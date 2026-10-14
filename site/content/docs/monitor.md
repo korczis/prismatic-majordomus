@@ -1,7 +1,7 @@
 +++
 title = "The monitor"
 description = "the monitor: everything that happens around a repository in one stream — mesh sessions, claims, handovers and reviews, the executor's outcomes, GitHub's pull requests and runs — with the noise folded away, what names you first, one cursor across every source, and the command, MCP, HTTP and Cockpit surfaces"
-weight = 61
+weight = 64
 [extra]
 source = "docs/MONITOR.md"
 +++
@@ -31,6 +31,7 @@ reviews and handovers asked of them for hours, and each one hand-rolled the same
 
 ## Quick start
 
+<!-- majordomus:unrun they follow a running server's stream, and --follow does not end on its own; cases 1050 and 1051 run these commands against a server with a declared mesh -->
 ```sh
 majordomus monitor                         # the newest signals of the last hour
 majordomus monitor --for 1b,cd             # ... with what names 1b or cd listed first

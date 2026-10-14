@@ -489,6 +489,11 @@ pub fn check_of(entry: &Value) -> CheckObservation {
                 .to_string(),
             t => t.to_string(),
         },
+        // a status context has no run to time, and a run's zero time means it has not started
+        started_at: match (kind, text("startedAt")) {
+            (CheckKind::StatusContext, _) | (_, "0001-01-01T00:00:00Z") => String::new(),
+            (_, t) => t.to_string(),
+        },
     }
 }
 
@@ -2206,6 +2211,19 @@ mod tests {
         assert_eq!(p.checks[2].kind, CheckKind::StatusContext);
         assert_eq!(p.checks[2].app_id, None);
         assert_eq!(p.checks[2].completed_at, "2026-09-01T00:07:00Z");
+        assert_eq!(
+            p.checks[0].started_at, "2026-09-01T00:00:00Z",
+            "a run says when it started"
+        );
+        assert_eq!(p.checks[1].started_at, "2026-09-01T00:06:00Z");
+        assert_eq!(
+            p.checks[2].started_at, "",
+            "a status context has no run to time"
+        );
+        assert_eq!(
+            p.checks[4].started_at, "",
+            "nor has a run the forge gave no start"
+        );
         assert_eq!(p.checks[3].state, CheckRunState::Passed);
         assert_eq!(
             p.checks[3].app_id, None,
@@ -2218,7 +2236,8 @@ mod tests {
         );
         let alone = check_of(&json!({
             "__typename": "CheckRun", "name": "ci", "status": "COMPLETED", "conclusion": "SUCCESS",
-            "completedAt": "2026-09-01T00:05:00Z", "checkSuite": {"app": {"databaseId": 15368}}
+            "startedAt": "2026-09-01T00:00:00Z", "completedAt": "2026-09-01T00:05:00Z",
+            "checkSuite": {"app": {"databaseId": 15368}}
         }));
         assert_eq!(p.checks[0], alone, "one parser reads both rollups");
     }

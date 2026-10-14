@@ -178,6 +178,18 @@
     @apply min-w-0 flex-1 border-0 bg-transparent py-2.5 text-sm focus:ring-0;
     color: var(--mj-fg);
   }
+  /* a filter form inside a panel (the Issues and Capabilities browsers) holds choices beside
+     its search: it wraps, and a choice whose options are long (a milestone with its title)
+     shrinks to the panel instead of widening the page */
+  .mj-ui-panel .mj-ui-search {
+    @apply flex-wrap basis-auto py-1.5 sm:max-w-none;
+  }
+  .mj-ui-panel .mj-ui-search > label {
+    @apply mb-0 flex min-w-0 max-w-full items-center gap-1;
+  }
+  .mj-ui-panel .mj-ui-search select {
+    @apply min-w-0 max-w-full truncate;
+  }
   .mj-ui-tools {
     @apply ml-auto flex shrink-0 items-center gap-1 xl:ml-0;
   }
@@ -312,8 +324,11 @@
     background: var(--mj-raised);
     border: 1px solid var(--mj-line);
   }
+  /* a panel being fetched says so by its frame and the pointer, never by fading its text:
+     faded text fails the contrast it owes while it is read (axe, /ui/deployments) */
   .mj-ui-panel[aria-busy="true"] {
-    opacity: 0.7;
+    border-style: dashed;
+    cursor: progress;
   }
   .mj-ui-panel-head {
     @apply flex min-w-0 items-start justify-between gap-4;
@@ -380,6 +395,26 @@
   .mj-ui-empty {
     @apply text-sm;
     color: var(--mj-muted);
+  }
+
+  /* Prose a record carries (ui/prose.rs): a milestone's problem and outcome, a list of
+     acceptance criteria. Read as text, at a measure a sentence can be read at. */
+  /* A record's prose names paths and commands, which have no place to break: without this a
+     long one is wider than a phone and the page scrolls sideways. */
+  .mj-ui-prose {
+    @apply mb-3 max-w-prose text-sm leading-relaxed;
+    color: var(--mj-body);
+    overflow-wrap: anywhere;
+  }
+  .mj-ui-prose-list {
+    @apply mb-3 max-w-prose list-disc space-y-1 pl-5 text-sm leading-relaxed;
+    color: var(--mj-body);
+    overflow-wrap: anywhere;
+  }
+  .mj-ui-code {
+    @apply rounded px-1 py-0.5 font-mono text-small;
+    background: var(--mj-sunken);
+    color: var(--mj-body);
   }
   .mj-ui-line {
     @apply mb-3 text-sm;
@@ -595,8 +630,10 @@
     @apply m-0 grid gap-2;
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 9rem), 1fr));
   }
+  /* a fact's value can be one long word (`behaviorally_verified`): the fact may shrink below
+     it and the value breaks, or the grid widens the page */
   .mj-ui-fact {
-    @apply flex flex-col gap-0.5 rounded-lg px-3 py-2;
+    @apply flex min-w-0 flex-col gap-0.5 rounded-lg px-3 py-2;
     background: var(--mj-sunken);
   }
   .mj-ui-fact > dt {
@@ -606,5 +643,99 @@
   .mj-ui-fact > dd {
     @apply m-0 font-mono text-lg font-semibold;
     color: var(--mj-fg);
+    overflow-wrap: anywhere;
+  }
+
+  /* the Observatory (/ui/observatory, /ui/kiosk): a stage the script draws on, sized for a wall display.
+     Every word on it is set by the script from the projection the page carries. */
+  .mj-obs {
+    @apply relative w-full overflow-hidden rounded-xl;
+    aspect-ratio: 16 / 9;
+    background: var(--mj-bg);
+    border: 1px solid var(--mj-line);
+    color: var(--mj-fg);
+  }
+  .mj-obs:fullscreen {
+    @apply rounded-none;
+    aspect-ratio: auto;
+    border: 0;
+  }
+  .mj-obs--kiosk {
+    @apply fixed inset-0 z-50 rounded-none;
+    aspect-ratio: auto;
+    border: 0;
+  }
+  .mj-obs-canvas {
+    @apply absolute inset-0 block h-full w-full;
+  }
+  .mj-obs-noscript {
+    @apply m-0 p-6 text-sm;
+  }
+  .mj-obs-head,
+  .mj-obs-foot {
+    @apply pointer-events-none absolute inset-x-0 flex items-baseline gap-4 px-[3%] font-mono uppercase;
+    font-size: clamp(0.6rem, 1.15vw, 1.6rem);
+    letter-spacing: 0.14em;
+  }
+  .mj-obs-head {
+    @apply top-[4%];
+  }
+  .mj-obs-foot {
+    @apply bottom-[4%];
+  }
+  .mj-obs-brand,
+  .mj-obs-fact {
+    color: var(--mj-muted);
+  }
+  .mj-obs-title {
+    @apply mx-auto font-semibold;
+    letter-spacing: 0.32em;
+  }
+  .mj-obs-status {
+    @apply ml-auto;
+  }
+  .mj-obs-status[data-state='live'] {
+    color: var(--mj-tone-cyan-fill);
+  }
+  .mj-obs-status[data-state='stale'] {
+    color: var(--mj-tone-orange-fill);
+  }
+  .mj-obs-status[data-state='resynced'] {
+    color: var(--mj-tone-blue-fill);
+  }
+  .mj-obs-status[data-state='replay'] {
+    color: var(--mj-tone-orange-fill);
+  }
+  .mj-obs-status[data-state='snapshot'] {
+    color: var(--mj-tone-violet-fill);
+  }
+  .mj-obs-scene {
+    @apply font-semibold;
+  }
+  .mj-obs-fact {
+    @apply ml-auto normal-case;
+    letter-spacing: 0.02em;
+  }
+  .mj-obs-legend {
+    @apply absolute inset-x-[3%] bottom-[12%] m-0 rounded-lg p-3 text-sm;
+    background: var(--mj-sunken);
+    border: 1px solid var(--mj-line);
+    color: var(--mj-fg);
+  }
+  .mj-obs-controls {
+    @apply absolute right-[3%] top-[11%] flex gap-1 opacity-0 transition-opacity;
+  }
+  .mj-obs:hover .mj-obs-controls,
+  .mj-obs:focus-within .mj-obs-controls {
+    @apply opacity-100;
+  }
+  .mj-obs-button {
+    @apply cursor-pointer rounded-md px-2 py-1 font-mono text-xs;
+    background: var(--mj-sunken);
+    border: 1px solid var(--mj-line);
+    color: var(--mj-fg);
+  }
+  .mj-obs-button[aria-pressed='false'] {
+    color: var(--mj-muted);
   }
 }

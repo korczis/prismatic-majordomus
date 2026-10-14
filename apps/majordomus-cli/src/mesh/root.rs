@@ -144,10 +144,8 @@ fn committed(root: &Path, branch: &str, path: &str) -> Option<Result<MeshConfig,
     let out = crate::git::read_only(root)
         .args(["show", &spec])
         .output()
-        .ok()?;
-    if !out.status.success() {
-        return None;
-    }
+        .ok()
+        .filter(|out| out.status.success())?;
     let named = format!("{branch}:{path}");
     let parsed = String::from_utf8(out.stdout)
         .map_err(|e| e.to_string())

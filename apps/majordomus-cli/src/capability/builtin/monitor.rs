@@ -116,6 +116,9 @@ pub(crate) fn runtime_of(stream: &str) -> String {
         .to_string()
 }
 
+/// Why the mesh source is absent when the mesh runtime gives no reason of its own.
+const NOT_RUNNING: &str = "the mesh is not running in this server";
+
 fn skipped<P>() -> Result<SourceRead<P>, (MonitorSourceHealth, String)> {
     Err((MonitorSourceHealth::Skipped, "not asked for".into()))
 }
@@ -169,7 +172,7 @@ fn monitor(ctx: &Context, input: MonitorInput) -> Result<MonitorPage, Capability
             ctx.mesh
                 .cooperation_status()
                 .reason
-                .unwrap_or_else(|| "the mesh is not running in this server".into()),
+                .unwrap_or(NOT_RUNNING.to_string()),
         ))
     };
 
@@ -248,6 +251,177 @@ mod tests {
     fn a_runtime_is_its_stream_without_the_instance() {
         assert_eq!(runtime_of("aa-bb-cc"), "aa-bb");
         assert_eq!(runtime_of("plain"), "plain");
+    }
+
+    use std::sync::Arc;
+
+    use serde_json::json;
+
+    use crate::monitor::github::{self, Fetched};
+    use crate::monitor::testing::{context, cooperation, session};
+
+    fn input(sources: &str) -> MonitorInput {
+        MonitorInput {
+            after: None,
+            limit: None,
+            sources: Some(sources.into()),
+            reader: Some("1b".into()),
+            since: Some(10 * 365 * 86_400),
+        }
+    }
+
+    fn state(page: &MonitorPage, source: MonitorSource) -> (MonitorSourceHealth, Option<String>) {
+        let s = page.sources.iter().find(|s| s.source == source).unwrap();
+        (s.state, s.reason.clone())
+    }
+
+    /// Every source answers through the capability: the mesh from the cooperation's journal,
+    /// the executor from the trail in the repository, GitHub from its fetch. What names the
+    /// reader is for them, and the page resumes from its cursor with nothing repeated.
+    #[test]
+    fn every_source_answers_through_the_capability_and_a_page_resumes() {
+        let _cache = github::CACHE_TESTS
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let ctx = context(&repo);
+        let c = cooperation();
+        session(&c, "s1", "3d", "the runtime train");
+        c.request_review("s1", "1b, read #885".into(), vec![], None, None, None)
+            .unwrap();
+        ctx.mesh.attach_cooperation(Arc::clone(&c));
+        let trail = crate::integration::events_path(repo.root()).unwrap();
+        std::fs::create_dir_all(trail.parent().unwrap()).unwrap();
+        std::fs::write(
+            &trail,
+            format!(
+                "{}\n",
+                json!({"at": "2026-10-10T20:00:00Z", "actor": "cd (pid 7 on lundra)",
+                       "action": "merge_succeeded", "pr": 9, "master_before": null,
+                       "head_sha": null, "master_after": null, "reasons": [], "detail": ""})
+            ),
+        )
+        .unwrap();
+        // the context's root is the canonical one (/private/var, not /var, on macOS)
+        github::seed(
+            Path::new(&ctx.index.repository.root),
+            Fetched {
+                prs: json!([{"number": 5, "title": "1b's fix", "state": "OPEN",
+                             "createdAt": "2026-10-10T20:05:00Z", "headRefName": "fix/x",
+                             "author": {"login": "korczis"}}]),
+                runs: json!([]),
+            },
+        );
+
+        let page = monitor(&ctx, input("mesh,executor,github")).unwrap();
+        for source in MonitorSource::ALL {
+            assert_eq!(
+                state(&page, source).0,
+                MonitorSourceHealth::Ok,
+                "{source:?}"
+            );
+        }
+        let kinds: Vec<&str> = page.signals.iter().map(|s| s.kind.as_str()).collect();
+        for kind in ["session_joined", "review_requested", "merged", "pr_opened"] {
+            assert!(kinds.contains(&kind), "{kind} is missing from {kinds:?}");
+        }
+        assert_eq!(
+            page.for_you, 2,
+            "the review and the pull request name 1b: {kinds:?}"
+        );
+
+        let mut next = input("mesh,executor,github");
+        next.after = Some(page.cursor.clone());
+        let resumed = monitor(&ctx, next).unwrap();
+        assert!(resumed.signals.is_empty(), "{:?}", resumed.signals);
+    }
+
+    /// A source not asked for is skipped, a mesh not running is absent with its reason, an
+    /// empty trail is absent, and a bad cursor or source is refused as invalid input.
+    #[test]
+    fn what_cannot_answer_says_why_and_bad_input_is_refused() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let ctx = context(&repo);
+        let page = monitor(&ctx, input("mesh,executor")).unwrap();
+        let (mesh, reason) = state(&page, MonitorSource::Mesh);
+        assert_eq!(mesh, MonitorSourceHealth::Absent);
+        assert!(
+            reason
+                .as_deref()
+                .is_some_and(|r| r.starts_with("not active")),
+            "the mesh runtime's own reason: {reason:?}"
+        );
+        assert_eq!(
+            state(&page, MonitorSource::Executor).0,
+            MonitorSourceHealth::Absent
+        );
+        assert_eq!(
+            state(&page, MonitorSource::Github).0,
+            MonitorSourceHealth::Skipped
+        );
+
+        let mut bad = input("mesh");
+        bad.after = Some("m12".into());
+        assert!(matches!(
+            monitor(&ctx, bad),
+            Err(CapabilityError::InvalidInput(_))
+        ));
+        assert!(matches!(
+            monitor(&ctx, input("mesh,slack")),
+            Err(CapabilityError::InvalidInput(_))
+        ));
+    }
+
+    /// A mesh that is active and has heard another node names both machines, this one
+    /// included, and a source not asked for is skipped whichever it is.
+    #[test]
+    fn the_machines_are_the_nodes_heard_and_this_one_and_what_is_not_asked_is_skipped() {
+        use crate::mesh::config::MeshConfig;
+        use crate::mesh::identity::NodeIdentity;
+        use crate::mesh::protocol::advertise;
+
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let ctx = context(&repo);
+        // this machine's own key is listed: a machine its trust list does not name keeps its
+        // mesh closed and hears nobody
+        let this = NodeIdentity::ephemeral().unwrap();
+        let config: MeshConfig = serde_json::from_value(json!({
+            "schema": "mesh/v1", "kind": "mesh", "id": "majordomus", "enabled": true,
+            "multicast": { "enabled": false },
+            "trust": { "allow": [this.public.public_key.clone()] },
+        }))
+        .unwrap();
+        ctx.mesh
+            .activate_as(
+                &config,
+                Arc::new(this),
+                "0000000000000001",
+                vec![],
+                vec!["root".into()],
+                "test",
+            )
+            .unwrap();
+        let other = NodeIdentity::ephemeral().unwrap();
+        let envelope = advertise(&other, 1, &["127.0.0.1:1".into()], &[], &[], "test");
+        ctx.mesh
+            .register(&serde_json::to_value(&envelope).unwrap(), "test");
+        assert_eq!(ctx.mesh.nodes().len(), 1, "the other node was heard");
+        let c = cooperation();
+        session(&c, "s1", "3d", "the runtime train");
+        ctx.mesh.attach_cooperation(Arc::clone(&c));
+
+        let page = monitor(&ctx, input("mesh")).unwrap();
+        assert_eq!(state(&page, MonitorSource::Mesh).0, MonitorSourceHealth::Ok);
+        assert_eq!(
+            state(&page, MonitorSource::Executor).0,
+            MonitorSourceHealth::Skipped
+        );
+        let page = monitor(&ctx, input("executor")).unwrap();
+        assert_eq!(
+            state(&page, MonitorSource::Mesh).0,
+            MonitorSourceHealth::Skipped
+        );
+        ctx.mesh.stop();
     }
 
     #[test]

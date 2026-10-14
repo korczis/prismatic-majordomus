@@ -51,9 +51,27 @@ type Fetch = Result<Fetched, (MonitorSourceHealth, String)>;
 
 static CACHE: Mutex<Option<(PathBuf, Instant, Fetch)>> = Mutex::new(None);
 
+/// Serialises the tests that read or write [`CACHE`]: it holds one repository's fetch.
+#[cfg(test)]
+pub(crate) static CACHE_TESTS: Mutex<()> = Mutex::new(());
+
+/// Put `fetched` in the cache for `root`, as a fetch a moment ago would have: what a test of
+/// a reader of this source hands it instead of the network.
+#[cfg(test)]
+pub(crate) fn seed(root: &Path, fetched: Fetched) {
+    if let Ok(mut cache) = CACHE.lock() {
+        *cache = Some((root.to_path_buf(), Instant::now(), Ok(fetched)));
+    }
+}
+
 /// The pull requests and runs of the repository at `root`, from the cache when it is
 /// younger than [`TTL`].
 pub(crate) fn fetch(root: &Path) -> Fetch {
+    fetch_with("gh", root)
+}
+
+/// [`fetch`], asking `program` in place of `gh`: the seam a test puts its own program in.
+fn fetch_with(program: &str, root: &Path) -> Fetch {
     if let Ok(cache) = CACHE.lock() {
         if let Some((at_root, at, fetched)) = cache.as_ref() {
             if at_root == root && at.elapsed() < TTL {
@@ -61,15 +79,16 @@ pub(crate) fn fetch(root: &Path) -> Fetch {
             }
         }
     }
-    let fetched = fetch_now(root);
+    let fetched = fetch_now(program, root);
     if let Ok(mut cache) = CACHE.lock() {
         *cache = Some((root.to_path_buf(), Instant::now(), fetched.clone()));
     }
     fetched
 }
 
-fn fetch_now(root: &Path) -> Fetch {
-    let prs = gh(
+fn fetch_now(program: &str, root: &Path) -> Fetch {
+    let prs = run(
+        program,
         root,
         &[
             "pr",
@@ -82,7 +101,8 @@ fn fetch_now(root: &Path) -> Fetch {
             "number,title,state,createdAt,mergedAt,closedAt,headRefName,author,url",
         ],
     )?;
-    let runs = gh(
+    let runs = run(
+        program,
         root,
         &[
             "run",
@@ -95,30 +115,29 @@ fn fetch_now(root: &Path) -> Fetch {
     )?;
     Ok(Fetched {
         prs,
-        runs: with_deploy_jobs(root, runs),
+        runs: with_deploy_jobs(program, root, runs),
     })
 }
 
 /// `runs` with the jobs of every failed deploy run attached under `jobs`, each asked within
 /// [`BUDGET`]; a run whose jobs could not be read keeps its plain verdict.
-fn with_deploy_jobs(root: &Path, mut runs: Value) -> Value {
-    for run in runs.as_array_mut().into_iter().flatten() {
-        let failed_deploy = text(run, "status") == "completed"
-            && verdict(&text(run, "conclusion")) == Verdict::Failed
-            && family(&text(run, "workflowName")) == "deploy";
-        let Some(id) = run["databaseId"].as_u64().filter(|_| failed_deploy) else {
+fn with_deploy_jobs(program: &str, root: &Path, mut runs: Value) -> Value {
+    for item in runs.as_array_mut().into_iter().flatten() {
+        let failed_deploy = text(item, "status") == "completed"
+            && verdict(&text(item, "conclusion")) == Verdict::Failed
+            && family(&text(item, "workflowName")) == "deploy";
+        let Some(id) = item["databaseId"].as_u64().filter(|_| failed_deploy) else {
             continue;
         };
-        if let Ok(view) = gh(root, &["run", "view", &id.to_string(), "--json", "jobs"]) {
-            run["jobs"] = view["jobs"].clone();
+        if let Ok(view) = run(
+            program,
+            root,
+            &["run", "view", &id.to_string(), "--json", "jobs"],
+        ) {
+            item["jobs"] = view["jobs"].clone();
         }
     }
     runs
-}
-
-/// One `gh` call, bounded by [`BUDGET`], its stdout parsed as JSON.
-fn gh(root: &Path, args: &[&str]) -> Result<Value, (MonitorSourceHealth, String)> {
-    run("gh", root, args)
 }
 
 /// One call of `program`, bounded by [`BUDGET`], its stdout parsed as JSON; every failure is
@@ -141,8 +160,9 @@ fn run(program: &str, root: &Path, args: &[&str]) -> Result<Value, (MonitorSourc
     let status = loop {
         match child.try_wait() {
             Ok(Some(status)) => break status,
-            Ok(None) if Instant::now() < deadline => std::thread::sleep(Duration::from_millis(25)),
-            Ok(None) => {
+            // not finished, or not able to say: the budget decides either way
+            _ if Instant::now() < deadline => std::thread::sleep(Duration::from_millis(25)),
+            _ => {
                 let _ = child.kill();
                 let _ = child.wait();
                 return Err((
@@ -150,17 +170,13 @@ fn run(program: &str, root: &Path, args: &[&str]) -> Result<Value, (MonitorSourc
                     format!("gh {} took longer than {}s", args[0], BUDGET.as_secs()),
                 ));
             }
-            Err(e) => return Err((MonitorSourceHealth::Error, format!("gh: {e}"))),
         }
     };
     let mut out = String::new();
     let mut err = String::new();
-    if let Some(mut s) = child.stdout.take() {
-        let _ = s.read_to_string(&mut out);
-    }
-    if let Some(mut s) = child.stderr.take() {
-        let _ = s.read_to_string(&mut err);
-    }
+    // both were piped above, so both are there to read
+    let _ = child.stdout.take().map(|mut s| s.read_to_string(&mut out));
+    let _ = child.stderr.take().map(|mut s| s.read_to_string(&mut err));
     if !status.success() {
         let reason = err
             .lines()
@@ -508,6 +524,126 @@ mod tests {
         let since = parse_rfc3339("2026-10-10T20:30:00Z").unwrap();
         let read = fold(&fetched(), None, since, &Reader::default());
         assert_eq!(read.signals.len(), 2, "closed at 20:30 and opened at 20:45");
+    }
+
+    /// A program standing in for `gh`: it answers `pr list` and `run list` with JSON, counts
+    /// its calls in `calls`, and fails `run list` when the file `fail-runs` exists.
+    fn fake_gh(dir: &Path) -> PathBuf {
+        let program = dir.join("fake-gh");
+        std::fs::write(
+            &program,
+            concat!(
+                "#!/bin/sh\n",
+                "echo \"$1\" >> \"$(dirname \"$0\")/calls\"\n",
+                "case \"$1\" in\n",
+                "  pr) echo '[{\"number\": 5, \"title\": \"t\", \"state\": \"OPEN\", ",
+                "\"createdAt\": \"2026-10-10T20:00:00Z\", \"headRefName\": \"fix/x\", \"author\": {}}]' ;;\n",
+                "  run) [ -e \"$(dirname \"$0\")/fail-runs\" ] && { echo 'gh: no runs today' >&2; exit 1; }\n",
+                "       echo '[]' ;;\n",
+                "esac\n"
+            ),
+        )
+        .unwrap();
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            std::fs::set_permissions(&program, std::fs::Permissions::from_mode(0o755)).unwrap();
+        }
+        program
+    }
+
+    #[test]
+    #[cfg(unix)]
+    fn a_fetch_asks_twice_and_is_shared_until_it_is_stale_or_another_root_asks() {
+        let _cache = CACHE_TESTS.lock().unwrap_or_else(|e| e.into_inner());
+        let dir = std::env::temp_dir().join(format!("mj-gh-fetch-{}", std::process::id()));
+        let (one, two) = (dir.join("one"), dir.join("two"));
+        std::fs::create_dir_all(&one).unwrap();
+        std::fs::create_dir_all(&two).unwrap();
+        let program = fake_gh(&dir);
+        let program = program.to_str().unwrap();
+        let calls = || {
+            std::fs::read_to_string(dir.join("calls"))
+                .unwrap_or_default()
+                .lines()
+                .count()
+        };
+
+        let fetched = fetch_with(program, &one).expect("the fake answers");
+        assert_eq!(fetched.prs[0]["number"], 5);
+        assert_eq!(fetched.runs, json!([]));
+        assert_eq!(calls(), 2, "one call for pull requests, one for runs");
+
+        fetch_with(program, &one).expect("the cache answers");
+        assert_eq!(calls(), 2, "a second read within the TTL asks nobody");
+
+        std::fs::write(dir.join("fail-runs"), "").unwrap();
+        let (state, reason) = fetch_with(program, &two).expect_err("runs fail for this root");
+        assert_eq!(state, MonitorSourceHealth::Error);
+        assert!(
+            reason.contains("gh run failed: gh: no runs today"),
+            "{reason}"
+        );
+        assert_eq!(calls(), 4, "another root is asked afresh");
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// A cache poisoned by a reader that panicked is passed by: the fetch asks afresh and
+    /// leaves the cache alone.
+    #[test]
+    fn a_poisoned_cache_is_passed_by_and_the_fetch_asks_afresh() {
+        let _cache = CACHE_TESTS.lock().unwrap_or_else(|e| e.into_inner());
+        let poisoner = std::thread::spawn(|| {
+            let _held = CACHE.lock();
+            panic!("a reader panics holding the cache");
+        });
+        assert!(poisoner.join().is_err());
+        assert!(CACHE.is_poisoned());
+        let fetched = fetch_with("majordomus-no-such-gh-binary", &std::env::temp_dir());
+        CACHE.clear_poison();
+        let (state, _) = fetched.expect_err("no such binary");
+        assert_eq!(state, MonitorSourceHealth::Absent);
+    }
+
+    #[test]
+    fn a_gh_that_outlives_its_budget_is_killed_and_reported() {
+        let dir = std::env::temp_dir();
+        let started = Instant::now();
+        let (state, reason) = run("sleep", &dir, &["30"]).expect_err("sleep outlives the budget");
+        assert_eq!(state, MonitorSourceHealth::Error);
+        assert_eq!(
+            reason,
+            format!("gh 30 took longer than {}s", BUDGET.as_secs())
+        );
+        assert!(
+            started.elapsed() < Duration::from_secs(20),
+            "it was not waited out"
+        );
+    }
+
+    #[test]
+    fn a_moment_without_its_time_is_no_moment_and_a_release_is_named_so() {
+        let fetched = Fetched {
+            prs: json!([
+                {"number": 1, "title": "no dates", "state": "OPEN", "headRefName": "a"},
+                {"number": 2, "title": "closed, no date", "state": "CLOSED",
+                 "createdAt": "2026-10-10T19:00:00Z", "headRefName": "b"}
+            ]),
+            runs: json!([
+                {"status": "completed", "conclusion": "failure", "workflowName": "ci",
+                 "headBranch": "master"},
+                {"status": "completed", "conclusion": "success", "workflowName": "Release",
+                 "headBranch": "master", "updatedAt": "2026-10-10T20:00:00Z", "displayTitle": "v1"}
+            ]),
+        };
+        let read = fold(&fetched, Some(0), 0, &Reader::default());
+        let kinds: Vec<&str> = read.signals.iter().map(|(_, s)| s.kind.as_str()).collect();
+        assert_eq!(
+            kinds,
+            vec!["pr_opened", "release_succeeded"],
+            "#1 has no moment, #2 only its opening, the undated run none"
+        );
+        assert_eq!(read.suppressed, 0);
     }
 
     #[test]

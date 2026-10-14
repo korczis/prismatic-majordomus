@@ -188,6 +188,15 @@
         "push_record_on_end": {
           "type": "boolean",
           "description": "Publish the record commit, as a fast-forward only and through the pre-push hook like any other push. That hook asks whether the task may be published, so the push often will not go out and the record travels with the worker's next push instead."
+        },
+        "retention_max_files": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "How many closed session records the sessions section holds before `doctor` and `watch` report it over its cap. The count is the section's own records; the ones `majordomus session archive` moved under its archive directory are not counted, and nothing is ever deleted to get under the cap."
+        },
+        "archive": {
+          "type": "boolean",
+          "description": "Whether `majordomus session archive` may move the oldest records beyond `retention_max_files` into the section's archive directory. Archiving happens only when that command is run; false makes it refuse and write nothing."
         }
       }
     },
@@ -342,6 +351,50 @@
               },
               "description": {
                 "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "release": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Who raises the version and by at least how much (ADR 0134). Absent is allocation: off with no floor: a policy that predates the block raises its version as it always did.",
+      "properties": {
+        "allocation": {
+          "type": "string",
+          "enum": ["off", "landing"],
+          "description": "off: a pull request raises its own version. landing: the integration executor raises it when it lands the pull request, from the trunk's version."
+        },
+        "floor": {
+          "type": "string",
+          "enum": ["none", "patch", "minor", "major"],
+          "description": "The least an eligible integration advances the version, whatever its measured impact."
+        },
+        "exempt": {
+          "type": "array",
+          "description": "Classes of change held to no floor: a pull request whose every changed path one class covers. The compatibility requirement still applies.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "description", "paths"],
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "description": {
+                "type": "string",
+                "minLength": 1
+              },
+              "paths": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
               }
             }
           }

@@ -304,7 +304,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -526,7 +526,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -763,7 +763,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -934,7 +934,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -1058,7 +1058,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -1159,7 +1159,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -1329,7 +1329,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -1485,7 +1485,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -1626,7 +1626,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -1784,7 +1784,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -1905,7 +1905,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -2006,7 +2006,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -2082,6 +2082,10 @@
               "name": "providers"
             },
             {
+              "help": "The files Zed and Google Antigravity read: `.agents/skills/<id>/SKILL.md` for every active skill, and `.zed/tasks.json` from the tracked justfile",
+              "name": "editors"
+            },
+            {
               "help": "site/data/registry/registry.json, the registry dataset the site renders",
               "name": "site"
             },
@@ -2102,7 +2106,7 @@
               "name": "changelog"
             },
             {
-              "help": "deploy/Dockerfile, .dockerignore and fly.toml, from the deployment objects",
+              "help": "deploy/Dockerfile and .dockerignore, from the deployment objects",
               "name": "deployment"
             },
             {
@@ -2194,6 +2198,27 @@
           "id": "generate-one-target",
           "setup": [],
           "title": "One target only"
+        },
+        {
+          "argv": [
+            "generate",
+            "site",
+            "--check"
+          ],
+          "command": "majordomus generate site --check",
+          "description": "`--check` composes with a target: here only the registry dataset the site renders is compared with what the sources produce, exit 10 naming it when it is stale.",
+          "expectation": "exits 0",
+          "id": "generate-site-check",
+          "setup": [
+            {
+              "argv": [
+                "generate",
+                "site"
+              ],
+              "command": "majordomus generate site"
+            }
+          ],
+          "title": "Check one target without writing it"
         }
       ],
       "executable": true,
@@ -2240,7 +2265,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -2525,7 +2550,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -2646,7 +2671,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -2792,7 +2817,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -2898,7 +2923,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -3059,7 +3084,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -3247,7 +3272,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -3411,7 +3436,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -3579,7 +3604,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -3732,7 +3757,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -3885,7 +3910,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -3989,6 +4014,18 @@
           "command": "majordomus web report ui",
           "name": "ui",
           "route": "/docs/cli/web/report/ui/"
+        },
+        {
+          "about": "The UI itself, read once at this commit and written as static pages a publication carries at /ui (ADR 0141)",
+          "command": "majordomus web report ui-snapshot",
+          "name": "ui-snapshot",
+          "route": "/docs/cli/web/report/ui-snapshot/"
+        },
+        {
+          "about": "The Cockpit itself, read once at this commit and written as static pages a publication carries at /cockpit (ADR 0147)",
+          "command": "majordomus web report cockpit-snapshot",
+          "name": "cockpit-snapshot",
+          "route": "/docs/cli/web/report/cockpit-snapshot/"
         }
       ],
       "command": "majordomus web report",
@@ -4073,7 +4110,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -4247,7 +4284,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -4421,7 +4458,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -4541,6 +4578,386 @@
       "usage": "majordomus web report ui [OPTIONS]"
     },
     {
+      "about": "The UI itself, read once at this commit and written as static pages a publication carries at /ui (ADR 0141)",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus web",
+          "name": "web",
+          "route": "/docs/cli/web/"
+        },
+        {
+          "command": "majordomus web report",
+          "name": "report",
+          "route": "/docs/cli/web/report/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [
+            "240"
+          ],
+          "global": false,
+          "help": "The most pages to write: every screen and panel first, then what they link to",
+          "long": "limit",
+          "name": "limit",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "LIMIT"
+        },
+        {
+          "defaults": [
+            "180"
+          ],
+          "global": false,
+          "help": "The most seconds to spend on the pages the screens link to; the screens and panels are written whatever they cost",
+          "long": "budget-seconds",
+          "name": "budget_seconds",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "BUDGET_SECONDS"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only these surfaces, by discovered id (repeat or separate with commas)",
+          "long": "only",
+          "name": "only",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "ONLY"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Every surface except these, by discovered id",
+          "long": "exclude",
+          "name": "exclude",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "EXCLUDE"
+        }
+      ],
+      "children": [],
+      "command": "majordomus web report ui-snapshot",
+      "depth": 3,
+      "examples": [
+        {
+          "argv": [
+            "web",
+            "report",
+            "ui-snapshot",
+            "--limit",
+            "20"
+          ],
+          "command": "majordomus web report ui-snapshot --limit 20",
+          "description": "Asks the UI in-process for every screen and panel and then, one page per family in turn until `--limit` pages or `--budget-seconds` are reached, for the pages they link to, and writes each as a file under target/web/ui-snapshot: links between them relative, a link only a running process answers led to the snapshot's page about the live UI, the script told not to read again, and every page stamped with the commit, the time and the executable that read it. The declaration beside it makes the directory a surface of every publication and of no process.",
+          "expectation": "exits 0; prints web report, ui-snapshot",
+          "id": "web-report-ui-snapshot",
+          "setup": [],
+          "title": "Read the UI once and write it as the pages a publication carries at /ui"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "ui-snapshot",
+      "parent_route": "/docs/cli/web/report/",
+      "path": [
+        "majordomus",
+        "web",
+        "report",
+        "ui-snapshot"
+      ],
+      "route": "/docs/cli/web/report/ui-snapshot/",
+      "usage": "majordomus web report ui-snapshot [OPTIONS]"
+    },
+    {
+      "about": "The Cockpit itself, read once at this commit and written as static pages a publication carries at /cockpit (ADR 0147)",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus web",
+          "name": "web",
+          "route": "/docs/cli/web/"
+        },
+        {
+          "command": "majordomus web report",
+          "name": "report",
+          "route": "/docs/cli/web/report/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [
+            "240"
+          ],
+          "global": false,
+          "help": "The most pages to write: every static route first, then the pages the UI's snapshot links to, then what those link to",
+          "long": "limit",
+          "name": "limit",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "LIMIT"
+        },
+        {
+          "defaults": [
+            "180"
+          ],
+          "global": false,
+          "help": "The most seconds to spend on the pages the static routes link to; the routes themselves are written whatever they cost",
+          "long": "budget-seconds",
+          "name": "budget_seconds",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "BUDGET_SECONDS"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only these surfaces, by discovered id (repeat or separate with commas)",
+          "long": "only",
+          "name": "only",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "ONLY"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Every surface except these, by discovered id",
+          "long": "exclude",
+          "name": "exclude",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "EXCLUDE"
+        }
+      ],
+      "children": [],
+      "command": "majordomus web report cockpit-snapshot",
+      "depth": 3,
+      "examples": [
+        {
+          "argv": [
+            "web",
+            "report",
+            "cockpit-snapshot",
+            "--limit",
+            "12"
+          ],
+          "command": "majordomus web report cockpit-snapshot --limit 12",
+          "description": "Asks the Cockpit in-process for every static route except the one page about this machine, then for the pages the UI's snapshot links to, then, one page per family in turn until `--limit` pages or `--budget-seconds` are reached, for the pages those link to, and writes each as a file under target/web/cockpit-snapshot. Links between them are relative; a link into the UI leads to the UI's snapshot when that holds the page; a form, a query or a page past the bound leads to the snapshot's page about the live Cockpit; no page carries a script, because the Cockpit's scripts talk to a process; and every page is stamped with the commit, the time and the executable that read it.",
+          "expectation": "exits 0; prints web report, cockpit-snapshot",
+          "id": "web-report-cockpit-snapshot",
+          "setup": [],
+          "title": "Read the Cockpit once and write it as the pages a publication carries at /cockpit"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "cockpit-snapshot",
+      "parent_route": "/docs/cli/web/report/",
+      "path": [
+        "majordomus",
+        "web",
+        "report",
+        "cockpit-snapshot"
+      ],
+      "route": "/docs/cli/web/report/cockpit-snapshot/",
+      "usage": "majordomus web report cockpit-snapshot [OPTIONS]"
+    },
+    {
       "about": "Compose every published surface into one publishable tree",
       "ancestors": [
         {
@@ -4590,7 +5007,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -4740,7 +5157,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -5041,7 +5458,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -5346,7 +5763,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -5613,7 +6030,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -5879,7 +6296,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -6157,7 +6574,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -6437,7 +6854,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -6698,7 +7115,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -6851,7 +7268,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -7022,7 +7439,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -7162,7 +7579,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -7344,7 +7761,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -7475,7 +7892,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -7604,7 +8021,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -7733,7 +8150,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -7862,7 +8279,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -8015,7 +8432,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -8150,7 +8567,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -8291,7 +8708,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -8422,7 +8839,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -8546,7 +8963,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -8710,7 +9127,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -8865,7 +9282,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -9052,7 +9469,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -9265,7 +9682,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -9410,7 +9827,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -9568,7 +9985,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -9694,7 +10111,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -9922,7 +10339,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -10064,7 +10481,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -10205,7 +10622,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -10349,7 +10766,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -10494,7 +10911,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -10618,7 +11035,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -10810,7 +11227,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -10948,7 +11365,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -11123,7 +11540,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -11227,7 +11644,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -11451,7 +11868,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -11582,7 +11999,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -11720,7 +12137,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -11851,7 +12268,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -11991,7 +12408,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -12132,7 +12549,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -12297,7 +12714,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -12450,7 +12867,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -12657,7 +13074,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -12787,7 +13204,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -12916,7 +13333,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -13060,7 +13477,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -13203,7 +13620,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -13358,7 +13775,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -13511,7 +13928,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -13654,7 +14071,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -13778,7 +14195,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -13972,7 +14389,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -14103,7 +14520,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -14243,7 +14660,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -14373,7 +14790,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -14586,7 +15003,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -14744,7 +15161,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -14912,7 +15329,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -15042,7 +15459,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -15171,7 +15588,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -15300,7 +15717,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -15429,7 +15846,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -15553,7 +15970,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -15699,7 +16116,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -15842,7 +16259,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -16022,7 +16439,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -16159,7 +16576,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -16297,7 +16714,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -16449,7 +16866,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -16592,7 +17009,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -16732,7 +17149,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -16896,7 +17313,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -17022,7 +17439,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -17287,7 +17704,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -17542,7 +17959,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -17773,7 +18190,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -18003,7 +18420,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -18233,7 +18650,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -18463,7 +18880,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -18688,7 +19105,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -18770,6 +19187,12 @@
           "route": "/docs/cli/release/analyze/"
         },
         {
+          "about": "The version a landing of HEAD onto the trunk allocates, and why: the trunk's version, the measured movement, the policy floor and any exemption (ADR 0134)",
+          "command": "majordomus release next",
+          "name": "next",
+          "route": "/docs/cli/release/next/"
+        },
+        {
           "about": "Raise the version in the one place it is authored, to at least what the public contract requires; scripts/derive derives the rest",
           "command": "majordomus release bump",
           "name": "bump",
@@ -18840,7 +19263,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -18971,7 +19394,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -19128,7 +19551,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -19222,6 +19645,165 @@
       "usage": "majordomus release analyze [OPTIONS]"
     },
     {
+      "about": "The version a landing of HEAD onto the trunk allocates, and why: the trunk's version, the measured movement, the policy floor and any exemption (ADR 0134)",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus release",
+          "name": "release",
+          "route": "/docs/cli/release/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [
+            "origin/master"
+          ],
+          "global": false,
+          "help": "The trunk the landing raises from",
+          "long": "base",
+          "name": "base",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "REF"
+        },
+        {
+          "defaults": [
+            "HEAD"
+          ],
+          "global": false,
+          "help": "What lands",
+          "long": "head",
+          "name": "head",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "REF"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "How to render the answer",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus release next",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "release",
+            "next",
+            "--format",
+            "json"
+          ],
+          "command": "majordomus release next --format json",
+          "description": "The version the integration executor allocates when it lands a head on the trunk (ADR 0134): the trunk's version, the head's movement of the public contract measured against the trunk's committed registry, the policy floor and any exemption, and the larger of the requirement and the floor — read from git at the two refs, never from the branch's own version. This fixture has no trunk to raise from, and says so with exit 12 rather than inventing a number.",
+          "expectation": "exits 12",
+          "id": "release-next",
+          "setup": [],
+          "title": "What a landing would raise the version to"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "next",
+      "parent_route": "/docs/cli/release/",
+      "path": [
+        "majordomus",
+        "release",
+        "next"
+      ],
+      "route": "/docs/cli/release/next/",
+      "usage": "majordomus release next [OPTIONS]"
+    },
+    {
       "about": "Raise the version in the one place it is authored, to at least what the public contract requires; scripts/derive derives the rest",
       "ancestors": [
         {
@@ -19297,7 +19879,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -19465,7 +20047,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -19677,7 +20259,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -19855,7 +20437,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -20033,7 +20615,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -20215,7 +20797,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -20357,7 +20939,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -20510,7 +21092,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -20651,7 +21233,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -20781,7 +21363,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -20907,7 +21489,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -21151,7 +21733,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -21419,7 +22001,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -21551,7 +22133,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -21672,13 +22254,19 @@
           "route": "/docs/cli/mesh/identity/"
         },
         {
-          "about": "Prove the mesh prerequisites on this machine alone: declaration, identity, sockets, multicast, broadcast, and the protocol end to end",
+          "about": "Prove the mesh prerequisites on this machine alone: declaration, identity, sockets, multicast, broadcast, the protocol end to end, and the host firewall",
           "command": "majordomus mesh doctor",
           "name": "doctor",
           "route": "/docs/cli/mesh/doctor/"
         },
         {
-          "about": "Every machine, runtime and session this checkout's server cooperates with, with each link's state",
+          "about": "What the host firewall must admit for the declared mesh and whether it does; `apply` admits it, as root",
+          "command": "majordomus mesh firewall",
+          "name": "firewall",
+          "route": "/docs/cli/mesh/firewall/"
+        },
+        {
+          "about": "Every machine and runtime this checkout's server cooperates with, each link's state, and the active sessions; --full for every session and claim",
           "command": "majordomus mesh peers",
           "name": "peers",
           "route": "/docs/cli/mesh/peers/"
@@ -21690,7 +22278,7 @@
           "route": "/docs/cli/mesh/peer/"
         },
         {
-          "about": "The state every linked runtime converges on: sessions, claims and conflicts, handovers, reviews, and the digest",
+          "about": "The state every linked runtime converges on, summarised with its digest; --full for every session, claim, handover and review",
           "command": "majordomus mesh state",
           "name": "state",
           "route": "/docs/cli/mesh/state/"
@@ -21790,7 +22378,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -21919,7 +22507,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -22048,7 +22636,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -22140,7 +22728,7 @@
       "usage": "majordomus mesh identity [OPTIONS]"
     },
     {
-      "about": "Prove the mesh prerequisites on this machine alone: declaration, identity, sockets, multicast, broadcast, and the protocol end to end",
+      "about": "Prove the mesh prerequisites on this machine alone: declaration, identity, sockets, multicast, broadcast, the protocol end to end, and the host firewall",
       "ancestors": [
         {
           "command": "majordomus",
@@ -22177,7 +22765,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -22269,7 +22857,7 @@
       "usage": "majordomus mesh doctor [OPTIONS]"
     },
     {
-      "about": "Every machine, runtime and session this checkout's server cooperates with, with each link's state",
+      "about": "What the host firewall must admit for the declared mesh and whether it does; `apply` admits it, as root",
       "ancestors": [
         {
           "command": "majordomus",
@@ -22283,6 +22871,18 @@
         }
       ],
       "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The port this checkout's server listens on beyond loopback, when it does",
+          "long": "port",
+          "name": "port",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PORT"
+        },
         {
           "defaults": [],
           "global": true,
@@ -22306,7 +22906,405 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": false,
+          "help": "`text` for a person, `json` for a machine; both render the same answer",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [
+        {
+          "about": "Run the commands that admit the plan on this host's firewall; needs root, and exits 10 when it refuses or the firewall still does not admit the mesh",
+          "command": "majordomus mesh firewall apply",
+          "name": "apply",
+          "route": "/docs/cli/mesh/firewall/apply/"
+        }
+      ],
+      "command": "majordomus mesh firewall",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "mesh",
+            "firewall"
+          ],
+          "command": "majordomus mesh firewall",
+          "description": "The admissions derived from the declaration and this machine's addresses — the multicast group's port, the hub ports whose address is this machine's, the server's port beyond loopback — the firewall front this host runs, the commands that admit them there, the firewall's own word about them, and what the kernel logged it dropping toward those ports in the last five minutes. Here, with no declaration, nothing is needed and the report says so; a rule observed missing or a logged drop exits 10.",
+          "expectation": "exits 0; prints backend, verdict",
+          "id": "mesh-firewall",
+          "setup": [],
+          "title": "What the host firewall must admit for the declared mesh, and whether it does"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "firewall",
+      "parent_route": "/docs/cli/mesh/",
+      "path": [
+        "majordomus",
+        "mesh",
+        "firewall"
+      ],
+      "route": "/docs/cli/mesh/firewall/",
+      "usage": "majordomus mesh firewall [OPTIONS] [COMMAND]"
+    },
+    {
+      "about": "Run the commands that admit the plan on this host's firewall; needs root, and exits 10 when it refuses or the firewall still does not admit the mesh",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus mesh",
+          "name": "mesh",
+          "route": "/docs/cli/mesh/"
+        },
+        {
+          "command": "majordomus mesh firewall",
+          "name": "firewall",
+          "route": "/docs/cli/mesh/firewall/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The port this checkout's server listens on beyond loopback, when it does",
+          "long": "port",
+          "name": "port",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PORT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": false,
+          "help": "`text` for a person, `json` for a machine; both render the same answer",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus mesh firewall apply",
+      "depth": 3,
+      "examples": [
+        {
+          "argv": [
+            "mesh",
+            "firewall",
+            "apply"
+          ],
+          "command": "majordomus mesh firewall apply",
+          "description": "Runs the commands `mesh firewall` renders — one allow per rule and source network on ufw or nftables, the executable admitted on the macOS application firewall — and asks the firewall again, so the verdict is its own. It refuses, running nothing, without root or without a backend, and exits 10, as here, where nothing is declared and the example does not run as root.",
+          "expectation": "exits 10",
+          "id": "mesh-firewall-apply",
+          "setup": [],
+          "title": "Admit the mesh through the host firewall, as root"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "apply",
+      "parent_route": "/docs/cli/mesh/firewall/",
+      "path": [
+        "majordomus",
+        "mesh",
+        "firewall",
+        "apply"
+      ],
+      "route": "/docs/cli/mesh/firewall/apply/",
+      "usage": "majordomus mesh firewall apply [OPTIONS]"
+    },
+    {
+      "about": "Every machine and runtime this checkout's server cooperates with, each link's state, and the active sessions; --full for every session and claim",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus mesh",
+          "name": "mesh",
+          "route": "/docs/cli/mesh/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Every session, claim, handover and review, not the summary",
+          "long": "full",
+          "name": "full",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "FULL"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Only claims that are still held",
+          "long": "live-claims",
+          "name": "live_claims",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "LIVE_CLAIMS"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Only what moved after this Lamport stamp",
+          "long": "after",
+          "name": "after",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "AFTER"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Only this session: its key or its bare id",
+          "long": "session",
+          "name": "session",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "SESSION"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Only this runtime (`<node>-<runtime>`), or every runtime of a node id",
+          "long": "runtime",
+          "name": "runtime",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "RUNTIME"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Only this collection: sessions, claims, overlaps, handovers or reviews",
+          "long": "kind",
+          "name": "kind",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "KIND"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "At most this many of each collection, the newest first kept",
+          "long": "limit",
+          "name": "limit",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "LIMIT"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Only what is still open: active sessions, live claims, unanswered reviews, untaken handovers",
+          "long": "open",
+          "name": "open",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "OPEN"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Only what mentions this text: a path, a branch, an issue, a pull request, a word",
+          "long": "matching",
+          "name": "matching",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "MATCHING"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -22446,7 +23444,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -22539,7 +23537,7 @@
       "usage": "majordomus mesh peer [OPTIONS] <RUNTIME>"
     },
     {
-      "about": "The state every linked runtime converges on: sessions, claims and conflicts, handovers, reviews, and the digest",
+      "about": "The state every linked runtime converges on, summarised with its digest; --full for every session, claim, handover and review",
       "ancestors": [
         {
           "command": "majordomus",
@@ -22553,6 +23551,120 @@
         }
       ],
       "args": [
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Every session, claim, handover and review, not the summary",
+          "long": "full",
+          "name": "full",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "FULL"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Only claims that are still held",
+          "long": "live-claims",
+          "name": "live_claims",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "LIVE_CLAIMS"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Only what moved after this Lamport stamp",
+          "long": "after",
+          "name": "after",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "AFTER"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Only this session: its key or its bare id",
+          "long": "session",
+          "name": "session",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "SESSION"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Only this runtime (`<node>-<runtime>`), or every runtime of a node id",
+          "long": "runtime",
+          "name": "runtime",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "RUNTIME"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Only this collection: sessions, claims, overlaps, handovers or reviews",
+          "long": "kind",
+          "name": "kind",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "KIND"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "At most this many of each collection, the newest first kept",
+          "long": "limit",
+          "name": "limit",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "LIMIT"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Only what is still open: active sessions, live claims, unanswered reviews, untaken handovers",
+          "long": "open",
+          "name": "open",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "OPEN"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Only what mentions this text: a path, a branch, an issue, a pull request, a word",
+          "long": "matching",
+          "name": "matching",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "MATCHING"
+        },
         {
           "defaults": [],
           "global": true,
@@ -22576,7 +23688,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -22653,6 +23765,20 @@
           "id": "mesh-state",
           "setup": [],
           "title": "The state every linked runtime converges on"
+        },
+        {
+          "argv": [
+            "mesh",
+            "state",
+            "--full",
+            "--live-claims"
+          ],
+          "command": "majordomus mesh state --full --live-claims",
+          "description": "The whole state with only the claims still held, as docs/MESH.md lists it — or, with no running server, why there is none.",
+          "expectation": "exits 0; prints cooperation inactive",
+          "id": "mesh-state-live-claims",
+          "setup": [],
+          "title": "Every claim still held"
         }
       ],
       "executable": true,
@@ -22707,6 +23833,20 @@
           "value_name": "LIMIT"
         },
         {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "The newest events instead of the first ones after `--after`",
+          "long": "newest",
+          "name": "newest",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "NEWEST"
+        },
+        {
           "defaults": [],
           "global": true,
           "help": "Start the search for the repository root here (default: the current directory)",
@@ -22729,7 +23869,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -22862,7 +24002,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -23064,7 +24204,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -23209,7 +24349,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -23496,7 +24636,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -23650,7 +24790,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -23868,7 +25008,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -24043,7 +25183,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -24166,6 +25306,12 @@
           "command": "majordomus mesh review answer",
           "name": "answer",
           "route": "/docs/cli/mesh/review/answer/"
+        },
+        {
+          "about": "Withdraw a review request this runtime asked for, with its result",
+          "command": "majordomus mesh review withdraw",
+          "name": "withdraw",
+          "route": "/docs/cli/mesh/review/withdraw/"
         }
       ],
       "command": "majordomus mesh review",
@@ -24264,6 +25410,18 @@
         },
         {
           "defaults": [],
+          "global": false,
+          "help": "What the reviewer needs beyond the subject: evidence, commands, the question (up to 8 KiB)",
+          "long": "body",
+          "name": "body",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "BODY"
+        },
+        {
+          "defaults": [],
           "global": true,
           "help": "Start the search for the repository root here (default: the current directory)",
           "long": "repo",
@@ -24285,7 +25443,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -24484,7 +25642,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -24581,6 +25739,182 @@
       ],
       "route": "/docs/cli/mesh/review/answer/",
       "usage": "majordomus mesh review answer [OPTIONS] <REQUEST>"
+    },
+    {
+      "about": "Withdraw a review request this runtime asked for, with its result",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus mesh",
+          "name": "mesh",
+          "route": "/docs/cli/mesh/"
+        },
+        {
+          "command": "majordomus mesh review",
+          "name": "review",
+          "route": "/docs/cli/mesh/review/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The request's key, `<stream>/<review>`",
+          "name": "request",
+          "positional": true,
+          "possible_values": [],
+          "required": true,
+          "takes_value": true,
+          "value_name": "REQUEST"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The withdrawing session, within the runtime that asked",
+          "long": "session",
+          "name": "session",
+          "positional": false,
+          "possible_values": [],
+          "required": true,
+          "takes_value": true,
+          "value_name": "SESSION"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "What came of it, or why it is void (up to 8 KiB)",
+          "long": "note",
+          "name": "note",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "NOTE"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": false,
+          "help": "`text` for a person, `json` for a machine; both render the same answer",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus mesh review withdraw",
+      "depth": 3,
+      "examples": [
+        {
+          "argv": [
+            "mesh",
+            "review",
+            "withdraw",
+            "stream/r-000000000000",
+            "--session",
+            "s1",
+            "--note",
+            "superseded"
+          ],
+          "command": "majordomus mesh review withdraw stream/r-000000000000 --session s1 --note superseded",
+          "description": "Only the runtime that asked may withdraw its request, from any of its sessions; the note is the requester's own result and never an answer. It needs the running server; without one it exits 10.",
+          "expectation": "exits 10",
+          "id": "mesh-review-withdraw",
+          "setup": [],
+          "title": "Withdraw a review request with its result"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "withdraw",
+      "parent_route": "/docs/cli/mesh/review/",
+      "path": [
+        "majordomus",
+        "mesh",
+        "review",
+        "withdraw"
+      ],
+      "route": "/docs/cli/mesh/review/withdraw/",
+      "usage": "majordomus mesh review withdraw [OPTIONS] <REQUEST>"
     },
     {
       "about": "Everything that happens around this repository, followed in one stream: mesh sessions, claims, handovers and reviews on every linked machine, the executor's merges and failures, and GitHub's pull requests and runs, with what is addressed to you marked",
@@ -24763,7 +26097,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -24952,7 +26286,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -25117,7 +26451,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -25305,7 +26639,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -25457,7 +26791,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -25534,6 +26868,20 @@
           "id": "reasoning-advisors",
           "setup": [],
           "title": "The advisors, and what they can do now"
+        },
+        {
+          "argv": [
+            "reasoning",
+            "advisors",
+            "--format",
+            "json"
+          ],
+          "command": "majordomus reasoning advisors --format json",
+          "description": "The report the API and the MCP tool return: `operational`, the mode and what decided it, every advisor with its status and reason, and the capacity per capability. A script reads this rather than the text form.",
+          "expectation": "exits 0; prints one JSON document carrying /operational, /mode, /advisors, /capacity",
+          "id": "reasoning-advisors-json",
+          "setup": [],
+          "title": "The same answer as one document"
         }
       ],
       "executable": true,
@@ -25626,7 +26974,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -25705,6 +27053,22 @@
           "id": "reasoning-plan",
           "setup": [],
           "title": "What a material uncertainty calls for"
+        },
+        {
+          "argv": [
+            "reasoning",
+            "plan",
+            "--materiality",
+            "high",
+            "--capabilities",
+            "independent_reasoning,code_review"
+          ],
+          "command": "majordomus reasoning plan --materiality high --capabilities independent_reasoning,code_review",
+          "description": "The selection covers the requested capabilities first, then prefers an advisor reached through a different adapter, then declaration order; every advisor not selected carries its reason. With none available the outcome is the structured local review.",
+          "expectation": "exits 0; prints outcome, budget",
+          "id": "reasoning-plan-capabilities",
+          "setup": [],
+          "title": "A high uncertainty that asks for named capabilities"
         }
       ],
       "executable": true,
@@ -25769,7 +27133,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -25926,7 +27290,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -26068,7 +27432,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -26198,7 +27562,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -26322,7 +27686,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -26557,7 +27921,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -26713,7 +28077,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -26854,7 +28218,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -27068,7 +28432,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -27247,7 +28611,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -27375,7 +28739,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -27443,6 +28807,12 @@
           "command": "majordomus served observe",
           "name": "observe",
           "route": "/docs/cli/served/observe/"
+        },
+        {
+          "about": "Ask the forge which deployments and releases it recorded, and keep the answer for the readers",
+          "command": "majordomus served forge",
+          "name": "forge",
+          "route": "/docs/cli/served/forge/"
         },
         {
           "about": "Each deployment's newest record, re-judged against a commit",
@@ -27577,7 +28947,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -27674,6 +29044,135 @@
       "usage": "majordomus served observe [OPTIONS]"
     },
     {
+      "about": "Ask the forge which deployments and releases it recorded, and keep the answer for the readers",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus served",
+          "name": "served",
+          "route": "/docs/cli/served/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus served forge",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "served",
+            "forge"
+          ],
+          "command": "majordomus served forge",
+          "description": "Asks the forge, through its own command-line tool, for the newest deployments to every environment and the newest releases, and records the answer `deploy.observed` reads. Here the repository has no remote the forge knows, so nothing is asked and the command says why with exit 12 — not answered, never an empty list read as none. In a checkout of a repository on the forge, with a credential, it prints how many deployments, environments and releases the answer held and exits 0.",
+          "expectation": "exits 12",
+          "id": "served-forge-unknown-repository",
+          "setup": [],
+          "title": "A forge that cannot be asked is said, and what was recorded before stands"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "forge",
+      "parent_route": "/docs/cli/served/",
+      "path": [
+        "majordomus",
+        "served",
+        "forge"
+      ],
+      "route": "/docs/cli/served/forge/",
+      "usage": "majordomus served forge [OPTIONS]"
+    },
+    {
       "about": "Each deployment's newest record, re-judged against a commit",
       "ancestors": [
         {
@@ -27735,7 +29234,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -27861,7 +29360,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -28059,7 +29558,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -28201,7 +29700,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -28342,7 +29841,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -28469,7 +29968,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -28579,6 +30078,12 @@
           "command": "majordomus intent explain",
           "name": "explain",
           "route": "/docs/cli/intent/explain/"
+        },
+        {
+          "about": "Write a new, unplanned intent: what must become true (ADR 0144)",
+          "command": "majordomus intent propose",
+          "name": "propose",
+          "route": "/docs/cli/intent/propose/"
         }
       ],
       "command": "majordomus intent",
@@ -28633,7 +30138,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -28787,7 +30292,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -28917,7 +30422,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -29046,7 +30551,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -29213,7 +30718,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -29404,7 +30909,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -29547,7 +31052,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -29701,7 +31206,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -29794,6 +31299,173 @@
       "usage": "majordomus intent explain [OPTIONS] <ID>"
     },
     {
+      "about": "Write a new, unplanned intent: what must become true (ADR 0144)",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus intent",
+          "name": "intent",
+          "route": "/docs/cli/intent/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "What must become true, kept verbatim",
+          "long": "statement",
+          "name": "statement",
+          "positional": false,
+          "possible_values": [],
+          "required": true,
+          "takes_value": true,
+          "value_name": "STATEMENT"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "One line naming it; the statement's first line when absent",
+          "long": "title",
+          "name": "title",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "TITLE"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The identity and file name; the title's slug when absent",
+          "long": "id",
+          "name": "id",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "ID"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus intent propose",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "intent",
+            "propose",
+            "--statement",
+            "Every page answers within 100 ms when warm"
+          ],
+          "command": "majordomus intent propose --statement 'Every page answers within 100 ms when warm'",
+          "description": "Writes a new record under `.ai/repo/project/intents/` holding the statement and nothing else yet (ADR 0144): no milestone, criterion or invariant. Its stage derives as `declared`, `intent validate` reports the two absences as warnings, and no work can serve it until it is planned. `--title` and `--id` default to the statement's first line and that line's slug; an identity that exists is refused, never overwritten.",
+          "expectation": "exits 0; prints proposed every-page-answers-within-100-ms-when-warm, .ai/repo/project/intents/every-page-answers-within-100-ms-when-warm.yaml",
+          "id": "intent-propose",
+          "setup": [],
+          "title": "Propose an intent: what must become true"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "propose",
+      "parent_route": "/docs/cli/intent/",
+      "path": [
+        "majordomus",
+        "intent",
+        "propose"
+      ],
+      "route": "/docs/cli/intent/propose/",
+      "usage": "majordomus intent propose [OPTIONS]"
+    },
+    {
       "about": "Whether each product feature exists: on master, deployed, publicly verified, tested, its evidence published and linked — every dimension computed, unknown never a pass",
       "ancestors": [
         {
@@ -29826,7 +31498,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -29968,7 +31640,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -30124,7 +31796,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -30322,7 +31994,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -30513,7 +32185,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -30654,7 +32326,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -30821,7 +32493,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -30950,7 +32622,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -31085,7 +32757,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -31314,7 +32986,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -31427,7 +33099,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -31555,7 +33227,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -31697,7 +33369,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -31837,7 +33509,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -31973,7 +33645,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -32099,7 +33771,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -32244,7 +33916,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -32413,7 +34085,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -32554,7 +34226,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -32679,7 +34351,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -32801,7 +34473,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -32927,7 +34599,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -33105,7 +34777,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -33239,7 +34911,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -33393,7 +35065,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -33523,7 +35195,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -33647,7 +35319,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -33781,7 +35453,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -33923,7 +35595,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -34053,7 +35725,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -34179,7 +35851,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -34337,7 +36009,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -34468,7 +36140,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -34611,7 +36283,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -34754,7 +36426,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -34921,7 +36593,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -35062,7 +36734,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -35205,7 +36877,7 @@
           "positional": false,
           "possible_values": [
             {
-              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
               "name": "vcs"
             },
             {
@@ -35298,13 +36970,13 @@
     }
   ],
   "counts": {
-    "arguments": 1528,
-    "commands": 223,
-    "examples": 223,
-    "runnable": 196
+    "arguments": 1606,
+    "commands": 231,
+    "examples": 235,
+    "runnable": 204
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
-  "generator_version": "0.21.0",
+  "generator_version": "0.26.0",
   "route_prefix": "/docs/cli",
   "schema": 1,
   "source": "docs/generated/cli.json"

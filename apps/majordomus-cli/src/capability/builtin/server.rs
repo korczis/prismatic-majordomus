@@ -470,8 +470,8 @@ pub fn local_half(root: &Path) -> String {
 /// asks through here, so that `server.status` and the `server` check of `health.report`
 /// cannot drift into two answers.
 ///
-/// Costs one small file read, and one HTTP round trip bounded by
-/// [`crate::lease::PROBE_TIMEOUT`] when the lease names an address. Nothing is cached: the
+/// Costs one small file read, and one HTTP round trip bounded by the declared probe timeout
+/// ([`crate::lease::timings`]) when the lease names an address. Nothing is cached: the
 /// file is written by other processes.
 ///
 /// ```
@@ -511,8 +511,9 @@ fn peers_of(ctx: &Context, url: &str) -> Option<usize> {
         .as_ref()?
         .path
         .clone();
-    let reply =
-        crate::mcp::bridge::request(url, "GET", &path, &[], None, lease::PROBE_TIMEOUT).ok()?;
+    // the probe timeout the policy declares, as the election reads it (I2129)
+    let timeout = lease::timings().probe_timeout;
+    let reply = crate::mcp::bridge::request(url, "GET", &path, &[], None, timeout).ok()?;
     if reply.status != 200 {
         return None;
     }
@@ -653,5 +654,35 @@ pub fn module() -> ModuleDescriptor {
                 handler: server_status,
             },
         ]
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// A server whose version cannot be ordered against this executable's — a pre-release
+    /// beside its release — is outdated, and the reason names both versions without
+    /// claiming which is older.
+    #[test]
+    fn a_version_that_cannot_be_ordered_is_outdated_naming_both() {
+        let doc = LeaseDocument {
+            schema: lease::SCHEMA.into(),
+            pid: 1,
+            token: "t".into(),
+            root: "/r".into(),
+            url: Some("http://127.0.0.1:1".into()),
+            started_at: "2026-09-10T00:00:00Z".into(),
+            executable: None,
+            version: Some("1.0.0-rc.1".into()),
+        };
+        let (standing, reason) =
+            standing_of(&LeaseFile::Document(doc), Duration::ZERO, |_| true, "1.0.0");
+        assert_eq!(standing, ServerStanding::Outdated);
+        let reason = reason.expect("a reason");
+        assert_eq!(
+            reason,
+            "the server is serving version 1.0.0-rc.1; this executable is 1.0.0"
+        );
     }
 }

@@ -581,7 +581,7 @@ evidence,finish}.sh`, `src/cockpit/{nav,pages}.rs`, `docs/COCKPIT.md`.
 `docs/generated/**`, `site/data/**`, `site/content/**`, `share/allow/**`,
 `share/sections/**`, `AGENTS.md`, `CLAUDE.md`, `.bb/AGENTS.md`, `share/design/*.css`,
 `apps/majordomus-cli/src/web/tokens.css`, `apps/majordomus-cli/src/design/tokens.yaml`,
-`deploy/Dockerfile`, `fly.toml`, `docs/SITE_CLAIMS.md`, `docs/PLAN_STATUS.md`,
+`deploy/Dockerfile`, `docs/SITE_CLAIMS.md`, `docs/PLAN_STATUS.md`,
 `docs/PAGES_STATUS.md`. Each is written by `majordomus generate` or `scripts/derive` and
 checked against a fresh generation; an edit is a reported failure, not a silent divergence.
 

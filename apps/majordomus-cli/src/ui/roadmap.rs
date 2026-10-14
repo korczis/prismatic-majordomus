@@ -25,9 +25,18 @@ const ROADMAP: Source = Source::of("plan.roadmap");
 const PLAN: Source = Source::of("plan.status");
 const INTENTS: Source = Source::of("intents.list");
 
-/// The Roadmap screen.
-pub fn screen(ctx: &Context) -> View {
-    let answers = ask_all(ctx, &[ROADMAP, PLAN, INTENTS]);
+const ISSUES: Source = Source::of("plan.issues");
+
+/// The Roadmap screen; `query` may pick one milestone to inspect (`?milestone=M004`).
+pub fn screen(ctx: &Context, query: &[(String, String)]) -> View {
+    let picked = super::milestone::picked(query);
+    let intent = super::intent::picked(query);
+    // the issues are asked only when a milestone or an intent is inspected, their one reader
+    let mut sources = vec![ROADMAP, PLAN, INTENTS];
+    if picked.is_some() || intent.is_some() {
+        sources.push(ISSUES);
+    }
+    let answers = ask_all(ctx, &sources);
     let (roadmap, plan, intents) = (&answers[&ROADMAP], &answers[&PLAN], &answers[&INTENTS]);
 
     let top = hero(
@@ -110,7 +119,7 @@ pub fn screen(ctx: &Context) -> View {
                     GraphNode {
                         label: id.clone(),
                         tone: status_tone(&text(m, "status")),
-                        href: format!("#milestone-{id}"),
+                        href: super::milestone::href(&id),
                         kind: "node",
                         id,
                     }
@@ -144,9 +153,13 @@ pub fn screen(ctx: &Context) -> View {
             .map(|i| {
                 el("tr")
                     .child(
-                        el("td")
-                            .child(el("span").class("mj-ui-mono mj-ui-dim").text(text(i, "id")))
-                            .child(el("span").class("mj-ui-cell-title").text(text(i, "title"))),
+                        el("td").child(
+                            el("a")
+                                .class("mj-ui-row-link")
+                                .attr("href", super::intent::href(&text(i, "id")))
+                                .child(el("span").class("mj-ui-mono mj-ui-dim").text(text(i, "id")))
+                                .child(el("span").class("mj-ui-cell-title").text(text(i, "title"))),
+                        ),
                     )
                     .child(el("td").child(state(i, "stage")))
                     .child(el("td").child(state(i, "verdict")))
@@ -159,8 +172,22 @@ pub fn screen(ctx: &Context) -> View {
         )
     });
 
-    let grid = el("div")
-        .class("mj-ui-grid")
+    let mut grid = el("div").class("mj-ui-grid");
+    if let (Some(id), Some(issues)) = (&intent, answers.get(&ISSUES)) {
+        grid = grid.child(wide(super::intent::inspector(intents, issues, id)));
+    }
+    if let (Some(id), Some(issues)) = (&picked, answers.get(&ISSUES)) {
+        // the milestone's own record, for the prose no plan summary carries
+        let record = super::source::ask_input(
+            ctx,
+            "objects.get",
+            serde_json::json!({ "uri": format!("majordomus://milestone/{id}") }),
+        );
+        grid = grid.child(wide(super::milestone::inspector_with(
+            roadmap, issues, &record, id,
+        )));
+    }
+    let grid = grid
         .child(wide(panel(
             "Milestones",
             "Every milestone, in the plan's order; the plan declares no dates, so none are drawn.",
@@ -190,6 +217,18 @@ pub fn screen(ctx: &Context) -> View {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// `?intent=` opens the intent's inspector on the Roadmap screen itself, asking the plan's
+    /// issues for what serves it.
+    #[test]
+    fn the_screen_opens_an_intent_it_is_asked_for() {
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a synthetic repository");
+        let ctx = repo.context().expect("a context");
+        let html = screen(&ctx, &[("intent".to_string(), "intent-nope".to_string())])
+            .main
+            .render();
+        assert!(html.contains("intent-nope is not an intent"), "{html}");
+    }
     use crate::capability::{builtin, CapabilityRegistry};
     use crate::synthetic::SyntheticRepository;
 
@@ -241,7 +280,7 @@ mod tests {
     fn the_dependencies_are_a_table_and_a_graph_and_the_intents_are_listed() {
         let repo = planned_with_an_intent();
         let ctx = repo.context().expect("a context");
-        let view = screen(&ctx);
+        let view = screen(&ctx, &[]);
         let html = view.main.render();
         assert_eq!(view.status, 200);
         // m-second depends on m-first: its row in the table, its edge in the graph
@@ -251,8 +290,8 @@ mod tests {
             "a recorded dependency is a row: {html}"
         );
         assert!(
-            html.contains("#milestone-m-first"),
-            "a node leads to its row"
+            html.contains("/ui/roadmap?milestone=m-first#milestone"),
+            "a node opens its milestone's inspector"
         );
         assert!(html.contains("data-graph"), "{html}");
         assert!(
@@ -268,7 +307,7 @@ mod tests {
     fn a_roadmap_that_cannot_answer_draws_no_sequence() {
         let repo = SyntheticRepository::planned();
         let ctx = context_without(&repo, &["plan", "intents"]);
-        let html = screen(&ctx).main.render();
+        let html = screen(&ctx, &[]).main.render();
         assert!(html.contains("plan.roadmap could not answer"), "{html}");
         assert!(!html.contains("#milestone-m-first"), "{html}");
         assert!(
@@ -282,7 +321,7 @@ mod tests {
     fn a_plan_without_dependencies_or_intents_says_so() {
         let repo = SyntheticRepository::small().expect("a synthetic repository");
         let ctx = repo.context().expect("a context");
-        let html = screen(&ctx).main.render();
+        let html = screen(&ctx, &[]).main.render();
         assert!(html.contains("No milestone depends on another."), "{html}");
         assert!(html.contains("No intent is recorded."), "{html}");
     }

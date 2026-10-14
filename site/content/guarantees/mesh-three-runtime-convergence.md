@@ -1,7 +1,7 @@
 +++
 title = "Runtimes linked only through a relay converge on one state digest, each event held once, with no replication loop"
 description = "A is linked to B and B to C; A and C never talk. A claim made on A is held on C, a claim"
-weight = 220
+weight = 223
 [extra]
 claim_id = "mesh-three-runtime-convergence"
 status = "guaranteed"
@@ -31,7 +31,7 @@ the set of events and the liveness verdicts alone
 ## How to see it
 
 ```
-curl http://127.0.0.1:8741/api/v1/mesh/state | jq '.state.digest'   # on each runtime
+curl http://127.0.0.1:8741/api/v1/mesh/state | jq '.summary.digest'   # on each runtime
 curl 'http://127.0.0.1:8741/api/v1/mesh/events?limit=1000' | jq '.count'
 cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test mesh_cooperation three_runtimes
 ```

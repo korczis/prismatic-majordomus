@@ -33,6 +33,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use super::config::MeshConfig;
+use super::firewall;
 use super::identity::{default_identity_path, NodeIdentity};
 use super::manager::MeshStatus;
 use super::protocol;
@@ -288,10 +289,11 @@ pub fn doctor_at(
         }
     };
 
-    // Trust: under an allowlist-shaped declaration, is this machine's own key listed? A
-    // fleet whose declaration forgot a machine links around it.
+    // Trust: under an allowlist-shaped declaration, is this machine's own key listed? An
+    // unlisted machine keeps the mesh closed (`manager::closed_to`), so this is the check
+    // that names why and what to do.
     if let (Some(Ok(config)), Some(identity)) = (&declaration, &identity) {
-        if config.enabled && !config.trust.allow.is_empty() {
+        if config.enabled && config.trust.policy != super::trust::TrustPolicy::Tofu {
             let listed = config.trust.allow.contains(&identity.public.public_key);
             checks.push(if listed {
                 DoctorCheck::pass("trust", "this machine's key is on the allowlist")
@@ -303,7 +305,7 @@ pub fn doctor_at(
                         identity.public.public_key,
                         config.trust.allow.len()
                     ),
-                    "the other machines of the fleet refuse this one's links as untrusted; this machine can still dial them if it trusts their keys",
+                    "the mesh stays closed on this machine: it neither announces nor dials, and no other machine links to it",
                     "add the key above to trust.allow in the mesh declaration and commit it",
                 )
             });
@@ -408,6 +410,12 @@ pub fn doctor_at(
         ),
     });
 
+    // The host firewall: what the declaration implies this machine must admit, and whether
+    // the host does. Every check above is a fact of the process; this one is a fact of the
+    // host, and the one that was missing when a declared hub dropped every registration
+    // at the kernel while the doctor said every check held.
+    checks.push(firewall_check(&declaration));
+
     // The runtime: what the process's mesh runtime decided about the declaration, when
     // anything decided. Every check above says the machine could run a mesh; this one says
     // whether the server did.
@@ -416,6 +424,55 @@ pub fn doctor_at(
     MeshDoctorReport {
         ok: checks.iter().all(|c| c.ok),
         checks,
+    }
+}
+
+/// The `firewall` verdict: the admissions the declaration implies on this host, derived
+/// by [`firewall::plan`] from the declaration and this machine's addresses, against what
+/// the host's firewall says and what the kernel logged it dropping. It fails when a rule
+/// is observed missing or when the kernel logged drops toward the mesh's ports in the
+/// last five minutes; a firewall that cannot be asked without root, with nothing logged, holds —
+/// an absence, not a verdict — and says how to ask as root.
+fn firewall_check(declaration: &Option<Result<MeshConfig, MeshError>>) -> DoctorCheck {
+    let config = declaration.as_ref().and_then(|d| d.as_ref().ok());
+    let local: Vec<std::net::Ipv4Addr> = super::address::interfaces()
+        .into_iter()
+        .map(|(_, ip)| ip)
+        .collect();
+    firewall_verdict(&firewall::report(config, &local, None))
+}
+
+/// The `firewall` check of a report already built. Apart from [`firewall_check`] so that
+/// the verdict is a function of the report alone: which firewall a machine runs, and
+/// whether it admits the mesh, is a fact of that machine, and the failing verdict has to
+/// be held on every machine, not only on one whose firewall happens to drop the mesh.
+fn firewall_verdict(report: &firewall::FirewallReport) -> DoctorCheck {
+    let detail = if report.plan.rules.is_empty() {
+        report.verdict.clone()
+    } else {
+        format!(
+            "{} ({}): needs {}; {}",
+            report.backend.as_str(),
+            report.platform,
+            report
+                .plan
+                .rules
+                .iter()
+                .map(firewall::FirewallRule::label)
+                .collect::<Vec<_>>()
+                .join(", "),
+            report.verdict
+        )
+    };
+    if report.ok {
+        DoctorCheck::pass("firewall", detail)
+    } else {
+        DoctorCheck::fail(
+            "firewall",
+            detail,
+            "what the firewall drops never reaches the socket: a declared hub that drops registrations is a hub nobody can register with, and a machine that drops the multicast group hears no peer on its segment, while every other check holds",
+            "run `majordomus mesh firewall` for the rules and the commands that admit them, and `sudo majordomus mesh firewall apply` to admit them",
+        )
     }
 }
 
@@ -492,6 +549,10 @@ fn runtime_check(declared: Declared, runtime: Option<&MeshStatus>) -> DoctorChec
     let why = reason.strip_prefix("not active: ").unwrap_or(reason);
     if !status.active {
         return match declared {
+            // closed by the trust list: the trust check carries the failure and the remedy
+            Declared::Enabled if why.starts_with("closed: ") => {
+                DoctorCheck::pass("runtime", why.to_string())
+            }
             Declared::Enabled => DoctorCheck::fail(
                 "runtime",
                 format!("the declaration is enabled and this server's mesh is not active — {why}"),
@@ -616,6 +677,27 @@ mod tests {
     use super::*;
 
     #[test]
+    fn the_runtime_verdict_judges_what_a_server_decided_about_the_declaration() {
+        let enabled: MeshConfig = serde_json::from_value(serde_json::json!({
+            "schema": "mesh/v1", "kind": "mesh-declaration", "id": "x", "enabled": true,
+        }))
+        .unwrap();
+        let server = super::super::manager::MeshRuntime::new();
+        server.decline("the node identity did not load");
+        let declined = runtime_verdict(Some(Ok(enabled)), Some(&server.status()));
+        assert_eq!(declined.check, "runtime");
+        assert!(
+            !declined.ok,
+            "a declared mesh the server declined is owed: {declined:?}"
+        );
+        let undeclared = runtime_verdict(None, Some(&server.status()));
+        assert!(
+            undeclared.ok,
+            "no declaration, nothing owed: {undeclared:?}"
+        );
+    }
+
+    #[test]
     fn the_self_check_runs_without_a_declaration_and_without_a_network() {
         let report = doctor(None);
         let names: Vec<&str> = report.checks.iter().map(|c| c.check.as_str()).collect();
@@ -629,10 +711,11 @@ mod tests {
                 "broadcast",
                 "protocol",
                 "link",
+                "firewall",
                 "runtime"
             ]
         );
-        for check in ["protocol", "link", "runtime"] {
+        for check in ["protocol", "link", "firewall", "runtime"] {
             let c = report.checks.iter().find(|c| c.check == check).unwrap();
             assert!(c.ok, "{}", c.detail);
         }
@@ -741,6 +824,86 @@ mod tests {
         assert!(!report.ok);
     }
 
+    /// A firewall report as [`firewall::report`] builds one, for a host this suite does
+    /// not run on: ufw on Linux, asked `status`, with the multicast group the one rule an
+    /// enabled declaration with no hub implies. The report is assembled from the module's
+    /// own pure functions, so no firewall is asked and none is needed.
+    fn firewall_report(declared: bool, status: &str) -> firewall::FirewallReport {
+        let config = config(declared);
+        let plan = firewall::plan(Some(&config), &[Ipv4Addr::new(10, 0, 0, 2)], None);
+        let observation = firewall::judge_ufw(status, &plan);
+        let ok = observation.state != firewall::FirewallObservationState::Missing;
+        firewall::FirewallReport {
+            ok,
+            platform: "linux".into(),
+            backend: firewall::Backend::Ufw,
+            executable: None,
+            commands: firewall::render(firewall::Backend::Ufw, &plan, None),
+            plan,
+            verdict: format!("what ufw said: {}", observation.detail),
+            observation,
+            window_seconds: firewall::BLOCK_WINDOW_SECONDS,
+            blocked_recently: None,
+        }
+    }
+
+    #[test]
+    fn a_firewall_that_drops_the_mesh_fails_the_check_with_its_impact_and_the_command_to_run() {
+        let dropping = firewall_report(true, "Status: active\n");
+        let check = firewall_verdict(&dropping);
+        assert_eq!(check.check, "firewall");
+        assert!(!check.ok);
+        assert_eq!(
+            check.detail,
+            "ufw (linux): needs udp/7741 to 239.255.77.77 from any; what ufw said: 1 of 1 rule(s) not admitted: udp/7741 to 239.255.77.77 from any"
+        );
+        let impact = check.impact.as_deref().unwrap_or_default();
+        assert!(
+            impact.contains("never reaches the socket") && impact.contains("every other check"),
+            "{impact}"
+        );
+        let remedy = check.remediation.as_deref().unwrap_or_default();
+        assert!(
+            remedy.contains("`majordomus mesh firewall`")
+                && remedy.contains("`sudo majordomus mesh firewall apply`"),
+            "{remedy}"
+        );
+    }
+
+    #[test]
+    fn a_firewall_that_admits_the_mesh_holds_and_names_the_rules_it_was_asked_about() {
+        let admitting = firewall_report(
+            true,
+            "Status: active\n239.255.77.77 7741/udp     ALLOW IN    Anywhere\n",
+        );
+        let check = firewall_verdict(&admitting);
+        assert!(check.ok, "{}", check.detail);
+        assert_eq!(
+            check.detail,
+            "ufw (linux): needs udp/7741 to 239.255.77.77 from any; what ufw said: every rule of the plan is admitted (1 rule(s))"
+        );
+        assert!(check.impact.is_none() && check.remediation.is_none());
+    }
+
+    #[test]
+    fn a_mesh_that_needs_nothing_admitted_is_reported_by_the_verdict_alone() {
+        // A disabled declaration derives no rule, so there is no backend and no rule to
+        // name beside the verdict: the sentence is the whole detail.
+        let nothing = firewall_report(false, "Status: active\n");
+        assert!(nothing.plan.rules.is_empty());
+        let check = firewall_verdict(&nothing);
+        assert!(check.ok);
+        assert_eq!(check.detail, nothing.verdict);
+        // and the check the doctor runs on this host is that verdict over the real report
+        let here = firewall_check(&Some(Ok(config(false))));
+        assert!(here.ok, "{}", here.detail);
+        assert!(
+            here.detail.contains("needs no inbound admission"),
+            "{}",
+            here.detail
+        );
+    }
+
     #[test]
     fn a_disabled_declaration_a_server_declined_is_off_as_declared() {
         let server = super::super::MeshRuntime::new();
@@ -785,6 +948,7 @@ mod tests {
         let identity = NodeIdentity::load_or_create(&dir.path().join("node.json")).unwrap();
         let mut quiet = config(true);
         quiet.multicast.enabled = false;
+        quiet.trust.allow = vec![identity.public.public_key.clone()];
         server
             .activate(&quiet, identity, vec![], vec![], "test")
             .unwrap();

@@ -387,4 +387,170 @@ mod tests {
         d.queue.lock = "/tmp/q".into();
         assert!(d.validate().unwrap_err().contains("same directory"));
     }
+
+    /// Every refusal names what it refused, one field at a time, on a declaration that is
+    /// otherwise valid.
+    #[test]
+    fn each_field_validation_refuses_names_what_it_refused() {
+        let valid = || declaration(serde_json::json!([{ "id": "x", "address": "u@h" }]));
+        valid().validate().unwrap();
+
+        let mut d = valid();
+        d.schema = "derive-offload/v0".into();
+        assert_eq!(
+            d.validate().unwrap_err(),
+            "schema derive-offload/v0 is not derive-offload/v1"
+        );
+
+        let mut d = valid();
+        d.kind = "rule".into();
+        assert_eq!(d.validate().unwrap_err(), "kind rule is not derive-offload");
+
+        for id in ["", "a b", "it's", "say\"x\""] {
+            let d = declaration(serde_json::json!([{ "id": id, "address": "u@h" }]));
+            assert_eq!(
+                d.validate().unwrap_err(),
+                format!("host id '{id}' is empty or carries a space or quote")
+            );
+        }
+
+        let d = declaration(serde_json::json!([
+            { "id": "twin", "address": "u@a" },
+            { "id": "twin", "address": "u@b" }
+        ]));
+        assert_eq!(
+            d.validate().unwrap_err(),
+            "host id 'twin' is declared twice"
+        );
+
+        let d = declaration(serde_json::json!([
+            { "id": "x", "address": "u@h", "identity_file": "~/my key" }
+        ]));
+        assert_eq!(
+            d.validate().unwrap_err(),
+            "host x: identity_file '~/my key' is not one plain word"
+        );
+
+        type Field = fn(&mut OffloadDeclaration) -> &mut String;
+        let fields: [(&str, Field); 6] = [
+            ("remote.checkout", |d| &mut d.remote.checkout),
+            ("remote.worktrees", |d| &mut d.remote.worktrees),
+            ("remote.target", |d| &mut d.remote.target),
+            ("remote.spool", |d| &mut d.remote.spool),
+            ("remote.derive", |d| &mut d.remote.derive),
+            ("base", |d| &mut d.base),
+        ];
+        for (name, field) in fields {
+            let mut d = valid();
+            *field(&mut d) = "two words".into();
+            assert_eq!(
+                d.validate().unwrap_err(),
+                format!("{name} 'two words' is empty or carries a space or quote")
+            );
+        }
+
+        let mut d = valid();
+        d.remote.path.push(String::new());
+        assert_eq!(
+            d.validate().unwrap_err(),
+            "remote path entry '' is empty or carries a space or quote"
+        );
+        let mut d = valid();
+        d.remote.touch = vec!["src/a b.rs".into()];
+        assert_eq!(
+            d.validate().unwrap_err(),
+            "remote path entry 'src/a b.rs' is empty or carries a space or quote"
+        );
+    }
+
+    fn object(metadata: serde_json::Value) -> Object {
+        Object {
+            kind: KIND.into(),
+            identity: "derive".into(),
+            uri: "majordomus://derive-offload/derive".into(),
+            title: None,
+            description: None,
+            metadata,
+            body: String::new(),
+            content: String::new(),
+            media_type: "application/yaml",
+            provenance: crate::model::Provenance {
+                path: ".ai/repo/offload/derive.yaml".into(),
+                directory: ".ai/repo/offload".into(),
+                source_class: "offload".into(),
+                section: None,
+                bytes: 0,
+                member: None,
+            },
+        }
+    }
+
+    /// An indexed object is a declaration when it parses and validates; otherwise the
+    /// refusal names the object's URI and why.
+    #[test]
+    fn an_indexed_object_is_parsed_and_validated_naming_its_uri() {
+        let good = serde_json::json!({
+            "schema": SCHEMA_VERSION, "kind": KIND, "id": "derive",
+            "hosts": [{ "id": "lundra", "address": "u@lundra" }]
+        });
+        let d = OffloadDeclaration::parse(&object(good)).unwrap();
+        assert_eq!(d.hosts[0].id, "lundra");
+
+        let unknown = serde_json::json!({
+            "schema": SCHEMA_VERSION, "kind": KIND, "id": "d", "hosts": [], "typo": 1
+        });
+        let e = OffloadDeclaration::parse(&object(unknown)).unwrap_err();
+        assert!(
+            e.starts_with("majordomus://derive-offload/derive: ") && e.contains("typo"),
+            "{e}"
+        );
+
+        let no_host = serde_json::json!({
+            "schema": SCHEMA_VERSION, "kind": KIND, "id": "d", "hosts": []
+        });
+        assert_eq!(
+            OffloadDeclaration::parse(&object(no_host)).unwrap_err(),
+            "majordomus://derive-offload/derive: no host is declared: a derive has nowhere to go"
+        );
+    }
+
+    /// A declaration file that is missing, not YAML of the declaration, or invalid is
+    /// refused naming the file.
+    #[test]
+    fn a_declaration_file_is_refused_naming_the_file() {
+        let tmp = tempfile::tempdir().unwrap();
+        let missing = tmp.path().join("missing.yaml");
+        let e = OffloadDeclaration::read(&missing).unwrap_err();
+        assert!(e.starts_with(&format!("{}: ", missing.display())), "{e}");
+
+        let wrong = tmp.path().join("wrong.yaml");
+        std::fs::write(&wrong, "schema: derive-offload/v1\nkind: derive-offload\n").unwrap();
+        let e = OffloadDeclaration::read(&wrong).unwrap_err();
+        assert!(e.starts_with(&format!("{}: ", wrong.display())), "{e}");
+
+        let invalid = tmp.path().join("invalid.yaml");
+        std::fs::write(
+            &invalid,
+            "schema: derive-offload/v1\nkind: derive-offload\nid: d\nhosts: []\n",
+        )
+        .unwrap();
+        assert_eq!(
+            OffloadDeclaration::read(&invalid).unwrap_err(),
+            format!(
+                "{}: no host is declared: a derive has nowhere to go",
+                invalid.display()
+            )
+        );
+
+        let good = tmp.path().join("good.yaml");
+        std::fs::write(
+            &good,
+            "schema: derive-offload/v1\nkind: derive-offload\nid: d\nhosts:\n  - id: a\n    address: u@a\n",
+        )
+        .unwrap();
+        assert_eq!(
+            OffloadDeclaration::read(&good).unwrap().hosts[0].address,
+            "u@a"
+        );
+    }
 }

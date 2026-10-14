@@ -37,6 +37,7 @@
 //! ```
 
 pub(crate) mod capabilities;
+pub(crate) mod claim;
 pub(crate) mod command;
 pub(crate) mod dashboard;
 pub(crate) mod delivery;
@@ -45,10 +46,19 @@ pub(crate) mod docs;
 pub(crate) mod evidence;
 pub(crate) mod governance;
 pub(crate) mod icons;
+pub(crate) mod intent;
+pub(crate) mod issues;
+pub(crate) mod knowledge;
 pub(crate) mod mesh;
+pub(crate) mod milestone;
+pub(crate) mod observatory;
+pub(crate) mod prose;
+pub(crate) mod prs;
 pub(crate) mod roadmap;
+pub(crate) mod rule;
 pub(crate) mod shell;
 pub(crate) mod source;
+pub(crate) mod timings;
 pub(crate) mod view;
 pub(crate) mod work;
 
@@ -130,6 +140,18 @@ pub(crate) const SCREENS: &[Screen] = &[
         answers: "Which issues are ready or blocked, and what the pull-request queue would do.",
     },
     Screen {
+        route: issues::ROUTE,
+        title: "Issues",
+        icon: "list",
+        answers: "Every issue of the plan, by status, milestone, priority or text.",
+    },
+    Screen {
+        route: prs::ROUTE,
+        title: "PR Drain",
+        icon: "branch",
+        answers: "Every open pull request, what the lane would do with it, and why.",
+    },
+    Screen {
         route: capabilities::ROUTE,
         title: "Capabilities",
         icon: "puzzle",
@@ -160,6 +182,12 @@ pub(crate) const SCREENS: &[Screen] = &[
         answers: "Which claims hold, which are stale or untested, and why.",
     },
     Screen {
+        route: knowledge::ROUTE,
+        title: "Knowledge",
+        icon: "sparkles",
+        answers: "What the work left for review, and whether the deriver is still writing.",
+    },
+    Screen {
         route: docs::ROUTE,
         title: "Documentation",
         icon: "book",
@@ -171,17 +199,29 @@ pub(crate) const SCREENS: &[Screen] = &[
         icon: "shield-check",
         answers: "Which rules bind this repository and how each is proven.",
     },
+    Screen {
+        route: observatory::ROUTE,
+        title: "Observatory",
+        icon: "eye",
+        answers: "What the repository and its mesh are doing, drawn as rotating scenes for a wall display.",
+    },
 ];
 
 /// The routes that answer one panel of a screen, each also a page of its own for a reader
 /// without JavaScript.
-pub(crate) const PANELS: &[&str] = &[dashboard::PULL_REQUESTS_PANEL, deployments::DELIVERY_PANEL];
+pub(crate) const PANELS: &[&str] = &[
+    dashboard::PULL_REQUESTS_PANEL,
+    deployments::DELIVERY_PANEL,
+    prs::PANEL,
+];
 
 /// The UI over the repository as it is now.
 pub(crate) struct Ui {
     live: Arc<Live>,
     version: &'static str,
     assets: Assets,
+    /// Whether this UI's screens have been read once behind its first reader.
+    warmed: std::sync::atomic::AtomicBool,
 }
 
 impl Ui {
@@ -204,6 +244,42 @@ impl Ui {
             live: live.into_live(),
             version,
             assets,
+            warmed: std::sync::atomic::AtomicBool::new(false),
+        }
+    }
+
+    /// Read every screen and every panel once, behind the first reader of this UI, so that
+    /// the screen they open next has its sources read before they ask for it.
+    ///
+    /// The routes are [`SCREENS`] and [`PANELS`], the lists the navigation and the
+    /// dispatcher are held to, so a screen added tomorrow is warmed with no edit here. What
+    /// each request renders is discarded: its effect is that the sources it names are now
+    /// remembered and kept current (`crate::capability::readings`). A process that runs
+    /// every capability without its cache does not warm, and neither do the crate's own
+    /// unit tests, whose fixtures are gone before a background reader would finish.
+    pub(crate) fn warm_once(ui: &Arc<Ui>) {
+        use std::sync::atomic::Ordering;
+        if cfg!(test) || crate::capability::executor::bypassed() {
+            return;
+        }
+        if ui.warmed.swap(true, Ordering::SeqCst) {
+            return;
+        }
+        let ui = Arc::clone(ui);
+        let warm = move || {
+            let routes = SCREENS
+                .iter()
+                .map(|s| s.route)
+                .chain(PANELS.iter().copied());
+            for route in routes {
+                let _ = ui.handle(&Request::parse_target("GET", route, Vec::new()));
+            }
+        };
+        if let Err(refused) = std::thread::Builder::new()
+            .name("mj-ui-warm".into())
+            .spawn(warm)
+        {
+            tracing::warn!("no thread to warm the UI's screens: {refused}");
         }
     }
 
@@ -224,33 +300,67 @@ impl Ui {
             );
         }
         if let Some(name) = req.path.strip_prefix(ASSETS_PREFIX) {
-            let version = req
-                .query
-                .iter()
-                .find(|(k, _)| k == "v")
-                .map(|(_, v)| v.as_str());
-            return self.assets.respond(name, version);
+            return self.assets.respond(name, req);
         }
-        // one reading of the repository for the whole screen
-        let ctx = self.live.current();
+        // one reading of the repository for the whole screen: the generation there is, never
+        // a wait for the next one (ADR 0142); a screen drawn from a generation the repository
+        // has moved past says so, and the page's script reads it again
+        let (reading, behind) = self.live.view_without_waiting();
+        let ctx = reading.ctx;
         let fragment = req.query.iter().any(|(k, _)| k == FRAGMENT);
         let path = req.path.trim_end_matches('/');
+        // an earlier or mistyped name leads to the route it meant, query kept
+        if let Some((_, target)) = observatory::REDIRECTS.iter().find(|(old, _)| *old == path) {
+            let query = req
+                .query
+                .iter()
+                .map(|(k, v)| format!("{k}={v}"))
+                .collect::<Vec<_>>()
+                .join("&");
+            let to = match query.is_empty() {
+                true => target.to_string(),
+                false => format!("{target}?{query}"),
+            };
+            return Response::new(308, "text/plain; charset=utf-8", format!("{to}\n"))
+                .with_header("Location", to);
+        }
+        // the kiosk is the Observatory's screen under a second name, never a second screen
+        let kiosk = path == observatory::KIOSK;
+        let path = if kiosk { observatory::ROUTE } else { path };
         let mut screen = match path {
             "" | PREFIX => dashboard::screen(&ctx),
-            roadmap::ROUTE => roadmap::screen(&ctx),
+            roadmap::ROUTE => roadmap::screen(&ctx, &req.query),
             work::ROUTE => work::screen(&ctx, &req.query),
+            issues::ROUTE => issues::screen(&ctx, &req.query),
+            prs::ROUTE => prs::screen(&ctx, &req.query),
             mesh::ROUTE => mesh::screen(&ctx, &req.query),
             delivery::ROUTE => delivery::screen(&ctx),
             deployments::ROUTE => deployments::screen(&ctx),
             command::ROUTE => command::screen(&ctx, &req.query),
             capabilities::ROUTE => capabilities::screen(&ctx, &req.query),
             docs::ROUTE => docs::screen(&ctx),
-            evidence::ROUTE => evidence::screen(&ctx),
-            governance::ROUTE => governance::screen(&ctx),
+            evidence::ROUTE => evidence::screen(&ctx, &req.query),
+            knowledge::ROUTE => knowledge::screen(&ctx),
+            governance::ROUTE => governance::screen(&ctx, &req.query),
+            observatory::ROUTE => {
+                observatory::screen(&ctx, &req.query, &self.assets.url(observatory::LIB), kiosk)
+            }
             dashboard::PULL_REQUESTS_PANEL => dashboard::pull_requests_panel(&ctx, &req.query),
             deployments::DELIVERY_PANEL => deployments::delivery_panel(&ctx),
+            prs::PANEL => prs::panel_view(&ctx, &req.query),
             other => shell::not_found(other),
         };
+        if behind {
+            screen.main = crate::cockpit::html::el("div")
+                .class("mj-ui-stack")
+                .child(
+                    crate::cockpit::html::el("p")
+                        .class("mj-ui-dim")
+                        .attr(view::CATCHING_UP, "")
+                        .text("The repository changed: this screen shows it as it was, and is being read again."),
+                )
+                .child(screen.main);
+        }
         // A panel read as a page of its own has no hero, so it carries the page's one heading
         // itself; the fragment a screen pulls in does not, or the screen would have two.
         if !fragment && PANELS.contains(&path) {
@@ -337,6 +447,41 @@ mod tests {
         );
     }
 
+    /// The Observatory has one screen and three more names: the kiosk is the same screen told
+    /// to run unattended, its earlier name redirects to it, and the misspelling to the screen,
+    /// each with its query kept.
+    #[test]
+    fn the_observatory_is_one_screen_under_its_names() {
+        let repo = crate::synthetic::SyntheticRepository::new(crate::synthetic::Shape::default())
+            .expect("a synthetic repository");
+        let ui = Ui::new(repo.context().expect("a context"), "0.0.0-test", None);
+        let get = |target: &str| ui.handle(&Request::parse_target("GET", target, Vec::new()));
+        let text = |r: &Response| r.body.text().into_owned();
+        let screen = get(observatory::ROUTE);
+        assert_eq!(screen.status, 200);
+        assert!(text(&screen).contains("data-observatory-mode=\"screen\""));
+        let kiosk = get(observatory::KIOSK);
+        assert_eq!(kiosk.status, 200);
+        assert!(text(&kiosk).contains("data-observatory-mode=\"kiosk\""));
+        for (old, target) in observatory::REDIRECTS {
+            let r = get(&format!("{old}?scene=delivery"));
+            assert_eq!(r.status, 308, "{old}");
+            let to = r
+                .headers
+                .iter()
+                .find(|(k, _)| k == "Location")
+                .map(|(_, v)| v.clone());
+            assert_eq!(to, Some(format!("{target}?scene=delivery")), "{old}");
+        }
+        assert_eq!(
+            observatory::REDIRECTS,
+            &[
+                ("/ui/screensaver", "/ui/kiosk"),
+                ("/ui/obsrvatory", "/ui/observatory")
+            ]
+        );
+    }
+
     /// The UI answers in-process exactly as it does over a socket: every screen and panel as
     /// a page with one heading, a fragment without the frame, an asset by its digest, a
     /// route it does not serve as a page that says so, and anything but GET refused.
@@ -399,18 +544,35 @@ mod tests {
         let ctx = repo.context().expect("a context");
         for (route, view) in [
             (PREFIX, dashboard::screen(&ctx)),
-            (roadmap::ROUTE, roadmap::screen(&ctx)),
+            (
+                roadmap::ROUTE,
+                roadmap::screen(&ctx, &[("milestone".into(), "M001".into())]),
+            ),
             (
                 work::ROUTE,
                 work::screen(&ctx, &[("pr".into(), "1".into())]),
+            ),
+            (
+                issues::ROUTE,
+                issues::screen(&ctx, &[("status".into(), "READY".into())]),
+            ),
+            (
+                prs::ROUTE,
+                prs::screen(&ctx, &[("issue".into(), "I0001".into())]),
             ),
             (
                 mesh::ROUTE,
                 mesh::screen(&ctx, &[("node".into(), "nowhere".into())]),
             ),
             (delivery::ROUTE, delivery::screen(&ctx)),
-            (evidence::ROUTE, evidence::screen(&ctx)),
-            (governance::ROUTE, governance::screen(&ctx)),
+            (
+                evidence::ROUTE,
+                evidence::screen(&ctx, &[("claim".into(), "no-such-claim".into())]),
+            ),
+            (
+                governance::ROUTE,
+                governance::screen(&ctx, &[("rule".into(), "no.such-rule".into())]),
+            ),
             (command::ROUTE, command::screen(&ctx, &[])),
             (
                 capabilities::ROUTE,
@@ -418,6 +580,7 @@ mod tests {
             ),
             (deployments::ROUTE, deployments::screen(&ctx)),
             (docs::ROUTE, docs::screen(&ctx)),
+            (knowledge::ROUTE, knowledge::screen(&ctx)),
         ] {
             let html = view.main.render();
             assert_eq!(view.status, 200, "{route}");

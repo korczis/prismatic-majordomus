@@ -1,0 +1,7 @@
+# M01: Baseline, architecture truth, contracts and gap ledger
+
+Audit HEAD without assumptions. Inventory each canonical type, registries, `Context::execute` dispatch, MCP tool/resource, stdio/HTTP session, shared server lease, mesh discovery providers, cooperation journal, peer boards, Cockpit and new UI routes, docs, generated code, gate, test and release. Identify drift between docs and executable behavior. Run existing tests before editing. Collect actual local/version/system compatibility requirements.
+
+Create a traceability matrix connecting user-facing workflows to typed operation, authority, state lifetime, transport, projection, observable result and evidence. Record exact consistency semantics: discovery eventually consistent; reconciliation journal; what persists across process and machine; what is immutable; how failure detection and lease loss work; how partition conflicts are reported. Define service lifecycle state machine (stopped, starting, ready, degraded, stopping, failed) and connection state machine (candidate, authenticated, connected, degraded, expired, refused) using existing types where possible. Separate observed/inferred/declared states; no fake `ready` status.
+
+Deliver executable baselines, minimal ADR or update if policy requires, concrete gap inventory prioritized by blast radius, evidence mapping and a dependency-aware migration plan. Gate: architecture and docs claims link to a code/test location; no undocumented hidden sources of truth.

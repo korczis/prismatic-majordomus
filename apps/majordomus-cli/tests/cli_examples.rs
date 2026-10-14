@@ -13,9 +13,9 @@ mod common;
 
 use std::io::{BufRead, BufReader, Read, Write};
 use std::net::TcpStream;
-use std::process::{Command, Stdio};
+use std::process::Stdio;
 
-use common::{dist_share, run_in, Fixture, BIN};
+use common::{dist_share, run_in, Fixture};
 use majordomus_cli::cli::{CommandDoc, ExampleView, Expect};
 use serde_json::{json, Value};
 
@@ -117,7 +117,7 @@ fn run_example(command: &str, e: &ExampleView) {
 /// request, then stop it the documented way and prove it ended cleanly. Nothing is left
 /// running: the guard waits for the child whatever the assertions did.
 fn http_example(f: &Fixture, e: &ExampleView, path: &str) {
-    let mut child = Command::new(BIN)
+    let mut child = common::majordomus()
         .args(argv(e))
         .current_dir(f.root())
         .env("MAJORDOMUS_LOG", "info")
@@ -185,7 +185,7 @@ fn http_example(f: &Fixture, e: &ExampleView, path: &str) {
 /// An MCP example: spawn it, speak the real protocol on stdin, and prove that stdout
 /// carried protocol frames and nothing else. End of input ends the session.
 fn mcp_example(f: &Fixture, e: &ExampleView) {
-    let mut child = Command::new(BIN)
+    let mut child = common::majordomus()
         .args(argv(e))
         .current_dir(f.root())
         .env("MAJORDOMUS_LOG", "info")

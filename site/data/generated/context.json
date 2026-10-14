@@ -192,7 +192,7 @@
       "order": 100,
       "status": "active",
       "title": "Deployments",
-      "description": "One canonical object per deployment of this repository's executable; every container and provider artifact is generated from it and none of them is authoritative.",
+      "description": "One canonical object per deployment of this repository's executable; every artifact built from it — the container image definition and its ignore file — is generated from it and none of them is authoritative.",
       "children_require_contract": null,
       "providers": [
         "*"
@@ -309,6 +309,28 @@
         "share/kinds.yaml",
         "docs/MESH.md"
       ]
+    },
+    {
+      "id": "ai.repo.observatory",
+      "path": ".ai/repo/observatory/README.md",
+      "dir": ".ai/repo/observatory",
+      "depth": 2,
+      "scope": "subtree",
+      "composition": "extend",
+      "order": 100,
+      "status": "active",
+      "title": "Observatory recording",
+      "description": "The recording of the mesh scenes the published Observatory replays where no mesh runs, captured from a running server and committed.",
+      "children_require_contract": null,
+      "providers": [
+        "*"
+      ],
+      "audience": [
+        "human",
+        "agent"
+      ],
+      "supersedes": [],
+      "tracks": []
     },
     {
       "id": "ai.repo.offload",
@@ -637,6 +659,28 @@
       ]
     },
     {
+      "id": "ai.repo.benchmarks.observatory",
+      "path": ".ai/repo/benchmarks/observatory/README.md",
+      "dir": ".ai/repo/benchmarks/observatory",
+      "depth": 3,
+      "scope": "subtree",
+      "composition": "extend",
+      "order": 100,
+      "status": "active",
+      "title": "Observatory evidence",
+      "description": "The gates of the Observatory (G0 to G7) with their verdicts, and the browser measurements behind them, each naming its revision, command and machine.",
+      "children_require_contract": false,
+      "providers": [
+        "*"
+      ],
+      "audience": [
+        "human",
+        "agent"
+      ],
+      "supersedes": [],
+      "tracks": []
+    },
+    {
       "id": "ai.repo.benchmarks.pages",
       "path": ".ai/repo/benchmarks/pages/README.md",
       "dir": ".ai/repo/benchmarks/pages",
@@ -960,7 +1004,7 @@
         "supersedes": [],
         "tracks": [],
         "paths": [],
-        "sha256": "b10303834061b1a5cf5ac30266183a2994a8d759c85d8079e405814597e24740"
+        "sha256": "240fd329719fa4bf96d76a07ae13d2828bb49ab19fb2a1b8b8b52f63a4c53392"
       }
     },
     {
@@ -1103,7 +1147,7 @@
       "depth": 3,
       "name": "economics",
       "contract": {
-        "index": 26,
+        "index": 27,
         "id": "ai.repo.benchmarks.economics",
         "path": ".ai/repo/benchmarks/economics/README.md",
         "dir": ".ai/repo/benchmarks/economics",
@@ -1231,6 +1275,57 @@
       "contract": null
     },
     {
+      "dir": ".ai/repo/benchmarks/observatory",
+      "document": "ai.repo.benchmarks.observatory",
+      "requires_contract": false,
+      "governed_by": ".ai/repo/benchmarks/observatory/README.md",
+      "depth": 3,
+      "name": "observatory",
+      "contract": {
+        "index": 28,
+        "id": "ai.repo.benchmarks.observatory",
+        "path": ".ai/repo/benchmarks/observatory/README.md",
+        "dir": ".ai/repo/benchmarks/observatory",
+        "depth": 3,
+        "scope": "subtree",
+        "composition": "extend",
+        "order": 100,
+        "status": "active",
+        "title": "Observatory evidence",
+        "description": "The gates of the Observatory (G0 to G7) with their verdicts, and the browser measurements behind them, each naming its revision, command and machine.",
+        "children_require_contract": false,
+        "providers": [
+          "*"
+        ],
+        "audience": [
+          "human",
+          "agent"
+        ],
+        "supersedes": [],
+        "tracks": [],
+        "paths": [],
+        "sha256": "a507456e9f6d8d503274268778b758ff4b43652c78495e10859c52bc4ebbfac0"
+      }
+    },
+    {
+      "dir": ".ai/repo/benchmarks/observatory/live",
+      "document": null,
+      "requires_contract": false,
+      "governed_by": ".ai/repo/benchmarks/observatory/README.md",
+      "depth": 4,
+      "name": "live",
+      "contract": null
+    },
+    {
+      "dir": ".ai/repo/benchmarks/observatory/production",
+      "document": null,
+      "requires_contract": false,
+      "governed_by": ".ai/repo/benchmarks/observatory/README.md",
+      "depth": 4,
+      "name": "production",
+      "contract": null
+    },
+    {
       "dir": ".ai/repo/benchmarks/pages",
       "document": "ai.repo.benchmarks.pages",
       "requires_contract": true,
@@ -1238,7 +1333,7 @@
       "depth": 3,
       "name": "pages",
       "contract": {
-        "index": 27,
+        "index": 29,
         "id": "ai.repo.benchmarks.pages",
         "path": ".ai/repo/benchmarks/pages/README.md",
         "dir": ".ai/repo/benchmarks/pages",
@@ -1273,7 +1368,7 @@
       "depth": 3,
       "name": "rust",
       "contract": {
-        "index": 28,
+        "index": 30,
         "id": "ai.repo.benchmarks.rust",
         "path": ".ai/repo/benchmarks/rust/README.md",
         "dir": ".ai/repo/benchmarks/rust",
@@ -1298,7 +1393,7 @@
           "scripts/rust-check"
         ],
         "paths": [],
-        "sha256": "70723d37a5e8af4ef057cd0b93a324b251f5c5c51abf1d6bcd1c21355a133342"
+        "sha256": "a2ab71a1be8aa6718b18c6e7891ef6139ca6e698f7f5ff04c292cb485019a03c"
       }
     },
     {
@@ -1335,7 +1430,7 @@
           ".github/workflows/validate.yml"
         ],
         "paths": [],
-        "sha256": "950282cc08b89a793a73a03f5f7b93c63f80ab2afeb6e3ea19324b1d1033b499"
+        "sha256": "fd92a2c288554a2b33da02073a2449a9ca8791c7fa903f465ec62bf493b5f122"
       }
     },
     {
@@ -1356,7 +1451,7 @@
         "order": 100,
         "status": "active",
         "title": "Deployments",
-        "description": "One canonical object per deployment of this repository's executable; every container and provider artifact is generated from it and none of them is authoritative.",
+        "description": "One canonical object per deployment of this repository's executable; every artifact built from it — the container image definition and its ignore file — is generated from it and none of them is authoritative.",
         "children_require_contract": null,
         "providers": [
           "*"
@@ -1371,7 +1466,7 @@
           "share/kinds.yaml"
         ],
         "paths": [],
-        "sha256": "f00616e0f8d3605a885f09335b7c7bbc6af6246676f4222d6e61421f3f58ffc8"
+        "sha256": "15a0e3f1f425e43be72e8dfbd130c41f1985452971a44f9d3613dcd923b61b44"
       }
     },
     {
@@ -1454,7 +1549,7 @@
       "depth": 3,
       "name": "domains",
       "contract": {
-        "index": 37,
+        "index": 39,
         "id": "ai.repo.features.domains",
         "path": ".ai/repo/features/domains/README.md",
         "dir": ".ai/repo/features/domains",
@@ -1530,7 +1625,7 @@
       "depth": 3,
       "name": "candidates",
       "contract": {
-        "index": 29,
+        "index": 31,
         "id": "ai.repo.knowledge.candidates",
         "path": ".ai/repo/knowledge/candidates/README.md",
         "dir": ".ai/repo/knowledge/candidates",
@@ -1552,7 +1647,7 @@
         "supersedes": [],
         "tracks": [],
         "paths": [],
-        "sha256": "932391638f4f18ae79df00206d886d475fe57c46ff87452f920dbfb17d5bda3e"
+        "sha256": "9939471c0d0ad863309e410406186c89d0b880735f3cce61b690c864a8cc8c41"
       }
     },
     {
@@ -1563,7 +1658,7 @@
       "depth": 3,
       "name": "curated",
       "contract": {
-        "index": 30,
+        "index": 32,
         "id": "ai.repo.knowledge.curated",
         "path": ".ai/repo/knowledge/curated/README.md",
         "dir": ".ai/repo/knowledge/curated",
@@ -1626,6 +1721,39 @@
       }
     },
     {
+      "dir": ".ai/repo/observatory",
+      "document": "ai.repo.observatory",
+      "requires_contract": true,
+      "governed_by": null,
+      "depth": 2,
+      "name": "observatory",
+      "contract": {
+        "index": 14,
+        "id": "ai.repo.observatory",
+        "path": ".ai/repo/observatory/README.md",
+        "dir": ".ai/repo/observatory",
+        "depth": 2,
+        "scope": "subtree",
+        "composition": "extend",
+        "order": 100,
+        "status": "active",
+        "title": "Observatory recording",
+        "description": "The recording of the mesh scenes the published Observatory replays where no mesh runs, captured from a running server and committed.",
+        "children_require_contract": null,
+        "providers": [
+          "*"
+        ],
+        "audience": [
+          "human",
+          "agent"
+        ],
+        "supersedes": [],
+        "tracks": [],
+        "paths": [],
+        "sha256": "d36618302e84525ccd2b316386feb60a09b3159fa76e41f922008082ffc21e01"
+      }
+    },
+    {
       "dir": ".ai/repo/offload",
       "document": "ai.repo.offload",
       "requires_contract": true,
@@ -1633,7 +1761,7 @@
       "depth": 2,
       "name": "offload",
       "contract": {
-        "index": 14,
+        "index": 15,
         "id": "ai.repo.offload",
         "path": ".ai/repo/offload/README.md",
         "dir": ".ai/repo/offload",
@@ -1670,7 +1798,7 @@
       "depth": 2,
       "name": "profiles",
       "contract": {
-        "index": 15,
+        "index": 16,
         "id": "ai.repo.profiles",
         "path": ".ai/repo/profiles/README.md",
         "dir": ".ai/repo/profiles",
@@ -1706,7 +1834,7 @@
       "depth": 2,
       "name": "project",
       "contract": {
-        "index": 16,
+        "index": 17,
         "id": "ai.repo.project",
         "path": ".ai/repo/project/README.md",
         "dir": ".ai/repo/project",
@@ -1732,7 +1860,7 @@
           "share/allow/project.txt"
         ],
         "paths": [],
-        "sha256": "2f17d7e365858a0ba205157fe17e950689aa1311b69fda137b59c6ae04e5def4"
+        "sha256": "bb3d521fbc53e73a69426afcbe117758a322e479386509325be9180e5013311b"
       }
     },
     {
@@ -1743,7 +1871,7 @@
       "depth": 3,
       "name": "critiques",
       "contract": {
-        "index": 31,
+        "index": 33,
         "id": "ai.repo.project.critiques",
         "path": ".ai/repo/project/critiques/README.md",
         "dir": ".ai/repo/project/critiques",
@@ -1776,7 +1904,7 @@
       "depth": 3,
       "name": "gaps",
       "contract": {
-        "index": 32,
+        "index": 34,
         "id": "ai.repo.project.gaps",
         "path": ".ai/repo/project/gaps/README.md",
         "dir": ".ai/repo/project/gaps",
@@ -1809,7 +1937,7 @@
       "depth": 3,
       "name": "intents",
       "contract": {
-        "index": 33,
+        "index": 35,
         "id": "ai.repo.project.intents",
         "path": ".ai/repo/project/intents/README.md",
         "dir": ".ai/repo/project/intents",
@@ -1834,7 +1962,7 @@
           "share/schemas/majordomus/intent/intent.v1.schema.json"
         ],
         "paths": [],
-        "sha256": "c8c9659fc01c9044617f2ede0805634f849be34f4c26a5702460534afcb3ea28"
+        "sha256": "6c78d86e0e02d806a08d80fba963f1511f7ef337677d737decf92527ac257caf"
       }
     },
     {
@@ -1845,7 +1973,7 @@
       "depth": 3,
       "name": "issues",
       "contract": {
-        "index": 34,
+        "index": 36,
         "id": "ai.repo.project.issues",
         "path": ".ai/repo/project/issues/README.md",
         "dir": ".ai/repo/project/issues",
@@ -1880,7 +2008,7 @@
       "depth": 3,
       "name": "milestones",
       "contract": {
-        "index": 35,
+        "index": 37,
         "id": "ai.repo.project.milestones",
         "path": ".ai/repo/project/milestones/README.md",
         "dir": ".ai/repo/project/milestones",
@@ -1915,7 +2043,7 @@
       "depth": 2,
       "name": "prompts",
       "contract": {
-        "index": 17,
+        "index": 18,
         "id": "ai.repo.prompts",
         "path": ".ai/repo/prompts/README.md",
         "dir": ".ai/repo/prompts",
@@ -1951,7 +2079,7 @@
       "depth": 2,
       "name": "providers",
       "contract": {
-        "index": 18,
+        "index": 19,
         "id": "ai.repo.providers",
         "path": ".ai/repo/providers/README.md",
         "dir": ".ai/repo/providers",
@@ -2020,7 +2148,7 @@
       "depth": 2,
       "name": "rules",
       "contract": {
-        "index": 19,
+        "index": 20,
         "id": "ai.repo.rules",
         "path": ".ai/repo/rules/README.md",
         "dir": ".ai/repo/rules",
@@ -2058,7 +2186,7 @@
       "depth": 3,
       "name": "project",
       "contract": {
-        "index": 36,
+        "index": 38,
         "id": "ai.repo.rules.project",
         "path": ".ai/repo/rules/project/README.md",
         "dir": ".ai/repo/rules/project",
@@ -2091,7 +2219,7 @@
       "depth": 2,
       "name": "sessions",
       "contract": {
-        "index": 20,
+        "index": 21,
         "id": "ai.repo.sessions",
         "path": ".ai/repo/sessions/README.md",
         "dir": ".ai/repo/sessions",
@@ -2127,7 +2255,7 @@
       "depth": 2,
       "name": "skills",
       "contract": {
-        "index": 21,
+        "index": 22,
         "id": "ai.repo.skills",
         "path": ".ai/repo/skills/README.md",
         "dir": ".ai/repo/skills",
@@ -2177,6 +2305,24 @@
       "governed_by": ".ai/repo/skills/README.md",
       "depth": 3,
       "name": "deploy-site",
+      "contract": null
+    },
+    {
+      "dir": ".ai/repo/skills/evolve",
+      "document": null,
+      "requires_contract": false,
+      "governed_by": ".ai/repo/skills/README.md",
+      "depth": 3,
+      "name": "evolve",
+      "contract": null
+    },
+    {
+      "dir": ".ai/repo/skills/evolve/examples",
+      "document": null,
+      "requires_contract": false,
+      "governed_by": ".ai/repo/skills/README.md",
+      "depth": 4,
+      "name": "examples",
       "contract": null
     },
     {
@@ -2277,7 +2423,7 @@
       "depth": 2,
       "name": "use-cases",
       "contract": {
-        "index": 22,
+        "index": 23,
         "id": "ai.repo.use-cases",
         "path": ".ai/repo/use-cases/README.md",
         "dir": ".ai/repo/use-cases",
@@ -2310,7 +2456,7 @@
       "depth": 2,
       "name": "why",
       "contract": {
-        "index": 23,
+        "index": 24,
         "id": "ai.repo.why",
         "path": ".ai/repo/why/README.md",
         "dir": ".ai/repo/why",
@@ -2373,7 +2519,7 @@
       "depth": 2,
       "name": "workflows",
       "contract": {
-        "index": 24,
+        "index": 25,
         "id": "ai.repo.workflows",
         "path": ".ai/repo/workflows/README.md",
         "dir": ".ai/repo/workflows",
@@ -2412,7 +2558,7 @@
       "depth": 2,
       "name": "workspaces",
       "contract": {
-        "index": 25,
+        "index": 26,
         "id": "ai.repo.workspaces",
         "path": ".ai/repo/workspaces/README.md",
         "dir": ".ai/repo/workspaces",
@@ -2442,8 +2588,8 @@
     }
   ],
   "counts": {
-    "directories": 64,
-    "documented": 37,
-    "exempt": 27
+    "directories": 70,
+    "documented": 39,
+    "exempt": 31
   }
 }

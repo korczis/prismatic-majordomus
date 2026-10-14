@@ -1,11 +1,11 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the `integration` module of the canonical Majordomus capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.21.0 -->
+     Generator: majordomus-cli 0.26.0 -->
 # Module `integration` — Pull-request integration
 
 Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, unsafe (auto-merge armed), redundant (its work is on master already), superseded (by a declared successor that landed, named in superseded_by), possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository's own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation; the one exception is the dry-run proof, which observes the forge itself because the observation is part of what it proves moves nothing.
 
-Stability: experimental. Capabilities: 6.
+Stability: experimental. Capabilities: 7.
 
 ## `integration.cleanup` — What cleanup would do
 
@@ -107,6 +107,25 @@ The ranked queue: the repository, the base and the master commit every assessmen
 Input: none.
 
 Output: `IntegrationStatus`.
+
+## `integration.timings` — How long CI takes
+
+How long CI takes on the open pull requests, measured from the recorded forge observation: for every check, how many of its runs started and completed, how many passed and failed, and its median, 90th percentile (nearest rank) and longest duration in seconds, the slowest median first; for every open head with a measured check, the wall time from its first check's start to its last check's completion and the check that took longest, the longest wait first; and how many runs could not be measured (still running, queued, or recorded before starts were read), which are counted and never measured as zero. A read: it asks the forge for nothing; `majordomus prs refresh` records the observation. `observed: false` with the reason when this checkout has recorded none.
+
+| | |
+|---|---|
+| kind | query |
+| stability | experimental |
+| MCP tool | `majordomus_ci_timings` |
+| HTTP | `GET /api/v1/pull-requests/timings` |
+| cache | — |
+| benchmark | required |
+| provenance | builtin majordomus_cli::capability::builtin::integration |
+| tags | integration, pull-requests, ci, timings |
+
+Input: none.
+
+Output: `IntegrationTimings`.
 
 ## `integration.trains` — The trains of stacked pull requests
 

@@ -292,15 +292,12 @@ impl Memory {
                 scope,
                 issue,
                 reviewer,
+                body,
             } => {
                 let name = self.name_of(&stream, &session);
                 let mine = ctx.reader.is(&session) || ctx.reader.is(&name);
-                // I2415 adds a body (up to 8 KiB): it can name the reader where the subject does not
-                let text = event
-                    .body
-                    .get("body")
-                    .and_then(|b| b.as_str())
-                    .unwrap_or_default();
+                // the body (I2415, up to 8 KiB) can name the reader where the subject does not
+                let text = body.as_deref().unwrap_or_default();
                 let asked = reviewer.as_deref().is_some_and(|r| ctx.reader.is(r))
                     || ctx.reader.named_in(&subject)
                     || ctx.reader.named_in(text);
@@ -376,6 +373,8 @@ impl Memory {
                 s.actor = Some(name);
                 s
             }
+            // read raw above, before the body is typed: a withdrawal never reaches this match
+            EventBody::ReviewWithdrawn { .. } => return None,
         };
         signal.machine = Some(machine);
         Some(signal)
@@ -739,6 +738,19 @@ mod tests {
     }
 
     #[test]
+    fn a_withdrawal_whose_request_is_not_a_name_is_no_signal() {
+        let events = vec![event(
+            1,
+            1,
+            json!({"kind": "review_withdrawn", "request": 7, "session": "board-p3"}),
+        )];
+        let reader = Reader::named(Some("1b"));
+        let machines = HashMap::new();
+        let read = fold(&events, None, &ctx(&reader, &machines));
+        assert!(read.signals.is_empty(), "{:?}", read.signals);
+    }
+
+    #[test]
     fn a_withdrawn_review_is_news_to_whoever_was_asked_or_answered() {
         let events = vec![
             event(
@@ -786,6 +798,71 @@ mod tests {
             "{}",
             other.summary
         );
+    }
+
+    /// The rarer shapes: an exclusive claim, a handover with no branch and the taking of one
+    /// this fold never saw, an approval without a note to a request it never saw (by the
+    /// reader, so they are involved), and a withdrawal that names no request.
+    #[test]
+    fn the_rare_shapes_still_read_as_sentences() {
+        let events = vec![
+            event(
+                1,
+                1,
+                json!({"kind": "claim_acquired", "claim": "c-9", "session": "board-p1",
+                "scope": ["apps/x"], "intent": "the lane", "mode": "exclusive"}),
+            ),
+            event(
+                2,
+                2,
+                json!({"kind": "handover_published", "handover": {
+                "id": "h", "body": "# Objective\nx\n# Next Action\nship it\n" }}),
+            ),
+            event(
+                3,
+                3,
+                json!({"kind": "handover_consumed", "handover": "0123456789abcdef0123",
+                "session": "board-p4"}),
+            ),
+            event(
+                4,
+                4,
+                json!({"kind": "review_answered", "request": format!("{STREAM}/r-7"),
+                "session": "1b", "verdict": "approved"}),
+            ),
+            event(
+                5,
+                5,
+                json!({"kind": "review_withdrawn", "session": "board-p3"}),
+            ),
+        ];
+        let reader = Reader::named(Some("1b"));
+        let machines = HashMap::new();
+        let read = fold(&events, None, &ctx(&reader, &machines));
+        let seen: Vec<(&str, &str)> = read
+            .signals
+            .iter()
+            .map(|(_, s)| (s.kind.as_str(), s.summary.as_str()))
+            .collect();
+        assert_eq!(
+            seen.len(),
+            4,
+            "the withdrawal without a request is no signal: {seen:?}"
+        );
+        assert!(seen[0].1.contains("exclusively"), "{seen:?}");
+        assert!(seen[1].1.contains("handed over (no branch)@"), "{seen:?}");
+        assert!(!read.signals[1].1.for_you, "nothing in it names 1b");
+        assert!(
+            seen[2].1.ends_with("took the handover of 0123456789ab"),
+            "{seen:?}"
+        );
+        assert_eq!(seen[3].0, "review_answered");
+        assert!(seen[3].1.contains("answered r-7: approved"), "{seen:?}");
+        assert!(
+            !seen[3].1.contains(" to "),
+            "no requester is known: {seen:?}"
+        );
+        assert_eq!(read.signals[3].1.severity, MonitorSeverity::Info);
     }
 
     #[test]

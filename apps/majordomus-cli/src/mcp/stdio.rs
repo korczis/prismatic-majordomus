@@ -104,3 +104,84 @@ fn write_line<W: Write, M: serde::Serialize>(output: &mut W, message: &M) -> Res
         .map_err(Error::Transport)?;
     output.flush().map_err(Error::Transport)
 }
+
+#[cfg(test)]
+mod tests {
+    use std::io::{BufReader, Cursor, Read, Write};
+
+    use serde_json::{json, Value};
+
+    use super::*;
+
+    /// A source or sink that fails on every call, as a closed descriptor does.
+    struct Broken;
+
+    impl Read for Broken {
+        fn read(&mut self, _: &mut [u8]) -> std::io::Result<usize> {
+            Err(std::io::Error::other("the input is gone"))
+        }
+    }
+
+    impl Write for Broken {
+        fn write(&mut self, _: &[u8]) -> std::io::Result<usize> {
+            Err(std::io::Error::other("the output is gone"))
+        }
+
+        fn flush(&mut self) -> std::io::Result<()> {
+            Err(std::io::Error::other("the output is gone"))
+        }
+    }
+
+    fn echo(m: Value) -> Option<Value> {
+        Some(json!({ "jsonrpc": "2.0", "id": m["id"], "result": {} }))
+    }
+
+    #[test]
+    fn an_oversized_message_is_answered_as_a_parse_error_and_the_session_goes_on() {
+        let mut input = vec![b'x'; MAX_LINE_BYTES + 10];
+        input.extend_from_slice(b"\n{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"ping\"}\n");
+        let mut out = Vec::new();
+        let answered = serve(Cursor::new(input), &mut out, echo).unwrap();
+        assert_eq!(answered, 2, "the refusal and the next message");
+        let lines: Vec<Value> = std::str::from_utf8(&out)
+            .unwrap()
+            .lines()
+            .map(|l| serde_json::from_str(l).unwrap())
+            .collect();
+        assert_eq!(lines[0]["id"], Value::Null);
+        assert_eq!(lines[0]["error"]["code"], -32700);
+        let text = lines[0]["error"]["message"].as_str().unwrap();
+        assert!(
+            text.contains("bound") && text.contains("not read"),
+            "{text}"
+        );
+        assert_eq!(lines[1]["id"], 2, "the message after it is answered");
+    }
+
+    #[test]
+    fn an_input_that_fails_ends_the_session_with_a_transport_error() {
+        let result = serve(BufReader::new(Broken), Vec::new(), echo);
+        assert!(matches!(result, Err(Error::Transport(_))), "{result:?}");
+    }
+
+    #[test]
+    fn an_input_that_fails_inside_an_oversized_message_ends_the_session() {
+        // over the bound, and the input breaks while the rest of the line is skipped
+        let input = Cursor::new(vec![b'x'; MAX_LINE_BYTES + 10]).chain(Broken);
+        let mut out = Vec::new();
+        let result = serve(BufReader::new(input), &mut out, echo);
+        assert!(matches!(result, Err(Error::Transport(_))), "{result:?}");
+        assert!(
+            out.is_empty(),
+            "nothing is answered for a line never read to its end"
+        );
+    }
+
+    #[test]
+    fn an_output_that_fails_on_the_refusal_of_an_oversized_message_ends_the_session() {
+        let mut input = vec![b'x'; MAX_LINE_BYTES + 10];
+        input.push(b'\n');
+        let result = serve(Cursor::new(input), Broken, echo);
+        assert!(matches!(result, Err(Error::Transport(_))), "{result:?}");
+    }
+}

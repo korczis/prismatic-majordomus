@@ -85,7 +85,9 @@
 //! ```
 
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, RwLock};
+use std::time::{Duration, Instant};
 
 use crate::capability::Context;
 use crate::cli::RepoArgs;
@@ -111,6 +113,13 @@ pub const WORKTREE_FILES: [&str; 6] = [
 /// removed — the shape a ref update takes, since git writes a lock file and renames it
 /// over the target.
 pub const COMMON_FILES: [&str; 2] = ["packed-refs", "refs"];
+
+/// How long a stamp whose load failed is answered from the previous generation before the
+/// load is tried again. A failure is not retried on every request — a layer that will not
+/// load costs a whole load each time — and it is not given up on either: the change it
+/// failed on is still the repository's, so it is read once the interval has passed, or at
+/// once when git moves again.
+pub const RETRY_AFTER: Duration = Duration::from_secs(5);
 
 /// The salt the stamp is taken under, so that it can never collide with another
 /// fingerprint computed over the same files for another purpose.
@@ -285,6 +294,16 @@ pub struct Live {
 struct Watch {
     args: RepoArgs,
     stamp: Stamp,
+    /// The clock a failed load's retry interval is measured on: the process's own, or a
+    /// test's, so that the interval is asserted rather than slept through.
+    clock: Arc<dyn Fn() -> Instant + Send + Sync>,
+    /// The stamp and the write count the last load failed at, and when. The generation keeps
+    /// the stamp and the count it was built at, so the change stays unconsumed and is read
+    /// again.
+    failed: Mutex<Option<(String, u64, Instant)>>,
+    /// How many loads were attempted: what a test counts to hold a failing load to one
+    /// attempt per interval.
+    loads: AtomicU64,
 }
 
 impl std::fmt::Debug for Live {
@@ -340,6 +359,15 @@ impl Live {
     /// # }
     /// ```
     pub fn watching(args: RepoArgs, ctx: Arc<Context>) -> Live {
+        Live::watching_on(args, ctx, Arc::new(Instant::now))
+    }
+
+    /// [`Live::watching`], measuring the retry interval of a failed load on `clock`.
+    fn watching_on(
+        args: RepoArgs,
+        ctx: Arc<Context>,
+        clock: Arc<dyn Fn() -> Instant + Send + Sync>,
+    ) -> Live {
         let root = PathBuf::from(&ctx.index.repository.root);
         // The root is pinned to the one already discovered rather than left to be
         // rediscovered from `--repo`, which is `None` for a process started in the
@@ -365,7 +393,13 @@ impl Live {
         );
         let writes = ctx.executor.writes();
         Live {
-            watch: Some(Watch { args, stamp }),
+            watch: Some(Watch {
+                args,
+                stamp,
+                clock,
+                failed: Mutex::new(None),
+                loads: AtomicU64::new(0),
+            }),
             state: RwLock::new(Generation {
                 ctx,
                 stamp: taken,
@@ -440,7 +474,7 @@ impl Live {
         let taken = watch.stamp.take();
         {
             let state = read(&self.state);
-            if state.current(&taken) {
+            if state.current(&taken) || watch.waiting(&taken, state.ctx.executor.writes()) {
                 return View {
                     generation: state.number,
                     ctx: Arc::clone(&state.ctx),
@@ -448,6 +482,62 @@ impl Live {
             }
         }
         self.reload(watch, taken)
+    }
+
+    /// The generation there is, at once, and whether the repository has moved past it: what
+    /// a page a person is looking at asks for (ADR 0142).
+    ///
+    /// [`Live::view`] waits for a reload, because an answer must be of the repository the
+    /// caller saw. A page need not be: it is drawn from the generation that exists, says that
+    /// the repository changed, and is read again once the new generation has loaded. So
+    /// when the repository has moved, this starts the reload on a thread of its own, unless
+    /// one is already running, and returns the existing generation with `behind` set.
+    /// Nothing about [`Live::view`] changes for any other caller.
+    ///
+    /// ```
+    /// use majordomus_cli::live::Live;
+    /// use majordomus_cli::synthetic::SyntheticRepository;
+    /// use std::sync::Arc;
+    ///
+    /// let repo = SyntheticRepository::small().unwrap();
+    /// let live = Arc::new(Live::pinned(repo.context().unwrap()));
+    /// // a pinned view follows nothing, so the generation there is is the one to show and
+    /// // the repository has never moved past it
+    /// let (view, behind) = live.view_without_waiting();
+    /// assert!(!behind);
+    /// assert_eq!(view.generation, live.view().generation);
+    /// ```
+    pub fn view_without_waiting(self: &Arc<Self>) -> (View, bool) {
+        let Some(watch) = self.watch.as_ref() else {
+            return (self.view(), false);
+        };
+        let taken = watch.stamp.take();
+        let existing = {
+            let state = read(&self.state);
+            let view = View {
+                generation: state.number,
+                ctx: Arc::clone(&state.ctx),
+            };
+            if state.current(&taken) {
+                return (view, false);
+            }
+            view
+        };
+        // one reload at a time: a caller that finds one running leaves it to finish
+        if let Ok(guard) = self.rebuilding.try_lock() {
+            drop(guard);
+            let live = Arc::clone(self);
+            let started = std::thread::Builder::new()
+                .name("mj-reload".into())
+                .spawn(move || {
+                    live.view();
+                });
+            if let Err(refused) = started {
+                tracing::warn!("no thread to reload the repository behind a page: {refused}");
+                return (self.view(), false);
+            }
+        }
+        (existing, true)
     }
 
     fn reload(&self, watch: &Watch, taken: String) -> View {
@@ -464,7 +554,14 @@ impl Live {
             .unwrap_or_else(std::sync::PoisonError::into_inner);
         let previous = {
             let state = read(&self.state);
-            if state.current(&taken) {
+            // Asked again, now that the rebuild this caller waited for is over. It finds
+            // the new generation when that rebuild read the stamp this caller saw — or it
+            // finds that the rebuild failed at that very stamp, and then it is answered
+            // from the previous generation like every caller inside the retry interval. A
+            // waiter that loaded here instead would try the failing load once per waiter:
+            // every request that queued behind one failure would repeat it, which is the
+            // cost the interval exists to bound.
+            if state.current(&taken) || watch.waiting(&taken, state.ctx.executor.writes()) {
                 return View {
                     generation: state.number,
                     ctx: Arc::clone(&state.ctx),
@@ -475,19 +572,18 @@ impl Live {
         // read before the load: a write that lands while the layer is being read is one the
         // new generation may not carry, and it must leave the next reading stale
         let writes = previous.executor.writes();
+        watch.loads.fetch_add(1, Ordering::SeqCst);
         let built = crate::app::App::load(&watch.args);
         let mut state = write(&self.state);
-        state.writes = writes;
         match built {
             Ok(app) => {
+                *lock(&watch.failed) = None;
+                state.writes = writes;
                 state.ctx = Arc::new(app.context.continuing(&previous));
                 state.number += 1;
                 // the declaration may have changed with the repository: a key withdrawn from
                 // it loses its links now, not at the next restart (I2134)
-                let ended = crate::capability::builtin::mesh::retrust(&state.ctx);
-                if !ended.is_empty() {
-                    tracing::warn!(peers = ?ended, "mesh links ended: their keys are no longer trusted by the declaration");
-                }
+                warn_of_ended_links(&crate::capability::builtin::mesh::retrust(&state.ctx));
                 state.stamp = taken;
                 tracing::info!(
                     generation = state.number,
@@ -500,13 +596,16 @@ impl Live {
             Err(e) => {
                 // A repository caught mid-rebase, a manifest being edited, a checkout half
                 // written: the last generation that loaded is a better answer than an
-                // error, and the stamp is recorded so the failure is not retried on every
-                // request until something changes again.
-                state.stamp = taken;
+                // error. The generation keeps the stamp it was built at, so the change is
+                // not consumed by a load that failed to read it; the failure is recorded
+                // instead, and holds the retry off for RETRY_AFTER — never once per request,
+                // never given up on (Watch::waiting).
+                *lock(&watch.failed) = Some((taken, writes, (watch.clock)()));
                 tracing::warn!(
                     error = %e,
-                    "the repository moved but the layer would not load; serving generation {} until it changes again",
-                    state.number
+                    "the repository moved but the layer would not load; serving generation {} and reading it again in {}s, or at once when it moves again",
+                    state.number,
+                    RETRY_AFTER.as_secs()
                 );
             }
         }
@@ -662,6 +761,38 @@ fn head_of(ctx: &Context) -> String {
     }
 }
 
+/// Say which mesh links a reload ended because the declaration no longer trusts their keys
+/// (I2134); `true` when there was one to name. A reload that ended none says nothing.
+fn warn_of_ended_links(ended: &[String]) -> bool {
+    if ended.is_empty() {
+        return false;
+    }
+    tracing::warn!(
+        peers = ?ended,
+        "mesh links ended: their keys are no longer trusted by the declaration"
+    );
+    true
+}
+
+impl Watch {
+    /// Whether `taken` and `writes` are the stamp and the write count the last load failed
+    /// at, inside the retry interval: the previous generation answers, and nothing is loaded.
+    /// A stamp or a count that moved since, or an interval that has passed, is read again.
+    fn waiting(&self, taken: &str, writes: u64) -> bool {
+        lock(&self.failed)
+            .as_ref()
+            .is_some_and(|(stamp, failed_at, at)| {
+                stamp == taken && *failed_at == writes && (self.clock)() < *at + RETRY_AFTER
+            })
+    }
+}
+
+fn lock<T>(mutex: &Mutex<T>) -> std::sync::MutexGuard<'_, T> {
+    mutex
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+}
+
 fn read<T>(lock: &RwLock<T>) -> std::sync::RwLockReadGuard<'_, T> {
     lock.read().unwrap_or_else(|e| e.into_inner())
 }
@@ -693,6 +824,243 @@ mod tests {
         git(&["add", "-A"]);
         git(&["commit", "-qm", "one"]);
         dir
+    }
+
+    /// A synthetic layer in a git work tree, loaded once, with the arguments that reload it
+    /// and a clock the test moves by hand.
+    struct Layer {
+        repo: crate::synthetic::SyntheticRepository,
+        live: Live,
+        now: Arc<Mutex<Instant>>,
+    }
+
+    impl Layer {
+        fn new() -> Layer {
+            let repo = crate::synthetic::SyntheticRepository::small().expect("a synthetic layer");
+            let layer = |args: &[&str]| {
+                Command::new("git")
+                    .arg("-C")
+                    .arg(repo.root())
+                    .args(args)
+                    .output()
+                    .expect("git")
+            };
+            layer(&["init", "-q"]);
+            layer(&["config", "user.email", "t@example.com"]);
+            layer(&["config", "user.name", "t"]);
+            layer(&["add", "-A"]);
+            layer(&["commit", "-qm", "layer"]);
+            let args = RepoArgs {
+                repo: Some(repo.root().to_path_buf()),
+                share: Some(crate::synthetic::crate_share()),
+                discovery: crate::cli::DiscoveryMode::Filesystem,
+                ..Default::default()
+            };
+            let ctx = crate::app::App::load(&args)
+                .expect("the layer loads")
+                .context;
+            let now = Arc::new(Mutex::new(Instant::now()));
+            let clock = {
+                let now = Arc::clone(&now);
+                Arc::new(move || *lock(&now))
+            };
+            Layer {
+                live: Live::watching_on(args, ctx, clock),
+                repo,
+                now,
+            }
+        }
+
+        fn git(&self, args: &[&str]) {
+            let out = Command::new("git")
+                .arg("-C")
+                .arg(self.repo.root())
+                .args(args)
+                .output()
+                .expect("git");
+            assert!(out.status.success(), "git {args:?}: {out:?}");
+        }
+
+        fn manifest(&self) -> PathBuf {
+            self.repo.root().join(".ai/manifest.yaml")
+        }
+
+        /// The manifest gains a key nothing declares, so the layer will not load, and the
+        /// change is committed: git moves.
+        fn break_and_commit(&self) -> String {
+            let manifest = std::fs::read_to_string(self.manifest()).expect("a manifest");
+            std::fs::write(
+                self.manifest(),
+                format!("{manifest}a_key_nothing_declares: 1\n"),
+            )
+            .expect("the manifest is written");
+            self.git(&["commit", "-qam", "a manifest that will not load"]);
+            manifest
+        }
+
+        fn loads(&self) -> u64 {
+            self.live
+                .watch
+                .as_ref()
+                .expect("a watching view")
+                .loads
+                .load(Ordering::SeqCst)
+        }
+
+        fn advance(&self, by: Duration) {
+            let mut now = lock(&self.now);
+            *now += by;
+        }
+    }
+
+    #[test]
+    fn a_failed_load_consumes_no_change_and_is_read_again_after_the_interval() {
+        let l = Layer::new();
+        let good = l.break_and_commit();
+        assert_eq!(l.live.view().generation, 0, "the layer will not load");
+        assert_eq!(l.loads(), 1);
+        // the layer is mended in the work tree alone: no git control file moves, so only the
+        // retry can find it
+        std::fs::write(l.manifest(), good).expect("the manifest is written");
+        assert_eq!(
+            l.live.view().generation,
+            0,
+            "inside the interval, nothing is loaded"
+        );
+        assert_eq!(
+            l.loads(),
+            1,
+            "a failed load is not retried on every request"
+        );
+        l.advance(RETRY_AFTER);
+        assert_eq!(
+            l.live.view().generation,
+            1,
+            "the change the failed load did not read is read once the interval has passed"
+        );
+        assert_eq!(l.loads(), 2);
+        assert_eq!(l.live.view().generation, 1, "and is then current");
+        assert_eq!(l.loads(), 2);
+    }
+
+    #[test]
+    fn a_failure_is_read_again_at_once_when_the_repository_moves_again() {
+        let l = Layer::new();
+        let good = l.break_and_commit();
+        assert_eq!(l.live.view().generation, 0);
+        std::fs::write(l.manifest(), good).expect("the manifest is written");
+        l.git(&["commit", "-qam", "the manifest mended"]);
+        assert_eq!(
+            l.live.view().generation,
+            1,
+            "a new move is read at once, whatever the interval"
+        );
+        assert_eq!(l.loads(), 2);
+    }
+
+    #[test]
+    fn a_write_whose_reload_fails_is_read_again_after_the_interval() {
+        let l = Layer::new();
+        // the layer is broken in the work tree and this process writes: no git control file
+        // moves, so only the write count says the repository moved
+        let good = std::fs::read_to_string(l.manifest()).expect("a manifest");
+        std::fs::write(l.manifest(), format!("{good}a_key_nothing_declares: 1\n"))
+            .expect("the manifest is written");
+        l.live.current().executor.count_write();
+        assert_eq!(l.live.view().generation, 0, "the layer will not load");
+        assert_eq!(l.loads(), 1);
+        std::fs::write(l.manifest(), &good).expect("the manifest is written");
+        assert_eq!(
+            l.live.view().generation,
+            0,
+            "inside the interval, nothing is loaded"
+        );
+        assert_eq!(l.loads(), 1);
+        l.advance(RETRY_AFTER);
+        assert_eq!(
+            l.live.view().generation,
+            1,
+            "the write the failed load did not read is read once the interval has passed"
+        );
+        assert_eq!(l.loads(), 2);
+    }
+
+    #[test]
+    fn a_new_write_after_a_failed_load_is_read_at_once() {
+        let l = Layer::new();
+        let good = l.break_and_commit();
+        assert_eq!(l.live.view().generation, 0);
+        std::fs::write(l.manifest(), good).expect("the manifest is written");
+        l.live.current().executor.count_write();
+        assert_eq!(
+            l.live.view().generation,
+            1,
+            "a write is a move, read at once whatever the interval"
+        );
+        assert_eq!(l.loads(), 2);
+    }
+
+    #[test]
+    fn a_load_that_keeps_failing_is_tried_once_per_interval() {
+        let l = Layer::new();
+        l.break_and_commit();
+        for _ in 0..5 {
+            assert_eq!(l.live.view().generation, 0);
+        }
+        assert_eq!(l.loads(), 1);
+        l.advance(RETRY_AFTER - Duration::from_millis(1));
+        assert_eq!(l.live.view().generation, 0);
+        assert_eq!(l.loads(), 1, "not a moment before the interval");
+        l.advance(Duration::from_millis(1));
+        for _ in 0..3 {
+            assert_eq!(l.live.view().generation, 0);
+        }
+        assert_eq!(l.loads(), 2, "once when it has passed, and not again");
+    }
+
+    /// A caller that queued behind a rebuild which then failed is answered from the
+    /// previous generation and loads nothing: the failure it waited for is the failure at
+    /// the stamp it saw, and that is retried once per interval, not once per waiter.
+    #[test]
+    fn a_caller_that_waited_for_a_rebuild_that_failed_does_not_repeat_it() {
+        let l = Layer::new();
+        l.break_and_commit();
+        let watch = l.live.watch.as_ref().expect("a watching view");
+        // the rebuild somebody else is running
+        let rebuilding = l.live.rebuilding.lock().expect("the rebuild");
+        let (said, heard) = std::sync::mpsc::channel();
+        std::thread::scope(|scope| {
+            scope.spawn(|| {
+                let _ = said.send(l.live.view().generation);
+            });
+            assert!(
+                heard
+                    .recv_timeout(std::time::Duration::from_millis(300))
+                    .is_err(),
+                "a caller that saw the move was answered while the rebuild was still running"
+            );
+            // that rebuild ends as a failed load does: the stamp and the write count it
+            // failed at are recorded, and the generation is left where it was
+            *lock(&watch.failed) = Some((
+                watch.stamp.take(),
+                read(&l.live.state).ctx.executor.writes(),
+                (watch.clock)(),
+            ));
+            drop(rebuilding);
+            let generation = heard
+                .recv_timeout(std::time::Duration::from_secs(60))
+                .expect("the caller is answered once the rebuild is over");
+            assert_eq!(generation, 0, "from the generation that loaded");
+        });
+        assert_eq!(
+            l.loads(),
+            0,
+            "the waiter repeated the load it had just waited to see fail"
+        );
+        // and the change is still read: once the interval has passed, by whoever asks
+        l.advance(RETRY_AFTER);
+        assert_eq!(l.live.view().generation, 0, "the layer still will not load");
+        assert_eq!(l.loads(), 1, "tried once when the interval has passed");
     }
 
     /// A synthetic layer in a git work tree with one commit, and a `Live` watching it.
@@ -767,6 +1135,64 @@ mod tests {
                 .expect("the caller is answered once the rebuild is over");
             assert_eq!(answered, after, "and with the commit it asked about");
         });
+    }
+
+    /// A page does not wait for a rebuild: it is handed the generation there is, told the
+    /// repository has moved past it, and the rebuild runs behind it; once it is over, the
+    /// next page is current. A caller of `view` still waits, as before.
+    #[test]
+    fn a_page_is_handed_the_generation_there_is_and_the_rebuild_runs_behind_it() {
+        let (fixture, live) = followed();
+        let live = Arc::new(live);
+        let before = head_in(fixture.root());
+        let (view, behind) = live.view_without_waiting();
+        assert!(!behind, "nothing has moved");
+        assert_eq!(head_of(&view.ctx), before);
+
+        // a rebuild already running: the page is not held by it
+        let rebuilding = live.rebuilding.lock().expect("the rebuild");
+        Command::new("git")
+            .arg("-C")
+            .arg(fixture.root())
+            .args(["commit", "-q", "--allow-empty", "-m", "two"])
+            .output()
+            .expect("git");
+        let after = head_in(fixture.root());
+        let started = std::time::Instant::now();
+        let (view, behind) = live.view_without_waiting();
+        assert!(
+            started.elapsed() < std::time::Duration::from_secs(1),
+            "the page waited for the rebuild: {:?}",
+            started.elapsed()
+        );
+        assert!(
+            behind,
+            "the page is told the repository moved past what it shows"
+        );
+        assert_eq!(head_of(&view.ctx), before, "as it was");
+        drop(rebuilding);
+
+        // no rebuild running: the page starts one behind itself, and the generation catches up
+        let until = std::time::Instant::now() + std::time::Duration::from_secs(60);
+        loop {
+            let (view, behind) = live.view_without_waiting();
+            if !behind {
+                assert_eq!(
+                    head_of(&view.ctx),
+                    after,
+                    "current once the rebuild is over"
+                );
+                break;
+            }
+            assert!(
+                std::time::Instant::now() < until,
+                "the rebuild never caught up"
+            );
+            std::thread::sleep(std::time::Duration::from_millis(20));
+        }
+        // a pinned view has nothing to follow, and is never behind
+        let pinned = Arc::new(Live::pinned(Arc::clone(&live.view().ctx)));
+        assert!(!pinned.view_without_waiting().1);
     }
 
     #[test]
@@ -858,5 +1284,11 @@ mod tests {
             });
         }
         assert_eq!(built, 1);
+    }
+
+    #[test]
+    fn a_reload_names_the_links_it_ended_and_is_silent_when_it_ended_none() {
+        assert!(!warn_of_ended_links(&[]));
+        assert!(warn_of_ended_links(&["node-a".to_string()]));
     }
 }

@@ -21,7 +21,7 @@ related:
   - file:apps/majordomus-cli/src/http/router.rs
   - file:apps/majordomus-cli/src/mcp/surface.rs
   - test:apps/majordomus-cli/tests/remote_callers.rs
-  - test:test/cases/1022_a_remote_caller_cannot_write.sh
+  - test:test/cases/1086_a_remote_caller_cannot_write.sh
 ---
 
 # 126. A caller beyond loopback reads, and changes nothing it cannot authenticate

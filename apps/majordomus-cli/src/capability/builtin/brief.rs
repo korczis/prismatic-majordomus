@@ -604,7 +604,8 @@ fn mesh_section(ctx: &Context) -> BriefMeshSection {
             "not active here: {}",
             status
                 .reason
-                .unwrap_or_else(|| "cooperation is not running in this process".into())
+                .as_deref()
+                .unwrap_or("cooperation is not running in this process")
         );
         return section;
     };
@@ -718,7 +719,8 @@ fn primary_home(root: &Path) -> Option<PathBuf> {
         .ok()
         .filter(|o| o.status.success())?;
     let common = PathBuf::from(String::from_utf8_lossy(&out.stdout).trim());
-    common.parent()?.parent().map(Path::to_path_buf)
+    // the common directory's parent's parent: the directory the primary checkout sits in
+    common.ancestors().nth(2).map(Path::to_path_buf)
 }
 
 /// The derive section from the files alone: kept apart from where they are found so that a
@@ -1232,5 +1234,888 @@ mod tests {
             c.exposure.cli.as_ref().map(|c| c.path.clone()),
             Some(vec!["brief".to_string()])
         );
+    }
+
+    // ------------------------------------------------ owners that answer what a test says
+
+    use crate::peers::Transport;
+    use crate::synthetic::SyntheticRepository;
+    use std::io::{Read as _, Write as _};
+
+    #[derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema)]
+    struct Anything {}
+
+    impl BenchmarkCases for Anything {
+        fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+            vec![NamedCase::new("default", Anything {})]
+        }
+    }
+
+    thread_local! {
+        /// What each stand-in owner answers on this test's thread; an owner with nothing
+        /// here refuses.
+        static CANNED: std::cell::RefCell<std::collections::BTreeMap<&'static str, serde_json::Value>> =
+            Default::default();
+    }
+
+    fn can(id: &'static str, answer: serde_json::Value) {
+        CANNED.with(|c| {
+            c.borrow_mut().insert(id, answer);
+        });
+    }
+
+    fn canned(id: &str) -> Result<serde_json::Value, CapabilityError> {
+        CANNED
+            .with(|c| c.borrow().get(id).cloned())
+            .ok_or_else(|| CapabilityError::Refused(format!("{id} does not answer")))
+    }
+
+    fn canned_continuity(_: &Context, _: Anything) -> Result<serde_json::Value, CapabilityError> {
+        canned("continuity.state")
+    }
+
+    fn canned_episodes(_: &Context, _: Anything) -> Result<serde_json::Value, CapabilityError> {
+        canned("lifecycle.episodes")
+    }
+
+    fn canned_peers(_: &Context, _: Anything) -> Result<serde_json::Value, CapabilityError> {
+        canned("peers.list")
+    }
+
+    /// A context whose registry holds the brief and stand-ins for the three owners it asks
+    /// through the registry, the board's with the HTTP route a leaseholder is asked over.
+    fn canned_context(repo: &SyntheticRepository) -> Context {
+        let registry = crate::capability::CapabilityRegistry::builder()
+            .with_modules(vec![module()])
+            .with_builtin(vec![
+                capability! {
+                    id: "continuity.state", title: "Continuity", description: "Canned.",
+                    input: Anything, output: serde_json::Value,
+                    stability: Stability::Experimental, exposure: Exposure::default(), tags: [],
+                    handler: canned_continuity,
+                },
+                capability! {
+                    id: "lifecycle.episodes", title: "Episodes", description: "Canned.",
+                    input: Anything, output: serde_json::Value,
+                    stability: Stability::Experimental, exposure: Exposure::default(), tags: [],
+                    handler: canned_episodes,
+                },
+                capability! {
+                    id: "peers.list", title: "Peers", description: "Canned.",
+                    input: Anything, output: serde_json::Value,
+                    stability: Stability::Experimental,
+                    exposure: Exposure { http: get("/api/v1/peers"), ..Exposure::default() },
+                    tags: [],
+                    handler: canned_peers,
+                },
+            ])
+            .build()
+            .expect("a registry of stand-ins");
+        Context::new(
+            std::sync::Arc::new(repo.index().expect("an index")),
+            std::sync::Arc::new(registry),
+        )
+    }
+
+    fn bare_context(repo: &SyntheticRepository) -> Context {
+        Context::new(
+            std::sync::Arc::new(repo.index().expect("an index")),
+            std::sync::Arc::new(
+                crate::capability::CapabilityRegistry::builder()
+                    .build()
+                    .expect("an empty registry"),
+            ),
+        )
+    }
+
+    fn continuity_with_task() -> serde_json::Value {
+        json!({
+            "present": true,
+            "worktree": "/w",
+            "branch": "feature/x",
+            "head": "0123456789abcdef",
+            "task": {
+                "id": "t-1",
+                "task": "I2399: cover the brief",
+                "profile": "implementation",
+                "outcome": "active",
+            },
+            "tallies": {},
+        })
+    }
+
+    fn two_episodes() -> serde_json::Value {
+        json!({
+            "present": true,
+            "store": ".ai/local/state/sessions-open",
+            "worktree": "/w",
+            "current": "s-0001",
+            "episodes": [
+                {"session_id": "s-0001", "path": "a.yaml", "standing": "current",
+                 "events": 1, "note": "the pointer resolves to it"},
+                {"session_id": "s-0002", "path": "b.yaml", "provider": "claude-code",
+                 "provider_session": "prov-2", "standing": "open", "events": 3,
+                 "note": "this worktree, not pointed at"},
+            ],
+        })
+    }
+
+    /// A loopback HTTP server that answers each request by its path, for the rest of the
+    /// test binary's life; its URL.
+    fn serve(answer: impl Fn(&str) -> (u16, String) + Send + 'static) -> String {
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").expect("a loopback port");
+        let url = format!("http://{}", listener.local_addr().expect("its address"));
+        std::thread::spawn(move || {
+            for stream in listener.incoming() {
+                let Ok(mut stream) = stream else { continue };
+                let mut head = Vec::new();
+                let mut chunk = [0u8; 4096];
+                while !head.windows(4).any(|w| w == b"\r\n\r\n") {
+                    match stream.read(&mut chunk) {
+                        Ok(0) | Err(_) => break,
+                        Ok(n) => head.extend_from_slice(&chunk[..n]),
+                    }
+                }
+                let text = String::from_utf8_lossy(&head);
+                let path = text.split_whitespace().nth(1).unwrap_or("/").to_string();
+                let (status, body) = answer(&path);
+                let _ = write!(
+                    stream,
+                    "HTTP/1.1 {status} X\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
+                    body.len()
+                );
+            }
+        });
+        url
+    }
+
+    /// An address nothing listens on.
+    fn dead_url() -> String {
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").expect("a loopback port");
+        let url = format!("http://{}", listener.local_addr().expect("its address"));
+        drop(listener);
+        url
+    }
+
+    /// The canonical root the handler reads its lease under.
+    fn canonical(repo: &SyntheticRepository) -> PathBuf {
+        repo.root()
+            .canonicalize()
+            .unwrap_or_else(|_| repo.root().to_path_buf())
+    }
+
+    /// Write a lease of another process into the checkout, naming `url`.
+    fn lease_of_another(repo: &SyntheticRepository, url: Option<&str>) {
+        let root = canonical(repo);
+        let file = lease::lease_file(&root, &server::local_half(&root));
+        std::fs::create_dir_all(file.parent().unwrap()).unwrap();
+        std::fs::write(
+            &file,
+            json!({
+                "schema": lease::SCHEMA,
+                "pid": 0,
+                "token": "another-process",
+                "root": root,
+                "url": url,
+                "started_at": "2026-10-11T00:00:00Z",
+            })
+            .to_string(),
+        )
+        .unwrap();
+    }
+
+    fn input(checkouts: Checkouts, session: Option<&str>) -> BriefInput {
+        BriefInput {
+            session: session.map(str::to_string),
+            checkouts,
+            local: false,
+        }
+    }
+
+    // ------------------------------------------------ the session section
+
+    #[test]
+    fn the_session_is_the_episode_its_provider_session_owns_else_the_pointers() {
+        let repo = SyntheticRepository::small().expect("a repository");
+        let ctx = canned_context(&repo);
+        can("continuity.state", continuity_with_task());
+        can("lifecycle.episodes", two_episodes());
+
+        let me = ctx.peers.attach(Transport::Http);
+        let mine = session_section(&ctx.for_caller(me.clone()), Some("prov-2"));
+        assert_eq!(mine.state, BriefSectionState::Read);
+        assert_eq!(mine.episode.as_deref(), Some("s-0002"));
+        assert_eq!(mine.provider_session.as_deref(), Some("prov-2"));
+        assert_eq!(mine.head, "0123456789", "the head, abbreviated");
+        assert_eq!(mine.task_id.as_deref(), Some("t-1"));
+        assert_eq!(
+            mine.summary,
+            format!(
+                "episode s-0002 on feature/x at 0123456789; task t-1: I2399: cover the brief; \
+                 this connection is {} on this checkout's board",
+                me.as_str()
+            )
+        );
+
+        // no provider session: the pointer's episode, which no provider session owns
+        let pointed = session_section(&ctx, None);
+        assert_eq!(pointed.episode.as_deref(), Some("s-0001"));
+        assert_eq!(pointed.provider_session, None, "an empty owner is no owner");
+        assert!(pointed.caller.is_none());
+        assert!(pointed.summary.starts_with("episode s-0001 on feature/x"));
+    }
+
+    #[test]
+    fn a_session_whose_episodes_cannot_be_read_is_partial_and_one_without_continuity_unread() {
+        let repo = SyntheticRepository::small().expect("a repository");
+        let ctx = canned_context(&repo);
+        can("continuity.state", continuity_with_task());
+        // an answer that is not the episodes' shape
+        can("lifecycle.episodes", json!({ "not": "episodes" }));
+        let partial = session_section(&ctx, Some("prov-2"));
+        assert_eq!(partial.state, BriefSectionState::Partial);
+        assert_eq!(partial.episode, None);
+        assert!(
+            partial
+                .summary
+                .starts_with("no open episode for provider session prov-2 on feature/x"),
+            "{}",
+            partial.summary
+        );
+
+        // continuity that answers in a shape nobody can read is no continuity
+        can("continuity.state", json!({ "not": "continuity" }));
+        let unread = session_section(&ctx, None);
+        assert_eq!(unread.state, BriefSectionState::Unread);
+        assert!(unread.branch.is_empty() && unread.head.is_empty());
+        assert!(unread.task_id.is_none() && unread.task.is_none());
+        assert!(
+            unread
+                .summary
+                .starts_with("unread: continuity.state did not answer ("),
+            "{}",
+            unread.summary
+        );
+
+        // and owners that are not there at all
+        let bare = bare_context(&repo);
+        let nobody = session_section(&bare, None);
+        assert_eq!(nobody.state, BriefSectionState::Unread);
+        assert!(
+            nobody.summary.contains("continuity.state"),
+            "{}",
+            nobody.summary
+        );
+    }
+
+    // ------------------------------------------------ the peers section
+
+    /// The board of a real `peers.list`: nine workers, two of whom claim scopes that meet.
+    fn nine_on_a_board() -> serde_json::Value {
+        let repo = SyntheticRepository::small().expect("a repository");
+        let ctx = repo.context().expect("a context");
+        for i in 0..9 {
+            let p = ctx.peers.attach(Transport::Http);
+            let scope = match i {
+                0 => "src/cockpit".to_string(),
+                1 => "src/cockpit/pages.rs".to_string(),
+                _ => format!("docs/{i}.md"),
+            };
+            ctx.peers
+                .announce(&p, &format!("worker {i} at work"), vec![scope]);
+        }
+        ctx.execute("peers.list", json!({ "checkouts": "this" }))
+            .expect("the board")
+    }
+
+    #[test]
+    fn the_peers_section_names_eight_counts_the_rest_and_says_what_it_could_not_read() {
+        let mut list = nine_on_a_board();
+        let mut unread = list["boards"][0].clone();
+        unread["reason"] = json!("its server is starting and has no board to read yet");
+        // a board carries its checkout's fields beside its own
+        let at = if unread.get("checkout").is_some() {
+            &mut unread["checkout"]
+        } else {
+            &mut unread
+        };
+        at["worktree"] = json!("/elsewhere");
+        at["this_checkout"] = json!(false);
+        list["boards"].as_array_mut().unwrap().push(unread);
+
+        let repo = SyntheticRepository::small().expect("a repository");
+        let ctx = canned_context(&repo);
+        can("peers.list", list);
+        let s = peers_section(&ctx, Checkouts::Repository, None);
+        assert_eq!(s.state, BriefSectionState::Partial);
+        assert_eq!((s.attached, s.boards, s.overlaps), (9, 2, 1));
+        assert_eq!(
+            s.unread,
+            ["/elsewhere: its server is starting and has no board to read yet"]
+        );
+        assert_eq!(s.named.len(), PEERS_NAMED);
+        assert!(
+            s.named[0].ends_with("@?: worker 0 at work"),
+            "a checkout with no branch is named `?`: {}",
+            s.named[0]
+        );
+        assert_eq!(
+            s.summary,
+            "9 attached on 2 board(s); 1 overlapping claim(s): majordomus_peers; \
+             1 board(s) unread; 1 more not named"
+        );
+    }
+
+    #[test]
+    fn a_board_nobody_answers_for_is_unread() {
+        let repo = SyntheticRepository::small().expect("a repository");
+        let bare = bare_context(&repo);
+        let s = peers_section(&bare, Checkouts::This, None);
+        assert_eq!(s.state, BriefSectionState::Unread);
+        assert_eq!((s.attached, s.boards, s.overlaps), (0, 0, 0));
+        assert!(s.unread.is_empty() && s.named.is_empty() && s.superseded.is_none());
+        assert!(
+            s.summary.starts_with("unread: peers.list did not answer ("),
+            "{}",
+            s.summary
+        );
+
+        // an answer in a shape that is not a board is unread too
+        let ctx = canned_context(&repo);
+        can("peers.list", json!({ "peers": "nobody" }));
+        let s = peers_section(&ctx, Checkouts::This, None);
+        assert_eq!(s.state, BriefSectionState::Unread);
+    }
+
+    // ------------------------------------------------ a superseded server
+
+    /// A server that lost the lease answers its own MCP sessions: it says so, adds the
+    /// leaseholder's board to its own, and names whose board it could not reach.
+    #[test]
+    fn a_superseded_server_adds_the_leaseholders_board_and_says_it_is_superseded() {
+        let leaseholder = {
+            let repo = SyntheticRepository::small().expect("a repository");
+            let ctx = repo.context().expect("a context");
+            let p = ctx.peers.attach(Transport::Http);
+            ctx.peers
+                .announce(&p, "the leaseholder's worker", vec!["lib".into()]);
+            serde_json::to_value(ctx.peers.list()).expect("its board")
+        };
+        let board = json!({ "peers": leaseholder }).to_string();
+        let url = serve(move |path| {
+            if path.starts_with("/api/v1/peers") {
+                (200, board.clone())
+            } else {
+                (404, "{}".into())
+            }
+        });
+
+        let repo = SyntheticRepository::small().expect("a repository");
+        let ctx = canned_context(&repo);
+        can("continuity.state", continuity_with_task());
+        can("lifecycle.episodes", two_episodes());
+        // this server's own board: one worker, read from its memory
+        let mut own = nine_on_a_board();
+        let first = own["peers"][0].clone();
+        own["peers"] = json!([first]);
+        own["overlaps"] = json!([]);
+        can("peers.list", own);
+        lease_of_another(&repo, Some(&url));
+
+        let me = ctx.peers.attach(Transport::Http);
+        let b = brief(&ctx.for_caller(me), input(Checkouts::This, None)).expect("a brief");
+        assert_eq!(b.answered_by.process, "superseded");
+        assert_eq!(b.answered_by.url, None);
+        assert_eq!(
+            b.answered_by.note.as_deref(),
+            Some(format!("this server does not hold the lease; the leaseholder is {url}").as_str())
+        );
+        assert_eq!(b.peers.state, BriefSectionState::Partial);
+        assert_eq!(b.peers.attached, 2, "its own worker and the leaseholder's");
+        assert!(
+            b.peers
+                .named
+                .iter()
+                .any(|n| n.contains("the leaseholder's worker")),
+            "{:?}",
+            b.peers.named
+        );
+        let said = b.peers.superseded.clone().expect("superseded");
+        assert!(said.contains(&format!("superseded by {url}")), "{said}");
+        assert!(said.contains("the 1 peer(s) attached here"), "{said}");
+        assert!(
+            b.peers.summary.ends_with(&format!("; {said}")),
+            "{}",
+            b.peers.summary
+        );
+        assert!(b.line.contains(" SUPERSEDED"), "{}", b.line);
+        assert!(b.line.starts_with("I2399 @feature/x"), "{}", b.line);
+
+        // a leaseholder that does not answer: its board is named unread
+        lease_of_another(&repo, Some(&dead_url()));
+        let b = brief(
+            &ctx.for_caller(ctx.peers.attach(Transport::Http)),
+            input(Checkouts::This, None),
+        )
+        .expect("a brief");
+        assert_eq!(b.peers.unread.len(), 1, "{:?}", b.peers.unread);
+        assert!(
+            b.peers.unread[0].starts_with("the leaseholder's board: "),
+            "{:?}",
+            b.peers.unread
+        );
+        assert!(b.peers.summary.contains("; 1 board(s) unread"));
+        assert!(b.line.contains("(1 unread) SUPERSEDED"), "{}", b.line);
+
+        // a leaseholder still binding: no address to name, and no board to ask
+        lease_of_another(&repo, None);
+        let b = brief(
+            &ctx.for_caller(ctx.peers.attach(Transport::Http)),
+            input(Checkouts::This, None),
+        )
+        .expect("a brief");
+        assert_eq!(b.answered_by.process, "superseded");
+        assert_eq!(
+            b.answered_by.note.as_deref(),
+            Some("this server does not hold the lease; the leaseholder is still binding")
+        );
+        assert_eq!(b.peers.superseded, None);
+    }
+
+    // ------------------------------------------------ asking the leaseholder
+
+    fn a_brief() -> SessionBrief {
+        compose(
+            "t".into(),
+            20,
+            origin(),
+            session(None),
+            peers(0, false),
+            mesh_off(),
+            BriefIntegrationSection {
+                state: BriefSectionState::Undeclared,
+                summary: "never observed".into(),
+            },
+            derive_from(false, None, None),
+        )
+    }
+
+    #[test]
+    fn the_leaseholder_is_asked_over_the_declared_route_and_every_failure_is_named() {
+        let repo = SyntheticRepository::small().expect("a repository");
+        let asked = input(Checkouts::This, None);
+
+        // a registry that declares no route for the brief cannot ask
+        let e = forward(&bare_context(&repo), "http://127.0.0.1:1", &asked).expect_err("no route");
+        assert_eq!(e, "brief.session declares no HTTP route to ask over");
+
+        let ctx = canned_context(&repo);
+        let dead = dead_url();
+        let e = forward(&ctx, &dead, &asked).expect_err("nobody listens");
+        assert!(
+            e.starts_with(&format!("the leaseholder at {dead} did not answer (")),
+            "{e}"
+        );
+        assert!(e.ends_with("; composed by this process"), "{e}");
+
+        let old = serve(|_| (404, "{}".into()));
+        let e = forward(&ctx, &old, &asked).expect_err("an older server");
+        assert_eq!(
+            e,
+            format!(
+                "the leaseholder at {old} answered 404 (a server older than this executable has no brief); composed by this process"
+            )
+        );
+
+        let garbled = serve(|_| (200, "not a brief".into()));
+        let e = forward(&ctx, &garbled, &asked).expect_err("an unreadable brief");
+        assert!(
+            e.starts_with(&format!(
+                "the leaseholder at {garbled} answered a brief this executable cannot read ("
+            )),
+            "{e}"
+        );
+
+        // the leaseholder's answer is the brief, asked for locally and for this checkout
+        let theirs = a_brief();
+        let body = serde_json::to_string(&theirs).unwrap();
+        let seen = std::sync::Arc::new(std::sync::Mutex::new(String::new()));
+        let heard = std::sync::Arc::clone(&seen);
+        let good = serve(move |path| {
+            *heard.lock().unwrap() = path.to_string();
+            (200, body.clone())
+        });
+        assert_eq!(forward(&ctx, &good, &asked), Ok(theirs));
+        assert_eq!(
+            seen.lock().unwrap().as_str(),
+            "/api/v1/brief?local=true&checkouts=this",
+            "no session asked, none sent"
+        );
+    }
+
+    /// The command line asks the leaseholder; one that answers the probe and not the brief
+    /// leaves the brief to this process, which says why.
+    #[test]
+    fn a_leaseholder_that_cannot_brief_leaves_the_brief_to_this_process() {
+        let repo = SyntheticRepository::small().expect("a repository");
+        let id = crate::repository::identity(&canonical(&repo));
+        let url = serve(move |path| {
+            if path == "/" {
+                (
+                    200,
+                    json!({ "name": "majordomus", "repository_id": id }).to_string(),
+                )
+            } else {
+                (404, "{}".into())
+            }
+        });
+        lease_of_another(&repo, Some(&url));
+        let ctx = canned_context(&repo);
+        can("continuity.state", continuity_with_task());
+        can("lifecycle.episodes", two_episodes());
+        can("peers.list", nine_on_a_board());
+        let b = brief(&ctx, input(Checkouts::This, Some("prov-2"))).expect("a brief");
+        assert_eq!(b.answered_by.process, "this_process");
+        let note = b.answered_by.note.clone().expect("why");
+        assert!(
+            note.contains(&format!("the leaseholder at {url} answered 404")),
+            "{note}"
+        );
+        assert!(
+            b.lines
+                .last()
+                .is_some_and(|l| l.starts_with("answered by  this_process (")),
+            "{:?}",
+            b.lines
+        );
+        assert_eq!(b.session.episode.as_deref(), Some("s-0002"));
+    }
+
+    // ------------------------------------------------ the mesh section
+
+    /// Two runtimes of one process, linked over an in-memory transport: the socket is the
+    /// only thing replaced.
+    mod mesh_world {
+        pub(super) use crate::mesh::testing::{runtime, Net};
+    }
+
+    #[test]
+    fn an_active_mesh_is_read_for_its_links_its_claims_and_what_it_addresses_here() {
+        use crate::mesh::journal::{ClaimMode, HandoverBody, SessionInfo};
+        let net = std::sync::Arc::new(mesh_world::Net::default());
+        let (a, b) = (
+            mesh_world::runtime(&net, "a:1"),
+            mesh_world::runtime(&net, "b:1"),
+        );
+        a.dial(&["b:1".into()]).expect("B welcomes A");
+        // two of this runtime's workers claim scopes that meet, and one asks this runtime
+        // itself for a review; its own handover waits on nobody here
+        a.claim(
+            &SessionInfo::named("s1", "cli"),
+            vec!["apps".into()],
+            None,
+            ClaimMode::Advisory,
+            None,
+        )
+        .unwrap();
+        a.claim(
+            &SessionInfo::named("s2", "cli"),
+            vec!["apps/majordomus-cli".into()],
+            None,
+            ClaimMode::Advisory,
+            None,
+        )
+        .unwrap();
+        let me = a.status().runtime.clone().expect("a runtime");
+        a.request_review("s1", "feature/x".into(), vec![], None, Some(me), None)
+            .unwrap();
+        let body = "# Objective\ncover the brief\n".to_string();
+        a.publish_handover(HandoverBody {
+            id: HandoverBody::digest_of(&body),
+            task: None,
+            issue: None,
+            milestone: None,
+            branch: Some("feature/x".into()),
+            head: None,
+            created_at: None,
+            name: None,
+            body,
+        })
+        .unwrap();
+
+        let repo = SyntheticRepository::small().expect("a repository");
+        let ctx = repo.context().expect("a context");
+        ctx.mesh.attach_cooperation(std::sync::Arc::clone(&a));
+
+        let fresh = mesh_section(&ctx);
+        assert_eq!(fresh.state, BriefSectionState::Read);
+        assert_eq!((fresh.links, fresh.connected, fresh.failing), (1, 1, 0));
+        assert_eq!((fresh.claims_held, fresh.own_claims), (2, 2));
+        assert_eq!(
+            (
+                fresh.reviews_for_you,
+                fresh.handovers_waiting,
+                fresh.overlaps_for_you
+            ),
+            (1, 0, 1)
+        );
+        assert_eq!(
+            fresh.summary,
+            "1 of 1 link(s) connected; 2 claim(s) held, 2 of them this runtime's; \
+             for this runtime: 1 review(s), 0 handover(s) waiting, 1 overlap(s)"
+        );
+
+        // the link outlives its expiry with no exchange: it is failing
+        std::thread::sleep(Duration::from_millis(3500));
+        let stale = mesh_section(&ctx);
+        assert_eq!((stale.connected, stale.failing), (0, 1));
+        assert!(
+            stale
+                .summary
+                .starts_with("0 of 1 link(s) connected, 1 failing; "),
+            "{}",
+            stale.summary
+        );
+
+        // a runtime nothing is addressed to says so
+        let quiet = SyntheticRepository::small().expect("a repository");
+        let quiet_ctx = quiet.context().expect("a context");
+        let c = mesh_world::runtime(&net, "c:1");
+        quiet_ctx.mesh.attach_cooperation(std::sync::Arc::clone(&c));
+        let calm = mesh_section(&quiet_ctx);
+        assert_eq!(
+            calm.summary,
+            "0 of 0 link(s) connected; 0 claim(s) held, 0 of them this runtime's; \
+             nothing addressed to this runtime"
+        );
+        for r in [a, b, c] {
+            r.stop();
+        }
+    }
+
+    /// What another runtime holds is not this one's: its handover waits here, its claims
+    /// that meet are no overlap of this runtime's, and an answered review is for nobody.
+    #[test]
+    fn another_runtimes_handover_waits_here_and_its_overlaps_and_answered_reviews_do_not() {
+        use crate::mesh::journal::{ClaimMode, HandoverBody, SessionInfo};
+        let net = std::sync::Arc::new(mesh_world::Net::default());
+        let (a, b) = (
+            mesh_world::runtime(&net, "a:1"),
+            mesh_world::runtime(&net, "b:1"),
+        );
+        let key = a.dial(&["b:1".into()]).expect("B welcomes A");
+        for (session, scope) in [("s1", "apps"), ("s2", "apps/majordomus-cli")] {
+            b.claim(
+                &SessionInfo::named(session, "cli"),
+                vec![scope.into()],
+                None,
+                ClaimMode::Advisory,
+                None,
+            )
+            .unwrap();
+        }
+        let body = "# Objective\nhand it on\n".to_string();
+        b.publish_handover(HandoverBody {
+            id: HandoverBody::digest_of(&body),
+            task: None,
+            issue: None,
+            milestone: None,
+            branch: Some("feature/y".into()),
+            head: None,
+            created_at: None,
+            name: None,
+            body,
+        })
+        .unwrap();
+        let me = a.status().runtime.clone().expect("a runtime");
+        a.request_review("s1", "feature/x".into(), vec![], None, Some(me), None)
+            .unwrap();
+        let request = a.state().reviews[0].key.clone();
+        a.answer_review(&request, "s9", "approved".into(), None)
+            .unwrap();
+        for _ in 0..2 {
+            b.journal().beat_own();
+            a.journal().beat_own();
+            a.sync_with(&key).unwrap();
+        }
+
+        let repo = SyntheticRepository::small().expect("a repository");
+        let ctx = repo.context().expect("a context");
+        ctx.mesh.attach_cooperation(std::sync::Arc::clone(&a));
+        let section = mesh_section(&ctx);
+        assert_eq!((section.claims_held, section.own_claims), (2, 0));
+        assert_eq!(
+            (
+                section.reviews_for_you,
+                section.handovers_waiting,
+                section.overlaps_for_you
+            ),
+            (0, 1, 0)
+        );
+        for r in [a, b] {
+            r.stop();
+        }
+    }
+
+    #[test]
+    fn a_mesh_that_is_not_running_says_why() {
+        let repo = SyntheticRepository::small().expect("a repository");
+        let ctx = repo.context().expect("a context");
+        ctx.mesh.decline_cooperation("no endpoint to be dialed at");
+        let off = mesh_section(&ctx);
+        assert_eq!(off.state, BriefSectionState::Undeclared);
+        assert_eq!(off.summary, "not active here: no endpoint to be dialed at");
+    }
+
+    // ------------------------------------------------ integration and derive
+
+    #[test]
+    fn an_observed_forge_is_the_integration_sections_answer() {
+        use crate::integration::{store_observation, ForgeObservation, OBSERVATION_SCHEMA};
+        let repo = SyntheticRepository::small().expect("a repository");
+        let never = integration_section(repo.root());
+        assert_eq!(never.state, BriefSectionState::Undeclared);
+        store_observation(
+            repo.root(),
+            &ForgeObservation {
+                schema: OBSERVATION_SCHEMA,
+                repository: "owner/repo".into(),
+                base: "master".into(),
+                base_sha: "0".repeat(40),
+                observed_at: "2026-10-01T00:00:00Z".into(),
+                required_checks: Some(vec!["ci".into()]),
+                review_policy: Some(Default::default()),
+                up_to_date_required: Some(true),
+                merge_methods: vec!["merge".into()],
+                pull_requests: Vec::new(),
+                resolved: Default::default(),
+                delete_branch_on_merge: None,
+            },
+        )
+        .expect("an observation");
+        let read = integration_section(repo.root());
+        assert_eq!(read.state, BriefSectionState::Read);
+        assert_eq!(
+            Some(read.summary.clone()),
+            crate::commands::prs::brief(repo.root()),
+            "the section is what `prs brief` says"
+        );
+    }
+
+    #[test]
+    fn a_derive_lock_whose_holder_is_gone_is_said_to_be_reclaimable() {
+        let dir = tempfile::tempdir().expect("a scratch directory");
+        let lock = dir.path().join(".derive.lock");
+        let priority = dir.path().join(".derive.priority");
+        std::fs::create_dir(&lock).expect("the lock directory");
+        // a pid above every system's pid range names no process
+        std::fs::write(
+            lock.join("owner"),
+            "derive:feature/y pid=99999999 branch=feature/y\n",
+        )
+        .expect("the owner line");
+        // a marker that names nobody
+        std::fs::write(&priority, "\n").expect("the marker");
+        let gone = derive_from(true, Some(&lock), Some(&priority));
+        assert_eq!(gone.pid, Some(99_999_999));
+        assert_eq!(gone.alive, Some(false));
+        assert!(
+            gone.summary.starts_with(
+                "lock held by derive:feature/y (pid 99999999, NOT running: the next derive reclaims it"
+            ),
+            "{}",
+            gone.summary
+        );
+        assert_eq!(gone.priority.as_deref(), Some(""));
+        assert!(
+            gone.summary.ends_with("; priority to ?"),
+            "{}",
+            gone.summary
+        );
+
+        // a lock dated in the future has no age to tell
+        std::fs::File::open(&lock)
+            .and_then(|f| f.set_modified(std::time::SystemTime::now() + Duration::from_secs(3600)))
+            .expect("the lock's time");
+        let ageless = derive_from(true, Some(&lock), None);
+        assert_eq!(ageless.held_seconds, None);
+        assert!(
+            ageless
+                .summary
+                .ends_with("NOT running: the next derive reclaims it)"),
+            "{}",
+            ageless.summary
+        );
+    }
+
+    // ------------------------------------------------ the line
+
+    #[test]
+    fn the_line_says_what_could_not_be_read_and_what_is_addressed_here() {
+        let mut s = session(None);
+        s.state = BriefSectionState::Unread;
+        let mut p = peers(0, false);
+        p.state = BriefSectionState::Unread;
+        let mut m = mesh_off();
+        m.state = BriefSectionState::Read;
+        m.links = 2;
+        m.connected = 1;
+        m.reviews_for_you = 1;
+        m.handovers_waiting = 1;
+        m.overlaps_for_you = 1;
+        let free = BriefDeriveSection {
+            state: BriefSectionState::Read,
+            holder: None,
+            pid: None,
+            alive: None,
+            held_seconds: None,
+            priority: None,
+            summary: "lock free".into(),
+        };
+        let line = one_line(
+            &s,
+            &p,
+            &m,
+            &BriefIntegrationSection {
+                state: BriefSectionState::Unread,
+                summary: String::new(),
+            },
+            &free,
+        );
+        assert_eq!(
+            line,
+            "session ? | peers ? | mesh 1/2 +3 for you | prs ? | derive free"
+        );
+        // a mesh that is read and addresses nothing here shows its links alone
+        m.reviews_for_you = 0;
+        m.handovers_waiting = 0;
+        m.overlaps_for_you = 0;
+        let line = one_line(
+            &session(None),
+            &peers(0, false),
+            &m,
+            &a_brief().integration,
+            &free,
+        );
+        assert!(line.contains("| mesh 1/2 |"), "{line}");
+    }
+
+    #[test]
+    fn every_state_has_its_word() {
+        assert_eq!(state_word(BriefSectionState::Read), "read");
+        assert_eq!(state_word(BriefSectionState::Unread), "unread");
+        assert_eq!(state_word(BriefSectionState::Undeclared), "undeclared");
+        for state in [
+            BriefSectionState::Read,
+            BriefSectionState::Partial,
+            BriefSectionState::Unread,
+            BriefSectionState::Undeclared,
+        ] {
+            assert_eq!(
+                serde_json::to_value(state).unwrap(),
+                json!(state_word(state)),
+                "the word is the one it serialises under"
+            );
+        }
     }
 }

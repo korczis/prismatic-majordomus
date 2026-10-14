@@ -14,7 +14,7 @@ use crate::monitor::{MonitorPage, MonitorSeverity, MonitorSignal, MonitorSourceH
 use super::html::{el, El};
 use super::nav::Area;
 use super::pages::{ask, failed, param, Page};
-use super::view::{card, card_with, table, word_badge};
+use super::view::{card, card_with, pre, table, word_badge};
 
 /// How many signals the first page shows.
 const FIRST_PAGE: u64 = 100;
@@ -47,12 +47,7 @@ pub fn page(ctx: &Context, query: &[(String, String)]) -> Page {
     let sources = el("ul")
         .class("mj-list")
         .children(page.sources.iter().map(|s| {
-            let state = match s.state {
-                MonitorSourceHealth::Ok => "ok",
-                MonitorSourceHealth::Absent => "absent",
-                MonitorSourceHealth::Error => "error",
-                MonitorSourceHealth::Skipped => "skipped",
-            };
+            let state = health_word(s.state);
             let mut item = el("li")
                 .child(el("strong").text(format!("{:?}", s.source).to_lowercase()))
                 .child(el("span").text(" "))
@@ -62,7 +57,12 @@ pub fn page(ctx: &Context, query: &[(String, String)]) -> Page {
                     s.signals, s.suppressed
                 )));
             if let Some(reason) = &s.reason {
-                item = item.child(el("span").class("mj-muted").text(format!(" — {reason}")));
+                // `mj-identity`: a source's reason may name a key with no break in it
+                item = item.child(
+                    el("span")
+                        .class("mj-muted mj-identity")
+                        .text(format!(" — {reason}")),
+                );
             }
             item
         }));
@@ -107,7 +107,8 @@ pub fn page(ctx: &Context, query: &[(String, String)]) -> Page {
             .child(card("Sources", sources))
             .child(card(
                 "From a terminal",
-                el("pre").class("mj-code").text(
+                // the scrolling block every listing uses: a bare <pre> is wider than a phone
+                pre(
                     "majordomus monitor --for 1b            # this page, for one reader\nmajordomus monitor --follow             # keep printing what is new\nmajordomus monitor --follow --match '#885' --until merged --timeout 1h",
                 ),
             )),
@@ -155,10 +156,91 @@ fn row(s: &MonitorSignal) -> El {
         .child(el("td").child(summary))
 }
 
+/// The badge word of a source's state.
+fn health_word(state: MonitorSourceHealth) -> &'static str {
+    match state {
+        MonitorSourceHealth::Ok => "ok",
+        MonitorSourceHealth::Absent => "absent",
+        MonitorSourceHealth::Error => "error",
+        MonitorSourceHealth::Skipped => "skipped",
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::monitor::MonitorSource;
+
+    use crate::monitor::testing::{context, cooperation, session};
+
+    fn body(page: &Page) -> String {
+        page.main.render()
+    }
+
+    /// A reader named in the address sees what names them first, as rows with the action
+    /// marked, and the live list asks for the same reader; a reader named nowhere is told so.
+    #[test]
+    fn a_named_reader_sees_their_signals_first_and_the_live_list_asks_for_them() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let ctx = context(&repo);
+        let c = cooperation();
+        session(&c, "s1", "3d", "the runtime train");
+        c.request_review("s1", "1b, read #885".into(), vec![], None, None, None)
+            .unwrap();
+        crate::mesh::testing::attach(&ctx, c);
+
+        let for_1b = page(&ctx, &[("for".into(), "1b".into())]);
+        let html = body(&for_1b);
+        assert!(html.contains("For you (1)"), "{html}");
+        assert!(html.contains("data-mj-severity=\"action\""), "{html}");
+        assert!(html.contains("1b, read #885"), "{html}");
+        assert!(
+            html.contains("/api/v1/monitor?limit=200&amp;for=1b"),
+            "{html}"
+        );
+        assert!(html.contains("<strong>mesh</strong>"), "{html}");
+        assert!(
+            !html.contains("Nothing happened in the last six hours"),
+            "{html}"
+        );
+
+        let for_nobody = page(&ctx, &[("for".into(), "zz".into())]);
+        assert!(body(&for_nobody).contains("Nothing in this window names you."));
+        let blank = page(&ctx, &[("for".into(), " ".into())]);
+        assert!(
+            body(&blank).contains("Say who you are"),
+            "a blank name is no name"
+        );
+    }
+
+    #[test]
+    fn every_source_state_has_its_word() {
+        let words: Vec<&str> = [
+            MonitorSourceHealth::Ok,
+            MonitorSourceHealth::Absent,
+            MonitorSourceHealth::Error,
+            MonitorSourceHealth::Skipped,
+        ]
+        .into_iter()
+        .map(health_word)
+        .collect();
+        assert_eq!(words, vec!["ok", "absent", "error", "skipped"]);
+    }
+
+    /// A server whose registry has no monitor capability shows the failure, not a page.
+    #[test]
+    fn a_stream_that_cannot_be_asked_is_a_failed_page() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let registry = crate::capability::CapabilityRegistry::builder()
+            .build()
+            .unwrap();
+        let ctx = Context::new(
+            std::sync::Arc::new(repo.index().unwrap()),
+            std::sync::Arc::new(registry),
+        );
+        let html = body(&page(&ctx, &[]));
+        assert!(html.contains("monitor.stream"), "{html}");
+    }
 
     #[test]
     fn a_row_carries_its_time_severity_and_link() {

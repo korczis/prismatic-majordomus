@@ -1383,7 +1383,10 @@ impl Cooperation {
         for peer in peers.iter().filter(|p| p.attached) {
             let session = format!("board-{}", peer.id);
             seen.push(session.clone());
-            let intent = peer.claims.first().map(|c| c.intent.clone());
+            // clipped before it is compared: the projection holds what the journal accepted,
+            // so comparing the board's whole text with it would differ on every pass for an
+            // intent past the bound, and reopen the session each time
+            let intent = peer.claims.first().map(|c| clip(&c.intent, 512));
             let entry = projected.entry(session.clone()).or_default();
             let fresh = entry.info.session.is_empty();
             if fresh || entry.info.intent != intent {
@@ -1396,7 +1399,7 @@ impl Cooperation {
                         .clone()
                         .filter(|t| !t.is_empty())
                         .map(|t| clip(&t, 128)),
-                    intent: intent.clone().map(|i| clip(&i, 512)),
+                    intent: intent.clone(),
                     checkout: self.checkout.id.clone(),
                     branch: self.checkout.git(&["symbolic-ref", "--short", "HEAD"]),
                     head: self.checkout.git(&["rev-parse", "--verify", "HEAD"]),
@@ -2236,11 +2239,10 @@ impl Cooperation {
         message: impl Fn(Vec<MeshEvent>) -> T,
     ) -> Result<(Signed, usize), String> {
         let signed = |events: Vec<MeshEvent>| -> Result<(Signed, usize), String> {
-            let body = serde_json::to_value(message(events)).map_err(|e| e.to_string())?;
+            let body = serde_json::to_value(message(events)).map_err(json_text)?;
             let signed = sign(&self.identity, domain, body);
-            let size = serde_json::to_vec(&signed)
-                .map_err(|e| e.to_string())?
-                .len();
+            // a message that cannot be written out is no message under the bound
+            let size = serde_json::to_vec(&signed).map_or(usize::MAX, |b| b.len());
             Ok((signed, size))
         };
         let (bare, overhead) = signed(Vec::new())?;
@@ -2781,31 +2783,42 @@ impl Cooperation {
                     }
                 }
             };
-            let delay = match outcome {
-                Ok(()) => {
-                    failures = 0;
-                    unknown_in_a_row = 0;
+            let delay = self.after_round(&outcome, &mut failures, &mut unknown_in_a_row);
+            self.sleep(delay);
+        }
+    }
+
+    /// How long [`Self::work`] waits after a round that ended in `outcome`, with the counts of
+    /// failed rounds and of `unknown_link` answers in a row carried from round to round.
+    fn after_round(
+        &self,
+        outcome: &Result<(), RoundError>,
+        failures: &mut u32,
+        unknown_in_a_row: &mut u32,
+    ) -> Duration {
+        match outcome {
+            Ok(()) => {
+                *failures = 0;
+                *unknown_in_a_row = 0;
+                self.heartbeat()
+            }
+            Err(RoundError::Refused(r)) if r.code == RefusalCode::UnknownLink => {
+                *failures = 0;
+                *unknown_in_a_row = unknown_in_a_row.saturating_add(1);
+                if *unknown_in_a_row == 1 {
+                    Duration::ZERO
+                } else {
                     self.heartbeat()
                 }
-                Err(RoundError::Refused(r)) if r.code == RefusalCode::UnknownLink => {
-                    failures = 0;
-                    unknown_in_a_row = unknown_in_a_row.saturating_add(1);
-                    if unknown_in_a_row == 1 {
-                        Duration::ZERO
-                    } else {
-                        self.heartbeat()
-                    }
-                }
-                Err(RoundError::Refused(_)) => {
-                    failures = failures.saturating_add(3).min(6);
-                    self.backoff(failures)
-                }
-                Err(_) => {
-                    failures = failures.saturating_add(1).min(6);
-                    self.backoff(failures)
-                }
-            };
-            self.sleep(delay);
+            }
+            Err(RoundError::Refused(_)) => {
+                *failures = failures.saturating_add(3).min(6);
+                self.backoff(*failures)
+            }
+            Err(_) => {
+                *failures = failures.saturating_add(1).min(6);
+                self.backoff(*failures)
+            }
         }
     }
 
@@ -3715,7 +3728,7 @@ impl Cooperation {
     /// use majordomus_cli::mesh::state::ReviewState;
     ///
     /// cooperation.request_review("s1", "feature/mesh-cooperation".into(),
-    ///     vec!["apps/majordomus-cli/src/mesh".into()], Some("#184".into()), None).unwrap();
+    ///     vec!["apps/majordomus-cli/src/mesh".into()], Some("#184".into()), None, None).unwrap();
     ///
     /// let review = &cooperation.state().reviews[0];
     /// assert_eq!(review.subject, "feature/mesh-cooperation");
@@ -3723,7 +3736,7 @@ impl Cooperation {
     ///
     /// // a reviewer nobody is linked to is refused now, not left waiting
     /// cooperation.request_review("s1", "feature/x".into(), vec![], None,
-    ///     Some("somebody-0000000000000002".into())).expect_err("no such peer");
+    ///     Some("somebody-0000000000000002".into()), None).expect_err("no such peer");
     /// ```
     pub fn request_review(
         &self,
@@ -3732,6 +3745,7 @@ impl Cooperation {
         scope: Vec<String>,
         issue: Option<String>,
         reviewer: Option<String>,
+        body: Option<String>,
     ) -> Result<Written, CooperationError> {
         if let Some(target) = &reviewer {
             if *target != self.own_key {
@@ -3761,6 +3775,7 @@ impl Cooperation {
                 scope,
                 issue,
                 reviewer,
+                body,
             },
             self.own(&review),
         )
@@ -3791,7 +3806,7 @@ impl Cooperation {
     /// use majordomus_cli::mesh::state::ReviewState;
     ///
     /// let asked = cooperation
-    ///     .request_review("s1", "feature/mesh-cooperation".into(), vec![], None, None)
+    ///     .request_review("s1", "feature/mesh-cooperation".into(), vec![], None, None, None)
     ///     .unwrap();
     ///
     /// cooperation.answer_review(&asked.key, "s2", "approved".into(),
@@ -3832,6 +3847,81 @@ impl Cooperation {
             request.into(),
         )
     }
+
+    /// End a review request this runtime asked for: done, void or superseded, with an
+    /// optional result the request then carries. Any session of the asking runtime may —
+    /// an MCP session is one connection, and the asker that reconnects is another session
+    /// of the same runtime — and no other runtime may: a withdrawal is the requester's own
+    /// record, never a verdict, so it does not count as an answer.
+    ///
+    /// ```
+    /// # use std::sync::Arc;
+    /// # use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};
+    /// # use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};
+    /// # use majordomus_cli::mesh::identity::NodeIdentity;
+    /// # use majordomus_cli::mesh::link::HttpTransport;
+    /// # use majordomus_cli::mesh::registry::MeshRegistry;
+    /// # use majordomus_cli::mesh::repository::of_root_commits;
+    /// # let cooperation = Cooperation::new(CooperationSetup {
+    /// #     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: "0000000000000001".into(),
+    /// #     repository: of_root_commits(&["root".into()]), endpoints: vec!["127.0.0.1:9".into()],
+    /// #     version: "doc".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),
+    /// #     journal_path: None, registry: Arc::new(MeshRegistry::new()),
+    /// #     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),
+    /// # }).unwrap();
+    /// use majordomus_cli::mesh::state::ReviewState;
+    ///
+    /// let asked = cooperation
+    ///     .request_review("s1", "pre-flight of #919".into(), vec![], None, None,
+    ///         Some("structure job and own cases, hook environment unset".into()))
+    ///     .unwrap();
+    ///
+    /// // a request of another runtime cannot be ended here
+    /// cooperation.withdraw_review("other-0000000000000009/r-1", "s1", None)
+    ///     .expect_err("not this runtime's request");
+    ///
+    /// cooperation.withdraw_review(&asked.key, "s1", Some("clean: 45 gates, 12 cases".into()))
+    ///     .unwrap();
+    /// let review = &cooperation.state().reviews[0];
+    /// assert_eq!(review.state, ReviewState::Withdrawn);
+    /// assert_eq!(review.result.as_deref(), Some("clean: 45 gates, 12 cases"));
+    /// assert!(review.answers.is_empty(), "a result is not an answer");
+    /// ```
+    pub fn withdraw_review(
+        &self,
+        request: &str,
+        session: &str,
+        note: Option<String>,
+    ) -> Result<Written, CooperationError> {
+        let state = self.state();
+        let Some(review) = state.reviews.iter().find(|r| r.key == request) else {
+            return Err(CooperationError::NotFound(format!(
+                "no review request {request}"
+            )));
+        };
+        if !review
+            .key
+            .starts_with(&format!("{}/", self.journal.own_stream()))
+        {
+            return Err(CooperationError::Invalid(format!(
+                "review {request} was asked by {}, and only the runtime that asked may withdraw it",
+                review.session
+            )));
+        }
+        self.write(
+            EventBody::ReviewWithdrawn {
+                request: request.into(),
+                session: session.into(),
+                note,
+            },
+            request.into(),
+        )
+    }
+}
+
+/// A JSON error as the text a refusal or a round error carries.
+fn json_text(error: serde_json::Error) -> String {
+    error.to_string()
 }
 
 #[cfg(test)]
@@ -3939,6 +4029,171 @@ mod tests {
 
     fn session(name: &str) -> SessionInfo {
         SessionInfo::named(name, "test")
+    }
+
+    #[test]
+    fn retrust_ends_a_link_this_runtime_dialed_as_well_as_one_it_answered() {
+        let net = Arc::new(InProcess::default());
+        let a = runtime(&net, "a:1", "root", TrustPolicy::Tofu);
+        let b = runtime(&net, "b:1", "root", TrustPolicy::Tofu);
+        b.dial(&["a:1".into()]).expect("linked under tofu");
+        // B dialed: it holds A outbound only, and A's key loses its trust all the same
+        let ended = b.retrust(TrustConfig::default());
+        assert_eq!(ended, vec![a.runtime_key().to_string()]);
+        let synced = b.sync_with(a.runtime_key());
+        assert!(matches!(synced, Err(RoundError::NoLink)), "{synced:?}");
+    }
+
+    /// A body whose serialization fails once it carries an event.
+    struct RefusesEvents(usize);
+
+    impl Serialize for RefusesEvents {
+        fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+            if self.0 > 0 {
+                return Err(serde::ser::Error::custom("no events here"));
+            }
+            serializer.serialize_unit()
+        }
+    }
+
+    #[test]
+    fn a_sync_message_over_the_bound_or_unwritable_is_an_error_and_a_heavy_one_drops_events() {
+        let net = Arc::new(InProcess::default());
+        let a = runtime(&net, "a:1", "root", TrustPolicy::Tofu);
+        for name in ["s1", "s2"] {
+            a.open_session(session(name)).unwrap();
+        }
+        let nothing = Marks::new();
+        let over = a.sync_within_bound(Domain::SyncRequest, &nothing, |_| {
+            "x".repeat(MAX_LINK_MESSAGE)
+        });
+        assert!(over.unwrap_err().contains("link bound"), "no event fits");
+        let refused = a.sync_within_bound(Domain::SyncRequest, &nothing, |events| {
+            RefusesEvents(events.len())
+        });
+        assert_eq!(refused.unwrap_err(), "no events here");
+        let bare = a.sync_within_bound(Domain::SyncRequest, &nothing, |_| RefusesEvents(1));
+        assert_eq!(
+            bare.unwrap_err(),
+            "no events here",
+            "not even the bare message"
+        );
+        // a message that grows faster than its events loses events from the end until it fits
+        let half = MAX_LINK_MESSAGE / 2;
+        let (_, kept) = a
+            .sync_within_bound(Domain::SyncRequest, &nothing, |events| {
+                "x".repeat(events.len() * half)
+            })
+            .unwrap();
+        assert_eq!(kept, 1, "one event fits beside its padding");
+        let (bare, kept) = a
+            .sync_within_bound(Domain::SyncRequest, &nothing, |events| {
+                "x".repeat(events.len() * MAX_LINK_MESSAGE)
+            })
+            .unwrap();
+        assert_eq!(kept, 0, "not one event fits, and the bare message goes");
+        assert_eq!(bare.body, serde_json::json!(""));
+    }
+
+    #[test]
+    fn a_sync_over_the_link_bound_is_unreachable_and_an_answer_over_it_is_refused() {
+        let net = Arc::new(InProcess::default());
+        let a = runtime(&net, "a:1", "root", TrustPolicy::Tofu);
+        let b = runtime(&net, "b:1", "root", TrustPolicy::Tofu);
+        let key = a.dial(&["b:1".into()]).unwrap();
+        a.sync_with(&key).unwrap();
+        b.open_session(session("s1")).unwrap();
+        let link = {
+            let mut table = a.table.lock().unwrap();
+            let out = table
+                .peers
+                .get_mut(&key)
+                .unwrap()
+                .outbound
+                .as_mut()
+                .unwrap();
+            std::mem::replace(&mut out.link, "x".repeat(MAX_LINK_MESSAGE))
+        };
+        let synced = a.sync_with(&key);
+        assert!(
+            matches!(synced, Err(RoundError::Unreachable(ref e)) if e.contains("link bound")),
+            "{synced:?}"
+        );
+        // a request exactly at the bound whose answer, carrying B's marks, is over it
+        let request = |link: String| SyncRequest {
+            link,
+            counter: 1_000_000,
+            instance: a.card.instance.clone(),
+            marks: Marks::new(),
+            events: vec![],
+        };
+        let signed = |r: &SyncRequest| {
+            sign(
+                &a.identity,
+                Domain::SyncRequest,
+                serde_json::to_value(r).unwrap(),
+            )
+        };
+        let base = serde_json::to_vec(&signed(&request(String::new())))
+            .unwrap()
+            .len();
+        let long = "y".repeat(MAX_LINK_MESSAGE - base);
+        let message = signed(&request(long.clone()));
+        assert_eq!(
+            serde_json::to_vec(&message).unwrap().len(),
+            MAX_LINK_MESSAGE
+        );
+        {
+            let mut table = b.table.lock().unwrap();
+            let peer = table.inbound_links[&link].clone();
+            table.inbound_links.insert(long, peer);
+        }
+        let reply = b.accept_sync(&message);
+        assert_eq!(
+            reply.refusal.map(|r| r.code),
+            Some(RefusalCode::Oversized),
+            "the answer cannot be built under the bound"
+        );
+    }
+
+    #[test]
+    fn a_round_s_outcome_sets_the_pause_before_the_next() {
+        let net = Arc::new(InProcess::default());
+        let a = runtime(&net, "a:1", "root", TrustPolicy::Tofu);
+        let refusal = |code| {
+            Err(RoundError::Refused(LinkRefusal {
+                code,
+                detail: "test".into(),
+                proto_min: LINK_PROTOCOL_MIN,
+                proto_max: LINK_PROTOCOL_MAX,
+            }))
+        };
+        let (mut failures, mut unknown) = (0u32, 0u32);
+        let beat = a.heartbeat();
+        let unknown_link = refusal(RefusalCode::UnknownLink);
+        assert_eq!(
+            a.after_round(&unknown_link, &mut failures, &mut unknown),
+            Duration::ZERO,
+            "a restarted answerer is greeted again at once"
+        );
+        assert_eq!(
+            a.after_round(&unknown_link, &mut failures, &mut unknown),
+            beat,
+            "and no faster than a heartbeat after that"
+        );
+        assert_eq!(unknown, 2);
+        let replay = refusal(RefusalCode::Replay);
+        assert_eq!(
+            a.after_round(&replay, &mut failures, &mut unknown),
+            a.backoff(3)
+        );
+        assert_eq!(
+            a.after_round(&Err(RoundError::NoLink), &mut failures, &mut unknown),
+            a.backoff(4)
+        );
+        assert_eq!(failures, 4);
+        assert_eq!(a.after_round(&Ok(()), &mut failures, &mut unknown), beat);
+        assert_eq!((failures, unknown), (0, 0));
     }
 
     #[test]
@@ -4398,7 +4653,14 @@ mod tests {
             .unwrap()
             .card
             .features = vec!["claims".into()];
-        let refused = a.request_review("s1", "feature/x".into(), vec![], None, Some(key.clone()));
+        let refused = a.request_review(
+            "s1",
+            "feature/x".into(),
+            vec![],
+            None,
+            Some(key.clone()),
+            None,
+        );
         assert!(
             matches!(refused, Err(CooperationError::FeatureUnsupported(_))),
             "{refused:?}"
@@ -4409,12 +4671,13 @@ mod tests {
                 "feature/x".into(),
                 vec![],
                 None,
-                Some("nobody".into())
+                Some("nobody".into()),
+                None
             ),
             Err(CooperationError::NotFound(_))
         ));
         assert!(a
-            .request_review("s1", "feature/x".into(), vec![], None, None)
+            .request_review("s1", "feature/x".into(), vec![], None, None, None)
             .is_ok());
 
         a.start();
@@ -4485,6 +4748,28 @@ mod tests {
         let live: Vec<_> = state.claims.iter().filter(|c| c.state.is_live()).collect();
         assert_eq!(live.len(), 1);
         assert_eq!(live[0].scope, vec!["docs".to_string()]);
+
+        // an intent past the journal's bound is projected once, clipped, and then left alone:
+        // compared unclipped it differed from the projection on every pass and reopened the
+        // session each time (986 of 1000 journal events on 2026-10-10)
+        let long = format!("relay the train {}", "x".repeat(600));
+        board.announce(&p, &long, vec!["docs".into()]);
+        a.project_board();
+        let once = a.state();
+        assert_eq!(
+            once.sessions[0].info.intent.as_deref().map(str::len),
+            Some(512),
+            "clipped to the bound"
+        );
+        let events = a.journal().events().len();
+        a.project_board();
+        a.project_board();
+        assert_eq!(
+            a.journal().events().len(),
+            events,
+            "an unchanged long intent writes nothing"
+        );
+        assert_eq!(a.state().digest, once.digest);
 
         board.detach(&p);
         a.project_board();

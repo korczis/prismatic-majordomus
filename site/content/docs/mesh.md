@@ -1,7 +1,7 @@
 +++
 title = "Majordomus Mesh"
 description = "the mesh: how running Majordomus instances discover each other — Ed25519 node identity, one signed bounded envelope over multicast, broadcast and rendezvous, one registry, deny-unknown trust, the off-by-default declaration, the threat model, and how to operate and extend it"
-weight = 60
+weight = 63
 [extra]
 source = "docs/MESH.md"
 +++
@@ -136,6 +136,15 @@ A key withdrawn from `trust.allow` loses its links as soon as the server reads t
 reappearing under a different key is rejected under every policy. Trust is a precondition of
 a link, not a link: discovery never admits one.
 
+Under `deny_unknown` and `allowlist`, a machine whose own key is not in `trust.allow` keeps the
+mesh **closed**: it binds no multicast socket, registers with no hub, dials no seed and opens no
+link, and `mesh status` gives the reason with the key to list. This covers a contributor's
+clone of a public repository and a new machine nobody has enrolled yet. Without the rule, such
+a machine would announce itself on its network and dial every endpoint the repository commits,
+while every peer refused it. `mesh doctor` fails its `trust` check with the key and the remedy,
+its `runtime` check reads `closed: …`, and the session's briefing says `Mesh: CLOSED — …`.
+Listing the key and restarting the server opens it. `tofu` never closes on this ground.
+
 ### Which copy of the declaration is obeyed
 
 A working tree may narrow trust and never widen it. When the trunk holds a committed copy of
@@ -222,7 +231,7 @@ Two layers, deliberately separate:
 
 Everything cooperative is an event of the journal: `session_opened`, `session_closed`,
 `claim_acquired`, `claim_released`, `handover_published`, `handover_consumed`,
-`review_requested`, `review_answered`. A person or an agent reads the journal folded, not raw, through `majordomus monitor`
+`review_requested`, `review_answered`, `review_withdrawn`. A person or an agent reads the journal folded, not raw, through `majordomus monitor`
 (`docs/MONITOR.md`, ADR 0133). It drops a board session's unchanged re-projection on each
 heartbeat, marks what names the reader, and pages with the full causal key rather than the
 Lamport stamp alone. An event carries its stream, a dense sequence, a
@@ -268,6 +277,38 @@ dialer and the answerer alike; an event that would take it over waits for the ne
 
 `mesh.state` folds the journal: every runtime with the same events and the same liveness
 verdicts computes the same state and the same `digest`.
+
+### Reading the state in one answer
+
+The fold keeps its history — every session that ever opened, every claim ever taken — and on
+2026-10-10, with twelve runtimes, the whole of it was 449 kB from `mesh.state` and 313 kB from
+`mesh.peers`; a page of 80 journal events was 83 000 characters, 30 of them one session
+reopening itself. An answer a worker's client cannot show is not an answer. So both
+capabilities take one input (`apps/majordomus-cli/src/mesh/page.rs`, I2414):
+
+<div class="overflow-x-auto" tabindex="0">
+
+| Input | Values | What it does |
+|---|---|---|
+| `view` | `summary` (default), `full` | The summary counts sessions and claims by standing, gives each runtime its liveness, counts and newest live claim, and lists the open review requests and the handovers nobody has taken — at most 24 of each, the rest counted, every intent cut to 160 characters. `full` is the fold. |
+| `claims` | `all` (default), `live` | Only the claims still held; their overlaps follow them. |
+| `after` | a Lamport stamp | Only sessions, claims and handovers that moved after it. |
+| `session` | a key or a bare id | Only what that session holds, opened or took. |
+| `runtime` | `<node>-<runtime>` or a node id | Only that runtime, or every runtime of that machine. |
+| `kind` | `sessions`, `claims`, `overlaps`, `handovers`, `reviews` | Only that collection; the others answer empty. |
+| `limit` | a count | At most that many of each collection, the newest by Lamport stamp, in the fold's order. |
+| `open` | `true` | Only what is still open: active sessions, live claims, review requests nobody has answered, handovers nobody has taken. |
+| `matching` | text | Only what mentions it, ignoring case: a claimed path, a branch, an issue, a pull request, a word of an intent or a subject. |
+
+</div>
+
+
+The `digest` in every answer is the whole fold's, never a page's: it is what two runtimes
+compare. `majordomus mesh state` and `mesh peers` take the same input as `--full`,
+`--live-claims`, `--after`, `--session`, `--runtime`, `--kind`, `--limit`, `--open` and
+`--matching`. A server older than this input
+refuses it as invalid; the readers in this repository that need the fold (the integration
+lease's claims, the mesh-review advisor) ask again without it, and the answer is the same.
 
 ## Claims and leases
 
@@ -331,6 +372,24 @@ with it. So compaction forgets the ended sessions and claims, the taken handover
 requests of what it drops — never a claim that holds or a session that is open, never a
 handover still offered, and never who took or answered what stays. A property test holds
 that over random histories of dead and live runs.
+
+A review request ends in one of three ways, and the fold says which:
+
+- `answered`: another session gives a verdict.
+- `withdrawn`: the runtime that asked ends it with `mesh review withdraw` (done, void or
+  superseded). Any session of that runtime may, because an MCP session is one connection and
+  an asker that reconnects is another session of the same runtime. No other runtime may. The
+  note is the requester's own `result` and never an answer.
+- `expired`: nobody answered and the asking runtime has stopped beating.
+
+Expiry is a reading of liveness like a claim's, so no runtime reads another's clock. A runtime
+that sleeps and beats again reads `open` again, and the asking session closing does not end a
+request, since a lane request outlives many connections. A consumer that takes only `open`
+requests (`ReviewState::is_waiting`), such as an executor's lane intake, therefore skips
+expired ones: it should name them rather than drop them silently. A request may carry a `body` of up to 8 KiB
+beside its one-line subject: the evidence, the commands and the question. A runtime older
+than the field reads the request without its body, and holds `review_withdrawn` as an opaque
+event it relays but does not fold.
 
 **Tombstones.** A dropped stream leaves a tombstone: the sequence it reached, advertised as its
 mark so that a peer still holding the stream does not send it again, and the beat it was last
@@ -517,7 +576,22 @@ a comment naming the machine and its node id to the trust row of the table above
 both; `majordomus mesh doctor` on that machine passes its
 `trust` check once the key is listed, and names the remedy until then. A new hub is a server
 started with `majordomus serve --host 0.0.0.0 --port 8791` on the machine, and its addresses
-added under `rendezvous.endpoints`.
+added under `rendezvous.endpoints`; then `sudo majordomus mesh firewall apply` there, because a
+hub whose host firewall drops port 8791 is a hub nobody can register with
+([The host firewall](#the-host-firewall)).
+
+**The hubs as services.** On lundra the hub is a systemd user unit,
+`~/.config/systemd/user/majordomus.service`, running the release executable of a dedicated
+checkout (`~/dev/prismatic-majordomus-hub`, detached at the trunk) with `serve --host 0.0.0.0
+--port 8791 --idle 0`, `Restart=always`, and the share of that checkout; updating it is a
+fetch and checkout of the trunk there, `just build-release`, and `systemctl --user restart
+majordomus`. On the owner's MacBook Pro the hub runs the installed release from a dedicated
+worktree (`~/dev/prismatic-majordomus-hub`, detached at the trunk): `majordomus serve --repo
+~/dev/prismatic-majordomus-hub --host 0.0.0.0 --port 8791 --idle 0`, started by hand, because
+the checkout a person works in already runs its own shared server and a second one is refused.
+The launchd agent of the same shape — `~/Library/LaunchAgents/dev.majordomus.hub.plist` with
+`RunAtLoad`, `KeepAlive` and those arguments — is the operator's to install, and an installer
+that writes either unit is still owed as a typed capability (ADR 0059).
 
 **Turning it off.** Commit `enabled: false`; a server started after that opens nothing,
 `mesh status` says why, and the briefing says `Mesh: off, as declared`. That reverses ADR 0059,
@@ -562,25 +636,104 @@ hook library, which sends no request of its own (SECURITY.md); with no ready ser
 line, and the server line above says why.
 
 **What holds it.** `test/cases/491_the_mesh_is_on_here.sh`: the committed declaration is the
-reviewed one as the executable reads it, the self-check holds over this repository, two
-worktrees under one key link, an unlisted key is refused `untrusted`, and a machine whose key is
-missing is told so. `test/cases/494_the_mesh_is_declared_and_held.sh`: the declaration is
+reviewed one as the executable reads it, the self-check holds over this repository, a machine
+whose key is not listed keeps the mesh closed and dials nobody, two worktrees under one listed
+key link, and a machine whose key is missing is told so. `test/cases/494_the_mesh_is_declared_and_held.sh`: the declaration is
 tracked, enabled, `deny_unknown`, allowlists at least as many keys as the trust row above names
 machines, and names a hub — so adding a machine is a key under `trust.allow` and a node id in
 that row, in one commit — and a disposable repository proves every briefing answer and exit 10
 through the start event. The hubs are started by hand; an installer that runs one as a service
 is owed as a typed capability or a Rhai workflow (ADR 0059).
 
+## The host firewall
+
+The declaration says who may link; the host firewall says what reaches the socket at all, and
+the two drift silently. On 2026-10-08 lundra, a declared hub, ran ufw with default deny and no
+rule for port 8791 or the multicast group: the kernel dropped every registration and every
+advertisement from the LAN (187 `[UFW BLOCK]` lines in a week, 109 in the last hour) while
+`mesh doctor` reported every check holding — because every check it ran was a fact of the
+process, and none was a fact of the host. So the admission is a derived requirement with a
+verdict, `mesh.firewall` (`apps/majordomus-cli/src/mesh/firewall.rs`):
+
+<div class="overflow-x-auto" tabindex="0">
+
+| | derived from | rule |
+|---|---|---|
+| multicast | `multicast.enabled`, `.group`, `.port` | UDP to the group's port, from any source — the TTL keeps it on the segment |
+| broadcast | `broadcast.mode`, `.port`, `.networks` | UDP to the port, from the declared networks |
+| hub | every `rendezvous.endpoints` entry whose address is one of this machine's | TCP to that port, from the fleet's networks |
+| link | `--port`, when this checkout's server listens beyond loopback | TCP to that port, from the fleet's networks |
+
+</div>
+
+
+The fleet's networks are the enclosing private ranges of every address the declaration names
+(hubs and seeds): `192.168.x.0/24`, `10.0.0.0/8`, `172.16.0.0/12`, `100.64.0.0/10` for a tailnet
+— and this machine's own ranges when it names none. A public address derives no network, and
+case 491 refuses one in the declaration first. With no network to admit from, no rule is
+planned for a TCP or broadcast port: only the multicast group is ever admitted from any
+source, and opening a port to every address stays the operator's act. A machine that is no
+hub, with multicast on, needs exactly one rule: the group's port.
+
+`majordomus mesh firewall` prints the plan, the backend (`ufw`, `nftables`, the macOS
+application firewall, or `none`), the commands that admit the plan there, the firewall's own
+word about it — `present`, `missing`, `inactive`, or `unobservable` without root — and what
+the kernel logged it dropping toward those ports in the last five minutes, which is readable
+without root on a machine whose user is in `adm`; it exits 10 when a rule is observed missing
+or a drop was logged. `sudo majordomus mesh firewall apply` runs those commands and asks the
+firewall again, so the verdict afterwards is the firewall's; it refuses, running nothing,
+without root, without a backend, or when the firewall is inactive, because nothing filters
+then and no rule is owed. Each command it ran is reported with its own exit, ok or not, and
+the tool's words beside it. On nftables the rules are added to the `input` chain of the `inet
+filter` table, which the plan presupposes and does not create: a host that filters in another
+table gets nft's refusal for each command and the verdict `missing`. Every rule it writes
+carries the comment `majordomus mesh: …`, so it can be told from an operator's own and
+removed as a set. It is offered on the
+command line only: it runs a privileged host tool, which nothing reachable over HTTP or MCP
+may do. The doctor's `firewall` check, between the process's checks and the server's
+`runtime` verdict, is the same report as one line.
+
+```
+$ majordomus mesh firewall
+backend     ufw (linux)
+plan        2 rule(s) from 100.64.0.0/10, 192.168.100.0/24
+  multicast  udp/7741 to 239.255.77.77 from any — …
+  hub        tcp/8791 from 100.64.0.0/10, 192.168.100.0/24 — …
+observation unobservable: ufw status needs root; run `sudo majordomus mesh firewall` to observe the rules
+blocked     7741: 81, 8791: 28 (kernel log, last 300 s)
+commands    what `sudo majordomus mesh firewall apply` runs:
+  ufw allow in proto udp to 239.255.77.77 port 7741 comment 'majordomus mesh: multicast discovery'
+  ufw allow in proto tcp from 100.64.0.0/10 to any port 8791 comment 'majordomus mesh: rendezvous hub'
+  ufw allow in proto tcp from 192.168.100.0/24 to any port 8791 comment 'majordomus mesh: rendezvous hub'
+verdict     the kernel logged 109 inbound datagram(s) or connection(s) toward the mesh's ports dropped in the last 5 minutes, and the firewall could not be asked without root: run `sudo majordomus mesh firewall apply`
+```
+
+**What it is not.** A firewall manager: it admits the mesh's ports from the fleet's private
+networks and touches no other rule, never widens a source to a public range, and never
+removes anything. On macOS the application firewall admits an executable, not a port, so the
+plan there is the server's executable allowed inbound, and a machine whose application
+firewall is off needs nothing. Where no backend is found nothing is observed and the check
+holds as an absence, like `runtime` in a process no server runs in.
+
+**Recorded, 2026-10-08.** On lundra the report above was taken as the owner, then as root
+(`missing`, both rules, 77 and 28 drops in the window), then `sudo majordomus mesh firewall
+apply` added three rules (`Rule added`, `Rule added`, `Rule updated` — the LAN hub rule had
+been added by hand a quarter of an hour earlier), after which the report as root read
+`present` with no drop in the window, and the hub's `mesh nodes`, which had listed nobody, listed both Macs of the LAN as present and trusted, each heard by multicast and registered by rendezvous.
+
 ## Operating it
 
 ```sh
-majordomus mesh doctor            # prerequisites and the server's runtime verdict; exits 10 on a failed check
+majordomus mesh doctor            # prerequisites, the host firewall, and the server's runtime verdict; exits 10 on a failed check
+majordomus mesh firewall          # what the host firewall must admit, whether it does, and the commands; exits 10 when it does not
+sudo majordomus mesh firewall apply   # admit it; needs root, refuses without
 majordomus mesh identity          # this machine's key, for trust.allow
 majordomus mesh status            # discovery: providers, tallies, refusals
 majordomus mesh nodes             # discovery: one row per node × runtime
-majordomus mesh peers             # machines → runtimes → sessions → claims, each link's state
+majordomus mesh peers             # machines → runtimes → active sessions, each link's state; --full for all
 majordomus mesh peer <runtime>    # one runtime; exits 10 when unknown
-majordomus mesh state             # sessions, claims (held/conflicted/expired), handovers, reviews, digest
+majordomus mesh state             # counts, each runtime's newest claim, open reviews, untaken handovers, digest
+majordomus mesh state --full --live-claims   # every held claim; --after, --session, --runtime narrow
 majordomus mesh events --after 0  # the journal
 majordomus mesh verify            # a live round with every dialed peer, convergence; exits 10 on failure
 majordomus mesh session open --session s1 --client codex --issue '#184'
@@ -590,19 +743,21 @@ majordomus mesh handover publish --issue '#184'
 majordomus mesh handover consume <id> --session s2
 majordomus mesh review request feature/x --session s1 --reviewer <runtime>
 majordomus mesh review answer <request-key> --session s2 --verdict approved
+majordomus mesh review withdraw <request-key> --session s1 --note 'superseded by the rebuilt head'
 ```
 
 Every command has `--format json`, which prints the capability's answer unchanged.
 
-**HTTP and OpenAPI.** `GET /api/v1/mesh`, `/nodes`, `/identity`, `/doctor`, `/cooperation`,
+**HTTP and OpenAPI.** `GET /api/v1/mesh`, `/nodes`, `/identity`, `/doctor`, `/firewall?port=`, `/cooperation`,
 `/peers`, `/peer?runtime=`, `/state`, `/events?after=&limit=`; `POST /api/v1/mesh/register`,
 `/verify`, `/sessions`, `/sessions/close`, `/claims`, `/claims/release`, `/handovers`,
-`/handovers/consume`, `/reviews`, `/reviews/answer`, `/link/hello`, `/link/sync`. The schemas
+`/handovers/consume`, `/reviews`, `/reviews/answer`, `/reviews/withdraw`, `/link/hello`, `/link/sync`. The schemas
 are in `/openapi.json`, generated from the capability declarations.
 
-**MCP.** `majordomus_mesh`, `_nodes`, `_identity`, `_doctor`, `_register`, `_cooperation`, `_peers`,
+**MCP.** `majordomus_mesh`, `_nodes`, `_identity`, `_doctor`, `_firewall`, `_register`, `_cooperation`, `_peers`,
 `_peer`, `_state`, `_events`, `_verify`, `_session_open`, `_session_close`, `_claim`,
-`_release`, `_handover_publish`, `_handover_consume`, `_review_request`, `_review_answer`. An
+`_release`, `_handover_publish`, `_handover_consume`, `_review_request`, `_review_answer`,
+`_review_withdraw`. An
 agent claims work with `majordomus_mesh_claim` instead of inventing a coordination channel;
 without a `session` the call acts for the agent's own board session.
 
@@ -615,8 +770,12 @@ the same capabilities from their Capabilities pages.
 ## Troubleshooting
 
 1. **`mesh doctor`** on each machine. A failed `declaration`, `identity`, `trust`,
-   `repository`, `udp` or `multicast` check names its impact and remedy; a failed `runtime`
-   check is the server's: the declaration is enabled and its mesh is not active, and why.
+   `repository`, `udp` or `multicast` check names its impact and remedy; a failed `firewall`
+   check is the host's: a rule the mesh needs is observed missing, or the kernel logged the
+   firewall dropping toward the mesh's ports — `sudo majordomus mesh firewall apply`; a failed
+   `runtime` check is the server's: the declaration is enabled and its mesh is not active, and
+   why. A hub every other machine registers with and that lists nobody is the firewall case
+   until `mesh firewall` says otherwise.
 2. **`mesh status`** — discovery. No nodes: multicast is not routed between the machines;
    declare `cooperation.seeds` or a rendezvous. Rising `signature` refusals: a broken or
    hostile sender. `version` refusals: a peer runs an executable older than discovery
@@ -640,7 +799,8 @@ the same capabilities from their Capabilities pages.
 
 | level | what | where | runs |
 |---|---|---|---|
-| unit & property | journal dedup, gaps, hostile events, beats; compaction changes nothing live, bounds a handover's hold and hears a returning stream again; fold order/duplicate independence and exclusivity; handshake refusals; three-runtime relay; partition reconciliation; board projection; handover materialisation; repository identity | `cargo test --lib mesh` | CI `rust` |
+| unit & property | journal dedup, gaps, hostile events, beats; compaction changes nothing live, bounds a handover's hold and hears a returning stream again; fold order/duplicate independence and exclusivity; handshake refusals; three-runtime relay; partition reconciliation; board projection; handover materialisation; repository identity; the firewall plan from a declaration, its rendering per backend, and the judgement of a firewall's own output | `cargo test --lib mesh` | CI `rust` |
+| the host firewall | the committed declaration derives the group's port; the doctor carries `firewall`; no declaration needs nothing; a declaration naming this machine as a hub derives the hub rule from its private range alone; `apply` refuses without root, running nothing; the MCP tool answers | `test/run.sh 495_the_firewall_admits_the_mesh` | CI `suite` |
 | two runtimes in process | the real link protocol over an in-process transport: a runtime compacted while it slept is heard again whole; takers and answers outlive their runs; a taken handover keeps its stopped publisher nowhere | `cargo test --test mesh_compaction`, `test/run.sh 493_mesh_compaction_keeps_what_is_live` | CI `rust`, `suite` |
 | multi-process integration | separate `majordomus serve` processes with separate keys over TCP: two-runtime cooperation (sessions, claims, conflicts, reviews, handover, CLI parity, verify), repository isolation, untrusted key, SIGKILL expiry and restart, three runtimes in a line, hostile messages over HTTP, two worktrees under one key | `cargo test --test mesh_cooperation` | CI `rust`, `macos` |
 | network lab | four Linux containers on one docker bridge: multicast discovery with no seeds, full-mesh handshake, repository isolation, cross-node claim and conflict, cross-node handover, three-node convergence, network partition and healing, process crash and restart, `mesh verify` in a node | `test/mesh-lab/run` → `target/mesh-lab/evidence.json` | CI `mesh-lab` |

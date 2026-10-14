@@ -1,7 +1,7 @@
 +++
 title = "The GitHub projection is checked by a gate, not by somebody remembering to run it"
 description = "The GitHub projection is checked by a gate, not by somebody remembering to run it"
-weight = 104
+weight = 110
 [extra]
 kind = "rule"
 slug = "project-github-projection-gated-1"
@@ -47,6 +47,17 @@ It amends version 1 rather than issuing a version 2 because a rule in an open pu
 dependency that does not resolve stops the whole set from applying. A version 2 carrying
 this text follows once that pull request is on the trunk.
 
+## Amended in place, 2026-10-12
+
+Until this amendment the last line of the required behaviour read "Applying the projection
+stays a deliberate human act. CI proves agreement; it does not create issues." On 2026-10-12
+the window passed with I2460 to I2478 behind, because the person whose act it was had gone on
+to the next landing, and master was refused (validate run 38278173940 at `81178f5362`). The
+owner ordered the apply to follow the landing. The line now names the rule that says who
+applies, `project.the-projection-is-applied-at-landing@1`; nothing this rule refuses is
+refused less, and the window still bounds how late the trunk may be. Amended in version 1
+for the reason the amendment above gives.
+
 ## Required behaviour
 
 - A gate reads the remote and fails on drift. It runs on every change that can move the
@@ -70,11 +81,20 @@ this text follows once that pull request is on the trunk.
   baseline rather than tolerated silently. The number may fall and may never rise, and
   writing it is a deliberate act, as it already is for
   [`.ai/repo/claim-proof-baseline.txt`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/claim-proof-baseline.txt).
+- A record the head added is not backlog. `missing` is pending, reported and not refused,
+  for a record whose file is not in the head's merge base, and on the trunk for a record
+  added in a landing younger than the declared window: nothing has projected it yet, and
+  the landing's apply creates it. A record that is missing and that the head did not add
+  is held by the ratchet as before, and so is `adopt` on every record. Amended in version 1
+  on 2026-10-13: a pull request that added 54 records read "73 record(s) missing, over the
+  baseline of 19" on its own head and could not go green there, the same wall the
+  amendment above removed for a record a head edits.
 - A gate that cannot reach the remote — no `gh`, no token, no permission — exits unusable
   and says which, and never exits clean. A projection gate that skips quietly reintroduces
   the exact defect it was written to remove.
-- Applying the projection stays a deliberate human act. CI proves agreement; it does not
-  create issues.
+- This gate proves agreement and applies nothing. Who applies is
+  `project.the-projection-is-applied-at-landing@1`: the landing, through a workflow that runs
+  this gate after its apply; a person's apply is the fallback.
 
 ## Failure behaviour
 
@@ -92,6 +112,13 @@ trunk past the window the same records are a refused line that names
 a record whose canonical text has moved fails the gate, a record added to the model and
 never projected fails the ratchet, a backlog at its baseline passes, and the gate is
 declared in `.ai/repo/ci/gates.yaml` for the path classes that can move either side.
+
+`test/cases/1038_a_head_is_judged_against_what_it_changes.sh` proves the pending states on a
+fixture with a base, a head and two landings. For an added record: it is pending on the head
+and on a young landing, a missing record the head did not add is refused beside it, and past
+the window the trunk is refused. Two mutations of the gate were applied on 2026-10-13 and
+each failed the case: the list of added records left empty, and every missing record called
+added.
 
 `test/cases/45_github_projection.sh` proves the six states the gate reads.
 

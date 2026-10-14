@@ -15,7 +15,7 @@ CHECK="$ROOT/scripts/ci/homepage-check"
 F="$PWD/fixture"
 fresh() {
   rm -rf "$F"; mkdir -p "$F/site/data/registry" "$F/site/data/generated" "$F/site/public/graphs"
-  printf 'order = ["hero"]\n\n[budget]\nassets_bytes = 100\ninline_json_bytes = 20\n' > "$F/site/data/homepage.toml"
+  printf 'order = ["hero"]\n\n[budget]\nhtml_bytes = 4000\nassets_bytes = 100\ninline_json_bytes = 20\n' > "$F/site/data/homepage.toml"
   printf '[indexing]\nunlisted = []\n' > "$F/site/data/nav.toml"
   printf '%s\n' '{"features":[],"providers":[],"evidence":{"available":false,"claims":{}}}' > "$F/site/data/registry/product.json"
   # what every homepage-check run reads, whichever check is asked about: the web topology

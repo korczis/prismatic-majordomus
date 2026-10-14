@@ -1,7 +1,7 @@
 +++
 title = "The derive offload"
 description = "the derive offload: a branch's derive run on a declared cluster machine in its turn — the commands and exit codes, the `derive-offload` declaration, host choice by free space and queue length, the FIFO queue with dead-waiter removal, the bundle round trip with its refusals and a build directory of each derive's own, and the board and mesh etiquette"
-weight = 57
+weight = 60
 [extra]
 source = "docs/OFFLOAD.md"
 +++
@@ -23,6 +23,7 @@ on lundra that way, the oldest for 2 h 12 min, while later arrivals won the lock
 
 ## The commands
 
+<!-- majordomus:unrun probe and derive reach the machines .ai/repo/offload/derive.yaml declares over ssh, which a documentation check has no access to; the declaration and the queue are held by the unit tests in apps/majordomus-cli/src/offload -->
 ```sh
 majordomus offload hosts                  # the declaration, defaults filled in; contacts nobody
 majordomus offload probe                  # measure every host, name the one a derive would take

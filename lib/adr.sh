@@ -105,6 +105,20 @@ mj_adr_load() {
 mj_adr_un() { [ "$1" = - ] && printf '' || printf '%s' "$1"; }
 
 mj_adr_get()  { mj_yget "$MJ_ADR_FLAT" "$1"; }
+# Several fields of the loaded record in one read of the flat file, one value per line in the
+# order asked: each key's first occurrence, as mj_adr_get reads it. With --join <key> last,
+# that list's values follow on one more line, joined with commas less one trailing comma, as
+# `mj_adr_lst <key> | tr '\n' ',' | sed 's/,$//'` joined them. One process instead of one per
+# field, for every decision doctor, watch and `adr check` examine.
+mj_adr_fields() {
+  local join=""
+  if [ "$#" -ge 2 ] && [ "${*: -2:1}" = --join ]; then join="${*: -1}"; set -- "${@:1:$(($# - 2))}"; fi
+  awk -v keys="$*" -v join="$join" 'BEGIN { n = split(keys, k, " ") }
+    { for (i = 1; i <= n; i++) if (!(i in v) && index($0, k[i] "=") == 1) v[i] = substr($0, length(k[i]) + 2)
+      if (join != "" && index($0, join ".") == 1) { r = substr($0, length(join) + 2)
+        if (r ~ /^[0-9]+=/) { sub(/^[0-9]+=/, "", r); j = j r "," } } }
+    END { for (i = 1; i <= n; i++) print v[i]; if (join != "") { sub(/,$/, "", j); print j } }' "$MJ_ADR_FLAT"
+}
 mj_adr_lst()  { mj_ylist "$MJ_ADR_FLAT" "$1"; }
 
 # mj_adr_ref_valid REF — the reference is <type>:<value> with a known type, and a file:
@@ -158,13 +172,17 @@ mj_adr_validate() {
   mj_adr_validate_loaded "$f" "$base"
 }
 mj_adr_validate_loaded() {
-  local f="$1" base="$2" rc=0 v s h unk missing="" origin refs n
+  local f="$1" base="$2" rc=0 v s unk missing="" origin refs n
+  local f_schema f_kind f_id f_title f_status f_date f_sb f_origin
   unk="$(mj_yaml_unknown_keys "$MJ_ADR_FLAT" "$MJ_ALLOW_DIR/adr.txt" || true)"
   [ -n "$unk" ] && { printf 'unknown front-matter key(s): %s\n' "$(printf '%s' "$unk" | tr '\n' ' ' | sed 's/ $//')"; rc=1; }
-  v="$(mj_adr_get schema)"
+  { IFS= read -r f_schema; IFS= read -r f_kind; IFS= read -r f_id; IFS= read -r f_title
+    IFS= read -r f_status; IFS= read -r f_date; IFS= read -r f_sb; IFS= read -r f_origin
+  } < <(mj_adr_fields schema kind id title status date superseded_by provenance.origin)
+  v="$f_schema"
   [ "$v" = "$MJ_ADR_SCHEMA" ] || { printf 'schema must be %s (found "%s")\n' "$MJ_ADR_SCHEMA" "$v"; rc=1; }
-  [ "$(mj_adr_get kind)" = adr ] || { printf 'kind must be adr (found "%s")\n' "$(mj_adr_get kind)"; rc=1; }
-  v="$(mj_adr_get id)"
+  [ "$f_kind" = adr ] || { printf 'kind must be adr (found "%s")\n' "$f_kind"; rc=1; }
+  v="$f_id"
   if [ -z "$v" ]; then printf 'id is missing\n'; rc=1
   else
     case "$v" in
@@ -177,10 +195,10 @@ mj_adr_validate_loaded() {
       *) printf 'id "%s" does not match the file name "%s" (expected %s-<slug>.md)\n' "$v" "$base" "${v#adr-}"; rc=1 ;;
     esac
   fi
-  [ -n "$(mj_adr_get title)" ] || { printf 'title is empty\n'; rc=1; }
-  s="$(mj_adr_get status)"
+  [ -n "$f_title" ] || { printf 'title is empty\n'; rc=1; }
+  s="$f_status"
   case " $MJ_ADR_STATUSES " in *" $s "*) ;; *) printf 'status must be one of %s (found "%s")\n' "$(printf '%s' "$MJ_ADR_STATUSES" | sed 's/ /, /g')" "$s"; rc=1 ;; esac
-  v="$(mj_adr_get date)"
+  v="$f_date"
   case "$v" in
     [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]) ;;
     *) printf 'date must be YYYY-MM-DD (found "%s")\n' "$v"; rc=1 ;;
@@ -190,12 +208,12 @@ mj_adr_validate_loaded() {
   done
   # superseded_by is present exactly when the status is superseded: a record that says it
   # was replaced and does not say by what is a dangling end of the chain
-  v="$(mj_adr_get superseded_by)"
+  v="$f_sb"
   if [ "$s" = superseded ] && [ -z "$v" ]; then printf 'status is superseded but superseded_by is missing\n'; rc=1; fi
   if [ "$s" != superseded ] && [ -n "$v" ]; then printf 'superseded_by is set but the status is "%s", not superseded\n' "$s"; rc=1; fi
   # provenance: an extracted record is a candidate for a person to read, and it says what
   # it was derived from. Nothing the tool wrote may claim to have been accepted.
-  origin="$(mj_adr_get provenance.origin)"
+  origin="$f_origin"
   if [ -n "$origin" ]; then
     case " $MJ_ADR_ORIGINS " in *" $origin "*) ;; *) printf 'provenance.origin must be one of %s (found "%s")\n' "$(printf '%s' "$MJ_ADR_ORIGINS" | sed 's/ /, /g')" "$origin"; rc=1 ;; esac
   fi
@@ -214,13 +232,18 @@ mj_adr_validate_loaded() {
     if [ "$s" = accepted ]; then printf 'provenance.origin is extracted and status is "%s": a record the tool derived is proposed until a person accepts it\n' "$s"; rc=1; fi
   fi
   # the body is the decision: the sections a reader relies on exist and are not empty
-  for h in $MJ_ADR_SECTIONS; do
-    if ! mj_record_body "$f" | awk -v h="## $h" '
-        $0 == h { in_s = 1; found = 1; next }
-        in_s && /^## / { in_s = 0 }
-        in_s && NF { body = 1 }
-        END { exit (found && body) ? 0 : 1 }'; then missing="$missing $h"; fi
-  done
+  # every required section in one pass over the body (what mj_record_body prints: the lines
+  # after the second ---), each judged as a pass of its own would: its heading is present and
+  # some non-blank line follows it before the next heading
+  missing="$(awk -v secs="$MJ_ADR_SECTIONS" '
+      BEGIN { n = split(secs, h, " ") }
+      c >= 2 {
+        hit = 0
+        for (i = 1; i <= n; i++) if ($0 == "## " h[i]) { cur = i; found[i] = 1; hit = 1 }
+        if (!hit) { if ($0 ~ /^## /) cur = 0; else if (cur && NF) body[cur] = 1 }
+      }
+      /^---$/ { c++ }
+      END { for (i = 1; i <= n; i++) if (!(found[i] && body[i])) printf " %s", h[i] }' "$f")"
   [ -n "$missing" ] && { printf 'body is missing or empty in section(s):%s\n' "$missing"; rc=1; }
   return "$rc"
 }
@@ -238,6 +261,12 @@ mj_adr_catalogue() {
   tmp="$(mktemp "${TMPDIR:-/tmp}/mj.ac.XXXXXX")"
   out="$(mktemp "${TMPDIR:-/tmp}/mj.ao.XXXXXX")"; MJ_ADR_ROWS="$out"
   MJ_ADR_N=0; MJ_ADR_INVALID=0
+  # The effective rule set, resolved once here and not once per decision: the validator runs
+  # in a command substitution, so a load it made itself died with that subshell and the next
+  # decision naming a `rule:` resolved the whole set again — one resolution per such decision
+  # for one `adr check`. A load that fails leaves nothing behind, so each validator still
+  # tries it, meets the same failure and reports it against its own reference.
+  mj_rules_load >/dev/null 2>&1 || true
   # The loop stays in this shell so that the counts survive it, and the front matter is
   # loaded here rather than inside the validator's command substitution: a subshell would
   # take MJ_ADR_FLAT with it and every field below would read the previous record's.
@@ -251,9 +280,11 @@ mj_adr_catalogue() {
       reasons="$MJ_ADR_ERROR"; MJ_ADR_INVALID=$((MJ_ADR_INVALID + 1))
     fi
     reasons="$(printf '%s' "$reasons" | tr '\n' ';' | sed 's/;$//')"
-    id="$(mj_adr_get id)"; st="$(mj_adr_get status)"; date="$(mj_adr_get date)"
-    title="$(mj_adr_get title)"; sb="$(mj_adr_get superseded_by)"
-    sup="$(mj_adr_lst supersedes | tr '\n' ',' | sed 's/,$//')"
+    # the six fields of the row in one read of the flat file rather than one process each:
+    # each scalar is its first occurrence, as mj_adr_get reads it, and supersedes is joined
+    # with commas less one trailing comma, as `mj_adr_lst | tr | sed` joined it
+    { IFS= read -r id; IFS= read -r st; IFS= read -r date; IFS= read -r title; IFS= read -r sb
+      IFS= read -r sup; } < <(mj_adr_fields id status date title superseded_by --join supersedes)
     # a tab is whitespace, so `read` collapses a run of them and one empty field would
     # shift every field after it; "-" stands for empty and is read back as empty
     printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \

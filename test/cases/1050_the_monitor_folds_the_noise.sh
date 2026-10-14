@@ -103,3 +103,16 @@ expect_exit 10 "$RB" monitor --after 'm12'
 expect_grep 'invalid_input'
 expect_exit 10 "$RB" monitor --sources mesh,slack
 expect_grep 'unknown source .?"slack'
+
+# ---------------------------------------------------------------- 5. the same stream over MCP
+# An MCP client asks the server it is bridged to with `tools/call`, and gets the page the
+# command line printed: the mesh read, the review asked of 1b marked for 1b.
+FRAME="$( {
+  printf '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"case1050","version":"0"}}}\n'
+  printf '{"jsonrpc":"2.0","method":"notifications/initialized"}\n'
+  printf '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"majordomus_monitor","arguments":{"for":"1b","sources":"mesh"}}}\n'
+} | "$RB" mcp 2>"$T/mcp.err" | sed -n 2p)"
+jq -e '.result.structuredContent
+  | ([.sources[] | select(.source == "mesh") | .state] == ["ok"])
+  and ([.signals[] | select(.kind == "review_requested" and .for_you)] | length == 1)' <<<"$FRAME" >/dev/null \
+  || { echo "    majordomus_monitor over MCP did not answer the page:"; echo "$FRAME" | head -c 800; echo; head -5 "$T/mcp.err"; exit 1; }

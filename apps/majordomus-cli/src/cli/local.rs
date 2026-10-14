@@ -208,6 +208,16 @@ pub const LOCAL: &[LocalCommand] = &[
         note: "writes the UI conformance report surface from a probe's output, which is a producer of the web root rather than a reading of it.",
     },
     LocalCommand {
+        command: "web report ui-snapshot",
+        reason: LocalReason::WritesRepository,
+        note: "writes the UI's snapshot surface, one file per screen and panel read in-process, which is a producer of the web root rather than a reading of it.",
+    },
+    LocalCommand {
+        command: "web report cockpit-snapshot",
+        reason: LocalReason::WritesRepository,
+        note: "writes the Cockpit's snapshot surface, one file per page read in-process, and leads the UI snapshot's links to those pages, which is a producer of the web root rather than a reading of it.",
+    },
+    LocalCommand {
         command: "prs",
         reason: LocalReason::Alias("prs status"),
         note: "with no subcommand it answers `prs status`, the ranked integration queue.",
@@ -411,6 +421,11 @@ pub const LOCAL: &[LocalCommand] = &[
         note: "runs mesh.review.answer on this checkout's running server, whose journal holds the request.",
     },
     LocalCommand {
+        command: "mesh review withdraw",
+        reason: LocalReason::RendersCapability("mesh.review.withdraw"),
+        note: "runs mesh.review.withdraw on this checkout's running server, whose journal holds the request.",
+    },
+    LocalCommand {
         command: "capabilities validate",
         reason: LocalReason::RendersCapability("repository.info"),
         note: "reports the registry's own validation, which repository.info answers as the diagnostics of the process that built it.",
@@ -609,6 +624,11 @@ pub const LOCAL: &[LocalCommand] = &[
         command: "release analyze",
         reason: LocalReason::RendersCapability("release.analysis"),
         note: "prints what the public contract did since the last release and the smallest version it allows.",
+    },
+    LocalCommand {
+        command: "release next",
+        reason: LocalReason::RendersCapability("release.next"),
+        note: "prints the version a landing of HEAD onto the trunk would allocate, and why.",
     },
     LocalCommand {
         command: "release bump",

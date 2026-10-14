@@ -8,9 +8,9 @@ mod common;
 
 use std::collections::BTreeSet;
 use std::io::{BufRead, Write};
-use std::process::{Command, Stdio};
+use std::process::Stdio;
 
-use common::{rule, without_observation_times, Fixture, Served, BIN};
+use common::{rule, without_observation_times, Fixture, Served};
 use serde_json::{json, Value};
 
 #[test]
@@ -170,7 +170,7 @@ fn errors_are_typed_and_the_server_survives_them() {
 
 /// One MCP tools/call over stdio, returning structuredContent.
 fn mcp_call(cwd: &std::path::Path, tool: &str, args: Value) -> Value {
-    let mut child = Command::new(BIN)
+    let mut child = common::majordomus()
         .arg("mcp")
         .env("MAJORDOMUS_SHARE", common::dist_share())
         .current_dir(cwd)
@@ -191,6 +191,59 @@ fn mcp_call(cwd: &std::path::Path, tool: &str, args: Value) -> Value {
         .map(|l| serde_json::from_str(l).unwrap())
         .collect();
     frames[1]["result"]["structuredContent"].clone()
+}
+
+/// The editor projection is one value on every machine surface, and it reads the repository
+/// it is asked about: a hand-written Antigravity rule without a `trigger`, which the product
+/// discards without a word, is a finding over MCP exactly as it is over HTTP.
+#[test]
+fn the_editor_projection_answers_over_mcp_as_over_http() {
+    let f = Fixture::new();
+    f.write(".agents/rules/plain.md", "# a rule with no front matter\n");
+    let s = Served::start(&f.root(), &[]);
+
+    let (status, via_http) = s.get("/api/v1/editors");
+    assert_eq!(status, 200, "{via_http}");
+    let via_mcp = mcp_call(&f.root(), "majordomus_editors", json!({}));
+    assert_eq!(via_http, via_mcp, "HTTP and MCP must not be two opinions");
+
+    assert_eq!(via_mcp["schema"], "majordomus/editor-projection/v1");
+    let adapters: Vec<&str> = via_mcp["adapters"]
+        .as_array()
+        .expect("adapters")
+        .iter()
+        .map(|a| a["id"].as_str().unwrap())
+        .collect();
+    assert_eq!(adapters, ["antigravity", "claude-code", "zed"]);
+    let discarded = via_mcp["diagnostics"]
+        .as_array()
+        .expect("diagnostics")
+        .iter()
+        .find(|d| d["code"] == "antigravity-rule-discarded")
+        .unwrap_or_else(|| panic!("the rule without a trigger is not reported: {via_mcp}"));
+    assert_eq!(discarded["path"], ".agents/rules/plain.md");
+    assert!(
+        !via_mcp.to_string().contains(f.root().to_str().unwrap()),
+        "the answer carries the checkout path"
+    );
+}
+
+/// What was deployed is one value on every machine surface, and a repository nobody has
+/// asked the forge about says so over MCP exactly as over HTTP, with the command that asks.
+#[test]
+fn what_was_deployed_answers_over_mcp_as_over_http() {
+    let f = Fixture::new();
+    let s = Served::start(&f.root(), &[]);
+    let (status, via_http) = s.get("/api/v1/deployments/observed");
+    assert_eq!(status, 200, "{via_http}");
+    let via_mcp = mcp_call(&f.root(), "majordomus_deployments_observed", json!({}));
+    assert_eq!(via_http, via_mcp, "HTTP and MCP must not be two opinions");
+    assert_eq!(via_mcp["observed"], false);
+    assert!(
+        via_mcp["reason"].as_str().unwrap().contains("served forge"),
+        "{via_mcp}"
+    );
+    assert_eq!(via_mcp["deployments"], json!([]));
 }
 
 /// The release analysis is one value, and every machine surface renders that one.
@@ -295,7 +348,7 @@ fn mcp_session(
     cwd: &std::path::Path,
     requests: &[Value],
 ) -> std::collections::BTreeMap<u64, Value> {
-    let mut child = Command::new(BIN)
+    let mut child = common::majordomus()
         .args(["mcp", "--standalone"])
         .env("MAJORDOMUS_SHARE", common::dist_share())
         .current_dir(cwd)
@@ -646,7 +699,7 @@ fn head_is_answered_and_a_bad_kind_filter_is_an_invalid_input() {
 #[test]
 fn with_stdin_at_dev_null_the_server_keeps_running() {
     let f = Fixture::new();
-    let mut child = Command::new(BIN)
+    let mut child = common::majordomus()
         .args(["serve", "--port", "0"])
         .current_dir(f.root())
         .env("MAJORDOMUS_LOG", "info")

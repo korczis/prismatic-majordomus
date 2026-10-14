@@ -47,6 +47,7 @@ pub mod devtask;
 pub(crate) mod directories;
 pub(crate) mod distribution;
 pub mod economics;
+pub(crate) mod editors;
 pub mod entity;
 pub mod environment;
 pub mod episodes;
@@ -66,6 +67,7 @@ pub(crate) mod models;
 pub(crate) mod monitor;
 pub mod objects;
 pub mod obligations;
+pub mod observatory;
 pub mod pack;
 pub(crate) mod peers;
 pub(crate) mod perf;
@@ -214,6 +216,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         devcontext,
         artifacts,
         economics,
+        editors,
         environment,
         quality,
         distribution,
@@ -228,7 +231,8 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         integration,
         convergence,
         trace,
-        product
+        product,
+        observatory
     ]
 }
 
@@ -326,6 +330,8 @@ mod tests {
                 "continuity.sync",
                 // runs any executable capability, writers included (ADR 0126)
                 "executions.start",
+                // writes one new intent record, never a stage (ADR 0144)
+                "intents.propose",
                 "plan.transition",
                 "reasoning.record",
                 "recover.orphans"

@@ -73,6 +73,16 @@ impl Remote {
         }
     }
 
+    /// A host reached through `program`, which is handed the remote command as one string
+    /// the way ssh is: a test's stand-in that fails, vanishes or prints what a host would.
+    #[cfg(test)]
+    pub fn through(program: &Path) -> Remote {
+        Remote {
+            prefix: vec![program.to_string_lossy().into_owned()],
+            label: "stand-in".into(),
+        }
+    }
+
     /// A host reached over ssh, without a terminal and without a password prompt. The ssh
     /// program is `$MAJORDOMUS_OFFLOAD_SSH` when set, so a test can stand a local shim in.
     pub fn ssh(address: &str, identity_file: Option<&str>, label: &str) -> Remote {
@@ -259,5 +269,130 @@ mod tests {
             std::thread::sleep(std::time::Duration::from_millis(20));
         }
         assert!(gone, "the holder outlived its owner");
+    }
+
+    fn alive(pid: u32) -> bool {
+        Remote::local()
+            .run("kill -0 \"$1\"", &[&pid.to_string()], None)
+            .unwrap()
+            .ok()
+    }
+
+    fn stand_in(dir: &Path, body: &str) -> std::path::PathBuf {
+        use std::os::unix::fs::PermissionsExt;
+        let p = dir.join("stand-in");
+        std::fs::write(&p, format!("#!/bin/sh\n{body}\n")).unwrap();
+        std::fs::set_permissions(&p, std::fs::Permissions::from_mode(0o755)).unwrap();
+        p
+    }
+
+    /// The ssh prefix: batch mode, the identity file with `~/` expanded against the invoking
+    /// user's home and any other path kept as written, then the address.
+    #[test]
+    fn an_ssh_host_is_reached_in_batch_mode_with_its_identity() {
+        let home = std::env::var("HOME").unwrap();
+        let r = Remote::ssh("u@lundra", Some("~/.ssh/cluster"), "lundra");
+        assert_eq!(r.label, "lundra");
+        let n = r.prefix.len();
+        assert_eq!(
+            r.prefix[n - 3..],
+            [
+                "-i".to_string(),
+                format!("{home}/.ssh/cluster"),
+                "u@lundra".into()
+            ]
+        );
+        assert!(r.prefix.contains(&"BatchMode=yes".to_string()));
+        if std::env::var(SSH_PROGRAM_ENV).is_err() {
+            assert_eq!(r.prefix[0], "ssh", "the default program is ssh");
+        }
+        let r = Remote::ssh("u@h", Some("/etc/keys/k"), "h");
+        assert_eq!(r.prefix[r.prefix.len() - 2], "/etc/keys/k");
+        let r = Remote::ssh("u@h", None, "h");
+        assert!(!r.prefix.contains(&"-i".to_string()));
+        assert_eq!(expand_home("relative/k"), "relative/k");
+    }
+
+    /// The ssh form hands the program one string that `sh -c` reads back into the script
+    /// and its arguments, each word quoted.
+    #[test]
+    fn a_remote_command_reaches_its_program_as_one_quoted_string() {
+        let tmp = tempfile::tempdir().unwrap();
+        let r = Remote::through(&stand_in(tmp.path(), r#"exec sh -c "$1""#));
+        let out = r
+            .run("printf '%s|%s' \"$1\" \"$2\"", &["a b", "it's"], None)
+            .unwrap();
+        assert_eq!((out.ok(), out.stdout.as_str()), (true, "a b|it's"));
+    }
+
+    /// What cannot run is an error, never an empty answer: a program that is not there, a
+    /// standard input that cannot be opened, a download target that cannot be created.
+    #[test]
+    fn what_cannot_be_run_is_an_error() {
+        let tmp = tempfile::tempdir().unwrap();
+        let gone = Remote::through(&tmp.path().join("no-such-ssh"));
+        let e = gone.run("true", &[], None).unwrap_err();
+        assert_eq!(e.kind(), std::io::ErrorKind::NotFound);
+        let e = gone
+            .run_to_file("true", &[], &tmp.path().join("out"))
+            .unwrap_err();
+        assert_eq!(e.kind(), std::io::ErrorKind::NotFound);
+        assert!(Holder::start(&gone).is_err(), "a holder started on no host");
+
+        let e = Remote::local()
+            .run("cat", &[], Some(&tmp.path().join("no-such-input")))
+            .unwrap_err();
+        assert_eq!(e.kind(), std::io::ErrorKind::NotFound);
+        let e = Remote::local()
+            .run_to_file("echo x", &[], &tmp.path().join("no-dir/out"))
+            .unwrap_err();
+        assert_eq!(e.kind(), std::io::ErrorKind::NotFound);
+
+        let input = tmp.path().join("in");
+        std::fs::write(&input, "fed\n").unwrap();
+        let out = Remote::local().run("cat", &[], Some(&input)).unwrap();
+        assert_eq!(out.stdout, "fed\n");
+        let file = tmp.path().join("down");
+        let out = Remote::local()
+            .run_to_file("echo down; echo said >&2; exit 4", &[], &file)
+            .unwrap();
+        assert_eq!((out.code, out.stderr.as_str()), (Some(4), "said\n"));
+        assert_eq!(std::fs::read_to_string(&file).unwrap(), "down\n");
+    }
+
+    /// A holder that does not print its pid — a login banner, a broken connection, bytes that
+    /// are not text — is refused and its process ended.
+    #[test]
+    fn a_holder_that_does_not_print_its_pid_is_refused() {
+        let tmp = tempfile::tempdir().unwrap();
+        let banner = Remote::through(&stand_in(
+            tmp.path(),
+            "echo 'Welcome to lundra'; exec cat >/dev/null",
+        ));
+        let e = Holder::start(&banner).err().expect("a banner is not a pid");
+        assert_eq!(
+            e.to_string(),
+            "the host's holder did not print its pid: \"Welcome to lundra\""
+        );
+        let binary = Remote::through(&stand_in(
+            tmp.path(),
+            r"printf '\377\376\n'; exec cat >/dev/null",
+        ));
+        let e = Holder::start(&binary).err().expect("bytes are not a pid");
+        assert_eq!(e.kind(), std::io::ErrorKind::InvalidData);
+    }
+
+    /// A holder whose standard input was never piped still ends with its owner.
+    #[test]
+    fn a_holder_without_an_input_still_ends_when_dropped() {
+        let child = Command::new("sleep")
+            .arg("30")
+            .stdin(Stdio::null())
+            .spawn()
+            .unwrap();
+        let pid = child.id();
+        assert!(alive(pid));
+        drop(Holder { child, pid });
+        assert!(!alive(pid), "the holder outlived its owner");
     }
 }

@@ -26,7 +26,8 @@ use super::view::{
 pub const ROUTE: &str = "/ui/mesh";
 
 const PEERS: Source = Source::of("mesh.peers");
-const EVENTS: Source = Source::of("mesh.events");
+/// The journal as it stands now: its newest events, not the first page from its beginning.
+const EVENTS: Source = Source::with("mesh.events", r#"{"newest":true}"#);
 
 /// The tone a runtime's liveness is drawn in: presentation of the runtime's own word.
 fn liveness_tone(word: &str) -> &'static str {
@@ -52,6 +53,9 @@ fn livenesses(m: &Value) -> Vec<String> {
 }
 
 /// Where selecting a machine leads: this screen, with the machine in the URL.
+/// How many characters of a session's intent its row shows; the rest is in the row's title.
+const INTENT: usize = 160;
+
 fn select(name: &str) -> String {
     format!("{ROUTE}?node={name}#node")
 }
@@ -227,6 +231,20 @@ fn machine_row(m: &Value) -> El {
         )
 }
 
+/// How many claims a session holds. The summary view of `mesh.peers` counts them in
+/// `claims_held` and leaves the `claims` list empty; an answer without the count lists them.
+fn live_claims(session: &Value) -> u64 {
+    session
+        .get("claims_held")
+        .and_then(Value::as_u64)
+        .unwrap_or_else(|| {
+            session
+                .get("claims")
+                .and_then(Value::as_array)
+                .map_or(0, |c| c.len() as u64)
+        })
+}
+
 /// The inspector of one machine: what it is, its runtimes, the sessions they hold, their
 /// claims, and the events the journal holds from it.
 fn inspector(name: &str, machines: &[Value], peers: &Answer, events: &Answer) -> El {
@@ -282,11 +300,16 @@ fn inspector(name: &str, machines: &[Value], peers: &Answer, events: &Answer) ->
                     .unwrap_or_default()
                     .to_string()
             };
-            let claims = s
-                .get("claims")
-                .and_then(Value::as_array)
-                .map_or(0, Vec::len);
-            let intent: String = info("intent").chars().take(160).collect();
+            let claims = live_claims(&s);
+            // a long intent is cut for the row and said whole in its title
+            let said = info("intent");
+            let intent: String = if said.chars().count() > INTENT {
+                format!("{}…", said.chars().take(INTENT).collect::<String>())
+            } else if said.is_empty() {
+                "none".into()
+            } else {
+                said.clone()
+            };
             el("tr")
                 .child(el("td").class("mj-ui-mono").text(info("session")))
                 .child(
@@ -297,7 +320,12 @@ fn inspector(name: &str, machines: &[Value], peers: &Answer, events: &Answer) ->
                     ),
                 )
                 .child(el("td").class("mj-ui-num").text(claims.to_string()))
-                .child(el("td").class("mj-ui-dim").text(intent))
+                .child(
+                    el("td")
+                        .class("mj-ui-dim")
+                        .attr_if("title", (!said.is_empty()).then_some(said))
+                        .text(intent),
+                )
         })
         .collect::<Vec<_>>();
     let body = el("div")
@@ -326,12 +354,12 @@ fn inspector(name: &str, machines: &[Value], peers: &Answer, events: &Answer) ->
             ),
         )
         .child(table(
-            &["Runtime", "Liveness", "Last beat", "Sessions"],
+            &["Runtime", "Liveness", "Last beat", "Active sessions"],
             runtime_rows,
             "It runs no runtime the mesh knows.",
         ))
         .child(table(
-            &["Session", "Worker", "Claims", "What it said"],
+            &["Session", "Worker", "Claims held", "What it said"],
             session_rows,
             "No session is open on it.",
         ))
@@ -349,10 +377,13 @@ fn inspector(name: &str, machines: &[Value], peers: &Answer, events: &Answer) ->
 /// The journal's latest events, newest first; with `node`, only the streams of that node.
 fn journal(events: &Answer, node: Option<&str>) -> El {
     unanswered(events).unwrap_or_else(|| {
-        let rows = list(events, "/events")
-            .iter()
+        let from_here: Vec<Value> = list(events, "/events")
+            .into_iter()
             .rev()
             .filter(|e| node.is_none_or(|n| text(e, "stream").starts_with(n)))
+            .collect();
+        let rows = from_here
+            .iter()
             .take(ROWS * 2)
             .map(|e| {
                 let kind = e
@@ -376,11 +407,17 @@ fn journal(events: &Answer, node: Option<&str>) -> El {
                     .child(el("td").class("mj-ui-mono").text(short(&text(e, "stream"))))
             })
             .collect::<Vec<_>>();
-        table(
-            &["At", "Event", "Stream"],
-            rows,
-            "The journal holds no event from here.",
-        )
+        el("div")
+            .child(table(
+                &["At", "Event", "Stream"],
+                rows,
+                "The journal holds no event from here.",
+            ))
+            .children(super::view::more(
+                (ROWS * 2).min(from_here.len()),
+                from_here.len(),
+                None,
+            ))
     })
 }
 
@@ -422,6 +459,16 @@ mod tests {
         assert_eq!(liveness_tone("something-new"), "orange");
     }
 
+    /// The summary view counts a session's claims and lists none; the count is what is drawn.
+    #[test]
+    fn a_session_shows_the_claims_the_summary_counts() {
+        let summarised = serde_json::json!({ "claims": [], "claims_held": 3 });
+        assert_eq!(live_claims(&summarised), 3);
+        let listed = serde_json::json!({ "claims": [{}, {}] });
+        assert_eq!(live_claims(&listed), 2);
+        assert_eq!(live_claims(&serde_json::json!({})), 0);
+    }
+
     /// Selecting a machine is a URL, so it survives a reload and the browser's Back.
     #[test]
     fn a_selection_is_a_url() {
@@ -437,6 +484,7 @@ mod tests {
             exposure: Default::default(),
             value: Ok(serde_json::json!({ "machines": [] })),
             took: std::time::Duration::ZERO,
+            standing: crate::ui::source::Standing::NOW,
         };
         let html = inspector("nowhere", &[], &peers, &peers).render();
         assert!(html.contains("knows no machine by this name"), "{html}");
@@ -449,6 +497,7 @@ mod tests {
             exposure: Default::default(),
             value,
             took: std::time::Duration::ZERO,
+            standing: crate::ui::source::Standing::NOW,
         }
     }
 
@@ -684,5 +733,36 @@ mod tests {
         assert_eq!(short("77aa-r9"), "r9");
         assert_eq!(short("plain"), "plain");
         assert!(livenesses(&serde_json::json!({ "name": "ghost" })).is_empty());
+    }
+
+    /// A long intent is cut for its row and said whole in the row's title, a session that
+    /// said nothing reads none, and a journal longer than its rows says how many it leaves out.
+    #[test]
+    fn a_long_intent_is_cut_and_said_whole_and_a_long_journal_counts_the_rest() {
+        let long = "x".repeat(INTENT + 40);
+        let peers = answer(
+            PEERS,
+            Ok(
+                serde_json::json!({ "machines": [{ "node": "aa", "name": "studio", "runtimes": [{
+                "runtime": "aa-r1", "liveness": "own",
+                "sessions": [ { "info": { "session": "s-1", "intent": long } },
+                              { "info": { "session": "s-2" } } ] }] }] }),
+            ),
+        );
+        let many: Vec<Value> = (0..ROWS * 2 + 5)
+            .map(|i| serde_json::json!({ "stream": "aa-r1", "at": 1_760_000_000u64 + i as u64, "body": { "kind": "beat" } }))
+            .collect();
+        let events = answer(EVENTS, Ok(serde_json::json!({ "events": many })));
+        let html = render(&peers, &events, Some("studio")).main.render();
+        assert!(
+            html.contains(&format!("title=\"{long}\"")),
+            "the whole intent is in the title"
+        );
+        assert!(
+            html.contains(&format!("{}…", "x".repeat(INTENT))),
+            "the row shows the cut"
+        );
+        assert!(html.contains("<td class=\"mj-ui-dim\">none</td>"), "{html}");
+        assert!(html.contains("5 more not shown"), "{html}");
     }
 }

@@ -16,11 +16,11 @@ mod common;
 use std::io::{BufRead, BufReader, Read, Write};
 use std::net::TcpStream;
 use std::path::{Path, PathBuf};
-use std::process::{Child, Command, ExitStatus, Stdio};
+use std::process::{Child, ExitStatus, Stdio};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
-use common::{dist_share, Fixture, BIN};
+use common::{dist_share, Fixture};
 use majordomus_cli::lease::LeaseFile;
 use serde_json::{json, Value};
 
@@ -36,7 +36,7 @@ struct Server {
 
 impl Server {
     fn start(f: &Fixture) -> Self {
-        let mut child = Command::new(BIN)
+        let mut child = common::majordomus()
             .args(["serve", "--port", "0"])
             .current_dir(f.root())
             .env("MAJORDOMUS_LOG", "info")
@@ -304,7 +304,7 @@ fn serve_stop_ends_the_server_in_order_and_closes_its_episodes() {
 
     // the person's command, exactly as they type it
     let ended = server.reap_in_background();
-    let out = Command::new(BIN)
+    let out = common::majordomus()
         .args(["serve", "stop"])
         .current_dir(f.root())
         .env("MAJORDOMUS_SHARE", dist_share())

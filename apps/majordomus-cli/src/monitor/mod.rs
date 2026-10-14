@@ -21,6 +21,8 @@
 pub(crate) mod executor;
 pub(crate) mod github;
 pub(crate) mod mesh;
+#[cfg(test)]
+pub(crate) mod testing;
 
 use std::collections::HashMap;
 
@@ -480,9 +482,10 @@ pub(crate) fn assemble(
     let echoed = (before - signals.len()) as u64;
     suppressed += echoed;
     if echoed > 0 {
-        if let Some(state) = states
+        // a GitHub signal was dropped, so GitHub's lane answered and has its state
+        for state in states
             .iter_mut()
-            .find(|s| s.source == MonitorSource::Github)
+            .filter(|s| s.source == MonitorSource::Github)
         {
             state.signals = state.signals.saturating_sub(echoed as usize);
             state.suppressed += echoed;
@@ -570,6 +573,23 @@ mod tests {
 
     fn signal(at: u64, source: MonitorSource) -> MonitorSignal {
         MonitorSignal::new(at, source, "k", MonitorSeverity::Info, "s")
+    }
+
+    #[test]
+    fn a_word_that_ends_the_text_inside_another_is_no_match() {
+        assert!(!contains_word("ab", "b"));
+        assert!(contains_word("a b", "b"));
+    }
+
+    #[test]
+    fn a_page_cut_before_a_sources_first_signal_keeps_its_position() {
+        let mut slot = Some(7u64);
+        advance(&mut slot, &[8, 9], 0, Some(9));
+        assert_eq!(slot, Some(7), "nothing of it was taken");
+        advance(&mut slot, &[8, 9], 1, Some(9));
+        assert_eq!(slot, Some(8));
+        advance(&mut slot, &[], 0, None);
+        assert_eq!(slot, Some(8), "a source that read nothing stays");
     }
 
     #[test]

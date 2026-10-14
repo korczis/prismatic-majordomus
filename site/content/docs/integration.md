@@ -1,7 +1,7 @@
 +++
 title = "Pull-request integration"
 description = "pull-request integration: every open pull request classified against the current master with its evidence, the fourteen dispositions, the deterministic rank, one merge at a time with a re-plan after each, refreshing a branch, the cleanup threshold, the lease and the audit trail (ADR 0101)"
-weight = 54
+weight = 57
 [extra]
 source = "docs/INTEGRATION.md"
 +++
@@ -484,15 +484,21 @@ new observation.
 A merge that changes a projected plan record leaves GitHub behind by exactly that change.
 The records are the files under `.ai/repo/project/issues/` and `.ai/repo/project/milestones/`
 and every record whose derived status moves with one of them. `scripts/github-sync --apply`
-projects master and nothing else, and `prs drain` never runs it. So after landing such a pull
-request, whoever operates the executor runs `scripts/github-sync --apply` from master as the
-next step. `scripts/ci/github-check` gives that step a declared window, `apply.window` in
-`.ai/repo/ci/github.yaml`. On the pull request's own head the records it changed are reported
-`PENDING` and not refused. On master they stay `PENDING` while the landing is younger than the
-window. Past it the gate refuses master and names the command. A job on every push to master
-that applies with a token allowed to write issues would remove the manual step. That is the
-owner's open choice and nothing runs one: the workflow token reads issues, and applying stays
-a deliberate act (`project.github-projection-gated`).
+projects master and nothing else, and `prs drain` never runs it. The landing does: every push
+to master starts `.github/workflows/github.yml`, which asks what GitHub does not show yet
+(`scripts/github-sync --check`), applies it, and proves the result with
+`scripts/ci/github-check`. The workflow holds `issues: write` and nothing broader, runs one
+at a time, is never cancelled, and refuses to apply without the Rust executable. Its model is
+`.ai/repo/ci/github.yaml` and the rule is `project.the-projection-is-applied-at-landing`.
+Whoever operates the executor has no step to remember here.
+
+`scripts/ci/github-check` gives the apply a declared window, `apply.window` in the same
+file. On the pull request's own head the records it changed are reported `PENDING` and not
+refused. On master they stay `PENDING` while the landing is younger than the window. Past it
+the gate refuses master and names the command. That is the fallback, for a run that failed: a
+person runs `scripts/github-sync --apply` from the clean tip of master, with `MAJORDOMUS_BIN`
+naming the executable. Until 2026-10-12 that manual apply was the mechanism, and master went
+red on the day the executor was busy for longer than the window.
 
 When nothing is ready, `prs drain --refresh` brings master into the first `needs_refresh`
 pull request. It uses a scratch worktree under the common git directory, runs `git merge
@@ -554,6 +560,97 @@ nobody judged.
 
 A train is prepared by whoever brings the heads up to date; the executor decides each link on
 what git says of it and does not build one itself yet.
+
+### The record pull request it reopens
+
+A release proposes its record as `release/record-<tag>`, opened with the workflow's own
+token, and a forge starts no workflow from an event that token caused. Such a pull request
+has no check of its own and never will: it reads `waiting_for_checks` with
+`required_checks:missing` for as long as nobody closes and reopens it, and until the record
+is on master the release check fails on every other open head.
+
+So when nothing is ready, and before any refresh, `prs drain` looks for a pull request from
+a `release/record-` branch in that state and asks the forge what the queue does not carry:
+who opened it, when, and whether it has a single check of its own. If it is open at the head
+decided on, was opened by `app/github-actions`, is older than two minutes
+(`RECORD_REOPEN_GRACE`) and its rollup is empty, the executor closes it with a comment
+saying why and reopens it at once, which is the event that starts its run. The act is taken
+once per head: a head the trail names in `reopen_attempted` or `reopened` is never tried
+again, because a reopened pull request also reads `missing` until its run's last job exists.
+It pushes nothing, so it needs no `--refresh`, and `--dry-run` only names it.
+
+A record a person opened, one that has any check of its own, one still inside the grace,
+one the forge cannot show and every branch that is no record are left alone. If the forge
+refuses the reopen after the closure, the pull request is closed: the drain says so, names
+`gh pr reopen <n>`, records `reopen_failed` and exits 10.
+
+## An expedited landing
+
+Everything above is the executor, and the executor never passes `--admin`. One thing is
+outside it: the owner of the branch protection may decide to spend it. Rule
+`project.an-expedited-landing-is-the-owners-word` and ADR 0155 say when a named lander may
+merge past the required check, and what that never reaches.
+
+The required check takes about an hour and the pool judges one pull request at a time. On
+2026-10-12 a release record that changed one file waited two and a half hours behind runs
+nobody was going to read, while the site named a release two versions old. The owner's order
+that followed is quoted in the ADR. What makes a landing under it safe was measured over the
+next day:
+
+<div class="overflow-x-auto" tabindex="0">
+
+| the lander | because |
+|---|---|
+| holds the exclusive landing claim on the mesh, alone | a merge between another lander's gates and its merge makes those gates a verdict on a tree that no longer exists |
+| merges master into the branch, commits the merge, then derives | a head judged alone is not the tree that lands, and a derive taken on an uncommitted merge is stale |
+| runs the whole structure job, the library tests and the cases the change touches on that merged tree, and names the commit each ran on | a gate nobody ran reads as a gate that passed; a landing with the structure job unfinished put two reds on master |
+| before judging, searches the tests for what reads the change: a sibling's identifier across `apps/majordomus-cli/tests` and `test/cases` when the change adds a named record (a skill, a screen, a rule, a capability), the script's name when it changes how a script calls a tool; and runs every test found | a test that lists records by name, or that replaces a tool with a stand-in and reads what it was asked, lives in the rust lanes and the suite shards, which the structure job does not run; two landings of 2026-10-13 passed that job and left the trunk red there, for 95 minutes and for the length of the next run |
+| after a red is found, searches for the same shape before pushing its fix | the first fix of 2026-10-13 named the skill in the crate test; the case that makes the same demand would have been the next red, one run later |
+| merges with `gh pr merge --admin --merge --match-head-commit <head>` | a head that moved after it was judged is refused |
+| cancels its own branch's run after the merge | a run nobody will read still holds a runner, and the trunk's run waits behind it |
+| verifies the commit production serves, with `scripts/pages verify` | every landing is a deployment, and a merge that broke the publication says nothing |
+
+</div>
+
+
+A run is stale, and is cancelled, when its pull request is merged or closed, when its head is
+no longer the head of its branch, or when another run of the same workflow already judges
+the same commit. The trunk's only run of a commit, a deployment in flight, a release run and
+another session's run on a current head are never cancelled. A landing on the trunk cancels
+nothing by itself: the trunk's validation runs are each their own concurrency group, and the
+publication queue never cancels the deploy in flight.
+
+A run that can no longer end green is cancelled as well: once one job of a branch's run has
+failed, the jobs still running decide nothing about that head, and they hold the runners the
+trunk's run waits for. The lander reads the failed job first, through the jobs API, which
+answers while the run is still going. The trunk's own run is left to finish: its other jobs
+are the only reading of the trunk's other lanes. While the trunk's run is queued, a branch
+run on a head that contains the trunk is that reading, lane by lane, and is read before it
+is cancelled. On a pull request the workflow does this by itself: the last step of every gate
+job, on `failure()` of a `pull_request` event alone, cancels the run by its own id
+(`.github/workflows/validate.yml`, case 3019). A push to master, the schedule and a dispatch
+are never cancelled that way.
+
+What the merged tree owes follows what the change touches, and rule clause 4 lists it: a
+record a crate test reads (a skill, a rule, a claim, the quality baseline, a plan record) owes
+the crate tests that open this repository itself (`tests/skills.rs`, `tests/quality.rs` and
+their siblings) and the `intent-check` gate, although no Rust moved. An active skill missing
+from the header of `tests/skills.rs` or from case 391 is refused in the structure job by the
+`skill-naming` gate.
+
+A red on the trunk has one carrier, named by the integrator. A second session that builds the
+same fix costs a disk and lands nothing sooner.
+
+Between a tag and its record nothing else lands. The record pull request the release
+workflow opens is the record and the files derived from it, generated against the master of
+that minute; a landing in that window moves those files under it, and the site keeps naming
+the previous release until the record has been merged with master and derived again. The
+record is merged first, pinned, as soon as its own gates are read.
+
+A release is never expedited. A tag is pushed only on a commit whose `ci` check concluded
+success; `scripts/ci/release-verdict` refuses anything else, the release workflow asks it
+before it builds, and no gate is disabled, skipped or edited to get there. A merge is
+corrected by the next merge. A tag publishes executables that people install.
 
 ## Repair
 
@@ -700,12 +797,19 @@ json` stays the list of pull requests to close.
 - A read writes nothing. `prs status`, `plan`, `explain`, the `integration.*` capabilities
   and the Cockpit build the queue from the recorded observation and leave the checkout as
   they found it; only `prs refresh` and the executor, which have just observed the forge,
-  keep the relations they decided and the summary a briefing reads. An observation older
+  keep the relations they decided and the summary a briefing reads. What a read decides is
+  still kept, in the process that read it: a long-running server remembers each relation and
+  shape by its `master..head` pair, and whether one mirrored head contains another by its
+  pair of commits, so its next read of the same checkout asks git again only about a head or
+  a master that moved. Reads of one checkout take turns, so concurrent readers decide each
+  pair once. `MAJORDOMUS_INTEGRATION_MEMO=off` reads without that memory; the answer is the
+  same (`integration::memo`). An observation older
   than an hour is said in the queue's diagnostics, and every reading of a queue with a
   diagnostic — `status`, `plan` and `explain` alike — exits 10.
 - The trail is written first. A merge is asked of the forge only after `merge_attempted` is
   on the trail, a refresh is pushed only after `refresh_attempted`, a repair only after
-  `repair_attempted`, and a pull request is closed only after `close_attempted`. When that
+  `repair_attempted`, a pull request is closed only after `close_attempted`, and a record
+  pull request is closed and reopened only after `reopen_attempted`. When that
   line cannot be written, the act is not taken: the step reports `trail_unwritable`, the
   drain stops, and `prs drain` exits 12 (`prs repair --apply` exits 12 too). A lease the
   trail cannot record is given back and refused. Any other write the trail refuses ends the
@@ -730,6 +834,8 @@ json` stays the list of pull requests to close.
   | `repaired` (with the head it pushed), `repair_refused` (with its class) | after it, or when the classification refused it |
   | `close_attempted` | before a redundant or superseded pull request is closed |
   | `closed_redundant`, `closed_superseded` (with its evidence), `close_failed` | after it |
+  | `reopen_attempted` | before a record pull request the workflow's token opened is closed and reopened |
+  | `reopened`, `reopen_failed` (with its class, saying whether it was left closed) | after it |
   | `idle` | nothing was ready |
   | `observe_failed` | a continuous drain's cycle met an outage short enough to wait out |
 

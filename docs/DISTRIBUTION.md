@@ -201,6 +201,26 @@ git tag v0.3.0 && git push origin v0.3.0
 #    the record, and scripts/pages verify --commit <merge sha> confirms it
 ```
 
+**The tag comes first and the record second, and the window between them is pending, not
+red.** The record cannot be written before the tag: it is made from what was published — the
+archives' names and SHA-256 digests, the release page — and none of that exists until the
+pipeline the tag starts has run. So the record is proposed after publication, on
+`release/record-<tag>`, and its pull request needs a full run of its own before it can merge,
+about two hours. `scripts/ci/release-check` refuses a published tag the layer holds no record
+for, and until I2054 it refused it on every head in that window: on 2026-10-08 four pull
+requests about other things went red on that one finding while v0.17.0's record ran, and on
+2026-10-14 every branch did between the v0.25.0 tag and its record's merge. It now reads the
+proposal from git, as the structure job already has it (`fetch-depth: 0` fetches every branch
+as `refs/remotes/origin/*`): a tag whose record is carried by the tip of a
+`release/record-<tag>` branch younger than `MJ_RELEASE_RECORD_GRACE_HOURS` (24 by default) is
+reported `pending`, naming that branch, and passes. What it costs: the gate trusts a branch,
+not a merged record, for up to a day — a record branch whose pull request was closed excuses
+its tag until the grace runs out — and a checkout that fetched no branches sees no proposal
+and refuses as before. A tag with no record and no branch proposing one, the v0.7.0 state, is
+refused at once on every head. Proposing the record before the tag was the other choice, and
+it was not taken: the record would describe artifacts nobody had built yet.
+`test/cases/3021_a_tag_does_not_freeze_the_queue.sh` holds every state.
+
 The pipeline is [`.github/workflows/release.yml`](../.github/workflows/release.yml), an
 adapter over [`.ai/repo/ci/release.yaml`](../.ai/repo/ci/release.yaml) and the generated
 matrix:
@@ -275,7 +295,7 @@ Stage by stage:
 | `publish`, after the release exists | yes — the release and its assets | yes; the rerun adopts those assets | none |
 | `publish`, after the metadata commit | yes — the record is on the default branch | yes; the commit step finds nothing to add | none |
 | `pages` | yes — the record is committed but not served | `gh workflow run pages.yml --ref master` | none |
-| `smoke`, while the record is a proposal | yes — the release, not its metadata | merge the record pull request the error names once its `ci` is green (the pipeline asked for that verdict; if it could not, `gh workflow run validate.yml --ref release/record-<tag> -f plan=change`), then rerun `smoke` | none |
+| `smoke`, while the record is a proposal | yes — the release, not its metadata | merge the record pull request the error names once its `ci` is green (`majordomus prs drain` reopens it so that its own run starts; by hand, `gh pr close <n>` then `gh pr reopen <n>`), then rerun `smoke` | none |
 | `smoke` | yes — everything is published | fix the cause, then rerun | none; the release stands or is withdrawn below |
 
 #### Why the release asks for the verdict of its record
@@ -297,6 +317,16 @@ does not fail the job, because the release is published either way and `smoke` m
 run to say so. `test/cases/996_the_record_pull_request_gets_its_verdict.sh` holds both
 workflows to this.
 
+That dispatch has not, by itself, made a record mergeable. On `v0.19.1` its `ci` passed at
+the record's head and the merge was still refused; the record landed only after a person
+closed and reopened the pull request, 3.4 hours after it was proposed, with every open head
+red meanwhile (I2282). So the integration executor does that part: `majordomus prs drain`
+closes and reopens a `release/record-<tag>` pull request that the workflow's token opened
+and that has no check of its own, once per head, and the run its reopening starts is the one
+the merge waits for ([INTEGRATION.md](INTEGRATION.md), "The record pull request it reopens";
+`test/cases/1036_the_executor_reopens_a_record_pull_request.sh`). Without a drain running,
+the remedy is the same two commands by hand: `gh pr close <n>` and `gh pr reopen <n>`.
+
 #### The site serves a release before its record lands
 
 What the installer reads is `releases/latest.json` and `releases/<tag>.json`, both projections
@@ -315,6 +345,18 @@ names, when it names a newer version than the build; it says so in its output an
 `latest.json` that differs from the tag's file, and a release older than the one served: a
 site never goes back a release. `test/cases/1041_a_release_publishes_its_metadata.sh` holds
 all of it.
+
+The pages follow the metadata, not the record. Until 2026-10-12 they did not: `latest.json`
+named v0.21.0 from 10:23Z while the homepage beside the install command offered v0.20.0,
+because every page read the release record and the record was still a pull request. The
+release a page offers is now derived once, by `scripts/site-build`, as the newer of the
+newest record and the `releases/latest.json` that `gh-pages` serves (read from the git ref,
+named in `/build.json` as `release.published_from`), and every page reads that one value. So
+the build the publish job asks for below is the one that moves the homepage, minutes after the
+archives rather than hours. `scripts/pages release-live` holds the homepage, `latest.json`
+and GitHub's newest release to one version past `deploy.release_window`, after every deploy
+and in the `pages-live` gate (`project.the-site-offers-the-release-it-published`,
+`test/cases/1087_the_site_offers_the_release_it_published.sh`).
 
 #### Why the release asks Pages to publish
 
@@ -435,7 +477,10 @@ yanked: true
 then `just derive` and commit. `latest.json` is derived on every generation as the highest
 version among the stable, unwithdrawn records, so the stable pointer moves back on its own
 and `--version v0.3.0` still resolves for anyone who wants exactly that. Nothing is deleted
-and no URL stops working.
+and no URL stops working. The site follows the same derivation: the record's reading of the
+release it offers is `latest` in `site/data/registry/distribution.json`, never the highest
+record file name, so a withdrawn or prerelease record is not what the pages present, and
+`scripts/site-check` refuses a build whose badges differ from the one release it offers.
 
 ## Reproducibility
 
