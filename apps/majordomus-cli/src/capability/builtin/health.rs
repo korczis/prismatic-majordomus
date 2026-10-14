@@ -613,7 +613,7 @@ fn health(ctx: &Context, _: Empty) -> Result<Health, CapabilityError> {
     //
     // Not a second opinion and not a second reading: `server::standing_at` is what answers
     // `GET /api/v1/server`, and this reports what it says. It costs one small file and,
-    // when the lease names an address, one probe bounded by `lease::PROBE_TIMEOUT`; the
+    // when the lease names an address, one probe bounded by the declared probe timeout; the
     // five-second cache on `health.report` is as fresh as a file other processes write can
     // usefully be, and `server.status` is the uncached answer for a caller that needs one.
     let checkout = root.canonicalize().unwrap_or_else(|_| root.to_path_buf());
