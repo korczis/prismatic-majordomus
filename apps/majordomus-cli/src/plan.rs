@@ -21,6 +21,9 @@
 //! values already in memory. That is what lets it be built on demand, inside the handler of
 //! a plan capability, rather than eagerly when a [`crate::capability::Context`] is composed:
 //! `App::load` has a stated budget and 200 project records have no business inside it.
+//! The one question asked of the working tree is [`header_unknown`]'s — whether
+//! `project.yaml` is there when no object carries it — and it is asked by the reader about
+//! to report a blank header, never by [`Plan::build`].
 
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -597,7 +600,7 @@ fn raws(index: &Index) -> (PlanProject, Vec<PlanMilestoneRaw>, Vec<PlanIssueRaw>
         match o.kind.as_str() {
             MILESTONE => milestones.push(PlanMilestoneRaw::of(&o.identity, &o.metadata)),
             ISSUE => issues.push(PlanIssueRaw::of(&o.identity, &o.metadata)),
-            PROJECT if o.provenance.path.ends_with("project/project.yaml") => {
+            PROJECT if is_header(&o.provenance.path) => {
                 header.name = field(&o.metadata, "name");
                 header.repository = field(&o.metadata, "repository");
                 header.default_branch = field(&o.metadata, "default_branch");
@@ -610,6 +613,111 @@ fn raws(index: &Index) -> (PlanProject, Vec<PlanMilestoneRaw>, Vec<PlanIssueRaw>
     milestones.sort_by(|a, b| a.id.cmp(&b.id));
     issues.sort_by(|a, b| a.id.cmp(&b.id));
     (header, milestones, issues)
+}
+
+/// The file name the plan's header is authored in, under the layer's `project` section.
+const HEADER_FILE: &str = "project.yaml";
+/// The header's path where the manifest names no `project` section.
+const HEADER_DEFAULT: &str = ".ai/repo/project/project.yaml";
+/// Where a repository declares its source classes.
+const SOURCES_FILE: &str = ".ai/repo/knowledge/sources.yaml";
+
+/// Whether a discovered object of kind [`PROJECT`] is the plan's header.
+fn is_header(path: &str) -> bool {
+    path.ends_with("project/project.yaml")
+}
+
+/// Why a plan built from this index carries no name, no repository and no default branch.
+///
+/// The header is an object like every other: `project.yaml` is read only when a source
+/// class names its path. A layer whose `sources.yaml` was written before the skeleton
+/// declared the `project` class has the file and never reads it, and three empty strings
+/// would say "the file declares nothing", which nobody measured. So the absence is reported
+/// with what was measured instead: whether a class of that kind is declared, whether the
+/// file is there, and the declaration that makes it read.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct PlanHeaderUnknown {
+    /// Why the header's three declared fields are absent, in one sentence.
+    pub reason: String,
+    /// The header's path, relative to the repository root.
+    pub file: String,
+    /// Whether that file is in the working tree.
+    pub file_present: bool,
+    /// The kind no source class of this layer declares, when that is the cause.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub missing_source_class: Option<String>,
+    /// What to do about it.
+    pub remedy: String,
+}
+
+/// Why [`Plan::project`] of a plan built from `index` is blank, or `None` when the header
+/// was read.
+///
+/// Kept beside [`Plan::build`] and not inside it: the build is a walk of values already in
+/// memory, and this asks the working tree one question — whether the file is there — which
+/// only a reader about to report the blank header needs answered.
+pub fn header_unknown(index: &Index) -> Option<PlanHeaderUnknown> {
+    if index
+        .objects
+        .iter()
+        .any(|o| o.kind == PROJECT && is_header(&o.provenance.path))
+    {
+        return None;
+    }
+    let file = index.repository.sections.get(PROJECT).map_or_else(
+        || HEADER_DEFAULT.to_string(),
+        |d| format!("{d}/{HEADER_FILE}"),
+    );
+    let file_present = !index.repository.root.is_empty()
+        && std::path::Path::new(&index.repository.root)
+            .join(&file)
+            .is_file();
+    let classes: Vec<&str> = index
+        .repository
+        .source_classes
+        .iter()
+        .filter(|(_, kind)| kind == PROJECT)
+        .map(|(id, _)| id.as_str())
+        .collect();
+    let declare = format!(
+        "declare it in {SOURCES_FILE}: `- id: {PROJECT}`, `kind: {PROJECT}`, `discovery: vcs`, \
+         `pathspec: ':(glob){file}'`, `required: false`, as share/skeleton/ai/repo/knowledge/sources.yaml does"
+    );
+    let (reason, missing_source_class, remedy) = match (classes.is_empty(), file_present) {
+        (true, true) => (
+            format!(
+                "{file} exists and no source class of kind `{PROJECT}` names it, so it is not read"
+            ),
+            Some(PROJECT.to_string()),
+            declare,
+        ),
+        (true, false) => (
+            format!("there is no {file}, and no source class of kind `{PROJECT}` would read one"),
+            Some(PROJECT.to_string()),
+            format!("write {file} (name, repository, default_branch) and {declare}"),
+        ),
+        (false, true) => (
+            format!(
+                "{file} exists and the source class `{}` discovered no header in it: \
+                 the file is untracked, outside the class's pathspec, or refused by its schema",
+                classes.join("`, `")
+            ),
+            None,
+            format!("track {file} and read the index diagnostics for it"),
+        ),
+        (false, false) => (
+            format!("there is no {file}: this repository declares no plan header"),
+            None,
+            format!("write {file} (name, repository, default_branch) and track it"),
+        ),
+    };
+    Some(PlanHeaderUnknown {
+        reason,
+        file,
+        file_present,
+        missing_source_class,
+        remedy,
+    })
 }
 
 fn priority_rank(p: &str) -> u8 {

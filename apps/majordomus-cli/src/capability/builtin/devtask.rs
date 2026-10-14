@@ -239,12 +239,14 @@ fn devtask_issue(ctx: &Context, input: DevTaskInput) -> Result<DevTask, Capabili
         None
     };
     let record = record(&ctx.index, ISSUE, &input.issue);
+    let header_unknown = crate::plan::header_unknown(&ctx.index);
     let model = DevTaskModel {
         plan: &plan,
         record: record.map(|(path, metadata)| RecordRef { path, metadata }),
         trace: trace.as_ref(),
         sessions: sessions_of(&ctx.index, &input.issue),
         repository: repository_of(&plan),
+        header_unknown: header_unknown.as_ref(),
     };
     Ok(DevTask::build(&model, &input.issue))
 }
@@ -399,6 +401,7 @@ mod tests {
                 trace: None,
                 sessions: Vec::new(),
                 repository: repository_of(&plan),
+                header_unknown: None,
             };
             let task = DevTask::build(&model, &issue.id);
             assert_eq!(
@@ -430,6 +433,7 @@ mod tests {
             trace: None,
             sessions: Vec::new(),
             repository: repository_of(&plan),
+            header_unknown: None,
         };
         let task = DevTask::build(&model, "I9999");
         assert!(!task.declared);
