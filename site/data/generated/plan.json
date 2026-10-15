@@ -14343,6 +14343,15 @@
           "artifact": "",
           "commit": "c0e3585dc836201089d6b5dd49f5a79fe8bff798",
           "recorded_at": "2026-10-15T00:32:15Z"
+        },
+        {
+          "covers": "fixture_without_history_evaluates",
+          "type": "test",
+          "command": "bash test/run.sh 3055_a_derivation_needs_no_history",
+          "result": "tests: 1 passed, 0 failed, 0 skipped (2026-10-15 ~04:2xZ on 3b5833692a3, MAJORDOMUS_BIN = a build of that tree; an export of HEAD into a fresh git init, holding no release commit: both halves of scripts/pages current pass with the changelog kept and said not judged, generate rewrites nothing, a moved registry source exits 10; cases 56, 3048 and 103 also pass)",
+          "artifact": "",
+          "commit": "3b5833692a3aceef62e3a102c2b8406a2b307e34",
+          "recorded_at": "2026-10-15T04:27:17Z"
         }
       ],
       "risk": "Medium. The hashing change touches what every gate compares, so a wrong narrowing makes staleness undetectable rather than merely noisy - the failure would be silent in the direction that matters. The findings behind this record were measured by four sessions on 2026-09-10 and cross-checked between them; the two timing figures those sessions took for scripts/pages current disagreed sixfold on one machine twenty minutes apart, which is why no number here is offered as a benchmark.",
