@@ -545,6 +545,37 @@ mj_git_trunk_ref() {
   return 0
 }
 
+# Is this checkout on the trunk? True when HEAD is the local branch named like the trunk's
+# remote-tracking branch (`main` for refs/remotes/origin/main). No trunk known (no remote,
+# or no refs/remotes/<remote>/HEAD) and a detached HEAD are both "not on the trunk", so a
+# repository without a remote keeps writing its records where it always has. ADR 0091,
+# amendment of 2026-10-15: a trunk that changes only through pull requests cannot commit
+# what an episode boundary writes there, so a trunk episode stages it in the outbox.
+mj_on_trunk() {
+  local trunk br
+  trunk="$(mj_git_trunk_ref)"
+  [ -n "$trunk" ] || return 1
+  br="$(mj_git symbolic-ref -q --short HEAD 2>/dev/null)" || return 1
+  trunk="${trunk#refs/remotes/}"
+  [ "${trunk#*/}" = "$br" ]
+}
+
+# Where a trunk episode stages what it would have written into a tracked section: the
+# closed session record under sessions/, the derived knowledge candidates under
+# candidates/. Checkout-local and never tracked; a branch episode moves it into the tracked
+# sections, and that branch's pull request carries it to the trunk.
+mj_outbox_dir() { printf '%s/outbox' "$MJ_STATE_DIR"; }
+
+# "<sessions> <candidates>": how many records wait in the outbox. `context` and `doctor`
+# name a non-empty outbox, so a clone that never branches again still says what it holds.
+mj_outbox_counts() {
+  local d s=0 c=0 f
+  d="$(mj_outbox_dir)"
+  for f in "$d"/sessions/*.md; do [ -f "$f" ] && s=$((s + 1)); done
+  for f in "$d"/candidates/*.md; do [ -f "$f" ] && c=$((c + 1)); done
+  printf '%s %s' "$s" "$c"
+}
+
 # Every commit this checkout made, sorted: the HEAD reflog's entries that created one.
 # A linked worktree has a HEAD reflog of its own, so this is this checkout's, not the
 # repository's. `pull --rebase (pick)` and `rebase -i (pick)` carry the action in

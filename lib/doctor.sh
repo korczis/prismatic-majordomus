@@ -500,6 +500,17 @@ EOF
   else
     mj_ok clone "unpushed" "every local commit is on a remote"
   fi
+
+  # Records a trunk episode staged and no branch has carried yet (ADR 0091, amendment of
+  # 2026-10-15). Named, not judged: the outbox is the trunk's correct place for them, and a
+  # clone that never branches again must still say what it holds. Silent when empty.
+  local ob os oc
+  ob="$(mj_outbox_counts)"; os="${ob% *}"; oc="${ob#* }"
+  if [ "$os" != 0 ] || [ "$oc" != 0 ]; then
+    mj_info clone "outbox" \
+      "$os session record(s) and $oc knowledge candidate(s) wait in $(mj_rel "$(mj_outbox_dir)")/ for a branch episode to carry them" \
+      "ls $(mj_rel "$(mj_outbox_dir)")/*/"
+  fi
 }
 
 # a hook file plus every file in its <hook>.d/ dispatch directory, in dispatch order

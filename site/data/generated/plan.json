@@ -17248,7 +17248,7 @@
       "non_scope": [],
       "objective": "Decide and implement where knowledge candidates are written so that deriving them at an episode boundary on the trunk never leaves the trunk's working tree dirty.",
       "why": "OSCILLA main carries untracked .ai/repo/knowledge/candidates/ (a README and 7 records). It can never commit them, because its main changes only through pull requests. Every checkpoint since records working_tree dirty, clean-tree release gates refuse, and the advisory rule candidates-reviewed asks for the very commit the process forbids.",
-      "current_state": "lib/knowledge.sh (~626, 839-897) writes candidates under .ai/repo/knowledge/candidates/ in whichever checkout closes the episode; ADR 0091 intends the tracked path.",
+      "current_state": "Slice 1 of the ADR 0091 amendment (2026-10-15): on the trunk (mj_on_trunk, lib/common.sh) session close and recovery (lib/session.sh, lib/recover.sh) and knowledge derive (lib/knowledge.sh) write to .ai/local/state/outbox/{sessions,candidates}/, and context and doctor name a non-empty outbox; case 3060. Open: slice 2 (a branch episode drains the outbox into the tracked sections) and slice 3 (docs/KNOWLEDGE.md, the candidates-reviewed rule text, the sessions README).",
       "desired_state": "Candidates derived on the trunk are staged under .ai/local, or derivation is skipped there, until a branch promotes them. The decision is recorded against ADR 0091.",
       "acceptance_criteria": [
         "Closing an episode on the trunk leaves `git status --porcelain` empty",
@@ -17271,6 +17271,15 @@
           "artifact": ".ai/repo/adrs/0091-knowledge-is-derived-at-the-episode-boundary-and-a-person-promotes-it.md",
           "commit": "c0e3585dc836201089d6b5dd49f5a79fe8bff798",
           "recorded_at": "2026-10-14T23:19:00Z"
+        },
+        {
+          "covers": "trunk_stays_clean_case",
+          "type": "test",
+          "command": "MJ_TEST_JOBS=4 bash test/run.sh 3060_trunk_stays_clean",
+          "result": "1 passed, 0 failed (red on a53f08f11b: the close left .ai/repo/sessions/ and .ai/repo/knowledge/candidates/ untracked on main)",
+          "artifact": "",
+          "commit": "a53f08f11b0b40381b3b8bd602c84ee9b5b8b31d",
+          "recorded_at": "2026-10-15T08:46:34Z"
         }
       ],
       "risk": "",

@@ -131,6 +131,16 @@ mj_ctx_briefing() {
   esac
 }
 
+# What a trunk episode staged and no branch has carried yet (ADR 0091, amendment of
+# 2026-10-15). Silent when the outbox is empty: it is the normal state.
+mj_ctx_outbox() {
+  local n s c
+  n="$(mj_outbox_counts)"; s="${n% *}"; c="${n#* }"
+  [ "$s" = 0 ] && [ "$c" = 0 ] && return 0
+  printf 'outbox       %s session record(s), %s knowledge candidate(s) in %s/, waiting for a branch episode to carry them\n' \
+    "$s" "$c" "$(mj_rel "$(mj_outbox_dir)")"
+}
+
 mj_context_sections() {
   local prompt_name="$1" no_prompt="$2"
   : > "$MJ_CTX_TMP/excluded"
@@ -158,6 +168,7 @@ mj_context_sections() {
       esac
     fi
     mj_ctx_briefing
+    mj_ctx_outbox
   } > "$MJ_CTX_TMP/10.git"
   MJ_CTX_LABEL="${label:-none}"
 

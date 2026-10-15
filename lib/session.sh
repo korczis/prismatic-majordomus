@@ -138,6 +138,28 @@ mj_session_store_ready() {
   [ -f "$MJ_SKELETON_DIR/ai/repo/sessions/README.md" ] || return 0
   cp "$MJ_SKELETON_DIR/ai/repo/sessions/README.md" "$dir/README.md"
 }
+# Where a close writes its record, which is not always where records are read from: on the
+# trunk a tracked section would leave the trunk dirty with a file only a pull request may
+# bring, so the record waits in the outbox instead (ADR 0091, amendment of 2026-10-15). A
+# layer without a sessions section writes to the checkout-local store as before.
+mj_session_outbox_dir() { printf '%s/sessions' "$(mj_outbox_dir)"; }
+mj_session_write_store() {
+  if [ -n "${MJ_SESSIONS_DIR:-}" ] && mj_on_trunk; then mj_session_outbox_dir; else mj_session_store; fi
+}
+# The write store exists the moment a record needs it; the tracked section also gets its
+# contract (mj_session_store_ready), the outbox needs none.
+mj_session_write_store_ready() {
+  if [ "$1" = "$(mj_session_store)" ]; then mj_session_store_ready; else mkdir -p "$1"; fi
+}
+# The record of one episode, wherever a close wrote it: the store or the outbox. The
+# exclusion is mj_publish_record's staging name, see the close below.
+mj_session_find_record() {
+  local sid="$1" d
+  for d in "$(mj_session_store)" "$(mj_session_outbox_dir)"; do
+    [ -d "$d" ] || continue
+    grep -rl --exclude='.tmp.*' "^session_id: $sid\$" "$d" 2>/dev/null | head -n 1
+  done | head -n 1
+}
 # One line naming the work, for a listing: the task's title when the episode had a task.
 mj_session_title() {
   local task="$1" sid="$2"
@@ -498,7 +520,9 @@ mj_session_close() {
   if [ -s "$body" ]; then printf '\n' >> "$rec"; cat "$body" >> "$rec"; fi
   rm -f "$body"
 
-  mj_session_store_ready
+  # On the trunk the record goes to the outbox, not the tracked section (ADR 0091 amendment).
+  local wstore; wstore="$(mj_session_write_store)"
+  mj_session_write_store_ready "$wstore"
   # One episode, one record. `mj_publish_record` gives each file a unique name, which makes
   # a second close of the same episode a second *file* rather than a collision — so nothing
   # here ever refused it, and the identity contract this section declares was enforced only
@@ -527,7 +551,9 @@ mj_session_close() {
   # (which is what `majordomus recover orphans` is for). Without this, a close would name a
   # temp file as the episode's record — the ledger event, the context close and this
   # command's own output would all point at a path that is about to be removed.
-  existing="$(grep -rl --exclude='.tmp.*' "^session_id: $sid\$" "$(mj_session_store)" 2>/dev/null | head -n 1 || true)"
+  # Both places a close may have written it: a record staged in the outbox is this
+  # episode's record as much as a tracked one.
+  existing="$(mj_session_find_record "$sid" || true)"
   if [ -n "$existing" ]; then
     # The episode's record is the one that already exists, and every reader downstream —
     # the ledger event, the context close, this command's own output — must name it, not
@@ -537,7 +563,7 @@ mj_session_close() {
     printf 'session: %s already has a record at %s; this close adds none\n' \
       "$sid" "$(mj_rel "$existing")" >&2
   else
-    final="$(mj_publish_record "$(mj_session_store)" "$sid" "$rec")" \
+    final="$(mj_publish_record "$wstore" "$sid" "$rec")" \
       || { rm -f "$rec" "$win"; mj_lock_release; mj_die "$MJ_EX_INTERNAL" "could not create a unique session file"; }
     rm -f "$rec" "$win"
   fi

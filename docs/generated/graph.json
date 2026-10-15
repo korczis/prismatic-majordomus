@@ -31083,7 +31083,6 @@
             "Candidates derived on a branch are still offered for review and promotion as today"
           ],
           "created_at": "2026-10-04",
-          "current_state": "lib/knowledge.sh (~626, 839-897) writes candidates under .ai/repo/knowledge/candidates/ in whichever checkout closes the episode; ADR 0091 intends the tracked path.",
           "desired_state": "Candidates derived on the trunk are staged under .ai/local, or derivation is skipped there, until a branch promotes them. The decision is recorded against ADR 0091.",
           "evidence_required": [
             "trunk_stays_clean_case",
@@ -31103,7 +31102,7 @@
             "test/cases"
           ],
           "slug": "knowledge-candidates-never-dirty-a-trunk",
-          "updated_at": "2026-10-14T23:19:00Z",
+          "updated_at": "2026-10-15T08:46:34Z",
           "validation": [
             "bin/majordomus plan validate",
             "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
@@ -53077,6 +53076,13 @@
         "label": "test/cases/305_a_command_is_claimed_or_classified.sh",
         "route": "/cockpit/objects/test/test-cases-305-a-command-is-claimed-or-classified-sh",
         "source": "test/cases/305_a_command_is_claimed_or_classified.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3060_trunk_stays_clean.sh",
+        "kind": "test",
+        "label": "test/cases/3060_trunk_stays_clean.sh",
+        "route": "/cockpit/objects/test/test-cases-3060-trunk-stays-clean-sh",
+        "source": "test/cases/3060_trunk_stays_clean.sh"
       },
       {
         "id": "majordomus://test/test/cases/30_command_registry.sh",
@@ -82904,6 +82910,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3060_trunk_stays_clean.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/30_command_registry.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -88190,8 +88201,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2796,
-      "edges": 6129,
+      "nodes": 2797,
+      "edges": 6130,
       "acyclic": false,
       "truncated": false
     }

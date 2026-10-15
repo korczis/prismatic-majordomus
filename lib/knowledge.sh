@@ -719,6 +719,9 @@ mj_knowledge_edges_cmd() {
 
 mj_knowledge_candidates_dir() { printf '%s/candidates' "$MJ_KNOWLEDGE_DIR"; }
 mj_knowledge_curated_dir()    { printf '%s/curated' "$MJ_KNOWLEDGE_DIR"; }
+# Where a trunk episode's candidates wait for a branch to carry them (ADR 0091, amendment
+# of 2026-10-15): the tracked section on the trunk is a file only a pull request may bring.
+mj_knowledge_outbox_dir()     { printf '%s/candidates' "$(mj_outbox_dir)"; }
 mj_knowledge_ledger()         { printf '%s/ledger.jsonl' "$MJ_STATE_DIR"; }
 MJ_KNOWLEDGE_CLASSES="fact convention constraint memory lesson"
 MJ_KNOWLEDGE_STATUSES="candidate verified superseded"
@@ -992,8 +995,11 @@ mj_knowledge_derive_cmd() {
     return 0
   fi
   local t0; t0="$(mj_phase_begin knowledge:derive)"
-  local tmp cdir kdir; tmp="$(mktemp -d "${TMPDIR:-/tmp}/mj.kdv.XXXXXX")"
+  local tmp cdir kdir wdir; tmp="$(mktemp -d "${TMPDIR:-/tmp}/mj.kdv.XXXXXX")"
   cdir="$(mj_knowledge_candidates_dir)"; kdir="$(mj_knowledge_curated_dir)"
+  # What is written goes to wdir: the tracked section, or on the trunk the outbox. What is
+  # already decided (promoted, superseded, the same bytes tracked) is still read from cdir.
+  wdir="$cdir"; mj_on_trunk && wdir="$(mj_knowledge_outbox_dir)"
   mj_knowledge_evidence "$sid" > "$tmp/rows"
   mj_knowledge_episode_commits "$sid" > "$tmp/commits"
   mj_knowledge_episode_refs "$tmp/commits" > "$tmp/refs"
@@ -1005,7 +1011,7 @@ mj_knowledge_derive_cmd() {
 $row
 EOF
     id="$(mj_knowledge_compose "$sid" "$row" "$tmp/refs" "$tmp/rec")"
-    rel="$(mj_rel "$cdir")/$id.md"
+    rel="$(mj_rel "$wdir")/$id.md"
     mj_count knowledge_evidence
     # Refused at derive time rather than written for the validator to fail: a title or a
     # description that opens like a turn of a conversation is not an assertion.
@@ -1015,12 +1021,19 @@ EOF
       verb="skipped (promoted)"; s=$((s + 1)); S="$S$rel"$'\n'
     elif [ -f "$cdir/$id.md" ] && [ "$(mj_knowledge_record_status "$cdir/$id.md")" != candidate ]; then
       verb="skipped (superseded)"; s=$((s + 1)); S="$S$rel"$'\n'
+    elif [ "$wdir" != "$cdir" ] && [ -f "$cdir/$id.md" ] && cmp -s "$tmp/rec" "$cdir/$id.md"; then
+      # tracked already, byte for byte: nothing for the outbox to carry
+      verb=unchanged; u=$((u + 1)); U="$U$(mj_rel "$cdir")/$id.md"$'\n'
     elif [ "$dry" = 1 ]; then
-      if [ -f "$cdir/$id.md" ] && cmp -s "$tmp/rec" "$cdir/$id.md"; then verb=unchanged; u=$((u + 1)); U="$U$rel"$'\n'
+      if [ -f "$wdir/$id.md" ] && cmp -s "$tmp/rec" "$wdir/$id.md"; then verb=unchanged; u=$((u + 1)); U="$U$rel"$'\n'
       else verb="would write"; w=$((w + 1)); W="$W$rel"$'\n'; fi
     else
-      mj_knowledge_candidates_ready || { rm -rf "$tmp"; mj_die "$MJ_EX_INTERNAL" "knowledge derive: cannot create $(mj_rel "$cdir")/"; }
-      verb="$(mj_knowledge_write_record "$cdir" "$id" "$tmp/rec")" \
+      if [ "$wdir" = "$cdir" ]; then
+        mj_knowledge_candidates_ready || { rm -rf "$tmp"; mj_die "$MJ_EX_INTERNAL" "knowledge derive: cannot create $(mj_rel "$cdir")/"; }
+      else
+        mkdir -p "$wdir" 2>/dev/null || { rm -rf "$tmp"; mj_die "$MJ_EX_INTERNAL" "knowledge derive: cannot create $(mj_rel "$wdir")/"; }
+      fi
+      verb="$(mj_knowledge_write_record "$wdir" "$id" "$tmp/rec")" \
         || { rm -rf "$tmp"; mj_die "$MJ_EX_INTERNAL" "knowledge derive: could not write $rel"; }
       case "$verb" in
         written) w=$((w + 1)); W="$W$rel"$'\n'; paths="$paths${paths:+ }$rel" ;;
