@@ -32053,6 +32053,8 @@
             "An episode with no observation writes no candidate and still appends knowledge.derived with written 0",
             "Cases 563, 564, 565, 707, 709, 710 and 711 still pass"
           ],
+          "completed_at": "2026-10-14T23:33:06Z",
+          "completed_event": "sha256:056c90235fbbe0562a497e20ba1338b389267327bc23ed9f2c2cb892483db666",
           "created_at": "2026-10-09",
           "current_state": "Four events map to candidates; no record says what it is about; candidates is a flat list.",
           "depends_on": [
@@ -32083,13 +32085,17 @@
             "a-session-leaves-what-it-observed#recurrence-is-grouped"
           ],
           "slug": "an-observation-becomes-a-candidate",
-          "updated_at": "2026-10-09",
+          "started_at": "2026-10-14T23:32:49Z",
+          "started_event": "sha256:6ff2928f564f61d8b55c2ac2ea31773983667fb75e5da145518a19b793c6d30a",
+          "updated_at": "2026-10-14T23:33:06Z",
           "validation": [
             "bash test/run.sh 981_an_observation_becomes_a_grouped_candidate",
             "bash test/run.sh 563_knowledge_is_derived_at_the_boundary",
             "bash test/run.sh 564_knowledge_derivation_is_idempotent",
             "cargo test --test knowledge_base"
           ],
+          "verified_at": "2026-10-14T23:32:56Z",
+          "verified_event": "sha256:7cd2e6cc92aaf9408a48b6f7024772258b3be31759a9bffb8f388a8544cc9b46",
           "why": "The same defect seen by several sessions must read as one thing without any episode writing another's file."
         }
       },
@@ -32107,6 +32113,8 @@
             "Two observations with different statements about one subject carry the same route",
             "The derivation emits no event it reads"
           ],
+          "completed_at": "2026-10-14T23:33:27Z",
+          "completed_event": "sha256:f1d900b04cf041e756921804d8735c57637532baf0db04a40990053ae874cdff",
           "created_at": "2026-10-09",
           "current_state": "No candidate carries an owner.",
           "depends_on": [
@@ -32130,10 +32138,14 @@
             "a-session-leaves-what-it-observed#route-is-structural"
           ],
           "slug": "a-candidate-is-routed",
-          "updated_at": "2026-10-09",
+          "started_at": "2026-10-14T23:33:12Z",
+          "started_event": "sha256:4d4382e307e0cda28c7f636123514c4cc89da9765c1560bd0a4f4608baf951b2",
+          "updated_at": "2026-10-14T23:33:27Z",
           "validation": [
             "bash test/run.sh 982_a_candidate_is_routed_by_what_it_is_about"
           ],
+          "verified_at": "2026-10-14T23:33:18Z",
+          "verified_event": "sha256:e42f314a9efec9c075a58af32dd54115c8c7cc6b9cb7cf0a1dc2e5c52b83d8d9",
           "why": "A candidate with no owner is read by nobody, and the route must come from structure because ADR 0091 rejected classifying by wording; in an adopter, the project's own share/ is not the tool."
         }
       },
