@@ -86,7 +86,8 @@ pub fn server_of(root: &Path) -> Option<ServerMesh> {
     use crate::capability::builtin::server::{local_half, standing_at, ServerStanding};
     let (standing, _, lease) = standing_at(root, &local_half(root));
     let url = lease.document().and_then(|d| d.url.clone());
-    url.filter(|_| standing == ServerStanding::Ready)
+    // a skewed server answers the mesh as a ready one does; only its pages lack assets
+    url.filter(|_| matches!(standing, ServerStanding::Ready | ServerStanding::Skewed))
         .map(ServerMesh::at)
 }
 

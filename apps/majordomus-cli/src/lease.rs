@@ -230,7 +230,16 @@ pub fn declare_share(location: crate::share::ShareLocation) {
     let _ = SHARE.set(location);
 }
 
-/// The share directory this process declared, when it has located one.
+/// The share directory this process declared, when it has located one: what every lease
+/// it writes names as `share`.
+///
+/// ```
+/// use majordomus_cli::lease::{declare_share, declared_share};
+/// use majordomus_cli::share::ShareLocation;
+/// declare_share(ShareLocation { path: "/opt/share".into(), origin: "--share".into() });
+/// let declared = declared_share().expect("declared above");
+/// assert_eq!(declared.origin, "--share");
+/// ```
 pub fn declared_share() -> Option<&'static crate::share::ShareLocation> {
     SHARE.get()
 }

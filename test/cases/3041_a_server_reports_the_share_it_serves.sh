@@ -7,11 +7,13 @@
 # reports said `ready`. This case holds the reporting half of the remedy: the lease names the
 # share directory the server located, and `server.status` — through `serve status` and
 # `GET /api/v1/server` alike — measures that directory on every call against the server's
-# version: the version its `version.txt` states, whether it holds `ui/`, and `skewed` with
-# the reason when either is wrong.
+# version: the version its `version.txt` states, whether it holds `ui/` and `cockpit/`, and
+# `skewed` with the reason when any of it is wrong. A server that answers at this executable's
+# version over such a share stands `skewed`, not `ready` (ADR 0163, point 3).
 #
-# Reporting only: the server keeps serving a skewed share and stays `ready`. Which share a
-# server should pick, and whether a skewed one is replaced, are decisions of their own.
+# Reporting only: the server keeps serving the skewed share, and `serve ensure` says so with
+# exit 10 rather than replacing it. Which share a server should pick, and whether a skewed one
+# is replaced, are ADR 0163's later steps (S4, S5).
 #
 # `--port 0` throughout: the default port belongs to whatever already serves this machine.
 . "$ROOT/test/lib.sh"
@@ -27,15 +29,25 @@ git -C "$R" config user.name t
 ( cd "$R" && "$MJ" init >/dev/null )
 git -C "$R" add -A >/dev/null && git -C "$R" commit -qm base >/dev/null
 MAJORDOMUS_LOG=warn; export MAJORDOMUS_LOG
+# every client of this case reads the crate's own share; each server below is given its own
+# through `start`, and what the status measures is the share the server's lease names
+MAJORDOMUS_SHARE="$ROOT/share"; export MAJORDOMUS_SHARE
 trap '"$RB" serve stop --repo "$R" >/dev/null 2>&1 || true' EXIT
 mj() { ( cd "$R" && "$RB" "$@" ); }
 version="$("$RB" --version | awk '{print $NF}')"
 [ -n "$version" ] || { echo "    the executable states no version"; exit 1; }
 
-start() {   # start SHARE — a server for the fixture over that share, and its address
+start() {   # start SHARE STANDING — a server over that share, standing so, and its address
+  local rc=0
   MAJORDOMUS_SHARE="$1" mj serve ensure --port 0 --idle 60 --wait 40 --format json \
-    > "$T/ensure.json" 2> "$T/ensure.err" \
-    || { echo "    the server did not come up over $1:"; cat "$T/ensure.json" "$T/ensure.err"; exit 1; }
+    > "$T/ensure.json" 2> "$T/ensure.err" || rc=$?
+  # ready is exit 0; a skewed server answers and is reported with exit 10, never replaced
+  local want=10
+  [ "$2" = ready ] && want=0
+  if [ "$rc" != "$want" ] || ! jq -e --arg s "$2" '.standing == $s' "$T/ensure.json" >/dev/null; then
+    echo "    the server over $1 did not come up $2 (exit $rc, wanted $want):"
+    cat "$T/ensure.json" "$T/ensure.err"; exit 1
+  fi
   url="$(jq -r '.url' "$T/ensure.json")"
   [ -n "$url" ] && [ "$url" != null ] || { echo "    no address"; cat "$T/ensure.json"; exit 1; }
 }
@@ -47,14 +59,17 @@ share_of() {   # share_of NAME — this checkout's served share, through the com
 
 # ---------------------------------------------------------------- 1. its own share: current
 own="$(cd "$ROOT/share" && pwd -P)"
-start "$own"
+start "$own" ready
 share_of own
 jq -e --arg v "$version" --arg p "$own" '.standing == "current" and .version == $v
-  and .ui_present == true and .path == $p and .origin == "MAJORDOMUS_SHARE"
-  and (has("reason") | not)' "$T/own.share.json" >/dev/null \
+  and .ui_present == true and .cockpit_present == true and .path == $p
+  and .origin == "MAJORDOMUS_SHARE" and (has("reason") | not)' "$T/own.share.json" >/dev/null \
   || { echo "    the server's own share is not reported current:"; cat "$T/own.json"; exit 1; }
+jq -e '.standing == "ready"' "$T/own.json" >/dev/null \
+  || { echo "    a server over its own share is not ready:"; cat "$T/own.json"; exit 1; }
 expect_exit 0 mj serve status
-expect_grep "share current  version $version  ui present"
+expect_grep '^standing   ready'
+expect_grep "share current  version $version  ui present  cockpit present"
 expect_exit 0 mj serve stop
 
 # ---------------------------------------------------------------- 2. a share of another release, without ui/
@@ -64,21 +79,26 @@ cp -R "$ROOT/share" "$old"
 old="$(cd "$old" && pwd -P)"
 rm -rf "$old/ui"
 printf '# planted by case 3041\nversion=0.0.1\n' > "$old/version.txt"
-start "$old"
+start "$old" skewed
+printf '%s' "$(jq -r '.reason' "$T/ensure.json")" | grep -q 'MAJORDOMUS_SHARE=' \
+  || { echo "    ensure reported the skew without its remedy:"; cat "$T/ensure.json"; exit 1; }
 share_of old
 jq -e --arg p "$old" '.standing == "skewed" and .version == "0.0.1" and .ui_present == false
-  and .path == $p
+  and .cockpit_present == true and .path == $p
   and (.reason | contains("states version 0.0.1") and contains("holds no ui/"))' \
   "$T/old.share.json" >/dev/null \
   || { echo "    a share of another release without ui/ is not reported skewed:"; cat "$T/old.json"; exit 1; }
-# reporting only: the server serves it and stays ready
-jq -e '.standing == "ready"' "$T/old.json" >/dev/null \
-  || { echo "    the report changed the server's standing:"; cat "$T/old.json"; exit 1; }
+# the server's own standing says it too, with the share's reason, while it serves
+jq -e '.standing == "skewed"
+  and (.servers[] | select(.this_checkout) | .standing == "skewed"
+       and (.reason | contains("holds no ui/")))' "$T/old.json" >/dev/null \
+  || { echo "    a ready server over a skewed share does not stand skewed:"; cat "$T/old.json"; exit 1; }
 curl -fsS -o /dev/null -w '%{http_code}' -m 10 "$url/ui/assets/ui.css" > "$T/css.code" 2>/dev/null || true
 [ "$(cat "$T/css.code")" = 404 ] \
   || { echo "    the skew this case reports is not the one it plants (ui.css answered $(cat "$T/css.code"))"; exit 1; }
 expect_exit 0 mj serve status
-expect_grep 'share skewed  version 0.0.1  ui absent'
+expect_grep '^standing   skewed'
+expect_grep 'share skewed  version 0.0.1  ui absent  cockpit present'
 expect_grep 'holds no ui/'
 # and the HTTP surface says the same thing about the share
 curl -fsS -m 30 "$url/api/v1/server" \
@@ -98,6 +118,8 @@ printf 'version=%s\n' "$version" > "$old/version.txt"
 share_of mended
 jq -e '.standing == "current" and .ui_present == true' "$T/mended.share.json" >/dev/null \
   || { echo "    the share was read when the server started, not when it was asked:"; cat "$T/mended.json"; exit 1; }
+jq -e '.standing == "ready"' "$T/mended.json" >/dev/null \
+  || { echo "    the server over its mended share is not ready again:"; cat "$T/mended.json"; exit 1; }
 expect_exit 0 mj serve stop
 
-echo "    a server names its share, and a share of another release or without ui/ is reported skewed, by both surfaces, while it serves"
+echo "    a server names its share; over a share of another release or without ui/ it stands skewed, on both surfaces, while it serves"

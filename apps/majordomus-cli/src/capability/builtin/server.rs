@@ -68,7 +68,7 @@ use crate::capability::model::{
 use crate::capability::module::ModuleDescriptor;
 use crate::lease::{self, ExecutableIdentity, LeaseDocument, LeaseFile, VersionVerdict};
 use crate::repository::{self, GitIdentity, Repository};
-use crate::share::ServedShare;
+use crate::share::{ServedShare, ShareStanding};
 use crate::{capability, module};
 
 use super::get;
@@ -154,9 +154,9 @@ impl BenchmarkCases for ServerStatusInput {
 /// ```
 /// use majordomus_cli::capability::builtin::server::ServerStanding;
 /// let all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,
-///            ServerStanding::Outdated, ServerStanding::Stale];
+///            ServerStanding::Outdated, ServerStanding::Skewed, ServerStanding::Stale];
 /// let words: Vec<&str> = all.iter().map(|s| s.as_str()).collect();
-/// assert_eq!(words, ["absent", "starting", "ready", "outdated", "stale"]);
+/// assert_eq!(words, ["absent", "starting", "ready", "outdated", "skewed", "stale"]);
 /// assert_eq!(serde_json::from_str::<ServerStanding>("\"stale\"").unwrap(), ServerStanding::Stale);
 /// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
@@ -172,6 +172,11 @@ pub enum ServerStanding {
     /// The server answers, but from older code than this executable, or from a file that
     /// has been replaced since it started: everything it says is yesterday's.
     Outdated,
+    /// The server answers for this checkout at this executable's version, but serves a
+    /// share directory that is not its own: one that states another version or none, or
+    /// lacks a surface's directory (`ui/`, `cockpit/`), so the pages it serves have no
+    /// assets and what it reads from `share/` is another release's (ADR 0163).
+    Skewed,
     /// The lease names a server that does not answer, or is not a lease at all.
     Stale,
 }
@@ -191,6 +196,7 @@ impl ServerStanding {
             ServerStanding::Starting => "starting",
             ServerStanding::Ready => "ready",
             ServerStanding::Outdated => "outdated",
+            ServerStanding::Skewed => "skewed",
             ServerStanding::Stale => "stale",
         }
     }
@@ -451,7 +457,18 @@ pub fn standing_of(
     }
     let theirs = doc.version.as_deref().unwrap_or_default();
     match lease::version_verdict(doc.version.as_deref(), version) {
-        VersionVerdict::Same => (ServerStanding::Ready, None),
+        // the same release, measured once more over the share the lease names: the version
+        // its `version.txt` states and the surfaces it holds, read now rather than recorded
+        VersionVerdict::Same => match doc
+            .share
+            .as_ref()
+            .map(|s| ServedShare::inspect(&s.path, Some(&s.origin), version))
+        {
+            Some(share) if share.standing == ShareStanding::Skewed => {
+                (ServerStanding::Skewed, share.reason)
+            }
+            _ => (ServerStanding::Ready, None),
+        },
         VersionVerdict::Unpublished => (
             ServerStanding::Outdated,
             Some(format!(
@@ -602,12 +619,12 @@ fn server_status(ctx: &Context, input: ServerStatusInput) -> Result<ServerStatus
         let peers = match standing {
             // this process's own board is in memory; asking it over the wire would queue
             // behind this very request (lease::is_own)
-            ServerStanding::Ready | ServerStanding::Outdated
+            ServerStanding::Ready | ServerStanding::Outdated | ServerStanding::Skewed
                 if read.document().is_some_and(lease::is_own) =>
             {
                 Some(ctx.peers.list().iter().filter(|p| p.attached).count())
             }
-            ServerStanding::Ready | ServerStanding::Outdated => read
+            ServerStanding::Ready | ServerStanding::Outdated | ServerStanding::Skewed => read
                 .document()
                 .and_then(|d| d.url.as_deref())
                 .and_then(|url| peers_of(ctx, url)),
@@ -670,7 +687,7 @@ pub fn module() -> ModuleDescriptor {
             capability! {
                 id: "server.status",
                 title: "The shared server, and every server of the repository",
-                description: "Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; the lease this process holds when it is the server; and, unless `checkouts` narrows it to this one, every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. Each lease carries the share directory its server serves, measured on every call: the version its `version.txt` states, whether it holds `ui/`, and `skewed` with the reason when it states another version than the executable of that server or has no `ui/`, the state in which every `/ui/assets/` file answers 404 and the UI is unstyled or blank. `checkouts: this` reads one lease and probes one server and enumerates no other checkout, which is what a caller asking only about the checkout it is in should pay. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes.",
+                description: "Where this checkout's server stands — absent, starting, ready, outdated, skewed or stale — measured against what this executable would serve; the lease this process holds when it is the server; and, unless `checkouts` narrows it to this one, every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. Each lease carries the share directory its server serves, measured on every call: the version its `version.txt` states, whether it holds `ui/`, and `skewed` with the reason when it states another version than the executable of that server or lacks `ui/` or `cockpit/`, the state in which every asset of those pages answers 404; a server that answers at this executable's version over such a share stands `skewed` rather than `ready`. `checkouts: this` reads one lease and probes one server and enumerates no other checkout, which is what a caller asking only about the checkout it is in should pay. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes.",
                 input: ServerStatusInput,
                 output: ServerStatus,
                 stability: Stability::BehaviorallyVerified,

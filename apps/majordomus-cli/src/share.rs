@@ -729,7 +729,18 @@ pub struct ShareLocation {
 }
 
 impl ShareLocation {
-    /// The location of a located share.
+    /// The location of a located share: its canonical directory and the word for how it
+    /// was found.
+    ///
+    /// ```
+    /// use majordomus_cli::share::{Share, ShareLocation};
+    /// let dir = tempfile::tempdir().unwrap();
+    /// std::fs::write(dir.path().join("kinds.yaml"), "version: 1\nkinds: []\n").unwrap();
+    /// let share = Share::locate(Some(dir.path()), dir.path()).unwrap();
+    /// let at = ShareLocation::of(&share);
+    /// assert_eq!(at.origin, "--share");
+    /// assert_eq!(at.path, dir.path().canonicalize().unwrap());
+    /// ```
     pub fn of(share: &Share) -> Self {
         ShareLocation {
             path: share.dir().to_path_buf(),
@@ -750,16 +761,19 @@ impl ShareLocation {
 )]
 #[serde(rename_all = "lowercase")]
 pub enum ShareStanding {
-    /// It states the executable's version and holds the UI's files.
+    /// It states the executable's version and holds the directory of every surface the
+    /// server serves pages from.
     Current,
-    /// It states another version, states none, or has no `ui/`: a server serving it answers
-    /// with one release's code over another release's data, and its UI is unstyled or blank.
+    /// It states another version, states none, or lacks `ui/` or `cockpit/`: a server
+    /// serving it answers with one release's code over another release's data, and those
+    /// pages are unstyled or blank.
     Skewed,
 }
 
 /// A share directory measured against the version of the executable that serves it: where
-/// it is, how it was found, the version it states, whether it holds the UI's files, and
-/// whether that makes it the executable's own.
+/// it is, how it was found, the version it states, whether it holds the directory of each
+/// surface the server serves pages from — `ui/` for `/ui`, `cockpit/` for `/cockpit` — and
+/// whether that makes it the executable's own (ADR 0163).
 ///
 /// Measured when it is asked for, never recorded: a checkout moves under a running server,
 /// and the directory a lease names may state another version an hour later.
@@ -769,6 +783,7 @@ pub enum ShareStanding {
 /// let dir = tempfile::tempdir().unwrap();
 /// std::fs::write(dir.path().join("version.txt"), "version=0.26.0\n").unwrap();
 /// std::fs::create_dir(dir.path().join("ui")).unwrap();
+/// std::fs::create_dir(dir.path().join("cockpit")).unwrap();
 /// let own = ServedShare::inspect(dir.path(), Some("installation"), "0.26.0");
 /// assert_eq!(own.standing, ShareStanding::Current);
 /// assert!(own.reason.is_none() && own.ui_present);
@@ -796,6 +811,8 @@ pub struct ServedShare {
     pub version: Option<String>,
     /// Whether it holds `ui/`, the UI's stylesheet and scripts.
     pub ui_present: bool,
+    /// Whether it holds `cockpit/`, the Cockpit's stylesheet and scripts.
+    pub cockpit_present: bool,
     /// Whether it is the executable's own.
     pub standing: ShareStanding,
     /// Why it is skewed, when it is.
@@ -805,10 +822,22 @@ pub struct ServedShare {
 
 impl ServedShare {
     /// Measure the directory at `path` against `executable`, the version of the executable
-    /// serving it.
+    /// serving it. Every way it differs is named in the reason, joined in one sentence.
+    ///
+    /// ```
+    /// use majordomus_cli::share::{ServedShare, ShareStanding};
+    /// let dir = tempfile::tempdir().unwrap();
+    /// std::fs::write(dir.path().join("version.txt"), "version=1.0.0\n").unwrap();
+    /// let measured = ServedShare::inspect(dir.path(), Some("repository"), "1.0.0");
+    /// assert_eq!(measured.standing, ShareStanding::Skewed, "no ui/ and no cockpit/");
+    /// let reason = measured.reason.unwrap();
+    /// assert!(reason.contains("holds no ui/") && reason.contains("holds no cockpit/"));
+    /// assert!(!reason.contains("states version"), "the version is its executable's");
+    /// ```
     pub fn inspect(path: &Path, origin: Option<&str>, executable: &str) -> Self {
         let version = stated_version(path);
         let ui_present = path.join(crate::ui::ASSETS_DIR).is_dir();
+        let cockpit_present = path.join(crate::cockpit::assets::DIR).is_dir();
         let mut why = Vec::new();
         if !path.is_dir() {
             why.push("is not a directory".to_string());
@@ -822,11 +851,19 @@ impl ServedShare {
                     "states no version (no {VERSION_FILE}), and the executable serving it is {executable}"
                 )),
             }
-            if !ui_present {
-                why.push(format!(
-                    "holds no {}/, so every /ui/assets/ file answers 404",
-                    crate::ui::ASSETS_DIR
-                ));
+            for (present, dir, prefix) in [
+                (ui_present, crate::ui::ASSETS_DIR, crate::ui::ASSETS_PREFIX),
+                (
+                    cockpit_present,
+                    crate::cockpit::assets::DIR,
+                    crate::cockpit::assets::PREFIX,
+                ),
+            ] {
+                if !present {
+                    why.push(format!(
+                        "holds no {dir}/, so every {prefix} file answers 404"
+                    ));
+                }
             }
         }
         let reason = (!why.is_empty())
@@ -836,6 +873,7 @@ impl ServedShare {
             origin: origin.map(str::to_string),
             version,
             ui_present,
+            cockpit_present,
             standing: if reason.is_some() {
                 ShareStanding::Skewed
             } else {
@@ -868,6 +906,15 @@ mod tests {
 
         std::fs::write(dir.path().join(VERSION_FILE), "# x\nversion= 1.0.0 \n").unwrap();
         std::fs::create_dir(dir.path().join("ui")).unwrap();
+        // the Cockpit is a surface too: a share without cockpit/ is skewed for it alone
+        let half = ServedShare::inspect(dir.path(), None, "1.0.0");
+        assert_eq!(half.standing, ShareStanding::Skewed);
+        assert!(half.ui_present && !half.cockpit_present);
+        let reason = half.reason.unwrap();
+        assert!(reason.contains("holds no cockpit/, so every /cockpit/assets/ file answers 404"));
+        assert!(!reason.contains("version"), "{reason}");
+
+        std::fs::create_dir(dir.path().join("cockpit")).unwrap();
         let own = ServedShare::inspect(dir.path(), None, "1.0.0");
         assert_eq!(own.standing, ShareStanding::Current);
         assert_eq!(own.version.as_deref(), Some("1.0.0"));
@@ -878,6 +925,7 @@ mod tests {
         );
         assert_eq!(json["standing"], "current");
         assert_eq!(json["ui_present"], true);
+        assert_eq!(json["cockpit_present"], true);
     }
 
     /// The word each offer is printed as is the word it is declared and serialised as, so a
