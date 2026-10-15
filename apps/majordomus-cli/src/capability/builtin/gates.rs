@@ -1,12 +1,19 @@
 //! The `gates` module: completion as a state the repository decides.
 //!
-//! Two capabilities, and the split is the same one [`super::obligations`] makes for the
+//! Three capabilities: the model, the policy, and the completion they decide. The split
+//! between the first two and the last is the same one [`super::obligations`] makes, for the
 //! same reason.
 //!
 //! **The model is declared.** `.ai/repo/ci/gates.yaml` is this repository's CI model: every
 //! validation gate, the job that runs it, the command it runs, and the path classes that
 //! decide which change selects which gate. `gates.model` reads it and answers in any
 //! checkout that has one, whether or not the lifecycle has ever run.
+//!
+//! **Done is declared once.** `share/completion.yaml` is the definition of done the tool
+//! ships: the stages of the work in order, every question a task must answer, and the
+//! source each answer is taken from. `gates.policy` serves it with what it resolves to here;
+//! `gates.completion` asks exactly its questions and folds the answers into the stage a task
+//! stands at.
 //!
 //! **The completion is local.** Whether *this* task may be called finished depends on the
 //! task record and the ledger under `.ai/local/state/`, which is one checkout's own state
@@ -27,11 +34,11 @@
 //! ```
 //! use majordomus_cli::capability::builtin::gates::module;
 //!
-//! // the whole module, as every projection reads it: two capabilities, and neither has a
+//! // the whole module, as every projection reads it: three capabilities, and none has a
 //! // command-line arm of its own because `check` and `finish` are the command line's answer
 //! let m = module();
 //! let ids: Vec<&str> = m.capabilities.iter().map(|c| c.capability.id.as_str()).collect();
-//! assert_eq!(ids, ["gates.model", "gates.completion"]);
+//! assert_eq!(ids, ["gates.model", "gates.policy", "gates.completion"]);
 //! for entry in &m.capabilities {
 //!     assert!(entry.capability.exposure.cli.is_none());
 //!     assert!(entry.capability.exposure.http.is_some());
@@ -48,7 +55,7 @@ use crate::capability::benchmark::{BenchmarkCases, CaseContext, NamedCase};
 use crate::capability::handler::{CapabilityError, Context};
 use crate::capability::model::{CachePolicy, Exposure, McpExposure, McpResource, Stability};
 use crate::capability::module::ModuleDescriptor;
-use crate::gates::{self, judge, model, Completion};
+use crate::gates::{self, judge, model, Completion, CompletionPolicy};
 use crate::{capability, module};
 
 use super::get;
@@ -60,6 +67,54 @@ pub const GATES_URI: &str = "majordomus://gates";
 
 /// The URI under which this checkout's completion state is read as an MCP resource.
 pub const COMPLETION_URI: &str = "majordomus://gates/completion";
+
+/// The URI under which the completion policy is read as an MCP resource.
+pub const POLICY_URI: &str = "majordomus://gates/policy";
+
+/// The completion policy, as `gates.policy` serves it: the stages, the questions and the
+/// source each is answered from, with what the policy resolves to in this repository.
+/// The policy is flattened into the report, so a reader sees the keys the file carries
+/// with the derived fields beside them.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::gates::CompletionPolicyReport;
+/// use majordomus_cli::gates::CompletionPolicy;
+///
+/// let policy = CompletionPolicy::parse(
+///     "version: 1\nstages:\n  - id: a\n    title: Alpha\n    summary: s\nquestions:\n  - id: q\n    stage: a\n    question: Is it?\n    source: gate:site-check\n    remediation: run it\n",
+///     "share/completion.yaml",
+/// )
+/// .unwrap();
+/// let report = CompletionPolicyReport {
+///     outline: policy.outline(),
+///     problems: policy.validate(&[]),
+///     unanswered_gates: policy.unanswered_gates(&[]),
+///     policy,
+/// };
+/// assert_eq!(report.outline, "- Alpha: q\n");
+/// assert_eq!(report.unanswered_gates, ["q:site-check"]);
+/// let json = serde_json::to_value(&report).unwrap();
+/// assert_eq!(json["stages"][0]["id"], "a", "the policy's own keys, flattened");
+/// assert!(json.get("problems").is_none(), "a coherent distribution writes no problems");
+/// ```
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct CompletionPolicyReport {
+    /// The policy as read from the distribution.
+    #[serde(flatten)]
+    pub policy: CompletionPolicy,
+    /// The definition of done in a dozen lines: one per stage that asks anything, its
+    /// questions after a colon.
+    pub outline: String,
+    /// What does not resolve against the vocabulary the policy is shipped beside: a token
+    /// `share/obligations.yaml` lacks. Empty in a coherent distribution, and never silently so.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub problems: Vec<String>,
+    /// The questions answered by a gate this repository's CI model does not declare, as
+    /// `question:gate`. Not a problem of the policy — the model is the repository's — but a
+    /// question this repository never gets a verdict for, listed so that it is seen.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub unanswered_gates: Vec<String>,
+}
 
 // ---------------------------------------------------------------- output types
 
@@ -228,6 +283,31 @@ fn vocabulary(ctx: &Context) -> Result<Vec<Obligation>, String> {
     let file: File =
         crate::metadata::yaml::parse_into(&text).map_err(|e| format!("{}: {e}", path.display()))?;
     Ok(file.obligations)
+}
+
+/// The completion policy the distribution ships, located the way the vocabulary is.
+fn policy(ctx: &Context) -> Result<CompletionPolicy, String> {
+    let root = PathBuf::from(&ctx.index.repository.root);
+    let share = crate::share::Share::locate(ctx.index.share.as_deref(), &root)
+        .map_err(|e| format!("no distribution to read the completion policy from: {e}"))?;
+    CompletionPolicy::load(share.dir())
+}
+
+/// The policy, resolved against the vocabulary beside it and this repository's CI model.
+fn gates_policy(ctx: &Context, _: Empty) -> Result<CompletionPolicyReport, CapabilityError> {
+    let policy = policy(ctx).map_err(CapabilityError::NotFound)?;
+    let tokens: Vec<String> = vocabulary(ctx)
+        .map(|v| v.into_iter().map(|o| o.id).collect())
+        .unwrap_or_default();
+    let root = PathBuf::from(&ctx.index.repository.root);
+    let (m, _) = load_model(&root);
+    let declared: Vec<String> = m.gates.iter().map(|g| g.id.clone()).collect();
+    Ok(CompletionPolicyReport {
+        outline: policy.outline(),
+        problems: policy.validate(&tokens),
+        unanswered_gates: policy.unanswered_gates(&declared),
+        policy,
+    })
 }
 
 /// The CI model, or an empty one and the reason there is none.
@@ -429,6 +509,20 @@ fn gates_completion(ctx: &Context, input: CompletionInput) -> Result<Completion,
         .as_ref()
         .map(|t| gates::closing::read(&root, &t.head, &t.started_at));
 
+    // The questions themselves are the completion policy's. A distribution whose policy
+    // cannot be read is not answered with no questions — that would read as nothing owed —
+    // but with the one question of whether it can be, unknown, and nothing complete.
+    let policy = match policy(ctx) {
+        Ok(p) => Some(p),
+        Err(reason) => {
+            findings.push(format!(
+                "the completion policy could not be read, so no question of the done \
+                 invariant can be asked and nothing is complete: {reason}"
+            ));
+            None
+        }
+    };
+
     Ok(gates::complete(
         &m,
         &changed,
@@ -442,6 +536,7 @@ fn gates_completion(ctx: &Context, input: CompletionInput) -> Result<Completion,
         closing.as_ref(),
         input.on_demand.unwrap_or(false),
         &crate::peers::rfc3339(std::time::SystemTime::now()),
+        policy.as_ref(),
         findings,
     ))
 }
@@ -466,7 +561,7 @@ fn gates_completion(ctx: &Context, input: CompletionInput) -> Result<Completion,
 ///     .iter()
 ///     .filter_map(|e| e.capability.exposure.http.as_ref().map(|h| h.path.as_str()))
 ///     .collect();
-/// assert_eq!(routes, ["/api/v1/gates", "/api/v1/gates/completion"]);
+/// assert_eq!(routes, ["/api/v1/gates", "/api/v1/gates/policy", "/api/v1/gates/completion"]);
 /// ```
 pub fn module() -> ModuleDescriptor {
     module! {
@@ -495,9 +590,28 @@ pub fn module() -> ModuleDescriptor {
                 handler: gates_model,
             },
             capability! {
+                id: "gates.policy",
+                title: "The completion policy",
+                description: "The one definition of done: the stages of the work in order, every question a task must answer before it may be called finished, the stage each question belongs to and the source its answer is taken from — an obligation of share/obligations.yaml, a gate of the CI model, the change set, the repository's convergence or the closing readings. Read from share/completion.yaml, the file `gates.completion` takes its questions from. A token the policy names and the vocabulary lacks is reported as a problem, and a gate question this repository's CI model never answers is listed by name.",
+                input: Empty,
+                output: CompletionPolicyReport,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure {
+                    mcp: Some(McpExposure {
+                        tool: Some("majordomus_completion_policy".into()),
+                        resource: Some(McpResource { uri: POLICY_URI.into(), name: "completion-policy".into() }),
+                    }),
+                    http: get("/api/v1/gates/policy"),
+                    cli: None,
+                },
+                tags: ["gates", "completion", "policy", "introspection"],
+                cache: CachePolicy::Process { max_entries: 4, ttl_seconds: Some(5) },
+                handler: gates_policy,
+            },
+            capability! {
                 id: "gates.completion",
                 title: "Whether this task may be called finished",
-                description: "The active task's own change set — from the commit it started at to the working tree, uncommitted files included — put through the CI model: which gates it selects and why, what each one last reported and over which files, which verdicts have gone stale because the tree moved underneath them, which required gates have never reported at all, and which obligations the change implies whether or not the task declared them. `finishable` is false only when a required gate is known to be failing, stale or blocked by one that is; absence of a verdict is reported as unverified rather than silently accepted.",
+                description: "The active task's own change set — from the commit it started at to the working tree, uncommitted files included — put through the CI model: which gates it selects and why, what each one last reported and over which files, which verdicts have gone stale because the tree moved underneath them, which required gates have never reported at all, and which obligations the change implies whether or not the task declared them. `finishable` is false only when a required gate is known to be failing, stale or blocked by one that is; absence of a verdict is reported as unverified rather than silently accepted. The done invariant is the questions of share/completion.yaml, in its order, each answered from the source it names; `stage` is the stage of the work those answers fold to, and `complete` is true only when every question passes or is exempt — finishable and complete are two different words.",
                 input: CompletionInput,
                 output: Completion,
                 stability: Stability::BehaviorallyVerified,
@@ -525,7 +639,7 @@ mod tests {
     fn the_module_declares_what_it_claims() {
         let m = module();
         assert_eq!(m.id.as_str(), "gates");
-        assert_eq!(m.capabilities.len(), 2);
+        assert_eq!(m.capabilities.len(), 3);
         for e in &m.capabilities {
             assert_eq!(e.capability.id.namespace(), "gates");
             assert!(
@@ -565,7 +679,10 @@ mod tests {
         modules: Vec<crate::capability::module::ModuleDescriptor>,
     ) -> crate::gates::Completion {
         let repo = crate::synthetic::SyntheticRepository::small().unwrap();
-        let index = repo.index().unwrap();
+        let mut index = repo.index().unwrap();
+        // the completion policy is the distribution's, and a synthetic repository carries no
+        // share of its own: the crate's is the one this build ships
+        index.share = Some(crate::synthetic::crate_share());
         let registry = crate::capability::CapabilityRegistry::builder()
             .with_modules(modules)
             .with_index(&index)
@@ -607,7 +724,8 @@ mod tests {
              started_at: 2026-10-10T12:00:00Z\nhead: 0123456789012345678901234567890123456789\n",
         )
         .unwrap();
-        let index = repo.index().unwrap();
+        let mut index = repo.index().unwrap();
+        index.share = Some(crate::synthetic::crate_share());
         let registry = crate::capability::CapabilityRegistry::builder()
             .with_modules(super::super::modules())
             .with_index(&index)
@@ -689,5 +807,149 @@ mod tests {
             unreadable.findings
         );
         assert_eq!(stale(&unreadable), crate::gates::GateStatus::Unknown);
+    }
+
+    // ------------------------------------------------------------ the policy
+
+    /// A context over `repo` whose distribution is `share`.
+    fn context_over(
+        repo: &crate::synthetic::SyntheticRepository,
+        share: &Path,
+    ) -> std::sync::Arc<Context> {
+        let mut index = repo.index().unwrap();
+        index.share = Some(share.to_path_buf());
+        let registry = crate::capability::CapabilityRegistry::builder()
+            .with_modules(super::super::modules())
+            .with_index(&index)
+            .build()
+            .expect("the registry builds");
+        std::sync::Arc::new(Context::new(
+            std::sync::Arc::new(index),
+            std::sync::Arc::new(registry),
+        ))
+    }
+
+    /// The report resolves the shipped policy against the vocabulary beside it and against
+    /// this repository's own model: a gate question the model does not declare is listed,
+    /// not counted as a problem.
+    #[test]
+    fn the_policy_report_names_the_gate_questions_this_repository_never_asks() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let path = repo.root().join(model::MODEL_PATH);
+        std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+        std::fs::write(
+            path,
+            "version: 1\ngates:\n  - id: release-check\n    job: structure\n    runs: \"true\"\n    \
+             summary: the release record is current\nclasses: []\n",
+        )
+        .unwrap();
+        let ctx = context_over(&repo, &crate::synthetic::crate_share());
+        let report = gates_policy(&ctx, Empty {}).expect("the shipped policy is read");
+        assert!(report.problems.is_empty(), "{:?}", report.problems);
+        assert_eq!(report.unanswered_gates, ["version:version-surface"]);
+        assert_eq!(report.outline, report.policy.outline());
+        assert_eq!(report.policy.source, "share/completion.yaml");
+
+        // and the completion report over the same repository asks exactly those questions
+        let value = ctx
+            .execute("gates.completion", serde_json::json!({ "changed": [] }))
+            .expect("the completion report answers");
+        let c: crate::gates::Completion = serde_json::from_value(value).unwrap();
+        let asked: Vec<&str> = c.questions.iter().map(|q| q.id.as_str()).collect();
+        let declared: Vec<&str> = report
+            .policy
+            .questions
+            .iter()
+            .map(|q| q.id.as_str())
+            .collect();
+        assert_eq!(asked, declared);
+        assert_eq!(c.policy.as_deref(), Some("share/completion.yaml"));
+        assert!(!c.complete, "no task is no completion");
+    }
+
+    /// A token the policy names and the vocabulary beside it lacks is a problem of the
+    /// distribution, reported by question.
+    #[test]
+    fn a_policy_naming_a_token_the_vocabulary_lacks_reports_the_question() {
+        let share = tempfile::tempdir().unwrap();
+        for f in ["kinds.yaml", "obligations.yaml"] {
+            std::fs::copy(
+                crate::synthetic::crate_share().join(f),
+                share.path().join(f),
+            )
+            .unwrap();
+        }
+        let text = std::fs::read_to_string(
+            crate::synthetic::crate_share().join(crate::gates::POLICY_FILE),
+        )
+        .unwrap()
+        .replace(
+            "source: obligation:pages",
+            "source: obligation:no-such-token",
+        );
+        std::fs::write(share.path().join(crate::gates::POLICY_FILE), text).unwrap();
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let ctx = context_over(&repo, share.path());
+        let report = gates_policy(&ctx, Empty {}).expect("the policy parses");
+        assert_eq!(
+            report.problems,
+            [
+                "question 'published' is answered by obligation 'no-such-token', which \
+              share/obligations.yaml does not declare"
+            ]
+        );
+    }
+
+    /// A distribution that ships no definition of done cannot be asked what done is, and the
+    /// completion report over it asks only whether it can be — never nothing.
+    #[test]
+    fn a_distribution_without_a_completion_policy_is_refused_and_completes_nothing() {
+        let refusal = |r: Result<CompletionPolicyReport, CapabilityError>| match r {
+            Err(CapabilityError::NotFound(why)) => why,
+            other => panic!("expected a refusal, and it answered {other:?}"),
+        };
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+
+        let no_policy = tempfile::tempdir().unwrap();
+        std::fs::copy(
+            crate::synthetic::crate_share().join("kinds.yaml"),
+            no_policy.path().join("kinds.yaml"),
+        )
+        .unwrap();
+        let ctx = context_over(&repo, no_policy.path());
+        let why = refusal(gates_policy(&ctx, Empty {}));
+        assert!(why.contains("completion.yaml"), "{why}");
+        let c = gates_completion(
+            &ctx,
+            CompletionInput {
+                changed: Some(vec![]),
+                ..Default::default()
+            },
+        )
+        .expect("the completion report still answers");
+        assert_eq!(c.policy, None);
+        assert_eq!(
+            c.questions
+                .iter()
+                .map(|q| q.id.as_str())
+                .collect::<Vec<_>>(),
+            ["policy"]
+        );
+        assert!(!c.complete);
+        assert!(
+            c.findings
+                .iter()
+                .any(|f| f.starts_with("the completion policy could not be read")),
+            "{:?}",
+            c.findings
+        );
+
+        let no_distribution = tempfile::tempdir().unwrap();
+        let ctx = context_over(&repo, no_distribution.path());
+        let why = refusal(gates_policy(&ctx, Empty {}));
+        assert!(
+            why.starts_with("no distribution to read the completion policy from"),
+            "{why}"
+        );
     }
 }

@@ -700,6 +700,15 @@
         "status": "query"
       },
       {
+        "id": "capability:gates.policy",
+        "kind": "capability",
+        "label": "gates.policy",
+        "summary": "The completion policy",
+        "route": "/cockpit/capabilities/gates.policy",
+        "source": "apps/majordomus-cli/src/capability/builtin/gates.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:graph.get",
         "kind": "capability",
         "label": "graph.get",
@@ -58804,6 +58813,21 @@
         "kind": "projects"
       },
       {
+        "source": "capability:gates.policy",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:gates.policy",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:gates.policy",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
         "source": "capability:graph.get",
         "target": "projection:cockpit",
         "kind": "projects"
@@ -87544,6 +87568,11 @@
         "kind": "composes"
       },
       {
+        "source": "module:gates",
+        "target": "capability:gates.policy",
+        "kind": "composes"
+      },
+      {
         "source": "module:graph",
         "target": "capability:graph.get",
         "kind": "composes"
@@ -88190,8 +88219,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2796,
-      "edges": 6129,
+      "nodes": 2797,
+      "edges": 6133,
       "acyclic": false,
       "truncated": false
     }

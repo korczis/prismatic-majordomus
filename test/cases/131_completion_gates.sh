@@ -142,9 +142,26 @@ git checkout -q -- lib/a.sh
 [ "$(status_of unit)" = pass ] || { echo "    reverting the edit did not restore the run"; exit 1; }
 
 # ---------------------------------------------------------------- the done invariant
-# Twenty-two questions, each with the source that answered it and the evidence it read.
-[ "$(completion | jq -r '.questions | length')" = 22 ] \
-  || { echo "    the done invariant is $(completion | jq -r '.questions | length') questions, not 22"; exit 1; }
+# The questions are share/completion.yaml's — its ids, in its order, each in the stage it
+# names — and each carries the source that answered it and the evidence it read. The list
+# is read from the file, never written here: the policy is the one definition of done.
+awk '/^questions:/ { q = 1; next } /^[a-z]/ { q = 0 } q && /^  - id:/ { print $3 }' \
+  "$ROOT/share/completion.yaml" > "$S/questions.want"
+[ -s "$S/questions.want" ] || { echo "    no question was read from share/completion.yaml"; exit 1; }
+completion | jq -r '.questions[].id' | cmp -s - "$S/questions.want" \
+  || { echo "    the report does not ask share/completion.yaml's questions in its order"; exit 1; }
+[ "$(completion | jq -r .policy)" = share/completion.yaml ] \
+  || { echo "    the report does not name the policy it asked: $(completion | jq -r .policy)"; exit 1; }
+awk '/^stages:/ { s = 1; next } /^questions:/ { s = 0 } s && /^  - id:/ { print $3 }' \
+  "$ROOT/share/completion.yaml" > "$S/stages.want"
+completion | jq -r '.stage.stages[].id' | cmp -s - "$S/stages.want" \
+  || { echo "    the stage fold does not walk share/completion.yaml's stages in order"; exit 1; }
+completion | jq -e --rawfile st "$S/stages.want" '[.questions[] | select(.stage as $s | ($st | split("\n") | index($s)) == null)] | length == 0' >/dev/null \
+  || { echo "    a question names a stage the policy does not declare"; exit 1; }
+# questions are still owed here, so the task is not complete, and the stage says what it owes
+[ "$(completion | jq -r .complete)" = false ] || { echo "    a task with owed questions is complete"; exit 1; }
+completion | jq -e '.stage.complete == false and (.stage.owing | length) >= 1 and (.stage.state == "pending" or .stage.state == "blocked")' >/dev/null \
+  || { echo "    the stage does not hold the task where something is owed: $(completion | jq -c .stage)"; exit 1; }
 completion | jq -e '[.questions[] | select((.source | length) == 0 or (.evidence | length) == 0)] | length == 0' >/dev/null \
   || { echo "    a question carries no source or no evidence"; exit 1; }
 # every gate has reported and passed, so the CI question passes and says what it read

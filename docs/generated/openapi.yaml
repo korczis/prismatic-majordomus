@@ -4631,7 +4631,7 @@ paths:
     get:
       operationId: gates.completion
       summary: Whether this task may be called finished
-      description: "The active task's own change set — from the commit it started at to the working tree, uncommitted files included — put through the CI model: which gates it selects and why, what each one last reported and over which files, which verdicts have gone stale because the tree moved underneath them, which required gates have never reported at all, and which obligations the change implies whether or not the task declared them. `finishable` is false only when a required gate is known to be failing, stale or blocked by one that is; absence of a verdict is reported as unverified rather than silently accepted."
+      description: "The active task's own change set — from the commit it started at to the working tree, uncommitted files included — put through the CI model: which gates it selects and why, what each one last reported and over which files, which verdicts have gone stale because the tree moved underneath them, which required gates have never reported at all, and which obligations the change implies whether or not the task declared them. `finishable` is false only when a required gate is known to be failing, stale or blocked by one that is; absence of a verdict is reported as unverified rather than silently accepted. The done invariant is the questions of share/completion.yaml, in its order, each answered from the source it names; `stage` is the stage of the work those answers fold to, and `complete` is true only when every question passes or is exempt — finishable and complete are two different words."
       tags:
         - gates
       parameters:
@@ -4715,6 +4715,63 @@ paths:
         resource:
           uri: majordomus://gates/completion
           name: completion
+  "/api/v1/gates/policy":
+    get:
+      operationId: gates.policy
+      summary: The completion policy
+      description: "The one definition of done: the stages of the work in order, every question a task must answer before it may be called finished, the stage each question belongs to and the source its answer is taken from — an obligation of share/obligations.yaml, a gate of the CI model, the change set, the repository's convergence or the closing readings. Read from share/completion.yaml, the file `gates.completion` takes its questions from. A token the policy names and the vocabulary lacks is reported as a problem, and a gate question this repository's CI model never answers is listed by name."
+      tags:
+        - gates
+      parameters: []
+      responses:
+        "200":
+          description: "The completion policy: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/CompletionPolicyReport"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: gates.policy
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::gates
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: process
+        max_entries: 4
+        ttl_seconds: 5
+      x-majordomus-effect: read
+      x-majordomus-mcp:
+        tool: majordomus_completion_policy
+        resource:
+          uri: majordomus://gates/policy
+          name: completion-policy
   "/api/v1/graph":
     get:
       operationId: graph.get
@@ -16866,7 +16923,18 @@ components:
           type: array
           items:
             "$ref": "#/components/schemas/DoneQuestion"
-          description: "The done invariant: the questions a task must answer before anybody may call it\nfinished, each with the source that answered it and the evidence it read. Composed\nfrom the obligation closure, the gates, the change set, the repository's convergence\nand the closing readings; a question nothing here reaches is `unknown` and names the\ncommand that would answer it."
+          description: "The done invariant: the questions a task must answer before anybody may call it\nfinished, each with the source that answered it and the evidence it read. Composed\nfrom the obligation closure, the gates, the change set, the repository's convergence\nand the closing readings; a question nothing here reaches is `unknown` and names the\ncommand that would answer it. Exactly the questions of the completion policy, in its\norder, each with the stage the policy places it in."
+        policy:
+          type:
+            - string
+            - "null"
+          description: "The completion policy the questions were taken from, as the distribution names it.\nAbsent when no policy could be read; a finding then says why, the one question asked\nis whether it can be, and nothing is complete."
+        stage:
+          "$ref": "#/components/schemas/LifecycleStage"
+          description: "Where the task stands in the lifecycle, folded from the answers in the policy's\nstage order: the first stage blocked, else the first stage pending, else the last.\nDerived on every reading and never written down by anybody."
+        complete:
+          type: boolean
+          description: "True only when a task is present and every question of the policy passes or is\nexempt. The one field that may be read as \"done\": it is the stage fold's word, and\nno surface computes it a second time from the parts."
         findings:
           type: array
           items:
@@ -16881,7 +16949,50 @@ components:
         - gates
         - obligations
         - questions
-      description: "```\nuse majordomus_cli::gates::Completion;\n\n// the document every surface reads, as `gates.completion` answers with it. The property\n// that matters is the one asserted here: a gate that never reported leaves the task\n// finishable and *unverified*, which is a different thing from a task that passed.\nlet c: Completion = serde_json::from_value(serde_json::json!({\n    \"present\": true,\n    \"model\": \".ai/repo/ci/gates.yaml\",\n    \"plan\": { \"mode\": \"affected\", \"reason\": \"1 path in 1 class\", \"changed\": [\"docs/CLI.md\"],\n              \"classes\": [], \"unclassified\": [], \"selected\": {}, \"excluded\": {} },\n    \"finishable\": true,\n    \"unverified\": [\"reference-check\"],\n    \"tallies\": { \"queued\": 1 },\n    \"gates\": [],\n    \"obligations\": [],\n    \"questions\": []\n}))\n.unwrap();\nassert!(c.finishable, \"absence of a verdict does not refuse\");\nassert_eq!(c.unverified, [\"reference-check\"], \"and it is never silently accepted\");\nassert!(c.blocking.is_empty());\n```\nWhether the active task may be called finished, and everything the answer rests on.\n\n`finishable` is the field a caller acts on and the one thing no surface may recompute:\nthe shell tool's `check` and `finish` read it, the HTTP API serves it, the Cockpit\nrenders it, and all of them are reading this one execution."
+        - stage
+        - complete
+      description: "```\nuse majordomus_cli::gates::Completion;\n\n// the document every surface reads, as `gates.completion` answers with it. The property\n// that matters is the one asserted here: a gate that never reported leaves the task\n// finishable and *unverified*, which is a different thing from a task that passed.\nlet c: Completion = serde_json::from_value(serde_json::json!({\n    \"present\": true,\n    \"model\": \".ai/repo/ci/gates.yaml\",\n    \"plan\": { \"mode\": \"affected\", \"reason\": \"1 path in 1 class\", \"changed\": [\"docs/CLI.md\"],\n              \"classes\": [], \"unclassified\": [], \"selected\": {}, \"excluded\": {} },\n    \"finishable\": true,\n    \"unverified\": [\"reference-check\"],\n    \"tallies\": { \"queued\": 1 },\n    \"gates\": [],\n    \"obligations\": [],\n    \"questions\": [],\n    \"policy\": \"share/completion.yaml\",\n    \"stage\": { \"id\": \"gates\", \"title\": \"Gates\", \"state\": \"pending\", \"complete\": false,\n               \"owing\": [\"ci\"], \"stages\": [] },\n    \"complete\": false\n}))\n.unwrap();\nassert!(c.finishable, \"absence of a verdict does not refuse\");\nassert_eq!(c.unverified, [\"reference-check\"], \"and it is never silently accepted\");\nassert!(c.blocking.is_empty());\n// finishable is not complete: the stage the answers fold to still owes the ci question\nassert!(!c.complete);\nassert_eq!(c.stage.id, \"gates\");\nassert_eq!(c.stage.owing, [\"ci\"]);\n```\nWhether the active task may be called finished, and everything the answer rests on.\n\n`finishable` is the field a caller acts on and the one thing no surface may recompute:\nthe shell tool's `check` and `finish` read it, the HTTP API serves it, the Cockpit\nrenders it, and all of them are reading this one execution."
+    CompletionPolicyReport:
+      type: object
+      properties:
+        version:
+          type: integer
+          format: uint32
+          minimum: 0
+          description: The format version the file states.
+        source:
+          type: string
+          description: Where it was read from.
+        stages:
+          type: array
+          items:
+            "$ref": "#/components/schemas/StageDecl"
+          description: "The lifecycle, in order."
+        questions:
+          type: array
+          items:
+            "$ref": "#/components/schemas/QuestionDecl"
+          description: "Every question, in declaration order."
+        outline:
+          type: string
+          description: "The definition of done in a dozen lines: one per stage that asks anything, its\nquestions after a colon."
+        problems:
+          type: array
+          items:
+            type: string
+          description: "What does not resolve against the vocabulary the policy is shipped beside: a token\n`share/obligations.yaml` lacks. Empty in a coherent distribution, and never silently so."
+        unanswered_gates:
+          type: array
+          items:
+            type: string
+          description: "The questions answered by a gate this repository's CI model does not declare, as\n`question:gate`. Not a problem of the policy — the model is the repository's — but a\nquestion this repository never gets a verdict for, listed so that it is seen."
+      required:
+        - version
+        - source
+        - stages
+        - questions
+        - outline
+      description: "The completion policy, as `gates.policy` serves it: the stages, the questions and the\nsource each is answered from, with what the policy resolves to in this repository.\nThe policy is flattened into the report, so a reader sees the keys the file carries\nwith the derived fields beside them.\n\n```\nuse majordomus_cli::capability::builtin::gates::CompletionPolicyReport;\nuse majordomus_cli::gates::CompletionPolicy;\n\nlet policy = CompletionPolicy::parse(\n    \"version: 1\\nstages:\\n  - id: a\\n    title: Alpha\\n    summary: s\\nquestions:\\n  - id: q\\n    stage: a\\n    question: Is it?\\n    source: gate:site-check\\n    remediation: run it\\n\",\n    \"share/completion.yaml\",\n)\n.unwrap();\nlet report = CompletionPolicyReport {\n    outline: policy.outline(),\n    problems: policy.validate(&[]),\n    unanswered_gates: policy.unanswered_gates(&[]),\n    policy,\n};\nassert_eq!(report.outline, \"- Alpha: q\\n\");\nassert_eq!(report.unanswered_gates, [\"q:site-check\"]);\nlet json = serde_json::to_value(&report).unwrap();\nassert_eq!(json[\"stages\"][0][\"id\"], \"a\", \"the policy's own keys, flattened\");\nassert!(json.get(\"problems\").is_none(), \"a coherent distribution writes no problems\");\n```"
     Component:
       oneOf:
         - type: string
@@ -19712,6 +19823,9 @@ components:
         id:
           type: string
           description: "The question's identity, stable across reports."
+        stage:
+          type: string
+          description: The lifecycle stage the policy places it in.
         question:
           type: string
           description: "The question, as a person would ask it."
@@ -19729,12 +19843,13 @@ components:
           description: "What would settle it, as a command."
       required:
         - id
+        - stage
         - question
         - status
         - evidence
         - source
         - remediation
-      description: "```\nuse majordomus_cli::gates::{DoneQuestion, GateStatus};\n\nlet q = DoneQuestion {\n    id: \"pushed\".into(),\n    question: \"Has the commit reached the remote?\".into(),\n    status: GateStatus::Queued,\n    evidence: \"the obligation is owed\".into(),\n    source: \"obligation push (obligations.closure)\".into(),\n    remediation: \"git push\".into(),\n};\n// every question names what answered it and what would settle it: a question with\n// neither is a checklist line, which is the artifact this type exists instead of\nassert!(!q.source.is_empty() && !q.remediation.is_empty());\nassert!(q.status.unverified());\n```\nOne question of the done invariant, and what answered it."
+      description: "```\nuse majordomus_cli::gates::{DoneQuestion, GateStatus};\n\nlet q = DoneQuestion {\n    id: \"pushed\".into(),\n    stage: \"commit\".into(),\n    question: \"Has the commit reached the remote?\".into(),\n    status: GateStatus::Queued,\n    evidence: \"the obligation is owed\".into(),\n    source: \"obligation push (obligations.closure)\".into(),\n    remediation: \"git push\".into(),\n};\n// every question names what answered it and what would settle it: a question with\n// neither is a checklist line, which is the artifact this type exists instead of\nassert!(!q.source.is_empty() && !q.remediation.is_empty());\nassert!(q.status.unverified());\n```\nOne question of the done invariant, and what answered it."
     DriftedObject:
       type: object
       properties:
@@ -27538,6 +27653,38 @@ components:
           const: musl
           description: "musl: Alpine, and any statically linked artifact."
       description: The C library a Linux artifact is linked against.
+    LifecycleStage:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "The stage the task stands at: the first one blocked, else the first one pending,\nelse the last stage of the policy."
+        title:
+          type: string
+          description: That stage as a heading.
+        state:
+          "$ref": "#/components/schemas/StageState"
+          description: Where it stands.
+        complete:
+          type: boolean
+          description: "True only when every stage is complete or empty. The word `completed` is earned\nhere and nowhere else."
+        owing:
+          type: array
+          items:
+            type: string
+          description: The questions still owed or refusing at the stage the task stands at.
+        stages:
+          type: array
+          items:
+            "$ref": "#/components/schemas/StageReport"
+          description: "Every stage of the policy, in order."
+      required:
+        - id
+        - title
+        - state
+        - complete
+        - stages
+      description: "Where the task stands: the one stage a reader acts on, and every stage behind and\nahead of it. Produced by `derive_stage` and by nothing else, so the stage a report\nnames is always the fold over the answers and never a word somebody wrote down.\n\n```\nuse majordomus_cli::gates::{DoneQuestion, GateStatus, LifecycleStage, StageDecl, StageState, derive_stage};\n\nlet stages = [StageDecl { id: \"build\".into(), title: \"Build\".into(), summary: \"s\".into() }];\nlet owed = DoneQuestion {\n    id: \"committed\".into(), stage: \"build\".into(), question: \"Is it committed?\".into(),\n    status: GateStatus::Queued, evidence: \"owed\".into(), source: \"s\".into(), remediation: \"git commit\".into(),\n};\nlet stage: LifecycleStage = derive_stage(&stages, &[owed]);\nassert_eq!((stage.id.as_str(), stage.state), (\"build\", StageState::Pending));\nassert_eq!(stage.owing, [\"committed\"]);\nassert!(!stage.complete, \"a question still owed is a task not completed\");\nassert_eq!(stage.stages.len(), 1);\n```"
     LimitsView:
       type: object
       properties:
@@ -33373,6 +33520,31 @@ components:
           const: warning
           description: "Reported, and the gate passes."
       description: "How much a finding matters.\n\nThere are two levels and not five, because the only question a gate can answer is\nwhether the change may land. A warning is a finding the repository has decided not to\nblock on; nothing else is a warning."
+    QuestionDecl:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "The question's identity, stable across reports."
+        stage:
+          type: string
+          description: The stage it belongs to.
+        question:
+          type: string
+          description: "The question, as a person would ask it."
+        source:
+          type: string
+          description: "What answers it, as the policy states it."
+        remediation:
+          type: string
+          description: "What would settle it, as a command."
+      required:
+        - id
+        - stage
+        - question
+        - source
+        - remediation
+      description: "One question of the policy, as declared.\n\n`source` is carried as the text the file states (`obligation:tests`, `gates`,\n`closing:debt`), never as a structure: the policy file, `gates.policy` and the\nquestions of the completion report then state the same bytes for the same question,\nand a reader compares them by eye. `Self::kind`\nparses it; `CompletionPolicy::parse` has already refused a text nothing answers.\n\n```\nuse majordomus_cli::gates::{QuestionDecl, QuestionSource};\n\nlet decl = QuestionDecl {\n    id: \"pushed\".into(),\n    stage: \"commit\".into(),\n    question: \"Has the commit reached the remote?\".into(),\n    source: \"obligation:push\".into(),\n    remediation: \"git push\".into(),\n};\nassert_eq!(decl.kind(), QuestionSource::Obligation(\"push\".into()));\n// the source is carried as text, and serialises as the text the file stated\nassert_eq!(serde_json::to_value(&decl).unwrap()[\"source\"], \"obligation:push\");\n```"
     QueueTallies:
       type: object
       properties:
@@ -39671,6 +39843,66 @@ components:
           const: unsupported
           description: "Considered and refused: listed with the reason, never executable."
       description: "Where a capability stands, in the repository's own vocabulary for claims. A capability\nthat is `Planned` or `Unsupported` may be listed but is never executable through any\nprojection; the registry refuses to build otherwise."
+    StageDecl:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "The stage's identity, stable across reports."
+        title:
+          type: string
+          description: The stage as a heading.
+        summary:
+          type: string
+          description: What it means for the stage to be complete.
+      required:
+        - id
+        - title
+        - summary
+      description: "One stage of the lifecycle, in the order the policy states them. A stage carries no\nquestion of its own: the questions name it by `id`, and\n`CompletionPolicy::questions_of` gathers them back, so a stage is a heading over\nwhatever the policy hangs under it.\n\n```\nuse majordomus_cli::gates::StageDecl;\n\nlet stage = StageDecl {\n    id: \"commit\".into(),\n    title: \"Commit and push\".into(),\n    summary: \"The work is in the branch's history.\".into(),\n};\n// the same shape the file carries, so a report and the policy agree byte for byte\nlet json = serde_json::to_value(&stage).unwrap();\nassert_eq!(json[\"id\"], \"commit\");\nassert_eq!(serde_json::from_value::<StageDecl>(json).unwrap(), stage);\n```"
+    StageReport:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "The stage's identity."
+        title:
+          type: string
+          description: The stage as a heading.
+        state:
+          "$ref": "#/components/schemas/StageState"
+          description: Where it stands.
+        questions:
+          type: array
+          items:
+            type: string
+          description: "The questions of this stage, in policy order."
+        owing:
+          type: array
+          items:
+            type: string
+          description: "The questions still owed or refusing, in policy order."
+      required:
+        - id
+        - title
+        - state
+        - questions
+      description: "One stage of the lifecycle, with what its questions said. Every stage of the policy\ngets one, in the policy's order, so a reader sees the stages behind the task as well\nas the one it stands at; `owing` is written only when something is owed.\n\n```\nuse majordomus_cli::gates::{StageReport, StageState};\n\nlet report = StageReport {\n    id: \"commit\".into(),\n    title: \"Commit and push\".into(),\n    state: StageState::Complete,\n    questions: vec![\"committed\".into(), \"pushed\".into()],\n    owing: Vec::new(),\n};\nlet json = serde_json::to_value(&report).unwrap();\nassert_eq!(json[\"state\"], \"complete\");\nassert!(json.get(\"owing\").is_none(), \"nothing owed is nothing written\");\n```"
+    StageState:
+      oneOf:
+        - type: string
+          const: complete
+          description: Every question of the stage passes or is exempt.
+        - type: string
+          const: pending
+          description: "A question of the stage has not been answered: queued or unknown."
+        - type: string
+          const: blocked
+          description: "A question of the stage refuses: failing, stale, or blocked by one that is."
+        - type: string
+          const: empty
+          description: The stage declares no question that applies here.
+      description: "Where one stage stands, folded from the answers to its questions and never set by\nanybody. A refusal anywhere in the stage makes it blocked whatever else passed; a\nstage with nothing owed is complete; one with an unanswered question is pending; and\na stage the change asks nothing of is empty, which neither blocks nor completes.\n\n```\nuse majordomus_cli::gates::StageState;\n\nassert_eq!(StageState::Blocked.as_str(), \"blocked\");\n// serialised as the same word the report prints, so no reader meets two spellings\nassert_eq!(serde_json::to_string(&StageState::Pending).unwrap(), \"\\\"pending\\\"\");\nassert_eq!(serde_json::from_str::<StageState>(\"\\\"empty\\\"\").unwrap(), StageState::Empty);\n```"
     Stance:
       oneOf:
         - type: string
