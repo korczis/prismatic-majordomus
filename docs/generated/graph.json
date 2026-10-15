@@ -32317,6 +32317,8 @@
             "A request in flight at the moment of supersession receives its own answer, not a 404",
             "docs/MCP.md states the grace and that a lost server ends"
           ],
+          "completed_at": "2026-10-14T22:13:35Z",
+          "completed_event": "sha256:085b40f580faf092b37e6211cf83b49bb8d0d01d3e12401de84c09be6e8807bd",
           "created_at": "2026-10-09",
           "depends_on": [],
           "evidence_required": [
@@ -32337,11 +32339,15 @@
             "docs/MCP.md"
           ],
           "slug": "a-lost-server-hands-on-and-ends",
-          "updated_at": "2026-10-09",
+          "started_at": "2026-10-14T22:12:56Z",
+          "started_event": "sha256:86bad7968a101dc289fab416beff882f24364f759548541e5d21962ca7c443b3",
+          "updated_at": "2026-10-14T22:13:35Z",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --test lease_lost --test mcp_shared"
-          ]
+          ],
+          "verified_at": "2026-10-14T22:13:14Z",
+          "verified_event": "sha256:c13e91e7d8d2590bc6061b8abf036e6a9de9eb24e617f15d49a280818099c12b"
         }
       },
       {
@@ -33123,6 +33129,8 @@
             "A client of version N-1 attaching to a server of version N reports the difference in its initialize answer",
             "One function decides the version verdict for elect, serve ensure and server.status"
           ],
+          "completed_at": "2026-10-14T22:15:01Z",
+          "completed_event": "sha256:c9efeaaccd43fb37945cebd8bccd22b7a1c6d8f340e1dc5d381ab23fe8e327fd",
           "created_at": "2026-10-09",
           "current_state": "After an upgrade through the installer, new clients are served by the old version until it idles out.",
           "depends_on": [
@@ -33147,12 +33155,16 @@
             "docs/MCP.md"
           ],
           "slug": "versions-meet-safely",
-          "updated_at": "2026-10-09",
+          "started_at": "2026-10-14T22:14:26Z",
+          "started_event": "sha256:8303f42aa02bcb737ee972ac7ed00bbb36808a25b15ad88fef8f4f2703328620",
+          "updated_at": "2026-10-14T22:15:01Z",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --test serve_lifecycle --test server_status",
             "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
-          ]
+          ],
+          "verified_at": "2026-10-14T22:14:44Z",
+          "verified_event": "sha256:d3b69c3b2984807ed8c423cbc64517f787eb9a6569145cbf5fa6c6001d2d18d7"
         }
       },
       {
