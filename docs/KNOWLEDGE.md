@@ -55,6 +55,54 @@ tracked: a record only one machine can read is a record nobody reads (ADR 0014).
 source classes in `.ai/repo/knowledge/sources.yaml`, discovered through the git index like
 every kind, and both carry a `README.md` contract.
 
+## On the trunk, the records wait in the outbox
+
+A trunk that changes only through pull requests cannot commit what an episode boundary writes
+there, so a candidate written into `candidates/` on the trunk would leave the trunk dirty for
+good. The ADR 0091 amendment of 2026-10-15 (I1984) moves where a trunk episode writes, not what
+it writes.
+
+**Where they go.** The trunk is the remote's default branch as `mj_git_trunk_ref` reads it
+(`refs/remotes/<remote>/HEAD`); a checkout is on it when `HEAD` is the local branch of that
+name (`mj_on_trunk`). There, `knowledge derive` writes each new candidate to
+`.ai/local/state/outbox/candidates/<id>.md`, and `session close` and `recover episodes`
+write the closed session record to `.ai/local/state/outbox/sessions/`, instead of the
+tracked sections. The outbox is checkout-local and never tracked, so closing an episode on the trunk
+leaves `git status --porcelain` empty. A candidate whose id is already promoted or superseded
+is skipped as before, and one already tracked with the same bytes is reported `unchanged` and
+is not staged. A repository with no remote, or no remote default branch, and a detached
+`HEAD` are not on a trunk: there the records go where they always have.
+
+**When they leave.** The next `session close` on any other branch of the same clone drains
+the outbox (`mj_session_outbox_drain`), after the episode's own record and before its
+derivation. Each file moves into `.ai/repo/sessions/` or `.ai/repo/knowledge/candidates/`
+unchanged and under its own name, so a record still names the episode and the branch that
+wrote it, never the one that carried it, and that branch's pull request brings it to the
+trunk. The move happens once per record: a session record the section already holds by
+`session_id`, and a candidate already promoted, superseded or tracked with the same bytes,
+is retired from the outbox, not written again. Each move is one line on standard error
+(`outbox: carried <path>`, `outbox: <id> is already tracked; the staged copy is retired`),
+because the close's standard output is the path of its own record.
+
+**What says so meanwhile.** Until a branch carries them, staged candidates are not in the
+review queue: `knowledge candidates`, the index and the surfaces read `candidates/`, and
+`majordomus.candidates-reviewed` neither counts them nor reports them as untracked. So a
+non-empty outbox is named where a person looks first. `context` prints one line,
+`outbox  <n> session record(s), <m> knowledge candidate(s) in .ai/local/state/outbox/,
+waiting for a branch episode to carry them`; `doctor` reports an `INFO` finding `outbox`
+under the category `clone` with the same counts and `ls .ai/local/state/outbox/*/` as its
+reproduce. Neither is a failure: the outbox is where a trunk episode's records belong, and a
+clone that never branches again still says what it holds. An empty outbox says nothing.
+
+**A file that is not a record.** A session file without `session/v1` front matter naming a
+`session_id`, or a candidate without `knowledge/v1` front matter whose `id` is its file name,
+is named on standard error and left where it is: moving it would put an invalid file into a
+tracked section, and removing it would lose whatever it was. So is a session file whose name
+another episode's record already takes in the tracked section. The drain ends with
+`outbox: <n> file(s) stay in .ai/local/state/outbox/ (run: majordomus doctor)`, and `doctor`
+and `context` keep counting the file until a person moves or removes it. Case `3060` proves
+the trunk half and case `3063` the drain.
+
 ## What is derived, from what
 
 The evidence is the ledger lines the episode stamped and the commits it made. The mapping is
@@ -204,7 +252,7 @@ target — never staged, and prints the path written on the last line, the way `
 
 | Command | Reads | Writes | Exit codes |
 |---|---|---|---|
-| `knowledge derive [--episode <id>] [--dry-run] [--json]` | the ledger window of the episode, the task notes under `.ai/local/state/completed/`, the sessions store, git (the episode's commits and the paths they touched), the policy, both record directories | `candidates/<id>.md` per record; `knowledge.derived`; nothing under `--dry-run` | `0` (also with no episode or nothing changed), `2` usage, `10` the policy does not parse, `13` write failure |
+| `knowledge derive [--episode <id>] [--dry-run] [--json]` | the ledger window of the episode, the task notes under `.ai/local/state/completed/`, the sessions store, git (the episode's commits and the paths they touched), the policy, both record directories | `candidates/<id>.md` per record, on the trunk `.ai/local/state/outbox/candidates/<id>.md`; `knowledge.derived`; nothing under `--dry-run` | `0` (also with no episode or nothing changed), `2` usage, `10` the policy does not parse, `13` write failure |
 | `knowledge candidates [--json]` | `candidates/` on disk (tracked or not, so a candidate the hook just wrote is listed), the sessions store, the ledger | nothing | `0`, `2` usage |
 | `knowledge promote <id> [--class <c>] < evidence` | the candidate, stdin, the open episode | `curated/<id>.md`; removes the candidate; `knowledge.promoted` | `0`, `2` usage, `10` empty or transcript stdin, status not candidate, class outside the enumeration, `12` no such candidate, `13` write failure |
 | `knowledge reject <id> --reason "<why>" [--by <id>]` | the candidate, both directories for `--by` | the candidate rewritten in place; `knowledge.rejected` | `0`, `2` usage or empty reason, `10` status not candidate or `--by` names no record, `12` no such candidate, `13` write failure |
@@ -253,7 +301,8 @@ The advisory rule measures the queue and empties nothing. Review age is the age 
 entry — the oldest `knowledge.derived` line naming the file, then the commit that added it,
 then the record's `date` — and the finding says which source it used. It is dispatched from
 `doctor` only: under `watch` an advisory finding is drift, and a full review queue must not
-turn `watch` red in a hook.
+turn `watch` red in a hook. A candidate staged in the trunk's outbox is outside `candidates/`
+and outside this rule; `doctor` names the outbox under `clone` instead.
 
 Each rule names its tests and its claims; `scripts/ci/rule-proof-check` and
 `scripts/ci/claim-proof-check` refuse a rule whose proof is missing and a claim whose test

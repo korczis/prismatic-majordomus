@@ -31082,6 +31082,8 @@
             "Closing an episode on the trunk leaves `git status --porcelain` empty",
             "Candidates derived on a branch are still offered for review and promotion as today"
           ],
+          "completed_at": "2026-10-15T11:21:05Z",
+          "completed_event": "sha256:b7efcec68d0b38ff2b619a9525815b069d211f2be1a6b4590018bf4e506d2b1a",
           "created_at": "2026-10-04",
           "desired_state": "Candidates derived on the trunk are staged under .ai/local, or derivation is skipped there, until a branch promotes them. The decision is recorded against ADR 0091.",
           "evidence_required": [
@@ -31102,7 +31104,9 @@
             "test/cases"
           ],
           "slug": "knowledge-candidates-never-dirty-a-trunk",
-          "updated_at": "2026-10-15T10:43:28Z",
+          "started_at": "2026-10-15T11:20:46Z",
+          "started_event": "sha256:d7b110162c6c39739bd1bb1eb51000e63225e9477430d88b85a60c5ff5d0b1cd",
+          "updated_at": "2026-10-15T11:21:05Z",
           "validation": [
             "bin/majordomus plan validate",
             "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
