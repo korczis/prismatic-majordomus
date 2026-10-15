@@ -60,6 +60,7 @@ pub(crate) mod shell;
 pub(crate) mod source;
 pub(crate) mod timings;
 pub(crate) mod view;
+pub(crate) mod waves;
 pub(crate) mod work;
 
 use std::sync::Arc;
@@ -138,6 +139,12 @@ pub(crate) const SCREENS: &[Screen] = &[
         title: "Issues & PRs",
         icon: "merge",
         answers: "Which issues are ready or blocked, and what the pull-request queue would do.",
+    },
+    Screen {
+        route: waves::ROUTE,
+        title: "Waves",
+        icon: "list",
+        answers: "What the plan lets run at the same time, and what is still open in each wave.",
     },
     Screen {
         route: issues::ROUTE,
@@ -331,6 +338,7 @@ impl Ui {
             "" | PREFIX => dashboard::screen(&ctx),
             roadmap::ROUTE => roadmap::screen(&ctx, &req.query),
             work::ROUTE => work::screen(&ctx, &req.query),
+            waves::ROUTE => waves::screen(&ctx),
             issues::ROUTE => issues::screen(&ctx, &req.query),
             prs::ROUTE => prs::screen(&ctx, &req.query),
             mesh::ROUTE => mesh::screen(&ctx, &req.query),
@@ -552,6 +560,7 @@ mod tests {
                 work::ROUTE,
                 work::screen(&ctx, &[("pr".into(), "1".into())]),
             ),
+            (waves::ROUTE, waves::screen(&ctx)),
             (
                 issues::ROUTE,
                 issues::screen(&ctx, &[("status".into(), "READY".into())]),

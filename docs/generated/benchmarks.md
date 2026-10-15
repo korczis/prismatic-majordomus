@@ -248,6 +248,7 @@ Every screen and panel of the UI's own route list, read with `GET` and `Accept: 
 | `system.http.ui.command` | `/ui/command` | pinned | — |
 | `system.http.ui.roadmap` | `/ui/roadmap` | pinned | — |
 | `system.http.ui.work` | `/ui/work` | pinned | — |
+| `system.http.ui.waves` | `/ui/waves` | pinned | — |
 | `system.http.ui.issues` | `/ui/issues` | pinned | — |
 | `system.http.ui.prs` | `/ui/prs` | pinned | — |
 | `system.http.ui.capabilities` | `/ui/capabilities` | pinned | — |
@@ -263,6 +264,7 @@ Every screen and panel of the UI's own route list, read with `GET` and `Accept: 
 | `system.http.live.ui.command` | `/ui/command` | live | — |
 | `system.http.live.ui.roadmap` | `/ui/roadmap` | live | — |
 | `system.http.live.ui.work` | `/ui/work` | live | — |
+| `system.http.live.ui.waves` | `/ui/waves` | live | — |
 | `system.http.live.ui.issues` | `/ui/issues` | live | — |
 | `system.http.live.ui.prs` | `/ui/prs` | live | — |
 | `system.http.live.ui.capabilities` | `/ui/capabilities` | live | — |
