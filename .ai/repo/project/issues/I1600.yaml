@@ -44,4 +44,32 @@ evidence_required:
   - public_site_serves_it
 risk: "The derivation now runs one more scenario and the homepage replaces its hero console; the console moves under how it works rather than leaving, so the gate that holds every recorded lifecycle panel to the homepage is unchanged."
 created_at: 2026-09-15
-updated_at: 2026-09-30
+updated_at: 2026-10-11T04:40:59Z
+started_at: 2026-10-11T04:18:57Z
+started_event: sha256:9bfb39d8d44f5e3d24d0018fcdda3fb684212666a42a3c47116eb8341fd05cdd
+verified_at: 2026-10-11T04:40:44Z
+verified_event: sha256:35b76a1925bdd703d2fdf0186dd0caaca452c84965a9af1b2f7ede749f19d732
+completed_at: 2026-10-11T04:40:59Z
+completed_event: sha256:66d5cfb1bc95a74eebef6bfc226c91d06a4340ad5a22a8453a471ff3854f4ef5
+evidence:
+  - covers: challenge_recorded
+    type: test
+    command: "MJ_TEST_JOBS=4 bash test/run.sh 632_a_scenario_shows_the_worker_it_judges 103_obligations"
+    result: "ok 632 (worker step recorded as actor worker; refused in a live scenario, beside run, and without an exit code) and ok 103 (finish prints one blocking doctrine per line) at master 1393d9ef2a; site/data/generated/challenge.json holds 10 steps: check refused (scope), finish refused twice on 'sh test/parse.sh', handover then context, accepted finish"
+    artifact: "site/data/generated/challenge.json"
+    commit: 1393d9ef2a0a85209f379a87cccfb0f9cf65d253
+    recorded_at: 2026-10-11T04:40:15Z
+  - covers: site_holds_the_run
+    type: ci
+    command: "gh run view 38083715376 --json jobs (validate on master 890e112d04, the site job runs scripts/generate-site-data --check and scripts/site-check --no-sync)"
+    result: "site job success, pages job success; 890e112d04..1393d9ef2a changes no file under apps, lib, scripts, site/templates or test (25 campaign documents only); site-check holds /challenge/ and the homepage replay to every recorded line, the step-panel count, the challenge CTA and each guarantee link, and generate-site-data refuses a challenge with no refusal, a non-guaranteed claim or a README transcript that is not a recorded step"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/38083715376"
+    commit: 1393d9ef2a0a85209f379a87cccfb0f9cf65d253
+    recorded_at: 2026-10-11T04:40:24Z
+  - covers: public_site_serves_it
+    type: artifact
+    command: "curl -fsS https://majordomus.dev/challenge/ | grep -o 'data-outcome=\"[a-z]*\"' | sort | uniq -c; curl -fsS https://majordomus.dev/ | grep -cE 'href=\"[^\"]*/challenge/\"[^>]*data-cta=\"challenge\"'; curl -fsS https://majordomus.dev/build.json"
+    result: "HTTP 200; 10 step panels (4 accepted, 3 change, 3 refused) = the 10 steps challenge.json recorded; the homepage's first call to action links /challenge/; build.json names master 890e112d04, version 0.20.0, dirty false"
+    artifact: "https://majordomus.dev/challenge/"
+    commit: 1393d9ef2a0a85209f379a87cccfb0f9cf65d253
+    recorded_at: 2026-10-11T04:40:32Z
