@@ -71,13 +71,18 @@ pub fn run(args: ServeArgs) -> Result<u8> {
             idle,
             wait,
             format,
-        }) => ensure(
-            &repo,
-            port.unwrap_or_else(|| crate::cli::checkout_port(repo.root())),
-            *idle,
-            Duration::from_secs(*wait),
-            *format,
-        ),
+        }) => {
+            // the declared server timings, the idle life among them, read before the lease
+            // is judged; `--idle` given here overrides the declaration (I2701)
+            let _ = crate::policy::LoadedPolicy::load(&repo);
+            ensure(
+                &repo,
+                port.unwrap_or_else(|| crate::cli::checkout_port(repo.root())),
+                idle.unwrap_or_else(|| lease::timings().idle.as_secs()),
+                Duration::from_secs(*wait),
+                *format,
+            )
+        }
         Some(ServeCommand::Stop { wait }) => stop(&repo, Duration::from_secs(*wait)),
     }
 }
@@ -775,7 +780,7 @@ fn report(
 /// Standard input, output and error are redirected here, and for a long time that looked
 /// like enough. It is not: `Command` only replaces those three, and **every other descriptor
 /// the parent had open is inherited by the child**, which then holds it for its whole life —
-/// fifteen minutes, by `DEFAULT_IDLE_SECONDS`.
+/// fifteen minutes, by `DEFAULT_IDLE_SECONDS`, or the declared `server.idle_seconds`.
 ///
 /// direnv is where that stops being theoretical. It hands the file it evaluates an extra
 /// descriptor of its own (fd 6 here), and it does not return until that pipe closes. On

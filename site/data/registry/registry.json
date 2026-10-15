@@ -6,7 +6,7 @@
     "version": "0.26.0"
   },
   "registry": {
-    "fingerprint": "885d51956211be16b28df7cf26008890844b7da2efd8293e9677a80142fd515f",
+    "fingerprint": "ce5f0998619fbb4d3baeb31552b1aa1343e50e763a207f9d746dca25622d401f",
     "summary": {
       "total": 2379,
       "builtin": 199,
@@ -81850,7 +81850,7 @@
     ]
   },
   "index": {
-    "fingerprint": "611eb45fe03cb0e94ee4bbf41e77ec711e5745a6c28dfc12602a14bc17667ad2",
+    "fingerprint": "82e057a2dc9948a676fbba87b084ddcb07319331ad9f84300871e2b861eb18b7",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -87839,7 +87839,7 @@
         "title": "MCP surface — `majordomus mcp`",
         "path": "docs/MCP.md",
         "source_class": "document",
-        "bytes": 66574
+        "bytes": 66973
       },
       {
         "uri": "majordomus://document/docs/MESH.md",
@@ -96453,7 +96453,7 @@
         "path": ".ai/repo/policy.yaml",
         "section": "policy",
         "source_class": "policy",
-        "bytes": 22748
+        "bytes": 22957
       },
       {
         "uri": "majordomus://profile/debugging",
@@ -102604,7 +102604,7 @@
         "identity": "test/cases/354_a_lease_contest_is_judged_by_a_declaration.sh",
         "path": "test/cases/354_a_lease_contest_is_judged_by_a_declaration.sh",
         "source_class": "case",
-        "bytes": 5513
+        "bytes": 5542
       },
       {
         "uri": "majordomus://test/test/cases/357_ci_records_evidence.sh",
@@ -106178,15 +106178,13 @@
                 "name": "idle",
                 "long": "idle",
                 "positional": false,
-                "help": "The started server stops when no peer has been attached for this many seconds",
+                "help": "The started server stops when no peer has been attached for this many seconds; without it, the policy's declared `server.idle_seconds`, 900 when none is declared",
                 "value_name": "SECONDS",
                 "takes_value": true,
                 "required": false,
                 "global": false,
                 "possible_values": [],
-                "defaults": [
-                  "900"
-                ]
+                "defaults": []
               },
               {
                 "name": "wait",

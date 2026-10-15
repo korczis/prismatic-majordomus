@@ -603,4 +603,9 @@ pub struct ServerPolicy {
     /// without a request read in full on it before it closes the connection.
     #[serde(default)]
     pub read_deadline_seconds: Option<u64>,
+    /// `server.idle_seconds:` — how long a server started for a checkout no client owns
+    /// (`serve ensure`, a shell entering the checkout) outlives its last peer before it stops
+    /// by itself. `--idle` on the command line overrides it.
+    #[serde(default)]
+    pub idle_seconds: Option<u64>,
 }

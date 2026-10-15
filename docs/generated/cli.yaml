@@ -409,14 +409,13 @@ cli:
             - name: idle
               long: idle
               positional: false
-              help: The started server stops when no peer has been attached for this many seconds
+              help: "The started server stops when no peer has been attached for this many seconds; without it, the policy's declared `server.idle_seconds`, 900 when none is declared"
               value_name: SECONDS
               takes_value: true
               required: false
               global: false
               possible_values: []
-              defaults:
-                - "900"
+              defaults: []
             - name: wait
               long: wait
               positional: false

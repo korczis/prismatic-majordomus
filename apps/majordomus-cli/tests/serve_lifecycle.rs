@@ -1,7 +1,8 @@
 //! The server's lifecycle as a person or a hook converges on it: `serve ensure` starts one
 //! server and finds it the next time, three at once start one process and share it, a start
 //! in progress holds another off while a dead one does not, a stale lease and a killed
-//! server are both recovered, an idle server ends by itself, a taken port is not a failure,
+//! server are both recovered, an idle server ends by itself after the idle time it was given
+//! or the one its policy declares, a taken port is not a failure,
 //! `serve stop` ends the server this checkout's lease names and leaves another checkout's
 //! alone.
 
@@ -718,6 +719,51 @@ fn an_idle_server_ends_by_itself() {
     assert!(out.starts_with("standing   absent"), "{out}");
 }
 
+/// I2701: the idle life of a server `ensure` starts is declared beside the other server
+/// timings (`server.idle_seconds:`), not compiled. Declared at two seconds, a server started
+/// without `--idle` stops after about that long rather than after 900; and `--idle` on the
+/// command line overrides the declaration, so a server given 120 is still serving well past
+/// the declared two.
+#[test]
+fn idle_timeout_declared_test() {
+    let f = Fixture::new();
+    f.write(
+        ".ai/repo/policy.yaml",
+        &format!("{}\nserver:\n  idle_seconds: 2\n", common::POLICY),
+    );
+    f.commit("declare a short idle timeout");
+
+    // no --idle: the declaration decides
+    let (code, a, err) = ensure(&f.root(), &[]);
+    assert_eq!(code, 0, "{a}\n{err}");
+    let url = a["url"].as_str().unwrap().to_string();
+    wait_until(
+        "a server started without --idle ends after the declared idle time",
+        Duration::from_secs(20),
+        || LeaseFile::read(&lease_path(&f)) == LeaseFile::Absent,
+    );
+    wait_until("its port closes", Duration::from_secs(5), || {
+        get(&url, "/").is_none()
+    });
+
+    // --idle overrides the declaration
+    let (code, b, err) = ensure(&f.root(), &["--idle", "120"]);
+    assert_eq!(code, 0, "{b}\n{err}");
+    let url = b["url"].as_str().unwrap().to_string();
+    std::thread::sleep(Duration::from_secs(6));
+    assert_ne!(
+        LeaseFile::read(&lease_path(&f)),
+        LeaseFile::Absent,
+        "a server given --idle 120 stopped after the declared 2 s: the command line did not override the declaration"
+    );
+    assert!(
+        get(&url, "/").is_some(),
+        "the server given --idle 120 no longer answers"
+    );
+    let (code, _, err) = mj(&f.root(), &["serve", "stop"]);
+    assert_eq!(code, 0, "{err}");
+}
+
 /// The port in a server's URL.
 fn port_of(url: &str) -> u16 {
     url.rsplit(':')
@@ -759,7 +805,10 @@ fn stable_port_per_checkout_test() {
         assert_eq!(code, 0, "{out}");
     }
     assert_eq!(seen[0], seen[1], "a restart moved the address: {seen:?}");
-    assert_eq!(seen[0], pa, "the server did not ask for its checkout's port first");
+    assert_eq!(
+        seen[0], pa,
+        "the server did not ask for its checkout's port first"
+    );
     for dir in [&a, &b] {
         f.git(&["worktree", "remove", "--force", dir.to_str().unwrap()]);
     }

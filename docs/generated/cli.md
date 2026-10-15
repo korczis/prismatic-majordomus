@@ -380,7 +380,7 @@ majordomus serve ensure [OPTIONS]
 | argument | value | default | description |
 |---|---|---|---|
 | `--port` | `<PORT>` | — | The port the started server asks for first, without it the one this checkout derives (8741 for the primary checkout); a taken one is replaced by a free one |
-| `--idle` | `<SECONDS>` | `900` | The started server stops when no peer has been attached for this many seconds |
+| `--idle` | `<SECONDS>` | — | The started server stops when no peer has been attached for this many seconds; without it, the policy's declared `server.idle_seconds`, 900 when none is declared |
 | `--wait` | `<SECONDS>` | `20` | How long to wait for a server to become ready before reporting what stands |
 | `--format` | `text` \| `json` | `text` | Output shape — `text`: Lines for a person; `json`: One JSON document, deterministic |
 | `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |

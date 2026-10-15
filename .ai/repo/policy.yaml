@@ -365,12 +365,16 @@ commit:
 # The values below are the constants they replace, so declaring them changed no behaviour.
 # Changing them here changes behaviour, and test/cases holds that it does — otherwise this
 # would be a constant moved to another file rather than a value the model owns.
+#
+# `idle_seconds` is how long a server started for a checkout no client owns (`serve ensure`,
+# a shell entering the checkout) outlives its last peer; `serve --idle` overrides it (I2701).
 server:
   probe_timeout_seconds: 2
   bind_grace_seconds: 15
   join_timeout_seconds: 20
   busy_grace_seconds: 10
   read_deadline_seconds: 30
+  idle_seconds: 900
 
 projections:
   - provider: agents

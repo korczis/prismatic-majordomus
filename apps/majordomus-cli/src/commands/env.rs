@@ -27,7 +27,7 @@ use std::io::Write;
 use std::time::Duration;
 
 use crate::app::App;
-use crate::cli::{EnvArgs, EnvCommand, OutputFormat, RepoArgs, DEFAULT_IDLE_SECONDS};
+use crate::cli::{EnvArgs, EnvCommand, OutputFormat, RepoArgs};
 use crate::environment::preflight;
 use crate::environment::render::{banner, BannerMode, Presentation};
 use crate::environment::shell::{export, Dialect};
@@ -499,7 +499,8 @@ pub const RUNTIME_ENV: &str = "MAJORDOMUS_RUNTIME";
 /// "a shell is not a client".
 ///
 /// What resolved it is that the objection was about a *process without an owner*, not about
-/// who typed the `cd`: a server `ensure` starts is given [`DEFAULT_IDLE_SECONDS`] and ends
+/// who typed the `cd`: a server `ensure` starts is given the declared `server.idle_seconds`
+/// ([`crate::cli::DEFAULT_IDLE_SECONDS`] when none is declared) and ends
 /// when no peer has been attached for that long, so ADR 0003's line stays true in time.
 /// ADR 0043 records that, and the entry file's one call is this.
 ///
@@ -712,7 +713,8 @@ fn ensure_runtime(repository: &Repository, policy: Option<&LoadedPolicy>, wait: 
     let c = match crate::commands::serve::converge(
         repository,
         crate::cli::checkout_port(repository.root()),
-        DEFAULT_IDLE_SECONDS,
+        // the declared `server.idle_seconds`, read with the policy above (I2701)
+        crate::lease::timings().idle.as_secs(),
         wait,
     ) {
         Ok(c) => c,

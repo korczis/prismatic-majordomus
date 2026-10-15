@@ -3984,7 +3984,9 @@ pub struct ServeArgs {
 
 /// How long a server started by `serve ensure` outlives its last peer, in seconds: long
 /// enough that an agent's next attach finds it, short enough that a checkout nobody works
-/// in does not keep a process.
+/// in does not keep a process. The default of `server.idle_seconds:` in
+/// `.ai/repo/policy.yaml`, which a repository may declare beside the other server timings
+/// (`lease::Timings::idle`); `--idle` on the command line overrides both (I2701).
 pub const DEFAULT_IDLE_SECONDS: u64 = 900;
 
 #[derive(Debug, Subcommand)]
@@ -3996,16 +3998,19 @@ pub const DEFAULT_IDLE_SECONDS: u64 = 900;
 /// ```
 /// use clap::Parser;
 /// use majordomus_cli::capability::builtin::Checkouts;
-/// use majordomus_cli::cli::{Cli, Command, ServeCommand, DEFAULT_IDLE_SECONDS};
+/// use majordomus_cli::cli::{Cli, Command, ServeCommand};
 ///
 /// let cli = Cli::try_parse_from(["majordomus", "serve", "ensure", "--idle", "5"]).unwrap();
 /// let Command::Serve(args) = cli.command else { panic!("serve") };
-/// assert!(matches!(args.command, Some(ServeCommand::Ensure { idle: 5, .. })));
+/// assert!(matches!(args.command, Some(ServeCommand::Ensure { idle: Some(5), .. })));
 ///
-/// // without a subcommand, `serve` serves; the defaults are the documented ones
+/// // without `--idle`, `ensure` names no idle life: the declared `server.idle_seconds:`
+/// // decides, and `DEFAULT_IDLE_SECONDS` when nothing is declared (I2701)
 /// let cli = Cli::try_parse_from(["majordomus", "serve", "ensure"]).unwrap();
 /// let Command::Serve(args) = cli.command else { panic!("serve") };
-/// assert!(matches!(args.command, Some(ServeCommand::Ensure { idle, .. }) if idle == DEFAULT_IDLE_SECONDS));
+/// assert!(matches!(args.command, Some(ServeCommand::Ensure { idle: None, .. })));
+///
+/// // without a subcommand, `serve` serves; the defaults are the documented ones
 /// let cli = Cli::try_parse_from(["majordomus", "serve"]).unwrap();
 /// let Command::Serve(args) = cli.command else { panic!("serve") };
 /// assert!(args.command.is_none() && args.idle == 0 && !args.fallback);
@@ -4036,9 +4041,10 @@ pub enum ServeCommand {
         /// derives (8741 for the primary checkout); a taken one is replaced by a free one
         #[arg(long)]
         port: Option<u16>,
-        /// The started server stops when no peer has been attached for this many seconds
-        #[arg(long, value_name = "SECONDS", default_value_t = DEFAULT_IDLE_SECONDS)]
-        idle: u64,
+        /// The started server stops when no peer has been attached for this many seconds;
+        /// without it, the policy's declared `server.idle_seconds`, 900 when none is declared
+        #[arg(long, value_name = "SECONDS")]
+        idle: Option<u64>,
         /// How long to wait for a server to become ready before reporting what stands
         #[arg(long, value_name = "SECONDS", default_value_t = 20)]
         wait: u64,
