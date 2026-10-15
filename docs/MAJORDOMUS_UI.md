@@ -44,13 +44,14 @@ lists it), declared beside the Cockpit in `apps/majordomus-cli/src/web/discover.
 
 | Screen | Route | Reads |
 |---|---|---|
+| Front door | `/` | the process itself (version, revision), `distribution.releases`, `repository.info`, the screens of the UI and every public surface of the web topology: a link when it answers, what builds it when it does not |
 | Dashboard | `/ui` | `repository.info`, `health.report`, `release.version`, `distribution.releases`, `plan.status`, `plan.roadmap`, `mesh.peers`; the queue on its own route |
 | Command | `/ui/command` | `commands.list` (its `origin` filter is the screen's tabs), `executions.list`; `capabilities.list` for the capability a command is |
 | Roadmap | `/ui/roadmap` | `plan.roadmap`, `plan.status`, `intents.list`; one milestone (`?milestone=`) in the inspector, with `plan.issues`: its issues, what can start, its critical path and its neighbours; one intent (`?intent=`) in its inspector: its statement, invariants and criteria with their evidence, and the milestones and issues that serve it |
 | Issues & PRs | `/ui/work` | `plan.status`, `plan.issues`; the queue on its own route, one pull request (`?pr=`) in its detail |
 | Issues | `/ui/issues` | `plan.issues`, `plan.status`, `plan.roadmap`: every issue, narrowed by `?status=` (the plan's own statuses as tabs), `?milestone=`, `?priority=` and `?q=`, each leading to its inspector |
 | PR Drain | `/ui/prs` | `plan.status`, `plan.issues` (one issue, `?issue=`); `integration.queue` and `integration.events` on its own route (`/ui/panels/drain`), narrowed by `?disposition=`, `?lane=` and `?q=`, one pull request (`?pr=`) in the inspector with what the executor did to it, the lane's recent activity, and its merges per day over the fortnight the trail ends on |
-| Capabilities | `/ui/capabilities` | `repository.info`, `capabilities.list` by kind; one capability (`?id=`) from `capabilities.describe` |
+| Capabilities | `/ui/capabilities` | `repository.info`, `capabilities.list` by kind: the queries and commands narrowed by kind, module, stability, surface and text, each facet counted; one capability (`?id=`) from `capabilities.describe`, keeping the filters |
 | Mesh | `/ui/mesh` | `mesh.peers`, `mesh.events`; one machine (`?node=`) in the inspector |
 | CI/CD & Releases | `/ui/delivery` | `distribution.releases`, `release.version`, `deploy.list`, `gates.model`, `integration.timings` (each check's median, 90th percentile and longest run, and the open heads that waited longest, each leading to its pull request) |
 | Deployments | `/ui/deployments` | `deploy.list` (what the layer declares); `deploy.observed` (what the forge recorded: where each environment stands, every deployment to every environment — GitHub Pages among them — and every release, each commit, ref, environment, run and release a link); `delivery.report` on its own route |

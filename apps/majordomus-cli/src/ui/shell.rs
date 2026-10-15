@@ -269,7 +269,10 @@ fn topbar(read_at: &str) -> El {
             el("nav")
                 .class("mj-ui-tools")
                 .attr("aria-label", "Other surfaces")
-                .child(tool(crate::web::discover::DOCS_MOUNT, "book", "Docs"))
+                // the UI's own Documentation screen, which is always served and leads to the
+                // built documentation when there is one; /docs itself answers 404 until
+                // scripts/site-build has run, and a top bar on every screen must not lead there
+                .child(tool(super::docs::ROUTE, "book", "Docs"))
                 .child(tool(crate::http::swagger::SWAGGER_PATH, "code", "API"))
                 .child(tool(crate::cockpit::PREFIX, "terminal", "Cockpit"))
                 .child(
