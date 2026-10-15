@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 105,
+      "count": 106,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 105
+      "count": 106
     },
     {
       "kind": "application",
@@ -2844,6 +2844,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0067/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0164",
+          "kind": "adr",
+          "route": "/adrs/adr-0164/",
+          "external": false
         }
       ]
     },
@@ -2975,7 +2982,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0164",
+          "kind": "adr",
+          "route": "/adrs/adr-0164/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -3484,6 +3499,13 @@
           "label": "adr-0123",
           "kind": "adr",
           "route": "/adrs/adr-0123/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0164",
+          "kind": "adr",
+          "route": "/adrs/adr-0164/",
           "external": false
         }
       ]
@@ -6150,7 +6172,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0164",
+          "kind": "adr",
+          "route": "/adrs/adr-0164/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -8184,6 +8214,101 @@
           "label": "test/cases/3011_the_observatory_draws_nothing_it_did_not_read.sh",
           "kind": "test",
           "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0164",
+      "identity": "adr-0164",
+      "slug": "adr-0164",
+      "cockpit": "/cockpit/objects/adr/adr-0164",
+      "title": "A durable record names the session that wrote it, and relates a task only when the task is that session's",
+      "status": "proposed",
+      "tags": [
+        "sessions",
+        "attribution",
+        "records"
+      ],
+      "source": ".ai/repo/adrs/0164-a-record-names-the-session-that-wrote-it.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0044",
+          "kind": "adr",
+          "route": "/adrs/adr-0044/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0047",
+          "kind": "adr",
+          "route": "/adrs/adr-0047/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0052",
+          "kind": "adr",
+          "route": "/adrs/adr-0052/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0103",
+          "kind": "adr",
+          "route": "/adrs/adr-0103/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "lib/checkpoint.sh",
+          "kind": "implementation",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "lib/common.sh",
+          "kind": "implementation",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "lib/decision.sh",
+          "kind": "implementation",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "lib/question.sh",
+          "kind": "implementation",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "lib/start.sh",
+          "kind": "implementation",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.no-new-nouns@1",
+          "kind": "rule",
+          "route": "/rules/project-no-new-nouns-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.the-session-context-is-derived@1",
+          "kind": "rule",
+          "route": "/rules/project-the-session-context-is-derived-1/",
           "external": false
         }
       ],
@@ -14884,6 +15009,13 @@
           "external": false
         },
         {
+          "edge": "put_in_force",
+          "label": "adr-0164",
+          "kind": "adr",
+          "route": "/adrs/adr-0164/",
+          "external": false
+        },
+        {
           "edge": "depends_on",
           "label": "project.canonical-order@1",
           "kind": "rule",
@@ -16353,6 +16485,13 @@
           "label": "adr-0046",
           "kind": "adr",
           "route": "/adrs/adr-0046/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0164",
+          "kind": "adr",
+          "route": "/adrs/adr-0164/",
           "external": false
         }
       ]

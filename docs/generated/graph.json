@@ -7309,6 +7309,36 @@
         }
       },
       {
+        "id": "majordomus://adr/adr-0164",
+        "kind": "adr",
+        "label": "adr-0164",
+        "summary": "A durable record names the session that wrote it, and relates a task only when the task is that session's",
+        "route": "/cockpit/objects/adr/adr-0164",
+        "source": ".ai/repo/adrs/0164-a-record-names-the-session-that-wrote-it.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-15",
+          "related": [
+            "file:lib/decision.sh",
+            "file:lib/checkpoint.sh",
+            "file:lib/question.sh",
+            "file:lib/common.sh",
+            "file:lib/start.sh",
+            "file:.ai/repo/adrs/0044-cooperation-is-repository-wide-the-board-is-gathered-not-shared.md",
+            "file:.ai/repo/adrs/0047-the-session-domain-is-typed-and-its-identities-are-not-interchangeable.md",
+            "file:.ai/repo/adrs/0052-the-session-lifecycle-is-the-episodes-not-the-tasks.md",
+            "file:.ai/repo/adrs/0103-every-client-gets-an-episode-and-every-provider-capability-cites-its-evidence.md",
+            "rule:project.no-new-nouns",
+            "rule:project.the-session-context-is-derived"
+          ],
+          "tags": [
+            "sessions",
+            "attribution",
+            "records"
+          ]
+        }
+      },
+      {
         "id": "majordomus://application/ci-gated-project",
         "kind": "application",
         "label": "ci-gated-project",
@@ -65264,6 +65294,66 @@
         "kind": "put_in_force"
       },
       {
+        "source": "majordomus://adr/adr-0164",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0164",
+        "target": "majordomus://adr/adr-0044",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0164",
+        "target": "majordomus://adr/adr-0047",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0164",
+        "target": "majordomus://adr/adr-0052",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0164",
+        "target": "majordomus://adr/adr-0103",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0164",
+        "target": "majordomus://implementation/lib/checkpoint.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0164",
+        "target": "majordomus://implementation/lib/common.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0164",
+        "target": "majordomus://implementation/lib/decision.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0164",
+        "target": "majordomus://implementation/lib/question.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0164",
+        "target": "majordomus://implementation/lib/start.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0164",
+        "target": "majordomus://rule/project.no-new-nouns@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0164",
+        "target": "majordomus://rule/project.the-session-context-is-derived@1",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://application/ci-gated-project",
         "target": "kind:application",
         "kind": "is_a"
@@ -88190,8 +88280,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2796,
-      "edges": 6129,
+      "nodes": 2797,
+      "edges": 6141,
       "acyclic": false,
       "truncated": false
     }
