@@ -271,7 +271,8 @@ impl LeaseView {
     /// std::fs::write(dir.path().join("version.txt"), "version=0.21.0\n").unwrap();
     /// let doc = LeaseDocument { schema: SCHEMA.into(), pid: 1, token: "t".into(), root: "/r".into(),
     ///     url: None, started_at: String::new(), executable: None, version: Some("0.26.0".into()),
-    ///     share: Some(ShareLocation { path: dir.path().into(), origin: "MAJORDOMUS_SHARE".into() }) };
+    ///     share: Some(Box::new(ShareLocation {
+    ///         path: dir.path().into(), origin: "MAJORDOMUS_SHARE".into() })) };
     /// let share = LeaseView::of(&doc).share.unwrap();
     /// assert_eq!(share.standing, ShareStanding::Skewed);
     /// assert_eq!(share.version.as_deref(), Some("0.21.0"));

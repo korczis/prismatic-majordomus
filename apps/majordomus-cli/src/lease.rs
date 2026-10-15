@@ -347,8 +347,11 @@ pub struct LeaseDocument {
     /// The share directory the server serves and how it was found, so that a reader can
     /// measure it against `version` ([`crate::share::ServedShare`]). Absent in a lease
     /// written before this field existed, and while the server has not located one yet.
+    ///
+    /// Boxed: the lease document is the largest variant of [`LeaseFile`], and a location
+    /// held inline would make every reading of an absent or empty file carry its size.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub share: Option<crate::share::ShareLocation>,
+    pub share: Option<Box<crate::share::ShareLocation>>,
 }
 
 /// What a lease file holds, read once. Every state of the file is a variant, so that a
@@ -1496,7 +1499,7 @@ impl Lease {
             started_at: self.started_at.clone(),
             executable: executable_identity(),
             version: Some(crate::VERSION.into()),
-            share: declared_share().cloned(),
+            share: declared_share().cloned().map(Box::new),
         }
     }
 
