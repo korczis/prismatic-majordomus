@@ -1135,7 +1135,7 @@
       "title": "Every LLM session joins the Majordomus mesh at start, told the mesh as work",
       "problem": "Mesh participation was left to the worker: the start printed one health line (lib/capture.sh mj_capture_mesh_line), MCP initialize instructions never mentioned the mesh (apps/majordomus-cli/src/mcp/protocol.rs), only Claude Code had a lifecycle adapter (lib/capture.sh MJ_CAPTURE_LIFECYCLE), nothing surfaced handovers or reviews waiting for this machine, and no gate noticed a task built outside the mesh. Survey of 2026-10-10 at master a804ae2045.",
       "outcome": "Any LLM session that starts in a repository with an enabled mesh is on the mesh from its first turn, told who works where on every machine and what waits for it, and a task built outside the mesh is refused by the repository's gates.",
-      "current_state": "Partly automatic (2026-10-15, origin/master c0e3585dc8): an MCP connection is projected as a nameless board-pN mesh session, and an announce adds its intent and advisory claims; the start event prints one health line about the mesh; nothing claims a task scope on the mesh and nothing refuses work done off it. The 2026-10-10 branches for I2285..I2292 never reached a pull request; I2734 is the first slice to land.",
+      "current_state": "Partly automatic: an announcing MCP client is projected as a mesh session with advisory claims; everything else is the worker's memory.",
       "desired_state": "mesh.briefing at every start and MCP initialize, a mesh session and a claim for every task, a gated rule, projections and the Cockpit, an article.",
       "scope": [
         "apps/majordomus-cli/src/mesh",
