@@ -32585,6 +32585,8 @@
             "Removing a key from trust.allow on a running runtime closes that key's links within one heartbeat and refuses its next hello, with no restart",
             "Under a permissive umask the node key file is never readable by group or others"
           ],
+          "completed_at": "2026-10-14T23:33:07Z",
+          "completed_event": "sha256:a1d2499eb1843d6145f5d1189f180c453fb790d3381ed5208f95a5a8255b61de",
           "created_at": "2026-10-09",
           "current_state": "Revocation takes effect only on each peer's restart. Rotation does not exist. The key file is briefly readable at umask permissions.",
           "depends_on": [],
@@ -32607,12 +32609,16 @@
             "docs/MESH.md"
           ],
           "slug": "trust-can-be-revoked-and-keys-rotated",
-          "updated_at": "2026-10-14",
+          "started_at": "2026-10-14T23:32:46Z",
+          "started_event": "sha256:5f4f537a93d134531573f4332374a401e5ea215bfd043082ba2cd9cc428c9cf0",
+          "updated_at": "2026-10-14T23:33:07Z",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --test mesh_cooperation",
             "cargo test --lib mesh::identity"
-          ]
+          ],
+          "verified_at": "2026-10-14T23:32:54Z",
+          "verified_event": "sha256:d4f1ff297c468f9877c7252e79a6ec6c4a8d2f3731f6ef418b586c04eedafc45"
         }
       },
       {
