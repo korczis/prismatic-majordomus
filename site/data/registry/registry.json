@@ -6,7 +6,7 @@
     "version": "0.26.0"
   },
   "registry": {
-    "fingerprint": "dcd73504305fb981edaa3320c23c9994f922898e6750a89a9804ff556fc13e5b",
+    "fingerprint": "aeefac7aec969a1d3eee9c56e00cc4ba1bcd08397eada078f91d85627e8140b4",
     "summary": {
       "total": 2379,
       "builtin": 199,
@@ -81850,7 +81850,7 @@
     ]
   },
   "index": {
-    "fingerprint": "989c3406d092f52a3c8908b082b7356ee825e5fdd9d03625425c0523881962d0",
+    "fingerprint": "a7d346e01ce77d8b3e8427e7a7abc5fe54df2afd1cafb38d927b6843f0ed3898",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -87866,7 +87866,7 @@
         "title": "The monitor",
         "path": "docs/MONITOR.md",
         "source_class": "document",
-        "bytes": 9274
+        "bytes": 9961
       },
       {
         "uri": "majordomus://document/docs/OFFLOAD.md",
@@ -101124,7 +101124,7 @@
         "identity": "test/cases/1050_the_monitor_folds_the_noise.sh",
         "path": "test/cases/1050_the_monitor_folds_the_noise.sh",
         "source_class": "case",
-        "bytes": 6686
+        "bytes": 7330
       },
       {
         "uri": "majordomus://test/test/cases/1051_a_followed_stream_can_be_waited_on.sh",
@@ -101132,7 +101132,7 @@
         "identity": "test/cases/1051_a_followed_stream_can_be_waited_on.sh",
         "path": "test/cases/1051_a_followed_stream_can_be_waited_on.sh",
         "source_class": "case",
-        "bytes": 4073
+        "bytes": 6809
       },
       {
         "uri": "majordomus://test/test/cases/1052_an_absent_source_is_reported.sh",
@@ -101140,7 +101140,7 @@
         "identity": "test/cases/1052_an_absent_source_is_reported.sh",
         "path": "test/cases/1052_an_absent_source_is_reported.sh",
         "source_class": "case",
-        "bytes": 4257
+        "bytes": 4901
       },
       {
         "uri": "majordomus://test/test/cases/1053_the_cockpit_follows_the_stream.sh",
@@ -101148,7 +101148,7 @@
         "identity": "test/cases/1053_the_cockpit_follows_the_stream.sh",
         "path": "test/cases/1053_the_cockpit_follows_the_stream.sh",
         "source_class": "case",
-        "bytes": 3582
+        "bytes": 4226
       },
       {
         "uri": "majordomus://test/test/cases/1054_every_session_is_told_the_stream.sh",
@@ -101156,7 +101156,7 @@
         "identity": "test/cases/1054_every_session_is_told_the_stream.sh",
         "path": "test/cases/1054_every_session_is_told_the_stream.sh",
         "source_class": "case",
-        "bytes": 3828
+        "bytes": 4472
       },
       {
         "uri": "majordomus://test/test/cases/1060_the_version_is_allocated_at_landing.sh",
@@ -127954,6 +127954,18 @@
             "positional": false,
             "help": "Start after this cursor (a page's `cursor`), instead of the newest signals",
             "value_name": "AFTER",
+            "takes_value": true,
+            "required": false,
+            "global": false,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "cursor_file",
+            "long": "cursor-file",
+            "positional": false,
+            "help": "Keep the cursor in this file: start after the one it holds (unless `--after` is given) and write each page's cursor back, so a restarted watcher repeats nothing",
+            "value_name": "FILE",
             "takes_value": true,
             "required": false,
             "global": false,

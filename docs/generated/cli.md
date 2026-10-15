@@ -4946,6 +4946,7 @@ majordomus monitor [OPTIONS]
 |---|---|---|---|
 | `--follow` | flag | — | Keep following: ask again every `--interval` seconds and print only what is new |
 | `--after` | `<AFTER>` | — | Start after this cursor (a page's `cursor`), instead of the newest signals |
+| `--cursor-file` | `<FILE>` | — | Keep the cursor in this file: start after the one it holds (unless `--after` is given) and write each page's cursor back, so a restarted watcher repeats nothing |
 | `--limit` | `<LIMIT>` | — | At most this many signals per page (default 50, at most 500) |
 | `--sources` | `<SOURCES>` | — | A comma-separated subset of mesh, executor and github (default: all three) |
 | `--for` | `<READER>` | — | Your names, comma-separated (a worker such as 1b, a role, a login): what names them is marked for you; default $MAJORDOMUS_MONITOR_FOR |
