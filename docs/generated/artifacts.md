@@ -305,7 +305,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `share/allow/application.txt` | `allow/application` | text | 384 | `1be1b43b2b256662` |
 | `share/allow/context.txt` | `allow/context` | text | 447 | `e5262c08a79bc0f2` |
 | `share/allow/critique.txt` | `allow/critique` | text | 479 | `c92313c6f434dd1a` |
-| `share/allow/current.txt` | `allow/current` | text | 454 | `ff973f9a21bfd38a` |
+| `share/allow/current.txt` | `allow/current` | text | 467 | `fe569bdb176f0d7c` |
 | `share/allow/deployment.txt` | `allow/deployment` | text | 873 | `303f3333dc90c191` |
 | `share/allow/derive-offload.txt` | `allow/derive-offload` | text | 613 | `482b92c4c12b2e00` |
 | `share/allow/distribution.txt` | `allow/distribution` | text | 997 | `63f058590a8bcdad` |
@@ -359,7 +359,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `site/data/registry/evidence-subjects.json` | `site-evidence-subjects` | json | 784869 | `3da02416b1364618` |
 | `site/data/registry/product-graph.json` | `site-product-graph` | json | 98705 | `e3453462685c9c48` |
 | `site/data/registry/product.json` | `site-product` | json | 737286 | `dc7dfe45b9a53989` |
-| `site/data/registry/registry.json` | `site-registry` | json | 6766965 | `eebd80543abd1947` |
+| `site/data/registry/registry.json` | `site-registry` | json | 6766965 | `cb02595479246b1a` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180163 | `9693904a8c466e33` |
 | `site/data/registry/why.json` | `site-why` | json | 349924 | `532982b657422540` |
 | `site/static/favicon.svg` | `design-mark` | text | 904 | `aa48c069472e09ad` |
