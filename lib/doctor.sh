@@ -404,6 +404,15 @@ mj_validate_retention() {
   if ! cap="$(mj_pol_req checkpoint.retention_max_files)"; then mj_doctrine_fail retention "checkpoints" "policy declares no checkpoint.retention_max_files" "add a checkpoint: block to $(mj_rel "$MJ_POLICY_FILE"); see share/skeleton/policy.yaml"; else
   hc="$(find "$MJ_STATE_DIR/checkpoints" -name '*.md' 2>/dev/null | wc -l | tr -d ' ')"
   if [ "$hc" -le "$cap" ]; then mj_doctrine_ok retention "checkpoints" "$hc files, cap $cap"; else mj_doctrine_fail retention "checkpoints" "$hc files over cap $cap" "majordomus checkpoint --list | wc -l"; fi; fi
+  # The sessions section is tracked and shared where the three above are local, and it is
+  # capped for the same reason: a store nothing bounds grows until a reader pays for it. A
+  # layer that declares no sessions section owes no cap for one. What `session archive`
+  # moved aside is not counted — that is what the command is for.
+  if [ -n "${MJ_SESSIONS_DIR:-}" ]; then
+  if ! cap="$(mj_pol_req session.retention_max_files)"; then mj_doctrine_fail retention "sessions" "policy declares no session.retention_max_files" "add it under session: in $(mj_rel "$MJ_POLICY_FILE"); see share/skeleton/policy.yaml"; else
+  hc="$(mj_session_record_names | wc -l | tr -d ' ')"
+  if [ "$hc" -le "$cap" ]; then mj_doctrine_ok retention "sessions" "$hc records, cap $cap"; else mj_doctrine_fail retention "sessions" "$hc records over cap $cap" "majordomus session archive --dry-run"; fi; fi
+  fi
 
   return 0
 }
@@ -413,19 +422,22 @@ mj_validate_retention() {
 # independent review capacity is a count. What does fail is a finding of `reasoning check`:
 # provider-independent code that names an advisor, CI that names a model credential, a
 # record claiming a review nobody planned. Read through the executable, never rebuilt here.
+# The CI and claims checks judge what this repository's own workflows and documents say,
+# so the executable runs them only where project.advisors-are-optional is declared; an
+# adopter is told so, as information (I1996). Every hint names a command an adopter has.
 mj_report_reasoning() {
   # shellcheck source=rust_bin.sh
   . "$MJ_LIB_DIR/rust_bin.sh"
   local bin share advisors check
   bin="$(mj_rust_bin "$MJ_HOME")"
   if [ ! -x "$bin" ]; then
-    mj_info reasoning "-" "the executable is not built, so advisor availability is not reported here (bin/majordomus-cli reasoning advisors)"
+    mj_info reasoning "-" "the executable is not built, so advisor availability is not reported here (majordomus reasoning advisors)"
     return 0
   fi
   share="$(mj_rust_share "$MJ_ROOT")"
   advisors="$( ( [ -z "$share" ] || export MAJORDOMUS_SHARE="$share"
                  "$bin" reasoning advisors --repo "$MJ_ROOT" --format json ) 2>/dev/null )" || {
-    mj_info reasoning "-" "advisor availability could not be read (bin/majordomus-cli reasoning advisors)"; return 0; }
+    mj_info reasoning "-" "advisor availability could not be read (majordomus reasoning advisors)"; return 0; }
   mj_ok reasoning "share/advisors.yaml" "$(printf '%s' "$advisors" | jq -r '"operational, mode \(.mode.mode) (\(.mode.source)); independent review capacity \(.available) advisor(s)"')"
   printf '%s' "$advisors" | jq -r '.advisors[] | [.id, .status, .reason] | @tsv' | \
     while IFS="$(printf '\t')" read -r id status reason; do
@@ -436,14 +448,17 @@ mj_report_reasoning() {
   check="$( ( [ -z "$share" ] || export MAJORDOMUS_SHARE="$share"
               "$bin" reasoning check --repo "$MJ_ROOT" --format json ) 2>/dev/null )" || true
   if [ -z "$check" ]; then
-    mj_info reasoning "-" "reasoning check could not run (bin/majordomus-cli reasoning check)"
+    mj_info reasoning "-" "reasoning check could not run (majordomus reasoning check)"
   elif [ "$(printf '%s' "$check" | jq -r '.ok')" = true ]; then
     mj_ok reasoning "-" "reasoning check: $(printf '%s' "$check" | jq -r '.checks | join(", ")') — no finding"
   else
     printf '%s' "$check" | jq -r '.findings[] | [.check, .subject, .message] | @tsv' | \
       while IFS="$(printf '\t')" read -r c subject message; do
-        mj_fail reasoning "$subject" "$c: $message" "bin/majordomus-cli reasoning check"
+        mj_fail reasoning "$subject" "$c: $message" "majordomus reasoning check"
       done
+  fi
+  if [ -n "$check" ] && [ "$(printf '%s' "$check" | jq -r '.checks | index("ci") == null')" = true ]; then
+    mj_info reasoning "-" "ci, claims: not run; they judge Majordomus's own workflows and documents and apply where project.advisors-are-optional is declared (majordomus reasoning check)"
   fi
   return 0
 }
@@ -599,7 +614,7 @@ mj_validate_ai_layout() {
     mj_doctrine_fail layout "$rel/" "carries tracked files; the local half is this checkout's own" "git ls-files $rel"; bad=1
   else mj_doctrine_ok layout "$rel/" "ignored, and nothing under it is tracked"; fi
   # a personal layer is held to what it claims on every doctor, not only when it was made
-  if mj_personal_active; then mj_personal_verify mj_doctrine_ok mj_doctrine_fail || bad=1; fi
+  if mj_personal_active; then mj_personal_verify doctrine || bad=1; fi
   if [ -f "$MJ_ROOT/.majordomus/policy.yaml" ]; then
     mj_doctrine_fail layout ".majordomus/policy.yaml" "pre-.ai project data beside the .ai layer; two layouts cannot both be authoritative" "majordomus migrate"; bad=1
   fi
@@ -1269,6 +1284,10 @@ SCHEMAS
     mj_doctrine_fail schema "share/schemas" \
       "$(printf '%s' "$orphan" | wc -w | tr -d ' ') schema(s) are applied by nothing — no kind names them and no allow-list the tool reads is derived from them:$orphan" \
       "grep -n 'schema:' share/kinds.yaml   # wire it to a kind, or delete the file"
+  elif [ "$MJ_JSON_PARSER" = none ]; then
+    # nothing here could parse a file, so "valid JSON" is not a thing this run established:
+    # it says what it did check and that the parse was not asked
+    mj_info schema "share/schemas" "$m schema(s), each applied; none was parsed, because neither python3 nor jq can run here — that every one is valid JSON was not established" "python3 -c 'import json'; jq -n 1"
   else
     mj_doctrine_ok schema "share/schemas" "$m schema(s), each valid JSON and each applied — by a kind, through an allow-list the tool reads, by a validator that names it, or as a generated document's contract ($gen)"
   fi
@@ -1309,20 +1328,38 @@ mj_schema_named_in_source() {
   grep -rqF "$1" "$MJ_LIB_DIR" "$MJ_HOME/apps/majordomus-cli/src" 2>/dev/null
 }
 
-# One top-level string field of a JSON file, or nothing. A parser being absent is not a
-# reason to invent an answer: with neither python3 nor jq the field is unknown, and an
-# unknown identifier falls back to the path.
+# The JSON parser this process can actually run: python3, jq, or none. Found once.
+#
+# "Is python3 on PATH" is not that question. A version manager's shim is on PATH whether or
+# not it can start anything: asdf answers "No version is set for command python3" and exits
+# non-zero in any directory with no pinned Python, and pyenv does the same. Asked only
+# whether the command existed, the two readers below took the shim, read its failure as the
+# file's — every schema the tool ships "does not parse as JSON" — and never reached the jq
+# that was there. So each candidate is started on nothing first, and the one that runs is
+# used.
+MJ_JSON_PARSER=""
+mj_json_parser_find() {
+  [ -z "$MJ_JSON_PARSER" ] || return 0
+  if python3 -c 'import json' >/dev/null 2>&1; then MJ_JSON_PARSER=python3
+  elif jq -n 1 >/dev/null 2>&1; then MJ_JSON_PARSER=jq
+  else MJ_JSON_PARSER=none; fi
+}
+
+# One top-level string field of a JSON file, or nothing. A parser that cannot run is not a
+# reason to invent an answer: with neither python3 nor jq able to start, the field is
+# unknown, and an unknown identifier falls back to the path.
 mj_json_string() {
-  if command -v python3 >/dev/null 2>&1; then
-    python3 -c 'import json,sys
+  mj_json_parser_find
+  case "$MJ_JSON_PARSER" in
+    python3)
+      python3 -c 'import json,sys
 try:
     v = json.load(open(sys.argv[1])).get(sys.argv[2], "")
 except Exception:
     v = ""
-sys.stdout.write(v if isinstance(v, str) else "")' "$1" "$2" 2>/dev/null
-  elif command -v jq >/dev/null 2>&1; then
-    jq -r --arg k "$2" 'if (.[$k]? | type) == "string" then .[$k] else "" end' "$1" 2>/dev/null
-  fi
+sys.stdout.write(v if isinstance(v, str) else "")' "$1" "$2" 2>/dev/null ;;
+    jq) jq -r --arg k "$2" 'if (.[$k]? | type) == "string" then .[$k] else "" end' "$1" 2>/dev/null ;;
+  esac
 }
 
 # The batch form of mj_json_ok and mj_json_string over the paths on stdin, one per line:
@@ -1357,10 +1394,14 @@ mj_allow_applied() {
   grep -rqE "(ALLOW_DIR|share/allow)/$1\.txt" "$MJ_LIB_DIR" "$MJ_HOME/apps/majordomus-cli/src" 2>/dev/null
 }
 
-# Does this file parse as JSON? The schemas are the tool's own data, so a parser being
-# absent is not a reason to pass them.
+# Does this file parse as JSON? Asked of a parser that runs (mj_json_parser_find): what a
+# parser that could not start says about a file is nothing about the file. With no parser
+# able to run the question cannot be put, and the file is not called broken on that account.
 mj_json_ok() {
-  if command -v python3 >/dev/null 2>&1; then python3 -c 'import json,sys; json.load(open(sys.argv[1]))' "$1" >/dev/null 2>&1
-  elif command -v jq >/dev/null 2>&1; then jq -e . "$1" >/dev/null 2>&1
-  else return 0; fi
+  mj_json_parser_find
+  case "$MJ_JSON_PARSER" in
+    python3) python3 -c 'import json,sys; json.load(open(sys.argv[1]))' "$1" >/dev/null 2>&1 ;;
+    jq) jq -e . "$1" >/dev/null 2>&1 ;;
+    *) return 0 ;;
+  esac
 }

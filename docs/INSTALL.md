@@ -2,7 +2,7 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/install/INSTALL.md.in (the prose) and share/distribution.yaml (every platform, name and URL);
      regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.22.0 -->
+     Generator: majordomus-cli 0.26.0 -->
 
 ## Quick install
 
@@ -129,10 +129,10 @@ MAJORDOMUS_INSTALL_DIR="$HOME/bin" curl -fsSL https://majordomus.dev/install.sh 
 ## Pinning a version
 
 ```bash
-curl -fsSL https://majordomus.dev/install.sh | sh -s -- --version v0.21.0
+curl -fsSL https://majordomus.dev/install.sh | sh -s -- --version v0.26.0
 ```
 
-A pinned installation resolves `https://majordomus.dev/releases/v0.21.0.json`, which names the exact artifact and its
+A pinned installation resolves `https://majordomus.dev/releases/v0.26.0.json`, which names the exact artifact and its
 sha256 digest, and therefore installs the same bytes every time. An unpinned
 installation resolves `https://majordomus.dev/releases/latest.json`, which is the latest stable release and moves
 forward as releases are published. Use the pinned form in CI.
@@ -140,7 +140,7 @@ forward as releases are published. Use the pinned form in CI.
 ## Using it in CI
 
 ```bash
-curl -fsSL https://majordomus.dev/install.sh | sh -s -- --version v0.21.0
+curl -fsSL https://majordomus.dev/install.sh | sh -s -- --version v0.26.0
 export PATH="$HOME/.local/bin:$PATH"
 majordomus --version
 ```
@@ -174,7 +174,12 @@ the tool's, and no command of this project deletes them.
 
 | Release | Published | Channel | Artifacts | Metadata |
 |---|---|---|---|---|
-| `v0.21.0` (latest) | 2026-10-12 | stable | 6 | [`v0.21.0.json`](https://majordomus.dev/releases/v0.21.0.json) |
+| `v0.26.0` (latest) | 2026-10-14 | stable | 6 | [`v0.26.0.json`](https://majordomus.dev/releases/v0.26.0.json) |
+| `v0.25.0` | 2026-10-14 | stable | 6 | [`v0.25.0.json`](https://majordomus.dev/releases/v0.25.0.json) |
+| `v0.24.1` | 2026-10-14 | stable | 6 | [`v0.24.1.json`](https://majordomus.dev/releases/v0.24.1.json) |
+| `v0.23.0` | 2026-10-13 | stable | 6 | [`v0.23.0.json`](https://majordomus.dev/releases/v0.23.0.json) |
+| `v0.22.0` | 2026-10-13 | stable | 6 | [`v0.22.0.json`](https://majordomus.dev/releases/v0.22.0.json) |
+| `v0.21.0` | 2026-10-12 | stable | 6 | [`v0.21.0.json`](https://majordomus.dev/releases/v0.21.0.json) |
 | `v0.20.0` | 2026-10-10 | stable | 6 | [`v0.20.0.json`](https://majordomus.dev/releases/v0.20.0.json) |
 | `v0.19.1` | 2026-10-10 | stable | 6 | [`v0.19.1.json`](https://majordomus.dev/releases/v0.19.1.json) |
 | `v0.19.0` | 2026-10-09 | stable | 6 | [`v0.19.0.json`](https://majordomus.dev/releases/v0.19.0.json) |

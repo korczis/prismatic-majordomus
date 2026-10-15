@@ -2198,6 +2198,27 @@
           "id": "generate-one-target",
           "setup": [],
           "title": "One target only"
+        },
+        {
+          "argv": [
+            "generate",
+            "site",
+            "--check"
+          ],
+          "command": "majordomus generate site --check",
+          "description": "`--check` composes with a target: here only the registry dataset the site renders is compared with what the sources produce, exit 10 naming it when it is stale.",
+          "expectation": "exits 0",
+          "id": "generate-site-check",
+          "setup": [
+            {
+              "argv": [
+                "generate",
+                "site"
+              ],
+              "command": "majordomus generate site"
+            }
+          ],
+          "title": "Check one target without writing it"
         }
       ],
       "executable": true,
@@ -3999,6 +4020,12 @@
           "command": "majordomus web report ui-snapshot",
           "name": "ui-snapshot",
           "route": "/docs/cli/web/report/ui-snapshot/"
+        },
+        {
+          "about": "The Cockpit itself, read once at this commit and written as static pages a publication carries at /cockpit (ADR 0147)",
+          "command": "majordomus web report cockpit-snapshot",
+          "name": "cockpit-snapshot",
+          "route": "/docs/cli/web/report/cockpit-snapshot/"
         }
       ],
       "command": "majordomus web report",
@@ -4739,6 +4766,196 @@
       ],
       "route": "/docs/cli/web/report/ui-snapshot/",
       "usage": "majordomus web report ui-snapshot [OPTIONS]"
+    },
+    {
+      "about": "The Cockpit itself, read once at this commit and written as static pages a publication carries at /cockpit (ADR 0147)",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus web",
+          "name": "web",
+          "route": "/docs/cli/web/"
+        },
+        {
+          "command": "majordomus web report",
+          "name": "report",
+          "route": "/docs/cli/web/report/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [
+            "240"
+          ],
+          "global": false,
+          "help": "The most pages to write: every static route first, then the pages the UI's snapshot links to, then what those link to",
+          "long": "limit",
+          "name": "limit",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "LIMIT"
+        },
+        {
+          "defaults": [
+            "180"
+          ],
+          "global": false,
+          "help": "The most seconds to spend on the pages the static routes link to; the routes themselves are written whatever they cost",
+          "long": "budget-seconds",
+          "name": "budget_seconds",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "BUDGET_SECONDS"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only these surfaces, by discovered id (repeat or separate with commas)",
+          "long": "only",
+          "name": "only",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "ONLY"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Every surface except these, by discovered id",
+          "long": "exclude",
+          "name": "exclude",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "EXCLUDE"
+        }
+      ],
+      "children": [],
+      "command": "majordomus web report cockpit-snapshot",
+      "depth": 3,
+      "examples": [
+        {
+          "argv": [
+            "web",
+            "report",
+            "cockpit-snapshot",
+            "--limit",
+            "12"
+          ],
+          "command": "majordomus web report cockpit-snapshot --limit 12",
+          "description": "Asks the Cockpit in-process for every static route except the one page about this machine, then for the pages the UI's snapshot links to, then, one page per family in turn until `--limit` pages or `--budget-seconds` are reached, for the pages those link to, and writes each as a file under target/web/cockpit-snapshot. Links between them are relative; a link into the UI leads to the UI's snapshot when that holds the page; a form, a query or a page past the bound leads to the snapshot's page about the live Cockpit; no page carries a script, because the Cockpit's scripts talk to a process; and every page is stamped with the commit, the time and the executable that read it.",
+          "expectation": "exits 0; prints web report, cockpit-snapshot",
+          "id": "web-report-cockpit-snapshot",
+          "setup": [],
+          "title": "Read the Cockpit once and write it as the pages a publication carries at /cockpit"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "cockpit-snapshot",
+      "parent_route": "/docs/cli/web/report/",
+      "path": [
+        "majordomus",
+        "web",
+        "report",
+        "cockpit-snapshot"
+      ],
+      "route": "/docs/cli/web/report/cockpit-snapshot/",
+      "usage": "majordomus web report cockpit-snapshot [OPTIONS]"
     },
     {
       "about": "Compose every published surface into one publishable tree",
@@ -23616,6 +23833,20 @@
           "value_name": "LIMIT"
         },
         {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "The newest events instead of the first ones after `--after`",
+          "long": "newest",
+          "name": "newest",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "NEWEST"
+        },
+        {
           "defaults": [],
           "global": true,
           "help": "Start the search for the repository root here (default: the current directory)",
@@ -26625,6 +26856,20 @@
           "id": "reasoning-advisors",
           "setup": [],
           "title": "The advisors, and what they can do now"
+        },
+        {
+          "argv": [
+            "reasoning",
+            "advisors",
+            "--format",
+            "json"
+          ],
+          "command": "majordomus reasoning advisors --format json",
+          "description": "The report the API and the MCP tool return: `operational`, the mode and what decided it, every advisor with its status and reason, and the capacity per capability. A script reads this rather than the text form.",
+          "expectation": "exits 0; prints one JSON document carrying /operational, /mode, /advisors, /capacity",
+          "id": "reasoning-advisors-json",
+          "setup": [],
+          "title": "The same answer as one document"
         }
       ],
       "executable": true,
@@ -26796,6 +27041,22 @@
           "id": "reasoning-plan",
           "setup": [],
           "title": "What a material uncertainty calls for"
+        },
+        {
+          "argv": [
+            "reasoning",
+            "plan",
+            "--materiality",
+            "high",
+            "--capabilities",
+            "independent_reasoning,code_review"
+          ],
+          "command": "majordomus reasoning plan --materiality high --capabilities independent_reasoning,code_review",
+          "description": "The selection covers the requested capabilities first, then prefers an advisor reached through a different adapter, then declaration order; every advisor not selected carries its reason. With none available the outcome is the structured local review.",
+          "expectation": "exits 0; prints outcome, budget",
+          "id": "reasoning-plan-capabilities",
+          "setup": [],
+          "title": "A high uncertainty that asks for named capabilities"
         }
       ],
       "executable": true,
@@ -28536,6 +28797,12 @@
           "route": "/docs/cli/served/observe/"
         },
         {
+          "about": "Ask the forge which deployments and releases it recorded, and keep the answer for the readers",
+          "command": "majordomus served forge",
+          "name": "forge",
+          "route": "/docs/cli/served/forge/"
+        },
+        {
           "about": "Each deployment's newest record, re-judged against a commit",
           "command": "majordomus served show",
           "name": "show",
@@ -28763,6 +29030,135 @@
       ],
       "route": "/docs/cli/served/observe/",
       "usage": "majordomus served observe [OPTIONS]"
+    },
+    {
+      "about": "Ask the forge which deployments and releases it recorded, and keep the answer for the readers",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus served",
+          "name": "served",
+          "route": "/docs/cli/served/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus served forge",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "served",
+            "forge"
+          ],
+          "command": "majordomus served forge",
+          "description": "Asks the forge, through its own command-line tool, for the newest deployments to every environment and the newest releases, and records the answer `deploy.observed` reads. Here the repository has no remote the forge knows, so nothing is asked and the command says why with exit 12 — not answered, never an empty list read as none. In a checkout of a repository on the forge, with a credential, it prints how many deployments, environments and releases the answer held and exits 0.",
+          "expectation": "exits 12",
+          "id": "served-forge-unknown-repository",
+          "setup": [],
+          "title": "A forge that cannot be asked is said, and what was recorded before stands"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "forge",
+      "parent_route": "/docs/cli/served/",
+      "path": [
+        "majordomus",
+        "served",
+        "forge"
+      ],
+      "route": "/docs/cli/served/forge/",
+      "usage": "majordomus served forge [OPTIONS]"
     },
     {
       "about": "Each deployment's newest record, re-judged against a commit",
@@ -36562,13 +36958,13 @@
     }
   ],
   "counts": {
-    "arguments": 1590,
-    "commands": 229,
-    "examples": 230,
-    "runnable": 202
+    "arguments": 1605,
+    "commands": 231,
+    "examples": 235,
+    "runnable": 204
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
-  "generator_version": "0.22.0",
+  "generator_version": "0.26.0",
   "route_prefix": "/docs/cli",
   "schema": 1,
   "source": "docs/generated/cli.json"

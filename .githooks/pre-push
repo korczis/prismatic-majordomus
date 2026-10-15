@@ -4,10 +4,27 @@
 # finish contract asks whether the task's work may be published, which is not this
 # question, and asking it would refuse a handover for exactly the task it hands over.
 # Any other ref in the same push and the contract applies to the whole push, as before.
-only_layer=1 any=0
-while read -r _local_ref _local_sha remote_ref _remote_sha; do
+only_layer=1 any=0 heads=""
+while read -r _local_ref local_sha remote_ref _remote_sha; do
   any=1
-  case "$remote_ref" in refs/majordomus/*) ;; *) only_layer=0 ;; esac
+  case "$remote_ref" in refs/majordomus/*) ;; *) only_layer=0; heads="$heads $local_sha" ;; esac
 done
 [ "$any" = 1 ] && [ "$only_layer" = 1 ] && exit 0
 bin/majordomus finish --check || exit $?
+# No two cases share a number. Each branch is clean alone and the pair exists only once both
+# are merged, so the trunk is where it was found (2026-10-12, two cases numbered 1096): the
+# check reads file names, takes under a second, and is asked of every push.
+scripts/case-numbers check >/dev/null || { scripts/case-numbers check >&2; exit 1; }
+# The crate's API reference builds with warnings denied, or the push is refused. Clippy, the
+# tests and the doctests all pass over a doc comment that links a private item; only rustdoc
+# refuses it, and CI's rustdoc job is where the Pages deploy starts. On 2026-10-12 a head that
+# had passed every one of the others landed and nothing was published until it was fixed.
+# Asked only of a push that changes the crate against the trunk, where it costs about a
+# minute on a warm build; a deleted ref and a push with no trunk to compare with are let by.
+for head in $heads; do
+  case "$head" in *[!0]*) ;; *) continue ;; esac
+  base="$(git merge-base "$head" origin/master 2>/dev/null)" || continue
+  git diff --quiet "$base" "$head" -- apps/majordomus-cli/src apps/majordomus-cli/Cargo.toml && continue
+  scripts/rust-check --doc || { echo "pre-push: the crate's rustdoc does not build with warnings denied (scripts/rust-check --doc); a push that changes the crate is refused until it does" >&2; exit 1; }
+  break
+done

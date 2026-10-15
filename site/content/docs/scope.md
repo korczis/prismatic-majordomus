@@ -1,7 +1,7 @@
 +++
 title = "The repository scope"
 description = "the repository scope: what a worker reads and what it never reads, declared once in `.ai/repo/scope.yaml`, how a path is judged (name, size, content), what the executable does with it, and `majordomus scope`"
-weight = 47
+weight = 48
 [extra]
 source = "docs/SCOPE.md"
 +++
@@ -12,7 +12,9 @@ What a worker reads of this repository, and what it never reads, declared once a
 [`.ai/repo/scope.yaml`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/scope.yaml). The Rust executable reads it when it
 starts, discovers and indexes nothing outside it, serves nothing outside it through MCP,
 HTTP or the command line, and answers for any path whether it is in or out and why. The
-shell tool seeds it on `init` and checks it in `doctor`. The rule behind it is
+shell tool seeds it on `init` and checks it in `doctor`. `init` seeds the entries every
+repository shares and, for each stack whose marker it finds at the root (`mix.exs`,
+`Cargo.toml`), that stack's block, and it prints which it found. The rule behind it is
 `project.scope-is-declared` under [`.ai/repo/rules/project/`](https://github.com/korczis/prismatic-majordomus/tree/@source-ref@/.ai/repo/rules/project);
 the claim is `scope-declared` in [`CLAIMS.yaml`](@/guarantees/_index.md).
 
@@ -119,7 +121,7 @@ refused where it is read, as `invalid_utf8`.
 - **The origin.** The manifest's `scope` section names the file. A repository whose
   manifest names none is read under the distribution's default,
   [`share/skeleton/ai/repo/scope.yaml`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/share/skeleton/ai/repo/scope.yaml), the file
-  `init` seeds, and the report says `distribution`. Nothing is assumed silently.
+  `init` seeds from (every stack block included), and the report says `distribution`. Nothing is assumed silently.
 
 The declaration is compiled once when the process starts and never re-read per request:
 `repository.scope` and `repository.scope_classify` read from the index, as

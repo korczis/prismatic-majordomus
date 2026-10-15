@@ -273,6 +273,7 @@
       "tests": {
         "behaviour": [
           "02_doctor_basic",
+          "1015_one_malformed_rule_is_one_finding",
           "130_mesh",
           "131_models",
           "132_health_sees_a_stopped_writer",
@@ -294,7 +295,8 @@
           "84_deployment_contract",
           "886_the_timing_report_is_json",
           "899_a_bootstrap_names_only_rules_in_force",
-          "96_worktree_topology"
+          "96_worktree_topology",
+          "999_a_parser_that_cannot_run_is_not_a_verdict"
         ],
         "negative": [
           "02_doctor_basic",
@@ -932,6 +934,7 @@
           "17_doctrine_enforcement",
           "19_end_to_end",
           "25_continuity_lifecycle",
+          "3023_a_knowledge_record_outlives_the_file_it_cites",
           "32_refusal_lifecycle",
           "578_an_unknown_gate_refuses_completed",
           "707_knowledge_check_refuses_malformed_records"
@@ -2496,9 +2499,9 @@
       "requires_repository": true,
       "requires_installed": true,
       "json_output": true,
-      "syntax": "majordomus session <start|status|close|list|show|latest|context> [options]",
+      "syntax": "majordomus session <start|status|close|list|show|latest|context|archive> [options]",
       "demo": "session-episode",
-      "note": "One open session per provider session, not per worktree: a second window of the same provider gets an episode of its own under state/sessions-open/, and session-current.yaml points at the episode of this checkout. The open record is never tracked. A closed record is an envelope of references selected by the session stamp on each ledger line, never by a time range. start freezes the resolved context into the local working-context store as an opening snapshot, and `session context` composes the live working context on every read instead of returning that file: the episode's identity, git now against git at the open, and the checkpoints, decisions and questions the episode recorded, taken from the ledger lines carrying its own session id. `--path` prints the snapshot instead. A closed record's body is composed the same way and is never empty; where the episode recorded nothing authored, the record says so and names the command that would have recorded it. --if-open and --if-none are what let a provider hook run the open and the close on every event.",
+      "note": "One open session per provider session, not per worktree: a second window of the same provider gets an episode of its own under state/sessions-open/, and session-current.yaml points at the episode of this checkout. The open record is never tracked. A closed record is an envelope of references selected by the session stamp on each ledger line, never by a time range. start freezes the resolved context into the local working-context store as an opening snapshot, and `session context` composes the live working context on every read instead of returning that file: the episode's identity, git now against git at the open, and the checkpoints, decisions and questions the episode recorded, taken from the ledger lines carrying its own session id. `--path` prints the snapshot instead. A closed record's body is composed the same way and is never empty; where the episode recorded nothing authored, the record says so and names the command that would have recorded it. --if-open and --if-none are what let a provider hook run the open and the close on every event. archive moves the oldest closed records beyond the policy's session.retention_max_files into the section's archive/ directory, only when it is run and only when session.archive is true; it deletes nothing and refuses before the first move when a record of that name is already archived.",
       "reads": [
         ".ai/local/state/sessions-open/",
         ".ai/local/state/session-current.yaml",
@@ -2534,6 +2537,8 @@
           "224_continuity_crosses_machines",
           "281_published_order_is_tracked",
           "284_a_record_reads_the_whole_declaration",
+          "2985_session_records_are_capped_and_archived",
+          "3015_an_unsupervised_repository_exits_12_from_both_tools",
           "494_the_mesh_is_declared_and_held",
           "54_session_lifecycle_hooks",
           "55_session_context",
@@ -2549,6 +2554,7 @@
           "222_an_episode_nobody_ended",
           "223_an_unsupported_schema_is_a_finding",
           "281_published_order_is_tracked",
+          "3015_an_unsupervised_repository_exits_12_from_both_tools",
           "54_session_lifecycle_hooks",
           "55_session_context",
           "565_knowledge_switch_and_failure_leave_evidence",
@@ -2733,6 +2739,9 @@
       ],
       "tests": {
         "behaviour": [
+          "3004_evolve_is_a_procedure_of_existing_commands",
+          "3015_an_unsupervised_repository_exits_12_from_both_tools",
+          "3023_a_knowledge_record_outlives_the_file_it_cites",
           "405_the_knowledge_reader_honours_the_schema",
           "563_knowledge_is_derived_at_the_boundary",
           "564_knowledge_derivation_is_idempotent",
@@ -2749,6 +2758,7 @@
           "982_a_candidate_is_routed_by_what_it_is_about"
         ],
         "negative": [
+          "3015_an_unsupervised_repository_exits_12_from_both_tools",
           "405_the_knowledge_reader_honours_the_schema",
           "563_knowledge_is_derived_at_the_boundary",
           "64_knowledge_discovery",
@@ -3172,15 +3182,20 @@
       ],
       "tests": {
         "behaviour": [
+          "1015_one_malformed_rule_is_one_finding",
           "125_rule_proof",
           "133_rule_graph",
           "138_governance_gates",
+          "3015_an_unsupervised_repository_exits_12_from_both_tools",
           "67_rule_dag"
         ],
         "negative": [
+          "1015_one_malformed_rule_is_one_finding",
           "125_rule_proof",
           "133_rule_graph",
           "138_governance_gates",
+          "2984_a_handbook_edition_is_built_from_the_tree",
+          "3015_an_unsupervised_repository_exits_12_from_both_tools",
           "403_published_translation",
           "67_rule_dag"
         ]

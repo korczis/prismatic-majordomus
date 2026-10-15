@@ -12,7 +12,7 @@
 {%- set design = load_data(path="data/registry/design.json") -%}
 {%- set page_url = current_url or config.base_url -%}
 {#- The language this page is written in. Every page of this site is English but for the
-    published translations project.english-only v2 permits, and each of those declares its own
+    published translations project.english-only permits, and each of those declares its own
     language in its front matter (ADR 0077). A page that declared nothing used to be served as
     `lang="en"` whatever it was written in, which misreports it to a screen reader and to a
     search engine; the declaration the language gate already requires is the one read here, so

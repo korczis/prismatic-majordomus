@@ -173,8 +173,12 @@ gates:
   # files of one identity in one tree is the defect this refuses; the collisions of the day it
   # was written sit on the baseline, because they are spread across other sessions' branches
   # and renumbering them would break those. File reads only, no build, no git.
+  # always: two branches that each add a case under the same number are both clean alone,
+  # and neither change's paths select this gate on the other's merge. The pair exists only
+  # in the merged tree, so the gate is asked of every plan (2026-10-12, 1096 twice on master).
   - id: case-numbers
     job: structure
+    always: true
     runs: scripts/case-numbers check
     summary: no file under test/cases/ shares its identity with another, beyond the collisions recorded on the baseline
 
@@ -215,6 +219,16 @@ gates:
     runs: scripts/ci/rust-command-check --strict
     summary: every composed command module asserts, in the file that declares it, that it is what it claims
 
+  # Seventeen seconds, file reads and git only. Unconditional rather than classed: what a
+  # chapter rests on can be a document, a rule, a decision, a claim, a command or a module,
+  # so the change that breaks it can arrive through any path, and a class list that forgot
+  # one would be the gap (project.the-handbook-is-built-from-the-tree, ADR 0149).
+  - id: handbook-check
+    job: structure
+    always: true
+    runs: python3 handbook/build.py --check
+    summary: every edition of the handbook builds from this tree; a chapter whose declared anchor left the repository's graph, a chapter that cites nothing, a caption with no figure behind it and derived data that changed shape each fail
+
   - id: english-only
     job: structure
     always: true
@@ -245,6 +259,16 @@ gates:
     job: structure
     runs: cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- skills verify
     summary: every active skill is named by a test and invoked by a workflow, prompt, profile, provider template, recipe or CI workflow; no test or invocation names a skill that does not exist
+
+  # Two tests demand to name every active skill — the crate's tests/skills.rs in its header
+  # and case 391 in its first marker line — and skills-proof cannot see that demand: it asks
+  # only that some test names each skill. On 2026-10-13 an active skill named by neither
+  # passed the structure job, was merged with --admin, and turned the trunk's rust lane red
+  # an hour later (I2664). This reads the same lines in seconds and builds nothing.
+  - id: skill-naming
+    job: structure
+    runs: scripts/ci/skill-naming-check
+    summary: every active skill is named where a test demands the whole list — the majordomus-skill header of apps/majordomus-cli/tests/skills.rs and the first marker line of test/cases/391_skills_are_proven_capabilities.sh — and neither names a skill that does not exist
 
   # The ChatGPT source pack of this repository can be built (rule
   # project.packs-carry-only-sources): the plan of the `chatgpt` profile has no finding — no
@@ -552,8 +576,8 @@ gates:
   - id: ui-audit
     job: ui
     requires: [site-build]
-    runs: scripts/rust-check --doc && scripts/ui audit --report
-    summary: every discovered page of every surface the executable serves — built directories and the routes it renders itself — at every width the theme implies, in a browser, against the responsive, semantic, component and WCAG invariants; the report is rendered at /tests/ui
+    runs: scripts/rust-check --doc && cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- bench system.http. --transport system --profile ci --no-write --check && scripts/ui audit --report
+    summary: every warm screen of the UI within the latency budget the benchmark policy declares, measured over a real socket; then every discovered page of every surface the executable serves — built directories and the routes it renders itself — at every width the theme implies, in a browser, against the responsive, semantic, component and WCAG invariants; the report is rendered at /tests/ui
 
   # The one gate that measures the published site rather than this tree: the advertised
   # install command, run as it is written, against what GitHub Pages and GitHub Releases
@@ -731,7 +755,7 @@ gates:
   - id: release-record-cases
     job: rust
     requires: [rust-integration]
-    runs: MJ_TEST_JOBS=4 bash test/run.sh --no-skips 84_distribution_model 87_release_pipeline 97_install_gate 103_release_projection 112_version_matches_surface 139_release_record_schema 352_the_version_the_site_shows_is_one_you_can_get 620_mcp_tools_are_invoked_and_answer 743_release_version_answers_with_the_contract 763_a_tag_older_than_the_record_practice_is_a_note 1041_a_release_publishes_its_metadata 1060_the_version_is_allocated_at_landing 1087_the_site_offers_the_release_it_published
+    runs: MJ_TEST_JOBS=4 bash test/run.sh --no-skips 84_distribution_model 87_release_pipeline 97_install_gate 103_release_projection 112_version_matches_surface 139_release_record_schema 352_the_version_the_site_shows_is_one_you_can_get 620_mcp_tools_are_invoked_and_answer 743_release_version_answers_with_the_contract 763_a_tag_older_than_the_record_practice_is_a_note 1041_a_release_publishes_its_metadata 1060_the_version_is_allocated_at_landing 1087_the_site_offers_the_release_it_published 3021_a_tag_does_not_freeze_the_queue
     summary: the cases about the committed release record and what is offered from it — the distribution model, the release pipeline and projection, the record's schema, the version the site shows, the install gate, the stable channel the MCP tools resolve — pass against this tree
 
 # Shapes: changes whose plan is narrower than the union of their classes (the header's last
@@ -854,8 +878,8 @@ classes:
   # the skills: every active skill is a proven capability (project.skills-are-proven-capabilities);
   # a change to a skill, to a surface that invokes one, or to the derivation runs the proof.
   - id: skills
-    paths: [.ai/repo/skills/**, .ai/repo/prompts/**, .ai/repo/workflows/**, .ai/repo/profiles/**, .ai/repo/providers/**, .just/**, justfile, apps/majordomus-cli/src/skill/**, apps/majordomus-cli/src/capability/builtin/skills.rs, apps/majordomus-cli/src/commands/skills.rs, apps/majordomus-cli/tests/skills.rs, lib/skills.sh, test/cases/95_skills.sh, test/cases/391_skills_are_proven_capabilities.sh, .ai/repo/rules/project/skills-are-proven-capabilities.v1.md]
-    gates: [skills-proof, shell-suite, rust-integration]
+    paths: [.ai/repo/skills/**, .ai/repo/prompts/**, .ai/repo/workflows/**, .ai/repo/profiles/**, .ai/repo/providers/**, .just/**, justfile, apps/majordomus-cli/src/skill/**, apps/majordomus-cli/src/capability/builtin/skills.rs, apps/majordomus-cli/src/commands/skills.rs, apps/majordomus-cli/tests/skills.rs, lib/skills.sh, test/cases/95_skills.sh, test/cases/391_skills_are_proven_capabilities.sh, test/cases/3020_an_active_skill_is_named_where_the_crate_test_demands.sh, .ai/repo/rules/project/skills-are-proven-capabilities.v1.md]
+    gates: [skills-proof, skill-naming, shell-suite, rust-integration]
 
   # the source pack and the archive: one profile declaration, the selection both read, the
   # skill on top of them and the rule they hold. A change to any of them can move what a

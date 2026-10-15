@@ -821,6 +821,13 @@ pub struct MeshPeerArgs {
 /// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
 /// let MeshCommand::Events(events) = mesh.command else { panic!("expected `events`") };
 /// assert_eq!((events.after, events.limit), (None, None));
+/// assert!(!events.newest);
+///
+/// // the journal as it stands now: its newest events
+/// let cli = Cli::try_parse_from(["majordomus", "mesh", "events", "--newest"]).unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Events(events) = mesh.command else { panic!("expected `events`") };
+/// assert!(events.newest);
 /// ```
 pub struct MeshEventsArgs {
     /// Only events whose Lamport stamp is above this
@@ -829,6 +836,9 @@ pub struct MeshEventsArgs {
     /// At most this many (default 100, at most 1000)
     #[arg(long)]
     pub limit: Option<u64>,
+    /// The newest events instead of the first ones after `--after`
+    #[arg(long)]
+    pub newest: bool,
     #[command(flatten)]
     /// Where the repository is and how to answer.
     pub query: MeshQueryArgs,
@@ -2670,7 +2680,7 @@ pub struct ServedArgs {
     pub repo: RepoArgs,
 
     #[command(subcommand)]
-    /// `observe` or `show`.
+    /// `observe`, `forge` or `show`.
     pub command: ServedCommand,
 
     #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
@@ -2680,8 +2690,8 @@ pub struct ServedArgs {
 
 #[derive(Debug, Subcommand)]
 /// The subcommands of `majordomus served`: `observe` is the command line of
-/// `served.observe` and `show` of `served.show`. `observe` is the only one that reaches the
-/// network, and it is a command line and nothing else.
+/// `served.observe`, `forge` of `served.forge` and `show` of `served.show`. `observe` and
+/// `forge` reach the network, and each is a command line and nothing else.
 ///
 /// ```
 /// use clap::Parser;
@@ -2689,6 +2699,9 @@ pub struct ServedArgs {
 /// let cli = Cli::try_parse_from(["majordomus", "served", "observe", "--dry-run"]).unwrap();
 /// let Command::Served(args) = cli.command else { panic!("served") };
 /// assert!(matches!(args.command, ServedCommand::Observe { dry_run: true, .. }));
+/// let cli = Cli::try_parse_from(["majordomus", "served", "forge"]).unwrap();
+/// let Command::Served(args) = cli.command else { panic!("served") };
+/// assert!(matches!(args.command, ServedCommand::Forge));
 /// ```
 pub enum ServedCommand {
     /// Probe the build identity a deployment serves, judge it against a commit and record it
@@ -2712,6 +2725,8 @@ pub enum ServedCommand {
         #[arg(long)]
         dry_run: bool,
     },
+    /// Ask the forge which deployments and releases it recorded, and keep the answer for the readers
+    Forge,
     /// Each deployment's newest record, re-judged against a commit
     Show {
         /// The commit to judge against (default HEAD)
@@ -3207,6 +3222,18 @@ pub enum ReportCommand {
         limit: usize,
         /// The most seconds to spend on the pages the screens link to; the screens and
         /// panels are written whatever they cost
+        #[arg(long, default_value_t = crate::web::report::snapshot::DEFAULT_BUDGET_SECONDS)]
+        budget_seconds: u64,
+    },
+    /// The Cockpit itself, read once at this commit and written as static pages a
+    /// publication carries at /cockpit (ADR 0147)
+    CockpitSnapshot {
+        /// The most pages to write: every static route first, then the pages the UI's
+        /// snapshot links to, then what those link to
+        #[arg(long, default_value_t = crate::web::report::snapshot::DEFAULT_LIMIT)]
+        limit: usize,
+        /// The most seconds to spend on the pages the static routes link to; the routes
+        /// themselves are written whatever they cost
         #[arg(long, default_value_t = crate::web::report::snapshot::DEFAULT_BUDGET_SECONDS)]
         budget_seconds: u64,
     },
@@ -5258,6 +5285,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
         }],
     },
     CommandExamples {
+        command: "served forge",
+        examples: &[ExampleDoc {
+            id: "served-forge-unknown-repository",
+            title: "A forge that cannot be asked is said, and what was recorded before stands",
+            description: "Asks the forge, through its own command-line tool, for the newest deployments to every environment and the newest releases, and records the answer `deploy.observed` reads. Here the repository has no remote the forge knows, so nothing is asked and the command says why with exit 12 — not answered, never an empty list read as none. In a checkout of a repository on the forge, with a credential, it prints how many deployments, environments and releases the answer held and exits 0.",
+            argv: &["served", "forge"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
+        }],
+    },
+    CommandExamples {
         command: "served show",
         examples: &[ExampleDoc {
             id: "served-show-json",
@@ -5895,6 +5933,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
         }],
     },
     CommandExamples {
+        command: "web report cockpit-snapshot",
+        examples: &[ExampleDoc {
+            id: "web-report-cockpit-snapshot",
+            title: "Read the Cockpit once and write it as the pages a publication carries at /cockpit",
+            description: "Asks the Cockpit in-process for every static route except the one page about this machine, then for the pages the UI's snapshot links to, then, one page per family in turn until `--limit` pages or `--budget-seconds` are reached, for the pages those link to, and writes each as a file under target/web/cockpit-snapshot. Links between them are relative; a link into the UI leads to the UI's snapshot when that holds the page; a form, a query or a page past the bound leads to the snapshot's page about the live Cockpit; no page carries a script, because the Cockpit's scripts talk to a process; and every page is stamped with the commit, the time and the executable that read it.",
+            argv: &["web", "report", "cockpit-snapshot", "--limit", "12"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["web report", "cockpit-snapshot"]),
+        }],
+    },
+    CommandExamples {
         command: "web compose",
         examples: &[ExampleDoc {
             id: "web-compose",
@@ -6384,6 +6433,14 @@ pub const EXAMPLES: &[CommandExamples] = &[
                 description: "Each target can be written on its own while a change is iterated on; `majordomus generate` with no target writes all of them.",
                 argv: &["generate", "openapi"],
                 setup: &[],
+                expect: Expect::Success,
+            },
+            ExampleDoc {
+                id: "generate-site-check",
+                title: "Check one target without writing it",
+                description: "`--check` composes with a target: here only the registry dataset the site renders is compared with what the sources produce, exit 10 naming it when it is stale.",
+                argv: &["generate", "site", "--check"],
+                setup: &[&["generate", "site"]],
                 expect: Expect::Success,
             },
         ],
@@ -7061,6 +7118,13 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["reasoning", "advisors"],
             setup: &[],
             expect: Expect::StdoutContains(&["reasoning   operational"]),
+        }, ExampleDoc {
+            id: "reasoning-advisors-json",
+            title: "The same answer as one document",
+            description: "The report the API and the MCP tool return: `operational`, the mode and what decided it, every advisor with its status and reason, and the capacity per capability. A script reads this rather than the text form.",
+            argv: &["reasoning", "advisors", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/operational", "/mode", "/advisors", "/capacity"]),
         }],
     },
     CommandExamples {
@@ -7070,6 +7134,13 @@ pub const EXAMPLES: &[CommandExamples] = &[
             title: "What a material uncertainty calls for",
             description: "Whether independent review is worth having, how many advisors the mode allows, which available advisors a capability-driven selection asks, and why every other advisor is left out. With no suitable advisor the plan is the structured local review. Nothing is recorded.",
             argv: &["reasoning", "plan", "--materiality", "material"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["outcome", "budget"]),
+        }, ExampleDoc {
+            id: "reasoning-plan-capabilities",
+            title: "A high uncertainty that asks for named capabilities",
+            description: "The selection covers the requested capabilities first, then prefers an advisor reached through a different adapter, then declaration order; every advisor not selected carries its reason. With none available the outcome is the structured local review.",
+            argv: &["reasoning", "plan", "--materiality", "high", "--capabilities", "independent_reasoning,code_review"],
             setup: &[],
             expect: Expect::StdoutContains(&["outcome", "budget"]),
         }],

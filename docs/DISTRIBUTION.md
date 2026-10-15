@@ -201,6 +201,26 @@ git tag v0.3.0 && git push origin v0.3.0
 #    the record, and scripts/pages verify --commit <merge sha> confirms it
 ```
 
+**The tag comes first and the record second, and the window between them is pending, not
+red.** The record cannot be written before the tag: it is made from what was published — the
+archives' names and SHA-256 digests, the release page — and none of that exists until the
+pipeline the tag starts has run. So the record is proposed after publication, on
+`release/record-<tag>`, and its pull request needs a full run of its own before it can merge,
+about two hours. `scripts/ci/release-check` refuses a published tag the layer holds no record
+for, and until I2054 it refused it on every head in that window: on 2026-10-08 four pull
+requests about other things went red on that one finding while v0.17.0's record ran, and on
+2026-10-14 every branch did between the v0.25.0 tag and its record's merge. It now reads the
+proposal from git, as the structure job already has it (`fetch-depth: 0` fetches every branch
+as `refs/remotes/origin/*`): a tag whose record is carried by the tip of a
+`release/record-<tag>` branch younger than `MJ_RELEASE_RECORD_GRACE_HOURS` (24 by default) is
+reported `pending`, naming that branch, and passes. What it costs: the gate trusts a branch,
+not a merged record, for up to a day — a record branch whose pull request was closed excuses
+its tag until the grace runs out — and a checkout that fetched no branches sees no proposal
+and refuses as before. A tag with no record and no branch proposing one, the v0.7.0 state, is
+refused at once on every head. Proposing the record before the tag was the other choice, and
+it was not taken: the record would describe artifacts nobody had built yet.
+`test/cases/3021_a_tag_does_not_freeze_the_queue.sh` holds every state.
+
 The pipeline is [`.github/workflows/release.yml`](../.github/workflows/release.yml), an
 adapter over [`.ai/repo/ci/release.yaml`](../.ai/repo/ci/release.yaml) and the generated
 matrix:

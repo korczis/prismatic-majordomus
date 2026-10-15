@@ -1,9 +1,9 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the canonical capability registry; regenerate with `majordomus generate`
-# Generator: majordomus-cli 0.22.0
+# Generator: majordomus-cli 0.26.0
 schema: majordomus/capability-registry/v1
 generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the canonical capability registry; regenerate with `majordomus generate`"
-generator: majordomus-cli 0.22.0
+generator: majordomus-cli 0.26.0
 modules:
   - id: artifacts
     title: Generated artifacts
@@ -221,6 +221,12 @@ modules:
     stability: behaviorally_verified
     source: builtin
     capabilities: 2
+  - id: observatory
+    title: Observatory
+    description: "What the Observatory may carry to a place where no mesh runs: the mesh scenes this process has live, pseudonymized for publication, and the recording the repository carries, which the published Observatory replays and labels as a replay."
+    stability: behaviorally_verified
+    source: builtin
+    capabilities: 3
   - id: pack
     title: Source pack
     description: "The tracked tree as a few token-bounded Markdown shards a language model's file search can index, with an index that orients the reader and a manifest that proves afterwards what left the machine: the git index's blobs only, never the working tree, and never a binary, a gitlink or worktree, a symbolic link, build output or a credential, whatever the index holds."
@@ -292,7 +298,7 @@ modules:
     description: "Whether a deployment serves the commit it was meant to: the build identity a site serves, read from outside the way a visitor reads it, judged by commit containment and recorded so that a later reader can re-judge it. Only `served` passes; a site that could not be reached, an identity that could not be read, a build from an uncommitted tree and a served commit this clone does not hold are each an unanswered question, never a yes. Observing reaches the network and is a command of the trusted command line; reading the recorded standing is a read on every surface."
     stability: behaviorally_verified
     source: builtin
-    capabilities: 2
+    capabilities: 3
   - id: server
     title: Server
     description: "The shared server of this checkout and of every other checkout of the same git repository: what each lease says, whether the server it names answers, whether what answers is the code on disk at this executable's version, and how many peers each one holds."
@@ -1061,6 +1067,11 @@ capabilities:
           execution:
             "$ref": "#/$defs/ExecutionPolicy"
             description: "What running it as an execution means: classified from the kind, so that a client\nreads a fact rather than deciding for itself."
+          skill:
+            anyOf:
+              - "$ref": "#/$defs/SkillExposure"
+              - type: "null"
+            description: "The short name a person invokes it by from an agent's prompt, when it has one."
         required:
           - id
           - module
@@ -1444,6 +1455,19 @@ capabilities:
                 const: serial
                 description: "One at a time. A second execution of the same capability waits for the first, which\nis what a capability that changes anything — this process's own memory included —\nneeds in order to be reasoned about at all."
             description: Whether two executions of one capability may overlap.
+          SkillExposure:
+            type: object
+            properties:
+              alias:
+                type: string
+                description: "The name typed after the slash: lowercase letters, digits and hyphens, at most 64."
+              argument:
+                type: string
+                description: "The input field the text typed after the name fills, verbatim."
+            required:
+              - alias
+              - argument
+            description: "A capability as a skill a person invokes by a short name from an agent's prompt:\n`/intent <sentence>` in Claude Code. The name and the one input field the typed text\nfills are declared here, once; the file an agent product reads is generated from them\n(the `editors` module) and carries no description of what the capability does beyond\nthe capability's own.\n\n```\nuse majordomus_cli::capability::SkillExposure;\nlet s = SkillExposure { alias: \"intent\".into(), argument: \"statement\".into() };\nassert!(s.validate().is_ok());\n// a name an agent product already owns is refused, and so is one that is not a name\nlet taken = SkillExposure { alias: \"review\".into(), argument: \"x\".into() };\nassert!(taken.validate().unwrap_err().contains(\"reserved\"));\nlet shouted = SkillExposure { alias: \"Intent\".into(), argument: \"x\".into() };\nassert!(shouted.validate().is_err());\n```"
     provenance:
       source: builtin
       module: majordomus_cli::capability::builtin::capabilities
@@ -8544,7 +8568,7 @@ capabilities:
     module: deploy
     kind: query
     title: "What was deployed, and where"
-    description: "Every deployment the forge recorded, to every environment it has one in — GitHub Pages among them — with the commit, the ref, who created it, how it ended, where it is served and the run that did it; every environment described by its newest deployment; and every release the forge published. Read from the record `majordomus prs refresh` wrote when it last asked the forge: nothing here reaches the network, and a checkout that has never asked answers `observed: false` with what to run."
+    description: "Every deployment the forge recorded, to every environment it has one in — GitHub Pages among them — with the commit, the ref, who created it, how it ended, where it is served and the run that did it; every environment described by its newest deployment; and every release the forge published. Read from the record `majordomus served forge` wrote when it last asked the forge: nothing here reaches the network, and a checkout that has never asked answers `observed: false` with what to run."
     input:
       name: Empty
       schema:
@@ -22262,6 +22286,9 @@ capabilities:
           status:
             "$ref": "#/$defs/HealthStatus"
             description: "The worst check's status."
+          repository:
+            "$ref": "#/$defs/HealthStatus"
+            description: "The worst status among the dimensions that describe the repository at this commit:\nevery check but the ones in `PROCESS_DIMENSIONS`. A process that is no server —\nthe command line, or the reader of a published snapshot (ADR 0141) — cannot decide\nwho is attached or what the mesh runtime did, and says `unknown` for them; this is\nthe verdict that is the same whichever process read the repository, and it is what a\npublication shows first."
           tallies:
             type: object
             additionalProperties:
@@ -22281,6 +22308,7 @@ capabilities:
             description: "When the state a check decided on was read, by check id: the freshness contract\n(`crate::index::AnswerObservation`). A check absent here decided live, during this call.\n`layer` and `git` are here because they judge the picture the index took, which is\nas old as the index."
         required:
           - status
+          - repository
           - tallies
           - checks
         description: The health of what this process serves.
@@ -29159,6 +29187,9 @@ capabilities:
       effect: repository_mutation
       cancellable: false
       concurrency: serial
+    skill:
+      alias: intent
+      argument: statement
     source_path: apps/majordomus-cli/src/capability/builtin/intents.rs
   - id: intents.record
     module: intents
@@ -29905,9 +29936,12 @@ capabilities:
                 const: external
                 description: "Vouched for by the ledger, the task store or git: a session, a task, a decision, a commit."
               - type: string
+                const: historical
+                description: "A `file:` or `test:` the tree no longer holds and git history does: cited before the\nfile was deleted, or pinned as `file:<path>@<commit>`. The `target` is the blob that\nanswers, `<commit>:<path>`, which `git show` reads."
+              - type: string
                 const: missing
                 description: "Nothing answers to it. A dangling reference is the integrity validator's finding."
-            description: "How a typed reference resolved.\n\nThree words and no fourth: a reference names an object of the index, or something only\nthe ledger and git can vouch for, or nothing. `external` is not a weaker `object` — a\ncommit or a task is exactly as real as a rule — it says which reader answered.\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::ReferenceResolution;\nlet r: ReferenceResolution = serde_json::from_str(r#\"\"external\"\"#).unwrap();\nassert_eq!(r, ReferenceResolution::External);\nassert!(r.resolves(), \"vouched for by the ledger or git is resolved\");\nassert!(!ReferenceResolution::Missing.resolves());\n```"
+            description: "How a typed reference resolved.\n\nFour words and no fifth: a reference names an object of the index, or something only\nthe ledger and git can vouch for, or a file the tree no longer holds and git history\ndoes, or nothing. `external` is not a weaker `object` — a commit or a task is exactly as\nreal as a rule — it says which reader answered; `historical` resolves as well, and is\nnamed apart so a reader sees which provenance outlived its file (I1987).\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::ReferenceResolution;\nlet r: ReferenceResolution = serde_json::from_str(r#\"\"external\"\"#).unwrap();\nassert_eq!(r, ReferenceResolution::External);\nassert!(r.resolves(), \"vouched for by the ledger or git is resolved\");\nassert!(!ReferenceResolution::Missing.resolves());\n```"
           ResolvedRelation:
             type: object
             properties:
@@ -31909,6 +31943,11 @@ capabilities:
             format: uint64
             minimum: 0
             description: "At most this many (default 100, at most 1000)."
+          newest:
+            type:
+              - boolean
+              - "null"
+            description: "The newest `limit` events above `after` instead of the first ones: what a reader who\nwants the journal as it stands now asks for. Still in Lamport order, and `lamport` is\nthen the newest stamp the journal holds, so resuming after it reads only what comes\nnext. Without it the journal is read forward from `after`, a page at a time."
         description: "The input of `mesh.events`."
         title: MeshEventsInput
     output:
@@ -38398,6 +38437,368 @@ capabilities:
       cancellable: false
       concurrency: unrestricted
     source_path: apps/majordomus-cli/src/capability/builtin/obligations.rs
+  - id: observatory.capture
+    module: observatory
+    kind: query
+    title: Observatory capture
+    description: "The mesh scenes of the Observatory as this process has them live, fit for publication: machines, runtimes, sessions and events by ordinal, an event by its kind, logical clock and time only. Writes nothing; committing the answer to .ai/repo/observatory/recording.json is what publishes it."
+    input:
+      name: Empty
+      schema:
+        type: object
+        additionalProperties: false
+        description: No input.
+        title: Empty
+    output:
+      name: ObservatoryRecording
+      schema:
+        type: object
+        properties:
+          schema:
+            type: string
+            description: "`RECORDING_SCHEMA`."
+          recorded_at:
+            type: string
+            description: When the scenes were read.
+          revision:
+            type:
+              - string
+              - "null"
+            description: "The commit the recording process stood at, short; absent when it could not say."
+          scenes:
+            type: object
+            additionalProperties: true
+            description: "Each recorded scene's model, by scene id; a scene the process had nothing live for is\nabsent, never empty."
+          manifest:
+            "$ref": "#/$defs/RecordingManifest"
+            description: "What the recording is a record of, and what it leaves out."
+        required:
+          - schema
+          - recorded_at
+          - scenes
+          - manifest
+        description: "The mesh scenes of one process at one moment, fit for publication.\n\n```\nuse majordomus_cli::capability::builtin::observatory::ObservatoryRecording;\nlet r: ObservatoryRecording = serde_json::from_value(serde_json::json!({\n    \"schema\": \"observatory-recording/v1\", \"recorded_at\": \"2026-10-14T05:00:00Z\", \"scenes\": {},\n    \"manifest\": { \"sources\": [], \"removed\": [] },\n})).unwrap();\nassert!(r.scenes.is_empty() && r.revision.is_none());\n```"
+        title: ObservatoryRecording
+        "$defs":
+          RecordingManifest:
+            type: object
+            properties:
+              sources:
+                type: array
+                items:
+                  type: string
+                description: The capabilities whose answers the recorded scenes were projected from.
+              window:
+                anyOf:
+                  - "$ref": "#/$defs/RecordingWindow"
+                  - type: "null"
+                description: "The first and last event the recording holds, by time and by logical clock; absent\nwhen it holds none."
+              removed:
+                type: array
+                items:
+                  type: string
+                description: "Every kind of thing removed before publication, and why."
+            required:
+              - sources
+              - removed
+            description: "What a recording is a record of: the capabilities read, the window of events it holds,\nand what was removed from what they answered, with the reason.\n\n```\nuse majordomus_cli::capability::builtin::observatory::RecordingManifest;\nlet m: RecordingManifest = serde_json::from_value(serde_json::json!({\n    \"sources\": [\"mesh.events\"], \"removed\": [\"event bodies\"],\n})).unwrap();\nassert!(m.window.is_none(), \"a recording that holds no event has no window\");\n```"
+          RecordingWindow:
+            type: object
+            properties:
+              events:
+                type: integer
+                format: uint
+                minimum: 0
+                description: How many events.
+              from_at:
+                type:
+                  - integer
+                  - "null"
+                format: uint64
+                minimum: 0
+                description: "The earliest event's time, in seconds since the epoch."
+              to_at:
+                type:
+                  - integer
+                  - "null"
+                format: uint64
+                minimum: 0
+                description: "The latest event's time, in seconds since the epoch."
+              from_lamport:
+                type:
+                  - integer
+                  - "null"
+                format: uint64
+                minimum: 0
+                description: The smallest logical clock.
+              to_lamport:
+                type:
+                  - integer
+                  - "null"
+                format: uint64
+                minimum: 0
+                description: The largest logical clock.
+            required:
+              - events
+            description: "The events a recording holds, from first to last.\n\n```\nuse majordomus_cli::capability::builtin::observatory::RecordingWindow;\nlet w = RecordingWindow { events: 2, from_at: Some(100), to_at: Some(160), from_lamport: Some(9), to_lamport: Some(10) };\nassert_eq!(w.to_at.unwrap() - w.from_at.unwrap(), 60, \"a minute of the journal\");\n```"
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::observatory
+    exposure:
+      mcp:
+        tool: majordomus_observatory_capture
+      http:
+        method: GET
+        path: /api/v1/observatory/capture
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - observatory
+      - mesh
+      - ui
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/observatory.rs
+  - id: observatory.events
+    module: observatory
+    kind: query
+    title: Observatory events
+    description: "The events of the mesh journal above a cursor, as the Observatory's activity scene draws them: identity, kind, node, logical clock and time, newest first, at most a page. The answer's cursor is the next request's `after`; a cursor this journal never reached is expired, and the reader takes a fresh projection. Without a cursor, the newest page."
+    input:
+      name: ObservatoryEventsInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          after:
+            type:
+              - integer
+              - "null"
+            format: uint64
+            minimum: 0
+            description: "The cursor: only events whose logical clock is above it. Absent is the newest page."
+          limit:
+            type:
+              - integer
+              - "null"
+            format: uint64
+            minimum: 0
+            description: "At most this many (default 200, at most 1000)."
+        description: "The input of `observatory.events`: a cursor and a page size.\n\n```\nuse majordomus_cli::capability::builtin::observatory::ObservatoryEventsInput;\nlet q: ObservatoryEventsInput = serde_json::from_value(serde_json::json!({ \"after\": 42 })).unwrap();\nassert_eq!((q.after, q.limit), (Some(42), None));\nassert!(serde_json::from_value::<ObservatoryEventsInput>(serde_json::json!({ \"since\": 1 })).is_err());\n```"
+        title: ObservatoryEventsInput
+    output:
+      name: ObservatoryEvents
+      schema:
+        type: object
+        properties:
+          active:
+            type: boolean
+            description: Whether a mesh runs in this process; without one there is no journal to follow.
+          after:
+            type:
+              - integer
+              - "null"
+            format: uint64
+            minimum: 0
+            description: "The cursor that was asked, when one was."
+          cursor:
+            type: integer
+            format: uint64
+            minimum: 0
+            description: "The cursor to ask next: the logical clock of the newest event read, or the journal's\nnewest clock when the cursor had expired."
+          expired:
+            type: boolean
+            description: "The cursor names a clock this journal never reached (another runtime's journal, or one\nthat restarted): nothing above it can be read, and the reader takes a fresh projection."
+          events:
+            type: array
+            items: true
+            description: "The events above the cursor, newest first, as marks: identity, kind, node, logical\nclock and time, never a body."
+        required:
+          - active
+          - cursor
+          - expired
+          - events
+        description: "The Observatory's events above a cursor, as the activity scene draws them.\n\n```\nuse majordomus_cli::capability::builtin::observatory::ObservatoryEvents;\nlet e: ObservatoryEvents = serde_json::from_value(serde_json::json!({\n    \"active\": true, \"after\": 9, \"cursor\": 12, \"expired\": false, \"events\": [{ \"id\": \"s:3\" }],\n})).unwrap();\nassert!(e.cursor > e.after.unwrap(), \"the next request resumes past what was read\");\n```"
+        title: ObservatoryEvents
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::observatory
+    exposure:
+      mcp:
+        tool: majordomus_observatory_events
+      http:
+        method: GET
+        path: /api/v1/observatory/events
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - observatory
+      - mesh
+      - ui
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/observatory.rs
+  - id: observatory.replay
+    module: observatory
+    kind: query
+    title: Observatory replay
+    description: "The recording of the mesh scenes the repository carries at .ai/repo/observatory/recording.json, which the Observatory draws, labelled as a replay, where no mesh runs. Absent is present: false; a file that cannot be read is an error."
+    input:
+      name: Empty
+      schema:
+        type: object
+        additionalProperties: false
+        description: No input.
+        title: Empty
+    output:
+      name: ObservatoryReplay
+      schema:
+        type: object
+        properties:
+          present:
+            type: boolean
+            description: Whether the repository carries a recording.
+          path:
+            type: string
+            description: The file it is read from.
+          recording:
+            anyOf:
+              - "$ref": "#/$defs/ObservatoryRecording"
+              - type: "null"
+            description: The recording.
+        required:
+          - present
+          - path
+        description: "The recording the repository carries, or that it carries none.\n\n```\nuse majordomus_cli::capability::builtin::observatory::{replay_at, ObservatoryReplay, RECORDING};\nlet dir = tempfile::tempdir().unwrap();\nlet none: ObservatoryReplay = replay_at(dir.path()).unwrap();\nassert!(!none.present && none.recording.is_none());\nassert_eq!(none.path, RECORDING);\n```"
+        title: ObservatoryReplay
+        "$defs":
+          ObservatoryRecording:
+            type: object
+            properties:
+              schema:
+                type: string
+                description: "`RECORDING_SCHEMA`."
+              recorded_at:
+                type: string
+                description: When the scenes were read.
+              revision:
+                type:
+                  - string
+                  - "null"
+                description: "The commit the recording process stood at, short; absent when it could not say."
+              scenes:
+                type: object
+                additionalProperties: true
+                description: "Each recorded scene's model, by scene id; a scene the process had nothing live for is\nabsent, never empty."
+              manifest:
+                "$ref": "#/$defs/RecordingManifest"
+                description: "What the recording is a record of, and what it leaves out."
+            required:
+              - schema
+              - recorded_at
+              - scenes
+              - manifest
+            description: "The mesh scenes of one process at one moment, fit for publication.\n\n```\nuse majordomus_cli::capability::builtin::observatory::ObservatoryRecording;\nlet r: ObservatoryRecording = serde_json::from_value(serde_json::json!({\n    \"schema\": \"observatory-recording/v1\", \"recorded_at\": \"2026-10-14T05:00:00Z\", \"scenes\": {},\n    \"manifest\": { \"sources\": [], \"removed\": [] },\n})).unwrap();\nassert!(r.scenes.is_empty() && r.revision.is_none());\n```"
+          RecordingManifest:
+            type: object
+            properties:
+              sources:
+                type: array
+                items:
+                  type: string
+                description: The capabilities whose answers the recorded scenes were projected from.
+              window:
+                anyOf:
+                  - "$ref": "#/$defs/RecordingWindow"
+                  - type: "null"
+                description: "The first and last event the recording holds, by time and by logical clock; absent\nwhen it holds none."
+              removed:
+                type: array
+                items:
+                  type: string
+                description: "Every kind of thing removed before publication, and why."
+            required:
+              - sources
+              - removed
+            description: "What a recording is a record of: the capabilities read, the window of events it holds,\nand what was removed from what they answered, with the reason.\n\n```\nuse majordomus_cli::capability::builtin::observatory::RecordingManifest;\nlet m: RecordingManifest = serde_json::from_value(serde_json::json!({\n    \"sources\": [\"mesh.events\"], \"removed\": [\"event bodies\"],\n})).unwrap();\nassert!(m.window.is_none(), \"a recording that holds no event has no window\");\n```"
+          RecordingWindow:
+            type: object
+            properties:
+              events:
+                type: integer
+                format: uint
+                minimum: 0
+                description: How many events.
+              from_at:
+                type:
+                  - integer
+                  - "null"
+                format: uint64
+                minimum: 0
+                description: "The earliest event's time, in seconds since the epoch."
+              to_at:
+                type:
+                  - integer
+                  - "null"
+                format: uint64
+                minimum: 0
+                description: "The latest event's time, in seconds since the epoch."
+              from_lamport:
+                type:
+                  - integer
+                  - "null"
+                format: uint64
+                minimum: 0
+                description: The smallest logical clock.
+              to_lamport:
+                type:
+                  - integer
+                  - "null"
+                format: uint64
+                minimum: 0
+                description: The largest logical clock.
+            required:
+              - events
+            description: "The events a recording holds, from first to last.\n\n```\nuse majordomus_cli::capability::builtin::observatory::RecordingWindow;\nlet w = RecordingWindow { events: 2, from_at: Some(100), to_at: Some(160), from_lamport: Some(9), to_lamport: Some(10) };\nassert_eq!(w.to_at.unwrap() - w.from_at.unwrap(), 60, \"a minute of the journal\");\n```"
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::observatory
+    exposure:
+      mcp:
+        tool: majordomus_observatory_replay
+      http:
+        method: GET
+        path: /api/v1/observatory/replay
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - observatory
+      - mesh
+      - ui
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/observatory.rs
   - id: pack.plan
     module: pack
     kind: query
@@ -44389,7 +44790,7 @@ capabilities:
     module: reasoning
     kind: query
     title: Check that reasoning stays provider-independent
-    description: "The executable half of the rules advisors-are-optional and review-is-recorded-not-claimed: the advisor catalogue resolves against the provider table and the model catalogue; every adapter it names has its transport module; no provider-independent source names an advisor; no CI workflow or gate names a model credential; no document asserts a refused claim; every stored consultation names an advisor its plan selected, and every conclusion's review matches what it cites."
+    description: "The executable half of the rules advisors-are-optional and review-is-recorded-not-claimed: the advisor catalogue resolves against the provider table and the model catalogue; every adapter it names has its transport module; no provider-independent source names an advisor; no CI workflow or gate names a model credential; no document asserts a refused claim; every stored consultation names an advisor its plan selected, and every conclusion's review matches what it cites. The CI and claims checks judge what this repository's own workflows and documents say, so they apply only where the rule advisors-are-optional is declared; an adopter is held to what it adopted."
     input:
       name: Empty
       schema:
@@ -51119,6 +51520,93 @@ capabilities:
       cancellable: false
       concurrency: unrestricted
     source_path: apps/majordomus-cli/src/capability/builtin/rules.rs
+  - id: served.forge
+    module: served
+    kind: command
+    title: Ask the forge what it recorded as deployed and released
+    description: "Asks the forge, through its own command-line tool and with the caller's credential, for the newest deployments to every environment and the newest releases, in one query, and records the answer in the checkout-local state `deploy.observed` reads. Exit 0 when the forge answered and the answer was recorded, 12 when it could not be asked (no tool, no credential, no network, a repository the forge does not know): what was recorded before then stands, with its age."
+    input:
+      name: Empty
+      schema:
+        type: object
+        additionalProperties: false
+        description: No input.
+        title: Empty
+    output:
+      name: ForgeObserved
+      schema:
+        type: object
+        properties:
+          observed:
+            type: boolean
+            description: Whether the forge answered and the answer was recorded.
+          reason:
+            type:
+              - string
+              - "null"
+            description: "Why not, in the words of whatever refused; absent when it answered."
+          repository:
+            type:
+              - string
+              - "null"
+            description: "`owner/name`, as the forge named the repository."
+          observed_at:
+            type:
+              - string
+              - "null"
+            description: "When the forge was asked, RFC 3339."
+          deployments:
+            type: integer
+            format: uint
+            minimum: 0
+            description: How many deployments the answer held.
+          releases:
+            type: integer
+            format: uint
+            minimum: 0
+            description: How many releases the answer held.
+          environments:
+            type: integer
+            format: uint
+            minimum: 0
+            description: How many environments those deployments went to.
+          exit_code:
+            type: integer
+            format: int32
+            description: "The exit status the command line reports: 0 observed, 12 not answered."
+        required:
+          - observed
+          - deployments
+          - releases
+          - environments
+          - exit_code
+        description: "What `served.forge` came to: whether the forge answered, and what its answer held. The\nanswer itself is read through `deploy.observed`; this is the receipt of having asked.\n\n```\nuse majordomus_cli::capability::builtin::served::ForgeObserved;\n// a forge that could not be asked is said, with the reason, and is exit 12: not answered\nlet json = r#\"{\"observed\":false,\"reason\":\"gh repo view failed: no network\",\n  \"deployments\":0,\"releases\":0,\"environments\":0,\"exit_code\":12}\"#;\nlet got: ForgeObserved = serde_json::from_str(json).unwrap();\nassert!(!got.observed);\nassert_eq!(got.exit_code, 12);\nassert!(got.repository.is_none());\n```"
+        title: ForgeObserved
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::served
+    exposure:
+      cli:
+        path:
+          - served
+          - forge
+    availability: runtime
+    visibility: developer
+    stability: behaviorally_verified
+    tags:
+      - deployment
+      - evidence
+      - forge
+    benchmark:
+      policy: waived
+      reason: external_dependency
+    cache:
+      policy: disabled
+    execution:
+      effect: process_state
+      cancellable: false
+      concurrency: serial
+    source_path: apps/majordomus-cli/src/capability/builtin/served.rs
   - id: served.observe
     module: served
     kind: command

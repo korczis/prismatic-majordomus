@@ -29,9 +29,10 @@
 # deliberate act with a reason, exactly as scripts/ci/pipefail-check treats its own.
 #
 # A head is judged against what it changes, not against GitHub's live state. The adapter
-# projects the trunk and nothing else, and nothing applies it automatically, so a record a
-# head changed is `behind` on GitHub for exactly as long as that head is unmerged, and for a
-# little longer on the trunk, until the executor applies. Refusing that made a pull request
+# projects the trunk and nothing else, so a record a head changed is `behind` on GitHub for
+# exactly as long as that head is unmerged, and for a little longer on the trunk, until the
+# landing has applied it (.github/workflows/github.yml, on every push to the default branch;
+# a person's `scripts/github-sync --apply` is the fallback). Refusing that made a pull request
 # that edits a projected record red from birth with no way to go green on its own head (#855
 # changed one line of I1900; #820 closed eight records), and would have left the trunk red
 # after it landed. So the four states an apply writes — `behind`, `state`, `milestone` and
@@ -43,10 +44,19 @@
 #                   in a pull request's run, MJ_GH_BASE=<ref> when a person names one, and
 #                   otherwise the remote's default branch for a tree that is not on it.
 #   on the trunk    the records that changed in a landing younger than the window declared
-#                   in .ai/repo/ci/github.yaml as apply.window: "the executor applies after
-#                   landing". Older than the window they are refused, and the refusal names
+#                   in .ai/repo/ci/github.yaml as apply.window: "the landing applies".
+#                   Older than the window they are refused, and the refusal names
 #                   the remedy. The trunk is a run whose GITHUB_REF is the default branch,
 #                   or, with no CI event, a HEAD the remote's default branch contains.
+#
+# `missing` waits for the same apply, for the same two sets, when the record is one the
+# head or the young landing ADDED: a record whose file is not in the reference commit has no
+# counterpart on GitHub because nothing has projected it yet, and the ratchet counted it as
+# backlog. A pull request that adds a record was red from birth, exactly as one that edited
+# a record had been (#1058 added 54 records and read "73 record(s) missing, over the
+# baseline of 19"). A record that is missing and that the head did not add is the backlog,
+# and the ratchet holds it as before. `adopt` is never pending: a counterpart without an
+# identity marker is not something an added record causes.
 #
 # A record has changed when its file differs from the reference commit, or when its
 # rendering does: a status is derived, so closing one issue moves the body of every issue
@@ -79,8 +89,8 @@ SYNC="$SELF/../github-sync"
 ROOT="${MJ_ROOT:-$(cd "$SELF/../.." && pwd)}"
 cd "$ROOT"
 BASELINE="${MJ_GH_BASELINE:-.ai/repo/ci/github-drift-baseline.txt}"
-# The model of this gate: how long the trunk may carry a landed change the executor has not
-# applied. Declared there, read here, and written nowhere else.
+# The model of this gate: how long the trunk may carry a landed change nothing has applied
+# yet. Declared there, read here, and written nowhere else.
 MODEL=".ai/repo/ci/github.yaml"
 REMOTE="${MJ_GH_REMOTE:-origin}"
 WRITE=0
@@ -201,6 +211,19 @@ decide_reference() {
 CHANGED="$work/changed"; : > "$CHANGED"
 RECORDS=".ai/repo/project/issues .ai/repo/project/milestones"
 ids_of_paths() { awk -F/ '/\.yaml$/ { f = $NF; sub(/\.yaml$/, "", f); print f }'; }
+# The ids of the records whose files are not in the reference commit, in $ADDED. With no
+# reference on the trunk every landing is inside the window, and every record is the
+# landing's, as it is in $CHANGED.
+ADDED="$work/added"; : > "$ADDED"
+added_files() {
+  # shellcheck disable=SC2086 # two pathspecs, deliberately split
+  if [ -z "$REF" ]; then
+    cp "$CHANGED" "$ADDED"
+  else
+    { git --no-pager diff --name-only --diff-filter=A "$REF" -- $RECORDS
+      git ls-files --others --exclude-standard -- $RECORDS; } | ids_of_paths | LC_ALL=C sort -u > "$ADDED"
+  fi
+}
 changed_files() {
   # shellcheck disable=SC2086 # two pathspecs, deliberately split
   if [ -z "$REF" ]; then
@@ -259,14 +282,19 @@ split_lines() { # <state> <pending|held>
 
 # Nothing is measured until something could be pending: a tree with no such drift costs
 # what it always cost, and prints what it always printed.
+baseline_of() { local b; b="$(awk -v s="$1" '$1==s { print $2; exit }' "$BASELINE")"; printf '%s' "${b:-0}"; }
 waiting=0
 for s in $PENDABLE; do waiting=$((waiting + $(count_of "$s"))); done
-if [ "$waiting" -gt 0 ]; then
+# a `missing` over its ceiling is measured too: the excess may be what this tree added
+over=0
+if [ "$(count_of missing)" -gt "$(baseline_of missing)" ]; then over=1; fi
+if [ "$waiting" -gt 0 ] || [ "$over" = 1 ]; then
   decide_reference
   if [ "$KIND" = none ]; then
     note "what this tree changed could not be measured: $WHY; every drift is judged as if this tree changed nothing"
   else
     changed_files
+    added_files
     unexplained=0
     for s in $PENDABLE; do unexplained=$((unexplained + $(split_lines "$s" held | grep -c . || true))); done
     # The rendering is asked only for drift the files do not explain, and never on a trunk
@@ -288,7 +316,7 @@ for s in $REFUSED; do
     why="the projection is behind the canonical model or a person's text is at stake (run: scripts/github-sync --check)"
     case " $PENDABLE " in *" $s "*)
       case "$KIND" in
-        trunk) why="$why; nothing changed them inside the ${WINDOW}s the executor is given after a landing ($MODEL), so they are owed now — run: scripts/github-sync --apply from $TRUNK" ;;
+        trunk) why="$why; nothing changed them inside the ${WINDOW}s a landing is given to apply them ($MODEL), so they are owed now and the github-projection workflow has not applied them — run: scripts/github-sync --apply from $TRUNK" ;;
         head)  why="$why; this head did not change them: they drifted before it, or the trunk has moved past this tree's base" ;;
       esac ;;
     esac
@@ -299,8 +327,8 @@ for s in $REFUSED; do
   fi
   if [ "$p" -gt 0 ]; then
     case "$KIND" in
-      trunk) pend "$p record(s) $s, $ABOUT — the executor applies after landing (scripts/github-sync --apply from $TRUNK); refused once the window declared in $MODEL has passed" ;;
-      *)     pend "$p record(s) $s, $ABOUT — projected after merge: GitHub shows the trunk's plan, and the executor runs scripts/github-sync --apply once this has landed" ;;
+      trunk) pend "$p record(s) $s, $ABOUT — the landing applies (.github/workflows/github.yml; the fallback is scripts/github-sync --apply from $TRUNK); refused once the window declared in $MODEL has passed" ;;
+      *)     pend "$p record(s) $s, $ABOUT — projected after merge: GitHub shows the trunk's plan, and the landing applies it once this has merged" ;;
     esac
     sample "$waits"
   fi
@@ -308,10 +336,30 @@ done
 
 for s in $RATCHET; do
   n="$(count_of "$s")"
-  b="$(awk -v s="$s" '$1==s { print $2; exit }' "$BASELINE")"
-  [ -n "$b" ] || b=0
+  b="$(baseline_of "$s")"
+  # The missing records this tree added wait for the apply and are not backlog. The ids are
+  # read in BEGIN, as in split_lines: an empty list must make no line pending.
+  waits=""; p=0; held="$(lines_of "$s")"
+  if [ "$s" = missing ] && [ -s "$ADDED" ]; then
+    waits="$(lines_of missing | awk -v list="$ADDED" '
+      BEGIN { while ((getline id < list) > 0) c[id] = 1 }
+      ($4 in c)')"
+    held="$(lines_of missing | awk -v list="$ADDED" '
+      BEGIN { while ((getline id < list) > 0) c[id] = 1 }
+      !($4 in c)')"
+    p="$(printf '%s' "$waits" | grep -c . || true)"
+    n=$((n - p))
+  fi
+  if [ "$p" -gt 0 ]; then
+    case "$KIND" in
+      trunk) pend "$p record(s) $s, added in a landing on $TRUNK less than ${WINDOW}s ago — the landing applies (.github/workflows/github.yml; the fallback is scripts/github-sync --apply from $TRUNK); refused once the window declared in $MODEL has passed" ;;
+      *)     pend "$p record(s) $s, added by this head since its merge base (${REF:0:12}) — projected after merge: GitHub shows the trunk's plan, and the landing creates them once this has merged" ;;
+    esac
+    sample "$waits"
+  fi
   if [ "$n" -gt "$b" ]; then
     fail "$n record(s) $s, over the baseline of $b — a record was added to the model and never projected (run: scripts/github-sync --apply, then scripts/ci/github-check --write-baseline)"
+    sample "$held"
   elif [ "$n" -lt "$b" ]; then
     ok "$n record(s) $s, under the baseline of $b — lower it with --write-baseline"
   else

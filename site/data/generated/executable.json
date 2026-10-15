@@ -2432,6 +2432,57 @@
       "tool": "majordomus_obligations"
     },
     {
+      "api_anchor": "/docs/api/observatory/#op-observatory-capture",
+      "claims": [],
+      "cli": null,
+      "id": "observatory.capture",
+      "kind": "query",
+      "module": "observatory",
+      "module_route": "/registry/modules/observatory/",
+      "resource": null,
+      "route": "/registry/capabilities/observatory-capture/",
+      "slug": "observatory-capture",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/observatory.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/observatory.rs",
+      "tests": [],
+      "title": "Observatory capture",
+      "tool": "majordomus_observatory_capture"
+    },
+    {
+      "api_anchor": "/docs/api/observatory/#op-observatory-events",
+      "claims": [],
+      "cli": null,
+      "id": "observatory.events",
+      "kind": "query",
+      "module": "observatory",
+      "module_route": "/registry/modules/observatory/",
+      "resource": null,
+      "route": "/registry/capabilities/observatory-events/",
+      "slug": "observatory-events",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/observatory.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/observatory.rs",
+      "tests": [],
+      "title": "Observatory events",
+      "tool": "majordomus_observatory_events"
+    },
+    {
+      "api_anchor": "/docs/api/observatory/#op-observatory-replay",
+      "claims": [],
+      "cli": null,
+      "id": "observatory.replay",
+      "kind": "query",
+      "module": "observatory",
+      "module_route": "/registry/modules/observatory/",
+      "resource": null,
+      "route": "/registry/capabilities/observatory-replay/",
+      "slug": "observatory-replay",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/observatory.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/observatory.rs",
+      "tests": [],
+      "title": "Observatory replay",
+      "tool": "majordomus_observatory_replay"
+    },
+    {
       "api_anchor": "/docs/api/pack/#op-pack-plan",
       "claims": [],
       "cli": "majordomus pack plan",
@@ -3093,6 +3144,23 @@
       "tests": [],
       "title": "What proves this rule",
       "tool": "majordomus_rule"
+    },
+    {
+      "api_anchor": null,
+      "claims": [],
+      "cli": "majordomus served forge",
+      "id": "served.forge",
+      "kind": "command",
+      "module": "served",
+      "module_route": "/registry/modules/served/",
+      "resource": null,
+      "route": "/registry/capabilities/served-forge/",
+      "slug": "served-forge",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/served.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/served.rs",
+      "tests": [],
+      "title": "Ask the forge what it recorded as deployed and released",
+      "tool": null
     },
     {
       "api_anchor": null,
@@ -3808,6 +3876,13 @@
         "test": "apps/majordomus-cli/tests/ui_surface.rs"
       },
       {
+        "id": "observatory-draws-nothing-it-did-not-read",
+        "implementation": "apps/majordomus-cli/src/ui/observatory.rs",
+        "route": "/guarantees/observatory-draws-nothing-it-did-not-read/",
+        "status": "guaranteed",
+        "test": "test/cases/3011_the_observatory_draws_nothing_it_did_not_read.sh"
+      },
+      {
         "id": "evidence-proof-is-an-execution",
         "implementation": "apps/majordomus-cli/src/evidence/mod.rs",
         "route": "/guarantees/evidence-proof-is-an-execution/",
@@ -4115,11 +4190,11 @@
     ]
   },
   "counts": {
-    "capabilities": 195,
-    "claims": 92,
-    "modules": 56
+    "capabilities": 199,
+    "claims": 93,
+    "modules": 57
   },
-  "generator": "majordomus-cli 0.22.0",
+  "generator": "majordomus-cli 0.26.0",
   "modules": [
     {
       "capabilities": [
@@ -5217,6 +5292,32 @@
     {
       "capabilities": [
         {
+          "id": "observatory.capture",
+          "route": "/registry/capabilities/observatory-capture/",
+          "slug": "observatory-capture"
+        },
+        {
+          "id": "observatory.events",
+          "route": "/registry/capabilities/observatory-events/",
+          "slug": "observatory-events"
+        },
+        {
+          "id": "observatory.replay",
+          "route": "/registry/capabilities/observatory-replay/",
+          "slug": "observatory-replay"
+        }
+      ],
+      "claims": [],
+      "id": "observatory",
+      "route": "/registry/modules/observatory/",
+      "slug": "observatory",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/observatory.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/observatory.rs",
+      "title": "Observatory"
+    },
+    {
+      "capabilities": [
+        {
           "id": "pack.plan",
           "route": "/registry/capabilities/pack-plan/",
           "slug": "pack-plan"
@@ -5532,6 +5633,11 @@
     },
     {
       "capabilities": [
+        {
+          "id": "served.forge",
+          "route": "/registry/capabilities/served-forge/",
+          "slug": "served-forge"
+        },
         {
           "id": "served.observe",
           "route": "/registry/capabilities/served-observe/",

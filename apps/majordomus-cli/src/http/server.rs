@@ -4,7 +4,8 @@
 //! threads, and each request is answered on a thread of its own up to a bound, so a slow
 //! request queues nothing behind it — not even the probe a client sends before it would
 //! take the lease over — and the owner's stdio session never waits on HTTP. Stopping is cooperative: every
-//! worker is unblocked and joined, and an in-flight response is finished first. A connection
+//! worker is unblocked and joined, and an in-flight response is finished first. A stopped
+//! server refuses the next connection: `stop` returns after the listening socket is closed. A connection
 //! that reads no request within the declared deadline is closed ([`super::deadline`]), and a
 //! request that finds every handler busy is refused rather than answered on a worker.
 
@@ -205,7 +206,9 @@ impl Running {
         format!("http://{}", self.address)
     }
 
-    /// Unblock every worker and wait for it; an in-flight response is finished first.
+    /// Unblock every worker and wait for it; an in-flight response is finished first. When
+    /// this returns the address refuses a connection: the next caller learns that nothing was
+    /// sent, not that an answer was lost.
     pub fn stop(self) {
         self.stopping.store(true, Ordering::SeqCst);
         // one more than there are workers is harmless; the sweeper reads `stopping` itself
@@ -221,8 +224,36 @@ impl Running {
         while HANDLERS.load(Ordering::SeqCst) > 0 && std::time::Instant::now() < deadline {
             std::thread::sleep(std::time::Duration::from_millis(20));
         }
+        drop(self.server);
+        closed(&self.address);
         tracing::info!(address = %self.address, "http stopped");
     }
+}
+
+/// How long [`Running::stop`] waits for the listening socket to close.
+const CLOSE_GRACE: std::time::Duration = std::time::Duration::from_secs(2);
+
+/// Wait until `address` refuses a connection, within [`CLOSE_GRACE`].
+///
+/// Dropping the server only asks its accept thread to end: the listening socket is closed by
+/// that thread, some time after the drop returns. Until then the kernel still completes a
+/// connection nobody will read, and the caller is reset after it has sent its request, so it
+/// cannot tell whether the request ran. A stopped server is one that refuses, and `stop`
+/// returns only when this one does. Another process bound to the same port keeps answering;
+/// the bound is what ends the wait then.
+fn closed(address: &str) {
+    let Ok(address) = address.parse::<std::net::SocketAddr>() else {
+        return;
+    };
+    let deadline = std::time::Instant::now() + CLOSE_GRACE;
+    let attempt = std::time::Duration::from_millis(100);
+    while std::time::Instant::now() < deadline {
+        if std::net::TcpStream::connect_timeout(&address, attempt).is_err() {
+            return;
+        }
+        std::thread::sleep(std::time::Duration::from_millis(5));
+    }
+    tracing::warn!(%address, "the listening socket still accepts after the server stopped");
 }
 
 fn worker(server: &Server, router: &Router, watch: &Arc<Watch>, stopping: &AtomicBool) {
@@ -321,6 +352,9 @@ fn upgrade(
     };
     // a live channel is never closed by the read deadline: it waits by design
     watch.live(request.remote_addr());
+    // and it ends when its client hangs up, not at its next write: an open channel keeps the
+    // server in use, so a closed one must stop counting within the idle timer's tick (I2131)
+    let hung_up = watch.hung_up(request.remote_addr());
     let key = accepted.accept.clone();
     let response = HttpResponse::empty(101).with_header(
         Header::from_bytes("Sec-WebSocket-Accept", key.as_bytes())
@@ -331,7 +365,7 @@ fn upgrade(
         .name("events".into())
         .spawn(move || {
             OPEN_CHANNELS.fetch_add(1, Ordering::Relaxed);
-            accepted.serve(Box::new(socket));
+            accepted.serve_until(Box::new(socket), hung_up);
             OPEN_CHANNELS.fetch_sub(1, Ordering::Relaxed);
             note_request();
         });

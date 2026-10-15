@@ -28,7 +28,7 @@
 command -v jq >/dev/null 2>&1 || skip "jq is not installed"
 command -v curl >/dev/null 2>&1 || skip "curl is not installed"
 
-S="$(mktemp -d "${TMPDIR:-/tmp}/mj1096.XXXXXX")"; trap 'stop_http; rm -rf "$S"' EXIT
+S="$(mktemp -d "${TMPDIR:-/tmp}/mj2983.XXXXXX")"; trap 'stop_http; rm -rf "$S"' EXIT
 gitq() { git -c user.email=t@example.com -c user.name=t -c core.hooksPath=/dev/null "$@"; }
 TAB="$(printf '\t')"
 pages() { env -u MAJORDOMUS_ROOT -u MAJORDOMUS_SHARE "$ROOT/scripts/pages" "$@"; }
@@ -96,6 +96,17 @@ expect_grep "FAIL the published UI was read at ${A:0:10}, not at $B: .*  \[repro
 expect_exit 10 probe --commit "$B"
 expect_grep "surface\.json .*built_from=${A:0:10}, want $B\" fail\$"
 echo "    a stale built_from: refused by name, with the command that shows it"
+
+# (a2) the first screen leads with a figure nothing decided
+site "$A" "$A"
+printf '<span class="mj-ui-kpi"><span class="mj-ui-kpi-label">Repository health</span><span class="mj-ui-kpi-value"><span class="mj-badge mj-badge--unknown">unknown</span></span></span>\n' >> "$W$mount/index.html"
+expect_exit 10 probe --commit "$A"
+expect_grep "FAIL the first screen of $HTTP_BASE$mount/ leads with figure\(s\) nothing decided \(Repository health\)"
+expect_grep "first-screen figure\(s\) undecided: Repository health\" fail\$"
+site "$A" "$A"
+expect_exit 0 probe --commit "$A"
+expect_grep 'first-screen figures decided" ok$'
+echo "    an undecided figure on the first screen: refused by name"
 
 # (b) the deploy that lost the mount: the site answers and holds no declaration there
 site "$A" "$A"; rm "$W$mount/surface.json"
@@ -210,6 +221,32 @@ expect_grep "surface\.json is absent or unreadable \(status 404\): the publicati
 live "$PUB"
 expect_exit 0 gate --offline
 expect_grep '^ok    the live UI was not asked \(--offline\)'
+
+# A tree that adds a snapshot declares what the *next* publication owes. The published commit's
+# own model is what the publication is held to: asked for a snapshot that commit never declared,
+# the gate refused every checkout from the commit that added the Cockpit's until its first
+# deployment. So: a commit whose model has no Cockpit row is the published one, the trunk's
+# newest commit adds the row, and the live site holds no Cockpit snapshot at all.
+if grep -qE '^ *- surface: cockpit$' "$R/.ai/repo/ci/pages.yaml"; then
+  cp "$R/.ai/repo/ci/pages.yaml" "$S/model-with.yaml"
+  awk '/^ *- surface: cockpit$/ { skip = 1 } !skip { print } skip && /marker:/ { skip = 0 }' \
+    "$S/model-with.yaml" > "$R/.ai/repo/ci/pages.yaml"
+  gitq -C "$R" commit -qam 'published before the Cockpit snapshot was declared'
+  PUB="$(git -C "$R" rev-parse HEAD)"
+  cp "$S/model-with.yaml" "$R/.ai/repo/ci/pages.yaml"
+  gitq -C "$R" commit -qam 'the Cockpit snapshot is declared'
+  was="$gp"
+  gp="$(printf 'deploy: site from %s (registry deadbeefcafe), 800 routes\n' "$PUB" | gitq -C "$R" commit-tree "$empty")"
+  git -C "$R" update-ref refs/heads/gh-pages "$gp"
+  git -C "$R" fetch -q origin '+refs/heads/*:refs/remotes/origin/*'
+  sed -i.bak "s/$was/$gp/" "$S/bin/gh" && rm -f "$S/bin/gh.bak"
+  live "$PUB"
+  rm -rf "$W/cockpit"
+  expect_exit 0 gate
+  expect_grep "^ok    the published commit ${PUB:0:12} declares no cockpit snapshot; the one this tree declares is owed by the next publication$"
+  expect_no_grep 'the live cockpit snapshot'
+  echo "    pages-check: a snapshot the published commit never declared is owed by the next publication, not refused"
+fi
 stop_http
 echo "    pages-check: ok for the UI read at the published commit, exit 10 for an older one and for none"
 
@@ -279,7 +316,7 @@ awk '/^  - id: pages-live$/{f=1} f && /^    summary:/{print; exit}' "$ROOT/.ai/r
   || { echo "    the pages-live gate's summary does not state the UI"; exit 1; }
 RULE="$ROOT/.ai/repo/rules/project/the-published-ui-is-the-trunks.v1.md"
 grep -q '^class: blocking$' "$RULE" || { echo "    the rule is missing or not blocking"; exit 1; }
-grep -q 'test/cases/1096_the_published_ui_is_the_trunks.sh' "$RULE" && grep -q 'scripts/ci/pages-check' "$RULE" \
+grep -q 'test/cases/2983_the_published_ui_is_the_trunks.sh' "$RULE" && grep -q 'scripts/ci/pages-check' "$RULE" \
   || { echo "    the rule's tests do not name this case and the gate"; exit 1; }
 echo "    the workflow, the gate, the deploy, the gate's summary and the rule carry it"
 

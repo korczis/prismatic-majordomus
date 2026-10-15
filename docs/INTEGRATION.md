@@ -440,15 +440,21 @@ new observation.
 A merge that changes a projected plan record leaves GitHub behind by exactly that change.
 The records are the files under `.ai/repo/project/issues/` and `.ai/repo/project/milestones/`
 and every record whose derived status moves with one of them. `scripts/github-sync --apply`
-projects master and nothing else, and `prs drain` never runs it. So after landing such a pull
-request, whoever operates the executor runs `scripts/github-sync --apply` from master as the
-next step. `scripts/ci/github-check` gives that step a declared window, `apply.window` in
-`.ai/repo/ci/github.yaml`. On the pull request's own head the records it changed are reported
-`PENDING` and not refused. On master they stay `PENDING` while the landing is younger than the
-window. Past it the gate refuses master and names the command. A job on every push to master
-that applies with a token allowed to write issues would remove the manual step. That is the
-owner's open choice and nothing runs one: the workflow token reads issues, and applying stays
-a deliberate act (`project.github-projection-gated`).
+projects master and nothing else, and `prs drain` never runs it. The landing does: every push
+to master starts `.github/workflows/github.yml`, which asks what GitHub does not show yet
+(`scripts/github-sync --check`), applies it, and proves the result with
+`scripts/ci/github-check`. The workflow holds `issues: write` and nothing broader, runs one
+at a time, is never cancelled, and refuses to apply without the Rust executable. Its model is
+`.ai/repo/ci/github.yaml` and the rule is `project.the-projection-is-applied-at-landing`.
+Whoever operates the executor has no step to remember here.
+
+`scripts/ci/github-check` gives the apply a declared window, `apply.window` in the same
+file. On the pull request's own head the records it changed are reported `PENDING` and not
+refused. On master they stay `PENDING` while the landing is younger than the window. Past it
+the gate refuses master and names the command. That is the fallback, for a run that failed: a
+person runs `scripts/github-sync --apply` from the clean tip of master, with `MAJORDOMUS_BIN`
+naming the executable. Until 2026-10-12 that manual apply was the mechanism, and master went
+red on the day the executor was busy for longer than the window.
 
 When nothing is ready, `prs drain --refresh` brings master into the first `needs_refresh`
 pull request. It uses a scratch worktree under the common git directory, runs `git merge
@@ -528,6 +534,69 @@ A record a person opened, one that has any check of its own, one still inside th
 one the forge cannot show and every branch that is no record are left alone. If the forge
 refuses the reopen after the closure, the pull request is closed: the drain says so, names
 `gh pr reopen <n>`, records `reopen_failed` and exits 10.
+
+## An expedited landing
+
+Everything above is the executor, and the executor never passes `--admin`. One thing is
+outside it: the owner of the branch protection may decide to spend it. Rule
+`project.an-expedited-landing-is-the-owners-word` and ADR 0155 say when a named lander may
+merge past the required check, and what that never reaches.
+
+The required check takes about an hour and the pool judges one pull request at a time. On
+2026-10-12 a release record that changed one file waited two and a half hours behind runs
+nobody was going to read, while the site named a release two versions old. The owner's order
+that followed is quoted in the ADR. What makes a landing under it safe was measured over the
+next day:
+
+| the lander | because |
+|---|---|
+| holds the exclusive landing claim on the mesh, alone | a merge between another lander's gates and its merge makes those gates a verdict on a tree that no longer exists |
+| merges master into the branch, commits the merge, then derives | a head judged alone is not the tree that lands, and a derive taken on an uncommitted merge is stale |
+| runs the whole structure job, the library tests and the cases the change touches on that merged tree, and names the commit each ran on | a gate nobody ran reads as a gate that passed; a landing with the structure job unfinished put two reds on master |
+| before judging, searches the tests for what reads the change: a sibling's identifier across `apps/majordomus-cli/tests` and `test/cases` when the change adds a named record (a skill, a screen, a rule, a capability), the script's name when it changes how a script calls a tool; and runs every test found | a test that lists records by name, or that replaces a tool with a stand-in and reads what it was asked, lives in the rust lanes and the suite shards, which the structure job does not run; two landings of 2026-10-13 passed that job and left the trunk red there, for 95 minutes and for the length of the next run |
+| after a red is found, searches for the same shape before pushing its fix | the first fix of 2026-10-13 named the skill in the crate test; the case that makes the same demand would have been the next red, one run later |
+| merges with `gh pr merge --admin --merge --match-head-commit <head>` | a head that moved after it was judged is refused |
+| cancels its own branch's run after the merge | a run nobody will read still holds a runner, and the trunk's run waits behind it |
+| verifies the commit production serves, with `scripts/pages verify` | every landing is a deployment, and a merge that broke the publication says nothing |
+
+A run is stale, and is cancelled, when its pull request is merged or closed, when its head is
+no longer the head of its branch, or when another run of the same workflow already judges
+the same commit. The trunk's only run of a commit, a deployment in flight, a release run and
+another session's run on a current head are never cancelled. A landing on the trunk cancels
+nothing by itself: the trunk's validation runs are each their own concurrency group, and the
+publication queue never cancels the deploy in flight.
+
+A run that can no longer end green is cancelled as well: once one job of a branch's run has
+failed, the jobs still running decide nothing about that head, and they hold the runners the
+trunk's run waits for. The lander reads the failed job first, through the jobs API, which
+answers while the run is still going. The trunk's own run is left to finish: its other jobs
+are the only reading of the trunk's other lanes. While the trunk's run is queued, a branch
+run on a head that contains the trunk is that reading, lane by lane, and is read before it
+is cancelled. On a pull request the workflow does this by itself: the last step of every gate
+job, on `failure()` of a `pull_request` event alone, cancels the run by its own id
+(`.github/workflows/validate.yml`, case 3019). A push to master, the schedule and a dispatch
+are never cancelled that way.
+
+What the merged tree owes follows what the change touches, and rule clause 4 lists it: a
+record a crate test reads (a skill, a rule, a claim, the quality baseline, a plan record) owes
+the crate tests that open this repository itself (`tests/skills.rs`, `tests/quality.rs` and
+their siblings) and the `intent-check` gate, although no Rust moved. An active skill missing
+from the header of `tests/skills.rs` or from case 391 is refused in the structure job by the
+`skill-naming` gate.
+
+A red on the trunk has one carrier, named by the integrator. A second session that builds the
+same fix costs a disk and lands nothing sooner.
+
+Between a tag and its record nothing else lands. The record pull request the release
+workflow opens is the record and the files derived from it, generated against the master of
+that minute; a landing in that window moves those files under it, and the site keeps naming
+the previous release until the record has been merged with master and derived again. The
+record is merged first, pinned, as soon as its own gates are read.
+
+A release is never expedited. A tag is pushed only on a commit whose `ci` check concluded
+success; `scripts/ci/release-verdict` refuses anything else, the release workflow asks it
+before it builds, and no gate is disabled, skipped or edited to get there. A merge is
+corrected by the next merge. A tag publishes executables that people install.
 
 ## Repair
 

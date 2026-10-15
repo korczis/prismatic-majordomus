@@ -408,7 +408,14 @@ EOF
 # Does the cover hold? One finding a fact, through the callbacks the caller names (doctor's
 # and init's differ only in how a finding is printed). Returns 1 when something shared shows it.
 mj_personal_verify() {
-  local ok_fn="$1" fail_fn="$2" rel bad=0 p seen
+  # The reporter is named by a word, not by its two functions: `doctrine` reports through the
+  # doctrine's ok and fail (so a class decides what a violation costs), anything else through
+  # the plain ones. A caller passing the functions themselves put the name of a reporting
+  # helper on a line that reports nothing, which scripts/ci/finding-reproduce-check reads as
+  # a finding with no command to reproduce it.
+  local reporter="" ok_fn fail_fn rel bad=0 p seen
+  [ "${1:-}" = doctrine ] && reporter=doctrine_
+  ok_fn="mj_${reporter}ok"; fail_fn="mj_${reporter}fail"
   rel="$(mj_rel "$MJ_AI_DIR")"
   if [ -n "$(mj_git ls-files -- "$rel" 2>/dev/null | head -n 1)" ]; then
     "$fail_fn" personal "$rel/" "carries tracked files; a personal layer is tracked nowhere (share it with: majordomus init --extend --shared)" "git ls-files $rel"; bad=1
@@ -648,13 +655,33 @@ mj_has()   { command -v "$1" >/dev/null 2>&1; }
 
 # policy + profiles, in that order, for the policy hash. An empty profiles/ is a policy
 # error that doctor reports, not a cat(1) failure that aborts whoever asked for the hash.
+#
+# Each file is hashed in its normal form (mj_yaml_normal), not as bytes: a comment or a
+# blank line changes no setting, so it must not move the stamp and regenerate every
+# bootstrap (I1991). The executable computes the same form (policy::normal_form), and the
+# two are held equal by apps/majordomus-cli/tests/providers_projection.rs.
 mj_policy_cat() {
   local pf
-  cat "$MJ_POLICY_FILE"
+  mj_yaml_normal < "$MJ_POLICY_FILE"
   for pf in "$MJ_PROFILES_DIR"/*.yaml; do
-    if [ -f "$pf" ]; then cat "$pf"; fi
+    if [ -f "$pf" ]; then mj_yaml_normal < "$pf"; fi
   done
   return 0
+}
+# The normal form of a file in the layer's YAML subset, stdin to stdout: trailing spaces,
+# tabs and carriage returns dropped; blank lines and whole-line comments dropped; a
+# trailing comment (a `#` after a space or tab) dropped from a line that holds no quote,
+# since in a quoted scalar ` #` may be text. Indentation, order and every value are kept,
+# so two files with one normal form are one setting. The subset refuses block scalars, so
+# no `#` line is ever content. Every line ends in a newline.
+mj_yaml_normal() {
+  awk -v sq="'" -v dq='"' '
+    { sub(/[ \t\r]+$/, "") }
+    /^[ \t]*$/ || /^[ \t]*#/ { next }
+    index($0, sq) == 0 && index($0, dq) == 0 && match($0, /[ \t]#/) {
+      $0 = substr($0, 1, RSTART - 1); sub(/[ \t]+$/, "")
+    }
+    { print }'
 }
 
 # normalise a repo-relative path: strip ./ and trailing /, collapse //, refuse escapes
@@ -1237,14 +1264,21 @@ mj_tmp_root_init() {
   # behind whole, as does a KILL. Trapping PIPE would remove it, and would also put a
   # "write error: Broken pipe" line on stderr that was never there. So the root carries its
   # process id, and here every root of this user's whose process no longer exists goes. A
-  # process id that has been reused keeps a dead root until that process ends too; nothing
-  # living is removed, since `kill -0` answers for a process this user can signal.
-  local stale pid
+  # process id that has been reused keeps a dead root until that process ends too.
+  #
+  # Gone means the system said "no such process" and nothing else. `kill -0` also fails when
+  # this process may not signal that one, and a session inside a sandbox may signal nobody:
+  # read as "gone", that refusal removed the roots of every living command of this user's,
+  # and on 2026-10-12 three derives died mid-run with their temporary files deleted under
+  # them. Any other answer — permission, or a wording this cannot read — keeps the root:
+  # a root kept too long costs disk, and a root removed too soon costs somebody's work.
+  local stale pid why
   for stale in "${base%/}"/mj.[0-9]*.??????; do
     [ -d "$stale" ] && [ -O "$stale" ] || continue
     pid="${stale##*/mj.}"; pid="${pid%.*}"
     case "$pid" in ''|*[!0-9]*) continue ;; esac
-    kill -0 "$pid" 2>/dev/null || rm -rf "$stale" 2>/dev/null || true
+    why="$(LC_ALL=C; export LC_ALL; kill -0 "$pid" 2>&1)" && continue
+    case "$why" in *[Nn]'o such process'*) rm -rf "$stale" 2>/dev/null || true ;; esac
   done
 }
 mktemp() {

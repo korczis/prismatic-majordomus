@@ -756,8 +756,12 @@ fn indexed_plan(app: &App, targets: &[Target]) -> Result<Vec<Artifact>> {
     }
 
     if targets.contains(&Target::Editors) {
-        let editors =
-            crate::editors::plan(&app.context.index, app.repository.root(), crate::VERSION);
+        let editors = crate::editors::plan(
+            &app.context.index,
+            &app.context.registry,
+            app.repository.root(),
+            crate::VERSION,
+        );
         // a projection that would differ by whether this machine has `just` is not derived
         // from the tree; refuse instead of committing whichever half this runner could see
         if let Some(d) = editors

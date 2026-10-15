@@ -121,6 +121,13 @@ session:
   # leaving it in the working tree is the same as not writing it.
   commit_record_on_end: true
   push_record_on_end: true
+  # The cap on the closed records the sessions section holds, and whether the oldest beyond
+  # it may be moved aside. A record is history and is never deleted: `majordomus session
+  # archive` moves the oldest over the cap into the section's archive/ directory, only when
+  # it is run, and refuses to overwrite a record already there. Over the cap, `doctor` fails
+  # and `watch` drifts, the way they do for checkpoints and handovers.
+  retention_max_files: 500
+  archive: true
   briefing_budget_lines: 60              # cap on what the start event injects, per episode
   checkpoint_on_compact: true            # also the checkpoint the close records, for the
                                          # same reason: both are moments at which what the
@@ -271,6 +278,10 @@ use_cases:
 # repo-relative, or absolute in the hook line), be executable, and be invoked by the
 # artifact named in wired_by without its exit code being swallowed.
 enforcement:
+  - name: ssh-permissions-on-commit
+    path: scripts/ci/providers-check
+    args: [--permissions-only]
+    wired_by: git-hook:pre-commit
   - name: doctor-on-commit
     path: bin/majordomus
     args: [doctor]

@@ -1268,7 +1268,7 @@
       "implementation": "scripts/ci/github-check",
       "test": "test/cases/1038_a_head_is_judged_against_what_it_changes.sh",
       "status": "guaranteed",
-      "note": "GitHub shows the trunk's plan and nothing applies it automatically, so a record a pull request edits is behind there until the pull request has merged and somebody has applied. The gate reports behind, state, milestone and closed as PENDING for the records a head changed since its merge base, and on the trunk for the records that changed in a landing younger than apply.window in .ai/repo/ci/github.yaml. A record has changed when its file or its rendering differs. Drift on any other record is refused as before, and so is every record when the change cannot be measured.",
+      "note": "GitHub shows the trunk's plan and nothing else, so a record a pull request edits is behind there until the pull request has merged and the landing has applied it (.github/workflows/github.yml). The gate reports behind, state, milestone and closed as PENDING for the records a head changed since its merge base, and on the trunk for the records that changed in a landing younger than apply.window in .ai/repo/ci/github.yaml. A record has changed when its file or its rendering differs. Drift on any other record is refused as before, and so is every record when the change cannot be measured.",
       "responsibility": "plan",
       "source_route": "/docs/planning/",
       "command": null,
@@ -2393,6 +2393,19 @@
       "test_case": "apps/majordomus-cli/tests/ui_surface.rs"
     },
     {
+      "id": "observatory-draws-nothing-it-did-not-read",
+      "claim": "The Observatory at /ui/observatory and /ui/kiosk shows a scene only when the capabilities it requires answered with something to draw, or, for a scene of the mesh where no mesh runs, when the repository carries a recording of it, which it labels a replay; a scene without either carries no model and states the source's reason, on a server and in the published snapshot alike",
+      "source": "docs/MAJORDOMUS_UI.md",
+      "implementation": "apps/majordomus-cli/src/ui/observatory.rs",
+      "test": "test/cases/3011_the_observatory_draws_nothing_it_did_not_read.sh",
+      "status": "guaranteed",
+      "note": "The case starts a server over a freshly initialised repository and takes a UI snapshot of it, and on both reads the projection the page carries: eight scenes in the declared order, every source named with its state and a failed one with a reason, an available scene with a model and an unavailable one with none and a reason, the three mesh scenes unavailable where no mesh runs, the kiosk carrying the same scenes, the two redirects, and the snapshot holding the page and its script. It reads the projection, not the canvas: what the script paints from an available scene's model is not claimed here.",
+      "responsibility": "none",
+      "source_route": "/docs/majordomus-ui/",
+      "command": null,
+      "test_case": "3011_the_observatory_draws_nothing_it_did_not_read"
+    },
+    {
       "id": "deployment-contract-refuses-by-name",
       "claim": "A deployment object that breaks its closed contract, whether by a key the contract does not have, another schema version, a missing field, an interface, port, machine count or health route that could not work, a value that reads as a credential or an identity two files claim, is refused by doctor with the reason named",
       "source": ".ai/repo/rules/vendor/majordomus/rules/deployment-contract.v1.md",
@@ -2512,7 +2525,7 @@
     {
       "id": "published-translation-is-declared",
       "claim": "A page of the published site written in a reader's language is declared with that language and a reason, and is refused unless the page declares the same language itself",
-      "source": ".ai/repo/rules/project/english-only.v2.md",
+      "source": ".ai/repo/rules/project/english-only.v3.md",
       "implementation": "scripts/ci/english-only-check",
       "test": "test/cases/403_published_translation.sh",
       "status": "guaranteed",

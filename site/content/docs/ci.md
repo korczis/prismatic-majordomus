@@ -1,7 +1,7 @@
 +++
 title = "Continuous integration"
 description = "how a change is validated: the validation workflow over repository-owned gates, the planner and its model of what can affect what, the gates and how to run each locally, the caches and artifacts, the executable as a build output, the parallel suite and probe, the platform policy, and where the measurements live"
-weight = 74
+weight = 75
 [extra]
 source = "docs/CI.md"
 +++
@@ -63,6 +63,18 @@ decides whether a change may merge. `.github/workflows/pages.yml` decides what t
 shows: it triggers directly on a master push whose paths can change the site and publishes as
 soon as the bytes are proved, without waiting for gates that cannot change a published byte.
 Neither repeats the other's work.
+
+A third decides what GitHub's issues and milestones show. `.github/workflows/github.yml` runs
+on every push to master, with no path filter: it builds the executable, asks
+`scripts/github-sync --check` what GitHub does not show yet, runs `scripts/github-sync --apply`
+when something is owed and the checkout is still the tip of master, and then runs
+`scripts/ci/github-check`, the same `github-projection` gate validate runs. It holds
+`issues: write` and `contents: read`, one run at a time and never cancelled, and every step
+refuses to run without `MAJORDOMUS_BIN`. Its model is `.ai/repo/ci/github.yaml`, the rule is
+`project.the-projection-is-applied-at-landing`, and
+`test/cases/1097_the_projection_is_applied_at_landing.sh` holds the workflow to the model and
+runs its steps against a scripted adapter. The gate in validate stays what it was: it bounds
+how late the trunk may be when that workflow fails, and names the manual apply as the remedy.
 
 ## The model: what can affect what
 
@@ -318,6 +330,16 @@ the newest pending run of the group, so a burst of merges costs at most one extr
 intermediate commit, and an older tree can never land after a newer one. Cancelling the run in
 flight starved publication on 2026-09-12: each superseding run was itself superseded, and the
 site stood 34 commits behind master for three hours.
+
+A pull request's run ends at its first red. Once one job has failed the run cannot be green,
+and the jobs still going hold runners the trunk's run and the deployments wait for: on
+2026-10-13 a run with two failed jobs kept nine more running for twenty minutes. So the last
+step of every gate job of `validate.yml`, on `failure()` of a `pull_request` event alone,
+cancels the run by its own id with the job's token (`actions: write`); `ci` and `evidence`
+still run, because they run `always()`, and report the run red. A push to master, the schedule
+and a dispatch are never cancelled this way: the trunk's remaining jobs are the only reading of
+its other lanes. Read a failed job's log through the jobs API (`gh run view --job <id> --log`)
+rather than waiting for the run. Case 3019 holds every job to it (I2664).
 
 ### The three ways a deploy fails, and who reports each
 

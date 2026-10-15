@@ -1,7 +1,7 @@
 +++
 title = "Reasoning"
 description = "provider-independent reasoning: material uncertainty assessed with evidence, optional advisors discovered by capability and consulted through one transport contract, disagreement settled by experiment rather than count, conclusions and review recorded, and the state carried across sessions, with no advisor required"
-weight = 65
+weight = 66
 [extra]
 source = "docs/REASONING.md"
 +++
@@ -162,6 +162,7 @@ written, and the shapes removed are named in the record.
 </div>
 
 
+<!-- majordomus:unrun it reads assessment.json, a record the reader writes for their own task, and it writes checkout state; the example reasoning-record-refused runs the command and case 730 records through the same writer -->
 ```sh
 majordomus reasoning record --file assessment.json      # or JSON on standard input
 ```
@@ -228,7 +229,9 @@ is gone the advisor disappears and the same plan decides locally.
 
 `MAJORDOMUS_REASONING_MODE=offline` admits only advisors running on this machine; with none,
 the local review path runs. A CI runner is `ci` mode: no advisor at all, and no required gate
-may name a model credential — `reasoning check` refuses a workflow or gate that does. Every
+may name a model credential — `reasoning check` refuses a workflow or gate that does, in a
+repository that declares `project.advisors-are-optional`. An adopter's workflows and
+documents are its own product, so there the `ci` and `claims` checks do not run. Every
 reasoning test runs against fakes: scripted fixture adapters, a fake fetch, a fake process.
 
 ## Surfaces
@@ -242,7 +245,7 @@ reasoning test runs against fakes: scripted fixture adapters, a fake fetch, a fa
 | MCP | `majordomus_reasoning_advisors`, `majordomus_reasoning_plan`, `majordomus_reasoning_record`, `majordomus_reasoning`, `majordomus_reasoning_explain`, `majordomus_reasoning_check`; resources `majordomus://reasoning`, `majordomus://reasoning/advisors` |
 | Cockpit | `/cockpit/reasoning` |
 | Environment | `reasoning` in `majordomus env --format json`; the `advisors` line of the banner |
-| Doctor | advisor availability as information, `reasoning check` findings as failures |
+| Doctor | advisor availability as information, `reasoning check` findings as failures; in a repository that does not declare `project.advisors-are-optional` (an adopter), `ci` and `claims` are not run and doctor says so as information |
 | Session | the REASONING section of `majordomus context`, the Reasoning section of a derived handover |
 
 </div>

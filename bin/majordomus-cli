@@ -56,7 +56,10 @@ if [ "$stale" = 1 ] && [ -z "${MAJORDOMUS_BIN:-}" ]; then
   [ "$profile" = release ] && flags="--release"
   # a machine-wide rustflags profile can make a dev build refuse to link; the crate sets none
   # shellcheck disable=SC2086
-  if ! RUSTFLAGS='' cargo build --quiet --locked --manifest-path "$crate/Cargo.toml" $flags 1>&2; then
+  # bounded: a build that stands behind another worktree's lock says so and builds in its own
+  # directory at the bound (lib/rust_bin.sh, mj_cargo_bounded)
+  # shellcheck disable=SC2086
+  if ! RUSTFLAGS='' mj_cargo_bounded "$root" build --quiet --locked --manifest-path "$crate/Cargo.toml" $flags 1>&2; then
     printf 'majordomus-cli: the build failed; see above\n' >&2
     exit 12
   fi

@@ -1,28 +1,28 @@
 {
   "schema": "majordomus/benchmark-matrix/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.22.0",
+  "generator": "majordomus-cli 0.26.0",
   "coverage": [
     {
       "scope": "direct",
-      "required": 195,
-      "covered": 166,
+      "required": 199,
+      "covered": 169,
       "missing": 0,
-      "waived": 29,
+      "waived": 30,
       "inapplicable": 0
     },
     {
       "scope": "http",
-      "required": 191,
-      "covered": 166,
+      "required": 194,
+      "covered": 169,
       "missing": 0,
       "waived": 25,
       "inapplicable": 0
     },
     {
       "scope": "mcp",
-      "required": 187,
-      "covered": 162,
+      "required": 190,
+      "covered": 165,
       "missing": 0,
       "waived": 25,
       "inapplicable": 0
@@ -37,10 +37,10 @@
     },
     {
       "scope": "total",
-      "required": 587,
-      "covered": 508,
+      "required": 597,
+      "covered": 517,
       "missing": 0,
-      "waived": 79,
+      "waived": 80,
       "inapplicable": 0
     }
   ],
@@ -1633,6 +1633,43 @@
       ]
     },
     {
+      "id": "observatory.capture",
+      "module": "observatory",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "observatory.events",
+      "module": "observatory",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "newest",
+        "after a cursor"
+      ]
+    },
+    {
+      "id": "observatory.replay",
+      "module": "observatory",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
       "id": "pack.plan",
       "module": "pack",
       "kind": "query",
@@ -2116,6 +2153,16 @@
       ]
     },
     {
+      "id": "served.forge",
+      "module": "served",
+      "kind": "command",
+      "cache": "—",
+      "direct": "waived",
+      "mcp": "none",
+      "http": "none",
+      "cases": []
+    },
+    {
       "id": "served.observe",
       "module": "served",
       "kind": "command",
@@ -2536,6 +2583,12 @@
       "deferred": false
     },
     {
+      "key": "system.http.ui.knowledge",
+      "route": "/ui/knowledge",
+      "view": "pinned",
+      "deferred": false
+    },
+    {
       "key": "system.http.ui.docs",
       "route": "/ui/docs",
       "view": "pinned",
@@ -2544,6 +2597,12 @@
     {
       "key": "system.http.ui.governance",
       "route": "/ui/governance",
+      "view": "pinned",
+      "deferred": false
+    },
+    {
+      "key": "system.http.ui.observatory",
+      "route": "/ui/observatory",
       "view": "pinned",
       "deferred": false
     },
@@ -2614,6 +2673,12 @@
       "deferred": false
     },
     {
+      "key": "system.http.live.ui.knowledge",
+      "route": "/ui/knowledge",
+      "view": "live",
+      "deferred": false
+    },
+    {
       "key": "system.http.live.ui.docs",
       "route": "/ui/docs",
       "view": "live",
@@ -2622,6 +2687,12 @@
     {
       "key": "system.http.live.ui.governance",
       "route": "/ui/governance",
+      "view": "live",
+      "deferred": false
+    },
+    {
+      "key": "system.http.live.ui.observatory",
+      "route": "/ui/observatory",
       "view": "live",
       "deferred": false
     },

@@ -1,11 +1,29 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the `served` module of the canonical Majordomus capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.22.0 -->
+     Generator: majordomus-cli 0.26.0 -->
 # Module `served` — Served deployments
 
 Whether a deployment serves the commit it was meant to: the build identity a site serves, read from outside the way a visitor reads it, judged by commit containment and recorded so that a later reader can re-judge it. Only `served` passes; a site that could not be reached, an identity that could not be read, a build from an uncommitted tree and a served commit this clone does not hold are each an unanswered question, never a yes. Observing reaches the network and is a command of the trusted command line; reading the recorded standing is a read on every surface.
 
-Stability: behaviorally_verified. Capabilities: 2.
+Stability: behaviorally_verified. Capabilities: 3.
+
+## `served.forge` — Ask the forge what it recorded as deployed and released
+
+Asks the forge, through its own command-line tool and with the caller's credential, for the newest deployments to every environment and the newest releases, in one query, and records the answer in the checkout-local state `deploy.observed` reads. Exit 0 when the forge answered and the answer was recorded, 12 when it could not be asked (no tool, no credential, no network, a repository the forge does not know): what was recorded before then stands, with its age.
+
+| | |
+|---|---|
+| kind | command |
+| stability | behaviorally_verified |
+| CLI | `majordomus served forge` |
+| cache | — |
+| benchmark | waived (external_dependency) |
+| provenance | builtin majordomus_cli::capability::builtin::served |
+| tags | deployment, evidence, forge |
+
+Input: none.
+
+Output: `ForgeObserved`.
 
 ## `served.observe` — Observe what a deployment serves
 
