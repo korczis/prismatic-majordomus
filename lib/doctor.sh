@@ -578,6 +578,14 @@ mj_report_uncommitted() {
     mj_info clone "uncommitted" "not read in the commit hook (MAJORDOMUS_DOCTOR_CONTEXT=commit): it takes one git status per linked worktree; run it on its own" "majordomus worktree uncommitted"
     return 0
   fi
+  # A repository with no linked worktree has nowhere for such work to sit, and says so the
+  # same way whether or not the executable is at hand: the use-case catalogue records this
+  # line, and a line that depended on the environment made derived data differ between a
+  # workstation and CI (validate 38673947429, catalogue.json).
+  if [ "$(git -C "$MJ_ROOT" worktree list --porcelain 2>/dev/null | grep -c '^worktree ')" -le 1 ]; then
+    mj_ok clone "uncommitted" "no linked worktree, so no uncommitted work can sit in one"
+    return 0
+  fi
   # shellcheck source=rust_bin.sh
   . "$MJ_LIB_DIR/rust_bin.sh"
   local bin share out path paths age remedy
