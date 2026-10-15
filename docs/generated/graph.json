@@ -12111,7 +12111,6 @@
             "12"
           ],
           "json": true,
-          "note": "The primary guarantee is wiring reconciliation — a declared enforcement that no hook invokes, or whose exit code a hook swallows, is a failure rather than a passing line.",
           "reads": [
             ".ai/repo/policy.yaml",
             ".ai/repo/profiles/",
@@ -12123,7 +12122,7 @@
           "requires_repository": true,
           "requires_task": "optional",
           "stage": "inspect",
-          "summary": "Is Majordomus itself healthy, and is every enforcement it declares actually wired here?",
+          "summary": "It checks governance only: is Majordomus itself healthy, and is every enforcement it declares actually wired here?",
           "syntax": "majordomus doctor [--json]",
           "visibility": "public",
           "writes": []
@@ -36127,6 +36126,8 @@
           "acceptance_criteria": [
             "majordomus doctor in a checkout whose server is stale reports it, or its help states that it checks governance only"
           ],
+          "completed_at": "2026-10-15T01:27:40Z",
+          "completed_event": "sha256:51d46247c5847a0b2dcb28a0d0727aaf4ccb05427ad181504a7847f2586ded0a",
           "created_at": "2026-10-14",
           "depends_on": [
             "I2157"
@@ -36144,15 +36145,20 @@
           "profile": "implementation",
           "scope": [
             "lib/doctor.sh",
+            "bin/majordomus",
             "share/commands.yaml",
             "docs/CLI.md",
             "test/cases"
           ],
           "slug": "doctor-says-what-it-checks",
-          "updated_at": "2026-10-14",
+          "started_at": "2026-10-15T01:27:13Z",
+          "started_event": "sha256:aaf5ff2302a766428dd3fe1b09bd2c013dd076c92095765f43f5713865b7ba71",
+          "updated_at": "2026-10-15T01:27:40Z",
           "validation": [
             "bin/majordomus plan validate"
-          ]
+          ],
+          "verified_at": "2026-10-15T01:27:25Z",
+          "verified_event": "sha256:186d033a36ca7782562f2ecfaaf1e0f2d93e71b5cacb3e2f9087788eb4962107"
         }
       },
       {
@@ -53070,6 +53076,13 @@
         "label": "test/cases/304_a_provider_is_declared_once.sh",
         "route": "/cockpit/objects/test/test-cases-304-a-provider-is-declared-once-sh",
         "source": "test/cases/304_a_provider_is_declared_once.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3050_doctor_says_it_checks_governance_only.sh",
+        "kind": "test",
+        "label": "test/cases/3050_doctor_says_it_checks_governance_only.sh",
+        "route": "/cockpit/objects/test/test-cases-3050-doctor-says-it-checks-governance-only-sh",
+        "source": "test/cases/3050_doctor_says_it_checks_governance_only.sh"
       },
       {
         "id": "majordomus://test/test/cases/305_a_command_is_claimed_or_classified.sh",
@@ -82899,6 +82912,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3050_doctor_says_it_checks_governance_only.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/305_a_command_is_claimed_or_classified.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -88190,8 +88208,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2796,
-      "edges": 6129,
+      "nodes": 2797,
+      "edges": 6130,
       "acyclic": false,
       "truncated": false
     }

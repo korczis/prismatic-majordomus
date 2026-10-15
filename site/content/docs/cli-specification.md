@@ -238,6 +238,25 @@ check: 1 action(s) would be taken and nothing was written (run: majordomus recov
 Is the supervisory layer real here? Read-only. Blocking by design: intended to run
 from a pre-commit hook and from CI.
 
+**It checks governance only** — the policy, the profiles, the wiring of every declared
+enforcement, the projections, the records and their retention. It reads nothing of the
+checkout's server, its lease or the mesh, so a clean report says nothing about whether the
+server answering for this checkout is current (I2707). The runtime is read by:
+
+<div class="overflow-x-auto" tabindex="0">
+
+| Question | Where it is read |
+| --- | --- |
+| Is the server answering for this checkout current, or stale? | `majordomus serve status` |
+| Is the mesh healthy here: identity, trust, link, runtime, journal? | `majordomus mesh doctor` |
+| What does the server report about itself, the mesh included? | `GET /api/v1/health` (`health.report`) |
+| Can this process answer: lease held, executable current? | `GET /api/v1/ready` (`health.ready`) |
+
+</div>
+
+
+`majordomus doctor --help` prints the same before its usage.
+
 **Checks, in order:**
 
 1. `policy.yaml` parses; `version` supported; no unknown keys at any level.

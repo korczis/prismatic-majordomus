@@ -51,6 +51,8 @@
 
 MJ_DOCTOR_MISSING=0
 mj_cmd_doctor() {
+  # what doctor reaches comes before its usage, and apart from the option loop (I2707)
+  case " $* " in *" --help "*|*" -h "*) mj_doctor_reach ;; esac
   local a
   for a in "$@"; do case "$a" in
     --help|-h) echo "usage: majordomus doctor [--json]   (read-only; exit 0 healthy, 10 failures, 12 missing)"; return 0 ;;
@@ -1404,4 +1406,23 @@ mj_json_ok() {
     jq) jq -e . "$1" >/dev/null 2>&1 ;;
     *) return 0 ;;
   esac
+}
+
+# What doctor reaches, said where its usage is (I2707). Everything doctor checks is
+# governance: the policy, the profiles, the wiring of each declared enforcement, the
+# projections, the records and their retention. It reads nothing about the checkout's server,
+# its lease or the mesh, and its name suggests that it does, so a clean report used to be
+# read as a healthy runtime. Those are read elsewhere, and the help names where. The same
+# words are doctor's summary in share/commands.yaml and in bin/majordomus's usage, and
+# docs/CLI.md says them; case 3050 holds the four together.
+mj_doctor_reach() {
+  cat <<'EOF'
+majordomus doctor checks governance only: the policy, the profiles, the wiring of every
+declared enforcement, the projections, the records and their retention. It does not read
+the checkout's server, its lease or the mesh. The runtime is read by:
+  majordomus serve status   is the server answering for this checkout current, or stale?
+  majordomus mesh doctor    the mesh: identity, trust, link, runtime, journal
+  GET /api/v1/health        health.report: the server's own report, the mesh included
+  GET /api/v1/ready         can this process answer: lease held, executable current
+EOF
 }
