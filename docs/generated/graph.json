@@ -2143,6 +2143,14 @@
         "external": true
       },
       {
+        "id": "file:.ai/repo/visualisation-baseline.txt",
+        "kind": "file",
+        "label": "visualisation-baseline.txt",
+        "summary": "named by the layer; not an object of this index",
+        "source": ".ai/repo/visualisation-baseline.txt",
+        "external": true
+      },
+      {
         "id": "file:.githooks/commit-msg",
         "kind": "file",
         "label": "commit-msg",
@@ -2975,6 +2983,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/markdown.rs",
+        "kind": "file",
+        "label": "markdown.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/markdown.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/mcp/protocol.rs",
         "kind": "file",
         "label": "protocol.rs",
@@ -3316,6 +3332,14 @@
         "label": "observatory.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/ui/observatory.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/ui/prose.rs",
+        "kind": "file",
+        "label": "prose.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/ui/prose.rs",
         "external": true
       },
       {
@@ -3711,6 +3735,14 @@
         "external": true
       },
       {
+        "id": "file:scripts/ci/visualisation-check",
+        "kind": "file",
+        "label": "visualisation-check",
+        "summary": "named by the layer; not an object of this index",
+        "source": "scripts/ci/visualisation-check",
+        "external": true
+      },
+      {
         "id": "file:scripts/cockpit-probe",
         "kind": "file",
         "label": "cockpit-probe",
@@ -3956,6 +3988,14 @@
         "label": "rule.txt",
         "summary": "named by the layer; not an object of this index",
         "source": "share/allow/rule.txt",
+        "external": true
+      },
+      {
+        "id": "file:share/cockpit/cockpit.js",
+        "kind": "file",
+        "label": "cockpit.js",
+        "summary": "named by the layer; not an object of this index",
+        "source": "share/cockpit/cockpit.js",
         "external": true
       },
       {
@@ -7214,6 +7254,43 @@
             "cockpit",
             "ui",
             "pages"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0148",
+        "kind": "adr",
+        "label": "adr-0148",
+        "summary": "Markdown is drawn by one renderer in the executable, and every drawing on a served surface can be acted on",
+        "route": "/cockpit/objects/adr/adr-0148",
+        "source": ".ai/repo/adrs/0148-markdown-is-drawn-by-one-renderer-and-a-drawing-is-acted-on.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-12",
+          "related": [
+            "file:.ai/repo/adrs/0012-the-cockpit-is-a-projection-not-an-application.md",
+            "file:.ai/repo/adrs/0135-majordomus-ui-is-the-primary-surface.md",
+            "file:.ai/repo/adrs/0141-the-ui-is-published-as-a-snapshot-read-at-one-commit.md",
+            "file:.ai/repo/rules/project/markdown-is-rendered-once.v1.md",
+            "file:.ai/repo/rules/project/a-visualisation-is-interactive.v1.md",
+            "file:.ai/repo/visualisation-baseline.txt",
+            "file:apps/majordomus-cli/src/markdown.rs",
+            "file:apps/majordomus-cli/src/cockpit/pages.rs",
+            "file:apps/majordomus-cli/src/ui/prose.rs",
+            "file:share/cockpit/cockpit.js",
+            "file:share/design/primitives.css",
+            "file:scripts/ci/visualisation-check",
+            "file:test/cases/1101_markdown_is_rendered_once.sh",
+            "file:test/cases/1102_a_visualisation_is_interactive.sh",
+            "file:docs/COCKPIT.md"
+          ],
+          "tags": [
+            "architecture",
+            "interface",
+            "ui",
+            "cockpit",
+            "markdown",
+            "visualisation"
           ]
         }
       },
@@ -43201,6 +43278,30 @@
         }
       },
       {
+        "id": "majordomus://rule/project.a-visualisation-is-interactive@1",
+        "kind": "rule",
+        "label": "project.a-visualisation-is-interactive@1",
+        "summary": "A graph, a chart or a diagram is something a reader can act on, never a picture",
+        "route": "/cockpit/objects/rule/project-a-visualisation-is-interactive-1",
+        "source": ".ai/repo/rules/project/a-visualisation-is-interactive.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.ui-derived-state@1",
+            "project.ui-conformance@1",
+            "project.every-link-and-control-is-tested@1",
+            "project.markdown-is-rendered-once@1"
+          ],
+          "tags": [
+            "ui",
+            "cockpit",
+            "visualisation",
+            "accessibility"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.a-worker-that-stops-leaves-its-work-behind@2",
         "kind": "rule",
         "label": "project.a-worker-that-stops-leaves-its-work-behind@2",
@@ -44106,6 +44207,31 @@
             "integration",
             "deployment",
             "evidence"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://rule/project.markdown-is-rendered-once@1",
+        "kind": "rule",
+        "label": "project.markdown-is-rendered-once@1",
+        "summary": "A Markdown body is drawn by one renderer, wherever it is shown",
+        "route": "/cockpit/objects/rule/project-markdown-is-rendered-once-1",
+        "source": ".ai/repo/rules/project/markdown-is-rendered-once.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.interfaces-are-projections@1",
+            "project.ui-conformance@1",
+            "project.ui-derived-state@1",
+            "project.derived-once@1"
+          ],
+          "tags": [
+            "ui",
+            "cockpit",
+            "markdown",
+            "projections",
+            "security"
           ]
         }
       },
@@ -52230,6 +52356,20 @@
         "label": "test/cases/10_site_data.sh",
         "route": "/cockpit/objects/test/test-cases-10-site-data-sh",
         "source": "test/cases/10_site_data.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/1101_markdown_is_rendered_once.sh",
+        "kind": "test",
+        "label": "test/cases/1101_markdown_is_rendered_once.sh",
+        "route": "/cockpit/objects/test/test-cases-1101-markdown-is-rendered-once-sh",
+        "source": "test/cases/1101_markdown_is_rendered_once.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/1102_a_visualisation_is_interactive.sh",
+        "kind": "test",
+        "label": "test/cases/1102_a_visualisation_is_interactive.sh",
+        "route": "/cockpit/objects/test/test-cases-1102-a-visualisation-is-interactive-sh",
+        "source": "test/cases/1102_a_visualisation_is_interactive.sh"
       },
       {
         "id": "majordomus://test/test/cases/110_lease_reader.sh",
@@ -65101,6 +65241,86 @@
       {
         "source": "majordomus://adr/adr-0147",
         "target": "majordomus://test/test/cases/2982_two_snapshots_link_what_the_other_holds.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0148",
+        "target": "file:.ai/repo/visualisation-baseline.txt",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0148",
+        "target": "file:apps/majordomus-cli/src/cockpit/pages.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0148",
+        "target": "file:apps/majordomus-cli/src/markdown.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0148",
+        "target": "file:apps/majordomus-cli/src/ui/prose.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0148",
+        "target": "file:scripts/ci/visualisation-check",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0148",
+        "target": "file:share/cockpit/cockpit.js",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0148",
+        "target": "file:share/design/primitives.css",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0148",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0148",
+        "target": "majordomus://adr/adr-0012",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0148",
+        "target": "majordomus://adr/adr-0135",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0148",
+        "target": "majordomus://adr/adr-0141",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0148",
+        "target": "majordomus://document/docs/COCKPIT.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0148",
+        "target": "majordomus://rule/project.a-visualisation-is-interactive@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0148",
+        "target": "majordomus://rule/project.markdown-is-rendered-once@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0148",
+        "target": "majordomus://test/test/cases/1101_markdown_is_rendered_once.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0148",
+        "target": "majordomus://test/test/cases/1102_a_visualisation_is_interactive.sh",
         "kind": "put_in_force"
       },
       {
@@ -79984,6 +80204,31 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/project.a-visualisation-is-interactive@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.a-visualisation-is-interactive@1",
+        "target": "majordomus://rule/project.every-link-and-control-is-tested@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.a-visualisation-is-interactive@1",
+        "target": "majordomus://rule/project.markdown-is-rendered-once@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.a-visualisation-is-interactive@1",
+        "target": "majordomus://rule/project.ui-conformance@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.a-visualisation-is-interactive@1",
+        "target": "majordomus://rule/project.ui-derived-state@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.a-worker-that-stops-leaves-its-work-behind@2",
         "target": "kind:rule",
         "kind": "is_a"
@@ -80566,6 +80811,31 @@
       {
         "source": "majordomus://rule/project.land-and-publish@1",
         "target": "majordomus://rule/project.interfaces-are-projections@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.markdown-is-rendered-once@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.markdown-is-rendered-once@1",
+        "target": "majordomus://rule/project.derived-once@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.markdown-is-rendered-once@1",
+        "target": "majordomus://rule/project.interfaces-are-projections@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.markdown-is-rendered-once@1",
+        "target": "majordomus://rule/project.ui-conformance@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.markdown-is-rendered-once@1",
+        "target": "majordomus://rule/project.ui-derived-state@1",
         "kind": "depends_on"
       },
       {
@@ -82295,6 +82565,16 @@
       },
       {
         "source": "majordomus://test/test/cases/10_site_data.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/1101_markdown_is_rendered_once.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/1102_a_visualisation_is_interactive.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -88190,8 +88470,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2796,
-      "edges": 6129,
+      "nodes": 2806,
+      "edges": 6157,
       "acyclic": false,
       "truncated": false
     }

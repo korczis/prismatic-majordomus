@@ -155,7 +155,7 @@ pub fn inspector(answer: &Answer, id: &str) -> El {
                             ),
                     ),
             )
-            .child(el("p").class("mj-ui-lead").text(text(&rule, "statement")))
+            .child(super::view::lead(&text(&rule, "statement")))
             .child(el("p").class("mj-ui-line").text(text(&proof, "meaning")))
             .child(
                 el("dl")

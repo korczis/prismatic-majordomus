@@ -474,15 +474,18 @@ they cost. It renders nothing itself. What it changes is only what a file cannot
 | a link to a page of the Cockpit: the "technical view" of a source or of an object | that page of the Cockpit's own snapshot at `/cockpit/` when it holds it (ADR 0147), and the page about the live UI when it does not |
 | a link to a surface a publication holds (`/rustdoc`, `/openapi.json`) | unchanged |
 | a link into the served documentation (`/docs/…`) | the same page of the published site |
-| the script reads the screen again every minute and pulls in slow panels | it does neither: the body carries `data-snapshot` |
+| a slow panel is a placeholder the script fills once the screen has painted (`data-panel-src`) | the panel is written into the page: no process will answer later, so the placeholder would be all a reader ever saw |
+| the script reads the screen again every minute | it does not: the body carries `data-snapshot` |
 | "Read at" in the top bar | also a notice on every page: the commit, the time, the executable, and a link to the live UI |
 
 </div>
 
 
-A snapshot knows what the UI could read where it was taken. A Pages runner has no mesh, no
-recorded forge observation and no running execution, so those panels read `none`, `unknown`
-or `not answered`, never zero. A snapshot is not evidence of the live state of anything: for
+A snapshot knows what the UI could read where it was taken. The publishing job observes the
+forge first (`majordomus prs refresh` for the open pull requests, `majordomus served forge`
+for the deployments and the releases), so the drain and the deployments are the forge's as of that minute. A Pages runner
+has no mesh and no running execution, so those panels read `none`, `unknown` or `not
+answered`, never zero. A snapshot is not evidence of the live state of anything: for
 that, run `majordomus serve` in a checkout and open `/ui`.
 
 The directory declares itself (`surface.json`) as the surface `ui-snapshot`, mounted at `/ui`,

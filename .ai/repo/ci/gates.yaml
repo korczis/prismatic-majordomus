@@ -64,6 +64,15 @@ gates:
     runs: scripts/ui check
     summary: the static half of UI conformance — every scrolling box this repository writes is reachable from the keyboard
 
+  # A graph, a chart or a diagram that cannot be pressed is a picture of a problem with no way
+  # to it. Milliseconds, file reads only, and always: a drawing arrives with one new script,
+  # which no path class would be sure to name.
+  - id: visualisation-check
+    job: structure
+    always: true
+    runs: scripts/ci/visualisation-check
+    summary: every served script that draws binds a way from its marks to the records they stand for, and the drawings that still do not are a named debt that may not grow
+
   - id: pipefail-check
     job: structure
     always: true

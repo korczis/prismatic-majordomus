@@ -149,7 +149,7 @@ pub fn inspector(intents: &Answer, issues: &Answer, id: &str) -> El {
                                 ),
                         ),
                 )
-                .child(el("p").class("mj-ui-lead").text(text(&i, "statement")))
+                .child(super::view::lead(&text(&i, "statement")))
                 .child(
                     el("h4")
                         .class("mj-ui-panel-title")

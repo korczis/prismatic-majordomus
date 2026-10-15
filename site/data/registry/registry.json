@@ -6,23 +6,23 @@
     "version": "0.26.0"
   },
   "registry": {
-    "fingerprint": "dcd73504305fb981edaa3320c23c9994f922898e6750a89a9804ff556fc13e5b",
+    "fingerprint": "232bcf880c29f95f08f723d25170804b68e6bee690ec33196d5528d319d2a304",
     "summary": {
-      "total": 2379,
+      "total": 2384,
       "builtin": 199,
-      "declarative": 2180,
+      "declarative": 2185,
       "by_kind": {
         "command": 30,
         "query": 169,
-        "resource": 2180
+        "resource": 2185
       },
       "by_stability": {
         "behaviorally_verified": 139,
         "experimental": 51,
-        "implemented": 2189
+        "implemented": 2194
       },
       "mcp_tools": 190,
-      "mcp_resources": 2235,
+      "mcp_resources": 2240,
       "http_routes": 194,
       "cli_commands": 107,
       "modules": 91,
@@ -80579,7 +80579,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 105,
+        "capabilities": 106,
         "capability_ids": []
       },
       {
@@ -81616,7 +81616,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 179,
+        "capabilities": 181,
         "capability_ids": []
       },
       {
@@ -81760,7 +81760,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 481,
+        "capabilities": 483,
         "capability_ids": []
       },
       {
@@ -81850,7 +81850,7 @@
     ]
   },
   "index": {
-    "fingerprint": "989c3406d092f52a3c8908b082b7356ee825e5fdd9d03625425c0523881962d0",
+    "fingerprint": "f3f3df003fdc51c0c0814ed9791b7e2094655f668b0dc79b9d4e28d6c2e9055f",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -81873,7 +81873,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 105,
+      "adr": 106,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -81899,12 +81899,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 26,
-      "rule": 179,
+      "rule": 181,
       "scope": 1,
       "session": 89,
       "skill": 8,
       "taxonomy": 10,
-      "test": 481,
+      "test": 483,
       "use-case": 49,
       "workspace": 1
     },
@@ -83595,6 +83595,25 @@
           "cockpit",
           "ui",
           "pages"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0148",
+        "kind": "adr",
+        "identity": "adr-0148",
+        "title": "Markdown is drawn by one renderer in the executable, and every drawing on a served surface can be acted on",
+        "description": "Markdown is drawn by one renderer in the executable, and every drawing on a served surface can be acted on",
+        "path": ".ai/repo/adrs/0148-markdown-is-drawn-by-one-renderer-and-a-drawing-is-acted-on.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 7024,
+        "tags": [
+          "architecture",
+          "interface",
+          "ui",
+          "cockpit",
+          "markdown",
+          "visualisation"
         ]
       },
       {
@@ -87524,7 +87543,7 @@
         "title": "The Cockpit — the registry, rendered for a person",
         "path": "docs/COCKPIT.md",
         "source_class": "document",
-        "bytes": 51026
+        "bytes": 54313
       },
       {
         "uri": "majordomus://document/docs/COCKPIT_IDE_AUDIT.md",
@@ -87830,7 +87849,7 @@
         "title": "`majordomus ui` — the product",
         "path": "docs/MAJORDOMUS_UI.md",
         "source_class": "document",
-        "bytes": 32803
+        "bytes": 33190
       },
       {
         "uri": "majordomus://document/docs/MCP.md",
@@ -97922,6 +97941,23 @@
         ]
       },
       {
+        "uri": "majordomus://rule/project.a-visualisation-is-interactive@1",
+        "kind": "rule",
+        "identity": "project.a-visualisation-is-interactive@1",
+        "title": "A graph, a chart or a diagram is something a reader can act on, never a picture",
+        "description": "Every drawing a served surface makes — a relationship graph, a chart, a diagram drawn from a Markdown body, a scene — binds a way from its marks to the records they stand for, is drawn from data the server derived and put on the page, and has a text form a reader without the script reads instead; the drawings that predate the rule are a named debt that may shrink and may not grow.",
+        "path": ".ai/repo/rules/project/a-visualisation-is-interactive.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 4493,
+        "tags": [
+          "ui",
+          "cockpit",
+          "visualisation",
+          "accessibility"
+        ]
+      },
+      {
         "uri": "majordomus://rule/project.a-worker-that-stops-leaves-its-work-behind@2",
         "kind": "rule",
         "identity": "project.a-worker-that-stops-leaves-its-work-behind@2",
@@ -98620,6 +98656,24 @@
           "integration",
           "deployment",
           "evidence"
+        ]
+      },
+      {
+        "uri": "majordomus://rule/project.markdown-is-rendered-once@1",
+        "kind": "rule",
+        "identity": "project.markdown-is-rendered-once@1",
+        "title": "A Markdown body is drawn by one renderer, wherever it is shown",
+        "description": "Every Markdown body a served surface shows — a rule, a decision record, a skill, a use case, a document, a field of a plan record, a pull request's description — is drawn by the crate's one renderer, which writes nothing a record holds as markup, follows only the links it was told lead somewhere, and draws a diagram as its source until the page's script draws the figure.",
+        "path": ".ai/repo/rules/project/markdown-is-rendered-once.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 4655,
+        "tags": [
+          "ui",
+          "cockpit",
+          "markdown",
+          "projections",
+          "security"
         ]
       },
       {
@@ -99389,7 +99443,7 @@
         "path": ".ai/repo/rules/project/the-published-ui-is-the-trunks.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 9381,
+        "bytes": 9936,
         "tags": [
           "ui",
           "publication",
@@ -101447,6 +101501,22 @@
         "bytes": 7119
       },
       {
+        "uri": "majordomus://test/test/cases/1101_markdown_is_rendered_once.sh",
+        "kind": "test",
+        "identity": "test/cases/1101_markdown_is_rendered_once.sh",
+        "path": "test/cases/1101_markdown_is_rendered_once.sh",
+        "source_class": "case",
+        "bytes": 4879
+      },
+      {
+        "uri": "majordomus://test/test/cases/1102_a_visualisation_is_interactive.sh",
+        "kind": "test",
+        "identity": "test/cases/1102_a_visualisation_is_interactive.sh",
+        "path": "test/cases/1102_a_visualisation_is_interactive.sh",
+        "source_class": "case",
+        "bytes": 6097
+      },
+      {
         "uri": "majordomus://test/test/cases/110_lease_reader.sh",
         "kind": "test",
         "identity": "test/cases/110_lease_reader.sh",
@@ -102228,7 +102298,7 @@
         "identity": "test/cases/2983_the_published_ui_is_the_trunks.sh",
         "path": "test/cases/2983_the_published_ui_is_the_trunks.sh",
         "source_class": "case",
-        "bytes": 21589
+        "bytes": 22613
       },
       {
         "uri": "majordomus://test/test/cases/2984_a_handbook_edition_is_built_from_the_tree.sh",
@@ -105286,7 +105356,7 @@
       "identity": [
         "id"
       ],
-      "objects": 105
+      "objects": 106
     },
     {
       "name": "application",
@@ -105546,7 +105616,7 @@
         "id",
         "version"
       ],
-      "objects": 179
+      "objects": 181
     },
     {
       "name": "scope",
@@ -105601,7 +105671,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 481
+      "objects": 483
     },
     {
       "name": "use-case",
