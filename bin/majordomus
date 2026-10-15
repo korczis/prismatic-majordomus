@@ -196,8 +196,11 @@ mj_rust_subcommands() {
     return 0
   fi
   [ -x "$shipped" ] || return 0
-  # clap prints them as a block: `Commands:`, one indented line each, a blank line after
-  "$shipped" help "$1" 2>/dev/null | awk '
+  # clap prints them as a block: `Commands:`, one indented line each, a blank line after.
+  # Read from a process substitution, not a pipe: the launcher runs under set -e without
+  # pipefail (setting it here would change every library it sources), and pipefail-check
+  # refuses a pipe that could hide its producer's failure.
+  awk '
     /^Commands:$/ { on = 1; next }
     on && !/^  [a-z]/ { on = 0 }
     on {
@@ -205,7 +208,7 @@ mj_rust_subcommands() {
       about = $0; sub(/^ *[^ ]+ */, "", about)
       printf "%s\t%s\n", name, about
     }
-  ' || true
+  ' < <("$shipped" help "$1" 2>/dev/null) || true
   return 0
 }
 
