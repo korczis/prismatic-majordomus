@@ -1,0 +1,48 @@
+id: architecture-is-enforced
+title: "A violated invariant fails a gate, and green means every required check ran"
+slug: architecture-is-enforced
+order: 143
+priority: p1
+problem: "Several invariants are enforced well: no shadow operation inventory (projection-check, command-graph, mcp-tool-run, shell-inventory, mesh-check), generated drift (generate --check), skipped shell cases (test/run.sh --no-skips). Others are not. The full scheduled CI plan, the only one that selects every gate, has not produced a green verdict in its last 10 runs while push runs on master stay green, and nothing alarms; rule project.never-reported-is-not-green is review-only. rule-proof calls a rule satisfied when its proof is named and present: of 163 rules, 133 are 'not run'. No guard keeps a credential out of HTTP responses, MCP results, logs or mesh frames (apps/majordomus-cli/src/generate.rs:1364,1398 guards generated documents only), and redaction::public_text has no production caller (apps/majordomus-cli/src/redaction.rs:223). Nothing starts a shared server from an installed release in a foreign repository, and the release smoke swallows the launcher's failure (.github/workflows/release.yml:452). Measured in the runtime baseline audit of 2026-10-09 at master 1fb8d6be44 (plan/RUNTIME_BASELINE.md)."
+outcome: "A deliberate architectural violation fails a named gate; a red or cancelled full run is raised the day it happens; a rule is reported proven only when its proof ran; a credential shape never leaves through a response, log or frame; an installed release is proven to serve a repository that is not this one."
+current_state: "Gated: projections, generation, docs commands, release-follows-CI (scripts/ci/release-verdict). Partial: false green (push subset green over a red full plan), rule proof, secrets (prompt-privacy and no-machine-paths cover tracked text only), wire versions (version-surface covers the public surface only, see I2164), dogfood (install-check runs --standalone against this repository, scripts/ci/install-check:176). Remote unauthenticated mutation is I2123."
+desired_state: "Each row of the audit's enforcement table (plan/RUNTIME_BASELINE.md) is gated in CI with a fixture that makes the gate fail, and the session briefing shows the last full-plan verdict."
+scope:
+  - "scripts/ci"
+  - ".github/workflows/validate.yml"
+  - ".github/workflows/release.yml"
+  - ".ai/repo/ci/gates.yaml"
+  - ".ai/repo/rules/project"
+  - "apps/majordomus-cli/src/redaction.rs"
+  - "apps/majordomus-cli/src/logging.rs"
+  - "apps/majordomus-cli/src/http"
+  - "apps/majordomus-cli/src/execution/redact.rs"
+  - "apps/majordomus-cli/tests/executions.rs"
+  - "apps/majordomus-cli/tests/redaction.rs"
+  - "site/static/install.sh"
+  - "test/cases"
+  - "docs/DISTRIBUTION.md"
+non_scope:
+  - "Shortening the slowest case, which is I2115 (milestone ci-critical-path)."
+  - "The evidence publication's use of public_text, which is I1955 (test-evidence)."
+  - "A second CI pipeline; checks join the existing gates.yaml plan."
+acceptance_criteria:
+  - "A scheduled run that ends red or cancelled produces a visible record naming the failing jobs"
+  - "rule-proof reports each rule from recorded runs, and the not-run count of blocking rules is printed"
+  - "A credential-shaped value sent to the server never appears in a response, an MCP error or server.log"
+  - "CI installs a release archive, starts its shared server in a fresh foreign repository and reads its readiness"
+validation:
+  - "bin/majordomus plan validate"
+  - "scripts/ci/core-check"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the cases these issues add>"
+evidence_required:
+  - "full_plan_alarm"
+  - "rule_proof_from_runs"
+  - "secret_never_echoed"
+  - "installed_release_dogfood"
+depends_on: []
+risks:
+  - "Raising every cancelled scheduled run will be noisy until bench and macos fit their timeouts; that is the point, and the first runs should be read rather than silenced."
+  - "Opening GitHub issues from CI is an outward mutation; it must go through scripts/github-sync and be idempotent."
+created_at: 2026-10-09
+updated_at: 2026-10-09

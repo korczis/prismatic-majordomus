@@ -31,6 +31,23 @@ export async function api(path, options) {
 }
 
 /**
+ * The URL of a vendored file: the digested one the page publishes on its body
+ * (`data-vendor`, a JSON object by file name), which the server answers immutable, or the
+ * plain path when the page names none, which still works and only revalidates.
+ */
+let vendorUrls = null;
+function vendorUrl(file) {
+  if (vendorUrls === null) {
+    try {
+      vendorUrls = JSON.parse(document.body.dataset.vendor || '{}') || {};
+    } catch (e) {
+      vendorUrls = {};
+    }
+  }
+  return vendorUrls[file] || ASSETS + 'vendor/' + file;
+}
+
+/**
  * Load a vendored library that may not be there, once. Resolves with the global the
  * script defines, or rejects; a caller that rejects must leave its page working.
  */
@@ -40,7 +57,7 @@ export function vendor(file, globalName) {
   if (loading.has(file)) return loading.get(file);
   const pending = new Promise((resolve, reject) => {
     const script = document.createElement('script');
-    script.src = ASSETS + 'vendor/' + file;
+    script.src = vendorUrl(file);
     script.addEventListener('load', () => {
       const value = globalName ? window[globalName] : true;
       if (value) resolve(value);
@@ -61,7 +78,7 @@ export function vendor(file, globalName) {
  */
 export function vendorModule(file) {
   if (loading.has(file)) return loading.get(file);
-  const pending = import(ASSETS + 'vendor/' + file).catch(() => {
+  const pending = import(vendorUrl(file)).catch(() => {
     throw new Error(file + ' is not in share/cockpit/vendor/; run `just cockpit-assets`');
   });
   loading.set(file, pending);

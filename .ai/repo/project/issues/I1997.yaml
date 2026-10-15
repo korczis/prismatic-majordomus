@@ -1,0 +1,28 @@
+id: I1997
+milestone: development-runtime
+title: "The peer board can be read from the command line"
+slug: the-peer-board-can-be-read-from-the-command-line
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Project the peers capability onto the command line, so that a worker with no MCP tools can still ask who else is working in this repository and on which paths."
+why: "On 2026-10-08 the owner told a session in prismatic-platform to 'use majordomus to find other instances / peers', and the tool had nothing to answer with: `majordomus peers` is an unknown command, and `session` describes one provider session of one checkout. Cross-session awareness exists only as the MCP tools majordomus_peers and majordomus_announce. From 2026-09-12 until 0.17.0 Claude Code dropped every majordomus_* tool in this repository, because two tools published an input schema with no root type, so for a month no session here could read or write the board either; eight sessions coordinated by direct messages instead. A reading that exists on one projection only is gone when that projection is."
+current_state: "peers.list and peers.announce are served over MCP and HTTP. The command line has no reading of the board; `majordomus context` prints a peers section only when the shell tool can reach the server and somebody else is attached."
+desired_state: "`majordomus peers` prints the board gathered across every checkout of the repository — each peer, its worktree, its claims, whether it is attached — with `--format json`, from the same capability the MCP tool projects. It says when a checkout's board could not be asked. In a repository with no layer or no server it says that, and exits with the code for a missing artifact rather than 0."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/peers.rs"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "docs/MCP.md"
+  - "test/cases"
+acceptance_criteria:
+  - "`majordomus peers` lists a peer announced over MCP by another client of the same repository, with its worktree and claimed paths"
+  - "The command is a projection of the registry's capability: no board logic is written a second time for the command line"
+  - "With no server running it reports that no board could be asked and does not exit 0"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "cli_peers_lists_an_mcp_peer_case"
+  - "cli_peers_without_server_case"
+created_at: 2026-10-08
+updated_at: 2026-10-08

@@ -25,10 +25,12 @@ pub mod assets;
 pub mod html;
 pub(crate) mod intents;
 pub(crate) mod mcp;
+pub(crate) mod monitor;
 pub(crate) mod nav;
 pub(crate) mod pages;
 pub(crate) mod plan;
 pub(crate) mod reasoning;
+pub(crate) mod trains;
 pub(crate) mod view;
 
 use std::sync::Arc;
@@ -42,19 +44,33 @@ use assets::Assets;
 /// Every Cockpit route starts here.
 pub const PREFIX: &str = "/cockpit";
 
+/// The Cockpit's identity in the web topology (`web.surfaces`).
+pub const SURFACE: &str = "cockpit";
+
 /// The stylesheet the shell links.
 pub const STYLESHEET: &str = "cockpit.css";
 
-/// The script modules every page loads. `cockpit.js` is not among them and must not be:
-/// every other module imports it by its bare relative URL, and a `<script src=...?v=>`
-/// tag beside that is a *second* URL for the same file — the browser loads the module
-/// twice, runs its top level twice, and starts Alpine twice. The palette imports it, so
-/// it is in the graph of every page anyway, and it is answered `no-cache` rather than
-/// immutable, which is right for the one URL that carries no digest.
+/// The script modules every page loads. `cockpit.js` is not among them: the palette
+/// imports it, so it is in the graph of every page anyway. Every module that imports it
+/// names it by the one digested URL the server rewrites the import to (`assets.rs`), so a
+/// `<script>` tag here would add nothing but a second request.
 ///
 /// A page adds its own module to this list, which is what keeps a graph library off the
 /// overview.
 pub const SHELL_SCRIPTS: &[&str] = &["palette.js"];
+
+/// The vendored libraries the page modules load at run time, through `vendor()` and
+/// `vendorModule()` in `cockpit.js`. A run-time URL is not a static import the server can
+/// rewrite, so the page publishes each one's digested URL on its body (`data-vendor`), the
+/// way the UI hands its graph library over in `data-graph-lib`; a file not there is left
+/// out, and the script falls back to its plain path. A library a module imports itself
+/// (`three.core.min.js`, imported by `three.module.min.js`) is versioned by that import.
+pub(crate) const VENDOR: &[&str] = &[
+    "alpine.csp.min.js",
+    "cytoscape.min.js",
+    "three.module.min.js",
+    "p5.min.js",
+];
 
 /// The Cockpit over the repository as it is now. Cheap to clone into every worker thread:
 /// the assets are shared and the view of the repository is an `Arc`.
@@ -95,7 +111,9 @@ pub const STATIC_ROUTES: &[(&str, &str)] = &[
     ("/cockpit/worktrees", "worktrees"),
     ("/cockpit/peers", "peers"),
     ("/cockpit/integration", "integration"),
+    ("/cockpit/trains", "trains"),
     ("/cockpit/mesh", "mesh"),
+    ("/cockpit/monitor", ""),
     ("/cockpit/models", "models"),
     ("/cockpit/reasoning", "reasoning"),
     ("/cockpit/economics", "economics"),
@@ -157,12 +175,7 @@ impl Cockpit {
             );
         }
         if let Some(name) = req.path.strip_prefix(assets::PREFIX) {
-            let version = req
-                .query
-                .iter()
-                .find(|(k, _)| k == "v")
-                .map(|(_, v)| v.as_str());
-            return self.assets.respond(name, version);
+            return self.assets.respond(name, req);
         }
 
         // One reading of the repository for the whole page: the navigation and the page
@@ -183,7 +196,9 @@ impl Cockpit {
             breadcrumbs: page.breadcrumbs.clone(),
             navigation: &navigation,
             stylesheet: self.assets.url(STYLESHEET),
+            favicon: self.assets.url("favicon.svg"),
             scripts,
+            vendor: self.vendor_urls(),
             assets_present: self.assets.present(),
             version: self.version,
         };
@@ -205,6 +220,18 @@ impl Cockpit {
             .headers
             .push(("Referrer-Policy".into(), "no-referrer".into()));
         response
+    }
+
+    /// The digested URL of every vendored library that is there, by the file name
+    /// `vendor()` is called with, as the JSON object the page publishes in `data-vendor`.
+    fn vendor_urls(&self) -> String {
+        let urls: std::collections::BTreeMap<&str, String> = VENDOR
+            .iter()
+            .map(|file| (*file, format!("vendor/{file}")))
+            .filter(|(_, path)| self.assets.has(path))
+            .map(|(file, path)| (file, self.assets.url(&path)))
+            .collect();
+        serde_json::to_string(&urls).unwrap_or_else(|_| "{}".into())
     }
 
     fn route(&self, ctx: &Arc<Context>, req: &Request) -> pages::Page {
@@ -230,7 +257,9 @@ impl Cockpit {
             "/cockpit/worktrees" => pages::worktrees(ctx),
             "/cockpit/peers" => pages::peers(ctx),
             "/cockpit/integration" => pages::integration(ctx),
+            "/cockpit/trains" => trains::page(ctx),
             "/cockpit/mesh" => pages::mesh(ctx),
+            "/cockpit/monitor" => monitor::page(ctx, query),
             "/cockpit/models" => pages::models(ctx),
             "/cockpit/reasoning" => reasoning::page(ctx),
             "/cockpit/economics" => pages::economics(ctx),
@@ -348,6 +377,38 @@ pub fn base64(bytes: &[u8]) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Every library a script loads at run time is one the page publishes a digested URL
+    /// for: a `vendor('x')` that `VENDOR` does not name would still load, from its plain
+    /// path, and be downloaded again on every navigation without anything saying so.
+    #[test]
+    fn every_vendored_library_a_script_loads_is_published_with_its_digest() {
+        let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../share/cockpit");
+        let mut named = Vec::new();
+        for entry in std::fs::read_dir(&dir).expect("share/cockpit") {
+            let path = entry.expect("an entry").path();
+            if path.extension().is_none_or(|e| e != "js") {
+                continue;
+            }
+            let source = std::fs::read_to_string(&path).expect("a script");
+            for call in ["vendor('", "vendorModule('"] {
+                for rest in source.split(call).skip(1) {
+                    let file = rest.split('\'').next().unwrap_or_default();
+                    named.push((path.display().to_string(), file.to_string()));
+                }
+            }
+        }
+        assert!(
+            named.iter().any(|(_, f)| f == "alpine.csp.min.js"),
+            "the scan found the shell's own Alpine load: {named:?}"
+        );
+        for (script, file) in &named {
+            assert!(
+                VENDOR.contains(&file.as_str()),
+                "{script} loads {file}, which VENDOR does not name"
+            );
+        }
+    }
 
     #[test]
     fn the_policy_allows_no_remote_origin_and_no_unsafe_source() {

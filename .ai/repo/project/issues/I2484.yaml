@@ -1,0 +1,37 @@
+id: I2484
+milestone: development-runtime
+title: "majordomus ui ensures the shared server and opens the UI's dashboard"
+slug: majordomus-ui-opens-the-dashboard
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Give the primary surface its command: `majordomus ui` ensures this checkout's shared server, the way `serve ensure` does, prints the address of /ui and opens it in a browser, so that a person reaches the UI in one step and never needs the lease, a port or the Cockpit to find it."
+why: "ADR 0135, accepted by the owner on 2026-10-12, names `majordomus ui` the primary surface, and its first consequence says the command opens the UI's dashboard. The issue that was meant to carry it, I2231, lived only on PR #863, which was closed, so master has no command, docs/MAJORDOMUS_UI.md says to read the address off `serve status`, and `just open ui` is a recipe rather than a command of the executable."
+current_state: "`majordomus ui` is an unknown command. A person opens /ui on the address `majordomus serve status` prints, or with `just open ui`."
+desired_state: "`majordomus ui` is one entry of the canonical command graph, a projection of `server.status` and `serve ensure` with no server of its own (ADR 0135: no second server, no mode): it ensures this checkout's shared server, waits until it is ready, prints the URL of /ui (or of /ui/<screen> when one is named and SCREENS holds it), and opens it unless --no-open is given or no browser can be launched, in which case it says so and still prints the URL. `ui status` and `ui stop` are not added: `serve status` and `serve stop` already answer them. The help text, the generated command reference and the just bridge derive from the declaration, and docs/MAJORDOMUS_UI.md drops its workaround."
+scope:
+  - "apps/majordomus-cli/src/commands"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "apps/majordomus-cli/src/ui"
+  - "docs/MAJORDOMUS_UI.md"
+  - test/cases
+  - ".ai/repo/project/issues/I2484.yaml"
+non_scope:
+  - "A second server or a UI-only mode of the server"
+  - "Any change to the screens themselves"
+depends_on:
+  - I2461
+acceptance_criteria:
+  - "`majordomus ui --no-open` on a checkout with no running server starts one, prints a URL ending in /ui, and that URL answers 200"
+  - "`majordomus ui --no-open` with a server already running prints that server's /ui URL and starts no second server"
+  - "`majordomus ui --no-open <screen>` prints /ui/<screen> for a screen SCREENS holds and refuses an unknown screen by name, listing the known ones"
+  - "The command appears in the generated command reference and the just bridge without a hand-written entry"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --lib commands::"
+  - "majordomus generate --check"
+evidence_required:
+  - "ui_command_case"
+  - "ui_command_unit_tests"
+created_at: 2026-10-12
+updated_at: 2026-10-12

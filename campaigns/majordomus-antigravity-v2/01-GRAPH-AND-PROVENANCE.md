@@ -1,0 +1,3 @@
+# Phase 01: Audit -> canonical source DAG
+
+Read master prompt. Inventory source/derived/projection artifacts and runtime vs build-stable source boundaries. Find existing derive engine and reuse it. Introduce stable typed node IDs, canonical byte encoding, deterministic dependency order, schema/generator version, provenance/explain traces and minimal recomputation. Add diagnostics for missing/ambiguous/recursive inputs. Test randomized discovery order, graph cycles, stale/missing source, cache corruption and identical cached/uncached output. Show one real `.ai` registry -> derived editor/agent capability chain and exact invalidation frontier. No independent registry.

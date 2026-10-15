@@ -6,7 +6,7 @@ priority: p2
 profile: implementation
 parallel_safe: true
 objective: "Rewrite the baseline rules that describe Majordomus's own history as rules about any adopter. Mark their x-majordomus.tests as upstream proofs so an adopter is not pointed at test/cases it does not have, and give the package manifest a real source revision."
-why: "In share/standard/majordomus/rules/{adr-integrity,lifecycle-observed,completion-gates,record-changed-files,publication-currency,schema-integrity}.v1.md, 'this repository' means Majordomus. Their tests name test/cases paths absent in OSCILLA. The vendored manifest says source_revision 0.6.0 although OSCILLA vendored it from 0.12."
+why: "In share/standard/majordomus/rules/{adr-integrity,lifecycle-observed,completion-gates,record-changed-files,publication-currency,schema-integrity}.v1.md, 'this repository' means Majordomus. Their tests name test/cases paths absent in OSCILLA. The vendored manifest says source_revision 0.6.0 although OSCILLA vendored it from 0.12. A second adopter saw the same on 2026-10-08: in prismatic-platform, `rules vendor update` moved a 0.6.0 baseline to the 0.14.0 package (3 rules added, 4 changed) and `rules vendor status` still printed 'distribution: 1 (0.6.0)', so the label cannot tell the two packages apart."
 current_state: "As above at e08aec8651."
 desired_state: "Adopter-neutral rule text; tests resolvable or explicitly upstream; source_revision equals the release that produced the package."
 scope:
@@ -23,4 +23,21 @@ evidence_required:
   - "neutral_rule_text"
   - "source_revision_stamped"
 created_at: 2026-10-04
-updated_at: 2026-10-04
+updated_at: 2026-10-14T14:53:20Z
+started_at: 2026-10-14T14:52:58Z
+started_event: sha256:8facc572b750776d0a2e85228c6d3fece4bc4190ac7954a5f7d2d80dbf3dd8e0
+completed_at: 2026-10-14T14:53:20Z
+completed_event: sha256:c2af21108b49ea853bfba2b3d084d7e072f00226817c6e7c6365b71114305ea2
+evidence:
+  - covers: neutral_rule_text
+    type: test
+    command: "MJ_TEST_JOBS=2 bash test/run.sh 3022_the_rule_package_is_stamped_and_adopter_neutral"
+    result: "tests: 1 passed, 0 failed: no vendored rule says 'this repository'; every dated incident names Majordomus (run 2026-10-14 14:52Z on master 0dff496d1c plus this change)"
+    commit: 0dff496d1c312ce4a8d37ac5d6667b522beb4905
+    recorded_at: 2026-10-14T14:53:10Z
+  - covers: source_revision_stamped
+    type: test
+    command: "MJ_TEST_JOBS=2 bash test/run.sh 3022_the_rule_package_is_stamped_and_adopter_neutral"
+    result: "tests: 1 passed, 0 failed: stamped from the crate manifest (0.25.0), a stale stamp refused (run 2026-10-14 14:52Z on master 0dff496d1c plus this change)"
+    commit: 0dff496d1c312ce4a8d37ac5d6667b522beb4905
+    recorded_at: 2026-10-14T14:53:12Z

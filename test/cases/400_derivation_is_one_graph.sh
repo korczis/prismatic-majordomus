@@ -6,7 +6,8 @@
 # The real derivation takes minutes over the whole tree, so the first half of this case runs
 # the repository's own scripts/derive and scripts/derive-check, unmodified and copied into a
 # fixture, over stand-in generators that form a small graph with the same shape: stage A
-# (`majordomus generate`) writes a.txt from the source, stage B (scripts/generate-site-data)
+# (`majordomus generate`) writes a.txt from the source and then scripts/rules-package writes
+# the rule package's manifest, stage B (scripts/generate-site-data)
 # writes b.txt from a.txt, stage C (`majordomus generate` again) writes c.txt from b.txt, and
 # stage D (scripts/gitattributes) writes the merge policy over what the stages wrote. Every
 # stand-in has a --check that names the files it would change. What is asserted is what the
@@ -25,7 +26,7 @@
 G="$T/graph"; TOOL="$T/tool"; LOG="$T/calls.log"
 mkdir -p "$G/scripts" "$G/lib" "$G/src" "$G/out" "$TOOL"
 cp "$ROOT/scripts/derive" "$ROOT/scripts/derive-check" "$G/scripts/"
-cp "$ROOT/lib/rust_bin.sh" "$G/lib/"
+cp "$ROOT/lib/rust_bin.sh" "$ROOT/lib/machine_lock.sh" "$G/lib/"
 printf 'v1\n' > "$G/src/model.txt"
 
 # stage A and C: majordomus generate [--check] --repo R --strict
@@ -70,11 +71,22 @@ if [ "${1:-}" = --check ]; then
   [ "$(cat .gitattributes 2>/dev/null)" = "$want" ] || { echo "gitattributes: stale: .gitattributes"; exit 10; }
 else printf '%s\n' "$want" > .gitattributes; fi
 SH
-chmod +x "$TOOL/majordomus" "$G/scripts/generate-site-data" "$G/scripts/gitattributes"
+# stage A's second writer: scripts/rules-package write|check, the rule package's manifest
+cat > "$G/scripts/rules-package" <<'SH'
+#!/usr/bin/env bash
+set -eu
+printf 'rules-package %s\n' "$1" >> "$STUB_LOG"
+SH
+chmod +x "$TOOL/majordomus" "$G/scripts/generate-site-data" "$G/scripts/gitattributes" "$G/scripts/rules-package"
 STUB_LOG="$LOG"; export STUB_LOG
 ( cd "$G" && git init -q . && git config user.email t@example.com && git config user.name t \
   && git add -A && git commit -qm sources )
 
+# scripts/derive takes the machine's derive lock (lib/machine_lock.sh); the fixture's lock
+# and priority marker are its own, so this case neither waits for nor blocks a real derive.
+# The fixture's files are untracked in the case's scratch repository by construction.
+export MAJORDOMUS_DERIVE_LOCK="$T/derive.lock" MAJORDOMUS_DERIVE_PRIORITY="$T/derive.priority"
+export MAJORDOMUS_DERIVE_ALLOW_UNTRACKED=1
 derive()       { MAJORDOMUS_BIN="$TOOL/majordomus" bash "$G/scripts/derive"; }
 derive_check() { MAJORDOMUS_BIN="$TOOL/majordomus" bash "$G/scripts/derive-check"; }
 tree_state()   { ( cd "$G" && git status --porcelain --untracked-files=all && git diff && cat .gitattributes out/*.txt 2>/dev/null ) || true; }
@@ -83,6 +95,7 @@ tree_state()   { ( cd "$G" && git status --porcelain --untracked-files=all && gi
 : > "$LOG"
 expect_exit 0 derive
 want='generate
+rules-package write
 site-data
 generate
 gitattributes'
@@ -118,7 +131,8 @@ expect_grep 'stale: \.gitattributes'
 expect_grep 'run scripts/derive'
 want='generate --check
 site-data --check
-gitattributes --check'
+gitattributes --check
+rules-package check'
 [ "$(cat "$LOG")" = "$want" ] \
   || { printf '    scripts/derive-check did not run every check in the order derive runs the generators\n    want:\n%s\n    got:\n%s\n' "$want" "$(cat "$LOG")"; exit 1; }
 [ "$(tree_state)" = "$before" ] || { echo "    scripts/derive-check wrote to a stale tree"; exit 1; }

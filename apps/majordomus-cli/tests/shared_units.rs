@@ -324,6 +324,8 @@ fn the_bridge_client_speaks_to_a_real_socket_and_names_every_failure() {
         "{err}"
     );
     assert!(err.to_string().contains("rejected"));
+    // a server that answered is there: nothing about this refusal calls for an election
+    assert!(!err.calls_for_an_election(), "{err}");
 
     let answer = b.handle(&init()).unwrap().unwrap();
     assert_eq!(answer["result"]["serverInfo"]["name"], "majordomus");
@@ -385,6 +387,24 @@ fn the_bridge_client_speaks_to_a_real_socket_and_names_every_failure() {
     let mut moved = Bridge::new("http://127.0.0.1:1".into());
     moved.move_to(url);
     assert!(moved.handle(&init()).is_err());
+}
+
+/// Dropping the server only asks its accept thread to end, so a caller that connected right
+/// after `stop` was once accepted and then reset: the bridge said "did not answer" where
+/// nothing had been sent (validate on 9e50ce2af3, `rust (3)`).
+#[test]
+fn a_stopped_server_refuses_the_very_next_connection() {
+    let f = Fixture::new();
+    for round in 0..20 {
+        let (running, _endpoint) = bound(&f);
+        let address: std::net::SocketAddr = running.address().parse().unwrap();
+        running.stop();
+        let next = std::net::TcpStream::connect_timeout(&address, Duration::from_secs(1));
+        assert!(
+            next.is_err(),
+            "round {round}: {address} accepted after stop"
+        );
+    }
 }
 
 #[test]

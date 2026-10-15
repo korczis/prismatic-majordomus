@@ -69,7 +69,22 @@ bound_minutes: 225
 # room, or the budget is a number nothing can reach. One declaration, two readers —
 # test/run.sh and this file must agree, and case 417 refuses it when they do not, or when the
 # budget is not below the bound.
-case_bound_seconds: 3600
+#
+# Re-derived on 2026-10-09 from the ci-metrics-suite report of every complete validate run
+# that day (19 runs, 409 to 412 cases each). 95_executable_reference cost, at its worst:
+#
+#   run 37932195384   3530 s   #852 at 5b5367f08a
+#   run 37922977087   3495 s   master
+#   run 37950924470   3473 s   fix/an-absent-key-is-not-consent
+#   run 37926379104   3419 s   #831 (its first attempt measured 3468 s)
+#   run 37962747722   3405 s
+#   fourteen more     2048 to 3254 s
+#
+# plus first attempts the reports above were rerun over: 3471 s (37943722020, #852) and
+# 3469 s (37980257400, #861, the v0.19.0 record). Every case passed in each. At 3530 s the
+# case was 70 s from being killed, so the bound no longer held the doctrine above: the
+# worst uncensored cost x 1.5 = 5295, so 5300.
+case_bound_seconds: 5300
 
 # ---------------------------------------------------------------- what a healthy run costs
 # Seconds of case time, summed over every case the runner executed, from MJ_TEST_REPORT.
@@ -185,10 +200,37 @@ case_bound_seconds: 3600
 # same runner pool. That is the spread the paragraph above measured at 1.22, larger; it is
 # runner load, not growth, and no case came near its own bound. 56000 is about a tenth above
 # the worst total measured, 51011. The slowest-case budget stands: 3352 is under 3450.
+#
+# Re-measured on 2026-10-11, when 95_skills went over the 3890 on every head that ran the
+# whole suite, with all four shards green and every case passing (master 890e112d04's own
+# run among them):
+#
+#   run 38093056059   95_skills 4161 s                             #827 feature/mesh-firewall
+#   run 38101737743   95_skills 4153 s   54737 s over 413 cases    #914
+#   run 38101518374   95_skills 4127 s   49220 s over 413 cases    #909
+#   (run of #859)     95_skills 4085 s
+#
+# The same 413 cases cost 49220 s on one head and 54737 s on the next, an hour apart: 1.11
+# times as much, with some forty runs queued on the same runner pool. That is runner load,
+# not growth. About a tenth above the worst uncensored cost, 4161 x 1.1 = 4577, so 4580,
+# below case_bound_seconds (5300) as case 417 requires. The total stands: 54737 is under
+# 56000, though only by a fortieth.
 budget:
   # every case, summed; run 37760481991 (51011 s) and the ones above
   cases_seconds: 56000
   # the single slowest case; one case that runs away is invisible in the total until it is
   # most of it, and it is also what decides whether the parallel phase can still be packed.
-  # Re-derived from the uncensored 3168 s of run 37207794591: see above.
-  slowest_case_seconds: 3450
+  # Re-derived from the uncensored 3168 s of run 37207794591: see above. Re-derived on
+  # 2026-10-09 from the worst of that day's 19 complete runs, 3530 s (run 37932195384; the
+  # table is above case_bound_seconds). Six attempts that day went over the 3450 with every
+  # case passing, the v0.19.0 record among them, and each cost a rerun of about 86 minutes:
+  # runner load on a shared pool, not growth. About a tenth above the worst, 3530 x 1.1 = 3883,
+  # so 3890, below the case bound as case 417 requires.
+  # Re-derived on 2026-10-11 from uncensored runs on a saturated pool (19 jobs in progress,
+  # the cap, 132 queued): 95_skills cost 4085 s in run 38073770856 (2026-10-10 22:15Z, #859),
+  # 4127 s in run 38101518374 (2026-10-11 06:29Z, #909, a head carrying master's #881) and
+  # 4161 s in run 38093056059, every case passing each time; each cost the verdict and a rerun.
+  # Runner load again, not growth: the case is unchanged since the 3530 above. About a tenth
+  # above the worst, 4161 x 1.1 = 4577, so 4580, still under the 5300 case bound as case 417
+  # requires.
+  slowest_case_seconds: 4580

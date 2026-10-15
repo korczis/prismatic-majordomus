@@ -18,7 +18,7 @@ use std::process::{Child, ChildStdin, Command, Stdio};
 use std::sync::mpsc::{self, Receiver};
 use std::time::{Duration, Instant};
 
-use common::{without_observation_times, Fixture, BIN};
+use common::{without_observation_times, Fixture};
 use serde_json::{json, Value};
 
 const WAIT: Duration = Duration::from_secs(20);
@@ -37,7 +37,7 @@ impl Mcp {
     fn spawn(cwd: &Path, args: &[&str]) -> Self {
         let mut all = vec!["mcp"];
         all.extend_from_slice(args);
-        let mut child = Command::new(BIN)
+        let mut child = common::majordomus()
             .args(&all)
             .current_dir(cwd)
             .env("MAJORDOMUS_LOG", "info")
@@ -727,6 +727,50 @@ fn a_bridged_peer_takes_over_when_its_server_dies() {
     assert!(!lease_path(&f).exists());
 }
 
+/// A bridged client that asks before it has said `initialize` is refused by the server it
+/// is bridged to, and is told so. The server is there and serving, so nobody is elected:
+/// an election would find the same server, attach to it again and be refused again. The
+/// session then opens as any other does, on the same server.
+#[test]
+fn a_request_a_serving_server_refuses_is_answered_and_elects_nobody() {
+    let f = Fixture::new();
+    let mut a = Mcp::spawn(&f.root(), &["--http-port", "0"]);
+    a.wait_log("listening on http://");
+    a.initialize("claude-code");
+    let mut b = Mcp::spawn(&f.root(), &["--http-port", "0"]);
+    b.wait_log("bridging this stdio session");
+
+    // a notification the server refuses has no answer to carry the refusal, and gets none
+    b.send(&json!({ "jsonrpc": "2.0", "method": "notifications/initialized" }));
+    let early = b.request("ping", json!({}));
+    assert_eq!(early["error"]["code"], -32600, "{early}");
+    let said = early["error"]["message"].as_str().unwrap_or_default();
+    assert!(said.contains("session_required"), "{said}");
+    assert!(said.contains("(400)"), "{said}");
+
+    // the session opens on the server it was bridged to, which is still the server
+    let init = b.initialize("codex");
+    assert!(
+        init["result"]["instructions"]
+            .as_str()
+            .unwrap()
+            .contains("You are peer p2"),
+        "{init}"
+    );
+    let peers = b.call("majordomus_peers", json!({}));
+    assert_eq!(peers["structuredContent"]["count"], 2, "{peers}");
+    assert_eq!(b.close(), 0);
+    let log = b.drain_log();
+    assert!(
+        !log.contains("electing again"),
+        "a refusal from a serving server started an election:\n{log}"
+    );
+    assert!(
+        a.alive(),
+        "the server the client was bridged to is still serving"
+    );
+}
+
 #[test]
 fn a_bridged_peer_re_attaches_when_another_process_took_the_lease_first() {
     let f = Fixture::new();
@@ -961,10 +1005,17 @@ fn sigterm_removes_the_lease_before_the_process_dies() {
         .unwrap();
     assert!(sent.success(), "kill -TERM");
     let status = a.child.wait().unwrap();
-    assert_eq!(status.signal(), Some(15), "died of SIGTERM: {status:?}");
+    // The handler only records the request. The server's own thread then runs the ordered
+    // stop — episodes closed, the lease released through the check that it is still this
+    // process's — and only then ends the process with the signal it was sent: the stdio
+    // session of a `majordomus mcp` belongs to its client and was cut, which the exit status
+    // still says. (A `majordomus serve` returns from `main` instead: tests/lease_holder.rs.)
+    let log = a.wait_log("shared server stopped");
+    assert!(log.contains("shared server stopped"), "{log}");
+    assert_eq!(status.signal(), Some(15), "ended by SIGTERM: {status:?}");
     assert!(
         !lease_path(&f).exists(),
-        "the handler removed the lease before the process died"
+        "the lease was gone by the time the process was"
     );
     // the next client finds no stale lease and starts cleanly
     let mut b = Mcp::spawn(&f.root(), &["--http-port", "0"]);

@@ -1,0 +1,39 @@
+{#- A number cited by hand-written prose: `{{ <cite_figure name="capabilities" /> }}` prints the
+    figure site/data/figures.toml declares under that name, read from the generated file it
+    names. The prose never types the number, so it cannot go stale beside the data.
+
+    Every way of not having a number fails the build and names the figure: an undeclared or
+    twice-declared name, a source that does not load, a path that does not resolve, a value
+    that is not a number, a length taken of something that is not a list, a filter naming an
+    attribute an element does not carry. An empty string in a sentence is a wrong sentence
+    nobody is told about. scripts/site-check (check 19) refuses the typed alternative. -#}
+{% component cite_figure(name) %}
+{%- set figs = load_data(path="data/figures.toml") -%}
+{%- set_global fig = false -%}
+{%- set_global declared = 0 -%}
+{%- for f in figs.figure -%}{%- if f.name == name -%}{%- set_global fig = f -%}{%- set_global declared = declared + 1 -%}{%- endif -%}{%- endfor -%}
+{%- if declared == 0 -%}{{ throw(message="figure '" ~ name ~ "' is not declared in site/data/figures.toml") }}{%- endif -%}
+{%- if declared > 1 -%}{{ throw(message="figure '" ~ name ~ "' is declared " ~ declared ~ " times in site/data/figures.toml") }}{%- endif -%}
+{%- set where = "figure '" ~ name ~ "' (site/data/" ~ fig.source ~ ", path " ~ fig.path | join(sep=".") ~ ")" -%}
+{%- set data = load_data(path="data/" ~ fig.source, required=false) -%}
+{%- if not data -%}{{ throw(message=where ~ ": the source does not load") }}{%- endif -%}
+{%- set_global v = data -%}
+{%- for k in fig.path -%}
+{%- if v is map and k in v -%}{%- set_global v = v[k] -%}{%- else -%}{{ throw(message=where ~ ": the path does not resolve at '" ~ k ~ "'") }}{%- endif -%}
+{%- endfor -%}
+{%- if fig.measure == "value" -%}
+{%- if v is not number -%}{{ throw(message=where ~ ": the value is not a number") }}{%- endif -%}
+{{ v }}
+{%- elif fig.measure == "length" -%}
+{%- if v is not iterable or v is string -%}{{ throw(message=where ~ ": a length is taken of a list or a map, and this is neither") }}{%- endif -%}
+{%- set_global n = 0 -%}
+{%- for item in v -%}
+{%- if fig.where_attribute -%}
+{%- if item is not map or fig.where_attribute not in item -%}{{ throw(message=where ~ ": an element carries no attribute '" ~ fig.where_attribute ~ "'") }}{%- endif -%}
+{%- if item[fig.where_attribute] == fig.where_value -%}{%- set_global n = n + 1 -%}{%- endif -%}
+{%- else -%}{%- set_global n = n + 1 -%}{%- endif -%}
+{%- endfor -%}
+{{ n }}
+{%- else -%}{{ throw(message=where ~ ": measure is '" ~ fig.measure ~ "', and a figure measures a value or a length") }}
+{%- endif -%}
+{%- endcomponent cite_figure %}

@@ -9,7 +9,7 @@
 
 # ---------------------------------------------------------------- the doctrine
 # majordomus.deployment-contract: a deployment is described once, in the layer, against a
-# closed contract; every provider artifact is generated from that description.
+# closed contract; every artifact built from it is generated from that description.
 mj_validate_deployments() {
   local dir f flat n=0 bad=0 ids="" id
   [ -n "${MJ_DEPLOYMENTS_DIR:-}" ] || return 0    # a layer with no deployments section owes nothing
@@ -48,7 +48,7 @@ mj_validate_deployments() {
                listen.port listen.interface health.liveness health.readiness \
                resources.cpu_kind resources.cpus resources.memory_mb \
                machines.count machines.min_running machines.autostart machines.autostop \
-               region provider.name; do
+               region; do
       [ -n "$(mj_yget "$flat" "$key")" ] || {
         mj_doctrine_fail deployment "$(basename "$f")" "lacks $key, which every deployment states" "head -n 40 $(mj_rel "$f")"
         bad=1

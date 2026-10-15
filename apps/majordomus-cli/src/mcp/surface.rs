@@ -109,7 +109,7 @@ pub enum ToolOutcome {
     /// The handler declined: the category as one word ([`CapabilityError::code`]) and the
     /// reason as the handler gave it.
     Refused {
-        /// `invalid_input`, `not_found` or `refused`.
+        /// `invalid_input`, `not_found`, `refused` or `forbidden`.
         code: &'static str,
         /// The message, category included, as every transport shows it.
         reason: String,
@@ -376,19 +376,38 @@ impl Surface {
         ctx.registry.iter().filter_map(Tool::of).collect()
     }
 
-    /// Call a tool by name.
+    /// Call a tool by name, for a caller on this machine.
     pub fn call(&self, name: &str, args: &Value) -> Result<ToolOutcome, SurfaceError> {
+        self.call_from(name, args, false)
+    }
+
+    /// Call a tool by name, saying whether the caller is on another host. A remote caller
+    /// is refused a tool that changes something and does not authenticate its input, with
+    /// the same word and sentence the HTTP route answers (ADR 0126).
+    pub(crate) fn call_from(
+        &self,
+        name: &str,
+        args: &Value,
+        remote: bool,
+    ) -> Result<ToolOutcome, SurfaceError> {
         let ctx = self.context();
         let c = ctx
             .registry
             .by_mcp_tool(name)
             .ok_or_else(|| SurfaceError::UnknownTool(name.to_string()))?;
+        if remote && !c.execution.admits_remote() {
+            let e = CapabilityError::remote(c.id.as_str());
+            return Ok(ToolOutcome::Refused {
+                code: e.code(),
+                reason: e.to_string(),
+            });
+        }
         match ctx.execute(c.id.as_str(), args.clone()) {
             Ok(v) => Ok(ToolOutcome::Ok(v)),
             Err(CapabilityError::Internal(e)) => Err(SurfaceError::Internal(e)),
             Err(e) => Ok(ToolOutcome::Refused {
                 code: e.code(),
-                reason: e.to_string(),
+                reason: crate::redaction::redact_secrets(&e.to_string()).text,
             }),
         }
     }

@@ -121,6 +121,19 @@
           "type": "boolean",
           "description": "Write a derived continuation record when an episode ends. Until ADR 0052 this happened only while a task was still active, so a repository whose last task had been handed over stopped writing the one record a future worker resumes from."
         },
+        "handover_on_fill": {
+          "type": "boolean",
+          "description": "Install the provider mod that asks the worker for a continuation record when the context window nears its fill line, while there is still room for the writing turn. PreCompact derives a checkpoint because the worker cannot be asked at that moment; this asks before it. `capture install` converges on the value: only true installs it, and anything else removes a mod it wrote. Absent means off, because the mod writes into the adopter's own .claude/ tree and an absent key is not consent to that; the skeleton declares true (ADR 0123)."
+        },
+        "brief_on_interval": {
+          "type": "boolean",
+          "description": "Install the provider mod that keeps a session briefed on what surrounds it: the one-line `majordomus brief` as its status line, the full brief put before the model once per interval, and a prompt of its own when the session is idle, so that it reports on itself without being asked; and have the start event tell the session how to keep itself awake. `capture install` converges on the value: only true installs the mod, and anything else removes a mod it wrote. Absent means off, for the reason handover_on_fill gives; the skeleton declares true (ADR 0136)."
+        },
+        "brief_interval_minutes": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "How often a session reports on itself without being asked, in minutes. `brief.session` carries it, and the provider mod reads it from that answer. Absent means 20 (ADR 0136)."
+        },
         "knowledge_on_end": {
           "type": "boolean",
           "description": "Derive the knowledge an episode produced into candidate records under the tracked knowledge section as the episode closes, on every close path: the ledger lines it stamped are the evidence, and they are about to stop being reachable. Deterministic and without a model; a second run over the same evidence writes nothing (ADR 0091). Absent means on."
@@ -175,6 +188,15 @@
         "push_record_on_end": {
           "type": "boolean",
           "description": "Publish the record commit, as a fast-forward only and through the pre-push hook like any other push. That hook asks whether the task may be published, so the push often will not go out and the record travels with the worker's next push instead."
+        },
+        "retention_max_files": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "How many closed session records the sessions section holds before `doctor` and `watch` report it over its cap. The count is the section's own records; the ones `majordomus session archive` moved under its archive directory are not counted, and nothing is ever deleted to get under the cap."
+        },
+        "archive": {
+          "type": "boolean",
+          "description": "Whether `majordomus session archive` may move the oldest records beyond `retention_max_files` into the section's archive directory. Archiving happens only when that command is run; false makes it refuse and write nothing."
         }
       }
     },
@@ -335,6 +357,50 @@
         }
       }
     },
+    "release": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Who raises the version and by at least how much (ADR 0134). Absent is allocation: off with no floor: a policy that predates the block raises its version as it always did.",
+      "properties": {
+        "allocation": {
+          "type": "string",
+          "enum": ["off", "landing"],
+          "description": "off: a pull request raises its own version. landing: the integration executor raises it when it lands the pull request, from the trunk's version."
+        },
+        "floor": {
+          "type": "string",
+          "enum": ["none", "patch", "minor", "major"],
+          "description": "The least an eligible integration advances the version, whatever its measured impact."
+        },
+        "exempt": {
+          "type": "array",
+          "description": "Classes of change held to no floor: a pull request whose every changed path one class covers. The compatibility requirement still applies.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "description", "paths"],
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "description": {
+                "type": "string",
+                "minLength": 1
+              },
+              "paths": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "projections": {
       "type": "array",
       "items": {
@@ -477,6 +543,11 @@
           "type": "integer",
           "minimum": 1,
           "description": "How long a live owner that does not answer its probe is waited on, and asked again, before its lease is taken over. A probe that times out is not a dead server; a live process that stays silent this long is treated as wedged and replaced."
+        },
+        "read_deadline_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "How long the shared server lets a connection go without a request read in full on it — waiting for a head, kept alive between requests, or reading a body — before it closes the connection and counts it in server.status. A connection whose request is being answered is never closed by it."
         }
       }
     }

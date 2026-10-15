@@ -285,6 +285,18 @@ MJ_CAPTURE_ADAPTERS='claude-code .claude/settings.json UserPromptSubmit prompt_i
 # nothing writes `-`, and its workers resolve through the pointer as everything did before.
 MJ_CAPTURE_LIFECYCLE='claude-code .claude/settings.json SessionStart SessionEnd .claude/hooks/majordomus-session-start .claude/hooks/majordomus-session-end session_id,sessionId source,session_source reason,end_reason clear,logout,prompt_input_exit PreCompact .claude/hooks/majordomus-session-compact CLAUDE_CODE_SESSION_ID'
 
+# The mods a provider loads by itself from a folder inside the repository (ADR 0123): one
+# line each, the provider, the mod's name under share/mods/<provider>/, the folder it is
+# installed to, and the policy key that switches it. A shim answers an event the provider
+# fires; a mod is asked by the provider while the conversation runs, which is the only
+# place a measurement of the context window is made, so the request for a handover before
+# the window fills cannot be a shim.
+# The second keeps a session briefed on what surrounds it, as its status line and on an
+# interval (ADR 0136): the status line and the clock are the provider's, inside the
+# conversation, and no event fires for either.
+MJ_CAPTURE_MODS='claude-code majordomus-handover .claude/skills/majordomus-handover session.handover_on_fill
+claude-code majordomus-brief .claude/skills/majordomus-brief session.brief_on_interval'
+
 # ---------------------------------------------------------------- the connection episode
 # A provider whose declared episode source is `connection` has no adapter line above and
 # must not need one: it fires no event, so there is no vendor payload shape to version
@@ -1585,8 +1597,35 @@ mj_capture_session_start() {
   # for on 2026-09-12 (ADR 0059), and the briefing is where a worker hears of it before its
   # first tool call. It travels as an argument, like the server line.
   local mesh; mesh="$(mj_capture_mesh_line "$server")"
-  mj_derive_briefing "$server" "$mesh" 2>/dev/null || mj_session_context_log "$provider start event: the briefing could not be assembled"
+  # What happened around the repository since the last hour, under the mesh (ADR 0133): a
+  # review asked of this worker or a handover for it is told before its first tool call.
+  local monitor=""
+  case "$server" in
+    ready\ http://*)
+      # shellcheck source=rust_bin.sh
+      . "$MJ_LIB_DIR/rust_bin.sh"
+      monitor="$(mj_rust_monitor_brief "$MJ_ROOT" "$MJ_HOME")" ;;
+  esac
+  mj_derive_briefing "$server" "$mesh" "$monitor" 2>/dev/null || mj_session_context_log "$provider start event: the briefing could not be assembled"
+  # How to keep itself awake and reporting (ADR 0136), told to every provider's session the
+  # policy switches it for, whether or not a mod of that provider shows the brief as well.
+  [ "$(mj_pol session.brief_on_interval)" = true ] && mj_capture_keep_awake "$psession"
   return 0
+}
+
+# What the session is told about keeping itself awake, and the brief as it stands: the
+# executable's own `brief --keep-awake`, asked of the server just ensured. Best-effort, like
+# the server and mesh lines: an executable that is missing or stale says nothing here.
+mj_capture_keep_awake() {
+  local psession="${1:-}" bin
+  # shellcheck source=rust_bin.sh
+  . "$MJ_LIB_DIR/rust_bin.sh"
+  bin="$(mj_rust_bin "$MJ_HOME")"
+  { [ -x "$bin" ] && ! mj_rust_stale "$MJ_HOME" "$bin"; } || return 0
+  set -- brief --repo "$MJ_ROOT" --keep-awake --this-checkout
+  [ -n "$psession" ] && set -- "$@" --session "$psession"
+  printf '\n## Keeping awake\n\n'
+  "$bin" "$@" 2>/dev/null || true
 }
 
 # Make sure the repository's shared server serves this checkout, on the start event, and
@@ -1654,6 +1693,8 @@ mj_capture_mesh_line() {
       elif ($rt.detail | startswith("active as ")) then
         "active — " + ($rt.detail | sub("^active as [^ ]+ since [^ ]+: "; ""))
         + (if $tr != null and ($tr.ok | not) then "; TRUST: " + $tr.detail else "" end)
+      elif ($rt.detail | startswith("closed: ")) then
+        "CLOSED — " + ($rt.detail | sub("^closed: "; ""))
       elif ($rt.ok | not) then
         "DECLARED ENABLED BUT NOT ACTIVE — "
         + ($rt.detail | sub("^the declaration is enabled and this server.s mesh is not active — "; ""))
@@ -1814,6 +1855,9 @@ mj_capture_publish_record() {
   local abs="$1" rel idx tree parent new msg
   [ -n "$abs" ] && [ -f "$abs" ] || return 0
   [ "$(mj_pol session.commit_record_on_end)" != false ] || return 0
+  # A personal layer's record is one person's: committing it would put a file of the layer
+  # on a branch other people share (ADR 0145). It stays where it was written.
+  mj_personal_active && return 0
   rel="$(mj_rel "$abs")"
   case "$rel" in /*) return 0 ;; esac          # outside the repository: not ours to commit
 
@@ -1859,6 +1903,7 @@ the working tree reaches no surface that reads session records.
 mj_capture_push_record() {
   local new="$1" branch remote upstream
   [ "$(mj_pol session.push_record_on_end)" != false ] || return 0
+  mj_personal_active && return 0               # nothing of a personal layer is pushed
   branch="$(mj_git branch --show-current 2>/dev/null)" || return 0
   [ -n "$branch" ] || return 0                 # detached: nothing to publish onto
   remote="$(mj_git config "branch.$branch.remote" 2>/dev/null)" || remote=""
@@ -2094,8 +2139,10 @@ mj_capture_install_one() {
         "capture session --provider $p --event $one" "$(mj_lifecycle_latency "$one")"
     done
   fi
+  mj_capture_install_mods "$p"
 
   if [ ! -f "$cfg" ]; then
+    mj_personal_guard "$(mj_capture_field "$p" 2)"
     mj_capture_config "$p" > "$cfg"
     mj_info capture "$(mj_capture_field "$p" 2)" "written with the $(mj_capture_events "$p" | sed 's/=.*//' | paste -sd, - | sed 's/,/, /g') hook(s)"
     return 0
@@ -2164,15 +2211,94 @@ mj_capture_install_shim() {
     if [ "$(cat "$shim")" = "$body" ]; then
       mj_info capture "$rel" "already present; left as it is"; return 0
     fi
+    mj_personal_guard "$rel"
     printf '%s\n' "$body" > "$shim"
     chmod +x "$shim"
     mj_info capture "$rel" "rewritten ($latency)"
     return 0
   fi
+  # under a personal layer the shim is covered before it exists (ADR 0145); a no-op otherwise
+  mj_personal_guard "$rel"
   mkdir -p "$(dirname "$shim")"
   printf '%s\n' "$body" > "$shim"
   chmod +x "$shim"
   mj_info capture "$rel" "written and made executable ($latency)"
+}
+
+# Every mod this provider has, copied from the distribution into the folder the provider
+# loads it from. The rules are the shim's: a folder whose hooks module does not carry the
+# marker is somebody's own and is left as it is; one this tool wrote is rewritten when the
+# distribution's copy differs, so an upgrade is repaired by the command that installed it.
+# The policy key is the switch, and only `true` turns it on: the mod writes into the
+# adopter's own .claude/ tree, and an absent key is not consent to that (the reading F15
+# gave the keys that commit and push). The skeleton declares true, so `init` opts in
+# knowingly; an older policy without the key, or one that cannot be read, gets nothing.
+# The command converges in both directions: off removes a folder this tool wrote, because
+# a mod the policy turned off and the provider still loads is a declaration nothing enforces.
+#
+# Only what was installed is ever touched. The files are the distribution's list (its test
+# file excepted: that is the distribution's own evidence, run by `claude plugin test`), so a
+# rewrite copies those files over their installed copies and a removal deletes those files
+# one by one, then the type declarations the provider lays beside a mod it loaded, then the
+# directories that are left empty, deepest first. Nothing is deleted recursively: a file the
+# person put in the folder stops the removal, which names it and leaves it where it is.
+
+# The files of a mod in the distribution, relative to its folder, one per line.
+mj_capture_mod_files() { (cd "$1" && find . -type f ! -name '*.test.ts' | sed 's|^\./||' | sort); }
+
+# Whether every file of the distribution's copy is already installed, byte for byte.
+mj_capture_mod_same() {
+  local f
+  for f in $(mj_capture_mod_files "$1"); do cmp -s "$1/$f" "$2/$f" || return 1; done
+}
+
+# Remove an installed mod: its own files, the provider's type declarations, then the empty
+# directories. Says what is left when something the tool did not write is still there.
+mj_capture_mod_remove() {
+  local src="$1" dst="$2" rel="$3" key="$4" f d left
+  for f in $(mj_capture_mod_files "$src"); do rm -f "$dst/$f"; done
+  if [ -d "$dst/.claude-plugin/types" ]; then
+    find "$dst/.claude-plugin/types" -type f | while read -r f; do rm -f "$f"; done
+  fi
+  find "$dst" -depth -type d | while read -r d; do rmdir "$d" 2>/dev/null || true; done
+  if [ -d "$dst" ]; then
+    left="$(cd "$dst" && find . -type f | sed 's|^\./||' | paste -sd, - | sed 's/,/, /g')"
+    mj_info capture "$rel" "its files removed ($key is not true); left in place, not this tool's: $left"
+  else
+    mj_info capture "$rel" "removed: $key is not true"
+  fi
+}
+
+mj_capture_install_mods() {
+  local p="$1" prov name rel key src dst on verb f
+  while read -r prov name rel key; do
+    [ "$prov" = "$p" ] || continue
+    src="$MJ_SHARE_DIR/mods/$p/$name"; dst="$MJ_ROOT/$rel"
+    [ -f "$src/hooks/register.ts" ] || {
+      mj_err "capture install: $src is not in this distribution; the $name mod is not installed"
+      continue; }
+    on=0
+    if mj_load_policy 2>/dev/null && [ "$(mj_pol "$key")" = true ]; then on=1; fi
+    if [ -d "$dst" ] && ! grep -qF 'Written by `majordomus capture install`' "$dst/hooks/register.ts" 2>/dev/null; then
+      mj_info capture "$rel" "already present and not this tool's; left as it is"; continue
+    fi
+    if [ "$on" = 0 ]; then
+      if [ -d "$dst" ]; then mj_capture_mod_remove "$src" "$dst" "$rel" "$key"
+      else mj_info capture "$rel" "not written: $key is not true"; fi
+      continue
+    fi
+    if [ -d "$dst" ] && mj_capture_mod_same "$src" "$dst"; then
+      mj_info capture "$rel" "already present; left as it is"; continue
+    fi
+    verb=written; [ -d "$dst" ] && verb=rewritten
+    mj_personal_guard "$rel"
+    for f in $(mj_capture_mod_files "$src"); do
+      mkdir -p "$dst/$(dirname "$f")" && cp "$src/$f" "$dst/$f"
+    done
+    mj_info capture "$rel" "$verb; the provider loads it at its next start"
+  done <<EOF
+$MJ_CAPTURE_MODS
+EOF
 }
 
 # The text of one shim. Kept apart from writing it so that an installed shim can be compared

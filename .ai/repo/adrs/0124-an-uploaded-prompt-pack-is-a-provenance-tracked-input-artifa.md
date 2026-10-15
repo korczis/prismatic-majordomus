@@ -1,6 +1,6 @@
 ---
 schema: adr/v1
-id: adr-0121
+id: adr-0124
 kind: adr
 title: An uploaded prompt pack is a provenance-tracked input artifact, not a second intent model
 status: proposed

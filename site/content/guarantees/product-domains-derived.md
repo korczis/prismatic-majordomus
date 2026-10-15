@@ -1,7 +1,7 @@
 +++
 title = "The product is filed under a few domains declared once as files of the layer; a feature names exactly one, and every domain's members, interfaces, guarantees and use cases are derived from the features that name it, so a stable feature cannot be left out of the product map without the model refusing it"
 description = "A domain is one Markdown file under .ai/repo/features/domains/: a title, a one-sentence"
-weight = 189
+weight = 191
 [extra]
 claim_id = "product-domains-derived"
 status = "guaranteed"

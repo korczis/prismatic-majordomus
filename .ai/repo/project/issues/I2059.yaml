@@ -1,0 +1,30 @@
+id: I2059
+milestone: development-runtime
+title: "A rebuild never replaces the executable a live lease names"
+slug: a-rebuild-never-replaces-a-leased-executable
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Stop an entry point from rebuilding the executable in place under a running shared server, and make the server that follows a superseded one bind the address the old one was serving, or say that it did not."
+why: "bin/majordomus-cli rebuilds apps/majordomus-cli/target/debug/majordomus whenever the sources moved. In the primary checkout that file is the one the shared server was started from, and since #747 a replaced executable supersedes the lease. On 2026-10-08 a server the owner had ordered onto every interface (0.0.0.0:57547, started 2026-10-07T18:49Z) lost its lease at 08:06:32Z: .ai/local/state/mcp/server.log records 'superseded lease: the server was started from ... target/debug/majordomus and that file has been replaced since', after a diagnostic build in the primary. The integrator reported the same after every `prs refresh`, `plan` and `drain` run from the primary following a fast-forward. The successor was started by a launcher whose environment did not carry MAJORDOMUS_HTTP_HOST, so it bound loopback on another port; new sessions were answered 409 lease_lost by the old server and nobody was told the address had changed. #747 made the consequence visible. It did not remove the cause."
+current_state: "A build in a checkout with a ready server replaces the file its lease names. The lease is superseded, the next launcher starts a successor on the default address, and the address the old server was serving is not carried over or mentioned."
+desired_state: "Building in a checkout leaves its ready server ready on the same address until something restarts it on purpose: the build writes beside the leased executable and a restart swaps it, or the server runs from a copy. When a server is superseded, its successor serves the address the old one published, or the supersession is reported with both addresses on every surface that reports a server's standing."
+scope:
+  - "bin/majordomus-cli"
+  - "lib/rust_bin.sh"
+  - "apps/majordomus-cli/src/lease.rs"
+  - "apps/majordomus-cli/src/commands/serve.rs"
+  - "docs/MCP.md"
+  - "test/cases"
+acceptance_criteria:
+  - "A build run in a checkout whose server is ready leaves `serve status` reporting that server ready on the address it had before the build"
+  - "A successor started after a supersession binds the host and port the superseded lease published, or `serve status` names both addresses and why they differ"
+  - "A server bound through MAJORDOMUS_HTTP_HOST or --host is not replaced by a loopback server without a line in server.log saying so"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "rebuild_keeps_server_ready_case"
+  - "successor_address_case"
+created_at: 2026-10-08
+updated_at: 2026-10-08
