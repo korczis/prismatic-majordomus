@@ -1417,7 +1417,26 @@
         "Making readiness stricter can make deploy health checks fail where they passed; the fly-deployment health block reads /api/v1/live and must keep doing so.",
         "A deadline on request reads that is too short breaks slow links; it must be declared and measured."
       ],
-      "evidence": [],
+      "evidence": [
+        {
+          "covers": "readiness_reflects_state",
+          "type": "ci",
+          "command": "gh run view 38635619021 (validate on master c0e3585dc8, push): job rust (3) 116098148455 runs cargo test --test lease_lost --test health_server; job rust (2) 116098148534 runs the lib test capability::builtin::health::tests",
+          "result": "success. lease_lost: a_server_that_lost_its_lease_says_so_and_takes_on_nobody_new ok (1 passed; /api/v1/ready false with reason lease_lost); health_server: 7 passed, including an_enabled_mesh_that_runs_is_a_healthy_dimension_as_the_doctor_says, an_enabled_mesh_whose_every_transport_failed_fails_the_dimension_as_the_doctor_does, the_mesh_is_a_dimension_of_health_and_unknown_where_no_server_decided_it; lib: readiness_names_a_degraded_layer_and_is_still_ready, readiness_reports_what_this_process_already_holds, readiness_refuses_a_process_whose_executable_was_removed_under_it ok. Delivered by I2157 (DONE); the run's head is origin/master, so the tested code is the code on master",
+          "artifact": "https://github.com/korczis/prismatic-majordomus/actions/runs/38635619021",
+          "commit": "c0e3585dc836201089d6b5dd49f5a79fe8bff798",
+          "recorded_at": "2026-10-15T02:04:17Z"
+        },
+        {
+          "covers": "request_deadline_test",
+          "type": "ci",
+          "command": "gh run view 38635619021 (validate on master c0e3585dc8, push): job rust (3) 116098148455 runs cargo test --test http_slow_client",
+          "result": "success. http_slow_client: slow_client_released_test ok (slow clients closed at the declared deadline and counted in connections.closed_by_deadline, a fifth client answered), past_the_handler_bound_a_request_is_refused_and_the_probe_is_answered ok (2 passed, 16.88 s). The deadline is declared as server.read_deadline_seconds: 30 in .ai/repo/policy.yaml and documented in docs/MCP.md. Delivered by I2156 (DONE); the run's head is origin/master",
+          "artifact": "https://github.com/korczis/prismatic-majordomus/actions/runs/38635619021",
+          "commit": "c0e3585dc836201089d6b5dd49f5a79fe8bff798",
+          "recorded_at": "2026-10-15T02:04:24Z"
+        }
+      ],
       "issues": [
         "I2156",
         "I2157",
