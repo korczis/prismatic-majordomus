@@ -33,15 +33,25 @@
 #     which CI's recorded seconds never include, because its runner has the build cached) and
 #     whose recorded seconds (.ai/repo/ci/structure-durations.tsv,
 #     written by `scripts/ci-baseline --structure-durations`) are at most MJ_PUSH_GATE_SECONDS
-#     (default 15), cheapest first, while their sum stays within MJ_PUSH_GATE_BUDGET (default
-#     120);
+#     (default 15);
 #   - the cases .ai/repo/ci/suite-durations.tsv records at most MJ_PUSH_CASE_SECONDS (default
 #     5), four at a time.
 #
-# Every gate left out prints one line naming it and why. The step reports its measured time
-# against MJ_PUSH_BOUND (default 180) seconds. A plan that cannot be computed, or a durations
-# file that is missing, refuses the push: what cannot be measured is not passed. There is no
-# flag that skips it, as there is no --no-verify.
+# Those are the candidates; what a push runs of them is what fits in MJ_PUSH_BOUND (default
+# 180) seconds on THIS machine. CI's seconds say which gates are cheap, not what they cost
+# here: on a workstation nine sessions share, the cheap gates took 180-280 s against CI's
+# ~120 and the fast cases 136-167 s, so a budget picked from the runner's seconds overran its
+# bound every time. Each run appends what every gate and case took here to the machine's
+# file (MJ_PUSH_LOCAL, default <git common dir>/majordomus/push-durations.tsv: one file for
+# every worktree of the repository on this machine, read by the next push). A candidate is
+# priced at its last local seconds, or, never measured here, at CI's seconds times the ratio
+# local/CI of the candidates that were (MJ_PUSH_COLD_FACTOR, default 2, before any was). The
+# cheapest are taken first — a case at a quarter of its price, four running at a time —
+# until the bound less MJ_PUSH_RESERVE (default 5) seconds is spent, and the cases are priced
+# again against what the gates left. Every gate and case left to CI prints one line naming
+# it and why, and the last line counts them: coverage a push gives up is said, never dropped.
+# A plan that cannot be computed, or a durations file that is missing, refuses the push: what
+# cannot be measured is not passed. There is no flag that skips it, as there is no --no-verify.
 #
 #   MJ_CI_TIMINGS=FILE   append "<job or plan><TAB><gate id><TAB>seconds" per gate
 #   MJ_CI_RECEIPTS=FILE  append "<gate id><TAB><success or failure><TAB><job>/run-plan" per
@@ -80,6 +90,7 @@ if [ -z "${MJ_KEEP_SHARE:-}" ]; then
   fi
   unset MAJORDOMUS_SHARE
 fi
+t_start="$(date +%s)"   # the push's bound counts the plan's computation too
 given=""; job=""; skip=""; rest=(); before_push=0
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -107,71 +118,144 @@ if [ "$before_push" = 1 ]; then
   for f in "$durations" "$cases_file"; do
     [ -f "$f" ] || { echo "run-plan: $f is missing, so nothing can be budgeted and the push is refused (scripts/ci-baseline --structure-durations writes the first)" >&2; exit 12; }
   done
-  per_gate="${MJ_PUSH_GATE_SECONDS:-15}"; budget="${MJ_PUSH_GATE_BUDGET:-120}"
-  per_case="${MJ_PUSH_CASE_SECONDS:-5}"; bound="${MJ_PUSH_BOUND:-180}"
-  t_all="$(date +%s)"; failed=""; chosen=""; spent=0
+  per_gate="${MJ_PUSH_GATE_SECONDS:-15}"; per_case="${MJ_PUSH_CASE_SECONDS:-5}"
+  bound="${MJ_PUSH_BOUND:-180}"; reserve="${MJ_PUSH_RESERVE:-5}"; jobs=4
+  # what this machine measured, shared by every worktree of the repository on it
+  here="${MJ_PUSH_LOCAL:-}"
+  if [ -z "$here" ]; then
+    common="$(git -C "$ROOT" rev-parse --path-format=absolute --git-common-dir 2>/dev/null)" || common=""
+    here="${common:-$ROOT/.ai/local}/majordomus/push-durations.tsv"
+  fi
+  mkdir -p "$(dirname "$here")" 2>/dev/null || true
+  deadline=$(( t_start + bound - reserve ))
+  failed=""; chosen=""; picked_cases=""; ran_g=0; left_g=0; left_c=0
+  leave_gate() { printf '  left out %s\n' "$1"; left_g=$(( left_g + 1 )); }
+  leave_case() { printf '  left out case %s\n' "$1"; left_c=$(( left_c + 1 )); }
+  # many cases left for one reason: one line that counts and names them all
+  leave_cases() { [ "$2" -gt 0 ] || return 0; printf '  left out %s case(s) %s:%s\n' "$2" "$1" "$3"; left_c=$(( left_c + $2 )); }
   printf 'run-plan --before-push: %s — %s\n' "$(jq -r .mode "$plan")" "$(jq -r .reason "$plan")"
-  # candidates, cheapest first: "<seconds> <id>", or a line saying why a gate is left out
+  : > "$plan.cand"
+  # the gates that may run before a push at all, "gate <id> <CI seconds>"
   while read -r id network builds; do
     secs="$(awk -F'\t' -v g="$id" '$1 == g { print $2 }' "$durations")"
-    if [ "$network" = true ]; then printf '  left out %s: it reaches the network; CI runs it\n' "$id"
-    elif [ "$builds" = true ]; then printf '  left out %s: it builds the crate, which the %ss CI recorded do not include; CI runs it\n' "$id" "${secs:-no}"
-    elif [ -z "$secs" ]; then printf '  left out %s: no recorded duration in %s; CI runs it\n' "$id" "$durations"
-    elif [ "$secs" -gt "$per_gate" ]; then printf '  left out %s: CI recorded %ss, over the %ss a push spends on one gate\n' "$id" "$secs" "$per_gate"
-    else printf '%s %s\n' "$secs" "$id" >> "$plan.cand"; fi
+    if [ "$network" = true ]; then leave_gate "$id: it reaches the network; CI runs it"
+    elif [ "$builds" = true ]; then leave_gate "$id: it builds the crate, which the ${secs:-no}s CI recorded do not include; CI runs it"
+    elif [ -z "$secs" ]; then leave_gate "$id: no recorded duration in $durations; CI runs it"
+    elif [ "$secs" -gt "$per_gate" ]; then leave_gate "$id: CI recorded ${secs}s, over the ${per_gate}s a push spends on one gate"
+    else printf 'gate %s %s\n' "$id" "$secs" >> "$plan.cand"; fi
   done < <(jq -r '.gates[] | select(.job == "structure" and .selected) | "\(.id) \(.network // false) \(.builds // false)"' "$plan")
-  if [ -f "$plan.cand" ]; then
-    while read -r secs id; do
-      if [ $(( spent + secs )) -gt "$budget" ]; then
-        printf '  left out %s: %ss more would pass the %ss budget for gates; CI runs it\n' "$id" "$secs" "$budget"; continue
-      fi
-      spent=$(( spent + secs )); chosen="$chosen $id"
-    done < <(LC_ALL=C sort -n "$plan.cand"); rm -f "$plan.cand"
-  fi
-  # the chosen gates, in the plan's order, with stdin closed: a hook's stdin is the ref list
+  # the cases that may: fast by what CI recorded; local by what the case does. A case that
+  # starts a server (serve_up, mcp_shared, serve ensure or start, the MCP launcher) or
+  # declares that it runs alone measures timing and ports: on a machine nine sessions share
+  # it fails for the load and not for the change, so CI runs it and the push does not.
+  slow=""; nslow=0; unrecorded=""; nunrec=0
+  # one pass over the cases and their recorded seconds, and one grep each for the two marks:
+  # a process per case would spend seconds of the bound before anything ran
+  alone=" $(grep -l '^# majordomus-exclusive:' test/cases/*.sh 2>/dev/null | tr '\n' ' ') "
+  serves=" $(grep -lE '\bserve_up\b|\bmcp_shared\b|\bserve (ensure|start)\b|majordomus-mcp|\$MJ"? mcp\b' test/cases/*.sh 2>/dev/null | tr '\n' ' ') "
+  while read -r n s; do
+    c="test/cases/$n.sh"
+    if [ "$s" = - ]; then unrecorded="$unrecorded $n"; nunrec=$(( nunrec + 1 ))
+    elif [ "$s" -gt "$per_case" ]; then slow="$slow $n"; nslow=$(( nslow + 1 ))
+    else case "$alone" in *" $c "*) leave_case "$n: it declares that it runs alone; CI runs it"; continue ;; esac
+      case "$serves" in *" $c "*) leave_case "$n: it starts a server; CI runs it"; continue ;; esac
+      printf 'case %s %s\n' "$n" "$s" >> "$plan.cand"; fi
+  done < <(for c in test/cases/*.sh; do c="${c##*/}"; printf '%s\n' "${c%.sh}"; done \
+    | awk -F'\t' 'NR == FNR { if ($2 ~ /^[0-9]+$/ && !($1 in s)) s[$1] = $2; next } { print $1, (($1 in s) ? s[$1] : "-") }' "$cases_file" -)
+  leave_cases "that CI recorded over ${per_case}s" "$nslow" "$slow"
+  leave_cases "with no recorded duration in $cases_file" "$nunrec" "$unrecorded"
+  # Each candidate's price here: its last local seconds, or CI's times the ratio local/CI of
+  # its kind's candidates that were measured here. A case costs a quarter of its price, four
+  # running at a time; so every price is in quarter-seconds: "<quarters> <rank> <kind> <id>
+  # <seconds> <how>", a gate before a case at the same price.
+  price() {
+    awk -v F="$here" -v cold="${MJ_PUSH_COLD_FACTOR:-2}" -v jobs="$jobs" '
+      BEGIN { while ((getline l < F) > 0) { n = split(l, a, "\t"); if (n >= 3 && a[3] ~ /^[0-9]+$/) at[a[1] " " a[2]] = a[3] } }
+      { kind[NR] = $1; id[NR] = $2; ci[NR] = $3; k = $1 " " $2
+        if (k in at) { sl[$1] += at[k]; sc[$1] += $3 } }
+      END {
+        for (i = 1; i <= NR; i++) {
+          k = kind[i] " " id[i]
+          if (k in at) { e = at[k]; how = "measured here" }
+          else {
+            f = (sc[kind[i]] > 0) ? sl[kind[i]] / sc[kind[i]] : cold
+            e = int(ci[i] * f + 0.999); if (e < 1) e = 1
+            how = sprintf("never measured here: %ss in CI x %.2f", ci[i], f)
+          }
+          printf "%d %d %s %s %d %s\n", (kind[i] == "gate" ? e * jobs : e), (kind[i] == "gate" ? 0 : 1), kind[i], id[i], e, how
+        } }' "$plan.cand"
+  }
+  # cheapest first, while the bound less its reserve lasts
+  room=$(( (deadline - $(date +%s)) * jobs )); spent=0
+  while read -r quarters _ kind id est how; do
+    if [ $(( spent + quarters )) -gt "$room" ]; then
+      why="$id: about ${est}s here ($how), past what is left of the ${bound}s bound; CI runs it"
+      if [ "$kind" = gate ]; then leave_gate "$why"; else leave_case "$why"; fi
+      continue
+    fi
+    spent=$(( spent + quarters ))
+    if [ "$kind" = gate ]; then chosen="$chosen $id:$est"; else picked_cases="$picked_cases $id:$est"; fi
+  done < <(price | LC_ALL=C sort -k1,1n -k2,2n -k4,4)
+  rm -f "$plan.cand"
+  record() { printf '%s\t%s\t%s\n' "$1" "$2" "$3" >> "$here" 2>/dev/null || true; }
+  # the chosen gates, in the plan's order, with stdin closed: a hook's stdin is the ref list.
+  # A gate whose price no longer fits — the ones before it took longer than they were priced
+  # — is left to CI by name rather than run past the bound.
   for g in $(jq -r '.gates[] | select(.job == "structure" and .selected) | .id' "$plan"); do
-    case " $chosen " in *" $g "*) ;; *) continue ;; esac
+    est=""; for p in $chosen; do [ "${p%:*}" = "$g" ] && est="${p##*:}"; done
+    [ -n "$est" ] || continue
+    if [ $(( $(date +%s) + est )) -gt "$deadline" ]; then
+      leave_gate "$g: about ${est}s here, and $(( deadline - $(date +%s) ))s of the bound are left (the gates before it took longer than priced); CI runs it"
+      continue
+    fi
     cmd="$(jq -r --arg g "$g" '.gates[] | select(.id == $g) | .runs' "$plan")"
     t0="$(date +%s)"
-    if bash -c "$cmd" < /dev/null > "$plan.$g.log" 2>&1; then printf '  ok     %s (%ss)\n' "$g" "$(( $(date +%s) - t0 ))"; printf '%s %s\n' "$(( $(date +%s) - t0 ))" "$g" >> "$plan.times"
+    if bash -c "$cmd" < /dev/null > "$plan.$g.log" 2>&1; then printf '  ok     %s (%ss; priced %ss)\n' "$g" "$(( $(date +%s) - t0 ))" "$est"
     else printf '  FAILED %s (%ss): %s\n' "$g" "$(( $(date +%s) - t0 ))" "$cmd"; sed 's/^/         | /' "$plan.$g.log" | tail -n 15
       failed="$failed $g"; fi
+    took_g=$(( $(date +%s) - t0 )); record gate "$g" "$took_g"; ran_g=$(( ran_g + 1 ))
+    printf '%s %s\n' "$took_g" "$g" >> "$plan.times"
     rm -f "$plan.$g.log"
   done
-  # the fast cases, four at a time. Fast is what CI recorded; local is what the case does. A
-  # case that starts a server (serve_up, mcp_shared, serve ensure or start, the MCP launcher)
-  # or declares that it runs alone measures timing and ports: on a machine nine sessions share
-  # it fails for the load and not for the change, so CI runs it and the push does not.
-  names=""
-  for n in $(awk -F'\t' -v m="$per_case" '$2 ~ /^[0-9]+$/ && $2 <= m { print $1 }' "$cases_file"); do
-    [ -f "test/cases/$n.sh" ] || continue
-    if grep -q '^# majordomus-exclusive:' "test/cases/$n.sh"; then
-      printf '  left out case %s: it declares that it runs alone; CI runs it\n' "$n"; continue; fi
-    if grep -qE '\bserve_up\b|\bmcp_shared\b|\bserve (ensure|start)\b|majordomus-mcp|\$MJ"? mcp\b' "test/cases/$n.sh"; then
-      printf '  left out case %s: it starts a server; CI runs it\n' "$n"; continue; fi
-    names="$names $n"
+  # the chosen cases, priced again against what the gates left
+  room=$(( (deadline - $(date +%s)) * jobs )); spent=0; names=""
+  for p in $picked_cases; do
+    n="${p%:*}"; est="${p##*:}"
+    if [ $(( spent + est )) -gt "$room" ]; then
+      leave_case "$n: about ${est}s here, past the $(( room / jobs ))s the gates left of the bound; CI runs it"; continue
+    fi
+    spent=$(( spent + est )); names="$names $n"
   done
   ncases="$(printf '%s' "$names" | wc -w | tr -d ' ')"
   if [ "$ncases" -gt 0 ]; then
     t0="$(date +%s)"
     # shellcheck disable=SC2086
-    if MJ_TEST_JOBS=4 bash test/run.sh $names < /dev/null > "$plan.cases.log" 2>&1; then
-      printf '  ok     %s case(s) of at most %ss each (%ss)\n' "$ncases" "$per_case" "$(( $(date +%s) - t0 ))"
-      printf '%s %s\n' "$(( $(date +%s) - t0 ))" "the fast cases" >> "$plan.times"
+    if MJ_TEST_JOBS="$jobs" MJ_TEST_REPORT="$plan.report" bash test/run.sh $names < /dev/null > "$plan.cases.log" 2>&1; then
+      printf '  ok     %s case(s) of at most %ss each in CI (%ss)\n' "$ncases" "$per_case" "$(( $(date +%s) - t0 ))"
     else
       printf '  FAILED cases (%ss):\n' "$(( $(date +%s) - t0 ))"; grep -E '^(FAIL|not ok)|^    ' "$plan.cases.log" | head -n 20 | sed 's/^/         | /'
       failed="$failed cases"
     fi
-    rm -f "$plan.cases.log"
+    printf '%s %s\n' "$(( $(date +%s) - t0 ))" "the fast cases" >> "$plan.times"
+    [ -f "$plan.report" ] && awk -F'\t' '$3 ~ /^[0-9]+$/ { printf "case\t%s\t%s\n", $1, $3 }' "$plan.report" >> "$here" 2>/dev/null
+    rm -f "$plan.cases.log" "$plan.report"
   fi
-  took=$(( $(date +%s) - t_all ))
-  printf 'run-plan --before-push: %s gate(s) and %s case(s) in %ss, against a bound of %ss' \
-    "$(printf '%s' "$chosen" | wc -w | tr -d ' ')" "$ncases" "$took" "$bound"
+  # The file is a cache: one line per measurement, the last one wins. Past 5000 lines it is
+  # rewritten to the last line of each; a push measuring at that instant may lose its lines,
+  # which costs one estimate, never a gate.
+  if [ "$(wc -l < "$here" 2>/dev/null || echo 0)" -gt 5000 ]; then
+    awk -F'\t' '{ k = $1 FS $2; if (!(k in v)) o[++n] = k; v[k] = $3 } END { for (i = 1; i <= n; i++) print o[i] FS v[o[i]] }' \
+      "$here" > "$here.$$" 2>/dev/null && mv "$here.$$" "$here" 2>/dev/null
+    rm -f "$here.$$"
+  fi
+  took=$(( $(date +%s) - t_start ))
+  printf 'run-plan --before-push: %s gate(s) and %s case(s) in %ss, against a bound of %ss; left to CI: %s gate(s) and %s case(s), each named above' \
+    "$ran_g" "$ncases" "$took" "$bound" "$left_g" "$left_c"
   # Over the bound is reported, never refused: a push must not fail because the machine is
   # busy, or people route around the step. The slowest steps are named so the overrun can be
   # traced to a gate or to the load.
   if [ "$took" -gt "$bound" ]; then
-    printf ' (over it by %ss; slowest: %s; this machine is slower than the runner the durations were recorded on, and the push is not refused for that)' \
+    printf ' (over it by %ss; slowest: %s; this machine took longer than the prices it measured, and the push is not refused for that)' \
       "$(( took - bound ))" "$( [ -f "$plan.times" ] && LC_ALL=C sort -rn "$plan.times" | head -n 3 | awk '{s=$1; $1=""; sub(/^ /,""); printf "%s%s %ss", (NR>1?", ":""), $0, s}')"
   fi
   rm -f "$plan.times"
