@@ -9987,7 +9987,7 @@
           "claim": "An exclusive claim made on one runtime excludes an overlapping claim on every linked runtime, and concurrent claims resolve to one named winner everywhere",
           "implementation": "apps/majordomus-cli/src/mesh/state.rs",
           "responsibility": "none",
-          "source": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md",
+          "source": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v2.md",
           "test": "apps/majordomus-cli/tests/mesh_cooperation.rs"
         }
       },
@@ -10018,7 +10018,7 @@
           "claim": "Two runtimes of one repository link only through a signed, replay-protected handshake that checks protocol, repository identity and trust, and every refusal is typed and visible",
           "implementation": "apps/majordomus-cli/src/mesh/cooperation.rs",
           "responsibility": "none",
-          "source": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md",
+          "source": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v2.md",
           "test": "apps/majordomus-cli/tests/mesh_cooperation.rs"
         }
       },
@@ -10142,7 +10142,7 @@
           "claim": "Runtimes serving different repositories never form a cooperative link, even when they discover each other",
           "implementation": "apps/majordomus-cli/src/mesh/repository.rs",
           "responsibility": "none",
-          "source": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md",
+          "source": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v2.md",
           "test": "apps/majordomus-cli/tests/mesh_cooperation.rs"
         }
       },
@@ -32500,11 +32500,14 @@
             "A hello captured from a link to runtime A and replayed to runtime B within the skew window is refused with a typed refusal and changes no link of B",
             "A hello replayed to A after A restarts cannot displace an established link"
           ],
+          "completed_at": "2026-10-15T02:25:52Z",
+          "completed_event": "sha256:0d54c9be900260c6b4ca0ca1afc4d9d34ab7e4514e8b445ea5da634baeac0136",
           "created_at": "2026-10-09",
           "current_state": "A valid hello is accepted by any runtime of the repository that trusts its key and has not seen its nonce.",
           "depends_on": [],
           "evidence_required": [
-            "hello_replay_to_another_runtime_refused_test"
+            "hello_replay_to_another_runtime_refused_test",
+            "hello_replay_after_restart_refused_test"
           ],
           "milestone": "runtime-trust",
           "objective": "Bind each link hello to its intended recipient inside the signed bytes, refuse a hello addressed elsewhere, and make the documented check order the one the code runs.",
@@ -32519,12 +32522,16 @@
             ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md"
           ],
           "slug": "a-hello-names-its-recipient",
-          "updated_at": "2026-10-14",
+          "started_at": "2026-10-15T01:41:59Z",
+          "started_event": "sha256:2d3792ec1b2beaa4c0ec8fda08ce6ba0311e5135c25d583bf04e28323041cc26",
+          "updated_at": "2026-10-15T02:25:52Z",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --test mesh_cooperation",
             "cargo test --lib mesh::cooperation"
-          ]
+          ],
+          "verified_at": "2026-10-15T02:25:40Z",
+          "verified_event": "sha256:14a07de235b6fbbf6ba88f10d71058a3711aa4e21e058e9c962670af39985f32"
         }
       },
       {
@@ -35947,6 +35954,8 @@
           "acceptance_criteria": [
             "The rule's check order and the code's check order are the same, and a test names the order"
           ],
+          "completed_at": "2026-10-15T09:49:54Z",
+          "completed_event": "sha256:81e5061412cf39d14b2c0e1fb371b4faf81bf281f2a6c66c88b7415173db52c8",
           "created_at": "2026-10-14",
           "depends_on": [
             "I2132"
@@ -35970,7 +35979,9 @@
             "docs/MESH.md"
           ],
           "slug": "the-rule-states-the-hello-check-order",
-          "updated_at": "2026-10-14",
+          "started_at": "2026-10-15T08:05:22Z",
+          "started_event": "sha256:fb240e74c28d131e5525e03d404a9831a1a12526efe7cd7436380c45936f559b",
+          "updated_at": "2026-10-15T09:49:54Z",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --lib mesh::cooperation",
@@ -44110,12 +44121,12 @@
         }
       },
       {
-        "id": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
+        "id": "majordomus://rule/project.mesh-cooperation-is-authenticated@2",
         "kind": "rule",
-        "label": "project.mesh-cooperation-is-authenticated@1",
+        "label": "project.mesh-cooperation-is-authenticated@2",
         "summary": "Mesh cooperation is admitted per link, replicated through one journal, and projected by every surface alike",
-        "route": "/cockpit/objects/rule/project-mesh-cooperation-is-authenticated-1",
-        "source": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md",
+        "route": "/cockpit/objects/rule/project-mesh-cooperation-is-authenticated-2",
+        "source": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v2.md",
         "status": "active",
         "facts": {
           "class": "blocking",
@@ -62840,7 +62851,7 @@
       },
       {
         "source": "majordomus://adr/adr-0067",
-        "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
+        "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@2",
         "kind": "put_in_force"
       },
       {
@@ -64475,7 +64486,7 @@
       },
       {
         "source": "majordomus://adr/adr-0126",
-        "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
+        "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@2",
         "kind": "put_in_force"
       },
       {
@@ -68065,7 +68076,7 @@
       },
       {
         "source": "majordomus://claim/mesh-claims-cross-runtime",
-        "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
+        "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@2",
         "kind": "defined_in"
       },
       {
@@ -68105,7 +68116,7 @@
       },
       {
         "source": "majordomus://claim/mesh-cooperation-links",
-        "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
+        "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@2",
         "kind": "defined_in"
       },
       {
@@ -68265,7 +68276,7 @@
       },
       {
         "source": "majordomus://claim/mesh-repository-isolation",
-        "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
+        "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@2",
         "kind": "defined_in"
       },
       {
@@ -80569,12 +80580,12 @@
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
+        "source": "majordomus://rule/project.mesh-cooperation-is-authenticated@2",
         "target": "kind:rule",
         "kind": "is_a"
       },
       {
-        "source": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
+        "source": "majordomus://rule/project.mesh-cooperation-is-authenticated@2",
         "target": "majordomus://rule/project.mesh-is-observation-not-authority@1",
         "kind": "depends_on"
       },

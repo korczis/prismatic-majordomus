@@ -40,7 +40,7 @@ flowchart TD
     registry["MeshRegistry<br>one record per node × runtime"]
   end
   subgraph cooperationLayer["cooperation (ADR 0067)"]
-    link["link handshake (link.rs)<br>signature · freshness · nonce · protocol ·<br>self · repository · trust"]
+    link["link handshake (cooperation.rs)<br>size · shape · signature · freshness · nonce ·<br>protocol · self · recipient · repository ·<br>trust · link age · nonce cache · capacity"]
     table["peer-link table (cooperation.rs)<br>connecting · connected · degraded ·<br>unreachable · expired"]
     journal["Journal (journal.rs)<br>signed events (stream, seq), Lamport,<br>beats, marks"]
     fold["fold (state.rs)<br>sessions · claims · conflicts ·<br>handovers · reviews · digest"]
@@ -152,22 +152,35 @@ other, or any runtime with a declared seed — posts a signed **hello** to
 `POST /api/v1/mesh/link/hello`: its runtime card (key, runtime, instance, repository, name,
 version, features, endpoints), a 32-hex nonce, a timestamp, its link protocol range and,
 when the dialer knows whom it dials, the runtime key it means to reach (`to`). The answerer
-admits it only if, in the order the code checks:
+admits it only if, in the order the code checks (`Cooperation::accept_hello`; the first check
+that fails decides the refusal, and rule `project.mesh-cooperation-is-authenticated` v2 lists
+the same order):
 
-1. the message is within 900 KiB and has the shape of a hello;
-2. the Ed25519 signature verifies under the hello domain (a signature over another message
-   kind can never be replayed as a hello);
-3. the timestamp is within ±300 s of its clock;
-4. the nonce has 32 hex characters;
-5. the protocol ranges meet (link protocol 1..1 today; the highest common version is chosen);
-6. the peer is not this runtime;
-7. a hello that names its recipient names this runtime — a copy captured on its way to
-   another runtime of the repository is refused `misaddressed`;
-8. the peer's repository identity equals its own;
-9. the peer's key is trusted by its policy;
-10. the nonce has not been answered before. It is checked last on purpose: the replay cache
-    holds only nonces of trusted keys of this repository, so a stranger's hellos can neither
-    fill it nor evict a real peer's nonce.
+1. cooperation is running on it (`not_active`);
+2. the message is within 900 KiB (`oversized`);
+3. it has the shape of a hello and a well-formed card (`malformed`);
+4. the Ed25519 signature verifies under the hello domain — a signature over another message
+   kind can never be replayed as a hello (`signature`);
+5. the timestamp is within ±300 s of its clock (`stale`);
+6. the nonce has 32 hex characters (`malformed`);
+7. the protocol ranges meet — link protocol 1..1 today; the highest common version is
+   chosen (`protocol_unsupported`);
+8. the peer is not this runtime (`self_link`);
+9. a hello that names its recipient names this runtime — a copy captured on its way to
+   another runtime of the repository is refused before its nonce is spent (`misaddressed`);
+10. the peer's repository identity equals its own (`repository_mismatch`);
+11. the peer's key is trusted by its policy (`untrusted`);
+12. the hello is no older than the one that made the peer's live link (`replay`);
+13. its nonce has not been answered before (`replay`);
+14. a peer it does not know yet fits the peer table (`capacity`).
+
+The two replay checks come after trust on purpose: the replay cache holds only nonces of
+trusted keys of this repository, so a stranger's hellos can neither fill it nor evict a real
+peer's nonce. The age check is what the cache cannot be after a restart: a hello captured
+before this runtime restarted, replayed within the skew window once the peer has linked
+again, is refused `replay` rather than displacing that link. The unit test
+`the_hello_checks_run_in_the_order_the_rule_lists` sends hellos that fail each check and
+each adjacent pair, and reads this list and the rule's to hold all three to one order.
 
 A hello without `to` — from a seed, a first contact, or a release before it — is still
 admitted, and is protected from replay to another runtime only by the per-runtime nonce cache
@@ -430,7 +443,7 @@ What the mesh defends against, and how:
 | threat | answer |
 |---|---|
 | forged advertisement, hello, welcome, sync or event | Ed25519 over canonical bytes under per-message domains; the node id is derived from the key, never carried |
-| replayed hello or sync round | nonce cache; per-link rising counter; per-instance sequence for advertisements and events; a hello that names its recipient is refused `misaddressed` by every other runtime (I2132) |
+| replayed hello or sync round | nonce cache; per-link rising counter; per-instance sequence for advertisements and events; a hello that names its recipient is refused `misaddressed` by every other runtime, and a hello older than the one that made the peer's live link cannot replace it, even after a restart emptied the cache (I2132) |
 | a runtime of another repository | `repository_mismatch` at the handshake, `repository` rejection at ingest |
 | an unknown or untrusted key on the network | observed by discovery, refused `untrusted` at the handshake; its relayed events refused `untrusted` at ingest |
 | a key withdrawn from `trust.allow`, then a restart | the journal file is input: a reloaded event passes the checks and the trust decision a received one does, and what is refused is reported by reason (`untrusted`); only this machine's own key needs no allowing |
