@@ -25979,7 +25979,6 @@
             "The check runs in CI on every change"
           ],
           "created_at": "2026-09-06",
-          "current_state": "No such scan exists for the site or the Cockpit data.",
           "depends_on": [
             "I1005"
           ],
@@ -26002,7 +26001,7 @@
             "test/cases"
           ],
           "slug": "public-metadata-safety",
-          "updated_at": "2026-09-06",
+          "updated_at": "2026-10-15",
           "validation": [
             "bash test/run.sh"
           ],
@@ -53063,6 +53062,13 @@
         "label": "test/cases/303_one_source_serves_two_mounts.sh",
         "route": "/cockpit/objects/test/test-cases-303-one-source-serves-two-mounts-sh",
         "source": "test/cases/303_one_source_serves_two_mounts.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3047_a_leak_finding_names_where_it_is.sh",
+        "kind": "test",
+        "label": "test/cases/3047_a_leak_finding_names_where_it_is.sh",
+        "route": "/cockpit/objects/test/test-cases-3047-a-leak-finding-names-where-it-is-sh",
+        "source": "test/cases/3047_a_leak_finding_names_where_it_is.sh"
       },
       {
         "id": "majordomus://test/test/cases/304_a_provider_is_declared_once.sh",
@@ -82894,6 +82900,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3047_a_leak_finding_names_where_it_is.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/304_a_provider_is_declared_once.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -88190,8 +88201,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2796,
-      "edges": 6129,
+      "nodes": 2797,
+      "edges": 6130,
       "acyclic": false,
       "truncated": false
     }

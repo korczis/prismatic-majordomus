@@ -620,8 +620,25 @@ CREDENTIAL_RE="$(leak_patterns credential)"; NOT_CREDENTIAL_RE="$(leak_patterns 
 case "|$PRIVATE_RE|" in *"||"*) PRIVATE_RE="" ;; esac
 [ -n "$PRIVATE_RE" ] && [ -n "$CREDENTIAL_RE" ] && [ -n "$NOT_CREDENTIAL_RE" ] \
   || { echo "site-check: the leak patterns could not be read from ${LEAKS#"$ROOT"/}" >&2; exit 12; }
-site_files | xargs -0 grep -hoaE "$PRIVATE_RE" 2>/dev/null | head -1 | grep -q . && bad private "local path in output" || ok private "no local paths or internal hosts"
-site_files | xargs -0 grep -hoaE "$CREDENTIAL_RE" 2>/dev/null | grep -vE "$NOT_CREDENTIAL_RE" | head -1 | grep -q . && bad secrets "credential pattern in output" || ok secrets "no credential pattern"
+# A finding names the file it is in and the kind it is, and never the text: the text is the
+# secret, and a check that printed it would publish it into every CI log that ran it.
+# leak_files <regex> [<not-regex>] lists the site's own files carrying a match, one path
+# relative to the site per line; with <not-regex>, a file counts only when a match survives
+# that filter. The findings are read back into this shell, so every one of them is counted.
+leak_files() {
+  site_files | xargs -0 grep -laE "$1" 2>/dev/null | while IFS= read -r f; do
+    [ -z "${2:-}" ] || grep -oaE "$1" "$f" 2>/dev/null | grep -qvE "$2" || continue
+    printf '%s\n' "${f#"$PUB"/}"
+  done
+}
+LEAKED="$(leak_files "$PRIVATE_RE")"
+if [ -n "$LEAKED" ]; then
+  while IFS= read -r f; do bad private "$f: a local path or an internal host"; done <<< "$LEAKED"
+else ok private "no local paths or internal hosts"; fi
+LEAKED="$(leak_files "$CREDENTIAL_RE" "$NOT_CREDENTIAL_RE")"
+if [ -n "$LEAKED" ]; then
+  while IFS= read -r f; do bad secrets "$f: a credential-shaped assignment"; done <<< "$LEAKED"
+else ok secrets "no credential pattern"; fi
 # 13. docs coverage: every rendered docs page has a source, every docs.json entry is rendered
 for d in $(jq -r '.docs[] | select(.route) | .path' "$SITE/data/generated/docs.json"); do
   r="$(jq -r --arg p "$d" '.docs[] | select(.path==$p) | .route' "$SITE/data/generated/docs.json")"
