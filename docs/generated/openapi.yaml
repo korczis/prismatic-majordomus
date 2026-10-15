@@ -41867,6 +41867,17 @@ components:
             - state
             - detail
           description: "The policy rejected this node; `detail` says why (for instance a TOFU key\nchange). A rejected node stays listed — an operator debugging a mesh needs to\nsee what was refused, not wonder about silence."
+        - type: object
+          properties:
+            state:
+              type: string
+              const: retired
+            detail:
+              type: string
+          required:
+            - state
+            - detail
+          description: "The key was succeeded by a trusted successor, whose key is the `detail`: its history\nstays legitimate, and it is trusted for nothing new. Retired, not withdrawn."
       description: What the policy decided about one node.
     UnattachedPrep:
       type: object

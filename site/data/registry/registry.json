@@ -6,7 +6,7 @@
     "version": "0.26.0"
   },
   "registry": {
-    "fingerprint": "8bb6c8159b83c1a4857074c9e45c5b5f091505511db66bc49928fdc4a922bdcb",
+    "fingerprint": "c22f6a8f5d57320fd2be0226e3ccbc4161c588ee56d906b67837c118443093e8",
     "summary": {
       "total": 2379,
       "builtin": 199,
@@ -44198,6 +44198,23 @@
                       "detail"
                     ],
                     "description": "The policy rejected this node; `detail` says why (for instance a TOFU key\nchange). A rejected node stays listed — an operator debugging a mesh needs to\nsee what was refused, not wonder about silence."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "state": {
+                        "type": "string",
+                        "const": "retired"
+                      },
+                      "detail": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "state",
+                      "detail"
+                    ],
+                    "description": "The key was succeeded by a trusted successor, whose key is the `detail`: its history\nstays legitimate, and it is trusted for nothing new. Retired, not withdrawn."
                   }
                 ],
                 "description": "What the policy decided about one node."
@@ -46851,6 +46868,23 @@
                       "detail"
                     ],
                     "description": "The policy rejected this node; `detail` says why (for instance a TOFU key\nchange). A rejected node stays listed — an operator debugging a mesh needs to\nsee what was refused, not wonder about silence."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "state": {
+                        "type": "string",
+                        "const": "retired"
+                      },
+                      "detail": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "state",
+                      "detail"
+                    ],
+                    "description": "The key was succeeded by a trusted successor, whose key is the `detail`: its history\nstays legitimate, and it is trusted for nothing new. Retired, not withdrawn."
                   }
                 ],
                 "description": "What the policy decided about one node."
@@ -47304,6 +47338,23 @@
                       "detail"
                     ],
                     "description": "The policy rejected this node; `detail` says why (for instance a TOFU key\nchange). A rejected node stays listed — an operator debugging a mesh needs to\nsee what was refused, not wonder about silence."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "state": {
+                        "type": "string",
+                        "const": "retired"
+                      },
+                      "detail": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "state",
+                      "detail"
+                    ],
+                    "description": "The key was succeeded by a trusted successor, whose key is the `detail`: its history\nstays legitimate, and it is trusted for nothing new. Retired, not withdrawn."
                   }
                 ],
                 "description": "What the policy decided about one node."
@@ -48425,6 +48476,23 @@
                       "detail"
                     ],
                     "description": "The policy rejected this node; `detail` says why (for instance a TOFU key\nchange). A rejected node stays listed — an operator debugging a mesh needs to\nsee what was refused, not wonder about silence."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "state": {
+                        "type": "string",
+                        "const": "retired"
+                      },
+                      "detail": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "state",
+                      "detail"
+                    ],
+                    "description": "The key was succeeded by a trusted successor, whose key is the `detail`: its history\nstays legitimate, and it is trusted for nothing new. Retired, not withdrawn."
                   }
                 ],
                 "description": "What the policy decided about one node."
@@ -81850,7 +81918,7 @@
     ]
   },
   "index": {
-    "fingerprint": "91856503e50c190eed4ef3038cddbeecb22470999bc338c9dc21316140a5a46b",
+    "fingerprint": "bc1094084239329ad220ebcd02a0a9f457291d7bd98cafab2c2f726773497e7a",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {

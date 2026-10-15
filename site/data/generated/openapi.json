@@ -55069,7 +55069,7 @@
       "is_enum": false,
       "name": "TrustState",
       "properties": [],
-      "type": "one of 3 variants",
+      "type": "one of 4 variants",
       "used_by": [],
       "used_by_schemas": [
         "NodeRecord",
@@ -55119,6 +55119,26 @@
               "refs": [],
               "required": true,
               "type": "\"rejected\""
+            },
+            {
+              "description": "",
+              "name": "detail",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "The key was succeeded by a trusted successor, whose key is the `detail`: its history\nstays legitimate, and it is trusted for nothing new. Retired, not withdrawn.",
+          "properties": [
+            {
+              "description": "",
+              "name": "state",
+              "refs": [],
+              "required": true,
+              "type": "\"retired\""
             },
             {
               "description": "",
