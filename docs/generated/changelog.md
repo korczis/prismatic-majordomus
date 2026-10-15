@@ -77,6 +77,12 @@ Current version: **0.26.0**
 
 ## v0.24.1 — 2026-10-14
 
+### Decisions
+
+- **ADR-0158** The Observatory is one screen of the UI, and it draws only what was observed _(proposed)_
+- **ADR-0155** An expedited landing is the owner's word, judged on the merged tree, and never reaches a tag _(proposed)_
+- **ADR-0147** The Cockpit is published as a snapshot by the exporter that reads the UI, and two snapshots link only the pages each holds _(proposed)_
+
 ### Added
 
 - **product**: the Observatory is a feature with a claim a reader can check (`3d8da99be`)
