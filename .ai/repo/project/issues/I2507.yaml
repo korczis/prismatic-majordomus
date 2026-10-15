@@ -1,0 +1,43 @@
+id: I2507
+milestone: an-intent-is-followed-to-the-deployment-that-carries-it
+title: "intent explain continues past the merge to the release and the observed deployment that carry each served issue"
+slug: intent-explain-reaches-release-and-deployment
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "Extend the answer of intent_realization.explain so that each completed issue serving the intent is followed to its merge commit, the first release record whose commit contains it, and the first observed deployment per environment whose commit contains it, with each absent link stated."
+why: "campaigns/majordomus-autonomous-idd-maximal/15_RELEASE_GITHUB_ROLLOUT.md lists the trace intent, plan revision, issue, branch, commits, checks, pull request, merge commit, release, artifact, deployment, smoke, criterion evidence, and campaigns/majordomus-autonomous-idd-maximal/19_ACCEPTANCE_TRACEABILITY_MATRIX.md (AC-032) asks that one explanation provides it. The repository derives the first half (ADR 0075, I1903, the trace capabilities) and holds the second half as separate records; a reader who asks whether the work of an intent has shipped joins them by hand from git tag --contains and the Deployments screen."
+current_state: "apps/majordomus-cli/src/intent_realization.rs names neither a release nor a deployment (grep finds no occurrence of either word). Release records are tracked under .ai/repo/releases, one per version. Observed deployments are in the recorded forge observation (apps/majordomus-cli/src/deploy/observed.rs). trace.issue answers an issue's branches and commits from git."
+desired_state: "For each completed issue the explanation carries delivery: the merge commit on the default branch, the release (version and commit) that first contains it or the statement not released, and per environment the first observed deployment that contains it or the statement not deployed, with the observation's time or the statement never observed. Everything is derived from git, the release records and the recorded observation at the call."
+scope:
+  - "apps/majordomus-cli/src/intent_realization.rs"
+  - "apps/majordomus-cli/src/capability/builtin/intent_realization.rs"
+  - "apps/majordomus-cli/src/release/model.rs"
+  - "apps/majordomus-cli/src/deploy/observed.rs"
+  - "apps/majordomus-cli/tests/intent_realization.rs"
+  - "apps/majordomus-cli/src/ui/intent.rs"
+  - "apps/majordomus-cli/src/ui/roadmap.rs"
+  - "docs/PLANNING.md"
+  - "docs/DELIVERY.md"
+  - ".ai/repo/project/issues/I2507.yaml"
+non_scope:
+  - "Pull requests, checks and reviews in the explanation: the executable makes no network call and scripts/traceability holds that half"
+  - "Artifact digests and attestations, which are I2165"
+  - "Storing the join"
+depends_on:
+  - "I2506"
+  - "I2541"
+acceptance_criteria:
+  - "In a fixture repository with one merged issue, one release record after it and one observed deployment after that, the explanation names all three commits and the version"
+  - "An issue merged after the newest release reads not released, and one released but in no observed deployment reads not deployed for that environment"
+  - "With no recorded observation every environment reads never observed, and nothing reads not deployed"
+  - "The answer is the same over the command line, HTTP and MCP, and a test asserts the handler spawns no process that reaches the network"
+  - "The Realisation panel of the intent inspector that I2541 adds shows the three links per issue from the same capability"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test intent_realization"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 388_an_intent_is_realised_across_providers_and_held_to_reality 1081_an_intent_opens_what_serves_it"
+evidence_required:
+  - "explain_reaches_release_and_deployment"
+created_at: 2026-10-13
+updated_at: 2026-10-13

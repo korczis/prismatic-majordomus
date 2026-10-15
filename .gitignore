@@ -41,6 +41,10 @@ site/static/openapi.json
 site/static/build.json
 site/static/graphs/
 site/data/build.json
+# what moved since the deployment a build replaces (scripts/site-build `since_deploy`): composed
+# from the commit that deployment was built from to the one being built, so a committed copy
+# would be stale at the next commit by construction
+site/data/since-deploy.json
 # the CI evidence a publication fetched for its own commit (scripts/pages evidence): an input of
 # one deployment, like build.json, and never committed — a committed copy would describe the
 # commit before the one carrying it (ADR 68)
@@ -56,6 +60,7 @@ share/cockpit/vendor/cytoscape.min.js
 share/cockpit/vendor/three.module.min.js
 share/cockpit/vendor/three.core.min.js
 share/cockpit/vendor/p5.min.js
+share/cockpit/vendor/mermaid.min.js
 # the UI's copy of the same pinned graph library, lazy-loaded by the screens that draw a
 # graph, each complete without it (ADR 0135)
 share/ui/vendor/

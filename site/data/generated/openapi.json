@@ -69,6 +69,7 @@
     "op-executions-start": "docs/api/executions/",
     "op-gates-completion": "docs/api/gates/",
     "op-gates-model": "docs/api/gates/",
+    "op-gates-policy": "docs/api/gates/",
     "op-graph-get": "docs/api/graph/",
     "op-graph-list": "docs/api/graph/",
     "op-health-live": "docs/api/health/",
@@ -340,6 +341,7 @@
     "schema-CompiledContext": "docs/api/devcontext/",
     "schema-CompilerPolicy": "docs/api/devcontext/",
     "schema-Completion": "docs/api/gates/",
+    "schema-CompletionPolicyReport": "docs/api/gates/",
     "schema-Component": "docs/api/continuity/",
     "schema-ConclusionView": "docs/api/reasoning/",
     "schema-ConditionState": "docs/api/intents/",
@@ -431,6 +433,7 @@
     "schema-DropReason": "docs/api/pack/",
     "schema-DroppedFile": "docs/api/pack/",
     "schema-DryRunProof": "docs/api/integration/",
+    "schema-Durability": "docs/api/mesh/",
     "schema-EconomicsCheck": "docs/api/economics/",
     "schema-EconomicsCheckReport": "docs/api/economics/",
     "schema-EconomicsClass": "docs/api/economics/",
@@ -641,6 +644,7 @@
     "schema-IntentRealizationView": "docs/api/intent-realization/",
     "schema-IntentRealizedWork": "docs/api/intent-realization/",
     "schema-IntentStage": "docs/api/shared/",
+    "schema-IntentUnlinkedClass": "docs/api/intent-realization/",
     "schema-IntentUnmetCriterion": "docs/api/intent-realization/",
     "schema-IntentValidation": "docs/api/intents/",
     "schema-IntentVerdict": "docs/api/shared/",
@@ -676,6 +680,7 @@
     "schema-LeftBranch": "docs/api/integration/",
     "schema-LeftBranchReport": "docs/api/integration/",
     "schema-Libc": "docs/api/distribution/",
+    "schema-LifecycleStage": "docs/api/gates/",
     "schema-LimitsView": "docs/api/executions/",
     "schema-LineState": "docs/api/continuity/",
     "schema-LineSync": "docs/api/continuity/",
@@ -875,6 +880,7 @@
     "schema-QualityAnswer": "docs/api/quality/",
     "schema-QualityReport": "docs/api/quality/",
     "schema-QualitySeverity": "docs/api/quality/",
+    "schema-QuestionDecl": "docs/api/gates/",
     "schema-QueueTallies": "docs/api/integration/",
     "schema-RankFactors": "docs/api/integration/",
     "schema-Readiness": "docs/api/health/",
@@ -1022,6 +1028,7 @@
     "schema-SelectedAdvisor": "docs/api/reasoning/",
     "schema-Selector": "docs/api/devcontext/",
     "schema-SelectorRule": "docs/api/devcontext/",
+    "schema-ServedShare": "docs/api/server/",
     "schema-ServedStanding": "docs/api/served/",
     "schema-ServedVerdict": "docs/api/served/",
     "schema-ServerStanding": "docs/api/shared/",
@@ -1039,6 +1046,7 @@
     "schema-Severity": "docs/api/shared/",
     "schema-ShardLimits": "docs/api/pack/",
     "schema-ShardPlan": "docs/api/pack/",
+    "schema-ShareStanding": "docs/api/server/",
     "schema-ShellFinding": "docs/api/shell/",
     "schema-ShellReport": "docs/api/shell/",
     "schema-ShellUnit": "docs/api/shell/",
@@ -1068,6 +1076,9 @@
     "schema-SourceRelation": "docs/api/continuity/",
     "schema-Spelling": "docs/api/session-domain/",
     "schema-Stability": "docs/api/shared/",
+    "schema-StageDecl": "docs/api/gates/",
+    "schema-StageReport": "docs/api/gates/",
+    "schema-StageState": "docs/api/gates/",
     "schema-Stance": "docs/api/reasoning/",
     "schema-Standing": "docs/api/worktree/",
     "schema-StartInput": "docs/api/executions/",
@@ -1230,8 +1241,8 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 196,
-    "schemas": 974,
+    "operations": 197,
+    "schemas": 984,
     "tags": 57
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1392,6 +1403,7 @@
     "executions.start": "executions",
     "gates.completion": "gates",
     "gates.model": "gates",
+    "gates.policy": "gates",
     "graph.get": "graph",
     "graph.list": "graph",
     "health.live": "health",
@@ -1667,6 +1679,7 @@
     "CompiledContext": "devcontext",
     "CompilerPolicy": "devcontext",
     "Completion": "gates",
+    "CompletionPolicyReport": "gates",
     "Component": "continuity",
     "ConclusionView": "reasoning",
     "ConditionState": "intents",
@@ -1758,6 +1771,7 @@
     "DropReason": "pack",
     "DroppedFile": "pack",
     "DryRunProof": "integration",
+    "Durability": "mesh",
     "EconomicsCheck": "economics",
     "EconomicsCheckReport": "economics",
     "EconomicsClass": "economics",
@@ -1968,6 +1982,7 @@
     "IntentRealizationView": "intent-realization",
     "IntentRealizedWork": "intent-realization",
     "IntentStage": "shared",
+    "IntentUnlinkedClass": "intent-realization",
     "IntentUnmetCriterion": "intent-realization",
     "IntentValidation": "intents",
     "IntentVerdict": "shared",
@@ -2003,6 +2018,7 @@
     "LeftBranch": "integration",
     "LeftBranchReport": "integration",
     "Libc": "distribution",
+    "LifecycleStage": "gates",
     "LimitsView": "executions",
     "LineState": "continuity",
     "LineSync": "continuity",
@@ -2202,6 +2218,7 @@
     "QualityAnswer": "quality",
     "QualityReport": "quality",
     "QualitySeverity": "quality",
+    "QuestionDecl": "gates",
     "QueueTallies": "integration",
     "RankFactors": "integration",
     "Readiness": "health",
@@ -2349,6 +2366,7 @@
     "SelectedAdvisor": "reasoning",
     "Selector": "devcontext",
     "SelectorRule": "devcontext",
+    "ServedShare": "server",
     "ServedStanding": "served",
     "ServedVerdict": "served",
     "ServerStanding": "shared",
@@ -2366,6 +2384,7 @@
     "Severity": "shared",
     "ShardLimits": "pack",
     "ShardPlan": "pack",
+    "ShareStanding": "server",
     "ShellFinding": "shell",
     "ShellReport": "shell",
     "ShellUnit": "shell",
@@ -2395,6 +2414,9 @@
     "SourceRelation": "continuity",
     "Spelling": "session-domain",
     "Stability": "shared",
+    "StageDecl": "gates",
+    "StageReport": "gates",
+    "StageState": "gates",
     "Stance": "reasoning",
     "Standing": "worktree",
     "StartInput": "executions",
@@ -9976,7 +9998,7 @@
       "variants": []
     },
     {
-      "description": "```\nuse majordomus_cli::gates::Completion;\n\n// the document every surface reads, as `gates.completion` answers with it. The property\n// that matters is the one asserted here: a gate that never reported leaves the task\n// finishable and *unverified*, which is a different thing from a task that passed.\nlet c: Completion = serde_json::from_value(serde_json::json!({\n    \"present\": true,\n    \"model\": \".ai/repo/ci/gates.yaml\",\n    \"plan\": { \"mode\": \"affected\", \"reason\": \"1 path in 1 class\", \"changed\": [\"docs/CLI.md\"],\n              \"classes\": [], \"unclassified\": [], \"selected\": {}, \"excluded\": {} },\n    \"finishable\": true,\n    \"unverified\": [\"reference-check\"],\n    \"tallies\": { \"queued\": 1 },\n    \"gates\": [],\n    \"obligations\": [],\n    \"questions\": []\n}))\n.unwrap();\nassert!(c.finishable, \"absence of a verdict does not refuse\");\nassert_eq!(c.unverified, [\"reference-check\"], \"and it is never silently accepted\");\nassert!(c.blocking.is_empty());\n```\nWhether the active task may be called finished, and everything the answer rests on.\n\n`finishable` is the field a caller acts on and the one thing no surface may recompute:\nthe shell tool's `check` and `finish` read it, the HTTP API serves it, the Cockpit\nrenders it, and all of them are reading this one execution.",
+      "description": "```\nuse majordomus_cli::gates::Completion;\n\n// the document every surface reads, as `gates.completion` answers with it. The property\n// that matters is the one asserted here: a gate that never reported leaves the task\n// finishable and *unverified*, which is a different thing from a task that passed.\nlet c: Completion = serde_json::from_value(serde_json::json!({\n    \"present\": true,\n    \"model\": \".ai/repo/ci/gates.yaml\",\n    \"plan\": { \"mode\": \"affected\", \"reason\": \"1 path in 1 class\", \"changed\": [\"docs/CLI.md\"],\n              \"classes\": [], \"unclassified\": [], \"selected\": {}, \"excluded\": {} },\n    \"finishable\": true,\n    \"unverified\": [\"reference-check\"],\n    \"tallies\": { \"queued\": 1 },\n    \"gates\": [],\n    \"obligations\": [],\n    \"questions\": [],\n    \"policy\": \"share/completion.yaml\",\n    \"stage\": { \"id\": \"gates\", \"title\": \"Gates\", \"state\": \"pending\", \"complete\": false,\n               \"owing\": [\"ci\"], \"stages\": [] },\n    \"complete\": false\n}))\n.unwrap();\nassert!(c.finishable, \"absence of a verdict does not refuse\");\nassert_eq!(c.unverified, [\"reference-check\"], \"and it is never silently accepted\");\nassert!(c.blocking.is_empty());\n// finishable is not complete: the stage the answers fold to still owes the ci question\nassert!(!c.complete);\nassert_eq!(c.stage.id, \"gates\");\nassert_eq!(c.stage.owing, [\"ci\"]);\n```\nWhether the active task may be called finished, and everything the answer rests on.\n\n`finishable` is the field a caller acts on and the one thing no surface may recompute:\nthe shell tool's `check` and `finish` read it, the HTTP API serves it, the Cockpit\nrenders it, and all of them are reading this one execution.",
       "home": "gates",
       "is_enum": false,
       "name": "Completion",
@@ -10060,13 +10082,36 @@
           "type": "array of ImpliedObligation"
         },
         {
-          "description": "The done invariant: the questions a task must answer before anybody may call it\nfinished, each with the source that answered it and the evidence it read. Composed\nfrom the obligation closure, the gates, the change set, the repository's convergence\nand the closing readings; a question nothing here reaches is `unknown` and names the\ncommand that would answer it.",
+          "description": "The done invariant: the questions a task must answer before anybody may call it\nfinished, each with the source that answered it and the evidence it read. Composed\nfrom the obligation closure, the gates, the change set, the repository's convergence\nand the closing readings; a question nothing here reaches is `unknown` and names the\ncommand that would answer it. Exactly the questions of the completion policy, in its\norder, each with the stage the policy places it in.",
           "name": "questions",
           "refs": [
             "DoneQuestion"
           ],
           "required": true,
           "type": "array of DoneQuestion"
+        },
+        {
+          "description": "The completion policy the questions were taken from, as the distribution names it.\nAbsent when no policy could be read; a finding then says why, the one question asked\nis whether it can be, and nothing is complete.",
+          "name": "policy",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Where the task stands in the lifecycle, folded from the answers in the policy's\nstage order: the first stage blocked, else the first stage pending, else the last.\nDerived on every reading and never written down by anybody.",
+          "name": "stage",
+          "refs": [
+            "LifecycleStage"
+          ],
+          "required": true,
+          "type": "LifecycleStage"
+        },
+        {
+          "description": "True only when a task is present and every question of the policy passes or is\nexempt. The one field that may be read as \"done\": it is the stage fold's word, and\nno surface computes it a second time from the parts.",
+          "name": "complete",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
         },
         {
           "description": "What could not be established, each as one line. Never empty when something was\nskipped: a gap is reported rather than left to be inferred.",
@@ -10079,6 +10124,74 @@
       "type": "object",
       "used_by": [
         "gates.completion"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The completion policy, as `gates.policy` serves it: the stages, the questions and the\nsource each is answered from, with what the policy resolves to in this repository.\nThe policy is flattened into the report, so a reader sees the keys the file carries\nwith the derived fields beside them.\n\n```\nuse majordomus_cli::capability::builtin::gates::CompletionPolicyReport;\nuse majordomus_cli::gates::CompletionPolicy;\n\nlet policy = CompletionPolicy::parse(\n    \"version: 1\\nstages:\\n  - id: a\\n    title: Alpha\\n    summary: s\\nquestions:\\n  - id: q\\n    stage: a\\n    question: Is it?\\n    source: gate:site-check\\n    remediation: run it\\n\",\n    \"share/completion.yaml\",\n)\n.unwrap();\nlet report = CompletionPolicyReport {\n    outline: policy.outline(),\n    problems: policy.validate(&[]),\n    unanswered_gates: policy.unanswered_gates(&[]),\n    policy,\n};\nassert_eq!(report.outline, \"- Alpha: q\\n\");\nassert_eq!(report.unanswered_gates, [\"q:site-check\"]);\nlet json = serde_json::to_value(&report).unwrap();\nassert_eq!(json[\"stages\"][0][\"id\"], \"a\", \"the policy's own keys, flattened\");\nassert!(json.get(\"problems\").is_none(), \"a coherent distribution writes no problems\");\n```",
+      "home": "gates",
+      "is_enum": false,
+      "name": "CompletionPolicyReport",
+      "properties": [
+        {
+          "description": "The format version the file states.",
+          "name": "version",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "Where it was read from.",
+          "name": "source",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The lifecycle, in order.",
+          "name": "stages",
+          "refs": [
+            "StageDecl"
+          ],
+          "required": true,
+          "type": "array of StageDecl"
+        },
+        {
+          "description": "Every question, in declaration order.",
+          "name": "questions",
+          "refs": [
+            "QuestionDecl"
+          ],
+          "required": true,
+          "type": "array of QuestionDecl"
+        },
+        {
+          "description": "The definition of done in a dozen lines: one per stage that asks anything, its\nquestions after a colon.",
+          "name": "outline",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What does not resolve against the vocabulary the policy is shipped beside: a token\n`share/obligations.yaml` lacks. Empty in a coherent distribution, and never silently so.",
+          "name": "problems",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "The questions answered by a gate this repository's CI model does not declare, as\n`question:gate`. Not a problem of the policy — the model is the repository's — but a\nquestion this repository never gets a verdict for, listed so that it is seen.",
+          "name": "unanswered_gates",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "gates.policy"
       ],
       "used_by_schemas": [],
       "values": [],
@@ -15159,7 +15272,7 @@
       "variants": []
     },
     {
-      "description": "```\nuse majordomus_cli::gates::{DoneQuestion, GateStatus};\n\nlet q = DoneQuestion {\n    id: \"pushed\".into(),\n    question: \"Has the commit reached the remote?\".into(),\n    status: GateStatus::Queued,\n    evidence: \"the obligation is owed\".into(),\n    source: \"obligation push (obligations.closure)\".into(),\n    remediation: \"git push\".into(),\n};\n// every question names what answered it and what would settle it: a question with\n// neither is a checklist line, which is the artifact this type exists instead of\nassert!(!q.source.is_empty() && !q.remediation.is_empty());\nassert!(q.status.unverified());\n```\nOne question of the done invariant, and what answered it.",
+      "description": "```\nuse majordomus_cli::gates::{DoneQuestion, GateStatus};\n\nlet q = DoneQuestion {\n    id: \"pushed\".into(),\n    stage: \"commit\".into(),\n    question: \"Has the commit reached the remote?\".into(),\n    status: GateStatus::Queued,\n    evidence: \"the obligation is owed\".into(),\n    source: \"obligation push (obligations.closure)\".into(),\n    remediation: \"git push\".into(),\n};\n// every question names what answered it and what would settle it: a question with\n// neither is a checklist line, which is the artifact this type exists instead of\nassert!(!q.source.is_empty() && !q.remediation.is_empty());\nassert!(q.status.unverified());\n```\nOne question of the done invariant, and what answered it.",
       "home": "gates",
       "is_enum": false,
       "name": "DoneQuestion",
@@ -15167,6 +15280,13 @@
         {
           "description": "The question's identity, stable across reports.",
           "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The lifecycle stage the policy places it in.",
+          "name": "stage",
           "refs": [],
           "required": true,
           "type": "string"
@@ -15427,6 +15547,37 @@
       ],
       "used_by_schemas": [],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "Whether an event this runtime wrote reached this machine's disk: what an append\nacknowledges, and the only thing a caller may say about it.\n\n```\nuse majordomus_cli::mesh::journal::Durability;\nassert_eq!(serde_json::to_value(Durability::NotDurable).unwrap(), \"not_durable\");\nassert_eq!(Durability::default(), Durability::Unknown, \"an answer that did not say\");\nassert!(Durability::Synced.is_on_disk() && !Durability::NotDurable.is_on_disk());\n```",
+      "home": "mesh",
+      "is_enum": true,
+      "name": "Durability",
+      "properties": [],
+      "type": "\"synced\" | \"memory\" | \"not_durable\" | \"unknown\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "Written"
+      ],
+      "values": [
+        {
+          "description": "Appended to the journal file and synced (`fsync` of its data) before the append\nreturned.",
+          "value": "synced"
+        },
+        {
+          "description": "The journal has no file: it lives in memory and its peers, by configuration.",
+          "value": "memory"
+        },
+        {
+          "description": "The write to the journal file failed. The event is held in memory and replicated to\npeers, and is lost to this machine when the runtime restarts unless a peer still holds\nit. It is not acknowledged as durable.",
+          "value": "not_durable"
+        },
+        {
+          "description": "Not reported: an answer from an executable that predates this field.",
+          "value": "unknown"
+        }
+      ],
       "variants": []
     },
     {
@@ -18947,6 +19098,7 @@
         "executions.start",
         "gates.model",
         "gates.completion",
+        "gates.policy",
         "graph.get",
         "graph.list",
         "health.report",
@@ -27234,7 +27386,7 @@
       "variants": []
     },
     {
-      "description": "Every intent, realised, and every unit of work, joined: what `majordomus intent realization`\nanswers.\n\n```\nuse majordomus_cli::intent_realization::IntentRealization;\nlet r = IntentRealization { intents: vec![], work: vec![], orphans: 0, findings: vec![] };\nassert_eq!(r.orphans, 0);\n```",
+      "description": "Every intent, realised, and every unit of work, joined: what `majordomus intent realization`\nanswers.\n\n```\nuse majordomus_cli::intent_realization::IntentRealization;\nlet r = IntentRealization {\n    intents: vec![], work: vec![], orphans: 0, empty: 0, before_intents: 0, findings: vec![],\n};\nassert_eq!(r.orphans + r.empty + r.before_intents, 0);\n```",
       "home": "intent-realization",
       "is_enum": false,
       "name": "IntentRealization",
@@ -27258,10 +27410,24 @@
           "type": "array of IntentRealizedWork"
         },
         {
-          "description": "How many units of work realise no intent.",
+          "description": "How many units of work serve no intent: the unlinked units of class `orphan` alone.",
           "name": "orphans",
           "refs": [],
           "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many unlinked units are `empty`: session records that did no work a link could be\nread from.",
+          "name": "empty",
+          "refs": [],
+          "required": false,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many unlinked units are `before_intents`: finished work that started before the\nfirst intent record was written, or while none was declared.",
+          "name": "before_intents",
+          "refs": [],
+          "required": false,
           "type": "integer (uint)"
         },
         {
@@ -27370,7 +27536,7 @@
       "variants": []
     },
     {
-      "description": "A unit of work with every intent it realises, or the reason it realises none.\n\n```\nuse majordomus_cli::intent_realization::{IntentRealizedWork, IntentWorkKind, IntentWorkUnit};\nlet w = IntentRealizedWork {\n    work: IntentWorkUnit::new(IntentWorkKind::Task, \"t-1\"),\n    links: vec![],\n    unlinked: Some(\"it names no issue\".into()),\n};\nassert!(w.links.is_empty() && w.unlinked.is_some());\n```",
+      "description": "A unit of work with every intent it realises, or the reason it realises none.\n\n```\nuse majordomus_cli::intent_realization::{IntentRealizedWork, IntentWorkKind, IntentWorkUnit};\nlet w = IntentRealizedWork {\n    work: IntentWorkUnit::new(IntentWorkKind::Task, \"t-1\"),\n    links: vec![],\n    unlinked: Some(\"it names no issue\".into()),\n    class: None,\n};\nassert!(w.links.is_empty() && w.unlinked.is_some());\n```",
       "home": "intent-realization",
       "is_enum": false,
       "name": "IntentRealizedWork",
@@ -27399,6 +27565,15 @@
           "refs": [],
           "required": false,
           "type": "string | null"
+        },
+        {
+          "description": "When it realises none: what it is, by the facts it records. `realize` sets it on every\nunlinked unit; `link` alone, which knows neither liveness nor the first intent, leaves\nit empty.",
+          "name": "class",
+          "refs": [
+            "IntentUnlinkedClass"
+          ],
+          "required": false,
+          "type": "IntentUnlinkedClass | null"
         }
       ],
       "type": "object",
@@ -27453,6 +27628,33 @@
         {
           "description": "The record names the intent that replaced it.",
           "value": "superseded"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "What a unit of work that realises no intent is, by the facts it records (ADR 0075,\namendment of 2026-10-15). Only `IntentUnlinkedClass::Orphan` is work serving no intent;\nthe other two classes say why a unit is not, and neither is a link.\n\n```\nuse majordomus_cli::intent_realization::IntentUnlinkedClass;\nassert_eq!(\n    serde_json::to_string(&IntentUnlinkedClass::BeforeIntents).unwrap(),\n    \"\\\"before_intents\\\"\"\n);\nassert!(IntentUnlinkedClass::Empty < IntentUnlinkedClass::Orphan);\n```",
+      "home": "intent-realization",
+      "is_enum": true,
+      "name": "IntentUnlinkedClass",
+      "properties": [],
+      "type": "\"empty\" | \"before_intents\" | \"orphan\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "IntentRealizedWork"
+      ],
+      "values": [
+        {
+          "description": "A session record that lists no issue, no commit and no changed path outside the session\nrecords, and whose own words cite no issue: it did no work a link could be read from.",
+          "value": "empty"
+        },
+        {
+          "description": "Not live, not empty, and its earliest episode started before the first intent record\nwas written — or no intent is declared at all.",
+          "value": "before_intents"
+        },
+        {
+          "description": "Anything else unlinked: work done, or being done, while an intent existed, with no fact\nlinking it to one.",
+          "value": "orphan"
         }
       ],
       "variants": []
@@ -27951,6 +28153,20 @@
           "refs": [],
           "required": false,
           "type": "array of string"
+        },
+        {
+          "description": "When its earliest episode started, as its record says: a session record's `started_at`,\na task's first `task.started`, a claim's `at`. Empty when no record says.",
+          "name": "started_at",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "The commits a session record lists.",
+          "name": "commits",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
         }
       ],
       "type": "object",
@@ -28217,6 +28433,13 @@
         {
           "description": "Lines of the journal file the last reload could not read: torn, corrupt, or written\nby something that is not this journal. Counted, never silently dropped.",
           "name": "unreadable",
+          "refs": [],
+          "required": false,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Bytes of the journal file the last reload left unread because they lie beyond\n`MAX_RELOAD_BYTES`: on disk and kept by compaction, and not in memory. Nonzero fails\n`mesh doctor`.",
+          "name": "unread_bytes",
           "refs": [],
           "required": false,
           "type": "integer (uint64)"
@@ -29266,7 +29489,7 @@
       "variants": []
     },
     {
-      "description": "A lease as a reader sees it: what the server wrote about itself, without the token that\nmakes the file the server's own.\n\n```\nuse majordomus_cli::capability::builtin::server::LeaseView;\nlet view = LeaseView { pid: 7, url: Some(\"http://127.0.0.1:8741\".into()),\n    started_at: \"2026-09-10T00:00:00Z\".into(), executable: None, version: Some(\"1.0.0\".into()) };\nlet v = serde_json::to_value(&view).unwrap();\nassert_eq!(v[\"pid\"], 7);\nassert!(v.get(\"token\").is_none() && v.get(\"root\").is_none());\n```",
+      "description": "A lease as a reader sees it: what the server wrote about itself, without the token that\nmakes the file the server's own.\n\n```\nuse majordomus_cli::capability::builtin::server::LeaseView;\nlet view = LeaseView { pid: 7, url: Some(\"http://127.0.0.1:8741\".into()),\n    started_at: \"2026-09-10T00:00:00Z\".into(), executable: None, version: Some(\"1.0.0\".into()),\n    share: None };\nlet v = serde_json::to_value(&view).unwrap();\nassert_eq!(v[\"pid\"], 7);\nassert!(v.get(\"token\").is_none() && v.get(\"root\").is_none());\nassert!(v.get(\"share\").is_none(), \"a lease that names no share is read without one\");\n```",
       "home": "server",
       "is_enum": false,
       "name": "LeaseView",
@@ -29307,6 +29530,15 @@
           "refs": [],
           "required": false,
           "type": "string | null"
+        },
+        {
+          "description": "The share directory the server serves, measured now against `version`: the version\nit states, whether it holds `ui/`, and `skewed` with the reason when either differs\nfrom what the server's executable needs. Absent when the lease names no share — a\nserver older than this field, or one that has not located its share yet.",
+          "name": "share",
+          "refs": [
+            "ServedShare"
+          ],
+          "required": false,
+          "type": "ServedShare | null"
         }
       ],
       "type": "object",
@@ -29477,6 +29709,67 @@
           "value": "musl"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "Where the task stands: the one stage a reader acts on, and every stage behind and\nahead of it. Produced by `derive_stage` and by nothing else, so the stage a report\nnames is always the fold over the answers and never a word somebody wrote down.\n\n```\nuse majordomus_cli::gates::{DoneQuestion, GateStatus, LifecycleStage, StageDecl, StageState, derive_stage};\n\nlet stages = [StageDecl { id: \"build\".into(), title: \"Build\".into(), summary: \"s\".into() }];\nlet owed = DoneQuestion {\n    id: \"committed\".into(), stage: \"build\".into(), question: \"Is it committed?\".into(),\n    status: GateStatus::Queued, evidence: \"owed\".into(), source: \"s\".into(), remediation: \"git commit\".into(),\n};\nlet stage: LifecycleStage = derive_stage(&stages, &[owed]);\nassert_eq!((stage.id.as_str(), stage.state), (\"build\", StageState::Pending));\nassert_eq!(stage.owing, [\"committed\"]);\nassert!(!stage.complete, \"a question still owed is a task not completed\");\nassert_eq!(stage.stages.len(), 1);\n```",
+      "home": "gates",
+      "is_enum": false,
+      "name": "LifecycleStage",
+      "properties": [
+        {
+          "description": "The stage the task stands at: the first one blocked, else the first one pending,\nelse the last stage of the policy.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "That stage as a heading.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Where it stands.",
+          "name": "state",
+          "refs": [
+            "StageState"
+          ],
+          "required": true,
+          "type": "StageState"
+        },
+        {
+          "description": "True only when every stage is complete or empty. The word `completed` is earned\nhere and nowhere else.",
+          "name": "complete",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The questions still owed or refusing at the stage the task stands at.",
+          "name": "owing",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "Every stage of the policy, in order.",
+          "name": "stages",
+          "refs": [
+            "StageReport"
+          ],
+          "required": true,
+          "type": "array of StageReport"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Completion"
+      ],
+      "values": [],
       "variants": []
     },
     {
@@ -40095,6 +40388,56 @@
       "variants": []
     },
     {
+      "description": "One question of the policy, as declared.\n\n`source` is carried as the text the file states (`obligation:tests`, `gates`,\n`closing:debt`), never as a structure: the policy file, `gates.policy` and the\nquestions of the completion report then state the same bytes for the same question,\nand a reader compares them by eye. `Self::kind`\nparses it; `CompletionPolicy::parse` has already refused a text nothing answers.\n\n```\nuse majordomus_cli::gates::{QuestionDecl, QuestionSource};\n\nlet decl = QuestionDecl {\n    id: \"pushed\".into(),\n    stage: \"commit\".into(),\n    question: \"Has the commit reached the remote?\".into(),\n    source: \"obligation:push\".into(),\n    remediation: \"git push\".into(),\n};\nassert_eq!(decl.kind(), QuestionSource::Obligation(\"push\".into()));\n// the source is carried as text, and serialises as the text the file stated\nassert_eq!(serde_json::to_value(&decl).unwrap()[\"source\"], \"obligation:push\");\n```",
+      "home": "gates",
+      "is_enum": false,
+      "name": "QuestionDecl",
+      "properties": [
+        {
+          "description": "The question's identity, stable across reports.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The stage it belongs to.",
+          "name": "stage",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The question, as a person would ask it.",
+          "name": "question",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What answers it, as the policy states it.",
+          "name": "source",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What would settle it, as a command.",
+          "name": "remediation",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "CompletionPolicyReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "How many pull requests are in each disposition and lane.",
       "home": "integration",
       "is_enum": false,
@@ -49320,6 +49663,72 @@
       "variants": []
     },
     {
+      "description": "A share directory measured against the version of the executable that serves it: where\nit is, how it was found, the version it states, whether it holds the directory of each\nsurface the server serves pages from — `ui/` for `/ui`, `cockpit/` for `/cockpit` — and\nwhether that makes it the executable's own (ADR 0163).\n\nMeasured when it is asked for, never recorded: a checkout moves under a running server,\nand the directory a lease names may state another version an hour later.\n\n```\nuse majordomus_cli::share::{ServedShare, ShareStanding};\nlet dir = tempfile::tempdir().unwrap();\nstd::fs::write(dir.path().join(\"version.txt\"), \"version=0.26.0\\n\").unwrap();\nstd::fs::create_dir(dir.path().join(\"ui\")).unwrap();\nstd::fs::create_dir(dir.path().join(\"cockpit\")).unwrap();\nlet own = ServedShare::inspect(dir.path(), Some(\"installation\"), \"0.26.0\");\nassert_eq!(own.standing, ShareStanding::Current);\nassert!(own.reason.is_none() && own.ui_present);\n\nlet older = ServedShare::inspect(dir.path(), None, \"0.27.0\");\nassert_eq!(older.standing, ShareStanding::Skewed);\nassert!(older.reason.unwrap().contains(\"states version 0.26.0\"));\n\nstd::fs::remove_dir(dir.path().join(\"ui\")).unwrap();\nlet blank = ServedShare::inspect(dir.path(), None, \"0.26.0\");\nassert_eq!(blank.standing, ShareStanding::Skewed);\nassert!(!blank.ui_present && blank.reason.unwrap().contains(\"no ui/\"));\n```",
+      "home": "server",
+      "is_enum": false,
+      "name": "ServedShare",
+      "properties": [
+        {
+          "description": "The share directory.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How it was found, when the server said.",
+          "name": "origin",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The version its `version.txt` states; absent when it states none.",
+          "name": "version",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Whether it holds `ui/`, the UI's stylesheet and scripts.",
+          "name": "ui_present",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Whether it holds `cockpit/`, the Cockpit's stylesheet and scripts.",
+          "name": "cockpit_present",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Whether it is the executable's own.",
+          "name": "standing",
+          "refs": [
+            "ShareStanding"
+          ],
+          "required": true,
+          "type": "ShareStanding"
+        },
+        {
+          "description": "Why it is skewed, when it is.",
+          "name": "reason",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "LeaseView"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "Every deployment's standing against one commit: the answer `served.show` gives on the\ncommand line, over HTTP and to an MCP client, from one derivation.\n\n```\nuse majordomus_cli::capability::builtin::served::{standing, ServedStanding};\nuse majordomus_cli::served::{Ancestry, OBSERVATIONS_PATH};\n#### struct A; impl Ancestry for A {\n####     fn has(&self, _: &str) -> Option<bool> { Some(true) }\n####     fn contains(&self, _: &str, _: &str) -> Option<bool> { Some(true) } }\nlet dir = tempfile::tempdir().unwrap();\nlet s: ServedStanding = standing(dir.path(), &\"a\".repeat(40), None, &A);\nassert_eq!(s.observations, OBSERVATIONS_PATH);\nassert!(s.deployments.is_empty(), \"nothing observed yet\");\nassert_eq!(s.unreadable, 0);\n```",
       "home": "served",
       "is_enum": false,
@@ -49405,12 +49814,12 @@
       "variants": []
     },
     {
-      "description": "Where a checkout's server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable's code.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Stale];\nlet words: Vec<&str> = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\"absent\", \"starting\", \"ready\", \"outdated\", \"stale\"]);\nassert_eq!(serde_json::from_str::<ServerStanding>(\"\\\"stale\\\"\").unwrap(), ServerStanding::Stale);\n```",
+      "description": "Where a checkout's server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable's code.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Skewed, ServerStanding::Stale];\nlet words: Vec<&str> = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\"absent\", \"starting\", \"ready\", \"outdated\", \"skewed\", \"stale\"]);\nassert_eq!(serde_json::from_str::<ServerStanding>(\"\\\"stale\\\"\").unwrap(), ServerStanding::Stale);\n```",
       "home": "shared",
       "is_enum": true,
       "name": "ServerStanding",
       "properties": [],
-      "type": "\"absent\" | \"starting\" | \"ready\" | \"outdated\" | \"stale\"",
+      "type": "\"absent\" | \"starting\" | \"ready\" | \"outdated\" | \"skewed\" | \"stale\"",
       "used_by": [],
       "used_by_schemas": [
         "BoardView",
@@ -49433,6 +49842,10 @@
         {
           "description": "The server answers, but from older code than this executable, or from a file that\nhas been replaced since it started: everything it says is yesterday's.",
           "value": "outdated"
+        },
+        {
+          "description": "The server answers for this checkout at this executable's version, but serves a\nshare directory that is not its own: one that states another version or none, or\nlacks a surface's directory (`ui/`, `cockpit/`), so the pages it serves have no\nassets and what it reads from `share/` is another release's (ADR 0163).",
+          "value": "skewed"
         },
         {
           "description": "The lease names a server that does not answer, or is not a lease at all.",
@@ -50273,6 +50686,29 @@
         "PackPlan"
       ],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "Whether a share directory is the one an executable should serve.\n\n```\nuse majordomus_cli::share::ShareStanding;\nassert_eq!(serde_json::to_value(ShareStanding::Current).unwrap(), \"current\");\nassert_eq!(serde_json::to_value(ShareStanding::Skewed).unwrap(), \"skewed\");\n```",
+      "home": "server",
+      "is_enum": true,
+      "name": "ShareStanding",
+      "properties": [],
+      "type": "\"current\" | \"skewed\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "ServedShare"
+      ],
+      "values": [
+        {
+          "description": "It states the executable's version and holds the directory of every surface the\nserver serves pages from.",
+          "value": "current"
+        },
+        {
+          "description": "It states another version, states none, or lacks `ui/` or `cockpit/`: a server\nserving it answers with one release's code over another release's data, and those\npages are unstyled or blank.",
+          "value": "skewed"
+        }
+      ],
       "variants": []
     },
     {
@@ -51558,6 +51994,126 @@
         {
           "description": "Considered and refused: listed with the reason, never executable.",
           "value": "unsupported"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "One stage of the lifecycle, in the order the policy states them. A stage carries no\nquestion of its own: the questions name it by `id`, and\n`CompletionPolicy::questions_of` gathers them back, so a stage is a heading over\nwhatever the policy hangs under it.\n\n```\nuse majordomus_cli::gates::StageDecl;\n\nlet stage = StageDecl {\n    id: \"commit\".into(),\n    title: \"Commit and push\".into(),\n    summary: \"The work is in the branch's history.\".into(),\n};\n// the same shape the file carries, so a report and the policy agree byte for byte\nlet json = serde_json::to_value(&stage).unwrap();\nassert_eq!(json[\"id\"], \"commit\");\nassert_eq!(serde_json::from_value::<StageDecl>(json).unwrap(), stage);\n```",
+      "home": "gates",
+      "is_enum": false,
+      "name": "StageDecl",
+      "properties": [
+        {
+          "description": "The stage's identity, stable across reports.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The stage as a heading.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What it means for the stage to be complete.",
+          "name": "summary",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "CompletionPolicyReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One stage of the lifecycle, with what its questions said. Every stage of the policy\ngets one, in the policy's order, so a reader sees the stages behind the task as well\nas the one it stands at; `owing` is written only when something is owed.\n\n```\nuse majordomus_cli::gates::{StageReport, StageState};\n\nlet report = StageReport {\n    id: \"commit\".into(),\n    title: \"Commit and push\".into(),\n    state: StageState::Complete,\n    questions: vec![\"committed\".into(), \"pushed\".into()],\n    owing: Vec::new(),\n};\nlet json = serde_json::to_value(&report).unwrap();\nassert_eq!(json[\"state\"], \"complete\");\nassert!(json.get(\"owing\").is_none(), \"nothing owed is nothing written\");\n```",
+      "home": "gates",
+      "is_enum": false,
+      "name": "StageReport",
+      "properties": [
+        {
+          "description": "The stage's identity.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The stage as a heading.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Where it stands.",
+          "name": "state",
+          "refs": [
+            "StageState"
+          ],
+          "required": true,
+          "type": "StageState"
+        },
+        {
+          "description": "The questions of this stage, in policy order.",
+          "name": "questions",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The questions still owed or refusing, in policy order.",
+          "name": "owing",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "LifecycleStage"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Where one stage stands, folded from the answers to its questions and never set by\nanybody. A refusal anywhere in the stage makes it blocked whatever else passed; a\nstage with nothing owed is complete; one with an unanswered question is pending; and\na stage the change asks nothing of is empty, which neither blocks nor completes.\n\n```\nuse majordomus_cli::gates::StageState;\n\nassert_eq!(StageState::Blocked.as_str(), \"blocked\");\n// serialised as the same word the report prints, so no reader meets two spellings\nassert_eq!(serde_json::to_string(&StageState::Pending).unwrap(), \"\\\"pending\\\"\");\nassert_eq!(serde_json::from_str::<StageState>(\"\\\"empty\\\"\").unwrap(), StageState::Empty);\n```",
+      "home": "gates",
+      "is_enum": true,
+      "name": "StageState",
+      "properties": [],
+      "type": "\"complete\" | \"pending\" | \"blocked\" | \"empty\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "LifecycleStage",
+        "StageReport"
+      ],
+      "values": [
+        {
+          "description": "Every question of the stage passes or is exempt.",
+          "value": "complete"
+        },
+        {
+          "description": "A question of the stage has not been answered: queued or unknown.",
+          "value": "pending"
+        },
+        {
+          "description": "A question of the stage refuses: failing, stale, or blocked by one that is.",
+          "value": "blocked"
+        },
+        {
+          "description": "The stage declares no question that applies here.",
+          "value": "empty"
         }
       ],
       "variants": []
@@ -56942,7 +57498,7 @@
       "variants": []
     },
     {
-      "description": "What an operation wrote, as its answer to the caller. Every mesh operation is an event\nappended to this runtime's journal, and the caller is handed the three facts it cannot\nwork out for itself: the mesh-wide key of the thing it created, the event that says so,\nand the Lamport stamp that places it against everyone else's events.\n\nThe key is what a later operation is addressed by — a claim is released by the key its\nacquisition returned, never by the local name it was given — and the stamp is what a\ncaller waiting for a peer to catch up compares against.\n\n```\n#### use std::sync::Arc;\n#### use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n#### use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};\n#### use majordomus_cli::mesh::identity::NodeIdentity;\n#### use majordomus_cli::mesh::link::HttpTransport;\n#### use majordomus_cli::mesh::registry::MeshRegistry;\n#### use majordomus_cli::mesh::repository::of_root_commits;\n#### let cooperation = Cooperation::new(CooperationSetup {\n####     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: \"0000000000000001\".into(),\n####     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![\"127.0.0.1:9\".into()],\n####     version: \"doc\".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),\n####     journal_path: None, registry: Arc::new(MeshRegistry::new()),\n####     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),\n#### }).unwrap();\nuse majordomus_cli::mesh::cooperation::Written;\nuse majordomus_cli::mesh::journal::{ClaimMode, SessionInfo};\n\nlet session = SessionInfo::named(\"s1\", \"cli\");\nlet written: Written = cooperation\n    .claim(&session, vec![\"docs\".into()], None, ClaimMode::Advisory, None)\n    .unwrap();\nassert!(written.lamport > 0, \"placed against every other runtime's events\");\n\n// and the key it returned is how the claim is addressed from here on\ncooperation.release(&written.key).unwrap();\n```",
+      "description": "What an operation wrote, as its answer to the caller. Every mesh operation is an event\nappended to this runtime's journal, and the caller is handed the three facts it cannot\nwork out for itself: the mesh-wide key of the thing it created, the event that says so,\nand the Lamport stamp that places it against everyone else's events.\n\nThe key is what a later operation is addressed by — a claim is released by the key its\nacquisition returned, never by the local name it was given — and the stamp is what a\ncaller waiting for a peer to catch up compares against.\n\n```\n#### use std::sync::Arc;\n#### use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n#### use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};\n#### use majordomus_cli::mesh::identity::NodeIdentity;\n#### use majordomus_cli::mesh::link::HttpTransport;\n#### use majordomus_cli::mesh::registry::MeshRegistry;\n#### use majordomus_cli::mesh::repository::of_root_commits;\n#### let cooperation = Cooperation::new(CooperationSetup {\n####     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: \"0000000000000001\".into(),\n####     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![\"127.0.0.1:9\".into()],\n####     version: \"doc\".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),\n####     journal_path: None, registry: Arc::new(MeshRegistry::new()),\n####     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),\n#### }).unwrap();\nuse majordomus_cli::mesh::cooperation::Written;\nuse majordomus_cli::mesh::journal::{ClaimMode, Durability, SessionInfo};\n\nlet session = SessionInfo::named(\"s1\", \"cli\");\nlet written: Written = cooperation\n    .claim(&session, vec![\"docs\".into()], None, ClaimMode::Advisory, None)\n    .unwrap();\nassert!(written.lamport > 0, \"placed against every other runtime's events\");\nassert_eq!(written.durability, Durability::Memory, \"this journal has no file\");\n\n// and the key it returned is how the claim is addressed from here on\ncooperation.release(&written.key).unwrap();\n```",
       "home": "mesh",
       "is_enum": false,
       "name": "Written",
@@ -56967,6 +57523,15 @@
           "refs": [],
           "required": true,
           "type": "integer (uint64)"
+        },
+        {
+          "description": "Whether the event reached this machine's disk: `synced`, `memory` (a journal with no\nfile, by configuration), or `not_durable` — held and replicated to peers, not on disk\nhere, and not acknowledged as durable. `unknown` from an executable that predates it.",
+          "name": "durability",
+          "refs": [
+            "Durability"
+          ],
+          "required": false,
+          "type": "Durability"
         }
       ],
       "type": "object",
@@ -61830,7 +62395,7 @@
           "cache_detail": "",
           "cli": "",
           "curl": "curl -s \"http://127.0.0.1:8741/api/v1/gates/completion?changed=%5B%22docs%2FCLI.md%22%5D&on_demand=true\"",
-          "description": "The active task's own change set — from the commit it started at to the working tree, uncommitted files included — put through the CI model: which gates it selects and why, what each one last reported and over which files, which verdicts have gone stale because the tree moved underneath them, which required gates have never reported at all, and which obligations the change implies whether or not the task declared them. `finishable` is false only when a required gate is known to be failing, stale or blocked by one that is; absence of a verdict is reported as unverified rather than silently accepted.",
+          "description": "The active task's own change set — from the commit it started at to the working tree, uncommitted files included — put through the CI model: which gates it selects and why, what each one last reported and over which files, which verdicts have gone stale because the tree moved underneath them, which required gates have never reported at all, and which obligations the change implies whether or not the task declared them. `finishable` is false only when a required gate is known to be failing, stale or blocked by one that is; absence of a verdict is reported as unverified rather than silently accepted. The done invariant is the questions of share/completion.yaml, in its order, each answered from the source it names; `stage` is the stage of the work those answers fold to, and `complete` is true only when every question passes or is exempt — finishable and complete are two different words.",
           "home": "gates",
           "id": "gates.completion",
           "kind": "query",
@@ -61917,6 +62482,63 @@
           "result_schema": "Completion",
           "stability": "behaviorally_verified",
           "summary": "Whether this task may be called finished"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "process",
+          "cache_detail": "max_entries=4, ttl_seconds=5",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/gates/policy\"",
+          "description": "The one definition of done: the stages of the work in order, every question a task must answer before it may be called finished, the stage each question belongs to and the source its answer is taken from — an obligation of share/obligations.yaml, a gate of the CI model, the change set, the repository's convergence or the closing readings. Read from share/completion.yaml, the file `gates.completion` takes its questions from. A token the policy names and the vocabulary lacks is reported as a problem, and a gate question this repository's CI model never answers is listed by name.",
+          "home": "gates",
+          "id": "gates.policy",
+          "kind": "query",
+          "mcp_resource": {
+            "name": "completion-policy",
+            "uri": "majordomus://gates/policy"
+          },
+          "mcp_tool": "majordomus_completion_policy",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/gates/policy",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::gates",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "The completion policy: the result.",
+              "schema": "CompletionPolicyReport",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "CompletionPolicyReport",
+          "stability": "behaviorally_verified",
+          "summary": "The completion policy"
         }
       ],
       "slug": "gates"
@@ -69208,7 +69830,7 @@
           "cache_detail": "",
           "cli": "serve status",
           "curl": "curl -s \"http://127.0.0.1:8741/api/v1/server?checkouts=repository\"",
-          "description": "Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; the lease this process holds when it is the server; and, unless `checkouts` narrows it to this one, every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. `checkouts: this` reads one lease and probes one server and enumerates no other checkout, which is what a caller asking only about the checkout it is in should pay. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes.",
+          "description": "Where this checkout's server stands — absent, starting, ready, outdated, skewed or stale — measured against what this executable would serve; the lease this process holds when it is the server; and, unless `checkouts` narrows it to this one, every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. Each lease carries the share directory its server serves, measured on every call: the version its `version.txt` states, whether it holds `ui/`, and `skewed` with the reason when it states another version than the executable of that server or lacks `ui/` or `cockpit/`, the state in which every asset of those pages answers 404; a server that answers at this executable's version over such a share stands `skewed` rather than `ready`. `checkouts: this` reads one lease and probes one server and enumerates no other checkout, which is what a caller asking only about the checkout it is in should pay. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes.",
           "home": "server",
           "id": "server.status",
           "kind": "query",

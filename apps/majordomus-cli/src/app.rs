@@ -42,6 +42,12 @@ impl App {
         tracing::info!(repository_root = %repository.root().display(), "repository found");
         let share = Share::locate(args.share.as_deref(), repository.root())?;
         tracing::info!(share = %share.dir().display(), origin = share.origin, "share directory");
+        for passed in share.passed_over() {
+            // a skewed conventional share was not served (ADR 0163): say which, and why
+            tracing::info!(share = %share.dir().display(), "{passed}");
+        }
+        // a server's lease names the share it serves, so that a reader can measure it
+        crate::lease::declare_share(crate::share::ShareLocation::of(&share));
         let schema = KindSchema::load(&share, &repository)?;
         if let Some(manifest_schema) = schema.schema("manifest") {
             let violations = manifest_schema.validate(&repository.manifest_value()?);

@@ -1,0 +1,41 @@
+id: I2609
+milestone: adopter-upgrades
+title: "An executable reads its own share: a skewed share found by convention is passed over for the installation's own"
+slug: an-executable-reads-its-own-share
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make an installed executable serve the share it was installed with when the share a convention found first is skewed for it (ADR 0163, point 2): judge every conventional candidate by the version it states and the ui/ it holds, use the first that is the executable's own, and name every share passed over and why in the origin of the one used."
+why: "Found twice. On 2026-10-13, from an adopting repository (session 17db9780, defect D1 of the adopter UI report): a tmux server started in the primary checkout keeps MAJORDOMUS_SHARE in its global environment, and an installed 0.22.0 server started from one of its windows read a 0.21.0 share with no share/ui/, so every screen was an empty state and /ui/assets/ui.css answered 404. On 2026-10-14 the shared 8741 server (executable 0.26.0) served the stale primary checkout's share (version.txt 0.21.0, no share/ui/) because bin/majordomus-cli and bin/majordomus-env export MAJORDOMUS_SHARE=<checkout>/share; every /ui/assets/* answered 404. Share::locate (apps/majordomus-cli/src/share.rs) took the variable before the share beside the executable and asked nothing of it but a kinds file."
+current_state: "Share::locate uses the first of --share, MAJORDOMUS_SHARE, <repo>/share with a kinds file, <exe>/../share. A share of another version, or one without ui/, is served without a word on any surface; case 3041 (S3) reports the skew but does not change which share is served."
+desired_state: "--share is used as given. A share found through MAJORDOMUS_SHARE or the repository's share/ that is skewed for the executable (it states another version or none, or lacks the directory of a surface it serves, ui/ or cockpit/, as ServedShare::inspect measures it) is passed over when a later candidate matches, and the share used says so in its origin: 'installation; passed over MAJORDOMUS_SHARE: <reason>'. That origin reaches the lease, serve status, capabilities validate and the log. When nothing found matches, the first is served as before and reported skewed (ADR 0163, point 3)."
+scope:
+  - "apps/majordomus-cli/src/share.rs"
+  - "apps/majordomus-cli/src/app.rs"
+  - "apps/majordomus-cli/src/commands/capabilities.rs"
+  - "test/cases/2994_an_executable_reads_its_own_share.sh"
+  - "docs/ENVIRONMENT.md"
+  - "docs/CAPABILITIES.md"
+  - "docs/MCP.md"
+  - ".ai/repo/project/issues/I2609.yaml"
+non_scope:
+  - "MAJORDOMUS_ROOT and MAJORDOMUS_URL inherited from another checkout: a separate leaf"
+  - "The shell tool's own reading of the share in lib/common.sh: a separate leaf"
+  - "serve ensure replacing a skewed server and a running server re-reading its share (ADR 0163 point 4, S5)"
+  - "The rule project.a-server-serves-its-own-share and doctor's report (ADR 0163 points 5-6, S6)"
+depends_on: []
+acceptance_criteria:
+  - "An installed executable under a MAJORDOMUS_SHARE that is skewed for it serves the share beside it, and the origin names the share passed over and why"
+  - "An installed executable run in a repository whose share/ is skewed for it serves the share beside it, and says so the same way"
+  - "--share is used as given, skewed or not"
+  - "With no matching share beside the executable, the first share found is served as before and server.status reports it skewed"
+  - "Each branch of the policy has a unit test that runs Share::locate_by_convention without the environment or the executable's real path, and fails on the tree before the change"
+validation:
+  - "bin/majordomus plan validate"
+  - "bash test/run.sh 2994_an_executable_reads_its_own_share 3041_a_server_reports_the_share_it_serves"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib share::"
+evidence_required:
+  - "installed_layout_case_2994"
+  - "share_locate_unit_tests"
+created_at: 2026-10-13
+updated_at: 2026-10-15

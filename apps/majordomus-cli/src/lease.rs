@@ -71,6 +71,12 @@ pub const JOIN_TIMEOUT: Duration = Duration::from_secs(20);
 /// that would let a handful of slow sockets outlast a [`BUSY_GRACE`] contest many times over.
 pub const READ_DEADLINE: Duration = Duration::from_secs(30);
 
+/// How long a server started for a checkout no client owns — by `serve ensure` or by a shell
+/// entering the checkout — outlives its last peer before it stops by itself:
+/// [`crate::cli::DEFAULT_IDLE_SECONDS`]. `serve --idle` on a command line overrides whatever
+/// is declared (I2701).
+pub const IDLE: Duration = Duration::from_secs(crate::cli::DEFAULT_IDLE_SECONDS);
+
 /// The timings above are the defaults. What a process actually judges a lease contest by is
 /// declared in `.ai/repo/policy.yaml`'s `server:` block and read once, here.
 ///
@@ -86,7 +92,7 @@ pub const READ_DEADLINE: Duration = Duration::from_secs(30);
 ///
 /// ```
 /// use majordomus_cli::lease::{
-///     Timings, BIND_GRACE, BUSY_GRACE, JOIN_TIMEOUT, PROBE_TIMEOUT, READ_DEADLINE,
+///     Timings, BIND_GRACE, BUSY_GRACE, IDLE, JOIN_TIMEOUT, PROBE_TIMEOUT, READ_DEADLINE,
 /// };
 /// // the defaults are the compiled constants, one for one
 /// let t = Timings::default();
@@ -95,6 +101,7 @@ pub const READ_DEADLINE: Duration = Duration::from_secs(30);
 /// assert_eq!(t.join_timeout, JOIN_TIMEOUT);
 /// assert_eq!(t.busy_grace, BUSY_GRACE);
 /// assert_eq!(t.read_deadline, READ_DEADLINE);
+/// assert_eq!(t.idle, IDLE);
 /// // a busy owner is given up on before the election that waits on it gives up itself
 /// assert!(t.busy_grace < t.join_timeout);
 /// ```
@@ -110,6 +117,8 @@ pub struct Timings {
     pub busy_grace: Duration,
     /// `server.read_deadline_seconds:`
     pub read_deadline: Duration,
+    /// `server.idle_seconds:`
+    pub idle: Duration,
 }
 
 impl Default for Timings {
@@ -120,6 +129,7 @@ impl Default for Timings {
             join_timeout: JOIN_TIMEOUT,
             busy_grace: BUSY_GRACE,
             read_deadline: READ_DEADLINE,
+            idle: IDLE,
         }
     }
 }
@@ -165,6 +175,10 @@ impl Timings {
     /// assert_ne!(t.probe_timeout, Timings::default().probe_timeout);
     /// // the keys it says nothing about are untouched
     /// assert_eq!(t.bind_grace, Timings::default().bind_grace);
+    ///
+    /// // the idle timeout is declared beside the others (I2701)
+    /// let declared = ServerPolicy { idle_seconds: Some(3), ..ServerPolicy::default() };
+    /// assert_eq!(Timings::from_policy(&declared).idle, Duration::from_secs(3));
     /// ```
     pub fn from_policy(policy: &crate::policy::ServerPolicy) -> Self {
         let d = Self::default();
@@ -189,6 +203,10 @@ impl Timings {
                 .read_deadline_seconds
                 .map(Duration::from_secs)
                 .unwrap_or(d.read_deadline),
+            idle: policy
+                .idle_seconds
+                .map(Duration::from_secs)
+                .unwrap_or(d.idle),
         }
     }
 }
@@ -210,6 +228,38 @@ impl Timings {
 /// ```
 pub fn declare_timings(policy: &crate::policy::ServerPolicy) {
     let _ = TIMINGS.set(Timings::from_policy(policy));
+}
+
+static SHARE: OnceLock<crate::share::ShareLocation> = OnceLock::new();
+
+/// Declare the share directory this process serves, for every lease it writes from now on.
+/// The first call decides, as with [`declare_timings`]: a process serves one share for its
+/// whole life, and a lease that named another one halfway through would describe neither.
+///
+/// ```
+/// use majordomus_cli::lease::{declare_share, declared_share};
+/// use majordomus_cli::share::ShareLocation;
+/// let first = ShareLocation { path: "/a/share".into(), origin: "installation".into() };
+/// declare_share(first.clone());
+/// declare_share(ShareLocation { path: "/b/share".into(), origin: "repository".into() });
+/// assert_eq!(declared_share(), Some(&first));
+/// ```
+pub fn declare_share(location: crate::share::ShareLocation) {
+    let _ = SHARE.set(location);
+}
+
+/// The share directory this process declared, when it has located one: what every lease
+/// it writes names as `share`.
+///
+/// ```
+/// use majordomus_cli::lease::{declare_share, declared_share};
+/// use majordomus_cli::share::ShareLocation;
+/// declare_share(ShareLocation { path: "/opt/share".into(), origin: "--share".into() });
+/// let declared = declared_share().expect("declared above");
+/// assert_eq!(declared.origin, "--share");
+/// ```
+pub fn declared_share() -> Option<&'static crate::share::ShareLocation> {
+    SHARE.get()
 }
 
 /// The environment variable a server is started with when the process that started it had
@@ -321,6 +371,14 @@ pub struct LeaseDocument {
     /// which is itself a fact: that server is older than any executable that reads this.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub version: Option<String>,
+    /// The share directory the server serves and how it was found, so that a reader can
+    /// measure it against `version` ([`crate::share::ServedShare`]). Absent in a lease
+    /// written before this field existed, and while the server has not located one yet.
+    ///
+    /// Boxed: the lease document is the largest variant of [`LeaseFile`], and a location
+    /// held inline would make every reading of an absent or empty file carry its size.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub share: Option<Box<crate::share::ShareLocation>>,
 }
 
 /// What a lease file holds, read once. Every state of the file is a variant, so that a
@@ -396,6 +454,7 @@ impl LeaseFile {
     /// let doc = LeaseDocument {
     ///     schema: SCHEMA.into(), pid: 7, token: "t".into(), root: "/r".into(), url: None,
     ///     started_at: "2026-09-10T00:00:00Z".into(), executable: None, version: None,
+    ///     share: None,
     /// };
     /// assert_eq!(LeaseFile::Document(doc.clone()).document(), Some(&doc));
     /// assert_eq!(LeaseFile::Corrupt("not JSON".into()).document(), None);
@@ -1467,6 +1526,7 @@ impl Lease {
             started_at: self.started_at.clone(),
             executable: executable_identity(),
             version: Some(crate::VERSION.into()),
+            share: declared_share().cloned().map(Box::new),
         }
     }
 
@@ -1748,6 +1808,7 @@ mod tests {
             started_at: "2026-10-09T00:00:00Z".into(),
             executable: None,
             version: None,
+            share: None,
         })
         .unwrap()
     }

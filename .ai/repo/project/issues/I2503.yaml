@@ -1,0 +1,47 @@
+id: I2503
+milestone: started-work-is-explained-bounded-and-survives-a-restart
+title: "An execution accepted before a restart is answered after it as interrupted, never as absent"
+slug: an-execution-survives-a-restart-as-a-record
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Put a bounded journal behind the execution store so that the executions a server accepted, with their events, are still answered after the server stops and starts, and one that had not finished reads a final state named interrupted."
+why: "campaigns/majordomus-autonomous-idd-maximal/09_STATE_MACHINE_AND_DATA_CONTRACTS.md asks that a typed execution can be reconstructed from persisted events after a restart, and campaigns/majordomus-autonomous-idd-maximal/02_ORCHESTRATOR_MESH.md and 19_ACCEPTANCE_TRACEABILITY_MATRIX.md (AC-008) ask that a restart loses no work silently. docs/EXECUTIONS.md states the opposite as a known limit: an execution does not outlive the process that accepted it, and there is no execution that survives a restart. A worker that started a long capability call and whose server was replaced finds an empty list and cannot tell a call that never ran from one that ran halfway."
+current_state: "apps/majordomus-cli/src/execution/store.rs keeps snapshots and events in memory under execution::store::Limits (max_executions, max_events, max_log_chars, max_subscriber_queue). ExecutionState has queued, running, cancelling, succeeded, failed and cancelled (apps/majordomus-cli/src/execution/model.rs), and may_move_to is the whole contract. docs/EXECUTIONS.md says nothing above the store names a Mutex, so a durable store is a substitution."
+desired_state: "The store appends each accepted execution and each event to a journal in the checkout's untracked state and reads it at start. An execution found queued, running or cancelling at start moves to interrupted, a final state added to may_move_to, with an event that says the process ended. The journal is bounded by the same Limits, passes the execution redactor, and a damaged line is counted and reported, not fatal."
+scope:
+  - "apps/majordomus-cli/src/execution/store.rs"
+  - "apps/majordomus-cli/src/execution/model.rs"
+  - "apps/majordomus-cli/src/execution/event.rs"
+  - "apps/majordomus-cli/src/execution/engine.rs"
+  - "apps/majordomus-cli/src/execution/redact.rs"
+  - "apps/majordomus-cli/src/capability/builtin/executions.rs"
+  - "apps/majordomus-cli/tests/executions.rs"
+  - "apps/majordomus-cli/src/ui/command.rs"
+  - "docs/EXECUTIONS.md"
+  - ".ai/repo/adrs"
+  - ".ai/repo/rules/project/execution-events-are-typed.v1.md"
+  - ".ai/repo/project/issues/I2503.yaml"
+non_scope:
+  - "Running an interrupted handler again: the record says it was interrupted and a caller decides"
+  - "Retries, schedules or a queue that dispatches after a restart"
+  - "Replicating executions over the mesh"
+  - "Tracking the journal in git: it is checkout state under .ai/local"
+depends_on: []
+acceptance_criteria:
+  - "A server that accepted three executions, one succeeded and two running, is killed and started; executions.list answers all three, the succeeded one unchanged and the other two interrupted"
+  - "executions.events after a cursor read before the restart answers the remaining events and repeats none"
+  - "interrupted is final: the store refuses any move out of it, and the protocol version of executions.protocol changes with the new state"
+  - "The journal never holds more executions or events than Limits allows, and a test fills it past the bound"
+  - "A journal with a torn last line starts, reports one damaged line, and answers every complete execution before it"
+  - "The journal of an execution whose input held a credential the redactor knows does not contain the credential"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib execution"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test executions"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test no_answer_carries_a_credential"
+evidence_required:
+  - "execution_survives_restart"
+  - "journal_is_bounded_and_redacted"
+created_at: 2026-10-13
+updated_at: 2026-10-13

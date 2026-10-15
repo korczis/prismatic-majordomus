@@ -1271,7 +1271,7 @@ fn issue_panel(issues: &Answer, id: &str, filter: &Filter) -> El {
                             ),
                     ),
             )
-            .child(el("p").class("mj-ui-lead").text(text(&i, "objective")))
+            .child(super::view::lead(&text(&i, "objective")))
             .child(
                 el("dl")
                     .class("mj-ui-facts")

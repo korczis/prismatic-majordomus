@@ -62,7 +62,7 @@ pages still render, say so, and remain fully usable.
 | `/cockpit/graphs/<id>` | one graph: the drawing, the vocabularies, and every node and edge as tables | `graph.get` |
 | `/cockpit/graphs/topology` | the registry graph in three dimensions — optional | `graph.get` (`registry`) |
 | `/cockpit/continuity` | what this checkout's lifecycle is holding, and what the subsystem around it is doing: the open episode the briefing is about, the active task, the records that resolve here with their labels, the blockers, the other machines — this device, the store against its remote, and the handovers other devices published that could be resumed here — then every open episode of the store, this process against the repository, recovery, the providers, and the tracked records | `continuity.state`, `continuity.status`, `lifecycle.episodes`, `lifecycle.runtime`, `lifecycle.recovery`, `lifecycle.providers`, `lifecycle.closed` |
-| `/cockpit/intents` | every intent with its derived stage, the criteria with current evidence, the work and providers realising it, and the findings — closed work the evidence contradicts among them | `intent_realization.work` |
+| `/cockpit/intents` | every intent with its derived stage, the criteria with current evidence, the work and providers realising it, the units of work serving no intent beside the empty records and the work from before the first intent (neither of which is orphan work, ADR 0075), and the findings — closed work the evidence contradicts among them | `intent_realization.work` |
 | `/cockpit/intents/<id>` | one intent: how far reality is from it, each criterion with its evidence state, a link to the test object it names, the issues serving it and the command that reproduces it; the milestones; every task, session record and peer claim realising it with the provenance of its link, its providers and handovers; and why it stands where it stands | `intent_realization.explain` |
 | `/cockpit/plan` | the milestones in derived order with the one that is now and the one after it, the issue the plan hands out next, and every issue filtered by milestone, status or wave | `plan.roadmap`, `plan.next`, `plan.issues` |
 | `/cockpit/plan/milestones/<id>` | one milestone as a graph of work: its outcome, every issue with its readiness and wave, the partitions, the critical blockers, what may run at the same time, and every finding | `devtask.milestone` |
@@ -406,6 +406,53 @@ in either direction — for `registry` and again for the largest graph there is,
 only one that ever had the defect. The assertion it replaces counted `canvas` elements, and
 cytoscape makes three of those over a one-pixel line.
 
+## Markdown bodies
+
+A rule, a decision, a prompt, a skill, a use case: most of what the layer holds is a Markdown
+file, and so is most of what a forge hands back about a pull request or a release. One
+function draws all of it — `markdown::render` (`src/markdown.rs`) — and the short prose a
+record carries in a field (a milestone's problem, a rule's statement, a pull request's
+summary) goes through its inline form, `markdown::inline`. There is no second renderer in the
+executable and none in a script: `project.markdown-is-rendered-once` holds that, by
+`test/cases/1101_markdown_is_rendered_once.sh`.
+
+| What the source holds | What a reader gets |
+|---|---|
+| headings, emphasis, lists, task lists, tables, strikethrough | the element, with one `mj-md-*` class each; headings start below the page's own |
+| a fenced block | `<pre class="mj-pre mj-md-pre">` with the language named; never highlighted by a script |
+| a fenced `mermaid` block | the source, and a figure drawn from it when the library is there (below) |
+| an alert (`> [!NOTE]`, `TIP`, `IMPORTANT`, `WARNING`, `CAUTION`) | a quotation with the alert's status colour from the design tokens |
+| a link to another file of the layer | a link to that object's own Cockpit page, resolved through `objects.list` |
+| a web link | followed, `rel="noopener noreferrer"` |
+| any other address (`javascript:`, a path outside the layer) | the text, marked as not linked; never an `href` |
+| raw HTML | shown as the text it is; a comment is dropped |
+| an image | its alternative text and address; never fetched |
+
+The parser is `pulldown-cmark` with its default features off; its events are drawn through
+the same element builder every page uses, so escaping is the builder's and not this
+module's. The typography is `share/design/primitives.css` (`.mj-md` and below), which the
+Cockpit, the UI and the published site all import — one look for a body wherever it is read.
+A YAML or JSON object is not Markdown and stays the file as it is.
+
+## Every drawing can be acted on
+
+A graph, a chart or a diagram on these surfaces stands for records, and a press on a mark
+leads to its record. That is a rule (`project.a-visualisation-is-interactive`), and a gate in
+every plan: `scripts/ci/visualisation-check`, which with `--list` says which script is which.
+
+The gate reads the served scripts. One that loads a vendored library at run time — the only
+way a drawing library reaches a page — must bind a way from its marks to somewhere: a tap or
+click handler, or an anchor it builds. The drawings that predate the rule and bind nothing
+are listed in `.ai/repo/visualisation-baseline.txt`; the list may shrink and may not grow,
+and a line whose drawing became interactive fails until it is removed.
+
+Where a mark leads is never written in a script. The server resolves it, with the resolver
+the page's own links use, and puts it on the page: a graph's nodes carry `href` in
+`data-graph`; a diagram drawn from a Markdown body carries `data-mj-links`, the name-to-address
+map of every node whose label names a record the body links to. The script only wraps the
+drawn node in the anchor it was given. A diagram keeps its source one press away, and the
+source is what a reader without the library, or without script, reads.
+
 ## Health
 
 `health.report` reports one check per dimension. Every check carries **who decided it** and
@@ -529,7 +576,7 @@ scripts/cockpit-assets --check    # fail if the committed stylesheet differs fro
 | `favicon.svg` | yes | a generated copy of the canonical mark `share/design/brand/logo-mark.svg`, written by `majordomus generate design` |
 | `*.js` | yes | written by hand, no build step |
 | `vendor/alpine.csp.min.js` | yes | the interaction depends on it and it is 70 kB |
-| `vendor/{cytoscape,three.module,three.core,p5}.min.js` | no | ~2 MB, lazy, optional, every page complete without them |
+| `vendor/{cytoscape,three.module,three.core,p5,mermaid}.min.js` | no | ~5 MB, lazy, optional, every page complete without them |
 
 There are no utility classes in the Rust that renders the pages. Everything the markup
 names is defined in `src/cockpit.css` or in the shared `share/design/primitives.css` as a

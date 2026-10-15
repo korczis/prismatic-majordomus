@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "0.27.0"
   },
-  "fingerprint": "60045fbebf4a21960713b78f819d89c762125f00a90d43ed1e75e4c0651f95fc",
+  "fingerprint": "33d7aee2e2c2cd188bbe78565ca3f61f4ab8787157b777433bc538b50a7d1318",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -2569,7 +2569,7 @@
         "use_cases": 8,
         "rules": 12,
         "enforced_rules": 10,
-        "capabilities": 4,
+        "capabilities": 5,
         "moments": 31
       },
       "evidence": {
@@ -2634,7 +2634,7 @@
           "id": "observatory",
           "label": "Observatory",
           "title": "The Observatory: the repository and its mesh, drawn for a wall",
-          "headline": "One screen of the UI rotates eight scenes on a display nobody is sitting at, and every mark on it is a value a capability answered; a scene with nothing true to draw says why and is never drawn empty.",
+          "headline": "One screen of the UI rotates nine scenes on a display nobody is sitting at, and every mark on it is a value a capability answered; a scene with nothing true to draw says why and is never drawn empty.",
           "route": "/features/observatory/",
           "featured": true,
           "surfaces": {
@@ -3229,7 +3229,7 @@
         "use_cases": 10,
         "rules": 15,
         "enforced_rules": 14,
-        "capabilities": 126,
+        "capabilities": 127,
         "moments": 38
       },
       "evidence": {
@@ -3489,7 +3489,7 @@
         },
         {
           "id": "doctor",
-          "summary": "Is Majordomus itself healthy, and is every enforcement it declares actually wired here?",
+          "summary": "It checks governance only: is Majordomus itself healthy, and is every enforcement it declares actually wired here?",
           "stage": "inspect",
           "read_only": true
         }
@@ -6690,7 +6690,7 @@
       "kind_refs": [
         {
           "name": "session",
-          "objects": 89
+          "objects": 90
         },
         {
           "name": "prompt",
@@ -7044,11 +7044,11 @@
       "counts": {
         "capabilities": 16,
         "mcp_tools": 16,
-        "mcp_resources": 98,
+        "mcp_resources": 99,
         "http_routes": 16,
         "cli_paths": 7,
         "commands": 7,
-        "objects": 93,
+        "objects": 94,
         "rules": 8,
         "enforced_rules": 7,
         "docs": 2,
@@ -7266,7 +7266,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 109
+          "objects": 114
         },
         {
           "name": "knowledge",
@@ -7274,7 +7274,7 @@
         },
         {
           "name": "document",
-          "objects": 347
+          "objects": 348
         }
       ],
       "rule_refs": [
@@ -7547,11 +7547,11 @@
       "counts": {
         "capabilities": 5,
         "mcp_tools": 5,
-        "mcp_resources": 463,
+        "mcp_resources": 469,
         "http_routes": 5,
         "cli_paths": 3,
         "commands": 6,
-        "objects": 460,
+        "objects": 466,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -7747,7 +7747,7 @@
         },
         {
           "id": "doctor",
-          "summary": "Is Majordomus itself healthy, and is every enforcement it declares actually wired here?",
+          "summary": "It checks governance only: is Majordomus itself healthy, and is every enforcement it declares actually wired here?",
           "stage": "inspect",
           "read_only": true
         },
@@ -7767,7 +7767,7 @@
       "kind_refs": [
         {
           "name": "rule",
-          "objects": 179
+          "objects": 184
         }
       ],
       "rule_refs": [
@@ -8143,11 +8143,11 @@
       "counts": {
         "capabilities": 6,
         "mcp_tools": 4,
-        "mcp_resources": 181,
+        "mcp_resources": 186,
         "http_routes": 6,
         "cli_paths": 3,
         "commands": 5,
-        "objects": 179,
+        "objects": 184,
         "rules": 7,
         "enforced_rules": 7,
         "docs": 2,
@@ -8381,6 +8381,15 @@
               "tool": "majordomus_gates",
               "resource": "majordomus://gates",
               "route": "GET /api/v1/gates"
+            },
+            {
+              "id": "gates.policy",
+              "title": "The completion policy",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_completion_policy",
+              "resource": "majordomus://gates/policy",
+              "route": "GET /api/v1/gates/policy"
             }
           ]
         },
@@ -8730,10 +8739,10 @@
         "planning"
       ],
       "counts": {
-        "capabilities": 4,
-        "mcp_tools": 4,
-        "mcp_resources": 4,
-        "http_routes": 4,
+        "capabilities": 5,
+        "mcp_tools": 5,
+        "mcp_resources": 5,
+        "http_routes": 5,
         "cli_paths": 0,
         "commands": 4,
         "objects": 0,
@@ -8857,7 +8866,7 @@
         },
         {
           "id": "doctor",
-          "summary": "Is Majordomus itself healthy, and is every enforcement it declares actually wired here?",
+          "summary": "It checks governance only: is Majordomus itself healthy, and is every enforcement it declares actually wired here?",
           "stage": "inspect",
           "read_only": true
         }
@@ -9213,7 +9222,7 @@
       "id": "observatory",
       "title": "The Observatory: the repository and its mesh, drawn for a wall",
       "short_title": "Observatory",
-      "headline": "One screen of the UI rotates eight scenes on a display nobody is sitting at, and every mark on it is a value a capability answered; a scene with nothing true to draw says why and is never drawn empty.",
+      "headline": "One screen of the UI rotates nine scenes on a display nobody is sitting at, and every mark on it is a value a capability answered; a scene with nothing true to draw says why and is never drawn empty.",
       "summary": "At /ui/observatory, and at /ui/kiosk filling the window unattended, the shared server draws the machines of the mesh and their runtimes, the newest events of its journal, the milestones of the plan, the dimensions of health, the published releases and the sessions cooperating, from the same capabilities the other screens read. The published site carries it as a snapshot that says which commit it was read at.",
       "status": "stable",
       "weight": 94,
@@ -10764,6 +10773,15 @@
               "tool": "majordomus_gates",
               "resource": "majordomus://gates",
               "route": "GET /api/v1/gates"
+            },
+            {
+              "id": "gates.policy",
+              "title": "The completion policy",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_completion_policy",
+              "resource": "majordomus://gates/policy",
+              "route": "GET /api/v1/gates/policy"
             }
           ]
         },
@@ -11341,10 +11359,10 @@
         "observatory"
       ],
       "counts": {
-        "capabilities": 97,
-        "mcp_tools": 89,
-        "mcp_resources": 16,
-        "http_routes": 94,
+        "capabilities": 98,
+        "mcp_tools": 90,
+        "mcp_resources": 17,
+        "http_routes": 95,
         "cli_paths": 41,
         "commands": 0,
         "objects": 0,
@@ -11833,7 +11851,7 @@
       "kind_refs": [
         {
           "name": "session",
-          "objects": 89
+          "objects": 90
         }
       ],
       "rule_refs": [
@@ -12066,11 +12084,11 @@
       "counts": {
         "capabilities": 0,
         "mcp_tools": 0,
-        "mcp_resources": 89,
+        "mcp_resources": 90,
         "http_routes": 0,
         "cli_paths": 0,
         "commands": 4,
-        "objects": 89,
+        "objects": 90,
         "rules": 4,
         "enforced_rules": 4,
         "docs": 2,
@@ -12839,11 +12857,11 @@
       "kind_refs": [
         {
           "name": "milestone",
-          "objects": 37
+          "objects": 47
         },
         {
           "name": "issue",
-          "objects": 390
+          "objects": 461
         },
         {
           "name": "intent",
@@ -13045,11 +13063,11 @@
       "counts": {
         "capabilities": 23,
         "mcp_tools": 23,
-        "mcp_resources": 434,
+        "mcp_resources": 515,
         "http_routes": 23,
         "cli_paths": 11,
         "commands": 1,
-        "objects": 431,
+        "objects": 512,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -14772,7 +14790,7 @@
       "command_refs": [
         {
           "id": "doctor",
-          "summary": "Is Majordomus itself healthy, and is every enforcement it declares actually wired here?",
+          "summary": "It checks governance only: is Majordomus itself healthy, and is every enforcement it declares actually wired here?",
           "stage": "inspect",
           "read_only": true
         },
@@ -16732,7 +16750,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (109)",
+        "title": "adr (114)",
         "features": [
           "knowledge"
         ]
@@ -16829,7 +16847,7 @@
       },
       {
         "id": "issue",
-        "title": "issue (390)",
+        "title": "issue (461)",
         "features": [
           "planning"
         ]
@@ -16850,7 +16868,7 @@
       },
       {
         "id": "milestone",
-        "title": "milestone (37)",
+        "title": "milestone (47)",
         "features": [
           "planning"
         ]
@@ -16892,7 +16910,7 @@
       },
       {
         "id": "rule",
-        "title": "rule (179)",
+        "title": "rule (184)",
         "features": [
           "doctrine"
         ]
@@ -16906,7 +16924,7 @@
       },
       {
         "id": "session",
-        "title": "session (89)",
+        "title": "session (90)",
         "features": [
           "continuity",
           "provenance"
@@ -17848,19 +17866,19 @@
     }
   ],
   "telemetry": {
-    "capabilities": 2434,
-    "builtin": 201,
-    "declarative": 2233,
+    "capabilities": 2554,
+    "builtin": 202,
+    "declarative": 2352,
     "modules": 57,
-    "mcp_tools": 191,
-    "mcp_resources": 2288,
-    "http_routes": 196,
+    "mcp_tools": 192,
+    "mcp_resources": 2408,
+    "http_routes": 197,
     "cli_commands": 205,
     "shell_commands": 30,
     "kinds": 34,
-    "objects": 2233,
+    "objects": 2352,
     "by_kind": {
-      "adr": 109,
+      "adr": 114,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -17871,27 +17889,27 @@
       "deployment": 1,
       "derive-offload": 1,
       "distribution-model": 1,
-      "document": 347,
+      "document": 348,
       "domain": 6,
       "feature": 29,
       "gap": 3,
       "implementation": 52,
       "intent": 4,
-      "issue": 390,
+      "issue": 461,
       "knowledge": 4,
       "mesh-declaration": 1,
-      "milestone": 37,
+      "milestone": 47,
       "moment": 38,
       "policy": 1,
       "profile": 4,
       "prompt": 4,
       "release-record": 26,
-      "rule": 179,
+      "rule": 184,
       "scope": 1,
-      "session": 89,
+      "session": 90,
       "skill": 8,
       "taxonomy": 10,
-      "test": 496,
+      "test": 522,
       "use-case": 49,
       "workspace": 1
     },

@@ -33,4 +33,11 @@ validation:
 evidence_required:
   - "eventbody_allowlist_case"
 created_at: 2026-10-14
-updated_at: 2026-10-14
+updated_at: 2026-10-15T01:29:02Z
+evidence:
+  - covers: eventbody_allowlist_case
+    type: test
+    command: "bash test/run.sh 3051_an_unlisted_event_field_fails_the_mesh_check 301_the_mesh_stays_one_subsystem; scripts/ci/mesh-check"
+    result: "tests: 2 passed, 0 failed. Case 3051: the real tree passes (47 fields carried, 1 redacted before signing: HandoverBody.body); a copy fails with exit 10 on an unlisted variant field (EventBody.ReviewAnswered.token), an unlisted carried-struct field (SessionInfo.home), a new variant (EventBody.NoteShared.text), an entry neither redacted nor clear, a stale entry, a journal without EventBody and a missing list, and passes again once the field is listed (run 2026-10-15 on #1179 head 98ef9ac6e3 plus this change)"
+    commit: 98ef9ac6e3baa93e851ba0294b6aa0bc0460294d
+    recorded_at: 2026-10-15T01:29:02Z

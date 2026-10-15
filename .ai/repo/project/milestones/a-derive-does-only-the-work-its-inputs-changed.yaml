@@ -1,0 +1,68 @@
+id: a-derive-does-only-the-work-its-inputs-changed
+title: "A derive does only the work its inputs changed, and can say why"
+slug: a-derive-does-only-the-work-its-inputs-changed
+order: 510
+priority: p1
+problem: "Every derive regenerates everything. scripts/derive builds the executable, runs majordomus generate over every target, runs scripts/generate-site-data over the whole site (use-case scenarios included), runs majordomus generate over every target a second time and rewrites the merge policy, whatever changed; a one-line edit of a rule costs what a change to the generator costs, and docs/OFFLOAD.md records that cost as about ten minutes on an idle machine and up to an hour on the shared one. The order of the stages is a comment at the top of a shell script, so nothing can be asked which producer owns an output or which inputs it read. The owner's brief of 2026-10-12, campaigns/majordomus-incremental-derive-prompt-pack/README.md, asks for the full regeneration to be replaced by a typed, content-addressed, incremental derivation graph without weakening the full derivation or the freshness checks; its pages 01 to 04, 06, 07, 10 and 11 are what this milestone plans."
+outcome: "The derivation is a typed graph the executable owns: every producer is a node with declared inputs and outputs, every node has a key computed from the bytes it reads, a read-only plan says for each node whether it would be reused or regenerated and why, and an incremental run regenerates only the nodes whose keys moved. The full derivation stays as the oracle, and a test holds the incremental result byte-identical to it."
+current_state: "Read at 3491f35cab. scripts/derive runs, under the machine's derive lock (lib/machine_lock.sh), a cargo build unless MAJORDOMUS_BIN is set, then stage A (majordomus generate --strict, all 17 targets of Target::ALL in apps/majordomus-cli/src/generate.rs), stage B (scripts/generate-site-data, 2622 lines of shell, which runs majordomus usecase run for every scenario), stage C (the same generate over all targets again) and stage D (scripts/gitattributes). No stage is skipped when its inputs are unchanged; the only saving is that generate::write leaves a file alone when its bytes already match. scripts/generate-site-data carries one fingerprint over its whole input list (--fingerprint, --inputs), and its --check stages a full generation and diffs it. The executable has no derive command; majordomus offload derive moves the same full derive to another machine. test/cases/400_derivation_is_one_graph.sh proves the stage order with stand-in generators. .github/workflows/validate.yml allows generate-site-data --check 2700 seconds."
+desired_state: "One module of the crate declares the derivation graph and answers it as a capability. A derive on a tree whose inputs did not change runs no generator. A changed input regenerates the nodes that read it and the nodes downstream of them, and no others. majordomus derive plan and majordomus derive explain answer what would run and why without writing. scripts/derive --full and scripts/derive-check keep their behaviour and exit codes, and a case compares the two paths byte for byte."
+scope:
+  - ".ai/repo/adrs"
+  - ".ai/repo/project"
+  - ".ai/repo/rules/project"
+  - "apps/majordomus-cli/src/derivation"
+  - "apps/majordomus-cli/src/generate.rs"
+  - "apps/majordomus-cli/src/generation.rs"
+  - "apps/majordomus-cli/src/commands"
+  - "apps/majordomus-cli/src/capability/builtin"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "apps/majordomus-cli/src/ui"
+  - "apps/majordomus-cli/tests"
+  - "scripts/derive"
+  - "scripts/derive-check"
+  - "scripts/generate-site-data"
+  - "scripts/gitattributes"
+  - "test/cases"
+  - "docs"
+
+non_scope:
+  - "A store of outputs shared between worktrees or with CI, and making the incremental path the default: milestone a-derivation-computed-once-is-reused."
+  - "Narrowing what a committed fingerprint covers so that an unrelated merge does not invalidate it: milestone derived-data-integrity and I1409."
+  - "Rewriting scripts/generate-site-data in Rust. Its sections become nodes of the graph; its migration off shell is the automation inventory's (ADR 0069)."
+  - "A daemon, a database or a second scheduler outside the crate."
+  - "Weakening scripts/derive-check, the derived merge driver or the generation guard that refuses a borrowed executable."
+
+acceptance_criteria:
+  - "One capability answers the derivation graph, and every path in docs/generated/artifacts.json and every tree scripts/generate-site-data publishes belongs to exactly one node of it"
+  - "A graph with a cycle, an output claimed by two nodes or a generator no node declares is refused, and the refusal names the node"
+  - "A node's key changes when a declared input is edited, renamed, deleted or added and when the executable's generation changes, and does not change when an undeclared path changes"
+  - "A second incremental derive on an unchanged tree runs no generator and writes no file"
+  - "A missing or altered output is regenerated even when the node's key did not move"
+  - "For every fixture of the differential case, the tracked files an incremental derive leaves are byte-identical to those of a full derive, deletions included"
+  - "derive plan and derive explain write nothing, and explain names the input that moved a node's key"
+  - "scripts/derive-check exits 0, 10 and 15 for the same trees as before"
+
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib derivation"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 400_derivation_is_one_graph 51_derived_artifacts_committed 104_strict_derivation"
+  - "scripts/derive-check"
+  - "majordomus generate --check"
+
+evidence_required:
+  - "derive_baseline_measurements"
+  - "derivation_graph_capability"
+  - "node_key_property_tests"
+  - "warm_no_op_runs_no_generator"
+  - "incremental_equals_full_case"
+  - "omitted_edge_turns_the_gate_red"
+
+risks:
+  - "An input a generator reads and the graph does not declare is silent in the dangerous direction: the node is reused and the tree is stale while every check that trusts the key reads green. scripts/derive-check must go on comparing bytes, and the differential case must include a deliberately omitted edge."
+  - "ADR 0041 holds that inputs unchanged is not proof. A reused node is a saving in a derive and never a verdict in a gate."
+  - "Stage B is shell and runs scenarios with effects in temporary repositories; declaring its reads completely may cost more than the split saves, in which case the node stays coarse."
+  - "The subsystem is touched by every branch, so each change lands into contention with whatever else is deriving."
+
+created_at: 2026-10-13
+updated_at: 2026-10-13

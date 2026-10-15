@@ -1,0 +1,41 @@
+id: I2567
+milestone: a-screen-is-fast-bounded-and-says-why
+title: "A reading explains itself: perf.readings lists every remembered reading, and a screen's response says what it cost in Server-Timing"
+slug: a-reading-explains-itself
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make the readings store answerable: one read capability lists every remembered reading with its age, standing, cost and why it was last read again, and every screen's response carries a Server-Timing header with the render time and each source's standing."
+why: "campaigns/majordomus-ui-speed-pack/00-MASTER.md step 8 asks for Server-Timing, cache diagnostics and stale and fresh indicators, and 03-CACHE.md asks for hit, miss and invalidation reasons with explain diagnostics. A page shows each reading's standing on its source line, and nothing else does: perf.counters counts executor hits and misses for the whole process, no capability lists the readings, and a slow screen cannot be traced to a source without reading the page's HTML."
+current_state: "apps/majordomus-cli/src/capability/readings.rs keeps, per source and input, the value, when it was read, how long the read took and the state of the repository it was read in; the store is private to the module. capability/builtin/perf.rs declares one capability, perf.counters. No response of the UI carries Server-Timing (a search of src/ui, src/cockpit and src/http finds none)."
+desired_state: "perf.readings (CachePolicy Disabled, effect read) answers one row per remembered reading: source id, a digest of the input, age, freshness, whether a worker is reading it, the duration of the last read, how many times it was read, and the reason of the last read (first, revalidate, moved, switch). It carries no value of a reading and no input, so nothing a source answered leaves through it. Ui::answer adds Server-Timing with one entry for rendering and one per source the screen asked for, naming the source and its standing with the wait it cost the request. The header is sent to a local caller only, by the rule the remote-caller guard already applies."
+scope:
+  - "apps/majordomus-cli/src/capability/readings.rs"
+  - "apps/majordomus-cli/src/capability/builtin/perf.rs"
+  - "apps/majordomus-cli/src/ui/mod.rs"
+  - "apps/majordomus-cli/src/ui/source.rs"
+  - "apps/majordomus-cli/tests/executor.rs"
+  - "docs/MAJORDOMUS_UI.md"
+  - "docs/PERFORMANCE.md"
+  - ".ai/repo/project/issues/I2567.yaml"
+non_scope:
+  - "A metrics exporter or a tracing backend"
+  - "The value or the input of a reading in any diagnostic"
+  - "A Cockpit page for it beyond what the registry derives for every capability"
+depends_on:
+  - I2486
+acceptance_criteria:
+  - "After a screen was read, perf.readings lists each of its sources with an age and a duration, and after a move of the repository the reason of the next read is moved"
+  - "perf.readings answers the same over the command line, HTTP and MCP, declared once with capability!"
+  - "A screen's response carries Server-Timing with a render entry and one entry per source, and a remote caller's response carries none"
+  - "No row of perf.readings and no Server-Timing entry holds a reading's value or input"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test executor"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::"
+  - "bin/majordomus generate --check"
+evidence_required:
+  - "perf_readings_capability_tests"
+  - "server_timing_header_test"
+created_at: 2026-10-13
+updated_at: 2026-10-13

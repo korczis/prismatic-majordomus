@@ -569,24 +569,27 @@ try {
   for (const route of visiting) {
     const page = await context.newPage();
     watch(page, route);
-    let first = true;
-    for (const width of WIDTHS) {
-      await page.setViewportSize({ width, height: 1000 });
-      // a route that never goes quiet — a page that polls a slow API on a machine with
-      // many worktrees — is a finding about that route, not the end of the sweep
-      let response;
-      try {
-        response = await page.goto(BASE + route, { waitUntil: 'networkidle' });
-      } catch (e) {
-        fail('load', `${route} @${width}px: ${String(e.message || e).split('\n')[0].slice(0, 120)}`);
-        break;
+    // Loaded once, at the narrowest width, where a phone loads it; every wider width is the
+    // same document resized, which reflows it under that width's media queries. A load per
+    // width waited for the network to go quiet each time: at seven declared widths that was
+    // most of the job's 1200 s bound, for no layout a resize does not produce.
+    await page.setViewportSize({ width: WIDTHS[0], height: 1000 });
+    // a route that never goes quiet — a page that polls a slow API on a machine with
+    // many worktrees — is a finding about that route, not the end of the sweep
+    let response;
+    try {
+      response = await page.goto(BASE + route, { waitUntil: 'networkidle' });
+    } catch (e) {
+      fail('load', `${route} @${WIDTHS[0]}px: ${String(e.message || e).split('\n')[0].slice(0, 120)}`);
+      await page.close();
+      continue;
+    }
+    if (await shell(page, route, response)) {
+      await designContract(page, route, badgeWords);
+      for (const width of WIDTHS) {
+        await page.setViewportSize({ width, height: 1000 });
+        await overflow(page, route, width);
       }
-      if (first) {
-        if (!(await shell(page, route, response))) break;
-        first = false;
-        await designContract(page, route, badgeWords);
-      }
-      await overflow(page, route, width);
     }
     await page.close();
   }

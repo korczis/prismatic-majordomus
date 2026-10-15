@@ -44,6 +44,7 @@ pub(crate) mod delivery;
 pub(crate) mod deployments;
 pub(crate) mod docs;
 pub(crate) mod evidence;
+pub(crate) mod front;
 pub(crate) mod governance;
 pub(crate) mod icons;
 pub(crate) mod intent;
@@ -64,6 +65,7 @@ pub(crate) mod work;
 
 use std::sync::Arc;
 
+use crate::capability::Context;
 use crate::cockpit::assets::Assets;
 use crate::http::router::{Request, Response};
 use crate::live::{IntoLive, Live};
@@ -347,6 +349,7 @@ impl Ui {
                     director: self.assets.url(observatory::LIB),
                     scenes: self.assets.url(observatory::SCENES_LIB),
                     p5: self.assets.url(observatory::P5_LIB),
+                    stream: self.assets.url(observatory::STREAM_LIB),
                 };
                 observatory::screen(&ctx, &req.query, &libs, kiosk)
             }
@@ -381,21 +384,44 @@ impl Ui {
         let body = if fragment {
             screen.main.render()
         } else {
-            shell::page(
-                &ctx,
-                &shell::Frame {
-                    current: path,
-                    stylesheet: self.assets.url(STYLESHEET),
-                    favicon: self.assets.url("favicon.svg"),
-                    script: self.assets.url(SCRIPT),
-                    graph_lib: self.assets.url(GRAPH_LIB),
-                    assets_present: self.assets.present(),
-                    version: self.version,
-                },
-                &screen,
-            )
+            self.framed(&ctx, path, &screen)
         };
-        let mut response = Response::new(screen.status, "text/html; charset=utf-8", body);
+        Self::respond(screen.status, body)
+    }
+
+    /// The front door, for the router's `/`: the UI's own screen of this process and
+    /// everything it serves, in the UI's frame, from facts the router holds and the surfaces
+    /// the topology offers.
+    pub(crate) fn front_door(
+        &self,
+        process: &front::Process<'_>,
+        sections: &[(crate::web::model::Category, Vec<crate::web::home::Entry>)],
+    ) -> Response {
+        let ctx = self.live.current();
+        let screen = front::screen(&ctx, process, sections);
+        Self::respond(screen.status, self.framed(&ctx, front::ROUTE, &screen))
+    }
+
+    /// A screen in the frame, with the UI's files.
+    fn framed(&self, ctx: &Context, path: &str, screen: &shell::View) -> String {
+        shell::page(
+            ctx,
+            &shell::Frame {
+                current: path,
+                stylesheet: self.assets.url(STYLESHEET),
+                favicon: self.assets.url("favicon.svg"),
+                script: self.assets.url(SCRIPT),
+                graph_lib: self.assets.url(GRAPH_LIB),
+                assets_present: self.assets.present(),
+                version: self.version,
+            },
+            screen,
+        )
+    }
+
+    /// A page of the UI, with the headers every one carries.
+    fn respond(status: u16, body: String) -> Response {
+        let mut response = Response::new(status, "text/html; charset=utf-8", body);
         for (name, value) in [
             ("Cache-Control", "no-cache"),
             ("Content-Security-Policy", crate::cockpit::csp()),

@@ -105,7 +105,13 @@
         };
         p.draw = () => {
           p.clear();
+          // the marks of this draw, kept with the finished frame they belong to: the director
+          // is handed them with every frame it composes from `snap`, so what a reader points
+          // at is what the surface shows, whenever p5 finishes drawing it
+          const drawn = [];
+          s.frame.collect = drawn;
           s.frame.fact = sketch(p, s.frame) || '';
+          s.marks = drawn;
           const done = p.canvas;
           if (s.snap.width !== done.width || s.snap.height !== done.height) {
             s.snap.width = done.width;
@@ -147,7 +153,10 @@
       s.frame.moving = moving;
       if (s.p5.width !== box.w || s.p5.height !== box.h) s.p5.resizeCanvas(box.w, box.h, true);
       s.p5.redraw();
-      if (s.ready) c.drawImage(s.snap, 0, 0, box.w, box.h);
+      if (s.ready) {
+        c.drawImage(s.snap, 0, 0, box.w, box.h);
+        if (typeof box.mark === 'function') for (const m of s.marks || []) box.mark(m);
+      }
       return s.frame.fact || 'the scene is being drawn';
     };
   }
@@ -168,6 +177,11 @@
   }
   function dim(p, box, str, x, y, scale, align) {
     text(p, box, str, x, y, scale, align, 0.55);
+  }
+  // A mark a reader can point at, registered with the director's frame (observatory.js):
+  // where it is on the stage, the record or the count it stands for, and what was read.
+  function mark(f, m) {
+    if (Array.isArray(f.collect)) f.collect.push(m);
   }
   const grouped = (obj) =>
     Object.entries(obj || {})
@@ -196,6 +210,10 @@
       const alpha = r.state === 'gated' || r.state === 'reviewed' ? 0.95 : 0.55 + 0.2 * breathe;
       p.fill(paint(r.state, alpha));
       p.rect(x + gap / 2, y + gap / 2, cell - gap, cell - gap, cell * 0.22);
+      mark(f, {
+        x: x + gap / 2, y: y + gap / 2, w: cell - gap, h: cell - gap, id: r.id, kind: 'rule', state: r.state,
+        truth: 'observed', fields: [['class', r.class || 'unstated']],
+      });
       if (r.class === 'advisory') {
         // an advisory rule carries a pin; a blocking one is the plain cell
         p.fill(withAlpha(token('--mj-bg', '#000'), 0.7));
@@ -211,6 +229,10 @@
       const y = box.h * 0.22 + i * box.u * 2.4;
       p.fill(paint(word, 0.9));
       p.rect(bx, y, Math.max(2, (count / most) * bw), box.u * 0.9, box.u * 0.2);
+      mark(f, {
+        x: bx, y, w: Math.max(box.u, (count / most) * bw), h: box.u * 0.9, id: word, kind: 'rules in one state',
+        state: plain(word), truth: 'derived', fields: [['rules', count], ['of all', m.total]],
+      });
       text(p, box, count, bx - box.u * 0.5, y + box.u * 0.45, 0.9, 'right');
       text(p, box, plain(word), bx + Math.max(2, (count / most) * bw) + box.u * 0.6, y + box.u * 0.45, 0.62, 'left');
     });
@@ -241,6 +263,10 @@
         p.noStroke();
         p.fill(paint(word, 0.88));
         p.rect(x, y, Math.max(1.5, w - 2), row * 0.62, row * 0.12);
+        mark(f, {
+          x, y, w: Math.max(1.5, w - 2), h: row * 0.62, id: `${g.status}:${word}`, kind: 'claims of one kind',
+          state: plain(word), truth: 'derived', fields: [['kind of claim', g.status], ['claims', count], ['all of this kind', g.total]],
+        });
         if (w > box.u * 3) text(p, box, count, x + w / 2, y + row * 0.31, 0.7, 'center', 1);
         x += w;
       });
@@ -304,6 +330,11 @@
       p.fill(tone(colour));
       p.rect(box.w * 0.52, y - box.u * 0.4, box.u * 0.8, box.u * 0.8, box.u * 0.15);
       text(p, box, `${name}  ${typeof ops[key] === 'number' ? ops[key] : '—'} of ${canonical === null ? '—' : canonical}`, box.w * 0.52 + box.u * 1.3, y, 0.7, 'left');
+      mark(f, {
+        x: box.w * 0.52, y: y - box.u * 0.6, w: box.w * 0.4, h: box.u * 1.2, id: name, kind: 'surface',
+        state: typeof ops[key] === 'number' ? 'measured' : 'unstated', truth: 'observed',
+        fields: [['operations it projects', typeof ops[key] === 'number' ? ops[key] : 'unstated'], ['canonical operations', canonical === null ? 'unstated' : canonical]],
+      });
     });
     // the same counts for modules and the public API, as bars against their own totals
     const bars = [];
@@ -330,6 +361,10 @@
         p.rect(x, y, Math.max(2, (have / of) * w), box.u * 0.8, box.u * 0.2);
       }
       text(p, box, `${name}  ${have === undefined || have === null ? '—' : have} of ${of}`, x, y - box.u * 0.8, 0.58, 'left');
+      mark(f, {
+        x, y: y - box.u * 1.3, w, h: box.u * 2.1, id: name, kind: 'measured share', state: typeof have === 'number' ? 'measured' : 'unstated',
+        truth: 'observed', fields: [['have', have === undefined || have === null ? 'unstated' : have], ['of', of]],
+      });
     });
     dim(p, box, `measured on ${m.target || 'the crate'}; every arc is a count, none is estimated`, box.w * 0.52, box.h * 0.9, 0.55, 'left');
     const sums = surfaces_.map(([k, n]) => `${n} ${typeof ops[k] === 'number' ? ops[k] : '—'}`).join(' · ');
@@ -359,6 +394,10 @@
         seen[word] = (seen[word] || 0) + count;
         p.fill(paint(word, 0.9));
         p.rect(x, y - h, width, Math.max(1, h - 1), 2);
+        mark(f, {
+          x, y: y - h, w: width, h: Math.max(1, h - 1), id: `wave ${w.wave}:${word}`, kind: 'issues of a wave',
+          state: plain(word), truth: 'derived', fields: [['wave', w.wave], ['issues', count], ['all in the wave', w.issues]],
+        });
         y -= h;
       });
       text(p, box, w.issues, x + width / 2, y - box.u * 0.9, 0.8);
@@ -404,6 +443,10 @@
         p.fill(paint(c.state, 0.95));
         p.rect(x, y, box.u * 0.35, ch * 0.92, box.u * 0.17);
       }
+      mark(f, {
+        x, y, w: cw * 0.92, h: ch * 0.92, id: c.id, kind: 'release check', state: plain(c.state), truth: 'observed',
+        fields: [['observed', c.observed || 'unstated']],
+      });
       text(p, box, String(c.id).toUpperCase(), x + box.u * 1.0, y + ch * 0.28, 0.9, 'left');
       text(p, box, plain(c.state), x + box.u * 1.0, y + ch * 0.55, 0.7, 'left');
       if (c.observed) dim(p, box, c.observed, x + box.u * 1.0, y + ch * 0.78, 0.5, 'left');
@@ -466,6 +509,10 @@
       // the tile's shade is its count again, so a darker tile never says more than a number
       p.fill(withAlpha(tone('cyan'), 0.18 + 0.7 * (item.count / most)));
       p.rect(x + 1.5, y + 1.5, Math.max(1, w - 3), Math.max(1, h - 3), Math.min(w, h) * 0.06);
+      mark(f, {
+        x, y, w, h, id: item.module, kind: 'module of the registry', state: 'declared', truth: 'derived',
+        fields: [['capabilities', item.count], ['of all', m.total]],
+      });
       if (w > box.u * 5 && h > box.u * 2.4) {
         text(p, box, item.module, x + box.u * 0.6, y + box.u * 1.1, 0.62, 'left', 1);
         text(p, box, item.count, x + box.u * 0.6, y + box.u * 2.4, 0.9, 'left', 0.85);
@@ -530,6 +577,11 @@
       });
       const done = by.DONE || 0;
       const share = ms.total ? Math.round((done / ms.total) * 100) : null;
+      mark(f, {
+        x, y, w: colW * 0.95, h: rowH, id: ms.id, kind: 'milestone', state: ms.status || 'unstated', truth: 'observed',
+        href: `/ui/roadmap?milestone=${encodeURIComponent(ms.id)}`,
+        fields: [['title', ms.title], ['issues', ms.total === null || ms.total === undefined ? 'unstated' : ms.total], ['done', done]],
+      });
       text(p, box, share === null ? '—' : `${done}/${ms.total}  ${share}%`, bx + bw + box.u * 0.5, y + rowH * 0.45, 0.5, 'left', 0.7);
     });
     grouped(totals).forEach(([word, count], i) => {

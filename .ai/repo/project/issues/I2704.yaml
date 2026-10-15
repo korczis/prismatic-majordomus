@@ -7,7 +7,7 @@ profile: implementation
 parallel_safe: false
 objective: "Bound the link and rendezvous replies a dialer reads at the link message bound and the candidate count it accepts at the registration bound, give the link backoff jitter, and measure the unknown_link retry rate in a test."
 why: "Split from I2133 on 2026-10-14. I2133 bounded the discovery queue, answered a refused registration with its refusal alone and slowed the unknown_link retry, and its desired_state said 'Not done here' of capping the reply a dialer reads and the received candidate count, jitter on the link backoff, and a test that measures the unknown_link retry rate, while its acceptance criteria still required them, so it could never close. Baseline audit of 2026-10-09 at master 1fb8d6be44, mesh gaps 5 and 11, threats T4 and T13."
-current_state: "Every reply bridge::request reads is bounded at MAX_REPLY_BYTES, 32 MiB (apps/majordomus-cli/src/mcp/bridge.rs, I2147), not at MAX_LINK_MESSAGE (900 KiB, apps/majordomus-cli/src/mesh/link.rs), which bounds only what the answerer receives and the dialer sends. The rendezvous client takes every candidate an answer carries (apps/majordomus-cli/src/mesh/rendezvous.rs); MAX_CANDIDATES (32) bounds only what this node answers (apps/majordomus-cli/src/mesh/manager.rs). Cooperation::backoff (apps/majordomus-cli/src/mesh/cooperation.rs) is heartbeat times 2^failures with no jitter. No test measures how often a peer that answers hello and refuses every sync is retried."
+current_state: "The dialer half is delivered (slice I2704a, 2026-10-15). A dialer reads its link and rendezvous replies through bridge::request_json_within (apps/majordomus-cli/src/mcp/bridge.rs), which holds a JSON body without the whitespace the server pretty-prints, refuses the first byte over its bound and a reply not whole within its deadline as a typed bridge::ReplyRefused (Oversized, Late), and parses nothing of either. A link reply is bounded at link::MAX_LINK_REPLY, one MAX_LINK_MESSAGE inside the signed field of a LinkReply, within LINK_REPLY_WITHIN (20 s); a register answer at rendezvous::MAX_REGISTER_ANSWER (81 KiB) within 15 s, and its candidates at rendezvous::MAX_ANSWER_CANDIDATES (33, the answerer's own and MAX_CANDIDATES), the 34th refused as RegisterError::TooManyCandidates before it is built. tests/mesh.rs reply_bound_test proves each bound with a fake peer. The retry half is delivered too (slice I2704b, 2026-10-15). manager.rs answers a registration by rendezvous::MAX_CANDIDATES, the one bound a dialer also reads, and keeps no copy of it. Every retry pause Cooperation::after_round takes, the heartbeat after a repeated unknown_link and the heartbeat times 2^failures backoff after any other failed round, is lengthened by link::jittered: a fresh draw (link::retry_seed) of up to a quarter of its base (RETRY_JITTER_DIVISOR), never shorter than the base. The test mesh::cooperation::tests::unknown_link_retry_rate_test drives a peer that welcomes every hello and refuses every sync for 40 rounds. Each refusal is counted in refused_out[unknown_link], and the summed pauses put the rate at no more than one per heartbeat. Two dialers' pause sequences differ, and a peer that refuses every hello is retried no sooner than its backoff base."
 desired_state: "A link reply over MAX_LINK_MESSAGE and a rendezvous answer with more than MAX_CANDIDATES candidates are refused as typed errors before they are parsed; the link backoff carries a bounded jitter; a test drives a peer that welcomes and refuses every sync and measures the retry rate."
 scope:
   - "apps/majordomus-cli/src/mesh/link.rs"
@@ -35,4 +35,23 @@ evidence_required:
   - "reply_bound_test"
   - "unknown_link_retry_rate_test"
 created_at: 2026-10-14
-updated_at: 2026-10-14
+updated_at: 2026-10-15T04:02:41Z
+started_at: 2026-10-15T04:02:30Z
+started_event: sha256:2de27a6fbace0e98aa12b98d2d1f0af31901b728f5998ddedb88ce7328e6323a
+verified_at: 2026-10-15T04:02:35Z
+verified_event: sha256:cdd9ed6d1fca19d8ede68402da1731f65575e4df2cf4458bbd03310c758d9347
+completed_at: 2026-10-15T04:02:41Z
+completed_event: sha256:8e415e910ba58cd95433fd27bbdf6707fe7f5fdeeb87bd47e88e835116ce5612
+evidence:
+  - covers: reply_bound_test
+    type: test
+    command: "cargo test --test mesh reply_bound_test"
+    result: "slice I2704a (dialer half): passed on lundra 2026-10-15 with tests/mcp_transport_bounds and lib mcp::bridge/mesh::rendezvous/mesh::link; a link reply at MAX_LINK_REPLY is read and one byte over refused, 33 register candidates read, 34 refused TooManyCandidates, 10000 refused Oversized at MAX_REGISTER_ANSWER, a dripping reply cut Late at its deadline. unknown_link_retry_rate_test remains for I2704b"
+    commit: c0e3585dc836201089d6b5dd49f5a79fe8bff798
+    recorded_at: 2026-10-15T02:08:07Z
+  - covers: unknown_link_retry_rate_test
+    type: test
+    command: "cargo test --lib mesh::cooperation::tests::unknown_link_retry_rate_test"
+    result: "slice I2704b (retry half): passed on lundra 2026-10-15 with cargo test --lib mesh:: (307), --test mesh (9), --test mesh_cooperation (7) and the mesh::link doctests (29); a peer that welcomes every hello and refuses every sync is retried 40 times, refused_out[unknown_link] counts 40, the summed pauses lie in [39, 39 x 1.25] heartbeats, the pauses after the first are all distinct, two dialers' sequences differ, and a peer that refuses every hello is never retried sooner than its backoff base"
+    commit: b862b8cdadba95188e2e5ead58caf179271b5f7a
+    recorded_at: 2026-10-15T03:51:49Z

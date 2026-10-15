@@ -160,6 +160,9 @@ never reported as drift.
 
 `wired_by` values: `git-hook:<name>` (resolved through `core.hooksPath` or
 `.git/hooks/`), `ci:<path>` (a file that must exist and contain the invocation),
+`git-config:<key>` (a key the clone's own git configuration must set to a value naming the tool),
+`toolchain:<file>` (the pinned Rust toolchain the file names is installed on this machine, so
+`scripts/derive` and `prs repair --apply` can build),
 `manual` (documented, not verified; doctor lists it as unverified, never as wired).
 The hook line must not swallow the exit code (`|| true`, `|| exit 0`).
 
@@ -618,6 +621,84 @@ local, so upgrading does not turn an existing installation red.
 `outcome` and `checkpoint_at` are the only fields a command changes after `start`.
 `active` refuses a new `start`; every other outcome lets `start` archive the record to
 `state/archive/<id>.yaml` and begin a new task.
+
+---
+
+## `.ai/local/state/telemetry/<task-id>.yaml` — a telemetry record
+
+What a provider reported about the execution of one task. Majordomus invokes no model, so
+it measures none of this itself: every number in the record was handed to it, and the
+record keeps who handed it.
+
+**This section is ahead of its writer, and says so.** The contract is defined
+(`share/schemas/majordomus/telemetry/telemetry.v1.schema.json`, kind `telemetry` in
+`share/kinds.yaml`, allow-list `share/allow/telemetry.txt`) and a record that breaks it is
+refused wherever a `telemetry` document is validated, but no command writes one yet. The
+command that attaches reported facts to the active task is issue I0302 of the
+`execution-telemetry` milestone; until it lands, the directory does not exist and nothing
+reads it. It is the one format in this document described before something produces it,
+because every later statement about what a task consumed rests on this shape and it had to
+be fixed first.
+
+```yaml
+schema: telemetry/v1
+kind: telemetry
+task_id: t-20261012201705-7bf9        # the task `majordomus start` allocated
+session_id: s-20261012201704-3c1e     # optional; the episode the facts were reported in
+recorded_at: 2026-10-12T21:04:10Z     # when the record was written, never the provider's clock
+facts:
+  input_uncached_tokens:
+    value: 1840
+    reporter: claude-code
+  cache_write_tokens:
+    value: 52210
+    reporter: claude-code
+  cache_read_tokens:
+    value: 903377
+    reporter: claude-code
+  output_tokens:
+    value: 21504
+    reporter: claude-code
+  reasoning_tokens:
+    not_reported: "the harness reports reasoning inside output_tokens, not apart"
+    reporter: claude-code
+  requests:
+    value: 61
+    reporter: claude-code
+  tool_calls:
+    value: 0                          # a measurement: the reporter said zero
+    reporter: claude-code
+  cost_microusd:
+    not_reported: "no price table was reported for this session"
+    reporter: claude-code
+```
+
+Three rules make the record what it is, and the schema enforces each of them:
+
+- **Every fact names its reporter.** `reporter` is the party the value came from — a
+  provider by its id in `share/providers.yaml`, or another named source. A fact without one
+  is refused. For an absent fact it is the party that would have reported it and did not.
+- **Absence is a value.** A fact is `value` or `not_reported`, exactly one of them, and
+  `not_reported` carries the reason. All eight facts are required in every record: a record
+  that leaves one out is refused, because an omitted key is what a reader takes for zero.
+  A provider that reports nothing produces a record in which every fact is `not_reported`.
+- **Nothing derived is stored.** There is no total and no ratio here; those are arithmetic
+  over the facts, done by the reader. `cost_microusd` is what the reporter says the work
+  cost, in millionths of a US dollar — a harness's projection or a bill, as the reporter
+  states it — and is never computed from the other facts.
+
+The fact names are the provider-neutral ones `majordomus economics` already normalises
+recorded runs onto (`apps/majordomus-cli/src/economics/usage.rs`): input that touched no
+cache, input written to the cache, input read from it, and output with reasoning included.
+A provider whose own field means something else — one input figure with the cached part
+inside it — is mapped by whatever hands the facts in, and what it cannot separate is
+`not_reported`, not a guess.
+
+What version 1 does not carry: the model or models that answered, per-request detail, wall
+time, and anything a session said or read. None of them is estimated to fill the gap.
+
+Unknown keys are an error at every level, as in every other Majordomus YAML file. These
+files are **not tracked**: the numbers belong to one checkout's work.
 
 ---
 

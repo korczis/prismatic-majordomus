@@ -44,10 +44,54 @@ pub enum Availability {
     NotBuilt,
 }
 
-/// Render the home page for a topology and the process serving it.
+/// One public surface as the page offers it: what it is called, where it is reached, and
+/// whether it answers now or which command would make it.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Entry {
+    /// The surface's id in the topology.
+    pub id: String,
+    /// What it is, in the surface's own words.
+    pub title: String,
+    /// The href it is reached through, relative to the origin.
+    pub href: String,
+    /// Whether it answers now.
+    pub state: Availability,
+    /// The command that produces it, for a static surface that has not been built.
+    pub producer: String,
+}
+
+/// Every public surface of the topology, by the category it declares, in the topology's
+/// order; a category without a public surface is left out.
 ///
 /// `ready` is asked about every static surface; a native route is always ready, because a
 /// process that serves the page serves its own routes.
+pub fn entries(topology: &Topology, ready: Readiness<'_>) -> Vec<(Category, Vec<Entry>)> {
+    Category::ALL
+        .into_iter()
+        .map(|category| {
+            let entries = topology
+                .public_in(category)
+                .iter()
+                .map(|surface| Entry {
+                    id: surface.id.clone(),
+                    title: surface.title.clone(),
+                    href: link_target(surface.mount.as_str(), surface.kind),
+                    state: match surface.kind {
+                        SurfaceKind::StaticDirectory => ready(&surface.id),
+                        _ => Availability::Ready,
+                    },
+                    producer: surface.producer.clone(),
+                })
+                .collect::<Vec<_>>();
+            (category, entries)
+        })
+        .filter(|(_, entries)| !entries.is_empty())
+        .collect()
+}
+
+/// Render the home page for a topology and the process serving it: the plain page, for a
+/// process that does not serve the UI. One that does answers `/` with the UI's own front
+/// door (`crate::ui::front`), drawn from the same [`entries`].
 pub fn page(topology: &Topology, identity: &Identity<'_>, ready: Readiness<'_>) -> String {
     let mut body = String::new();
     body.push_str(&html::summary(&[
@@ -63,33 +107,24 @@ pub fn page(topology: &Topology, identity: &Identity<'_>, ready: Readiness<'_>) 
         ),
     ]));
 
-    for category in Category::ALL {
-        let surfaces = topology.public_in(category);
-        if surfaces.is_empty() {
-            continue;
-        }
+    for (category, surfaces) in entries(topology, ready) {
         body.push_str(&format!("<h2>{}</h2>", html::escape(category.title())));
         let rows: Vec<Vec<String>> = surfaces
             .iter()
             .map(|surface| {
-                let target = link_target(surface.mount.as_str(), surface.kind);
-                let state = match surface.kind {
-                    SurfaceKind::StaticDirectory => ready(&surface.id),
-                    _ => Availability::Ready,
-                };
-                let name = match state {
+                let name = match surface.state {
                     Availability::Ready => format!(
                         "<a href=\"{}\">{}</a>",
-                        html::escape(&target),
+                        html::escape(&surface.href),
                         html::escape(&surface.id)
                     ),
                     Availability::NotBuilt => html::escape(&surface.id),
                 };
                 vec![
                     name,
-                    format!("<code>{}</code>", html::escape(&target)),
+                    format!("<code>{}</code>", html::escape(&surface.href)),
                     html::escape(&surface.title),
-                    match state {
+                    match surface.state {
                         Availability::Ready => String::from("<span class=\"pass\">ready</span>"),
                         Availability::NotBuilt => format!(
                             "<span class=\"fail\">not built</span> — run <code>{}</code>",

@@ -83,6 +83,17 @@ byte for byte the package the tool ships) and an empty `rules/project/`,
 `.ai/local/` line in `.gitignore`, added once. Everything under `.ai/repo/` belongs to
 the repository from that moment; a newer tool does not rewrite it.
 
+**Existing instruction files.** The policy `init` creates is the skeleton's, with one
+reading of the repository applied to it: a projection target that already exists and does
+not begin with the stamp `update` writes (a `CLAUDE.md` or an `AGENTS.md` somebody wrote)
+gets `mode: region` in its projection, and `init` prints one `region: <target> …` line for
+each. `update` then appends a marked region to such a file and leaves the rest byte for
+byte alone. A target that is absent, or that `update` generated, keeps the whole-file
+projection, so a repository with none of them gets the skeleton's policy unchanged. Under
+`--extend` the same reading is applied only when `--extend` is what creates the policy; a
+policy that exists is never rewritten. Held by
+`test/cases/2997_init_projects_into_a_region_over_a_hand_written_target.sh`.
+
 **Refuses** (`15`) when `.ai/` already exists, unless `--extend`, which adds every file
 the skeleton ships and the repository lacks and overwrites nothing; (`15`) when `.ai/`
 exists without a manifest, naming the choice between moving it aside and `--extend`; and
@@ -237,6 +248,25 @@ check: 1 action(s) would be taken and nothing was written (run: majordomus recov
 
 Is the supervisory layer real here? Read-only. Blocking by design: intended to run
 from a pre-commit hook and from CI.
+
+**It checks governance only** — the policy, the profiles, the wiring of every declared
+enforcement, the projections, the records and their retention. It reads nothing of the
+checkout's server, its lease or the mesh, so a clean report says nothing about whether the
+server answering for this checkout is current (I2707). The runtime is read by:
+
+<div class="overflow-x-auto" tabindex="0">
+
+| Question | Where it is read |
+| --- | --- |
+| Is the server answering for this checkout current, or stale? | `majordomus serve status` |
+| Is the mesh healthy here: identity, trust, link, runtime, journal? | `majordomus mesh doctor` |
+| What does the server report about itself, the mesh included? | `GET /api/v1/health` (`health.report`) |
+| Can this process answer: lease held, executable current? | `GET /api/v1/ready` (`health.ready`) |
+
+</div>
+
+
+`majordomus doctor --help` prints the same before its usage.
 
 **Checks, in order:**
 
@@ -399,12 +429,15 @@ else: each target carries its own provenance.
 - Refuses (`15`) to overwrite content whose current hash matches neither the stamp it
   carries nor the new output, unless `--force`. A target with no stamp at all was not
   written by `update` and is refused the same way. A hand edit is never silently lost; the refusal
-  names the file and the `--diff` command that shows it.
+  names the file and the `--diff` command that shows it. For a whole-file projection over
+  a file with no stamp it names `mode: region` first, as the way to keep the file, and
+  `--force` second, as the way to replace it.
 - `mode: region` (see `SCHEMAS.md`) generates only the text between the
   `majordomus:begin` and `majordomus:end` markers. The rest of the target is copied
   through byte for byte, an absent region is appended once, and malformed markers are
   refused (`15`). This is how a repository that already has a hand-written `CLAUDE.md`
-  adopts Majordomus without losing it.
+  adopts Majordomus without losing it. `init` declares it for every target it finds
+  already written (see `majordomus init`).
 - Appends `projections.updated` to the ledger.
 - Every file-mode target begins with a stamp naming this command, the policy hash it
   came from and the hash of the content below it; a region-mode target carries the same
@@ -853,13 +886,28 @@ branch-breaking defects overnight because they looked identical
 (`majordomus.never-reported-is-not-green`).
 
 The whole judgement — every gate, the plan that selected it, which obligations the change
-implies, and the twenty-two questions of the done invariant with the source that answered
-each — is one document, `gates.completion`, read the same way by the command line, the HTTP
-API, MCP and the Cockpit:
+implies, and the questions of the done invariant with the source that answered each — is
+one document, `gates.completion`, read the same way by the command line, the HTTP API, MCP
+and the Cockpit:
 
 ```
 majordomus-cli run gates.completion --input '{}' --format json | jq '.output.questions'
 ```
+
+The questions are declared once, in `share/completion.yaml`, which the tool ships: the
+stages of the work in order (implementation, validation, documentation, commit, gates,
+version, integration, deployment, verification, closing, provenance), every question in the
+stage it belongs to, and the source its answer is taken from — an obligation, a gate, the
+change set, the repository's convergence or a closing reading. `gates.policy`
+(`majordomus_completion_policy`, `GET /api/v1/gates/policy`) serves the file with what it
+resolves to here: a token the vocabulary lacks is a `problem`, and a gate question this
+repository's CI model never answers is listed under `unanswered_gates`. The report asks
+exactly those questions in that order, and folds the answers into `stage` — the first stage
+blocked, else the first with a question still owed, else the last — which is derived on
+every reading and written down by nobody. `complete` is true only when a task is present
+and every question passes or is exempt; `finishable` and `complete` are two different
+words. A distribution whose policy cannot be read is asked one question, `policy`, answered
+`unknown`, and nothing is complete.
 
 ### The closing questions
 

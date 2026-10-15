@@ -9,6 +9,8 @@
 #                                   second generation for the same answer (scripts/pages does,
 #                                   by fingerprint; the site job of validate.yml does, by the
 #                                   `generate-site-data --check` step that precedes the build).
+#   scripts/site-check --since-deploy REPO   only check 21's half that needs no build: that REPO
+#                                   does not track the build-time since-deploy record (for the cases)
 #   scripts/site-check --prose-figures <dir>
 #                                   check 19 alone, over every *.md and *.toml under <dir>, with
 #                                   no built site: the scan a case runs on a fixture. Exit 0 when
@@ -16,6 +18,11 @@
 set -eu
 SYNC=1
 if [ "${1:-}" = --no-sync ]; then SYNC=0; shift; fi
+SINCE_REPO=""
+if [ "${1:-}" = --since-deploy ]; then
+  [ $# -ge 2 ] || { echo "site-check: --since-deploy REPO" >&2; exit 2; }
+  SINCE_REPO="$2"; shift 2
+fi
 # The scan of check 19, "prose states no count by hand": every line of the given files on which
 # a number of two or more digits stands within three words before a counted noun. A count
 # typed into prose is the author's on the day it was typed, and the site goes on printing it
@@ -83,6 +90,34 @@ LOCAL="$(mj_rel "$MJ_AI_LOCAL_DIR")"
 SRC_REF="$(jq -r 'if (.commit // "unknown") != "unknown" and (.dirty | not) then .commit else "master" end' \
   "$SITE/data/build.json" 2>/dev/null || echo master)"
 fails=0; ok() { printf 'OK   %-12s %s\n' "$1" "$2"; }; bad() { printf 'FAIL %-12s %s\n' "$1" "$2"; fails=$((fails+1)); }
+# 21. since-deploy (the function; it runs last below). What moved since the previous deployment is a
+# fact of one build — scripts/site-build composes it from the commit that deployment was built from
+# to the one being built — so it lives in an ignored file beside build.json. Tracked, it would be
+# stale at the next commit by construction and every commit would change its bytes; so a tracked
+# or unignored copy is refused, and the built changelog page must say the state the file records
+# (or `absent` without one), with the homepage's trust strip linking it.
+since_deploy_check() {   # <repository> [<built public dir>]
+  local repo="$1" pub="${2:-}" rel=site/data/since-deploy.json sdbad=0 state
+  if git -C "$repo" ls-files --error-unmatch "$rel" >/dev/null 2>&1; then
+    bad since-deploy "$rel is tracked; it is a fact of one build and must never be committed (git rm --cached $rel)"; sdbad=1
+  elif ! git -C "$repo" check-ignore -q "$rel"; then
+    bad since-deploy "$rel is not ignored, so a build would leave it for a commit to pick up"; sdbad=1
+  fi
+  if [ -n "$pub" ]; then
+    state=absent
+    [ -f "$repo/$rel" ] && state="$(jq -r '.state // "unreadable"' "$repo/$rel" 2>/dev/null || echo unreadable)"
+    grep -qF "data-since-deploy=\"$state\"" "$pub/changelog/index.html" 2>/dev/null \
+      || { bad since-deploy "/changelog/ does not show the since-deploy state the build recorded ($state)"; sdbad=1; }
+    grep -qF 'data-since-deploy-link' "$pub/index.html" 2>/dev/null \
+      || { bad since-deploy "the homepage's trust strip does not link what changed since the last deploy"; sdbad=1; }
+  fi
+  [ "$sdbad" = 0 ] && ok since-deploy "$rel is ignored and untracked${pub:+, and /changelog/ shows the state it records ($state)}"
+  return 0
+}
+if [ -n "$SINCE_REPO" ]; then
+  since_deploy_check "$SINCE_REPO"
+  [ "$fails" = 0 ] && exit 0 || exit 10
+fi
 [ -d "$PUB" ] || { echo "site-check: site/public/ missing; run scripts/site-build" >&2; exit 12; }
 PREFIX="$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$SITE/config.toml" | sed -E 's#^[a-z]+://[^/]+##; s#/$##')"
 # The pages this check judges are the site's own. scripts/site-build composes the other
@@ -620,8 +655,25 @@ CREDENTIAL_RE="$(leak_patterns credential)"; NOT_CREDENTIAL_RE="$(leak_patterns 
 case "|$PRIVATE_RE|" in *"||"*) PRIVATE_RE="" ;; esac
 [ -n "$PRIVATE_RE" ] && [ -n "$CREDENTIAL_RE" ] && [ -n "$NOT_CREDENTIAL_RE" ] \
   || { echo "site-check: the leak patterns could not be read from ${LEAKS#"$ROOT"/}" >&2; exit 12; }
-site_files | xargs -0 grep -hoaE "$PRIVATE_RE" 2>/dev/null | head -1 | grep -q . && bad private "local path in output" || ok private "no local paths or internal hosts"
-site_files | xargs -0 grep -hoaE "$CREDENTIAL_RE" 2>/dev/null | grep -vE "$NOT_CREDENTIAL_RE" | head -1 | grep -q . && bad secrets "credential pattern in output" || ok secrets "no credential pattern"
+# A finding names the file it is in and the kind it is, and never the text: the text is the
+# secret, and a check that printed it would publish it into every CI log that ran it.
+# leak_files <regex> [<not-regex>] lists the site's own files carrying a match, one path
+# relative to the site per line; with <not-regex>, a file counts only when a match survives
+# that filter. The findings are read back into this shell, so every one of them is counted.
+leak_files() {
+  site_files | xargs -0 grep -laE "$1" 2>/dev/null | while IFS= read -r f; do
+    [ -z "${2:-}" ] || grep -oaE "$1" "$f" 2>/dev/null | grep -qvE "$2" || continue
+    printf '%s\n' "${f#"$PUB"/}"
+  done
+}
+LEAKED="$(leak_files "$PRIVATE_RE")"
+if [ -n "$LEAKED" ]; then
+  while IFS= read -r f; do bad private "$f: a local path or an internal host"; done <<< "$LEAKED"
+else ok private "no local paths or internal hosts"; fi
+LEAKED="$(leak_files "$CREDENTIAL_RE" "$NOT_CREDENTIAL_RE")"
+if [ -n "$LEAKED" ]; then
+  while IFS= read -r f; do bad secrets "$f: a credential-shaped assignment"; done <<< "$LEAKED"
+else ok secrets "no credential pattern"; fi
 # 13. docs coverage: every rendered docs page has a source, every docs.json entry is rendered
 for d in $(jq -r '.docs[] | select(.route) | .path' "$SITE/data/generated/docs.json"); do
   r="$(jq -r --arg p "$d" '.docs[] | select(.path==$p) | .route' "$SITE/data/generated/docs.json")"
@@ -1473,5 +1525,8 @@ fi
 # template that renders a document to reaching all three through what it extends and includes,
 # so a layout family added without the navbar is refused at its source.
 relay_check search "$ROOT/scripts/lib/search-check.mjs" "OK   search       " "FAIL search       "
+
+# 21. since-deploy: the record is never committed, and the pages show what it states (above)
+since_deploy_check "$ROOT" "$PUB"
 
 printf 'site-check: %s failure(s)\n' "$fails"; [ "$fails" = 0 ] && exit 0 || exit 10

@@ -7,7 +7,7 @@ profile: implementation
 parallel_safe: true
 objective: "Scan the published graph, the static site and everything the client receives for credential material, private environment values and machine-absolute paths, and fail on a finding without printing it."
 why: "This milestone publishes a description of everything the repository knows. That is exactly the artifact in which an accidental token or a developer's home directory would travel furthest."
-current_state: "No such scan exists for the site or the Cockpit data."
+current_state: "One definition, apps/majordomus-cli/src/quality/leak-patterns.tsv, is read by scripts/ci/no-machine-paths (every tracked file), scripts/site-check check 12 (the built site) and `majordomus quality rustdoc` (the crate's reference). Since 2026-10-15 site-check names the file and the kind of each finding and never its text, and case 3047 plants synthetic markers to prove it. Not yet detected: a credential written as a quoted JSON key (the closing quote stands between the name and the colon) and raw authorization material (an `Authorization:` header or a bearer value)."
 desired_state: "One check inspects the generated data and the built site, reports findings by location and kind, and runs in CI."
 scope:
   - test/cases
@@ -28,4 +28,4 @@ evidence_required:
   - negative_test
 risk: "A scan tuned to be quiet finds nothing forever. The synthetic marker is what keeps it honest."
 created_at: 2026-09-06
-updated_at: 2026-09-06
+updated_at: 2026-10-15

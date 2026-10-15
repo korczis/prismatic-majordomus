@@ -73,14 +73,19 @@ pub fn run(args: ServeArgs) -> Result<u8> {
             idle,
             wait,
             format,
-        }) => ensure(
-            &repo,
-            *port,
-            *idle,
-            Duration::from_secs(*wait),
-            *format,
-            &layer,
-        ),
+        }) => {
+            // the declared server timings, the idle life among them, read before the lease
+            // is judged; `--idle` given here overrides the declaration (I2701)
+            let _ = crate::policy::LoadedPolicy::load(&repo);
+            ensure(
+                &repo,
+                port.unwrap_or_else(|| crate::cli::checkout_port(repo.root())),
+                idle.unwrap_or_else(|| lease::timings().idle.as_secs()),
+                Duration::from_secs(*wait),
+                *format,
+                &layer,
+            )
+        }
         Some(ServeCommand::Stop { wait }) => stop(&repo, Duration::from_secs(*wait)),
     }
 }
@@ -123,7 +128,9 @@ fn serve(args: &ServeArgs, repo: &Repository) -> Result<u8> {
                 std::path::Path::new(&app.context.index.repository.root),
             )
             .0,
-            args.port,
+            // the port this checkout asks for on every start, unless one was given (I2702)
+            args.port
+                .unwrap_or_else(|| crate::cli::checkout_port(repo.root())),
         ),
     };
     // The server outlives many commits. It follows the repository rather than freezing
@@ -355,8 +362,40 @@ fn render_status(out: &mut impl Write, s: &Value, checkouts: Checkouts) -> Resul
         if let Some(r) = v["reason"].as_str() {
             w(out, format!("            {r}"))?;
         }
+        if let Some(line) = share_line(&v["lease"]["share"]) {
+            w(out, line)?;
+        }
     }
     Ok(())
+}
+
+/// The line that says which share a server serves and whether it is that server's own: its
+/// standing, version, whether it holds `ui/` and `cockpit/`, the directory and how it was
+/// found, then the reason on a line of its own when it is skewed. Nothing when the lease
+/// names no share.
+fn share_line(share: &Value) -> Option<String> {
+    let path = share["path"].as_str()?;
+    let held = |key: &str| {
+        if share[key] == true {
+            "present"
+        } else {
+            "absent"
+        }
+    };
+    let mut line = format!(
+        "            share {}  version {}  ui {}  cockpit {}  {path}",
+        share["standing"].as_str().unwrap_or("?"),
+        share["version"].as_str().unwrap_or("none"),
+        held("ui_present"),
+        held("cockpit_present"),
+    );
+    if let Some(origin) = share["origin"].as_str() {
+        line.push_str(&format!(" ({origin})"));
+    }
+    if let Some(reason) = share["reason"].as_str() {
+        line.push_str(&format!("\n              {reason}"));
+    }
+    Some(line)
 }
 
 fn pretty(v: &Value) -> String {
@@ -629,6 +668,11 @@ pub fn converge_with(
         };
         match standing {
             ServerStanding::Ready => return Ok(settle(started, false)),
+            // It answers, at this version, over a share that is not its own. Reported, not
+            // replaced: which share a server should pick and whether a skewed one is
+            // replaced are ADR 0163's later steps (S4, S5), and starting a second server
+            // that locates the same share would only make a second skewed one.
+            ServerStanding::Skewed => return Ok(settle(started, false)),
             ServerStanding::Starting => {}
             ServerStanding::Absent | ServerStanding::Stale if !started => {
                 // A stale verdict reached after the whole of the busy grace is a judgement the
@@ -716,6 +760,11 @@ fn ensure(
                 .unwrap_or_default(),
             wait.as_secs(),
             c.log.display()
+        ))
+    } else if c.standing == ServerStanding::Skewed {
+        Some(format!(
+            "{}; it answers, and its pages have no assets: start it over the share of this executable's version (`MAJORDOMUS_SHARE=<that share> majordomus serve ensure` after `majordomus serve stop`)",
+            c.reason.clone().unwrap_or_default()
         ))
     } else if c.standing == ServerStanding::Outdated {
         Some(format!(
@@ -841,7 +890,7 @@ fn server_command(exe: &Path, root: &Path, port: u16, idle: u64, layer: &[OsStri
 /// Standard input, output and error are redirected here, and for a long time that looked
 /// like enough. It is not: `Command` only replaces those three, and **every other descriptor
 /// the parent had open is inherited by the child**, which then holds it for its whole life —
-/// fifteen minutes, by `DEFAULT_IDLE_SECONDS`.
+/// fifteen minutes, by `DEFAULT_IDLE_SECONDS`, or the declared `server.idle_seconds`.
 ///
 /// direnv is where that stops being theoretical. It hands the file it evaluates an extra
 /// descriptor of its own (fd 6 here), and it does not return until that pipe closes. On
@@ -1189,6 +1238,31 @@ mod tests {
         assert!(matches!(args.command, Some(ServeCommand::Ensure { .. })));
         let layer = layer_args(&args.repo).unwrap();
         assert_eq!(layer, [OsString::from("--share"), OsString::from("/s")]);
+    }
+
+    /// `serve status` names the share a server serves, says when it is skewed and why, and
+    /// says nothing about a share a lease does not name.
+    #[test]
+    fn a_status_line_names_the_share_and_its_skew() {
+        assert_eq!(share_line(&Value::Null), None);
+        let skewed = share_line(&json!({
+            "path": "/s", "origin": "repository", "version": "0.21.0", "ui_present": false,
+            "cockpit_present": true, "standing": "skewed", "reason": "the share at /s is old",
+        }))
+        .unwrap();
+        assert!(skewed
+            .contains("share skewed  version 0.21.0  ui absent  cockpit present  /s (repository)"));
+        assert!(
+            skewed.ends_with("\n              the share at /s is old"),
+            "{skewed}"
+        );
+        let own = share_line(&json!({
+            "path": "/s", "version": "0.26.0", "ui_present": true, "cockpit_present": true,
+            "standing": "current",
+        }))
+        .unwrap();
+        assert!(own.contains("share current  version 0.26.0  ui present  cockpit present  /s"));
+        assert!(!own.contains('\n'), "a current share takes one line");
     }
 
     #[test]

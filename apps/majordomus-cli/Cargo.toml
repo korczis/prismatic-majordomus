@@ -35,6 +35,11 @@ schemars = "1"
 # tiny_http: a synchronous HTTP/1.1 server for the loopback `serve` command. No async
 # runtime, no framework; routes are derived from the capability registry, not declared.
 tiny_http = "0.12"
+# pulldown-cmark: the CommonMark parser rustdoc and mdBook read with, for every Markdown body a
+# surface shows (a rule, a decision record, a skill, a pull request's description). Only the
+# parser: the events are drawn through the crate's own HTML builder, so nothing a record
+# holds is ever written as markup. No default features — no SIMD, no command-line binary.
+pulldown-cmark = { version = "0.13", default-features = false }
 # sha2: the registry and index fingerprints (cache keys, generated-file headers, benchmark
 # evidence) need a stable hash across processes; the standard library's is not.
 sha2 = "0.10"
@@ -112,3 +117,15 @@ harness = false
 
 [profile.release]
 strip = true
+
+# The dependencies are optimised in the debug build that every derive, hook, case and CI job
+# runs; this crate itself is not, so an edit to it compiles as fast as before. Unoptimised,
+# dependency code was the largest part of `generate --check` (2026-10-15, sampled): syn
+# parsing every source file for the rustdoc module routes, sha2's software SHA-256 over the
+# index, the crate's generation and every artifact, serde_json reading the schemas. Optimised,
+# `generate site --check` used 5.3 s of CPU instead of 10.0 and `generate --check` 21.0 s
+# instead of 28.1 (medians, crate at opt-level 0), with byte-identical output. The
+# dependencies compile once per build directory and again only when Cargo.lock moves. Proc
+# macros and build scripts keep the build-override profile, so the derives compile as before.
+[profile.dev.package."*"]
+opt-level = 2

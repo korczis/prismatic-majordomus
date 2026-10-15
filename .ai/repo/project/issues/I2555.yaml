@@ -1,0 +1,46 @@
+id: I2555
+milestone: automation-is-scripted-capabilities
+title: "A hand-written recipe is one call: the eight recipe bodies the inventory describes as shell leave .just, and a recipe that grows a second line fails a gate"
+slug: a-hand-written-recipe-is-one-call
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Reduce every recipe written by hand in justfile and .just/*.just to a single invocation of a program with its arguments forwarded positionally, move the logic of the eight recipes that carry more into the command or script they belong to, and hold the property with a check over just's own JSON dump."
+why: "campaigns/majordomus-shellfall/03-derived-just.md asks that just be an adapter with no business logic, that recipes be projections of the command graph, that arguments pass through exactly, and that the generated bridge never be read back as a source. Most of that exists and is not planned again here: apps/majordomus-cli/src/command_graph/bridge.rs writes every command of both programs as a recipe into the untracked .ai/local/cache/command-graph/bridge.just, the justfile imports it optionally so a fresh clone still parses, set positional-arguments forwards arguments as written, command_graph/workflow.rs excludes bridged recipes when it reads the declared ones, and case 101_command_graph covers it. What remains is the hand-written part: the inventory carries nine records about shell inside recipes (build, build-release and clean in .just/build.just, distribution-check in .just/ci.just, open in .just/serve.just, derive-merge-driver in .just/site.just, bench and test-shell in .just/test.just, and one summary record for every recipe body), and nothing stops a recipe from growing shell."
+current_state: "justfile is 64 lines and imports five files of 270 lines. set shell is bash with -euo pipefail -c, so every recipe line is evaluated by bash. The justfile's own header says every recipe is a thin call; eight recipes are not, by the inventory's account, and no gate reads the recipes."
+desired_state: "Each of the eight recipes is one call to a command of the executable or to the script that already owns the step, or is deleted because the bridge projects it. A check reads just --dump --dump-format json and fails on a hand-written recipe whose body has more than one line or contains a pipe, a redirection, a control operator or an interpolated argument. The eight recipe records are deleted from the inventory, and the summary record says what is left and why bash is still the recipe shell."
+scope:
+  - "justfile"
+  - ".just/build.just"
+  - ".just/ci.just"
+  - ".just/serve.just"
+  - ".just/site.just"
+  - ".just/test.just"
+  - "apps/majordomus-cli/src/environment/workflows.rs"
+  - "apps/majordomus-cli/src/automation/mod.rs"
+  - ".ai/repo/automation/inventory.jsonl"
+  - "test/cases/101_command_graph.sh"
+  - "docs/ENVIRONMENT.md"
+  - ".ai/repo/project/issues/I2555.yaml"
+non_scope:
+  - "Generating the hand-written recipes: a recipe that composes two commands is declared once in .just and the bridge carries the rest, which is the current design"
+  - "Replacing bash as the recipe shell or moving to just modules, either of which changes recipe names or evaluation for every caller"
+  - "Tracking bridge.just: it is a pure function of the tree and stays untracked"
+  - "Any recipe name or alias a person types today"
+depends_on: []
+acceptance_criteria:
+  - "just --list prints the same recipe names, in the same groups and order, before and after"
+  - "The check fails on a fixture recipe with a two-line body and on one that interpolates an argument into its body, naming the recipe and the file"
+  - "No inventory record carries an anchor that begins with recipe"
+  - "An argument with a space, a quote, a leading dash and a dollar-parenthesis passed to one of the changed recipes reaches the program as one argument"
+  - "just with no arguments starts no build and no network connection, which the case asserts with a PATH that has no cargo"
+validation:
+  - "bin/majordomus plan validate"
+  - "bin/majordomus-cli shell check"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 101_command_graph 366_automation_inventory_agrees_with_the_tree"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test environment"
+evidence_required:
+  - "recipes_carry_no_shell_body"
+  - "recipe_names_unchanged"
+created_at: 2026-10-13
+updated_at: 2026-10-13

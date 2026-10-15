@@ -1,0 +1,49 @@
+id: I2561
+milestone: shell-shrinks-to-its-bootstrap
+title: "A provider hook reaches the executable: recording a prompt and a session event are capabilities, and the generated hook starts the shell tool only when no executable is there"
+slug: a-provider-hook-reaches-the-executable
+priority: p2
+profile: deep-work
+parallel_safe: false
+objective: "Implement capture prompt and capture session (start, end, compact) as capabilities of the executable that write the same records lib/capture.sh writes, and change the generated provider hooks to exec the executable when one is present and fall back to bin/majordomus otherwise, with the hook's fail-open exit unchanged."
+why: "campaigns/majordomus-shellfall/05-remove-shell-legacy.md asks that there be no bash dependency for the core command path, that shell-defined surfaces which must remain be narrow, and that the bootstrap chain be designed for the case where the executable is not installed yet. The provider hook is the most frequently run shell in the repository: the four generated shims under .claude/hooks (68 lines) exec bin/majordomus capture on every prompt, session start, session end and compaction, and that command is lib/capture.sh, the largest shell unit at 2,767 lines. The inventory records the session shims as duplicating the executable's session module, so the event is handled once in bash and read again in Rust, and every prompt pays for a bash start and the sourcing of lib/common.sh (1,765 lines)."
+current_state: "bin/majordomus lists capture among the 29 commands it sources from lib. The shim resolves bin/majordomus, .majordomus/bin or PATH and execs capture prompt --provider claude-code; it exits 0 when no tool is found. apps/majordomus-cli has lifecycle and episode modules that read what the shell wrote and no capability that records a prompt or opens an episode from a hook. lib/capture.sh also holds render, reconcile, prune, install and status."
+desired_state: "Two capabilities record a prompt and a session event with typed input read from the provider's hook payload on standard input, applying the same redaction and writing the same files under .ai/local as the shell does, proven by running both on the same payloads and comparing the records. The shim template tries the executable first. lib/capture.sh loses the prompt and session functions and keeps what is not yet moved; its record stays, with its exemption naming the issue that will finish it. The time a prompt hook takes is measured before and after with majordomus bench."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin"
+  - "apps/majordomus-cli/src/session"
+  - "apps/majordomus-cli/src/episodes.rs"
+  - "lib/capture.sh"
+  - "share/providers"
+  - "share/commands.yaml"
+  - ".claude/hooks"
+  - ".ai/repo/automation/inventory.jsonl"
+  - "test/cases"
+  - "docs/COMMANDS.md"
+  - ".ai/repo/project/issues/I2561.yaml"
+non_scope:
+  - "capture render, reconcile, prune, install and status, which stay in lib/capture.sh until an issue of their own"
+  - "Removing the shim: a provider's hook contract runs a command line, and a file that finds the tool is the narrow shell that remains"
+  - "Changing the record formats under .ai/local or what a prompt record redacts"
+  - "Hooks of providers other than the ones share/providers declares today"
+depends_on:
+  - "I1505"
+acceptance_criteria:
+  - "For a set of recorded hook payloads, the files the capability writes are byte-identical to the files lib/capture.sh wrote, apart from fields the case names as time or identity"
+  - "With the executable present, a prompt hook run under a PATH that has no bash succeeds and records the prompt"
+  - "With no executable and no shell tool, the shim exits 0 and writes nothing"
+  - "A malformed payload exits 12 and an unwritable archive exits 13, as the shell does, and the shim never exits 2"
+  - "majordomus bench reports the prompt hook's cold and warm time, and the warm time after is lower than before on the same machine"
+  - "shell check passes and prints fewer lines under lib than at the base"
+validation:
+  - "bin/majordomus plan validate"
+  - "bin/majordomus-cli shell check"
+  - "bin/majordomus-cli capabilities validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test session_domain"
+  - "bin/majordomus bench"
+evidence_required:
+  - "hook_reaches_executable"
+  - "records_identical_to_shell"
+  - "hook_latency_measured"
+created_at: 2026-10-13
+updated_at: 2026-10-13

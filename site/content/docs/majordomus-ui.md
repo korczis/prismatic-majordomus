@@ -59,13 +59,14 @@ lists it), declared beside the Cockpit in `apps/majordomus-cli/src/web/discover.
 
 | Screen | Route | Reads |
 |---|---|---|
+| Front door | `/` | the process itself (version, revision), `distribution.releases`, `repository.info`, the screens of the UI and every public surface of the web topology: a link when it answers, what builds it when it does not |
 | Dashboard | `/ui` | `repository.info`, `health.report`, `release.version`, `distribution.releases`, `plan.status`, `plan.roadmap`, `mesh.peers`; the queue on its own route |
 | Command | `/ui/command` | `commands.list` (its `origin` filter is the screen's tabs), `executions.list`; `capabilities.list` for the capability a command is |
 | Roadmap | `/ui/roadmap` | `plan.roadmap`, `plan.status`, `intents.list`; one milestone (`?milestone=`) in the inspector, with `plan.issues`: its issues, what can start, its critical path and its neighbours; one intent (`?intent=`) in its inspector: its statement, invariants and criteria with their evidence, and the milestones and issues that serve it |
 | Issues & PRs | `/ui/work` | `plan.status`, `plan.issues`; the queue on its own route, one pull request (`?pr=`) in its detail |
 | Issues | `/ui/issues` | `plan.issues`, `plan.status`, `plan.roadmap`: every issue, narrowed by `?status=` (the plan's own statuses as tabs), `?milestone=`, `?priority=` and `?q=`, each leading to its inspector |
 | PR Drain | `/ui/prs` | `plan.status`, `plan.issues` (one issue, `?issue=`); `integration.queue` and `integration.events` on its own route (`/ui/panels/drain`), narrowed by `?disposition=`, `?lane=` and `?q=`, one pull request (`?pr=`) in the inspector with what the executor did to it, the lane's recent activity, and its merges per day over the fortnight the trail ends on |
-| Capabilities | `/ui/capabilities` | `repository.info`, `capabilities.list` by kind; one capability (`?id=`) from `capabilities.describe` |
+| Capabilities | `/ui/capabilities` | `repository.info`, `capabilities.list` by kind: the queries and commands narrowed by kind, module, stability, surface and text, each facet counted; one capability (`?id=`) from `capabilities.describe`, keeping the filters |
 | Mesh | `/ui/mesh` | `mesh.peers`, `mesh.events`; one machine (`?node=`) in the inspector |
 | CI/CD & Releases | `/ui/delivery` | `distribution.releases`, `release.version`, `deploy.list`, `gates.model`, `integration.timings` (each check's median, 90th percentile and longest run, and the open heads that waited longest, each leading to its pull request) |
 | Deployments | `/ui/deployments` | `deploy.list` (what the layer declares); `deploy.observed` (what the forge recorded: where each environment stands, every deployment to every environment — GitHub Pages among them — and every release, each commit, ref, environment, run and release a link); `delivery.report` on its own route |
@@ -73,7 +74,7 @@ lists it), declared beside the Cockpit in `apps/majordomus-cli/src/web/discover.
 | Knowledge | `/ui/knowledge` | `knowledge_base.status`, `knowledge_base.candidates`: the candidates awaiting review, newest first and bounded with what is left out counted, the subjects they are about, and whether the deriver is still writing. The review's commands are named as text; the screen promotes and rejects nothing |
 | Documentation | `/ui/docs` | `objects.list` (features, documents), `web.surfaces` |
 | Governance | `/ui/governance` | `rules.report`, each rule named and leading to its inspector; one rule (`?rule=`) from `rules.show`: what it states, how it is enforced, the tests that prove it, what is missing, and the rules around it |
-| Observatory | `/ui/observatory`, and `/ui/kiosk` as its preset | `mesh.peers`, `mesh.events`, `mesh.state`, `plan.roadmap`, `distribution.releases`, `release.version`, `health.report`, `economics.runs`, `repository.info`, `rules.report`, `evidence.report`, `quality.report`, `plan.waves`, `distribution.status`, `capabilities.list`: fifteen scenes, each drawn from what its sources answered or named as unavailable with the source's reason ([The Observatory](#the-observatory)) |
+| Observatory | `/ui/observatory`, and `/ui/kiosk` as its preset | `mesh.peers`, `mesh.events`, `mesh.state`, `plan.roadmap`, `distribution.releases`, `release.version`, `health.report`, `economics.runs`, `repository.info`, `rules.report`, `evidence.report`, `quality.report`, `plan.waves`, `distribution.status`, `capabilities.list`, `executions.list`, and the live channel `/events`: sixteen scenes, every mark of which answers a click with the record it was drawn from, each drawn from what its sources answered or named as unavailable with the source's reason ([The Observatory](#the-observatory)) |
 
 </div>
 
@@ -314,6 +315,7 @@ the same facts as rows, how long it stays, and its character:
 |---|---|---|---|
 | `mesh` | Mesh Cosmos | `mesh.peers` | Mesh |
 | `activity` | Event River | `mesh.events` | Mesh |
+| `executions` | Execution Flow | `executions.list`, then `/events` | Command |
 | `intents` | Intent Nebula | `plan.roadmap` | Roadmap |
 | `tokens` | Token Spectrum | `economics.runs` | Evidence |
 | `heartbeat` | System Pulse | `health.report` | Dashboard |
@@ -344,10 +346,26 @@ p5 in instance mode onto a surface of their own that the director composes onto 
 checkout built without it says "p5 is not built here" on the stage and keeps the same facts in the
 table below it.
 
+The executions scene is the one scene kept current by a pushed channel rather than by reading
+the page again. The page names the channel (`data-observatory-events`, the server's `/events`),
+the snapshot it brings forward (`data-observatory-executions`, the path the registry declares
+for `executions.list`) and the script that follows it (`data-observatory-stream`,
+`share/ui/observatory-stream.js`). That script opens no channel of its own and writes no frame:
+it reads the snapshot once the channel is ready, folds each execution event into it by its
+dense per-execution sequence, drops a duplicate, reads the snapshot again on a gap or a
+`stream.lagged`, retires a channel silent for 2.5 heartbeats, and reconnects with exponential
+backoff and jitter. While the executions scene is shown, the status word is the channel's:
+`LIVE`, `RECONNECTING`, or `STALE` once it has been down for 30 seconds; a lane moves only when
+one of its events arrives, so a channel that is down moves nothing. With no execution
+remembered the scene is unavailable like any other, and it is drawn once the channel hears one.
+Case 3046 runs the script against a real server.
+
 The page carries its whole projection as one document, `observatory/v1`, in the
 `data-observatory` attribute of its section: when it was observed, the revision, every source
 asked with the state it answered in (`answered` or `failed`, with the reason and the time
-taken), and every scene with its model. The rule of the screen is in that document:
+taken), how its reading stands (`current`, `stale` when it was read before the repository last
+moved, `pending` when its first reading has not arrived, and its age), and every scene with its
+model. The rule of the screen is in that document:
 
 <div class="overflow-x-auto" tabindex="0">
 
@@ -371,7 +389,8 @@ The status word says how the page was read:
   and both readers back off to 120 seconds when the server does not answer;
 - `RESYNCED`: for ten seconds after the cursor named a clock the journal never reached (another
   runtime's journal, or one that restarted); the page was read again at once;
-- `STALE`: not read again within the bound;
+- `STALE`: not read again within the bound. The scene is then drawn dimmed and still: what it
+  shows was true when it was read, and nothing on it moves as if it were happening now;
 - `REPLAY`: a scene of the mesh drawn from the repository's recording, with the time it was
   recorded;
 - `SNAPSHOT`: the public site, which reads nothing again and names its revision.
@@ -392,6 +411,17 @@ The display's own state is readable for an inspector or an evidence run: the sec
 `observatory` property answers `data()` (the projection it is drawing now), `quarantined()`
 and `trace()` (the last 24 choices of the rotation with their reasons). The evidence of the
 gates is taken through it by `scripts/lib/ui-observatory.mjs`.
+
+The display is passive until someone points at it. Every painter registers each mark it draws
+with the record it stands for, so any mark answers a click or a tap; the keyboard walks the
+marks of the scene with ↑ and ↓ (or `j` and `k`) while the stage has the focus, Enter opens the
+one it is on and Esc closes it. The detail is read-only words: the mark's kind and identity, its
+state, its truth class (`OBSERVED`, a value the source answered; `DERIVED`, a count of what it
+answered; `REPLAY`, the recording's), each source with its standing and age, when the page was
+read, what the scene read of the record, and a link to the same facts as rows. A mark that
+leaves the projection while its detail is open stays shown, dashed, with the time it left. The
+open detail holds the rotation, and closes itself after five minutes without a reader so an
+unattended display goes back to rotating. The dots under the stage are one button per scene.
 
 On the public site the process that takes the snapshot runs no mesh. There `mesh`, `activity`
 and `coop` draw the recording the repository carries (`.ai/repo/observatory/recording.json`,
@@ -491,15 +521,18 @@ they cost. It renders nothing itself. What it changes is only what a file cannot
 | a link to a page of the Cockpit: the "technical view" of a source or of an object | that page of the Cockpit's own snapshot at `/cockpit/` when it holds it (ADR 0147), and the page about the live UI when it does not |
 | a link to a surface a publication holds (`/rustdoc`, `/openapi.json`) | unchanged |
 | a link into the served documentation (`/docs/…`) | the same page of the published site |
-| the script reads the screen again every minute and pulls in slow panels | it does neither: the body carries `data-snapshot` |
+| a slow panel is a placeholder the script fills once the screen has painted (`data-panel-src`) | the panel is written into the page: no process will answer later, so the placeholder would be all a reader ever saw |
+| the script reads the screen again every minute | it does not: the body carries `data-snapshot` |
 | "Read at" in the top bar | also a notice on every page: the commit, the time, the executable, and a link to the live UI |
 
 </div>
 
 
-A snapshot knows what the UI could read where it was taken. A Pages runner has no mesh, no
-recorded forge observation and no running execution, so those panels read `none`, `unknown`
-or `not answered`, never zero. A snapshot is not evidence of the live state of anything: for
+A snapshot knows what the UI could read where it was taken. The publishing job observes the
+forge first (`majordomus prs refresh` for the open pull requests, `majordomus served forge`
+for the deployments and the releases), so the drain and the deployments are the forge's as of that minute. A Pages runner
+has no mesh and no running execution, so those panels read `none`, `unknown` or `not
+answered`, never zero. A snapshot is not evidence of the live state of anything: for
 that, run `majordomus serve` in a checkout and open `/ui`.
 
 The directory declares itself (`surface.json`) as the surface `ui-snapshot`, mounted at `/ui`,

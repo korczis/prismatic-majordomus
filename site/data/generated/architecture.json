@@ -464,7 +464,7 @@
       "kind": "module",
       "label": "doctor",
       "command": "doctor",
-      "summary": "is Majordomus itself healthy and actually wired here?",
+      "summary": "governance only: is every declared enforcement wired here?",
       "read_only": true,
       "route": "/commands/doctor/",
       "external": false
@@ -1024,11 +1024,6 @@
     {
       "source": "lib/init.sh",
       "target": ".ai/local/state/open-questions.md",
-      "kind": "reads"
-    },
-    {
-      "source": "lib/init.sh",
-      "target": ".ai/repo/policy.yaml",
       "kind": "reads"
     },
     {
@@ -2168,6 +2163,11 @@
     },
     {
       "source": "lib/update.sh",
+      "target": ".ai/repo/policy.yaml",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/update.sh",
       "target": ".ai/repo/providers",
       "kind": "uses"
     },
@@ -2239,6 +2239,11 @@
     {
       "source": "lib/init.sh",
       "target": ".ai/local/state/handovers",
+      "kind": "writes"
+    },
+    {
+      "source": "lib/init.sh",
+      "target": ".ai/repo/policy.yaml",
       "kind": "writes"
     },
     {

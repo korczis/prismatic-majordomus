@@ -19,17 +19,48 @@ use super::ServiceAvailability;
 
 /// Run a command and take its output, or give up after `budget`.
 ///
+/// [`bounded`] with the reason folded away: a caller that only needs to know whether it
+/// got an answer, such as a snapshot on a shell prompt, reads `None` the same whether the
+/// program could not be started or ran out of time.
+pub fn bounded_output(command: &mut Command, budget: Duration) -> Option<Output> {
+    bounded(command, budget).ok()
+}
+
+/// Why [`bounded`] has no output to give.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Unbounded {
+    /// The program could not be started, or waiting for it failed.
+    NotRun,
+    /// The program was still running when the budget ran out, and was killed.
+    Expired,
+}
+
+/// Run a command and take its output, or give up after `budget`, saying which.
+///
 /// The child is waited for on its own thread so that its pipes are drained while the
 /// caller's clock runs: polling `try_wait` from here instead would deadlock the moment a
-/// child wrote more than a pipe buffer. On expiry the child is killed and `None` comes
-/// back; a caller that cannot say what it wanted must say that, not guess.
-pub fn bounded_output(command: &mut Command, budget: Duration) -> Option<Output> {
+/// child wrote more than a pipe buffer. On expiry the child is killed and
+/// [`Unbounded::Expired`] comes back; a caller that cannot say what it wanted must say
+/// that, not guess — and a caller whose answer is committed must tell a slow machine from
+/// a refusal, because only one of them is a property of the tree.
+///
+/// ```
+/// use majordomus_cli::environment::probe::{bounded, Unbounded};
+/// use std::process::Command;
+/// use std::time::Duration;
+///
+/// let quick = bounded(Command::new("true").arg("x"), Duration::from_secs(30));
+/// assert!(quick.is_ok_and(|o| o.status.success()));
+/// let absent = bounded(&mut Command::new("no-such-program-anywhere"), Duration::from_secs(1));
+/// assert_eq!(absent.unwrap_err(), Unbounded::NotRun);
+/// ```
+pub fn bounded(command: &mut Command, budget: Duration) -> Result<Output, Unbounded> {
     let child = command
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()
-        .ok()?;
+        .map_err(|_| Unbounded::NotRun)?;
     // The child's id, kept here so it can still be signalled after the waiting thread
     // has taken ownership of the `Child` itself.
     #[cfg(unix)]
@@ -39,8 +70,8 @@ pub fn bounded_output(command: &mut Command, budget: Duration) -> Option<Output>
         let _ = tx.send(child.wait_with_output());
     });
     match rx.recv_timeout(budget) {
-        Ok(Ok(output)) => Some(output),
-        Ok(Err(_)) => None,
+        Ok(Ok(output)) => Ok(output),
+        Ok(Err(_)) => Err(Unbounded::NotRun),
         Err(_) => {
             // Out of time. The waiting thread owns the child, so the signal goes to the
             // process directly; the thread then completes and exits on its own.
@@ -51,7 +82,7 @@ pub fn bounded_output(command: &mut Command, budget: Duration) -> Option<Output>
             unsafe {
                 libc::kill(pid as libc::pid_t, libc::SIGKILL);
             }
-            None
+            Err(Unbounded::Expired)
         }
     }
 }

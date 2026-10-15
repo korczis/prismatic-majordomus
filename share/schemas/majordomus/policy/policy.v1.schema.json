@@ -519,6 +519,18 @@
         }
       }
     },
+    "workflows": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "How a derivation asks the workflow runner (just) about the justfile. A committed projection is read from the answer, so the bound decides whether it is a function of the tree or of the machine's load.",
+      "properties": {
+        "describe_timeout_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "How long a derivation waits for `just --dump` and `just --groups` before it refuses, naming the command and this bound. Absent is 30."
+        }
+      }
+    },
     "server": {
       "type": "object",
       "additionalProperties": false,
@@ -548,6 +560,11 @@
           "type": "integer",
           "minimum": 1,
           "description": "How long the shared server lets a connection go without a request read in full on it — waiting for a head, kept alive between requests, or reading a body — before it closes the connection and counts it in server.status. A connection whose request is being answered is never closed by it."
+        },
+        "idle_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "How long a server started for a checkout no client owns — by `serve ensure` or by a shell entering the checkout — outlives its last peer before it stops by itself. Absent means 900. `--idle` on the command line overrides it."
         }
       }
     }

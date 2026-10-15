@@ -1,7 +1,7 @@
 +++
 title = "The UI the site publishes is the trunk's, and a UI that is missing, older or cut short without saying so is a failed publication"
 description = "The UI the site publishes is the trunk's, and a UI that is missing, older or cut short without saying so is a failed publication"
-weight = 164
+weight = 169
 [extra]
 kind = "rule"
 slug = "project-the-published-ui-is-the-trunks-1"
@@ -74,7 +74,14 @@ crate's reference). The stage after the producer is owned now.
    is a pass that says so. One whose record does not say what ended the reading, or does not
    list what it left out, is a failure: "every page" and "the pages there was time for" must
    be distinguishable from the public bytes alone.
-6. **A gate, not a note.** The pages workflow runs the probe after a deploy, once the site
+6. **Whole on the page.** A running UI asks for a slow panel after the screen has painted;
+   a snapshot has no process to ask. The snapshot writes each panel into the page that asks
+   for it and names them in its record (`panels` of `snapshot.json`). A published first
+   screen that still carries the request (`data-panel-src`) beside such a record is a
+   failure: its reader would see a placeholder for ever. A record without the field was
+   written before the writer did this, and the probe says so instead of failing a
+   publication for its age.
+7. **A gate, not a note.** The pages workflow runs the probe after a deploy, once the site
    serves the commit, and the step is not `continue-on-error`. `scripts/ci/pages-check` asks
    it of the published commit as section 2c; a UI that is absent, another commit's or not
    whole is exit `10`, and one that could not be judged is exit `12` with the half named in

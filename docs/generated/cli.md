@@ -280,7 +280,7 @@ majordomus mcp [OPTIONS]
 | `--transport` | `stdio` | `stdio` | The transport to serve on — `stdio`: One JSON-RPC frame per line on stdin and stdout |
 | `--standalone` | flag | — | Serve this client alone: no shared server, no HTTP, no Swagger UI, no peers, and nothing written anywhere. The default is the shared server (below) |
 | `--http-host` | `<HOST>` | — | Interface the shared server binds when this process is the one that starts it; without it, the one `MAJORDOMUS_HTTP_HOST` names on this machine, and loopback (`127.0.0.1`) when that is unset |
-| `--http-port` | `<PORT>` | `8741` | Port the shared server binds when this process starts it; when it is taken, a free port is used instead and the URL is logged on stderr either way |
+| `--http-port` | `<PORT>` | — | Port the shared server binds when this process starts it; without it, the port this checkout derives (8741 for the primary checkout). When it is taken, a free port is used instead and the URL is logged on stderr either way |
 
 Examples:
 
@@ -326,7 +326,7 @@ majordomus serve [OPTIONS] [COMMAND]
 | `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
 | `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
 | `--host` | `<HOST>` | — | Interface to bind; without it, the one `MAJORDOMUS_HTTP_HOST` names on this machine, and loopback (`127.0.0.1`) when that is unset |
-| `--port` | `<PORT>` | `8741` | Port to bind; 0 picks a free one and the address is logged on stderr |
+| `--port` | `<PORT>` | — | Port to bind; without it, the port this checkout derives (8741 for the primary checkout); 0 picks a free one and the address is logged on stderr |
 | `--fallback` | flag | — | When the port is taken, bind a free one instead and log both; without this a taken port is an error |
 | `--idle` | `<SECONDS>` | `0` | Stop when no peer has been attached for this many seconds; 0 runs until stopped. What a server no client owns is started with |
 | `--deployment` | `<ID>` | — | Bind the address this deployment object declares (`.ai/repo/deployments/<ID>.yaml`) instead of the local default. What a hosted process is started with; the address is the object's, not this command line's |
@@ -380,8 +380,8 @@ majordomus serve ensure [OPTIONS]
 
 | argument | value | default | description |
 |---|---|---|---|
-| `--port` | `<PORT>` | `8741` | The port the started server asks for first; a taken one is replaced by a free one |
-| `--idle` | `<SECONDS>` | `900` | The started server stops when no peer has been attached for this many seconds |
+| `--port` | `<PORT>` | — | The port the started server asks for first, without it the one this checkout derives (8741 for the primary checkout); a taken one is replaced by a free one |
+| `--idle` | `<SECONDS>` | — | The started server stops when no peer has been attached for this many seconds; without it, the policy's declared `server.idle_seconds`, 900 when none is declared |
 | `--wait` | `<SECONDS>` | `20` | How long to wait for a server to become ready before reporting what stands |
 | `--format` | `text` \| `json` | `text` | Output shape — `text`: Lines for a person; `json`: One JSON document, deterministic |
 | `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
@@ -4975,6 +4975,7 @@ majordomus monitor [OPTIONS]
 |---|---|---|---|
 | `--follow` | flag | — | Keep following: ask again every `--interval` seconds and print only what is new |
 | `--after` | `<AFTER>` | — | Start after this cursor (a page's `cursor`), instead of the newest signals |
+| `--cursor-file` | `<FILE>` | — | Keep the cursor in this file: start after the one it holds (unless `--after` is given) and write each page's cursor back, so a restarted watcher repeats nothing |
 | `--limit` | `<LIMIT>` | — | At most this many signals per page (default 50, at most 500) |
 | `--sources` | `<SOURCES>` | — | A comma-separated subset of mesh, executor and github (default: all three) |
 | `--for` | `<READER>` | — | Your names, comma-separated (a worker such as 1b, a role, a login): what names them is marked for you; default $MAJORDOMUS_MONITOR_FOR |

@@ -100,8 +100,8 @@ use serde::{Deserialize, Serialize};
 use super::config::{CooperationConfig, TrustConfig};
 use super::identity::{node_id_of_key, NodeIdentity};
 use super::journal::{
-    ClaimMode, EventBody, HandoverBody, Journal, JournalTallies, Marks, MeshEvent, Rejection,
-    SessionInfo, StreamId, StreamLiveness, HANDOVER_RETENTION,
+    ClaimMode, Durability, EventBody, HandoverBody, Journal, JournalTallies, Marks, MeshEvent,
+    Rejection, SessionInfo, StreamId, StreamLiveness, HANDOVER_RETENTION,
 };
 use super::link::{
     fresh_token, negotiate, sign, verify_signed, Domain, Hello, LinkRefusal, LinkReply,
@@ -281,6 +281,8 @@ struct Outbound {
 struct Inbound {
     link: String,
     counter: u64,
+    /// The timestamp of the hello that made this link: an older hello cannot replace it.
+    hello_ts: u64,
 }
 
 struct PeerLink {
@@ -951,13 +953,14 @@ impl MeshVerifyReport {
 /// #     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),
 /// # }).unwrap();
 /// use majordomus_cli::mesh::cooperation::Written;
-/// use majordomus_cli::mesh::journal::{ClaimMode, SessionInfo};
+/// use majordomus_cli::mesh::journal::{ClaimMode, Durability, SessionInfo};
 ///
 /// let session = SessionInfo::named("s1", "cli");
 /// let written: Written = cooperation
 ///     .claim(&session, vec!["docs".into()], None, ClaimMode::Advisory, None)
 ///     .unwrap();
 /// assert!(written.lamport > 0, "placed against every other runtime's events");
+/// assert_eq!(written.durability, Durability::Memory, "this journal has no file");
 ///
 /// // and the key it returned is how the claim is addressed from here on
 /// cooperation.release(&written.key).unwrap();
@@ -970,6 +973,11 @@ pub struct Written {
     pub event: String,
     /// The event's Lamport stamp.
     pub lamport: u64,
+    /// Whether the event reached this machine's disk: `synced`, `memory` (a journal with no
+    /// file, by configuration), or `not_durable` — held and replicated to peers, not on disk
+    /// here, and not acknowledged as durable. `unknown` from an executable that predates it.
+    #[serde(default)]
+    pub durability: Durability,
 }
 
 /// What a dial or a sync round did not do. The three are kept apart because they are acted
@@ -1970,6 +1978,23 @@ impl Cooperation {
             table
                 .nonces
                 .retain(|_, ts| now.saturating_sub(*ts) <= 2 * MAX_LINK_SKEW_SECONDS);
+            // The cache is memory, so a restart forgets it; the link a peer made since is what
+            // a hello captured before the restart would displace. A hello older than the one
+            // that made the peer's live link cannot replace it (one runtime key is one
+            // checkout on one machine, so its hellos carry one clock).
+            let established = table
+                .peers
+                .get(&runtime_key)
+                .and_then(|peer| peer.inbound.as_ref())
+                .map(|inbound| inbound.hello_ts);
+            if established.is_some_and(|ts| hello.ts < ts) {
+                drop(table);
+                return self.refuse_in(
+                    RefusalCode::Replay,
+                    "this hello is older than the one that made the peer's live link".into(),
+                    runtime,
+                );
+            }
             let key = (hello.card.pk.clone(), hello.nonce.clone());
             if table.nonces.contains_key(&key) {
                 drop(table);
@@ -2043,6 +2068,7 @@ impl Cooperation {
             peer.inbound = Some(Inbound {
                 link: link.clone(),
                 counter: 0,
+                hello_ts: hello.ts,
             });
             peer.last_exchange = Some(Instant::now());
             peer.handshakes += 1;
@@ -2808,22 +2834,30 @@ impl Cooperation {
                 if *unknown_in_a_row == 1 {
                     Duration::ZERO
                 } else {
-                    self.heartbeat()
+                    Self::jitter(self.heartbeat())
                 }
             }
             Err(RoundError::Refused(_)) => {
                 *failures = failures.saturating_add(3).min(6);
-                self.backoff(*failures)
+                Self::jitter(self.backoff(*failures))
             }
             Err(_) => {
                 *failures = failures.saturating_add(1).min(6);
-                self.backoff(*failures)
+                Self::jitter(self.backoff(*failures))
             }
         }
     }
 
+    /// A retry's pause: `base` and a fresh jitter of up to a quarter of it on top, never
+    /// less than `base`, so that runtimes whose links to one peer failed together do not
+    /// retry it together (I2704).
+    fn jitter(base: Duration) -> Duration {
+        super::link::jittered(base, super::link::retry_seed())
+    }
+
     /// Heartbeat × 2^failures, never beyond the expiry: an unreachable peer is asked less
-    /// and less, and still within one expiry of coming back.
+    /// and less, and still within one expiry of coming back. The base a retry's jitter is
+    /// drawn over, by [`Self::jitter`].
     fn backoff(&self, failures: u32) -> Duration {
         let factor = 1u32 << failures.min(6);
         (self.heartbeat() * factor).min(self.expiry().max(self.heartbeat()))
@@ -3363,14 +3397,15 @@ impl Cooperation {
     // ------------------------------------------------------------------ operations
 
     fn write(&self, body: EventBody, key: String) -> Result<Written, CooperationError> {
-        let event = self
+        let appended = self
             .journal
-            .append_own(body)
+            .append_acknowledged(body)
             .map_err(|e| CooperationError::Invalid(e.to_string()))?;
         Ok(Written {
             key,
-            event: event.id(),
-            lamport: event.lamport,
+            event: appended.event.id(),
+            lamport: appended.event.lamport,
+            durability: appended.durability,
         })
     }
 
@@ -4170,30 +4205,97 @@ mod tests {
         };
         let (mut failures, mut unknown) = (0u32, 0u32);
         let beat = a.heartbeat();
+        let within = |pause: Duration, base: Duration| {
+            pause >= base && pause <= base + base / crate::mesh::link::RETRY_JITTER_DIVISOR
+        };
         let unknown_link = refusal(RefusalCode::UnknownLink);
         assert_eq!(
             a.after_round(&unknown_link, &mut failures, &mut unknown),
             Duration::ZERO,
             "a restarted answerer is greeted again at once"
         );
-        assert_eq!(
-            a.after_round(&unknown_link, &mut failures, &mut unknown),
-            beat,
-            "and no faster than a heartbeat after that"
+        let pause = a.after_round(&unknown_link, &mut failures, &mut unknown);
+        assert!(
+            within(pause, beat),
+            "and no faster than a heartbeat after that, jittered: {pause:?}"
         );
         assert_eq!(unknown, 2);
         let replay = refusal(RefusalCode::Replay);
-        assert_eq!(
-            a.after_round(&replay, &mut failures, &mut unknown),
-            a.backoff(3)
-        );
-        assert_eq!(
-            a.after_round(&Err(RoundError::NoLink), &mut failures, &mut unknown),
-            a.backoff(4)
-        );
+        let pause = a.after_round(&replay, &mut failures, &mut unknown);
+        assert!(within(pause, a.backoff(3)), "{pause:?}");
+        let pause = a.after_round(&Err(RoundError::NoLink), &mut failures, &mut unknown);
+        assert!(within(pause, a.backoff(4)), "{pause:?}");
         assert_eq!(failures, 4);
         assert_eq!(a.after_round(&Ok(()), &mut failures, &mut unknown), beat);
         assert_eq!((failures, unknown), (0, 0));
+    }
+
+    /// The retry rate against a peer that welcomes every hello and refuses every sync as
+    /// `unknown_link`, and against one that refuses every hello, measured: each refusal is
+    /// counted where every surface reads it (`refused_out`), and the pauses the worker takes
+    /// between the rounds are summed into the time the rounds take. No faster than once
+    /// per heartbeat, and two dialers of one peer never in lockstep (I2704).
+    #[test]
+    fn unknown_link_retry_rate_test() {
+        const ROUNDS: u32 = 40;
+        let net = Arc::new(InProcess::default());
+        let a = runtime(&net, "a:1", "root", TrustPolicy::Tofu);
+        let c = runtime(&net, "c:1", "root", TrustPolicy::Tofu);
+        let b = runtime(&net, "b:1", "root", TrustPolicy::Tofu);
+        let beat = a.heartbeat();
+        let ceiling = beat + beat / crate::mesh::link::RETRY_JITTER_DIVISOR;
+        let mut sequences = Vec::new();
+        for dialer in [&a, &c] {
+            let (mut failures, mut unknown) = (0u32, 0u32);
+            let mut pauses = Vec::new();
+            for _ in 0..ROUNDS {
+                // what the worker does each round: hello while unlinked, then sync
+                let key = dialer.dial(&["b:1".into()]).expect("b welcomes every hello");
+                // b forgets every link it made: the sync names a link it does not know
+                b.table.lock().unwrap().inbound_links.clear();
+                let outcome = dialer.sync_with(&key);
+                assert!(
+                    matches!(&outcome, Err(RoundError::Refused(r)) if r.code == RefusalCode::UnknownLink),
+                    "{outcome:?}"
+                );
+                pauses.push(dialer.after_round(&outcome, &mut failures, &mut unknown));
+            }
+            let refused = dialer.status().counters.refused_out[&RefusalCode::UnknownLink];
+            assert_eq!(refused, u64::from(ROUNDS), "every refusal is counted");
+            assert_eq!(pauses[0], Duration::ZERO, "the first is a restart, greeted at once");
+            let elapsed: Duration = pauses.iter().sum();
+            assert!(
+                elapsed >= beat * (ROUNDS - 1) && elapsed <= ceiling * (ROUNDS - 1),
+                "{refused} refusals in {elapsed:?}: no faster than one per {beat:?}"
+            );
+            let retries = &pauses[1..];
+            assert!(retries.iter().all(|p| *p >= beat && *p <= ceiling), "{retries:?}");
+            let distinct: std::collections::BTreeSet<_> = retries.iter().collect();
+            assert!(distinct.len() > retries.len() / 2, "jittered, not fixed: {retries:?}");
+            sequences.push(pauses);
+        }
+        assert_ne!(sequences[0], sequences[1], "two dialers of one peer drift apart");
+
+        // a peer that refuses every hello: another repository's runtime
+        let d = runtime(&net, "d:1", "elsewhere", TrustPolicy::Tofu);
+        let (mut failures, mut unknown) = (0u32, 0u32);
+        let mut elapsed = Duration::ZERO;
+        for round in 0..ROUNDS {
+            let outcome = a.dial(&["d:1".into()]).map(|_| ());
+            assert!(matches!(&outcome, Err(RoundError::Refused(_))), "{outcome:?}");
+            let pause = a.after_round(&outcome, &mut failures, &mut unknown);
+            let base = a.backoff(failures);
+            assert!(
+                pause >= base && pause <= base + base / 4 && pause >= beat,
+                "round {round}: {pause:?} against {base:?}"
+            );
+            elapsed += pause;
+        }
+        assert!(
+            elapsed >= beat * ROUNDS,
+            "{ROUNDS} refused hellos in {elapsed:?}: no faster than one per {beat:?}"
+        );
+        drop(d);
     }
 
     #[test]
@@ -4316,6 +4418,70 @@ mod tests {
             matches!(wrong, Err(RoundError::Refused(ref r)) if r.code == RefusalCode::Misaddressed),
             "{wrong:?}"
         );
+    }
+
+    #[test]
+    fn a_hello_replayed_after_a_restart_cannot_displace_the_link_a_newer_one_made() {
+        let net = Arc::new(InProcess::default());
+        let a = runtime(&net, "a:1", "root", TrustPolicy::Tofu);
+        let b = runtime(&net, "b:1", "root", TrustPolicy::Tofu);
+        // a hello B addressed to A thirty seconds ago, captured on its way: inside the skew
+        // window, and A answers it once
+        let captured = sign(
+            &b.identity,
+            Domain::Hello,
+            serde_json::to_value(&Hello {
+                proto_min: LINK_PROTOCOL_MIN,
+                proto_max: LINK_PROTOCOL_MAX,
+                card: b.card.clone(),
+                nonce: fresh_token(),
+                ts: crate::mesh::protocol::now() - 30,
+                to: Some(a.runtime_key().to_string()),
+            })
+            .unwrap(),
+        );
+        assert!(a.accept_hello(&captured).refusal.is_none());
+        // A restarts: the same key and runtime, and a replay cache that remembers nothing
+        let identity = Arc::clone(&a.identity);
+        drop(a);
+        let a = Cooperation::new(CooperationSetup {
+            identity,
+            runtime: crate::mesh::repository::runtime_id("a:1"),
+            repository: of_root_commits(&["root".into()]),
+            endpoints: vec!["a:1".into()],
+            version: "test".into(),
+            config: CooperationConfig::default(),
+            trust: TrustConfig {
+                policy: TrustPolicy::Tofu,
+                allow: vec![],
+            },
+            journal_path: None,
+            registry: Arc::new(MeshRegistry::new()),
+            transport: Arc::clone(&net) as Arc<dyn LinkTransport>,
+            board: None,
+            checkout: CheckoutFacts::default(),
+        })
+        .unwrap();
+        net.runtimes
+            .lock()
+            .unwrap()
+            .insert("a:1".into(), Arc::downgrade(&a));
+        // B links to the restarted A with a fresh hello, and the link carries a sync
+        b.dial_to(Some(a.runtime_key()), &["a:1".into()])
+            .expect("linked again");
+        assert!(b.sync_with(a.runtime_key()).is_ok());
+        let reconnects = a.counters.reconnects.load(Ordering::Relaxed);
+        // the captured hello, replayed: A's cache has never seen its nonce, and it is refused
+        // all the same, because it is older than the hello that made the link it would replace
+        let refusal = a.accept_hello(&captured).refusal.expect("refused");
+        assert_eq!(refusal.code, RefusalCode::Replay, "{refusal:?}");
+        // and the link B holds is the one A still serves
+        assert!(
+            b.sync_with(a.runtime_key()).is_ok(),
+            "the established link was not displaced"
+        );
+        assert_eq!(a.counters.reconnects.load(Ordering::Relaxed), reconnects);
+        assert_eq!(a.peers().len(), 1);
     }
 
     #[test]

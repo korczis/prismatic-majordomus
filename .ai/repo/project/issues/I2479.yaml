@@ -1,0 +1,29 @@
+id: I2479
+milestone: development-runtime
+title: "The capabilities are searched and faceted: kind, module, stability, surface and text, each counted"
+slug: the-capabilities-are-faceted
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Let a reader of majordomus ui narrow the queries and commands on /ui/capabilities by kind, module, stability, the surface they are projected on and text, with each facet counting what choosing it would show, every control a link or a GET form, and every row opening its declaration without losing the filters."
+why: "The owner asked on 2026-10-11 to implement every view of the UI screenshots, maximally interactive (pack v3 M09-01, a searchable capability listing with facets). The Capabilities screen showed 188 queries and commands as two fixed tables with no way to narrow them, and its ?id= value reached the capability unchecked."
+current_state: "Two fixed tables of commands and queries; nothing narrows them; a row's link drops whatever the reader was looking at."
+desired_state: "One browser of queries and commands: kind tabs, a search over id, title, description, module and tags, and module, stability and surface choices, each value with the count it would show among what the other picks admit; a module or surface in a row is itself a link that narrows by it; '<n> of <m> capabilities shown'; a row opens its declaration (?id=) keeping the filters, and a change of filter closes it. A value that is no word of the registry is dropped and never echoed."
+scope:
+  - "apps/majordomus-cli/src/ui/capabilities.rs"
+  - ".ai/repo/project/issues/I2479.yaml"
+  - "docs/MAJORDOMUS_UI.md"
+  - "test/cases/1084_the_capabilities_are_faceted.sh"
+depends_on: ["I2462"]
+acceptance_criteria:
+  - "kind, module, stability, surface and text narrow the capabilities together, each facet counted among what the other picks admit"
+  - "a row opens its declaration and keeps the filters"
+  - "a value that is no word of the registry is dropped and never echoed"
+validation:
+  - "cargo test --lib ui::capabilities"
+  - "test/run.sh 1084_the_capabilities_are_faceted"
+evidence_required:
+  - "ui_capabilities_unit_tests"
+  - "ui_capabilities_case_1084"
+created_at: 2026-10-11
+updated_at: 2026-10-11

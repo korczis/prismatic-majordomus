@@ -1,0 +1,61 @@
+id: an-intent-is-followed-to-the-deployment-that-carries-it
+title: "An intent is followed from its criteria to the deployment that carries its work, and one scenario proves it across a restart"
+slug: an-intent-is-followed-to-the-deployment-that-carries-it
+order: 501
+priority: p2
+problem: "campaigns/majordomus-autonomous-idd-maximal/04_RELEASE_DEPLOY_EVIDENCE.md asks that merged, released, deployed and satisfied stay distinct and that an intent reads satisfied only after an observed deployment; campaigns/majordomus-autonomous-idd-maximal/15_RELEASE_GITHUB_ROLLOUT.md asks for one trace from the intent to the deployment; campaigns/majordomus-autonomous-idd-maximal/17_OBSERVABILITY_SLOS_COST.md asks for the lead time from merge to deployment with its sample size; and campaigns/majordomus-autonomous-idd-maximal/08_E2E_ROLLOUT.md, 14_TESTING_CHAOS_PERFORMANCE.md (S01, S13, S30) and 19_ACCEPTANCE_TRACEABILITY_MATRIX.md (AC-018, AC-019, AC-029, AC-032) ask for one scenario that proves the path with a forced restart and a failed deployment. Measured on 2026-10-13: an intent criterion is settled by a test, a claim or a command (apps/majordomus-cli/src/intent.rs) and by no deployment; apps/majordomus-cli/src/intent_realization.rs names neither a release nor a deployment, so intent explain stops at the merged work; deploy.observed records what the forge deployed and nothing joins it to a merge; integration::metrics folds merges and no wait for deployment; and no case under test/cases follows one intent past its evidence to a deployment or across a server restart."
+outcome: "A criterion can require an observed deployment; intent explain continues from each served issue to the release and the deployment that carry it; the wait from merge to deployment is a measured number with its sample size; and the disposable-repository case of I2545 is continued to a deployment, a failed deployment and a restart."
+current_state: "The parts exist apart: the evidence engine with one freshness function (ADR 0087), the recorded forge observation (apps/majordomus-cli/src/deploy/observed.rs), the release records under .ai/repo/releases, and the integrator's trail. Cases 367, 388, 890, 895, 1081 and 2978 each hold one segment, and I2545 plans the case from a sentence to a verdict."
+desired_state: "The segments are joined by derivation: one evidence kind, one continuation of an existing explanation, one fold and one case. Nothing is stored that was not stored before."
+scope:
+  - ".ai/repo/adrs"
+  - ".ai/repo/project"
+  - ".ai/repo/use-cases"
+  - "apps/majordomus-cli/src/intent.rs"
+  - "apps/majordomus-cli/src/intent_realization.rs"
+  - "apps/majordomus-cli/src/deploy"
+  - "apps/majordomus-cli/src/evidence"
+  - "apps/majordomus-cli/src/release"
+  - "apps/majordomus-cli/src/integration/metrics.rs"
+  - "apps/majordomus-cli/src/ui"
+  - "apps/majordomus-cli/src/capability/builtin"
+  - "apps/majordomus-cli/tests"
+  - "test/cases"
+  - "docs/EVIDENCE.md"
+  - "docs/DELIVERY.md"
+  - "docs/PLANNING.md"
+  - "docs/DOGFOODING.md"
+
+non_scope:
+  - "Deploying anything: the forge and CI deploy, and this milestone reads what they recorded"
+  - "Rollback, promotion gates and a production control plane: the deployed targets are release archives and GitHub Pages"
+  - "The gap, the critique and the realisation on the UI, which is I2541, and starting work from the UI, which is the-ui-starts-work-through-the-executor"
+  - "Service level objectives: a threshold is set after the measurement exists, not with it"
+  - "A second trace or metrics store: every number is a fold over the trail and the recorded observation"
+
+acceptance_criteria:
+  - "A criterion whose evidence is a deployment reads met only while the recorded observation holds a successful deployment that contains the work, reads unmet after a failed one, and reads not derivable where nothing was observed"
+  - "intent explain names, for each completed issue serving the intent, its merge commit, the release that contains it and the observed deployment that contains it, or says which of the three is absent"
+  - "The merge-to-deployment wait is answered as a median with its sample size and window, and a merge no deployment contains is counted as waiting, never as zero"
+  - "One case in a disposable repository reads satisfied only after the successful observation, its failing variant never does, and an execution accepted before a restart is still listed after it"
+
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test intent --test intent_realization"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib integration::metrics"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 367_an_intent_is_satisfied_only_by_evidence 388_an_intent_is_realised_across_providers_and_held_to_reality"
+  - "majordomus generate --check"
+
+evidence_required:
+  - "deployment_evidence_kind"
+  - "explain_reaches_release_and_deployment"
+  - "merge_to_deployment_wait_measured"
+  - "intent_to_deployment_case"
+
+risks:
+  - "A deployment is observed only when majordomus prs refresh ran; a criterion that needs one must read an old observation as old, not as a verdict."
+  - "The observation keeps the newest fifty deployments; work deployed before that window must read unmeasured or never observed, not undeployed."
+  - "A scenario with a fixture forge proves the join, not a live rollout, and must say so in its own output."
+
+created_at: 2026-10-13
+updated_at: 2026-10-13

@@ -25,6 +25,7 @@
 use serde::Serialize;
 use serde_json::Value;
 
+use crate::capability::readings::Freshness;
 use crate::capability::Context;
 use crate::cockpit::html::el;
 
@@ -59,7 +60,12 @@ pub const SCENES_LIB: &str = "observatory-kiosk.js";
 /// stay available as rows.
 pub const P5_LIB: &str = "vendor/p5.min.js";
 
-/// The three scripts a page names, as the digested URLs the server emits.
+/// The script that keeps the executions scene current from the live channel
+/// ([`crate::http::events`]), among the UI's assets. It opens no channel of its own: it
+/// reads the one every client of this process reads.
+pub const STREAM_LIB: &str = "observatory-stream.js";
+
+/// The four scripts a page names, as the digested URLs the server emits.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Libs {
     /// The director and the first scenes ([`LIB`]).
@@ -68,20 +74,22 @@ pub struct Libs {
     pub scenes: String,
     /// The optional drawing library ([`P5_LIB`]).
     pub p5: String,
+    /// The follower of the live channel ([`STREAM_LIB`]).
+    pub stream: String,
 }
 
 #[cfg(test)]
 impl Libs {
-    /// The three scripts under one prefix, plain: what a fixture names.
+    /// The four scripts under one prefix, plain: what a fixture names.
     pub fn under(prefix: &str) -> Libs {
         Libs {
             director: format!("{prefix}{LIB}"),
             scenes: format!("{prefix}{SCENES_LIB}"),
             p5: format!("{prefix}{P5_LIB}"),
+            stream: format!("{prefix}{STREAM_LIB}"),
         }
     }
 }
-
 const PEERS: Source = Source::of("mesh.peers");
 const EVENTS: Source = Source::with("mesh.events", r#"{"limit":200,"newest":true}"#);
 const STATE: Source = Source::with("mesh.state", r#"{"view":"full"}"#);
@@ -98,6 +106,7 @@ const WAVES: Source = Source::of("plan.waves");
 const DISTRIBUTION: Source = Source::of("distribution.status");
 const CAPABILITIES: Source = Source::of("capabilities.list");
 const REPLAY: Source = Source::of("observatory.replay");
+const EXECUTIONS: Source = Source::with("executions.list", r#"{"limit":200}"#);
 
 /// Every source the Observatory reads, asked together.
 pub const SOURCES: &[Source] = &[
@@ -117,6 +126,7 @@ pub const SOURCES: &[Source] = &[
     DISTRIBUTION,
     CAPABILITIES,
     REPLAY,
+    EXECUTIONS,
 ];
 
 /// Where a scene's model came from when it is a replay: the recording the repository
@@ -186,6 +196,15 @@ pub const SCENES: &[Scene] = &[
         meaning: "A mark is one event of the mesh journal, placed by its time and banded by its kind. A quiet journal is a quiet river.",
         href: super::mesh::ROUTE,
         dwell_seconds: 45,
+    },
+    Scene {
+        id: "executions",
+        label: "Execution Flow",
+        character: Character::Semantic,
+        requires: &[EXECUTIONS],
+        meaning: "A lane is one execution this process remembers, coloured by its state; a pulse runs along it when one of its events arrives over the live channel. A lane that heard nothing does not move, and a channel that is not live moves nothing.",
+        href: super::command::ROUTE,
+        dwell_seconds: 40,
     },
     Scene {
         id: "intents",
@@ -320,6 +339,13 @@ pub struct SourceStanding {
     pub reason: Option<String>,
     /// How long the executor took, in milliseconds.
     pub took_ms: u64,
+    /// How old the reading was when the page was made, in milliseconds; absent for a first
+    /// reading that has not arrived. What a mark's detail says of its freshness is this.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub age_ms: Option<u64>,
+    /// `current`, `stale` (read before the repository last moved) or `pending` (never read in
+    /// this process yet): the reading's own standing, never inferred from its age.
+    pub freshness: &'static str,
 }
 
 /// One scene as projected: the descriptor, whether it can be drawn, and the model it draws.
@@ -396,6 +422,12 @@ pub fn project_from(answers: &Answers, observed_at: String) -> Projection {
             },
             reason: a.value.as_ref().err().cloned(),
             took_ms: a.took.as_millis() as u64,
+            age_ms: a.standing.age.map(|d| d.as_millis() as u64),
+            freshness: match a.standing.freshness {
+                Freshness::Current => "current",
+                Freshness::Stale => "stale",
+                Freshness::Pending => "pending",
+            },
         })
         .collect::<Vec<_>>();
     let scenes = SCENES
@@ -885,6 +917,28 @@ fn model(id: &str, answers: &Answers, sources: &[SourceStanding]) -> Result<Valu
                 })).collect::<Vec<_>>(),
             }))
         }
+        "executions" => {
+            // nothing to draw is unavailable, never an empty picture; the page's script still
+            // listens on the live channel, and the scene is drawn once that channel hears an
+            // execution
+            let list = answer(answers, EXECUTIONS);
+            let executions = items(list, "/executions");
+            if executions.is_empty() {
+                return Err("this process remembers no execution; the scene is drawn when the live channel hears one".into());
+            }
+            Ok(serde_json::json!({
+                "executions": executions.iter().take(BOUND).map(|e| serde_json::json!({
+                    "id": word(e, "id"),
+                    "capability": word(e, "capability"),
+                    "state": word(e, "state"),
+                    "last_sequence": e.get("last_sequence").and_then(Value::as_u64).unwrap_or(0),
+                    "events": e.get("event_count").and_then(Value::as_u64).unwrap_or(0),
+                })).collect::<Vec<_>>(),
+                "remembered": list.get("remembered").and_then(Value::as_u64).unwrap_or(executions.len() as u64),
+                "active": list.get("active").and_then(Value::as_u64).unwrap_or(0),
+                "queued": list.get("queued").and_then(Value::as_u64).unwrap_or(0),
+            }))
+        }
         "ambient" => Ok(serde_json::json!({
             "sources": sources.iter().map(|s| serde_json::json!({
                 "capability": s.capability,
@@ -928,6 +982,18 @@ pub fn screen(ctx: &Context, query: &[(String, String)], libs: &Libs, kiosk: boo
         .attr("data-observatory-lib", libs.director.as_str())
         .attr("data-observatory-companion", libs.scenes.as_str())
         .attr("data-p5-lib", libs.p5.as_str())
+        // the live channel and the snapshot it brings forward: both named by the server, so
+        // the script writes no path down (the snapshot's path is the registry's own)
+        .attr("data-observatory-stream", libs.stream.as_str())
+        .attr("data-observatory-events", crate::http::events::PATH)
+        .attr(
+            "data-observatory-executions",
+            ctx.registry
+                .get(EXECUTIONS.capability)
+                .and_then(|c| c.exposure.http.as_ref())
+                .map(|h| h.path.clone())
+                .unwrap_or_default(),
+        )
         .attr_if("data-observatory-scene", selected)
         .attr("data-observatory-mode", if kiosk { "kiosk" } else { "screen" })
         .child(
@@ -1052,7 +1118,7 @@ mod tests {
         ids.sort_unstable();
         ids.dedup();
         assert_eq!(ids.len(), SCENES.len());
-        assert_eq!(SCENES.len(), 15);
+        assert_eq!(SCENES.len(), 16);
         for s in SCENES {
             assert_eq!(
                 s.requires.is_empty(),
@@ -1301,6 +1367,11 @@ mod tests {
             ),
         ]);
         let p = project_from(&answers, at());
+        // every source says how its reading stands, as the reading said it, and how old it was
+        assert!(p
+            .sources
+            .iter()
+            .all(|s| s.freshness == "current" && s.age_ms == Some(0)));
         let proof = scene(&p, "proof");
         assert!(proof.available);
         assert_eq!(proof.model["total"], 3);
@@ -1363,12 +1434,35 @@ mod tests {
             director: "/ui/assets/observatory.js?v=1".into(),
             scenes: "/ui/assets/observatory-kiosk.js?v=1".into(),
             p5: "/ui/assets/vendor/p5.min.js".into(),
+            stream: "/ui/assets/observatory-stream.js?v=1".into(),
         };
         let html = screen(&ctx, &[], &libs, false).main.render();
         assert!(html.contains("data-observatory=\"{"), "{html}");
         assert!(html.contains("data-observatory-lib=\"/ui/assets/observatory.js?v=1\""));
         assert!(html.contains("data-observatory-companion=\"/ui/assets/observatory-kiosk.js?v=1\""));
         assert!(html.contains("data-p5-lib=\"/ui/assets/vendor/p5.min.js\""));
+        // the live channel and the snapshot it brings forward are named by the server
+        assert!(html.contains("data-observatory-stream=\"/ui/assets/observatory-stream.js?v=1\""));
+        assert!(html.contains(&format!(
+            "data-observatory-events=\"{}\"",
+            crate::http::events::PATH
+        )));
+        assert!(
+            html.contains("data-observatory-executions=\"/api/v1/executions\""),
+            "{html}"
+        );
+        // a process that has run nothing has no execution to draw: unavailable, with why
+        let (p0, _) = project(&ctx);
+        let flow = scene(&p0, "executions");
+        assert!(!flow.available);
+        assert!(
+            flow.reason
+                .as_deref()
+                .unwrap_or("")
+                .contains("live channel"),
+            "{:?}",
+            flow.reason
+        );
         assert!(html.contains(SCHEMA));
         for s in SCENES {
             assert!(

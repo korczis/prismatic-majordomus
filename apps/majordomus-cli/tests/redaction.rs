@@ -327,3 +327,66 @@ fn a_secret_access_key_is_refused_without_the_id_it_pairs_with() {
     let reason = "skipped: AWS_SECRET_ACCESS_KEY is not set";
     assert_eq!(public_text(reason, dir.path(), None).unwrap().text, reason);
 }
+
+/// A credential-shaped value in any tracing field is absent from the log (I2708). Every
+/// line of the fixture the redactor takes out is logged to a `server.log` through the
+/// subscriber `logging::init` installs: as a span's field, as a string field, as a displayed
+/// field, as a debugged field and inside the message. None of them is in the file, and each
+/// is there as its marker, so the fields were written redacted rather than not at all.
+#[test]
+fn a_tracing_field_never_writes_a_credential() {
+    use majordomus_cli::logging;
+    use tracing_subscriber::EnvFilter;
+
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("server.log");
+    let file = std::sync::Arc::new(std::fs::File::create(&path).unwrap());
+    // a line that is already its own redaction (a marker the fixture feeds back) is not a
+    // credential, so it is not one the log could leak
+    let lines: Vec<(String, String)> = samples()
+        .into_iter()
+        .filter(|s| s.redacted)
+        .map(|s| {
+            let line = format!("{}{}", s.prefix, s.body);
+            let marked = redact_secrets(&line).text;
+            (line, marked)
+        })
+        .filter(|(line, marked)| line != marked)
+        .collect();
+    assert!(lines.len() > 10, "the fixture lost its redacted lines");
+
+    let subscriber = logging::subscriber(EnvFilter::new("trace"), file);
+    tracing::subscriber::with_default(subscriber, || {
+        for (line, _) in &lines {
+            let span = tracing::info_span!("request", origin = line.as_str());
+            let _inside = span.enter();
+            tracing::warn!(
+                value = line.as_str(),
+                shown = %line,
+                debugged = ?line,
+                "refused {line}"
+            );
+        }
+    });
+
+    let log = std::fs::read_to_string(&path).unwrap();
+    let mut leaked = Vec::new();
+    for (line, marked) in &lines {
+        if log.contains(line.as_str()) || log.contains(&format!("{line:?}")) {
+            leaked.push(line.clone());
+        }
+        assert!(
+            log.contains(&format!("refused {marked}")),
+            "the message was not written as {marked:?}:\n{log}"
+        );
+        assert!(
+            log.contains(&format!("origin={marked:?}")),
+            "the span's field was not written as {marked:?}:\n{log}"
+        );
+    }
+    assert!(
+        leaked.is_empty(),
+        "{} credential(s) reached the log:\n{log}",
+        leaked.len()
+    );
+}

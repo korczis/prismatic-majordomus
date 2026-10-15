@@ -1,7 +1,7 @@
 +++
 title = "Continuous integration"
 description = "how a change is validated: the validation workflow over repository-owned gates, the planner and its model of what can affect what, the gates and how to run each locally, the caches and artifacts, the executable as a build output, the parallel suite and probe, the platform policy, and where the measurements live"
-weight = 76
+weight = 77
 [extra]
 source = "docs/CI.md"
 +++
@@ -340,6 +340,14 @@ still run, because they run `always()`, and report the run red. A push to master
 and a dispatch are never cancelled this way: the trunk's remaining jobs are the only reading of
 its other lanes. Read a failed job's log through the jobs API (`gh run view --job <id> --log`)
 rather than waiting for the run. Case 3019 holds every job to it (I2664).
+
+A run that ends at its first red says which red that was (I2726). The cancel makes the failed
+job read as cancelled like every other one and hides its log until the run is over, so the
+step before each self-cancel, `scripts/ci/first-red job`, names the job and its failed step in an
+error annotation and at the top of the job's summary, and the `ci` job's `scripts/ci/first-red
+run` starts its log and summary with `ended at its first red: <job> / <step>` before the
+verdict. Both read the run's jobs through the API and never fail the job that asked. Case 3054
+holds the wiring and the reading.
 
 The release path goes first (I2710). Every workflow of this repository draws on one pool of
 job slots, first come, first served, and on 2026-10-14 v0.26.0 was published while its record's

@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 109,
+      "count": 114,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -23,7 +23,7 @@
       "title": "Rules",
       "description": "Every rule in force here — the vendored doctrine package and this repository's own — with the class it declares, the artefacts it names as its enforcement, whether the tree holds them, and the rules either side of it in the dependency graph.",
       "weight": 46,
-      "count": 179,
+      "count": 184,
       "dir": "rules",
       "statuses": [
         "active"
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 109
+      "count": 114
     },
     {
       "kind": "application",
@@ -125,7 +125,7 @@
       "route": null,
       "title": null,
       "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-      "count": 347
+      "count": 348
     },
     {
       "kind": "domain",
@@ -173,7 +173,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 390
+      "count": 461
     },
     {
       "kind": "knowledge",
@@ -197,7 +197,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 37
+      "count": 47
     },
     {
       "kind": "moment",
@@ -245,7 +245,7 @@
       "route": "/rules/",
       "title": "Rules",
       "reason": null,
-      "count": 179
+      "count": 184
     },
     {
       "kind": "scope",
@@ -261,7 +261,7 @@
       "route": "/sessions/",
       "title": null,
       "reason": null,
-      "count": 89
+      "count": 90
     },
     {
       "kind": "skill",
@@ -285,7 +285,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 496
+      "count": 522
     },
     {
       "kind": "use-case",
@@ -396,6 +396,13 @@
           "label": "adr-0126",
           "kind": "adr",
           "route": "/adrs/adr-0126/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0163",
+          "kind": "adr",
+          "route": "/adrs/adr-0163/",
           "external": false
         }
       ]
@@ -814,6 +821,13 @@
         },
         {
           "edge": "put_in_force",
+          "label": "adr-0148",
+          "kind": "adr",
+          "route": "/adrs/adr-0148/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
           "label": "adr-0160",
           "kind": "adr",
           "route": "/adrs/adr-0160/",
@@ -1058,6 +1072,13 @@
           "label": "adr-0145",
           "kind": "adr",
           "route": "/adrs/adr-0145/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0163",
+          "kind": "adr",
+          "route": "/adrs/adr-0163/",
           "external": false
         }
       ]
@@ -2160,6 +2181,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0050/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0163",
+          "kind": "adr",
+          "route": "/adrs/adr-0163/",
+          "external": false
         }
       ]
     },
@@ -2851,6 +2879,20 @@
           "kind": "adr",
           "route": "/adrs/adr-0067/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0163",
+          "kind": "adr",
+          "route": "/adrs/adr-0163/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0164",
+          "kind": "adr",
+          "route": "/adrs/adr-0164/",
+          "external": false
         }
       ]
     },
@@ -2982,7 +3024,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0164",
+          "kind": "adr",
+          "route": "/adrs/adr-0164/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -3374,6 +3424,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0134/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0151",
+          "kind": "adr",
+          "route": "/adrs/adr-0151/",
+          "external": false
         }
       ]
     },
@@ -3491,6 +3548,13 @@
           "label": "adr-0123",
           "kind": "adr",
           "route": "/adrs/adr-0123/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0164",
+          "kind": "adr",
+          "route": "/adrs/adr-0164/",
           "external": false
         }
       ]
@@ -4067,6 +4131,13 @@
           "label": "adr-0133",
           "kind": "adr",
           "route": "/adrs/adr-0133/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0163",
+          "kind": "adr",
+          "route": "/adrs/adr-0163/",
           "external": false
         }
       ]
@@ -6226,7 +6297,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0164",
+          "kind": "adr",
+          "route": "/adrs/adr-0164/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -6834,6 +6913,23 @@
     },
     {
       "kind": "adr",
+      "id": "majordomus://adr/adr-0124",
+      "identity": "adr-0124",
+      "slug": "adr-0124",
+      "cockpit": "/cockpit/objects/adr/adr-0124",
+      "title": "An uploaded prompt pack is a provenance-tracked input artifact, not a second intent model",
+      "status": "proposed",
+      "tags": [
+        "artifact-ingestion",
+        "mesh-pack",
+        "prompt-pack"
+      ],
+      "source": ".ai/repo/adrs/0124-an-uploaded-prompt-pack-is-a-provenance-tracked-input-artifa.md",
+      "references": [],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
       "id": "majordomus://adr/adr-0126",
       "identity": "adr-0126",
       "slug": "adr-0126",
@@ -7249,7 +7345,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0151",
+          "kind": "adr",
+          "route": "/adrs/adr-0151/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -7327,6 +7431,13 @@
         },
         {
           "edge": "put_in_force",
+          "label": "adr-0148",
+          "kind": "adr",
+          "route": "/adrs/adr-0148/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
           "label": "adr-0152",
           "kind": "adr",
           "route": "/adrs/adr-0152/",
@@ -7337,6 +7448,13 @@
           "label": "adr-0160",
           "kind": "adr",
           "route": "/adrs/adr-0160/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0163",
+          "kind": "adr",
+          "route": "/adrs/adr-0163/",
           "external": false
         }
       ]
@@ -7618,6 +7736,13 @@
           "label": "adr-0147",
           "kind": "adr",
           "route": "/adrs/adr-0147/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0148",
+          "kind": "adr",
+          "route": "/adrs/adr-0148/",
           "external": false
         }
       ]
@@ -8044,6 +8169,132 @@
     },
     {
       "kind": "adr",
+      "id": "majordomus://adr/adr-0148",
+      "identity": "adr-0148",
+      "slug": "adr-0148",
+      "cockpit": "/cockpit/objects/adr/adr-0148",
+      "title": "Markdown is drawn by one renderer in the executable, and every drawing on a served surface can be acted on",
+      "status": "proposed",
+      "tags": [
+        "architecture",
+        "interface",
+        "ui",
+        "cockpit",
+        "markdown",
+        "visualisation"
+      ],
+      "source": ".ai/repo/adrs/0148-markdown-is-drawn-by-one-renderer-and-a-drawing-is-acted-on.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": ".ai/repo/visualisation-baseline.txt",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/cockpit/pages.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/markdown.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/ui/prose.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "scripts/ci/visualisation-check",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "share/cockpit/cockpit.js",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "share/design/primitives.css",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0012",
+          "kind": "adr",
+          "route": "/adrs/adr-0012/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0135",
+          "kind": "adr",
+          "route": "/adrs/adr-0135/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0141",
+          "kind": "adr",
+          "route": "/adrs/adr-0141/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/COCKPIT.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.a-visualisation-is-interactive@1",
+          "kind": "rule",
+          "route": "/rules/project-a-visualisation-is-interactive-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.markdown-is-rendered-once@1",
+          "kind": "rule",
+          "route": "/rules/project-markdown-is-rendered-once-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/1101_markdown_is_rendered_once.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/1102_a_visualisation_is_interactive.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
       "id": "majordomus://adr/adr-0149",
       "identity": "adr-0149",
       "slug": "adr-0149",
@@ -8131,6 +8382,94 @@
         {
           "edge": "put_in_force",
           "label": "test/cases/2984_a_handbook_edition_is_built_from_the_tree.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0151",
+      "identity": "adr-0151",
+      "slug": "adr-0151",
+      "cockpit": "/cockpit/objects/adr/adr-0151",
+      "title": "A release is cut by a clock when the trunk has earned one",
+      "status": "proposed",
+      "tags": [
+        "release",
+        "ci",
+        "automation"
+      ],
+      "source": ".ai/repo/adrs/0151-a-release-is-cut-by-a-clock-when-the-trunk-has-earned-one.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": ".github/workflows/cadence.yml",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": ".github/workflows/release.yml",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": ".github/workflows/version.yml",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "scripts/ci/release-verdict",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "scripts/release-cadence",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0051",
+          "kind": "adr",
+          "route": "/adrs/adr-0051/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0134",
+          "kind": "adr",
+          "route": "/adrs/adr-0134/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/RELEASE.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.a-release-is-cut-on-the-hour@1",
+          "kind": "rule",
+          "route": "/rules/project-a-release-is-cut-on-the-hour-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/2990_a_release_is_cut_on_the_hour.sh",
           "kind": "test",
           "route": null,
           "external": false
@@ -8439,6 +8778,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0160/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0163",
+          "kind": "adr",
+          "route": "/adrs/adr-0163/",
+          "external": false
         }
       ]
     },
@@ -8587,6 +8933,225 @@
           "label": "test/cases/85_installer.sh",
           "kind": "test",
           "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0163",
+      "identity": "adr-0163",
+      "slug": "adr-0163",
+      "cockpit": "/cockpit/objects/adr/adr-0163",
+      "title": "A server serves only a share of its own version, with the surfaces it offers",
+      "status": "proposed",
+      "tags": [
+        "server",
+        "distribution",
+        "ui",
+        "resilience"
+      ],
+      "source": ".ai/repo/adrs/0163-a-server-serves-only-a-share-of-its-own-version.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/capability/builtin/server.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/cockpit/assets.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/commands/serve.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/share.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0003",
+          "kind": "adr",
+          "route": "/adrs/adr-0003/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0019",
+          "kind": "adr",
+          "route": "/adrs/adr-0019/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0035",
+          "kind": "adr",
+          "route": "/adrs/adr-0035/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0044",
+          "kind": "adr",
+          "route": "/adrs/adr-0044/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0067",
+          "kind": "adr",
+          "route": "/adrs/adr-0067/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0135",
+          "kind": "adr",
+          "route": "/adrs/adr-0135/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0158",
+          "kind": "adr",
+          "route": "/adrs/adr-0158/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "lib/rust_bin.sh",
+          "kind": "implementation",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.distribution-canonical@1",
+          "kind": "rule",
+          "route": "/rules/project-distribution-canonical-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.shared-server-resilience@1",
+          "kind": "rule",
+          "route": "/rules/project-shared-server-resilience-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.the-server-sees-the-current-tree@1",
+          "kind": "rule",
+          "route": "/rules/project-the-server-sees-the-current-tree-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0164",
+      "identity": "adr-0164",
+      "slug": "adr-0164",
+      "cockpit": "/cockpit/objects/adr/adr-0164",
+      "title": "A durable record names the session that wrote it, and relates a task only when the task is that session's",
+      "status": "proposed",
+      "tags": [
+        "sessions",
+        "attribution",
+        "records"
+      ],
+      "source": ".ai/repo/adrs/0164-a-record-names-the-session-that-wrote-it.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0044",
+          "kind": "adr",
+          "route": "/adrs/adr-0044/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0047",
+          "kind": "adr",
+          "route": "/adrs/adr-0047/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0052",
+          "kind": "adr",
+          "route": "/adrs/adr-0052/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0103",
+          "kind": "adr",
+          "route": "/adrs/adr-0103/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "lib/checkpoint.sh",
+          "kind": "implementation",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "lib/common.sh",
+          "kind": "implementation",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "lib/decision.sh",
+          "kind": "implementation",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "lib/question.sh",
+          "kind": "implementation",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "lib/start.sh",
+          "kind": "implementation",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.no-new-nouns@1",
+          "kind": "rule",
+          "route": "/rules/project-no-new-nouns-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.the-session-context-is-derived@1",
+          "kind": "rule",
+          "route": "/rules/project-the-session-context-is-derived-1/",
           "external": false
         }
       ],
@@ -11777,6 +12342,88 @@
     },
     {
       "kind": "rule",
+      "id": "majordomus://rule/project.a-push-runs-what-ci-would-find-first@1",
+      "identity": "project.a-push-runs-what-ci-would-find-first@1",
+      "slug": "project-a-push-runs-what-ci-would-find-first-1",
+      "cockpit": "/cockpit/objects/rule/project-a-push-runs-what-ci-would-find-first-1",
+      "title": "A push runs what CI would find first",
+      "status": "active",
+      "tags": [
+        "ci",
+        "process"
+      ],
+      "source": ".ai/repo/rules/project/a-push-runs-what-ci-would-find-first.v1.md",
+      "references": [],
+      "referenced_by": []
+    },
+    {
+      "kind": "rule",
+      "id": "majordomus://rule/project.a-release-is-cut-on-the-hour@1",
+      "identity": "project.a-release-is-cut-on-the-hour@1",
+      "slug": "project-a-release-is-cut-on-the-hour-1",
+      "cockpit": "/cockpit/objects/rule/project-a-release-is-cut-on-the-hour-1",
+      "title": "A release is cut by a clock when the trunk has earned one, and an hour without one says why",
+      "status": "active",
+      "tags": [
+        "release",
+        "ci",
+        "cadence"
+      ],
+      "source": ".ai/repo/rules/project/a-release-is-cut-on-the-hour.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.land-and-publish@1",
+          "kind": "rule",
+          "route": "/rules/project-land-and-publish-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.never-reported-is-not-green@1",
+          "kind": "rule",
+          "route": "/rules/project-never-reported-is-not-green-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0151",
+          "kind": "adr",
+          "route": "/adrs/adr-0151/",
+          "external": false
+        }
+      ]
+    },
+    {
+      "kind": "rule",
+      "id": "majordomus://rule/project.a-standing-approval-is-written-where-permissions-are-read@1",
+      "identity": "project.a-standing-approval-is-written-where-permissions-are-read@1",
+      "slug": "project-a-standing-approval-is-written-where-permissions-are-read-1",
+      "cockpit": "/cockpit/objects/rule/project-a-standing-approval-is-written-where-permissions-are-read-1",
+      "title": "A standing approval is written where the permission layer reads it",
+      "status": "active",
+      "tags": [
+        "process",
+        "governance",
+        "permissions",
+        "evidence"
+      ],
+      "source": ".ai/repo/rules/project/a-standing-approval-is-written-where-permissions-are-read.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.an-expedited-landing-is-the-owners-word@1",
+          "kind": "rule",
+          "route": "/rules/project-an-expedited-landing-is-the-owners-word-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "rule",
       "id": "majordomus://rule/project.a-tool-that-cannot-match-the-tree-refuses@1",
       "identity": "project.a-tool-that-cannot-match-the-tree-refuses@1",
       "slug": "project-a-tool-that-cannot-match-the-tree-refuses-1",
@@ -11842,6 +12489,61 @@
           "label": "project.a-number-names-one-case@1",
           "kind": "rule",
           "route": "/rules/project-a-number-names-one-case-1/",
+          "external": false
+        }
+      ]
+    },
+    {
+      "kind": "rule",
+      "id": "majordomus://rule/project.a-visualisation-is-interactive@1",
+      "identity": "project.a-visualisation-is-interactive@1",
+      "slug": "project-a-visualisation-is-interactive-1",
+      "cockpit": "/cockpit/objects/rule/project-a-visualisation-is-interactive-1",
+      "title": "A graph, a chart or a diagram is something a reader can act on, never a picture",
+      "status": "active",
+      "tags": [
+        "ui",
+        "cockpit",
+        "visualisation",
+        "accessibility"
+      ],
+      "source": ".ai/repo/rules/project/a-visualisation-is-interactive.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.every-link-and-control-is-tested@1",
+          "kind": "rule",
+          "route": "/rules/project-every-link-and-control-is-tested-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.markdown-is-rendered-once@1",
+          "kind": "rule",
+          "route": "/rules/project-markdown-is-rendered-once-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.ui-conformance@1",
+          "kind": "rule",
+          "route": "/rules/project-ui-conformance-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.ui-derived-state@1",
+          "kind": "rule",
+          "route": "/rules/project-ui-derived-state-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0148",
+          "kind": "adr",
+          "route": "/adrs/adr-0148/",
           "external": false
         }
       ]
@@ -12065,6 +12767,13 @@
           "label": "adr-0155",
           "kind": "adr",
           "route": "/adrs/adr-0155/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.a-standing-approval-is-written-where-permissions-are-read@1",
+          "kind": "rule",
+          "route": "/rules/project-a-standing-approval-is-written-where-permissions-are-read-1/",
           "external": false
         }
       ]
@@ -12760,6 +13469,13 @@
         },
         {
           "edge": "depends_on",
+          "label": "project.markdown-is-rendered-once@1",
+          "kind": "rule",
+          "route": "/rules/project-markdown-is-rendered-once-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
           "label": "project.navigation-is-declared-once@1",
           "kind": "rule",
           "route": "/rules/project-navigation-is-declared-once-1/",
@@ -13082,6 +13798,13 @@
           "label": "adr-0085",
           "kind": "adr",
           "route": "/adrs/adr-0085/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0163",
+          "kind": "adr",
+          "route": "/adrs/adr-0163/",
           "external": false
         },
         {
@@ -13531,6 +14254,13 @@
           "label": "adr-0152",
           "kind": "adr",
           "route": "/adrs/adr-0152/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.a-visualisation-is-interactive@1",
+          "kind": "rule",
+          "route": "/rules/project-a-visualisation-is-interactive-1/",
           "external": false
         },
         {
@@ -14358,6 +15088,13 @@
         },
         {
           "edge": "depends_on",
+          "label": "project.markdown-is-rendered-once@1",
+          "kind": "rule",
+          "route": "/rules/project-markdown-is-rendered-once-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
           "label": "project.navigation-is-declared-once@1",
           "kind": "rule",
           "route": "/rules/project-navigation-is-declared-once-1/",
@@ -14532,6 +15269,13 @@
         },
         {
           "edge": "depends_on",
+          "label": "project.a-release-is-cut-on-the-hour@1",
+          "kind": "rule",
+          "route": "/rules/project-a-release-is-cut-on-the-hour-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
           "label": "project.an-expedited-landing-is-the-owners-word@1",
           "kind": "rule",
           "route": "/rules/project-an-expedited-landing-is-the-owners-word-1/",
@@ -14577,6 +15321,69 @@
           "label": "project.the-version-is-measured@2",
           "kind": "rule",
           "route": "/rules/project-the-version-is-measured-2/",
+          "external": false
+        }
+      ]
+    },
+    {
+      "kind": "rule",
+      "id": "majordomus://rule/project.markdown-is-rendered-once@1",
+      "identity": "project.markdown-is-rendered-once@1",
+      "slug": "project-markdown-is-rendered-once-1",
+      "cockpit": "/cockpit/objects/rule/project-markdown-is-rendered-once-1",
+      "title": "A Markdown body is drawn by one renderer, wherever it is shown",
+      "status": "active",
+      "tags": [
+        "ui",
+        "cockpit",
+        "markdown",
+        "projections",
+        "security"
+      ],
+      "source": ".ai/repo/rules/project/markdown-is-rendered-once.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.derived-once@1",
+          "kind": "rule",
+          "route": "/rules/project-derived-once-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.interfaces-are-projections@1",
+          "kind": "rule",
+          "route": "/rules/project-interfaces-are-projections-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.ui-conformance@1",
+          "kind": "rule",
+          "route": "/rules/project-ui-conformance-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.ui-derived-state@1",
+          "kind": "rule",
+          "route": "/rules/project-ui-derived-state-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0148",
+          "kind": "adr",
+          "route": "/adrs/adr-0148/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.a-visualisation-is-interactive@1",
+          "kind": "rule",
+          "route": "/rules/project-a-visualisation-is-interactive-1/",
           "external": false
         }
       ]
@@ -14844,6 +15651,13 @@
           "label": "project.a-closing-question-is-answered-by-measurement@1",
           "kind": "rule",
           "route": "/rules/project-a-closing-question-is-answered-by-measurement-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.a-release-is-cut-on-the-hour@1",
+          "kind": "rule",
+          "route": "/rules/project-a-release-is-cut-on-the-hour-1/",
           "external": false
         },
         {
@@ -15348,6 +16162,13 @@
           "label": "adr-0118",
           "kind": "adr",
           "route": "/adrs/adr-0118/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0164",
+          "kind": "adr",
+          "route": "/adrs/adr-0164/",
           "external": false
         },
         {
@@ -16419,6 +17240,13 @@
       ],
       "referenced_by": [
         {
+          "edge": "put_in_force",
+          "label": "adr-0163",
+          "kind": "adr",
+          "route": "/adrs/adr-0163/",
+          "external": false
+        },
+        {
           "edge": "depends_on",
           "label": "project.entry-converges@2",
           "kind": "rule",
@@ -16796,7 +17624,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0163",
+          "kind": "adr",
+          "route": "/adrs/adr-0163/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "rule",
@@ -16827,6 +17663,13 @@
           "label": "adr-0046",
           "kind": "adr",
           "route": "/adrs/adr-0046/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0164",
+          "kind": "adr",
+          "route": "/adrs/adr-0164/",
           "external": false
         }
       ]
@@ -17009,6 +17852,13 @@
         },
         {
           "edge": "depends_on",
+          "label": "project.a-visualisation-is-interactive@1",
+          "kind": "rule",
+          "route": "/rules/project-a-visualisation-is-interactive-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
           "label": "project.design-tokens-declared-once@2",
           "kind": "rule",
           "route": "/rules/project-design-tokens-declared-once-2/",
@@ -17019,6 +17869,13 @@
           "label": "project.every-link-and-control-is-tested@1",
           "kind": "rule",
           "route": "/rules/project-every-link-and-control-is-tested-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.markdown-is-rendered-once@1",
+          "kind": "rule",
+          "route": "/rules/project-markdown-is-rendered-once-1/",
           "external": false
         }
       ]
@@ -17090,6 +17947,20 @@
           "label": "adr-0160",
           "kind": "adr",
           "route": "/adrs/adr-0160/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.a-visualisation-is-interactive@1",
+          "kind": "rule",
+          "route": "/rules/project-a-visualisation-is-interactive-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.markdown-is-rendered-once@1",
+          "kind": "rule",
+          "route": "/rules/project-markdown-is-rendered-once-1/",
           "external": false
         },
         {

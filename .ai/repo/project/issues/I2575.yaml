@@ -1,0 +1,45 @@
+id: I2575
+milestone: a-profile-is-resolved-once-and-enforced
+title: "An effective profile is resolved by one function: every field with its source and reason, one fingerprint, the same answer in any order"
+slug: an-effective-profile-is-resolved-by-one-function
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Add the resolver: one pure function from the policy, the definitions and what is asked about (a named profile, the active task, an issue) to an effective profile whose every field carries where it came from and why, with a fingerprint over its inputs, and declare profile.resolve and profile.explain over it."
+why: "campaigns/majordomus-profile-system-v2-prompt-pack/MAJORDOMUS_PROFILE_SYSTEM_V2_PROMPT_PACK.md, PROMPT 01, asks for one deterministic resolver with a field-level explain trace, structured reason codes, a fingerprint that holds no clock, and failure in the open for a missing profile or a conflict; PROMPT 04 asks for resolve and explain as read-only operations. Today the effective profile of a task is whatever each shell command reads from the flattened file at that moment: check --explain prints the file and four policy sections, and nothing says which profile an issue's profile field, the task's --profile and the policy's default would yield together."
+current_state: "lib/start.sh takes --profile or profiles.default and stores the name in .ai/local/state/current.yaml. An issue record names a profile (plan.rs field profile) that nothing applies to the task started for it. lib/check.sh --explain prints MJ_PRO_FLAT and part of MJ_POL_FLAT. There is no fingerprint of a profile other than the policy hash over all profile files (policy.rs)."
+desired_state: "profile::resolve takes the typed policy, the typed definitions and a subject (a profile name, or the active task with its issue when it has one) and returns EffectiveProfile: the definition's name and content digest, every axis value, and per field a decision with its source (policy, definition, issue, task, default), a reason code and the candidates it passed over. Which definition applies is decided in a stated order (the task's own, else its issue's, else the policy's default), and the order is data in the answer. A limit or a withheld permission from two sources is their intersection; a preference is the first in the order. The fingerprint is the SHA-256 of the canonical JSON of the definition digest, the policy fields read and the resolver's schema version. A missing profile, a default with no file and a conflict are typed errors. profile.resolve answers the effective profile; profile.explain answers the decisions as rows; with two subjects, resolve answers a structured difference between them. Resolution reads the index and the task record and starts no process."
+scope:
+  - "apps/majordomus-cli/src/profile"
+  - "apps/majordomus-cli/src/capability/builtin"
+  - "apps/majordomus-cli/src/plan.rs"
+  - "apps/majordomus-cli/tests"
+  - "share/commands.yaml"
+  - "docs/CLI.md"
+  - "docs/PROFILES.md"
+  - ".ai/repo/project/issues/I2575.yaml"
+non_scope:
+  - "Inheritance between profiles: axes compose, and no profile extends another"
+  - "The runtime limits of I0201 and the command I0202 plans to print them: this resolver is where they are carried once I0201 declares them"
+  - "Peer capabilities, budgets and provider availability as inputs: nothing in the repository records them for a task"
+  - "Caching the answer beyond what the capability's declared cache policy gives every capability"
+depends_on:
+  - I2574
+acceptance_criteria:
+  - "The four shipped profiles resolve to exactly the values their files hold, each field's source reading definition"
+  - "The definitions enumerated in a shuffled order, in a property test, resolve to the same bytes and the same fingerprint"
+  - "The fingerprint changes when the definition or a policy field the resolver read changes, and does not change with the time, the checkout's path or a profile that was not selected"
+  - "A task with --profile, a task whose issue names a profile and a task with neither each resolve to the profile the stated order gives, and explain names the candidates passed over"
+  - "A missing profile, a default with no file and two sources that cannot both hold are typed errors with a reason code, over every transport"
+  - "profile.resolve runs no handler of another capability, spawns no process and opens no socket, held by the counters tests/hot_path.rs reads"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib profile::"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test hot_path"
+  - "bin/majordomus generate --check"
+evidence_required:
+  - "resolver_determinism_tests"
+  - "resolver_fingerprint_tests"
+  - "resolver_error_matrix"
+created_at: 2026-10-13
+updated_at: 2026-10-13

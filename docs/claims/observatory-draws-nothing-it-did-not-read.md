@@ -14,7 +14,7 @@ unavailable.
 ## How it works
 
 `apps/majordomus-cli/src/ui/observatory.rs` holds the one inventory, `SCENES`, and projects
-the answers of nine capabilities into one bounded document, `observatory/v1`, which the page
+the answers of the capabilities it names in `SOURCES` into one bounded document, `observatory/v1`, which the page
 carries in its `data-observatory` attribute. `share/ui/observatory.js` draws that document
 and decides nothing about it. The same projection is a table on the page, one row per
 scene, for a reader without the script.
@@ -34,19 +34,33 @@ over a freshly initialised repository and on `majordomus web report ui-snapshot`
 - `/ui/screensaver` redirects to `/ui/kiosk` and `/ui/obsrvatory` to `/ui/observatory`;
 - the snapshot holds the page and its script.
 
+`test/cases/3026_the_observatory_answers_a_click.sh` proves what a reader who points at a
+mark is told, on a server over a freshly initialised repository:
+
+- every source says how its reading stands: current, stale or pending;
+- every painter of the director, drawing the server's own model, registers each mark it
+  drew with an identity that is a record of that model, a kind, a state and a truth class
+  (observed or derived): the detail a click opens is made of those words;
+- the scripts fetch only the page and the journal's events, and send nothing that would
+  change anything.
+
 ## How to see it
 
 ```bash
 majordomus serve                       # logs the URL of the shared server
 # open <url>/ui/observatory, or <url>/ui/kiosk for the unattended display
+# point at any mark, or walk them with the arrow keys and Enter; Esc closes the detail
 bash test/run.sh 3011_the_observatory_draws_nothing_it_did_not_read
+bash test/run.sh 3026_the_observatory_answers_a_click
 ```
 
 ## What it does not cover
 
 It proves which scenes are available and that an unavailable one carries no model. It does
 not prove what the canvas paints: that each mark of an available scene is placed and
-coloured from its model is the script's, and no test reads pixels. The unit tests of the
+coloured from its model is the script's, and no test reads pixels. Case 3026 reads the marks
+the director's own painters register, not those of the p5 scenes of ADR 0160, which need the
+vendored p5 to draw at all. The unit tests of the
 module hold the projection itself, including that an event's body is never projected.
 
 It does not prove frame rate, a 4K composition or that a kiosk keeps running; those are

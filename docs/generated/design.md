@@ -3,7 +3,7 @@
      Generator: majordomus-cli 0.27.0 -->
 # The design system
 
-One declaration, `share/design/tokens.yaml`, projected into every surface. Fingerprint `944a896b2646060d5dc100adcc36737fd5d8086e2f53d43d6858ac6fdad39540` (`--mj-design: "944a896b2646"` on every page that carries it). Explain any token with `majordomus_design_explain`, `GET /api/v1/design/explain?token=<name>` or the Cockpit's Design page.
+One declaration, `share/design/tokens.yaml`, projected into every surface. Fingerprint `02e49623d885e8a38b67633a892fb8ea97bedb75819dfddb247073f17adfd8bd` (`--mj-design: "02e49623d885"` on every page that carries it). Explain any token with `majordomus_design_explain`, `GET /api/v1/design/explain?token=<name>` or the Cockpit's Design page.
 
 ## Type
 
@@ -49,6 +49,14 @@ Each role is one custom property; its value follows the theme.
 | `--mj-series-6` | `rose-600` | `rose-400` | — | the sixth colour of the categorical series |
 | `--mj-series-7` | `lime-600` | `lime-400` | — | the seventh colour of the categorical series |
 | `--mj-series-8` | `fuchsia-600` | `fuchsia-400` | — | the eighth colour of the categorical series |
+| `--mj-obs-instance` | `blue-600` | `blue-400` | — | the Observatory's colour for an instance - a machine, a runtime, a checkout |
+| `--mj-obs-peer` | `violet-600` | `violet-400` | — | the Observatory's colour for a peer - a session of the mesh, a worker, a claim it holds |
+| `--mj-obs-task` | `orange-600` | `orange-400` | — | the Observatory's colour for a task - an execution, a recorded run |
+| `--mj-obs-issue` | `rose-600` | `rose-400` | — | the Observatory's colour for issues and the claims the documents make |
+| `--mj-obs-milestone` | `emerald-600` | `emerald-400` | — | the Observatory's colour for a milestone of the plan |
+| `--mj-obs-state` | `fuchsia-600` | `fuchsia-400` | — | the Observatory's colour for a state that is read - a health dimension, a check, a rule, a source |
+| `--mj-obs-event` | `cyan-600` | `cyan-400` | — | the Observatory's colour for an event of the mesh journal |
+| `--mj-obs-release` | `lime-600` | `lime-400` | — | the Observatory's colour for what is delivered - a release, a declared version, a module, a surface |
 
 ## Status
 
@@ -93,7 +101,7 @@ The class `dark` on the root element means dark; the choice is stored under `col
 
 ## Audit widths
 
-320px, 390px, 1024px, 1280px, 1600px
+320px, 375px, 390px, 768px, 1024px, 1280px, 1600px
 
 ## Palette
 

@@ -130,16 +130,25 @@ grep -qi '<html\|<h1' "$S/home.html" || { echo "    / did not render a page"; he
 curl -s -H 'Accept: application/json' "$U/" > "$S/home.json" || { echo "    GET / as JSON failed"; exit 1; }
 jq -e '.surfaces | length > 0' "$S/home.json" >/dev/null || { echo "    the machine-readable index carries no surfaces"; exit 1; }
 
+# Every public surface that answers is linked, but the page itself: `/` is the page. Every
+# link lands inside a public surface: a screen of the UI is a page of the ui surface, and its
+# stylesheet one of its files, so a link is judged by the mount it falls under, not by
+# equality with one.
 jq -r '.surfaces[] | select(.visibility == "public" and .ready) | .path' "$S/home.json" | LC_ALL=C sort -u > "$S/index_mounts.txt"
-grep -o 'href="[^"]*"' "$S/home.html" | sed 's/href="//; s/"$//' \
+grep -o 'href="[^"]*"' "$S/home.html" | sed 's/href="//; s/"$//; s/[?#].*//' \
   | grep '^/' | sed 's#\(..*\)/$#\1#' | LC_ALL=C sort -u > "$S/page_links.txt"
 while read -r m; do
-  [ -n "$m" ] || continue
+  [ -n "$m" ] && [ "$m" != / ] || continue
   grep -qx "$m" "$S/page_links.txt" || { echo "    the index offers $m and the page does not link it"; cat "$S/page_links.txt"; exit 1; }
 done < "$S/index_mounts.txt"
 while read -r l; do
   [ -n "$l" ] || continue
-  grep -qx "$l" "$S/index_mounts.txt" || { echo "    the page links $l, which is in no public surface: a hand-written link"; exit 1; }
+  under=""
+  while read -r m; do
+    [ -n "$m" ] && [ "$m" != / ] || continue
+    case "$l" in "$m"|"$m"/*) under=1 ;; esac
+  done < "$S/index_mounts.txt"
+  [ -n "$under" ] || { echo "    the page links $l, which is in no public surface: a hand-written link"; exit 1; }
 done < "$S/page_links.txt"
 
 # the page carries no absolute self-link: it must survive a port, a host and a proxy prefix

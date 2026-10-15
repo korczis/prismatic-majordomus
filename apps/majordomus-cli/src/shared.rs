@@ -53,6 +53,10 @@ fn activate_mesh(ctx: &Arc<Context>, version: &str, url: &str) {
         );
     }
     let Some(parsed) = resolved.declaration else {
+        // Nothing to activate is still a decision, and this is the process that makes it:
+        // a server that returns here undecided reports "this process runs no shared
+        // server" from the shared server itself, in every repository that declares no mesh.
+        ctx.mesh.decline("there is no declaration to activate");
         return;
     };
     let config = match parsed {
@@ -189,6 +193,15 @@ impl SharedServer {
             None => server::bind(host, port)?,
         };
         let url = bound.url();
+        // A share of another release, or one without `ui/`, still serves — the reports say
+        // so (`server.status` measures the share the lease names) — but the log says it once
+        // at the start, where a person reading why the UI is blank looks first.
+        if let Some(dir) = share_dir {
+            let origin = crate::lease::declared_share().map(|s| s.origin.as_str());
+            if let Some(reason) = crate::share::ServedShare::inspect(dir, origin, version).reason {
+                tracing::warn!(share = %dir.display(), "{reason}");
+            }
+        }
         let ctx_for_mesh = live.current();
         let endpoint = Arc::new(McpEndpoint::new(Arc::clone(&live), version, url.clone()));
         let router = Router::new(live, version)
@@ -441,6 +454,30 @@ mod tests {
             }
             std::thread::sleep(Duration::from_millis(20));
         }
+    }
+
+    /// A repository that declares no mesh is the common case, and its server still decides:
+    /// returning undecided made the shared server's own health say "this process runs no
+    /// shared server" and turned the whole report `unknown`.
+    #[test]
+    fn a_server_of_a_repository_with_no_mesh_declaration_still_decides() {
+        let fixture = SyntheticRepository::small().unwrap();
+        let app = App::load(&RepoArgs {
+            repo: Some(fixture.root().to_path_buf()),
+            discovery: DiscoveryMode::Filesystem,
+            share: Some(std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../share")),
+            ..Default::default()
+        })
+        .unwrap();
+        assert!(!app.context.mesh.decided(), "nothing decided yet");
+        activate_mesh(&app.context, crate::VERSION, "http://127.0.0.1:1");
+        assert!(app.context.mesh.decided(), "no declaration is a decision");
+        let status = app.context.mesh.status();
+        assert!(!status.active);
+        assert!(
+            status.reason.unwrap_or_default().contains("no declaration"),
+            "the reason says why"
+        );
     }
 
     #[test]

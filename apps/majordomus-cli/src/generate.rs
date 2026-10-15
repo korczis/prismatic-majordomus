@@ -732,6 +732,34 @@ fn indexed_plan(app: &App, targets: &[Target]) -> Result<Vec<Artifact>> {
         // three are compared by `generate --check`.
         let mut log =
             crate::release::compose_published(app.repository.root(), &app.context.index.objects);
+        // A repository without the history of a release — an exported fixture, a shallow
+        // clone — cannot compose what that release changed, and composing it anyway wrote a
+        // changelog of empty sections and called the committed one stale (I1409). What such
+        // a release changed is kept as committed, and said, rather than judged on history
+        // this repository does not have.
+        let unreadable = crate::release::changelog::unreadable_releases(
+            app.repository.root(),
+            &app.context.index.objects,
+        );
+        if !unreadable.is_empty() {
+            let committed =
+                std::fs::read_to_string(app.repository.root().join(OUT_DIR).join("changelog.json"))
+                    .ok()
+                    .and_then(|text| {
+                        serde_json::from_str::<crate::release::model::Changelog>(&text).ok()
+                    });
+            let kept = committed
+                .map(|c| crate::release::changelog::keep_committed(&mut log, &c, &unreadable))
+                .unwrap_or_default();
+            if let (Some(newest), Some(oldest)) = (kept.first(), kept.last()) {
+                tracing::warn!(
+                    "{OUT_DIR}/changelog.*: what {} release(s) changed ({newest} back to \
+                     {oldest}) is kept as committed and not judged: their history is not in \
+                     this repository's object database",
+                    kept.len()
+                );
+            }
+        }
         // The committed document names its producer the way the served one does, so a page
         // rendering either can find the same value on every other surface without a route
         // or an id of its own.
@@ -756,14 +784,19 @@ fn indexed_plan(app: &App, targets: &[Target]) -> Result<Vec<Artifact>> {
     }
 
     if targets.contains(&Target::Editors) {
+        // reading the policy declares how long `just` is waited for (`workflows:`); one that
+        // cannot be read leaves the compiled default, and the targets that project the policy
+        // refuse it themselves
+        let _ = LoadedPolicy::load(&app.repository);
         let editors = crate::editors::plan(
             &app.context.index,
             &app.context.registry,
             app.repository.root(),
             crate::VERSION,
         );
-        // a projection that would differ by whether this machine has `just` is not derived
-        // from the tree; refuse instead of committing whichever half this runner could see
+        // a projection that would differ by whether this machine has `just`, or by how loaded
+        // it was, is not derived from the tree; refuse instead of committing whichever half
+        // this runner could see
         if let Some(d) = editors
             .diagnostics
             .iter()
@@ -1491,7 +1524,7 @@ pub fn graph_document(ctx: &Context, version: &str) -> Result<String> {
     }
     // whole: the site's entity pages and its catalogue counts are read off this document,
     // and a prefix of the repository would drop what sorts past MAX_NODES without a word
-    let graph = crate::graph::composed_complete(&ctx.registry, &ctx.index);
+    let graph = committed_graph(crate::graph::composed_complete(&ctx.registry, &ctx.index))?;
     let doc = serde_json::json!({
         "schema": GRAPH_SCHEMA,
         "generated": format!("{HEADER}; source: the capability registry and every object of the index; regenerate with `majordomus generate`"),
@@ -1509,6 +1542,14 @@ pub fn graph_document(ctx: &Context, version: &str) -> Result<String> {
         });
     }
     Ok(rendered)
+}
+
+/// The composed graph as it may be committed: a graph that stopped at a bound is refused
+/// with the count it held and the bound, and nothing is written, as an unresolved relation
+/// is refused before it. The composition has no bound today; this is what keeps one that
+/// comes back from committing a prefix that still reads as whole (I1966).
+fn committed_graph(graph: crate::graph::Graph) -> Result<crate::graph::Graph> {
+    crate::graph::whole(graph).map_err(|reason| Error::Refused { code: 10, reason })
 }
 
 /// The schema of the composed graph, generated from the types that define it rather than
@@ -3218,6 +3259,43 @@ mod tests {
                 "{content}"
             );
         }
+    }
+
+    #[test]
+    fn a_composed_graph_that_stopped_at_a_bound_is_refused_and_not_committed() {
+        use crate::graph::{Builder, Node};
+        let thing = |id: &str| Node {
+            id: id.into(),
+            kind: "thing".into(),
+            label: id.into(),
+            summary: None,
+            route: None,
+            source: None,
+            status: None,
+            external: false,
+            facts: Default::default(),
+        };
+        let mut b = Builder::new("composed", "Everything", "two things, room for one", "test")
+            .node_kind("thing", "a thing")
+            .limit(1);
+        b.node(thing("a"));
+        b.node(thing("b"));
+        let err = committed_graph(b.finish()).expect_err("a prefix is not committed");
+        assert_eq!(err.exit_code(), 10);
+        let message = err.to_string();
+        assert!(message.contains("stopped at 1 nodes"), "{message}");
+        assert!(
+            message.contains(&crate::graph::MAX_NODES.to_string()),
+            "{message}"
+        );
+
+        let mut whole = Builder::new("composed", "Everything", "one thing", "test")
+            .node_kind("thing", "a thing");
+        whole.node(thing("a"));
+        assert!(
+            committed_graph(whole.finish()).is_ok(),
+            "a graph that stopped nowhere is committed"
+        );
     }
 
     #[test]

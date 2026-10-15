@@ -32,6 +32,23 @@
   const INTERRUPT_COOLDOWN_S = 120;
   const TRACE = 24;
   const SEEN = 4000;
+  // The marks one frame registers at most for a reader to point at: a scene is bounded by
+  // the server, and this bounds what one frame keeps of it.
+  const MARKS = 1200;
+  // The colour role each kind of mark is filed under (share/design/tokens.yaml, `obs-*`): the
+  // ring around a mark a reader points at and the detail it opens wear it. A kind not filed
+  // here wears the accent.
+  const KIND_ROLE = {
+    machine: 'instance', runtime: 'instance', checkout: 'instance',
+    'mesh session': 'peer', worker: 'peer', claim: 'peer',
+    execution: 'task', 'recorded run': 'task',
+    'issues of a wave': 'issue', 'claims of one kind': 'issue',
+    milestone: 'milestone',
+    'health dimension': 'state', 'release check': 'state', rule: 'state', 'rules in one state': 'state', source: 'state',
+    event: 'event',
+    release: 'release', 'declared version': 'release', 'module of the registry': 'release', surface: 'release', 'measured share': 'release',
+  };
+  const kindRole = (kind) => (KIND_ROLE[kind] ? `--mj-obs-${KIND_ROLE[kind]}` : '--mj-accent');
 
   // ---------------------------------------------------------------- colour and number
   const probe = document.createElement('canvas').getContext('2d', { willReadFrequently: true });
@@ -59,6 +76,8 @@
     warn: 'orange', stale: 'orange', BLOCKED: 'orange', VERIFY: 'orange', suspect: 'orange',
     fail: 'rose', failed: 'rose', conflicted: 'rose',
     ACTIVE: 'violet', READY: 'blue', PLANNED: 'blue', open: 'violet',
+    // the states of an execution (the executions scene)
+    queued: 'blue', running: 'violet', cancelling: 'orange', succeeded: 'cyan', cancelled: 'orange',
   };
   function colour(word) {
     const t = TONES[word];
@@ -80,6 +99,13 @@
     return ((h >>> 0) % 100000) / 100000;
   }
   const TAU = Math.PI * 2;
+
+  // The live channel of the executions scene, once the display has opened it: what it heard
+  // (`lanes()`), whether it is live (`status()`), and when each execution's last event
+  // arrived (`pulses`). One display per page, so one channel.
+  let channel = null;
+  // How long the pulse of one event runs along its lane, in seconds.
+  const PULSE_S = 2.4;
 
   // ---------------------------------------------------------------- the scenes
   // Each takes the drawing context, the stage's box, the scene's model, the time in seconds
@@ -117,6 +143,14 @@
           c.globalAlpha = runtime.liveness === 'live' ? 1 : 0.45;
           c.fill();
           c.globalAlpha = 1;
+          box.mark({
+            x: sx, y: sy, r: box.u * 0.5, id: runtime.id, kind: 'runtime', state: runtime.liveness, truth: 'observed',
+            fields: [['machine', machine.label], ['sessions', runtime.sessions], ['this runtime', runtime.this ? 'yes' : 'no']],
+          });
+        });
+        box.mark({
+          x, y, r, id: machine.id, kind: 'machine', state: local ? 'this machine' : 'known', truth: 'observed',
+          fields: [['name', machine.label], ['runtimes', machine.runtimes.length]],
         });
         label(c, box, `${machine.label}${local ? (m.replayed ? ' · where it was recorded' : ' · this machine') : ''}`, x, y + r + box.u * 2.6, 0.62);
       });
@@ -159,6 +193,10 @@
         c.globalAlpha = 0.85;
         c.fillRect(x - box.u * 0.06, y - box.u * 0.5, box.u * 0.12, box.u);
         c.globalAlpha = 1;
+        box.mark({
+          x: x - box.u * 0.3, y: y - box.u * 0.5, w: box.u * 0.6, h: box.u, id: e.id, kind: 'event', state: e.kind, truth: 'observed',
+          fields: [['node', e.node], ['logical clock', e.lamport], ['at', new Date(e.at * 1000).toISOString()]],
+        });
         // an event read after the display started arrives with one finite ring
         const age = born.has(e.id) ? (now - born.get(e.id)) / 1000 : 99;
         if (age < 3 && moving) {
@@ -211,6 +249,15 @@
           c.strokeStyle = colour(ms.status);
           c.stroke();
         }
+        box.mark({
+          x, y, r, id: ms.id, kind: 'milestone', state: ms.status, truth: 'observed', href: ms.href,
+          fields: [
+            ['title', ms.label],
+            ['issues done', share === null ? 'no issue counted' : `${ms.done || 0} of ${ms.total}`],
+            ['depends on', (ms.depends_on || []).join(', ') || 'nothing'],
+            ['plan', ms.id === m.now ? 'now' : ms.id === m.next ? 'next' : '—'],
+          ],
+        });
         if (ms.id === m.now || ms.id === m.next || ms.status === 'ACTIVE') {
           label(c, box, `${ms.id}${ms.id === m.now ? ' · now' : ms.id === m.next ? ' · next' : ''}`, x, y + r + box.u * 0.9, 0.55);
         }
@@ -229,6 +276,13 @@
         const h = (amount / most) * box.h * 0.5;
         c.fillStyle = tone(['violet', 'cyan', 'blue'][i % 3]);
         c.fillRect(box.x + box.w * 0.15 + i * width, box.cy + box.h * 0.25 - h, width * 0.7, h);
+        // a run without an identity of its own is named by its place in the list, and says so
+        const named = run.id || run.run_id || run.run;
+        box.mark({
+          x: box.x + box.w * 0.15 + i * width, y: box.cy + box.h * 0.25 - h, w: width * 0.7, h: Math.max(h, box.u),
+          id: named || `run ${i + 1} of the list`, kind: 'recorded run', state: 'recorded', truth: 'observed',
+          fields: [['tokens', amount], ['model', run.model || 'unstated'], ['recorded', run.at || run.recorded_at || 'unstated']],
+        });
       });
       const stated = amounts.filter((n) => n !== null).length;
       return `${runs.length} recorded run(s) · ${stated} state a token total`;
@@ -253,6 +307,10 @@
         c.fillStyle = colour(check.status);
         c.fillRect(box.x + box.w * 0.66, y - box.u * 0.5, box.u * 0.5, box.u * 0.5);
         label(c, box, `${check.label} · ${check.status}`, box.x + box.w * 0.66 + box.u * 1, y, 0.6, 'left');
+        box.mark({
+          x: box.x + box.w * 0.66, y: y - box.u * 0.8, w: box.w * 0.3, h: box.u * 1.1, id: check.id, kind: 'health dimension',
+          state: check.status, truth: 'observed', fields: [['title', check.label], ['ring', `${i + 1} from the centre`]],
+        });
       });
       const words = Object.keys(tally).sort().map((w) => `${tally[w]} ${w}`).join(' · ');
       return `${checks.length} dimension(s): ${words} · the report as a whole: ${m.status || 'unknown'}`;
@@ -283,6 +341,11 @@
         c.arc(box.cx + side * reach, y - box.u * 1.2, box.u * 0.26, 0, TAU);
         c.fillStyle = release.yanked ? colour('fail') : tone('cyan');
         c.fill();
+        box.mark({
+          x: box.cx + side * reach, y: y - box.u * 1.2, r: box.u * 0.6, id: release.version, kind: 'release',
+          state: release.yanked ? 'yanked' : 'published', truth: 'observed',
+          fields: [['published', release.published_at || 'unstated'], ['order', `${i + 1} of ${list.length}`]],
+        });
         if (i % every === 0 || i === list.length - 1) {
           label(c, box, release.version, box.cx + side * (reach + box.u * 0.8), y - box.u * 1.0, 0.55, side > 0 ? 'left' : 'right');
         }
@@ -294,6 +357,10 @@
         c.lineWidth = box.u * 0.12;
         c.stroke();
         label(c, box, `${m.next} · declared, not published`, box.cx, tip - box.u * 1.1, 0.6);
+        box.mark({
+          x: box.cx, y: tip, r: box.u * 0.8, id: m.next, kind: 'declared version', state: 'not published', truth: 'observed',
+          fields: [['changes since the last release', typeof m.changes === 'number' ? m.changes : 'unstated']],
+        });
       }
       const last = list[list.length - 1];
       const pending = typeof m.changes === 'number' ? ` · ${m.changes} change(s) since` : '';
@@ -325,6 +392,10 @@
         c.globalAlpha = s.state === 'active' ? 1 : 0.4;
         c.fill();
         c.globalAlpha = 1;
+        box.mark({
+          x, y, r: box.u * 0.8, id: s.id, kind: 'mesh session', state: s.state, truth: 'observed',
+          fields: [['machine', s.node], ['claims held', s.claims], ['reviews asked', s.reviews]],
+        });
         if (s.reviews) {
           c.beginPath();
           c.arc(x, y, box.u * 0.5, 0, TAU);
@@ -336,6 +407,56 @@
       label(c, box, `${m.claims} claim(s)`, box.cx, box.cy - box.u * 1.2, 0.9);
       label(c, box, `${m.handovers} handover(s) · ${m.reviews} review(s) · ${m.overlaps} overlap(s)`, box.cx, box.cy + box.u * 0.6, 0.62);
       return `${sessions.length} session(s) on ${nodes.length} machine(s) · ${active} active`;
+    },
+
+    executions(c, box, m, t, moving) {
+      // the lanes the channel brought forward, or the snapshot the page carries before it opened
+      const lanes = channel ? channel.lanes() : (m.executions || []);
+      const live = Boolean(channel) && channel.status() === 'live';
+      const word = channel ? channel.status() : (m.replayed ? 'replay' : 'not connected');
+      if (!lanes.length) {
+        label(c, box, 'QUIET', box.cx, box.cy - box.u * 1.2, 1.5);
+        label(c, box, live ? 'no execution has run in this process; listening on the live channel'
+          : 'no execution has run in this process', box.cx, box.cy + box.u * 1.2, 0.7);
+        return `0 executions · channel ${word}`;
+      }
+      const shown = lanes.slice(0, 16);
+      const left = box.x + box.w * 0.08;
+      const right = box.x + box.w * 0.92;
+      const top = box.y + box.h * 0.18;
+      const row = Math.min(box.u * 2.2, (box.h * 0.64) / shown.length);
+      const now = performance.now();
+      let active = 0;
+      shown.forEach((l, i) => {
+        const y = top + i * row;
+        if (l.state === 'running' || l.state === 'queued' || l.state === 'cancelling') active += 1;
+        c.strokeStyle = withAlpha(colour(l.state), live ? 0.35 : 0.18);
+        c.lineWidth = box.u * 0.12;
+        c.beginPath();
+        c.moveTo(left, y);
+        c.lineTo(right, y);
+        c.stroke();
+        c.beginPath();
+        c.arc(left, y, box.u * 0.42, 0, TAU);
+        c.fillStyle = colour(l.state);
+        c.globalAlpha = live ? 1 : 0.5;
+        c.fill();
+        c.globalAlpha = 1;
+        label(c, box, `${l.capability || l.id} · ${l.state} · #${l.last_sequence}`, left + box.u * 1.2, y - box.u * 0.45, 0.55, 'left');
+        // a pulse is an event this display heard; with the channel down nothing runs
+        const at = channel && channel.pulses.get(l.id);
+        if (live && at !== undefined) {
+          const age = (now - at) / 1000;
+          if (age >= 0 && age < PULSE_S) {
+            const x = left + (right - left) * (moving ? age / PULSE_S : 1);
+            c.beginPath();
+            c.arc(x, y, box.u * (0.5 + 0.4 * (1 - age / PULSE_S)), 0, TAU);
+            c.fillStyle = withAlpha(colour(l.state), 1 - age / PULSE_S);
+            c.fill();
+          }
+        }
+      });
+      return `${lanes.length} execution(s) · ${active} active · channel ${word}`;
     },
 
     ambient(c, box, m, t, moving) {
@@ -355,6 +476,10 @@
         c.fillStyle = colour(s.state);
         c.fillRect(box.x + box.w * 0.62, y - box.u * 0.45, box.u * 0.45, box.u * 0.45);
         label(c, box, `${s.capability} · ${s.state}`, box.x + box.w * 0.62 + box.u * 0.9, y, 0.6, 'left');
+        box.mark({
+          x: box.x + box.w * 0.62, y: y - box.u * 0.7, w: box.w * 0.34, h: box.u * 1.0, id: s.capability, kind: 'source',
+          state: s.state, truth: 'observed', fields: [],
+        });
       });
       return `${answered} of ${sources.length} source(s) answered · the motion on this scene is decoration`;
     },
@@ -424,6 +549,12 @@
     foot.append(name, dots, fact);
     const legend = make('p', 'mj-obs-legend');
     legend.hidden = true;
+    // a mark's detail: read-only words about the record a mark was drawn from, and the link
+    // to the screen that holds it as a row. Nothing in it acts on anything.
+    const detail = make('aside', 'mj-obs-detail');
+    detail.hidden = true;
+    detail.setAttribute('aria-live', 'polite');
+    detail.setAttribute('aria-label', 'The mark a reader chose');
     const controls = make('div', 'mj-obs-controls');
     const button = (text, hint, act) => {
       const b = make('button', 'mj-obs-button', text);
@@ -434,7 +565,9 @@
       controls.append(b);
       return b;
     };
-    holder.append(head, foot, legend, controls);
+    holder.append(head, foot, legend, detail, controls);
+    // the stage takes the keyboard's focus, so a reader can walk the marks without a pointer
+    if (!holder.hasAttribute('tabindex')) holder.tabIndex = 0;
 
     // ------------------------------------------------------------ the director
     // The rotation is a function of the projection and the clock: the available scenes, in
@@ -450,8 +583,11 @@
     // A scene whose renderer threw is quarantined for the rest of this display's life: the
     // rotation skips it, the others go on, and the scene says why when a reader asks for it.
     const quarantined = new Map(); // scene id -> what it threw
+    // a scene is drawable when the page says so, or, for the executions scene, once its live
+    // channel has heard an execution the page's reading did not yet hold
+    const drawable = (s) => s.available || (s.id === 'executions' && !s.replay && channel !== null && channel.lanes().length > 0);
     const eligible = () => data.scenes
-      .map((s, i) => (s.available && !quarantined.has(s.id) ? i : -1))
+      .map((s, i) => (drawable(s) && !quarantined.has(s.id) ? i : -1))
       .filter((i) => i >= 0);
     function select(index, reason) {
       if (index === current && reason !== 'start') return;
@@ -488,14 +624,169 @@
       if (document.fullscreenElement) document.exitFullscreen();
       else if (holder.requestFullscreen) holder.requestFullscreen().catch(() => {});
     });
+    // ------------------------------------------------------------ pointing at a mark
+    // Every painter registers the marks it drew with box.mark: where the mark is, the record
+    // it stands for and what the scene read of it. A reader points at one (a click, a tap, or
+    // the arrow keys and Enter) and the detail says what it is and where it came from. The
+    // detail holds the rotation while it is open and closes itself after MANUAL_HOLD_S
+    // without a reader, so an unattended display goes back to rotating.
+    let marks = []; // the last frame's marks
+    let marksScene = ''; // the scene they belong to
+    let hover = null; // the mark under the pointer
+    let focused = -1; // the index the keyboard walks
+    let chosen = null; // { scene, id, kind, mark, gone }
+    let touched = 0;
+    const same = (a, b) => a && b && a.id === b.id && a.kind === b.kind;
+    function hit(px, py) {
+      let best = null;
+      let bestD = Infinity;
+      const slack = Math.min(width, height) / 44 * 0.4;
+      for (const m of marks) {
+        let d;
+        if (typeof m.w === 'number') {
+          const inside = px >= m.x - slack && px <= m.x + m.w + slack && py >= m.y - slack && py <= m.y + m.h + slack;
+          if (!inside) continue;
+          d = Math.hypot(px - (m.x + m.w / 2), py - (m.y + m.h / 2)) / Math.max(m.w, m.h, 1);
+        } else {
+          const r = Math.max(m.r || 0, slack * 2);
+          const dist = Math.hypot(px - m.x, py - m.y);
+          if (dist > r + slack) continue;
+          d = dist / r;
+        }
+        if (d <= bestD) { bestD = d; best = m; }
+      }
+      return best;
+    }
+    function point(e) {
+      const rect = canvas.getBoundingClientRect();
+      return [e.clientX - rect.left, e.clientY - rect.top];
+    }
+    function choose(mark, reason) {
+      touched = performance.now();
+      held = touched;
+      if (!mark) { chosen = null; detail.hidden = true; shown = ''; return; }
+      chosen = { scene: data.scenes[current].id, id: mark.id, kind: mark.kind, mark, gone: 0 };
+      trace.push({ at: new Date().toISOString(), scene: chosen.scene, mark: `${mark.kind}:${mark.id}`, reason });
+      if (trace.length > TRACE) trace.shift();
+      detail.hidden = false;
+      detailShown = '';
+    }
+    canvas.addEventListener('pointermove', (e) => {
+      const [x, y] = point(e);
+      hover = hit(x, y);
+      canvas.style.cursor = hover ? 'pointer' : '';
+    });
+    canvas.addEventListener('pointerleave', () => { hover = null; canvas.style.cursor = ''; });
+    canvas.addEventListener('click', (e) => {
+      const [x, y] = point(e);
+      const m = hit(x, y);
+      if (m) choose(m, 'reader pointed at it');
+      else if (chosen) choose(null, 'reader');
+    });
+
     const onKey = (e) => {
       if (e.target instanceof HTMLInputElement || e.metaKey || e.ctrlKey || e.altKey) return;
-      if (e.key === 'ArrowRight') { held = performance.now(); step(1, 'reader'); }
-      else if (e.key === 'ArrowLeft') { held = performance.now(); step(-1, 'reader'); }
-      else if (e.key === ' ') { auto = !auto; held = 0; e.preventDefault(); }
+      // the marks are walked only while the stage has the focus, or on the kiosk, so the
+      // arrows still scroll a page the stage is a part of
+      const here = kiosk || holder.contains(document.activeElement);
+      if (e.key === 'ArrowRight') { held = performance.now(); choose(null); step(1, 'reader'); }
+      else if (e.key === 'ArrowLeft') { held = performance.now(); choose(null); step(-1, 'reader'); }
+      else if (e.key === ' ' && here) { auto = !auto; held = 0; e.preventDefault(); }
       else if (e.key === 'i') legend.hidden = !legend.hidden;
+      else if (e.key === 'Escape') { focused = -1; choose(null, 'reader'); }
+      else if (here && (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'j' || e.key === 'k') && marks.length) {
+        e.preventDefault();
+        const by = e.key === 'ArrowDown' || e.key === 'j' ? 1 : -1;
+        focused = focused < 0 ? (by > 0 ? 0 : marks.length - 1) : (focused + by + marks.length) % marks.length;
+        held = performance.now();
+        touched = held;
+        if (chosen) choose(marks[focused], 'reader walked to it');
+      } else if (here && e.key === 'Enter' && focused >= 0 && marks[focused]) {
+        e.preventDefault();
+        choose(marks[focused], 'reader walked to it');
+      }
     };
     document.addEventListener('keydown', onKey);
+
+    // the detail's words, set as text and only when they change
+    let detailShown = '';
+    function sourceLine(capability) {
+      const s = (data.sources || []).find((x) => x.capability === capability);
+      if (!s) return `${capability} · not asked`;
+      const age = typeof s.age_ms === 'number' ? ` · read ${Math.round(s.age_ms / 1000)} s before the page` : '';
+      return `${capability} · ${s.state} · ${s.freshness || 'unstated'}${age}${s.reason ? ` · ${s.reason}` : ''}`;
+    }
+    function renderDetail(scene, word) {
+      if (!chosen) return;
+      // a mark has left when frames that did draw marks have gone on without it for a while:
+      // a frame that drew none yet (a surface still drawing) says nothing about it
+      const live = marks.find((m) => same(m, chosen)) || null;
+      if (live) { chosen.mark = live; chosen.gone = 0; chosen.missing = 0; }
+      else if (marks.length && !chosen.gone) {
+        chosen.missing = chosen.missing || Date.now();
+        if (Date.now() - chosen.missing > 1500) chosen.gone = chosen.missing;
+      }
+      const m = chosen.mark;
+      const truth = scene.replay
+        ? `REPLAY · recorded ${scene.replay.recorded_at}; not this process's reading`
+        : m.truth === 'derived'
+          ? 'DERIVED · counted from what the source answered'
+          : 'OBSERVED · a value the source answered, drawn as it was read';
+      const rows = [
+        ['state', m.state === undefined || m.state === null || m.state === '' ? 'unstated' : m.state],
+        ['truth', truth],
+        ...scene.requires.map((cap) => ['source', sourceLine(cap)]),
+        ['read', `${String(data.observed_at).replace('T', ' ')} · ${word}${data.revision ? ` · at ${data.revision}` : ''}`],
+        ...(m.fields || []).map(([k, v]) => [k, v === null || v === undefined || v === '' ? 'unstated' : v]),
+      ];
+      const gone = chosen.gone ? `no longer in the projection since ${new Date(chosen.gone).toISOString().slice(11, 19)}Z: the last reading that held it is shown` : '';
+      const text = JSON.stringify([m.kind, m.id, rows, gone, m.href || scene.href]);
+      if (text === detailShown) return;
+      detailShown = text;
+      detail.textContent = '';
+      detail.classList.toggle('mj-obs-detail--gone', Boolean(chosen.gone));
+      // the kind's colour is a role of the declaration, named, never a value picked here
+      detail.style.setProperty('--obs-kind', `var(${kindRole(m.kind)})`);
+      const top = make('div', 'mj-obs-detail-head');
+      top.append(make('span', 'mj-obs-detail-kind', m.kind), make('span', 'mj-obs-detail-id', String(m.id)));
+      const close = make('button', 'mj-obs-button', '✕');
+      close.type = 'button';
+      close.title = 'Close the detail and let the display rotate again';
+      close.setAttribute('aria-label', close.title);
+      close.addEventListener('click', () => { choose(null, 'reader'); held = 0; holder.focus(); });
+      top.append(close);
+      detail.append(top);
+      if (gone) detail.append(make('p', 'mj-obs-detail-gone', gone));
+      const list = make('dl', 'mj-obs-detail-rows');
+      for (const [k, v] of rows) list.append(make('dt', '', k), make('dd', '', String(v)));
+      detail.append(list);
+      const rowsLink = make('a', 'mj-obs-detail-link', 'Open the same facts as rows →');
+      rowsLink.href = m.href || scene.href;
+      detail.append(rowsLink);
+    }
+
+    // the scene dots: one button per scene, so a reader can go to any of them
+    const dotButtons = [];
+    function renderDots() {
+      if (dotButtons.length !== data.scenes.length) {
+        dots.textContent = '';
+        dotButtons.length = 0;
+        data.scenes.forEach((s, i) => {
+          const b = make('button', 'mj-obs-dot');
+          b.type = 'button';
+          b.addEventListener('click', () => { held = performance.now(); choose(null); select(i, 'reader'); });
+          dots.append(b);
+          dotButtons.push(b);
+        });
+      }
+      data.scenes.forEach((s, i) => {
+        const b = dotButtons[i];
+        b.textContent = i === current ? '◉' : drawable(s) ? '●' : '○';
+        b.title = `${s.label} · ${s.available ? 'available' : `unavailable: ${s.reason || 'no fact to draw'}`}`;
+        b.setAttribute('aria-label', b.title);
+        b.setAttribute('aria-current', String(i === current));
+      });
+    }
 
     // ------------------------------------------------------------ reading the page again
     const born = new Map(); // event id -> when this display first read it
@@ -517,6 +808,41 @@
     }
     ingest(data, true);
     let readAt = Date.now();
+
+    // ------------------------------------------------------------ the live channel
+    // The executions scene is kept current by the channel every client of this process
+    // reads (`/events`), never by reading the page again: the script that follows it is
+    // loaded from the URL the page names, and so are the channel and the snapshot it brings
+    // forward. A published snapshot opens nothing.
+    const flowScene = () => data.scenes.find((s) => s.id === 'executions');
+    async function listen() {
+      const scene = flowScene();
+      const lib = holder.dataset.observatoryStream;
+      if (snapshot || !scene || scene.replay || !lib || !holder.dataset.observatoryEvents) return;
+      if (!window.mjObservatoryStream) {
+        await new Promise((resolve, reject) => {
+          const tag = document.createElement('script');
+          tag.src = lib;
+          tag.onload = resolve;
+          tag.onerror = reject;
+          document.head.append(tag);
+        });
+      }
+      const pulses = new Map();
+      const stream = window.mjObservatoryStream.connect({
+        path: holder.dataset.observatoryEvents,
+        snapshot: holder.dataset.observatoryExecutions,
+        initial: (scene.available && scene.model && scene.model.executions) || [],
+        on: {
+          change(_state, event) {
+            if (event && event.execution_id) pulses.set(event.execution_id, performance.now());
+            if (pulses.size > 400) pulses.delete(pulses.keys().next().value);
+          },
+        },
+      });
+      channel = { lanes: stream.lanes, status: stream.status, pulses, close: stream.close };
+    }
+    listen().catch(() => { channel = null; });
     let failures = 0;
     let timer = null;
     let controller = null;
@@ -651,6 +977,12 @@
       const t = now / 1000;
       const moving = !still;
 
+      // an open detail holds the rotation; left alone for MANUAL_HOLD_S it closes itself, and
+      // the display goes back to rotating as if nobody had touched it
+      if (chosen) {
+        if ((now - touched) / 1000 > MANUAL_HOLD_S) { choose(null); held = 0; }
+        else held = now;
+      }
       if (auto && (!held || (now - held) / 1000 > MANUAL_HOLD_S)) {
         held = 0;
         const river_ = data.scenes.findIndex((s) => s.id === 'activity');
@@ -662,14 +994,19 @@
           interrupt = null;
         }
         const scene = data.scenes[current];
-        if ((now - since) / 1000 > scene.dwell_seconds || !scene.available || quarantined.has(scene.id)) step(1, 'rotation');
+        if ((now - since) / 1000 > scene.dwell_seconds || !drawable(scene) || quarantined.has(scene.id)) step(1, 'rotation');
       }
 
       const u = Math.min(width, height) / 44;
       const drift = moving ? [Math.sin(t / 97) * u * 0.4, Math.cos(t / 131) * u * 0.4] : [0, 0];
+      // what this frame's painter registers as marks a reader can point at
+      const frameMarks = [];
       const box = {
         x: 0, y: 0, w: width, h: height, cx: width / 2, cy: height / 2, u,
         font: getComputedStyle(document.body).getPropertyValue('--font-mono').trim() || 'ui-monospace, monospace',
+        mark(m) {
+          if (frameMarks.length < MARKS && m && m.id !== undefined && m.id !== null && m.id !== '') frameMarks.push(m);
+        },
       };
       // the stage's background is the stylesheet's; the canvas is cleared to show it
       c.clearRect(0, 0, width, height);
@@ -688,18 +1025,21 @@
       const fade = Math.min((now - since) / 1000 / FADE_S, 1);
       let line = '';
       c.save();
-      c.globalAlpha = still ? 1 : fade;
+      // a reading the server has stopped renewing is drawn dimmed and still: what it shows
+      // was true when it was read, and nothing on it may look as if it were happening now
+      const stale = !snapshot && !scene.replay && Date.now() - readAt >= LIVE_WITHIN_MS;
+      c.globalAlpha = (still ? 1 : fade) * (stale ? 0.45 : 1);
       // a scene is the director's own, or one a companion script registered (ADR 0160)
       const painter = draw[scene.id] || registry.scenes[scene.id];
       if (quarantined.has(scene.id)) {
         label(c, box, 'QUARANTINED', box.cx, box.cy - u * 1.2, 1.5);
         label(c, box, `its renderer failed: ${quarantined.get(scene.id)}`, box.cx, box.cy + u * 1.2, 0.7);
         line = 'nothing is drawn: this scene\'s renderer failed, and the others go on';
-      } else if (scene.available && painter) {
+      } else if (drawable(scene) && painter) {
         // a replayed model says so to the scene that draws it, and its marks are not news
-        const model = scene.replay ? { ...scene.model, replayed: true } : scene.model;
+        const model = scene.replay ? { ...scene.model, replayed: true } : (scene.model || {});
         try {
-          line = painter(c, box, model, t, moving, scene.replay ? new Map() : born);
+          line = painter(c, box, model, t, moving && !stale, scene.replay ? new Map() : born);
         } catch (e) {
           quarantined.set(scene.id, String((e && e.message) || e).slice(0, 120));
           trace.push({ at: new Date().toISOString(), scene: scene.id, reason: 'quarantined' });
@@ -712,12 +1052,39 @@
         line = 'nothing is drawn: there is no fact to draw it from';
       }
       c.restore();
+      // the marks this frame drew; a p5 scene registers its own when its surface draws, into
+      // the same list, so it is kept by reference
+      if (marks !== frameMarks) {
+        const was = focused >= 0 ? marks[focused] : null;
+        marks = frameMarks;
+        focused = was ? marks.findIndex((m) => same(m, was)) : -1;
+      }
+      // the mark a reader points at, has walked to or has chosen wears a ring
+      const ring = (m, strong) => {
+        if (!m) return;
+        c.save();
+        c.strokeStyle = token(kindRole(m.kind), token('--mj-fg', '#fff'));
+        c.globalAlpha = strong ? 0.95 : 0.6;
+        c.lineWidth = Math.max(1.5, u * (strong ? 0.12 : 0.08));
+        c.beginPath();
+        if (typeof m.w === 'number') c.rect(m.x - u * 0.2, m.y - u * 0.2, m.w + u * 0.4, m.h + u * 0.4);
+        else c.arc(m.x, m.y, Math.max(m.r || 0, u * 0.4) + u * 0.35, 0, TAU);
+        c.stroke();
+        c.restore();
+      };
+      if (marksScene !== scene.id) { marksScene = scene.id; hover = null; focused = -1; }
+      ring(hover ? marks.find((m) => same(m, hover)) : null, false);
+      if (focused >= 0) ring(marks[focused], false);
+      if (chosen) ring(marks.find((m) => same(m, chosen)), true);
 
       // the words: set only when they change
       const age = Date.now() - readAt;
       // a replayed scene is a replay whatever the page is: it shows when it was recorded
       const resynced = Date.now() - resyncedAt < 10000;
-      const word = scene.replay ? 'REPLAY' : snapshot ? 'SNAPSHOT' : resynced ? 'RESYNCED' : age < LIVE_WITHIN_MS ? 'LIVE' : 'STALE';
+      // the executions scene says what its channel is doing, not when the page was last read
+      const flowing = scene.id === 'executions' && channel && !scene.replay && !snapshot;
+      const word = scene.replay ? 'REPLAY' : snapshot ? 'SNAPSHOT' : flowing ? channel.status().toUpperCase()
+        : resynced ? 'RESYNCED' : age < LIVE_WITHIN_MS ? 'LIVE' : 'STALE';
       // why a reading is old: only an asking that failed blames the server
       const silence = failures || streamFailures ? 'the server is not answering'
         : pollOwed || streamOwed ? 'not asked while the page was hidden'
@@ -738,10 +1105,11 @@
         status.dataset.state = word.toLowerCase();
         name.textContent = text.split('|')[2];
         fact.textContent = line;
-        legend.textContent = `${scene.meaning} Background dust and slow motion are decoration. Source: ${scene.requires.join(', ') || 'none'}.`;
+        legend.textContent = `${scene.meaning} Background dust and slow motion are decoration. Source: ${scene.requires.join(', ') || 'none'}. Point at a mark, or walk the marks with ↑ ↓ and Enter, to see the record it was drawn from; Esc closes it.`;
         autoButton.setAttribute('aria-pressed', String(auto));
-        dots.textContent = data.scenes.map((s, i) => (i === current ? '◉' : s.available ? '●' : '○')).join(' ');
+        renderDots();
       }
+      if (chosen) renderDetail(scene, word);
       head.style.transform = `translate(${drift[0]}px, ${drift[1]}px)`;
       foot.style.transform = `translate(${-drift[0]}px, ${-drift[1]}px)`;
       schedule();
@@ -770,26 +1138,36 @@
     document.addEventListener('visibilitychange', onVisible);
     schedule();
 
-    return {
+    const handle = {
       trace: () => trace.slice(),
       // the projection the display is drawing now, and the scenes it quarantined: what an
       // inspector or an evidence run reads, never a second model
       data: () => data,
+      // the executions channel as the display hears it: its word and its lanes
+      channel: () => (channel ? { status: channel.status(), lanes: channel.lanes() } : null),
       quarantined: () => Object.fromEntries(quarantined),
       policy: { min_dwell_seconds: MIN_DWELL_S, interrupt_cooldown_seconds: INTERRUPT_COOLDOWN_S, manual_hold_seconds: MANUAL_HOLD_S },
+      // what a reader could point at now, and what the detail says: for a probe that must
+      // prove a mark answers a click without reading pixels
+      marks: () => marks.map(({ id, kind, state, truth, x, y, r, w, h }) => ({ id, kind, state, truth, x, y, r, w, h })),
+      detail: () => (detail.hidden ? null : detail.textContent),
       dispose() {
         if (timer) clearTimeout(timer);
         if (controller) controller.abort();
         if (streamTimer) clearTimeout(streamTimer);
         if (streamController) streamController.abort();
+        if (channel) { channel.close(); channel = null; }
         if (frame !== null) { cancelAnimationFrame(frame); clearTimeout(frame); }
         observer.disconnect();
         document.removeEventListener('keydown', onKey);
         document.removeEventListener('visibilitychange', onVisible);
         document.removeEventListener('fullscreenchange', fit);
-        for (const node of [head, foot, legend, controls]) node.remove();
+        for (const node of [head, foot, legend, detail, controls]) node.remove();
+        if (registry.display === handle) registry.display = null;
       },
     };
+    registry.display = handle;
+    return handle;
   }
 
   function read(text) {
@@ -805,6 +1183,9 @@
   // tokens, the tone of a state word, a stable place from an identity, the text label.
   const registry = {
     mount,
+    // the director's own painters, beside the companion's: a probe draws a scene's model
+    // with them on a recording context and reads back the marks it registered
+    painters: draw,
     scenes: {},
     companion: false,
     kit: { token, tone, colour, withAlpha, unit, label, TAU },
