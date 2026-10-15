@@ -33231,6 +33231,46 @@
         }
       },
       {
+        "id": "majordomus://issue/I2288",
+        "kind": "issue",
+        "label": "I2288",
+        "summary": "A task is on the mesh while it works",
+        "route": "/cockpit/objects/issue/i2288",
+        "source": ".ai/repo/project/issues/I2288.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "After majordomus start the task's scope is a live claim on every linked runtime",
+            "After finish the claim is released",
+            "Without a server start records no claim and does not fail"
+          ],
+          "created_at": "2026-10-10",
+          "current_state": "majordomus start reports overlaps with the local board and claims nothing on the mesh.",
+          "depends_on": [
+            "I2734"
+          ],
+          "evidence_required": [
+            "case_3067"
+          ],
+          "milestone": "every-session-joins-the-mesh",
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "lib/common.sh",
+            "lib/start.sh",
+            "lib/finish.sh",
+            "test/cases/3067_a_task_is_claimed_on_the_mesh.sh",
+            "docs/MESH.md"
+          ],
+          "slug": "session-on-the-mesh",
+          "updated_at": "2026-10-15",
+          "validation": [
+            "bin/majordomus plan validate",
+            "bash test/run.sh 3067_a_task_is_claimed_on_the_mesh 04_start_check 06_finish"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I2296",
         "kind": "issue",
         "label": "I2296",
@@ -53175,6 +53215,13 @@
         "label": "test/cases/3066_a_session_joins_the_mesh_at_start.sh",
         "route": "/cockpit/objects/test/test-cases-3066-a-session-joins-the-mesh-at-start-sh",
         "source": "test/cases/3066_a_session_joins_the_mesh_at_start.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3067_a_task_is_claimed_on_the_mesh.sh",
+        "kind": "test",
+        "label": "test/cases/3067_a_task_is_claimed_on_the_mesh.sh",
+        "route": "/cockpit/objects/test/test-cases-3067-a-task-is-claimed-on-the-mesh-sh",
+        "source": "test/cases/3067_a_task_is_claimed_on_the_mesh.sh"
       },
       {
         "id": "majordomus://test/test/cases/30_command_registry.sh",
@@ -77822,6 +77869,21 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2288",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2288",
+        "target": "majordomus://issue/I2734",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2288",
+        "target": "majordomus://milestone/every-session-joins-the-mesh",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I2296",
         "target": "kind:issue",
         "kind": "is_a"
@@ -83018,6 +83080,11 @@
       },
       {
         "source": "majordomus://test/test/cases/3066_a_session_joins_the_mesh_at_start.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3067_a_task_is_claimed_on_the_mesh.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -88308,8 +88375,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2799,
-      "edges": 6133,
+      "nodes": 2801,
+      "edges": 6137,
       "acyclic": false,
       "truncated": false
     }

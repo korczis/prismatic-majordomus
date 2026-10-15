@@ -418,6 +418,13 @@ once. The id is the provider's own, so anything holding the provider's payload n
 same session. With no ready server, or a mesh that does not run, nothing is opened and the
 event is unaffected.
 
+A task is on the mesh while it works (I2288). `majordomus start` claims the task's scope as
+an advisory claim of the mesh session `task-<id>`, with the task's title as its intent and its
+issue, and keeps the claim's key on the task record as `mesh_claim`; `finish` closes that
+session, which ends its claims on every linked runtime. Every machine sees what the task works
+on and reports an overlap; an exclusive claim before building stays the worker's own act. With
+no server, or a mesh that does not run, nothing is claimed and `start` does not fail.
+
 What a session shares is metadata — intent, issue, task, milestone, branch, head, dirtiness,
 a context revision identifier. Context bodies are not replicated; a handover is the
 referenced artifact a peer materialises.
