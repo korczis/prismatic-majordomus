@@ -12,8 +12,8 @@ source = ".ai/repo/features/observatory.md"
 ## What it does
 
 The other screens of `majordomus ui` are rows for a person who came to decide something.
-The Observatory is the same facts as a picture, for a hallway display. It rotates eight
-scenes: Mesh Cosmos, Event River, Intent Nebula, Token Spectrum, System Pulse, Delivery
+The Observatory is the same facts as a picture, for a hallway display. It rotates nine
+scenes: Mesh Cosmos, Event River, Execution Flow, Intent Nebula, Token Spectrum, System Pulse, Delivery
 Tree, Cooperation Choreography and Ambient Intelligence. Each scene names the capabilities
 it requires, what its marks mean, and the screen where the same facts are rows.
 

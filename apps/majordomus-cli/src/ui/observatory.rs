@@ -49,6 +49,11 @@ pub const SCHEMA: &str = "observatory/v1";
 /// The script that draws the projection, among the UI's assets.
 pub const LIB: &str = "observatory.js";
 
+/// The script that keeps the executions scene current from the live channel
+/// ([`crate::http::events`]), among the UI's assets. It opens no channel of its own: it
+/// reads the one every client of this process reads.
+pub const STREAM_LIB: &str = "observatory-stream.js";
+
 const PEERS: Source = Source::of("mesh.peers");
 const EVENTS: Source = Source::with("mesh.events", r#"{"limit":200,"newest":true}"#);
 const STATE: Source = Source::with("mesh.state", r#"{"view":"full"}"#);
@@ -59,10 +64,12 @@ const HEALTH: Source = Source::of("health.report");
 const ECONOMICS: Source = Source::of("economics.runs");
 const REPOSITORY: Source = Source::of("repository.info");
 const REPLAY: Source = Source::of("observatory.replay");
+const EXECUTIONS: Source = Source::with("executions.list", r#"{"limit":200}"#);
 
 /// Every source the Observatory reads, asked together.
 pub const SOURCES: &[Source] = &[
     PEERS, EVENTS, STATE, ROADMAP, RELEASES, VERSION, HEALTH, ECONOMICS, REPOSITORY, REPLAY,
+    EXECUTIONS,
 ];
 
 /// Where a scene's model came from when it is a replay: the recording the repository
@@ -132,6 +139,15 @@ pub const SCENES: &[Scene] = &[
         meaning: "A mark is one event of the mesh journal, placed by its time and banded by its kind. A quiet journal is a quiet river.",
         href: super::mesh::ROUTE,
         dwell_seconds: 45,
+    },
+    Scene {
+        id: "executions",
+        label: "Execution Flow",
+        character: Character::Semantic,
+        requires: &[EXECUTIONS],
+        meaning: "A lane is one execution this process remembers, coloured by its state; a pulse runs along it when one of its events arrives over the live channel. A lane that heard nothing does not move, and a channel that is not live moves nothing.",
+        href: super::command::ROUTE,
+        dwell_seconds: 40,
     },
     Scene {
         id: "intents",
@@ -601,6 +617,28 @@ fn model(id: &str, answers: &Answers, sources: &[SourceStanding]) -> Result<Valu
                 "reviews": reviews.len(),
             }))
         }
+        "executions" => {
+            // nothing to draw is unavailable, never an empty picture; the page's script still
+            // listens on the live channel, and the scene is drawn once that channel hears an
+            // execution
+            let list = answer(answers, EXECUTIONS);
+            let executions = items(list, "/executions");
+            if executions.is_empty() {
+                return Err("this process remembers no execution; the scene is drawn when the live channel hears one".into());
+            }
+            Ok(serde_json::json!({
+                "executions": executions.iter().take(BOUND).map(|e| serde_json::json!({
+                    "id": word(e, "id"),
+                    "capability": word(e, "capability"),
+                    "state": word(e, "state"),
+                    "last_sequence": e.get("last_sequence").and_then(Value::as_u64).unwrap_or(0),
+                    "events": e.get("event_count").and_then(Value::as_u64).unwrap_or(0),
+                })).collect::<Vec<_>>(),
+                "remembered": list.get("remembered").and_then(Value::as_u64).unwrap_or(executions.len() as u64),
+                "active": list.get("active").and_then(Value::as_u64).unwrap_or(0),
+                "queued": list.get("queued").and_then(Value::as_u64).unwrap_or(0),
+            }))
+        }
         "ambient" => Ok(serde_json::json!({
             "sources": sources.iter().map(|s| serde_json::json!({
                 "capability": s.capability,
@@ -613,7 +651,13 @@ fn model(id: &str, answers: &Answers, sources: &[SourceStanding]) -> Result<Valu
 
 /// The Observatory screen: the stage the script draws on, the projection it draws, and the
 /// same facts as a table for a reader without the script.
-pub fn screen(ctx: &Context, query: &[(String, String)], lib: &str, kiosk: bool) -> View {
+pub fn screen(
+    ctx: &Context,
+    query: &[(String, String)],
+    lib: &str,
+    stream_lib: &str,
+    kiosk: bool,
+) -> View {
     // the scene a reader asked for by name; a name that is no scene selects nothing
     let selected = query
         .iter()
@@ -642,6 +686,18 @@ pub fn screen(ctx: &Context, query: &[(String, String)], lib: &str, kiosk: bool)
             serde_json::to_string(&projection).unwrap_or_else(|_| "{}".into()),
         )
         .attr("data-observatory-lib", lib)
+        // the live channel and the snapshot it brings forward: both named by the server, so
+        // the script writes no path down (the snapshot's path is the registry's own)
+        .attr("data-observatory-stream", stream_lib)
+        .attr("data-observatory-events", crate::http::events::PATH)
+        .attr(
+            "data-observatory-executions",
+            ctx.registry
+                .get(EXECUTIONS.capability)
+                .and_then(|c| c.exposure.http.as_ref())
+                .map(|h| h.path.clone())
+                .unwrap_or_default(),
+        )
         .attr_if("data-observatory-scene", selected)
         .attr("data-observatory-mode", if kiosk { "kiosk" } else { "screen" })
         .child(
@@ -766,7 +822,7 @@ mod tests {
         ids.sort_unstable();
         ids.dedup();
         assert_eq!(ids.len(), SCENES.len());
-        assert_eq!(SCENES.len(), 8);
+        assert_eq!(SCENES.len(), 9);
         for s in SCENES {
             assert_eq!(
                 s.requires.is_empty(),
@@ -944,11 +1000,39 @@ mod tests {
     fn the_screen_carries_the_projection_and_every_scene_as_a_row() {
         let repo = SyntheticRepository::new(Shape::default()).expect("a synthetic repository");
         let ctx = repo.context().expect("a context");
-        let html = screen(&ctx, &[], "/ui/assets/observatory.js?v=1", false)
-            .main
-            .render();
+        let html = screen(
+            &ctx,
+            &[],
+            "/ui/assets/observatory.js?v=1",
+            "/ui/assets/observatory-stream.js?v=1",
+            false,
+        )
+        .main
+        .render();
         assert!(html.contains("data-observatory=\"{"), "{html}");
         assert!(html.contains("data-observatory-lib=\"/ui/assets/observatory.js?v=1\""));
+        // the live channel and the snapshot it brings forward are named by the server
+        assert!(html.contains("data-observatory-stream=\"/ui/assets/observatory-stream.js?v=1\""));
+        assert!(html.contains(&format!(
+            "data-observatory-events=\"{}\"",
+            crate::http::events::PATH
+        )));
+        assert!(
+            html.contains("data-observatory-executions=\"/api/v1/executions\""),
+            "{html}"
+        );
+        // a process that has run nothing has no execution to draw: unavailable, with why
+        let (p0, _) = project(&ctx);
+        let flow = scene(&p0, "executions");
+        assert!(!flow.available);
+        assert!(
+            flow.reason
+                .as_deref()
+                .unwrap_or("")
+                .contains("live channel"),
+            "{:?}",
+            flow.reason
+        );
         assert!(html.contains(SCHEMA));
         for s in SCENES {
             assert!(
@@ -960,7 +1044,7 @@ mod tests {
         }
         assert!(!html.contains("data-observatory-scene"));
         let chosen = |v: &str| {
-            screen(&ctx, &[("scene".into(), v.into())], "x", false)
+            screen(&ctx, &[("scene".into(), v.into())], "x", "y", false)
                 .main
                 .render()
         };
@@ -968,7 +1052,7 @@ mod tests {
         assert!(!chosen("no-such-scene").contains("data-observatory-scene"));
         // the kiosk is the same screen with one word changed
         assert!(html.contains("data-observatory-mode=\"screen\""));
-        let kiosk = screen(&ctx, &[], "x", true).main.render();
+        let kiosk = screen(&ctx, &[], "x", "y", true).main.render();
         assert!(kiosk.contains("data-observatory-mode=\"kiosk\""));
         assert!(
             kiosk.contains(&format!("href=\"{ROUTE}\""))
