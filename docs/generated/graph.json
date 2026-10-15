@@ -23081,6 +23081,8 @@
             "Counters at N, 2N and 4N are within a linear bound",
             "The generator is reused by at least one other case"
           ],
+          "completed_at": "2026-10-15T07:36:57Z",
+          "completed_event": "sha256:4549374aad2f9bdef7036497c0bed399fae29221b6525e6b1f9c2c7d3c820dfb",
           "created_at": "2026-09-05",
           "current_state": "Fixtures are hand-built per case.",
           "depends_on": [
@@ -23103,9 +23105,11 @@
             "test/cases"
           ],
           "slug": "synthetic-repository",
-          "updated_at": "2026-09-05",
+          "started_at": "2026-10-15T07:36:51Z",
+          "started_event": "sha256:3dd5f8761273879d6f41d24669d0301413e70ac2191323e70c634641e052b2a5",
+          "updated_at": "2026-10-15T07:36:57Z",
           "validation": [
-            "bash test/run.sh 84_scaling"
+            "bash test/run.sh 3053_a_repository_of_n_records_costs_n"
           ],
           "why": "Quadratic behaviour hides in small repositories; the counters expose it before wall clock does."
         }
@@ -53072,6 +53076,13 @@
         "source": "test/cases/304_a_provider_is_declared_once.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3053_a_repository_of_n_records_costs_n.sh",
+        "kind": "test",
+        "label": "test/cases/3053_a_repository_of_n_records_costs_n.sh",
+        "route": "/cockpit/objects/test/test-cases-3053-a-repository-of-n-records-costs-n-sh",
+        "source": "test/cases/3053_a_repository_of_n_records_costs_n.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/305_a_command_is_claimed_or_classified.sh",
         "kind": "test",
         "label": "test/cases/305_a_command_is_claimed_or_classified.sh",
@@ -82899,6 +82910,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3053_a_repository_of_n_records_costs_n.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/305_a_command_is_claimed_or_classified.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -88190,8 +88206,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2796,
-      "edges": 6129,
+      "nodes": 2797,
+      "edges": 6130,
       "acyclic": false,
       "truncated": false
     }
