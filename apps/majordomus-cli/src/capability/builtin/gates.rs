@@ -1,7 +1,7 @@
 //! The `gates` module: completion as a state the repository decides.
 //!
-//! Two capabilities, and the split is the same one [`super::obligations`] makes for the
-//! same reason.
+//! Three capabilities. The first two split the way [`super::obligations`] splits, for the
+//! same reason; the third answers the question neither of them does.
 //!
 //! **The model is declared.** `.ai/repo/ci/gates.yaml` is this repository's CI model: every
 //! validation gate, the job that runs it, the command it runs, and the path classes that
@@ -12,6 +12,12 @@
 //! task record and the ledger under `.ai/local/state/`, which is one checkout's own state
 //! and is never tracked or published. `gates.completion` answers about the checkout the
 //! process was started in and about no other.
+//!
+//! **The state is the gates'.** `gates.state` answers how the last recorded run of every
+//! declared gate went — whichever task recorded it, over which tree, at which head — and
+//! names the gates no run has ever reported, which is the case an absent reader hides. It
+//! reads this checkout's record and nothing else, and it says so: the forge's CI runs are
+//! listed as not consulted rather than left out silently.
 //!
 //! **It is read, never written.** `majordomus evidence --gate` records a run; this judges
 //! the record. A second writer for the same ledger would be a second account of events,
@@ -27,11 +33,12 @@
 //! ```
 //! use majordomus_cli::capability::builtin::gates::module;
 //!
-//! // the whole module, as every projection reads it: two capabilities, and neither has a
-//! // command-line arm of its own because `check` and `finish` are the command line's answer
+//! // the whole module, as every projection reads it: three capabilities, none with a
+//! // command-line arm of its own (`majordomus run <id>` reaches each, and `check` and
+//! // `finish` are the command line's answer about completion)
 //! let m = module();
 //! let ids: Vec<&str> = m.capabilities.iter().map(|c| c.capability.id.as_str()).collect();
-//! assert_eq!(ids, ["gates.model", "gates.completion"]);
+//! assert_eq!(ids, ["gates.model", "gates.completion", "gates.state"]);
 //! for entry in &m.capabilities {
 //!     assert!(entry.capability.exposure.cli.is_none());
 //!     assert!(entry.capability.exposure.http.is_some());
@@ -48,7 +55,7 @@ use crate::capability::benchmark::{BenchmarkCases, CaseContext, NamedCase};
 use crate::capability::handler::{CapabilityError, Context};
 use crate::capability::model::{CachePolicy, Exposure, McpExposure, McpResource, Stability};
 use crate::capability::module::ModuleDescriptor;
-use crate::gates::{self, judge, model, Completion};
+use crate::gates::{self, judge, model, Completion, GateStateReport};
 use crate::{capability, module};
 
 use super::get;
@@ -60,6 +67,9 @@ pub const GATES_URI: &str = "majordomus://gates";
 
 /// The URI under which this checkout's completion state is read as an MCP resource.
 pub const COMPLETION_URI: &str = "majordomus://gates/completion";
+
+/// The URI under which the state of every declared gate is read as an MCP resource.
+pub const STATE_URI: &str = "majordomus://gates/state";
 
 // ---------------------------------------------------------------- output types
 
@@ -277,6 +287,99 @@ fn gates_model(ctx: &Context, _: Empty) -> Result<GateModelReport, CapabilityErr
     })
 }
 
+/// One hash per gate of `m`, over the files that select it, as they stand under `root`.
+///
+/// The gates overlap, so each file's digest is taken once for the whole report. A gate with
+/// no inputs hashes to the empty string, which is how the ledger records it; `None` means
+/// the hash could not be taken at all.
+fn gate_hashes(root: &Path, m: &model::GateModel) -> BTreeMap<String, Option<String>> {
+    let mut hashes: BTreeMap<String, Option<String>> = BTreeMap::new();
+    let mut digests = super::obligations::FileHashes::default();
+    for gate in &m.gates {
+        let specs = m.inputs_of(&gate.id);
+        let hash = if specs.is_empty() {
+            Some(String::new())
+        } else {
+            super::obligations::inputs_hash_with(root, &specs, &mut digests).map(|(h, _)| h)
+        };
+        hashes.insert(gate.id.clone(), hash);
+    }
+    hashes
+}
+
+/// The commit `root` is at, or why git could not say.
+fn head_of(root: &Path) -> Result<String, String> {
+    let out = crate::git::read_only(root)
+        .args(["rev-parse", "HEAD"])
+        .output()
+        .map_err(|e| format!("git rev-parse HEAD: {e}"))?;
+    if !out.status.success() {
+        return Err(format!(
+            "git rev-parse HEAD exited {}",
+            out.status.code().unwrap_or(-1)
+        ));
+    }
+    Ok(String::from_utf8_lossy(&out.stdout).trim().to_string())
+}
+
+fn gates_state(ctx: &Context, _: Empty) -> Result<GateStateReport, CapabilityError> {
+    let root = PathBuf::from(&ctx.index.repository.root);
+    let mut findings: Vec<String> = Vec::new();
+
+    let (m, unreadable) = load_model(&root);
+    if let Some(reason) = unreadable {
+        findings.push(format!(
+            "this repository declares no readable CI model at {}, so there is no gate set to \
+             report — an empty answer, never a passing one: {reason}",
+            model::MODEL_PATH
+        ));
+    }
+
+    let ledger = gates::ledger_path(&root);
+    let ledger_rel = ledger
+        .strip_prefix(&root)
+        .unwrap_or(&ledger)
+        .display()
+        .to_string();
+    let (runs, skipped) = judge::latest_runs(&ledger);
+    if !ledger.is_file() {
+        findings.push(format!(
+            "no ledger at {ledger_rel}: no gate run has ever been recorded in this checkout, \
+             so every gate is reported as never reported"
+        ));
+    } else if runs.is_empty() {
+        findings.push(format!(
+            "the ledger at {ledger_rel} holds no gate run: no gate run has ever been recorded \
+             in this checkout, so every gate is reported as never reported"
+        ));
+    }
+    if skipped > 0 {
+        findings.push(format!(
+            "{skipped} ledger line(s) could not be read and were skipped; run `majordomus doctor`"
+        ));
+    }
+
+    let head = match head_of(&root) {
+        Ok(h) => Some(h),
+        Err(reason) => {
+            findings.push(format!(
+                "the current commit could not be read, so no run is said to be on it: {reason}"
+            ));
+            None
+        }
+    };
+
+    let states = gates::state::state(&m, &runs, &gate_hashes(&root, &m), head.as_deref());
+    Ok(gates::state::report(
+        model::MODEL_PATH,
+        &ledger_rel,
+        head,
+        states,
+        findings,
+        &crate::peers::rfc3339(std::time::SystemTime::now()),
+    ))
+}
+
 fn gates_completion(ctx: &Context, input: CompletionInput) -> Result<Completion, CapabilityError> {
     let root = PathBuf::from(&ctx.index.repository.root);
     let mut findings: Vec<String> = Vec::new();
@@ -347,24 +450,7 @@ fn gates_completion(ctx: &Context, input: CompletionInput) -> Result<Completion,
 
     // one hash per gate, over the files that select it. Taken here rather than inside the
     // judgement so that a test drives the same function with hashes of its own.
-    // The gates overlap, so each file's digest is taken once for the whole report.
-    let mut hashes: BTreeMap<String, Option<String>> = BTreeMap::new();
-    let mut digests = super::obligations::FileHashes::default();
-    for gate in &m.gates {
-        let specs = m.inputs_of(&gate.id);
-        let hash =
-            super::obligations::inputs_hash_with(&root, &specs, &mut digests).map(|(h, _)| h);
-        // a token with no inputs hashes to the empty string in the ledger, and is compared
-        // as such; `None` here means the hash could not be taken at all
-        hashes.insert(
-            gate.id.clone(),
-            if specs.is_empty() {
-                Some(String::new())
-            } else {
-                hash
-            },
-        );
-    }
+    let hashes = gate_hashes(&root, &m);
 
     // The obligation half of the done invariant is `obligations.closure`'s judgement, asked
     // for through the same executor MCP and the HTTP routes use, so this report cannot
@@ -466,7 +552,7 @@ fn gates_completion(ctx: &Context, input: CompletionInput) -> Result<Completion,
 ///     .iter()
 ///     .filter_map(|e| e.capability.exposure.http.as_ref().map(|h| h.path.as_str()))
 ///     .collect();
-/// assert_eq!(routes, ["/api/v1/gates", "/api/v1/gates/completion"]);
+/// assert_eq!(routes, ["/api/v1/gates", "/api/v1/gates/completion", "/api/v1/gates/state"]);
 /// ```
 pub fn module() -> ModuleDescriptor {
     module! {
@@ -513,6 +599,25 @@ pub fn module() -> ModuleDescriptor {
                 cache: CachePolicy::Disabled,
                 handler: gates_completion,
             },
+            capability! {
+                id: "gates.state",
+                title: "How each gate last went",
+                description: "Every gate the CI model declares with the standing of its last recorded run in this checkout, whichever task recorded it: `pass` or `fail` over the files as they stand now, `stale` when those files have changed since the run, `queued` when no run has ever reported — listed again under `never_reported`, because a missing verdict is the case an absent reader renders green — and `unknown` when a run exists and cannot be checked against this tree. Each run carries the commit it was taken at and whether that is the commit checked out now. Read offline from this checkout's own record; what it did not consult, the forge's CI runs, is named under `unreached` rather than left out.",
+                input: Empty,
+                output: GateStateReport,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure {
+                    mcp: Some(McpExposure {
+                        tool: Some("majordomus_gate_state".into()),
+                        resource: Some(McpResource { uri: STATE_URI.into(), name: "gate-state".into() }),
+                    }),
+                    http: get("/api/v1/gates/state"),
+                    cli: None,
+                },
+                tags: ["gates", "ci", "evidence", "introspection"],
+                cache: CachePolicy::Disabled,
+                handler: gates_state,
+            },
         ],
     }
 }
@@ -525,7 +630,7 @@ mod tests {
     fn the_module_declares_what_it_claims() {
         let m = module();
         assert_eq!(m.id.as_str(), "gates");
-        assert_eq!(m.capabilities.len(), 2);
+        assert_eq!(m.capabilities.len(), 3);
         for e in &m.capabilities {
             assert_eq!(e.capability.id.namespace(), "gates");
             assert!(
@@ -534,6 +639,93 @@ mod tests {
                 e.capability.id
             );
         }
+    }
+
+    /// `gates.state` over a synthetic repository with no git: one gate reported by a task
+    /// that is no longer open, one gate never reported. The reported one stands on its run,
+    /// the other is `queued` and named as never reported, and what could not be had — the
+    /// commit, the forge — is said rather than left out.
+    #[test]
+    fn the_gate_state_answers_offline_and_never_reported_is_not_passed() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let root = repo.root().to_path_buf();
+        std::fs::create_dir_all(root.join(".ai/repo/ci")).unwrap();
+        std::fs::write(
+            root.join(model::MODEL_PATH),
+            "version: 1\ngates:\n  - id: lint\n    job: structure\n    runs: \"true\"\n    \
+             summary: lints\n  - id: docs\n    job: structure\n    runs: \"true\"\n    \
+             summary: docs\nclasses: []\n",
+        )
+        .unwrap();
+        let state = || -> GateStateReport {
+            let index = repo.index().unwrap();
+            let registry = crate::capability::CapabilityRegistry::builder()
+                .with_modules(super::super::modules())
+                .with_index(&index)
+                .build()
+                .expect("the registry builds");
+            let ctx = Context::new(std::sync::Arc::new(index), std::sync::Arc::new(registry));
+            serde_json::from_value(
+                ctx.execute("gates.state", serde_json::json!({}))
+                    .expect("the gate state answers"),
+            )
+            .expect("a gate state report")
+        };
+
+        // nothing recorded at all: every gate never reported, and the missing ledger is said
+        let none = state();
+        assert_eq!(none.count, 2);
+        assert_eq!(none.never_reported, ["lint", "docs"]);
+        assert!(none
+            .gates
+            .iter()
+            .all(|g| g.status == gates::GateStatus::Queued));
+        assert!(
+            none.findings.iter().any(|f| f.starts_with("no ledger at")),
+            "{:?}",
+            none.findings
+        );
+        assert!(none.head.is_none(), "no git here");
+        assert!(none.unreached.iter().any(|u| u.contains("forge")));
+
+        // a ledger that holds other events and no gate run says the same, in its own words
+        let ledger = gates::ledger_path(&root);
+        std::fs::create_dir_all(ledger.parent().unwrap()).unwrap();
+        std::fs::write(&ledger, "{\"event\":\"task.start\",\"task\":\"t-old\"}\n").unwrap();
+        let empty = state();
+        assert_eq!(empty.never_reported, ["lint", "docs"]);
+        assert!(
+            empty
+                .findings
+                .iter()
+                .any(|f| f.contains("holds no gate run")),
+            "{:?}",
+            empty.findings
+        );
+
+        // a run recorded by a task that has since finished still is the gate's last word
+        std::fs::write(
+            &ledger,
+            "{\"event\":\"task.gate\",\"task\":\"t-old\",\"gate\":\"lint\",\"exit\":0,\
+             \"head\":\"abc\",\"ts\":\"2026-10-15T00:00:00Z\"}\n",
+        )
+        .unwrap();
+        let some = state();
+        assert_eq!(some.never_reported, ["docs"]);
+        let lint = some.gates.iter().find(|g| g.id == "lint").unwrap();
+        assert_eq!(lint.status, gates::GateStatus::Pass, "{}", lint.reason);
+        assert!(
+            lint.on_head.is_none(),
+            "the commit could not be read, so no claim"
+        );
+        let docs = some.gates.iter().find(|g| g.id == "docs").unwrap();
+        assert_eq!(docs.status, gates::GateStatus::Queued);
+        assert_ne!(docs.status, lint.status, "never reported is not passed");
+        assert_eq!(some.tallies.get("pass"), Some(&1));
+        assert!(some
+            .findings
+            .iter()
+            .any(|f| f.starts_with("the current commit could not be read")));
     }
 
     #[test]

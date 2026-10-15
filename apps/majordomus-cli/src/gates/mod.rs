@@ -59,6 +59,7 @@ pub(crate) mod closing;
 pub(crate) mod done;
 pub(crate) mod judge;
 pub(crate) mod model;
+pub(crate) mod state;
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
@@ -74,6 +75,7 @@ pub use done::{DoneQuestion, ObligationStanding};
 pub use judge::{Gate, GateRun, GateStatus};
 pub(crate) use model::GateModel;
 pub use model::{GateClass, GateClassMatch, GateDecl, GatePlan, GatePlanMode};
+pub use state::{GateState, GateStateReport};
 
 /// The local half of the layer, relative to the repository root. The same constant
 /// `obligations` and `continuity` state, for the same reason: the shell tool decides where

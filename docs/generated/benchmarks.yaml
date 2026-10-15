@@ -6,20 +6,20 @@ generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark proje
 generator: majordomus-cli 0.26.0
 coverage:
   - scope: direct
-    required: 199
-    covered: 169
+    required: 200
+    covered: 170
     missing: 0
     waived: 30
     inapplicable: 0
   - scope: http
-    required: 194
-    covered: 169
+    required: 195
+    covered: 170
     missing: 0
     waived: 25
     inapplicable: 0
   - scope: mcp
-    required: 190
-    covered: 165
+    required: 191
+    covered: 166
     missing: 0
     waived: 25
     inapplicable: 0
@@ -30,8 +30,8 @@ coverage:
     waived: 0
     inapplicable: 0
   - scope: total
-    required: 597
-    covered: 517
+    required: 600
+    covered: 520
     missing: 0
     waived: 80
     inapplicable: 0
@@ -675,6 +675,15 @@ capabilities:
     module: gates
     kind: query
     cache: "process, 4 entries, 5s"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: gates.state
+    module: gates
+    kind: query
+    cache: "—"
     direct: covered
     mcp: covered
     http: covered
