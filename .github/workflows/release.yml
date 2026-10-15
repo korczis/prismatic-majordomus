@@ -122,6 +122,19 @@ jobs:
       - name: the target this artifact is for
         run: rustup target add "${{ matrix.target }}"
 
+      # The vendored browser libraries are built, not committed (.gitignore), and the archive
+      # is `share/` as it stands: without this step every installation shipped a UI and a
+      # Cockpit whose graphs asked for /ui/assets/vendor/cytoscape.min.js and got a 404.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: the browser assets the archive carries
+        run: |
+          npm ci --no-audit --no-fund
+          scripts/cockpit-assets
+
       - name: package
         env:
           MAJORDOMUS_BUILD_COMMIT: ${{ github.sha }}
@@ -133,7 +146,7 @@ jobs:
           native=""
           [ "${{ matrix.native }}" = "true" ] && native="--native"
           # shellcheck disable=SC2086
-          scripts/release-verify --archive "dist/$artifact" \
+          scripts/release-verify --archive "dist/$artifact" --browser-assets \
             --target "${{ matrix.target }}" --tag "${{ needs.plan.outputs.tag }}" $native
 
       - uses: actions/upload-artifact@v4
