@@ -15,29 +15,82 @@ MJ_FINISH_OUTCOME=""; MJ_FINISH_VERIFY=""; MJ_FINISH_NOTE=""
 MJ_FINISH_VEXIT=""; MJ_FINISH_VSECS=""; MJ_FINISH_VTREE=""
 export MJ_FINISH_OUTCOME
 
+# The pre-push judgement (ADR 0105, amendment of 2026-10-15; I1990). git hands a pre-push
+# hook one line per ref it pushes — `<local ref> <local sha> <remote ref> <remote sha>` — and
+# the hook passes them here. Each pushed branch is judged by the task of the checkout that has
+# it checked out, which is its canonical worktree; the current checkout's task is asked of its
+# own branch only. Before this, every push asked the pushing checkout's task, so pushing
+# branch X from a checkout whose task is on Y failed with `different_context`, and pushing
+# from the wrong checkout was the way round it. A branch no checkout holds, or whose checkout
+# has no active task, is a push without a task, as it always was: admitted, with a line that
+# names it. refs/majordomus/* is the continuity store and a deleted ref carries nothing; both
+# are left out. $1 is a file holding the lines, or - for standard input.
+mj_finish_check_refs() {
+  local src="$1" refs wts lref lsha rref branch holder state rec fails=0 refused="" judged=0 one
+  refs="$(cat -- "$src")" || mj_die "$MJ_EX_USAGE" "finish --check --refs: cannot read $src"
+  wts="$(mj_git worktree list --porcelain)"
+  state="$(mj_rel "$MJ_STATE_DIR")"
+  while read -r lref lsha rref _; do
+    [ -n "$lref" ] || continue
+    case "$rref" in refs/majordomus/*) continue ;; esac
+    case "$lsha" in *[!0]*) ;; *) continue ;; esac
+    case "$lref" in
+      refs/heads/*) branch="${lref#refs/heads/}" ;;
+      *) mj_info finish "$lref" "not a branch: no task judges it; admitted"; continue ;;
+    esac
+    judged=$((judged + 1))
+    holder="$(printf '%s\n' "$wts" | awk -v want="branch refs/heads/$branch" \
+      'index($0, "worktree ") == 1 { w = substr($0, 10) } $0 == want { print w; exit }')"
+    if [ -z "$holder" ]; then
+      mj_info finish "$branch" "no checkout holds this branch: pushed without a task; admitted"
+      continue
+    fi
+    rec="$holder/$state/current.yaml"
+    if [ ! -f "$rec" ] || ! grep -q '^outcome: active$' "$rec"; then
+      mj_info finish "$branch" "its checkout $holder has no active task: pushed without a task; admitted"
+      continue
+    fi
+    mj_info finish "$branch" "judged by the task of its checkout $holder"
+    one=0
+    if [ "$MJ_JSON" = 1 ]; then "$MJ_SELF" --repo "$holder" --json finish --check || one=$?
+    else "$MJ_SELF" --repo "$holder" finish --check || one=$?; fi
+    [ "$one" = 0 ] || { fails=$((fails + 1)); refused="$refused $branch"; }
+  done <<<"$refs"
+  [ "$MJ_JSON" = 1 ] || printf 'finish --check: %s pushed branch(es) judged, %s refused%s\n' \
+    "$judged" "$fails" "${refused:+:$refused}"
+  [ "$fails" = 0 ] && exit "$MJ_EX_OK" || exit "$MJ_EX_CONTRACT"
+}
+
 mj_cmd_finish() {
-  local outcome="" verify="" check=0 note=""
+  local outcome="" verify="" check=0 note="" refs=""
   while [ $# -gt 0 ]; do case "$1" in
     --outcome) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--outcome needs a value"; outcome="$2"; shift 2 ;;
     --outcome=*) outcome="${1#--outcome=}"; shift ;;
     --verify-command) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--verify-command needs a command"; verify="$2"; shift 2 ;;
     --note) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--note needs a file"; note="$2"; shift 2 ;;
     --check) check=1; shift ;;
+    --refs) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--refs needs a file, or - for standard input"; refs="$2"; shift 2 ;;
     --help|-h) cat <<H
 usage: majordomus finish --outcome <completed|partial|blocked|no_match|failed> [--verify-command "<cmd>"] [--note <file>]
-       majordomus finish --check
+       majordomus finish --check [--refs <file>|-]
   evaluates every line of the finish contract, prints pass/fail for each, refuses (10) if any fails
   --verify-command  the project's own verification; its command, exit code, duration and the
                     tree it ran over are recorded, and a tree that changed under it is not a pass.
                     A command that cannot verify anything (true, :, exit 0, only echo) is refused
   --note            a completion note (required sections as a handover); otherwise the newest handover for this task is used
   --check           evaluate the current task against scope and state without writing; exit 0 when no task is active
+  --refs            with --check: the refs a push carries, as git hands them to a pre-push hook
+                    (<local ref> <local sha> <remote ref> <remote sha>, one per line); each pushed
+                    branch is judged by the task of the checkout holding it, and one no checkout
+                    holds is admitted with a line naming it
 H
       return 0 ;;
     *) mj_die "$MJ_EX_USAGE" "finish: unknown option $1" ;;
   esac; done
+  [ -z "$refs" ] || [ "$check" = 1 ] || mj_die "$MJ_EX_USAGE" "finish: --refs is a question for --check"
   mj_require_installed
   mj_load_policy || mj_die "$MJ_EX_CONTRACT" "policy does not parse (run: majordomus doctor)"
+  [ -z "$refs" ] || mj_finish_check_refs "$refs"
   if ! mj_load_current; then
     [ "$check" = 1 ] && { mj_info finish "-" "no active task; nothing to enforce"; return 0; }
     mj_die "$MJ_EX_MISSING" "no active task ($(mj_rel "$MJ_STATE_DIR")/current.yaml); run: majordomus start"

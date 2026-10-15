@@ -6,23 +6,23 @@
     "version": "0.26.0"
   },
   "registry": {
-    "fingerprint": "dcd73504305fb981edaa3320c23c9994f922898e6750a89a9804ff556fc13e5b",
+    "fingerprint": "48bcc304ba2ec82114cb966919d6a3323ae600523fbd1f14e57ee6eb7f678745",
     "summary": {
-      "total": 2379,
+      "total": 2382,
       "builtin": 199,
-      "declarative": 2180,
+      "declarative": 2183,
       "by_kind": {
         "command": 30,
         "query": 169,
-        "resource": 2180
+        "resource": 2183
       },
       "by_stability": {
         "behaviorally_verified": 139,
         "experimental": 51,
-        "implemented": 2189
+        "implemented": 2192
       },
       "mcp_tools": 190,
-      "mcp_resources": 2235,
+      "mcp_resources": 2238,
       "http_routes": 194,
       "cli_commands": 107,
       "modules": 91,
@@ -81616,7 +81616,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 179,
+        "capabilities": 180,
         "capability_ids": []
       },
       {
@@ -81760,7 +81760,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 481,
+        "capabilities": 483,
         "capability_ids": []
       },
       {
@@ -81850,7 +81850,7 @@
     ]
   },
   "index": {
-    "fingerprint": "989c3406d092f52a3c8908b082b7356ee825e5fdd9d03625425c0523881962d0",
+    "fingerprint": "3e4f2d076f189fa2da3a3c5a3efe3fef945ab6a8f2d6fd719338cc8f81f5eb89",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -81899,12 +81899,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 26,
-      "rule": 179,
+      "rule": 180,
       "scope": 1,
       "session": 89,
       "skill": 8,
       "taxonomy": 10,
-      "test": 481,
+      "test": 483,
       "use-case": 49,
       "workspace": 1
     },
@@ -83130,7 +83130,7 @@
         "path": ".ai/repo/adrs/0091-knowledge-is-derived-at-the-episode-boundary-and-a-person-promotes-it.md",
         "section": "adrs",
         "source_class": "adr",
-        "bytes": 25311,
+        "bytes": 28001,
         "tags": [
           "knowledge",
           "sessions",
@@ -83234,7 +83234,7 @@
         "path": ".ai/repo/adrs/0105-a-handover-moves-between-machines-as-a-signed-record-in-a-ref-of-its-own.md",
         "section": "adrs",
         "source_class": "adr",
-        "bytes": 10777,
+        "bytes": 12675,
         "tags": [
           "architecture",
           "continuity",
@@ -91075,7 +91075,7 @@
         "identity": "lib/finish.sh",
         "path": "lib/finish.sh",
         "source_class": "library",
-        "bytes": 15779
+        "bytes": 19108
       },
       {
         "uri": "majordomus://implementation/lib/gates.sh",
@@ -94109,7 +94109,7 @@
         "path": ".ai/repo/project/issues/I1984.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1689
+        "bytes": 2147
       },
       {
         "uri": "majordomus://issue/I1985",
@@ -94175,7 +94175,7 @@
         "path": ".ai/repo/project/issues/I1990.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1435
+        "bytes": 2285
       },
       {
         "uri": "majordomus://issue/I1991",
@@ -96453,7 +96453,7 @@
         "path": ".ai/repo/policy.yaml",
         "section": "policy",
         "source_class": "policy",
-        "bytes": 22748
+        "bytes": 23154
       },
       {
         "uri": "majordomus://profile/debugging",
@@ -97888,6 +97888,21 @@
           "session",
           "capability",
           "evidence"
+        ]
+      },
+      {
+        "uri": "majordomus://rule/project.a-push-runs-what-ci-would-find-first@1",
+        "kind": "rule",
+        "identity": "project.a-push-runs-what-ci-would-find-first@1",
+        "title": "A push runs what CI would find first",
+        "description": "Before a push, the pre-push hook runs the plan's structure gates that CI recorded as cheap, that reach no network and that build nothing, and the suite's fast cases, within a stated bound, so a failure a local run finds in seconds never costs a CI round trip.",
+        "path": ".ai/repo/rules/project/a-push-runs-what-ci-would-find-first.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 7649,
+        "tags": [
+          "ci",
+          "process"
         ]
       },
       {
@@ -101015,6 +101030,14 @@
         "bytes": 3019
       },
       {
+        "uri": "majordomus://test/test/cases/1021_a_push_runs_what_ci_would_find_first.sh",
+        "kind": "test",
+        "identity": "test/cases/1021_a_push_runs_what_ci_would_find_first.sh",
+        "path": "test/cases/1021_a_push_runs_what_ci_would_find_first.sh",
+        "source_class": "case",
+        "bytes": 14167
+      },
+      {
         "uri": "majordomus://test/test/cases/1022_worktrees_share_build_intermediates.sh",
         "kind": "test",
         "identity": "test/cases/1022_worktrees_share_build_intermediates.sh",
@@ -102413,6 +102436,14 @@
         "path": "test/cases/305_a_command_is_claimed_or_classified.sh",
         "source_class": "case",
         "bytes": 7757
+      },
+      {
+        "uri": "majordomus://test/test/cases/3064_a_pushed_branch_is_judged_by_its_holder.sh",
+        "kind": "test",
+        "identity": "test/cases/3064_a_pushed_branch_is_judged_by_its_holder.sh",
+        "path": "test/cases/3064_a_pushed_branch_is_judged_by_its_holder.sh",
+        "source_class": "case",
+        "bytes": 5344
       },
       {
         "uri": "majordomus://test/test/cases/30_command_registry.sh",
@@ -105546,7 +105577,7 @@
         "id",
         "version"
       ],
-      "objects": 179
+      "objects": 180
     },
     {
       "name": "scope",
@@ -105601,7 +105632,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 481
+      "objects": 483
     },
     {
       "name": "use-case",

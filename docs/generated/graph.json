@@ -31103,7 +31103,7 @@
             "test/cases"
           ],
           "slug": "knowledge-candidates-never-dirty-a-trunk",
-          "updated_at": "2026-10-04",
+          "updated_at": "2026-10-14T23:19:00Z",
           "validation": [
             "bin/majordomus plan validate",
             "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
@@ -31339,7 +31339,7 @@
             "test/cases"
           ],
           "slug": "pre-push-judges-the-pushed-refs",
-          "updated_at": "2026-10-04",
+          "updated_at": "2026-10-15T11:59:22Z",
           "validation": [
             "bin/majordomus plan validate",
             "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
@@ -43158,6 +43158,23 @@
         }
       },
       {
+        "id": "majordomus://rule/project.a-push-runs-what-ci-would-find-first@1",
+        "kind": "rule",
+        "label": "project.a-push-runs-what-ci-would-find-first@1",
+        "summary": "A push runs what CI would find first",
+        "route": "/cockpit/objects/rule/project-a-push-runs-what-ci-would-find-first-1",
+        "source": ".ai/repo/rules/project/a-push-runs-what-ci-would-find-first.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [],
+          "tags": [
+            "ci",
+            "process"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.a-tool-that-cannot-match-the-tree-refuses@1",
         "kind": "rule",
         "label": "project.a-tool-that-cannot-match-the-tree-refuses@1",
@@ -51854,6 +51871,13 @@
         "source": "test/cases/1020_a_derive_sees_what_the_commit_will.sh"
       },
       {
+        "id": "majordomus://test/test/cases/1021_a_push_runs_what_ci_would_find_first.sh",
+        "kind": "test",
+        "label": "test/cases/1021_a_push_runs_what_ci_would_find_first.sh",
+        "route": "/cockpit/objects/test/test-cases-1021-a-push-runs-what-ci-would-find-first-sh",
+        "source": "test/cases/1021_a_push_runs_what_ci_would_find_first.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/1022_worktrees_share_build_intermediates.sh",
         "kind": "test",
         "label": "test/cases/1022_worktrees_share_build_intermediates.sh",
@@ -53077,6 +53101,13 @@
         "label": "test/cases/305_a_command_is_claimed_or_classified.sh",
         "route": "/cockpit/objects/test/test-cases-305-a-command-is-claimed-or-classified-sh",
         "source": "test/cases/305_a_command_is_claimed_or_classified.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3064_a_pushed_branch_is_judged_by_its_holder.sh",
+        "kind": "test",
+        "label": "test/cases/3064_a_pushed_branch_is_judged_by_its_holder.sh",
+        "route": "/cockpit/objects/test/test-cases-3064-a-pushed-branch-is-judged-by-its-holder-sh",
+        "source": "test/cases/3064_a_pushed_branch_is_judged_by_its_holder.sh"
       },
       {
         "id": "majordomus://test/test/cases/30_command_registry.sh",
@@ -79954,6 +79985,11 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/project.a-push-runs-what-ci-would-find-first@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://rule/project.a-tool-that-cannot-match-the-tree-refuses@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -82029,6 +82065,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/1021_a_push_runs_what_ci_would_find_first.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/1022_worktrees_share_build_intermediates.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -82900,6 +82941,11 @@
       },
       {
         "source": "majordomus://test/test/cases/305_a_command_is_claimed_or_classified.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3064_a_pushed_branch_is_judged_by_its_holder.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -88190,8 +88236,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2796,
-      "edges": 6129,
+      "nodes": 2799,
+      "edges": 6132,
       "acyclic": false,
       "truncated": false
     }
