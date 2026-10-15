@@ -726,8 +726,42 @@
       if (still) frame = setTimeout(() => paint(performance.now()), 1000);
       else frame = requestAnimationFrame(paint);
     }
-    const onVisible = () => { last = performance.now(); schedule(); };
+    // A display that is watched, not touched, must not be put to sleep by the system: the
+    // kiosk, and any display in full screen, holds a screen wake lock the way a video does.
+    // The browser releases it whenever the page is hidden, so it is asked for again each
+    // time the page is visible. Where the API is absent or refuses (an insecure context, a
+    // battery saver), nothing is drawn differently and the status says the display may sleep.
+    let wake = null;
+    let wantWake = kiosk || Boolean(document.fullscreenElement);
+    const wakeState = (word) => { holder.dataset.awake = word; };
+    wakeState(navigator.wakeLock ? 'idle' : 'unsupported');
+    async function holdAwake() {
+      if (!wantWake || wake || !navigator.wakeLock || document.visibilityState !== 'visible') return;
+      try {
+        wake = await navigator.wakeLock.request('screen');
+        wakeState('held');
+        wake.addEventListener('release', () => { wake = null; wakeState('idle'); });
+      } catch (e) {
+        wake = null;
+        wakeState('refused');
+      }
+    }
+    function releaseAwake() {
+      if (wake) { wake.release().catch(() => {}); wake = null; }
+      wakeState(navigator.wakeLock ? 'idle' : 'unsupported');
+    }
+    const onFullscreen = () => {
+      wantWake = kiosk || Boolean(document.fullscreenElement);
+      if (wantWake) holdAwake(); else releaseAwake();
+    };
+    document.addEventListener('fullscreenchange', onFullscreen);
+    const onVisible = () => { last = performance.now(); schedule(); holdAwake(); };
     document.addEventListener('visibilitychange', onVisible);
+    // some browsers grant it only after a gesture: the first one is enough
+    const onGesture = () => { holdAwake(); };
+    document.addEventListener('pointerdown', onGesture, { once: true });
+    document.addEventListener('keydown', onGesture, { once: true });
+    holdAwake();
     schedule();
 
     return {
@@ -747,6 +781,10 @@
         document.removeEventListener('keydown', onKey);
         document.removeEventListener('visibilitychange', onVisible);
         document.removeEventListener('fullscreenchange', fit);
+        document.removeEventListener('fullscreenchange', onFullscreen);
+        document.removeEventListener('pointerdown', onGesture);
+        document.removeEventListener('keydown', onGesture);
+        releaseAwake();
         for (const node of [head, foot, legend, controls]) node.remove();
       },
     };
