@@ -449,6 +449,13 @@ session, which ends its claims on every linked runtime. Every machine sees what 
 on and reports an overlap; an exclusive claim before building stays the worker's own act. With
 no server, or a mesh that does not run, nothing is claimed and `start` does not fail.
 
+That claim is enforced (I2289, rule `majordomus.task-on-the-mesh`). On a repository whose
+tracked declaration says `enabled: true`, `check` reports an active task whose record carries
+no `mesh_claim` under `mesh`, and `finish --outcome completed` refuses it, the refusal recorded
+with the rule named. `finish` claims the scope again first, so a server started after the task
+is all the task needs (`majordomus serve ensure`). `partial`, `blocked`, `no_match` and
+`failed` are not refused, and a repository with no enabled mesh is not judged.
+
 What a session shares is metadata — intent, issue, task, milestone, branch, head, dirtiness,
 a context revision identifier. Context bodies are not replicated; a handover is the
 referenced artifact a peer materialises.

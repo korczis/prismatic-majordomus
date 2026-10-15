@@ -14274,6 +14274,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:3068_a_task_off_the_mesh_is_refused",
+          "path": "test/cases/3068_a_task_off_the_mesh_is_refused.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:32_refusal_lifecycle",
           "path": "test/cases/32_refusal_lifecycle.sh",
           "category": "e2e"
@@ -22347,6 +22353,37 @@
           "inputs": [
             "test/cases/25_continuity_lifecycle.sh",
             ".ai/repo/rules/vendor/majordomus/rules/task-continuity.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "rule:majordomus.task-on-the-mesh": {
+      "kind": "rule",
+      "id": "majordomus.task-on-the-mesh",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:3067_a_task_is_claimed_on_the_mesh",
+          "path": "test/cases/3067_a_task_is_claimed_on_the_mesh.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/3067_a_task_is_claimed_on_the_mesh.sh",
+            ".ai/repo/rules/vendor/majordomus/rules/task-on-the-mesh.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:3068_a_task_off_the_mesh_is_refused",
+          "path": "test/cases/3068_a_task_off_the_mesh_is_refused.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/3068_a_task_off_the_mesh_is_refused.sh",
+            ".ai/repo/rules/vendor/majordomus/rules/task-on-the-mesh.v1.md"
           ]
         }
       ],

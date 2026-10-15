@@ -6,23 +6,23 @@
     "version": "0.26.0"
   },
   "registry": {
-    "fingerprint": "5aec77acd669b43243f99cdc717e71b720b71f96543443c3140183523e6515cf",
+    "fingerprint": "d70e3177076314fa8449c127db4efca366a505b5964a34c4472cae8c1eb21666",
     "summary": {
-      "total": 2384,
+      "total": 2387,
       "builtin": 199,
-      "declarative": 2185,
+      "declarative": 2188,
       "by_kind": {
         "command": 30,
         "query": 169,
-        "resource": 2185
+        "resource": 2188
       },
       "by_stability": {
         "behaviorally_verified": 139,
         "experimental": 51,
-        "implemented": 2194
+        "implemented": 2197
       },
       "mcp_tools": 190,
-      "mcp_resources": 2240,
+      "mcp_resources": 2243,
       "http_routes": 194,
       "cli_commands": 107,
       "modules": 91,
@@ -81189,7 +81189,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 364,
+        "capabilities": 365,
         "capability_ids": []
       },
       {
@@ -81616,7 +81616,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 179,
+        "capabilities": 180,
         "capability_ids": []
       },
       {
@@ -81760,7 +81760,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 483,
+        "capabilities": 484,
         "capability_ids": []
       },
       {
@@ -81850,7 +81850,7 @@
     ]
   },
   "index": {
-    "fingerprint": "65207eaf01e678b9802b052fa8fba34b4183c4e8a357f10df0d446dc0979f1ec",
+    "fingerprint": "2b59d9c198e288718e967b2032d8284d3f039f11402887cf64f730abaf6d3648",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -81890,7 +81890,7 @@
       "gap": 3,
       "implementation": 52,
       "intent": 4,
-      "issue": 364,
+      "issue": 365,
       "knowledge": 4,
       "mesh-declaration": 1,
       "milestone": 36,
@@ -81899,12 +81899,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 26,
-      "rule": 179,
+      "rule": 180,
       "scope": 1,
       "session": 89,
       "skill": 8,
       "taxonomy": 10,
-      "test": 483,
+      "test": 484,
       "use-case": 49,
       "workspace": 1
     },
@@ -87848,7 +87848,7 @@
         "title": "Majordomus Mesh",
         "path": "docs/MESH.md",
         "source_class": "document",
-        "bytes": 61463
+        "bytes": 62006
       },
       {
         "uri": "majordomus://document/docs/MODELS.md",
@@ -87920,7 +87920,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 134477
+        "bytes": 134624
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -91003,7 +91003,7 @@
         "identity": "lib/common.sh",
         "path": "lib/common.sh",
         "source_class": "library",
-        "bytes": 101392
+        "bytes": 103671
       },
       {
         "uri": "majordomus://implementation/lib/context.sh",
@@ -91075,7 +91075,7 @@
         "identity": "lib/finish.sh",
         "path": "lib/finish.sh",
         "source_class": "library",
-        "bytes": 15808
+        "bytes": 16230
       },
       {
         "uri": "majordomus://implementation/lib/gates.sh",
@@ -94662,6 +94662,17 @@
         "bytes": 1820
       },
       {
+        "uri": "majordomus://issue/I2289",
+        "kind": "issue",
+        "identity": "I2289",
+        "title": "A task built off the mesh is refused",
+        "description": "Rule majordomus.task-on-the-mesh, dispatched by check and finish: on a repository whose tracked mesh declaration is enabled, a completed finish of a task whose scope was never claimed on the mesh is refused and recorded; finish claims the scope again before it judges; partial and the other outcomes are not refused.",
+        "path": ".ai/repo/project/issues/I2289.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2061
+      },
+      {
         "uri": "majordomus://issue/I2296",
         "kind": "issue",
         "identity": "I2296",
@@ -97676,6 +97687,23 @@
         "tags": [
           "continuity",
           "finish"
+        ]
+      },
+      {
+        "uri": "majordomus://rule/majordomus.task-on-the-mesh@1",
+        "kind": "rule",
+        "identity": "majordomus.task-on-the-mesh@1",
+        "title": "A task on a repository whose mesh is enabled works on the mesh",
+        "description": "When the repository declares its mesh enabled, an active task's scope is claimed on the mesh — `start` claims it when the checkout's shared server answers and `finish` claims it again before judging — and a task completed without that claim is refused.",
+        "path": ".ai/repo/rules/vendor/majordomus/rules/task-on-the-mesh.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 2406,
+        "tags": [
+          "mesh",
+          "coordination",
+          "session",
+          "doctrine"
         ]
       },
       {
@@ -102464,6 +102492,14 @@
         "bytes": 3756
       },
       {
+        "uri": "majordomus://test/test/cases/3068_a_task_off_the_mesh_is_refused.sh",
+        "kind": "test",
+        "identity": "test/cases/3068_a_task_off_the_mesh_is_refused.sh",
+        "path": "test/cases/3068_a_task_off_the_mesh_is_refused.sh",
+        "source_class": "case",
+        "bytes": 4351
+      },
+      {
         "uri": "majordomus://test/test/cases/30_command_registry.sh",
         "kind": "test",
         "identity": "test/cases/30_command_registry.sh",
@@ -105498,7 +105534,7 @@
       "identity": [
         "id"
       ],
-      "objects": 364
+      "objects": 365
     },
     {
       "name": "knowledge",
@@ -105595,7 +105631,7 @@
         "id",
         "version"
       ],
-      "objects": 179
+      "objects": 180
     },
     {
       "name": "scope",
@@ -105650,7 +105686,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 483
+      "objects": 484
     },
     {
       "name": "use-case",

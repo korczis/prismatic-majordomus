@@ -1838,3 +1838,45 @@ mj_mesh_task_release() { # <task id>
   "$MJ_MESH_BIN" mesh session close --session "task-$id" --repo "$MJ_ROOT" --format json >/dev/null 2>&1 || true
   return 0
 }
+
+# Whether the repository declares its mesh enabled: a tracked declaration under
+# .ai/repo/mesh/ whose top-level `enabled` is true. The declaration is what the server obeys
+# (ADR 0059); whether a server runs right now is another question, and a task is judged
+# against what the repository declared, not against which processes happen to be up.
+mj_mesh_declared_enabled() {
+  local f
+  for f in $(mj_git ls-files -- '.ai/repo/mesh/*.yaml' '.ai/repo/mesh/*.yml' 2>/dev/null); do
+    grep -qE '^enabled:[[:space:]]*true[[:space:]]*$' "$MJ_ROOT/$f" 2>/dev/null && return 0
+  done
+  return 1
+}
+
+# A task works on the mesh (I2289, project.a-task-works-on-the-mesh). On a repository that
+# declares its mesh enabled, an active task's scope must have been claimed on it — `start`
+# does that when a server runs (I2288) and `finish` tries again before it judges — so that no
+# machine builds what another machine never saw being built. Only a completed finish is
+# refused: a worker whose server never came up still leaves by partial, blocked or failed.
+mj_validate_task_on_the_mesh() {
+  if ! mj_load_current || [ "$(mj_cur outcome)" != active ]; then
+    mj_doctrine_skip mesh "-" "no active task; nothing claims anything"
+    MJ_DOCTRINE_SKIPPED=1; return 0
+  fi
+  local id key; id="$(mj_cur id)"
+  if ! mj_mesh_declared_enabled; then
+    mj_doctrine_skip mesh "$id" "the repository declares no enabled mesh"
+    MJ_DOCTRINE_SKIPPED=1; return 0
+  fi
+  key="$(sed -n 's/^mesh_claim: //p' "$MJ_CUR" 2>/dev/null | head -n 1)"
+  if [ -n "$key" ]; then
+    mj_doctrine_ok mesh "$id" "the scope is claimed on the mesh as $key"
+    return 0
+  fi
+  if [ "${MJ_DOCTRINE_CMD:-}" = finish ] && [ -n "${MJ_FINISH_OUTCOME:-}" ] && [ "$MJ_FINISH_OUTCOME" != completed ]; then
+    mj_doctrine_skip mesh "$id" "the scope was never claimed on the mesh; outcome is $MJ_FINISH_OUTCOME, not completed, so it is not refused"
+    MJ_DOCTRINE_SKIPPED=1; return 0
+  fi
+  mj_doctrine_fail mesh "$id" \
+    "the repository declares its mesh enabled and this task's scope was never claimed on it: no shared server answered when it started, so no other machine saw what it works on" \
+    "majordomus serve ensure, then majordomus finish (finish claims the scope again when a server answers)"
+  return 0
+}

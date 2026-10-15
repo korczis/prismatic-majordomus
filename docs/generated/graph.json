@@ -33271,6 +33271,49 @@
         }
       },
       {
+        "id": "majordomus://issue/I2289",
+        "kind": "issue",
+        "label": "I2289",
+        "summary": "A task built off the mesh is refused",
+        "route": "/cockpit/objects/issue/i2289",
+        "source": ".ai/repo/project/issues/I2289.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "finish refuses a task whose scope was never claimed while the mesh was enabled",
+            "A disabled mesh refuses nothing",
+            "partial is not refused for the mesh",
+            "finish claims the scope once a server answers, and the rule passes"
+          ],
+          "created_at": "2026-10-10",
+          "current_state": "No validator reads mesh_claim; finish completes a task whose scope was never on the mesh.",
+          "depends_on": [
+            "I2288"
+          ],
+          "evidence_required": [
+            "case_3068"
+          ],
+          "milestone": "every-session-joins-the-mesh",
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "lib/common.sh",
+            "lib/finish.sh",
+            "share/standard/majordomus/rules/task-on-the-mesh.v1.md",
+            "share/standard/majordomus/manifest.yaml",
+            ".ai/repo/rules/vendor/majordomus",
+            "test/cases/3068_a_task_off_the_mesh_is_refused.sh",
+            "docs/MESH.md"
+          ],
+          "slug": "built-off-the-mesh-is-refused",
+          "updated_at": "2026-10-15",
+          "validation": [
+            "bin/majordomus plan validate",
+            "bash test/run.sh 3068_a_task_off_the_mesh_is_refused 3067_a_task_is_claimed_on_the_mesh 18_doctrine_wiring 3022_the_rule_package_is_stamped_and_adopter_neutral"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I2296",
         "kind": "issue",
         "label": "I2296",
@@ -42966,6 +43009,25 @@
           "tags": [
             "continuity",
             "finish"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://rule/majordomus.task-on-the-mesh@1",
+        "kind": "rule",
+        "label": "majordomus.task-on-the-mesh@1",
+        "summary": "A task on a repository whose mesh is enabled works on the mesh",
+        "route": "/cockpit/objects/rule/majordomus-task-on-the-mesh-1",
+        "source": ".ai/repo/rules/vendor/majordomus/rules/task-on-the-mesh.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [],
+          "tags": [
+            "mesh",
+            "coordination",
+            "session",
+            "doctrine"
           ]
         }
       },
@@ -53223,6 +53285,13 @@
         "label": "test/cases/3067_a_task_is_claimed_on_the_mesh.sh",
         "route": "/cockpit/objects/test/test-cases-3067-a-task-is-claimed-on-the-mesh-sh",
         "source": "test/cases/3067_a_task_is_claimed_on_the_mesh.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3068_a_task_off_the_mesh_is_refused.sh",
+        "kind": "test",
+        "label": "test/cases/3068_a_task_off_the_mesh_is_refused.sh",
+        "route": "/cockpit/objects/test/test-cases-3068-a-task-off-the-mesh-is-refused-sh",
+        "source": "test/cases/3068_a_task_off_the_mesh_is_refused.sh"
       },
       {
         "id": "majordomus://test/test/cases/30_command_registry.sh",
@@ -77885,6 +77954,21 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2289",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2289",
+        "target": "majordomus://issue/I2288",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2289",
+        "target": "majordomus://milestone/every-session-joins-the-mesh",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I2296",
         "target": "kind:issue",
         "kind": "is_a"
@@ -79918,6 +80002,11 @@
         "source": "majordomus://rule/majordomus.task-continuity@1",
         "target": "majordomus://rule/majordomus.handovers-carry-state@1",
         "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/majordomus.task-on-the-mesh@1",
+        "target": "kind:rule",
+        "kind": "is_a"
       },
       {
         "source": "majordomus://rule/majordomus.use-case-coverage@1",
@@ -83086,6 +83175,11 @@
       },
       {
         "source": "majordomus://test/test/cases/3067_a_task_is_claimed_on_the_mesh.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3068_a_task_off_the_mesh_is_refused.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -88376,8 +88470,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2801,
-      "edges": 6137,
+      "nodes": 2804,
+      "edges": 6142,
       "acyclic": false,
       "truncated": false
     }
