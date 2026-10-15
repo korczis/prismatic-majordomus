@@ -6,23 +6,23 @@
     "version": "0.26.0"
   },
   "registry": {
-    "fingerprint": "dcd73504305fb981edaa3320c23c9994f922898e6750a89a9804ff556fc13e5b",
+    "fingerprint": "f23673ca037f23080553c190a3af339730ec588e7946586695190c2511750e2d",
     "summary": {
-      "total": 2379,
+      "total": 2382,
       "builtin": 199,
-      "declarative": 2180,
+      "declarative": 2183,
       "by_kind": {
         "command": 30,
         "query": 169,
-        "resource": 2180
+        "resource": 2183
       },
       "by_stability": {
         "behaviorally_verified": 139,
         "experimental": 51,
-        "implemented": 2189
+        "implemented": 2192
       },
       "mcp_tools": 190,
-      "mcp_resources": 2235,
+      "mcp_resources": 2238,
       "http_routes": 194,
       "cli_commands": 107,
       "modules": 91,
@@ -81189,7 +81189,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 362,
+        "capabilities": 363,
         "capability_ids": []
       },
       {
@@ -81305,7 +81305,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 35,
+        "capabilities": 36,
         "capability_ids": []
       },
       {
@@ -81760,7 +81760,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 481,
+        "capabilities": 482,
         "capability_ids": []
       },
       {
@@ -81850,7 +81850,7 @@
     ]
   },
   "index": {
-    "fingerprint": "989c3406d092f52a3c8908b082b7356ee825e5fdd9d03625425c0523881962d0",
+    "fingerprint": "cbb46b6464e1f4ed3b9903aa93bd3ab2cf3309bac28cb768ce873524189ef402",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -81890,10 +81890,10 @@
       "gap": 3,
       "implementation": 52,
       "intent": 4,
-      "issue": 362,
+      "issue": 363,
       "knowledge": 4,
       "mesh-declaration": 1,
-      "milestone": 35,
+      "milestone": 36,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -81904,7 +81904,7 @@
       "session": 89,
       "skill": 8,
       "taxonomy": 10,
-      "test": 481,
+      "test": 482,
       "use-case": 49,
       "workspace": 1
     },
@@ -87848,7 +87848,7 @@
         "title": "Majordomus Mesh",
         "path": "docs/MESH.md",
         "source_class": "document",
-        "bytes": 60156
+        "bytes": 60909
       },
       {
         "uri": "majordomus://document/docs/MODELS.md",
@@ -87920,7 +87920,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 131889
+        "bytes": 134330
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -90963,7 +90963,7 @@
         "identity": "lib/capture.sh",
         "path": "lib/capture.sh",
         "source_class": "library",
-        "bytes": 160091
+        "bytes": 163185
       },
       {
         "uri": "majordomus://implementation/lib/changed.sh",
@@ -95344,6 +95344,17 @@
         "bytes": 2234
       },
       {
+        "uri": "majordomus://issue/I2734",
+        "kind": "issue",
+        "identity": "I2734",
+        "title": "A session joins the mesh at its start and leaves it at its end",
+        "description": "The provider's start event opens the session on the mesh of the checkout's shared server as <provider>-<provider session>, with client, branch, head and the active task; the briefing names that id; a resume says it again; the end event closes it.",
+        "path": ".ai/repo/project/issues/I2734.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2223
+      },
+      {
         "uri": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "identity": "a-commit-stood-behind-a-build-lock",
@@ -95547,6 +95558,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 5428
+      },
+      {
+        "uri": "majordomus://milestone/every-session-joins-the-mesh",
+        "kind": "milestone",
+        "identity": "every-session-joins-the-mesh",
+        "title": "Every LLM session joins the Majordomus mesh at start, told the mesh as work",
+        "description": "Any LLM session that starts in a repository with an enabled mesh is on the mesh from its first turn, told who works where on every machine and what waits for it, and a task built outside the mesh is refused by the repository's gates.",
+        "path": ".ai/repo/project/milestones/every-session-joins-the-mesh.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 2929
       },
       {
         "uri": "majordomus://milestone/everything-is-followed-in-one-stream",
@@ -102415,6 +102437,14 @@
         "bytes": 7757
       },
       {
+        "uri": "majordomus://test/test/cases/3066_a_session_joins_the_mesh_at_start.sh",
+        "kind": "test",
+        "identity": "test/cases/3066_a_session_joins_the_mesh_at_start.sh",
+        "path": "test/cases/3066_a_session_joins_the_mesh_at_start.sh",
+        "source_class": "case",
+        "bytes": 4846
+      },
+      {
         "uri": "majordomus://test/test/cases/30_command_registry.sh",
         "kind": "test",
         "identity": "test/cases/30_command_registry.sh",
@@ -105449,7 +105479,7 @@
       "identity": [
         "id"
       ],
-      "objects": 362
+      "objects": 363
     },
     {
       "name": "knowledge",
@@ -105479,7 +105509,7 @@
       "identity": [
         "id"
       ],
-      "objects": 35
+      "objects": 36
     },
     {
       "name": "moment",
@@ -105601,7 +105631,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 481
+      "objects": 482
     },
     {
       "name": "use-case",

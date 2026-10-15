@@ -408,6 +408,16 @@ a changed announcement releases and re-claims; a detached session is closed. An 
 `majordomus_mesh_claim` without a `session` acts for the caller's own `board-<peer>` session.
 Branch and head are read when a session changes, never on a heartbeat.
 
+A provider session is on the mesh before its worker says anything (I2734). The provider's
+start event opens `<provider>-<provider session id>` — `claude-code-<uuid>` for Claude Code —
+on the checkout's shared server with its client, branch and head, and with the task and its
+title while one is active; the briefing prints that id under the `Mesh:` line, so a worker
+can claim under it (`majordomus_mesh_claim` with that `session`). A resume or a compaction
+says it again; the end event closes it, which ends its claims on every linked runtime at
+once. The id is the provider's own, so anything holding the provider's payload names the
+same session. With no ready server, or a mesh that does not run, nothing is opened and the
+event is unaffected.
+
 What a session shares is metadata — intent, issue, task, milestone, branch, head, dirtiness,
 a context revision identifier. Context bodies are not replicated; a handover is the
 referenced artifact a peer materialises.

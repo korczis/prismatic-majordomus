@@ -36242,6 +36242,45 @@
         }
       },
       {
+        "id": "majordomus://issue/I2734",
+        "kind": "issue",
+        "label": "I2734",
+        "summary": "A session joins the mesh at its start and leaves it at its end",
+        "route": "/cockpit/objects/issue/i2734",
+        "source": ".ai/repo/project/issues/I2734.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A start event with a ready server whose mesh runs opens claude-code-<session id> on the mesh with client, branch and head",
+            "The briefing names the mesh session id under the Mesh line",
+            "A resume after majordomus start carries the active task and its title",
+            "The end event closes the mesh session",
+            "Without a server the start event opens the episode and names no mesh session"
+          ],
+          "created_at": "2026-10-15",
+          "current_state": "The start event prints one health line about the mesh and opens no mesh session; the end event closes none.",
+          "depends_on": [],
+          "evidence_required": [
+            "case_3066"
+          ],
+          "milestone": "every-session-joins-the-mesh",
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "lib/capture.sh",
+            "test/cases/3066_a_session_joins_the_mesh_at_start.sh",
+            ".ai/repo/project/issues/I2734.yaml",
+            ".ai/repo/project/milestones/every-session-joins-the-mesh.yaml"
+          ],
+          "slug": "a-session-joins-the-mesh-at-start",
+          "updated_at": "2026-10-15",
+          "validation": [
+            "bin/majordomus plan validate",
+            "bash test/run.sh 3066_a_session_joins_the_mesh_at_start 54_session_lifecycle_hooks 1054_every_session_is_told_the_stream"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "label": "a-commit-stood-behind-a-build-lock",
@@ -36973,6 +37012,58 @@
             "bin/majordomus-cli capabilities validate",
             "bin/majordomus-cli generate --check",
             "bash test/run.sh"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/every-session-joins-the-mesh",
+        "kind": "milestone",
+        "label": "every-session-joins-the-mesh",
+        "summary": "Every LLM session joins the Majordomus mesh at start, told the mesh as work",
+        "route": "/cockpit/objects/milestone/every-session-joins-the-mesh",
+        "source": ".ai/repo/project/milestones/every-session-joins-the-mesh.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A runtime's briefing shows another machine's live session, its exclusive claim, its handover and its review",
+            "The start briefing of a checkout whose mesh runs carries the briefing lines",
+            "An MCP initialize answer on a server whose mesh runs names the briefing and the protocol",
+            "After majordomus start the task's scope is a live claim on every linked runtime",
+            "finish refuses a task whose scope was never claimed while the mesh was enabled",
+            "A Codex or Gemini session start runs the same lifecycle, proved against the real tool",
+            "The provider projections and README name mesh.briefing and the protocol",
+            "The article is published by the site build and passes site-check"
+          ],
+          "created_at": "2026-10-10",
+          "depends_on": [],
+          "desired_state": "mesh.briefing at every start and MCP initialize, a mesh session and a claim for every task, a gated rule, projections and the Cockpit, an article.",
+          "evidence_required": [
+            "mesh_briefing_two_nodes_test"
+          ],
+          "non_scope": [
+            "Changing what the mesh may decide: it stays observation, not authority (ADR 0050)."
+          ],
+          "order": 145,
+          "priority": "p0",
+          "risks": [
+            "A start that waits on the mesh is a slower start for everyone: the briefing is read within a budget and skipped, not waited for."
+          ],
+          "scope": [
+            "apps/majordomus-cli/src/mesh",
+            "apps/majordomus-cli/src/mcp/protocol.rs",
+            "lib/capture.sh",
+            "lib/derive.sh",
+            ".ai/repo/rules/project",
+            ".ai/repo/providers",
+            "docs/MESH.md",
+            "README.md",
+            "site/content-src"
+          ],
+          "slug": "every-session-joins-the-mesh",
+          "updated_at": "2026-10-15",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --lib mesh::briefing",
+            "cargo test --test mesh_briefing"
           ]
         }
       },
@@ -53077,6 +53168,13 @@
         "label": "test/cases/305_a_command_is_claimed_or_classified.sh",
         "route": "/cockpit/objects/test/test-cases-305-a-command-is-claimed-or-classified-sh",
         "source": "test/cases/305_a_command_is_claimed_or_classified.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3066_a_session_joins_the_mesh_at_start.sh",
+        "kind": "test",
+        "label": "test/cases/3066_a_session_joins_the_mesh_at_start.sh",
+        "route": "/cockpit/objects/test/test-cases-3066-a-session-joins-the-mesh-at-start-sh",
+        "source": "test/cases/3066_a_session_joins_the_mesh_at_start.sh"
       },
       {
         "id": "majordomus://test/test/cases/30_command_registry.sh",
@@ -78574,6 +78672,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2734",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2734",
+        "target": "majordomus://milestone/every-session-joins-the-mesh",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -78665,6 +78773,11 @@
       },
       {
         "source": "majordomus://milestone/development-runtime",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/every-session-joins-the-mesh",
         "target": "kind:milestone",
         "kind": "is_a"
       },
@@ -82900,6 +83013,11 @@
       },
       {
         "source": "majordomus://test/test/cases/305_a_command_is_claimed_or_classified.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3066_a_session_joins_the_mesh_at_start.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -88190,8 +88308,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2796,
-      "edges": 6129,
+      "nodes": 2799,
+      "edges": 6133,
       "acyclic": false,
       "truncated": false
     }
