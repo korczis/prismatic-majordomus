@@ -1,5 +1,5 @@
 # majordomus-covers: none
-# Eleven MCP tools asked a question about this repository — nine of which nothing had ever
+# A sample of MCP tools asked a question about this repository — nine of which nothing had ever
 # asked one — and the ratchet that stops the next tool from arriving unasked.
 #
 # The registry projects its tools over MCP. `use_cases.coverage.mcp_tools` is advisory, so a
@@ -68,6 +68,23 @@ jq -e '(.tiers | length) >= 5 and .default_budget_tokens > 0 and ([.tiers[] | se
   || bad "majordomus_devcontext_policy does not answer with a tier ladder that names its kinds:" "$S/devpolicy.json"
 jq -e '[.tiers[].position] == ([.tiers[].position] | sort)' "$S/devpolicy.json" >/dev/null \
   || bad "the tiers are not in position order:" "$S/devpolicy.json"
+
+# ---------------------------------------------------------------- 3b. gates.policy
+# The one definition of done: the stages and the questions are the ones share/completion.yaml
+# declares, in its order, and the distribution is coherent — no token the vocabulary lacks.
+answer majordomus_completion_policy '{}' "$S/completion.json"
+awk '/^stages:/ { s = 1; next } /^questions:/ { s = 0 } s && /^  - id:/ { print $3 }' \
+  "$ROOT/share/completion.yaml" > "$S/stages.want"
+awk '/^questions:/ { q = 1; next } /^[a-z]/ { q = 0 } q && /^  - id:/ { print $3 }' \
+  "$ROOT/share/completion.yaml" > "$S/questions.want"
+[ -s "$S/stages.want" ] && [ -s "$S/questions.want" ] \
+  || bad "share/completion.yaml was not read: no stage or no question found in it"
+jq -r '.stages[].id' "$S/completion.json" | cmp -s - "$S/stages.want" \
+  || bad "majordomus_completion_policy does not answer with the stages share/completion.yaml declares, in order:" "$S/completion.json"
+jq -r '.questions[].id' "$S/completion.json" | cmp -s - "$S/questions.want" \
+  || bad "majordomus_completion_policy does not answer with the questions share/completion.yaml declares, in order:" "$S/completion.json"
+jq -e '(.problems // []) == [] and (.unanswered_gates // []) == [] and .source == "share/completion.yaml" and (.outline | length) > 0' "$S/completion.json" >/dev/null \
+  || bad "majordomus_completion_policy reports a problem, a gate this repository never answers, or no outline:" "$S/completion.json"
 
 # ---------------------------------------------------------------- 4. executions.cancel
 # One of the two sampled capabilities that are not reads (4b is the other). It is asked to refuse, and a refusal is a
@@ -181,7 +198,7 @@ jq -e --arg id "$id" '.id == $id and .path == (".ai/repo/skills/" + $id + "/SKIL
   "$S/skill.json" >/dev/null \
   || bad "majordomus_skill_explain does not describe skill $id:" "$S/skill.json"
 
-echo "    eleven MCP tools answered about this repository, and every answer matched the tree"
+echo "    every sampled MCP tool answered about this repository, and every answer matched the tree"
 
 # ================================================================ the ratchet, by mutation
 # A synthetic tree the gate can be pointed at: a registry projecting three tools, one client
@@ -298,7 +315,8 @@ expect_grep 'majordomus generate' "$S/gate.log"
 # rather than a count written here.
 rc=0; bash "$GATE" > "$S/real.log" 2>&1 || rc=$?
 [ "$rc" = 0 ] || { echo "    the gate does not pass on this repository, exit $rc"; cat "$S/real.log"; exit 1; }
-for tool in majordomus_artifacts majordomus_deployment majordomus_devcontext_policy \
+for tool in majordomus_artifacts majordomus_completion_policy majordomus_deployment \
+            majordomus_devcontext_policy \
             majordomus_execution_cancel majordomus_install_status majordomus_mesh_identity \
             majordomus_plan_issues majordomus_product_domains majordomus_product_validate majordomus_rules \
             majordomus_skill_explain majordomus_web_surfaces; do

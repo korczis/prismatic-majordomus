@@ -59,6 +59,8 @@ pub(crate) mod closing;
 pub(crate) mod done;
 pub(crate) mod judge;
 pub(crate) mod model;
+pub(crate) mod policy;
+pub(crate) mod stage;
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
@@ -74,6 +76,8 @@ pub use done::{DoneQuestion, ObligationStanding};
 pub use judge::{Gate, GateRun, GateStatus};
 pub(crate) use model::GateModel;
 pub use model::{GateClass, GateClassMatch, GateDecl, GatePlan, GatePlanMode};
+pub use policy::{CompletionPolicy, QuestionDecl, QuestionSource, StageDecl, POLICY_FILE};
+pub use stage::{derive_stage, LifecycleStage, StageReport, StageState};
 
 /// The local half of the layer, relative to the repository root. The same constant
 /// `obligations` and `continuity` state, for the same reason: the shell tool decides where
@@ -226,12 +230,20 @@ pub(crate) fn implied(
 ///     "tallies": { "queued": 1 },
 ///     "gates": [],
 ///     "obligations": [],
-///     "questions": []
+///     "questions": [],
+///     "policy": "share/completion.yaml",
+///     "stage": { "id": "gates", "title": "Gates", "state": "pending", "complete": false,
+///                "owing": ["ci"], "stages": [] },
+///     "complete": false
 /// }))
 /// .unwrap();
 /// assert!(c.finishable, "absence of a verdict does not refuse");
 /// assert_eq!(c.unverified, ["reference-check"], "and it is never silently accepted");
 /// assert!(c.blocking.is_empty());
+/// // finishable is not complete: the stage the answers fold to still owes the ci question
+/// assert!(!c.complete);
+/// assert_eq!(c.stage.id, "gates");
+/// assert_eq!(c.stage.owing, ["ci"]);
 /// ```
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 /// Whether the active task may be called finished, and everything the answer rests on.
@@ -270,8 +282,22 @@ pub struct Completion {
     /// finished, each with the source that answered it and the evidence it read. Composed
     /// from the obligation closure, the gates, the change set, the repository's convergence
     /// and the closing readings; a question nothing here reaches is `unknown` and names the
-    /// command that would answer it.
+    /// command that would answer it. Exactly the questions of the completion policy, in its
+    /// order, each with the stage the policy places it in.
     pub questions: Vec<DoneQuestion>,
+    /// The completion policy the questions were taken from, as the distribution names it.
+    /// Absent when no policy could be read; a finding then says why, the one question asked
+    /// is whether it can be, and nothing is complete.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub policy: Option<String>,
+    /// Where the task stands in the lifecycle, folded from the answers in the policy's
+    /// stage order: the first stage blocked, else the first stage pending, else the last.
+    /// Derived on every reading and never written down by anybody.
+    pub stage: LifecycleStage,
+    /// True only when a task is present and every question of the policy passes or is
+    /// exempt. The one field that may be read as "done": it is the stage fold's word, and
+    /// no surface computes it a second time from the parts.
+    pub complete: bool,
     /// What could not be established, each as one line. Never empty when something was
     /// skipped: a gap is reported rather than left to be inferred.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
@@ -340,6 +366,7 @@ pub(crate) fn complete(
     closing: Option<&closing::Closing>,
     on_demand: bool,
     now: &str,
+    policy: Option<&CompletionPolicy>,
     mut findings: Vec<String>,
 ) -> Completion {
     let plan = model::plan(model, changed, on_demand);
@@ -380,15 +407,25 @@ pub(crate) fn complete(
         }
     }
 
-    let questions = done::answer(
-        standing,
-        &obligations,
-        &gates,
-        changed,
-        closure_reachable,
-        convergence,
-        closing,
+    let questions = match policy {
+        Some(policy) => done::answer(
+            policy,
+            standing,
+            &obligations,
+            &gates,
+            changed,
+            closure_reachable,
+            convergence,
+            closing,
+        ),
+        None => vec![done::unreadable_policy()],
+    };
+
+    let stage = derive_stage(
+        policy.map(|p| p.stages.as_slice()).unwrap_or(&[]),
+        &questions,
     );
+    let complete = task.is_some() && stage.complete;
 
     Completion {
         present: task.is_some(),
@@ -402,6 +439,9 @@ pub(crate) fn complete(
         gates,
         obligations,
         questions,
+        policy: policy.map(|p| p.source.clone()),
+        stage,
+        complete,
         findings,
     }
 }
@@ -481,6 +521,15 @@ classes:
         }
     }
 
+    /// The policy this build ships, read once.
+    fn shipped() -> &'static CompletionPolicy {
+        static POLICY: std::sync::OnceLock<CompletionPolicy> = std::sync::OnceLock::new();
+        POLICY.get_or_init(|| {
+            let share = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../share");
+            CompletionPolicy::load(&share).expect("the shipped completion policy parses")
+        })
+    }
+
     fn hashes(m: &GateModel, v: &str) -> BTreeMap<String, Option<String>> {
         m.gates
             .iter()
@@ -557,6 +606,7 @@ classes:
             None,
             false,
             "now",
+            Some(shipped()),
             vec![],
         );
         assert!(c.finishable, "absence is not a failure");
@@ -590,6 +640,7 @@ classes:
             None,
             false,
             "now",
+            Some(shipped()),
             vec![],
         );
         assert!(!c.finishable);
@@ -630,6 +681,7 @@ classes:
             None,
             false,
             "now",
+            Some(shipped()),
             vec![],
         );
         assert!(ok.finishable && ok.blocking.is_empty());
@@ -649,6 +701,7 @@ classes:
             None,
             false,
             "now",
+            Some(shipped()),
             vec![],
         );
         assert!(
@@ -676,10 +729,139 @@ classes:
             None,
             false,
             "now",
+            Some(shipped()),
             vec![],
         );
         assert!(!c.present);
         assert_eq!(c.tallies.get("pass"), None);
         assert!(c.unverified.contains(&"build".to_string()));
+    }
+
+    /// `complete` is earned and nowhere else: the stage fold over the policy's questions
+    /// says every one passes or is exempt, and a task is there to be complete. The same
+    /// answers without a task complete nothing; one question still owed holds the task at
+    /// its stage, by name.
+    #[test]
+    fn complete_is_the_stage_folds_word_and_needs_a_task() {
+        let one = CompletionPolicy::parse(
+            "version: 1\nstages:\n  - id: build\n    title: Build\n    summary: s\n  - id: \
+             close\n    title: Close\n    summary: s\nquestions:\n  - id: regression-tested\n    \
+             stage: build\n    question: Does the change touch a test of its own?\n    source: \
+             change:test-path\n    remediation: add a test\n",
+            "share/completion.yaml",
+        )
+        .unwrap();
+        let m = model();
+        let v = vocabulary();
+        let t = task(&[]);
+        let ask = |changed: &[String], task: Option<&ActiveTask>| {
+            complete(
+                &m,
+                changed,
+                task,
+                &v,
+                &BTreeMap::new(),
+                &hashes(&m, "aaaa"),
+                &BTreeMap::new(),
+                false,
+                None,
+                None,
+                false,
+                "now",
+                Some(&one),
+                vec![],
+            )
+        };
+
+        // nothing changed: the one question is exempt, every stage is complete or empty
+        let c = ask(&[], Some(&t));
+        assert_eq!(c.policy.as_deref(), Some("share/completion.yaml"));
+        assert_eq!(c.questions[0].stage, "build");
+        assert!(c.stage.complete && c.complete);
+        assert_eq!(c.stage.state, StageState::Complete);
+
+        // the same answers and no task: nothing is complete that nobody is doing
+        let c = ask(&[], None);
+        assert!(c.stage.complete, "the fold is over the answers");
+        assert!(!c.complete, "and complete needs a task to be about");
+
+        // a source file and no test: owed, and the task stands at Build owing it
+        let c = ask(&["apps/x.rs".to_string()], Some(&t));
+        assert!(!c.complete);
+        assert_eq!(
+            (c.stage.id.as_str(), c.stage.state),
+            ("build", StageState::Pending)
+        );
+        assert_eq!(c.stage.owing, ["regression-tested"]);
+        assert!(
+            c.finishable,
+            "owed is not refused: complete and finishable are two words"
+        );
+    }
+
+    /// The shipped policy over a task with owed work: never complete, and the stage the
+    /// report names is one the policy declares.
+    #[test]
+    fn the_shipped_policy_holds_a_task_with_owed_work_at_a_declared_stage() {
+        let m = model();
+        let v = vocabulary();
+        let t = task(&["tests"]);
+        let c = complete(
+            &m,
+            &["apps/x.rs".to_string()],
+            Some(&t),
+            &v,
+            &BTreeMap::new(),
+            &hashes(&m, "aaaa"),
+            &BTreeMap::new(),
+            false,
+            None,
+            None,
+            false,
+            "now",
+            Some(shipped()),
+            vec![],
+        );
+        assert!(!c.complete);
+        assert_eq!(c.questions.len(), shipped().questions.len());
+        assert!(shipped().stages.iter().any(|s| s.id == c.stage.id));
+        assert_eq!(c.stage.stages.len(), shipped().stages.len());
+        assert!(!c.stage.owing.is_empty(), "the stage names what it owes");
+    }
+
+    /// A distribution whose policy cannot be read asks one question — whether it can be —
+    /// answers it unknown, and completes nothing; the gates are still judged and reported.
+    #[test]
+    fn no_policy_is_one_unknown_question_and_no_completion() {
+        let m = model();
+        let v = vocabulary();
+        let t = task(&[]);
+        let c = complete(
+            &m,
+            &[],
+            Some(&t),
+            &v,
+            &BTreeMap::new(),
+            &hashes(&m, "aaaa"),
+            &BTreeMap::new(),
+            false,
+            None,
+            None,
+            false,
+            "now",
+            None,
+            vec![],
+        );
+        assert_eq!(c.policy, None);
+        assert_eq!(c.questions.len(), 1);
+        assert_eq!(c.questions[0].id, "policy");
+        assert_eq!(c.questions[0].status, GateStatus::Unknown);
+        assert!(
+            !c.stage.complete && !c.complete,
+            "no definition of done completes nothing"
+        );
+        assert!(!c.gates.is_empty(), "the gates are judged all the same");
+        let json = serde_json::to_value(&c).unwrap();
+        assert!(json.get("policy").is_none(), "absent, not an empty string");
     }
 }

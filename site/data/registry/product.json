@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "0.26.0"
   },
-  "fingerprint": "e725edc6170d6b5b0f3933716ad9b9c23fcb7acfaafa9d881d3bf2b736c07386",
+  "fingerprint": "7e6cab16a7248f517dadbe5f9d572395ac1fc0ada648aac79925dc701a8b59d1",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -2569,7 +2569,7 @@
         "use_cases": 8,
         "rules": 12,
         "enforced_rules": 10,
-        "capabilities": 4,
+        "capabilities": 5,
         "moments": 31
       },
       "evidence": {
@@ -3229,7 +3229,7 @@
         "use_cases": 10,
         "rules": 15,
         "enforced_rules": 14,
-        "capabilities": 125,
+        "capabilities": 126,
         "moments": 38
       },
       "evidence": {
@@ -8356,6 +8356,15 @@
               "tool": "majordomus_gates",
               "resource": "majordomus://gates",
               "route": "GET /api/v1/gates"
+            },
+            {
+              "id": "gates.policy",
+              "title": "The completion policy",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_completion_policy",
+              "resource": "majordomus://gates/policy",
+              "route": "GET /api/v1/gates/policy"
             }
           ]
         },
@@ -8705,10 +8714,10 @@
         "planning"
       ],
       "counts": {
-        "capabilities": 4,
-        "mcp_tools": 4,
-        "mcp_resources": 4,
-        "http_routes": 4,
+        "capabilities": 5,
+        "mcp_tools": 5,
+        "mcp_resources": 5,
+        "http_routes": 5,
         "cli_paths": 0,
         "commands": 4,
         "objects": 0,
@@ -10739,6 +10748,15 @@
               "tool": "majordomus_gates",
               "resource": "majordomus://gates",
               "route": "GET /api/v1/gates"
+            },
+            {
+              "id": "gates.policy",
+              "title": "The completion policy",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_completion_policy",
+              "resource": "majordomus://gates/policy",
+              "route": "GET /api/v1/gates/policy"
             }
           ]
         },
@@ -11309,10 +11327,10 @@
         "observatory"
       ],
       "counts": {
-        "capabilities": 96,
-        "mcp_tools": 89,
-        "mcp_resources": 16,
-        "http_routes": 93,
+        "capabilities": 97,
+        "mcp_tools": 90,
+        "mcp_resources": 17,
+        "http_routes": 94,
         "cli_paths": 41,
         "commands": 0,
         "objects": 0,
@@ -17810,13 +17828,13 @@
     }
   ],
   "telemetry": {
-    "capabilities": 2379,
-    "builtin": 199,
+    "capabilities": 2380,
+    "builtin": 200,
     "declarative": 2180,
     "modules": 57,
-    "mcp_tools": 190,
-    "mcp_resources": 2235,
-    "http_routes": 194,
+    "mcp_tools": 191,
+    "mcp_resources": 2236,
+    "http_routes": 195,
     "cli_commands": 204,
     "shell_commands": 30,
     "kinds": 34,
