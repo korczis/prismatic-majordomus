@@ -21198,6 +21198,8 @@
             "It covers checkpoint and question as well as decision, or says why they are out of its reach",
             "It runs in a disposable repository like every other case"
           ],
+          "completed_at": "2026-10-15T00:48:23Z",
+          "completed_event": "sha256:dccfaa90a2d7a885e0216396792f5b81ae73d340a4e94f35d2d62c4cab2747f6",
           "created_at": "2026-09-04",
           "current_state": "decision, checkpoint and question resolve the active task from .majordomus/state/current.yaml. Nothing in test/cases exercises a second worker writing while somebody else's task is active.",
           "depends_on": [],
@@ -21216,7 +21218,9 @@
             "test/cases"
           ],
           "slug": "reproduce-misattribution",
-          "updated_at": "2026-09-04",
+          "started_at": "2026-10-15T00:47:59Z",
+          "started_event": "sha256:99eb30f70d88637fc7b41fc23e82c72345f11931391d44ad63f29205903d7438",
+          "updated_at": "2026-10-15T00:48:23Z",
           "validation": [
             "bash test/run.sh"
           ]
@@ -53065,6 +53069,13 @@
         "source": "test/cases/303_one_source_serves_two_mounts.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3049_a_second_workers_record_lands_on_the_first_workers_task.sh",
+        "kind": "test",
+        "label": "test/cases/3049_a_second_workers_record_lands_on_the_first_workers_task.sh",
+        "route": "/cockpit/objects/test/test-cases-3049-a-second-workers-record-lands-on-the-first-workers-task-sh",
+        "source": "test/cases/3049_a_second_workers_record_lands_on_the_first_workers_task.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/304_a_provider_is_declared_once.sh",
         "kind": "test",
         "label": "test/cases/304_a_provider_is_declared_once.sh",
@@ -82894,6 +82905,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3049_a_second_workers_record_lands_on_the_first_workers_task.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/304_a_provider_is_declared_once.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -88190,8 +88206,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2796,
-      "edges": 6129,
+      "nodes": 2797,
+      "edges": 6130,
       "acyclic": false,
       "truncated": false
     }
