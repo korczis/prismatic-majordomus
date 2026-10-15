@@ -83,6 +83,7 @@ pub mod scope;
 pub mod served;
 pub mod session;
 pub mod share;
+pub mod share_watch;
 pub(crate) mod shared;
 pub mod site;
 pub mod skill;

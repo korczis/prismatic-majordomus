@@ -200,6 +200,7 @@ impl Cockpit {
             scripts,
             vendor: self.vendor_urls(),
             assets_present: self.assets.present(),
+            skew: crate::share_watch::skew(),
             version: self.version,
         };
         let body = view::page(&shell, page.main);

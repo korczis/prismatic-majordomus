@@ -686,9 +686,247 @@ pub fn schema_identity(relative: &str) -> Option<String> {
     Some(format!("{vendor}.{name}/{version}"))
 }
 
+/// The projection of the tool's version inside the share directory, `version.txt`, whose
+/// `version=` line names the release the directory was written for.
+pub const VERSION_FILE: &str = "version.txt";
+
+/// The version a share directory states in its [`VERSION_FILE`]: the value of its first
+/// `version=` line, trimmed. A directory with no such file, or a file with no such line,
+/// states none.
+///
+/// ```
+/// use majordomus_cli::share::stated_version;
+/// let dir = tempfile::tempdir().unwrap();
+/// assert_eq!(stated_version(dir.path()), None, "no version.txt: no version");
+/// std::fs::write(dir.path().join("version.txt"), "# GENERATED\nversion=0.26.0\n").unwrap();
+/// assert_eq!(stated_version(dir.path()).as_deref(), Some("0.26.0"));
+/// ```
+pub fn stated_version(dir: &Path) -> Option<String> {
+    let text = std::fs::read_to_string(dir.join(VERSION_FILE)).ok()?;
+    text.lines()
+        .find_map(|line| line.trim().strip_prefix("version="))
+        .map(|v| v.trim().to_string())
+        .filter(|v| !v.is_empty())
+}
+
+/// Where a server's share directory is and how it was found: what a server records about
+/// the share it serves, so that a reader can measure that directory again.
+///
+/// ```
+/// use majordomus_cli::share::ShareLocation;
+/// let at = ShareLocation { path: "/opt/majordomus/share".into(), origin: "installation".into() };
+/// let text = serde_json::to_string(&at).unwrap();
+/// assert_eq!(serde_json::from_str::<ShareLocation>(&text).unwrap(), at);
+/// ```
+#[derive(
+    Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize, schemars::JsonSchema,
+)]
+pub struct ShareLocation {
+    /// The share directory, canonical.
+    pub path: PathBuf,
+    /// How it was found: `--share`, `MAJORDOMUS_SHARE`, `repository` or `installation`.
+    pub origin: String,
+}
+
+impl ShareLocation {
+    /// The location of a located share: its canonical directory and the word for how it
+    /// was found.
+    ///
+    /// ```
+    /// use majordomus_cli::share::{Share, ShareLocation};
+    /// let dir = tempfile::tempdir().unwrap();
+    /// std::fs::write(dir.path().join("kinds.yaml"), "version: 1\nkinds: []\n").unwrap();
+    /// let share = Share::locate(Some(dir.path()), dir.path()).unwrap();
+    /// let at = ShareLocation::of(&share);
+    /// assert_eq!(at.origin, "--share");
+    /// assert_eq!(at.path, dir.path().canonicalize().unwrap());
+    /// ```
+    pub fn of(share: &Share) -> Self {
+        ShareLocation {
+            path: share.dir().to_path_buf(),
+            origin: share.origin.to_string(),
+        }
+    }
+}
+
+/// Whether a share directory is the one an executable should serve.
+///
+/// ```
+/// use majordomus_cli::share::ShareStanding;
+/// assert_eq!(serde_json::to_value(ShareStanding::Current).unwrap(), "current");
+/// assert_eq!(serde_json::to_value(ShareStanding::Skewed).unwrap(), "skewed");
+/// ```
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize, schemars::JsonSchema,
+)]
+#[serde(rename_all = "lowercase")]
+pub enum ShareStanding {
+    /// It states the executable's version and holds the directory of every surface the
+    /// server serves pages from.
+    Current,
+    /// It states another version, states none, or lacks `ui/` or `cockpit/`: a server
+    /// serving it answers with one release's code over another release's data, and those
+    /// pages are unstyled or blank.
+    Skewed,
+}
+
+/// A share directory measured against the version of the executable that serves it: where
+/// it is, how it was found, the version it states, whether it holds the directory of each
+/// surface the server serves pages from — `ui/` for `/ui`, `cockpit/` for `/cockpit` — and
+/// whether that makes it the executable's own (ADR 0163).
+///
+/// Measured when it is asked for, never recorded: a checkout moves under a running server,
+/// and the directory a lease names may state another version an hour later.
+///
+/// ```
+/// use majordomus_cli::share::{ServedShare, ShareStanding};
+/// let dir = tempfile::tempdir().unwrap();
+/// std::fs::write(dir.path().join("version.txt"), "version=0.26.0\n").unwrap();
+/// std::fs::create_dir(dir.path().join("ui")).unwrap();
+/// std::fs::create_dir(dir.path().join("cockpit")).unwrap();
+/// let own = ServedShare::inspect(dir.path(), Some("installation"), "0.26.0");
+/// assert_eq!(own.standing, ShareStanding::Current);
+/// assert!(own.reason.is_none() && own.ui_present);
+///
+/// let older = ServedShare::inspect(dir.path(), None, "0.27.0");
+/// assert_eq!(older.standing, ShareStanding::Skewed);
+/// assert!(older.reason.unwrap().contains("states version 0.26.0"));
+///
+/// std::fs::remove_dir(dir.path().join("ui")).unwrap();
+/// let blank = ServedShare::inspect(dir.path(), None, "0.26.0");
+/// assert_eq!(blank.standing, ShareStanding::Skewed);
+/// assert!(!blank.ui_present && blank.reason.unwrap().contains("no ui/"));
+/// ```
+#[derive(
+    Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize, schemars::JsonSchema,
+)]
+pub struct ServedShare {
+    /// The share directory.
+    pub path: PathBuf,
+    /// How it was found, when the server said.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub origin: Option<String>,
+    /// The version its `version.txt` states; absent when it states none.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub version: Option<String>,
+    /// Whether it holds `ui/`, the UI's stylesheet and scripts.
+    pub ui_present: bool,
+    /// Whether it holds `cockpit/`, the Cockpit's stylesheet and scripts.
+    pub cockpit_present: bool,
+    /// Whether it is the executable's own.
+    pub standing: ShareStanding,
+    /// Why it is skewed, when it is.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub reason: Option<String>,
+}
+
+impl ServedShare {
+    /// Measure the directory at `path` against `executable`, the version of the executable
+    /// serving it. Every way it differs is named in the reason, joined in one sentence.
+    ///
+    /// ```
+    /// use majordomus_cli::share::{ServedShare, ShareStanding};
+    /// let dir = tempfile::tempdir().unwrap();
+    /// std::fs::write(dir.path().join("version.txt"), "version=1.0.0\n").unwrap();
+    /// let measured = ServedShare::inspect(dir.path(), Some("repository"), "1.0.0");
+    /// assert_eq!(measured.standing, ShareStanding::Skewed, "no ui/ and no cockpit/");
+    /// let reason = measured.reason.unwrap();
+    /// assert!(reason.contains("holds no ui/") && reason.contains("holds no cockpit/"));
+    /// assert!(!reason.contains("states version"), "the version is its executable's");
+    /// ```
+    pub fn inspect(path: &Path, origin: Option<&str>, executable: &str) -> Self {
+        let version = stated_version(path);
+        let ui_present = path.join(crate::ui::ASSETS_DIR).is_dir();
+        let cockpit_present = path.join(crate::cockpit::assets::DIR).is_dir();
+        let mut why = Vec::new();
+        if !path.is_dir() {
+            why.push("is not a directory".to_string());
+        } else {
+            match version.as_deref() {
+                Some(v) if v == executable => {}
+                Some(v) => why.push(format!(
+                    "states version {v}, and the executable serving it is {executable}"
+                )),
+                None => why.push(format!(
+                    "states no version (no {VERSION_FILE}), and the executable serving it is {executable}"
+                )),
+            }
+            for (present, dir, prefix) in [
+                (ui_present, crate::ui::ASSETS_DIR, crate::ui::ASSETS_PREFIX),
+                (
+                    cockpit_present,
+                    crate::cockpit::assets::DIR,
+                    crate::cockpit::assets::PREFIX,
+                ),
+            ] {
+                if !present {
+                    why.push(format!(
+                        "holds no {dir}/, so every {prefix} file answers 404"
+                    ));
+                }
+            }
+        }
+        let reason = (!why.is_empty())
+            .then(|| format!("the share at {} {}", path.display(), why.join("; it ")));
+        ServedShare {
+            path: path.to_path_buf(),
+            origin: origin.map(str::to_string),
+            version,
+            ui_present,
+            cockpit_present,
+            standing: if reason.is_some() {
+                ShareStanding::Skewed
+            } else {
+                ShareStanding::Current
+            },
+            reason,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// A share measured against its own version holds no skew, and every way it can differ
+    /// from its executable is named in the reason, each once.
+    #[test]
+    fn a_share_is_skewed_by_its_version_and_by_a_missing_ui() {
+        let dir = tempfile::tempdir().unwrap();
+        let missing = ServedShare::inspect(&dir.path().join("gone"), None, "1.0.0");
+        assert_eq!(missing.standing, ShareStanding::Skewed);
+        assert!(missing.reason.unwrap().contains("is not a directory"));
+
+        let both = ServedShare::inspect(dir.path(), Some("MAJORDOMUS_SHARE"), "1.0.0");
+        assert_eq!(both.standing, ShareStanding::Skewed);
+        let reason = both.reason.unwrap();
+        assert!(reason.contains("states no version"), "{reason}");
+        assert!(reason.contains("holds no ui/"), "{reason}");
+        assert_eq!(both.origin.as_deref(), Some("MAJORDOMUS_SHARE"));
+
+        std::fs::write(dir.path().join(VERSION_FILE), "# x\nversion= 1.0.0 \n").unwrap();
+        std::fs::create_dir(dir.path().join("ui")).unwrap();
+        // the Cockpit is a surface too: a share without cockpit/ is skewed for it alone
+        let half = ServedShare::inspect(dir.path(), None, "1.0.0");
+        assert_eq!(half.standing, ShareStanding::Skewed);
+        assert!(half.ui_present && !half.cockpit_present);
+        let reason = half.reason.unwrap();
+        assert!(reason.contains("holds no cockpit/, so every /cockpit/assets/ file answers 404"));
+        assert!(!reason.contains("version"), "{reason}");
+
+        std::fs::create_dir(dir.path().join("cockpit")).unwrap();
+        let own = ServedShare::inspect(dir.path(), None, "1.0.0");
+        assert_eq!(own.standing, ShareStanding::Current);
+        assert_eq!(own.version.as_deref(), Some("1.0.0"));
+        let json = serde_json::to_value(&own).unwrap();
+        assert!(
+            json.get("reason").is_none(),
+            "a current share writes no reason"
+        );
+        assert_eq!(json["standing"], "current");
+        assert_eq!(json["ui_present"], true);
+        assert_eq!(json["cockpit_present"], true);
+    }
 
     /// The word each offer is printed as is the word it is declared and serialised as, so a
     /// reader of the table and a reader of the JSON read one vocabulary.

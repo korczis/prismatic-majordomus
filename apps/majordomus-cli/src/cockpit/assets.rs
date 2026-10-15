@@ -15,9 +15,14 @@
 //! Nothing is compiled into the executable. `share/` is where this tool keeps its data —
 //! the kinds, the schemas, the allow-lists — and the Cockpit's stylesheet and scripts are
 //! more of the same, locatable per invocation and replaceable without a rebuild.
+//!
+//! Kept until the share moves: when a running server finds its share directory changed
+//! ([`crate::share_watch`]), every surface decides again whether its directory is there and
+//! forgets what it read, so a share repaired under the server is served without a restart.
 
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, OnceLock};
 
 use crate::http::router::{Request, Response};
@@ -73,7 +78,13 @@ impl Loaded {
 /// `share/cockpit/` under `/cockpit/assets/`, or another surface's beside it (ADR 0135).
 #[derive(Debug)]
 pub struct Assets {
+    /// Where this surface's directory is, or would be: `share_dir/<dir>`.
     root: Option<PathBuf>,
+    /// Whether `root` was a directory when it was last decided.
+    present: AtomicBool,
+    /// The share generation ([`crate::share_watch::generation`]) `present` and `loaded`
+    /// were decided under.
+    decided: AtomicU64,
     dir: &'static str,
     prefix: &'static str,
     loaded: Mutex<BTreeMap<String, Option<Arc<Loaded>>>>,
@@ -104,7 +115,9 @@ impl Assets {
     pub fn under(share_dir: &Path, dir: &'static str, prefix: &'static str) -> Self {
         let root = share_dir.join(dir);
         Assets {
-            root: root.is_dir().then_some(root),
+            present: AtomicBool::new(root.is_dir()),
+            decided: AtomicU64::new(crate::share_watch::generation()),
+            root: Some(root),
             dir,
             prefix,
             loaded: Mutex::new(BTreeMap::new()),
@@ -115,6 +128,8 @@ impl Assets {
     pub fn none() -> Self {
         Assets {
             root: None,
+            present: AtomicBool::new(false),
+            decided: AtomicU64::new(0),
             dir: DIR,
             prefix: PREFIX,
             loaded: Mutex::new(BTreeMap::new()),
@@ -142,7 +157,28 @@ impl Assets {
 
     /// Is there an asset directory?
     pub fn present(&self) -> bool {
-        self.root.is_some()
+        self.follow_share();
+        self.present.load(Ordering::SeqCst)
+    }
+
+    /// Decide again whether the directory is there, and forget every file read from it,
+    /// when the share this process serves has moved since the last decision: a share
+    /// repaired under a running server is served without a restart (ADR 0163). One atomic
+    /// read when nothing moved.
+    fn follow_share(&self) {
+        self.follow(crate::share_watch::generation());
+    }
+
+    /// [`Assets::follow_share`], for the share generation `now`.
+    fn follow(&self, now: u64) {
+        if self.decided.swap(now, Ordering::SeqCst) == now {
+            return;
+        }
+        let present = self.root.as_deref().is_some_and(Path::is_dir);
+        self.present.store(present, Ordering::SeqCst);
+        if let Ok(mut map) = self.loaded.lock() {
+            map.clear();
+        }
     }
 
     /// Is this file there and servable?
@@ -204,6 +240,7 @@ impl Assets {
     }
 
     fn load(&self, name: &str) -> Option<Arc<Loaded>> {
+        self.follow_share();
         self.load_from(name, &mut Vec::new())
     }
 
@@ -224,6 +261,9 @@ impl Assets {
     }
 
     fn read(&self, name: &str, visiting: &mut Vec<String>) -> Option<Loaded> {
+        if !self.present.load(Ordering::SeqCst) {
+            return None;
+        }
         let root = self.root.as_ref()?;
         let relative = safe_name(name)?;
         let media_type = media_type(&relative)?;
@@ -747,5 +787,39 @@ mod tests {
         assert!(none_match_holds("*", "\"ab\""));
         assert!(!none_match_holds("\"a\"", "\"ab\""));
         assert!(!none_match_holds("", "\"ab\""));
+    }
+
+    /// A surface whose directory was missing serves it once the share moves and it is
+    /// there, and forgets a file it read once the share moves and the file is gone: what a
+    /// running server does when its share is repaired, or goes bad, under it (ADR 0163).
+    #[test]
+    fn a_moved_share_is_decided_again() {
+        // read through `load_from`, which follows no share: the generation is the process's,
+        // and another test may have started a server that watches one
+        let served = |a: &Assets| a.load_from("ui.css", &mut Vec::new()).is_some();
+        let dir = tempfile::tempdir().unwrap();
+        let ui = Assets::under(dir.path(), "ui", "/ui/assets/");
+        assert!(!ui.present.load(Ordering::SeqCst));
+        assert!(!served(&ui));
+
+        std::fs::create_dir(dir.path().join("ui")).unwrap();
+        std::fs::write(dir.path().join("ui/ui.css"), "body{}").unwrap();
+        let generation = ui.decided.load(Ordering::SeqCst);
+        ui.follow(generation);
+        assert!(
+            !served(&ui),
+            "an unmoved share answers from what was decided"
+        );
+        ui.follow(generation + 1);
+        assert!(ui.present.load(Ordering::SeqCst));
+        assert!(served(&ui), "the repaired share is served");
+
+        std::fs::remove_dir_all(dir.path().join("ui")).unwrap();
+        ui.follow(generation + 2);
+        assert!(!ui.present.load(Ordering::SeqCst));
+        assert!(
+            !served(&ui),
+            "a file of a share that moved is not served from memory"
+        );
     }
 }

@@ -767,3 +767,101 @@ fn stop_leaves_a_server_of_another_checkout_alone() {
     assert_eq!(code, 0, "{out}");
     assert!(out.starts_with("stopped "), "{out}");
 }
+
+/// A share directory that is the distribution's in everything but its version: every entry
+/// of `dist_share()` linked into a temporary directory, and a `version.txt` stating
+/// `0.0.1`. Loadable as a share — its kinds and schemas are the real ones — and skewed for
+/// this executable, as a stale checkout's share is for an installed one (ADR 0163).
+fn a_skewed_share() -> tempfile::TempDir {
+    let dir = tempfile::tempdir().unwrap();
+    for entry in std::fs::read_dir(dist_share()).unwrap() {
+        let entry = entry.unwrap();
+        if entry.file_name() == "version.txt" {
+            continue;
+        }
+        std::os::unix::fs::symlink(entry.path(), dir.path().join(entry.file_name())).unwrap();
+    }
+    std::fs::write(dir.path().join("version.txt"), "version=0.0.1\n").unwrap();
+    dir
+}
+
+/// A server of this executable's own version answering for this checkout, over the share at
+/// `share`, which its lease names as found through `MAJORDOMUS_SHARE`. Like
+/// [`a_server_of_release`], the lease names no executable, so only the share can decide.
+fn a_server_over_share(f: &Fixture, share: &Path) -> String {
+    let url = a_server_of_release(f, majordomus_cli::VERSION);
+    let lease = lease_path(f);
+    let mut doc: Value = serde_json::from_str(&std::fs::read_to_string(&lease).unwrap()).unwrap();
+    doc["share"] = serde_json::json!({ "path": share, "origin": "MAJORDOMUS_SHARE" });
+    std::fs::write(&lease, doc.to_string()).unwrap();
+    url
+}
+
+#[test]
+fn ensure_replaces_a_server_whose_share_is_not_its_own() {
+    // The incident of 2026-10-14: a server of this very version answers, but over a share of
+    // another release. This executable locates a share of its own (the distribution's), so
+    // `ensure` starts a server over it, whose election takes the lease over, and says that
+    // it replaced the one it found and why. Before ADR 0163's S5 it reported `skewed` and
+    // left the server serving pages with no assets.
+    let f = Fixture::new();
+    let skewed = a_skewed_share();
+    let old_url = a_server_over_share(&f, skewed.path());
+    let (code, a, err) = ensure(&f.root(), &["--idle", "120"]);
+    assert_eq!(code, 0, "{a}\n{err}");
+    assert_eq!(a["standing"], "ready", "{a}");
+    assert_eq!(a["started"], true, "{a}");
+    assert_ne!(a["url"].as_str().unwrap(), old_url, "{a}");
+    let why = a["replaced"]
+        .as_str()
+        .unwrap_or_else(|| panic!("no replaced: {a}"));
+    assert!(why.contains("states version 0.0.1"), "{why}");
+    let LeaseFile::Document(doc) = LeaseFile::read(&lease_path(&f)) else {
+        panic!("no lease after the replacement")
+    };
+    assert_eq!(
+        doc.share.map(|s| s.path),
+        Some(dist_share()),
+        "the new server serves the share of its own version"
+    );
+    let (code, out, err) = mj(&f.root(), &["serve", "stop"]);
+    assert_eq!(code, 0, "serve stop: {out}{err}");
+}
+
+#[test]
+fn ensure_reports_a_skewed_server_it_has_no_share_to_replace_with() {
+    // The same server, but this executable locates the same skewed share (its
+    // MAJORDOMUS_SHARE is that directory): a second server over it would be skewed too, so
+    // nothing is started and the standing is reported with its remedy.
+    let f = Fixture::new();
+    let skewed = a_skewed_share();
+    let url = a_server_over_share(&f, skewed.path());
+    let out = common::majordomus()
+        .args(["serve", "ensure", "--format", "json", "--wait", "5"])
+        .current_dir(f.root())
+        .env("MAJORDOMUS_SHARE", skewed.path())
+        .output()
+        .expect("run majordomus");
+    let a: Value = serde_json::from_slice(&out.stdout).unwrap_or_else(|e| {
+        panic!(
+            "ensure printed no JSON ({e}): {}",
+            String::from_utf8_lossy(&out.stderr)
+        )
+    });
+    assert_eq!(out.status.code(), Some(10), "{a}");
+    assert_eq!(a["standing"], "skewed", "{a}");
+    assert_eq!(a["started"], false, "{a}");
+    assert!(a.get("replaced").is_none(), "{a}");
+    let reason = a["reason"].as_str().unwrap();
+    assert!(reason.contains("is not replaced"), "{reason}");
+    assert!(
+        reason.contains("serve --share"),
+        "the remedy is named: {reason}"
+    );
+    assert!(
+        matches!(LeaseFile::read(&lease_path(&f)), LeaseFile::Document(d) if d.url.as_deref() == Some(url.as_str())),
+        "the lease still names the server it found"
+    );
+    // never `serve stop` here: the lease names this test process, and stop signals its pid
+    std::fs::remove_file(lease_path(&f)).unwrap();
+}

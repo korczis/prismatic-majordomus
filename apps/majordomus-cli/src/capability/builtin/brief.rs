@@ -275,7 +275,10 @@ fn brief(ctx: &Context, input: BriefInput) -> Result<SessionBrief, CapabilityErr
     let doc = read.document();
     let own = doc.is_some_and(lease::is_own);
     let url = doc.and_then(|d| d.url.clone());
-    let answering = matches!(standing, ServerStanding::Ready | ServerStanding::Outdated);
+    let answering = matches!(
+        standing,
+        ServerStanding::Ready | ServerStanding::Outdated | ServerStanding::Skewed
+    );
 
     // The command line (and a plain request to a server that is not the leaseholder) asks
     // the leaseholder, which holds the board and the mesh. An MCP session of a superseded
