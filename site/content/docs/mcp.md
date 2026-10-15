@@ -442,15 +442,11 @@ transport, when it attached and when it was last seen. The `initialize` result's
 `instructions` tell a client the server's URL, its own peer id and every other peer with
 what it announced, before its first tool call.
 
-<div class="overflow-x-auto" tabindex="0">
-
-| tool | capability | arguments | answers |
-|---|---|---|---|
-| `majordomus_peers` | `peers.list` | `checkouts?` | every worker of the repository with the checkout it is on, the caller's own id, each peer's announcement, every pair of claims that meet, and which checkouts the answer covered |
-| `majordomus_announce` | `peers.announce` | `intent`, `scope?` | the calling peer's record, and the peers whose claimed scope it collides with |
-
-</div>
-
+Two tools serve the board: `majordomus_peers` reads it (`peers.list`) and
+`majordomus_announce` writes to it (`peers.announce`). Their arguments and answers are the
+registry's, and this page does not repeat them: the generated reference
+([`generated/capabilities.md`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/docs/generated/capabilities.md), `/registry/mcp/` on the site) and
+`majordomus_capability` at runtime carry them.
 
 An announcement is one line of intent and the repository-relative paths the peer expects
 to touch. The board lives in the server's memory and is gone with the process;
@@ -542,16 +538,10 @@ provider hooks of its own the connection is the only thing that can draw its bou
 Until it, drawing the boundary below the model was wired for Claude Code alone, and the
 repository's claim to do so was a claim about one vendor.
 
-<div class="overflow-x-auto" tabindex="0">
-
-| tool | capability | arguments | answers |
-|---|---|---|---|
-| `majordomus_session_attach` | `episodes.attach` | `external_id` | the episode this connection now holds, whether it was resumed, and the reattach grace |
-| `majordomus_session_detach` | `episodes.detach` | `external_id?` | the episode as it was closed, and what the repository's end event reported |
-| `majordomus_episodes` | `episodes.list` | none | every episode this server holds, open and detached, and the caller's own |
-
-</div>
-
+A connection holds an episode with `majordomus_session_attach` (`episodes.attach`), closes it
+with `majordomus_session_detach` (`episodes.detach`) and reads them with
+`majordomus_episodes` (`episodes.list`); their arguments and answers are in the generated
+reference ([`generated/capabilities.md`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/docs/generated/capabilities.md), `/registry/mcp/`).
 
 <pre class="mermaid">
 stateDiagram-v2
@@ -672,37 +662,25 @@ manifest section it falls under, and its size.
 
 ## Tools
 
-<div class="overflow-x-auto" tabindex="0">
+Every tool is a projection of one capability of the registry, under the name that
+capability declares (`objects.list` is served as `majordomus_list`, `worktree.status` as
+`majordomus_worktree_status`). The list grows whenever a module is composed, so this page
+keeps no copy of it: a hand-written table of tools is the second definition ADR 0004 calls
+a design defect, and the copy that stood here had already fallen behind the registry it
+repeated. The total reference, with every tool's capability, arguments and answers, is
+derived:
 
-| tool | capability | arguments | answers |
-|---|---|---|---|
-| `majordomus_list` | `objects.list` | `kind?`, `tag?` | the objects, summarised |
-| `majordomus_get` | `objects.get` | `uri` | tagged by `source`: `declarative`, a file of the layer with metadata, provenance, media type and content; or `builtin`, a query the URI projects (`majordomus://repository`) with its `answer`, the capability's provenance and the same text as `content` |
-| `majordomus_search` | `objects.search` | `query`, `kind?`, `limit?` | case-insensitive substring hits with one snippet line each |
-| `majordomus_entity` | `entity.show` | `uri?`, `kind?` + `slug?` | one object as an addressable node: its derived route, the references it declares, the references that resolve to it, the surfaces that answer for it, the state of the executable artefacts it names, and its public documentation page |
-| `majordomus_kinds` | `entity.kinds` | none | every kind the index holds with the route of its listing, how many objects are addressable, and every route collision there is |
-| `majordomus_repository` | `repository.info` | none | the `majordomus://repository` document |
-| `majordomus_scope` | `repository.scope` | none | the `majordomus://scope` document: the declaration, its origin, the tally |
-| `majordomus_scope_classify` | `repository.scope_classify` | `path` | whether a repository-relative path is in or out of the scope, the reason, and the rule that decided |
-| `majordomus_capabilities` | `capabilities.list` | `kind?`, `exposure?` | every capability with its projections |
-| `majordomus_capability` | `capabilities.describe` | `id` | one capability: schemas, provenance, every projection |
-| `majordomus_peers` | `peers.list` | `checkouts?` | every worker of the repository, gathered from the board of every checkout (above) |
-| `majordomus_announce` | `peers.announce` | `intent`, `scope?` | records what the calling peer is working on (above) |
-| `majordomus_mcp` | `mcp.projection` | `effect?` | the projection described (below): server, protocol versions, transports and attached sessions, methods served, every tool with its effect and hints, the writers, the resources, and where each declared client's configuration stands here |
-| `majordomus_perf` | `perf.counters` | none | this process's work counters and phase timings: what happened once at startup, what happens per call |
-| `majordomus_worktrees` | `worktree.topology` | none | the `majordomus://worktrees` document: the container, the trunk, every worktree with its standing and diagnostics, every branch, the tallies |
-| `majordomus_worktree_status` | `worktree.status` | `path?` | one worktree — the repository's own, or the one holding `path` — with its standing, canonical path, uncommitted work and whether it is where it belongs; a path in another repository is refused |
-| `majordomus_worktree_inspect` | `worktree.inspect` | `branch` | the canonical path of a branch, whether it exists, what occupies the path, the worktree holding it |
-| `majordomus_worktree_migration_plan` | `worktree.migration_plan` | none | every misplaced worktree with where it belongs, how it would move and what blocks it; the exceptions; changes nothing |
+- [`generated/capabilities.md`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/docs/generated/capabilities.md) — every capability with its MCP
+  tool, HTTP route and command (`majordomus generate`);
+- `/registry/mcp/` on the site — one row per tool the registry projects, each linking its
+  capability's page (case 532 holds it to the registry, no more and no fewer);
+- `majordomus_capabilities` and `majordomus_capability` at runtime — the registry of the
+  executable that is answering.
 
-</div>
-
-
-The table above is the core set and not the whole of it: the tool list is a projection of
-the capability registry, it grows whenever a module is composed, and a list in prose that
-claimed to be complete would be wrong the next time one is. `majordomus_capabilities` and
-`docs/generated/capabilities.md` are the derived, total reference; what is written here is
-what a reader needs before opening it.
+Where the sections above and below name a tool, they say why it exists and how it behaves;
+what it takes and returns is the registry's. Case
+`3062_the_mcp_reference_repeats_no_registry_entry` refuses a hand-written tool row in any
+document under `docs/` outside `docs/generated/`.
 
 ### Sessions and continuity
 
@@ -711,19 +689,12 @@ and they are the reason the server binds to the loopback interface. They are ser
 never published: no generator writes them into `docs/generated/` and no site page carries
 one.
 
-<div class="overflow-x-auto" tabindex="0">
-
-| tool | capability | answers |
-|---|---|---|
-| `majordomus_continuity` | `continuity.state` | what a worker resuming *here* would be handed: the episode the pointer resolves to, the active task, the handover and checkpoint that resolve for this worktree and branch with their labels, the blockers |
-| `majordomus_lifecycle_episodes` | `lifecycle.episodes` | every open episode of the store — not only the one the pointer follows — with its provider session, its standing (`current`, `open`, `foreign`, `stranded`) and the last ledger line stamped with it |
-| `majordomus_lifecycle_recovery` | `lifecycle.recovery` | episodes that can no longer close themselves and the command that clears each, temporary files a killed close left in the tracked sessions section, the pointer's layout, and the started-against-closed arithmetic |
-| `majordomus_lifecycle_runtime` | `lifecycle.runtime` | the commit this process's index was built at, against the commit the repository is on right now, and whether they agree |
-| `majordomus_lifecycle_providers` | `lifecycle.providers` | per provider: the lifecycle events its adapter declares, whether it can archive prompts, and the enforcement entries this repository wires to its hook |
-| `majordomus_lifecycle_closed` | `lifecycle.closed` | the tracked records a clone receives: how many, how many on this branch, and the newest twenty |
-
-</div>
-
+They are `majordomus_continuity` (`continuity.state`) — what a worker resuming *here* would
+be handed — and the operator's five: `majordomus_lifecycle_episodes`,
+`majordomus_lifecycle_recovery`, `majordomus_lifecycle_runtime`,
+`majordomus_lifecycle_providers` and `majordomus_lifecycle_closed` (`lifecycle.*`). Because
+no generated page carries them, their arguments and answers are read where they are served:
+`majordomus_capability` with the id, or `majordomus capabilities describe <id>`.
 
 The first answers the worker's question and the rest answer the operator's, which is a
 different question and not a superset: `continuity.state` follows
