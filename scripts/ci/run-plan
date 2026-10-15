@@ -29,7 +29,9 @@
 # runs a budget of it, chosen from what CI recorded and never from a list typed by hand:
 #
 #   - the structure gates of this tree's plan that make no network call (`network: true` in
-#     .ai/repo/ci/gates.yaml) and whose recorded seconds (.ai/repo/ci/structure-durations.tsv,
+#     .ai/repo/ci/gates.yaml), build nothing (`builds: true`: the gate compiles the crate,
+#     which CI's recorded seconds never include, because its runner has the build cached) and
+#     whose recorded seconds (.ai/repo/ci/structure-durations.tsv,
 #     written by `scripts/ci-baseline --structure-durations`) are at most MJ_PUSH_GATE_SECONDS
 #     (default 15), cheapest first, while their sum stays within MJ_PUSH_GATE_BUDGET (default
 #     120);
@@ -110,13 +112,14 @@ if [ "$before_push" = 1 ]; then
   t_all="$(date +%s)"; failed=""; chosen=""; spent=0
   printf 'run-plan --before-push: %s — %s\n' "$(jq -r .mode "$plan")" "$(jq -r .reason "$plan")"
   # candidates, cheapest first: "<seconds> <id>", or a line saying why a gate is left out
-  while read -r id network; do
+  while read -r id network builds; do
     secs="$(awk -F'\t' -v g="$id" '$1 == g { print $2 }' "$durations")"
     if [ "$network" = true ]; then printf '  left out %s: it reaches the network; CI runs it\n' "$id"
+    elif [ "$builds" = true ]; then printf '  left out %s: it builds the crate, which the %ss CI recorded do not include; CI runs it\n' "$id" "${secs:-no}"
     elif [ -z "$secs" ]; then printf '  left out %s: no recorded duration in %s; CI runs it\n' "$id" "$durations"
     elif [ "$secs" -gt "$per_gate" ]; then printf '  left out %s: CI recorded %ss, over the %ss a push spends on one gate\n' "$id" "$secs" "$per_gate"
     else printf '%s %s\n' "$secs" "$id" >> "$plan.cand"; fi
-  done < <(jq -r '.gates[] | select(.job == "structure" and .selected) | "\(.id) \(.network // false)"' "$plan")
+  done < <(jq -r '.gates[] | select(.job == "structure" and .selected) | "\(.id) \(.network // false) \(.builds // false)"' "$plan")
   if [ -f "$plan.cand" ]; then
     while read -r secs id; do
       if [ $(( spent + secs )) -gt "$budget" ]; then

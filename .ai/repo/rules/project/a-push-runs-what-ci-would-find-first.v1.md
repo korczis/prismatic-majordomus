@@ -3,7 +3,7 @@ id: project.a-push-runs-what-ci-would-find-first
 version: 1
 kind: rule
 title: A push runs what CI would find first
-description: Before a push, the pre-push hook runs the plan's structure gates that CI recorded as cheap and that reach no network, and the suite's fast cases, within a stated bound, so a failure a local run finds in seconds never costs a CI round trip.
+description: Before a push, the pre-push hook runs the plan's structure gates that CI recorded as cheap, that reach no network and that build nothing, and the suite's fast cases, within a stated bound, so a failure a local run finds in seconds never costs a CI round trip.
 statement: Push through the pre-push hook, which runs `scripts/ci/run-plan --before-push` after `finish --check`. A gate or case it refuses is fixed before the push. A gate it leaves out is named with its reason and left to CI. Nothing skips the step.
 status: active
 class: blocking
@@ -37,14 +37,20 @@ local and certain to fail the same way, chosen from what CI measured.
   cannot be computed. `scripts/ci-plan` refuses a base or head that names no commit. It used
   to pipe a failing `git diff` into `sort`, whose status hid the failure, and so returned a
   plan computed from nothing with exit 0.
-- **Gates.** It runs the plan's selected structure gates that are not marked `network: true`
-  in `.ai/repo/ci/gates.yaml` and whose recorded seconds are at most `MJ_PUSH_GATE_SECONDS`
+- **Gates.** It runs the plan's selected structure gates that are marked neither
+  `network: true` nor `builds: true` in `.ai/repo/ci/gates.yaml` and whose recorded seconds are at most `MJ_PUSH_GATE_SECONDS`
   (default 15). The seconds come from `.ai/repo/ci/structure-durations.tsv`, which
   `scripts/ci-baseline --structure-durations` writes from the `ci-metrics-structure`
   artifacts CI uploads. It takes them cheapest first while their sum stays within
   `MJ_PUSH_GATE_BUDGET` (default 120).
+- **Builds.** A gate marked `builds: true` compiles the crate before it measures (`cargo run`,
+  `cargo test`). CI's runner has the build cached, so the seconds it records leave the build
+  out. On 2026-10-15 two such gates, `skills-proof` and `economics-claims` (5 and 6 s in CI),
+  made the step take 641, 1178 and 1693 s on a workstation against its bound of 180. Every
+  such gate is CI's. `scripts/ci-plan` refuses a gate whose command calls cargo without the
+  mark, so a new one cannot reach a push undeclared.
 - **Skipped gates.** Every gate left out prints one line naming it and why: it reaches the
-  network, it has no recorded duration, it is over the per-gate limit, or it is past the
+  network, it builds the crate, it has no recorded duration, it is over the per-gate limit, or it is past the
   budget. A missing durations file refuses the push.
 - **Cases.** It runs the cases `.ai/repo/ci/suite-durations.tsv` records at most
   `MJ_PUSH_CASE_SECONDS` (default 5), four at a time. It leaves out, by name, a case that
@@ -70,8 +76,11 @@ for the same reason". There is no flag that skips the step, as there is no `--no
 durations it writes. It proves:
 
 - a cheap gate runs, and a cheap failing gate refuses the push with its output;
-- each kind of left-out gate is named with its reason: the network, no recorded duration,
-  over the per-gate limit, and past the budget;
+- each kind of left-out gate is named with its reason: the network, a build, no recorded
+  duration, over the per-gate limit, and past the budget;
+- every gate of the model whose command calls cargo carries `builds: true` in the plan, the
+  step leaves each such structure gate of the full plan out by name, and the model refuses a
+  cargo gate without the mark or with a mark that is not `true`;
 - a missing durations file, or a plan that cannot be computed (an unknown base), refuses the
   push;
 - the hook calls the step, the policy declares the enforcement, and the plan carries the
