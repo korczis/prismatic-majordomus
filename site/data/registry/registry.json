@@ -6,23 +6,23 @@
     "version": "0.26.0"
   },
   "registry": {
-    "fingerprint": "dcd73504305fb981edaa3320c23c9994f922898e6750a89a9804ff556fc13e5b",
+    "fingerprint": "fa1a53c2c207373907e9c94876eb042128ad96bdc02d2f8edfa4b84a788a1a21",
     "summary": {
-      "total": 2379,
+      "total": 2382,
       "builtin": 199,
-      "declarative": 2180,
+      "declarative": 2183,
       "by_kind": {
         "command": 30,
         "query": 169,
-        "resource": 2180
+        "resource": 2183
       },
       "by_stability": {
         "behaviorally_verified": 139,
         "experimental": 51,
-        "implemented": 2189
+        "implemented": 2192
       },
       "mcp_tools": 190,
-      "mcp_resources": 2235,
+      "mcp_resources": 2238,
       "http_routes": 194,
       "cli_commands": 107,
       "modules": 91,
@@ -55597,11 +55597,16 @@
                   },
                   {
                     "type": "string",
+                    "const": "skewed",
+                    "description": "The server answers for this checkout at this executable's version, but serves a\nshare directory that is not its own: one that states another version or none, or\nlacks a surface's directory (`ui/`, `cockpit/`), so the pages it serves have no\nassets and what it reads from `share/` is another release's (ADR 0163)."
+                  },
+                  {
+                    "type": "string",
                     "const": "stale",
                     "description": "The lease names a server that does not answer, or is not a lease at all."
                   }
                 ],
-                "description": "Where a checkout's server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable's code.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Stale];\nlet words: Vec<&str> = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\"absent\", \"starting\", \"ready\", \"outdated\", \"stale\"]);\nassert_eq!(serde_json::from_str::<ServerStanding>(\"\\\"stale\\\"\").unwrap(), ServerStanding::Stale);\n```"
+                "description": "Where a checkout's server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable's code.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Skewed, ServerStanding::Stale];\nlet words: Vec<&str> = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\"absent\", \"starting\", \"ready\", \"outdated\", \"skewed\", \"stale\"]);\nassert_eq!(serde_json::from_str::<ServerStanding>(\"\\\"stale\\\"\").unwrap(), ServerStanding::Stale);\n```"
               }
             }
           }
@@ -72725,7 +72730,7 @@
         "module": "server",
         "kind": "query",
         "title": "The shared server, and every server of the repository",
-        "description": "Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; the lease this process holds when it is the server; and, unless `checkouts` narrows it to this one, every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. `checkouts: this` reads one lease and probes one server and enumerates no other checkout, which is what a caller asking only about the checkout it is in should pay. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes.",
+        "description": "Where this checkout's server stands — absent, starting, ready, outdated, skewed or stale — measured against what this executable would serve; the lease this process holds when it is the server; and, unless `checkouts` narrows it to this one, every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. Each lease carries the share directory its server serves, measured on every call: the version its `version.txt` states, whether it holds `ui/`, and `skewed` with the reason when it states another version than the executable of that server or lacks `ui/` or `cockpit/`, the state in which every asset of those pages answers 404; a server that answers at this executable's version over such a share stands `skewed` rather than `ready`. `checkouts: this` reads one lease and probes one server and enumerates no other checkout, which is what a caller asking only about the checkout it is in should pay. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes.",
         "input": {
           "name": "ServerStatusInput",
           "schema": {
@@ -72950,13 +72955,88 @@
                       "null"
                     ],
                     "description": "The executable's version; absent for a server too old to have written one."
+                  },
+                  "share": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/ServedShare"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "The share directory the server serves, measured now against `version`: the version\nit states, whether it holds `ui/`, and `skewed` with the reason when either differs\nfrom what the server's executable needs. Absent when the lease names no share — a\nserver older than this field, or one that has not located its share yet."
                   }
                 },
                 "required": [
                   "pid",
                   "started_at"
                 ],
-                "description": "A lease as a reader sees it: what the server wrote about itself, without the token that\nmakes the file the server's own.\n\n```\nuse majordomus_cli::capability::builtin::server::LeaseView;\nlet view = LeaseView { pid: 7, url: Some(\"http://127.0.0.1:8741\".into()),\n    started_at: \"2026-09-10T00:00:00Z\".into(), executable: None, version: Some(\"1.0.0\".into()) };\nlet v = serde_json::to_value(&view).unwrap();\nassert_eq!(v[\"pid\"], 7);\nassert!(v.get(\"token\").is_none() && v.get(\"root\").is_none());\n```"
+                "description": "A lease as a reader sees it: what the server wrote about itself, without the token that\nmakes the file the server's own.\n\n```\nuse majordomus_cli::capability::builtin::server::LeaseView;\nlet view = LeaseView { pid: 7, url: Some(\"http://127.0.0.1:8741\".into()),\n    started_at: \"2026-09-10T00:00:00Z\".into(), executable: None, version: Some(\"1.0.0\".into()),\n    share: None };\nlet v = serde_json::to_value(&view).unwrap();\nassert_eq!(v[\"pid\"], 7);\nassert!(v.get(\"token\").is_none() && v.get(\"root\").is_none());\nassert!(v.get(\"share\").is_none(), \"a lease that names no share is read without one\");\n```"
+              },
+              "ServedShare": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "The share directory."
+                  },
+                  "origin": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "How it was found, when the server said."
+                  },
+                  "version": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The version its `version.txt` states; absent when it states none."
+                  },
+                  "ui_present": {
+                    "type": "boolean",
+                    "description": "Whether it holds `ui/`, the UI's stylesheet and scripts."
+                  },
+                  "cockpit_present": {
+                    "type": "boolean",
+                    "description": "Whether it holds `cockpit/`, the Cockpit's stylesheet and scripts."
+                  },
+                  "standing": {
+                    "$ref": "#/$defs/ShareStanding",
+                    "description": "Whether it is the executable's own."
+                  },
+                  "reason": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Why it is skewed, when it is."
+                  }
+                },
+                "required": [
+                  "path",
+                  "ui_present",
+                  "cockpit_present",
+                  "standing"
+                ],
+                "description": "A share directory measured against the version of the executable that serves it: where\nit is, how it was found, the version it states, whether it holds the directory of each\nsurface the server serves pages from — `ui/` for `/ui`, `cockpit/` for `/cockpit` — and\nwhether that makes it the executable's own (ADR 0163).\n\nMeasured when it is asked for, never recorded: a checkout moves under a running server,\nand the directory a lease names may state another version an hour later.\n\n```\nuse majordomus_cli::share::{ServedShare, ShareStanding};\nlet dir = tempfile::tempdir().unwrap();\nstd::fs::write(dir.path().join(\"version.txt\"), \"version=0.26.0\\n\").unwrap();\nstd::fs::create_dir(dir.path().join(\"ui\")).unwrap();\nstd::fs::create_dir(dir.path().join(\"cockpit\")).unwrap();\nlet own = ServedShare::inspect(dir.path(), Some(\"installation\"), \"0.26.0\");\nassert_eq!(own.standing, ShareStanding::Current);\nassert!(own.reason.is_none() && own.ui_present);\n\nlet older = ServedShare::inspect(dir.path(), None, \"0.27.0\");\nassert_eq!(older.standing, ShareStanding::Skewed);\nassert!(older.reason.unwrap().contains(\"states version 0.26.0\"));\n\nstd::fs::remove_dir(dir.path().join(\"ui\")).unwrap();\nlet blank = ServedShare::inspect(dir.path(), None, \"0.26.0\");\nassert_eq!(blank.standing, ShareStanding::Skewed);\nassert!(!blank.ui_present && blank.reason.unwrap().contains(\"no ui/\"));\n```"
+              },
+              "ShareStanding": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "current",
+                    "description": "It states the executable's version and holds the directory of every surface the\nserver serves pages from."
+                  },
+                  {
+                    "type": "string",
+                    "const": "skewed",
+                    "description": "It states another version, states none, or lacks `ui/` or `cockpit/`: a server\nserving it answers with one release's code over another release's data, and those\npages are unstyled or blank."
+                  }
+                ],
+                "description": "Whether a share directory is the one an executable should serve.\n\n```\nuse majordomus_cli::share::ShareStanding;\nassert_eq!(serde_json::to_value(ShareStanding::Current).unwrap(), \"current\");\nassert_eq!(serde_json::to_value(ShareStanding::Skewed).unwrap(), \"skewed\");\n```"
               },
               "ServerStanding": {
                 "oneOf": [
@@ -72982,11 +73062,16 @@
                   },
                   {
                     "type": "string",
+                    "const": "skewed",
+                    "description": "The server answers for this checkout at this executable's version, but serves a\nshare directory that is not its own: one that states another version or none, or\nlacks a surface's directory (`ui/`, `cockpit/`), so the pages it serves have no\nassets and what it reads from `share/` is another release's (ADR 0163)."
+                  },
+                  {
+                    "type": "string",
                     "const": "stale",
                     "description": "The lease names a server that does not answer, or is not a lease at all."
                   }
                 ],
-                "description": "Where a checkout's server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable's code.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Stale];\nlet words: Vec<&str> = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\"absent\", \"starting\", \"ready\", \"outdated\", \"stale\"]);\nassert_eq!(serde_json::from_str::<ServerStanding>(\"\\\"stale\\\"\").unwrap(), ServerStanding::Stale);\n```"
+                "description": "Where a checkout's server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable's code.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Skewed, ServerStanding::Stale];\nlet words: Vec<&str> = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\"absent\", \"starting\", \"ready\", \"outdated\", \"skewed\", \"stale\"]);\nassert_eq!(serde_json::from_str::<ServerStanding>(\"\\\"stale\\\"\").unwrap(), ServerStanding::Stale);\n```"
               },
               "ServerView": {
                 "type": "object",
@@ -81189,7 +81274,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 362,
+        "capabilities": 363,
         "capability_ids": []
       },
       {
@@ -81760,7 +81845,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 481,
+        "capabilities": 483,
         "capability_ids": []
       },
       {
@@ -81850,7 +81935,7 @@
     ]
   },
   "index": {
-    "fingerprint": "989c3406d092f52a3c8908b082b7356ee825e5fdd9d03625425c0523881962d0",
+    "fingerprint": "ee126771d38eb215a8fcad545b0e387ad28fab2dd0e3808910a47d6806fedbf2",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -81890,7 +81975,7 @@
       "gap": 3,
       "implementation": 52,
       "intent": 4,
-      "issue": 362,
+      "issue": 363,
       "knowledge": 4,
       "mesh-declaration": 1,
       "milestone": 35,
@@ -81904,7 +81989,7 @@
       "session": 89,
       "skill": 8,
       "taxonomy": 10,
-      "test": 481,
+      "test": 483,
       "use-case": 49,
       "workspace": 1
     },
@@ -87488,7 +87573,7 @@
         "title": "Capabilities — one definition, every interface derived",
         "path": "docs/CAPABILITIES.md",
         "source_class": "document",
-        "bytes": 44853
+        "bytes": 45164
       },
       {
         "uri": "majordomus://document/docs/CATALOGUE.md",
@@ -87704,7 +87789,7 @@
         "title": "The repository environment — one snapshot, every surface a rendering",
         "path": "docs/ENVIRONMENT.md",
         "source_class": "document",
-        "bytes": 7378
+        "bytes": 9468
       },
       {
         "uri": "majordomus://document/docs/EVIDENCE.md",
@@ -87839,7 +87924,7 @@
         "title": "MCP surface — `majordomus mcp`",
         "path": "docs/MCP.md",
         "source_class": "document",
-        "bytes": 66066
+        "bytes": 67846
       },
       {
         "uri": "majordomus://document/docs/MESH.md",
@@ -87920,7 +88005,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 131889
+        "bytes": 134288
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -95124,6 +95209,17 @@
         "bytes": 6346
       },
       {
+        "uri": "majordomus://issue/I2609",
+        "kind": "issue",
+        "identity": "I2609",
+        "title": "An executable reads its own share: a skewed share found by convention is passed over for the installation's own",
+        "description": "Make an installed executable serve the share it was installed with when the share a convention found first is skewed for it (ADR 0163, point 2): judge every conventional candidate by the version it states and the ui/ it holds, use the first that is the executable's own, and name every share passed over and why in the origin of the one used.",
+        "path": ".ai/repo/project/issues/I2609.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4039
+      },
+      {
         "uri": "majordomus://issue/I2652",
         "kind": "issue",
         "identity": "I2652",
@@ -102247,6 +102343,14 @@
         "bytes": 8281
       },
       {
+        "uri": "majordomus://test/test/cases/2994_an_executable_reads_its_own_share.sh",
+        "kind": "test",
+        "identity": "test/cases/2994_an_executable_reads_its_own_share.sh",
+        "path": "test/cases/2994_an_executable_reads_its_own_share.sh",
+        "source_class": "case",
+        "bytes": 5041
+      },
+      {
         "uri": "majordomus://test/test/cases/2999_delivery_is_expedited_only_where_the_rule_says.sh",
         "kind": "test",
         "identity": "test/cases/2999_delivery_is_expedited_only_where_the_rule_says.sh",
@@ -102397,6 +102501,14 @@
         "path": "test/cases/303_one_source_serves_two_mounts.sh",
         "source_class": "case",
         "bytes": 10098
+      },
+      {
+        "uri": "majordomus://test/test/cases/3041_a_server_reports_the_share_it_serves.sh",
+        "kind": "test",
+        "identity": "test/cases/3041_a_server_reports_the_share_it_serves.sh",
+        "path": "test/cases/3041_a_server_reports_the_share_it_serves.sh",
+        "source_class": "case",
+        "bytes": 7300
       },
       {
         "uri": "majordomus://test/test/cases/304_a_provider_is_declared_once.sh",
@@ -105449,7 +105561,7 @@
       "identity": [
         "id"
       ],
-      "objects": 362
+      "objects": 363
     },
     {
       "name": "knowledge",
@@ -105601,7 +105713,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 481
+      "objects": 483
     },
     {
       "name": "use-case",
@@ -140336,7 +140448,7 @@
         "name": "majordomus_server",
         "id": "server.status",
         "title": "The shared server, and every server of the repository",
-        "description": "Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; the lease this process holds when it is the server; and, unless `checkouts` narrows it to this one, every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. `checkouts: this` reads one lease and probes one server and enumerates no other checkout, which is what a caller asking only about the checkout it is in should pay. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes.",
+        "description": "Where this checkout's server stands — absent, starting, ready, outdated, skewed or stale — measured against what this executable would serve; the lease this process holds when it is the server; and, unless `checkouts` narrows it to this one, every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. Each lease carries the share directory its server serves, measured on every call: the version its `version.txt` states, whether it holds `ui/`, and `skewed` with the reason when it states another version than the executable of that server or lacks `ui/` or `cockpit/`, the state in which every asset of those pages answers 404; a server that answers at this executable's version over such a share stands `skewed` rather than `ready`. `checkouts: this` reads one lease and probes one server and enumerates no other checkout, which is what a caller asking only about the checkout it is in should pay. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes.",
         "kind": "query",
         "read_only": true,
         "effect": "read",

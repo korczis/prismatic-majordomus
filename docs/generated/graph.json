@@ -35352,6 +35352,56 @@
         }
       },
       {
+        "id": "majordomus://issue/I2609",
+        "kind": "issue",
+        "label": "I2609",
+        "summary": "An executable reads its own share: a skewed share found by convention is passed over for the installation's own",
+        "route": "/cockpit/objects/issue/i2609",
+        "source": ".ai/repo/project/issues/I2609.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "An installed executable under a MAJORDOMUS_SHARE that is skewed for it serves the share beside it, and the origin names the share passed over and why",
+            "An installed executable run in a repository whose share/ is skewed for it serves the share beside it, and says so the same way",
+            "--share is used as given, skewed or not",
+            "With no matching share beside the executable, the first share found is served as before and server.status reports it skewed",
+            "Each branch of the policy has a unit test that runs Share::locate_by_convention without the environment or the executable's real path, and fails on the tree before the change"
+          ],
+          "created_at": "2026-10-13",
+          "depends_on": [],
+          "evidence_required": [
+            "installed_layout_case_2994",
+            "share_locate_unit_tests"
+          ],
+          "milestone": "adopter-upgrades",
+          "non_scope": [
+            "MAJORDOMUS_ROOT and MAJORDOMUS_URL inherited from another checkout: a separate leaf",
+            "The shell tool's own reading of the share in lib/common.sh: a separate leaf",
+            "serve ensure replacing a skewed server and a running server re-reading its share (ADR 0163 point 4, S5)",
+            "The rule project.a-server-serves-its-own-share and doctor's report (ADR 0163 points 5-6, S6)"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/share.rs",
+            "apps/majordomus-cli/src/app.rs",
+            "apps/majordomus-cli/src/commands/capabilities.rs",
+            "test/cases/2994_an_executable_reads_its_own_share.sh",
+            "docs/ENVIRONMENT.md",
+            "docs/CAPABILITIES.md",
+            "docs/MCP.md",
+            ".ai/repo/project/issues/I2609.yaml"
+          ],
+          "slug": "an-executable-reads-its-own-share",
+          "updated_at": "2026-10-15",
+          "validation": [
+            "bin/majordomus plan validate",
+            "bash test/run.sh 2994_an_executable_reads_its_own_share 3041_a_server_reports_the_share_it_serves",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib share::"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I2652",
         "kind": "issue",
         "label": "I2652",
@@ -52932,6 +52982,13 @@
         "source": "test/cases/2985_session_records_are_capped_and_archived.sh"
       },
       {
+        "id": "majordomus://test/test/cases/2994_an_executable_reads_its_own_share.sh",
+        "kind": "test",
+        "label": "test/cases/2994_an_executable_reads_its_own_share.sh",
+        "route": "/cockpit/objects/test/test-cases-2994-an-executable-reads-its-own-share-sh",
+        "source": "test/cases/2994_an_executable_reads_its_own_share.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/2999_delivery_is_expedited_only_where_the_rule_says.sh",
         "kind": "test",
         "label": "test/cases/2999_delivery_is_expedited_only_where_the_rule_says.sh",
@@ -53063,6 +53120,13 @@
         "label": "test/cases/303_one_source_serves_two_mounts.sh",
         "route": "/cockpit/objects/test/test-cases-303-one-source-serves-two-mounts-sh",
         "source": "test/cases/303_one_source_serves_two_mounts.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3041_a_server_reports_the_share_it_serves.sh",
+        "kind": "test",
+        "label": "test/cases/3041_a_server_reports_the_share_it_serves.sh",
+        "route": "/cockpit/objects/test/test-cases-3041-a-server-reports-the-share-it-serves-sh",
+        "source": "test/cases/3041_a_server_reports_the_share_it_serves.sh"
       },
       {
         "id": "majordomus://test/test/cases/304_a_provider_is_declared_once.sh",
@@ -78314,6 +78378,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2609",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2609",
+        "target": "majordomus://milestone/adopter-upgrades",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I2652",
         "target": "kind:issue",
         "kind": "is_a"
@@ -82799,6 +82873,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/2994_an_executable_reads_its_own_share.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/2999_delivery_is_expedited_only_where_the_rule_says.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -82890,6 +82969,11 @@
       },
       {
         "source": "majordomus://test/test/cases/303_one_source_serves_two_mounts.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3041_a_server_reports_the_share_it_serves.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -88190,8 +88274,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2796,
-      "edges": 6129,
+      "nodes": 2799,
+      "edges": 6133,
       "acyclic": false,
       "truncated": false
     }

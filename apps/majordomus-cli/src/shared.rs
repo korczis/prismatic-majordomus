@@ -189,6 +189,15 @@ impl SharedServer {
             None => server::bind(host, port)?,
         };
         let url = bound.url();
+        // A share of another release, or one without `ui/`, still serves — the reports say
+        // so (`server.status` measures the share the lease names) — but the log says it once
+        // at the start, where a person reading why the UI is blank looks first.
+        if let Some(dir) = share_dir {
+            let origin = crate::lease::declared_share().map(|s| s.origin.as_str());
+            if let Some(reason) = crate::share::ServedShare::inspect(dir, origin, version).reason {
+                tracing::warn!(share = %dir.display(), "{reason}");
+            }
+        }
         let ctx_for_mesh = live.current();
         let endpoint = Arc::new(McpEndpoint::new(Arc::clone(&live), version, url.clone()));
         let router = Router::new(live, version)

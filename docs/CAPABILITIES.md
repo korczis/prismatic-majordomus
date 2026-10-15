@@ -232,7 +232,10 @@ nothing and says so.
 Which files are declarative objects, and of which kind, is the repository's:
 `.ai/repo/knowledge/sources.yaml` maps pathspecs to kinds. How a kind is read is data
 too, in the tool distribution's share directory (`--share`, `MAJORDOMUS_SHARE`, the
-repository's own `share/`, or the one beside the executable):
+repository's own `share/`, or the one beside the executable). `--share` is used as given;
+a share found by one of the three conventions that states another version than the
+executable, or lacks a surface it serves (`ui/`, `cockpit/`), is passed over for a later one that matches, and the share
+used names the one it passed over and why in its origin (ADR 0163). Its files:
 
 - `share/kinds.yaml` — per kind: the format (`markdown`, `yaml`, `text`), whether front
   matter is required, which JSON Schema the metadata must satisfy, which fields carry

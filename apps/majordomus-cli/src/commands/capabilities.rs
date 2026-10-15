@@ -245,7 +245,7 @@ pub fn run(args: CapabilitiesArgs) -> Result<u8> {
                 format!(
                     "OK   share       {} ({}) — kinds from {}; {} schema(s)",
                     app.share.dir().display(),
-                    app.share.origin,
+                    app.share.provenance(),
                     app.schema.sources().join(" + "),
                     app.schema.schemas().count()
                 ),

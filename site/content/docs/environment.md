@@ -107,6 +107,43 @@ server behind it, never on the strength of a connection alone. The server publis
 only after its request workers start, so the lease-triggered reload can reach it. While it
 prepares its routes, its lease remains in the starting state.
 
+### An inherited share of another version
+
+The assignments outlive the directory they were written for. A shell that leaves the
+checkout keeps them unless direnv unloads them, and a terminal multiplexer started inside
+one keeps `MAJORDOMUS_SHARE` in its global environment and hands it to every window it
+opens, in every repository. `bin/majordomus-cli` and `bin/majordomus-env` export it for the
+executable built from the same checkout, whose version is the share's by construction; the
+installed release that `~/.local/bin/majordomus` launches inherits it too. On 2026-10-13 an
+installed 0.22.0 server read a 0.21.0 checkout's share that way, and on 2026-10-14 the
+installed 0.26.0 shared server did: no `share/ui/`, so every `/ui/assets/` file answered
+404, and kinds, schemas and allow-lists five releases old.
+
+So `Share::locate` judges what a convention found (ADR 0163, point 2). A share is skewed
+for the executable when its `version.txt` states another version or none, or when it lacks
+the directory of a surface the executable serves pages from (`ui/`, `cockpit/`), as
+`ServedShare::inspect` measures it:
+
+<div class="overflow-x-auto" tabindex="0">
+
+| found through | skewed, and a later candidate matches | skewed, and nothing matches |
+|---|---|---|
+| `--share` | used as given | used as given |
+| `MAJORDOMUS_SHARE` | passed over | used, and reported `skewed` |
+| the repository's `share/` | passed over | used, and reported `skewed` |
+| the installation's `share/` beside the executable | — | used, and reported `skewed` |
+
+</div>
+
+
+The share used names every share it passed over and why in its origin —
+`installation; passed over MAJORDOMUS_SHARE: the share at <path> states version 0.21.0 …` —
+which is what the lease records, `serve status` and `capabilities validate` print and the
+log says once. A build run from a checkout has no share beside it, so `bin/majordomus-cli`
+and the test suite read the checkout's share as before.
+`test/cases/2994_an_executable_reads_its_own_share.sh` is the proof, on an installed layout.
+`MAJORDOMUS_ROOT` and `MAJORDOMUS_URL` are inherited the same way and are not decided here.
+
 ## What is canonical, and what is derived
 
 <div class="overflow-x-auto" tabindex="0">

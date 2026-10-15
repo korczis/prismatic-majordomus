@@ -342,8 +342,40 @@ fn render_status(out: &mut impl Write, s: &Value, checkouts: Checkouts) -> Resul
         if let Some(r) = v["reason"].as_str() {
             w(out, format!("            {r}"))?;
         }
+        if let Some(line) = share_line(&v["lease"]["share"]) {
+            w(out, line)?;
+        }
     }
     Ok(())
+}
+
+/// The line that says which share a server serves and whether it is that server's own: its
+/// standing, version, whether it holds `ui/` and `cockpit/`, the directory and how it was
+/// found, then the reason on a line of its own when it is skewed. Nothing when the lease
+/// names no share.
+fn share_line(share: &Value) -> Option<String> {
+    let path = share["path"].as_str()?;
+    let held = |key: &str| {
+        if share[key] == true {
+            "present"
+        } else {
+            "absent"
+        }
+    };
+    let mut line = format!(
+        "            share {}  version {}  ui {}  cockpit {}  {path}",
+        share["standing"].as_str().unwrap_or("?"),
+        share["version"].as_str().unwrap_or("none"),
+        held("ui_present"),
+        held("cockpit_present"),
+    );
+    if let Some(origin) = share["origin"].as_str() {
+        line.push_str(&format!(" ({origin})"));
+    }
+    if let Some(reason) = share["reason"].as_str() {
+        line.push_str(&format!("\n              {reason}"));
+    }
+    Some(line)
 }
 
 fn pretty(v: &Value) -> String {
@@ -603,6 +635,11 @@ pub fn converge(repo: &Repository, port: u16, idle: u64, wait: Duration) -> Resu
         };
         match standing {
             ServerStanding::Ready => return Ok(settle(started, false)),
+            // It answers, at this version, over a share that is not its own. Reported, not
+            // replaced: which share a server should pick and whether a skewed one is
+            // replaced are ADR 0163's later steps (S4, S5), and starting a second server
+            // that locates the same share would only make a second skewed one.
+            ServerStanding::Skewed => return Ok(settle(started, false)),
             ServerStanding::Starting => {}
             ServerStanding::Absent | ServerStanding::Stale if !started => {
                 // A stale verdict reached after the whole of the busy grace is a judgement the
@@ -689,6 +726,11 @@ fn ensure(
                 .unwrap_or_default(),
             wait.as_secs(),
             c.log.display()
+        ))
+    } else if c.standing == ServerStanding::Skewed {
+        Some(format!(
+            "{}; it answers, and its pages have no assets: start it over the share of this executable's version (`MAJORDOMUS_SHARE=<that share> majordomus serve ensure` after `majordomus serve stop`)",
+            c.reason.clone().unwrap_or_default()
         ))
     } else if c.standing == ServerStanding::Outdated {
         Some(format!(
@@ -1024,6 +1066,31 @@ mod tests {
     use super::*;
 
     const YOUNG: Duration = Duration::ZERO;
+
+    /// `serve status` names the share a server serves, says when it is skewed and why, and
+    /// says nothing about a share a lease does not name.
+    #[test]
+    fn a_status_line_names_the_share_and_its_skew() {
+        assert_eq!(share_line(&Value::Null), None);
+        let skewed = share_line(&json!({
+            "path": "/s", "origin": "repository", "version": "0.21.0", "ui_present": false,
+            "cockpit_present": true, "standing": "skewed", "reason": "the share at /s is old",
+        }))
+        .unwrap();
+        assert!(skewed
+            .contains("share skewed  version 0.21.0  ui absent  cockpit present  /s (repository)"));
+        assert!(
+            skewed.ends_with("\n              the share at /s is old"),
+            "{skewed}"
+        );
+        let own = share_line(&json!({
+            "path": "/s", "version": "0.26.0", "ui_present": true, "cockpit_present": true,
+            "standing": "current",
+        }))
+        .unwrap();
+        assert!(own.contains("share current  version 0.26.0  ui present  cockpit present  /s"));
+        assert!(!own.contains('\n'), "a current share takes one line");
+    }
 
     #[test]
     fn a_claim_naming_a_live_process_is_a_start_in_progress() {
