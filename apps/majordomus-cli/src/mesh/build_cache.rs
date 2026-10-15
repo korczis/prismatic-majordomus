@@ -142,6 +142,10 @@ pub struct Policy {
     /// An offer with less headroom than this many GiB is passed over; an offer that
     /// states none is not.
     pub min_headroom_gib: u64,
+    /// The asking node's id. A `host` offer is reachable from its own node and no other,
+    /// so it is usable only when this names the offering node; unset, none is.
+    #[serde(default)]
+    pub own_node: Option<String>,
 }
 
 impl Default for Policy {
@@ -151,6 +155,7 @@ impl Default for Policy {
             providers: Vec::new(),
             max_age_seconds: 90,
             min_headroom_gib: 20,
+            own_node: None,
         }
     }
 }
@@ -211,6 +216,12 @@ fn refusal(offer: &Offer, policy: &Policy) -> Option<String> {
     if !policy.providers.is_empty() && !policy.providers.iter().any(|p| p == &offer.provider) {
         return Some(format!("provider {} is not accepted", offer.provider));
     }
+    if offer.scope == Scope::Host && policy.own_node.as_deref() != Some(offer.node.as_str()) {
+        return Some(format!(
+            "host-only: reachable from {} and no other machine",
+            offer.node
+        ));
+    }
     match offer.health {
         Health::Healthy => {}
         Health::Degraded => return Some("its own probe says degraded".into()),
@@ -236,20 +247,23 @@ fn refusal(offer: &Offer, policy: &Policy) -> Option<String> {
 
 /// The ranking key among usable offers; smaller is better. Total, because the node id
 /// ends it.
-fn rank(
-    o: &Offer,
+fn rank<'a>(
+    o: &'a Offer,
+    policy: &Policy,
 ) -> (
     Scope,
     std::cmp::Reverse<i32>,
     std::cmp::Reverse<u64>,
     u32,
-    &str,
+    &'a str,
 ) {
+    // the asking node's own store is no round trip away; a probe leaves it unmeasured
+    let own = policy.own_node.as_deref() == Some(o.node.as_str());
     (
         o.scope,
         std::cmp::Reverse(o.priority),
         std::cmp::Reverse(o.headroom_gib.unwrap_or(0)),
-        o.rtt_ms.unwrap_or(u32::MAX),
+        if own { 0 } else { o.rtt_ms.unwrap_or(u32::MAX) },
         o.node.as_str(),
     )
 }
@@ -287,7 +301,7 @@ pub fn select(offers: &[Offer], policy: &Policy) -> Selection {
     let best = usable
         .iter()
         .enumerate()
-        .min_by(|(_, a), (_, b)| rank(a).cmp(&rank(b)))
+        .min_by(|(_, a), (_, b)| rank(a, policy).cmp(&rank(b, policy)))
         .map(|(i, _)| i);
     let chosen = best.map(|i| usable[i].clone());
     for (i, o) in usable.iter().enumerate() {
@@ -678,6 +692,52 @@ mod tests {
     }
 
     #[test]
+    fn a_host_offer_is_usable_only_by_its_own_node() {
+        let mut h = offer("jetson");
+        h.scope = Scope::Host;
+        let other = offer("lan-peer");
+        // asked from another node: the nearest scope is unreachable, so it is passed over
+        let from_elsewhere = Policy {
+            own_node: Some("mac".into()),
+            ..Policy::default()
+        };
+        let s = select(&[h.clone(), other.clone()], &from_elsewhere);
+        assert_eq!(s.chosen.map(|o| o.node), Some("lan-peer".into()));
+        assert!(
+            s.passed_over[0].why.contains("host-only"),
+            "{}",
+            s.passed_over[0].why
+        );
+        // asked from its own node it is chosen, and so it is when no asker is named only
+        // if that asker is the offering node
+        let own = Policy {
+            own_node: Some("jetson".into()),
+            ..Policy::default()
+        };
+        assert_eq!(
+            select(&[h.clone(), other], &own).chosen.map(|o| o.node),
+            Some("jetson".into())
+        );
+        assert_eq!(select(&[h], &Policy::default()).chosen, None);
+    }
+
+    #[test]
+    fn the_asking_nodes_own_unmeasured_store_beats_a_measured_remote_at_a_tie() {
+        let mut mine = offer("mine");
+        mine.rtt_ms = None;
+        let mut theirs = offer("aaa");
+        theirs.rtt_ms = Some(2);
+        let p = Policy {
+            own_node: Some("mine".into()),
+            ..Policy::default()
+        };
+        assert_eq!(
+            select(&[theirs, mine], &p).chosen.map(|o| o.node),
+            Some("mine".into())
+        );
+    }
+
+    #[test]
     fn ties_end_at_the_node_id() {
         let s = select(&[offer("zulu"), offer("alpha")], &Policy::default());
         assert_eq!(s.chosen.map(|o| o.node), Some("alpha".into()));
@@ -1011,7 +1071,12 @@ mod tests {
         ] {
             let mut o = offer("b");
             o.scope = scope;
-            let s = select(&[o], &Policy::default());
+            // asked from the offering node itself, so that a host offer is reachable
+            let asker = Policy {
+                own_node: Some("b".into()),
+                ..Policy::default()
+            };
+            let s = select(&[o], &asker);
             assert!(s.reason.contains(&format!("{word} scope")), "{}", s.reason);
         }
     }
