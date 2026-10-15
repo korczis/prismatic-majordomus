@@ -316,7 +316,10 @@ and the jobs still going hold runners the trunk's run and the deployments wait f
 2026-10-13 a run with two failed jobs kept nine more running for twenty minutes. So the last
 step of every gate job of `validate.yml`, on `failure()` of a `pull_request` event alone,
 cancels the run by its own id with the job's token (`actions: write`); `ci` and `evidence`
-still run, because they run `always()`, and report the run red. A push to master, the schedule
+still run, because they run `always()`, and report the run red. A combined top, a pull request
+whose head is an `integration/*` branch, is never cancelled this way: it carries many heads and
+is judged once for all of them, so one run of it shows every red (on 2026-10-15 the grand top
+took three full cycles to show three reds). A push to master, the schedule
 and a dispatch are never cancelled this way: the trunk's remaining jobs are the only reading of
 its other lanes. Read a failed job's log through the jobs API (`gh run view --job <id> --log`)
 rather than waiting for the run. Case 3019 holds every job to it (I2664).
