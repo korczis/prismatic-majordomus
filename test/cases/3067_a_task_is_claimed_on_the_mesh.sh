@@ -1,6 +1,5 @@
 # majordomus-timeout: 300
-# majordomus-covers: start
-# majordomus-covers: finish
+# majordomus-covers: start finish
 # A task is on the mesh while it works (I2288). `majordomus start` claims the task's scope on
 # the checkout's running server as an advisory claim of the mesh session `task-<id>`, with the
 # task's title as its intent, and keeps the claim's key on the task record; `finish` closes the
