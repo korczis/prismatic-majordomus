@@ -341,9 +341,8 @@ pub fn apply(service: &WorktreeService, options: &MigrationOptions) -> Result<Mi
             Ok(()) => {
                 // A per-worktree `core.hooksPath` names the old path: whichever way it got
                 // there, a moved worktree is bound again to its own tree's hooks (I2718).
-                if step.outcome == StepOutcome::Moved {
-                    step.hooks = Some(hooks::carry_hooks_path(&primary, &to));
-                }
+                step.hooks = (step.outcome == StepOutcome::Moved)
+                    .then(|| hooks::carry_hooks_path(&primary, &to));
                 if was_current {
                     plan.moved_current = Some(step.to.clone());
                 }

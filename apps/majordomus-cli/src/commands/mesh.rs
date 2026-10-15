@@ -1277,6 +1277,15 @@ mod tests {
         assert!(ask(&args, "GET", "/api/v1/mesh", None, render_status, never).is_err());
     }
 
+    /// `mesh doctor` outside any repository has no server to find and no layer to read:
+    /// an error, not a report.
+    #[test]
+    fn a_doctor_outside_any_repository_is_an_error_not_a_report() {
+        let plain = tempfile::tempdir().unwrap();
+        let args = query(Some(plain.path().to_path_buf()), OutputFormat::Json);
+        assert!(doctor(args).is_err());
+    }
+
     /// Through a borrowed server, a publish is refused by name on the text surface too.
     #[test]
     fn a_publish_through_a_borrowed_server_is_refused_in_text() {

@@ -79,13 +79,30 @@ fn fixture(real: &Path, root: &Path, name: &str) -> (PathBuf, PathBuf) {
     (primary, wt)
 }
 
-/// The stand-in: refuses (exit 128, with words) any run whose arguments contain
-/// `$REFUSE_ARGS`, and hands every other run to the real git.
+/// The stand-in. A run whose arguments contain `$STUB_ARGS` is answered by the stand-in —
+/// `$STUB_TEXT` on standard output when `$STUB_DO` is `print`, else a refusal (exit 128,
+/// with words) — once armed: at once when `$STUB_ARM` is empty, else only after a run whose
+/// arguments contain `$STUB_ARM` has been handed to the real git. Every other run is the
+/// real git's.
 fn stand_in(dir: &Path, real: &Path) {
+    let real = real.display();
     let script = format!(
-        "#!/bin/sh\ncase \" $* \" in\n  *\" $REFUSE_ARGS \"*)\n    \
-         echo \"fatal: refused by the test\" >&2\n    exit 128 ;;\nesac\nexec '{}' \"$@\"\n",
-        real.display()
+        r#"#!/bin/sh
+case " $* " in
+  *" $STUB_ARGS "*)
+    if [ -z "$STUB_ARM" ] || [ -e "$STUB_MARK" ]; then
+      if [ "$STUB_DO" = print ]; then printf '%s\n' "$STUB_TEXT"; exit 0; fi
+      echo "fatal: refused by the test" >&2
+      exit 128
+    fi ;;
+esac
+if [ -n "$STUB_ARM" ]; then
+  case " $* " in
+    *" $STUB_ARM "*) '{real}' "$@"; rc=$?; : > "$STUB_MARK"; exit $rc ;;
+  esac
+fi
+exec '{real}' "$@"
+"#
     );
     let path = dir.join("git");
     std::fs::write(&path, script).unwrap();
@@ -122,41 +139,82 @@ fn every_git_run_carry_hooks_path_makes_can_fail_and_is_reported() {
     let mut path = vec![bin.clone()];
     path.extend(std::env::split_paths(&original));
     std::env::set_var("PATH", std::env::join_paths(path).unwrap());
-    for (name, refuse, version_one) in [
+    struct Case {
+        name: &'static str,
+        args: &'static str,
+        print: Option<&'static str>,
+        arm: &'static str,
+        version_one: bool,
+        says: &'static str,
+    }
+    let refuse = |name, args| Case {
+        name,
+        args,
+        print: None,
+        arm: "",
+        version_one: false,
+        says: "refused by the test",
+    };
+    for case in [
         // whether the extension is on
-        ("bool", "--type=bool --get extensions.worktreeConfig", false),
+        refuse("bool", "--type=bool --get extensions.worktreeConfig"),
+        // whether core.worktree is in the shared file
+        refuse("core-worktree", "--get core.worktree"),
+        // ... and it is
+        Case {
+            print: Some("/somewhere"),
+            says: "core.worktree is set in the shared configuration (/somewhere)",
+            ..refuse("core-worktree-set", "--get core.worktree")
+        },
         // the repository's format version
-        ("version", "--get core.repositoryformatversion", false),
+        refuse("version", "--get core.repositoryformatversion"),
         // writing the format version
-        ("write-version", "core.repositoryformatversion 1", false),
+        refuse("write-version", "core.repositoryformatversion 1"),
         // writing the extension, in a repository already at version 1
-        ("write-extension", "extensions.worktreeConfig true", true),
+        Case {
+            version_one: true,
+            ..refuse("write-extension", "extensions.worktreeConfig true")
+        },
+        // the hooks directory asked again, after the value was set, to verify it
+        Case {
+            arm: "config --worktree core.hooksPath",
+            ..refuse("verify", "--git-path hooks")
+        },
     ] {
-        let (primary, wt) = fixture(&real, &root, name);
-        if version_one {
+        let (primary, wt) = fixture(&real, &root, case.name);
+        if case.version_one {
             git(
                 &real,
                 &primary,
                 &["config", "core.repositoryformatversion", "1"],
             );
         }
-        std::env::set_var("REFUSE_ARGS", refuse);
+        std::env::set_var("STUB_ARGS", case.args);
+        std::env::set_var("STUB_DO", if case.print.is_some() { "print" } else { "" });
+        std::env::set_var("STUB_TEXT", case.print.unwrap_or(""));
+        std::env::set_var("STUB_ARM", case.arm);
+        std::env::set_var("STUB_MARK", root.join(format!("{}.armed", case.name)));
         let message = failed(carry_hooks_path(&primary, &wt));
-        assert!(message.contains("refused by the test"), "{name}: {message}");
-        // nothing was bound: the worktree has no value of its own
-        assert!(
-            Command::new(&real)
-                .arg("-C")
-                .arg(&wt)
-                .args(["config", "--worktree", "--get", "core.hooksPath"])
-                .env("GIT_CONFIG_GLOBAL", "/dev/null")
-                .output()
-                .unwrap()
-                .stdout
-                .is_empty(),
-            "{name}"
-        );
+        assert!(message.contains(case.says), "{}: {message}", case.name);
+        let bound = Command::new(&real)
+            .arg("-C")
+            .arg(&wt)
+            .args(["config", "--worktree", "--get", "core.hooksPath"])
+            .env("GIT_CONFIG_GLOBAL", "/dev/null")
+            .output()
+            .unwrap()
+            .stdout;
+        if case.arm.is_empty() {
+            // refused before anything was written: the worktree has no value of its own
+            assert!(bound.is_empty(), "{}", case.name);
+        } else {
+            // written, and then the verification could not be made: reported, not hidden
+            assert!(!bound.is_empty(), "{}", case.name);
+            assert!(root.join(format!("{}.armed", case.name)).exists());
+        }
     }
-    std::env::remove_var("REFUSE_ARGS");
+    for key in ["STUB_ARGS", "STUB_DO", "STUB_TEXT", "STUB_ARM", "STUB_MARK"] {
+        std::env::remove_var(key);
+    }
     std::env::set_var("PATH", &original);
 }

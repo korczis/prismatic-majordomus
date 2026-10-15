@@ -494,11 +494,13 @@ pub fn judge(held: bool, age_seconds: Option<u64>, threshold: Option<u64>) -> Wo
 
 /// What a reading could not read or judge, in words, in the order a reader meets it: a
 /// threshold nothing declares, work trees `git status` would not answer for, and whether a
-/// process works inside one when that could not be read.
+/// process works inside one of the `dirty` work trees when that could not be read
+/// (`processes_unread`); with no dirty work tree there was nothing to ask about.
 fn reading_findings(
     threshold_declared: bool,
     unread: usize,
-    processes_unknown: bool,
+    processes_unread: bool,
+    dirty: usize,
 ) -> Vec<String> {
     let mut findings = Vec::new();
     if !threshold_declared {
@@ -512,7 +514,7 @@ fn reading_findings(
             "{unread} linked work tree(s) would not answer `git status`; their work is not listed"
         ));
     }
-    if processes_unknown {
+    if processes_unread && dirty > 0 {
         findings.push(
             "whether a process works inside a work tree could not be read (no lsof); \
              only task and episode records were taken as holding work"
@@ -618,7 +620,8 @@ impl WorktreeService {
         let findings = reading_findings(
             threshold.seconds.is_some(),
             unread,
-            inside.is_none() && !dirs.is_empty(),
+            inside.is_none(),
+            dirs.len(),
         );
 
         let mut worktrees: Vec<UncommittedWorktree> = Vec::new();
@@ -956,18 +959,32 @@ mod tests {
 
     #[test]
     fn a_reading_says_what_it_could_not_read_in_order() {
-        assert!(reading_findings(true, 0, false).is_empty());
-        let all = reading_findings(false, 2, true);
+        assert!(reading_findings(true, 0, false, 3).is_empty());
+        let all = reading_findings(false, 2, true, 1);
         assert_eq!(all.len(), 3, "{all:?}");
         assert!(all[0].contains(THRESHOLD_KEY), "{all:?}");
         assert!(all[1].starts_with("2 linked work tree(s)"), "{all:?}");
         assert!(all[2].contains("no lsof"), "{all:?}");
-        assert_eq!(reading_findings(true, 1, false).len(), 1);
+        assert_eq!(reading_findings(true, 1, false, 0).len(), 1);
         assert_eq!(
-            reading_findings(true, 0, true),
+            reading_findings(true, 0, true, 2),
             [all[2].clone()],
             "an unknown process reading is said alone"
         );
+    }
+
+    /// Whether `lsof` could be read only matters when there was a dirty work tree to ask
+    /// about: both sides of that decision, fed directly, so no platform's `lsof` decides
+    /// which one a test takes.
+    #[test]
+    fn an_unread_process_reading_is_said_only_when_there_was_work_to_ask_about() {
+        assert!(
+            reading_findings(true, 0, true, 0).is_empty(),
+            "no dirty work tree: nothing was asked, nothing is missing"
+        );
+        assert_eq!(reading_findings(true, 0, true, 1).len(), 1);
+        assert!(reading_findings(true, 0, false, 1).is_empty());
+        assert!(reading_findings(true, 0, false, 0).is_empty());
     }
 
     #[test]

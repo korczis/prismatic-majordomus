@@ -1416,6 +1416,16 @@ mod tests {
         );
         let text = at_every_line(|out| render_plan(&plan, out).map(|()| 0));
         assert!(text.contains("  hooks   "), "{text}");
+        // a plan recorded before moves carried hooks has none to say
+        let mut older = plan.clone();
+        for s in older.steps.iter_mut() {
+            s.hooks = None;
+        }
+        let text = at_every_line(|out| render_plan(&older, out).map(|()| 0));
+        assert!(
+            text.contains("outcome moved") && !text.contains("  hooks   "),
+            "{text}"
+        );
 
         // a worktree whose tree lost the directory keeps the primary's, and repair says so
         // on every run; one already on its own is the quiet case

@@ -294,10 +294,16 @@ fn repository_policy(primary: &Path) -> Result<Option<String>, String> {
     else {
         return Ok(None);
     };
-    Ok(match line.split_once('\t') {
+    Ok(policy_of(&line))
+}
+
+/// The repository's policy in one `--show-scope` line (`<scope>\t<value>`): the value when
+/// the repository's own file or the worktree's set it, and non-empty; none otherwise.
+fn policy_of(line: &str) -> Option<String> {
+    match line.split_once('\t') {
         Some(("local" | "worktree", value)) if !value.is_empty() => Some(value.to_string()),
         _ => None,
-    })
+    }
 }
 
 /// The hooks directory git runs for `worktree`, as an absolute path.
@@ -610,6 +616,24 @@ mod tests {
                 enabled: vec!["extensions.worktreeConfig=true".into()],
             }
         );
+    }
+
+    #[test]
+    fn only_a_non_empty_value_of_the_repositorys_own_files_is_its_policy() {
+        assert_eq!(
+            policy_of("local\t/r/.githooks"),
+            Some("/r/.githooks".into())
+        );
+        assert_eq!(policy_of("worktree\t.githooks"), Some(".githooks".into()));
+        assert_eq!(policy_of("local\t"), None, "an empty value");
+        assert_eq!(policy_of("worktree\t"), None, "an empty value");
+        assert_eq!(
+            policy_of("global\t/home/h"),
+            None,
+            "the user's, not the repository's"
+        );
+        assert_eq!(policy_of("command\t/c"), None);
+        assert_eq!(policy_of("no tab at all"), None);
     }
 
     #[test]
