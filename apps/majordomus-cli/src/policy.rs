@@ -322,6 +322,13 @@ pub struct SessionPolicy {
     /// mod reads the interval from that answer rather than from this file.
     #[serde(default)]
     pub brief_interval_minutes: Option<u64>,
+    /// `session.edits_require_claim:` — whether a provider's tool may write a file of the
+    /// checkout only while a claim covers it: the active task's scope, or a live mesh claim
+    /// of the writing session (I2735, [`crate::guard`]). Off unless a repository turns it
+    /// on, because it refuses edits, and a repository that never asked for that must not
+    /// find its workers stopped by an upgrade.
+    #[serde(default)]
+    pub edits_require_claim: bool,
 }
 
 impl Default for SessionPolicy {
@@ -332,6 +339,7 @@ impl Default for SessionPolicy {
             knowledge_on_end: true,
             knowledge_on_compact: true,
             brief_interval_minutes: None,
+            edits_require_claim: false,
         }
     }
 }

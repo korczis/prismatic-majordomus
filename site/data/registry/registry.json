@@ -6,27 +6,27 @@
     "version": "0.26.0"
   },
   "registry": {
-    "fingerprint": "154e33d81533ad19040c9a0bb847ef0bbac4d6c1bbda464600ce997d64a1c79b",
+    "fingerprint": "21b8b6372e1d3d3b96b141fd27ddd40a758c696916a628b68140ca997fd963e9",
     "summary": {
-      "total": 2387,
-      "builtin": 199,
-      "declarative": 2188,
+      "total": 2390,
+      "builtin": 200,
+      "declarative": 2190,
       "by_kind": {
         "command": 30,
-        "query": 169,
-        "resource": 2188
+        "query": 170,
+        "resource": 2190
       },
       "by_stability": {
         "behaviorally_verified": 139,
-        "experimental": 51,
-        "implemented": 2197
+        "experimental": 52,
+        "implemented": 2199
       },
-      "mcp_tools": 190,
-      "mcp_resources": 2243,
-      "http_routes": 194,
+      "mcp_tools": 191,
+      "mcp_resources": 2245,
+      "http_routes": 195,
       "cli_commands": 107,
-      "modules": 91,
-      "benchmark_required": 169,
+      "modules": 92,
+      "benchmark_required": 170,
       "benchmark_waived": 30,
       "cached": 54
     },
@@ -30722,6 +30722,110 @@
           "concurrency": "unrestricted"
         },
         "source_path": "apps/majordomus-cli/src/capability/builtin/graph.rs"
+      },
+      {
+        "id": "guard.edit",
+        "module": "guard",
+        "kind": "query",
+        "title": "Judge one edit",
+        "description": "Whether the given session may write the given path now: allowed when the policy's session.edits_require_claim is off, the path is outside the checkout or its local state, the repository declares no enabled mesh, the active task's scope covers it, or a live mesh claim of the session covers it; refused as unclaimed otherwise, with the remedy. What cannot be read — the policy, the mesh — is let through and named, never refused.",
+        "input": {
+          "name": "GuardEditInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "path": {
+                "type": "string",
+                "description": "The path about to be written: absolute, or relative to the repository root."
+              },
+              "session": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The writing session's id on the mesh (`claude-code-<session id>` for Claude Code);\nwithout it only the active task's scope can cover the write."
+              }
+            },
+            "required": [
+              "path"
+            ],
+            "description": "Which write to judge.",
+            "title": "GuardEditInput"
+          }
+        },
+        "output": {
+          "name": "EditVerdict",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "allowed": {
+                "type": "boolean",
+                "description": "Whether the edit may proceed."
+              },
+              "path": {
+                "type": "string",
+                "description": "The path asked about, repository-relative when it is inside the checkout."
+              },
+              "ground": {
+                "type": "string",
+                "description": "Why, as one word: `off`, `outside`, `local`, `no_mesh`, `task`, `claim`,\n`undecided` or `unclaimed`. Only `unclaimed` refuses."
+              },
+              "detail": {
+                "type": "string",
+                "description": "The sentence a person reads."
+              },
+              "remedy": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "What makes the edit allowed, when it is refused."
+              }
+            },
+            "required": [
+              "allowed",
+              "path",
+              "ground",
+              "detail"
+            ],
+            "description": "The answer to one edit.",
+            "title": "EditVerdict"
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::guard"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_guard_edit"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/guard/edit"
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "experimental",
+        "tags": [
+          "guard",
+          "mesh",
+          "coordination"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/guard.rs"
       },
       {
         "id": "health.live",
@@ -81091,6 +81195,18 @@
         "source_path": "apps/majordomus-cli/src/capability/builtin/graph.rs"
       },
       {
+        "id": "guard",
+        "title": "Edit guard",
+        "description": "Whether a write to a file of this checkout is covered by a claim: the active task's scope, or a live mesh claim of the writing session. The judgement a provider's pre-tool hook asks before every edit (majordomus guard hook), switched by session.edits_require_claim.",
+        "stability": "experimental",
+        "source": "builtin",
+        "capabilities": 1,
+        "capability_ids": [
+          "guard.edit"
+        ],
+        "source_path": "apps/majordomus-cli/src/capability/builtin/guard.rs"
+      },
+      {
         "id": "health",
         "title": "Health",
         "description": "Whether what this process serves is healthy, decided by the engines that already decide it: the index's diagnostics, the registry builder, the benchmark projection's coverage, the comparison `generate --check` makes and the lease reading `server.status` answers from. No check here has an opinion of its own.",
@@ -81189,7 +81305,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 365,
+        "capabilities": 366,
         "capability_ids": []
       },
       {
@@ -81760,7 +81876,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 484,
+        "capabilities": 485,
         "capability_ids": []
       },
       {
@@ -81850,7 +81966,7 @@
     ]
   },
   "index": {
-    "fingerprint": "00e52d409c8bbc2885dfcfc648830960b591c72a172350a3bccfbe6bbcb41f68",
+    "fingerprint": "5ea0b4fc286d7b054f12d7fc380b1d174a5caac562bb5b757f0fd787c3c50fb4",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -81890,7 +82006,7 @@
       "gap": 3,
       "implementation": 52,
       "intent": 4,
-      "issue": 365,
+      "issue": 366,
       "knowledge": 4,
       "mesh-declaration": 1,
       "milestone": 36,
@@ -81904,7 +82020,7 @@
       "session": 89,
       "skill": 8,
       "taxonomy": 10,
-      "test": 484,
+      "test": 485,
       "use-case": 49,
       "workspace": 1
     },
@@ -87848,7 +87964,7 @@
         "title": "Majordomus Mesh",
         "path": "docs/MESH.md",
         "source_class": "document",
-        "bytes": 62006
+        "bytes": 63183
       },
       {
         "uri": "majordomus://document/docs/MODELS.md",
@@ -87920,7 +88036,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 134624
+        "bytes": 134769
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -95377,6 +95493,17 @@
         "bytes": 2223
       },
       {
+        "uri": "majordomus://issue/I2735",
+        "kind": "issue",
+        "identity": "I2735",
+        "title": "An edit no claim covers is refused",
+        "description": "With session.edits_require_claim on and the mesh enabled, a provider's pre-tool hook refuses a write (Edit, Write, MultiEdit, NotebookEdit) no claim covers: the active task's scope or a live mesh claim of the writing session; judged by majordomus guard hook in the checkout the file belongs to, and by the capability guard.edit over MCP and HTTP.",
+        "path": ".ai/repo/project/issues/I2735.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2836
+      },
+      {
         "uri": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "identity": "a-commit-stood-behind-a-build-lock",
@@ -96497,7 +96624,7 @@
         "path": ".ai/repo/policy.yaml",
         "section": "policy",
         "source_class": "policy",
-        "bytes": 22748
+        "bytes": 22934
       },
       {
         "uri": "majordomus://profile/debugging",
@@ -102500,6 +102627,14 @@
         "bytes": 4351
       },
       {
+        "uri": "majordomus://test/test/cases/3069_an_edit_no_claim_covers_is_refused.sh",
+        "kind": "test",
+        "identity": "test/cases/3069_an_edit_no_claim_covers_is_refused.sh",
+        "path": "test/cases/3069_an_edit_no_claim_covers_is_refused.sh",
+        "source_class": "case",
+        "bytes": 5688
+      },
+      {
         "uri": "majordomus://test/test/cases/30_command_registry.sh",
         "kind": "test",
         "identity": "test/cases/30_command_registry.sh",
@@ -105534,7 +105669,7 @@
       "identity": [
         "id"
       ],
-      "objects": 365
+      "objects": 366
     },
     {
       "name": "knowledge",
@@ -105686,7 +105821,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 484
+      "objects": 485
     },
     {
       "name": "use-case",
@@ -124901,6 +125036,76 @@
       {
         "path": [
           "majordomus",
+          "guard"
+        ],
+        "route": "/docs/cli/guard/",
+        "executable": false,
+        "usage": "majordomus guard <COMMAND>",
+        "about": "The edit guard: whether a provider's tool may write a file of this checkout now, judged from the active task's scope and the writing session's live mesh claims",
+        "args": [],
+        "examples": [],
+        "subcommands": [
+          {
+            "path": [
+              "majordomus",
+              "guard",
+              "hook"
+            ],
+            "route": "/docs/cli/guard/hook/",
+            "executable": true,
+            "usage": "majordomus guard hook [OPTIONS]",
+            "about": "Judge the edit a provider's pre-tool payload (on stdin) is about to make; exit 2 with the reason and the remedy when no claim covers it, 0 otherwise",
+            "args": [
+              {
+                "name": "provider",
+                "long": "provider",
+                "positional": false,
+                "help": "The provider whose payload stdin carries; its session id on the mesh is `<provider>-<session_id>`",
+                "value_name": "PROVIDER",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "claude-code"
+                ]
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Where a relative path in the payload is resolved from (default: the current directory); the checkout judged is the one the written file belongs to",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              }
+            ],
+            "examples": [
+              {
+                "id": "guard-hook",
+                "title": "Judge the edit a provider's pre-tool payload names",
+                "description": "What a provider's pre-tool hook runs before an edit: the payload arrives on stdin, and the command exits 2 with the reason and the remedy when no claim covers the path it names, 0 otherwise. Here stdin is empty, so it names no path, and the command lets the tool run.",
+                "argv": [
+                  "guard",
+                  "hook",
+                  "--provider",
+                  "claude-code"
+                ],
+                "command": "majordomus guard hook --provider claude-code",
+                "setup": [],
+                "expectation": "exits 0"
+              }
+            ],
+            "subcommands": []
+          }
+        ]
+      },
+      {
+        "path": [
+          "majordomus",
           "mesh"
         ],
         "route": "/docs/cli/mesh/",
@@ -138735,6 +138940,23 @@
         "output": "GraphList"
       },
       {
+        "name": "majordomus_guard_edit",
+        "id": "guard.edit",
+        "title": "Judge one edit",
+        "description": "Whether the given session may write the given path now: allowed when the policy's session.edits_require_claim is off, the path is outside the checkout or its local state, the repository declares no enabled mesh, the active task's scope covers it, or a live mesh claim of the session covers it; refused as unclaimed otherwise, with the remedy. What cannot be read — the policy, the mesh — is let through and named, never refused.",
+        "kind": "query",
+        "read_only": true,
+        "effect": "read",
+        "hints": {
+          "read_only": true,
+          "destructive": false,
+          "idempotent": true,
+          "open_world": false
+        },
+        "input": "GuardEditInput",
+        "output": "EditVerdict"
+      },
+      {
         "name": "majordomus_health",
         "id": "health.report",
         "title": "Health of this process",
@@ -141584,6 +141806,12 @@
         "method": "GET",
         "path": "/api/v1/graphs",
         "id": "graph.list",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/guard/edit",
+        "id": "guard.edit",
         "kind": "query"
       },
       {
@@ -145081,6 +145309,64 @@
         "case": "default",
         "cached": false,
         "route": "GET /api/v1/graphs"
+      },
+      {
+        "key": "guard.edit|direct|in-repository",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "guard.edit",
+        "module": "guard",
+        "case": "in-repository",
+        "cached": false
+      },
+      {
+        "key": "guard.edit|direct|outside",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "guard.edit",
+        "module": "guard",
+        "case": "outside",
+        "cached": false
+      },
+      {
+        "key": "guard.edit|mcp|in-repository",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "guard.edit",
+        "module": "guard",
+        "case": "in-repository",
+        "cached": false,
+        "tool": "majordomus_guard_edit"
+      },
+      {
+        "key": "guard.edit|mcp|outside",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "guard.edit",
+        "module": "guard",
+        "case": "outside",
+        "cached": false,
+        "tool": "majordomus_guard_edit"
+      },
+      {
+        "key": "guard.edit|http|in-repository",
+        "kind": "capability",
+        "transport": "http",
+        "id": "guard.edit",
+        "module": "guard",
+        "case": "in-repository",
+        "cached": false,
+        "route": "GET /api/v1/guard/edit"
+      },
+      {
+        "key": "guard.edit|http|outside",
+        "kind": "capability",
+        "transport": "http",
+        "id": "guard.edit",
+        "module": "guard",
+        "case": "outside",
+        "cached": false,
+        "route": "GET /api/v1/guard/edit"
       },
       {
         "key": "health.live|direct|default",
@@ -151127,6 +151413,27 @@
           "cases": 1
         },
         {
+          "subject": "guard.edit",
+          "module": "guard",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "guard.edit",
+          "module": "guard",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "guard.edit",
+          "module": "guard",
+          "transport": "http",
+          "state": "covered",
+          "cases": 2
+        },
+        {
           "subject": "health.live",
           "module": "health",
           "transport": "direct",
@@ -153875,22 +154182,22 @@
       ],
       "tallies": {
         "direct": {
-          "required": 199,
-          "covered": 169,
+          "required": 200,
+          "covered": 170,
           "missing": 0,
           "waived": 30,
           "inapplicable": 0
         },
         "http": {
-          "required": 194,
-          "covered": 169,
+          "required": 195,
+          "covered": 170,
           "missing": 0,
           "waived": 25,
           "inapplicable": 0
         },
         "mcp": {
-          "required": 190,
-          "covered": 165,
+          "required": 191,
+          "covered": 166,
           "missing": 0,
           "waived": 25,
           "inapplicable": 0
@@ -153903,8 +154210,8 @@
           "inapplicable": 0
         },
         "total": {
-          "required": 597,
-          "covered": 517,
+          "required": 600,
+          "covered": 520,
           "missing": 0,
           "waived": 80,
           "inapplicable": 0

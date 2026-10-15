@@ -85,6 +85,8 @@ pub enum Command {
     Executions(ExecutionsArgs),
     /// The context a development session should be given, compiled from the repository: for an issue, a milestone, an intent or a set of paths, what is selected and why, what was left out and why, what collapsed into what, and the budget
     Devcontext(DevcontextArgs),
+    /// The edit guard: whether a provider's tool may write a file of this checkout now, judged from the active task's scope and the writing session's live mesh claims
+    Guard(GuardArgs),
     /// The mesh: the nodes this repository's running server has discovered on the network, this machine's node identity, and the self-check that proves the prerequisites on this machine alone
     Mesh(MeshArgs),
     /// Everything that happens around this repository, followed in one stream: mesh sessions, claims, handovers and reviews on every linked machine, the executor's merges and failures, and GitHub's pull requests and runs, with what is addressed to you marked
@@ -640,6 +642,56 @@ pub struct ModelsRouteArgs {
     #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
     /// `text` for a person, `json` for a machine; both render the same answer.
     pub format: OutputFormat,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus guard`: the edit guard (I2735).
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, GuardCommand};
+/// use clap::Parser;
+///
+/// let cli = Cli::try_parse_from(["majordomus", "guard", "hook", "--provider", "claude-code"]).unwrap();
+/// let Command::Guard(guard) = cli.command else { panic!("expected `guard`") };
+/// let GuardCommand::Hook(hook) = guard.command;
+/// assert_eq!(hook.provider, "claude-code");
+///
+/// // the group has no behaviour of its own
+/// assert!(Cli::try_parse_from(["majordomus", "guard"]).is_err());
+/// ```
+pub struct GuardArgs {
+    #[command(subcommand)]
+    /// `hook`.
+    pub command: GuardCommand,
+}
+
+#[derive(Debug, Subcommand)]
+/// The `guard` subcommands.
+pub enum GuardCommand {
+    /// Judge the edit a provider's pre-tool payload (on stdin) is about to make; exit 2 with the reason and the remedy when no claim covers it, 0 otherwise
+    Hook(GuardHookArgs),
+}
+
+#[derive(Debug, Args)]
+/// `guard hook`: the provider whose payload stdin carries, and the repository.
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, GuardCommand};
+/// use clap::Parser;
+///
+/// let cli = Cli::try_parse_from(["majordomus", "guard", "hook"]).unwrap();
+/// let Command::Guard(guard) = cli.command else { panic!("expected `guard`") };
+/// let GuardCommand::Hook(hook) = guard.command;
+/// assert_eq!(hook.provider, "claude-code", "the provider whose payload shape is known");
+/// assert_eq!(hook.repo, None);
+/// ```
+pub struct GuardHookArgs {
+    /// The provider whose payload stdin carries; its session id on the mesh is `<provider>-<session_id>`
+    #[arg(long, default_value = "claude-code")]
+    pub provider: String,
+    /// Where a relative path in the payload is resolved from (default: the current directory); the checkout judged is the one the written file belongs to
+    #[arg(long, value_name = "PATH")]
+    pub repo: Option<PathBuf>,
 }
 
 #[derive(Debug, Args)]
@@ -6837,6 +6889,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["offload", "derive", "."],
             setup: &[],
             expect: Expect::ExitCode(12),
+        }],
+    },
+    CommandExamples {
+        command: "guard hook",
+        examples: &[ExampleDoc {
+            id: "guard-hook",
+            title: "Judge the edit a provider's pre-tool payload names",
+            description: "What a provider's pre-tool hook runs before an edit: the payload arrives on stdin, and the command exits 2 with the reason and the remedy when no claim covers the path it names, 0 otherwise. Here stdin is empty, so it names no path, and the command lets the tool run.",
+            argv: &["guard", "hook", "--provider", "claude-code"],
+            setup: &[],
+            expect: Expect::Success,
         }],
     },
     CommandExamples {

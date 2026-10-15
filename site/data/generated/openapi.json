@@ -70,6 +70,7 @@
     "op-gates-model": "docs/api/gates/",
     "op-graph-get": "docs/api/graph/",
     "op-graph-list": "docs/api/graph/",
+    "op-guard-edit": "docs/api/guard/",
     "op-health-live": "docs/api/health/",
     "op-health-ready": "docs/api/health/",
     "op-health-report": "docs/api/health/",
@@ -458,6 +459,7 @@
     "schema-EconomicsVerdict": "docs/api/economics/",
     "schema-Edge": "docs/api/graph/",
     "schema-EdgeRule": "docs/api/devcontext/",
+    "schema-EditVerdict": "docs/api/guard/",
     "schema-EditorAdapter": "docs/api/editors/",
     "schema-EditorCapability": "docs/api/editors/",
     "schema-EditorDerivation": "docs/api/editors/",
@@ -1183,6 +1185,7 @@
     "tag-executions": "docs/api/executions/",
     "tag-gates": "docs/api/gates/",
     "tag-graph": "docs/api/graph/",
+    "tag-guard": "docs/api/guard/",
     "tag-health": "docs/api/health/",
     "tag-integration": "docs/api/integration/",
     "tag-intent_realization": "docs/api/intent-realization/",
@@ -1219,9 +1222,9 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 194,
-    "schemas": 965,
-    "tags": 57
+    "operations": 195,
+    "schemas": 966,
+    "tags": 58
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
   "errors": [
@@ -1382,6 +1385,7 @@
     "gates.model": "gates",
     "graph.get": "graph",
     "graph.list": "graph",
+    "guard.edit": "guard",
     "health.live": "health",
     "health.ready": "health",
     "health.report": "health",
@@ -1774,6 +1778,7 @@
     "EconomicsVerdict": "economics",
     "Edge": "graph",
     "EdgeRule": "devcontext",
+    "EditVerdict": "guard",
     "EditorAdapter": "editors",
     "EditorCapability": "editors",
     "EditorDerivation": "editors",
@@ -17240,6 +17245,56 @@
       "variants": []
     },
     {
+      "description": "The answer to one edit.",
+      "home": "guard",
+      "is_enum": false,
+      "name": "EditVerdict",
+      "properties": [
+        {
+          "description": "Whether the edit may proceed.",
+          "name": "allowed",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The path asked about, repository-relative when it is inside the checkout.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Why, as one word: `off`, `outside`, `local`, `no_mesh`, `task`, `claim`,\n`undecided` or `unclaimed`. Only `unclaimed` refuses.",
+          "name": "ground",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The sentence a person reads.",
+          "name": "detail",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What makes the edit allowed, when it is refused.",
+          "name": "remedy",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "guard.edit"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One adapter: the product, the version its claims were verified against, its capabilities.",
       "home": "editors",
       "is_enum": false,
@@ -18918,6 +18973,7 @@
         "gates.completion",
         "graph.get",
         "graph.list",
+        "guard.edit",
         "health.report",
         "intents.list",
         "intents.binding",
@@ -61393,6 +61449,96 @@
         }
       ],
       "slug": "graph"
+    },
+    {
+      "description": "Whether a write to a file of this checkout is covered by a claim: the active task's scope, or a live mesh claim of the writing session. The judgement a provider's pre-tool hook asks before every edit (majordomus guard hook), switched by session.edits_require_claim.",
+      "name": "guard",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/guard/edit?path=docs%2FMESH.md&session=claude-code-bench\"",
+          "description": "Whether the given session may write the given path now: allowed when the policy's session.edits_require_claim is off, the path is outside the checkout or its local state, the repository declares no enabled mesh, the active task's scope covers it, or a live mesh claim of the session covers it; refused as unclaimed otherwise, with the remedy. What cannot be read — the policy, the mesh — is let through and named, never refused.",
+          "home": "guard",
+          "id": "guard.edit",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_guard_edit",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "The path about to be written: absolute, or relative to the repository root.",
+              "examples": [
+                {
+                  "case": "in-repository",
+                  "value": "\"docs/MESH.md\""
+                },
+                {
+                  "case": "outside",
+                  "value": "\"/nonexistent/outside.txt\""
+                }
+              ],
+              "name": "path",
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "The writing session's id on the mesh (`claude-code-<session id>` for Claude Code);\nwithout it only the active task's scope can cover the write.",
+              "examples": [
+                {
+                  "case": "in-repository",
+                  "value": "\"claude-code-bench\""
+                }
+              ],
+              "name": "session",
+              "required": false,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/guard/edit",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::guard",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Judge one edit: the result.",
+              "schema": "EditVerdict",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "EditVerdict",
+          "stability": "experimental",
+          "summary": "Judge one edit"
+        }
+      ],
+      "slug": "guard"
     },
     {
       "description": "Whether what this process serves is healthy, decided by the engines that already decide it: the index's diagnostics, the registry builder, the benchmark projection's coverage, the comparison `generate --check` makes and the lease reading `server.status` answers from. No check here has an opinion of its own.",

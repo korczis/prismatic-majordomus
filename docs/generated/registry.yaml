@@ -149,6 +149,12 @@ modules:
     stability: behaviorally_verified
     source: builtin
     capabilities: 2
+  - id: guard
+    title: Edit guard
+    description: "Whether a write to a file of this checkout is covered by a claim: the active task's scope, or a live mesh claim of the writing session. The judgement a provider's pre-tool hook asks before every edit (majordomus guard hook), switched by session.edits_require_claim."
+    stability: experimental
+    source: builtin
+    capabilities: 1
   - id: health
     title: Health
     description: "Whether what this process serves is healthy, decided by the engines that already decide it: the index's diagnostics, the registry builder, the benchmark projection's coverage, the comparison `generate --check` makes and the lease reading `server.status` answers from. No check here has an opinion of its own."
@@ -22106,6 +22112,83 @@ capabilities:
       cancellable: false
       concurrency: unrestricted
     source_path: apps/majordomus-cli/src/capability/builtin/graph.rs
+  - id: guard.edit
+    module: guard
+    kind: query
+    title: Judge one edit
+    description: "Whether the given session may write the given path now: allowed when the policy's session.edits_require_claim is off, the path is outside the checkout or its local state, the repository declares no enabled mesh, the active task's scope covers it, or a live mesh claim of the session covers it; refused as unclaimed otherwise, with the remedy. What cannot be read — the policy, the mesh — is let through and named, never refused."
+    input:
+      name: GuardEditInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          path:
+            type: string
+            description: "The path about to be written: absolute, or relative to the repository root."
+          session:
+            type:
+              - string
+              - "null"
+            description: "The writing session's id on the mesh (`claude-code-<session id>` for Claude Code);\nwithout it only the active task's scope can cover the write."
+        required:
+          - path
+        description: Which write to judge.
+        title: GuardEditInput
+    output:
+      name: EditVerdict
+      schema:
+        type: object
+        properties:
+          allowed:
+            type: boolean
+            description: Whether the edit may proceed.
+          path:
+            type: string
+            description: "The path asked about, repository-relative when it is inside the checkout."
+          ground:
+            type: string
+            description: "Why, as one word: `off`, `outside`, `local`, `no_mesh`, `task`, `claim`,\n`undecided` or `unclaimed`. Only `unclaimed` refuses."
+          detail:
+            type: string
+            description: The sentence a person reads.
+          remedy:
+            type:
+              - string
+              - "null"
+            description: "What makes the edit allowed, when it is refused."
+        required:
+          - allowed
+          - path
+          - ground
+          - detail
+        description: The answer to one edit.
+        title: EditVerdict
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::guard
+    exposure:
+      mcp:
+        tool: majordomus_guard_edit
+      http:
+        method: GET
+        path: /api/v1/guard/edit
+    availability: runtime
+    visibility: public
+    stability: experimental
+    tags:
+      - guard
+      - mesh
+      - coordination
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/guard.rs
   - id: health.live
     module: health
     kind: query

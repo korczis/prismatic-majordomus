@@ -51,6 +51,7 @@ pub(crate) mod generate;
 pub(crate) mod intent;
 pub(crate) mod knowledge;
 pub(crate) mod mcp;
+pub(crate) mod guard;
 pub(crate) mod mesh;
 pub(crate) mod models;
 pub(crate) mod monitor;
@@ -101,6 +102,7 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Run(args) => executions::run(args),
         Command::Executions(args) => executions::executions(args),
         Command::Devcontext(args) => devcontext::run(args),
+        Command::Guard(args) => guard::run(args),
         Command::Mesh(args) => mesh::run(args),
         Command::Monitor(args) => monitor::run(args),
         Command::Models(args) => models::run(args),

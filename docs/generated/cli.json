@@ -19177,6 +19177,76 @@
       {
         "path": [
           "majordomus",
+          "guard"
+        ],
+        "route": "/docs/cli/guard/",
+        "executable": false,
+        "usage": "majordomus guard <COMMAND>",
+        "about": "The edit guard: whether a provider's tool may write a file of this checkout now, judged from the active task's scope and the writing session's live mesh claims",
+        "args": [],
+        "examples": [],
+        "subcommands": [
+          {
+            "path": [
+              "majordomus",
+              "guard",
+              "hook"
+            ],
+            "route": "/docs/cli/guard/hook/",
+            "executable": true,
+            "usage": "majordomus guard hook [OPTIONS]",
+            "about": "Judge the edit a provider's pre-tool payload (on stdin) is about to make; exit 2 with the reason and the remedy when no claim covers it, 0 otherwise",
+            "args": [
+              {
+                "name": "provider",
+                "long": "provider",
+                "positional": false,
+                "help": "The provider whose payload stdin carries; its session id on the mesh is `<provider>-<session_id>`",
+                "value_name": "PROVIDER",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "claude-code"
+                ]
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Where a relative path in the payload is resolved from (default: the current directory); the checkout judged is the one the written file belongs to",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              }
+            ],
+            "examples": [
+              {
+                "id": "guard-hook",
+                "title": "Judge the edit a provider's pre-tool payload names",
+                "description": "What a provider's pre-tool hook runs before an edit: the payload arrives on stdin, and the command exits 2 with the reason and the remedy when no claim covers the path it names, 0 otherwise. Here stdin is empty, so it names no path, and the command lets the tool run.",
+                "argv": [
+                  "guard",
+                  "hook",
+                  "--provider",
+                  "claude-code"
+                ],
+                "command": "majordomus guard hook --provider claude-code",
+                "setup": [],
+                "expectation": "exits 0"
+              }
+            ],
+            "subcommands": []
+          }
+        ]
+      },
+      {
+        "path": [
+          "majordomus",
           "mesh"
         ],
         "route": "/docs/cli/mesh/",

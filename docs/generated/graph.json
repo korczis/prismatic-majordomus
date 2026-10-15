@@ -718,6 +718,15 @@
         "status": "query"
       },
       {
+        "id": "capability:guard.edit",
+        "kind": "capability",
+        "label": "guard.edit",
+        "summary": "Judge one edit",
+        "route": "/cockpit/capabilities/guard.edit",
+        "source": "apps/majordomus-cli/src/capability/builtin/guard.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:health.live",
         "kind": "capability",
         "label": "health.live",
@@ -36364,6 +36373,57 @@
         }
       },
       {
+        "id": "majordomus://issue/I2735",
+        "kind": "issue",
+        "label": "I2735",
+        "summary": "An edit no claim covers is refused",
+        "route": "/cockpit/objects/issue/i2735",
+        "source": ".ai/repo/project/issues/I2735.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "An unclaimed edit is refused with exit 2, naming the path and the remedy",
+            "The writing session's live claim, or the active task's scope, lets the edit through; another session's claim does not",
+            "Local state, a path outside the checkout, a tool that writes no file, the policy off and an unanswering server are let through",
+            "The checkout judged is the one the written file belongs to",
+            "The tracked shim passes on the refusal and nothing else"
+          ],
+          "created_at": "2026-10-15",
+          "current_state": "No hook runs before a tool; an edit no claim covers is never refused.",
+          "depends_on": [
+            "I2289"
+          ],
+          "evidence_required": [
+            "case_3069",
+            "guard_unit_tests"
+          ],
+          "milestone": "every-session-joins-the-mesh",
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/guard.rs",
+            "apps/majordomus-cli/src/capability/builtin/guard.rs",
+            "apps/majordomus-cli/src/commands/guard.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/cli/local.rs",
+            "apps/majordomus-cli/src/policy.rs",
+            ".claude/hooks/majordomus-edit-guard",
+            ".ai/repo/policy.yaml",
+            "share/schemas/majordomus/policy/policy.v1.schema.json",
+            "share/skeleton/policy.yaml",
+            "test/cases/3069_an_edit_no_claim_covers_is_refused.sh",
+            "docs/MESH.md"
+          ],
+          "slug": "an-edit-off-the-mesh-is-refused",
+          "updated_at": "2026-10-15",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --lib guard",
+            "bash test/run.sh 3069_an_edit_no_claim_covers_is_refused"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "label": "a-commit-stood-behind-a-build-lock",
@@ -53294,6 +53354,13 @@
         "source": "test/cases/3068_a_task_off_the_mesh_is_refused.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3069_an_edit_no_claim_covers_is_refused.sh",
+        "kind": "test",
+        "label": "test/cases/3069_an_edit_no_claim_covers_is_refused.sh",
+        "route": "/cockpit/objects/test/test-cases-3069-an-edit-no-claim-covers-is-refused-sh",
+        "source": "test/cases/3069_an_edit_no_claim_covers_is_refused.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/30_command_registry.sh",
         "kind": "test",
         "label": "test/cases/30_command_registry.sh",
@@ -57512,6 +57579,11 @@
         "label": "graph"
       },
       {
+        "id": "module:guard",
+        "kind": "module",
+        "label": "guard"
+      },
+      {
         "id": "module:health",
         "kind": "module",
         "label": "health"
@@ -59045,6 +59117,21 @@
       },
       {
         "source": "capability:graph.list",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:guard.edit",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:guard.edit",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:guard.edit",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -78829,6 +78916,21 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2735",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2735",
+        "target": "majordomus://issue/I2289",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2735",
+        "target": "majordomus://milestone/every-session-joins-the-mesh",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -83180,6 +83282,11 @@
       },
       {
         "source": "majordomus://test/test/cases/3068_a_task_off_the_mesh_is_refused.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3069_an_edit_no_claim_covers_is_refused.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -87834,6 +87941,11 @@
         "kind": "composes"
       },
       {
+        "source": "module:guard",
+        "target": "capability:guard.edit",
+        "kind": "composes"
+      },
+      {
         "source": "module:health",
         "target": "capability:health.live",
         "kind": "composes"
@@ -88470,8 +88582,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2804,
-      "edges": 6142,
+      "nodes": 2808,
+      "edges": 6150,
       "acyclic": false,
       "truncated": false
     }
