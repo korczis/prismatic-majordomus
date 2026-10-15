@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 201 | 170 | 0 | 31 |
-| http | 196 | 170 | 0 | 26 |
-| mcp | 191 | 166 | 0 | 25 |
+| direct | 202 | 171 | 0 | 31 |
+| http | 197 | 171 | 0 | 26 |
+| mcp | 192 | 167 | 0 | 25 |
 | system | 14 | 14 | 0 | 0 |
-| total | 602 | 520 | 0 | 82 |
+| total | 605 | 523 | 0 | 82 |
 
 ## Capabilities
 
@@ -217,6 +217,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `why.validate` | why | query | process, 2 entries | covered | covered | covered | `default` |
 | `worktree.inspect` | worktree | query | — | covered | covered | covered | `feature-branch` |
 | `worktree.migration_plan` | worktree | query | — | covered | covered | covered | `default` |
+| `worktree.reconciliation` | worktree | query | — | covered | covered | covered | `default` |
 | `worktree.status` | worktree | query | — | covered | covered | covered | `default`, `primary-checkout` |
 | `worktree.topology` | worktree | query | — | covered | covered | covered | `default` |
 | `worktree.uncommitted` | worktree | query | — | covered | covered | covered | `policy-threshold`, `one-hour` |

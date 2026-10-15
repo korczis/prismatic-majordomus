@@ -1,0 +1,125 @@
+---
+schema: adr/v1
+id: adr-0127
+kind: adr
+title: Every branch and every worktree has one state and one next step, read from git and the kernel
+status: proposed
+date: 2026-10-15
+tags:
+  - worktrees
+  - operations
+  - safety
+provenance:
+  origin: authored
+related:
+  - file:.ai/repo/adrs/0021-the-branch-to-worktree-topology-is-derived-from-git-identity-and-enfor.md
+  - file:.ai/repo/adrs/0055-disk-is-the-fifth-quantity-reclaimed-by-predicate-and-bounded-before-a-build.md
+  - rule:project.reclaim-only-what-you-own
+  - rule:project.worktree-topology
+  - file:apps/majordomus-cli/src/worktree/reconcile.rs
+  - file:docs/WORKTREES.md
+  - test:test/cases/612_every_worktree_has_a_disposition.sh
+  - test:test/cases/611_the_reclaim_refuses_what_it_cannot_prove.sh
+---
+
+# 127. Every branch and every worktree has one state and one next step, read from git and the kernel
+
+## Context
+
+ADR 21 made creating a worktree one command and left removing one to a person, on purpose: a
+tool that removed a worktree on the strength of a merged branch would eventually remove work
+somebody had not finished. ADR 55 then gave the build output a reaper, and `worktree cleanup
+--remove` gave the merged and clean worktree one. Both remove by predicate and both were
+correct. The count grew anyway.
+
+Measured on 2026-10-10 against `origin/master`: 274 registered worktrees and 297 local
+branches. Of 296 non-trunk branches, 81 were ancestors of the trunk, 23 merged to a tree
+identical to the trunk's, 67 merged cleanly with changes and 125 conflicted. Three readings
+explain why the first two groups were still there:
+
+- **Never nominated.** `cleanup` offers a branch only when its worktree is clean. 64 of the
+  81 merged branches held a dirty worktree, and nothing said what the dirt was.
+- **Always refused.** The reclaim refuses a branch with no upstream or with an upstream that
+  is gone. A forge that deletes the head branch of a merged pull request leaves exactly that,
+  and 76 of the 81 merged branches had no remote branch of their name any more. The refusal stands in for a
+  reading it does not take: whether any remote holds the commits.
+- **No state at all.** A branch the trunk does not reach was "unmerged". Whether merging it
+  would change nothing, conflict, or it was being worked on that minute, one word covered it,
+  and `cleanup` says nothing about any of them.
+
+And no step deletes a branch. A branch is the only durable name a piece of work has, which is
+why `cleanup` keeps them all; a branch whose every commit the trunk contains names nothing
+the trunk does not, and 81 of them is a listing nobody reads.
+
+## Decision
+
+Every non-trunk branch and every detached worktree is one subject with one state and one
+next step, decided by a pure function over readings taken from git and from the kernel, in
+`apps/majordomus-cli/src/worktree/reconcile.rs`. The questions are asked in the order of what
+cannot be recovered:
+
+1. a process has its working directory inside the worktree: `active`, keep;
+2. the worktree holds files no commit carries: `dirty`, commit;
+3. a reading could not be taken: `unreadable`, keep. Not knowing is never the harmless answer;
+4. the trunk reaches the commit: `merged`, or `unstarted` when no remote branch ever carried
+   the branch's name, because a branch cut a minute ago reads exactly like one that landed.
+   An upstream is not that evidence: git gives `origin/master` as the upstream to every
+   branch cut from it, and 34 local branches carried it on the day this was measured;
+5. merging it produces the trunk's own tree: `equivalent`;
+6. a commit no remote-tracking ref reaches: `unpublished`, or `orphaned` for a detached
+   worktree whose commit no ref holds;
+7. the merge conflicts: `conflicted`; otherwise `stale` when the trunk has moved and `ready`
+   when it has not.
+
+The relation to the trunk is decided against the remote-tracking branch the trunk follows,
+by reachability and then by `git merge-tree --write-tree`, which performs the merge in memory
+with the repository's own merge drivers. No state is decided from an age, a name or a
+timestamp.
+
+`majordomus worktree reconcile` prints the reading, and with a selector one subject and every
+reading that decided it; the capability `worktree.reconciliation` answers the same on MCP and
+HTTP. The reading removes nothing. A subject whose step removes something, whose proof is
+complete, and which is neither a scratch checkout nor the worktree the call came from is
+marked removable on proof, and every removal is named in git's own guarded form: a worktree
+by `git worktree remove` without `--force`, which refuses uncommitted work, and a branch by
+`git update-ref -d refs/heads/<branch> <commit>` naming the commit that was judged, which
+refuses a branch that moved since.
+
+Carrying the proven steps out by a tool, with each subject measured again immediately before
+it goes, is the second half of I2283 and is decided separately, by an amendment of this
+record, because removal is the half that can lose work.
+
+`worktree cleanup` and its `--remove` are unchanged. Their refusals remain true statements
+about what they read; `reconcile` reads the thing those refusals approximate.
+
+## Consequences
+
+- A branch a forge deleted after merging is marked removable on proof, where before it was
+  the refused case. The proof is that the remote trunk reaches its head, which is stronger
+  than an upstream that happens to still exist.
+- The commit a branch deletion would name is printed in the command, so the person who runs
+  it can restore it with `git branch <name> <commit>` while the object exists.
+- "Published" means what `majordomus convergence` means by it: both read
+  `state::commits_no_remote_reaches`. A remote-tracking ref is what this checkout last
+  fetched; a remote that lost a branch since is not seen, by design, and for a `merged`
+  branch does not matter.
+- A dirty worktree on a landed branch is still kept. The reading says `dirty` and says why;
+  deciding whether that dirt is stale derived output or authored work is not decided here.
+- `conflicted`, `stale` and `ready` are named and nothing acts on them. Integration stays the
+  integrator's (`majordomus prs`, ADR 101); the reading says which branches wait for it.
+- The reading costs up to two git subprocesses per unmerged branch, taken in parallel.
+- Nothing acts on the reading yet. Whether a tool carries out the proven steps, who runs it
+  and when, is the amendment this record expects.
+
+## Alternatives rejected
+
+- **Loosen `cleanup --remove`.** Its refusals are pinned by case 611 and are what make a bulk
+  removal safe to run without reading; changing what they mean under an existing command
+  would change what every caller of it relies on.
+- **Remove by age.** Two worktrees swept on 2026-09-15 looked untouched for three days and
+  had live processes in them. Age is a reason to look, never a proof.
+- **Delete every branch the trunk reaches.** A branch cut from the trunk and not yet committed
+  to is reached by the trunk. On 2026-10-10 the listing offered a worktree another session
+  had created that morning.
+- **Force-remove a dirty worktree after snapshotting it.** A snapshot preserves the bytes and
+  not the fact that somebody was in the middle of something.

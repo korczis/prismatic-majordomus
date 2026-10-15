@@ -1,7 +1,7 @@
 +++
 title = "majordomus served forge"
 description = "Ask the forge which deployments and releases it recorded, and keep the answer for the readers"
-weight = 178
+weight = 179
 [extra]
 route = "/docs/cli/served/forge/"
 command = "majordomus served forge"

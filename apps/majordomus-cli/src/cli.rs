@@ -3774,6 +3774,11 @@ pub enum WorktreeCommand {
         #[arg(long, value_name = "DURATION")]
         older_than: Option<String>,
     },
+    /// What becomes of every branch and every worktree: one state each (active, dirty, unreadable, unpublished, orphaned, unstarted, merged, equivalent, conflicted, stale, ready) decided from git and the kernel, never from an age, with the readings that decided it, the one step it permits and the command that takes it. With a selector, that one subject and why. Removes nothing
+    Reconcile {
+        /// One branch, or the path of one detached worktree: print its state and every reason
+        selector: Option<String>,
+    },
     /// Every local branch, one per line, for a shell completion that wants the live set
     Branches {
         /// Only branches with no worktree
@@ -5768,6 +5773,27 @@ pub const EXAMPLES: &[CommandExamples] = &[
             setup: &[],
             expect: Expect::StdoutContains(&["0 with uncommitted work", "nothing was changed"]),
         }],
+    },
+    CommandExamples {
+        command: "worktree reconcile",
+        examples: &[
+            ExampleDoc {
+                id: "worktree-reconcile-plan",
+                title: "What becomes of every branch and worktree",
+                description: "Every non-trunk branch and every detached worktree with the one state git supports for it and the one step that state permits. A branch cut from the trunk and never published is `unstarted` and kept: it reads exactly like one that landed, and only having been published tells them apart. The reading removes nothing.",
+                argv: &["worktree", "reconcile"],
+                setup: &[&["worktree", "create", "feature/improve-cli"]],
+                expect: Expect::StdoutContains(&["unstarted", "feature/improve-cli", "nothing to reconcile"]),
+            },
+            ExampleDoc {
+                id: "worktree-reconcile-explain",
+                title: "Why is this worktree still here?",
+                description: "With a selector the answer is one subject: its state, its step, and every reading that decided it, one per line.",
+                argv: &["worktree", "reconcile", "feature/improve-cli"],
+                setup: &[&["worktree", "create", "feature/improve-cli"]],
+                expect: Expect::StdoutContains(&["unstarted", "the trunk reaches the branch"]),
+            },
+        ],
     },
     CommandExamples {
         command: "worktree branches",

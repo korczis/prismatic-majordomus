@@ -3537,6 +3537,23 @@
       "tool": "majordomus_worktree_migration_plan"
     },
     {
+      "api_anchor": "/docs/api/worktree/#op-worktree-reconciliation",
+      "claims": [],
+      "cli": "majordomus worktree reconcile",
+      "id": "worktree.reconciliation",
+      "kind": "query",
+      "module": "worktree",
+      "module_route": "/registry/modules/worktree/",
+      "resource": null,
+      "route": "/registry/capabilities/worktree-reconciliation/",
+      "slug": "worktree-reconciliation",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/worktree.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/worktree.rs",
+      "tests": [],
+      "title": "What becomes of every branch and every worktree",
+      "tool": "majordomus_worktree_reconciliation"
+    },
+    {
       "api_anchor": "/docs/api/worktree/#op-worktree-status",
       "claims": [],
       "cli": "majordomus worktree status",
@@ -4224,7 +4241,7 @@
     ]
   },
   "counts": {
-    "capabilities": 201,
+    "capabilities": 202,
     "claims": 93,
     "modules": 57
   },
@@ -5869,6 +5886,11 @@
           "id": "worktree.migration_plan",
           "route": "/registry/capabilities/worktree-migration-plan/",
           "slug": "worktree-migration-plan"
+        },
+        {
+          "id": "worktree.reconciliation",
+          "route": "/registry/capabilities/worktree-reconciliation/",
+          "slug": "worktree-reconciliation"
         },
         {
           "id": "worktree.status",

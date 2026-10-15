@@ -20,9 +20,9 @@ use crate::cli::{OutputFormat, WorktreeArgs, WorktreeCommand};
 use crate::error::{Error, Result};
 use crate::worktree::{
     migrate, BranchState, CreateRequest, Detail, DirtyState, HooksPath, MigrationAction,
-    MigrationOptions, MigrationPlan, RepositoryTopology, Severity, Standing, StatusReport,
-    StepOutcome, Threshold, TopologyDiagnostic, WorkStanding, WorktreeService, WorktreeState,
-    EXIT_REFUSED,
+    MigrationOptions, MigrationPlan, ReconcileEntry, Reconciliation, RepositoryTopology, Severity,
+    Standing, StatusReport, StepOutcome, Threshold, TopologyDiagnostic, WorkStanding,
+    WorktreeService, WorktreeState, EXIT_MISSING, EXIT_REFUSED,
 };
 
 /// Run `majordomus worktree`.
@@ -95,6 +95,9 @@ pub fn run(args: WorktreeArgs) -> Result<u8> {
                 }
             })?;
             uncommitted(&svc()?, &threshold, format, &mut out)
+        }
+        Some(WorktreeCommand::Reconcile { selector }) => {
+            reconcile(&svc()?, selector.as_deref(), format, &mut out)
         }
         Some(WorktreeCommand::Branches { without_worktree }) => {
             branches(&svc()?, without_worktree, &mut out)
@@ -746,6 +749,106 @@ fn refusal(svc: &WorktreeService, branch: &str, path: &str) -> Option<String> {
     }
 }
 
+/// `worktree reconcile`: the reading, or one subject of it. It removes nothing.
+///
+/// Generic over the sink so that what a person reads is asserted against a buffer. The exit
+/// code is 0 for a reading, whatever it found; a selector that names no subject is the
+/// missing-artifact code.
+fn reconcile<W: Write>(
+    svc: &WorktreeService,
+    selector: Option<&str>,
+    format: OutputFormat,
+    out: &mut W,
+) -> Result<u8> {
+    let plan = svc.reconciliation().map_err(refuse)?;
+    match selector {
+        None => render_reconciliation(&plan, format, out).map(|()| 0),
+        Some(selector) => {
+            let Some(entry) = plan.entries.iter().find(|e| e.subject() == selector) else {
+                return Err(Error::Refused {
+                    code: EXIT_MISSING,
+                    reason: format!(
+                        "worktree reconcile: '{selector}' is neither a non-trunk branch nor the path of a detached worktree of this repository"
+                    ),
+                });
+            };
+            render_entry(entry, format, out).map(|()| 0)
+        }
+    }
+}
+
+fn line<W: Write>(out: &mut W, s: impl AsRef<str>) -> Result<()> {
+    writeln!(out, "{}", s.as_ref()).map_err(Error::Transport)
+}
+
+fn document<W: Write, T: Serialize>(out: &mut W, v: &T) -> Result<()> {
+    let value = serde_json::to_value(v).unwrap_or(Value::Null);
+    line(out, format!("{value:#}"))
+}
+
+/// The reading: one line per subject, what is removable on proof first, then the tallies
+/// and the verdict.
+fn render_reconciliation<W: Write>(
+    plan: &Reconciliation,
+    format: OutputFormat,
+    out: &mut W,
+) -> Result<()> {
+    if format == OutputFormat::Json {
+        return document(out, plan);
+    }
+    for e in &plan.entries {
+        line(
+            out,
+            format!(
+                "{:<6} {:<11} {:<34} {}",
+                if e.automatic { "PROVEN" } else { "" },
+                e.state.as_str(),
+                e.step.as_str(),
+                e.subject()
+            ),
+        )?;
+    }
+    for (state, count) in &plan.tallies {
+        line(out, format!("{count:>5}  {state}"))?;
+    }
+    line(out, plan.summary())
+}
+
+/// One subject: what it is, what it permits, and every reading that decided it.
+fn render_entry<W: Write>(entry: &ReconcileEntry, format: OutputFormat, out: &mut W) -> Result<()> {
+    if format == OutputFormat::Json {
+        return document(out, entry);
+    }
+    line(out, format!("subject   {}", entry.subject()))?;
+    if let Some(path) = &entry.worktree {
+        line(out, format!("worktree  {path}"))?;
+    }
+    line(out, format!("head      {}", entry.head))?;
+    line(out, format!("state     {}", entry.state.as_str()))?;
+    line(
+        out,
+        format!(
+            "step      {}{}",
+            entry.step.as_str(),
+            if entry.automatic {
+                "   (removable on proof)"
+            } else {
+                ""
+            }
+        ),
+    )?;
+    if let Some(behind) = entry.behind {
+        line(out, format!("behind    {behind} trunk commit(s)"))?;
+    }
+    for reason in &entry.reasons {
+        line(out, format!("because   {reason}"))?;
+    }
+    if !entry.command.is_empty() {
+        line(out, format!("command   {}", entry.command))?;
+    }
+    Ok(())
+}
+
 fn branches(svc: &WorktreeService, without_worktree: bool, out: &mut Out<'_>) -> Result<u8> {
     let t = svc.topology(Detail::Fast).map_err(refuse)?;
     for b in t
@@ -1189,5 +1292,107 @@ mod tests {
         .expect("write");
         let why = refusal(&svc, &b.name, &path).expect("refused");
         assert!(why.contains("uncommitted work"), "{why}");
+    }
+
+    /// What a reconcile wrote to a buffer, with its exit code.
+    fn reconciled(
+        svc: &WorktreeService,
+        selector: Option<&str>,
+        format: OutputFormat,
+    ) -> (u8, String) {
+        let mut out: Vec<u8> = Vec::new();
+        let code = reconcile(svc, selector, format, &mut out).expect("reconcile");
+        (code, String::from_utf8(out).expect("utf-8"))
+    }
+
+    /// The reading a person reads: what is removable on proof is marked, every state is
+    /// tallied, the last line is the verdict, and nothing was removed.
+    #[test]
+    fn the_reconciliation_marks_what_is_removable_on_proof() {
+        let (_tmp, svc, b) = nominated();
+        let (code, text) = reconciled(&svc, None, OutputFormat::Text);
+        assert_eq!(code, 0);
+        let first = text.lines().next().expect("a line");
+        assert!(first.starts_with("PROVEN merged"), "{text}");
+        assert!(first.contains("remove_worktree_and_delete_branch") && first.ends_with("spare"));
+        assert!(text.contains("    1  merged"), "{text}");
+        assert!(
+            text.trim_end().ends_with(
+                "1 of 1 subject(s) removable on proof: majordomus worktree reconcile <subject> says how"
+            ),
+            "{text}"
+        );
+        let path = b.worktree.clone().expect("spare is checked out");
+        assert!(std::path::Path::new(&path).exists(), "a reading removes nothing");
+
+        let (_, document) = reconciled(&svc, None, OutputFormat::Json);
+        let plan: Reconciliation = serde_json::from_str(&document).expect("the plan as JSON");
+        assert_eq!(plan.entries[0].branch.as_deref(), Some("spare"));
+        assert_eq!(plan.entries[0].head, b.head);
+        assert!(plan.entries[0].automatic && !plan.settled);
+    }
+
+    /// One subject says why it stands where it does and which guarded command takes its
+    /// step; a name that is no subject is the missing-artifact code, not an empty answer.
+    #[test]
+    fn one_subject_says_why_it_stands_where_it_does() {
+        let (_tmp, svc, b) = nominated();
+        let path = b.worktree.clone().expect("spare is checked out");
+        let (code, text) = reconciled(&svc, Some("spare"), OutputFormat::Text);
+        assert_eq!(code, 0);
+        for wanted in [
+            "subject   spare",
+            "worktree  ",
+            "state     merged",
+            "step      remove_worktree_and_delete_branch   (removable on proof)",
+            "because   the trunk reaches the branch, and it was published",
+        ] {
+            assert!(text.contains(wanted), "no '{wanted}' in:\n{text}");
+        }
+        assert!(text.contains(&format!("head      {}", b.head)));
+        assert!(
+            text.contains(&format!(
+                "command   git worktree remove {path} && git update-ref -d refs/heads/spare {}",
+                b.head
+            )),
+            "{text}"
+        );
+
+        let (_, document) = reconciled(&svc, Some("spare"), OutputFormat::Json);
+        let entry: ReconcileEntry = serde_json::from_str(&document).expect("the entry as JSON");
+        assert_eq!(entry.subject(), "spare");
+
+        let mut out: Vec<u8> = Vec::new();
+        match reconcile(&svc, Some("no-such-branch"), OutputFormat::Text, &mut out) {
+            Err(Error::Refused { code, reason }) => {
+                assert_eq!(code, EXIT_MISSING);
+                assert!(reason.contains("'no-such-branch'"), "{reason}");
+            }
+            other => panic!("an unknown subject was answered: {other:?}"),
+        }
+        assert!(out.is_empty());
+
+        // a subject that is kept prints no marker and no command, and one that merges
+        // cleanly says how far behind it is
+        let held = ReconcileEntry {
+            branch: Some("feature/later".into()),
+            worktree: None,
+            head: "0123abc".into(),
+            state: crate::worktree::WorkState::Stale,
+            step: crate::worktree::ReconcileStep::Keep,
+            automatic: false,
+            scratch: false,
+            here: false,
+            relation: Some(crate::worktree::TrunkRelation::Mergeable),
+            behind: Some(2),
+            reasons: vec!["the trunk has moved since it left".into()],
+            command: String::new(),
+        };
+        let mut out: Vec<u8> = Vec::new();
+        render_entry(&held, OutputFormat::Text, &mut out).expect("render");
+        let text = String::from_utf8(out).expect("utf-8");
+        assert!(text.contains("step      keep\n"), "{text}");
+        assert!(text.contains("behind    2 trunk commit(s)"));
+        assert!(!text.contains("command") && !text.contains("worktree  "));
     }
 }

@@ -1,7 +1,7 @@
 +++
 title = "majordomus mesh doctor"
 description = "Prove the mesh prerequisites on this machine alone: declaration, identity, sockets, multicast, broadcast, the protocol end to end, and the host firewall"
-weight = 139
+weight = 140
 [extra]
 route = "/docs/cli/mesh/doctor/"
 command = "majordomus mesh doctor"
