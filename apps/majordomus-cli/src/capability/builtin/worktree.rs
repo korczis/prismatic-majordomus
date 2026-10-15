@@ -354,6 +354,31 @@ mod tests {
         assert_eq!(resource.map(|r| r.uri.as_str()), Some(WORKTREES_URI));
     }
 
+    /// An `older_than` that is not a duration is the caller's error, refused as invalid
+    /// input before any work tree is read.
+    #[test]
+    fn an_uncommitted_reading_against_no_duration_is_invalid_input() {
+        let fixture = crate::synthetic::SyntheticRepository::small().unwrap();
+        let app = crate::app::App::load(&crate::cli::RepoArgs {
+            repo: Some(fixture.root().to_path_buf()),
+            discovery: crate::cli::DiscoveryMode::Filesystem,
+            share: Some(Path::new(env!("CARGO_MANIFEST_DIR")).join("../../share")),
+            ..Default::default()
+        })
+        .unwrap();
+        let refused = app
+            .context
+            .execute(
+                "worktree.uncommitted",
+                serde_json::json!({ "older_than": "soon" }),
+            )
+            .unwrap_err();
+        assert!(
+            matches!(&refused, CapabilityError::InvalidInput(m) if m.contains("older_than")),
+            "{refused:?}"
+        );
+    }
+
     /// Every capability of the module is read-only: the registry's contract, and the
     /// reason the mutations live on the command line.
     #[test]

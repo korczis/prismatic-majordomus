@@ -441,21 +441,23 @@ impl ExecutionStore {
                     published.push(event);
                 }
             }
-            let record = inner.records.get_mut(id)?;
-            if let Some(reported) = record.reported.as_mut() {
-                reported.through = through;
-                reported.heard = Instant::now();
-            }
-            ReportOutcome {
-                applied,
-                through,
-                cancel_requested: record.cancel_requested,
-            }
+            // the record was found reported above, under this same lock: it is still there
+            inner.records.get_mut(id).map(|record| {
+                record.reported.iter_mut().for_each(|reported| {
+                    reported.through = through;
+                    reported.heard = Instant::now();
+                });
+                ReportOutcome {
+                    applied,
+                    through,
+                    cancel_requested: record.cancel_requested,
+                }
+            })
         };
         for (event, deliveries) in published {
             traced(&event, deliveries);
         }
-        Some(outcome)
+        outcome
     }
 
     /// Fail every reported execution that is not finished and has not been heard from for
@@ -513,10 +515,11 @@ impl ExecutionStore {
                         correlation_id: id.to_string(),
                     },
                 };
-                if let Some(event) = self.publish_locked(&mut inner, &id, payload) {
-                    published.push(event);
-                    abandoned.push(id);
-                }
+                // an active execution may always fail, so the event is published; the
+                // id is named abandoned only when it was
+                let event = self.publish_locked(&mut inner, &id, payload);
+                abandoned.extend(event.is_some().then_some(id));
+                published.extend(event);
             }
             abandoned
         };
@@ -1451,6 +1454,34 @@ mod tests {
                 "execution.completed"
             ]
         );
+    }
+
+    /// A report about an id this store holds nothing under answers nothing, and a reporter
+    /// that repeats its own `created` past the one the store published is not believed twice.
+    #[test]
+    fn a_report_about_nothing_held_answers_nothing_and_a_repeated_created_is_passed_over() {
+        let store = store();
+        assert_eq!(
+            store.report(&ExecutionId::fresh(), vec![(2, EventPayload::Started)]),
+            None
+        );
+        let id = ExecutionId::fresh();
+        store.adopt(id.clone(), seed(), 4242).expect("adopted");
+        let outcome = store
+            .report(
+                &id,
+                vec![(
+                    2,
+                    EventPayload::Created {
+                        capability: "demo.x".into(),
+                        title: "Demo".into(),
+                        input: serde_json::json!({}),
+                    },
+                )],
+            )
+            .expect("a reported execution");
+        assert_eq!((outcome.applied, outcome.through), (0, 2));
+        assert_eq!(store.get(&id).unwrap().event_count, 1, "one created event");
     }
 
     #[test]

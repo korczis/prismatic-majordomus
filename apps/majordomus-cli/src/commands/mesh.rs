@@ -242,7 +242,13 @@ fn not_ok(v: &Value) -> bool {
 /// ([`choose`]), because its `runtime` check is that server's verdict on the declaration;
 /// this process's otherwise. Exit 10 when a check failed.
 fn doctor(args: MeshQueryArgs) -> Result<u8> {
-    match server_url(&args)? {
+    let serving = server_url(&args)?;
+    doctor_through(serving, args)
+}
+
+/// [`doctor`] once the server that answers, if any, is known.
+fn doctor_through(serving: Option<Serving>, args: MeshQueryArgs) -> Result<u8> {
+    match serving {
         Some(serving) => ask_at(
             &serving.url,
             &args,
@@ -391,7 +397,21 @@ fn ask(
     render: fn(&Value) -> String,
     failed: fn(&Value) -> bool,
 ) -> Result<u8> {
-    let Some(serving) = server_url(args)? else {
+    let serving = server_url(args)?;
+    ask_through(serving, args, method, target, body, render, failed)
+}
+
+/// [`ask`] once the server that answers, if any, is known.
+fn ask_through(
+    serving: Option<Serving>,
+    args: &MeshQueryArgs,
+    method: &str,
+    target: &str,
+    body: Option<Value>,
+    render: fn(&Value) -> String,
+    failed: fn(&Value) -> bool,
+) -> Result<u8> {
+    let Some(serving) = serving else {
         let answer = json!({
             "active": false,
             "reason": "no running server for any checkout of this repository: the mesh lives inside the shared server (majordomus serve ensure in the primary checkout starts one)",
@@ -1230,6 +1250,79 @@ mod tests {
             None
         );
         assert_eq!(touches_the_serving_checkout("/api/v1/mesh", None), None);
+    }
+
+    fn query(repo: Option<std::path::PathBuf>, format: OutputFormat) -> MeshQueryArgs {
+        MeshQueryArgs {
+            repo: crate::cli::RepoArgs {
+                repo,
+                ..Default::default()
+            },
+            format,
+        }
+    }
+
+    /// A loopback address nothing listens on: a port the system handed out and took back.
+    fn closed_url() -> String {
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let port = listener.local_addr().unwrap().port();
+        drop(listener);
+        format!("http://127.0.0.1:{port}")
+    }
+
+    #[test]
+    fn a_question_outside_any_repository_is_an_error_not_an_answer() {
+        let plain = tempfile::tempdir().unwrap();
+        let args = query(Some(plain.path().to_path_buf()), OutputFormat::Json);
+        assert!(ask(&args, "GET", "/api/v1/mesh", None, render_status, never).is_err());
+    }
+
+    /// Through a borrowed server, a publish is refused by name on the text surface too.
+    #[test]
+    fn a_publish_through_a_borrowed_server_is_refused_in_text() {
+        let serving = Serving {
+            url: closed_url(),
+            borrowed_from: Some("/r".into()),
+        };
+        let code = ask_through(
+            Some(serving),
+            &query(None, OutputFormat::Text),
+            "POST",
+            "/api/v1/mesh/handovers",
+            Some(json!({ "path": null })),
+            render_written,
+            never,
+        )
+        .unwrap();
+        assert_eq!(code, EXIT_REFUSED);
+    }
+
+    /// A server that answers for this checkout is asked, by `ask` and by `doctor`; one that
+    /// has gone since it was found is an error naming its address, not an absence.
+    #[test]
+    fn a_found_server_is_asked_and_one_gone_since_is_an_error_naming_it() {
+        let url = closed_url();
+        let serving = || Serving {
+            url: url.clone(),
+            borrowed_from: None,
+        };
+        let asked = ask_through(
+            Some(serving()),
+            &query(None, OutputFormat::Json),
+            "GET",
+            "/api/v1/mesh",
+            None,
+            render_status,
+            never,
+        )
+        .expect_err("nothing answers");
+        assert!(asked.to_string().contains(&url), "{asked}");
+        let doctor = doctor_through(Some(serving()), query(None, OutputFormat::Json))
+            .expect_err("nothing answers");
+        assert!(
+            doctor.to_string().contains("/api/v1/mesh/doctor"),
+            "{doctor}"
+        );
     }
 
     /// A 32-hex node key, as `<node>-<runtime>` carries it.

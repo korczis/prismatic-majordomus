@@ -1462,4 +1462,31 @@ mod tests {
         let sibling = ResolvedPath::of(home.path().join("sibling"));
         assert!(svc.ephemeral_root_of(&sibling).is_none(), "the repository lives in the temporary directory, so nothing beside it is a scratch checkout");
     }
+
+    /// A report written before the hooks were carried reads as hooks that were not
+    /// configured, never as a parse failure.
+    #[test]
+    fn a_create_report_without_hooks_reads_as_not_configured() {
+        assert_eq!(default_hooks(), HooksPath::NotConfigured);
+    }
+
+    /// A repair binds every existing linked worktree to its hooks and says which, by path;
+    /// a dry run changes nothing and binds nothing.
+    #[test]
+    fn a_repair_names_the_hooks_of_every_linked_worktree_and_a_dry_run_none() {
+        let repo = Repo::new();
+        let home = repo.service().expected_path_of("topic").expect("a path");
+        repo.worktree("topic", &home);
+        let svc = repo.service();
+
+        let dry = svc.repair(true).expect("a dry run");
+        assert!(!dry.applied);
+        assert!(dry.hooks.is_empty(), "{dry:?}");
+
+        let applied = svc.repair(false).expect("a repair");
+        assert!(applied.applied);
+        let paths: Vec<&String> = applied.hooks.keys().collect();
+        assert_eq!(paths.len(), 1, "{applied:?}");
+        assert!(paths[0].ends_with("topic"), "{applied:?}");
+    }
 }

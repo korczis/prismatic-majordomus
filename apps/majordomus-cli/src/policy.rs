@@ -530,6 +530,21 @@ pub fn is_safe_relative(path: &str) -> bool {
 mod tests {
     use super::*;
 
+    /// `session.stranded_after` is read as the text it was written as: a duration as a
+    /// string, a bare number as its digits, anything else as absent, and a value that is
+    /// not even well-formed as the parse failure it is.
+    #[test]
+    fn a_stranded_after_is_text_a_number_or_absent() {
+        let read = |json: &str| serde_json::from_str::<SessionPolicy>(json);
+        let text = read(r#"{"stranded_after": "12h"}"#).unwrap();
+        assert_eq!(text.stranded_after.as_deref(), Some("12h"));
+        let number = read(r#"{"stranded_after": 3600}"#).unwrap();
+        assert_eq!(number.stranded_after.as_deref(), Some("3600"));
+        let other = read(r#"{"stranded_after": true}"#).unwrap();
+        assert_eq!(other.stranded_after, None);
+        assert!(read(r#"{"stranded_after": tru}"#).is_err());
+    }
+
     #[test]
     fn a_comment_or_a_blank_line_is_not_part_of_the_normal_form() {
         let plain = "version: 1\ncontext:\n  budget: 150\n  list: [a, b]\n";

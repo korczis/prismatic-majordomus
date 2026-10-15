@@ -141,6 +141,13 @@ pub fn aged_dirty_state(worktree: &Path) -> Result<(DirtyState, Option<SystemTim
     if state.clean {
         return Ok((state, None));
     }
+    Ok((state, oldest_change(worktree, &bytes)))
+}
+
+/// The earliest modification time among the paths of a `status --porcelain -z` answer for
+/// `worktree`, ignored entries left out, with the index file's time standing in for a path
+/// that cannot be read — or for all of them. `None` only when neither can be read.
+fn oldest_change(worktree: &Path, bytes: &[u8]) -> Option<SystemTime> {
     let mut oldest: Option<SystemTime> = None;
     let mut unreadable = false;
     for entry in bytes.split(|b| *b == 0).filter(|e| e.len() >= 4) {
@@ -162,7 +169,7 @@ pub fn aged_dirty_state(worktree: &Path) -> Result<(DirtyState, Option<SystemTim
             oldest = Some(oldest.map_or(t, |o| o.min(t)));
         }
     }
-    Ok((state, oldest))
+    oldest
 }
 
 /// Which of these directories has a process working inside it right now, one answer per
@@ -194,7 +201,13 @@ pub fn processes_inside(dirs: &[&Path]) -> Option<Vec<bool>> {
     if real.is_empty() {
         return Some(Vec::new());
     }
-    let out = std::process::Command::new("lsof")
+    inside_by(&real, "lsof")
+}
+
+/// [`processes_inside`] for directories already resolved, asking the `lsof` at `program`:
+/// `None` when it cannot be run.
+fn inside_by(real: &[String], program: &str) -> Option<Vec<bool>> {
+    let out = std::process::Command::new(program)
         .args(["-a", "-d", "cwd", "-Fn"])
         .output()
         .ok()?;
@@ -580,6 +593,61 @@ mod tests {
         let b = parse_branches("x\0abc\0origin/x\0\0\0\n");
         let u = b[0].upstream.as_ref().unwrap();
         assert_eq!((u.ahead, u.behind), (Some(0), Some(0)));
+    }
+
+    fn git(cwd: &Path, args: &[&str]) {
+        let ok = std::process::Command::new("git")
+            .args(["-c", "user.name=t", "-c", "user.email=t@t"])
+            .args(["-c", "commit.gpgsign=false"])
+            .args(args)
+            .current_dir(cwd)
+            .status()
+            .expect("run git");
+        assert!(ok.success(), "git {args:?}");
+    }
+
+    #[test]
+    fn a_directory_git_does_not_answer_for_has_no_aged_state() {
+        let plain = tempfile::tempdir().unwrap();
+        assert!(aged_dirty_state(plain.path()).is_err());
+    }
+
+    /// An ignored entry is not a change; a changed path that is gone takes the index's time;
+    /// a path that is there takes its own.
+    #[test]
+    fn the_oldest_change_skips_ignored_entries_and_a_gone_path_takes_the_index_time() {
+        let repo = tempfile::tempdir().unwrap();
+        git(repo.path(), &["init", "-q"]);
+        std::fs::write(repo.path().join("kept.txt"), "k").unwrap();
+        git(repo.path(), &["add", "kept.txt"]);
+        let index = std::fs::metadata(repo.path().join(".git/index"))
+            .and_then(|m| m.modified())
+            .unwrap();
+        let kept = std::fs::metadata(repo.path().join("kept.txt"))
+            .and_then(|m| m.modified())
+            .unwrap();
+
+        // only an ignored entry: nothing of its own counts, and the index stands in
+        let ignored = oldest_change(repo.path(), b"!! build/\0");
+        assert_eq!(ignored, Some(index));
+        // a present path counts by its own time
+        assert_eq!(oldest_change(repo.path(), b"A  kept.txt\0"), Some(kept));
+        // a gone path brings the index in beside the present one
+        let both = oldest_change(repo.path(), b"A  kept.txt\0 D gone.txt\0");
+        assert_eq!(both, Some(kept.min(index)));
+
+        // no repository at all: a gone path and no index answer nothing
+        let plain = tempfile::tempdir().unwrap();
+        assert_eq!(oldest_change(plain.path(), b" D gone.txt\0"), None);
+    }
+
+    #[test]
+    fn a_directory_that_cannot_be_resolved_or_an_absent_lsof_is_not_knowing() {
+        let gone = Path::new("/nonexistent/majordomus-test/worktree");
+        assert_eq!(processes_inside(&[gone]), None);
+        assert_eq!(processes_inside(&[]), Some(Vec::new()));
+        let real = ["/nonexistent".to_string()];
+        assert_eq!(inside_by(&real, "/nonexistent/majordomus-test/lsof"), None);
     }
 
     #[test]

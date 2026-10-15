@@ -69,15 +69,14 @@ pub fn run(args: RunArgs) -> Result<u8> {
         )
         .map_err(map)?;
     let id = started["id"].as_str().unwrap_or_default().to_string();
-    let mut relay = match &server {
-        Some(url) => Some(Relay::new(ctx, url, event_id(&id)?, show)),
-        None => {
-            if !args.quiet {
-                eprintln!("{NOT_VISIBLE}");
-            }
-            None
-        }
-    };
+    // the id is the one this process just minted, so it parses whenever a server serves
+    let mut relay = server
+        .as_deref()
+        .zip(ExecutionId::parse(&id))
+        .map(|(url, execution)| Relay::new(ctx, url, execution, show));
+    if server.is_none() && !args.quiet {
+        eprintln!("{NOT_VISIBLE}");
+    }
 
     let deadline = std::time::Instant::now() + PATIENCE;
     loop {
@@ -935,5 +934,412 @@ mod tests {
             out.contains("message    execution.created") && out.contains("message    stream.ready"),
             "{out}"
         );
+    }
+
+    // ------------------------------------------------ the report to a serving server
+
+    use std::io::Read;
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    use std::sync::{Arc, Mutex};
+
+    use crate::execution::{Actor, ActorKind, RepositoryRef};
+    use crate::synthetic::SyntheticRepository;
+
+    /// What one request to [`serve`] was: its method, its path and its body as JSON.
+    type Asked<'a> = (&'a str, &'a str, &'a Value);
+
+    /// A loopback HTTP server that answers each request with `answer`, for the rest of the
+    /// test binary's life; its URL. The body is read whole, by its `Content-Length`.
+    fn serve(answer: impl Fn(Asked<'_>) -> (u16, Value) + Send + 'static) -> String {
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").expect("a loopback port");
+        let url = format!("http://{}", listener.local_addr().expect("its address"));
+        std::thread::spawn(move || {
+            for stream in listener.incoming() {
+                let Ok(mut stream) = stream else { continue };
+                let mut raw = Vec::new();
+                let mut chunk = vec![0u8; 64 * 1024];
+                let body_at = loop {
+                    if let Some(at) = raw.windows(4).position(|w| w == b"\r\n\r\n") {
+                        break at + 4;
+                    }
+                    match stream.read(&mut chunk) {
+                        Ok(0) | Err(_) => break raw.len(),
+                        Ok(n) => raw.extend_from_slice(&chunk[..n]),
+                    }
+                };
+                let head = String::from_utf8_lossy(&raw[..body_at]).to_string();
+                let length = head
+                    .lines()
+                    .filter_map(|l| l.split_once(':'))
+                    .find(|(k, _)| k.eq_ignore_ascii_case("content-length"))
+                    .and_then(|(_, v)| v.trim().parse::<usize>().ok())
+                    .unwrap_or(0);
+                while raw.len() < body_at + length {
+                    match stream.read(&mut chunk) {
+                        Ok(0) | Err(_) => break,
+                        Ok(n) => raw.extend_from_slice(&chunk[..n]),
+                    }
+                }
+                let mut words = head.split_whitespace();
+                let method = words.next().unwrap_or_default().to_string();
+                let path = words.next().unwrap_or("/").to_string();
+                let body: Value = serde_json::from_slice(&raw[body_at..]).unwrap_or(Value::Null);
+                let (status, value) = answer((&method, &path, &body));
+                let text = value.to_string();
+                let _ = write!(
+                    stream,
+                    "HTTP/1.1 {status} X\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{text}",
+                    text.len()
+                );
+            }
+        });
+        url
+    }
+
+    /// An address nothing listens on.
+    fn dead_url() -> String {
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").expect("a loopback port");
+        let url = format!("http://{}", listener.local_addr().expect("its address"));
+        drop(listener);
+        url
+    }
+
+    /// The last sequence a report carried, or `held` when it carried none.
+    fn last_sequence(body: &Value, held: u64) -> u64 {
+        body["events"]
+            .as_array()
+            .and_then(|events| events.last())
+            .and_then(|e| e["sequence"].as_u64())
+            .unwrap_or(held)
+    }
+
+    /// A server that takes every report whole and answers how far it holds the run, with
+    /// `cancel` as its stop request; its URL, how many reports it took, and the bodies.
+    fn taking(cancel: bool) -> (String, Arc<AtomicUsize>, Arc<Mutex<Vec<Value>>>) {
+        let count = Arc::new(AtomicUsize::new(0));
+        let bodies = Arc::new(Mutex::new(Vec::new()));
+        let held = Arc::new(Mutex::new(0u64));
+        let (c, b) = (Arc::clone(&count), Arc::clone(&bodies));
+        let url = serve(move |(_, _, body)| {
+            c.fetch_add(1, Ordering::SeqCst);
+            b.lock().unwrap().push(body.clone());
+            let mut held = held.lock().unwrap();
+            *held = last_sequence(body, *held);
+            (
+                200,
+                json!({
+                    "applied": 0,
+                    "through": *held,
+                    "cancel_requested": cancel,
+                    "execution": { "links": { "cockpit": "/cockpit/executions/x" } }
+                }),
+            )
+        });
+        (url, count, bodies)
+    }
+
+    /// An execution of this process, queued, with `input`.
+    fn own(ctx: &crate::capability::Context, input: Value) -> ExecutionId {
+        let id = ExecutionId::fresh();
+        ctx.executions.store().create(
+            id.clone(),
+            "executions.demonstrate",
+            "Demonstrate an execution",
+            input,
+            true,
+            Actor::of(ActorKind::Internal),
+            RepositoryRef {
+                name: "r".into(),
+                id: "id".into(),
+                branch: None,
+            },
+        );
+        id
+    }
+
+    fn line(n: usize, chars: usize) -> crate::execution::EventPayload {
+        crate::execution::EventPayload::Log {
+            stream: LogStream::Handler,
+            message: format!("{n} {}", "x".repeat(chars)),
+        }
+    }
+
+    /// A run reports what it said, says once where it can be seen, honours the stop the
+    /// server hands back once, waits for news before reporting again, and finishes with the
+    /// server holding everything it said.
+    #[test]
+    fn a_relay_reports_the_run_and_honours_the_stop_the_server_hands_back_once() {
+        let repo = SyntheticRepository::small().expect("a repository");
+        let ctx = repo.context().expect("a context");
+        let store = ctx.executions.store();
+        let id = own(&ctx, json!({ "steps": 1 }));
+        store.publish(&id, crate::execution::EventPayload::Started);
+        let (url, count, _) = taking(true);
+
+        let mut relay = Relay::new(&ctx, &url, id.clone(), true);
+        relay.tick();
+        assert_eq!(count.load(Ordering::SeqCst), 1, "the first tick reports");
+        assert!(relay.reached && relay.stopped && relay.lost.is_none());
+        assert_eq!(relay.through, 2, "created and started are held");
+        assert_eq!(store.get(&id).unwrap().state, ExecutionState::Cancelling);
+
+        // the stop published news, but the last report is a moment old: nothing is sent
+        relay.tick();
+        assert_eq!(count.load(Ordering::SeqCst), 1);
+        std::thread::sleep(std::time::Duration::from_millis(220));
+        relay.tick();
+        assert_eq!(
+            count.load(Ordering::SeqCst),
+            2,
+            "news a moment old is reported"
+        );
+        assert_eq!(relay.through, relay.local_last());
+
+        // the server asks again; the run was already told, and is not cancelled twice
+        assert_eq!(store.get(&id).unwrap().event_count, 3);
+        store.publish(&id, line(1, 8));
+        relay.finish();
+        assert_eq!(count.load(Ordering::SeqCst), 3);
+        assert_eq!(relay.through, relay.local_last());
+        assert_eq!(store.get(&id).unwrap().event_count, 4, "no second stop");
+        relay.finish();
+        assert_eq!(count.load(Ordering::SeqCst), 3, "nothing new: nothing sent");
+    }
+
+    /// A server that takes a report and never moves its `through` is not asked for ever:
+    /// the finish gives up after a handful of reports that changed nothing.
+    #[test]
+    fn a_finish_gives_up_on_a_server_that_holds_nothing_more() {
+        let repo = SyntheticRepository::small().expect("a repository");
+        let ctx = repo.context().expect("a context");
+        let id = own(&ctx, json!({}));
+        let count = Arc::new(AtomicUsize::new(0));
+        let c = Arc::clone(&count);
+        let url = serve(move |_| {
+            c.fetch_add(1, Ordering::SeqCst);
+            (200, json!({ "through": 0, "cancel_requested": false }))
+        });
+        let mut relay = Relay::new(&ctx, &url, id, false);
+        relay.finish();
+        assert_eq!(count.load(Ordering::SeqCst), 8);
+        assert_eq!(relay.through, 0);
+        assert!(relay.reached && relay.lost.is_none());
+    }
+
+    /// A server that cannot be reached at the first report loses the run at once; one that
+    /// took reports and then fails is given three tries in a row. A lost run sends nothing.
+    #[test]
+    fn a_relay_loses_an_unreachable_server_at_once_and_a_failing_one_after_three_tries() {
+        let repo = SyntheticRepository::small().expect("a repository");
+        let ctx = repo.context().expect("a context");
+        let id = own(&ctx, json!({}));
+
+        let mut unreachable = Relay::new(&ctx, &dead_url(), id.clone(), false);
+        unreachable.send();
+        assert!(unreachable.lost.is_some() && !unreachable.reached);
+        let last = unreachable.last;
+        unreachable.send();
+        assert_eq!(unreachable.last, last, "a lost run is not reported again");
+
+        let count = Arc::new(AtomicUsize::new(0));
+        let c = Arc::clone(&count);
+        let url = serve(move |_| {
+            if c.fetch_add(1, Ordering::SeqCst) == 0 {
+                (200, json!({ "through": 1, "cancel_requested": false }))
+            } else {
+                (
+                    500,
+                    json!({ "error": { "code": "internal", "message": "it broke" } }),
+                )
+            }
+        });
+        let mut failing = Relay::new(&ctx, &url, id, false);
+        failing.send();
+        assert!(failing.reached && failing.lost.is_none());
+        failing.send();
+        failing.send();
+        assert_eq!(failing.failures, 2);
+        assert!(
+            failing.lost.is_none(),
+            "two failures are not yet a lost server"
+        );
+        failing.send();
+        assert!(
+            failing
+                .lost
+                .as_deref()
+                .is_some_and(|w| w.contains("it broke")),
+            "{:?}",
+            failing.lost
+        );
+    }
+
+    /// A run this process no longer holds is not reported, and one whose oldest events this
+    /// process has already dropped is lost rather than reported with a hole in it.
+    #[test]
+    fn a_relay_reports_nothing_of_a_run_it_does_not_hold_whole() {
+        let repo = SyntheticRepository::small().expect("a repository");
+        let ctx = repo.context().expect("a context");
+        let (url, count, _) = taking(false);
+
+        let mut absent = Relay::new(&ctx, &url, ExecutionId::fresh(), false);
+        assert_eq!(absent.local_last(), 0);
+        absent.send();
+        assert_eq!(count.load(Ordering::SeqCst), 0);
+        assert!(absent.lost.is_none());
+
+        let id = own(&ctx, json!({}));
+        let store = ctx.executions.store();
+        for n in 0..crate::execution::Limits::default().max_events + 5 {
+            store.publish(&id, line(n, 4));
+        }
+        let mut gapped = Relay::new(&ctx, &url, id, false);
+        gapped.send();
+        assert_eq!(count.load(Ordering::SeqCst), 0);
+        assert!(
+            gapped
+                .lost
+                .as_deref()
+                .is_some_and(|w| w.contains("no longer holds events 1..")),
+            "{:?}",
+            gapped.lost
+        );
+    }
+
+    /// A report stays under the server's body bound: an input too large for the channel is
+    /// carried as a note of its size, and events past the budget wait for the next report.
+    #[test]
+    fn a_report_withholds_a_large_input_and_leaves_events_past_its_budget_for_the_next() {
+        let repo = SyntheticRepository::small().expect("a repository");
+        let ctx = repo.context().expect("a context");
+        let large = json!({ "text": "y".repeat(crate::http::ws::MAX_FRAME_BYTES) });
+        let id = own(&ctx, large);
+        let store = ctx.executions.store();
+        let limit = crate::execution::Limits::default().max_log_chars;
+        for n in 0..450 {
+            store.publish(&id, line(n, limit));
+        }
+        let (url, count, bodies) = taking(false);
+        let mut relay = Relay::new(&ctx, &url, id, false);
+        relay.send();
+        {
+            let bodies = bodies.lock().unwrap();
+            let first = &bodies[0];
+            assert_eq!(first["input"]["withheld"], "too_large");
+            assert_eq!(first["events"][0]["type"], "execution.created");
+            assert_eq!(
+                first["events"][0]["data"]["input"]["withheld"], "too_large",
+                "the created event carries the note too"
+            );
+            let carried = first["events"].as_array().unwrap().len();
+            assert!(
+                carried > 1 && carried < 451,
+                "{carried} events in one report"
+            );
+            assert!(first.to_string().len() < crate::http::server::MAX_BODY_BYTES);
+        }
+        relay.finish();
+        assert!(count.load(Ordering::SeqCst) >= 2);
+        assert_eq!(relay.through, 451, "the rest followed in the next report");
+    }
+
+    /// A repository `run` can load: the synthetic one, made a git repository.
+    fn runnable() -> SyntheticRepository {
+        let repo = SyntheticRepository::small().expect("a repository");
+        let git = std::process::Command::new("git")
+            .args(["init", "-q"])
+            .current_dir(repo.root())
+            .status()
+            .expect("git");
+        assert!(git.success());
+        repo
+    }
+
+    fn run_args(repo: &SyntheticRepository, quiet: bool, format: OutputFormat) -> RunArgs {
+        RunArgs {
+            repo: crate::cli::RepoArgs {
+                repo: Some(repo.root().to_path_buf()),
+                discovery: crate::cli::DiscoveryMode::Filesystem,
+                share: Some(crate::synthetic::crate_share()),
+                ..Default::default()
+            },
+            capability: "executions.demonstrate".into(),
+            input: Some(r#"{ "steps": 1, "delay_ms": 0 }"#.into()),
+            follow: !quiet,
+            quiet,
+            format,
+        }
+    }
+
+    /// With no server, a quiet run says nothing about being unseen and a loud one does;
+    /// both run to the end.
+    #[test]
+    fn a_run_without_a_server_runs_and_says_so_unless_quiet() {
+        let repo = runnable();
+        assert_eq!(
+            run(run_args(&repo, true, OutputFormat::Text)).expect("ran"),
+            0
+        );
+        assert_eq!(
+            run(run_args(&repo, false, OutputFormat::Json)).expect("ran"),
+            0
+        );
+    }
+
+    /// With a server serving the checkout, the run reports itself to it until the server
+    /// holds everything the run said.
+    #[test]
+    fn a_run_with_a_server_reports_itself_to_it() {
+        let repo = runnable();
+        let app = App::load(&run_args(&repo, false, OutputFormat::Text).repo).expect("loads");
+        let identity = crate::repository::identity(app.repository.root());
+        let reports = Arc::new(Mutex::new(Vec::<Value>::new()));
+        let held = Arc::new(Mutex::new(0u64));
+        let r = Arc::clone(&reports);
+        let url = serve(move |(method, _, body)| {
+            if method == "GET" {
+                return (
+                    200,
+                    json!({ "name": "majordomus", "repository_id": identity }),
+                );
+            }
+            r.lock().unwrap().push(body.clone());
+            let mut held = held.lock().unwrap();
+            *held = last_sequence(body, *held);
+            (200, json!({ "through": *held, "cancel_requested": false }))
+        });
+        let lease = crate::lease::lease_path(&app.repository);
+        std::fs::create_dir_all(lease.parent().unwrap()).unwrap();
+        std::fs::write(
+            &lease,
+            json!({
+                "schema": crate::lease::SCHEMA,
+                "pid": 0,
+                "token": "another-process",
+                "root": app.repository.root(),
+                "url": url,
+                "started_at": "2026-10-15T00:00:00Z",
+            })
+            .to_string(),
+        )
+        .unwrap();
+        assert_eq!(
+            crate::lease::serving(&app.repository).as_deref(),
+            Some(url.as_str())
+        );
+
+        assert_eq!(
+            run(run_args(&repo, false, OutputFormat::Text)).expect("ran"),
+            0
+        );
+        let reports = reports.lock().unwrap();
+        assert!(!reports.is_empty(), "the run reported itself");
+        let types: Vec<&str> = reports
+            .iter()
+            .flat_map(|r| r["events"].as_array().into_iter().flatten())
+            .filter_map(|e| e["type"].as_str())
+            .collect();
+        assert_eq!(types.first(), Some(&"execution.created"), "{types:?}");
+        assert_eq!(types.last(), Some(&"execution.completed"), "{types:?}");
     }
 }

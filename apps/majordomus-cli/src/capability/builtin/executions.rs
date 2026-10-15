@@ -463,21 +463,22 @@ fn executions_report(ctx: &Context, input: ReportInput) -> Result<ReportAnswer, 
             input.pid,
         )
         .map_err(|e| CapabilityError::Refused(e.to_string()))?;
-    let outcome = store
+    // adopted just now as a reported execution, so the store answers both readings; the
+    // refusal is named once, eagerly, rather than on two paths no report can take
+    let refused = CapabilityError::NotFound(format!("no reported execution {id} in this process"));
+    store
         .report(
             &id,
             input.events.into_iter().map(|e| (e.sequence, e.payload)),
         )
-        .ok_or_else(|| CapabilityError::NotFound(format!("no reported execution {id}")))?;
-    let execution = store
-        .get(&id)
-        .ok_or_else(|| CapabilityError::NotFound(format!("no execution {id} in this process")))?;
-    Ok(ReportAnswer {
-        applied: outcome.applied,
-        through: outcome.through,
-        cancel_requested: outcome.cancel_requested,
-        execution: ExecutionView::of(ctx, execution),
-    })
+        .zip(store.get(&id))
+        .map(|(outcome, execution)| ReportAnswer {
+            applied: outcome.applied,
+            through: outcome.through,
+            cancel_requested: outcome.cancel_requested,
+            execution: ExecutionView::of(ctx, execution),
+        })
+        .ok_or(refused)
 }
 
 // ---------------------------------------------------------------- executions.protocol
@@ -956,5 +957,149 @@ mod tests {
             ],
             "the control messages"
         );
+    }
+
+    fn report_of(id: &str, capability: &str, events: Vec<ExecutionEvent>) -> ReportInput {
+        ReportInput {
+            id: id.to_string(),
+            capability: capability.to_string(),
+            title: "Demonstrate an execution".into(),
+            input: serde_json::json!({ "steps": 1 }),
+            cancellable: true,
+            pid: 4242,
+            events,
+        }
+    }
+
+    fn started(id: &ExecutionId, sequence: u64) -> ExecutionEvent {
+        ExecutionEvent::new(
+            id.clone(),
+            sequence,
+            crate::execution::EventPayload::Started,
+        )
+    }
+
+    /// A report is refused before anything is held when its id is not one, when it carries
+    /// more events than one report may, or when an event in it is about another execution;
+    /// and an id this server runs itself is never written into by a report.
+    #[test]
+    fn a_report_is_refused_for_a_bad_id_too_many_events_a_foreign_event_or_an_own_execution() {
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a repository");
+        let ctx = repo.context().expect("a context");
+        let refusal = |input: ReportInput| match executions_report(&ctx, input) {
+            Err(e) => e,
+            Ok(answer) => panic!("a report was taken: {}", answer.through),
+        };
+
+        let e = refusal(report_of("x-nope", "executions.demonstrate", Vec::new()));
+        assert!(matches!(e, CapabilityError::InvalidInput(_)), "{e}");
+
+        let id = ExecutionId::fresh();
+        let many = (2..=(MAX_EVENTS as u64 + 2))
+            .map(|n| started(&id, n))
+            .collect();
+        let e = refusal(report_of(id.as_str(), "executions.demonstrate", many));
+        assert!(e.to_string().contains("events in one report"), "{e}");
+
+        let other = ExecutionId::fresh();
+        let e = refusal(report_of(
+            id.as_str(),
+            "executions.demonstrate",
+            vec![started(&other, 2)],
+        ));
+        assert!(e.to_string().contains("in a report about"), "{e}");
+        assert!(ctx.executions.store().get(&id).is_none(), "nothing held");
+
+        let own = ExecutionId::fresh();
+        ctx.executions.store().create(
+            own.clone(),
+            "executions.demonstrate",
+            "Demonstrate an execution",
+            serde_json::json!({}),
+            true,
+            Actor::of(ActorKind::Internal),
+            repository_of(&ctx),
+        );
+        let e = refusal(report_of(
+            own.as_str(),
+            "executions.demonstrate",
+            Vec::new(),
+        ));
+        assert!(matches!(e, CapabilityError::Refused(_)), "{e}");
+    }
+
+    /// A report about a capability this registry does not know is still held, its input as
+    /// the reporter stored it; one this registry knows is held too, and answers how far the
+    /// server holds it.
+    #[test]
+    fn a_report_is_held_whether_or_not_this_registry_knows_its_capability() {
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a repository");
+        let ctx = repo.context().expect("a context");
+
+        let elsewhere = ExecutionId::fresh();
+        let answer = executions_report(
+            &ctx,
+            report_of(
+                elsewhere.as_str(),
+                "nowhere.known",
+                vec![started(&elsewhere, 2)],
+            ),
+        )
+        .expect("held");
+        assert_eq!((answer.applied, answer.through), (1, 2));
+        assert!(!answer.cancel_requested);
+        let held = ctx.executions.store().get(&elsewhere).expect("held");
+        assert_eq!(held.input, serde_json::json!({ "steps": 1 }));
+        assert_eq!(held.actor.pid, Some(4242));
+
+        let known = ExecutionId::fresh();
+        let answer = executions_report(
+            &ctx,
+            report_of(known.as_str(), "executions.demonstrate", Vec::new()),
+        )
+        .expect("held");
+        assert_eq!((answer.applied, answer.through), (0, 1));
+        assert_eq!(answer.execution.execution.state, ExecutionState::Queued);
+    }
+
+    /// The Cockpit's page about one execution names the process that runs a reported one and
+    /// says how a stop reaches it; about one this server runs, it says only that the flag is
+    /// set.
+    #[test]
+    fn the_execution_page_says_where_a_stop_goes_for_a_reported_and_an_own_execution() {
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a repository");
+        let ctx = repo.context().expect("a context");
+
+        let reported = ExecutionId::fresh();
+        executions_report(
+            &ctx,
+            report_of(
+                reported.as_str(),
+                "executions.demonstrate",
+                vec![started(&reported, 2)],
+            ),
+        )
+        .expect("held");
+        let html = crate::cockpit::pages::execution(&ctx, reported.as_str())
+            .main
+            .render();
+        assert!(html.contains("majordomus run, process 4242"), "{html}");
+        assert!(html.contains("It runs in process 4242"), "{html}");
+
+        let own = ExecutionId::fresh();
+        ctx.executions.store().create(
+            own.clone(),
+            "executions.demonstrate",
+            "Demonstrate an execution",
+            serde_json::json!({}),
+            true,
+            Actor::of(ActorKind::Internal),
+            repository_of(&ctx),
+        );
+        let html = crate::cockpit::pages::execution(&ctx, own.as_str())
+            .main
+            .render();
+        assert!(html.contains("the flag is set"), "{html}");
+        assert!(!html.contains("majordomus run, process"), "{html}");
     }
 }

@@ -562,4 +562,162 @@ mod tests {
             assert!(!line.contains('\n'));
         }
     }
+
+    #[test]
+    fn a_set_outcome_names_what_it_switched_on_only_when_it_switched_something_on() {
+        let quiet = HooksPath::Set {
+            path: "/w/.githooks".into(),
+            enabled: Vec::new(),
+        };
+        assert_eq!(
+            quiet.describe(),
+            "hooks   /w/.githooks, its own (git config --worktree core.hooksPath)"
+        );
+        let loud = HooksPath::Set {
+            path: "/w/.githooks".into(),
+            enabled: vec!["a=1".into(), "b=true".into()],
+        };
+        assert!(loud.describe().ends_with("; enabled a=1, b=true)"));
+        assert!(HooksPath::NotConfigured
+            .describe()
+            .starts_with("hooks   no core.hooksPath"));
+    }
+
+    /// Switch per-worktree configuration on in the primary, as a person (or an earlier run)
+    /// would have, and answer the administrative directory of `wt`.
+    fn per_worktree(f: &Fixture, wt: &Path) -> PathBuf {
+        git(&f.primary, &["config", "core.repositoryformatversion", "1"]);
+        git(&f.primary, &["config", "extensions.worktreeConfig", "true"]);
+        PathBuf::from(git(wt, &["rev-parse", "--absolute-git-dir"]))
+    }
+
+    fn failed(outcome: HooksPath) -> String {
+        match outcome {
+            HooksPath::Failed { message } => message,
+            other => panic!("expected a failure, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn a_version_one_repository_is_switched_on_without_its_version_being_written() {
+        let f = fixture(Some("{primary}/.githooks"));
+        let wt = add(&f, "x");
+        git(&f.primary, &["config", "core.repositoryformatversion", "1"]);
+        assert_eq!(
+            carry_hooks_path(&f.primary, &wt),
+            HooksPath::Set {
+                path: display(&wt.join(".githooks")),
+                enabled: vec!["extensions.worktreeConfig=true".into()],
+            }
+        );
+    }
+
+    #[test]
+    fn an_empty_value_is_no_policy() {
+        let f = fixture(Some(""));
+        let wt = add(&f, "x");
+        assert_eq!(repository_policy(&f.primary), Ok(None));
+        assert_eq!(carry_hooks_path(&f.primary, &wt), HooksPath::NotConfigured);
+    }
+
+    #[test]
+    fn what_git_refuses_is_reported_and_nothing_is_changed() {
+        let f = fixture(Some("{primary}/.githooks"));
+
+        // a primary checkout that is not there: git's own words
+        let gone = f.root.join("gone");
+        let message = failed(carry_hooks_path(&gone, &gone));
+        assert!(message.contains("--show-scope"), "{message}");
+
+        // a "worktree" that is no repository: the hooks directory cannot be asked for
+        let plain = f.root.join("plain");
+        std::fs::create_dir_all(&plain).unwrap();
+        let message = failed(carry_hooks_path(&f.primary, &plain));
+        assert!(message.contains("rev-parse"), "{message}");
+
+        // core.worktree in the shared file: a person's decision, refused before any write
+        let wt = add(&f, "x");
+        git(
+            &f.primary,
+            &["config", "core.worktree", f.primary.to_str().unwrap()],
+        );
+        let message = failed(carry_hooks_path(&f.primary, &wt));
+        assert!(message.contains("core.worktree is set"), "{message}");
+        assert!(
+            git::try_run(
+                &f.primary,
+                &["config", "--get", "extensions.worktreeConfig"]
+            )
+            .unwrap()
+            .status
+                != Some(0)
+        );
+    }
+
+    #[test]
+    fn a_value_git_will_not_overwrite_or_still_overrides_is_a_failure() {
+        let f = fixture(Some("{primary}/.githooks"));
+
+        // two values in the worktree's own file: git refuses to overwrite them
+        let wt = add(&f, "x");
+        let admin = per_worktree(&f, &wt);
+        std::fs::write(
+            admin.join("config.worktree"),
+            "[core]\n\thooksPath = /a\n\thooksPath = /b\n",
+        )
+        .unwrap();
+        let message = failed(carry_hooks_path(&f.primary, &wt));
+        assert!(message.contains("core.hooksPath"), "{message}");
+
+        // an include read after the value: set, and git still resolves another directory
+        let wt = add(&f, "y");
+        let admin = PathBuf::from(git(&wt, &["rev-parse", "--absolute-git-dir"]));
+        let extra = f.root.join("extra.conf");
+        std::fs::write(&extra, "[core]\n\thooksPath = /elsewhere\n").unwrap();
+        std::fs::write(
+            admin.join("config.worktree"),
+            format!(
+                "[core]\n\thooksPath = /a\n[include]\n\tpath = {}\n",
+                extra.display()
+            ),
+        )
+        .unwrap();
+        let message = failed(carry_hooks_path(&f.primary, &wt));
+        assert!(
+            message.contains("git still resolves /elsewhere"),
+            "{message}"
+        );
+    }
+
+    #[test]
+    fn a_path_git_answers_that_is_not_utf8_is_a_failure_not_a_lossy_name() {
+        // the worktree resolves a directory this tool cannot name
+        let f = fixture(Some("{primary}/.githooks"));
+        let wt = add(&f, "x");
+        let admin = per_worktree(&f, &wt);
+        std::fs::write(
+            admin.join("config.worktree"),
+            b"[core]\n\thooksPath = /\xff\n",
+        )
+        .unwrap();
+        let message = failed(carry_hooks_path(&f.primary, &wt));
+        assert!(message.contains("UTF-8"), "{message}");
+
+        // the policy itself cannot be named
+        let f = fixture(None);
+        let mut config = std::fs::read(f.primary.join(".git/config")).unwrap();
+        config.extend_from_slice(b"[core]\n\thooksPath = /\xff\n");
+        std::fs::write(f.primary.join(".git/config"), config).unwrap();
+        let message = failed(carry_hooks_path(&f.primary, &f.primary));
+        assert!(message.contains("UTF-8"), "{message}");
+    }
+
+    #[test]
+    fn a_configuration_read_git_fails_without_a_word_says_so() {
+        let f = fixture(None);
+        // `ls-remote --exit-code` exits 2, silently, when nothing matches
+        let err = config_value(&f.primary, &["ls-remote", "--exit-code", ".", "refs/none"])
+            .expect_err("exit 2 is neither a value nor its absence");
+        assert!(err.ends_with("failed: git said nothing"), "{err}");
+    }
 }

@@ -339,6 +339,11 @@ pub fn apply(service: &WorktreeService, options: &MigrationOptions) -> Result<Mi
         let was_current = ResolvedPath::of(&from).same_as(&current);
         match execute(service, &primary, &container, step, &from, &to, options) {
             Ok(()) => {
+                // A per-worktree `core.hooksPath` names the old path: whichever way it got
+                // there, a moved worktree is bound again to its own tree's hooks (I2718).
+                if step.outcome == StepOutcome::Moved {
+                    step.hooks = Some(hooks::carry_hooks_path(&primary, &to));
+                }
                 if was_current {
                     plan.moved_current = Some(step.to.clone());
                 }
@@ -427,7 +432,6 @@ fn execute(
                 step.message =
                     Some("moved by copy across filesystems, verified, original removed".into());
                 step.envrc = Some(direnv::approve(primary, to));
-                step.hooks = Some(hooks::carry_hooks_path(primary, to));
                 return Ok(());
             }
             Err(e) => return Err(e),
@@ -482,7 +486,6 @@ fn execute(
     // one; carry it, and say what happened beside the fingerprint that says the move was
     // faithful.
     step.envrc = Some(direnv::approve(primary, to));
-    step.hooks = Some(hooks::carry_hooks_path(primary, to));
     let dangling = dangling_relative_links(to);
     if !dangling.is_empty() {
         step.message = Some(format!(

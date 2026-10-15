@@ -801,15 +801,20 @@ fn layer_args(repo: &RepoArgs) -> Result<Vec<OsString>> {
     }
     if repo.discovery != DiscoveryMode::default() {
         out.push(OsString::from("--discovery"));
-        out.push(OsString::from(match repo.discovery {
-            DiscoveryMode::Vcs => "vcs",
-            DiscoveryMode::Filesystem => "filesystem",
-        }));
+        out.push(OsString::from(discovery_word(repo.discovery)));
     }
     if repo.strict {
         out.push(OsString::from("--strict"));
     }
     Ok(out)
+}
+
+/// A discovery mode as `--discovery` takes it.
+fn discovery_word(mode: DiscoveryMode) -> &'static str {
+    match mode {
+        DiscoveryMode::Vcs => "vcs",
+        DiscoveryMode::Filesystem => "filesystem",
+    }
 }
 
 /// The command a started server runs: this executable, `serve` for the checkout at `root`,
@@ -1155,6 +1160,67 @@ mod tests {
                 "--fallback"
             ],
             "a call that names no share leaves the started server to locate its own"
+        );
+    }
+
+    #[test]
+    fn every_discovery_mode_is_the_word_its_option_takes() {
+        use clap::ValueEnum;
+        for mode in [DiscoveryMode::Vcs, DiscoveryMode::Filesystem] {
+            let word = mode
+                .to_possible_value()
+                .expect("a value")
+                .get_name()
+                .to_string();
+            assert_eq!(discovery_word(mode), word);
+        }
+    }
+
+    /// A small layer in a temporary directory: what `Repository::discover` needs.
+    fn layer_only() -> (crate::synthetic::SyntheticRepository, PathBuf) {
+        let fixture = crate::synthetic::SyntheticRepository::small().unwrap();
+        let root = fixture.root().canonicalize().unwrap();
+        (fixture, root)
+    }
+
+    /// A share that cannot be made absolute is refused before any subcommand runs, so
+    /// nothing is started with a share it would not find.
+    #[test]
+    fn a_share_that_cannot_be_made_absolute_is_refused_before_anything_runs() {
+        use clap::Parser;
+        let (_dir, root) = layer_only();
+        let cli = crate::cli::Cli::try_parse_from([
+            "majordomus",
+            "serve",
+            "--repo",
+            root.to_str().unwrap(),
+            "stop",
+        ])
+        .unwrap();
+        let crate::cli::Command::Serve(mut args) = cli.command else {
+            panic!("not the serve command")
+        };
+        args.repo.share = Some(PathBuf::new());
+        let err = run(args).expect_err("an empty share is refused");
+        assert!(matches!(err, Error::Io { .. }), "{err:?}");
+    }
+
+    /// `converge` with no wait and a start another live process has claimed starts
+    /// nothing: it waits on that start, and with no time left says it ran out.
+    #[test]
+    fn converge_with_no_wait_and_a_claimed_start_starts_nothing() {
+        let (_dir, root) = layer_only();
+        let repo = Repository::discover(&root).unwrap();
+        let claim = spawn_claim_path(&repo);
+        fs::create_dir_all(claim.parent().unwrap()).unwrap();
+        fs::write(&claim, std::process::id().to_string()).unwrap();
+        let c = converge(&repo, 0, 0, Duration::ZERO).unwrap();
+        assert!(!c.started, "{c:?}");
+        assert!(c.timed_out, "{c:?}");
+        assert_eq!(c.standing, ServerStanding::Absent);
+        assert!(
+            !lease::lease_path(&repo).exists(),
+            "no server was started, so no lease was written"
         );
     }
 

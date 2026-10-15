@@ -492,6 +492,66 @@ pub fn judge(held: bool, age_seconds: Option<u64>, threshold: Option<u64>) -> Wo
     }
 }
 
+/// What a reading could not read or judge, in words, in the order a reader meets it: a
+/// threshold nothing declares, work trees `git status` would not answer for, and whether a
+/// process works inside one when that could not be read.
+fn reading_findings(
+    threshold_declared: bool,
+    unread: usize,
+    processes_unknown: bool,
+) -> Vec<String> {
+    let mut findings = Vec::new();
+    if !threshold_declared {
+        findings.push(format!(
+            "the policy declares no {THRESHOLD_KEY}, so no work is judged abandoned and no \
+             episode stranded; every listing below is reported as found"
+        ));
+    }
+    if unread > 0 {
+        findings.push(format!(
+            "{unread} linked work tree(s) would not answer `git status`; their work is not listed"
+        ));
+    }
+    if processes_unknown {
+        findings.push(
+            "whether a process works inside a work tree could not be read (no lsof); \
+             only task and episode records were taken as holding work"
+                .into(),
+        );
+    }
+    findings
+}
+
+/// A work tree's label: its branch, or `detached/<short commit>`, or `detached` when not
+/// even the commit is known.
+fn label_of(branch: Option<&str>, head: Option<&str>) -> String {
+    match (branch, head) {
+        (Some(b), _) => b.to_string(),
+        (None, Some(h)) => detached_label(h),
+        (None, None) => "detached".into(),
+    }
+}
+
+/// What holds a work tree's work, in words: its active task, every open episode that is
+/// not stranded, and a process working inside it. Empty when nothing does.
+fn holders(
+    task: Option<&str>,
+    episodes: &[OpenEpisode],
+    process_inside: Option<bool>,
+) -> Vec<String> {
+    let mut held_by = Vec::new();
+    if let Some(t) = task {
+        held_by.push(format!("task {t}"));
+    }
+    for e in episodes.iter().filter(|e| e.stranded == Some(false)) {
+        held_by.push(format!("episode {}", e.id));
+    }
+    if process_inside == Some(true) {
+        held_by.push("a process working inside".into());
+    }
+    held_by
+}
+
 impl WorktreeService {
     /// Every linked work tree holding uncommitted work, with how much, how old, what holds
     /// it and whether it is abandoned against `threshold`. Reads every work tree and writes
@@ -541,19 +601,7 @@ impl WorktreeService {
         let probes: Vec<Option<&Path>> = records.iter().map(|r| Some(r.path.as_path())).collect();
         let measured = state::probe_all(&probes, |p| state::aged_dirty_state(p).ok());
 
-        let mut findings = Vec::new();
-        if threshold.seconds.is_none() {
-            findings.push(format!(
-                "the policy declares no {THRESHOLD_KEY}, so no work is judged abandoned and no \
-                 episode stranded; every listing below is reported as found"
-            ));
-        }
         let unread = measured.iter().filter(|m| m.is_none()).count();
-        if unread > 0 {
-            findings.push(format!(
-                "{unread} linked work tree(s) would not answer `git status`; their work is not listed"
-            ));
-        }
 
         let dirty: Vec<(
             &super::topology::WorktreeRecord,
@@ -567,22 +615,16 @@ impl WorktreeService {
             .collect();
         let dirs: Vec<&Path> = dirty.iter().map(|(r, _, _)| r.path.as_path()).collect();
         let inside = state::processes_inside(&dirs);
-        if inside.is_none() && !dirs.is_empty() {
-            findings.push(
-                "whether a process works inside a work tree could not be read (no lsof); \
-                 only task and episode records were taken as holding work"
-                    .into(),
-            );
-        }
+        let findings = reading_findings(
+            threshold.seconds.is_some(),
+            unread,
+            inside.is_none() && !dirs.is_empty(),
+        );
 
         let mut worktrees: Vec<UncommittedWorktree> = Vec::new();
         for (i, (record, work, oldest)) in dirty.into_iter().enumerate() {
             let path = super::service::display(&record.path);
-            let label = match (&record.branch, &record.head) {
-                (Some(b), _) => b.clone(),
-                (None, Some(h)) => detached_label(h),
-                (None, None) => "detached".into(),
-            };
+            let label = label_of(record.branch.as_deref(), record.head.as_deref());
             let task =
                 crate::capability::builtin::continuity::read_task(&record.path.join(TASK_RECORD))
                     .filter(|t| t.outcome == "active")
@@ -604,16 +646,7 @@ impl WorktreeService {
                 .collect();
             let process_inside = inside.as_ref().and_then(|v| v.get(i).copied());
 
-            let mut held_by = Vec::new();
-            if let Some(t) = &task {
-                held_by.push(format!("task {t}"));
-            }
-            for e in episodes.iter().filter(|e| e.stranded == Some(false)) {
-                held_by.push(format!("episode {}", e.id));
-            }
-            if process_inside == Some(true) {
-                held_by.push("a process working inside".into());
-            }
+            let held_by = holders(task.as_deref(), &episodes, process_inside);
 
             let age_seconds = oldest.and_then(epoch).map(|t| now_secs.saturating_sub(t));
             let standing = judge(!held_by.is_empty(), age_seconds, threshold.seconds);
@@ -846,6 +879,184 @@ mod tests {
         assert!(
             c.ends_with("push origin HEAD:refs/heads/rescue/fix-x-y-20261014"),
             "{c}"
+        );
+    }
+
+    #[test]
+    fn a_threshold_that_is_not_a_duration_is_refused_by_its_source() {
+        let policy = Threshold::resolve(Some("soon"), None).unwrap_err();
+        assert!(policy.starts_with(THRESHOLD_KEY), "{policy}");
+        let own = Threshold::resolve(Some("12h"), Some("later")).unwrap_err();
+        assert!(own.starts_with("older_than"), "{own}");
+    }
+
+    #[test]
+    fn every_standing_has_its_one_word() {
+        for (s, word) in [
+            (WorkStanding::Held, "held"),
+            (WorkStanding::Recent, "recent"),
+            (WorkStanding::Abandoned, "abandoned"),
+        ] {
+            assert_eq!(s.as_str(), word);
+            assert_eq!(serde_json::to_value(s).unwrap(), word);
+        }
+    }
+
+    #[test]
+    fn the_verdict_has_one_answer_for_every_combination() {
+        assert_eq!(judge(true, None, None), WorkStanding::Held);
+        assert_eq!(judge(false, Some(10), None), WorkStanding::Recent);
+        assert_eq!(judge(false, None, Some(5)), WorkStanding::Abandoned);
+        assert_eq!(judge(false, Some(10), Some(5)), WorkStanding::Abandoned);
+        assert_eq!(judge(false, Some(5), Some(5)), WorkStanding::Recent);
+        assert_eq!(judge(false, Some(3), Some(5)), WorkStanding::Recent);
+    }
+
+    fn entry(path: &str, standing: WorkStanding, age: Option<u64>) -> UncommittedWorktree {
+        UncommittedWorktree {
+            path: path.into(),
+            branch: None,
+            label: path.into(),
+            work: DirtyState::default(),
+            paths: 1,
+            oldest_change: None,
+            age_seconds: age,
+            age: None,
+            task: None,
+            episodes: Vec::new(),
+            process_inside: None,
+            held_by: Vec::new(),
+            standing,
+            remedy: String::new(),
+        }
+    }
+
+    #[test]
+    fn a_listing_is_abandoned_then_recent_then_held_and_oldest_first_inside_each() {
+        let mut listing = vec![
+            entry("/wt/held", WorkStanding::Held, Some(u64::MAX)),
+            entry("/wt/recent-young", WorkStanding::Recent, Some(10)),
+            entry("/wt/recent-unaged", WorkStanding::Recent, None),
+            entry("/wt/recent-old", WorkStanding::Recent, Some(500)),
+            entry("/wt/abandoned", WorkStanding::Abandoned, Some(1)),
+        ];
+        crate::order::canonical(&mut listing);
+        let paths: Vec<&str> = listing.iter().map(|w| w.path.as_str()).collect();
+        assert_eq!(
+            paths,
+            [
+                "/wt/abandoned",
+                "/wt/recent-old",
+                "/wt/recent-young",
+                "/wt/recent-unaged",
+                "/wt/held"
+            ]
+        );
+    }
+
+    #[test]
+    fn a_reading_says_what_it_could_not_read_in_order() {
+        assert!(reading_findings(true, 0, false).is_empty());
+        let all = reading_findings(false, 2, true);
+        assert_eq!(all.len(), 3, "{all:?}");
+        assert!(all[0].contains(THRESHOLD_KEY), "{all:?}");
+        assert!(all[1].starts_with("2 linked work tree(s)"), "{all:?}");
+        assert!(all[2].contains("no lsof"), "{all:?}");
+        assert_eq!(reading_findings(true, 1, false).len(), 1);
+        assert_eq!(
+            reading_findings(true, 0, true),
+            [all[2].clone()],
+            "an unknown process reading is said alone"
+        );
+    }
+
+    #[test]
+    fn a_label_is_the_branch_or_the_detached_commit() {
+        assert_eq!(label_of(Some("feature/x"), Some("abc")), "feature/x");
+        assert_eq!(
+            label_of(None, Some("0123456789abcdef0123")),
+            "detached/0123456789ab"
+        );
+        assert_eq!(label_of(None, None), "detached");
+    }
+
+    #[test]
+    fn a_task_a_live_episode_and_a_process_each_hold_the_work() {
+        let episode = |id: &str, stranded: Option<bool>| OpenEpisode {
+            id: id.into(),
+            last_sign_of_life: None,
+            stranded,
+        };
+        let episodes = [
+            episode("s-live", Some(false)),
+            episode("s-gone", Some(true)),
+            episode("s-unjudged", None),
+        ];
+        assert_eq!(
+            holders(Some("t-1"), &episodes, Some(true)),
+            ["task t-1", "episode s-live", "a process working inside"]
+        );
+        assert!(holders(None, &episodes[1..], Some(false)).is_empty());
+        assert!(holders(None, &[], None).is_empty());
+    }
+
+    /// A detached linked work tree is listed under its short commit, and one whose status
+    /// git refuses is counted as unread and said, not listed.
+    #[test]
+    fn a_detached_work_tree_is_labelled_by_its_commit_and_an_unreadable_one_is_said() {
+        let dir = tempfile::tempdir().unwrap();
+        let repo = dir.path().join("repo");
+        std::fs::create_dir_all(&repo).unwrap();
+        git(&repo, &["init", "-q"]);
+        git(&repo, &["commit", "-q", "--allow-empty", "-m", "init"]);
+        let detached = dir.path().join("detached");
+        git(
+            &repo,
+            &[
+                "worktree",
+                "add",
+                "-q",
+                "--detach",
+                detached.to_str().unwrap(),
+            ],
+        );
+        std::fs::write(detached.join("d.txt"), "d\n").unwrap();
+        let broken = dir.path().join("broken");
+        git(
+            &repo,
+            &[
+                "worktree",
+                "add",
+                "-q",
+                "-b",
+                "topic",
+                broken.to_str().unwrap(),
+            ],
+        );
+        // the link back to the repository names nothing git can read
+        std::fs::write(
+            broken.join(".git"),
+            "gitdir: /nonexistent/majordomus-test\n",
+        )
+        .unwrap();
+
+        let service = WorktreeService::open(&repo).unwrap();
+        let report = service
+            .uncommitted(&Threshold::resolve(Some("12h"), None).unwrap())
+            .unwrap();
+        assert_eq!(report.worktrees.len(), 1, "{report:#?}");
+        assert!(
+            report.worktrees[0].label.starts_with("detached/"),
+            "{report:#?}"
+        );
+        assert_eq!(report.worktrees[0].branch, None);
+        assert_eq!(report.tallies.measured, 1, "{report:#?}");
+        assert!(
+            report
+                .findings
+                .iter()
+                .any(|f| f.starts_with("1 linked work tree(s) would not answer")),
+            "{report:#?}"
         );
     }
 }
