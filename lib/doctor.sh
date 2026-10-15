@@ -277,7 +277,7 @@ mj_validate_wiring() {
             mj_doctrine_fail wiring "$name" "$target pins no channel, so the toolchain this machine builds with is nobody's decision" "grep -n channel $target"
           elif [ -z "$tcargo" ]; then
             mj_doctrine_fail wiring "$name" "cargo is not installed on this machine, so $prog cannot build the executable and every derive and \`prs repair --apply\` here fails" \
-              "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal"
+              "install rustup as https://rustup.rs describes, then: rustup toolchain install $tchan"
           else
             # rustup keeps the pinned channel as its own installation; asking it is the only
             # answer that does not trigger an install as a side effect of the question.

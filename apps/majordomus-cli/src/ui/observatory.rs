@@ -931,12 +931,13 @@ fn model(id: &str, answers: &Answers, sources: &[SourceStanding]) -> Result<Valu
                     "id": word(e, "id"),
                     "capability": word(e, "capability"),
                     "state": word(e, "state"),
-                    "last_sequence": e.get("last_sequence").and_then(Value::as_u64).unwrap_or(0),
-                    "events": e.get("event_count").and_then(Value::as_u64).unwrap_or(0),
+                    // a count the list does not carry is unknown (null), never a zero
+                    "last_sequence": e.get("last_sequence").and_then(Value::as_u64),
+                    "events": e.get("event_count").and_then(Value::as_u64),
                 })).collect::<Vec<_>>(),
                 "remembered": list.get("remembered").and_then(Value::as_u64).unwrap_or(executions.len() as u64),
-                "active": list.get("active").and_then(Value::as_u64).unwrap_or(0),
-                "queued": list.get("queued").and_then(Value::as_u64).unwrap_or(0),
+                "active": list.get("active").and_then(Value::as_u64),
+                "queued": list.get("queued").and_then(Value::as_u64),
             }))
         }
         "ambient" => Ok(serde_json::json!({
@@ -988,11 +989,18 @@ pub fn screen(ctx: &Context, query: &[(String, String)], libs: &Libs, kiosk: boo
         .attr("data-observatory-events", crate::http::events::PATH)
         .attr(
             "data-observatory-executions",
-            ctx.registry
-                .get(EXECUTIONS.capability)
-                .and_then(|c| c.exposure.http.as_ref())
-                .map(|h| h.path.clone())
-                .unwrap_or_default(),
+            // asked, not read from the registry: what any client asking is told
+            ctx.execute(
+                "capabilities.describe",
+                serde_json::json!({ "id": EXECUTIONS.capability }),
+            )
+            .ok()
+            .and_then(|d| {
+                d.pointer("/exposure/http/path")
+                    .and_then(Value::as_str)
+                    .map(str::to_string)
+            })
+            .unwrap_or_default(),
         )
         .attr_if("data-observatory-scene", selected)
         .attr("data-observatory-mode", if kiosk { "kiosk" } else { "screen" })
