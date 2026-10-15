@@ -17,7 +17,9 @@
 #      growing outside the provider contract;
 #   2. a second MeshRegistry construction site — a second truth about who exists;
 #   3. a declaration whose kind, schema and rule have come apart — an object nothing
-#      validates.
+#      validates;
+#   4. a committed declaration that trusts on first use — the trunk is the one copy the
+#      runtime honours `tofu` from (I2135), so a committed one trusts every key nobody listed.
 #
 # The exemptions are exercised too, because a gate that also catches the crate's own tests
 # or a document describing the mesh is one people route around within a week.
@@ -146,6 +148,41 @@ expect_grep 'incomplete: kind=1 schema=1 rules=0'
 F="$(fixture 8)"
 expect_exit 0 env MJ_ROOT="$F" "$GATE"
 
+# ---------------------------------------------------------------- 4. no committed tofu
+# The runtime reads the working tree's declaration narrowed by the trunk's committed copy
+# (mesh::root), and honours `policy: tofu` only from that committed copy. So the committed
+# copy is the one place trust on first use could still arrive from, and the gate refuses it
+# there. The fixture is a git repository because the gate reads what git tracks: a tofu in
+# an untracked working-tree file is the runtime's to refuse, not this gate's.
+declaration() {   # declaration <policy> -> a mesh declaration with that trust policy
+  printf 'schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\ntrust:\n  policy: %s\n  allow:\n    - aa\n' "$1"
+}
+commit_tree() {   # commit_tree <tree> -> every file of the tree committed
+  git -C "$1" init -q .
+  git -C "$1" -c user.email=t@example.com -c user.name=t add -A >/dev/null
+  git -C "$1" -c user.email=t@example.com -c user.name=t commit -qm fixture >/dev/null
+}
+F="$(fixture 10)"
+mkdir -p "$F/.ai/repo/mesh"
+declaration tofu > "$F/.ai/repo/mesh/majordomus.yaml"
+commit_tree "$F"
+expect_exit 10 env MJ_ROOT="$F" "$GATE"
+expect_grep '.ai/repo/mesh/majordomus.yaml sets trust.policy tofu — a committed declaration trusts no key it does not list'
+
+# restored: the same declaration denying unknown keys is the shape the gate asks for
+declaration deny_unknown > "$F/.ai/repo/mesh/majordomus.yaml"
+git -C "$F" -c user.email=t@example.com -c user.name=t commit -qam 'deny unknown' >/dev/null
+expect_exit 0 env MJ_ROOT="$F" "$GATE"
+expect_grep 'no committed tofu'
+
+# an untracked tofu is not committed: the runtime refuses it (tests/mesh_trust_root.rs),
+# and the gate, which holds what the trunk can carry, does not name it
+F="$(fixture 11)"
+commit_tree "$F"
+mkdir -p "$F/.ai/repo/mesh"
+declaration tofu > "$F/.ai/repo/mesh/majordomus.yaml"
+expect_exit 0 env MJ_ROOT="$F" "$GATE"
+
 # ---------------------------------------------------------------- every finding, at once
 # A gate that stops at the first finding makes a broken tree take three runs to fix. This
 # one reports all three and exits once.
@@ -164,4 +201,4 @@ expect_grep 'discovery.rs opens a UDP socket'
 expect_grep 'server.rs constructs MeshRegistry'
 expect_grep 'incomplete: kind=1 schema=1 rules=0'
 
-echo "    the mesh boundary refuses a second transport, a second peer store and a half-declared kind"
+echo "    the mesh boundary refuses a second transport, a second peer store, a half-declared kind and a committed tofu"
