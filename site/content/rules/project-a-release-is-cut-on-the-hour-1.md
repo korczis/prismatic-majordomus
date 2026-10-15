@@ -1,7 +1,7 @@
 +++
 title = "A release is cut by a clock when the trunk has earned one, and an hour without one says why"
 description = "A release is cut by a clock when the trunk has earned one, and an hour without one says why"
-weight = 71
+weight = 72
 [extra]
 kind = "rule"
 slug = "project-a-release-is-cut-on-the-hour-1"

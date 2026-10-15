@@ -175,6 +175,20 @@ impl Watch {
         }
     }
 
+    /// Whether the client of `peer`'s live channel has hung up, asked of the connection's
+    /// socket rather than learned from a failed write: the channel writes only on an event or
+    /// a heartbeat, and until it learned, the idle timer counted a closed channel as open
+    /// (I2131). The answer is a closure the channel's own thread asks on each quiet interval.
+    ///
+    /// Called before the socket is handed to the channel, while its client is certainly
+    /// there, because that is when the socket can be found; the channel holds the socket
+    /// open for as long as it asks. An unknown peer, or a platform where the socket cannot
+    /// be found, never hangs up: the channel then learns at its next write, as before.
+    pub(crate) fn hung_up(&self, peer: Option<&SocketAddr>) -> impl Fn() -> bool + Send + 'static {
+        let descriptor = peer.and_then(|peer| sockets::descriptor(self.local, *peer));
+        move || descriptor.is_some_and(sockets::hung_up)
+    }
+
     /// The request of `peer` was answered: the connection waits for the next from now on.
     pub(crate) fn answered(&self, peer: Option<&SocketAddr>) {
         if let Some(peer) = peer {
@@ -320,6 +334,54 @@ mod sockets {
         }
     }
 
+    /// The descriptor of the connection from `peer` to the served address `local`, while it
+    /// is connected. Found once, while the client is there: a socket its client has reset
+    /// no longer names its peer (macOS answers `getpeername` with an error), so a later
+    /// search by address finds nothing exactly when there is something to find.
+    pub(super) fn descriptor(local: SocketAddr, peer: SocketAddr) -> Option<RawFd> {
+        connected_to(local)
+            .into_iter()
+            .find_map(|(descriptor, theirs)| (theirs == peer).then_some(descriptor))
+    }
+
+    /// Has the client at the other end of `descriptor` hung up? Whatever it sent is read and
+    /// dropped — the live channel never reads, and ignores what a client sends
+    /// (`super::super::ws`) — until the socket says it has nothing more: an end of stream or
+    /// a reset is a client that has gone, an empty socket is one that is still there. Never
+    /// blocks: every read is `MSG_DONTWAIT`, on a descriptor whose own flags are left alone,
+    /// because the channel's thread writes through the same socket.
+    ///
+    /// The caller holds the socket `descriptor` belongs to open for as long as it asks, so
+    /// the number cannot have been closed and reused in between.
+    pub(super) fn hung_up(descriptor: RawFd) -> bool {
+        let mut buffer = [0u8; 4096];
+        // a bound, so that a client streaming bytes at the server cannot hold this thread
+        for _ in 0..64 {
+            // SAFETY: a read into a buffer this function owns, of at most its length, on a
+            // descriptor that is only read and never closed here
+            let read = unsafe {
+                libc::recv(
+                    descriptor,
+                    buffer.as_mut_ptr().cast(),
+                    buffer.len(),
+                    libc::MSG_DONTWAIT,
+                )
+            };
+            match read {
+                0 => return true,
+                n if n > 0 => continue,
+                _ => {
+                    let error = std::io::Error::last_os_error();
+                    return !matches!(
+                        error.kind(),
+                        std::io::ErrorKind::WouldBlock | std::io::ErrorKind::Interrupted
+                    );
+                }
+            }
+        }
+        false
+    }
+
     /// Shut the connection down, after asking again that the descriptor is still the one
     /// it was: a descriptor closed and reused since the listing is left alone.
     pub(super) fn shut_down(descriptor: RawFd, local: SocketAddr, peer: SocketAddr) -> bool {
@@ -348,6 +410,14 @@ mod sockets {
     }
 
     pub(super) fn shut_reading(_: SocketAddr, _: SocketAddr) {}
+
+    pub(super) fn descriptor(_: SocketAddr, _: SocketAddr) -> Option<i32> {
+        None
+    }
+
+    pub(super) fn hung_up(_: i32) -> bool {
+        false
+    }
 }
 
 #[cfg(test)]

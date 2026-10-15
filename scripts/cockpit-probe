@@ -73,7 +73,7 @@ if [ -z "$BASE" ]; then
   BIN="${MAJORDOMUS_BIN:-$TARGET_DIR/debug/majordomus}"
   if [ ! -x "$BIN" ]; then
     command -v cargo >/dev/null || { echo "cockpit-probe: no executable at $BIN and no cargo to build one" >&2; exit 12; }
-    RUSTFLAGS='' cargo build --quiet --manifest-path "$CRATE/Cargo.toml" || exit 12
+    RUSTFLAGS='' mj_cargo_bounded "$ROOT" build --quiet --manifest-path "$CRATE/Cargo.toml" || exit 12
     BIN="$TARGET_DIR/debug/majordomus"
   fi
   LOG="$(mktemp "${TMPDIR:-/tmp}/mj-cockpit-probe.XXXXXX")"

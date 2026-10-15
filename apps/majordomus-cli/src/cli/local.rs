@@ -213,6 +213,11 @@ pub const LOCAL: &[LocalCommand] = &[
         note: "writes the UI's snapshot surface, one file per screen and panel read in-process, which is a producer of the web root rather than a reading of it.",
     },
     LocalCommand {
+        command: "web report cockpit-snapshot",
+        reason: LocalReason::WritesRepository,
+        note: "writes the Cockpit's snapshot surface, one file per page read in-process, and leads the UI snapshot's links to those pages, which is a producer of the web root rather than a reading of it.",
+    },
+    LocalCommand {
         command: "prs",
         reason: LocalReason::Alias("prs status"),
         note: "with no subcommand it answers `prs status`, the ranked integration queue.",

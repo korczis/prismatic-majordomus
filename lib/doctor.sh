@@ -404,6 +404,15 @@ mj_validate_retention() {
   if ! cap="$(mj_pol_req checkpoint.retention_max_files)"; then mj_doctrine_fail retention "checkpoints" "policy declares no checkpoint.retention_max_files" "add a checkpoint: block to $(mj_rel "$MJ_POLICY_FILE"); see share/skeleton/policy.yaml"; else
   hc="$(find "$MJ_STATE_DIR/checkpoints" -name '*.md' 2>/dev/null | wc -l | tr -d ' ')"
   if [ "$hc" -le "$cap" ]; then mj_doctrine_ok retention "checkpoints" "$hc files, cap $cap"; else mj_doctrine_fail retention "checkpoints" "$hc files over cap $cap" "majordomus checkpoint --list | wc -l"; fi; fi
+  # The sessions section is tracked and shared where the three above are local, and it is
+  # capped for the same reason: a store nothing bounds grows until a reader pays for it. A
+  # layer that declares no sessions section owes no cap for one. What `session archive`
+  # moved aside is not counted — that is what the command is for.
+  if [ -n "${MJ_SESSIONS_DIR:-}" ]; then
+  if ! cap="$(mj_pol_req session.retention_max_files)"; then mj_doctrine_fail retention "sessions" "policy declares no session.retention_max_files" "add it under session: in $(mj_rel "$MJ_POLICY_FILE"); see share/skeleton/policy.yaml"; else
+  hc="$(mj_session_record_names | wc -l | tr -d ' ')"
+  if [ "$hc" -le "$cap" ]; then mj_doctrine_ok retention "sessions" "$hc records, cap $cap"; else mj_doctrine_fail retention "sessions" "$hc records over cap $cap" "majordomus session archive --dry-run"; fi; fi
+  fi
 
   return 0
 }
@@ -413,19 +422,22 @@ mj_validate_retention() {
 # independent review capacity is a count. What does fail is a finding of `reasoning check`:
 # provider-independent code that names an advisor, CI that names a model credential, a
 # record claiming a review nobody planned. Read through the executable, never rebuilt here.
+# The CI and claims checks judge what this repository's own workflows and documents say,
+# so the executable runs them only where project.advisors-are-optional is declared; an
+# adopter is told so, as information (I1996). Every hint names a command an adopter has.
 mj_report_reasoning() {
   # shellcheck source=rust_bin.sh
   . "$MJ_LIB_DIR/rust_bin.sh"
   local bin share advisors check
   bin="$(mj_rust_bin "$MJ_HOME")"
   if [ ! -x "$bin" ]; then
-    mj_info reasoning "-" "the executable is not built, so advisor availability is not reported here (bin/majordomus-cli reasoning advisors)"
+    mj_info reasoning "-" "the executable is not built, so advisor availability is not reported here (majordomus reasoning advisors)"
     return 0
   fi
   share="$(mj_rust_share "$MJ_ROOT")"
   advisors="$( ( [ -z "$share" ] || export MAJORDOMUS_SHARE="$share"
                  "$bin" reasoning advisors --repo "$MJ_ROOT" --format json ) 2>/dev/null )" || {
-    mj_info reasoning "-" "advisor availability could not be read (bin/majordomus-cli reasoning advisors)"; return 0; }
+    mj_info reasoning "-" "advisor availability could not be read (majordomus reasoning advisors)"; return 0; }
   mj_ok reasoning "share/advisors.yaml" "$(printf '%s' "$advisors" | jq -r '"operational, mode \(.mode.mode) (\(.mode.source)); independent review capacity \(.available) advisor(s)"')"
   printf '%s' "$advisors" | jq -r '.advisors[] | [.id, .status, .reason] | @tsv' | \
     while IFS="$(printf '\t')" read -r id status reason; do
@@ -436,14 +448,17 @@ mj_report_reasoning() {
   check="$( ( [ -z "$share" ] || export MAJORDOMUS_SHARE="$share"
               "$bin" reasoning check --repo "$MJ_ROOT" --format json ) 2>/dev/null )" || true
   if [ -z "$check" ]; then
-    mj_info reasoning "-" "reasoning check could not run (bin/majordomus-cli reasoning check)"
+    mj_info reasoning "-" "reasoning check could not run (majordomus reasoning check)"
   elif [ "$(printf '%s' "$check" | jq -r '.ok')" = true ]; then
     mj_ok reasoning "-" "reasoning check: $(printf '%s' "$check" | jq -r '.checks | join(", ")') — no finding"
   else
     printf '%s' "$check" | jq -r '.findings[] | [.check, .subject, .message] | @tsv' | \
       while IFS="$(printf '\t')" read -r c subject message; do
-        mj_fail reasoning "$subject" "$c: $message" "bin/majordomus-cli reasoning check"
+        mj_fail reasoning "$subject" "$c: $message" "majordomus reasoning check"
       done
+  fi
+  if [ -n "$check" ] && [ "$(printf '%s' "$check" | jq -r '.checks | index("ci") == null')" = true ]; then
+    mj_info reasoning "-" "ci, claims: not run; they judge Majordomus's own workflows and documents and apply where project.advisors-are-optional is declared (majordomus reasoning check)"
   fi
   return 0
 }

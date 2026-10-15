@@ -536,6 +536,7 @@ mj_uc_normalise() { # repo-path
     -e '/: printf: write error: Broken pipe$/d' \
     -e '/^INFO advisor +[^ ]+ — .* — optional$/d' \
     -e '/^OK +reasoning +- — reasoning check: /d' \
+    -e '/^INFO +reasoning +- — ci, claims: not run; /d' \
     -e 's/^(OK|INFO) +reasoning +.*$/·    reasoning   <decided by the advisors and the executable of the recording machine>/'
 }
 # an argv as a reader would type it: an argument a shell would split or expand is single-quoted,

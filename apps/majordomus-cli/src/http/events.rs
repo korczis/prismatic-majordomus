@@ -24,9 +24,11 @@
 //! below. A client that does not recognise a `type` must ignore that frame; that is what
 //! lets a variant be added without a version change.
 //!
-//! The server pings on a heartbeat and never reads. A client that goes away is noticed
-//! when the next write fails, which the heartbeat guarantees happens; a client that sends
-//! anything is ignored, and the reason is in [`super::ws`]. Beside the ping, which is a
+//! The server pings on a heartbeat and never reads a frame. A client that goes away is
+//! noticed within [`LOOK`] where the server can ask the connection's socket (the read
+//! deadline's sweeper finds it, `super::deadline`), and otherwise when the next write
+//! fails, which the heartbeat guarantees happens; a client that sends anything is ignored,
+//! and the reason is in [`super::ws`]. Beside the ping, which is a
 //! control frame a browser never shows to a page, the same quiet interval writes a
 //! `stream.heartbeat` text frame, so a client can tell a quiet channel from a dead one.
 //!
@@ -175,9 +177,43 @@ impl Accepted {
     /// Serve the connection on an upgraded socket until it ends. Blocking; the caller runs
     /// it on a thread of its own.
     pub fn serve(self, socket: Box<dyn std::io::Write + Send>) {
-        self.stream.run(socket);
+        self.stream.run(socket, || false);
+    }
+
+    /// [`Accepted::serve`], also ending as soon as `hung_up` says the client has gone: asked
+    /// every [`LOOK`] while the channel is quiet, so a closed channel stops counting as use
+    /// of the server within a second, not at its next write (I2131).
+    ///
+    /// A client that has already gone ends the channel at the first look, long before the
+    /// heartbeat would have found out by writing:
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use std::time::{Duration, Instant};
+    /// use majordomus_cli::execution::{ExecutionStore, Limits};
+    /// use majordomus_cli::http::events::{accept, PATH};
+    /// use majordomus_cli::http::Request;
+    ///
+    /// let store = Arc::new(ExecutionStore::new(Limits::default()));
+    /// let req = Request::parse_target("GET", PATH, vec![]).with_headers(vec![
+    ///     ("Upgrade".into(), "websocket".into()),
+    ///     ("Connection".into(), "Upgrade".into()),
+    ///     ("Sec-WebSocket-Key".into(), "dGhlIHNhbXBsZSBub25jZQ==".into()),
+    ///     ("Sec-WebSocket-Version".into(), "13".into()),
+    /// ]);
+    /// let accepted = accept(&store, &req, "/api/v1/executions/get").expect("an upgrade");
+    /// let started = Instant::now();
+    /// accepted.serve_until(Box::new(Vec::new()), || true);
+    /// assert!(started.elapsed() < Duration::from_secs(5), "a gone client ends the channel");
+    /// ```
+    pub fn serve_until(self, socket: Box<dyn std::io::Write + Send>, hung_up: impl Fn() -> bool) {
+        self.stream.run(socket, hung_up);
     }
 }
+
+/// How often a quiet channel asks whether its client has hung up: the idle timer's own tick,
+/// so a channel that closes is no longer counted as use by the next time the timer looks.
+pub const LOOK: Duration = Duration::from_secs(1);
 
 struct LiveStream {
     store: Arc<ExecutionStore>,
@@ -292,7 +328,7 @@ pub fn accept(
 }
 
 impl LiveStream {
-    fn run(self, mut socket: Box<dyn std::io::Write + Send>) {
+    fn run(self, mut socket: Box<dyn std::io::Write + Send>, hung_up: impl Fn() -> bool) {
         let open = OPEN.fetch_add(1, Ordering::Relaxed) + 1;
         tracing::debug!(connections = open, "a live channel opened");
         let (subscriber, rx) = self.store.subscribe(self.filter.clone());
@@ -328,18 +364,30 @@ impl LiveStream {
             written = written.max(event.sequence);
             alive = self.write_event(&mut socket, &event);
         }
+        // quiet since: the heartbeat is written after this long without a frame, and the
+        // wait for the next delivery is cut into looks at whether the client has hung up
+        let mut quiet = std::time::Instant::now();
         while alive {
-            match rx.recv_timeout(self.heartbeat) {
+            let until_heartbeat = self.heartbeat.saturating_sub(quiet.elapsed());
+            match rx.recv_timeout(until_heartbeat.min(LOOK)) {
                 Ok(Delivery::Event(event)) => {
                     if event.sequence <= written && matches!(self.filter, Filter::Only(_)) {
                         continue; // the replay already wrote it
                     }
                     written = written.max(event.sequence);
                     alive = self.write_event(&mut socket, &event);
+                    quiet = std::time::Instant::now();
                 }
                 Ok(Delivery::Lagged { dropped }) => {
                     alive = write(&mut socket, &StreamMessage::Lagged { dropped });
+                    quiet = std::time::Instant::now();
                 }
+                Err(std::sync::mpsc::RecvTimeoutError::Timeout) if hung_up() => {
+                    tracing::debug!("the client of a live channel hung up");
+                    break;
+                }
+                Err(std::sync::mpsc::RecvTimeoutError::Timeout)
+                    if quiet.elapsed() < self.heartbeat => {}
                 Err(std::sync::mpsc::RecvTimeoutError::Timeout) => {
                     // the ping keeps intermediaries and the protocol honest; the heartbeat
                     // is the frame a page can see, so a dead channel is told from a quiet one
@@ -350,6 +398,7 @@ impl LiveStream {
                                 at: crate::peers::rfc3339(std::time::SystemTime::now()),
                             },
                         );
+                    quiet = std::time::Instant::now();
                 }
                 Err(std::sync::mpsc::RecvTimeoutError::Disconnected) => {
                     let _ = write(
@@ -763,6 +812,56 @@ mod tests {
             "{}",
             frames[1]
         );
+    }
+
+    /// A quiet channel whose client hangs up ends within a look, with nothing written after
+    /// its ready frame: before, it learned only when its next heartbeat failed, twenty
+    /// seconds on, and the idle timer counted it as an open channel all that time (I2131).
+    #[test]
+    fn a_quiet_channel_whose_client_hangs_up_ends_within_a_look_without_a_write() {
+        let (store, id) = store_with_one();
+        let last = store.get(&id).expect("retained").last_sequence;
+        let accepted = accept(
+            &store,
+            &upgrade_request(&format!("{PATH}?execution={id}&after={last}")),
+        )
+        .expect("accepted");
+        // a socket that never refuses a write: only the hang-up can end this channel
+        let sink = SharedSink::new(usize::MAX);
+        let writer = Box::new(sink.clone());
+        let gone = Arc::new(std::sync::atomic::AtomicBool::new(false));
+        let asked = Arc::clone(&gone);
+        let handle = std::thread::spawn(move || {
+            accepted.serve_until(writer, move || asked.load(Ordering::SeqCst))
+        });
+        std::thread::sleep(Duration::from_millis(300));
+        assert!(
+            !handle.is_finished(),
+            "a client that is there keeps its channel"
+        );
+        gone.store(true, Ordering::SeqCst);
+        let hung_up = std::time::Instant::now();
+        handle.join().expect("the channel ended by itself");
+        assert!(
+            hung_up.elapsed() < LOOK + Duration::from_millis(500),
+            "the hang-up was noticed after {:?}, not within a look",
+            hung_up.elapsed()
+        );
+        assert!(
+            LOOK < HEARTBEAT,
+            "a look is sooner than the heartbeat it replaces"
+        );
+        let types: Vec<String> = sink
+            .frames()
+            .iter()
+            .map(|f| serde_json::from_str::<serde_json::Value>(f).unwrap()["type"].to_string())
+            .collect();
+        assert_eq!(
+            types,
+            ["\"stream.ready\""],
+            "nothing was written to a client that left"
+        );
+        assert_eq!(store.subscribers(), 0, "its subscription was ended");
     }
 
     /// An output larger than one frame is written as a reference to the snapshot that
