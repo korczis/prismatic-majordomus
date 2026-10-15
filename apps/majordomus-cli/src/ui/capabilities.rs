@@ -547,6 +547,7 @@ mod tests {
             exposure: super::super::source::Exposure::default(),
             value: Ok(serde_json::json!({ "capabilities": capabilities })),
             took: std::time::Duration::from_millis(1),
+            standing: super::super::source::Standing::NOW,
         }
     }
 

@@ -96,7 +96,11 @@ fn compose_with(root: &Path, objects: &[Object], unreleased: bool) -> Changelog 
         .filter_map(|o| record_of(&o.metadata, &mut diagnostics))
         .collect();
     // Newest first, by the date the record carries: the order a changelog is read in.
-    records.sort_by(|a, b| b.date.cmp(&a.date));
+    newest_first(
+        &mut records,
+        |r| r.date.as_str(),
+        |_, _| std::cmp::Ordering::Equal,
+    );
 
     let decisions = decisions_of(root, objects);
     // Which commits each release's tree holds, read once for every release and every
@@ -302,7 +306,11 @@ pub fn unreadable_releases(root: &Path, objects: &[Object]) -> Vec<String> {
         return Vec::new();
     }
     // the order `compose_with` reads them in, so "the previous release" is the same one
-    records.sort_by(|a, b| b.date.cmp(&a.date));
+    newest_first(
+        &mut records,
+        |r| r.date.as_str(),
+        |_, _| std::cmp::Ordering::Equal,
+    );
     let shallow = std::process::Command::new("git")
         .arg("-C")
         .arg(root)
@@ -700,8 +708,19 @@ fn decisions_of(root: &Path, objects: &[Object]) -> Vec<Decision> {
             }
         })
         .collect();
-    out.sort_by(|a, b| b.date.cmp(&a.date).then_with(|| b.id.cmp(&a.id)));
+    newest_first(&mut out, |d| d.date.as_str(), |a, b| b.id.cmp(&a.id));
     out
+}
+
+/// Newest first by date, the order a changelog is read in; `then` breaks a tie between two
+/// items of one date, and `Ordering::Equal` keeps them in the order they came (the sort is
+/// stable). One sort for every dated collection here, rather than one beside each reader.
+fn newest_first<T>(
+    items: &mut [T],
+    date: impl Fn(&T) -> &str,
+    then: impl Fn(&T, &T) -> std::cmp::Ordering,
+) {
+    items.sort_by(|a, b| date(b).cmp(date(a)).then_with(|| then(a, b)));
 }
 
 /// The decisions not yet in any release: their file was added after the newest release's tree.
