@@ -447,10 +447,17 @@ referenced artifact a peer materialises.
 | a peer restarts while linked | the answerer refuses the old link id as `unknown_link`; the dialer says hello again | the table row is kept, `restarts` counts |
 | a relay dies in a line A–B–C | A and C expire each other's streams through lost beats | when B returns, marks re-align and nothing is duplicated |
 | hostile or broken input | typed refusal, counted, listed; the runtime keeps serving | nothing enters the journal |
-| a crash tears the journal file, or the disk refuses an append | an append writes a missing newline first and syncs; a failed append is counted (`write_failures`), a line that does not read on reload is counted (`unreadable`), and `mesh doctor` fails its `journal` check; compaction writes a synced file and renames it over the old one; the file is the owner's alone (0600) | every complete event reloads, the event after a torn line reads, and an event that did not reach the disk is still replicated from memory and from peers |
+| a crash tears the journal file, or the disk refuses an append | an append writes a missing newline first and syncs; a failed append is counted (`write_failures`) and its operation answers `"durability": "not_durable"` — never acknowledged as durable, and `mesh claim`, `mesh session open` and the other writes print `NOT DURABLE`; a line that does not read on reload is counted (`unreadable`), and `mesh doctor` fails its `journal` check; compaction writes a synced file and renames it over the old one; the file is the owner's alone (0600) | every complete event reloads, the event after a torn line reads, and an event that did not reach the disk is still replicated from memory and from peers |
+| a journal file larger than the reload bound (64 MiB) | a reload reads up to the bound, to the last whole line, and leaves the rest on disk: counted (`unread_bytes`), named by `mesh doctor`'s `journal` check, and copied byte for byte into the file compaction writes | the events within the bound reload; the rest is neither folded nor relayed by this runtime until the file is moved aside and peers refill it |
 
 </div>
 
+
+An operation's answer says what reached the disk: `durability` is `synced` when the event was
+appended to the journal file and its data synced before the answer, `memory` when the journal
+has no file by configuration, and `not_durable` when the write failed. "Synced" is the
+operating system's data sync of the journal file (`fdatasync` on Linux, `fsync` on macOS, which
+does not flush the drive's own cache), not a promise about the storage under it.
 
 ## Security model
 
