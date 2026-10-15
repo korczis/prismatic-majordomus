@@ -286,6 +286,19 @@ compare. `majordomus mesh state` and `mesh peers` take the same input as `--full
 refuses it as invalid; the readers in this repository that need the fold (the integration
 lease's claims, the mesh-review advisor) ask again without it, and the answer is the same.
 
+**Paging the raw journal.** `mesh.events` (`mesh events --after`, `/events?after=&limit=`)
+reads forward in causal order and answers `lamport`, the stamp of the last event on the page,
+which is the `after` of the next page. A page never ends inside a run of equal stamps — runtimes
+that wrote concurrently share them — so it can carry more than `limit`, and a walk resumed from
+each answer's `lamport` returns every event once, in order, while the reader's own events, and
+peers' events stamped above the walk's position, keep arriving between pages (I2140; unit tests
+`paging_by_stamp_returns_every_event_exactly_once` and
+`paging_while_events_arrive_returns_every_event_exactly_once`). One arrival is outside that
+walk: an event stamped at or below a position already passed — a runtime that was partitioned
+away and wrote without hearing it. Lamport stamps are their writer's, not the reader's arrival
+order, so such an event is read from an earlier `after` or folded by `mesh state`, not by the
+resumed walk.
+
 ## Claims and leases
 
 A claim is a scope — repository-relative paths — held by a session, `exclusive` (the default)
@@ -421,7 +434,14 @@ referenced artifact a peer materialises.
 | a peer restarts while linked | the answerer refuses the old link id as `unknown_link`; the dialer says hello again | the table row is kept, `restarts` counts |
 | a relay dies in a line A–B–C | A and C expire each other's streams through lost beats | when B returns, marks re-align and nothing is duplicated |
 | hostile or broken input | typed refusal, counted, listed; the runtime keeps serving | nothing enters the journal |
-| a crash tears the journal file, or the disk refuses an append | an append writes a missing newline first and syncs; a failed append is counted (`write_failures`), a line that does not read on reload is counted (`unreadable`), and `mesh doctor` fails its `journal` check; compaction writes a synced file and renames it over the old one; the file is the owner's alone (0600) | every complete event reloads, the event after a torn line reads, and an event that did not reach the disk is still replicated from memory and from peers |
+| a crash tears the journal file, or the disk refuses an append | an append writes a missing newline first and syncs; a failed append is counted (`write_failures`) and its operation answers `"durability": "not_durable"` — never acknowledged as durable, and `mesh claim`, `mesh session open` and the other writes print `NOT DURABLE`; a line that does not read on reload is counted (`unreadable`), and `mesh doctor` fails its `journal` check; compaction writes a synced file and renames it over the old one; the file is the owner's alone (0600) | every complete event reloads, the event after a torn line reads, and an event that did not reach the disk is still replicated from memory and from peers |
+| a journal file larger than the reload bound (64 MiB) | a reload reads up to the bound, to the last whole line, and leaves the rest on disk: counted (`unread_bytes`), named by `mesh doctor`'s `journal` check, and copied byte for byte into the file compaction writes | the events within the bound reload; the rest is neither folded nor relayed by this runtime until the file is moved aside and peers refill it |
+
+An operation's answer says what reached the disk: `durability` is `synced` when the event was
+appended to the journal file and its data synced before the answer, `memory` when the journal
+has no file by configuration, and `not_durable` when the write failed. "Synced" is the
+operating system's data sync of the journal file (`fdatasync` on Linux, `fsync` on macOS, which
+does not flush the drive's own cache), not a promise about the storage under it.
 
 ## Security model
 
