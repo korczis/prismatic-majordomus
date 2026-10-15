@@ -358,10 +358,10 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `share/version.txt` | `version` | text | 231 | `1352fbae838b723b` |
 | `site/data/registry/design.json` | `site-design` | json | 11587 | `3f68ed17decc529c` |
 | `site/data/registry/distribution.json` | `site-distribution` | json | 3005 | `6fee17f193d8d732` |
-| `site/data/registry/evidence-subjects.json` | `site-evidence-subjects` | json | 786182 | `e874bd6b1b85218d` |
+| `site/data/registry/evidence-subjects.json` | `site-evidence-subjects` | json | 786393 | `57f47c94c72dae6c` |
 | `site/data/registry/product-graph.json` | `site-product-graph` | json | 98705 | `acf56f906717cebf` |
 | `site/data/registry/product.json` | `site-product` | json | 737380 | `fc41882476f7badf` |
-| `site/data/registry/registry.json` | `site-registry` | json | 6778109 | `45373fc72dc204bf` |
+| `site/data/registry/registry.json` | `site-registry` | json | 6778109 | `93fbdce042a55651` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180163 | `9693904a8c466e33` |
 | `site/data/registry/why.json` | `site-why` | json | 349924 | `532982b657422540` |
 | `site/static/favicon.svg` | `design-mark` | text | 904 | `aa48c069472e09ad` |

@@ -189,7 +189,11 @@ pub fn judge_facts(asked: &str, rel: Option<&str>, facts: EditFacts<'_>) -> Edit
         }
         Ok(true) => {}
     }
-    if rel == ".ai/local" || rel.starts_with(".ai/local/") || rel == ".git" || rel.starts_with(".git/") {
+    if rel == ".ai/local"
+        || rel.starts_with(".ai/local/")
+        || rel == ".git"
+        || rel.starts_with(".git/")
+    {
         return EditVerdict::allow(rel, "local", "the path is this checkout's local state");
     }
     if !facts.mesh_enabled {
@@ -197,11 +201,7 @@ pub fn judge_facts(asked: &str, rel: Option<&str>, facts: EditFacts<'_>) -> Edit
     }
     if let Some((id, scope)) = facts.task {
         if let Some(s) = scope.iter().find(|s| covers(s, rel)) {
-            return EditVerdict::allow(
-                rel,
-                "task",
-                format!("the active task {id} claims {s}"),
-            );
+            return EditVerdict::allow(rel, "task", format!("the active task {id} claims {s}"));
         }
     }
     let claims = match facts.claims {
@@ -221,7 +221,11 @@ pub fn judge_facts(asked: &str, rel: Option<&str>, facts: EditFacts<'_>) -> Edit
                 && c.session.ends_with(&own)
                 && c.scope.iter().any(|s| covers(s, rel))
         }) {
-            return EditVerdict::allow(rel, "claim", format!("the session's claim {} covers it", c.key));
+            return EditVerdict::allow(
+                rel,
+                "claim",
+                format!("the session's claim {} covers it", c.key),
+            );
         }
     }
     let by_session = facts
@@ -283,12 +287,17 @@ pub fn server_claims(root: &Path) -> ClaimSource {
         return ClaimSource::Unavailable("no shared server answers for this checkout".into());
     };
     match server.ask("GET", "/api/v1/mesh/state?view=full&claims=live", None) {
-        Ok((200, v)) => match serde_json::from_value::<Vec<ClaimView>>(v["state"]["claims"].clone()) {
-            Ok(c) => ClaimSource::Claims(c),
-            Err(e) => ClaimSource::Unavailable(format!("the mesh state does not parse: {e}")),
-        },
+        Ok((200, v)) => {
+            match serde_json::from_value::<Vec<ClaimView>>(v["state"]["claims"].clone()) {
+                Ok(c) => ClaimSource::Claims(c),
+                Err(e) => ClaimSource::Unavailable(format!("the mesh state does not parse: {e}")),
+            }
+        }
         Ok((status, v)) => {
-            let m = v["error"]["message"].as_str().unwrap_or_default().to_string();
+            let m = v["error"]["message"]
+                .as_str()
+                .unwrap_or_default()
+                .to_string();
             ClaimSource::Unavailable(format!("the server answered {status}: {m}"))
         }
         Err(e) => ClaimSource::Unavailable(e),
@@ -325,7 +334,9 @@ pub fn judge(
         EditFacts {
             required,
             mesh_enabled,
-            task: task.as_ref().map(|(id, scope)| (id.as_str(), scope.as_slice())),
+            task: task
+                .as_ref()
+                .map(|(id, scope)| (id.as_str(), scope.as_slice())),
             session,
             claims,
         },
@@ -377,10 +388,7 @@ mod tests {
         .expect("a claim view")
     }
 
-    fn facts<'a>(
-        task: Option<(&'a str, &'a [String])>,
-        claims: ClaimSource,
-    ) -> EditFacts<'a> {
+    fn facts<'a>(task: Option<(&'a str, &'a [String])>, claims: ClaimSource) -> EditFacts<'a> {
         EditFacts {
             required: Ok(true),
             mesh_enabled: true,
@@ -393,7 +401,11 @@ mod tests {
     #[test]
     fn the_sessions_live_claim_covers_the_edit() {
         let c = vec![claim("claude-code-s1", &["docs"], ClaimState::Held)];
-        let v = judge_facts("docs/a.md", Some("docs/a.md"), facts(None, ClaimSource::Claims(c)));
+        let v = judge_facts(
+            "docs/a.md",
+            Some("docs/a.md"),
+            facts(None, ClaimSource::Claims(c)),
+        );
         assert!(v.allowed, "{v:?}");
         assert_eq!(v.ground, "claim");
     }
@@ -401,7 +413,11 @@ mod tests {
     #[test]
     fn another_sessions_claim_does_not() {
         let c = vec![claim("claude-code-s2", &["docs"], ClaimState::Held)];
-        let v = judge_facts("docs/a.md", Some("docs/a.md"), facts(None, ClaimSource::Claims(c)));
+        let v = judge_facts(
+            "docs/a.md",
+            Some("docs/a.md"),
+            facts(None, ClaimSource::Claims(c)),
+        );
         assert!(!v.allowed);
         assert_eq!(v.ground, "unclaimed");
     }
@@ -409,15 +425,25 @@ mod tests {
     #[test]
     fn a_released_claim_does_not() {
         let c = vec![claim("claude-code-s1", &["docs"], ClaimState::Released)];
-        let v = judge_facts("docs/a.md", Some("docs/a.md"), facts(None, ClaimSource::Claims(c)));
+        let v = judge_facts(
+            "docs/a.md",
+            Some("docs/a.md"),
+            facts(None, ClaimSource::Claims(c)),
+        );
         assert!(!v.allowed);
     }
 
     #[test]
     fn off_no_mesh_local_and_outside_are_let_through() {
-        let off = EditFacts { required: Ok(false), ..facts(None, ClaimSource::Claims(vec![])) };
+        let off = EditFacts {
+            required: Ok(false),
+            ..facts(None, ClaimSource::Claims(vec![]))
+        };
         assert_eq!(judge_facts("a", Some("a"), off).ground, "off");
-        let no_mesh = EditFacts { mesh_enabled: false, ..facts(None, ClaimSource::Claims(vec![])) };
+        let no_mesh = EditFacts {
+            mesh_enabled: false,
+            ..facts(None, ClaimSource::Claims(vec![]))
+        };
         assert_eq!(judge_facts("a", Some("a"), no_mesh).ground, "no_mesh");
         let local = judge_facts(
             ".ai/local/state/x",
@@ -425,12 +451,18 @@ mod tests {
             facts(None, ClaimSource::Claims(vec![])),
         );
         assert_eq!(local.ground, "local");
-        assert_eq!(judge_facts("/elsewhere", None, facts(None, ClaimSource::Claims(vec![]))).ground, "outside");
+        assert_eq!(
+            judge_facts("/elsewhere", None, facts(None, ClaimSource::Claims(vec![]))).ground,
+            "outside"
+        );
     }
 
     #[test]
     fn an_unreadable_policy_enforces_nothing() {
-        let f = EditFacts { required: Err("no manifest".into()), ..facts(None, ClaimSource::Claims(vec![])) };
+        let f = EditFacts {
+            required: Err("no manifest".into()),
+            ..facts(None, ClaimSource::Claims(vec![]))
+        };
         let v = judge_facts("a", Some("a"), f);
         assert!(v.allowed);
         assert_eq!(v.ground, "undecided");
