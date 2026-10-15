@@ -2375,6 +2375,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/capability/builtin/server.rs",
+        "kind": "file",
+        "label": "server.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/capability/builtin/server.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/capability/builtin/session_domain.rs",
         "kind": "file",
         "label": "session_domain.rs",
@@ -2455,6 +2463,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/cockpit/assets.rs",
+        "kind": "file",
+        "label": "assets.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/cockpit/assets.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/cockpit/intents.rs",
         "kind": "file",
         "label": "intents.rs",
@@ -2516,6 +2532,14 @@
         "label": "prs.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/commands/prs.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/commands/serve.rs",
+        "kind": "file",
+        "label": "serve.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/commands/serve.rs",
         "external": true
       },
       {
@@ -3268,6 +3292,14 @@
         "label": "mod.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/session/mod.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/share.rs",
+        "kind": "file",
+        "label": "share.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/share.rs",
         "external": true
       },
       {
@@ -7305,6 +7337,41 @@
             "observatory",
             "evidence",
             "mesh"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0163",
+        "kind": "adr",
+        "label": "adr-0163",
+        "summary": "A server serves only a share of its own version, with the surfaces it offers",
+        "route": "/cockpit/objects/adr/adr-0163",
+        "source": ".ai/repo/adrs/0163-a-server-serves-only-a-share-of-its-own-version.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-14",
+          "related": [
+            "file:.ai/repo/adrs/0003-shared-mcp-server-peers-and-client-autostart.md",
+            "file:.ai/repo/adrs/0019-distribution-is-one-model-and-every-surface-that-ships-the-t.md",
+            "file:.ai/repo/adrs/0035-a-checkout-s-server-is-one-of-the-repository-s-and-its-state.md",
+            "file:.ai/repo/adrs/0044-cooperation-is-repository-wide-the-board-is-gathered-not-shared.md",
+            "file:.ai/repo/adrs/0067-mesh-cooperation-is-authenticated-links-and-one-replicated-journal.md",
+            "file:.ai/repo/adrs/0135-majordomus-ui-is-the-primary-surface.md",
+            "file:.ai/repo/adrs/0158-the-observatory-draws-only-what-was-observed.md",
+            "file:.ai/repo/rules/project/shared-server-resilience.v1.md",
+            "file:.ai/repo/rules/project/the-server-sees-the-current-tree.v1.md",
+            "file:.ai/repo/rules/project/distribution-canonical.v1.md",
+            "file:apps/majordomus-cli/src/share.rs",
+            "file:apps/majordomus-cli/src/commands/serve.rs",
+            "file:apps/majordomus-cli/src/capability/builtin/server.rs",
+            "file:apps/majordomus-cli/src/cockpit/assets.rs",
+            "file:lib/rust_bin.sh"
+          ],
+          "tags": [
+            "server",
+            "distribution",
+            "ui",
+            "resilience"
           ]
         }
       },
@@ -65264,6 +65331,86 @@
         "kind": "put_in_force"
       },
       {
+        "source": "majordomus://adr/adr-0163",
+        "target": "file:apps/majordomus-cli/src/capability/builtin/server.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0163",
+        "target": "file:apps/majordomus-cli/src/cockpit/assets.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0163",
+        "target": "file:apps/majordomus-cli/src/commands/serve.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0163",
+        "target": "file:apps/majordomus-cli/src/share.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0163",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0163",
+        "target": "majordomus://adr/adr-0003",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0163",
+        "target": "majordomus://adr/adr-0019",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0163",
+        "target": "majordomus://adr/adr-0035",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0163",
+        "target": "majordomus://adr/adr-0044",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0163",
+        "target": "majordomus://adr/adr-0067",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0163",
+        "target": "majordomus://adr/adr-0135",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0163",
+        "target": "majordomus://adr/adr-0158",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0163",
+        "target": "majordomus://implementation/lib/rust_bin.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0163",
+        "target": "majordomus://rule/project.distribution-canonical@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0163",
+        "target": "majordomus://rule/project.shared-server-resilience@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0163",
+        "target": "majordomus://rule/project.the-server-sees-the-current-tree@1",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://application/ci-gated-project",
         "target": "kind:application",
         "kind": "is_a"
@@ -88190,8 +88337,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2796,
-      "edges": 6129,
+      "nodes": 2801,
+      "edges": 6145,
       "acyclic": false,
       "truncated": false
     }

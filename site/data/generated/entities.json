@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 105,
+      "count": 106,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 105
+      "count": 106
     },
     {
       "kind": "application",
@@ -396,6 +396,13 @@
           "label": "adr-0126",
           "kind": "adr",
           "route": "/adrs/adr-0126/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0163",
+          "kind": "adr",
+          "route": "/adrs/adr-0163/",
           "external": false
         }
       ]
@@ -1051,6 +1058,13 @@
           "label": "adr-0145",
           "kind": "adr",
           "route": "/adrs/adr-0145/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0163",
+          "kind": "adr",
+          "route": "/adrs/adr-0163/",
           "external": false
         }
       ]
@@ -2153,6 +2167,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0050/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0163",
+          "kind": "adr",
+          "route": "/adrs/adr-0163/",
+          "external": false
         }
       ]
     },
@@ -2843,6 +2864,13 @@
           "label": "adr-0067",
           "kind": "adr",
           "route": "/adrs/adr-0067/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0163",
+          "kind": "adr",
+          "route": "/adrs/adr-0163/",
           "external": false
         }
       ]
@@ -4060,6 +4088,13 @@
           "label": "adr-0133",
           "kind": "adr",
           "route": "/adrs/adr-0133/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0163",
+          "kind": "adr",
+          "route": "/adrs/adr-0163/",
           "external": false
         }
       ]
@@ -7232,6 +7267,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0147/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0163",
+          "kind": "adr",
+          "route": "/adrs/adr-0163/",
+          "external": false
         }
       ]
     },
@@ -8184,6 +8226,138 @@
           "label": "test/cases/3011_the_observatory_draws_nothing_it_did_not_read.sh",
           "kind": "test",
           "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0163",
+          "kind": "adr",
+          "route": "/adrs/adr-0163/",
+          "external": false
+        }
+      ]
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0163",
+      "identity": "adr-0163",
+      "slug": "adr-0163",
+      "cockpit": "/cockpit/objects/adr/adr-0163",
+      "title": "A server serves only a share of its own version, with the surfaces it offers",
+      "status": "proposed",
+      "tags": [
+        "server",
+        "distribution",
+        "ui",
+        "resilience"
+      ],
+      "source": ".ai/repo/adrs/0163-a-server-serves-only-a-share-of-its-own-version.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/capability/builtin/server.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/cockpit/assets.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/commands/serve.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/share.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0003",
+          "kind": "adr",
+          "route": "/adrs/adr-0003/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0019",
+          "kind": "adr",
+          "route": "/adrs/adr-0019/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0035",
+          "kind": "adr",
+          "route": "/adrs/adr-0035/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0044",
+          "kind": "adr",
+          "route": "/adrs/adr-0044/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0067",
+          "kind": "adr",
+          "route": "/adrs/adr-0067/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0135",
+          "kind": "adr",
+          "route": "/adrs/adr-0135/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0158",
+          "kind": "adr",
+          "route": "/adrs/adr-0158/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "lib/rust_bin.sh",
+          "kind": "implementation",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.distribution-canonical@1",
+          "kind": "rule",
+          "route": "/rules/project-distribution-canonical-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.shared-server-resilience@1",
+          "kind": "rule",
+          "route": "/rules/project-shared-server-resilience-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.the-server-sees-the-current-tree@1",
+          "kind": "rule",
+          "route": "/rules/project-the-server-sees-the-current-tree-1/",
           "external": false
         }
       ],
@@ -12667,6 +12841,13 @@
           "external": false
         },
         {
+          "edge": "put_in_force",
+          "label": "adr-0163",
+          "kind": "adr",
+          "route": "/adrs/adr-0163/",
+          "external": false
+        },
+        {
           "edge": "depends_on",
           "label": "project.a-personal-layer-changes-nothing-shared@1",
           "kind": "rule",
@@ -15945,6 +16126,13 @@
       ],
       "referenced_by": [
         {
+          "edge": "put_in_force",
+          "label": "adr-0163",
+          "kind": "adr",
+          "route": "/adrs/adr-0163/",
+          "external": false
+        },
+        {
           "edge": "depends_on",
           "label": "project.entry-converges@2",
           "kind": "rule",
@@ -16322,7 +16510,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0163",
+          "kind": "adr",
+          "route": "/adrs/adr-0163/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "rule",
