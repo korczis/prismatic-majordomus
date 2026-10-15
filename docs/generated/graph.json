@@ -32504,7 +32504,8 @@
           "current_state": "A valid hello is accepted by any runtime of the repository that trusts its key and has not seen its nonce.",
           "depends_on": [],
           "evidence_required": [
-            "hello_replay_to_another_runtime_refused_test"
+            "hello_replay_to_another_runtime_refused_test",
+            "hello_replay_after_restart_refused_test"
           ],
           "milestone": "runtime-trust",
           "objective": "Bind each link hello to its intended recipient inside the signed bytes, refuse a hello addressed elsewhere, and make the documented check order the one the code runs.",
@@ -32519,7 +32520,9 @@
             ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md"
           ],
           "slug": "a-hello-names-its-recipient",
-          "updated_at": "2026-10-14",
+          "started_at": "2026-10-15T01:41:59Z",
+          "started_event": "sha256:2d3792ec1b2beaa4c0ec8fda08ce6ba0311e5135c25d583bf04e28323041cc26",
+          "updated_at": "2026-10-15T01:41:59Z",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --test mesh_cooperation",

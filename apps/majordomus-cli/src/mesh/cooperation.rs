@@ -281,6 +281,8 @@ struct Outbound {
 struct Inbound {
     link: String,
     counter: u64,
+    /// The timestamp of the hello that made this link: an older hello cannot replace it.
+    hello_ts: u64,
 }
 
 struct PeerLink {
@@ -1970,6 +1972,23 @@ impl Cooperation {
             table
                 .nonces
                 .retain(|_, ts| now.saturating_sub(*ts) <= 2 * MAX_LINK_SKEW_SECONDS);
+            // The cache is memory, so a restart forgets it; the link a peer made since is what
+            // a hello captured before the restart would displace. A hello older than the one
+            // that made the peer's live link cannot replace it (one runtime key is one
+            // checkout on one machine, so its hellos carry one clock).
+            let established = table
+                .peers
+                .get(&runtime_key)
+                .and_then(|peer| peer.inbound.as_ref())
+                .map(|inbound| inbound.hello_ts);
+            if established.is_some_and(|ts| hello.ts < ts) {
+                drop(table);
+                return self.refuse_in(
+                    RefusalCode::Replay,
+                    "this hello is older than the one that made the peer's live link".into(),
+                    runtime,
+                );
+            }
             let key = (hello.card.pk.clone(), hello.nonce.clone());
             if table.nonces.contains_key(&key) {
                 drop(table);
@@ -2043,6 +2062,7 @@ impl Cooperation {
             peer.inbound = Some(Inbound {
                 link: link.clone(),
                 counter: 0,
+                hello_ts: hello.ts,
             });
             peer.last_exchange = Some(Instant::now());
             peer.handshakes += 1;
@@ -4316,6 +4336,70 @@ mod tests {
             matches!(wrong, Err(RoundError::Refused(ref r)) if r.code == RefusalCode::Misaddressed),
             "{wrong:?}"
         );
+    }
+
+    #[test]
+    fn a_hello_replayed_after_a_restart_cannot_displace_the_link_a_newer_one_made() {
+        let net = Arc::new(InProcess::default());
+        let a = runtime(&net, "a:1", "root", TrustPolicy::Tofu);
+        let b = runtime(&net, "b:1", "root", TrustPolicy::Tofu);
+        // a hello B addressed to A thirty seconds ago, captured on its way: inside the skew
+        // window, and A answers it once
+        let captured = sign(
+            &b.identity,
+            Domain::Hello,
+            serde_json::to_value(&Hello {
+                proto_min: LINK_PROTOCOL_MIN,
+                proto_max: LINK_PROTOCOL_MAX,
+                card: b.card.clone(),
+                nonce: fresh_token(),
+                ts: crate::mesh::protocol::now() - 30,
+                to: Some(a.runtime_key().to_string()),
+            })
+            .unwrap(),
+        );
+        assert!(a.accept_hello(&captured).refusal.is_none());
+        // A restarts: the same key and runtime, and a replay cache that remembers nothing
+        let identity = Arc::clone(&a.identity);
+        drop(a);
+        let a = Cooperation::new(CooperationSetup {
+            identity,
+            runtime: crate::mesh::repository::runtime_id("a:1"),
+            repository: of_root_commits(&["root".into()]),
+            endpoints: vec!["a:1".into()],
+            version: "test".into(),
+            config: CooperationConfig::default(),
+            trust: TrustConfig {
+                policy: TrustPolicy::Tofu,
+                allow: vec![],
+            },
+            journal_path: None,
+            registry: Arc::new(MeshRegistry::new()),
+            transport: Arc::clone(&net) as Arc<dyn LinkTransport>,
+            board: None,
+            checkout: CheckoutFacts::default(),
+        })
+        .unwrap();
+        net.runtimes
+            .lock()
+            .unwrap()
+            .insert("a:1".into(), Arc::downgrade(&a));
+        // B links to the restarted A with a fresh hello, and the link carries a sync
+        b.dial_to(Some(a.runtime_key()), &["a:1".into()])
+            .expect("linked again");
+        assert!(b.sync_with(a.runtime_key()).is_ok());
+        let reconnects = a.counters.reconnects.load(Ordering::Relaxed);
+        // the captured hello, replayed: A's cache has never seen its nonce, and it is refused
+        // all the same, because it is older than the hello that made the link it would replace
+        let refusal = a.accept_hello(&captured).refusal.expect("refused");
+        assert_eq!(refusal.code, RefusalCode::Replay, "{refusal:?}");
+        // and the link B holds is the one A still serves
+        assert!(
+            b.sync_with(a.runtime_key()).is_ok(),
+            "the established link was not displaced"
+        );
+        assert_eq!(a.counters.reconnects.load(Ordering::Relaxed), reconnects);
+        assert_eq!(a.peers().len(), 1);
     }
 
     #[test]
