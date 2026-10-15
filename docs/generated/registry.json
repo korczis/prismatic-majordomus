@@ -38000,13 +38000,24 @@
                     "null"
                   ],
                   "description": "When it realises none: the first link that is missing."
+                },
+                "class": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/IntentUnlinkedClass"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "When it realises none: what it is, by the facts it records. `realize` sets it on every\nunlinked unit; `link` alone, which knows neither liveness nor the first intent, leaves\nit empty."
                 }
               },
               "required": [
                 "work",
                 "links"
               ],
-              "description": "A unit of work with every intent it realises, or the reason it realises none.\n\n```\nuse majordomus_cli::intent_realization::{IntentRealizedWork, IntentWorkKind, IntentWorkUnit};\nlet w = IntentRealizedWork {\n    work: IntentWorkUnit::new(IntentWorkKind::Task, \"t-1\"),\n    links: vec![],\n    unlinked: Some(\"it names no issue\".into()),\n};\nassert!(w.links.is_empty() && w.unlinked.is_some());\n```"
+              "description": "A unit of work with every intent it realises, or the reason it realises none.\n\n```\nuse majordomus_cli::intent_realization::{IntentRealizedWork, IntentWorkKind, IntentWorkUnit};\nlet w = IntentRealizedWork {\n    work: IntentWorkUnit::new(IntentWorkKind::Task, \"t-1\"),\n    links: vec![],\n    unlinked: Some(\"it names no issue\".into()),\n    class: None,\n};\nassert!(w.links.is_empty() && w.unlinked.is_some());\n```"
             },
             "IntentWorkUnit": {
               "type": "object",
@@ -38068,6 +38079,17 @@
                     "type": "string"
                   },
                   "description": "Issue ids a recorded event shows it moving."
+                },
+                "started_at": {
+                  "type": "string",
+                  "description": "When its earliest episode started, as its record says: a session record's `started_at`,\na task's first `task.started`, a claim's `at`. Empty when no record says."
+                },
+                "commits": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The commits a session record lists."
                 }
               },
               "required": [
@@ -38163,6 +38185,26 @@
                 }
               ],
               "description": "The fact a link was read from.\n\n```\nuse majordomus_cli::intent_realization::IntentLinkVia;\nassert_eq!(serde_json::to_string(&IntentLinkVia::BranchIssue).unwrap(), \"\\\"branch_issue\\\"\");\nassert_eq!(IntentLinkVia::ScopeOverlap.provenance().as_str(), \"inferred\");\n```"
+            },
+            "IntentUnlinkedClass": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "empty",
+                  "description": "A session record that lists no issue, no commit and no changed path outside the session\nrecords, and whose own words cite no issue: it did no work a link could be read from."
+                },
+                {
+                  "type": "string",
+                  "const": "before_intents",
+                  "description": "Not live, not empty, and its earliest episode started before the first intent record\nwas written — or no intent is declared at all."
+                },
+                {
+                  "type": "string",
+                  "const": "orphan",
+                  "description": "Anything else unlinked: work done, or being done, while an intent existed, with no fact\nlinking it to one."
+                }
+              ],
+              "description": "What a unit of work that realises no intent is, by the facts it records (ADR 0075,\namendment of 2026-10-15). Only `IntentUnlinkedClass::Orphan` is work serving no intent;\nthe other two classes say why a unit is not, and neither is a link.\n\n```\nuse majordomus_cli::intent_realization::IntentUnlinkedClass;\nassert_eq!(\n    serde_json::to_string(&IntentUnlinkedClass::BeforeIntents).unwrap(),\n    \"\\\"before_intents\\\"\"\n);\nassert!(IntentUnlinkedClass::Empty < IntentUnlinkedClass::Orphan);\n```"
             }
           }
         }
@@ -38254,7 +38296,21 @@
               "type": "integer",
               "format": "uint",
               "minimum": 0,
-              "description": "How many units of work realise no intent."
+              "description": "How many units of work serve no intent: the unlinked units of class `orphan` alone."
+            },
+            "empty": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0,
+              "description": "How many unlinked units are `empty`: session records that did no work a link could be\nread from.",
+              "default": 0
+            },
+            "before_intents": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0,
+              "description": "How many unlinked units are `before_intents`: finished work that started before the\nfirst intent record was written, or while none was declared.",
+              "default": 0
             },
             "findings": {
               "type": "array",
@@ -38270,7 +38326,7 @@
             "orphans",
             "findings"
           ],
-          "description": "Every intent, realised, and every unit of work, joined: what `majordomus intent realization`\nanswers.\n\n```\nuse majordomus_cli::intent_realization::IntentRealization;\nlet r = IntentRealization { intents: vec![], work: vec![], orphans: 0, findings: vec![] };\nassert_eq!(r.orphans, 0);\n```",
+          "description": "Every intent, realised, and every unit of work, joined: what `majordomus intent realization`\nanswers.\n\n```\nuse majordomus_cli::intent_realization::IntentRealization;\nlet r = IntentRealization {\n    intents: vec![], work: vec![], orphans: 0, empty: 0, before_intents: 0, findings: vec![],\n};\nassert_eq!(r.orphans + r.empty + r.before_intents, 0);\n```",
           "title": "IntentRealization",
           "$defs": {
             "IntentRealizationView": {
@@ -38598,13 +38654,24 @@
                     "null"
                   ],
                   "description": "When it realises none: the first link that is missing."
+                },
+                "class": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/IntentUnlinkedClass"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "When it realises none: what it is, by the facts it records. `realize` sets it on every\nunlinked unit; `link` alone, which knows neither liveness nor the first intent, leaves\nit empty."
                 }
               },
               "required": [
                 "work",
                 "links"
               ],
-              "description": "A unit of work with every intent it realises, or the reason it realises none.\n\n```\nuse majordomus_cli::intent_realization::{IntentRealizedWork, IntentWorkKind, IntentWorkUnit};\nlet w = IntentRealizedWork {\n    work: IntentWorkUnit::new(IntentWorkKind::Task, \"t-1\"),\n    links: vec![],\n    unlinked: Some(\"it names no issue\".into()),\n};\nassert!(w.links.is_empty() && w.unlinked.is_some());\n```"
+              "description": "A unit of work with every intent it realises, or the reason it realises none.\n\n```\nuse majordomus_cli::intent_realization::{IntentRealizedWork, IntentWorkKind, IntentWorkUnit};\nlet w = IntentRealizedWork {\n    work: IntentWorkUnit::new(IntentWorkKind::Task, \"t-1\"),\n    links: vec![],\n    unlinked: Some(\"it names no issue\".into()),\n    class: None,\n};\nassert!(w.links.is_empty() && w.unlinked.is_some());\n```"
             },
             "IntentWorkUnit": {
               "type": "object",
@@ -38666,6 +38733,17 @@
                     "type": "string"
                   },
                   "description": "Issue ids a recorded event shows it moving."
+                },
+                "started_at": {
+                  "type": "string",
+                  "description": "When its earliest episode started, as its record says: a session record's `started_at`,\na task's first `task.started`, a claim's `at`. Empty when no record says."
+                },
+                "commits": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The commits a session record lists."
                 }
               },
               "required": [
@@ -38761,6 +38839,26 @@
                 }
               ],
               "description": "The fact a link was read from.\n\n```\nuse majordomus_cli::intent_realization::IntentLinkVia;\nassert_eq!(serde_json::to_string(&IntentLinkVia::BranchIssue).unwrap(), \"\\\"branch_issue\\\"\");\nassert_eq!(IntentLinkVia::ScopeOverlap.provenance().as_str(), \"inferred\");\n```"
+            },
+            "IntentUnlinkedClass": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "empty",
+                  "description": "A session record that lists no issue, no commit and no changed path outside the session\nrecords, and whose own words cite no issue: it did no work a link could be read from."
+                },
+                {
+                  "type": "string",
+                  "const": "before_intents",
+                  "description": "Not live, not empty, and its earliest episode started before the first intent record\nwas written — or no intent is declared at all."
+                },
+                {
+                  "type": "string",
+                  "const": "orphan",
+                  "description": "Anything else unlinked: work done, or being done, while an intent existed, with no fact\nlinking it to one."
+                }
+              ],
+              "description": "What a unit of work that realises no intent is, by the facts it records (ADR 0075,\namendment of 2026-10-15). Only `IntentUnlinkedClass::Orphan` is work serving no intent;\nthe other two classes say why a unit is not, and neither is a link.\n\n```\nuse majordomus_cli::intent_realization::IntentUnlinkedClass;\nassert_eq!(\n    serde_json::to_string(&IntentUnlinkedClass::BeforeIntents).unwrap(),\n    \"\\\"before_intents\\\"\"\n);\nassert!(IntentUnlinkedClass::Empty < IntentUnlinkedClass::Orphan);\n```"
             }
           }
         }

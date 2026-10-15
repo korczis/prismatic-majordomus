@@ -410,6 +410,8 @@ pub struct IntentRecord {
     pub cancelled: bool,
     /// The replacement, when there is one.
     pub superseded_by: String,
+    /// When the record was written, as its `created_at` says; empty when it says nothing.
+    pub created_at: String,
 }
 
 fn text(meta: &Value, key: &str) -> String {
@@ -442,10 +444,12 @@ impl IntentRecord {
     ///     ".ai/repo/project/intents/x.yaml",
     ///     &json!({"id": "x", "title": "X", "milestones": ["m"],
     ///             "satisfaction": [{"id": "c", "criterion": "c", "evidence": "test",
-    ///                               "ref": "test/cases/1_x.sh"}]}),
+    ///                               "ref": "test/cases/1_x.sh"}],
+    ///             "created_at": "2026-09-15"}),
     /// );
     /// assert_eq!(r.milestones, ["m"]);
     /// assert_eq!(r.satisfaction[0].reference, "test/cases/1_x.sh");
+    /// assert_eq!(r.created_at, "2026-09-15");
     /// ```
     pub fn from_metadata(source: &str, meta: &Value) -> IntentRecord {
         let satisfaction = meta
@@ -477,6 +481,7 @@ impl IntentRecord {
                 .and_then(Value::as_bool)
                 .unwrap_or(false),
             superseded_by: text(meta, "superseded_by"),
+            created_at: text(meta, "created_at"),
         }
     }
 
