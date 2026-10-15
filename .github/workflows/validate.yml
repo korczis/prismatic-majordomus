@@ -186,8 +186,9 @@ jobs:
           path: plan.json
           retention-days: 14
       # I2726: the cancel below makes this job read as cancelled and hides its log until the run
-      # ends, so the red is named first, in an annotation and the job's summary.
-      - name: the red that ends this run is named
+      # ends, so the red is named first, in an annotation and the job's summary (on an
+      # integration/* top, which is not cancelled, it is named the same way).
+      - name: this job's red is named
         if: failure() && github.event_name == 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
@@ -267,8 +268,9 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
       # I2726: the cancel below makes this job read as cancelled and hides its log until the run
-      # ends, so the red is named first, in an annotation and the job's summary.
-      - name: the red that ends this run is named
+      # ends, so the red is named first, in an annotation and the job's summary (on an
+      # integration/* top, which is not cancelled, it is named the same way).
+      - name: this job's red is named
         if: failure() && github.event_name == 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
@@ -394,8 +396,9 @@ jobs:
           path: suite.tsv
           retention-days: 3
       # I2726: the cancel below makes this job read as cancelled and hides its log until the run
-      # ends, so the red is named first, in an annotation and the job's summary.
-      - name: the red that ends this run is named
+      # ends, so the red is named first, in an annotation and the job's summary (on an
+      # integration/* top, which is not cancelled, it is named the same way).
+      - name: this job's red is named
         if: failure() && github.event_name == 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
@@ -493,8 +496,9 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
       # I2726: the cancel below makes this job read as cancelled and hides its log until the run
-      # ends, so the red is named first, in an annotation and the job's summary.
-      - name: the red that ends this run is named
+      # ends, so the red is named first, in an annotation and the job's summary (on an
+      # integration/* top, which is not cancelled, it is named the same way).
+      - name: this job's red is named
         if: failure() && github.event_name == 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
@@ -681,8 +685,9 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
       # I2726: the cancel below makes this job read as cancelled and hides its log until the run
-      # ends, so the red is named first, in an annotation and the job's summary.
-      - name: the red that ends this run is named
+      # ends, so the red is named first, in an annotation and the job's summary (on an
+      # integration/* top, which is not cancelled, it is named the same way).
+      - name: this job's red is named
         if: failure() && github.event_name == 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
@@ -776,8 +781,9 @@ jobs:
       - if: always()
         run: ../../scripts/ci/summary --job coverage --fact "rust cache hit=${{ steps.rust.outputs.cache-hit }}" --fact "crate threshold=$(cat ../../scripts/rust-coverage-threshold)" --fact "session domain threshold=$(cat ../../scripts/session-coverage-threshold)"
       # I2726: the cancel below makes this job read as cancelled and hides its log until the run
-      # ends, so the red is named first, in an annotation and the job's summary.
-      - name: the red that ends this run is named
+      # ends, so the red is named first, in an annotation and the job's summary (on an
+      # integration/* top, which is not cancelled, it is named the same way).
+      - name: this job's red is named
         if: failure() && github.event_name == 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
@@ -899,8 +905,9 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
       # I2726: the cancel below makes this job read as cancelled and hides its log until the run
-      # ends, so the red is named first, in an annotation and the job's summary.
-      - name: the red that ends this run is named
+      # ends, so the red is named first, in an annotation and the job's summary (on an
+      # integration/* top, which is not cancelled, it is named the same way).
+      - name: this job's red is named
         if: failure() && github.event_name == 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
@@ -1004,8 +1011,9 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
       # I2726: the cancel below makes this job read as cancelled and hides its log until the run
-      # ends, so the red is named first, in an annotation and the job's summary.
-      - name: the red that ends this run is named
+      # ends, so the red is named first, in an annotation and the job's summary (on an
+      # integration/* top, which is not cancelled, it is named the same way).
+      - name: this job's red is named
         if: failure() && github.event_name == 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
@@ -1065,8 +1073,9 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
       # I2726: the cancel below makes this job read as cancelled and hides its log until the run
-      # ends, so the red is named first, in an annotation and the job's summary.
-      - name: the red that ends this run is named
+      # ends, so the red is named first, in an annotation and the job's summary (on an
+      # integration/* top, which is not cancelled, it is named the same way).
+      - name: this job's red is named
         if: failure() && github.event_name == 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
@@ -1149,8 +1158,9 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
       # I2726: the cancel below makes this job read as cancelled and hides its log until the run
-      # ends, so the red is named first, in an annotation and the job's summary.
-      - name: the red that ends this run is named
+      # ends, so the red is named first, in an annotation and the job's summary (on an
+      # integration/* top, which is not cancelled, it is named the same way).
+      - name: this job's red is named
         if: failure() && github.event_name == 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
@@ -1207,8 +1217,9 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
       # I2726: the cancel below makes this job read as cancelled and hides its log until the run
-      # ends, so the red is named first, in an annotation and the job's summary.
-      - name: the red that ends this run is named
+      # ends, so the red is named first, in an annotation and the job's summary (on an
+      # integration/* top, which is not cancelled, it is named the same way).
+      - name: this job's red is named
         if: failure() && github.event_name == 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
@@ -1274,8 +1285,9 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
       # I2726: the cancel below makes this job read as cancelled and hides its log until the run
-      # ends, so the red is named first, in an annotation and the job's summary.
-      - name: the red that ends this run is named
+      # ends, so the red is named first, in an annotation and the job's summary (on an
+      # integration/* top, which is not cancelled, it is named the same way).
+      - name: this job's red is named
         if: failure() && github.event_name == 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
@@ -1349,8 +1361,9 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
       # I2726: the cancel below makes this job read as cancelled and hides its log until the run
-      # ends, so the red is named first, in an annotation and the job's summary.
-      - name: the red that ends this run is named
+      # ends, so the red is named first, in an annotation and the job's summary (on an
+      # integration/* top, which is not cancelled, it is named the same way).
+      - name: this job's red is named
         if: failure() && github.event_name == 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
@@ -1402,8 +1415,9 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
       # I2726: the cancel below makes this job read as cancelled and hides its log until the run
-      # ends, so the red is named first, in an annotation and the job's summary.
-      - name: the red that ends this run is named
+      # ends, so the red is named first, in an annotation and the job's summary (on an
+      # integration/* top, which is not cancelled, it is named the same way).
+      - name: this job's red is named
         if: failure() && github.event_name == 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
@@ -1469,8 +1483,9 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
       # I2726: the cancel below makes this job read as cancelled and hides its log until the run
-      # ends, so the red is named first, in an annotation and the job's summary.
-      - name: the red that ends this run is named
+      # ends, so the red is named first, in an annotation and the job's summary (on an
+      # integration/* top, which is not cancelled, it is named the same way).
+      - name: this job's red is named
         if: failure() && github.event_name == 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}

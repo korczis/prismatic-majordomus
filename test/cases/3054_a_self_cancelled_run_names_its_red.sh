@@ -12,6 +12,7 @@
 #      listing it cannot read still names the job GITHUB_JOB gives;
 #   2  `scripts/ci/first-red run` names the first step of the run that failed, by completion
 #      time, as "ended at its first red: <job> / <step>", and says nothing when none failed;
+#      an integration/* top, which is not cancelled (PR #1222), words both as one red of many;
 #   3  in validate.yml every self-cancel step is preceded by the step that names the red, on
 #      the same condition, and the ci job names the first red before it renders the verdict.
 #
@@ -29,7 +30,7 @@ cat > "$T/jobs.json" <<'EOF'
   {"name": "site", "status": "in_progress", "conclusion": null, "runner_name": "r2",
    "steps": [{"name": "build the site", "number": 4, "conclusion": "success", "completed_at": "2026-10-15T01:21:00Z"},
              {"name": "derived site data in sync", "number": 5, "conclusion": "failure", "completed_at": "2026-10-15T01:25:00Z"},
-             {"name": "the red that ends this run is named", "number": 9, "conclusion": null}]},
+             {"name": "this job's red is named", "number": 9, "conclusion": null}]},
   {"name": "interactions", "status": "in_progress", "conclusion": null, "runner_name": "r3",
    "steps": [{"name": "build the site", "number": 4, "conclusion": "failure", "completed_at": "2026-10-15T01:22:00Z"}]}
 ]}
@@ -67,11 +68,19 @@ out="$(GITHUB_STEP_SUMMARY=/dev/null "$FR" run --jobs "$T/green.json")"
 rc=0; "$FR" sideways >/dev/null 2>&1 || rc=$?
 [ "$rc" = 2 ] || { echo "    an unknown command exited $rc, not 2"; exit 1; }
 
+# an integration top is not cancelled at its first red (PR #1222): it is named as one red of many
+out="$(GITHUB_HEAD_REF=integration/next-top RUNNER_NAME=r2 GITHUB_STEP_SUMMARY=/dev/null "$FR" job --jobs "$T/jobs.json")"
+printf '%s\n' "$out" | grep -qF "::error title=This job's red::site / derived site data in sync failed; this is an integration top, so the run is not cancelled" \
+  || { echo "    on an integration top the job's red was worded as the end of the run:"; printf '      %s\n' "$out"; exit 1; }
+out="$(GITHUB_HEAD_REF=integration/next-top GITHUB_STEP_SUMMARY=/dev/null "$FR" run --jobs "$T/jobs.json")"
+[ "$out" = "its first red, of every red this integration top reports: interactions / build the site" ] \
+  || { echo "    on an integration top the ci job said the run ended at its first red: $out"; exit 1; }
+
 # ---------------------------------------------------------------- 3. the workflow is wired
 judge() { # <workflow> -> one finding per line; nothing when it holds
   awk '
     /^  [a-z0-9_-]+:[ \t]*$/ { job = $0; gsub(/[ :\t]/, "", job); prev_name = ""; named = 0 }
-    /^      - name: the red that ends this run is named$/ { named = 1; want_run = 1; next }
+    /^      - name: this job.s red is named$/ { named = 1; want_run = 1; next }
     want_run && /^        if: / { cond = $0; sub(/^        if: /, "", cond) }
     want_run && /^        run: / {
       want_run = 0
@@ -93,7 +102,7 @@ judge() { # <workflow> -> one finding per line; nothing when it holds
 }
 out="$(judge "$W")"
 [ -z "$out" ] || { echo "    validate.yml does not name the red before it cancels:"; printf '      %s\n' "$out"; exit 1; }
-n="$(grep -c '^      - name: the red that ends this run is named$' "$W")"
+n="$(grep -c "^      - name: this job's red is named\$" "$W")"
 [ "$n" -ge 10 ] || { echo "    only $n job(s) name their red; the reader has lost the jobs"; exit 1; }
 grep -B6 'scripts/ci/first-red run$' "$W" | grep -q 'GH_TOKEN: \${{ github.token }}' \
   || { echo "    the ci job names the first red without a token that can list the run's jobs"; exit 1; }
@@ -105,7 +114,7 @@ mutant() { # <name> <awk program> <expected finding (ERE)>
   printf '%s\n' "$out" | grep -qE -- "$3" || { echo "    mutation $1 was not refused as /$3/; findings:"; printf '      %s\n' "$out"; exit 1; }
 }
 # one job loses the naming step: its name line goes, so the cancel follows nothing named
-mutant unnamed '!d && /^      - name: the red that ends this run is named$/ { sub(/the red that ends this run is named/, "something else"); d = 1 } 1' \
+mutant unnamed '!d && /^      - name: this job.s red is named$/ { sub(/this job.s red is named/, "something else"); d = 1 } 1' \
   'cancels its run without naming the red first'
 # the ci job no longer names it
 mutant no-run '!/scripts\/ci\/first-red run$/' 'the ci job does not name the first red'

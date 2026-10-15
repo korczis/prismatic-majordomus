@@ -346,8 +346,10 @@ job read as cancelled like every other one and hides its log until the run is ov
 step before each self-cancel, `scripts/ci/first-red job`, names the job and its failed step in an
 error annotation and at the top of the job's summary, and the `ci` job's `scripts/ci/first-red
 run` starts its log and summary with `ended at its first red: <job> / <step>` before the
-verdict. Both read the run's jobs through the API and never fail the job that asked. Case 3054
-holds the wiring and the reading.
+verdict. Both read the run's jobs through the API and never fail the job that asked. On an
+`integration/*` top, which is not cancelled at its first red so that one run reports every red
+(PR #1222), both name the red as one of many instead. Case 3054 holds the wiring and the
+reading.
 
 The release path goes first (I2710). Every workflow of this repository draws on one pool of
 job slots, first come, first served, and on 2026-10-14 v0.26.0 was published while its record's

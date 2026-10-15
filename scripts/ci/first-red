@@ -16,6 +16,10 @@
 #       when it completed, as "ended at its first red: <job> / <step>" in the log and the
 #       summary; nothing when no step failed
 #
+# An integration/* top (GITHUB_HEAD_REF) is not cancelled at its first red, so that one run
+# reports every red (PR #1222): there the job is named as one red among those the run goes on
+# to report, and the ci job names "its first red" rather than the red that ended it.
+#
 # The steps are read from the forge: `gh api` with GH_TOKEN, this run's jobs (GITHUB_RUN_ID,
 # against --repo or GITHUB_REPOSITORY). `job` finds its own job as the one in progress on this
 # runner (RUNNER_NAME). --jobs reads that listing from a file instead, the shape the jobs API
@@ -28,7 +32,7 @@
 set -eu
 set -o pipefail
 
-usage() { sed -n '2,27p' "$0" | sed 's/^# \{0,1\}//'; }
+usage() { sed -n '2,31p' "$0" | sed 's/^# \{0,1\}//'; }
 [ $# -gt 0 ] || { usage >&2; exit 2; }
 CMD="$1"; shift
 case "$CMD" in job|run) ;; -h|--help) usage; exit 0 ;;
@@ -44,6 +48,7 @@ while [ $# -gt 0 ]; do
 done
 
 SUMMARY="${GITHUB_STEP_SUMMARY:-/dev/null}"
+TOP=0; case "${GITHUB_HEAD_REF:-}" in integration/*) TOP=1 ;; esac
 work="$(mktemp -d "${TMPDIR:-/tmp}/first-red.XXXXXX")"
 trap 'rm -rf "$work"' EXIT
 
@@ -83,6 +88,15 @@ if [ "$CMD" = job ]; then
   else
     red="${GITHUB_JOB:-this job} / (its steps could not be read: ${why:-no job in progress on runner ${RUNNER_NAME:-unknown}})"
   fi
+  if [ "$TOP" = 1 ]; then
+    echo "::error title=This job's red::$red failed; this is an integration top, so the run is not cancelled and goes on to report every other red"
+    {
+      printf "## This job's red\n\n"
+      printf '**%s** failed. This is an integration top (%s), so the run is not ' "$red" "$GITHUB_HEAD_REF"
+      printf 'cancelled and every other job still reports its own red.\n\n'
+    } >> "$SUMMARY"
+    exit 0
+  fi
   echo "::error title=This run ends at its first red::$red failed; the run is cancelled next (I2664), so this job and every other one read as cancelled"
   {
     printf '## This run ends at its first red\n\n'
@@ -102,5 +116,7 @@ first="$(jq -r '
     | {job: $job, step: .name, at: (.completed_at // "~")}]
   | sort_by(.at) | .[0] // empty | "\(.job) / \(.step)"' "$work/jobs.json")"
 [ -n "$first" ] || exit 0
-echo "ended at its first red: $first"
-printf '**ended at its first red: %s**\n\n' "$first" >> "$SUMMARY"
+said="ended at its first red"
+[ "$TOP" = 1 ] && said="its first red, of every red this integration top reports"
+echo "$said: $first"
+printf '**%s: %s**\n\n' "$said" "$first" >> "$SUMMARY"

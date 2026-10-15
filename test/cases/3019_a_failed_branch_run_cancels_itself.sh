@@ -111,7 +111,7 @@ mutant on-master "{ sub(/if: failure\(\) && $PR\$/, \"if: failure()\") } 1" \
   "cancels on 'failure\\(\\)', not on"
 # one job's would fire on a push as well. Anchored on the cancel step's own name: the plan job's
 # first step, the release path's yield (I2710), is a pull-request-only condition too, and so is
-# the step before every cancel that names the red (I2726, case 3054); neither is a cancel step
+# the step before every cancel that names the job's red (I2726, case 3054); neither is a cancel step
 mutant on-push "!d && prev ~ /- name: a failed branch run ends here\$/ && sub(/failure\(\) && $PR\$/, \"failure() \&\& ($PR || github.event_name == 'push')\") { d = 1 } { prev = \$0 } 1" \
   "could end a run of master"
 # a job without it: its first self-cancel is gone
