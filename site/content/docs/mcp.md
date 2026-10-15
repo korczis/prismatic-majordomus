@@ -146,6 +146,20 @@ keeps its socket, its peer board and the generation of the layer it loaded, and 
 serving the sessions it already had until they end. That is deliberate: a client mid-answer
 should not lose its server because somebody ran `cargo build`.
 
+Nor, since I2059, does a build take the lease. A process that may hold it — `majordomus mcp`,
+and `majordomus serve` without a subcommand — started from a cargo build output (the file
+under a directory carrying cargo's `CACHEDIR.TAG`) first replaces its own process image with a
+copy of that file, `<profile dir>/served/majordomus-<mtime>-<size>` — a second link to the
+build's own file where the filesystem allows one, the bytes otherwise — made once per build,
+never replaced, and shared by every server started from it (`served_executable`). The lease names the copy; a
+rebuild replaces `target/debug/majordomus` and never the copy, so the server stays `ready`
+on the address it had, and a launcher of the new build attaches to it, because a lease
+naming another path makes no rebuild claim. The new build serves once something restarts
+the server on purpose: `serve stop`, or its idle timeout. Copies older than a week are removed
+when a new one is made; a copy that cannot be made is said on stderr and the server runs in
+place, as before. An installed release is never copied: its path is already versioned.
+`test/cases/3061` holds it, and `test/cases/885` the server run from a file that is replaced.
+
 What it must not do is go on being *the* server. From the moment its own reader finds the
 lease no longer carries its token:
 
