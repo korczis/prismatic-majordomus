@@ -544,6 +544,7 @@ mod tests {
                 provenance: IntentLinkProvenance::Declared,
             }],
             unlinked: None,
+            class: None,
         };
         let html = work_row("x", &w).render();
         assert!(html.contains("—"), "{html}");
