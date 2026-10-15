@@ -16,7 +16,10 @@
 #      workflow grants actions: write, and a job that narrows its permissions keeps it;
 #   4  nothing else cancels a run: concurrency still waits rather than cancels (PR #576 was
 #      cancelled four times in a row on 2026-09-15 by a newer commit; case 2999 holds the
-#      rest of that).
+#      rest of that);
+#   5  a combined top runs to the end: on a pull request whose head is an `integration/*`
+#      branch every self-cancel step only says so and cancels nothing, so one run of a top
+#      shows every red (on 2026-10-15 the grand top took three full cycles to show three).
 #
 # Read from the tracked workflow with awk; nothing is built, nothing reaches the network.
 # Then each refusal is proved by mutating a copy.
@@ -68,6 +71,11 @@ judge() { # <workflow> -> the findings, one per line; nothing when it holds
     run="$(printf '%s\n' "$s" | awk -F'\t' -v j="$j" -v n="$cancel" '$1 == j && $2 == n && $3 == "run" { print $4 }')"
     printf '%s\n' "$run" | grep -qE 'gh run cancel "?\$(GITHUB_RUN_ID|\{\{ github\.run_id \}\})' \
       || echo "job $j cancels something other than its own run: $run"
+    # 5: an integration/* top is exempt, and its branch of the step cancels nothing
+    if ! printf '%s\n' "$run" | grep -qE '^case "\$GITHUB_HEAD_REF" in integration/\*\) [^;]*;; \*\) gh run cancel ' \
+      || printf '%s\n' "$run" | sed 's/;; \*).*//' | grep -q 'gh run cancel'; then
+      echo "job $j would cancel the run of an integration/* top: $run"
+    fi
     tok="$(printf '%s\n' "$s" | awk -F'\t' -v j="$j" -v n="$cancel" '$1 == j && $2 == n && $3 == "token" { print $4 }')"
     [ "$tok" = '${{ github.token }}' ] || [ "$tok" = '${{ secrets.GITHUB_TOKEN }}' ] \
       || echo "job $j cancels without the job's token (GH_TOKEN is '${tok:-unset}')"
@@ -114,7 +122,7 @@ mutant on-master "{ sub(/if: failure\(\) && $PR\$/, \"if: failure()\") } 1" \
 mutant on-push "!d && sub(/failure\(\) && $PR\$/, \"failure() \&\& ($PR || github.event_name == 'push')\") { d = 1 } 1" \
   "could end a run of master"
 # a job without it: its first self-cancel is gone
-mutant missing '!d && /run: gh run cancel/ { sub(/gh run cancel.*/, "echo no"); d = 1 } 1' \
+mutant missing '!d && /run: .*gh run cancel/ { sub(/gh run cancel.*/, "echo no"); d = 1 } 1' \
   "has no step that cancels its run"
 # the token cannot cancel: the workflow no longer grants actions: write
 mutant no-permission '!/^  actions: write$/' \
@@ -123,7 +131,16 @@ mutant no-permission '!/^  actions: write$/' \
 mutant newer-commit '{ sub(/^  cancel-in-progress: false$/, "  cancel-in-progress: true") } 1' \
   "concurrency may cancel a run in flight"
 # a step added after the cancel never runs once the cancel fires
-mutant late-step '{ print } /run: gh run cancel/ && !d { print "      - run: echo after"; d = 1 }' \
+mutant late-step '{ print } /run: .*gh run cancel/ && !d { print "      - run: echo after"; d = 1 }' \
   'cancels at step [0-9]+ of [0-9]+'
+# 5: one job cancels an integration/* top again — its guard is gone
+mutant top-unguarded '!d && /run: .*gh run cancel/ { sub(/case "\$GITHUB_HEAD_REF" in integration\/\*\) [^;]*;; \*\) /, ""); sub(/;; esac$/, ""); d = 1 } 1' \
+  'would cancel the run of an integration/\* top'
+# 5: one job's top branch cancels as well
+mutant top-cancels '!d && /run: .*gh run cancel/ { sub(/integration\/\*\) echo/, "integration/*) gh run cancel \"$GITHUB_RUN_ID\"; echo"); d = 1 } 1' \
+  'would cancel the run of an integration/\* top'
+# 5: one job exempts another prefix than integration/
+mutant top-renamed '!d && /run: .*gh run cancel/ { sub(/in integration\/\*\)/, "in integrate/*)"); d = 1 } 1' \
+  'would cancel the run of an integration/\* top'
 
-echo "    every gate job of validate.yml ends a failed pull request's run as its last step, on failure() of a pull_request event alone, with a token allowed to; master, the schedule and a dispatch run to the end, and concurrency still cancels nothing"
+echo "    every gate job of validate.yml ends a failed pull request's run as its last step, on failure() of a pull_request event alone, with a token allowed to, and never on an integration/* top; master, the schedule and a dispatch run to the end, and concurrency still cancels nothing"
