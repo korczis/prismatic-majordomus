@@ -32359,6 +32359,8 @@
             "The stopped process exits by its own return, not by signal 15, within serve stop's documented bound",
             "The comment at apps/majordomus-cli/src/shared.rs:274-281 and the LeaseView.pid doc describe what the code does"
           ],
+          "completed_at": "2026-10-15T04:32:47Z",
+          "completed_event": "sha256:830d1868de2c99ffe35daf245fc72d77cde5d251d711119ea034c97b227baf01",
           "created_at": "2026-10-09",
           "current_state": "Lease removal by the signal handler and by take_over does not re-check the token. serve stop is a hard kill that removes the lease first.",
           "depends_on": [],
@@ -32383,12 +32385,16 @@
             "docs/MCP.md"
           ],
           "slug": "a-lease-is-removed-only-by-its-holder",
-          "updated_at": "2026-10-09",
+          "started_at": "2026-10-15T04:32:23Z",
+          "started_event": "sha256:ffe9695533c68eecb9e4d6d9b65a6b22859334269e0477484c8b508025aa266e",
+          "updated_at": "2026-10-15T04:32:47Z",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --test mcp_shared --test serve_lifecycle --test shared_units",
             "MJ_TEST_JOBS=4 bash test/run.sh 113_shared_server_survives_a_crash"
-          ]
+          ],
+          "verified_at": "2026-10-15T04:32:30Z",
+          "verified_event": "sha256:ae00981c59fc02b24098c4e96c11cc93281e6e0f34de782800c86ff9e0607712"
         }
       },
       {
