@@ -120,8 +120,52 @@ mj_validate_policy() {
   return 0
 }
 
+# A linked worktree runs the hooks of its own tree (I2718). The repository's policy is the
+# primary checkout's core.hooksPath; when it names a directory of the primary checkout — an
+# absolute <primary>/.githooks in the configuration every worktree shares — git sends every
+# linked worktree to the primary's hooks, and a stale primary then judges every commit with
+# stale gates. That is a finding, with git's own per-worktree remedy, and the wiring below
+# judges the worktree's own directory (MJ_WIRING_HOOKDIR) rather than the one git would run.
+# The primary checkout, a bare repository, a repository with no core.hooksPath, one whose
+# hooks live outside every checkout, and a tree without the directory are left as they are.
+mj_wiring_own_hooks() {
+  MJ_WIRING_HOOKDIR=""
+  local gd common primary line policy rel own runs fix=""
+  gd="$(mj_git rev-parse --path-format=absolute --git-dir 2>/dev/null)" || return 0
+  common="$(mj_git rev-parse --path-format=absolute --git-common-dir 2>/dev/null)" || return 0
+  [ -n "$gd" ] && [ "$gd" != "$common" ] || return 0
+  primary="$(mj_git worktree list --porcelain 2>/dev/null | sed -n '1s/^worktree //p')"
+  [ -n "$primary" ] && [ -d "$primary" ] || return 0
+  mj_count git; line="$(git -C "$primary" config --show-scope --get core.hooksPath 2>/dev/null)" || return 0
+  case "$line" in local"$MJ_TAB"*|worktree"$MJ_TAB"*) policy="${line#*"$MJ_TAB"}" ;; *) return 0 ;; esac
+  primary="$(cd "$primary" && pwd -P)"
+  case "$policy" in
+    "") return 0 ;;
+    /*) [ -d "$policy" ] && policy="$(cd "$policy" && pwd -P)"
+        case "$policy" in "$primary"/*) rel="${policy#"$primary"/}" ;; *) return 0 ;; esac ;;
+    *) rel="$policy" ;;
+  esac
+  own="$MJ_ROOT/$rel"
+  [ -d "$own" ] || return 0
+  own="$(cd "$own" && pwd -P)"
+  runs="$(mj_git rev-parse --path-format=absolute --git-path hooks 2>/dev/null)" || return 0
+  [ -d "$runs" ] && runs="$(cd "$runs" && pwd -P)"
+  [ "$runs" = "$own" ] && return 0
+  MJ_WIRING_HOOKDIR="$own"
+  if [ "$(mj_git config --local --type=bool --get extensions.worktreeConfig 2>/dev/null)" != true ]; then
+    case "$(mj_git config --local --get core.repositoryformatversion 2>/dev/null)" in
+      ""|0) fix="git -C $MJ_ROOT config core.repositoryformatversion 1 && " ;;
+    esac
+    fix="${fix}git -C $MJ_ROOT config extensions.worktreeConfig true && "
+  fi
+  fix="${fix}git -C $MJ_ROOT config --worktree core.hooksPath $own"
+  mj_doctrine_fail wiring "hooks-path" "this linked worktree runs $runs, not its own $own, so every commit here is judged by another checkout's hooks; fix: $fix (or majordomus worktree repair, which binds every linked worktree)" \
+    "git -C $MJ_ROOT rev-parse --path-format=absolute --git-path hooks"
+}
+
 mj_validate_wiring() {
   local i=0 name path wired kind target hookdir hookfile arg0 prog
+  mj_wiring_own_hooks
   while [ -n "$(mj_pol "enforcement.$i.name")" ]; do
     name="$(mj_pol "enforcement.$i.name")"; path="$(mj_pol "enforcement.$i.path")"; wired="$(mj_pol "enforcement.$i.wired_by")"
     arg0="$(mj_pol "enforcement.$i.args.0")"; [ -z "$arg0" ] && arg0="$(mj_pol "enforcement.$i.args" | sed 's/\[\]//')"
@@ -146,7 +190,11 @@ mj_validate_wiring() {
           # Git says where its hooks are: core.hooksPath when set, else the common
           # directory's hooks/. A linked worktree's .git is a file naming that directory,
           # so "$MJ_ROOT/.git/hooks" does not exist there and every hook read as missing.
-          hookdir="$(mj_git rev-parse --git-path hooks 2>/dev/null || true)"; [ -z "$hookdir" ] && hookdir=".git/hooks"
+          # A linked worktree sent to another checkout's hooks is judged by its own, which
+          # is what it will run once the finding above is fixed.
+          hookdir="$MJ_WIRING_HOOKDIR"
+          [ -z "$hookdir" ] && hookdir="$(mj_git rev-parse --git-path hooks 2>/dev/null || true)"
+          [ -z "$hookdir" ] && hookdir=".git/hooks"
           case "$hookdir" in /*) hookfile="$hookdir/$target" ;; *) hookfile="$MJ_ROOT/$hookdir/$target" ;; esac
           # A hook is commonly a dispatcher that runs every executable in <hook>.d/; the
           # invocation then lives in one of those files, not in the hook git calls.

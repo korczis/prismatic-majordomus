@@ -585,6 +585,7 @@
     "schema-HistoryReport": "docs/api/commit/",
     "schema-Holding": "docs/api/convergence/",
     "schema-HoldingKind": "docs/api/convergence/",
+    "schema-HooksPath": "docs/api/worktree/",
     "schema-HttpExposure": "docs/api/capabilities/",
     "schema-HttpMethod": "docs/api/capabilities/",
     "schema-Identity": "docs/api/design/",
@@ -1230,7 +1231,7 @@
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
     "operations": 196,
-    "schemas": 973,
+    "schemas": 974,
     "tags": 57
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1260,7 +1261,7 @@
     "description": "The API reference, rendered from this document.",
     "url": "https://majordomus.dev/docs/api/"
   },
-  "generated_by": "majordomus-cli 0.26.0",
+  "generated_by": "majordomus-cli 0.27.0",
   "generator": "scripts/generate-site-data (scripts/lib/openapi-site.jq)",
   "info": {
     "contact_name": "Majordomus",
@@ -1269,7 +1270,7 @@
     "license": "MIT",
     "summary": "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.",
     "title": "Majordomus",
-    "version": "0.26.0"
+    "version": "0.27.0"
   },
   "infrastructure": [
     {
@@ -1911,6 +1912,7 @@
     "HistoryReport": "commit",
     "Holding": "convergence",
     "HoldingKind": "convergence",
+    "HooksPath": "worktree",
     "HttpExposure": "capabilities",
     "HttpMethod": "capabilities",
     "Identity": "design",
@@ -24331,6 +24333,148 @@
       "variants": []
     },
     {
+      "description": "What became of the hooks directory of a worktree that was just created, found or moved.\n\nIt travels in the JSON of `worktree create`, `ensure`, `migrate` and `repair`, tagged by\n`outcome`, so a reader branches on one word rather than parsing the line:\n\n```\nuse majordomus_cli::worktree::HooksPath;\n\nlet set = HooksPath::Set {\n    path: \"/r-wt/fix/x/.githooks\".into(),\n    enabled: vec![],\n};\nlet json = serde_json::to_value(&set).unwrap();\nassert_eq!(json[\"outcome\"], \"set\");\nassert_eq!(json[\"path\"], \"/r-wt/fix/x/.githooks\");\nlet back: HooksPath = serde_json::from_value(json).unwrap();\nassert_eq!(back, set);\n```",
+      "home": "worktree",
+      "is_enum": false,
+      "name": "HooksPath",
+      "properties": [],
+      "type": "one of 6 variants",
+      "used_by": [],
+      "used_by_schemas": [
+        "MigrationStep"
+      ],
+      "values": [],
+      "variants": [
+        {
+          "description": "The repository's configuration sets no `core.hooksPath`: git's own hooks directory\nin the common directory (or a value of the user's) serves every worktree, and there\nis no tracked directory to follow.",
+          "properties": [
+            {
+              "description": "",
+              "name": "outcome",
+              "refs": [],
+              "required": true,
+              "type": "\"not_configured\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "Git already resolves this worktree's hooks to its own directory; nothing was set.",
+          "properties": [
+            {
+              "description": "The directory git runs the hooks from.",
+              "name": "path",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "",
+              "name": "outcome",
+              "refs": [],
+              "required": true,
+              "type": "\"own\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "This worktree's `core.hooksPath` was set, per worktree, to its own directory.",
+          "properties": [
+            {
+              "description": "The directory it now runs the hooks from.",
+              "name": "path",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "Repository settings switched on so that a per-worktree value is honoured, as\n`key=value`; empty when they were on already.",
+              "name": "enabled",
+              "refs": [],
+              "required": true,
+              "type": "array of string"
+            },
+            {
+              "description": "",
+              "name": "outcome",
+              "refs": [],
+              "required": true,
+              "type": "\"set\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "The hooks directory is outside the primary checkout — one directory shared on\npurpose — and every worktree runs it; nothing was set.",
+          "properties": [
+            {
+              "description": "The directory every worktree runs the hooks from.",
+              "name": "path",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "",
+              "name": "outcome",
+              "refs": [],
+              "required": true,
+              "type": "\"shared\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "The primary checkout's hooks directory has no counterpart in this worktree's tree,\nso the worktree keeps running the primary's: pointing it at a directory that does\nnot exist would switch its hooks off.",
+          "properties": [
+            {
+              "description": "The directory that would be the worktree's own, and is not there.",
+              "name": "missing",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "The directory the worktree runs the hooks from instead.",
+              "name": "runs",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "",
+              "name": "outcome",
+              "refs": [],
+              "required": true,
+              "type": "\"untracked\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "Git was asked and refused, or could not be run; the message is its own.",
+          "properties": [
+            {
+              "description": "What went wrong.",
+              "name": "message",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "",
+              "name": "outcome",
+              "refs": [],
+              "required": true,
+              "type": "\"failed\""
+            }
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    {
       "description": "How a capability appears over HTTP. `GET` binds every top-level input property as a\nquery parameter; `POST` binds the input as the JSON request body. Paths are absolute\nand live under `HttpExposure::PREFIX`.",
       "home": "capabilities",
       "is_enum": false,
@@ -32005,6 +32149,15 @@
           ],
           "required": false,
           "type": "EnvrcApproval | null"
+        },
+        {
+          "description": "Which hooks it runs at its new path: a per-worktree `core.hooksPath` names the old\none, so a moved worktree is bound again to its own tree's (I2718). Only on a moved\nstep.",
+          "name": "hooks",
+          "refs": [
+            "HooksPath"
+          ],
+          "required": false,
+          "type": "HooksPath | null"
         }
       ],
       "type": "object",

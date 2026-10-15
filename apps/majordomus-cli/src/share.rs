@@ -248,6 +248,11 @@ struct ProviderEntry {
     title: Option<String>,
     #[serde(default)]
     client_config: Option<String>,
+    /// The file the provider reads for one person's instructions beside the project's.
+    /// Read by `init --personal` in the shell tool; accepted here so the declaration parses.
+    #[serde(default)]
+    #[allow(dead_code)]
+    personal_target: Option<String>,
     #[serde(default)]
     scratch_roots: Vec<String>,
     #[serde(default)]

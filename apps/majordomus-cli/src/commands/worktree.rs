@@ -19,9 +19,10 @@ use serde_json::Value;
 use crate::cli::{OutputFormat, WorktreeArgs, WorktreeCommand};
 use crate::error::{Error, Result};
 use crate::worktree::{
-    migrate, BranchState, CreateRequest, Detail, DirtyState, MigrationAction, MigrationOptions,
-    MigrationPlan, RepositoryTopology, Severity, Standing, StatusReport, StepOutcome, Threshold,
-    TopologyDiagnostic, WorkStanding, WorktreeService, WorktreeState, EXIT_REFUSED,
+    migrate, BranchState, CreateRequest, Detail, DirtyState, HooksPath, MigrationAction,
+    MigrationOptions, MigrationPlan, RepositoryTopology, Severity, Standing, StatusReport,
+    StepOutcome, Threshold, TopologyDiagnostic, WorkStanding, WorktreeService, WorktreeState,
+    EXIT_REFUSED,
 };
 
 /// Run `majordomus worktree`.
@@ -794,6 +795,7 @@ fn create(
             }
             w(out, report.envrc.describe())?;
             w(out, report.envrc_local.describe())?;
+            w(out, report.hooks.describe())?;
             w(
                 out,
                 format!("cd \"$(majordomus worktree path {})\"", report.branch),
@@ -898,6 +900,9 @@ fn render_plan(plan: &MigrationPlan, out: &mut Out<'_>) -> Result<()> {
                 if let Some(envrc) = &step.envrc {
                     w(out, format!("  {}", envrc.describe()))?;
                 }
+                if let Some(hooks) = &step.hooks {
+                    w(out, format!("  {}", hooks.describe()))?;
+                }
             }
             StepOutcome::Blocked => {
                 w(out, "  outcome BLOCKED")?;
@@ -998,6 +1003,13 @@ fn repair(
             }
             for line in &report.repaired {
                 w(out, line)?;
+            }
+            // Only what changed or still runs somebody else's hooks; a worktree already on
+            // its own is the quiet case.
+            for (path, hooks) in &report.hooks {
+                if !matches!(hooks, HooksPath::Own { .. } | HooksPath::NotConfigured) {
+                    w(out, format!("{path}\n  {}", hooks.describe()))?;
+                }
             }
             if report.applied {
                 w(

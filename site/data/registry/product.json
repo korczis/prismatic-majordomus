@@ -3,9 +3,9 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the product features of this repository's layer, resolved against the registry, the index, the catalogue and the topology; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.26.0"
+    "version": "0.27.0"
   },
-  "fingerprint": "307443ace887090c8fae611b545763ca3ef3d1640b330332fbe33f687d6c1c2a",
+  "fingerprint": "60045fbebf4a21960713b78f819d89c762125f00a90d43ed1e75e4c0651f95fc",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -3509,7 +3509,7 @@
         },
         {
           "name": "claim",
-          "objects": 246
+          "objects": 247
         }
       ],
       "rule_refs": [
@@ -3782,11 +3782,11 @@
       "counts": {
         "capabilities": 12,
         "mcp_tools": 12,
-        "mcp_resources": 319,
+        "mcp_resources": 320,
         "http_routes": 12,
         "cli_paths": 11,
         "commands": 2,
-        "objects": 312,
+        "objects": 313,
         "rules": 5,
         "enforced_rules": 4,
         "docs": 3,
@@ -7266,7 +7266,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 106
+          "objects": 109
         },
         {
           "name": "knowledge",
@@ -7274,7 +7274,7 @@
         },
         {
           "name": "document",
-          "objects": 344
+          "objects": 347
         }
       ],
       "rule_refs": [
@@ -7547,11 +7547,11 @@
       "counts": {
         "capabilities": 5,
         "mcp_tools": 5,
-        "mcp_resources": 457,
+        "mcp_resources": 463,
         "http_routes": 5,
         "cli_paths": 3,
         "commands": 6,
-        "objects": 454,
+        "objects": 460,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -12839,11 +12839,11 @@
       "kind_refs": [
         {
           "name": "milestone",
-          "objects": 35
+          "objects": 37
         },
         {
           "name": "issue",
-          "objects": 371
+          "objects": 390
         },
         {
           "name": "intent",
@@ -13045,11 +13045,11 @@
       "counts": {
         "capabilities": 23,
         "mcp_tools": 23,
-        "mcp_resources": 413,
+        "mcp_resources": 434,
         "http_routes": 23,
         "cli_paths": 11,
         "commands": 1,
-        "objects": 410,
+        "objects": 431,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -16732,7 +16732,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (106)",
+        "title": "adr (109)",
         "features": [
           "knowledge"
         ]
@@ -16760,7 +16760,7 @@
       },
       {
         "id": "claim",
-        "title": "claim (246)",
+        "title": "claim (247)",
         "features": [
           "declare-once"
         ]
@@ -16829,7 +16829,7 @@
       },
       {
         "id": "issue",
-        "title": "issue (371)",
+        "title": "issue (390)",
         "features": [
           "planning"
         ]
@@ -16850,7 +16850,7 @@
       },
       {
         "id": "milestone",
-        "title": "milestone (35)",
+        "title": "milestone (37)",
         "features": [
           "planning"
         ]
@@ -17023,7 +17023,13 @@
     {
       "id": "gemini",
       "title": "Gemini CLI",
-      "bootstraps": [],
+      "bootstraps": [
+        {
+          "target": "GEMINI.md",
+          "mode": "file",
+          "always_loaded": false
+        }
+      ],
       "client_config": ".gemini/settings.json",
       "hooks": [],
       "scratch_roots": [],
@@ -17842,39 +17848,39 @@
     }
   ],
   "telemetry": {
-    "capabilities": 2394,
+    "capabilities": 2434,
     "builtin": 201,
-    "declarative": 2193,
+    "declarative": 2233,
     "modules": 57,
     "mcp_tools": 191,
-    "mcp_resources": 2248,
+    "mcp_resources": 2288,
     "http_routes": 196,
     "cli_commands": 205,
     "shell_commands": 30,
     "kinds": 34,
-    "objects": 2193,
+    "objects": 2233,
     "by_kind": {
-      "adr": 106,
+      "adr": 109,
       "application": 5,
       "area": 9,
       "audience": 8,
-      "claim": 246,
+      "claim": 247,
       "command": 31,
       "context": 39,
       "critique": 3,
       "deployment": 1,
       "derive-offload": 1,
       "distribution-model": 1,
-      "document": 344,
+      "document": 347,
       "domain": 6,
       "feature": 29,
       "gap": 3,
       "implementation": 52,
       "intent": 4,
-      "issue": 371,
+      "issue": 390,
       "knowledge": 4,
       "mesh-declaration": 1,
-      "milestone": 35,
+      "milestone": 37,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -17885,7 +17891,7 @@
       "session": 89,
       "skill": 8,
       "taxonomy": 10,
-      "test": 484,
+      "test": 496,
       "use-case": 49,
       "workspace": 1
     },
@@ -17903,10 +17909,16 @@
       "executions": 14,
       "newest": "2026-09-17T01:14:59Z"
     },
-    "declared": 228,
+    "declared": 229,
     "supported": 0,
     "claims": {
       "a-candidate-is-routed-by-what-it-is-about": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "a-diagram-is-named-linked-and-addressable": {
         "status": "guaranteed",
         "state": "not-run",
         "label": "not run",

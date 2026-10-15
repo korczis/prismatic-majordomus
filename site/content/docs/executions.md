@@ -206,6 +206,7 @@ not ignore safely.
 GET /events                                  every execution of this process, live
 GET /events?execution=<id>                   one execution: its retained history, then live
 GET /events?execution=<id>&after=<sequence>   the same, from a cursor — what a reconnect sends
+GET /events?execution=<a>&execution=<b>       several executions: each one's history, then live
 ```
 
 A native WebSocket (RFC 6455), upgraded on the same socket the rest of the surface is served
@@ -228,6 +229,16 @@ an event at or below the last sequence it saw is dropped, and on a channel that 
 execution an event beyond the next one makes it reconnect with `after=<last seen>`, so the
 server replays what was missed; the same gap twice is read from the history over HTTP
 instead.
+
+**Several executions, one cursor each.** `sequence` is dense per execution, so a connection
+that names several executions keeps a cursor for each, and deduplicates each execution's
+events against its own. The one `after` starts every cursor: each execution named is
+replayed, page by page until it is caught up, from the events after it, and an execution
+named twice is followed once. `stream.ready` counts the whole replay in `replayed`, and
+`truncated` is true when the history of any execution followed had already been dropped. A
+client reconnecting to several executions sends no cursor and drops, per execution, what it
+already holds; the Cockpit's `share/cockpit/socket.js` does exactly that. A
+single-execution connection sends the sequence it last saw, as it always has.
 
 **Heartbeat and disconnection.** The server pings a quiet connection every twenty seconds
 and never reads: `tiny_http` hands over one `Read + Write` value on upgrade that cannot be

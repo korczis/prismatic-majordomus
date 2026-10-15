@@ -3,7 +3,7 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the claims, rules, features, use cases, commands, documented command-line examples and builtin capabilities this repository declares, and the first coverage and negative headers of its test cases; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.26.0"
+    "version": "0.27.0"
   },
   "route": "/evidence/",
   "kinds": [
@@ -1051,6 +1051,11 @@
       "kind": "claim",
       "subject": "claim:a-candidate-is-routed-by-what-it-is-about",
       "path": "/evidence/claims/a-candidate-is-routed-by-what-it-is-about/"
+    },
+    {
+      "kind": "claim",
+      "subject": "claim:a-diagram-is-named-linked-and-addressable",
+      "path": "/evidence/claims/a-diagram-is-named-linked-and-addressable/"
     },
     {
       "kind": "claim",
@@ -6134,6 +6139,29 @@
             "docs/KNOWLEDGE.md",
             "lib/knowledge.sh",
             "test/cases/982_a_candidate_is_routed_by_what_it_is_about.sh"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "claim:a-diagram-is-named-linked-and-addressable": {
+      "kind": "claim",
+      "id": "a-diagram-is-named-linked-and-addressable",
+      "status": "guaranteed",
+      "page": "/evidence/claims/a-diagram-is-named-linked-and-addressable/",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "claim",
+          "test": "suite:3006_diagrams_are_interactive_and_linkable",
+          "path": "test/cases/3006_diagrams_are_interactive_and_linkable.sh",
+          "category": "e2e",
+          "inputs": [
+            "docs/DIAGRAMS.md",
+            "scripts/lib/diagrams.mjs",
+            "test/cases/3006_diagrams_are_interactive_and_linkable.sh"
           ]
         }
       ],
@@ -13429,6 +13457,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:3036_a_worktree_runs_its_own_hooks",
+          "path": "test/cases/3036_a_worktree_runs_its_own_hooks.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:36_command_doctrines",
           "path": "test/cases/36_command_doctrines.sh",
           "category": "e2e"
@@ -14865,6 +14899,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:3037_a_knowledge_lookup_explains_its_order",
+          "path": "test/cases/3037_a_knowledge_lookup_explains_its_order.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:405_the_knowledge_reader_honours_the_schema",
           "path": "test/cases/405_the_knowledge_reader_honours_the_schema.sh",
           "category": "e2e"
@@ -14951,6 +14991,12 @@
           "via": "negative",
           "test": "suite:3015_an_unsupervised_repository_exits_12_from_both_tools",
           "path": "test/cases/3015_an_unsupervised_repository_exits_12_from_both_tools.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:3037_a_knowledge_lookup_explains_its_order",
+          "path": "test/cases/3037_a_knowledge_lookup_explains_its_order.sh",
           "category": "e2e"
         },
         {
@@ -27495,6 +27541,7 @@
     "crate:mcp_stdio",
     "crate:mcp_transport_bounds",
     "crate:mesh_compaction",
+    "crate:mesh_lease_retirement",
     "crate:mesh_sync_bound",
     "crate:mesh_trust_reload",
     "crate:mesh_trust_root",
@@ -27582,8 +27629,10 @@
     "suite:2980_a_capability_is_invoked_by_name_from_claude_code",
     "suite:2981_the_cockpit_snapshot_holds_its_routes",
     "suite:2982_two_snapshots_link_what_the_other_holds",
+    "suite:2998_evidence_reaches_the_subcommands_the_executable_owns",
     "suite:3003_the_knowledge_screen_answers",
     "suite:300_a_pipeline_cannot_hide_a_failure",
+    "suite:3014_the_kiosk_draws_what_the_repository_proves",
     "suite:3016_init_seeds_the_scope_of_the_stack_it_finds",
     "suite:3017_doctor_holds_an_adopter_to_what_it_adopted",
     "suite:3018_a_comment_in_the_policy_moves_no_bootstrap",
@@ -27592,8 +27641,15 @@
     "suite:3022_the_rule_package_is_stamped_and_adopter_neutral",
     "suite:3024_a_run_is_seen_by_the_server",
     "suite:3025_abandoned_work_in_a_worktree_is_named",
+    "suite:3027_the_release_path_goes_first",
+    "suite:3028_the_pages_job_waits_for_its_deployment",
+    "suite:3029_a_tag_in_flight_is_pending",
     "suite:302_the_topology_rule_has_one_source",
+    "suite:3032_the_quality_verdict_comes_first",
+    "suite:3033_a_release_record_case_is_listed_by_a_structure_gate",
+    "suite:3035_a_release_names_its_archive_from_the_matrix",
     "suite:303_one_source_serves_two_mounts",
+    "suite:3042_the_observatory_asks_again_when_it_is_seen",
     "suite:305_a_command_is_claimed_or_classified",
     "suite:310_rustdoc_projection",
     "suite:318_a_partial_sweep_says_so",

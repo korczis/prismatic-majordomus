@@ -221,6 +221,18 @@ refused at once on every head. Proposing the record before the tag was the other
 it was not taken: the record would describe artifacts nobody had built yet.
 `test/cases/3021_a_tag_does_not_freeze_the_queue.sh` holds every state.
 
+The window before the record branch exists is pending too (I2712). Between the tag push and the
+publish job's push of `release/record-<tag>` there is no record and no branch, and nothing is
+published yet either: on 2026-10-14 the structure job of #1146 went red on v0.26.0 while its
+release run was still waiting for a macOS build. Only the forge can see that state, so for a
+tag with neither record nor proposal the gate asks `gh` for the tag's runs of `release.yml`: a
+run queued or running makes the tag `pending`, naming the run; no run listed and no GitHub
+release yet, inside the same grace, is pending too. A concluded run, a GitHub release that
+exists, a forge that cannot be read and a repository it cannot name (`MJ_RELEASE_CHECK_REPO`,
+else the `origin` remote on github.com) leave the refusal standing, with a note saying which —
+offline, the gate is as strict as before. `test/cases/3029_a_tag_in_flight_is_pending.sh`
+holds those states.
+
 The pipeline is [`.github/workflows/release.yml`](../.github/workflows/release.yml), an
 adapter over [`.ai/repo/ci/release.yaml`](../.ai/repo/ci/release.yaml) and the generated
 matrix:

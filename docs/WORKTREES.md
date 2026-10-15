@@ -256,6 +256,41 @@ there too, from one file. The link is made only where git ignores the name
 (`not_ignored` otherwise), and a worktree with an `.envrc.local` of its own keeps it
 (`own_kept`).
 
+### The hooks of its own tree
+
+A repository that tracks its hooks (`.githooks/`, named by `core.hooksPath`) means each
+commit to be judged by the hooks of the tree it is made in. `core.hooksPath` lives in the
+configuration every worktree shares, so once it holds an absolute path —
+`<primary>/.githooks`, as it did here — every linked worktree runs the primary checkout's
+hooks. On 2026-10-14 the primary checkout was three days behind, and the `doctor` its hooks
+ran refused every commit of current master in every worktree (`FAIL wiring
+ssh-permissions-on-commit … not invoked by <primary>/.githooks/pre-commit`); I2718.
+
+Each linked worktree therefore has a hooks path of its own. `create`, `ensure`, every moved
+step of `migrate` and `repair` read the repository's policy from the primary checkout's
+effective `core.hooksPath`, find the directory it names inside the worktree, and, when git
+would run another checkout's, bind the worktree to its own with git's per-worktree
+configuration:
+
+```sh
+git config core.repositoryformatversion 1          # only when it was 0
+git config extensions.worktreeConfig true          # only when it was off
+git -C <worktree> config --worktree core.hooksPath <worktree>/.githooks
+```
+
+The value is absolute, so a moved worktree is bound again at its new path. The report says
+what happened on a `hooks` line and in the `hooks` field of the JSON (`set`, `own`,
+`not_configured`, `shared`, `untracked`, `failed`). Nothing is invented: a repository with no
+`core.hooksPath` keeps git's own hooks directory, a hooks directory outside the primary
+checkout is shared on purpose and left alone, and a tree that does not carry the directory
+keeps the primary's rather than none. A relative `.githooks` is already resolved by git
+against each worktree's own top level, and is reported as `own`. The primary checkout is
+never changed.
+
+`doctor`, run in a linked worktree that git sends to another checkout's hooks, fails
+`wiring hooks-path` with the exact command that fixes it, and judges the wiring of the
+worktree's own directory — what it will run once fixed — rather than the stale one.
+
 The last step is the one with no mechanism behind it. Creating a worktree is one command;
 removing one is a decision nobody is prompted to make, and `cleanup` deliberately deletes
 nothing — it names what is merged and clean and leaves the act to a person, because a tool
@@ -338,6 +373,7 @@ says where to `cd`.
 | a locked worktree | `worktree.locked`, the step blocked | `git worktree unlock <path>`, then migrate |
 | the wrong branch in a worktree | `worktree.branch_already_checked_out` on create | migrate the worktree that holds it, or work there |
 | `direnv: error .envrc is blocked` in a worktree | `envrc   differs …` or `envrc   the primary checkout's is not approved …` on the create or migrate report | read the file, then `direnv allow` there; approve the primary checkout's first when that is what the report names. A worktree older than the report: `majordomus worktree ensure <branch>` carries the approval now |
+| a commit in a worktree judged by stale hooks | `FAIL wiring hooks-path … runs <primary>/.githooks, not its own` from `doctor` | the command doctor prints, or `majordomus worktree repair`, which binds every linked worktree to its own `.githooks` |
 | the primary checkout on a feature branch | `worktree.primary_on_non_trunk`; the guard refuses | when clean, `git switch <trunk>`; then `worktree create <branch>` |
 | a scratch checkout of a session on a branch | `worktree.ephemeral`; the guard refuses | `git switch --detach` there and continue in the canonical worktree, or `migrate --include-ephemeral --only <branch>` |
 | a move that crossed devices | `worktree.cross_device` on the step, or a refusal | `migrate --allow-copy` |

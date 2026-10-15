@@ -1,0 +1,285 @@
+#!/usr/bin/env bash
+# release-path — the release path goes first on the shared runner pool (I2710).
+#
+# Every workflow of this repository draws on one pool of job slots, first come, first served.
+# On 2026-10-14 v0.26.0 was published while its record's verdict and the Pages deploy that
+# publishes it were queued behind pull-request validates holding all twenty slots; the site
+# went on offering the previous release until a person cancelled a run by hand. The model is
+# .ai/repo/ci/release-path.yaml; this is its one enforcer, and docs/CI.md is the prose.
+#
+#   scripts/ci/release-path status  [--self ID]
+#       the runs of the release path that are queued or running; exit 0 clear, 10 busy
+#   scripts/ci/release-path yield   --event E --pr N --branch B --self ID
+#       a pull request's validate run asks before it plans: busy, and it labels its pull
+#       request, says which run it yielded to, and cancels itself; clear, and it proceeds
+#   scripts/ci/release-path preempt [--self ID]
+#       the tag push's own run: busy, and every pull-request validate already queued or
+#       running is labelled, told, and cancelled; clear, and nothing is touched
+#   scripts/ci/release-path resume  [--self ID]
+#       clear, and the newest validate run of each labelled pull request's head runs again
+#       when it is the cancelled one, and the label goes; busy, and nothing is touched
+#
+# The release path is read from outside the release workflow, from the runs GitHub lists:
+# a run of the release workflow; a validate run on a record branch (the record's verdict);
+# a pages run of the trunk that the release's token dispatched. --self excludes the caller.
+#
+# Never cancelled by this, by construction: anything of the release path, and any run whose
+# event is not pull_request — master's validate, the schedule, a dispatch. `yield` cancels
+# only its own run, and only when --event is pull_request and --branch is no record branch.
+#
+# Forge access is `gh api` with GH_TOKEN, against --repo or GITHUB_REPOSITORY. A reading that
+# cannot be made is said and decides nothing: `yield` lets the run proceed, `preempt` and
+# `resume` touch nothing, `status` exits 12. None of them fails the job that asked: a release
+# is never held up by its own priority, and a branch's verdict is never red because of it.
+#
+# MJ_RELEASE_PATH_CANCEL_WAIT overrides the model's cancel_wait_seconds (case 3027 sets 0).
+#
+# Exit: 0 done (or clear) · 10 busy (status only) · 12 the reading could not be made
+# (status only) · 2 usage.
+set -eu
+set -o pipefail
+
+ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
+MODEL="$ROOT/.ai/repo/ci/release-path.yaml"
+
+usage() { sed -n '2,38p' "$0" | sed 's/^# \{0,1\}//'; }
+[ $# -gt 0 ] || { usage >&2; exit 2; }
+CMD="$1"; shift
+case "$CMD" in status|yield|preempt|resume) ;; -h|--help) usage; exit 0 ;;
+  *) echo "release-path: unknown command '$CMD' (status, yield, preempt, resume)" >&2; exit 2 ;;
+esac
+
+SELF=""; EVENT=""; PR=""; BRANCH=""; SLUG="${GITHUB_REPOSITORY:-}"
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --self) SELF="${2:?--self needs a run id}"; shift 2 ;;
+    --event) EVENT="${2?--event needs a value}"; shift 2 ;;
+    --pr) PR="${2?--pr needs a number}"; shift 2 ;;
+    --branch) BRANCH="${2?--branch needs a value}"; shift 2 ;;
+    --repo) SLUG="${2:?--repo needs owner/name}"; shift 2 ;;
+    *) echo "release-path: unknown option $1" >&2; exit 2 ;;
+  esac
+done
+
+# ------------------------------------------------------------------ the model
+# One scalar per key, `  key: value` under its section; a key the model does not state is
+# a model that is not usable, never a default chosen here.
+model() {
+  local v
+  v="$(sed -n "s/^  $1: *//p" "$MODEL" 2>/dev/null | head -n 1 | sed "s/[[:space:]]*#.*//; s/^'\(.*\)'\$/\1/")"
+  [ -n "$v" ] || { echo "release-path: $MODEL does not state $1" >&2; exit 2; }
+  printf '%s' "$v"
+}
+[ -f "$MODEL" ] || { echo "release-path: the model $MODEL is missing" >&2; exit 2; }
+W_RELEASE="$(model release)"
+W_VERDICT="$(model verdict)"
+RECORD_PREFIX="$(model record_branch_prefix)"
+W_PAGES="$(model pages)"
+PAGES_BY="$(model pages_dispatched_by)"
+TRUNK="$(model trunk)"
+LABEL="$(model label)"
+CANCEL_WAIT="${MJ_RELEASE_PATH_CANCEL_WAIT:-$(model cancel_wait_seconds)}"
+case "$CANCEL_WAIT" in *[!0-9]*) echo "release-path: cancel_wait_seconds is not a number: $CANCEL_WAIT" >&2; exit 2 ;; esac
+
+say()  { printf '%s\n' "$*"; }
+# the field separator of every list below: not whitespace, so an empty field survives `read`
+US="$(printf '\037')"
+# a GitHub annotation on a runner, a plain line anywhere else
+notice() { if [ -n "${GITHUB_ACTIONS:-}" ]; then printf '::notice title=release path::%s\n' "$*"; else say "$*"; fi; }
+warn()   { if [ -n "${GITHUB_ACTIONS:-}" ]; then printf '::warning title=release path::%s\n' "$*"; else say "warn  $*"; fi; }
+summary() { [ -z "${GITHUB_STEP_SUMMARY:-}" ] || printf '%s\n' "$*" >> "$GITHUB_STEP_SUMMARY"; }
+
+# ------------------------------------------------------------------ the forge
+# Every call goes through here, so a reading that fails is one place, and the behavioural case
+# stubs one command.
+api() { gh api "$@"; }
+enc() { printf '%s' "$1" | sed 's/:/%3A/g; s/ /%20/g; s/\[/%5B/g; s/\]/%5D/g'; }
+
+# The runs that have not finished, every workflow's, as one JSON array of the fields decided
+# on. GitHub filters by one status per request, and a run waiting in a concurrency group
+# (pending) or for a slot (queued) holds no slot yet but is exactly what is waiting, so each
+# is asked. Each page is cut down to those fields as it arrives and gathered through a file:
+# a hundred full runs are larger than one argument may be on Linux.
+RUNS="[]"; RUNS_ERR=""
+read_runs() {
+  local s out tmp
+  [ -n "$SLUG" ] || { RUNS_ERR="no repository (--repo or GITHUB_REPOSITORY), so the runs could not be read"; return 1; }
+  command -v gh >/dev/null 2>&1 || { RUNS_ERR="gh is not installed, so the runs could not be read"; return 1; }
+  tmp="$(mktemp "${TMPDIR:-/tmp}/mj-release-path.XXXXXX")"
+  for s in queued in_progress waiting pending requested; do
+    if ! out="$(api "repos/$SLUG/actions/runs?status=$s&per_page=100" 2>&1)"; then
+      RUNS_ERR="the $s runs could not be read: $(printf '%s' "$out" | head -n 1)"; rm -f "$tmp"; return 1
+    fi
+    jq -c '(.workflow_runs // [])[] | {id, path, event, head_branch, status, html_url,
+             by: (.triggering_actor.login // .actor.login // ""),
+             pr: (.pull_requests[0].number // null)}' <<<"$out" >> "$tmp" 2>/dev/null \
+      || { RUNS_ERR="the $s runs were not JSON"; rm -f "$tmp"; return 1; }
+  done
+  RUNS="$(jq -sc 'unique_by(.id)' "$tmp")"
+  rm -f "$tmp"
+}
+
+# The runs of the release path, one per line: "<id>|<what>|<status>|<url>", the bar being the
+# unit separator US (0x1f): a tab is whitespace to `read`, which folds an empty field away.
+release_path_runs() {
+  jq -r --arg self "$SELF" --arg rel "$W_RELEASE" --arg ver "$W_VERDICT" --arg pfx "$RECORD_PREFIX" \
+        --arg pages "$W_PAGES" --arg by "$PAGES_BY" --arg trunk "$TRUNK" '
+    def wf($p): ((.path // "") | startswith($p));
+    .[] | select((.id | tostring) != $self)
+    | (if wf($rel) then "the release run of \(.head_branch // "?")"
+       elif wf($ver) and ((.head_branch // "") | startswith($pfx)) then "the record verdict on \(.head_branch)"
+       elif wf($pages) and .head_branch == $trunk and .event == "workflow_dispatch"
+            and (.by == $by) then "the release deploy of \($trunk)"
+       else empty end) as $what
+    | "\(.id)\u001f\($what)\u001f\(.status)\u001f\(.html_url // "")"' <<<"$RUNS"
+}
+
+# The pull-request validate runs that could yield: "<id>|<pr>|<branch>|<status>", US-separated. A run
+# whose pull request GitHub does not name (a fork's) is listed with an empty number and left
+# alone, because nothing could re-request it.
+branch_runs() {
+  jq -r --arg self "$SELF" --arg ver "$W_VERDICT" --arg pfx "$RECORD_PREFIX" '
+    .[] | select((.id | tostring) != $self)
+    | select(((.path // "") | startswith($ver)) and .event == "pull_request")
+    | select(((.head_branch // "") | startswith($pfx)) | not)
+    | "\(.id)\u001f\(.pr // "")\u001f\(.head_branch // "")\u001f\(.status)"' <<<"$RUNS"
+}
+
+# The first run of the release path, as one phrase a person can follow.
+holder_phrase() {
+  local id what st url
+  IFS="$US" read -r id what st url <<<"$1"
+  printf '%s, run %s (%s)%s' "$what" "$id" "$st" "${url:+ $url}"
+}
+
+mark_and_tell() { # <pr> <run id> <holder phrase>
+  local out
+  out="$(api -X POST "repos/$SLUG/issues/$1/labels" -f "labels[]=$LABEL" 2>&1)" \
+    || warn "pull request #$1 could not be labelled $LABEL, so nothing will re-request run $2: $(printf '%s' "$out" | head -n 1)"
+  out="$(api -X POST "repos/$SLUG/issues/$1/comments" \
+    -f "body=Validate run $2 of this pull request yielded to the release path: $3. It runs again once the release path is clear (\`scripts/ci/release-path resume\`; the label \`$LABEL\` marks the wait). Model: .ai/repo/ci/release-path.yaml." 2>&1)" \
+    || warn "pull request #$1 could not be told why run $2 yielded: $(printf '%s' "$out" | head -n 1)"
+  return 0
+}
+
+# ------------------------------------------------------------------ the commands
+case "$CMD" in
+status)
+  read_runs || { say "release-path: $RUNS_ERR"; exit 12; }
+  held="$(release_path_runs)"
+  if [ -z "$held" ]; then say "clear  no run of the release path is queued or running"; exit 0; fi
+  printf '%s\n' "$held" | while IFS= read -r line; do say "busy   $(holder_phrase "$line")"; done
+  exit 10 ;;
+
+yield)
+  # The two refusals that keep the rule from reaching what it protects, before any reading.
+  if [ "$EVENT" != pull_request ]; then
+    say "release-path: a ${EVENT:-run with no event} run never yields; only a pull request's run gives way to the release path"
+    exit 0
+  fi
+  case "$BRANCH" in "$RECORD_PREFIX"*)
+    say "release-path: $BRANCH is a record branch; it is the release path and never yields"
+    exit 0 ;;
+  esac
+  [ -n "$PR" ] && [ -n "$SELF" ] || { echo "release-path: yield needs --pr and --self" >&2; exit 2; }
+  if ! read_runs; then
+    warn "$RUNS_ERR; this run proceeds without asking the release path"
+    exit 0
+  fi
+  held="$(release_path_runs)"
+  if [ -z "$held" ]; then
+    say "release-path: no run of the release path is queued or running; this run proceeds"
+    exit 0
+  fi
+  first="$(holder_phrase "$(printf '%s\n' "$held" | head -n 1)")"
+  notice "validate run $SELF of pull request #$PR yields to $first; it runs again once the release path is clear"
+  summary "## Yielded to the release path"
+  summary ""
+  summary "This run gave its slots to $first. The pull request is labelled \`$LABEL\`; \`scripts/ci/release-path resume\` runs it again once the release path is clear."
+  mark_and_tell "$PR" "$SELF" "$first"
+  out="$(api -X POST "repos/$SLUG/actions/runs/$SELF/cancel" 2>&1)" || {
+    warn "run $SELF could not cancel itself ($(printf '%s' "$out" | head -n 1)); it proceeds"
+    exit 0; }
+  # The cancellation ends this step from outside. Bounded: if it has not landed by then, the
+  # run proceeds rather than hanging, and says so.
+  waited=0
+  while [ "$waited" -lt "$CANCEL_WAIT" ]; do sleep 5; waited=$((waited + 5)); done
+  warn "run $SELF asked to be cancelled ${CANCEL_WAIT}s ago and is still running; it proceeds"
+  exit 0 ;;
+
+preempt)
+  if ! read_runs; then
+    warn "$RUNS_ERR; no branch run was asked to yield"
+    exit 0
+  fi
+  held="$(release_path_runs)"
+  if [ -z "$held" ]; then
+    say "release-path: no run of the release path is queued or running; no branch run yields"
+    exit 0
+  fi
+  first="$(holder_phrase "$(printf '%s\n' "$held" | head -n 1)")"
+  say "release-path: the release path holds: $first"
+  n=0
+  while IFS="$US" read -r id pr branch st; do
+    [ -n "$id" ] || continue
+    if [ -z "$pr" ]; then
+      say "left   validate run $id on $branch ($st): GitHub names no pull request for it, so nothing could re-request it"
+      continue
+    fi
+    mark_and_tell "$pr" "$id" "$first"
+    if out="$(api -X POST "repos/$SLUG/actions/runs/$id/cancel" 2>&1)"; then
+      say "yield  validate run $id of #$pr on $branch ($st) is cancelled and labelled $LABEL"
+      n=$((n + 1))
+    else
+      warn "validate run $id of #$pr could not be cancelled: $(printf '%s' "$out" | head -n 1)"
+    fi
+  done <<<"$(branch_runs)"
+  notice "$n pull-request validate run(s) yielded to $first"
+  summary "## The release path goes first"
+  summary ""
+  summary "$n pull-request validate run(s) yielded to $first."
+  exit 0 ;;
+
+resume)
+  if ! read_runs; then
+    warn "$RUNS_ERR; nothing was re-requested"
+    exit 0
+  fi
+  held="$(release_path_runs)"
+  if [ -n "$held" ]; then
+    say "release-path: the release path still holds: $(holder_phrase "$(printf '%s\n' "$held" | head -n 1)"); the runs that yielded wait"
+    exit 0
+  fi
+  if ! issues="$(api "repos/$SLUG/issues?labels=$(enc "$LABEL")&state=open&per_page=100" 2>&1)"; then
+    warn "the pull requests labelled $LABEL could not be read: $(printf '%s' "$issues" | head -n 1)"
+    exit 0
+  fi
+  prs="$(jq -r '.[] | select(.pull_request) | .number' <<<"$issues" 2>/dev/null || true)"
+  if [ -z "$prs" ]; then say "release-path: the release path is clear and no pull request waits for it"; exit 0; fi
+  wf="$(basename "$W_VERDICT")"
+  for pr in $prs; do
+    if ! pull="$(api "repos/$SLUG/pulls/$pr" 2>&1)"; then
+      warn "pull request #$pr could not be read; it keeps $LABEL"
+      continue
+    fi
+    sha="$(jq -r '.head.sha // empty' <<<"$pull")"
+    newest="$(api "repos/$SLUG/actions/workflows/$wf/runs?event=pull_request&head_sha=$sha&per_page=5" 2>/dev/null \
+      | jq -r '.workflow_runs | sort_by(.created_at) | last | select(.) | "\(.id)\u001f\(.status)\u001f\(.conclusion // "")"' 2>/dev/null || true)"
+    IFS="$US" read -r rid rst rcon <<<"${newest:-}" || true
+    if [ -z "${rid:-}" ]; then
+      say "drop   #$pr: no validate run of its head ${sha:0:12} is listed; the next push or label starts one"
+    elif [ "$rst" = completed ] && [ "$rcon" = cancelled ]; then
+      if out="$(api -X POST "repos/$SLUG/actions/runs/$rid/rerun" 2>&1)"; then
+        say "rerun  #$pr: validate run $rid of ${sha:0:12} runs again"
+      else
+        warn "#$pr: validate run $rid could not be re-requested ($(printf '%s' "$out" | head -n 1)); it keeps $LABEL"
+        continue
+      fi
+    else
+      say "drop   #$pr: its newest validate run $rid is ${rst}${rcon:+ ($rcon)}; nothing to re-request"
+    fi
+    api -X DELETE "repos/$SLUG/issues/$pr/labels/$(enc "$LABEL")" >/dev/null 2>&1 \
+      || warn "#$pr: the label $LABEL could not be removed"
+  done
+  exit 0 ;;
+esac
