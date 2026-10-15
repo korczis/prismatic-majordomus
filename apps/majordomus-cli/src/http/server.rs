@@ -4,7 +4,8 @@
 //! threads, and each request is answered on a thread of its own up to a bound, so a slow
 //! request queues nothing behind it — not even the probe a client sends before it would
 //! take the lease over — and the owner's stdio session never waits on HTTP. Stopping is cooperative: every
-//! worker is unblocked and joined, and an in-flight response is finished first. A connection
+//! worker is unblocked and joined, and an in-flight response is finished first. A stopped
+//! server refuses the next connection: `stop` returns after the listening socket is closed. A connection
 //! that reads no request within the declared deadline is closed ([`super::deadline`]), and a
 //! request that finds every handler busy is refused rather than answered on a worker.
 
@@ -155,7 +156,7 @@ impl Bound {
         let local = self
             .address
             .parse()
-            .unwrap_or_else(|_| std::net::SocketAddr::from(([0, 0, 0, 0], 0)));
+            .unwrap_or(std::net::SocketAddr::from(([0, 0, 0, 0], 0)));
         let watch = Arc::new(Watch::new(local, crate::lease::timings().read_deadline));
         let mut threads: Vec<JoinHandle<()>> = (0..WORKERS)
             .map(|n| {
@@ -205,7 +206,9 @@ impl Running {
         format!("http://{}", self.address)
     }
 
-    /// Unblock every worker and wait for it; an in-flight response is finished first.
+    /// Unblock every worker and wait for it; an in-flight response is finished first. When
+    /// this returns the address refuses a connection: the next caller learns that nothing was
+    /// sent, not that an answer was lost.
     pub fn stop(self) {
         self.stopping.store(true, Ordering::SeqCst);
         // one more than there are workers is harmless; the sweeper reads `stopping` itself
@@ -221,8 +224,36 @@ impl Running {
         while HANDLERS.load(Ordering::SeqCst) > 0 && std::time::Instant::now() < deadline {
             std::thread::sleep(std::time::Duration::from_millis(20));
         }
+        drop(self.server);
+        closed(&self.address);
         tracing::info!(address = %self.address, "http stopped");
     }
+}
+
+/// How long [`Running::stop`] waits for the listening socket to close.
+const CLOSE_GRACE: std::time::Duration = std::time::Duration::from_secs(2);
+
+/// Wait until `address` refuses a connection, within [`CLOSE_GRACE`].
+///
+/// Dropping the server only asks its accept thread to end: the listening socket is closed by
+/// that thread, some time after the drop returns. Until then the kernel still completes a
+/// connection nobody will read, and the caller is reset after it has sent its request, so it
+/// cannot tell whether the request ran. A stopped server is one that refuses, and `stop`
+/// returns only when this one does. Another process bound to the same port keeps answering;
+/// the bound is what ends the wait then.
+fn closed(address: &str) {
+    let Ok(address) = address.parse::<std::net::SocketAddr>() else {
+        return;
+    };
+    let deadline = std::time::Instant::now() + CLOSE_GRACE;
+    let attempt = std::time::Duration::from_millis(100);
+    while std::time::Instant::now() < deadline {
+        if std::net::TcpStream::connect_timeout(&address, attempt).is_err() {
+            return;
+        }
+        std::thread::sleep(std::time::Duration::from_millis(5));
+    }
+    tracing::warn!(%address, "the listening socket still accepts after the server stopped");
 }
 
 fn worker(server: &Server, router: &Router, watch: &Arc<Watch>, stopping: &AtomicBool) {
@@ -268,9 +299,14 @@ fn hand_off(router: &Router, watch: &Arc<Watch>, request: tiny_http::Request) {
             answer(&router, &watch, request);
             HANDLERS.fetch_sub(1, Ordering::SeqCst);
         });
+    released_unless_spawned(spawned, &HANDLERS);
+}
+
+/// A request whose thread could not be spawned went with the closure, and the client sees its
+/// connection close: give back the slot it took in `handlers`, and say so.
+fn released_unless_spawned(spawned: std::io::Result<JoinHandle<()>>, handlers: &AtomicUsize) {
     if let Err(e) = spawned {
-        // the request went with the closure; the client sees its connection close
-        HANDLERS.fetch_sub(1, Ordering::SeqCst);
+        handlers.fetch_sub(1, Ordering::SeqCst);
         tracing::warn!("a request could not be given a thread: {e}");
     }
 }
@@ -316,6 +352,9 @@ fn upgrade(
     };
     // a live channel is never closed by the read deadline: it waits by design
     watch.live(request.remote_addr());
+    // and it ends when its client hangs up, not at its next write: an open channel keeps the
+    // server in use, so a closed one must stop counting within the idle timer's tick (I2131)
+    let hung_up = watch.hung_up(request.remote_addr());
     let key = accepted.accept.clone();
     let response = HttpResponse::empty(101).with_header(
         Header::from_bytes("Sec-WebSocket-Accept", key.as_bytes())
@@ -326,7 +365,7 @@ fn upgrade(
         .name("events".into())
         .spawn(move || {
             OPEN_CHANNELS.fetch_add(1, Ordering::Relaxed);
-            accepted.serve(Box::new(socket));
+            accepted.serve_until(Box::new(socket), hung_up);
             OPEN_CHANNELS.fetch_sub(1, Ordering::Relaxed);
             note_request();
         });
@@ -389,12 +428,7 @@ fn answer_http(router: &Router, watch: &Watch, mut request: tiny_http::Request) 
 fn respond(request: tiny_http::Request, response: super::router::Response, head: bool) {
     // always Content-Length, never chunked: one less thing a small client must decode;
     // a HEAD gets the GET's headers and no body
-    let body: Vec<u8> = if head {
-        Vec::new()
-    } else {
-        response.body.as_bytes().to_vec()
-    };
-    let length = body.len();
+    let (body, length) = wire_body(&response, head);
     let mut out = HttpResponse::new(
         response.status.into(),
         Vec::new(),
@@ -416,6 +450,10 @@ fn respond(request: tiny_http::Request, response: super::router::Response, head:
         out.add_header(Header::from_bytes("Cache-Control", "no-store").expect("static header"));
     }
     for (name, value) in &response.headers {
+        // the length is the server's to write, and `wire_body` has already read it
+        if name.eq_ignore_ascii_case("content-length") {
+            continue;
+        }
         if let Ok(h) = Header::from_bytes(name.as_bytes(), value.as_bytes()) {
             out.add_header(h);
         }
@@ -423,6 +461,28 @@ fn respond(request: tiny_http::Request, response: super::router::Response, head:
     if let Err(e) = request.respond(out) {
         tracing::debug!("client went away before the response was written: {e}");
     }
+}
+
+/// The bytes to write and the `Content-Length` to announce. A HEAD writes nothing. A
+/// `304 Not Modified` writes nothing either, and announces the length its producer names in
+/// a `Content-Length` header — the 200's, the only value RFC 9110 section 8.6 allows a 304
+/// to carry — or none of its own, an empty body's 0.
+fn wire_body(response: &super::router::Response, head: bool) -> (Vec<u8>, usize) {
+    if response.status == 304 {
+        let named = response
+            .headers
+            .iter()
+            .find(|(name, _)| name.eq_ignore_ascii_case("content-length"))
+            .and_then(|(_, value)| value.trim().parse().ok());
+        return (Vec::new(), named.unwrap_or(0));
+    }
+    let body: Vec<u8> = if head {
+        Vec::new()
+    } else {
+        response.body.as_bytes().to_vec()
+    };
+    let length = body.len();
+    (body, length)
 }
 
 /// Is stdin a pipe or a socket, as when a parent process spawned us and holds the other end?
@@ -447,4 +507,39 @@ pub fn stdin_is_a_pipe() -> bool {
 #[cfg(not(unix))]
 pub fn stdin_is_a_pipe() -> bool {
     false
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_304_writes_no_body_and_announces_the_length_it_names() {
+        use super::super::router::Response;
+        let not_modified = Response::new(304, "text/css", "").with_header("Content-Length", "1234");
+        assert_eq!(wire_body(&not_modified, false), (Vec::new(), 1234));
+        let unnamed = Response::new(304, "text/css", "ignored");
+        assert_eq!(wire_body(&unnamed, false), (Vec::new(), 0));
+        let ok = Response::new(200, "text/css", "body{}");
+        assert_eq!(wire_body(&ok, false), (b"body{}".to_vec(), 6));
+        assert_eq!(
+            wire_body(&ok, true),
+            (Vec::new(), 0),
+            "a HEAD writes nothing"
+        );
+    }
+
+    #[test]
+    fn a_request_that_could_not_be_given_a_thread_gives_back_its_slot() {
+        let handlers = AtomicUsize::new(3);
+        released_unless_spawned(Err(std::io::Error::other("no threads left")), &handlers);
+        assert_eq!(handlers.load(Ordering::SeqCst), 2);
+        let spawned = std::thread::Builder::new().spawn(|| {});
+        released_unless_spawned(spawned, &handlers);
+        assert_eq!(
+            handlers.load(Ordering::SeqCst),
+            2,
+            "a request on its thread keeps its slot until it is answered"
+        );
+    }
 }

@@ -289,10 +289,11 @@ pub fn doctor_at(
         }
     };
 
-    // Trust: under an allowlist-shaped declaration, is this machine's own key listed? A
-    // fleet whose declaration forgot a machine links around it.
+    // Trust: under an allowlist-shaped declaration, is this machine's own key listed? An
+    // unlisted machine keeps the mesh closed (`manager::closed_to`), so this is the check
+    // that names why and what to do.
     if let (Some(Ok(config)), Some(identity)) = (&declaration, &identity) {
-        if config.enabled && !config.trust.allow.is_empty() {
+        if config.enabled && config.trust.policy != super::trust::TrustPolicy::Tofu {
             let listed = config.trust.allow.contains(&identity.public.public_key);
             checks.push(if listed {
                 DoctorCheck::pass("trust", "this machine's key is on the allowlist")
@@ -304,7 +305,7 @@ pub fn doctor_at(
                         identity.public.public_key,
                         config.trust.allow.len()
                     ),
-                    "the other machines of the fleet refuse this one's links as untrusted; this machine can still dial them if it trusts their keys",
+                    "the mesh stays closed on this machine: it neither announces nor dials, and no other machine links to it",
                     "add the key above to trust.allow in the mesh declaration and commit it",
                 )
             });
@@ -548,6 +549,10 @@ fn runtime_check(declared: Declared, runtime: Option<&MeshStatus>) -> DoctorChec
     let why = reason.strip_prefix("not active: ").unwrap_or(reason);
     if !status.active {
         return match declared {
+            // closed by the trust list: the trust check carries the failure and the remedy
+            Declared::Enabled if why.starts_with("closed: ") => {
+                DoctorCheck::pass("runtime", why.to_string())
+            }
             Declared::Enabled => DoctorCheck::fail(
                 "runtime",
                 format!("the declaration is enabled and this server's mesh is not active — {why}"),
@@ -670,6 +675,27 @@ fn link_probe() -> Result<String, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn the_runtime_verdict_judges_what_a_server_decided_about_the_declaration() {
+        let enabled: MeshConfig = serde_json::from_value(serde_json::json!({
+            "schema": "mesh/v1", "kind": "mesh-declaration", "id": "x", "enabled": true,
+        }))
+        .unwrap();
+        let server = super::super::manager::MeshRuntime::new();
+        server.decline("the node identity did not load");
+        let declined = runtime_verdict(Some(Ok(enabled)), Some(&server.status()));
+        assert_eq!(declined.check, "runtime");
+        assert!(
+            !declined.ok,
+            "a declared mesh the server declined is owed: {declined:?}"
+        );
+        let undeclared = runtime_verdict(None, Some(&server.status()));
+        assert!(
+            undeclared.ok,
+            "no declaration, nothing owed: {undeclared:?}"
+        );
+    }
 
     #[test]
     fn the_self_check_runs_without_a_declaration_and_without_a_network() {
@@ -922,6 +948,7 @@ mod tests {
         let identity = NodeIdentity::load_or_create(&dir.path().join("node.json")).unwrap();
         let mut quiet = config(true);
         quiet.multicast.enabled = false;
+        quiet.trust.allow = vec![identity.public.public_key.clone()];
         server
             .activate(&quiet, identity, vec![], vec![], "test")
             .unwrap();

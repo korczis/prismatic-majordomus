@@ -15,13 +15,13 @@ mod common;
 use std::io::{BufRead, BufReader, Read, Write};
 use std::net::{TcpListener, TcpStream};
 use std::path::Path;
-use std::process::{Child, ChildStdin, Command, Stdio};
+use std::process::{Child, ChildStdin, Stdio};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::mpsc::{self, Receiver};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
-use common::{Fixture, BIN};
+use common::Fixture;
 use serde_json::{json, Value};
 
 const WAIT: Duration = Duration::from_secs(30);
@@ -214,12 +214,9 @@ impl Mcp {
     fn spawn(f: &Fixture, args: &[&str]) -> Self {
         let mut all = vec!["mcp"];
         all.extend_from_slice(args);
-        let mut child = Command::new(BIN)
+        let mut child = common::majordomus()
             .args(&all)
             .current_dir(f.root())
-            .env_remove("MAJORDOMUS_ROOT")
-            .env_remove("MAJORDOMUS_URL")
-            .env_remove("MAJORDOMUS_HTTP_HOST")
             .env("MAJORDOMUS_LOG", "info")
             .env("MAJORDOMUS_SHARE", common::dist_share())
             .env("XDG_STATE_HOME", f.parent().join("state"))

@@ -7,9 +7,9 @@
 mod common;
 
 use std::io::{BufRead, BufReader, Write};
-use std::process::{Command, Stdio};
+use std::process::Stdio;
 
-use common::{Fixture, Served, BIN};
+use common::{Fixture, Served};
 use serde_json::{json, Value};
 
 const REQUESTS: usize = 200;
@@ -40,7 +40,7 @@ fn startup_work(snapshot: &Value) -> Vec<(String, u64)> {
 #[test]
 fn hundreds_of_mcp_requests_rebuild_nothing() {
     let f = Fixture::new();
-    let mut child = Command::new(BIN)
+    let mut child = common::majordomus()
         .args(["mcp", "--standalone"])
         .current_dir(f.root())
         .env("MAJORDOMUS_SHARE", common::dist_share())

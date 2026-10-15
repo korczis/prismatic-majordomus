@@ -1,7 +1,7 @@
 +++
 title = "The inbound admissions a mesh declaration implies on a machine — the multicast group's port, the declared hub ports whose address is the machine's, the server's port beyond loopback — are derived from the declaration by `majordomus mesh firewall`, which names the host's firewall backend, the commands that admit them and the firewall's own verdict, exits 10 when a rule is observed missing or the kernel logged a drop toward those ports, and whose `apply` runs the commands only as root and never over HTTP or MCP; `mesh doctor` carries the same verdict as its `firewall` check"
 description = "The declaration says who may link; the host firewall says what reaches the socket at all,"
-weight = 225
+weight = 228
 [extra]
 claim_id = "mesh-firewall-is-derived"
 status = "guaranteed"

@@ -143,7 +143,8 @@ pub struct IntentArgs {
     pub repo: RepoArgs,
 
     #[command(subcommand)]
-    /// `list`, `show`, `validate`, `coverage` or `preflight`.
+    /// `list`, `show`, `validate`, `coverage`, `preflight`, `binding`, `realization`,
+    /// `explain` or `propose`.
     pub command: IntentCommand,
 
     #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
@@ -217,6 +218,18 @@ pub enum IntentCommand {
     Explain {
         /// The intent's id
         id: String,
+    },
+    /// Write a new, unplanned intent: what must become true (ADR 0144)
+    Propose {
+        /// What must become true, kept verbatim
+        #[arg(long)]
+        statement: String,
+        /// One line naming it; the statement's first line when absent
+        #[arg(long)]
+        title: Option<String>,
+        /// The identity and file name; the title's slug when absent
+        #[arg(long)]
+        id: Option<String>,
     },
 }
 
@@ -808,6 +821,13 @@ pub struct MeshPeerArgs {
 /// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
 /// let MeshCommand::Events(events) = mesh.command else { panic!("expected `events`") };
 /// assert_eq!((events.after, events.limit), (None, None));
+/// assert!(!events.newest);
+///
+/// // the journal as it stands now: its newest events
+/// let cli = Cli::try_parse_from(["majordomus", "mesh", "events", "--newest"]).unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Events(events) = mesh.command else { panic!("expected `events`") };
+/// assert!(events.newest);
 /// ```
 pub struct MeshEventsArgs {
     /// Only events whose Lamport stamp is above this
@@ -816,6 +836,9 @@ pub struct MeshEventsArgs {
     /// At most this many (default 100, at most 1000)
     #[arg(long)]
     pub limit: Option<u64>,
+    /// The newest events instead of the first ones after `--after`
+    #[arg(long)]
+    pub newest: bool,
     #[command(flatten)]
     /// Where the repository is and how to answer.
     pub query: MeshQueryArgs,
@@ -1327,6 +1350,8 @@ pub enum MeshReviewCommand {
     Request(MeshReviewRequestArgs),
     /// Answer a review request
     Answer(MeshReviewAnswerArgs),
+    /// Withdraw a review request this runtime asked for, with its result
+    Withdraw(MeshReviewWithdrawArgs),
 }
 
 #[derive(Debug, Args)]
@@ -1369,6 +1394,10 @@ pub struct MeshReviewRequestArgs {
     /// The runtime asked, `<node>-<runtime>`
     #[arg(long)]
     pub reviewer: Option<String>,
+    /// What the reviewer needs beyond the subject: evidence, commands, the question (up to
+    /// 8 KiB)
+    #[arg(long)]
+    pub body: Option<String>,
     #[command(flatten)]
     /// Where the repository is and how to answer.
     pub query: MeshQueryArgs,
@@ -1520,6 +1549,42 @@ pub fn parse_duration(text: &str) -> std::result::Result<u64, String> {
         _ => return Err(format!("{text:?} has an unknown unit: use s, m, h or d")),
     };
     Ok(n.saturating_mul(scale))
+}
+
+#[derive(Debug, Args)]
+/// `mesh review withdraw`: end a request this runtime asked for, because it is done, void
+/// or superseded, with what came of it. Any session of the asking runtime may, no other
+/// runtime may; the note is its own result, shown with the request, and never an answer.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshCommand, MeshReviewCommand,
+///     MeshReviewWithdrawArgs};
+///
+/// let cli = Cli::try_parse_from([
+///     "majordomus", "mesh", "review", "withdraw", "a1b2c3d4-r1/r-1", "--session", "s1",
+///     "--note", "superseded by the rebuilt head",
+/// ])
+/// .unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Review(review) = mesh.command else { panic!("expected `review`") };
+/// let MeshReviewCommand::Withdraw(w) = review.command else { panic!("expected `withdraw`") };
+/// let w: MeshReviewWithdrawArgs = w;
+/// assert_eq!(w.request, "a1b2c3d4-r1/r-1");
+/// assert_eq!(w.note.as_deref(), Some("superseded by the rebuilt head"));
+/// ```
+pub struct MeshReviewWithdrawArgs {
+    /// The request's key, `<stream>/<review>`
+    pub request: String,
+    /// The withdrawing session, within the runtime that asked
+    #[arg(long)]
+    pub session: String,
+    /// What came of it, or why it is void (up to 8 KiB)
+    #[arg(long)]
+    pub note: Option<String>,
+    #[command(flatten)]
+    /// Where the repository is and how to answer.
+    pub query: MeshQueryArgs,
 }
 
 #[derive(Debug, Args)]
@@ -2615,7 +2680,7 @@ pub struct ServedArgs {
     pub repo: RepoArgs,
 
     #[command(subcommand)]
-    /// `observe` or `show`.
+    /// `observe`, `forge` or `show`.
     pub command: ServedCommand,
 
     #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
@@ -2625,8 +2690,8 @@ pub struct ServedArgs {
 
 #[derive(Debug, Subcommand)]
 /// The subcommands of `majordomus served`: `observe` is the command line of
-/// `served.observe` and `show` of `served.show`. `observe` is the only one that reaches the
-/// network, and it is a command line and nothing else.
+/// `served.observe`, `forge` of `served.forge` and `show` of `served.show`. `observe` and
+/// `forge` reach the network, and each is a command line and nothing else.
 ///
 /// ```
 /// use clap::Parser;
@@ -2634,6 +2699,9 @@ pub struct ServedArgs {
 /// let cli = Cli::try_parse_from(["majordomus", "served", "observe", "--dry-run"]).unwrap();
 /// let Command::Served(args) = cli.command else { panic!("served") };
 /// assert!(matches!(args.command, ServedCommand::Observe { dry_run: true, .. }));
+/// let cli = Cli::try_parse_from(["majordomus", "served", "forge"]).unwrap();
+/// let Command::Served(args) = cli.command else { panic!("served") };
+/// assert!(matches!(args.command, ServedCommand::Forge));
 /// ```
 pub enum ServedCommand {
     /// Probe the build identity a deployment serves, judge it against a commit and record it
@@ -2657,6 +2725,8 @@ pub enum ServedCommand {
         #[arg(long)]
         dry_run: bool,
     },
+    /// Ask the forge which deployments and releases it recorded, and keep the answer for the readers
+    Forge,
     /// Each deployment's newest record, re-judged against a commit
     Show {
         /// The commit to judge against (default HEAD)
@@ -3144,6 +3214,29 @@ pub enum ReportCommand {
         #[arg(long)]
         from: PathBuf,
     },
+    /// The UI itself, read once at this commit and written as static pages a publication
+    /// carries at /ui (ADR 0141)
+    UiSnapshot {
+        /// The most pages to write: every screen and panel first, then what they link to
+        #[arg(long, default_value_t = crate::web::report::snapshot::DEFAULT_LIMIT)]
+        limit: usize,
+        /// The most seconds to spend on the pages the screens link to; the screens and
+        /// panels are written whatever they cost
+        #[arg(long, default_value_t = crate::web::report::snapshot::DEFAULT_BUDGET_SECONDS)]
+        budget_seconds: u64,
+    },
+    /// The Cockpit itself, read once at this commit and written as static pages a
+    /// publication carries at /cockpit (ADR 0147)
+    CockpitSnapshot {
+        /// The most pages to write: every static route first, then the pages the UI's
+        /// snapshot links to, then what those link to
+        #[arg(long, default_value_t = crate::web::report::snapshot::DEFAULT_LIMIT)]
+        limit: usize,
+        /// The most seconds to spend on the pages the static routes link to; the routes
+        /// themselves are written whatever they cost
+        #[arg(long, default_value_t = crate::web::report::snapshot::DEFAULT_BUDGET_SECONDS)]
+        budget_seconds: u64,
+    },
 }
 
 #[derive(Debug, Subcommand)]
@@ -3320,7 +3413,8 @@ pub enum OutputFormat {
 /// How files are enumerated.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum, Default)]
 pub enum DiscoveryMode {
-    /// Tracked files, through the version-control index (the layer's contract)
+    /// Tracked files, through the version-control index (the layer's contract); a layer none
+    /// of which is tracked is read from the work tree
     #[default]
     Vcs,
     /// A walk of the work tree with the same glob semantics; untracked files included
@@ -4001,6 +4095,9 @@ pub enum GenerateTarget {
     Allow,
     /// The provider bootstraps the policy declares (AGENTS.md, CLAUDE.md, ...)
     Providers,
+    /// The files Zed and Google Antigravity read: `.agents/skills/<id>/SKILL.md` for every
+    /// active skill, and `.zed/tasks.json` from the tracked justfile
+    Editors,
     /// site/data/registry/registry.json, the registry dataset the site renders
     Site,
     /// docs/generated/artifacts.{json,yaml,md}: the index of every generated artifact
@@ -4014,7 +4111,7 @@ pub enum GenerateTarget {
     /// `docs/generated/changelog.{json,yaml,md}`: the changelog composed from the layer's
     /// release records, its decisions and the repository's commits
     Changelog,
-    /// deploy/Dockerfile, .dockerignore and fly.toml, from the deployment objects
+    /// deploy/Dockerfile and .dockerignore, from the deployment objects
     Deployment,
     /// docs/generated/graph.json and its schema: the composed graph as data
     Graph,
@@ -5188,6 +5285,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
         }],
     },
     CommandExamples {
+        command: "served forge",
+        examples: &[ExampleDoc {
+            id: "served-forge-unknown-repository",
+            title: "A forge that cannot be asked is said, and what was recorded before stands",
+            description: "Asks the forge, through its own command-line tool, for the newest deployments to every environment and the newest releases, and records the answer `deploy.observed` reads. Here the repository has no remote the forge knows, so nothing is asked and the command says why with exit 12 — not answered, never an empty list read as none. In a checkout of a repository on the forge, with a credential, it prints how many deployments, environments and releases the answer held and exits 0.",
+            argv: &["served", "forge"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
+        }],
+    },
+    CommandExamples {
         command: "served show",
         examples: &[ExampleDoc {
             id: "served-show-json",
@@ -5814,6 +5922,28 @@ pub const EXAMPLES: &[CommandExamples] = &[
         }],
     },
     CommandExamples {
+        command: "web report ui-snapshot",
+        examples: &[ExampleDoc {
+            id: "web-report-ui-snapshot",
+            title: "Read the UI once and write it as the pages a publication carries at /ui",
+            description: "Asks the UI in-process for every screen and panel and then, one page per family in turn until `--limit` pages or `--budget-seconds` are reached, for the pages they link to, and writes each as a file under target/web/ui-snapshot: links between them relative, a link only a running process answers led to the snapshot's page about the live UI, the script told not to read again, and every page stamped with the commit, the time and the executable that read it. The declaration beside it makes the directory a surface of every publication and of no process.",
+            argv: &["web", "report", "ui-snapshot", "--limit", "20"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["web report", "ui-snapshot"]),
+        }],
+    },
+    CommandExamples {
+        command: "web report cockpit-snapshot",
+        examples: &[ExampleDoc {
+            id: "web-report-cockpit-snapshot",
+            title: "Read the Cockpit once and write it as the pages a publication carries at /cockpit",
+            description: "Asks the Cockpit in-process for every static route except the one page about this machine, then for the pages the UI's snapshot links to, then, one page per family in turn until `--limit` pages or `--budget-seconds` are reached, for the pages those link to, and writes each as a file under target/web/cockpit-snapshot. Links between them are relative; a link into the UI leads to the UI's snapshot when that holds the page; a form, a query or a page past the bound leads to the snapshot's page about the live Cockpit; no page carries a script, because the Cockpit's scripts talk to a process; and every page is stamped with the commit, the time and the executable that read it.",
+            argv: &["web", "report", "cockpit-snapshot", "--limit", "12"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["web report", "cockpit-snapshot"]),
+        }],
+    },
+    CommandExamples {
         command: "web compose",
         examples: &[ExampleDoc {
             id: "web-compose",
@@ -6146,6 +6276,20 @@ pub const EXAMPLES: &[CommandExamples] = &[
         }],
     },
     CommandExamples {
+        command: "intent propose",
+        examples: &[ExampleDoc {
+            id: "intent-propose",
+            title: "Propose an intent: what must become true",
+            description: "Writes a new record under `.ai/repo/project/intents/` holding the statement and nothing else yet (ADR 0144): no milestone, criterion or invariant. Its stage derives as `declared`, `intent validate` reports the two absences as warnings, and no work can serve it until it is planned. `--title` and `--id` default to the statement's first line and that line's slug; an identity that exists is refused, never overwritten.",
+            argv: &["intent", "propose", "--statement", "Every page answers within 100 ms when warm"],
+            setup: &[],
+            expect: Expect::StdoutContains(&[
+                "proposed every-page-answers-within-100-ms-when-warm",
+                ".ai/repo/project/intents/every-page-answers-within-100-ms-when-warm.yaml",
+            ]),
+        }],
+    },
+    CommandExamples {
         command: "serve status",
         examples: &[ExampleDoc {
             id: "serve-status",
@@ -6289,6 +6433,14 @@ pub const EXAMPLES: &[CommandExamples] = &[
                 description: "Each target can be written on its own while a change is iterated on; `majordomus generate` with no target writes all of them.",
                 argv: &["generate", "openapi"],
                 setup: &[],
+                expect: Expect::Success,
+            },
+            ExampleDoc {
+                id: "generate-site-check",
+                title: "Check one target without writing it",
+                description: "`--check` composes with a target: here only the registry dataset the site renders is compared with what the sources produce, exit 10 naming it when it is stale.",
+                argv: &["generate", "site", "--check"],
+                setup: &[&["generate", "site"]],
                 expect: Expect::Success,
             },
         ],
@@ -6784,6 +6936,13 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["mesh", "state"],
             setup: &[],
             expect: Expect::StdoutContains(&["cooperation inactive"]),
+        }, ExampleDoc {
+            id: "mesh-state-live-claims",
+            title: "Every claim still held",
+            description: "The whole state with only the claims still held, as docs/MESH.md lists it — or, with no running server, why there is none.",
+            argv: &["mesh", "state", "--full", "--live-claims"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["cooperation inactive"]),
         }],
     },
     CommandExamples {
@@ -6918,6 +7077,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
         }],
     },
     CommandExamples {
+        command: "mesh review withdraw",
+        examples: &[ExampleDoc {
+            id: "mesh-review-withdraw",
+            title: "Withdraw a review request with its result",
+            description: "Only the runtime that asked may withdraw its request, from any of its sessions; the note is the requester's own result and never an answer. It needs the running server; without one it exits 10.",
+            argv: &["mesh", "review", "withdraw", "stream/r-000000000000", "--session", "s1", "--note", "superseded"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
         command: "models list",
         examples: &[ExampleDoc {
             id: "models-list",
@@ -6948,6 +7118,13 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["reasoning", "advisors"],
             setup: &[],
             expect: Expect::StdoutContains(&["reasoning   operational"]),
+        }, ExampleDoc {
+            id: "reasoning-advisors-json",
+            title: "The same answer as one document",
+            description: "The report the API and the MCP tool return: `operational`, the mode and what decided it, every advisor with its status and reason, and the capacity per capability. A script reads this rather than the text form.",
+            argv: &["reasoning", "advisors", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/operational", "/mode", "/advisors", "/capacity"]),
         }],
     },
     CommandExamples {
@@ -6957,6 +7134,13 @@ pub const EXAMPLES: &[CommandExamples] = &[
             title: "What a material uncertainty calls for",
             description: "Whether independent review is worth having, how many advisors the mode allows, which available advisors a capability-driven selection asks, and why every other advisor is left out. With no suitable advisor the plan is the structured local review. Nothing is recorded.",
             argv: &["reasoning", "plan", "--materiality", "material"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["outcome", "budget"]),
+        }, ExampleDoc {
+            id: "reasoning-plan-capabilities",
+            title: "A high uncertainty that asks for named capabilities",
+            description: "The selection covers the requested capabilities first, then prefers an advisor reached through a different adapter, then declaration order; every advisor not selected carries its reason. With none available the outcome is the structured local review.",
+            argv: &["reasoning", "plan", "--materiality", "high", "--capabilities", "independent_reasoning,code_review"],
             setup: &[],
             expect: Expect::StdoutContains(&["outcome", "budget"]),
         }],
@@ -7110,4 +7294,72 @@ pub enum CommitCommand {
         #[arg(long, value_name = "REV", conflicts_with = "file")]
         rev: Option<String>,
     },
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use clap::Parser;
+
+    fn view(args: &[&str]) -> MeshViewArgs {
+        let cli = Cli::try_parse_from(["majordomus", "mesh", "state"].iter().chain(args))
+            .expect("the flags parse");
+        let Command::Mesh(mesh) = cli.command else {
+            panic!("expected `mesh`")
+        };
+        let MeshCommand::State(view) = mesh.command else {
+            panic!("expected `state`")
+        };
+        view
+    }
+
+    /// Every flag of a mesh view is one pair of the query, in the order the flags are
+    /// declared whatever order they were written in; no flag is no pair.
+    #[test]
+    fn every_mesh_view_flag_is_one_query_pair_in_declared_order() {
+        let all = view(&[
+            "--matching",
+            "src/x.rs",
+            "--open",
+            "--limit",
+            "5",
+            "--kind",
+            "claims",
+            "--runtime",
+            "n1-r1",
+            "--session",
+            "s-1",
+            "--after",
+            "42",
+            "--live-claims",
+            "--full",
+        ]);
+        assert_eq!(
+            all.pairs(),
+            [
+                "view=full",
+                "claims=live",
+                "after=42",
+                "session=s-1",
+                "runtime=n1-r1",
+                "kind=claims",
+                "limit=5",
+                "open=true",
+                "matching=src/x.rs",
+            ]
+        );
+        assert!(view(&[]).pairs().is_empty());
+    }
+
+    /// A duration is seconds when it names no unit, and each unit scales it; a number that
+    /// is not one and a unit that is not known are refused in words that say which.
+    #[test]
+    fn a_duration_is_read_in_its_unit_and_refused_in_words() {
+        assert_eq!(parse_duration(" 90 "), Ok(90));
+        assert_eq!(parse_duration("2d"), Ok(172_800));
+        let not_a_number = parse_duration("soon").unwrap_err();
+        assert!(not_a_number.contains("is not a duration"), "{not_a_number}");
+        let unknown = parse_duration("3w").unwrap_err();
+        assert!(unknown.contains("unknown unit"), "{unknown}");
+    }
 }

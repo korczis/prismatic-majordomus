@@ -846,6 +846,19 @@
       "test_case": "01_init"
     },
     {
+      "id": "personal-layer-changes-nothing-shared",
+      "claim": "A layer installed with --personal is one person's own in a shared repository: it changes no tracked file, no .gitignore line and nothing git status shows, and the command that makes the claim verifies it",
+      "source": "docs/INSTALL.md",
+      "implementation": "lib/common.sh",
+      "test": "test/cases/2979_a_personal_layer_changes_nothing_shared.sh",
+      "status": "guaranteed",
+      "note": "The cover is a marked block in the common git directory's info/exclude. init --personal exits 10 unless git status reads the same after it as before, the installer compares it again by itself, update and capture install cover each path before writing it and refuse a tracked one whole, and doctor re-verifies on every run. Whether a layer is personal is read from the block and stored nowhere. init --extend --shared removes the cover and commits nothing.",
+      "responsibility": "layer",
+      "source_route": "/docs/install/",
+      "command": null,
+      "test_case": "2979_a_personal_layer_changes_nothing_shared"
+    },
+    {
       "id": "local-state-ignored",
       "claim": "Checkout-local state lives under .ai/local/, is ignored by git, and is absent on a fresh clone or worktree",
       "source": "docs/SCHEMAS.md",
@@ -1255,7 +1268,7 @@
       "implementation": "scripts/ci/github-check",
       "test": "test/cases/1038_a_head_is_judged_against_what_it_changes.sh",
       "status": "guaranteed",
-      "note": "GitHub shows the trunk's plan and nothing applies it automatically, so a record a pull request edits is behind there until the pull request has merged and somebody has applied. The gate reports behind, state, milestone and closed as PENDING for the records a head changed since its merge base, and on the trunk for the records that changed in a landing younger than apply.window in .ai/repo/ci/github.yaml. A record has changed when its file or its rendering differs. Drift on any other record is refused as before, and so is every record when the change cannot be measured.",
+      "note": "GitHub shows the trunk's plan and nothing else, so a record a pull request edits is behind there until the pull request has merged and the landing has applied it (.github/workflows/github.yml). The gate reports behind, state, milestone and closed as PENDING for the records a head changed since its merge base, and on the trunk for the records that changed in a landing younger than apply.window in .ai/repo/ci/github.yaml. A record has changed when its file or its rendering differs. Drift on any other record is refused as before, and so is every record when the change cannot be measured.",
       "responsibility": "plan",
       "source_route": "/docs/planning/",
       "command": null,
@@ -2367,6 +2380,32 @@
       "test_case": "apps/majordomus-cli/tests/cockpit.rs"
     },
     {
+      "id": "ui-dashboard-cites-its-sources",
+      "claim": "The UI's dashboard at /ui links every capability it read to that capability's page, serves under the Cockpit's security policy, and never waits for the pull-request queue, which is a page and a fragment of its own",
+      "source": "docs/MAJORDOMUS_UI.md",
+      "implementation": "apps/majordomus-cli/src/ui/dashboard.rs",
+      "test": "apps/majordomus-cli/tests/ui_surface.rs",
+      "status": "guaranteed",
+      "note": "the_dashboard_is_served_at_ui_under_the_cockpits_policy starts a real server on a fixture repository and asserts that the page links /cockpit/capabilities/<id> for each of health.report, release.version, distribution.releases, plan.status, plan.roadmap and mesh.peers, carries the Cockpit's content-security policy, and pulls the queue from /ui/panels/pull-requests rather than citing integration.queue; the_queue_panel_is_a_page_and_a_fragment proves the queue's own route.",
+      "responsibility": "none",
+      "source_route": "/docs/majordomus-ui/",
+      "command": null,
+      "test_case": "apps/majordomus-cli/tests/ui_surface.rs"
+    },
+    {
+      "id": "observatory-draws-nothing-it-did-not-read",
+      "claim": "The Observatory at /ui/observatory and /ui/kiosk shows a scene only when the capabilities it requires answered with something to draw, or, for a scene of the mesh where no mesh runs, when the repository carries a recording of it, which it labels a replay; a scene without either carries no model and states the source's reason, on a server and in the published snapshot alike",
+      "source": "docs/MAJORDOMUS_UI.md",
+      "implementation": "apps/majordomus-cli/src/ui/observatory.rs",
+      "test": "test/cases/3011_the_observatory_draws_nothing_it_did_not_read.sh",
+      "status": "guaranteed",
+      "note": "The case starts a server over a freshly initialised repository and takes a UI snapshot of it, and on both reads the projection the page carries: eight scenes in the declared order, every source named with its state and a failed one with a reason, an available scene with a model and an unavailable one with none and a reason, the three mesh scenes unavailable where no mesh runs, the kiosk carrying the same scenes, the two redirects, and the snapshot holding the page and its script. It reads the projection, not the canvas: what the script paints from an available scene's model is not claimed here.",
+      "responsibility": "none",
+      "source_route": "/docs/majordomus-ui/",
+      "command": null,
+      "test_case": "3011_the_observatory_draws_nothing_it_did_not_read"
+    },
+    {
       "id": "deployment-contract-refuses-by-name",
       "claim": "A deployment object that breaks its closed contract, whether by a key the contract does not have, another schema version, a missing field, an interface, port, machine count or health route that could not work, a value that reads as a credential or an identity two files claim, is refused by doctor with the reason named",
       "source": ".ai/repo/rules/vendor/majordomus/rules/deployment-contract.v1.md",
@@ -2486,7 +2525,7 @@
     {
       "id": "published-translation-is-declared",
       "claim": "A page of the published site written in a reader's language is declared with that language and a reason, and is refused unless the page declares the same language itself",
-      "source": ".ai/repo/rules/project/english-only.v2.md",
+      "source": ".ai/repo/rules/project/english-only.v3.md",
       "implementation": "scripts/ci/english-only-check",
       "test": "test/cases/403_published_translation.sh",
       "status": "guaranteed",

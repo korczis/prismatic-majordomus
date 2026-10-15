@@ -276,7 +276,9 @@ fn internal(e: crate::error::Error) -> CapabilityError {
 }
 
 /// The whole joined report, read fresh: the ledger is a file that changes outside this
-/// process, and a cached answer would be the stale evidence this module exists to name.
+/// process, and an answer kept past a change of it would be the stale evidence this module
+/// exists to name. The executor keeps the capability's answer per checkout state only
+/// (`CachePolicy::Checkout`), which an edit of the ledger moves.
 fn full_report(ctx: &Context) -> Result<RulesReport, CapabilityError> {
     let ledger = Ledger::load(&root_of(ctx)).map_err(internal)?;
     Ok(rules::report(&ctx.index, &ledger))
@@ -492,7 +494,7 @@ pub fn module() -> ModuleDescriptor {
             capability! {
                 id: "rules.report",
                 title: "Every rule against the proof there is for it",
-                description: "The whole rule corpus joined to the tree and the ledger: per rule, its class, its enforcement mode, the validator and the cases it names, whether each is in the tree, the execution behind each, the CI gates that run them, and the sentence explaining how the state was derived. The tallies count the whole corpus even when the answer is filtered, and the findings name every rule whose declared class the proof does not support. Read fresh on every call: the ledger is a file that changes outside this process.",
+                description: "The whole rule corpus joined to the tree and the ledger: per rule, its class, its enforcement mode, the validator and the cases it names, whether each is in the tree, the execution behind each, the CI gates that run them, and the sentence explaining how the state was derived. The tallies count the whole corpus even when the answer is filtered, and the findings name every rule whose declared class the proof does not support. Kept per checkout state, never longer: the ledger is a file that changes outside this process, and an edit of it, of a validator or of any tracked file, a new untracked file, a commit or a new ref is a new answer.",
                 input: RulesReportInput,
                 output: RulesReport,
                 stability: Stability::BehaviorallyVerified,
@@ -505,7 +507,7 @@ pub fn module() -> ModuleDescriptor {
                     cli: Some(CliExposure { path: vec!["rules".into(), "report".into()] }),
                 },
                 tags: ["rules", "governance", "verification", "evidence", "gates"],
-                cache: CachePolicy::Disabled,
+                cache: CachePolicy::Checkout { max_entries: 8 },
                 handler: report,
             },
             capability! {
@@ -521,7 +523,7 @@ pub fn module() -> ModuleDescriptor {
                     cli: Some(CliExposure { path: vec!["rules".into(), "show".into()] }),
                 },
                 tags: ["rules", "governance", "verification", "evidence"],
-                cache: CachePolicy::Disabled,
+                cache: CachePolicy::Checkout { max_entries: 32 },
                 handler: show,
             },
             capability! {
@@ -598,9 +600,14 @@ mod tests {
                 Some(cli.iter().map(|s| s.to_string()).collect::<Vec<_>>()),
                 "{id} lost or renamed its command line"
             );
+            // the ledger changes outside this process, so an answer is kept, if at all, only
+            // per checkout state, which an edit of the ledger moves
             assert!(
-                !e.capability.cache.is_enabled(),
-                "{id} must not cache: the ledger changes outside this process"
+                matches!(
+                    e.capability.cache,
+                    CachePolicy::Disabled | CachePolicy::Checkout { .. }
+                ),
+                "{id} may cache only per checkout state: the ledger changes outside this process"
             );
             assert!(e.capability.kind.is_read_only(), "{id} writes");
         }

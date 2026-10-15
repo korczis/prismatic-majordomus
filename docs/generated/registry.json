@@ -1,7 +1,7 @@
 {
   "schema": "majordomus/capability-registry/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the canonical capability registry; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.21.0",
+  "generator": "majordomus-cli 0.26.0",
   "modules": [
     {
       "id": "artifacts",
@@ -81,7 +81,7 @@
       "description": "The deployments this repository declares, read from the canonical objects the index holds, and whether they would work — decided against the capability registry this process built and the workspace it sits in. Every operation is a read: a deployment is changed by the trusted command line and by CI, never over HTTP and never by an MCP client.",
       "stability": "behaviorally_verified",
       "source": "builtin",
-      "capabilities": 3
+      "capabilities": 4
     },
     {
       "id": "design",
@@ -130,6 +130,14 @@
       "stability": "behaviorally_verified",
       "source": "builtin",
       "capabilities": 4
+    },
+    {
+      "id": "editors",
+      "title": "Editor and agent projections",
+      "description": "The files Zed and Google Antigravity read from this repository, derived from the skills and the tracked justfile: what each product supports and on what evidence, the state and content address of every projected file, and what to do about each finding.",
+      "stability": "behaviorally_verified",
+      "source": "builtin",
+      "capabilities": 1
     },
     {
       "id": "entity",
@@ -217,7 +225,7 @@
       "description": "What must become true above the milestones that realise it: each intent's statement, invariants and satisfaction criteria, its stage derived from the plan's milestone status, each criterion's state derived from the evidence ledger, and its verdict derived from those criteria alone. Nothing is stored and nothing transitions; an intent added under the project model is answered by all of these without a registration anywhere.",
       "stability": "behaviorally_verified",
       "source": "builtin",
-      "capabilities": 6
+      "capabilities": 7
     },
     {
       "id": "knowledge_base",
@@ -249,7 +257,7 @@
       "description": "The mesh of this process: discovery — authenticated observations of other running Majordomus instances in one registry — and cooperation — authenticated links to trusted runtimes of the same repository, replicating sessions, claims, handovers and reviews through one journal every runtime folds into the same state. Discovery grants nothing; a link is admitted per peer, and nothing a peer sends executes anything here.",
       "stability": "experimental",
       "source": "builtin",
-      "capabilities": 23
+      "capabilities": 24
     },
     {
       "id": "models",
@@ -282,6 +290,14 @@
       "stability": "behaviorally_verified",
       "source": "builtin",
       "capabilities": 2
+    },
+    {
+      "id": "observatory",
+      "title": "Observatory",
+      "description": "What the Observatory may carry to a place where no mesh runs: the mesh scenes this process has live, pseudonymized for publication, and the recording the repository carries, which the published Observatory replays and labels as a replay.",
+      "stability": "behaviorally_verified",
+      "source": "builtin",
+      "capabilities": 3
     },
     {
       "id": "pack",
@@ -377,7 +393,7 @@
       "description": "Whether a deployment serves the commit it was meant to: the build identity a site serves, read from outside the way a visitor reads it, judged by commit containment and recorded so that a later reader can re-judge it. Only `served` passes; a site that could not be reached, an identity that could not be read, a build from an uncommitted tree and a served commit this clone does not hold are each an unanswered question, never a yes. Observing reaches the network and is a command of the trusted command line; reading the recorded standing is a read on every surface.",
       "stability": "behaviorally_verified",
       "source": "builtin",
-      "capabilities": 2
+      "capabilities": 3
     },
     {
       "id": "server",
@@ -1427,6 +1443,17 @@
             "execution": {
               "$ref": "#/$defs/ExecutionPolicy",
               "description": "What running it as an execution means: classified from the kind, so that a client\nreads a fact rather than deciding for itself."
+            },
+            "skill": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/SkillExposure"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The short name a person invokes it by from an agent's prompt, when it has one."
             }
           },
           "required": [
@@ -1908,9 +1935,49 @@
                     "max_entries"
                   ],
                   "description": "Results are kept in this process's memory, bounded, for equal inputs."
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "max_entries": {
+                      "type": "integer",
+                      "format": "uint",
+                      "minimum": 0,
+                      "description": "The most entries kept for this capability; the oldest is evicted first."
+                    },
+                    "policy": {
+                      "type": "string",
+                      "const": "generation"
+                    }
+                  },
+                  "required": [
+                    "policy",
+                    "max_entries"
+                  ],
+                  "description": "Results are kept for equal inputs while the context that computed them is the one\nasked: for a capability that is a function of the index and the registry alone,\nincluding the git state the index was read at, which the registry fingerprint does\nnot cover. A reload of the repository is a new context, and so a new key."
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "max_entries": {
+                      "type": "integer",
+                      "format": "uint",
+                      "minimum": 0,
+                      "description": "The most entries kept for this capability; the oldest is evicted first."
+                    },
+                    "policy": {
+                      "type": "string",
+                      "const": "checkout"
+                    }
+                  },
+                  "required": [
+                    "policy",
+                    "max_entries"
+                  ],
+                  "description": "Results are kept for equal inputs while the context is the same *and* the checkout\nis as it was: HEAD, the staging index, the refs and every changed or untracked path\nof the work tree, fingerprinted again on every call\n(`capability::checkout`). For a capability that reads git, the index and the\nfiles of the work tree, and nothing that fingerprint cannot see: no ignored file, no\nother process, no network, no clock. A checkout git cannot fingerprint is not cached."
                 }
               ],
-              "description": "Whether, and how, the executor keeps results of this capability. Cache lives in the\nexecutor and nowhere else, so MCP, HTTP and the command line share one; the key is the\ncanonical id, the normalised input and the registry fingerprint, so a changed\nrepository never answers from an old entry."
+              "description": "Whether, and how, the executor keeps results of this capability. Cache lives in the\nexecutor and nowhere else, so MCP, HTTP and the command line share one; the key is the\ncanonical id, the normalised input and the registry fingerprint, so a changed\nrepository never answers from an old entry. The two narrower policies add to the key\nwhat the registry fingerprint cannot see: the context's own reading of the repository\n(`CachePolicy::Generation`) and the state of the checkout itself\n(`CachePolicy::Checkout`)."
             },
             "ExecutionPolicy": {
               "type": "object",
@@ -1973,6 +2040,24 @@
                 }
               ],
               "description": "Whether two executions of one capability may overlap."
+            },
+            "SkillExposure": {
+              "type": "object",
+              "properties": {
+                "alias": {
+                  "type": "string",
+                  "description": "The name typed after the slash: lowercase letters, digits and hyphens, at most 64."
+                },
+                "argument": {
+                  "type": "string",
+                  "description": "The input field the text typed after the name fills, verbatim."
+                }
+              },
+              "required": [
+                "alias",
+                "argument"
+              ],
+              "description": "A capability as a skill a person invokes by a short name from an agent's prompt:\n`/intent <sentence>` in Claude Code. The name and the one input field the typed text\nfills are declared here, once; the file an agent product reads is generated from them\n(the `editors` module) and carries no description of what the capability does beyond\nthe capability's own.\n\n```\nuse majordomus_cli::capability::SkillExposure;\nlet s = SkillExposure { alias: \"intent\".into(), argument: \"statement\".into() };\nassert!(s.validate().is_ok());\n// a name an agent product already owns is refused, and so is one that is not a name\nlet taken = SkillExposure { alias: \"review\".into(), argument: \"x\".into() };\nassert!(taken.validate().unwrap_err().contains(\"reserved\"));\nlet shouted = SkillExposure { alias: \"Intent\".into(), argument: \"x\".into() };\nassert!(shouted.validate().is_err());\n```"
             }
           }
         }
@@ -2006,7 +2091,8 @@
         "policy": "required"
       },
       "cache": {
-        "policy": "disabled"
+        "policy": "process",
+        "max_entries": 512
       },
       "execution": {
         "effect": "read",
@@ -2644,9 +2730,49 @@
                     "max_entries"
                   ],
                   "description": "Results are kept in this process's memory, bounded, for equal inputs."
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "max_entries": {
+                      "type": "integer",
+                      "format": "uint",
+                      "minimum": 0,
+                      "description": "The most entries kept for this capability; the oldest is evicted first."
+                    },
+                    "policy": {
+                      "type": "string",
+                      "const": "generation"
+                    }
+                  },
+                  "required": [
+                    "policy",
+                    "max_entries"
+                  ],
+                  "description": "Results are kept for equal inputs while the context that computed them is the one\nasked: for a capability that is a function of the index and the registry alone,\nincluding the git state the index was read at, which the registry fingerprint does\nnot cover. A reload of the repository is a new context, and so a new key."
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "max_entries": {
+                      "type": "integer",
+                      "format": "uint",
+                      "minimum": 0,
+                      "description": "The most entries kept for this capability; the oldest is evicted first."
+                    },
+                    "policy": {
+                      "type": "string",
+                      "const": "checkout"
+                    }
+                  },
+                  "required": [
+                    "policy",
+                    "max_entries"
+                  ],
+                  "description": "Results are kept for equal inputs while the context is the same *and* the checkout\nis as it was: HEAD, the staging index, the refs and every changed or untracked path\nof the work tree, fingerprinted again on every call\n(`capability::checkout`). For a capability that reads git, the index and the\nfiles of the work tree, and nothing that fingerprint cannot see: no ignored file, no\nother process, no network, no clock. A checkout git cannot fingerprint is not cached."
                 }
               ],
-              "description": "Whether, and how, the executor keeps results of this capability. Cache lives in the\nexecutor and nowhere else, so MCP, HTTP and the command line share one; the key is the\ncanonical id, the normalised input and the registry fingerprint, so a changed\nrepository never answers from an old entry."
+              "description": "Whether, and how, the executor keeps results of this capability. Cache lives in the\nexecutor and nowhere else, so MCP, HTTP and the command line share one; the key is the\ncanonical id, the normalised input and the registry fingerprint, so a changed\nrepository never answers from an old entry. The two narrower policies add to the key\nwhat the registry fingerprint cannot see: the context's own reading of the repository\n(`CachePolicy::Generation`) and the state of the checkout itself\n(`CachePolicy::Checkout`)."
             }
           }
         }
@@ -11172,7 +11298,7 @@
             },
             "application": {
               "type": "string",
-              "description": "The application's name at the provider."
+              "description": "The application's name: what the deployment is known by in a listing."
             },
             "build": {
               "$ref": "#/$defs/Build",
@@ -11211,10 +11337,6 @@
                 "request_p99_ms": null
               }
             },
-            "provider": {
-              "$ref": "#/$defs/Provider",
-              "description": "The provider and its own facts."
-            },
             "created_at": {
               "type": [
                 "string",
@@ -11244,8 +11366,7 @@
             "health",
             "resources",
             "machines",
-            "region",
-            "provider"
+            "region"
           ],
           "description": "One deployment as this process reads it, with where it came from.",
           "title": "DeploymentView",
@@ -11316,7 +11437,7 @@
               "properties": {
                 "port": {
                   "$ref": "#/$defs/Port",
-                  "description": "The port, stated once for the process, the image and the provider configuration."
+                  "description": "The port, stated once for the process and the image."
                 },
                 "interface": {
                   "$ref": "#/$defs/Interface",
@@ -11574,96 +11695,6 @@
                 }
               },
               "description": "The measured figures this deployment is held to. Each is written by the run that\nmeasured it; an absent one has not been measured yet and is not a licence."
-            },
-            "Provider": {
-              "type": "object",
-              "additionalProperties": false,
-              "properties": {
-                "name": {
-                  "$ref": "#/$defs/ProviderName",
-                  "description": "Which provider."
-                },
-                "fly": {
-                  "anyOf": [
-                    {
-                      "$ref": "#/$defs/Fly"
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ],
-                  "description": "Fly's own block, when the provider is Fly.",
-                  "default": null
-                }
-              },
-              "required": [
-                "name"
-              ],
-              "description": "The provider and the facts that belong to it alone."
-            },
-            "ProviderName": {
-              "oneOf": [
-                {
-                  "type": "string",
-                  "const": "fly",
-                  "description": "Fly.io."
-                }
-              ],
-              "description": "The hosting provider. One is supported; a second is an object of its own rather than an\nabstraction over this one."
-            },
-            "Fly": {
-              "type": "object",
-              "additionalProperties": false,
-              "properties": {
-                "org": {
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "description": "The organisation the application belongs to.",
-                  "default": null
-                },
-                "force_https": {
-                  "type": [
-                    "boolean",
-                    "null"
-                  ],
-                  "description": "Whether the edge redirects plain HTTP to HTTPS.",
-                  "default": null
-                },
-                "concurrency": {
-                  "anyOf": [
-                    {
-                      "$ref": "#/$defs/Concurrency"
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ],
-                  "description": "When the edge considers a machine loaded.",
-                  "default": null
-                }
-              },
-              "description": "Fly.io's own facts: what has no meaning for any other provider."
-            },
-            "Concurrency": {
-              "type": "object",
-              "additionalProperties": false,
-              "properties": {
-                "soft_limit": {
-                  "$ref": "#/$defs/Positive",
-                  "description": "Where the edge starts preferring another machine."
-                },
-                "hard_limit": {
-                  "$ref": "#/$defs/Positive",
-                  "description": "Where it stops sending requests to this one."
-                }
-              },
-              "required": [
-                "soft_limit",
-                "hard_limit"
-              ],
-              "description": "When the edge considers a machine loaded, in requests."
             }
           }
         }
@@ -11705,7 +11736,7 @@
       "module": "deploy",
       "kind": "query",
       "title": "Deployments",
-      "description": "Every deployment the layer declares, typed: the application, the package and binary shipped, the address the process listens on, the routes a platform polls, the resources, the machine count, the region, the build inputs, the measured budgets and the provider's own facts. An object of the kind this executable cannot read is reported with the reason rather than skipped.",
+      "description": "Every deployment the layer declares, typed: the application, the package and binary shipped, the address the process listens on, the routes a platform polls, the resources, the machine count, the region, the build inputs and the measured budgets. An object of the kind this executable cannot read is reported with the reason rather than skipped.",
       "input": {
         "name": "Empty",
         "schema": {
@@ -11793,7 +11824,7 @@
                 },
                 "application": {
                   "type": "string",
-                  "description": "The application's name at the provider."
+                  "description": "The application's name: what the deployment is known by in a listing."
                 },
                 "build": {
                   "$ref": "#/$defs/Build",
@@ -11832,10 +11863,6 @@
                     "request_p99_ms": null
                   }
                 },
-                "provider": {
-                  "$ref": "#/$defs/Provider",
-                  "description": "The provider and its own facts."
-                },
                 "created_at": {
                   "type": [
                     "string",
@@ -11865,8 +11892,7 @@
                 "health",
                 "resources",
                 "machines",
-                "region",
-                "provider"
+                "region"
               ],
               "description": "One deployment as this process reads it, with where it came from."
             },
@@ -11936,7 +11962,7 @@
               "properties": {
                 "port": {
                   "$ref": "#/$defs/Port",
-                  "description": "The port, stated once for the process, the image and the provider configuration."
+                  "description": "The port, stated once for the process and the image."
                 },
                 "interface": {
                   "$ref": "#/$defs/Interface",
@@ -12195,96 +12221,6 @@
               },
               "description": "The measured figures this deployment is held to. Each is written by the run that\nmeasured it; an absent one has not been measured yet and is not a licence."
             },
-            "Provider": {
-              "type": "object",
-              "additionalProperties": false,
-              "properties": {
-                "name": {
-                  "$ref": "#/$defs/ProviderName",
-                  "description": "Which provider."
-                },
-                "fly": {
-                  "anyOf": [
-                    {
-                      "$ref": "#/$defs/Fly"
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ],
-                  "description": "Fly's own block, when the provider is Fly.",
-                  "default": null
-                }
-              },
-              "required": [
-                "name"
-              ],
-              "description": "The provider and the facts that belong to it alone."
-            },
-            "ProviderName": {
-              "oneOf": [
-                {
-                  "type": "string",
-                  "const": "fly",
-                  "description": "Fly.io."
-                }
-              ],
-              "description": "The hosting provider. One is supported; a second is an object of its own rather than an\nabstraction over this one."
-            },
-            "Fly": {
-              "type": "object",
-              "additionalProperties": false,
-              "properties": {
-                "org": {
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "description": "The organisation the application belongs to.",
-                  "default": null
-                },
-                "force_https": {
-                  "type": [
-                    "boolean",
-                    "null"
-                  ],
-                  "description": "Whether the edge redirects plain HTTP to HTTPS.",
-                  "default": null
-                },
-                "concurrency": {
-                  "anyOf": [
-                    {
-                      "$ref": "#/$defs/Concurrency"
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ],
-                  "description": "When the edge considers a machine loaded.",
-                  "default": null
-                }
-              },
-              "description": "Fly.io's own facts: what has no meaning for any other provider."
-            },
-            "Concurrency": {
-              "type": "object",
-              "additionalProperties": false,
-              "properties": {
-                "soft_limit": {
-                  "$ref": "#/$defs/Positive",
-                  "description": "Where the edge starts preferring another machine."
-                },
-                "hard_limit": {
-                  "$ref": "#/$defs/Positive",
-                  "description": "Where it stops sending requests to this one."
-                }
-              },
-              "required": [
-                "soft_limit",
-                "hard_limit"
-              ],
-              "description": "When the edge considers a machine loaded, in requests."
-            },
             "Refusal": {
               "type": "object",
               "properties": {
@@ -12343,6 +12279,275 @@
       "stability": "behaviorally_verified",
       "tags": [
         "deployment"
+      ],
+      "benchmark": {
+        "policy": "required"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "read",
+        "cancellable": false,
+        "concurrency": "unrestricted"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/deploy.rs"
+    },
+    {
+      "id": "deploy.observed",
+      "module": "deploy",
+      "kind": "query",
+      "title": "What was deployed, and where",
+      "description": "Every deployment the forge recorded, to every environment it has one in — GitHub Pages among them — with the commit, the ref, who created it, how it ended, where it is served and the run that did it; every environment described by its newest deployment; and every release the forge published. Read from the record `majordomus served forge` wrote when it last asked the forge: nothing here reaches the network, and a checkout that has never asked answers `observed: false` with what to run.",
+      "input": {
+        "name": "Empty",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "No input.",
+          "title": "Empty"
+        }
+      },
+      "output": {
+        "name": "ObservedDeployments",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "observed": {
+              "type": "boolean",
+              "description": "Whether this checkout holds an observation at all."
+            },
+            "reason": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Why not, and what to run, when it holds none or cannot read it."
+            },
+            "repository": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "`owner/name`, when observed."
+            },
+            "repository_url": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The repository's address on the forge, when observed."
+            },
+            "observed_at": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "When the forge was asked, when observed."
+            },
+            "environments": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/EnvironmentSummary"
+              },
+              "description": "Every environment something was deployed to, by name."
+            },
+            "deployments": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/ObservedDeployment"
+              },
+              "description": "The observed deployments, newest first."
+            },
+            "releases": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/ObservedRelease"
+              },
+              "description": "The observed releases, newest first."
+            }
+          },
+          "required": [
+            "observed",
+            "environments",
+            "deployments",
+            "releases"
+          ],
+          "description": "`deploy.observed`: what was deployed where, or that nothing has been observed here.",
+          "title": "ObservedDeployments",
+          "$defs": {
+            "EnvironmentSummary": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "The environment."
+                },
+                "deployments": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "How many of the observed deployments went to it."
+                },
+                "state": {
+                  "type": "string",
+                  "description": "The state of its newest deployment."
+                },
+                "sha": {
+                  "type": "string",
+                  "description": "The commit its newest deployment put there."
+                },
+                "deployed_at": {
+                  "type": "string",
+                  "description": "When that was."
+                },
+                "url": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Where it is served, when its newest deployment says."
+                },
+                "activity_url": {
+                  "type": "string",
+                  "description": "The environment's activity on the forge."
+                }
+              },
+              "required": [
+                "name",
+                "deployments",
+                "state",
+                "sha",
+                "deployed_at",
+                "activity_url"
+              ],
+              "description": "One environment, as its deployments describe it."
+            },
+            "ObservedDeployment": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The forge's identity of the deployment."
+                },
+                "environment": {
+                  "type": "string",
+                  "description": "The environment it went to, in the forge's words (`github-pages`, `production`, ...)."
+                },
+                "sha": {
+                  "type": "string",
+                  "description": "The commit that was deployed."
+                },
+                "git_ref": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The ref it was deployed from, when the forge still names one."
+                },
+                "created_at": {
+                  "type": "string",
+                  "description": "When it was created, RFC 3339."
+                },
+                "creator": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Who or what created it."
+                },
+                "state": {
+                  "type": "string",
+                  "description": "How it ended, lower case as the forge states it (`success`, `failure`, `in_progress`,\n...); `unknown` when the forge reported no status at all."
+                },
+                "environment_url": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Where the environment is served, when the deployment says."
+                },
+                "log_url": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The run that performed it, when the deployment says."
+                }
+              },
+              "required": [
+                "id",
+                "environment",
+                "sha",
+                "created_at",
+                "state"
+              ],
+              "description": "One deployment the forge recorded."
+            },
+            "ObservedRelease": {
+              "type": "object",
+              "properties": {
+                "tag": {
+                  "type": "string",
+                  "description": "The tag."
+                },
+                "name": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The release's title, when it has one."
+                },
+                "published_at": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "When it was published; absent for a draft."
+                },
+                "url": {
+                  "type": "string",
+                  "description": "Its page on the forge."
+                },
+                "prerelease": {
+                  "type": "boolean",
+                  "description": "Whether the forge marks it a pre-release."
+                },
+                "draft": {
+                  "type": "boolean",
+                  "description": "Whether it is still a draft."
+                }
+              },
+              "required": [
+                "tag",
+                "url",
+                "prerelease",
+                "draft"
+              ],
+              "description": "One release the forge published."
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::deploy"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_deployments_observed"
+        },
+        "http": {
+          "method": "GET",
+          "path": "/api/v1/deployments/observed"
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "behaviorally_verified",
+      "tags": [
+        "deployment",
+        "delivery"
       ],
       "benchmark": {
         "policy": "required"
@@ -17828,7 +18033,8 @@
         "policy": "required"
       },
       "cache": {
-        "policy": "disabled"
+        "policy": "generation",
+        "max_entries": 1
       },
       "execution": {
         "effect": "read",
@@ -20610,6 +20816,389 @@
         "concurrency": "unrestricted"
       },
       "source_path": "apps/majordomus-cli/src/capability/builtin/economics.rs"
+    },
+    {
+      "id": "editors.status",
+      "module": "editors",
+      "kind": "query",
+      "title": "Editor and agent projections",
+      "description": "Every adapter (Zed, Antigravity) with each capability it supports, does not, or cannot be verified for, and the evidence; every projected file with the inputs it is derived from, its content address and its state here (current, stale, absent, or a conflict with a file this generator did not write); orphaned projections; and every finding with its remedy. Writes nothing: `majordomus generate editors` does.",
+      "input": {
+        "name": "Empty",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "No input.",
+          "title": "Empty"
+        }
+      },
+      "output": {
+        "name": "EditorProjection",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "schema": {
+              "type": "string",
+              "description": "`SCHEMA`."
+            },
+            "projection_version": {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0,
+              "description": "`PROJECTION_VERSION`."
+            },
+            "adapters": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/EditorAdapter"
+              },
+              "description": "The adapters, by id."
+            },
+            "inputs": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/EditorInput"
+              },
+              "description": "The inputs, by path."
+            },
+            "artifacts": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/EditorDerivation"
+              },
+              "description": "The projected files, by path."
+            },
+            "orphans": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Generator-owned files under a projected directory that the plan no longer contains."
+            },
+            "diagnostics": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/EditorDiagnostic"
+              },
+              "description": "The findings, by severity then code then path."
+            }
+          },
+          "required": [
+            "schema",
+            "projection_version",
+            "adapters",
+            "inputs",
+            "artifacts",
+            "diagnostics"
+          ],
+          "description": "`editors.status`: every adapter, every projected file and its state, every finding.",
+          "title": "EditorProjection",
+          "$defs": {
+            "EditorAdapter": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "`zed` or `antigravity`."
+                },
+                "title": {
+                  "type": "string",
+                  "description": "The product's name."
+                },
+                "verified_against": {
+                  "type": "string",
+                  "description": "The release the evidence was taken from."
+                },
+                "capabilities": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/EditorCapability"
+                  },
+                  "description": "Its capabilities, by id."
+                }
+              },
+              "required": [
+                "id",
+                "title",
+                "verified_against",
+                "capabilities"
+              ],
+              "description": "One adapter: the product, the version its claims were verified against, its capabilities."
+            },
+            "EditorCapability": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "Stable identity within the adapter: `skills`, `tasks`, `instructions`, `mcp`, ..."
+                },
+                "support": {
+                  "$ref": "#/$defs/EditorSupport",
+                  "description": "What the adapter does with it."
+                },
+                "artifacts": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The files that carry it, repository-relative. Empty when nothing is projected."
+                },
+                "evidence": {
+                  "type": "string",
+                  "description": "Where the claim about the product comes from."
+                },
+                "note": {
+                  "type": "string",
+                  "description": "What it means here, and what to do when nothing is projected."
+                }
+              },
+              "required": [
+                "id",
+                "support",
+                "evidence",
+                "note"
+              ],
+              "description": "One capability of one adapter."
+            },
+            "EditorSupport": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "supported",
+                  "description": "Projected, from a verified format."
+                },
+                {
+                  "type": "string",
+                  "const": "unsupported",
+                  "description": "The product has no project-level form for it."
+                },
+                {
+                  "type": "string",
+                  "const": "unknown",
+                  "description": "A project-level form is claimed somewhere and could not be verified; nothing written."
+                },
+                {
+                  "type": "string",
+                  "const": "deprecated",
+                  "description": "The product reads it, from a form this projection will not write."
+                },
+                {
+                  "type": "string",
+                  "const": "requires_user_action",
+                  "description": "A person can enable it, outside the repository; the remedy says how."
+                }
+              ],
+              "description": "What an adapter can do with one capability. Never a boolean: \"we do not know\" is an\nanswer of its own and is not \"no\"."
+            },
+            "EditorInput": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "description": "Repository-relative path."
+                },
+                "mutability": {
+                  "$ref": "#/$defs/EditorInputClass",
+                  "description": "Tracked content or checkout state."
+                },
+                "sha256": {
+                  "type": "string",
+                  "description": "SHA-256 of its content."
+                }
+              },
+              "required": [
+                "path",
+                "mutability",
+                "sha256"
+              ],
+              "description": "One input of the projection: a file, what kind of input it is, and its content address."
+            },
+            "EditorInputClass": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "repository",
+                  "description": "Tracked content of the repository: changes only by a commit. The only class an\ninput has today: what the checkout merely holds (an instruction file, a legacy\ndirectory) changes a finding, never a projected byte."
+                }
+              ],
+              "description": "How far an input may change without the repository changing."
+            },
+            "EditorDerivation": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "description": "Repository-relative path."
+                },
+                "document": {
+                  "type": "string",
+                  "description": "The document id in the generated-artifact manifest."
+                },
+                "adapters": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The adapters that read it."
+                },
+                "sources": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The inputs it is derived from, by path."
+                },
+                "key": {
+                  "type": "string",
+                  "description": "The content address of the derivation: the projection version and the fingerprints of\nits sources. The same key always yields the same bytes."
+                },
+                "sha256": {
+                  "type": "string",
+                  "description": "SHA-256 of the projected content."
+                },
+                "state": {
+                  "$ref": "#/$defs/EditorFileState",
+                  "description": "The state of the file in this checkout."
+                }
+              },
+              "required": [
+                "path",
+                "document",
+                "adapters",
+                "sources",
+                "key",
+                "sha256",
+                "state"
+              ],
+              "description": "One projected file and how it came to be."
+            },
+            "EditorFileState": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "current",
+                  "description": "Byte for byte what the projection says."
+                },
+                {
+                  "type": "string",
+                  "const": "stale",
+                  "description": "Generator-owned and different: `majordomus generate editors` rewrites it."
+                },
+                {
+                  "type": "string",
+                  "const": "absent",
+                  "description": "Not there: `majordomus generate editors` writes it."
+                },
+                {
+                  "type": "string",
+                  "const": "conflict",
+                  "description": "A file without the generated banner sits at the path: it is someone's, and nothing\noverwrites it."
+                }
+              ],
+              "description": "A projected file as this checkout holds it."
+            },
+            "EditorDiagnostic": {
+              "type": "object",
+              "properties": {
+                "severity": {
+                  "$ref": "#/$defs/Severity",
+                  "description": "`info`, `warning` or `error`."
+                },
+                "code": {
+                  "type": "string",
+                  "description": "Stable identity of the finding."
+                },
+                "adapter": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The adapter it concerns, when it concerns one."
+                },
+                "path": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The file it concerns, when it concerns one."
+                },
+                "message": {
+                  "type": "string",
+                  "description": "What was found."
+                },
+                "remedy": {
+                  "type": "string",
+                  "description": "What to do about it."
+                }
+              },
+              "required": [
+                "severity",
+                "code",
+                "message",
+                "remedy"
+              ],
+              "description": "Something about the projection worth acting on."
+            },
+            "Severity": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "info",
+                  "description": "Worth knowing; changes nothing."
+                },
+                {
+                  "type": "string",
+                  "const": "warning",
+                  "description": "Something to look at; the object is still served."
+                },
+                {
+                  "type": "string",
+                  "const": "error",
+                  "description": "The file is excluded and the index is degraded."
+                }
+              ],
+              "description": "How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts\nthe index into the degraded state; `Warning` and `Info` do neither."
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::editors"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_editors",
+          "resource": {
+            "uri": "majordomus://editors",
+            "name": "editors"
+          }
+        },
+        "http": {
+          "method": "GET",
+          "path": "/api/v1/editors"
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "behaviorally_verified",
+      "tags": [
+        "editors",
+        "projections",
+        "introspection"
+      ],
+      "benchmark": {
+        "policy": "required"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "read",
+        "cancellable": false,
+        "concurrency": "unrestricted"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/editors.rs"
     },
     {
       "id": "entity.kinds",
@@ -23587,7 +24176,8 @@
         "policy": "required"
       },
       "cache": {
-        "policy": "disabled"
+        "policy": "checkout",
+        "max_entries": 32
       },
       "execution": {
         "effect": "read",
@@ -24574,7 +25164,7 @@
       "module": "evidence",
       "kind": "query",
       "title": "Every claim against the evidence recorded for it",
-      "description": "The whole claims matrix joined to the ledger and judged at the presented revision: the working tree by default, or the checked-out commit as committed, read from the ledger that commit holds. Per claim: the proof state, the sentence explaining how that state was derived, why when the state alone does not say, the execution behind it, the files that changed since it, and the command that produces it again. A run on a commit the presented revision does not contain is stale, a test that declined to run is not run, and a run the working ledger holds that the presented commit's does not can only withhold proven. The tallies count the whole matrix even when the answer is filtered, and the findings name every claim that declares a guarantee the evidence does not support. Read fresh on every call: the ledger is a file that changes outside this process.",
+      "description": "The whole claims matrix joined to the ledger and judged at the presented revision: the working tree by default, or the checked-out commit as committed, read from the ledger that commit holds. Per claim: the proof state, the sentence explaining how that state was derived, why when the state alone does not say, the execution behind it, the files that changed since it, and the command that produces it again. A run on a commit the presented revision does not contain is stale, a test that declined to run is not run, and a run the working ledger holds that the presented commit's does not can only withhold proven. The tallies count the whole matrix even when the answer is filtered, and the findings name every claim that declares a guarantee the evidence does not support. Kept per checkout state, never longer: the ledger is a file that changes outside this process, and an edit of it, of a test or of any tracked file, a new untracked file, a commit or a new ref is a new answer.",
       "input": {
         "name": "EvidenceReportInput",
         "schema": {
@@ -25269,7 +25859,8 @@
         "policy": "required"
       },
       "cache": {
-        "policy": "disabled"
+        "policy": "checkout",
+        "max_entries": 8
       },
       "execution": {
         "effect": "read",
@@ -30097,6 +30688,14 @@
                   "description": "The pathspecs it covers, in the subset the model's header defines.",
                   "default": []
                 },
+                "except": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Single paths its patterns cover and the class does not: a data file under an\nescalating directory, read by named gates only. Each one is a path, never a\npattern, so a file that appears under the directory tomorrow still falls in it.",
+                  "default": []
+                },
                 "gates": {
                   "anyOf": [
                     {
@@ -30796,6 +31395,10 @@
               "$ref": "#/$defs/HealthStatus",
               "description": "The worst check's status."
             },
+            "repository": {
+              "$ref": "#/$defs/HealthStatus",
+              "description": "The worst status among the dimensions that describe the repository at this commit:\nevery check but the ones in `PROCESS_DIMENSIONS`. A process that is no server —\nthe command line, or the reader of a published snapshot (ADR 0141) — cannot decide\nwho is attached or what the mesh runtime did, and says `unknown` for them; this is\nthe verdict that is the same whichever process read the repository, and it is what a\npublication shows first."
+            },
             "tallies": {
               "type": "object",
               "additionalProperties": {
@@ -30822,6 +31425,7 @@
           },
           "required": [
             "status",
+            "repository",
             "tallies",
             "checks"
           ],
@@ -39884,7 +40488,8 @@
         "policy": "required"
       },
       "cache": {
-        "policy": "disabled"
+        "policy": "checkout",
+        "max_entries": 2
       },
       "execution": {
         "effect": "read",
@@ -40705,6 +41310,120 @@
         "effect": "read",
         "cancellable": false,
         "concurrency": "unrestricted"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/intents.rs"
+    },
+    {
+      "id": "intents.propose",
+      "module": "intents",
+      "kind": "command",
+      "title": "Propose an intent: what must become true",
+      "description": "Write a new intent record under `.ai/repo/project/intents/` from a statement of what must become true, with an optional title (the statement's first line when absent) and id (the title's slug when absent). The record names no milestone, criterion or invariant: its stage derives as `declared`, `intent validate` reports the two absences as warnings rather than failures, and no work can serve it until it is planned (ADR 0144). Nothing about its standing is stored. An existing record is refused, never overwritten, and the file appears whole or not at all. The answer names the identity and the file; `intents.record` answers the derived stage once the index holds it.",
+      "input": {
+        "name": "IntentProposeInput",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "statement": {
+              "type": "string",
+              "description": "What must become true, in the proposer's words; kept verbatim."
+            },
+            "title": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "One line naming it; the statement's first line when absent."
+            },
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The identity and file name; the title's slug when absent."
+            }
+          },
+          "required": [
+            "statement"
+          ],
+          "description": "The input of `intents.propose`: what must become true, and optionally its title and id.\n\nNo milestone, criterion or invariant: a proposal says what is wanted, and planning it is a\nseparate act (ADR 0144). No timestamp either: the record is dated when it is written.\n\n```\nuse majordomus_cli::capability::builtin::intents::IntentProposeInput;\nlet i: IntentProposeInput =\n    serde_json::from_str(r#\"{\"statement\": \"The UI answers within 100 ms warm\"}\"#).unwrap();\nassert_eq!(i.title, None);\n// a field the input does not have is refused, never ignored\nassert!(serde_json::from_str::<IntentProposeInput>(r#\"{\"statement\": \"s\", \"stage\": \"x\"}\"#).is_err());\n```",
+          "title": "IntentProposeInput"
+        }
+      },
+      "output": {
+        "name": "Proposed",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "The identity, which is also the file name."
+            },
+            "path": {
+              "type": "string",
+              "description": "Repository-relative path of the record written."
+            },
+            "title": {
+              "type": "string",
+              "description": "One line."
+            },
+            "statement": {
+              "type": "string",
+              "description": "What must become true, as it was given."
+            }
+          },
+          "required": [
+            "id",
+            "path",
+            "title",
+            "statement"
+          ],
+          "description": "What `propose` wrote: the identity, the file, and the record as it now reads.\n\n```\nuse majordomus_cli::intent::Proposed;\nlet p: Proposed = serde_json::from_str(\n    r#\"{\"id\": \"fast-ui\", \"path\": \".ai/repo/project/intents/fast-ui.yaml\",\n        \"title\": \"Fast UI\", \"statement\": \"The UI answers at once\"}\"#,\n)\n.unwrap();\n// the path is the identity under the intents directory: one answer to where it lives\nassert_eq!(p.path, format!(\".ai/repo/project/intents/{}.yaml\", p.id));\n```",
+          "title": "Proposed"
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::intents"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_intent_propose"
+        },
+        "http": {
+          "method": "POST",
+          "path": "/api/v1/intents/propose"
+        },
+        "cli": {
+          "path": [
+            "intent",
+            "propose"
+          ]
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "experimental",
+      "tags": [
+        "intent",
+        "project"
+      ],
+      "benchmark": {
+        "policy": "waived",
+        "reason": "destructive"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "repository_mutation",
+        "cancellable": false,
+        "concurrency": "serial"
+      },
+      "skill": {
+        "alias": "intent",
+        "argument": "statement"
       },
       "source_path": "apps/majordomus-cli/src/capability/builtin/intents.rs"
     },
@@ -41743,11 +42462,16 @@
                 },
                 {
                   "type": "string",
+                  "const": "historical",
+                  "description": "A `file:` or `test:` the tree no longer holds and git history does: cited before the\nfile was deleted, or pinned as `file:<path>@<commit>`. The `target` is the blob that\nanswers, `<commit>:<path>`, which `git show` reads."
+                },
+                {
+                  "type": "string",
                   "const": "missing",
                   "description": "Nothing answers to it. A dangling reference is the integrity validator's finding."
                 }
               ],
-              "description": "How a typed reference resolved.\n\nThree words and no fourth: a reference names an object of the index, or something only\nthe ledger and git can vouch for, or nothing. `external` is not a weaker `object` — a\ncommit or a task is exactly as real as a rule — it says which reader answered.\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::ReferenceResolution;\nlet r: ReferenceResolution = serde_json::from_str(r#\"\"external\"\"#).unwrap();\nassert_eq!(r, ReferenceResolution::External);\nassert!(r.resolves(), \"vouched for by the ledger or git is resolved\");\nassert!(!ReferenceResolution::Missing.resolves());\n```"
+              "description": "How a typed reference resolved.\n\nFour words and no fifth: a reference names an object of the index, or something only\nthe ledger and git can vouch for, or a file the tree no longer holds and git history\ndoes, or nothing. `external` is not a weaker `object` — a commit or a task is exactly as\nreal as a rule — it says which reader answered; `historical` resolves as well, and is\nnamed apart so a reader sees which provenance outlived its file (I1987).\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::ReferenceResolution;\nlet r: ReferenceResolution = serde_json::from_str(r#\"\"external\"\"#).unwrap();\nassert_eq!(r, ReferenceResolution::External);\nassert!(r.resolves(), \"vouched for by the ledger or git is resolved\");\nassert!(!ReferenceResolution::Missing.resolves());\n```"
             },
             "ResolvedRelation": {
               "type": "object",
@@ -44475,6 +45199,13 @@
               "format": "uint64",
               "minimum": 0,
               "description": "At most this many (default 100, at most 1000)."
+            },
+            "newest": {
+              "type": [
+                "boolean",
+                "null"
+              ],
+              "description": "The newest `limit` events above `after` instead of the first ones: what a reader who\nwants the journal as it stands now asks for. Still in Lamport order, and `lamport` is\nthen the newest stamp the journal holds, so resuming after it reads only what comes\nnext. Without it the journal is read forward from `after`, a page at a time."
             }
           },
           "description": "The input of `mesh.events`.",
@@ -49117,6 +49848,13 @@
                 "null"
               ],
               "description": "The runtime asked (`<node>-<runtime>`); anyone when omitted."
+            },
+            "body": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "What the reviewer needs beyond the subject: evidence, commands, the question. Up to\n8 KiB, several lines."
             }
           },
           "required": [
@@ -49166,6 +49904,108 @@
         "http": {
           "method": "POST",
           "path": "/api/v1/mesh/reviews"
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "experimental",
+      "tags": [
+        "mesh",
+        "coordination",
+        "cooperation"
+      ],
+      "benchmark": {
+        "policy": "waived",
+        "reason": "transient_state"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "process_state",
+        "cancellable": false,
+        "concurrency": "serial"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+    },
+    {
+      "id": "mesh.review.withdraw",
+      "module": "mesh",
+      "kind": "command",
+      "title": "Withdraw a review request",
+      "description": "End a review request this runtime asked for — done, void or superseded — with an optional result note the request then carries. Any session of the asking runtime may (a reconnected asker is another session of it); no other runtime may, and it is never counted as an answer. An unanswered request also reads expired while its runtime has stopped beating. Replicated to every linked runtime. Writes this runtime's journal only.",
+      "input": {
+        "name": "ReviewWithdrawInput",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "request": {
+              "type": "string",
+              "description": "The request's key, `<stream>/<review>`."
+            },
+            "session": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The withdrawing session of the asking runtime; the calling MCP session's own when\nomitted."
+            },
+            "note": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The requester's result or reason, up to 8 KiB: what came of it, or why it is void."
+            }
+          },
+          "required": [
+            "request"
+          ],
+          "description": "The input of `mesh.review.withdraw`.",
+          "title": "ReviewWithdrawInput"
+        }
+      },
+      "output": {
+        "name": "Written",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "key": {
+              "type": "string",
+              "description": "`<stream>/<local id>` of what was created or changed."
+            },
+            "event": {
+              "type": "string",
+              "description": "`<stream>/<seq>` of the event that says so."
+            },
+            "lamport": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0,
+              "description": "The event's Lamport stamp."
+            }
+          },
+          "required": [
+            "key",
+            "event",
+            "lamport"
+          ],
+          "description": "What an operation wrote, as its answer to the caller. Every mesh operation is an event\nappended to this runtime's journal, and the caller is handed the three facts it cannot\nwork out for itself: the mesh-wide key of the thing it created, the event that says so,\nand the Lamport stamp that places it against everyone else's events.\n\nThe key is what a later operation is addressed by — a claim is released by the key its\nacquisition returned, never by the local name it was given — and the stamp is what a\ncaller waiting for a peer to catch up compares against.\n\n```\n# use std::sync::Arc;\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::HttpTransport;\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::of_root_commits;\n# let cooperation = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: \"0000000000000001\".into(),\n#     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![\"127.0.0.1:9\".into()],\n#     version: \"doc\".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),\n#     journal_path: None, registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),\n# }).unwrap();\nuse majordomus_cli::mesh::cooperation::Written;\nuse majordomus_cli::mesh::journal::{ClaimMode, SessionInfo};\n\nlet session = SessionInfo::named(\"s1\", \"cli\");\nlet written: Written = cooperation\n    .claim(&session, vec![\"docs\".into()], None, ClaimMode::Advisory, None)\n    .unwrap();\nassert!(written.lamport > 0, \"placed against every other runtime's events\");\n\n// and the key it returned is how the claim is addressed from here on\ncooperation.release(&written.key).unwrap();\n```",
+          "title": "Written"
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::mesh"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_mesh_review_withdraw"
+        },
+        "http": {
+          "method": "POST",
+          "path": "/api/v1/mesh/reviews/withdraw"
         }
       },
       "availability": "runtime",
@@ -50550,6 +51390,13 @@
                   ],
                   "description": "The runtime asked, when one was."
                 },
+                "body": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "What the reviewer needs beyond the subject, when the requester wrote it."
+                },
                 "state": {
                   "$ref": "#/$defs/ReviewState",
                   "description": "Its standing."
@@ -50560,6 +51407,13 @@
                     "$ref": "#/$defs/ReviewAnswer"
                   },
                   "description": "The answers, in Lamport order."
+                },
+                "result": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The requester's own result or reason, written when it withdrew the request. Never an\nanswer: a review is another session's verdict."
                 }
               },
               "required": [
@@ -50570,7 +51424,7 @@
                 "state",
                 "answers"
               ],
-              "description": "One review request anywhere in the mesh, with every answer it has drawn. A request with\nno `reviewer` is an offer to the whole mesh rather than to nobody, which is why the\nanswers are a list: any linked runtime carrying the `reviews` feature may add one, and\nthey are kept in Lamport order so that every runtime reads them in the same sequence.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, ReviewView};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::ReviewRequested { review: \"r1\".into(), session: \"s1\".into(),\n    subject: \"feature/mesh-cooperation\".into(), scope: vec![\"src/mesh\".into()],\n    issue: Some(\"#184\".into()), reviewer: None }).unwrap();\nlet request = fold(&j.events(), &|_| StreamLiveness::Own).reviews[0].key.clone();\nj.append_own(EventBody::ReviewAnswered { request, session: \"s2\".into(),\n    verdict: \"approved\".into(), note: Some(\"reads well\".into()) }).unwrap();\n\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nlet review: &ReviewView = &state.reviews[0];\nassert_eq!(review.subject, \"feature/mesh-cooperation\");\nassert_eq!(review.reviewer, None, \"offered to the mesh, not addressed\");\nassert_eq!(review.answers[0].verdict, \"approved\");\n```"
+              "description": "One review request anywhere in the mesh, with every answer it has drawn. A request with\nno `reviewer` is an offer to the whole mesh rather than to nobody, which is why the\nanswers are a list: any linked runtime carrying the `reviews` feature may add one, and\nthey are kept in Lamport order so that every runtime reads them in the same sequence.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, ReviewView};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::ReviewRequested { review: \"r1\".into(), session: \"s1\".into(),\n    subject: \"feature/mesh-cooperation\".into(), scope: vec![\"src/mesh\".into()],\n    issue: Some(\"#184\".into()), reviewer: None, body: None }).unwrap();\nlet request = fold(&j.events(), &|_| StreamLiveness::Own).reviews[0].key.clone();\nj.append_own(EventBody::ReviewAnswered { request, session: \"s2\".into(),\n    verdict: \"approved\".into(), note: Some(\"reads well\".into()) }).unwrap();\n\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nlet review: &ReviewView = &state.reviews[0];\nassert_eq!(review.subject, \"feature/mesh-cooperation\");\nassert_eq!(review.reviewer, None, \"offered to the mesh, not addressed\");\nassert_eq!(review.answers[0].verdict, \"approved\");\n```"
             },
             "ReviewState": {
               "oneOf": [
@@ -50583,9 +51437,19 @@
                   "type": "string",
                   "const": "answered",
                   "description": "At least one answer."
+                },
+                {
+                  "type": "string",
+                  "const": "withdrawn",
+                  "description": "The runtime that asked ended the request: done, void or superseded. Whatever was\nanswered before stays with it."
+                },
+                {
+                  "type": "string",
+                  "const": "expired",
+                  "description": "Nobody answered and the runtime that asked stopped beating. A reading of liveness,\nlike a claim's expiry, decided from the journal and the streams' beats so that no\nruntime needs another's clock — a runtime that beats again reads open again."
                 }
               ],
-              "description": "A review request's standing: whether anybody has answered it yet. There is deliberately\nno `Approved` or `Rejected` here — a request may be answered by several runtimes and the\nverdicts are the answers' own, so collapsing them into one state would throw away the\ndisagreement that makes a second reviewer worth asking.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, ReviewState};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::ReviewRequested { review: \"r1\".into(), session: \"s1\".into(),\n    subject: \"feature/x\".into(), scope: vec![], issue: None, reviewer: None }).unwrap();\nlet asked = fold(&j.events(), &|_| StreamLiveness::Own);\nassert_eq!(asked.reviews[0].state, ReviewState::Open);\n\nlet request = asked.reviews[0].key.clone();\nj.append_own(EventBody::ReviewAnswered { request, session: \"s2\".into(),\n    verdict: \"approved\".into(), note: None }).unwrap();\nassert_eq!(fold(&j.events(), &|_| StreamLiveness::Own).reviews[0].state, ReviewState::Answered);\n```"
+              "description": "A review request's standing: whether anybody has answered it yet. There is deliberately\nno `Approved` or `Rejected` here — a request may be answered by several runtimes and the\nverdicts are the answers' own, so collapsing them into one state would throw away the\ndisagreement that makes a second reviewer worth asking.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, ReviewState};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::ReviewRequested { review: \"r1\".into(), session: \"s1\".into(),\n    subject: \"feature/x\".into(), scope: vec![], issue: None, reviewer: None, body: None }).unwrap();\nlet asked = fold(&j.events(), &|_| StreamLiveness::Own);\nassert_eq!(asked.reviews[0].state, ReviewState::Open);\n\nlet request = asked.reviews[0].key.clone();\nj.append_own(EventBody::ReviewAnswered { request, session: \"s2\".into(),\n    verdict: \"approved\".into(), note: None }).unwrap();\nassert_eq!(fold(&j.events(), &|_| StreamLiveness::Own).reviews[0].state, ReviewState::Answered);\n```"
             },
             "ReviewAnswer": {
               "type": "object",
@@ -53414,6 +54278,502 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/obligations.rs"
     },
     {
+      "id": "observatory.capture",
+      "module": "observatory",
+      "kind": "query",
+      "title": "Observatory capture",
+      "description": "The mesh scenes of the Observatory as this process has them live, fit for publication: machines, runtimes, sessions and events by ordinal, an event by its kind, logical clock and time only. Writes nothing; committing the answer to .ai/repo/observatory/recording.json is what publishes it.",
+      "input": {
+        "name": "Empty",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "No input.",
+          "title": "Empty"
+        }
+      },
+      "output": {
+        "name": "ObservatoryRecording",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "schema": {
+              "type": "string",
+              "description": "`RECORDING_SCHEMA`."
+            },
+            "recorded_at": {
+              "type": "string",
+              "description": "When the scenes were read."
+            },
+            "revision": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The commit the recording process stood at, short; absent when it could not say."
+            },
+            "scenes": {
+              "type": "object",
+              "additionalProperties": true,
+              "description": "Each recorded scene's model, by scene id; a scene the process had nothing live for is\nabsent, never empty."
+            },
+            "manifest": {
+              "$ref": "#/$defs/RecordingManifest",
+              "description": "What the recording is a record of, and what it leaves out."
+            }
+          },
+          "required": [
+            "schema",
+            "recorded_at",
+            "scenes",
+            "manifest"
+          ],
+          "description": "The mesh scenes of one process at one moment, fit for publication.\n\n```\nuse majordomus_cli::capability::builtin::observatory::ObservatoryRecording;\nlet r: ObservatoryRecording = serde_json::from_value(serde_json::json!({\n    \"schema\": \"observatory-recording/v1\", \"recorded_at\": \"2026-10-14T05:00:00Z\", \"scenes\": {},\n    \"manifest\": { \"sources\": [], \"removed\": [] },\n})).unwrap();\nassert!(r.scenes.is_empty() && r.revision.is_none());\n```",
+          "title": "ObservatoryRecording",
+          "$defs": {
+            "RecordingManifest": {
+              "type": "object",
+              "properties": {
+                "sources": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The capabilities whose answers the recorded scenes were projected from."
+                },
+                "window": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/RecordingWindow"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "The first and last event the recording holds, by time and by logical clock; absent\nwhen it holds none."
+                },
+                "removed": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Every kind of thing removed before publication, and why."
+                }
+              },
+              "required": [
+                "sources",
+                "removed"
+              ],
+              "description": "What a recording is a record of: the capabilities read, the window of events it holds,\nand what was removed from what they answered, with the reason.\n\n```\nuse majordomus_cli::capability::builtin::observatory::RecordingManifest;\nlet m: RecordingManifest = serde_json::from_value(serde_json::json!({\n    \"sources\": [\"mesh.events\"], \"removed\": [\"event bodies\"],\n})).unwrap();\nassert!(m.window.is_none(), \"a recording that holds no event has no window\");\n```"
+            },
+            "RecordingWindow": {
+              "type": "object",
+              "properties": {
+                "events": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "How many events."
+                },
+                "from_at": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "The earliest event's time, in seconds since the epoch."
+                },
+                "to_at": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "The latest event's time, in seconds since the epoch."
+                },
+                "from_lamport": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "The smallest logical clock."
+                },
+                "to_lamport": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "The largest logical clock."
+                }
+              },
+              "required": [
+                "events"
+              ],
+              "description": "The events a recording holds, from first to last.\n\n```\nuse majordomus_cli::capability::builtin::observatory::RecordingWindow;\nlet w = RecordingWindow { events: 2, from_at: Some(100), to_at: Some(160), from_lamport: Some(9), to_lamport: Some(10) };\nassert_eq!(w.to_at.unwrap() - w.from_at.unwrap(), 60, \"a minute of the journal\");\n```"
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::observatory"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_observatory_capture"
+        },
+        "http": {
+          "method": "GET",
+          "path": "/api/v1/observatory/capture"
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "behaviorally_verified",
+      "tags": [
+        "observatory",
+        "mesh",
+        "ui"
+      ],
+      "benchmark": {
+        "policy": "required"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "read",
+        "cancellable": false,
+        "concurrency": "unrestricted"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/observatory.rs"
+    },
+    {
+      "id": "observatory.events",
+      "module": "observatory",
+      "kind": "query",
+      "title": "Observatory events",
+      "description": "The events of the mesh journal above a cursor, as the Observatory's activity scene draws them: identity, kind, node, logical clock and time, newest first, at most a page. The answer's cursor is the next request's `after`; a cursor this journal never reached is expired, and the reader takes a fresh projection. Without a cursor, the newest page.",
+      "input": {
+        "name": "ObservatoryEventsInput",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "after": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint64",
+              "minimum": 0,
+              "description": "The cursor: only events whose logical clock is above it. Absent is the newest page."
+            },
+            "limit": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint64",
+              "minimum": 0,
+              "description": "At most this many (default 200, at most 1000)."
+            }
+          },
+          "description": "The input of `observatory.events`: a cursor and a page size.\n\n```\nuse majordomus_cli::capability::builtin::observatory::ObservatoryEventsInput;\nlet q: ObservatoryEventsInput = serde_json::from_value(serde_json::json!({ \"after\": 42 })).unwrap();\nassert_eq!((q.after, q.limit), (Some(42), None));\nassert!(serde_json::from_value::<ObservatoryEventsInput>(serde_json::json!({ \"since\": 1 })).is_err());\n```",
+          "title": "ObservatoryEventsInput"
+        }
+      },
+      "output": {
+        "name": "ObservatoryEvents",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "active": {
+              "type": "boolean",
+              "description": "Whether a mesh runs in this process; without one there is no journal to follow."
+            },
+            "after": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint64",
+              "minimum": 0,
+              "description": "The cursor that was asked, when one was."
+            },
+            "cursor": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0,
+              "description": "The cursor to ask next: the logical clock of the newest event read, or the journal's\nnewest clock when the cursor had expired."
+            },
+            "expired": {
+              "type": "boolean",
+              "description": "The cursor names a clock this journal never reached (another runtime's journal, or one\nthat restarted): nothing above it can be read, and the reader takes a fresh projection."
+            },
+            "events": {
+              "type": "array",
+              "items": true,
+              "description": "The events above the cursor, newest first, as marks: identity, kind, node, logical\nclock and time, never a body."
+            }
+          },
+          "required": [
+            "active",
+            "cursor",
+            "expired",
+            "events"
+          ],
+          "description": "The Observatory's events above a cursor, as the activity scene draws them.\n\n```\nuse majordomus_cli::capability::builtin::observatory::ObservatoryEvents;\nlet e: ObservatoryEvents = serde_json::from_value(serde_json::json!({\n    \"active\": true, \"after\": 9, \"cursor\": 12, \"expired\": false, \"events\": [{ \"id\": \"s:3\" }],\n})).unwrap();\nassert!(e.cursor > e.after.unwrap(), \"the next request resumes past what was read\");\n```",
+          "title": "ObservatoryEvents"
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::observatory"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_observatory_events"
+        },
+        "http": {
+          "method": "GET",
+          "path": "/api/v1/observatory/events"
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "behaviorally_verified",
+      "tags": [
+        "observatory",
+        "mesh",
+        "ui"
+      ],
+      "benchmark": {
+        "policy": "required"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "read",
+        "cancellable": false,
+        "concurrency": "unrestricted"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/observatory.rs"
+    },
+    {
+      "id": "observatory.replay",
+      "module": "observatory",
+      "kind": "query",
+      "title": "Observatory replay",
+      "description": "The recording of the mesh scenes the repository carries at .ai/repo/observatory/recording.json, which the Observatory draws, labelled as a replay, where no mesh runs. Absent is present: false; a file that cannot be read is an error.",
+      "input": {
+        "name": "Empty",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "No input.",
+          "title": "Empty"
+        }
+      },
+      "output": {
+        "name": "ObservatoryReplay",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "present": {
+              "type": "boolean",
+              "description": "Whether the repository carries a recording."
+            },
+            "path": {
+              "type": "string",
+              "description": "The file it is read from."
+            },
+            "recording": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/ObservatoryRecording"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The recording."
+            }
+          },
+          "required": [
+            "present",
+            "path"
+          ],
+          "description": "The recording the repository carries, or that it carries none.\n\n```\nuse majordomus_cli::capability::builtin::observatory::{replay_at, ObservatoryReplay, RECORDING};\nlet dir = tempfile::tempdir().unwrap();\nlet none: ObservatoryReplay = replay_at(dir.path()).unwrap();\nassert!(!none.present && none.recording.is_none());\nassert_eq!(none.path, RECORDING);\n```",
+          "title": "ObservatoryReplay",
+          "$defs": {
+            "ObservatoryRecording": {
+              "type": "object",
+              "properties": {
+                "schema": {
+                  "type": "string",
+                  "description": "`RECORDING_SCHEMA`."
+                },
+                "recorded_at": {
+                  "type": "string",
+                  "description": "When the scenes were read."
+                },
+                "revision": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The commit the recording process stood at, short; absent when it could not say."
+                },
+                "scenes": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "description": "Each recorded scene's model, by scene id; a scene the process had nothing live for is\nabsent, never empty."
+                },
+                "manifest": {
+                  "$ref": "#/$defs/RecordingManifest",
+                  "description": "What the recording is a record of, and what it leaves out."
+                }
+              },
+              "required": [
+                "schema",
+                "recorded_at",
+                "scenes",
+                "manifest"
+              ],
+              "description": "The mesh scenes of one process at one moment, fit for publication.\n\n```\nuse majordomus_cli::capability::builtin::observatory::ObservatoryRecording;\nlet r: ObservatoryRecording = serde_json::from_value(serde_json::json!({\n    \"schema\": \"observatory-recording/v1\", \"recorded_at\": \"2026-10-14T05:00:00Z\", \"scenes\": {},\n    \"manifest\": { \"sources\": [], \"removed\": [] },\n})).unwrap();\nassert!(r.scenes.is_empty() && r.revision.is_none());\n```"
+            },
+            "RecordingManifest": {
+              "type": "object",
+              "properties": {
+                "sources": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The capabilities whose answers the recorded scenes were projected from."
+                },
+                "window": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/RecordingWindow"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "The first and last event the recording holds, by time and by logical clock; absent\nwhen it holds none."
+                },
+                "removed": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Every kind of thing removed before publication, and why."
+                }
+              },
+              "required": [
+                "sources",
+                "removed"
+              ],
+              "description": "What a recording is a record of: the capabilities read, the window of events it holds,\nand what was removed from what they answered, with the reason.\n\n```\nuse majordomus_cli::capability::builtin::observatory::RecordingManifest;\nlet m: RecordingManifest = serde_json::from_value(serde_json::json!({\n    \"sources\": [\"mesh.events\"], \"removed\": [\"event bodies\"],\n})).unwrap();\nassert!(m.window.is_none(), \"a recording that holds no event has no window\");\n```"
+            },
+            "RecordingWindow": {
+              "type": "object",
+              "properties": {
+                "events": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "How many events."
+                },
+                "from_at": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "The earliest event's time, in seconds since the epoch."
+                },
+                "to_at": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "The latest event's time, in seconds since the epoch."
+                },
+                "from_lamport": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "The smallest logical clock."
+                },
+                "to_lamport": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "The largest logical clock."
+                }
+              },
+              "required": [
+                "events"
+              ],
+              "description": "The events a recording holds, from first to last.\n\n```\nuse majordomus_cli::capability::builtin::observatory::RecordingWindow;\nlet w = RecordingWindow { events: 2, from_at: Some(100), to_at: Some(160), from_lamport: Some(9), to_lamport: Some(10) };\nassert_eq!(w.to_at.unwrap() - w.from_at.unwrap(), 60, \"a minute of the journal\");\n```"
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::observatory"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_observatory_replay"
+        },
+        "http": {
+          "method": "GET",
+          "path": "/api/v1/observatory/replay"
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "behaviorally_verified",
+      "tags": [
+        "observatory",
+        "mesh",
+        "ui"
+      ],
+      "benchmark": {
+        "policy": "required"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "read",
+        "cancellable": false,
+        "concurrency": "unrestricted"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/observatory.rs"
+    },
+    {
       "id": "pack.plan",
       "module": "pack",
       "kind": "query",
@@ -55144,7 +56504,8 @@
         "policy": "required"
       },
       "cache": {
-        "policy": "disabled"
+        "policy": "generation",
+        "max_entries": 16
       },
       "execution": {
         "effect": "read",
@@ -55877,7 +57238,8 @@
         "policy": "required"
       },
       "cache": {
-        "policy": "disabled"
+        "policy": "generation",
+        "max_entries": 16
       },
       "execution": {
         "effect": "read",
@@ -56469,7 +57831,8 @@
         "policy": "required"
       },
       "cache": {
-        "policy": "disabled"
+        "policy": "generation",
+        "max_entries": 4
       },
       "execution": {
         "effect": "read",
@@ -56816,7 +58179,8 @@
         "policy": "required"
       },
       "cache": {
-        "policy": "disabled"
+        "policy": "generation",
+        "max_entries": 16
       },
       "execution": {
         "effect": "read",
@@ -61455,7 +62819,7 @@
       "module": "reasoning",
       "kind": "query",
       "title": "Check that reasoning stays provider-independent",
-      "description": "The executable half of the rules advisors-are-optional and review-is-recorded-not-claimed: the advisor catalogue resolves against the provider table and the model catalogue; every adapter it names has its transport module; no provider-independent source names an advisor; no CI workflow or gate names a model credential; no document asserts a refused claim; every stored consultation names an advisor its plan selected, and every conclusion's review matches what it cites.",
+      "description": "The executable half of the rules advisors-are-optional and review-is-recorded-not-claimed: the advisor catalogue resolves against the provider table and the model catalogue; every adapter it names has its transport module; no provider-independent source names an advisor; no CI workflow or gate names a model credential; no document asserts a refused claim; every stored consultation names an advisor its plan selected, and every conclusion's review matches what it cites. The CI and claims checks judge what this repository's own workflows and documents say, so they apply only where the rule advisors-are-optional is declared; an adopter is held to what it adopted.",
       "input": {
         "name": "Empty",
         "schema": {
@@ -67955,7 +69319,8 @@
         "policy": "required"
       },
       "cache": {
-        "policy": "disabled"
+        "policy": "checkout",
+        "max_entries": 2
       },
       "execution": {
         "effect": "read",
@@ -68444,7 +69809,8 @@
         "policy": "required"
       },
       "cache": {
-        "policy": "disabled"
+        "policy": "generation",
+        "max_entries": 1
       },
       "execution": {
         "effect": "read",
@@ -69323,7 +70689,7 @@
       "module": "rules",
       "kind": "query",
       "title": "Every rule against the proof there is for it",
-      "description": "The whole rule corpus joined to the tree and the ledger: per rule, its class, its enforcement mode, the validator and the cases it names, whether each is in the tree, the execution behind each, the CI gates that run them, and the sentence explaining how the state was derived. The tallies count the whole corpus even when the answer is filtered, and the findings name every rule whose declared class the proof does not support. Read fresh on every call: the ledger is a file that changes outside this process.",
+      "description": "The whole rule corpus joined to the tree and the ledger: per rule, its class, its enforcement mode, the validator and the cases it names, whether each is in the tree, the execution behind each, the CI gates that run them, and the sentence explaining how the state was derived. The tallies count the whole corpus even when the answer is filtered, and the findings name every rule whose declared class the proof does not support. Kept per checkout state, never longer: the ledger is a file that changes outside this process, and an edit of it, of a validator or of any tracked file, a new untracked file, a commit or a new ref is a new answer.",
       "input": {
         "name": "RulesReportInput",
         "schema": {
@@ -70348,7 +71714,8 @@
         "policy": "required"
       },
       "cache": {
-        "policy": "disabled"
+        "policy": "checkout",
+        "max_entries": 8
       },
       "execution": {
         "effect": "read",
@@ -71137,7 +72504,8 @@
         "policy": "required"
       },
       "cache": {
-        "policy": "disabled"
+        "policy": "checkout",
+        "max_entries": 32
       },
       "execution": {
         "effect": "read",
@@ -71145,6 +72513,120 @@
         "concurrency": "unrestricted"
       },
       "source_path": "apps/majordomus-cli/src/capability/builtin/rules.rs"
+    },
+    {
+      "id": "served.forge",
+      "module": "served",
+      "kind": "command",
+      "title": "Ask the forge what it recorded as deployed and released",
+      "description": "Asks the forge, through its own command-line tool and with the caller's credential, for the newest deployments to every environment and the newest releases, in one query, and records the answer in the checkout-local state `deploy.observed` reads. Exit 0 when the forge answered and the answer was recorded, 12 when it could not be asked (no tool, no credential, no network, a repository the forge does not know): what was recorded before then stands, with its age.",
+      "input": {
+        "name": "Empty",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "No input.",
+          "title": "Empty"
+        }
+      },
+      "output": {
+        "name": "ForgeObserved",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "observed": {
+              "type": "boolean",
+              "description": "Whether the forge answered and the answer was recorded."
+            },
+            "reason": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Why not, in the words of whatever refused; absent when it answered."
+            },
+            "repository": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "`owner/name`, as the forge named the repository."
+            },
+            "observed_at": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "When the forge was asked, RFC 3339."
+            },
+            "deployments": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0,
+              "description": "How many deployments the answer held."
+            },
+            "releases": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0,
+              "description": "How many releases the answer held."
+            },
+            "environments": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0,
+              "description": "How many environments those deployments went to."
+            },
+            "exit_code": {
+              "type": "integer",
+              "format": "int32",
+              "description": "The exit status the command line reports: 0 observed, 12 not answered."
+            }
+          },
+          "required": [
+            "observed",
+            "deployments",
+            "releases",
+            "environments",
+            "exit_code"
+          ],
+          "description": "What `served.forge` came to: whether the forge answered, and what its answer held. The\nanswer itself is read through `deploy.observed`; this is the receipt of having asked.\n\n```\nuse majordomus_cli::capability::builtin::served::ForgeObserved;\n// a forge that could not be asked is said, with the reason, and is exit 12: not answered\nlet json = r#\"{\"observed\":false,\"reason\":\"gh repo view failed: no network\",\n  \"deployments\":0,\"releases\":0,\"environments\":0,\"exit_code\":12}\"#;\nlet got: ForgeObserved = serde_json::from_str(json).unwrap();\nassert!(!got.observed);\nassert_eq!(got.exit_code, 12);\nassert!(got.repository.is_none());\n```",
+          "title": "ForgeObserved"
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::served"
+      },
+      "exposure": {
+        "cli": {
+          "path": [
+            "served",
+            "forge"
+          ]
+        }
+      },
+      "availability": "runtime",
+      "visibility": "developer",
+      "stability": "behaviorally_verified",
+      "tags": [
+        "deployment",
+        "evidence",
+        "forge"
+      ],
+      "benchmark": {
+        "policy": "waived",
+        "reason": "external_dependency"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "process_state",
+        "cancellable": false,
+        "concurrency": "serial"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/served.rs"
     },
     {
       "id": "served.observe",
@@ -79622,6 +81104,11 @@
       "key": "system.http.cockpit_graph",
       "transport": "http",
       "description": "GET /cockpit/graphs/registry (a page whose content is a derived graph)"
+    },
+    {
+      "key": "system.http.live.index",
+      "transport": "http",
+      "description": "GET / over the live view a served process uses (the per-request git stamp and surface resolution)"
     }
   ]
 }

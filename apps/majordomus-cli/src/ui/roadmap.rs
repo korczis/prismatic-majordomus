@@ -177,7 +177,15 @@ pub fn screen(ctx: &Context, query: &[(String, String)]) -> View {
         grid = grid.child(wide(super::intent::inspector(intents, issues, id)));
     }
     if let (Some(id), Some(issues)) = (&picked, answers.get(&ISSUES)) {
-        grid = grid.child(wide(super::milestone::inspector(roadmap, issues, id)));
+        // the milestone's own record, for the prose no plan summary carries
+        let record = super::source::ask_input(
+            ctx,
+            "objects.get",
+            serde_json::json!({ "uri": format!("majordomus://milestone/{id}") }),
+        );
+        grid = grid.child(wide(super::milestone::inspector_with(
+            roadmap, issues, &record, id,
+        )));
     }
     let grid = grid
         .child(wide(panel(
@@ -209,6 +217,18 @@ pub fn screen(ctx: &Context, query: &[(String, String)]) -> View {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// `?intent=` opens the intent's inspector on the Roadmap screen itself, asking the plan's
+    /// issues for what serves it.
+    #[test]
+    fn the_screen_opens_an_intent_it_is_asked_for() {
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a synthetic repository");
+        let ctx = repo.context().expect("a context");
+        let html = screen(&ctx, &[("intent".to_string(), "intent-nope".to_string())])
+            .main
+            .render();
+        assert!(html.contains("intent-nope is not an intent"), "{html}");
+    }
     use crate::capability::{builtin, CapabilityRegistry};
     use crate::synthetic::SyntheticRepository;
 

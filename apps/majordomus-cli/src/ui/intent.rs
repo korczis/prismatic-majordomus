@@ -229,6 +229,7 @@ mod tests {
             exposure: Exposure::default(),
             value: Ok(value),
             took: Duration::from_millis(1),
+            standing: crate::ui::source::Standing::NOW,
         }
     }
 
@@ -272,6 +273,26 @@ mod tests {
             !html.contains("I0010"),
             "an issue serving another intent is not its own"
         );
+    }
+
+    /// An intent that declares no invariant and that no milestone or issue serves yet says
+    /// each of those.
+    #[test]
+    fn an_intent_nothing_serves_yet_says_so() {
+        let intents = answer(
+            "intents.list",
+            serde_json::json!({ "intents": [{ "id": "intent-b", "title": "B", "statement": "B holds." }] }),
+        );
+        let issues = answer("plan.issues", serde_json::json!({ "issues": [] }));
+        let html = inspector(&intents, &issues, "intent-b").render();
+        for want in [
+            "It declares no invariant.",
+            "No milestone serves it yet.",
+            "No issue of the plan names it.",
+            "It declares no criterion.",
+        ] {
+            assert!(html.contains(want), "no {want}: {html}");
+        }
     }
 
     #[test]

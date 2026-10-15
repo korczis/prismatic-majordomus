@@ -85,6 +85,9 @@ pub fn run(args: MeshArgs) -> Result<u8> {
             if let Some(limit) = a.limit {
                 pairs.push(format!("limit={limit}"));
             }
+            if a.newest {
+                pairs.push("newest=true".to_string());
+            }
             if !pairs.is_empty() {
                 target = format!("{target}?{}", pairs.join("&"));
             }
@@ -182,6 +185,7 @@ pub fn run(args: MeshArgs) -> Result<u8> {
                     "scope": a.scope,
                     "issue": a.issue,
                     "reviewer": a.reviewer,
+                    "body": a.body,
                 })),
                 render_written,
                 never,
@@ -199,7 +203,27 @@ pub fn run(args: MeshArgs) -> Result<u8> {
                 render_written,
                 never,
             ),
+            MeshReviewCommand::Withdraw(a) => ask(
+                &a.query,
+                "POST",
+                "/api/v1/mesh/reviews/withdraw",
+                Some(json!({
+                    "request": a.request,
+                    "session": a.session,
+                    "note": a.note,
+                })),
+                render_written,
+                never,
+            ),
         },
+    }
+}
+
+/// `text` cut to at most `max` characters, with an ellipsis when it was longer.
+fn clip(text: &str, max: usize) -> String {
+    match text.char_indices().nth(max) {
+        Some((at, _)) => format!("{}…", &text[..at]),
+        None => text.to_string(),
     }
 }
 
@@ -776,9 +800,10 @@ fn viewed(path: &str, v: &crate::cli::MeshViewArgs) -> String {
     let pairs: Vec<String> = v
         .pairs()
         .iter()
-        .map(|pair| match pair.split_once('=') {
-            Some((key, value)) => format!("{key}={}", encode(value)),
-            None => pair.clone(),
+        .map(|pair| {
+            // every pair is `key=value`: `MeshViewArgs::pairs` writes them so
+            let (key, value) = pair.split_once('=').unwrap_or((pair, ""));
+            format!("{key}={}", encode(value))
         })
         .collect();
     if pairs.is_empty() {
@@ -912,6 +937,10 @@ fn render_state(v: &Value) -> String {
             s(r, "state"),
             r["answers"].as_array().map(Vec::len).unwrap_or(0)
         ));
+        if let Some(result) = r["result"].as_str() {
+            let first = result.lines().next().unwrap_or_default();
+            out.push_str(&format!("           result: {}\n", clip(first, 120)));
+        }
     }
     out.push_str(&format!("digest     {}", s(st, "digest")));
     out
@@ -1045,6 +1074,99 @@ mod tests {
             ("written", render_written),
             ("consumed", render_consumed),
         ]
+    }
+
+    /// The view a `mesh <command> <args>` line parses to.
+    fn view(args: &[&str]) -> crate::cli::MeshViewArgs {
+        use clap::Parser;
+        let line = ["majordomus", "mesh"].iter().chain(args).copied();
+        let cli = crate::cli::Cli::try_parse_from(line).unwrap();
+        let crate::cli::Command::Mesh(mesh) = cli.command else {
+            panic!("expected `mesh`")
+        };
+        match mesh.command {
+            MeshCommand::Peers(v) | MeshCommand::State(v) => v,
+            _ => panic!("expected `peers` or `state`"),
+        }
+    }
+
+    #[test]
+    fn a_view_is_the_path_with_its_flags_as_an_encoded_query() {
+        assert_eq!(
+            viewed("/api/v1/mesh/peers", &view(&["peers"])),
+            "/api/v1/mesh/peers"
+        );
+        assert_eq!(
+            viewed(
+                "/api/v1/mesh/state",
+                &view(&["state", "--full", "--limit", "5", "--matching", "#905 a/b"])
+            ),
+            "/api/v1/mesh/state?view=full&limit=5&matching=%23905%20a%2Fb"
+        );
+    }
+
+    #[test]
+    fn the_summary_lists_totals_runtimes_reviews_and_handovers_and_counts_the_rest() {
+        let a = runtime_key(NODE_A, "0001");
+        let b = runtime_key(NODE_B, "0002");
+        let answer = json!({
+            "active": true,
+            "summary": {
+                "sessions": { "active": 2, "closed": 3, "expired": 1 },
+                "claims": { "held": 4, "conflicted": 1, "released": 5, "expired": 6 },
+                "overlaps": 7,
+                "runtimes": [
+                    {
+                        "runtime": a, "liveness": "own", "last_beat_ms": 1500,
+                        "sessions": { "active": 2 }, "claims": { "held": 4 },
+                        "newest_claim": { "issue": "#905", "intent": "ship the inspector" },
+                    },
+                    // a degraded runtime: no beat, no counts, a newest claim with nothing in it
+                    { "runtime": b, "liveness": "expired", "newest_claim": {} },
+                    { "runtime": "bare", "liveness": "live" },
+                ],
+                "runtimes_not_listed": 2,
+                "open_reviews": [{ "key": "r-1", "subject": "feature/x" }],
+                "open_reviews_not_listed": 0,
+                "untaken_handovers": [
+                    { "id": "h1", "runtime": b, "branch": "feature/h" },
+                    { "id": "h2", "runtime": "bare" },
+                ],
+                "untaken_handovers_not_listed": 1,
+                "digest": "d1g3st",
+            },
+        });
+        let text = render_state(&answer);
+        for line in [
+            "sessions   2 active, 3 closed, 1 expired",
+            "claims     4 held, 1 conflicted, 5 released, 6 expired",
+            "overlaps   7",
+            "runtime    aaaaaaaa…-0001 own beat 1.5s ago sessions 2 active claims 4 held \
+             newest #905 — ship the inspector",
+            "runtime    bbbbbbbb…-0002 expired sessions 0 active claims 0 held newest -",
+            "runtime    bare live sessions 0 active claims 0 held",
+            "           and 2 more runtime(s)",
+            "review     r-1 feature/x open",
+            "handover   h1 from bbbbbbbb…-0002 branch feature/h untaken",
+            "handover   h2 from bare branch - untaken",
+            "           and 1 more untaken handover(s)",
+            "digest     d1g3st",
+        ] {
+            assert!(
+                text.lines().any(|l| l == line),
+                "missing {line:?} in:\n{text}"
+            );
+        }
+        assert!(
+            !text.contains("open review(s)"),
+            "none past the list: {text}"
+        );
+        let empty = render_state(&json!({ "summary": {} }));
+        assert!(
+            empty.starts_with("sessions   0 active, 0 closed, 0 expired"),
+            "{empty}"
+        );
+        assert!(empty.ends_with("digest     "), "{empty}");
     }
 
     #[test]
@@ -1304,6 +1426,26 @@ mod tests {
             },
             "streams": [],
         })
+    }
+
+    #[test]
+    fn a_withdrawn_review_shows_the_requesters_result_under_it() {
+        let mut v = folded_state();
+        v["state"]["reviews"] = json!([{
+            "key": "s/r2", "subject": "pre-flight #919", "state": "withdrawn", "answers": [],
+            "result": format!("clean: 45 gates\nsecond line {}", "x".repeat(200)),
+        }]);
+        let text = render_state(&v);
+        assert!(
+            text.contains("review     s/r2 pre-flight #919 withdrawn (0 answer(s))\n"),
+            "{text}"
+        );
+        assert!(
+            text.contains("           result: clean: 45 gates\n"),
+            "first line only:\n{text}"
+        );
+        assert_eq!(clip("abcdef", 3), "abc…");
+        assert_eq!(clip("abc", 3), "abc");
     }
 
     #[test]

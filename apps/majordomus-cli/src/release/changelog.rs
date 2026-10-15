@@ -350,7 +350,8 @@ fn added_at_each(root: &Path, paths: &[&str]) -> Vec<Option<String>> {
             .collect();
         workers
             .into_iter()
-            .flat_map(|w| w.join().unwrap_or_else(|e| std::panic::resume_unwind(e)))
+            // `added_at` has no panic site, so a worker always returns: no panic to carry on
+            .flat_map(|w| w.join().expect("added_at does not panic"))
             .collect()
     });
     let mut out = vec![None; paths.len()];
@@ -785,6 +786,22 @@ mod tests {
         assert_eq!(together[0].as_deref(), Some(at[11].as_str()));
         assert_eq!(together[12].as_deref(), Some(at[0].as_str()));
         assert!(added_at_each(dir.path(), &[]).is_empty());
+        // one path is asked in this thread, and answered as it is alone
+        assert_eq!(added_at_each(dir.path(), &asked[..1]), alone[..1]);
+    }
+
+    /// An ADR the index holds without a string `id` names no decision: it is left out, not
+    /// listed under an empty or a numeric name.
+    #[test]
+    fn an_adr_without_a_string_id_is_no_decision() {
+        let (dir, _) = repo_with_decisions(&["adr-0001"]);
+        let mut unnamed = adr_object("adr-0002");
+        unnamed.metadata.as_object_mut().unwrap().remove("id");
+        let mut numbered = adr_object("adr-0003");
+        numbered.metadata["id"] = 3.into();
+        let all = decisions_of(dir.path(), &[adr_object("adr-0001"), unnamed, numbered]);
+        let ids: Vec<&str> = all.iter().map(|d| d.id.as_str()).collect();
+        assert_eq!(ids, ["adr-0001"]);
     }
 
     /// A throwaway repository with `n` commits, the first of them tagged as a release the

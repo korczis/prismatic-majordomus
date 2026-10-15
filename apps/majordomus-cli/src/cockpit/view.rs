@@ -42,8 +42,13 @@ pub struct Shell<'a> {
     pub navigation: &'a Navigation,
     /// The stylesheet URL, with its digest.
     pub stylesheet: String,
+    /// The favicon URL, with its digest.
+    pub favicon: String,
     /// The Cockpit's own script modules, in load order, with their digests.
     pub scripts: Vec<String>,
+    /// The vendored libraries' digested URLs, a JSON object by file name, published on the
+    /// body for `vendor()` to read.
+    pub vendor: String,
     /// Whether the distribution has an asset directory at all.
     pub assets_present: bool,
     /// The executable's version, shown in the footer.
@@ -58,7 +63,7 @@ pub fn page(shell: &Shell<'_>, main: El) -> String {
             .attr("href", shell.stylesheet.clone()),
         el("link")
             .attr("rel", "icon")
-            .attr("href", "/cockpit/assets/favicon.svg"),
+            .attr("href", shell.favicon.clone()),
         // the theme is applied before first paint, so a dark-mode reader never sees a
         // white flash; this is the one inline script the Cockpit ships, and the
         // content-security policy names its digest rather than allowing inline scripts
@@ -86,6 +91,7 @@ pub fn page(shell: &Shell<'_>, main: El) -> String {
         )
         .attr_if("data-theme-class", design.map(|d| d.theme.class.clone()))
         .attr_if("data-design", design.map(|d| d.short_fingerprint()))
+        .attr("data-vendor", shell.vendor.clone())
         .child(skip_link())
         .child(header(shell))
         .child(

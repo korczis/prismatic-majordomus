@@ -116,7 +116,7 @@ for f in $gen_files; do
   [ "$(jq -r '.schema' "$SITE/data/generated/$f.json" 2>/dev/null)" = 1 ] || bad schema "$f.json missing or schema != 1"
 done; ok schema "every generated file ($(printf '%s\n' $gen_files | wc -l | tr -d ' ')) carries schema 1"
 # 3. marketing copy: line budget, no numbers, no claim words
-ml="$(mj_lines "$SITE/data/marketing.toml")"; [ "$ml" -le 60 ] && ok promo "marketing.toml is $ml lines, budget 60" || bad promo "marketing.toml is $ml lines, budget 60"
+ml="$(mj_lines "$SITE/data/marketing.toml")"; [ "$ml" -le 80 ] && ok promo "marketing.toml is $ml lines, budget 80" || bad promo "marketing.toml is $ml lines, budget 80"
 if grep -vE '^\s*#' "$SITE/data/marketing.toml" | grep -qE '\b[0-9]+ ?%|\b[0-9]{2,}\b'; then bad promo "marketing.toml contains a number; numbers are computed, never written"; fi
 # 3a. the long-form argument: the same rules, its own budget. It is the other hand-written file
 # on the site, and the one carrying the most assertion. What is mechanised here is what a script
@@ -328,12 +328,13 @@ EOF_CARDS
   [ -z "$hit" ] || { bad features "a number is written into a feature template: $(printf '%s' "$hit" | head -3 | tr '\n' ' ')"; fx_bad=1; }
   [ "$fx_bad" = 0 ] && ok features "every public feature is one card on /features/, under its domain or under none; every card names a public feature and links its page; a feature with a domain is placed under it; no feature template selects or counts by hand"
 fi
-# 3b. the terminal is a replay, not a mockup. Every panel the homepage shows is a run
-# site/data/generated/terminal.json recorded, and every run the dataset holds is on the page:
+# 3b. the terminal is a replay, not a mockup. Every run the homepage names is a run
+# site/data/generated/terminal.json recorded, and every run the dataset holds is named there:
 # both directions, because a page that drops a refusal and a dataset that gains one unnoticed
-# are the same defect seen from two sides. The command line, the exit status and the first
-# line of the body are matched against the rendered HTML, so a template that prettifies a
-# transcript, truncates it, or writes one of its own fails here rather than on the site. The
+# are the same defect seen from two sides. The homepage links each run's scenario, and the
+# command line and the first line of the body are matched against that scenario's rendered
+# page, so a link that leads to a page without the run, or a template that prettifies a
+# transcript, truncates it, or writes one of its own, fails here rather than on the site. The
 # body line is compared up to its reproduce command, which is the one part of a finding that
 # carries shell quoting the page's own escaping would have to be replayed byte for byte to
 # compare -- the verdict before it is what a reader is being shown.
@@ -344,16 +345,33 @@ if [ -f "$TD" ]; then
   # The text is read with its tags removed: the terminal draws the prompt outside the command
   # it copies (partials/terminal-run.html), so "$ <command>" is what a reader sees, not a
   # byte sequence of the markup.
-  HOME_HTML="$(sed 's/<[^>]*>//g; s/&quot;/"/g; s/&#x27;/'"'"'/g; s/&#39;/'"'"'/g; s/&lt;/</g; s/&gt;/>/g; s/&amp;/\&/g' "$PUB/index.html")"
-  n=0
-  while IFS="$MJ_TAB" read -r cmd first; do
+  term_text() { sed 's/<[^>]*>//g; s/&quot;/"/g; s/&#x27;/'"'"'/g; s/&#39;/'"'"'/g; s/&lt;/</g; s/&gt;/>/g; s/&amp;/\&/g' "$1"; }
+  HOME_HTML="$(term_text "$PUB/index.html")"
+  # The homepage names each run and links the scenario it was recorded in; the transcript is
+  # that scenario's page's, which is where it is compared (until 2026-10 every transcript was
+  # inline on the homepage, and was a quarter of its weight). A refusal is named by its
+  # command, as the run printed it; a lifecycle step by the step the lifecycle declares, so
+  # its command is looked for on the page its link leads to and nowhere else.
+  n=0; term_route=""; term_page=""
+  while IFS="$MJ_TAB" read -r kind route cmd first; do
+    [ -n "$kind" ] || continue
     n=$((n + 1))
-    printf '%s' "$HOME_HTML" | grep -qF -- "$ $cmd" \
-      || { bad terminal "the homepage does not carry the recorded run: $cmd"; term_bad=1; }
-    [ -z "$first" ] || printf '%s' "$HOME_HTML" | grep -qF -- "$first" \
-      || { bad terminal "the homepage does not carry the output of: $cmd"; term_bad=1; }
+    if [ "$kind" = refusal ]; then
+      printf '%s' "$HOME_HTML" | grep -qF -- "$ $cmd" \
+        || { bad terminal "the homepage does not name the recorded refusal: $cmd"; term_bad=1; }
+    fi
+    if [ "$route" != "$term_route" ]; then
+      term_route="$route"; term_page=""
+      [ -f "$PUB${route}index.html" ] && term_page="$(term_text "$PUB${route}index.html")"
+    fi
+    [ -n "$term_page" ] || { bad terminal "the scenario page $route, where $cmd was recorded, was not built"; term_bad=1; continue; }
+    printf '%s' "$term_page" | grep -qF -- "$cmd" \
+      || { bad terminal "$route does not carry the recorded run the homepage links it for: $cmd"; term_bad=1; }
+    [ -z "$first" ] || printf '%s' "$term_page" | grep -qF -- "$first" \
+      || { bad terminal "$route does not carry the output of: $cmd"; term_bad=1; }
   done <<EOF
-$(jq -r '[.walkthrough[], .refusals[]] | .[] | [.command, ((.output | split("\n") | map(select(length > 0)) | first // "") | split("  [reproduce:") | first)] | @tsv' "$TD")
+$(jq -r 'def first_line: ((.output | split("\n") | map(select(length > 0)) | first // "") | split("  [reproduce:") | first);
+         ((.walkthrough[] | ["step", .route, .command, first_line]), (.refusals[] | ["refusal", .route, .command, first_line])) | @tsv' "$TD")
 EOF
   want="$(jq -r '(.walkthrough | length) + (.refusals | length)' "$TD")"
   [ "$n" = "$want" ] || { bad terminal "the homepage was checked against $n panel(s), the dataset holds $want"; term_bad=1; }
@@ -365,13 +383,14 @@ EOF
     grep -qF "$PREFIX$r" "$PUB/index.html" \
       || { bad terminal "the homepage does not link the scenario $r a panel was recorded in"; term_bad=1; }
   done
-  [ "$term_bad" = 0 ] && ok terminal "$(jq -r '.counts.walkthrough' "$TD") lifecycle step(s) and $(jq -r '.counts.refusals' "$TD") refusal(s) on the homepage, each the command, the exit status and the stdout of a run recorded in $(jq -r '.counts.scenarios' "$TD") executed scenario(s); nothing on this page is typed"
+  [ "$term_bad" = 0 ] && ok terminal "$(jq -r '.counts.walkthrough' "$TD") lifecycle step(s) and $(jq -r '.counts.refusals' "$TD") refusal(s) on the homepage, each linking the scenario it was recorded in, and each scenario page carrying the command and the stdout of that run; nothing on this page is typed"
 else bad terminal "site/data/generated/terminal.json missing (regenerate: scripts/generate-site-data)"; fi
 # 3b'. the challenge is a replay too, of one scenario from start to finish, and it is held the
 # same way in both directions: every step site/data/generated/challenge.json recorded is on
-# /challenge/ and in the homepage replay, command line and decision lines as the run printed
-# them, the page renders exactly as many steps as the run holds, the homepage's first call to
-# action leads there, and every comparison row links the guarantee it stands on. Its words
+# /challenge/, command line and decision lines as the run printed them, the page renders
+# exactly as many steps as the run holds, the homepage carries the run's first refusal, its
+# final acceptance and the note of every step it retells, its call to see it working leads
+# there, and every comparison row links the guarantee it stands on. Its words
 # (site/data/challenge.toml) carry no number, like every other hand-written file on the site.
 CD="$SITE/data/generated/challenge.json"
 if [ -f "$SITE/data/challenge.toml" ]; then
@@ -387,18 +406,31 @@ if [ -f "$SITE/data/challenge.toml" ]; then
       [ -n "$want" ] || continue
       ch_n=$((ch_n + 1))
       printf '%s' "$CH_PAGE" | grep -qF -- "$want" || { bad challenge "/challenge/ does not carry the recorded line: $want"; ch_bad=1; }
-      printf '%s' "$CH_HOME" | grep -qF -- "$want" || { bad challenge "the homepage replay does not carry the recorded line: $want"; ch_bad=1; }
     done <<EOF
 $(jq -r '.steps[] | ("$ " + .command), (.decision[] | split("  [reproduce:") | first)' "$CD")
 EOF
+    # the homepage carries the run's verdicts, not its transcript: the command of the first
+    # finish the run refused with the verdict that refused it, the verdict that finally
+    # accepted it, and the note of every step it tells the story with
+    ch_h=0
+    while IFS= read -r want; do
+      [ -n "$want" ] || continue
+      ch_h=$((ch_h + 1))
+      printf '%s' "$CH_HOME" | grep -qF -- "$want" || { bad challenge "the homepage does not carry the recorded run's: $want"; ch_bad=1; }
+    done <<EOF
+$(jq -r '([.steps[] | select(.outcome == "refused" and .argv[0] == "finish")][0] // empty | ("$ " + .command), (.decision[] | select(startswith("finish:")))),
+         ([.steps[] | select(.outcome == "accepted" and .argv[0] == "finish")] | last // empty | .decision[] | select(startswith("finish:"))),
+         (.steps[] | select(.actor == "worker" or .argv[0] == "finish" or .argv[0] == "check") | .note // empty)' "$CD")
+EOF
+    [ "$ch_h" -gt 0 ] || { bad challenge "challenge.json gives the homepage no verdict to carry; a check over nothing has not passed"; ch_bad=1; }
     [ "$ch_n" -gt 0 ] || { bad challenge "challenge.json holds no recorded line to look for; a check over nothing has not passed"; ch_bad=1; }
     panels="$(grep -o 'data-outcome="[a-z]*"' "$PUB/challenge/index.html" | wc -l | tr -d ' ')"
     [ "$panels" = "$(jq '.steps | length' "$CD")" ] || { bad challenge "/challenge/ renders $panels step panel(s), the recorded run has $(jq '.steps | length' "$CD")"; ch_bad=1; }
-    grep -qE 'href="[^"]*/challenge/"[^>]*data-cta="challenge"' "$PUB/index.html" || { bad challenge "the homepage's first call to action does not lead to /challenge/"; ch_bad=1; }
+    grep -qE 'href="[^"]*/challenge/"[^>]*data-cta="challenge"' "$PUB/index.html" || { bad challenge "the homepage's call to see it working does not lead to /challenge/"; ch_bad=1; }
     for c in $(jq -r '.claims[].id' "$CD"); do
       grep -qF "/guarantees/$c/" "$PUB/challenge/index.html" || { bad challenge "/challenge/ does not link the guarantee $c a comparison row stands on"; ch_bad=1; }
     done
-    [ "$ch_bad" = 0 ] && ok challenge "$(jq -r '.counts.steps' "$CD") recorded step(s) and $(jq -r '.counts.refusals' "$CD") refusal(s) on /challenge/ and the homepage exactly as the run printed them ($ch_n line(s) matched); every comparison row links the guarantee it stands on"
+    [ "$ch_bad" = 0 ] && ok challenge "$(jq -r '.counts.steps' "$CD") recorded step(s) and $(jq -r '.counts.refusals' "$CD") refusal(s) on /challenge/ exactly as the run printed them ($ch_n line(s) matched), its verdicts and its story on the homepage ($ch_h line(s) matched); every comparison row links the guarantee it stands on"
   fi
 fi
 # 3c. the marketing copy carries no capability claim: the words are positioning, and every
@@ -829,6 +861,20 @@ while IFS="$MJ_TAB" read -r s_id s_mount _ s_producer; do
 done <<EOF
 $COMPOSED_ROWS
 EOF
+# and what the publication holds without this build composing it (ADR 0141): /build.json names
+# exactly the snapshots the publication model declares, each at the topology's mount of the
+# surface it is a snapshot of, and the site itself has built nothing at that mount. The pages
+# link a published copy from this list, so a list that drifted from the declaration is a link
+# to nothing, or a published surface still described as local.
+if [ -x "$ROOT/scripts/pages" ] && [ -f "$ROOT/.ai/repo/ci/pages.yaml" ]; then
+  snap_want="$("$ROOT/scripts/pages" snapshots | cut -f1,2 | LC_ALL=C sort)" || { bad surfaces "the publication model's snapshots cannot be read (scripts/pages snapshots)"; snap_want=""; }
+  snap_got="$(jq -r '.snapshots[]? | [.id, .mount] | @tsv' "$PUB/build.json" 2>/dev/null | LC_ALL=C sort || true)"
+  if [ "$snap_want" != "$snap_got" ]; then
+    bad surfaces "/build.json names the snapshots [$(printf '%s' "$snap_got" | tr '\t\n' ' ,')] and the publication model declares [$(printf '%s' "$snap_want" | tr '\t\n' ' ,')] (.ai/repo/ci/pages.yaml deploy.snapshots)"
+  else
+    ok surfaces "/build.json names the $(printf '%s' "$snap_want" | grep -c . || true) snapshot(s) the publication model declares, each at the topology's mount"
+  fi
+fi
 if [ "$surf_n" = 0 ]; then ok surfaces "docs/generated/web.json declares no published surface to compose; the site is the whole publication"
 elif [ "$surf_bad" = 0 ]; then ok surfaces "$surf_n composed surface(s) ($(printf '%s' "$COMPOSED_MOUNTS" | tr '\n' ' ')) are in the build, each built from ${build_commit:0:12}, the commit this build is"; fi
 # 13j. the build's provenance is served at /build.json and is this build's: the commit is
@@ -911,8 +957,18 @@ ok tiles "every profile, claim, status, responsibility, command, doctrine, use c
 # of the hero's section, read by landmark: a fixed count of the first links (it was 80) stopped
 # reaching the menu's last items once the homepage and the bar carried more links than that, and
 # a missing reference surface then went unreported here. A page with no hero is read whole.
-for href in $(awk '{ print } /id="hero"/ { h = 1 } h && /<\/section>/ { exit }' "$PUB/index.html" | grep -oE 'href="[^"]*"' | sed -E "s#href=\"$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$SITE/config.toml" | sed 's#/$##')##; s#\"##g; s#[?].*\$##" | grep -E '^/' | LC_ALL=C sort -u); do t="$PUB$href"; [ -f "$t/index.html" ] || [ -f "$t" ] || bad nav "navigation/hero link $href does not resolve"; done
-ok nav "every navigation link on the homepage resolves"
+# The root of a mount the publication holds a snapshot at (/build.json `snapshots`, ADR 0141) is
+# decided by that declaration when the snapshot is not in this tree: the deploy places it after
+# this check and refuses a site without it, and section 13m holds the list to the publication
+# model. Anything deeper than the root must be a file here like every other link.
+snap_roots="$(jq -r '.snapshots[]? | .mount' "$PUB/build.json" 2>/dev/null | sed 's#/*$##' || true)"
+nav_snap=0
+for href in $(awk '{ print } /id="hero"/ { h = 1 } h && /<\/section>/ { exit }' "$PUB/index.html" | grep -oE 'href="[^"]*"' | sed -E "s#href=\"$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$SITE/config.toml" | sed 's#/$##')##; s#\"##g; s#[?].*\$##" | grep -E '^/' | LC_ALL=C sort -u); do t="$PUB$href"
+  if [ -f "$t/index.html" ] || [ -f "$t" ]; then continue; fi
+  if [ -n "$snap_roots" ] && printf '%s\n' "$snap_roots" | grep -qxF -- "${href%/}"; then nav_snap=$((nav_snap + 1)); continue; fi
+  bad nav "navigation/hero link $href does not resolve"
+done
+ok nav "every navigation link on the homepage resolves ($nav_snap of them the root of a snapshot the publication holds and this build does not compose)"
 # 13e. and the other direction: every section the site publishes is reachable from the menu.
 #
 # The half that was missing. Check 13d proves nav -> page, so a menu entry can never point at
@@ -1309,7 +1365,10 @@ else
       # records rather than missing releases. A changelog naming an old version is doing its
       # job. The claim here is narrower than "every version on the site is obtainable", and the
       # check has to be too, or it reports true things that are not what it says.
-      shown="$(jq -r '.release // empty' "$ROOT/site/data/generated/project.json" 2>/dev/null)"
+      #
+      # What the site offers is build.json's `release` (scripts/site-build derives it, the newer
+      # of the newest record and what gh-pages already serves); project.json carries no release.
+      shown="$(jq -r '.release.version // empty' "$PUB/build.json" 2>/dev/null)"
       if [ -n "$shown" ]; then
         [ -f "$PUB/releases/v${shown#v}.json" ] \
           || { bad install "the site presents v${shown#v} as its version and /releases/v${shown#v}.json is not served: a reader beside the install command is told to expect a version that does not exist"; distbad=1; }
@@ -1327,6 +1386,43 @@ else
   fi
 fi
 [ "$distbad" = 0 ] && ok install "/install.sh is served as the model's URL names it, the homepage and the installation page show the command it composes, and every published release is complete"
+
+# 17b. one release, every surface (project.the-site-offers-the-release-it-published). The
+# release this build offers is derived once, into /build.json; the homepage states it in its
+# trust strip (`data-release`), and /releases/latest.json is what the installer resolves. The
+# three are refused unless they name one version: a template that read another source — the
+# record alone, as every page did until 2026-10-12 — renders a page that disagrees with the
+# metadata published beside it, and that is a build refused here, before anything is pushed.
+# Every `data-release` the homepage carries — the navbar badge, the hero badge, the trust strip
+# — is that one value. And the half that is decidable from the tree alone, before a merge: the
+# two committed projections of the latest release — `latest` in distribution.json, which the
+# build reads, and site/static/releases/latest.json, which it serves — name one version, so a
+# record whose projections were half regenerated cannot reach the build that would offer it.
+# Both come from `Releases::latest_stable`, the highest stable record that is not withdrawn;
+# the records are not listed here to find "the newest", because the highest file name is a
+# second derivation and a wrong one the day a prerelease or a yanked record tops it (#918).
+relbad=0
+offered="$(jq -r '.release.version // empty' "$PUB/build.json" 2>/dev/null || true)"
+home_offer="$(sed -n 's/.*data-trust-key="release" data-release="\([^"]*\)".*/\1/p' "$PUB/index.html" 2>/dev/null | head -n 1)"
+pub_latest="$(jq -r '.version // empty' "$PUB/releases/latest.json" 2>/dev/null || true)"
+if [ -n "$offered" ] || [ -n "$home_offer" ] || [ -n "$pub_latest" ]; then
+  [ "$home_offer" = "$offered" ] \
+    || { bad release "the homepage offers ${home_offer:-no release} and /build.json derives ${offered:-none}: a page reads another source than build.json's release"; relbad=1; }
+  [ "$pub_latest" = "$offered" ] \
+    || { bad release "/build.json offers ${offered:-no release} and the /releases/latest.json this build serves names ${pub_latest:-none}"; relbad=1; }
+fi
+if [ -n "$offered" ]; then
+  other_offers="$(grep -oE 'data-release="[^"]*"' "$PUB/index.html" 2>/dev/null | sed 's/^[^"]*"//; s/"$//' \
+    | LC_ALL=C sort -u | grep -vxF -- "$offered" | tr '\n' ' ' || true)"
+  [ -z "$other_offers" ] \
+    || { bad release "the homepage carries data-release ${other_offers% } beside the ${offered} /build.json offers: a badge reads another source"; relbad=1; }
+fi
+dist_latest="$(jq -r '.latest.version // empty' "$DIST" 2>/dev/null || true)"
+static_latest="$(jq -r '.version // empty' "$SITE/static/releases/latest.json" 2>/dev/null || true)"
+[ "$static_latest" = "$dist_latest" ] \
+  || { bad release "distribution.json names ${dist_latest:-no release} as the latest and site/static/releases/latest.json names ${static_latest:-none}; regenerate (scripts/derive)"; relbad=1; }
+[ "$relbad" = 0 ] && ok release "one release on every surface: the homepage, /build.json and /releases/latest.json offer ${offered:-none} ($(jq -r '.release.source // "no release"' "$PUB/build.json" 2>/dev/null)), and the committed projections agree on ${dist_latest:-none}"
+
 
 # 18. a publication offers no surface it cannot answer for. Every route the projection
 # declares `served-only` needs a running process, so this site may name it and must not

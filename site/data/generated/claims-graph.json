@@ -591,6 +591,15 @@
       "note": "init seeds .ai/ from the skeleton and nothing else; no hook, no shell file, no tool installation. doctor fails on a section the manifest names that is absent, and on a manifest key nothing reads."
     },
     {
+      "id": "claim:personal-layer-changes-nothing-shared",
+      "kind": "claim",
+      "label": "A layer installed with --personal is one person's own in a shared repository: it changes no tracked file, no .gitignore line and nothing git status shows, and the command that makes the claim verifies it",
+      "status": "guaranteed",
+      "route": "/guarantees/personal-layer-changes-nothing-shared/",
+      "external": false,
+      "note": "The cover is a marked block in the common git directory's info/exclude. init --personal exits 10 unless git status reads the same after it as before, the installer compares it again by itself, update and capture install cover each path before writing it and refuse a tracked one whole, and doctor re-verifies on every run. Whether a layer is personal is read from the block and stored nowhere. init --extend --shared removes the cover and commits nothing."
+    },
+    {
       "id": "claim:local-state-ignored",
       "kind": "claim",
       "label": "Checkout-local state lives under .ai/local/, is ignored by git, and is absent on a fresh clone or worktree",
@@ -876,7 +885,7 @@
       "status": "guaranteed",
       "route": "/guarantees/projected-record-edit-is-landable/",
       "external": false,
-      "note": "GitHub shows the trunk's plan and nothing applies it automatically, so a record a pull request edits is behind there until the pull request has merged and somebody has applied. The gate reports behind, state, milestone and closed as PENDING for the records a head changed since its merge base, and on the trunk for the records that changed in a landing younger than apply.window in .ai/repo/ci/github.yaml. A record has changed when its file or its rendering differs. Drift on any other record is refused as before, and so is every record when the change cannot be measured."
+      "note": "GitHub shows the trunk's plan and nothing else, so a record a pull request edits is behind there until the pull request has merged and the landing has applied it (.github/workflows/github.yml). The gate reports behind, state, milestone and closed as PENDING for the records a head changed since its merge base, and on the trunk for the records that changed in a landing younger than apply.window in .ai/repo/ci/github.yaml. A record has changed when its file or its rendering differs. Drift on any other record is refused as before, and so is every record when the change cannot be measured."
     },
     {
       "id": "claim:intent-stage-derived",
@@ -1642,6 +1651,24 @@
       "route": "/guarantees/cockpit-is-a-projection-of-the-registry/",
       "external": false,
       "note": "a_capability_the_repository_adds_reaches_every_cockpit_surface adds one rule to a fixture repository, which the registry makes a capability, and asks the Cockpit for it over a real socket in its listing, on its own page, on its object page with the navigation entry for its kind, and in its search; the_runner_form_is_generated_from_the_input_schema in the same file proves the form. Nothing of the Cockpit names that capability."
+    },
+    {
+      "id": "claim:ui-dashboard-cites-its-sources",
+      "kind": "claim",
+      "label": "The UI's dashboard at /ui links every capability it read to that capability's page, serves under the Cockpit's security policy, and never waits for the pull-request queue, which is a page and a fragment of its own",
+      "status": "guaranteed",
+      "route": "/guarantees/ui-dashboard-cites-its-sources/",
+      "external": false,
+      "note": "the_dashboard_is_served_at_ui_under_the_cockpits_policy starts a real server on a fixture repository and asserts that the page links /cockpit/capabilities/<id> for each of health.report, release.version, distribution.releases, plan.status, plan.roadmap and mesh.peers, carries the Cockpit's content-security policy, and pulls the queue from /ui/panels/pull-requests rather than citing integration.queue; the_queue_panel_is_a_page_and_a_fragment proves the queue's own route."
+    },
+    {
+      "id": "claim:observatory-draws-nothing-it-did-not-read",
+      "kind": "claim",
+      "label": "The Observatory at /ui/observatory and /ui/kiosk shows a scene only when the capabilities it requires answered with something to draw, or, for a scene of the mesh where no mesh runs, when the repository carries a recording of it, which it labels a replay; a scene without either carries no model and states the source's reason, on a server and in the published snapshot alike",
+      "status": "guaranteed",
+      "route": "/guarantees/observatory-draws-nothing-it-did-not-read/",
+      "external": false,
+      "note": "The case starts a server over a freshly initialised repository and takes a UI snapshot of it, and on both reads the projection the page carries: eight scenes in the declared order, every source named with its state and a failed one with a reason, an available scene with a model and an unavailable one with none and a reason, the three mesh scenes unavailable where no mesh runs, the kiosk carrying the same scenes, the two redirects, and the snapshot holding the page and its script. It reads the projection, not the canvas: what the script paints from an available scene's model is not claimed here."
     },
     {
       "id": "claim:deployment-contract-refuses-by-name",
@@ -2629,6 +2656,20 @@
       "external": false
     },
     {
+      "id": "impl:apps/majordomus-cli/src/ui/dashboard.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/ui/dashboard.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/ui/observatory.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/ui/observatory.rs",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "impl:apps/majordomus-cli/src/web/discover.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/web/discover.rs",
@@ -3140,9 +3181,9 @@
       "external": false
     },
     {
-      "id": "source:.ai/repo/rules/project/english-only.v2.md",
+      "id": "source:.ai/repo/rules/project/english-only.v3.md",
       "kind": "source",
-      "label": ".ai/repo/rules/project/english-only.v2.md",
+      "label": ".ai/repo/rules/project/english-only.v3.md",
       "route": null,
       "external": false
     },
@@ -3319,6 +3360,13 @@
       "kind": "source",
       "label": "docs/KNOWLEDGE.md",
       "route": "/docs/knowledge/",
+      "external": false
+    },
+    {
+      "id": "source:docs/MAJORDOMUS_UI.md",
+      "kind": "source",
+      "label": "docs/MAJORDOMUS_UI.md",
+      "route": "/docs/majordomus-ui/",
       "external": false
     },
     {
@@ -3558,6 +3606,13 @@
       "label": "apps/majordomus-cli/tests/registry.rs",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/tests/registry.rs"
+    },
+    {
+      "id": "test:apps/majordomus-cli/tests/ui_surface.rs",
+      "kind": "test",
+      "label": "apps/majordomus-cli/tests/ui_surface.rs",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/tests/ui_surface.rs"
     },
     {
       "id": "test:apps/majordomus-cli/tests/why.rs",
@@ -3826,11 +3881,25 @@
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/28_no_hardcoded_values.sh"
     },
     {
+      "id": "test:test/cases/2979_a_personal_layer_changes_nothing_shared.sh",
+      "kind": "test",
+      "label": "test/cases/2979_a_personal_layer_changes_nothing_shared.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/2979_a_personal_layer_changes_nothing_shared.sh"
+    },
+    {
       "id": "test:test/cases/29_prompt_capture.sh",
       "kind": "test",
       "label": "test/cases/29_prompt_capture.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/29_prompt_capture.sh"
+    },
+    {
+      "id": "test:test/cases/3011_the_observatory_draws_nothing_it_did_not_read.sh",
+      "kind": "test",
+      "label": "test/cases/3011_the_observatory_draws_nothing_it_did_not_read.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/3011_the_observatory_draws_nothing_it_did_not_read.sh"
     },
     {
       "id": "test:test/cases/30_command_registry.sh",
@@ -4778,6 +4847,11 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:personal-layer-changes-nothing-shared",
+      "target": "source:docs/INSTALL.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:local-state-ignored",
       "target": "source:docs/SCHEMAS.md",
       "kind": "specified_by"
@@ -5363,6 +5437,16 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:ui-dashboard-cites-its-sources",
+      "target": "source:docs/MAJORDOMUS_UI.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:observatory-draws-nothing-it-did-not-read",
+      "target": "source:docs/MAJORDOMUS_UI.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:deployment-contract-refuses-by-name",
       "target": "source:.ai/repo/rules/vendor/majordomus/rules/deployment-contract.v1.md",
       "kind": "specified_by"
@@ -5409,7 +5493,7 @@
     },
     {
       "source": "claim:published-translation-is-declared",
-      "target": "source:.ai/repo/rules/project/english-only.v2.md",
+      "target": "source:.ai/repo/rules/project/english-only.v3.md",
       "kind": "specified_by"
     },
     {
@@ -5993,6 +6077,11 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:personal-layer-changes-nothing-shared",
+      "target": "impl:lib/common.sh",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:local-state-ignored",
       "target": "impl:lib/common.sh",
       "kind": "implemented_by"
@@ -6515,6 +6604,16 @@
     {
       "source": "claim:cockpit-is-a-projection-of-the-registry",
       "target": "impl:apps/majordomus-cli/src/cockpit/mod.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:ui-dashboard-cites-its-sources",
+      "target": "impl:apps/majordomus-cli/src/ui/dashboard.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:observatory-draws-nothing-it-did-not-read",
+      "target": "impl:apps/majordomus-cli/src/ui/observatory.rs",
       "kind": "implemented_by"
     },
     {
@@ -7148,6 +7247,11 @@
       "kind": "proved_by"
     },
     {
+      "source": "claim:personal-layer-changes-nothing-shared",
+      "target": "test:test/cases/2979_a_personal_layer_changes_nothing_shared.sh",
+      "kind": "proved_by"
+    },
+    {
       "source": "claim:local-state-ignored",
       "target": "test:test/cases/01_init.sh",
       "kind": "proved_by"
@@ -7670,6 +7774,16 @@
     {
       "source": "claim:cockpit-is-a-projection-of-the-registry",
       "target": "test:apps/majordomus-cli/tests/cockpit.rs",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:ui-dashboard-cites-its-sources",
+      "target": "test:apps/majordomus-cli/tests/ui_surface.rs",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:observatory-draws-nothing-it-did-not-read",
+      "target": "test:test/cases/3011_the_observatory_draws_nothing_it_did_not_read.sh",
       "kind": "proved_by"
     },
     {

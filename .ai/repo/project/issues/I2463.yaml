@@ -46,4 +46,25 @@ evidence_required:
   - "train_model_unit_tests"
   - "trains_projection_case"
 created_at: 2026-10-11
-updated_at: 2026-10-11
+updated_at: 2026-10-12T10:59:59Z
+started_at: 2026-10-12T10:59:39Z
+started_event: sha256:e7b00616e848b3bd1a766202d241154abb429c8c310fd56dd9d06e90f080fe42
+verified_at: 2026-10-12T10:59:46Z
+verified_event: sha256:ee495f7d656b6bb6e758dedd929faa9e28061ff381e12fc61aef767b4e06b9f2
+completed_at: 2026-10-12T10:59:59Z
+completed_event: sha256:a5e8401e8eac1c6bba0a03c50177ca3a0f1937c4f5cf04e63cc8628515b09a8b
+evidence:
+  - covers: train_model_unit_tests
+    type: ci
+    command: "cargo test --lib integration::train (validate run 38223440282 on 722228ef3c, the v0.21.0 top)"
+    result: "17 integration::train tests ok"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/38223440282"
+    commit: 722228ef3c9d8db8af6039010f9bf88a106d6cc2
+    recorded_at: 2026-10-12T10:59:52Z
+  - covers: trains_projection_case
+    type: ci
+    command: "test/run.sh 1072_the_train_is_seen; cargo test --lib cockpit::trains (validate run 38223440282 on 722228ef3c, the v0.21.0 top)"
+    result: "case 1072_the_train_is_seen ok; 8 cockpit::trains tests ok"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/38223440282"
+    commit: 722228ef3c9d8db8af6039010f9bf88a106d6cc2
+    recorded_at: 2026-10-12T10:59:56Z

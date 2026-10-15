@@ -32,10 +32,15 @@ const POLL_SECONDS: u32 = 60;
 
 /// `/cockpit/trains`.
 pub fn page(ctx: &Context) -> Page {
-    let view: TrainsView = match ask(ctx, CAPABILITY, json!({})) {
-        Ok(v) => v,
-        Err(e) => return failed(Area::Trains, "Trains", e),
-    };
+    match ask(ctx, CAPABILITY, json!({})) {
+        Ok(view) => of_view(view),
+        Err(e) => failed(Area::Trains, "Trains", e),
+    }
+}
+
+/// The page of one answer of the capability: kept apart from the asking so that every shape
+/// of the answer can be drawn without a forge observation behind it.
+fn of_view(view: TrainsView) -> Page {
     let trail = vec![
         ("Cockpit", Some("/cockpit")),
         ("Integration", Some("/cockpit/integration")),
@@ -570,5 +575,195 @@ mod tests {
             html.contains("aria-live=\"polite\""),
             "the panel is announced"
         );
+    }
+
+    fn observed_view(trains: Vec<Train>) -> TrainsView {
+        let mut v = TrainsView::unobserved(String::new());
+        v.observed = true;
+        v.reason = None;
+        v.repository = Some("o/r".into());
+        v.base = Some("master".into());
+        v.master_sha = Some("m".repeat(40));
+        v.observed_at = Some("2026-10-11T00:00:00Z".into());
+        v.tallies.trains = trains.len();
+        v.tallies.links = trains.iter().map(|t| t.links.len()).sum();
+        v.trains = trains;
+        v
+    }
+
+    fn one_link_train(number: u64) -> Train {
+        Train {
+            id: format!("train-{number}"),
+            roots: vec![number],
+            tops: vec![number],
+            next: Some(number),
+            links: vec![link_of(number, None)],
+            edges: Vec::new(),
+            beneath: Vec::new(),
+            by_disposition: Default::default(),
+        }
+    }
+
+    /// A capability that cannot be asked is a failed page, never an empty one.
+    #[test]
+    fn a_page_whose_capability_does_not_answer_says_so() {
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a repository");
+        let bare = Context::new(
+            std::sync::Arc::new(repo.index().expect("an index")),
+            std::sync::Arc::new(
+                crate::capability::registry::CapabilityRegistry::builder()
+                    .build()
+                    .expect("an empty registry"),
+            ),
+        );
+        let page = page(&bare);
+        assert_eq!(page.status, 500);
+        let html = page.main.render();
+        assert!(html.contains("did not answer"), "{html}");
+        assert!(
+            !html.contains("data-mj-trains"),
+            "a failure drew a graph: {html}"
+        );
+    }
+
+    #[test]
+    fn nothing_observed_without_a_reason_is_still_said() {
+        let mut v = TrainsView::unobserved(String::new());
+        v.reason = None;
+        let page = of_view(v);
+        assert_eq!(page.status, 200);
+        let html = page.main.render();
+        assert!(html.contains("nothing is observed"), "{html}");
+        assert!(html.contains("majordomus prs refresh"), "{html}");
+        assert!(page.scripts.is_empty(), "no answer, no drawing");
+    }
+
+    /// An observed answer draws its tallies, the answer's identity, the graph, the
+    /// diagnostics, a card per train and the prepared heads no train holds.
+    #[test]
+    fn an_observed_answer_draws_every_part_of_itself() {
+        let mut v = observed_view(vec![one_link_train(7)]);
+        v.diagnostics = vec!["train-7 is caught in a dependency cycle".into()];
+        v.unattached_prep = vec![
+            crate::integration::train::UnattachedPrep {
+                number: 9,
+                sha: "9".repeat(40),
+                open: true,
+            },
+            crate::integration::train::UnattachedPrep {
+                number: 77,
+                sha: "7".repeat(40),
+                open: false,
+            },
+        ];
+        v.tallies.pending_prep = 1;
+        let page = of_view(v);
+        assert_eq!(page.status, 200);
+        assert_eq!(page.scripts, ["trains.js"]);
+        let html = page.main.render();
+        for want in [
+            "prepared heads no train holds",
+            "data-mj-trains-observed=\"2026-10-11T00:00:00Z\"",
+            &format!("every {POLL_SECONDS} s"),
+            "/cockpit/capabilities/integration.trains",
+            "Diagnostics",
+            "caught in a dependency cycle",
+            "id=\"train-7\"",
+            "refs/prep/9",
+            "open, stacked on nothing",
+            "refs/prep/77",
+            "not open",
+            "7777777777<",
+        ] {
+            assert!(html.contains(want), "the page lacks {want:?}: {html}");
+        }
+        assert!(
+            !html.contains("No open pull request is stacked on another"),
+            "{html}"
+        );
+    }
+
+    #[test]
+    fn an_observed_answer_with_no_train_says_there_is_none() {
+        let page = of_view(observed_view(Vec::new()));
+        let html = page.main.render();
+        assert!(
+            html.contains("No open pull request is stacked on another"),
+            "{html}"
+        );
+        assert!(!html.contains("Diagnostics"), "{html}");
+        assert!(!html.contains("Prepared heads no train holds"), "{html}");
+    }
+
+    /// The links beneath a train, a landed edge and a train with no link at its turn.
+    #[test]
+    fn a_train_card_names_what_is_beneath_it_and_when_nothing_is_at_its_turn() {
+        use crate::integration::model::DependencyState;
+        use crate::integration::train::BeneathLink;
+        let mut t = one_link_train(5);
+        t.next = None;
+        t.edges = vec![TrainEdge {
+            from: 5,
+            to: 4,
+            kind: TrainEdgeKind::DependsOn,
+            satisfied: true,
+        }];
+        t.beneath = vec![
+            BeneathLink {
+                number: 4,
+                state: DependencyState::Merged,
+                url: Some("https://github.com/o/r/pull/4".into()),
+            },
+            BeneathLink {
+                number: 3,
+                state: DependencyState::ClosedUnmerged,
+                url: None,
+            },
+        ];
+        let html = train_card(&t).render();
+        for want in [
+            "satisfied — it landed",
+            "Beneath it, no longer open: ",
+            "href=\"https://github.com/o/r/pull/4\"",
+            ", ",
+            "<code class=\"mj-mono\">#3</code>",
+            "no link at its turn",
+        ] {
+            assert!(html.contains(want), "the card lacks {want:?}: {html}");
+        }
+    }
+
+    /// A link with no page, caught in a cycle, carrying master, with no prepared head and no
+    /// checks page, and carrying links above it.
+    #[test]
+    fn a_link_row_says_each_fact_it_lacks_or_carries() {
+        let mut l = link_of(6, None);
+        l.in_cycle = true;
+        l.at_turn = false;
+        l.relation = RelationToMaster::CarriesMaster {
+            behind: 2,
+            authored: Vec::new(),
+        };
+        l.relation_kind = "carries_master".into();
+        l.carries_master = true;
+        l.checks_url = None;
+        l.carries = vec![8, 9];
+        l.on = vec![5];
+        let html = link_row(&l).render();
+        for want in [
+            "in a cycle",
+            "carries master (carries master)",
+            ">none<",
+            "#8 #9",
+            "#5",
+        ] {
+            assert!(html.contains(want), "the row lacks {want:?}: {html}");
+        }
+        assert!(!html.contains("checks</a>"), "{html}");
+        // no page at all: the number alone
+        l.url = None;
+        let html = link_row(&l).render();
+        assert!(html.contains("<code class=\"mj-mono\">#6</code>"), "{html}");
+        assert!(!html.contains("in a cycle"), "{html}");
     }
 }

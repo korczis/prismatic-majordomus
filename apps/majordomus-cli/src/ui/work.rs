@@ -8,7 +8,7 @@ use crate::cockpit::html::el;
 use super::dashboard::{issues_panel, PULL_REQUESTS_PANEL, ROWS};
 use super::shell::View;
 use super::source::{ask_all, Source};
-use super::view::{hero, kpi, list, panel, state, table, text, unanswered, wide};
+use super::view::{hero, kpi, list, panel, state, table, text, unanswered, value, wide};
 
 /// The route of the screen.
 pub const ROUTE: &str = "/ui/work";
@@ -104,26 +104,51 @@ fn issue_table(
     empty: &str,
 ) -> crate::cockpit::html::El {
     unanswered(issues).unwrap_or_else(|| {
-        let rows = list(issues, "/issues")
-            .iter()
+        let of_status: Vec<serde_json::Value> = list(issues, "/issues")
+            .into_iter()
             .filter(|i| text(i, "status") == status)
+            .collect();
+        let rows = of_status
+            .iter()
             .take(ROWS * 2)
             .map(|i| {
+                // an issue opens its inspector, its milestone the roadmap's
+                let (id, milestone) = (text(i, "id"), text(i, "milestone"));
                 el("tr")
                     .child(
-                        el("td")
-                            .child(el("span").class("mj-ui-mono mj-ui-dim").text(text(i, "id")))
-                            .child(el("span").class("mj-ui-cell-title").text(text(i, "title"))),
+                        el("td").child(
+                            el("a")
+                                .class("mj-ui-row-link")
+                                .attr("href", format!("{}?issue={id}#issue", super::prs::ROUTE))
+                                .child(
+                                    el("span")
+                                        .class("mj-ui-mono mj-ui-dim")
+                                        .text(value(i, "id")),
+                                )
+                                .child(
+                                    el("span").class("mj-ui-cell-title").text(value(i, "title")),
+                                ),
+                        ),
                     )
-                    .child(
-                        el("td")
-                            .class("mj-ui-mono mj-ui-dim")
-                            .text(text(i, "milestone")),
-                    )
+                    .child(el("td").child(if milestone.is_empty() {
+                        super::view::none()
+                    } else {
+                        super::view::code_link(super::milestone::href(&milestone), milestone)
+                    }))
                     .child(el("td").child(state(i, "priority")))
             })
             .collect::<Vec<_>>();
-        table(&["Issue", "Milestone", "Priority"], rows, empty)
+        el("div")
+            .child(table(&["Issue", "Milestone", "Priority"], rows, empty))
+            .children(super::view::more(
+                (ROWS * 2).min(of_status.len()),
+                of_status.len(),
+                Some(&format!(
+                    "{}?status={}",
+                    super::issues::ROUTE,
+                    status.to_lowercase()
+                )),
+            ))
     })
 }
 
@@ -141,6 +166,7 @@ mod tests {
             exposure: Default::default(),
             value: Ok(value),
             took: Duration::ZERO,
+            standing: crate::ui::source::Standing::NOW,
         }
     }
 
@@ -182,5 +208,34 @@ mod tests {
         );
         let html = issue_table(&issues, "DONE", "Nothing is done.").render();
         assert!(html.contains("Nothing is done."), "{html}");
+    }
+
+    /// An issue's row opens its inspector and its milestone the roadmap's; a table that
+    /// shows the first rows of a longer list says so and leads to the Issues screen.
+    #[test]
+    fn an_issue_row_opens_the_issue_and_its_milestone() {
+        let many: Vec<serde_json::Value> = (0..ROWS * 2 + 4)
+            .map(|i| json!({ "id": format!("I{i:04}"), "title": "t", "milestone": "m-first", "priority": "p1", "status": "READY" }))
+            .chain([json!({ "id": "I9000", "title": "No milestone", "status": "ACTIVE" })])
+            .collect();
+        let issues = answer(ISSUES, json!({ "issues": many }));
+        let html = issue_table(&issues, "READY", "none ready").render();
+        assert!(
+            html.contains("href=\"/ui/prs?issue=I0000#issue\""),
+            "{html}"
+        );
+        assert!(
+            html.contains("href=\"/ui/roadmap?milestone=m-first#milestone\""),
+            "{html}"
+        );
+        assert!(
+            html.contains("4 more") && html.contains("href=\"/ui/issues?status=ready\""),
+            "{html}"
+        );
+        let bare = issue_table(&issues, "ACTIVE", "none active").render();
+        assert!(
+            bare.contains(">none<") && !bare.contains("more not shown"),
+            "{bare}"
+        );
     }
 }

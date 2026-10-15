@@ -1,10 +1,10 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it; regenerate with `majordomus generate`
-# Generator: majordomus-cli 0.21.0
+# Generator: majordomus-cli 0.26.0
 schema: majordomus/cli/v1
 generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it; regenerate with `majordomus generate`"
-generator: majordomus-cli 0.21.0
-version: "0.21.0"
+generator: majordomus-cli 0.26.0
+version: "0.26.0"
 source: apps/majordomus-cli/src/cli.rs
 route_prefix: /docs/cli
 cli:
@@ -46,7 +46,7 @@ cli:
           global: true
           possible_values:
             - name: vcs
-              help: "Tracked files, through the version-control index (the layer's contract)"
+              help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
             - name: filesystem
               help: A walk of the work tree with the same glob semantics; untracked files included
           defaults:
@@ -202,7 +202,7 @@ cli:
           global: true
           possible_values:
             - name: vcs
-              help: "Tracked files, through the version-control index (the layer's contract)"
+              help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
             - name: filesystem
               help: A walk of the work tree with the same glob semantics; untracked files included
           defaults:
@@ -352,7 +352,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -466,7 +466,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -547,7 +547,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -612,7 +612,7 @@ cli:
           global: true
           possible_values:
             - name: vcs
-              help: "Tracked files, through the version-control index (the layer's contract)"
+              help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
             - name: filesystem
               help: A walk of the work tree with the same glob semantics; untracked files included
           defaults:
@@ -704,7 +704,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -807,7 +807,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -898,7 +898,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -1003,7 +1003,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -1081,7 +1081,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -1146,7 +1146,7 @@ cli:
           global: true
           possible_values:
             - name: vcs
-              help: "Tracked files, through the version-control index (the layer's contract)"
+              help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
             - name: filesystem
               help: A walk of the work tree with the same glob semantics; untracked files included
           defaults:
@@ -1194,6 +1194,8 @@ cli:
               help: "The shell tool's allow-lists under share/allow, derived from the schemas"
             - name: providers
               help: "The provider bootstraps the policy declares (AGENTS.md, CLAUDE.md, ...)"
+            - name: editors
+              help: "The files Zed and Google Antigravity read: `.agents/skills/<id>/SKILL.md` for every active skill, and `.zed/tasks.json` from the tracked justfile"
             - name: site
               help: "site/data/registry/registry.json, the registry dataset the site renders"
             - name: manifest
@@ -1205,7 +1207,7 @@ cli:
             - name: changelog
               help: "`docs/generated/changelog.{json,yaml,md}`: the changelog composed from the layer's release records, its decisions and the repository's commits"
             - name: deployment
-              help: "deploy/Dockerfile, .dockerignore and fly.toml, from the deployment objects"
+              help: "deploy/Dockerfile and .dockerignore, from the deployment objects"
             - name: graph
               help: "docs/generated/graph.json and its schema: the composed graph as data"
             - name: design
@@ -1265,6 +1267,20 @@ cli:
           command: majordomus generate openapi
           setup: []
           expectation: exits 0
+        - id: generate-site-check
+          title: Check one target without writing it
+          description: "`--check` composes with a target: here only the registry dataset the site renders is compared with what the sources produce, exit 10 naming it when it is stale."
+          argv:
+            - generate
+            - site
+            - "--check"
+          command: majordomus generate site --check
+          setup:
+            - argv:
+                - generate
+                - site
+              command: majordomus generate site
+          expectation: exits 0
       subcommands: []
     - path:
         - majordomus
@@ -1294,7 +1310,7 @@ cli:
           global: true
           possible_values:
             - name: vcs
-              help: "Tracked files, through the version-control index (the layer's contract)"
+              help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
             - name: filesystem
               help: A walk of the work tree with the same glob semantics; untracked files included
           defaults:
@@ -1476,7 +1492,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -1554,7 +1570,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -1640,7 +1656,7 @@ cli:
                   global: true
                   possible_values:
                     - name: vcs
-                      help: "Tracked files, through the version-control index (the layer's contract)"
+                      help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                     - name: filesystem
                       help: A walk of the work tree with the same glob semantics; untracked files included
                   defaults:
@@ -1709,7 +1725,7 @@ cli:
           global: true
           possible_values:
             - name: vcs
-              help: "Tracked files, through the version-control index (the layer's contract)"
+              help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
             - name: filesystem
               help: A walk of the work tree with the same glob semantics; untracked files included
           defaults:
@@ -1819,7 +1835,7 @@ cli:
           global: true
           possible_values:
             - name: vcs
-              help: "Tracked files, through the version-control index (the layer's contract)"
+              help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
             - name: filesystem
               help: A walk of the work tree with the same glob semantics; untracked files included
           defaults:
@@ -1919,7 +1935,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -2029,7 +2045,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -2142,7 +2158,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -2243,7 +2259,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -2344,7 +2360,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -2457,7 +2473,7 @@ cli:
                   global: true
                   possible_values:
                     - name: vcs
-                      help: "Tracked files, through the version-control index (the layer's contract)"
+                      help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                     - name: filesystem
                       help: A walk of the work tree with the same glob semantics; untracked files included
                   defaults:
@@ -2572,7 +2588,7 @@ cli:
                   global: true
                   possible_values:
                     - name: vcs
-                      help: "Tracked files, through the version-control index (the layer's contract)"
+                      help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                     - name: filesystem
                       help: A walk of the work tree with the same glob semantics; untracked files included
                   defaults:
@@ -2687,7 +2703,7 @@ cli:
                   global: true
                   possible_values:
                     - name: vcs
-                      help: "Tracked files, through the version-control index (the layer's contract)"
+                      help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                     - name: filesystem
                       help: A walk of the work tree with the same glob semantics; untracked files included
                   defaults:
@@ -2762,6 +2778,260 @@ cli:
                   setup: []
                   expectation: exits 13
               subcommands: []
+            - path:
+                - majordomus
+                - web
+                - report
+                - ui-snapshot
+              route: /docs/cli/web/report/ui-snapshot/
+              executable: true
+              usage: "majordomus web report ui-snapshot [OPTIONS]"
+              about: "The UI itself, read once at this commit and written as static pages a publication carries at /ui (ADR 0141)"
+              args:
+                - name: limit
+                  long: limit
+                  positional: false
+                  help: "The most pages to write: every screen and panel first, then what they link to"
+                  value_name: LIMIT
+                  takes_value: true
+                  required: false
+                  global: false
+                  possible_values: []
+                  defaults:
+                    - "240"
+                - name: budget_seconds
+                  long: budget-seconds
+                  positional: false
+                  help: The most seconds to spend on the pages the screens link to; the screens and panels are written whatever they cost
+                  value_name: BUDGET_SECONDS
+                  takes_value: true
+                  required: false
+                  global: false
+                  possible_values: []
+                  defaults:
+                    - "180"
+                - name: repo
+                  long: repo
+                  positional: false
+                  help: "Start the search for the repository root here (default: the current directory)"
+                  value_name: PATH
+                  takes_value: true
+                  required: false
+                  global: true
+                  possible_values: []
+                  defaults: []
+                - name: discovery
+                  long: discovery
+                  positional: false
+                  help: How declarative files are enumerated
+                  value_name: DISCOVERY
+                  takes_value: true
+                  required: false
+                  global: true
+                  possible_values:
+                    - name: vcs
+                      help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                    - name: filesystem
+                      help: A walk of the work tree with the same glob semantics; untracked files included
+                  defaults:
+                    - vcs
+                - name: strict
+                  long: strict
+                  positional: false
+                  help: Refuse to proceed when any file of the layer carries an error diagnostic
+                  value_name: STRICT
+                  takes_value: false
+                  required: false
+                  global: true
+                  possible_values: []
+                  defaults:
+                    - "false"
+                - name: share
+                  long: share
+                  positional: false
+                  help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+                  value_name: DIR
+                  takes_value: true
+                  required: false
+                  global: true
+                  possible_values: []
+                  defaults: []
+                - name: format
+                  long: format
+                  positional: false
+                  help: Output shape
+                  value_name: FORMAT
+                  takes_value: true
+                  required: false
+                  global: true
+                  possible_values:
+                    - name: text
+                      help: Lines for a person
+                    - name: json
+                      help: "One JSON document, deterministic"
+                  defaults:
+                    - text
+                - name: only
+                  long: only
+                  positional: false
+                  help: "Only these surfaces, by discovered id (repeat or separate with commas)"
+                  value_name: ONLY
+                  takes_value: true
+                  required: false
+                  global: true
+                  possible_values: []
+                  defaults: []
+                - name: exclude
+                  long: exclude
+                  positional: false
+                  help: "Every surface except these, by discovered id"
+                  value_name: EXCLUDE
+                  takes_value: true
+                  required: false
+                  global: true
+                  possible_values: []
+                  defaults: []
+              examples:
+                - id: web-report-ui-snapshot
+                  title: Read the UI once and write it as the pages a publication carries at /ui
+                  description: "Asks the UI in-process for every screen and panel and then, one page per family in turn until `--limit` pages or `--budget-seconds` are reached, for the pages they link to, and writes each as a file under target/web/ui-snapshot: links between them relative, a link only a running process answers led to the snapshot's page about the live UI, the script told not to read again, and every page stamped with the commit, the time and the executable that read it. The declaration beside it makes the directory a surface of every publication and of no process."
+                  argv:
+                    - web
+                    - report
+                    - ui-snapshot
+                    - "--limit"
+                    - "20"
+                  command: majordomus web report ui-snapshot --limit 20
+                  setup: []
+                  expectation: "exits 0; prints web report, ui-snapshot"
+              subcommands: []
+            - path:
+                - majordomus
+                - web
+                - report
+                - cockpit-snapshot
+              route: /docs/cli/web/report/cockpit-snapshot/
+              executable: true
+              usage: "majordomus web report cockpit-snapshot [OPTIONS]"
+              about: "The Cockpit itself, read once at this commit and written as static pages a publication carries at /cockpit (ADR 0147)"
+              args:
+                - name: limit
+                  long: limit
+                  positional: false
+                  help: "The most pages to write: every static route first, then the pages the UI's snapshot links to, then what those link to"
+                  value_name: LIMIT
+                  takes_value: true
+                  required: false
+                  global: false
+                  possible_values: []
+                  defaults:
+                    - "240"
+                - name: budget_seconds
+                  long: budget-seconds
+                  positional: false
+                  help: The most seconds to spend on the pages the static routes link to; the routes themselves are written whatever they cost
+                  value_name: BUDGET_SECONDS
+                  takes_value: true
+                  required: false
+                  global: false
+                  possible_values: []
+                  defaults:
+                    - "180"
+                - name: repo
+                  long: repo
+                  positional: false
+                  help: "Start the search for the repository root here (default: the current directory)"
+                  value_name: PATH
+                  takes_value: true
+                  required: false
+                  global: true
+                  possible_values: []
+                  defaults: []
+                - name: discovery
+                  long: discovery
+                  positional: false
+                  help: How declarative files are enumerated
+                  value_name: DISCOVERY
+                  takes_value: true
+                  required: false
+                  global: true
+                  possible_values:
+                    - name: vcs
+                      help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                    - name: filesystem
+                      help: A walk of the work tree with the same glob semantics; untracked files included
+                  defaults:
+                    - vcs
+                - name: strict
+                  long: strict
+                  positional: false
+                  help: Refuse to proceed when any file of the layer carries an error diagnostic
+                  value_name: STRICT
+                  takes_value: false
+                  required: false
+                  global: true
+                  possible_values: []
+                  defaults:
+                    - "false"
+                - name: share
+                  long: share
+                  positional: false
+                  help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+                  value_name: DIR
+                  takes_value: true
+                  required: false
+                  global: true
+                  possible_values: []
+                  defaults: []
+                - name: format
+                  long: format
+                  positional: false
+                  help: Output shape
+                  value_name: FORMAT
+                  takes_value: true
+                  required: false
+                  global: true
+                  possible_values:
+                    - name: text
+                      help: Lines for a person
+                    - name: json
+                      help: "One JSON document, deterministic"
+                  defaults:
+                    - text
+                - name: only
+                  long: only
+                  positional: false
+                  help: "Only these surfaces, by discovered id (repeat or separate with commas)"
+                  value_name: ONLY
+                  takes_value: true
+                  required: false
+                  global: true
+                  possible_values: []
+                  defaults: []
+                - name: exclude
+                  long: exclude
+                  positional: false
+                  help: "Every surface except these, by discovered id"
+                  value_name: EXCLUDE
+                  takes_value: true
+                  required: false
+                  global: true
+                  possible_values: []
+                  defaults: []
+              examples:
+                - id: web-report-cockpit-snapshot
+                  title: Read the Cockpit once and write it as the pages a publication carries at /cockpit
+                  description: "Asks the Cockpit in-process for every static route except the one page about this machine, then for the pages the UI's snapshot links to, then, one page per family in turn until `--limit` pages or `--budget-seconds` are reached, for the pages those link to, and writes each as a file under target/web/cockpit-snapshot. Links between them are relative; a link into the UI leads to the UI's snapshot when that holds the page; a form, a query or a page past the bound leads to the snapshot's page about the live Cockpit; no page carries a script, because the Cockpit's scripts talk to a process; and every page is stamped with the commit, the time and the executable that read it."
+                  argv:
+                    - web
+                    - report
+                    - cockpit-snapshot
+                    - "--limit"
+                    - "12"
+                  command: majordomus web report cockpit-snapshot --limit 12
+                  setup: []
+                  expectation: "exits 0; prints web report, cockpit-snapshot"
+              subcommands: []
         - path:
             - majordomus
             - web
@@ -2801,7 +3071,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -2903,7 +3173,7 @@ cli:
           global: true
           possible_values:
             - name: vcs
-              help: "Tracked files, through the version-control index (the layer's contract)"
+              help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
             - name: filesystem
               help: A walk of the work tree with the same glob semantics; untracked files included
           defaults:
@@ -3096,7 +3366,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -3321,7 +3591,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -3516,7 +3786,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -3710,7 +3980,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -3914,7 +4184,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -4119,7 +4389,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -4312,7 +4582,7 @@ cli:
           global: true
           possible_values:
             - name: vcs
-              help: "Tracked files, through the version-control index (the layer's contract)"
+              help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
             - name: filesystem
               help: A walk of the work tree with the same glob semantics; untracked files included
           defaults:
@@ -4404,7 +4674,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -4519,7 +4789,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -4612,7 +4882,7 @@ cli:
           global: true
           possible_values:
             - name: vcs
-              help: "Tracked files, through the version-control index (the layer's contract)"
+              help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
             - name: filesystem
               help: A walk of the work tree with the same glob semantics; untracked files included
           defaults:
@@ -4692,7 +4962,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -4775,7 +5045,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -4856,7 +5126,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -4937,7 +5207,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -5018,7 +5288,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -5119,7 +5389,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -5206,7 +5476,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -5297,7 +5567,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -5380,7 +5650,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -5460,7 +5730,7 @@ cli:
           global: true
           possible_values:
             - name: vcs
-              help: "Tracked files, through the version-control index (the layer's contract)"
+              help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
             - name: filesystem
               help: A walk of the work tree with the same glob semantics; untracked files included
           defaults:
@@ -5540,7 +5810,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -5643,7 +5913,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -5771,7 +6041,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -5919,7 +6189,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -6014,7 +6284,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -6118,7 +6388,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -6200,7 +6470,7 @@ cli:
           global: true
           possible_values:
             - name: vcs
-              help: "Tracked files, through the version-control index (the layer's contract)"
+              help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
             - name: filesystem
               help: A walk of the work tree with the same glob semantics; untracked files included
           defaults:
@@ -6326,7 +6596,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -6418,7 +6688,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -6509,7 +6779,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -6602,7 +6872,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -6696,7 +6966,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -6776,7 +7046,7 @@ cli:
           global: true
           possible_values:
             - name: vcs
-              help: "Tracked files, through the version-control index (the layer's contract)"
+              help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
             - name: filesystem
               help: A walk of the work tree with the same glob semantics; untracked files included
           defaults:
@@ -6890,7 +7160,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -6978,7 +7248,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -7095,7 +7365,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -7163,7 +7433,7 @@ cli:
           global: true
           possible_values:
             - name: vcs
-              help: "Tracked files, through the version-control index (the layer's contract)"
+              help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
             - name: filesystem
               help: A walk of the work tree with the same glob semantics; untracked files included
           defaults:
@@ -7245,7 +7515,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -7328,7 +7598,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -7414,7 +7684,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -7497,7 +7767,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -7587,7 +7857,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -7678,7 +7948,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -7789,7 +8059,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -7890,7 +8160,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -8031,7 +8301,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -8113,7 +8383,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -8194,7 +8464,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -8287,7 +8557,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -8379,7 +8649,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -8481,7 +8751,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -8579,7 +8849,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -8671,7 +8941,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -8751,7 +9021,7 @@ cli:
           global: true
           possible_values:
             - name: vcs
-              help: "Tracked files, through the version-control index (the layer's contract)"
+              help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
             - name: filesystem
               help: A walk of the work tree with the same glob semantics; untracked files included
           defaults:
@@ -8833,7 +9103,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -8916,7 +9186,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -9006,7 +9276,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -9088,7 +9358,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -9235,7 +9505,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -9339,7 +9609,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -9451,7 +9721,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -9533,7 +9803,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -9614,7 +9884,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -9695,7 +9965,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -9776,7 +10046,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -9856,7 +10126,7 @@ cli:
           global: true
           possible_values:
             - name: vcs
-              help: "Tracked files, through the version-control index (the layer's contract)"
+              help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
             - name: filesystem
               help: A walk of the work tree with the same glob semantics; untracked files included
           defaults:
@@ -9938,7 +10208,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -10031,7 +10301,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -10153,7 +10423,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -10244,7 +10514,7 @@ cli:
           global: true
           possible_values:
             - name: vcs
-              help: "Tracked files, through the version-control index (the layer's contract)"
+              help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
             - name: filesystem
               help: A walk of the work tree with the same glob semantics; untracked files included
           defaults:
@@ -10336,7 +10606,7 @@ cli:
           global: true
           possible_values:
             - name: vcs
-              help: "Tracked files, through the version-control index (the layer's contract)"
+              help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
             - name: filesystem
               help: A walk of the work tree with the same glob semantics; untracked files included
           defaults:
@@ -10416,7 +10686,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -10508,7 +10778,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -10598,7 +10868,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -10708,7 +10978,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -10790,7 +11060,7 @@ cli:
           global: true
           possible_values:
             - name: vcs
-              help: "Tracked files, through the version-control index (the layer's contract)"
+              help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
             - name: filesystem
               help: A walk of the work tree with the same glob semantics; untracked files included
           defaults:
@@ -10953,7 +11223,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -11137,7 +11407,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -11302,7 +11572,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -11466,7 +11736,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -11630,7 +11900,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -11794,7 +12064,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -11957,7 +12227,7 @@ cli:
           global: true
           possible_values:
             - name: vcs
-              help: "Tracked files, through the version-control index (the layer's contract)"
+              help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
             - name: filesystem
               help: A walk of the work tree with the same glob semantics; untracked files included
           defaults:
@@ -12037,7 +12307,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -12120,7 +12390,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -12224,7 +12494,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -12329,7 +12599,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -12443,7 +12713,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -12535,7 +12805,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -12683,7 +12953,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -12807,7 +13077,7 @@ cli:
           global: true
           possible_values:
             - name: vcs
-              help: "Tracked files, through the version-control index (the layer's contract)"
+              help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
             - name: filesystem
               help: A walk of the work tree with the same glob semantics; untracked files included
           defaults:
@@ -12932,7 +13202,7 @@ cli:
           global: true
           possible_values:
             - name: vcs
-              help: "Tracked files, through the version-control index (the layer's contract)"
+              help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
             - name: filesystem
               help: A walk of the work tree with the same glob semantics; untracked files included
           defaults:
@@ -13032,7 +13302,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -13124,7 +13394,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -13225,7 +13495,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -13316,7 +13586,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -13398,7 +13668,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -13480,7 +13750,7 @@ cli:
           global: true
           possible_values:
             - name: vcs
-              help: "Tracked files, through the version-control index (the layer's contract)"
+              help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
             - name: filesystem
               help: A walk of the work tree with the same glob semantics; untracked files included
           defaults:
@@ -13643,7 +13913,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -13839,7 +14109,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -13923,7 +14193,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -14014,7 +14284,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -14095,7 +14365,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -14176,7 +14446,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -14257,7 +14527,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -14348,7 +14618,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -14440,7 +14710,7 @@ cli:
                   global: true
                   possible_values:
                     - name: vcs
-                      help: "Tracked files, through the version-control index (the layer's contract)"
+                      help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                     - name: filesystem
                       help: A walk of the work tree with the same glob semantics; untracked files included
                   defaults:
@@ -14615,7 +14885,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -14705,7 +14975,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -14880,7 +15150,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -14931,6 +15201,17 @@ cli:
               command: majordomus mesh state
               setup: []
               expectation: exits 0; prints cooperation inactive
+            - id: mesh-state-live-claims
+              title: Every claim still held
+              description: "The whole state with only the claims still held, as docs/MESH.md lists it — or, with no running server, why there is none."
+              argv:
+                - mesh
+                - state
+                - "--full"
+                - "--live-claims"
+              command: majordomus mesh state --full --live-claims
+              setup: []
+              expectation: exits 0; prints cooperation inactive
           subcommands: []
         - path:
             - majordomus
@@ -14961,6 +15242,17 @@ cli:
               global: false
               possible_values: []
               defaults: []
+            - name: newest
+              long: newest
+              positional: false
+              help: "The newest events instead of the first ones after `--after`"
+              value_name: NEWEST
+              takes_value: false
+              required: false
+              global: false
+              possible_values: []
+              defaults:
+                - "false"
             - name: repo
               long: repo
               positional: false
@@ -14981,7 +15273,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -15066,7 +15358,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -15207,7 +15499,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -15302,7 +15594,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -15486,7 +15778,7 @@ cli:
                   global: true
                   possible_values:
                     - name: vcs
-                      help: "Tracked files, through the version-control index (the layer's contract)"
+                      help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                     - name: filesystem
                       help: A walk of the work tree with the same glob semantics; untracked files included
                   defaults:
@@ -15585,7 +15877,7 @@ cli:
                   global: true
                   possible_values:
                     - name: vcs
-                      help: "Tracked files, through the version-control index (the layer's contract)"
+                      help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                     - name: filesystem
                       help: A walk of the work tree with the same glob semantics; untracked files included
                   defaults:
@@ -15711,7 +16003,7 @@ cli:
                   global: true
                   possible_values:
                     - name: vcs
-                      help: "Tracked files, through the version-control index (the layer's contract)"
+                      help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                     - name: filesystem
                       help: A walk of the work tree with the same glob semantics; untracked files included
                   defaults:
@@ -15826,7 +16118,7 @@ cli:
                   global: true
                   possible_values:
                     - name: vcs
-                      help: "Tracked files, through the version-control index (the layer's contract)"
+                      help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                     - name: filesystem
                       help: A walk of the work tree with the same glob semantics; untracked files included
                   defaults:
@@ -15952,6 +16244,16 @@ cli:
                   global: false
                   possible_values: []
                   defaults: []
+                - name: body
+                  long: body
+                  positional: false
+                  help: "What the reviewer needs beyond the subject: evidence, commands, the question (up to 8 KiB)"
+                  value_name: BODY
+                  takes_value: true
+                  required: false
+                  global: false
+                  possible_values: []
+                  defaults: []
                 - name: repo
                   long: repo
                   positional: false
@@ -15972,7 +16274,7 @@ cli:
                   global: true
                   possible_values:
                     - name: vcs
-                      help: "Tracked files, through the version-control index (the layer's contract)"
+                      help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                     - name: filesystem
                       help: A walk of the work tree with the same glob semantics; untracked files included
                   defaults:
@@ -16103,7 +16405,7 @@ cli:
                   global: true
                   possible_values:
                     - name: vcs
-                      help: "Tracked files, through the version-control index (the layer's contract)"
+                      help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                     - name: filesystem
                       help: A walk of the work tree with the same glob semantics; untracked files included
                   defaults:
@@ -16158,6 +16460,123 @@ cli:
                     - "--verdict"
                     - approved
                   command: majordomus mesh review answer stream/r-000000000000 --session s1 --verdict approved
+                  setup: []
+                  expectation: exits 10
+              subcommands: []
+            - path:
+                - majordomus
+                - mesh
+                - review
+                - withdraw
+              route: /docs/cli/mesh/review/withdraw/
+              executable: true
+              usage: "majordomus mesh review withdraw [OPTIONS] <REQUEST>"
+              about: "Withdraw a review request this runtime asked for, with its result"
+              args:
+                - name: request
+                  positional: true
+                  help: "The request's key, `<stream>/<review>`"
+                  value_name: REQUEST
+                  takes_value: true
+                  required: true
+                  global: false
+                  possible_values: []
+                  defaults: []
+                - name: session
+                  long: session
+                  positional: false
+                  help: "The withdrawing session, within the runtime that asked"
+                  value_name: SESSION
+                  takes_value: true
+                  required: true
+                  global: false
+                  possible_values: []
+                  defaults: []
+                - name: note
+                  long: note
+                  positional: false
+                  help: "What came of it, or why it is void (up to 8 KiB)"
+                  value_name: NOTE
+                  takes_value: true
+                  required: false
+                  global: false
+                  possible_values: []
+                  defaults: []
+                - name: repo
+                  long: repo
+                  positional: false
+                  help: "Start the search for the repository root here (default: the current directory)"
+                  value_name: PATH
+                  takes_value: true
+                  required: false
+                  global: true
+                  possible_values: []
+                  defaults: []
+                - name: discovery
+                  long: discovery
+                  positional: false
+                  help: How declarative files are enumerated
+                  value_name: DISCOVERY
+                  takes_value: true
+                  required: false
+                  global: true
+                  possible_values:
+                    - name: vcs
+                      help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                    - name: filesystem
+                      help: A walk of the work tree with the same glob semantics; untracked files included
+                  defaults:
+                    - vcs
+                - name: strict
+                  long: strict
+                  positional: false
+                  help: Refuse to proceed when any file of the layer carries an error diagnostic
+                  value_name: STRICT
+                  takes_value: false
+                  required: false
+                  global: true
+                  possible_values: []
+                  defaults:
+                    - "false"
+                - name: share
+                  long: share
+                  positional: false
+                  help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+                  value_name: DIR
+                  takes_value: true
+                  required: false
+                  global: true
+                  possible_values: []
+                  defaults: []
+                - name: format
+                  long: format
+                  positional: false
+                  help: "`text` for a person, `json` for a machine; both render the same answer"
+                  value_name: FORMAT
+                  takes_value: true
+                  required: false
+                  global: false
+                  possible_values:
+                    - name: text
+                      help: Lines for a person
+                    - name: json
+                      help: "One JSON document, deterministic"
+                  defaults:
+                    - text
+              examples:
+                - id: mesh-review-withdraw
+                  title: Withdraw a review request with its result
+                  description: "Only the runtime that asked may withdraw its request, from any of its sessions; the note is the requester's own result and never an answer. It needs the running server; without one it exits 10."
+                  argv:
+                    - mesh
+                    - review
+                    - withdraw
+                    - stream/r-000000000000
+                    - "--session"
+                    - s1
+                    - "--note"
+                    - superseded
+                  command: majordomus mesh review withdraw stream/r-000000000000 --session s1 --note superseded
                   setup: []
                   expectation: exits 10
               subcommands: []
@@ -16301,7 +16720,7 @@ cli:
           global: true
           possible_values:
             - name: vcs
-              help: "Tracked files, through the version-control index (the layer's contract)"
+              help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
             - name: filesystem
               help: A walk of the work tree with the same glob semantics; untracked files included
           defaults:
@@ -16412,7 +16831,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -16523,7 +16942,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -16656,7 +17075,7 @@ cli:
           global: true
           possible_values:
             - name: vcs
-              help: "Tracked files, through the version-control index (the layer's contract)"
+              help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
             - name: filesystem
               help: A walk of the work tree with the same glob semantics; untracked files included
           defaults:
@@ -16728,7 +17147,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -16779,6 +17198,17 @@ cli:
               command: majordomus reasoning advisors
               setup: []
               expectation: exits 0; prints reasoning   operational
+            - id: reasoning-advisors-json
+              title: The same answer as one document
+              description: "The report the API and the MCP tool return: `operational`, the mode and what decided it, every advisor with its status and reason, and the capacity per capability. A script reads this rather than the text form."
+              argv:
+                - reasoning
+                - advisors
+                - "--format"
+                - json
+              command: majordomus reasoning advisors --format json
+              setup: []
+              expectation: "exits 0; prints one JSON document carrying /operational, /mode, /advisors, /capacity"
           subcommands: []
         - path:
             - majordomus
@@ -16841,7 +17271,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -16894,6 +17324,19 @@ cli:
               command: majordomus reasoning plan --materiality material
               setup: []
               expectation: "exits 0; prints outcome, budget"
+            - id: reasoning-plan-capabilities
+              title: A high uncertainty that asks for named capabilities
+              description: "The selection covers the requested capabilities first, then prefers an advisor reached through a different adapter, then declaration order; every advisor not selected carries its reason. With none available the outcome is the structured local review."
+              argv:
+                - reasoning
+                - plan
+                - "--materiality"
+                - high
+                - "--capabilities"
+                - "independent_reasoning,code_review"
+              command: "majordomus reasoning plan --materiality high --capabilities independent_reasoning,code_review"
+              setup: []
+              expectation: "exits 0; prints outcome, budget"
           subcommands: []
         - path:
             - majordomus
@@ -16934,7 +17377,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -17038,7 +17481,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -17130,7 +17573,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -17212,7 +17655,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -17292,7 +17735,7 @@ cli:
           global: true
           possible_values:
             - name: vcs
-              help: "Tracked files, through the version-control index (the layer's contract)"
+              help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
             - name: filesystem
               help: A walk of the work tree with the same glob semantics; untracked files included
           defaults:
@@ -17432,7 +17875,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -17535,7 +17978,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -17626,7 +18069,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -17778,7 +18221,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -17901,7 +18344,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -17985,7 +18428,7 @@ cli:
           global: true
           possible_values:
             - name: vcs
-              help: "Tracked files, through the version-control index (the layer's contract)"
+              help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
             - name: filesystem
               help: A walk of the work tree with the same glob semantics; untracked files included
           defaults:
@@ -18118,7 +18561,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -18178,6 +18621,87 @@ cli:
         - path:
             - majordomus
             - served
+            - forge
+          route: /docs/cli/served/forge/
+          executable: true
+          usage: "majordomus served forge [OPTIONS]"
+          about: "Ask the forge which deployments and releases it recorded, and keep the answer for the readers"
+          args:
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: served-forge-unknown-repository
+              title: "A forge that cannot be asked is said, and what was recorded before stands"
+              description: "Asks the forge, through its own command-line tool, for the newest deployments to every environment and the newest releases, and records the answer `deploy.observed` reads. Here the repository has no remote the forge knows, so nothing is asked and the command says why with exit 12 — not answered, never an empty list read as none. In a checkout of a repository on the forge, with a credential, it prints how many deployments, environments and releases the answer held and exits 0."
+              argv:
+                - served
+                - forge
+              command: majordomus served forge
+              setup: []
+              expectation: exits 12
+          subcommands: []
+        - path:
+            - majordomus
+            - served
             - show
           route: /docs/cli/served/show/
           executable: true
@@ -18224,7 +18748,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -18306,7 +18830,7 @@ cli:
           global: true
           possible_values:
             - name: vcs
-              help: "Tracked files, through the version-control index (the layer's contract)"
+              help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
             - name: filesystem
               help: A walk of the work tree with the same glob semantics; untracked files included
           defaults:
@@ -18430,7 +18954,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -18522,7 +19046,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -18613,7 +19137,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -18696,7 +19220,7 @@ cli:
           global: true
           possible_values:
             - name: vcs
-              help: "Tracked files, through the version-control index (the layer's contract)"
+              help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
             - name: filesystem
               help: A walk of the work tree with the same glob semantics; untracked files included
           defaults:
@@ -18768,7 +19292,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -18869,7 +19393,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -18951,7 +19475,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -19032,7 +19556,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -19144,7 +19668,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -19277,7 +19801,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -19370,7 +19894,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -19471,7 +19995,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -19524,6 +20048,119 @@ cli:
               setup: []
               expectation: "exits 0; prints fixture-intent, the-case-passes"
           subcommands: []
+        - path:
+            - majordomus
+            - intent
+            - propose
+          route: /docs/cli/intent/propose/
+          executable: true
+          usage: "majordomus intent propose [OPTIONS]"
+          about: "Write a new, unplanned intent: what must become true (ADR 0144)"
+          args:
+            - name: statement
+              long: statement
+              positional: false
+              help: "What must become true, kept verbatim"
+              value_name: STATEMENT
+              takes_value: true
+              required: true
+              global: false
+              possible_values: []
+              defaults: []
+            - name: title
+              long: title
+              positional: false
+              help: "One line naming it; the statement's first line when absent"
+              value_name: TITLE
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: id
+              long: id
+              positional: false
+              help: "The identity and file name; the title's slug when absent"
+              value_name: ID
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: intent-propose
+              title: "Propose an intent: what must become true"
+              description: "Writes a new record under `.ai/repo/project/intents/` holding the statement and nothing else yet (ADR 0144): no milestone, criterion or invariant. Its stage derives as `declared`, `intent validate` reports the two absences as warnings, and no work can serve it until it is planned. `--title` and `--id` default to the statement's first line and that line's slug; an identity that exists is refused, never overwritten."
+              argv:
+                - intent
+                - propose
+                - "--statement"
+                - Every page answers within 100 ms when warm
+              command: "majordomus intent propose --statement 'Every page answers within 100 ms when warm'"
+              setup: []
+              expectation: "exits 0; prints proposed every-page-answers-within-100-ms-when-warm, .ai/repo/project/intents/every-page-answers-within-100-ms-when-warm.yaml"
+          subcommands: []
     - path:
         - majordomus
         - delivery
@@ -19552,7 +20189,7 @@ cli:
           global: true
           possible_values:
             - name: vcs
-              help: "Tracked files, through the version-control index (the layer's contract)"
+              help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
             - name: filesystem
               help: A walk of the work tree with the same glob semantics; untracked files included
           defaults:
@@ -19635,7 +20272,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -19738,7 +20375,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -19830,7 +20467,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -19962,7 +20599,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -20053,7 +20690,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -20166,7 +20803,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -20247,7 +20884,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -20336,7 +20973,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -20501,7 +21138,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -20576,7 +21213,7 @@ cli:
           global: true
           possible_values:
             - name: vcs
-              help: "Tracked files, through the version-control index (the layer's contract)"
+              help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
             - name: filesystem
               help: A walk of the work tree with the same glob semantics; untracked files included
           defaults:
@@ -20648,7 +21285,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -20740,7 +21377,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -20833,7 +21470,7 @@ cli:
           global: true
           possible_values:
             - name: vcs
-              help: "Tracked files, through the version-control index (the layer's contract)"
+              help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
             - name: filesystem
               help: A walk of the work tree with the same glob semantics; untracked files included
           defaults:
@@ -20916,7 +21553,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -20998,7 +21635,7 @@ cli:
           global: true
           possible_values:
             - name: vcs
-              help: "Tracked files, through the version-control index (the layer's contract)"
+              help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
             - name: filesystem
               help: A walk of the work tree with the same glob semantics; untracked files included
           defaults:
@@ -21079,7 +21716,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -21193,7 +21830,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -21284,7 +21921,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -21365,7 +22002,7 @@ cli:
           global: true
           possible_values:
             - name: vcs
-              help: "Tracked files, through the version-control index (the layer's contract)"
+              help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
             - name: filesystem
               help: A walk of the work tree with the same glob semantics; untracked files included
           defaults:
@@ -21437,7 +22074,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -21519,7 +22156,7 @@ cli:
           global: true
           possible_values:
             - name: vcs
-              help: "Tracked files, through the version-control index (the layer's contract)"
+              help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
             - name: filesystem
               help: A walk of the work tree with the same glob semantics; untracked files included
           defaults:
@@ -21643,7 +22280,7 @@ cli:
           global: true
           possible_values:
             - name: vcs
-              help: "Tracked files, through the version-control index (the layer's contract)"
+              help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
             - name: filesystem
               help: A walk of the work tree with the same glob semantics; untracked files included
           defaults:
@@ -21715,7 +22352,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -21816,7 +22453,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -21898,7 +22535,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -21978,7 +22615,7 @@ cli:
           global: true
           possible_values:
             - name: vcs
-              help: "Tracked files, through the version-control index (the layer's contract)"
+              help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
             - name: filesystem
               help: A walk of the work tree with the same glob semantics; untracked files included
           defaults:
@@ -22050,7 +22687,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -22142,7 +22779,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -22224,7 +22861,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -22306,7 +22943,7 @@ cli:
           global: true
           possible_values:
             - name: vcs
-              help: "Tracked files, through the version-control index (the layer's contract)"
+              help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
             - name: filesystem
               help: A walk of the work tree with the same glob semantics; untracked files included
           defaults:
@@ -22378,7 +23015,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -22461,7 +23098,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -22554,7 +23191,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -22647,7 +23284,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -22760,7 +23397,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -22851,7 +23488,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:
@@ -22944,7 +23581,7 @@ cli:
               global: true
               possible_values:
                 - name: vcs
-                  help: "Tracked files, through the version-control index (the layer's contract)"
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
                 - name: filesystem
                   help: A walk of the work tree with the same glob semantics; untracked files included
               defaults:

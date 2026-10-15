@@ -1,7 +1,7 @@
 +++
 title = "Pack the repository for an outside reviewer"
 description = "Prepare a bounded, reproducible snapshot of the tracked tree for a reviewer who cannot read the repository directly, with the local half and anything secret left out and the questions the review must answer written down."
-weight = 5
+weight = 6
 [extra]
 id = "pack-for-review"
 status = "active"

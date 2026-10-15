@@ -1444,6 +1444,14 @@ mod tests {
     }
 
     #[test]
+    fn the_backend_here_is_the_one_detect_finds_with_the_path_lookup() {
+        assert_eq!(
+            detect_here(),
+            detect(std::env::consts::OS, &|name| find_tool(name).is_some())
+        );
+    }
+
+    #[test]
     fn no_declaration_and_a_disabled_one_need_nothing() {
         let p = plan(None, &[Ipv4Addr::new(192, 168, 1, 2)], Some(8741));
         assert!(p.rules.is_empty() && p.networks.is_empty());

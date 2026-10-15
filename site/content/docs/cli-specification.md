@@ -48,6 +48,18 @@ a check passed, it failed.
 - `--json` on any read-only command emits one JSON object per finding on stdout.
 - Nothing is written to stderr except usage errors and internal errors.
 - A finding without a reproduce command is a bug in Majordomus.
+- `MAJORDOMUS_CAPABILITY_CACHE=off` runs every capability without the executor's cache:
+  every call runs its handler and nothing is kept. The answers are the same with or without
+  it (`project.cache-is-invisible`); it exists to settle a doubt by asking without the cache.
+  A capability's own policy says what its answer is kept under: the registry fingerprint,
+  the context's reading of the repository (`generation`), or the checkout's state as well
+  (`checkout`: HEAD, the staging index, the refs, and every changed or untracked path).
+  The switch also makes a page's reading of a source run its handler and wait for it.
+- `MAJORDOMUS_READING_PATIENCE_MS` sets how long a page waits for a source after the
+  repository changed before it shows the reading it has, marked stale (50 by default; see
+  [`MAJORDOMUS_UI.md`](@/docs/majordomus-ui.md#fast-and-current)). `wait` makes every read wait for
+  a current reading, which is what a test that changes a repository and then reads a page
+  needs to be exact.
 
 ---
 
@@ -2082,6 +2094,20 @@ tree to the commands, rules, use cases, scenarios and behavioural cases they rea
 names the run to do next. `scaffold` writes a draft use case for a gap from what the
 registry, the command's fixture and the claims already know; a draft validates and runs
 and never counts.
+
+A live step is judged on its whole argument vector, not on its first word. A command's
+`class` in `share/commands.yaml` is the worst thing any of its argument vectors does, so
+`knowledge` is `state-mutating` as a whole although `knowledge edges`, `nodes`, `sources`,
+`candidates` and `check` write nothing, and `check` is `read-only` although `check
+--checkpoint` records a checkpoint. Where a command's subcommands or flags differ, the
+registry carries an `effects` list: a `subcommand` entry replaces the command's class for
+that subcommand, and a `flag` entry raises it for any vector the flag appears in; a flag
+never lowers a class. `usecase validate` refuses a live step whose vector is not
+`read-only` and names what decided it (`by command`, `by subcommand 'derive'` or `by flag
+'--checkpoint'`), and `usecase run --live` asks the same question again before it runs a
+step, so a step that would write is reported unmet and is not run. `doctor` reconciles each
+effect with the command it is declared on: a subcommand must be a word of the command's
+syntax, a flag must be written in it, and a flag may not be declared `read-only`.
 
 Exit codes: 0; 2 for a usage error; 10 when validation, a scenario or a required coverage
 gap fails; 12 when the section, a use case or the registry is absent; 13 when a scenario

@@ -283,7 +283,9 @@ fn a_disabled_declaration_opens_nothing_and_says_why() {
 #[test]
 fn two_runtimes_discover_each_other_through_the_rendezvous_handshake() {
     let dir = tempfile::tempdir().unwrap();
-    let quiet = |id: &str| MeshConfig {
+    // each runtime lists only its own key: an unlisted machine stays closed, and the
+    // other's key stays unknown, so its verdict is observed
+    let quiet = |id: &str, own: &str| MeshConfig {
         schema: "mesh/v1".into(),
         kind: "mesh-declaration".into(),
         id: id.into(),
@@ -294,12 +296,19 @@ fn two_runtimes_discover_each_other_through_the_rendezvous_handshake() {
         },
         broadcast: Default::default(),
         rendezvous: Default::default(),
-        trust: Default::default(),
+        trust: majordomus_cli::mesh::config::TrustConfig {
+            allow: vec![own.to_string()],
+            ..Default::default()
+        },
         cooperation: Default::default(),
     };
     let a_id = NodeIdentity::load_or_create(&dir.path().join("a.json")).unwrap();
     let b_id = NodeIdentity::load_or_create(&dir.path().join("b.json")).unwrap();
     let a_node = a_id.public.node_id.clone();
+    let (a_key, b_key) = (
+        a_id.public.public_key.clone(),
+        b_id.public.public_key.clone(),
+    );
     let b_node = b_id.public.node_id.clone();
     let b_envelope = advertise(
         &b_id,
@@ -312,7 +321,7 @@ fn two_runtimes_discover_each_other_through_the_rendezvous_handshake() {
 
     let a = MeshRuntime::new();
     a.activate(
-        &quiet("a"),
+        &quiet("a", &a_key),
         a_id,
         vec!["127.0.0.1:1".into()],
         vec![],
@@ -321,7 +330,7 @@ fn two_runtimes_discover_each_other_through_the_rendezvous_handshake() {
     .unwrap();
     let b = MeshRuntime::new();
     b.activate(
-        &quiet("b"),
+        &quiet("b", &b_key),
         b_id,
         vec!["127.0.0.1:2".into()],
         vec![],
@@ -579,7 +588,12 @@ fn a_registration_learns_only_the_trusted_nodes_of_its_own_repository() {
         trust: Default::default(),
         cooperation: Default::default(),
     };
-    config.trust.allow = vec![trusted_id.public.public_key.clone()];
+    // the hub lists its own key beside the trusted node's: a machine its trust list does not
+    // name keeps its mesh closed and admits nobody
+    config.trust.allow = vec![
+        hub_id.public.public_key.clone(),
+        trusted_id.public.public_key.clone(),
+    ];
     let hub = MeshRuntime::new();
     hub.activate(&config, hub_id, vec!["127.0.0.1:1".into()], vec![], "test")
         .unwrap();
@@ -623,4 +637,174 @@ fn a_registration_learns_only_the_trusted_nodes_of_its_own_repository() {
     assert!(other.accepted);
     assert_eq!(other.candidates.len(), 1, "{:?}", other.candidates);
     hub.stop();
+}
+
+/// A discovery provider that floods the manager: it hands over `total` copies of this node's
+/// own signed advertisement as fast as the queue takes them, counting what the queue took and
+/// what it dropped. Each copy the manager reads costs it a full parse and signature check
+/// before it is recognised as this node's echo, so the flood outruns the manager by orders of
+/// magnitude — what a segment shouting datagrams does to a real one.
+struct Flood {
+    total: usize,
+    accepted: std::sync::Arc<std::sync::atomic::AtomicU64>,
+    dropped: std::sync::Arc<std::sync::atomic::AtomicU64>,
+    done: std::sync::Arc<std::sync::atomic::AtomicBool>,
+}
+
+impl majordomus_cli::mesh::MeshProvider for Flood {
+    fn id(&self) -> &'static str {
+        "flood"
+    }
+
+    fn start(
+        &mut self,
+        ctx: &majordomus_cli::mesh::ProviderContext,
+    ) -> Result<(), majordomus_cli::mesh::MeshError> {
+        use std::sync::atomic::Ordering;
+        let bytes = majordomus_cli::mesh::protocol::encode(&ctx.beacon.next_envelope())?;
+        let tx = ctx.tx.clone();
+        let (total, accepted, dropped, done) = (
+            self.total,
+            std::sync::Arc::clone(&self.accepted),
+            std::sync::Arc::clone(&self.dropped),
+            std::sync::Arc::clone(&self.done),
+        );
+        std::thread::spawn(move || {
+            for _ in 0..total {
+                let sent = tx.send(majordomus_cli::mesh::Observation {
+                    source: majordomus_cli::mesh::MeshSource::UdpMulticast,
+                    path: "flood".into(),
+                    bytes: bytes.clone(),
+                });
+                // counted after the queue answered, so a reader never sees more accepted
+                // than the queue took
+                if sent {
+                    accepted.fetch_add(1, Ordering::SeqCst);
+                } else {
+                    dropped.fetch_add(1, Ordering::SeqCst);
+                }
+            }
+            done.store(true, Ordering::SeqCst);
+        });
+        Ok(())
+    }
+
+    fn status(&self) -> majordomus_cli::mesh::ProviderStatus {
+        majordomus_cli::mesh::ProviderStatus {
+            id: "flood".into(),
+            state: majordomus_cli::mesh::provider::MeshProviderState::Running,
+            detail: None,
+            sent: 0,
+            received: 0,
+        }
+    }
+}
+
+/// A discovery flood costs the process a bounded queue and a counter, and the counter is what
+/// the mesh status answers (I2133): every observation beyond `OBSERVATION_QUEUE` is dropped at
+/// the provider, never more than the bound waits for the manager at any moment, and each drop
+/// is the `overflow` refusal `mesh.status` reports — through the capability and through its
+/// HTTP route, the same number the provider counted.
+#[test]
+fn discovery_flood_bounded_test() {
+    use majordomus_cli::mesh::provider::OBSERVATION_QUEUE;
+    use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+    use std::sync::Arc;
+    use std::time::{Duration, Instant};
+
+    let f = Fixture::new();
+    let app = common::load_app(&f);
+    let mesh = &app.context.mesh;
+    let config: MeshConfig = serde_json::from_value(json!({
+        "schema": "mesh/v1", "kind": "mesh-declaration", "id": "majordomus", "enabled": true,
+        "multicast": { "enabled": false }, "trust": { "policy": "tofu" },
+    }))
+    .unwrap();
+    mesh.activate_as(
+        &config,
+        Arc::new(NodeIdentity::ephemeral().unwrap()),
+        "0000000000000001",
+        vec![],
+        vec![],
+        "test",
+    )
+    .expect("the mesh activates");
+    assert_eq!(mesh.status().refusals.overflow, 0, "nothing dropped yet");
+
+    let total = 50 * OBSERVATION_QUEUE;
+    let accepted = Arc::new(AtomicU64::new(0));
+    let dropped = Arc::new(AtomicU64::new(0));
+    let done = Arc::new(AtomicBool::new(false));
+    mesh.attach(Box::new(Flood {
+        total,
+        accepted: Arc::clone(&accepted),
+        dropped: Arc::clone(&dropped),
+        done: Arc::clone(&done),
+    }))
+    .expect("the flood starts");
+
+    // while the flood runs and after it: what the queue took, less what the manager has
+    // finished reading, is at most the bound — plus the one observation being read. Read in
+    // this order (the queue's count first) the difference can only understate the queue.
+    let bound = OBSERVATION_QUEUE as u64 + 1;
+    let deadline = Instant::now() + Duration::from_secs(60);
+    loop {
+        let finished = done.load(Ordering::SeqCst);
+        let took = accepted.load(Ordering::SeqCst);
+        let read = mesh.status().refusals.self_heard;
+        assert!(
+            took.saturating_sub(read) <= bound,
+            "{took} observations taken and {read} read: the queue held more than its bound of {OBSERVATION_QUEUE}"
+        );
+        if finished {
+            break;
+        }
+        assert!(Instant::now() < deadline, "the flood did not end");
+        std::thread::sleep(Duration::from_millis(1));
+    }
+    let took = accepted.load(Ordering::SeqCst);
+    let lost = dropped.load(Ordering::SeqCst);
+    assert_eq!(
+        took + lost,
+        total as u64,
+        "every observation was taken or dropped"
+    );
+    assert!(
+        lost > 0,
+        "{total} observations at once overflowed nothing: the flood never filled the queue"
+    );
+
+    // the manager drains what the queue took, and nothing more
+    let deadline = Instant::now() + Duration::from_secs(60);
+    while mesh.status().refusals.self_heard < took {
+        assert!(
+            Instant::now() < deadline,
+            "the manager did not drain the queue: {} of {took} read",
+            mesh.status().refusals.self_heard
+        );
+        std::thread::sleep(Duration::from_millis(10));
+    }
+    let status = mesh.status();
+    assert_eq!(status.refusals.self_heard, took, "{:?}", status.refusals);
+    assert_eq!(
+        status.refusals.overflow, lost,
+        "the status counts every drop the provider saw"
+    );
+
+    // and the answer a client reads says the same: the capability and its HTTP route
+    let answer = app
+        .context
+        .execute("mesh.status", json!({}))
+        .expect("mesh.status answers");
+    assert_eq!(answer["refusals"]["overflow"], json!(lost), "{answer}");
+    let router = majordomus_cli::http::Router::new(app.context.clone(), "test");
+    let response = router.handle(&majordomus_cli::http::Request::parse_target(
+        "GET",
+        "/api/v1/mesh",
+        vec![],
+    ));
+    assert_eq!(response.status, 200);
+    let routed: Value = serde_json::from_str(&response.body.text()).expect("a JSON status");
+    assert_eq!(routed["refusals"]["overflow"], json!(lost), "{routed}");
+    mesh.stop();
 }

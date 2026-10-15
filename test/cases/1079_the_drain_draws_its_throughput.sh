@@ -2,8 +2,9 @@
 # The PR Drain draws its merge throughput (I2474), through a real server over a fixture with a
 # recorded forge observation and an executor trail:
 #
-#   the window      fourteen days ending on the day of the trail's newest event, not the
-#                   reader's clock
+#   the window      the queue's own throughput window (throughput/window_days, I2481), ending
+#                   on the day of the trail's newest event, not the reader's clock; the screen
+#                   says which window it is and chooses none of its own
 #   the counts      each day's successful merges; an attempt is no merge
 #   readable        the counts are written in the chart's label and in a table beside it
 #
@@ -14,6 +15,7 @@
 . "$ROOT/test/lib.sh"
 RB="$(rust_bin)" || rust_bin_exit $?
 [ -x "$RB" ] || { echo "    the build produced no executable at $RB"; exit 1; }
+command -v jq >/dev/null 2>&1 || { echo "    jq is not installed"; exit 1; }
 MAJORDOMUS_SHARE="$ROOT/share"; export MAJORDOMUS_SHARE
 # the fixture's server listens on loopback whatever the machine's own default host is
 unset MAJORDOMUS_HTTP_HOST
@@ -53,11 +55,16 @@ serve_up serve.out serve.err || exit 1
 drain="$(curl -s --max-time 120 "$U/ui/panels/drain?fragment")"
 section="$(printf '%s' "$drain" | sed -n 's/.*id="throughput"\(.*\)/\1/p')"
 [ -n "$section" ] || { echo "    the drain draws no throughput"; printf '%s\n' "$drain" | grep -o 'mj-ui-empty">[^<]*' | sed 's/^/    | /'; echo; exit 1; }
+# the window the queue states, read from the same answer the screen reads
+days="$(curl -s --max-time 120 "$U/api/v1/pull-requests" | jq -r '.throughput.window_days')"
+[ "$days" = 7 ] || { echo "    the queue states a window of '$days' days, and this case's expectation is written for 7"; exit 1; }
+printf '%s' "$section" | grep -q "window of $days days" \
+  || { echo "    the throughput does not say it counts over the queue's window of $days days"; exit 1; }
 label="$(printf '%s' "$section" | grep -o 'Merges per day from [^"]*' | head -n 1)"
-[ "$label" = "Merges per day from 2026-09-28 to 2026-10-11: 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 1" ] \
+[ "$label" = "Merges per day from 2026-10-05 to 2026-10-11: 0, 0, 0, 0, 2, 0, 1" ] \
   || { echo "    the chart does not say each day's merges: '$label'"; exit 1; }
 printf '%s' "$section" | grep -q '<svg' || { echo "    the throughput has no chart"; exit 1; }
 printf '%s' "$section" | grep -qE '2026-10-09</td><td[^>]*>2<' \
   || { echo "    the table does not carry the day's count"; exit 1; }
 
-echo "    the drain counts each day's merges over the fortnight its trail ends on"
+echo "    the drain counts each day's merges over the queue's own window, ending where its trail ends"

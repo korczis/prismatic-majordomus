@@ -23,7 +23,7 @@ use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};
 use std::time::{Duration, Instant};
 
-use common::{dist_share, Fixture, Served, BIN};
+use common::{dist_share, Fixture, Served};
 use serde_json::{json, Value};
 
 use majordomus_cli::mesh::identity::NodeIdentity;
@@ -168,7 +168,7 @@ impl Node {
     }
 
     fn prs(&self, forge: &Forge, args: &[&str]) -> Command {
-        let mut c = Command::new(BIN);
+        let mut c = common::majordomus();
         c.arg("prs")
             .arg("--repo")
             .arg(self.root())

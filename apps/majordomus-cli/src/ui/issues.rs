@@ -383,6 +383,7 @@ mod tests {
             exposure: Exposure::default(),
             value: Ok(value),
             took: Duration::from_millis(1),
+            standing: crate::ui::source::Standing::NOW,
         }
     }
 
@@ -478,6 +479,20 @@ mod tests {
         assert!(none.contains("No issue of the plan matches."));
     }
 
+    /// An issue filed under no milestone says none, and a key the pick does not read gives
+    /// nothing back, so a link never carries a parameter it did not mean.
+    #[test]
+    fn an_issue_without_a_milestone_says_none() {
+        let issues = answer(
+            "plan.issues",
+            serde_json::json!({ "issues": [{ "id": "I0042", "title": "loose", "status": "READY", "priority": "p3" }] }),
+        );
+        let roadmap = answer("plan.roadmap", serde_json::json!({ "milestones": [] }));
+        let html = browser(&issues, &roadmap, &Pick::default()).render();
+        assert!(html.contains("I0042") && html.contains(">none<"), "{html}");
+        assert_eq!(Pick::default().get("nothing-of-ours"), None);
+    }
+
     #[test]
     fn a_value_that_is_no_word_of_the_plan_is_dropped() {
         let p = Pick::from_query(&q(&[
@@ -490,5 +505,16 @@ mod tests {
             p.href("priority", Some("p0")),
             "/ui/issues?milestone=M1&priority=p0&q=a%20b"
         );
+    }
+
+    /// An issue that leaves a key empty is counted under no value of it.
+    #[test]
+    fn a_tally_skips_an_issue_that_leaves_the_key_empty() {
+        let issues = vec![
+            serde_json::json!({ "id": "I1", "status": "" }),
+            serde_json::json!({ "id": "I2" }),
+            serde_json::json!({ "id": "I3", "status": "READY" }),
+        ];
+        assert_eq!(tally(&issues, "status"), vec![("READY".to_string(), 1)]);
     }
 }

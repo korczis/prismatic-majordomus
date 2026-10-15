@@ -206,6 +206,26 @@ fn render_trains(v: &integration::train::TrainsView, out: &mut impl Write) -> Re
     Ok(())
 }
 
+/// `prs trains`: the view of `root` in `format` on `out`, and its exit.
+fn trains(root: &std::path::Path, format: OutputFormat, out: &mut impl Write) -> Result<u8> {
+    let view = integration::train::trains_of(root);
+    if format == OutputFormat::Json {
+        json(out, &view)?;
+    } else {
+        render_trains(&view, out)?;
+    }
+    Ok(trains_exit(&view))
+}
+
+/// A trains view exits 0 only when it is whole: observed, and without a diagnostic.
+fn trains_exit(view: &integration::train::TrainsView) -> u8 {
+    if view.observed && view.diagnostics.is_empty() {
+        0
+    } else {
+        FINDING
+    }
+}
+
 /// Cleanup's second part: what merged pull requests left on origin, read now and recorded
 /// ([`drain::report_left_branches`]), then printed.
 fn cleanup_branches(root: &std::path::Path, out: &mut impl Write) -> Result<()> {
@@ -630,19 +650,7 @@ pub fn run(args: PrsArgs) -> Result<u8> {
             }
             Ok(0)
         }
-        PrsCommand::Trains => {
-            let view = integration::train::trains_of(&root);
-            if format == OutputFormat::Json {
-                json(&mut out, &view)?;
-            } else {
-                render_trains(&view, &mut out)?;
-            }
-            Ok(if view.observed && view.diagnostics.is_empty() {
-                0
-            } else {
-                FINDING
-            })
-        }
+        PrsCommand::Trains => trains(&root, format, &mut out),
         PrsCommand::Events => {
             let events = drain::events(&root);
             if format == OutputFormat::Json {
@@ -1885,6 +1893,183 @@ mod tests {
             repair_exit(&report(false, repaired, &["stale observation"])),
             0,
             "an act decides on its own fresh observation"
+        );
+    }
+
+    /// The world's trains view with every line `prs trains` can print: a prepared head in
+    /// each state, a link behind and in a cycle, a link beneath, prepared heads no train
+    /// holds, and a diagnostic.
+    fn trains_world() -> (Scratch, integration::train::TrainsView) {
+        use crate::integration::{
+            train::{BeneathLink, PrepState, PreparedHead, UnattachedPrep},
+            DependencyState,
+        };
+        let (s, _q) = world();
+        let mut v = integration::train::trains_of(&s.0);
+        assert!(v.observed, "{:?}", v.reason);
+        let t = v.trains.first_mut().expect("#6 depends on #2: a train");
+        assert_eq!(t.links.len(), 2, "{:?}", t.links);
+        t.links[0].prep = Some(PreparedHead {
+            reference: "refs/prep/2".into(),
+            sha: "0123456789abcdef".into(),
+            state: PrepState::Pushed,
+        });
+        t.links[1].prep = Some(PreparedHead {
+            reference: "refs/prep/6".into(),
+            sha: "fedcba9876543210".into(),
+            state: PrepState::Pending,
+        });
+        t.links[1].relation_kind = "behind".into();
+        t.links[1].behind = Some(3);
+        t.links[1].in_cycle = true;
+        t.beneath.push(BeneathLink {
+            number: 9,
+            state: DependencyState::Merged,
+            url: None,
+        });
+        v.unattached_prep = vec![
+            UnattachedPrep {
+                number: 7,
+                sha: "aaaaaaaaaaaaaaaa".into(),
+                open: true,
+            },
+            UnattachedPrep {
+                number: 8,
+                sha: "bbbbbbbbbbbbbbbb".into(),
+                open: false,
+            },
+        ];
+        v.diagnostics.push("a dependency cycle: #6".into());
+        (s, v)
+    }
+
+    /// A writer that accepts `.0` lines and refuses every write after them.
+    struct RefuseAfter(usize);
+
+    impl Write for RefuseAfter {
+        fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+            if self.0 == 0 {
+                return Err(std::io::Error::other("refused"));
+            }
+            self.0 -= buf.iter().filter(|b| **b == b'\n').count().min(self.0);
+            Ok(buf.len())
+        }
+        fn flush(&mut self) -> std::io::Result<()> {
+            Ok(())
+        }
+    }
+
+    /// Every line `prs trains` prints is a write that may be refused, and each refusal is
+    /// the command's error: with trains, without any, and a train with no next link.
+    #[test]
+    fn a_refused_write_fails_the_trains_on_every_line() {
+        let (_s, mut v) = trains_world();
+        v.trains[0].next = None;
+        let t = text(|o| render_trains(&v, o));
+        assert!(t.contains("next none"), "{t}");
+        for lines in 0..t.lines().count() {
+            assert!(
+                render_trains(&v, &mut RefuseAfter(lines)).is_err(),
+                "{lines}"
+            );
+        }
+        v.trains.clear();
+        for lines in 0..2 {
+            assert!(
+                render_trains(&v, &mut RefuseAfter(lines)).is_err(),
+                "{lines}"
+            );
+        }
+    }
+
+    /// The command's own writes are refused in text and JSON alike, and its exit is 0 only
+    /// for a view observed whole.
+    #[test]
+    fn the_trains_command_refuses_a_refused_write_and_exits_by_wholeness() {
+        let (s, mut v) = trains_world();
+        for format in [OutputFormat::Text, OutputFormat::Json] {
+            assert!(
+                trains(&s.0, format, &mut RefuseAfter(0)).is_err(),
+                "{format:?}"
+            );
+        }
+        assert_eq!(trains_exit(&v), FINDING, "a diagnostic is a finding");
+        v.diagnostics.clear();
+        assert_eq!(trains_exit(&v), 0, "observed and whole");
+        v.observed = false;
+        assert_eq!(trains_exit(&v), FINDING, "nothing observed is a finding");
+    }
+
+    /// `prs trains` says each train's links in landing order, with the turn, the relation,
+    /// the prepared head and what the link stands on; then what lies beneath, the prepared
+    /// heads no train holds, and every diagnostic.
+    #[test]
+    fn the_trains_say_each_link_its_prep_and_what_no_train_holds() {
+        let (_s, mut v) = trains_world();
+        let t = text(|o| render_trains(&v, o));
+        assert!(t.contains("train(s)") && t.contains("owner/repo"), "{t}");
+        assert!(t.contains("roots #2  tops #6  next #2"), "{t}");
+        assert!(t.contains("> #2"), "the link at its turn is marked: {t}");
+        assert!(t.contains("prep pushed"), "{t}");
+        assert!(t.contains("prep fedcba9876 pending"), "{t}");
+        assert!(t.contains("behind 3"), "{t}");
+        assert!(t.contains("on #2"), "{t}");
+        assert!(t.contains('…'), "a long title is cut: {t}");
+        assert!(t.contains("(in a cycle)"), "{t}");
+        assert!(t.contains("#9     beneath, merged"), "{t}");
+        assert!(t.contains("prepared heads no train holds:"), "{t}");
+        assert!(
+            t.contains("refs/prep/7 aaaaaaaaaa (open, stacked on nothing)"),
+            "{t}"
+        );
+        assert!(t.contains("refs/prep/8 bbbbbbbbbb (not open)"), "{t}");
+        assert!(t.contains("! a dependency cycle: #6"), "{t}");
+
+        // no train at all is said, and so is nothing observed
+        v.trains.clear();
+        let t = text(|o| render_trains(&v, o));
+        assert!(
+            t.contains("no open pull request is stacked on another"),
+            "{t}"
+        );
+        let t = text(|o| {
+            render_trains(
+                &integration::train::TrainsView::unobserved("nothing here".into()),
+                o,
+            )
+        });
+        assert_eq!(t, "no trains: nothing here\n");
+    }
+
+    /// `prs trains` exits 0 only on a whole answer, observed and without a diagnostic, in
+    /// text and in JSON alike; a checkout that observed nothing is a finding.
+    #[test]
+    fn the_trains_command_exits_by_whether_the_answer_is_whole() {
+        let (s, _q) = world();
+        let view = integration::train::trains_of(&s.0);
+        let whole = if view.observed && view.diagnostics.is_empty() {
+            0
+        } else {
+            FINDING
+        };
+        let args = |repo: &std::path::Path, format| PrsArgs {
+            repo: crate::cli::RepoArgs {
+                repo: Some(repo.to_path_buf()),
+                discovery: crate::cli::DiscoveryMode::Vcs,
+                strict: false,
+                share: None,
+            },
+            command: Some(PrsCommand::Trains),
+            format,
+        };
+        for format in [OutputFormat::Text, OutputFormat::Json] {
+            assert_eq!(run(args(&s.0, format)).unwrap(), whole, "{format:?}");
+        }
+        let empty = tempfile::tempdir().unwrap();
+        git(empty.path(), &["init", "-q"]);
+        assert_eq!(
+            run(args(empty.path(), OutputFormat::Text)).unwrap(),
+            FINDING
         );
     }
 }

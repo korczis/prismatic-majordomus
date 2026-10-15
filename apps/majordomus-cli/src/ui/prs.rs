@@ -20,8 +20,8 @@ use super::icons::icon;
 use super::shell::View;
 use super::source::{ask_all, Answer, Source};
 use super::view::{
-    day, graph, hero, kpi, kpi_to, list, meter, nothing, panel, panel_to, state, status_tone,
-    strip, table, text, unanswered, wide, GraphNode, Layout,
+    code_link, day, graph, hero, kpi, kpi_to, list, meter, more, none, nothing, panel, panel_to,
+    state, status_tone, strip, table, text, unanswered, value, wide, GraphNode, Layout,
 };
 
 /// The route of the screen.
@@ -33,11 +33,13 @@ pub const PANEL: &str = "/ui/panels/drain";
 const QUEUE: Source = Source::of("integration.queue");
 const EVENTS: Source = Source::of("integration.events");
 
-/// How many of the executor's events the inspector and the activity list show.
+/// How many of the executor's events the inspector and the activity list show; each says how
+/// many more the trail holds.
 const TRAIL: usize = 15;
 
-/// How many days the throughput chart covers.
-const DAYS: u64 = 14;
+/// How many pull requests a "next up" line names before it says how many more there are.
+const NEXT_UP: usize = 12;
+
 const PLAN: Source = Source::of("plan.status");
 const ISSUES: Source = Source::of("plan.issues");
 
@@ -300,12 +302,12 @@ pub fn drain_with(queue: &Answer, events: Option<&Answer>, filter: &Filter) -> E
                     ))
                 },
                 |a| {
-                    let own: Vec<Value> = trail
+                    let all_own: Vec<&Value> = trail
                         .iter()
                         .filter(|e| e.get("pr").and_then(Value::as_u64) == Some(n))
-                        .take(TRAIL)
-                        .cloned()
                         .collect();
+                    let own: Vec<Value> =
+                        all_own.iter().take(TRAIL).map(|e| (*e).clone()).collect();
                     inspector(a, &all, &repository, filter)
                         .child(
                             el("h4")
@@ -319,19 +321,18 @@ pub fn drain_with(queue: &Answer, events: Option<&Answer>, filter: &Filter) -> E
                         } else {
                             trail_of(&own, filter)
                         })
+                        .children(more(own.len(), all_own.len(), None))
                 },
             )
         });
         el("div")
             .class("mj-ui-stack")
             .child(tallies(queue))
-            .when(events.is_some(), |s| s.child(throughput(&trail)))
+            .when(events.is_some(), |s| s.child(throughput(&trail, queue)))
             .child(next_up(queue, filter))
             .child(tabs(queue, filter))
             .child(search(filter))
-            .when(inspected.is_some(), |s| {
-                s.child(inspected.clone().unwrap_or_else(|| el("div")))
-            })
+            .children(inspected)
             .child(rows(&shown, filter))
             .child(el("p").class("mj-ui-line").text(format!(
                 "{} of {} open pull requests shown · observed {}",
@@ -347,12 +348,12 @@ pub fn drain_with(queue: &Answer, events: Option<&Answer>, filter: &Filter) -> E
             .child(blockers(&all, filter))
             .child(dependency_graph(&all, &repository, filter))
             .when(events.is_some(), |s| {
-                let recent: Vec<Value> = trail
+                let about_one: Vec<&Value> = trail
                     .iter()
                     .filter(|e| e.get("pr").and_then(Value::as_u64).is_some())
-                    .take(TRAIL)
-                    .cloned()
                     .collect();
+                let recent: Vec<Value> =
+                    about_one.iter().take(TRAIL).map(|e| (*e).clone()).collect();
                 s.child(
                     el("div")
                         .attr("id", "activity")
@@ -361,7 +362,8 @@ pub fn drain_with(queue: &Answer, events: Option<&Answer>, filter: &Filter) -> E
                             nothing("The executor has recorded nothing about a pull request.")
                         } else {
                             trail_of(&recent, filter)
-                        }),
+                        })
+                        .children(more(recent.len(), about_one.len(), None)),
                 )
             })
     });
@@ -376,17 +378,22 @@ pub fn drain_with(queue: &Answer, events: Option<&Answer>, filter: &Filter) -> E
     )
 }
 
-/// Merges per day: how many pull requests the executor merged on each of the [`DAYS`] days
+/// Merges per day: how many pull requests the executor merged on each of the `days` days
 /// that end on the day of the trail's newest event, from its `merge_succeeded` events. The
+/// number of days is the queue's own throughput window (`throughput/window_days`), so the
+/// chart and the tile count over one window and the screen chooses none of its own. The
 /// window ends where the record ends, not at the reader's clock, so the chart says what was
 /// recorded and an idle week is a row of zeros the trail itself vouches for. Each day's count
 /// is written beside its bar, and a table carries the same numbers.
-pub fn merges_per_day(trail_newest_first: &[Value]) -> Vec<(String, u64)> {
+pub fn merges_per_day(trail_newest_first: &[Value], days: u64) -> Vec<(String, u64)> {
     let day_of = |e: &Value| crate::peers::parse_rfc3339(&text(e, "at")).map(|s| s / 86_400);
+    if days == 0 {
+        return Vec::new();
+    }
     let Some(last) = trail_newest_first.iter().filter_map(day_of).max() else {
         return Vec::new();
     };
-    let first = last.saturating_sub(DAYS - 1);
+    let first = last.saturating_sub(days - 1);
     let mut counts = vec![0u64; (last - first + 1) as usize];
     for e in trail_newest_first {
         if text(e, "action") != "merge_succeeded" {
@@ -407,8 +414,16 @@ pub fn merges_per_day(trail_newest_first: &[Value]) -> Vec<(String, u64)> {
         .collect()
 }
 
-fn throughput(trail_newest_first: &[Value]) -> El {
-    let days = merges_per_day(trail_newest_first);
+fn throughput(trail_newest_first: &[Value], queue: &Answer) -> El {
+    let Some(window) = queue.read("/throughput/window_days").count() else {
+        return el("div")
+            .attr("id", "throughput")
+            .child(el("h3").class("mj-ui-panel-title").text("Merge throughput"))
+            .child(nothing(
+                "The queue states no throughput window, so no day is counted here.",
+            ));
+    };
+    let days = merges_per_day(trail_newest_first, window);
     let body = if days.iter().all(|(_, n)| *n == 0) {
         nothing("The executor recorded no merge in the days its trail covers.")
     } else {
@@ -460,6 +475,9 @@ fn throughput(trail_newest_first: &[Value]) -> El {
     el("div")
         .attr("id", "throughput")
         .child(el("h3").class("mj-ui-panel-title").text("Merge throughput"))
+        .child(el("p").class("mj-ui-line mj-ui-dim").text(format!(
+            "Over the queue's window of {window} days, ending on the day of the trail's newest event."
+        )))
         .child(body)
 }
 
@@ -536,7 +554,10 @@ fn tallies(queue: &Answer) -> El {
             kpi("Held", &queue.read("/queue/tallies/by_lane/held")),
             &to_lane("held"),
         ),
-        kpi("Merged, 7 days", &queue.read("/throughput/merges")),
+        kpi(
+            &super::dashboard::merged_label(queue),
+            &queue.read("/throughput/merges"),
+        ),
         kpi("Merges per day", &queue.read("/throughput/merges_per_day")),
     ])
 }
@@ -549,12 +570,19 @@ fn next_up(queue: &Answer, filter: &Filter) -> El {
         if ns.is_empty() {
             return el("span").class("mj-ui-dim").text("none");
         }
-        el("span").children(ns.iter().take(12).map(|n| {
-            el("a")
-                .class("mj-ui-chip mj-ui-chip--link")
-                .attr("href", filter.href(ROUTE, "pr", Some(&n.to_string())))
-                .child(el("code").class("mj-ui-chip-value").text(format!("#{n}")))
-        }))
+        el("span")
+            .children(ns.iter().take(NEXT_UP).map(|n| {
+                el("a")
+                    .class("mj-ui-chip mj-ui-chip--link")
+                    .attr("href", filter.href(ROUTE, "pr", Some(&n.to_string())))
+                    .child(el("code").class("mj-ui-chip-value").text(format!("#{n}")))
+            }))
+            .when(ns.len() > NEXT_UP, |s| {
+                s.child(el("span").class("mj-ui-dim").text(format!(
+                    " and {} more in the rows below",
+                    ns.len() - NEXT_UP
+                )))
+            })
     };
     // a list the queue did not answer is unknown; an empty one it answered is none
     let listed = |p: &str| -> El {
@@ -738,7 +766,7 @@ fn rows(shown: &[&Value], filter: &Filter) -> El {
                 .child(
                     el("td")
                         .class("mj-ui-mono mj-ui-dim")
-                        .text(reasons.into_iter().take(2).collect::<Vec<_>>().join(", ")),
+                        .text(super::dashboard::first_reasons(&reasons)),
                 )
         })
         .collect::<Vec<_>>();
@@ -770,20 +798,32 @@ fn strings(a: &Value, k: &str) -> Vec<String> {
         .unwrap_or_default()
 }
 
+/// How many paths a row of chips shows before it says how many more there are.
+const PATHS: usize = 6;
+
 /// Paths as chips: each its own element, so a row of them wraps between paths and a long one
-/// is clipped inside its chip rather than widening the screen on a phone.
+/// is clipped inside its chip rather than widening the screen on a phone. A long list shows
+/// its first [`PATHS`] and says how many more there are, with every path in its title.
 fn path_chips(paths: &[String]) -> El {
     if paths.is_empty() {
-        return el("span").class("mj-ui-dim").text("none");
+        return none();
     }
     el("span")
         .class("mj-ui-badges")
-        .children(paths.iter().map(|p| {
+        .children(paths.iter().take(PATHS).map(|p| {
             el("span")
                 .class("mj-ui-chip")
                 .attr("title", p.clone())
                 .child(el("code").class("mj-ui-chip-value").text(p.clone()))
         }))
+        .when(paths.len() > PATHS, |s| {
+            s.child(
+                el("span")
+                    .class("mj-ui-chip mj-ui-dim")
+                    .attr("title", paths[PATHS..].join("\n"))
+                    .text(format!("and {} more", paths.len() - PATHS)),
+            )
+        })
 }
 
 /// One pull request in full: the queue's assessment of it, where it is on the forge, what
@@ -834,7 +874,7 @@ fn inspector(a: &Value, all: &[Value], repository: &str, filter: &Filter) -> El 
         }));
     let overlap_list = el("ul")
         .class("mj-ui-list")
-        .children(overlaps.iter().take(20).filter_map(|o| {
+        .children(overlaps.iter().filter_map(|o| {
             let m = o.get("number").and_then(Value::as_u64)?;
             let paths = strings(o, "paths");
             Some(
@@ -847,9 +887,7 @@ fn inspector(a: &Value, all: &[Value], repository: &str, filter: &Filter) -> El 
                         if paths.len() == 1 { "" } else { "s" },
                     ),
                 )
-                .child(path_chips(
-                    &paths.iter().take(3).cloned().collect::<Vec<_>>(),
-                )),
+                .child(path_chips(&paths)),
             )
         }));
     let named = issues_named(a);
@@ -1169,14 +1207,6 @@ fn issue_panel(issues: &Answer, id: &str, filter: &Filter) -> El {
                     .child(el("code").class("mj-ui-chip-value").text(other))
             }))
         };
-        let words = |k: &str| -> String {
-            let v = strings(&i, k);
-            if v.is_empty() {
-                "none".into()
-            } else {
-                v.join(", ")
-            }
-        };
         let fact = |label: &str, value: El| {
             el("div")
                 .class("mj-ui-fact")
@@ -1197,12 +1227,24 @@ fn issue_panel(issues: &Answer, id: &str, filter: &Filter) -> El {
             .child(
                 el("div")
                     .class("mj-ui-detail-head")
-                    .child(el("p").class("mj-ui-mono mj-ui-dim").text(format!(
-                        "{id} · {} · {} · wave {}",
-                        text(&i, "milestone"),
-                        text(&i, "priority"),
-                        i.get("wave").map(Value::to_string).unwrap_or_else(|| "?".into())
-                    )))
+                    .child({
+                        let milestone = text(&i, "milestone");
+                        el("p")
+                            .class("mj-ui-mono mj-ui-dim")
+                            .text(format!("{id} · "))
+                            .child(if milestone.is_empty() {
+                                none()
+                            } else {
+                                code_link(super::milestone::href(&milestone), milestone)
+                            })
+                            .text(format!(
+                                " · {} · wave {}",
+                                value(&i, "priority"),
+                                i.get("wave")
+                                    .map(Value::to_string)
+                                    .unwrap_or_else(|| "unknown".into())
+                            ))
+                    })
                     .child(el("h3").class("mj-ui-detail-title").text(text(&i, "title")))
                     .child(
                         el("p")
@@ -1236,10 +1278,29 @@ fn issue_panel(issues: &Answer, id: &str, filter: &Filter) -> El {
                     .child(fact("Depends on", ids("depends_on")))
                     .child(fact("Blocked by", ids("blocked_by")))
                     .child(fact("Unblocks", ids("dependents")))
-                    .child(fact(
-                        "Serves",
-                        el("span").class("mj-ui-mono").text(words("serves")),
-                    ))
+                    .child(fact("Serves", {
+                        // an intent opens its own inspector on the roadmap
+                        let intents = strings(&i, "serves");
+                        if intents.is_empty() {
+                            none()
+                        } else {
+                            el("span")
+                                .class("mj-ui-badges")
+                                .children(intents.into_iter().map(|served| {
+                                    // `intent#criterion`: the intent opens, the criterion is
+                                    // named in the label
+                                    let intent = served.split('#').next().unwrap_or(&served);
+                                    el("a")
+                                        .class("mj-ui-chip mj-ui-chip--link")
+                                        .attr("href", super::intent::href(intent))
+                                        .child(
+                                            el("code")
+                                                .class("mj-ui-chip-value")
+                                                .text(served.clone()),
+                                        )
+                                }))
+                        }
+                    }))
                     .child(fact("Scope", path_chips(&strings(&i, "scope"))))
                     .child(fact(
                         "Evidence",
@@ -1274,6 +1335,7 @@ mod tests {
             exposure: Exposure::default(),
             value: Ok(value),
             took: Duration::from_millis(5),
+            standing: crate::ui::source::Standing::NOW,
         }
     }
 
@@ -1288,7 +1350,7 @@ mod tests {
         serde_json::json!({
             "observed": true,
             "last_merge": { "at": "2026-10-11T01:10:03Z", "pr": 908, "detail": "merged and verified" },
-            "throughput": { "merges": 16, "merges_per_day": 2.29 },
+            "throughput": { "window_days": 7, "merges": 16, "merges_per_day": 2.29 },
             "queue": {
                 "repository": "korczis/prismatic-majordomus",
                 "observed_at": "2026-10-11T08:18:59Z",
@@ -1331,6 +1393,7 @@ mod tests {
             exposure: Exposure::default(),
             value: Ok(value),
             took: Duration::from_millis(1),
+            standing: crate::ui::source::Standing::NOW,
         }
     }
 
@@ -1390,7 +1453,7 @@ mod tests {
             ev("2026-10-10T10:00:00Z", "merge_succeeded"),
             ev("2026-09-01T10:00:00Z", "merge_succeeded"),
         ];
-        let days = merges_per_day(&trail);
+        let days = merges_per_day(&trail, 14);
         assert_eq!(
             days.len(),
             14,
@@ -1408,13 +1471,29 @@ mod tests {
             3,
             "a merge outside the window is not drawn"
         );
-        assert!(merges_per_day(&[]).is_empty());
-        let html = throughput(&trail).render();
+        assert!(merges_per_day(&[], 14).is_empty());
+        assert!(
+            merges_per_day(&trail, 0).is_empty(),
+            "a window of no days counts none"
+        );
+        // the chart counts over the queue's own window, and says which
+        let windowed = queue(serde_json::json!({ "throughput": { "window_days": 14 } }));
+        let html = throughput(&trail, &windowed).render();
         assert!(
             html.contains("<svg") && html.contains("Merges per day from 2026-09-28 to 2026-10-11"),
             "{html}"
         );
-        let idle = throughput(&[ev("2026-10-11T09:00:00Z", "observed")]).render();
+        assert!(html.contains("window of 14 days"), "{html}");
+        let seven = queue(serde_json::json!({ "throughput": { "window_days": 7 } }));
+        assert!(throughput(&trail, &seven)
+            .render()
+            .contains("Merges per day from 2026-10-05 to 2026-10-11"));
+        let silent = throughput(&trail, &queue(serde_json::json!({}))).render();
+        assert!(
+            silent.contains("states no throughput window") && !silent.contains("<svg"),
+            "a window the queue does not state is never invented: {silent}"
+        );
+        let idle = throughput(&[ev("2026-10-11T09:00:00Z", "observed")], &windowed).render();
         assert!(idle.contains("recorded no merge") && !idle.contains("<svg"));
     }
 
@@ -1537,6 +1616,109 @@ mod tests {
         );
     }
 
+    fn plan(value: Value) -> Answer {
+        Answer {
+            source: ISSUES,
+            route: Some("GET /api/v1/plan/issues".into()),
+            exposure: Exposure::default(),
+            value: Ok(value),
+            took: Duration::from_millis(1),
+            standing: crate::ui::source::Standing::NOW,
+        }
+    }
+
+    /// An issue opens with where it sits, what it waits for and unblocks (each a link to that
+    /// issue), what it serves, its scope, its evidence and its dates, and says "none" and
+    /// "not yet" for what it lacks rather than drawing nothing.
+    #[test]
+    fn an_issue_opens_with_what_it_waits_for_unblocks_and_serves() {
+        let issues = plan(serde_json::json!({ "issues": [{
+            "id": "I0002", "title": "The second thing", "milestone": "M1", "priority": "p1", "wave": 3,
+            "status": "READY", "objective": "Make the second thing true.",
+            "depends_on": ["I0001"], "blocked_by": [], "dependents": ["I0003"],
+            "serves": ["intent-a#c1"], "scope": ["apps/a.rs"],
+            "evidence_have": 1, "evidence_need": 2, "started_at": "2026-10-01T10:00:00Z"
+        }]}));
+        let filter = Filter::from_query(&q(&[("lane", "repair"), ("issue", "I0002")]));
+        let html = issue_panel(&issues, "I0002", &filter).render();
+        for want in [
+            "id=\"issue\"",
+            "I0002 · <a",
+            "href=\"/ui/roadmap?milestone=M1#milestone\">M1</a> · p1 · wave 3",
+            "href=\"/ui/roadmap?intent=intent-a#intent\"",
+            "Make the second thing true.",
+            "issue=I0001",
+            "issue=I0003",
+            "intent-a#c1",
+            "apps/a.rs",
+            "2026-10-01 10:00:00Z",
+            "not yet",
+            "Pull requests that name it",
+        ] {
+            assert!(html.contains(want), "no {want}: {html}");
+        }
+        assert!(
+            html.contains("lane=repair"),
+            "a link keeps the drain's filter: {html}"
+        );
+        let missing = issue_panel(&issues, "I9999", &filter).render();
+        assert!(missing.contains("I9999 is not an issue of the plan."));
+    }
+
+    /// A queue that left things out is drawn as what it said: no tabs without counts, an
+    /// unknown time, no last merge, a number given as text, a gate without a verdict, a
+    /// dependency without a number, and a trail that names no pull request.
+    #[test]
+    fn a_queue_that_left_things_out_is_drawn_as_what_it_said() {
+        let queue = queue(serde_json::json!({
+            "observed": true,
+            "queue": {
+                "repository": "",
+                "assessments": [
+                    { "number": "77", "title": "the seventy-seventh", "author": "a", "head_ref": "f/77",
+                      "disposition": "needs_refresh", "lane": "waiting", "reasons": ["behind_master:1"],
+                      "wait": { "actionable_since": "2026-10-10T08:00:00Z" },
+                      "gates": [{ "gate": "ci", "passed": false }, { "gate": "review" }],
+                      "dependencies": [{ "number": 5, "state": "merged", "satisfied": true }, { "state": "open" }],
+                      "overlaps": [] },
+                    { "number": 78, "title": "the seventy-eighth", "author": "a", "head_ref": "f/78",
+                      "disposition": "waiting_for_dependency", "lane": "waiting", "reasons": ["depends_on:77"],
+                      "dependencies": [{ "number": 77, "state": "open", "satisfied": false }],
+                      "overlaps": [] }
+                ]
+            }
+        }));
+        let trail = events(serde_json::json!({ "events": [
+            { "at": "2026-10-11T01:00:00Z", "action": "observed", "pr": null, "detail": "2 open", "reasons": [], "actor": "x" }
+        ]}));
+        let html = drain_with(
+            &queue,
+            Some(&trail),
+            &Filter::from_query(&q(&[("pr", "77"), ("lane", "waiting")])),
+        )
+        .render();
+        for want in [
+            "The queue did not count its dispositions.",
+            "at an unknown time",
+            "none recorded",
+            "id=\"pr\"",
+            "actionable since",
+            "No factor was named.",
+            "The executor has recorded nothing about it.",
+            "The executor has recorded nothing about a pull request.",
+            ">fail<",
+            ">unknown<",
+        ] {
+            assert!(html.contains(want), "no {want}: {html}");
+        }
+        // #78 depends on #77, which is open: the link stays in the drain
+        let html78 = drain_with(&queue, None, &Filter::from_query(&q(&[("pr", "78")]))).render();
+        assert!(
+            html78.contains("pr=77#pr"),
+            "an open dependency leads to its inspector: {html78}"
+        );
+    }
+
     #[test]
     fn the_screen_paints_the_issue_and_defers_the_drain() {
         let repo = crate::synthetic::SyntheticRepository::new(crate::synthetic::Shape::default())
@@ -1554,5 +1736,134 @@ mod tests {
             "{html}"
         );
         assert!(html.contains("id=\"issue\"") || html.contains("is not an issue of the plan"));
+    }
+
+    /// The inspector draws each overlap with its own count of shared paths and skips one
+    /// that names no pull request, lists the evidence and names the risk factors; an
+    /// assessment without a number is neither a node nor an edge, and with no repository a
+    /// dependency the queue does not hold leads back to the drain.
+    #[test]
+    fn the_inspector_draws_evidence_risk_and_every_overlap_it_can_name() {
+        let queue = queue(serde_json::json!({
+            "observed": true,
+            "queue": {
+                "repository": "",
+                "assessments": [
+                    { "number": 40, "title": "the fortieth", "author": "a", "head_ref": "f/40",
+                      "disposition": "waiting_for_dependency", "lane": "waiting",
+                      "risk_factors": ["wide_change", "no_tests"],
+                      "evidence": [{ "kind": "ci_run", "status": "PASSED", "detail": "run 12 green" }],
+                      "dependencies": [{ "number": 39, "state": "open", "certainty": "confirmed", "satisfied": false }],
+                      "overlaps": [
+                          { "number": 41, "kind": "authored", "paths": ["a.rs", "b.rs"] },
+                          { "number": 42, "kind": "derived", "paths": ["c.rs"] },
+                          { "kind": "nameless", "paths": ["d.rs"] }
+                      ] },
+                    { "title": "no number at all", "author": "a", "head_ref": "f/none",
+                      "disposition": "needs_refresh", "lane": "waiting",
+                      "dependencies": [{ "number": 40, "state": "open" }] }
+                ]
+            }
+        }));
+        let html = drain(&queue, &Filter::from_query(&q(&[("pr", "40")]))).render();
+        for want in [
+            "authored · 2 shared paths",
+            "derived · 1 shared path<",
+            "ci_run",
+            "run 12 green",
+            "wide_change · no_tests",
+        ] {
+            assert!(html.contains(want), "no {want}: {html}");
+        }
+        assert!(
+            !html.contains("nameless"),
+            "an overlap without a number: {html}"
+        );
+        assert!(
+            !html.contains("https://github.com"),
+            "no repository, no forge: {html}"
+        );
+        let graph = html.split("data-graph=\"").nth(1).unwrap_or_default();
+        let graph = graph.split('"').next().unwrap_or_default();
+        assert!(
+            graph.contains("39"),
+            "the dependency outside is drawn: {graph}"
+        );
+    }
+
+    /// A drain whose pull requests depend on no open one says so instead of drawing a graph.
+    #[test]
+    fn no_dependency_between_open_pull_requests_draws_no_graph() {
+        let html = dependency_graph(
+            &[serde_json::json!({ "number": 1, "dependencies": [] })],
+            "",
+            &Filter::default(),
+        )
+        .render();
+        assert!(html.contains("No open pull request depends on another open one."));
+        assert!(!html.contains("data-graph"));
+    }
+
+    /// An event about no pull request is titled by its action alone and opens nothing, and a
+    /// key the filter does not carry has no value.
+    #[test]
+    fn an_event_about_no_pull_request_is_its_action_alone() {
+        let html = trail_of(
+            &[
+                serde_json::json!({ "at": "2026-10-11T01:00:00Z", "action": "lane_observed",
+                "pr": null, "detail": "3 open", "reasons": [], "actor": "" }),
+            ],
+            &Filter::default(),
+        )
+        .render();
+        assert!(html.contains("lane observed"), "{html}");
+        assert!(!html.contains("#pr"), "{html}");
+        assert_eq!(Filter::from_query(&q(&[("pr", "1")])).get("wave"), None);
+    }
+
+    /// An issue that gives no wave and serves nothing says so.
+    #[test]
+    fn an_issue_without_a_wave_or_an_intent_says_so() {
+        let issues = plan(serde_json::json!({ "issues": [{
+            "id": "I0007", "title": "The seventh", "milestone": "M1", "priority": "p2",
+            "status": "READY", "serves": []
+        }]}));
+        let html = issue_panel(&issues, "I0007", &Filter::default()).render();
+        assert!(html.contains(">M1</a> · p2 · wave unknown"), "{html}");
+        assert!(
+            html.contains("<dt>Serves</dt><dd><span class=\"mj-ui-dim\">none</span>"),
+            "{html}"
+        );
+    }
+
+    /// A line of pull requests names its first dozen and how many more there are, a row of
+    /// paths its first six, and an issue with no milestone says none.
+    #[test]
+    fn a_long_line_of_pull_requests_or_paths_counts_the_rest() {
+        let ns: Vec<u64> = (1..=NEXT_UP as u64 + 3).collect();
+        let q = queue(
+            serde_json::json!({ "queue": { "next_refresh": ns, "starving": [], "tallies": {} } }),
+        );
+        let html = next_up(&q, &Filter::default()).render();
+        assert!(html.contains("and 3 more in the rows below"), "{html}");
+        let paths: Vec<String> = (0..PATHS + 2).map(|i| format!("p/{i}.rs")).collect();
+        let chips = path_chips(&paths).render();
+        assert!(
+            chips.contains("and 2 more") && chips.contains("p/7.rs"),
+            "{chips}"
+        );
+        assert!(
+            !chips.contains(">p/7.rs<"),
+            "the rest is in the title: {chips}"
+        );
+        assert!(path_chips(&[]).render().contains(">none<"));
+        let issues = plan(
+            serde_json::json!({ "issues": [{ "id": "I0008", "title": "Adrift", "status": "READY" }]}),
+        );
+        let html = issue_panel(&issues, "I0008", &Filter::default()).render();
+        assert!(
+            html.contains("I0008 · <span class=\"mj-ui-dim\">none</span> · none · wave unknown"),
+            "{html}"
+        );
     }
 }

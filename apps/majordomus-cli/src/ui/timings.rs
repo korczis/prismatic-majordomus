@@ -183,7 +183,23 @@ mod tests {
             exposure: Exposure::default(),
             value: Ok(value),
             took: Duration::from_millis(1),
+            standing: crate::ui::source::Standing::NOW,
         }
+    }
+
+    /// A check or a head the answer gives without its numbers is drawn as unknown and
+    /// unnumbered, never as a zero it did not say.
+    #[test]
+    fn what_the_answer_leaves_out_is_unknown_never_zero() {
+        let html = panel_of(&answer(serde_json::json!({ "observed": true, "timings": {
+            "observed_at": "2026-10-11T12:00:00Z",
+            "checks": [{ "name": "site" }],
+            "heads": [{ "head_sha": "a", "slowest_check": "site", "failed": false }]
+        }})))
+        .render();
+        assert!(html.contains("unknown"), "{html}");
+        assert!(html.contains("unnumbered"), "{html}");
+        assert!(!html.contains(">0 s<"), "{html}");
     }
 
     #[test]
@@ -233,5 +249,21 @@ mod tests {
             "observed_at": "t", "measured_runs": 0, "unmeasured_runs": 4, "checks": [], "heads": [] }}))).render();
         assert!(empty.contains("has both a start and an end"));
         assert!(!empty.contains("<svg"));
+    }
+
+    /// A head whose checks failed is drawn in the failing tone even when no check's median
+    /// is.
+    #[test]
+    fn a_failed_head_is_drawn_as_one() {
+        let html = panel_of(&answer(serde_json::json!({ "observed": true, "timings": {
+            "observed_at": "2026-10-11T12:00:00Z", "measured_runs": 1, "unmeasured_runs": 0,
+            "checks": [{ "name": "rust", "runs": 1, "passed": 1, "failed": 0, "median_seconds": 600,
+                         "p90_seconds": 600, "slowest_seconds": 600 }],
+            "heads": [{ "number": 960, "head_sha": "a", "wall_seconds": 600,
+                        "slowest_check": "rust", "slowest_seconds": 600, "failed": true }]
+        }})))
+        .render();
+        assert!(html.contains("/ui/prs?pr=960#pr"), "{html}");
+        assert!(html.contains("mj-tone--rose"), "{html}");
     }
 }

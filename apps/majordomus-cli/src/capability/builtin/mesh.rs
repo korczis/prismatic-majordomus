@@ -434,7 +434,8 @@ pub fn peer_tree(c: &Cooperation, query: &Query) -> PeerTree {
         node.link = links.get(key).cloned();
     }
     for claim in state.claims.iter().filter(|cl| cl.state.is_live()) {
-        if let Some(runtime) = runtimes.get_mut(&claim.runtime) {
+        // every claim's runtime is a node: each stream of the journal was touched above
+        runtimes.entry(claim.runtime.clone()).and_modify(|runtime| {
             let newer = runtime
                 .newest_claim
                 .as_ref()
@@ -450,7 +451,7 @@ pub fn peer_tree(c: &Cooperation, query: &Query) -> PeerTree {
                     acquired_lamport: claim.acquired_lamport,
                 });
             }
-        }
+        });
     }
     for session in &state.sessions {
         if summary && session.state != SessionState::Active {
@@ -722,6 +723,12 @@ pub struct MeshEventsInput {
     /// At most this many (default 100, at most 1000).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub limit: Option<u64>,
+    /// The newest `limit` events above `after` instead of the first ones: what a reader who
+    /// wants the journal as it stands now asks for. Still in Lamport order, and `lamport` is
+    /// then the newest stamp the journal holds, so resuming after it reads only what comes
+    /// next. Without it the journal is read forward from `after`, a page at a time.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub newest: Option<bool>,
 }
 
 impl BenchmarkCases for MeshEventsInput {
@@ -731,6 +738,7 @@ impl BenchmarkCases for MeshEventsInput {
             MeshEventsInput {
                 after: None,
                 limit: Some(100),
+                newest: None,
             },
         )]
     }
@@ -762,7 +770,16 @@ fn mesh_events(ctx: &Context, input: MeshEventsInput) -> Result<EventList, Capab
     };
     let limit = input.limit.unwrap_or(100).clamp(1, 1000) as usize;
     let after = input.after.unwrap_or(0);
-    let events = c.journal().events_after(after, limit);
+    let events = if input.newest == Some(true) {
+        // the whole tail above `after`, in order, and then its end: the journal is in memory
+        // and bounded by its own retention, so this is a walk and not a second index
+        let mut all = c.journal().events_after(after, usize::MAX);
+        let from = all.len().saturating_sub(limit);
+        all.drain(..from);
+        all
+    } else {
+        c.journal().events_after(after, limit)
+    };
     Ok(EventList {
         active: true,
         count: events.len(),
@@ -1133,6 +1150,10 @@ pub struct ReviewRequestInput {
     /// The runtime asked (`<node>-<runtime>`); anyone when omitted.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub reviewer: Option<String>,
+    /// What the reviewer needs beyond the subject: evidence, commands, the question. Up to
+    /// 8 KiB, several lines.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub body: Option<String>,
 }
 
 impl BenchmarkCases for ReviewRequestInput {
@@ -1145,6 +1166,7 @@ impl BenchmarkCases for ReviewRequestInput {
                 scope: vec![],
                 issue: None,
                 reviewer: None,
+                body: None,
             },
         )]
     }
@@ -1162,6 +1184,7 @@ fn mesh_review_request(
         input.scope,
         input.issue,
         input.reviewer,
+        input.body,
     )
     .map_err(map_error)
 }
@@ -1200,6 +1223,44 @@ fn mesh_review_answer(ctx: &Context, input: ReviewAnswerInput) -> Result<Written
     let c = cooperation(ctx)?;
     let session = session_of(ctx, input.session)?;
     c.answer_review(&input.request, &session, input.verdict, input.note)
+        .map_err(map_error)
+}
+
+#[derive(Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+/// The input of `mesh.review.withdraw`.
+pub struct ReviewWithdrawInput {
+    /// The request's key, `<stream>/<review>`.
+    pub request: String,
+    /// The withdrawing session of the asking runtime; the calling MCP session's own when
+    /// omitted.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub session: Option<String>,
+    /// The requester's result or reason, up to 8 KiB: what came of it, or why it is void.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub note: Option<String>,
+}
+
+impl BenchmarkCases for ReviewWithdrawInput {
+    fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        vec![NamedCase::new(
+            "unknown",
+            ReviewWithdrawInput {
+                request: "none/r-0".into(),
+                session: Some("bench".into()),
+                note: Some("superseded".into()),
+            },
+        )]
+    }
+}
+
+fn mesh_review_withdraw(
+    ctx: &Context,
+    input: ReviewWithdrawInput,
+) -> Result<Written, CapabilityError> {
+    let c = cooperation(ctx)?;
+    let session = session_of(ctx, input.session)?;
+    c.withdraw_review(&input.request, &session, input.note)
         .map_err(map_error)
 }
 
@@ -1535,6 +1596,19 @@ pub fn module() -> ModuleDescriptor {
                 handler: mesh_review_answer,
             },
             capability! {
+                id: "mesh.review.withdraw",
+                kind: CapabilityKind::Command,
+                title: "Withdraw a review request",
+                description: "End a review request this runtime asked for — done, void or superseded — with an optional result note the request then carries. Any session of the asking runtime may (a reconnected asker is another session of it); no other runtime may, and it is never counted as an answer. An unanswered request also reads expired while its runtime has stopped beating. Replicated to every linked runtime. Writes this runtime's journal only.",
+                input: ReviewWithdrawInput,
+                output: Written,
+                stability: Stability::Experimental,
+                exposure: Exposure { mcp: mcp("majordomus_mesh_review_withdraw"), http: post("/api/v1/mesh/reviews/withdraw"), cli: None },
+                tags: ["mesh", "coordination", "cooperation"],
+                benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::TransientState },
+                handler: mesh_review_withdraw,
+            },
+            capability! {
                 id: "mesh.link.hello",
                 kind: CapabilityKind::Command,
                 title: "Open a link (the handshake)",
@@ -1675,6 +1749,11 @@ mod tests {
                 Some("majordomus_mesh_review_answer"),
                 "/api/v1/mesh/reviews/answer",
             ),
+            (
+                "mesh.review.withdraw",
+                Some("majordomus_mesh_review_withdraw"),
+                "/api/v1/mesh/reviews/withdraw",
+            ),
             ("mesh.link.hello", None, HELLO_PATH),
             ("mesh.link.sync", None, SYNC_PATH),
         ];
@@ -1754,5 +1833,182 @@ mod tests {
                 c.id
             );
         }
+    }
+
+    /// A cooperation runtime that dials nobody until it is started, which these never are.
+    fn cooperation() -> std::sync::Arc<Cooperation> {
+        crate::mesh::testing::cooperation()
+    }
+
+    /// A context over a synthetic repository, with a mesh declaration in its working tree
+    /// when `declared`.
+    fn context(declared: bool) -> (crate::synthetic::SyntheticRepository, Context) {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let mut index = repo.index().unwrap();
+        if declared {
+            index.objects.push(crate::model::Object {
+                kind: crate::mesh::KIND.into(),
+                identity: "majordomus".into(),
+                uri: "majordomus://mesh-declaration/majordomus".into(),
+                title: None,
+                description: None,
+                metadata: serde_json::json!({
+                    "schema": "mesh/v1", "kind": "mesh-declaration", "id": "majordomus",
+                    "enabled": true, "trust": { "policy": "deny_unknown", "allow": [] },
+                }),
+                body: String::new(),
+                content: String::new(),
+                media_type: "application/yaml",
+                provenance: crate::model::Provenance {
+                    path: ".ai/repo/mesh/majordomus.yaml".into(),
+                    directory: ".ai/repo/mesh".into(),
+                    source_class: "mesh-declaration".into(),
+                    section: None,
+                    bytes: 0,
+                    member: None,
+                },
+            });
+        }
+        let registry = capability::CapabilityRegistry::builder()
+            .with_modules(vec![module()])
+            .with_index(&index)
+            .build()
+            .expect("the registry builds");
+        let ctx = Context::new(std::sync::Arc::new(index), std::sync::Arc::new(registry));
+        (repo, ctx)
+    }
+
+    #[test]
+    fn retrust_asks_the_running_cooperation_with_the_declaration_in_force() {
+        let (_repo, ctx) = context(true);
+        assert!(
+            matches!(declaration(&ctx), Some(Ok(_))),
+            "the declaration parses"
+        );
+        assert!(retrust(&ctx).is_empty(), "no cooperation, nothing to end");
+        ctx.mesh.attach_cooperation(cooperation());
+        assert!(
+            retrust(&ctx).is_empty(),
+            "a runtime with no links ends none"
+        );
+        let (_repo, undeclared) = context(false);
+        undeclared.mesh.attach_cooperation(cooperation());
+        assert!(
+            retrust(&undeclared).is_empty(),
+            "no declaration, no trust to put in force"
+        );
+    }
+
+    #[test]
+    fn a_peer_asked_of_a_server_without_cooperation_is_not_found_with_the_reason() {
+        let (_repo, ctx) = context(false);
+        ctx.mesh.decline_cooperation("no endpoint to be dialed at");
+        let detail = mesh_peer(
+            &ctx,
+            PeerInput {
+                runtime: "anything".into(),
+            },
+        )
+        .unwrap();
+        assert!(!detail.found);
+        assert_eq!(
+            detail.reason.as_deref(),
+            Some("no endpoint to be dialed at")
+        );
+        assert!(detail.machine.is_none() && detail.runtime.is_none() && detail.refused.is_empty());
+    }
+
+    #[test]
+    fn a_peer_is_found_by_its_runtime_key_in_the_full_tree_and_another_is_not() {
+        let (_repo, ctx) = context(false);
+        let c = cooperation();
+        ctx.mesh.attach_cooperation(std::sync::Arc::clone(&c));
+        let own = c.runtime_key().to_string();
+        let found = mesh_peer(
+            &ctx,
+            PeerInput {
+                runtime: format!(" {own} "),
+            },
+        )
+        .unwrap();
+        assert!(found.found, "{found:?}");
+        assert_eq!(found.runtime.map(|r| r.runtime), Some(own));
+        let missing = mesh_peer(
+            &ctx,
+            PeerInput {
+                runtime: "nobody".into(),
+            },
+        )
+        .unwrap();
+        assert!(!missing.found);
+        assert_eq!(
+            missing.reason.as_deref(),
+            Some("no runtime nobody is linked or heard here")
+        );
+    }
+
+    #[test]
+    fn the_summary_tree_lists_active_sessions_counted_and_the_full_one_every_claim() {
+        let c = cooperation();
+        let s1 = SessionInfo::named("s1", "test");
+        c.open_session(s1.clone()).unwrap();
+        // the older claim's id sorts last, so the fold lists the newer one first and the
+        // older one meets a newest it does not replace
+        for (claim, path, issue) in [("z1", "apps", "#1"), ("a2", "docs", "#2")] {
+            c.journal()
+                .append_own(crate::mesh::journal::EventBody::ClaimAcquired {
+                    claim: claim.into(),
+                    session: s1.session.clone(),
+                    scope: vec![path.into()],
+                    intent: Some("a long intent ".repeat(20)),
+                    mode: ClaimMode::Exclusive,
+                    issue: Some(issue.into()),
+                })
+                .unwrap();
+        }
+        c.open_session(SessionInfo::named("s2", "test")).unwrap();
+        c.close_session("s2").unwrap();
+        c.request_review("s1", "feature/x".into(), vec![], None, None, None)
+            .unwrap();
+        let own = |tree: &PeerTree| -> RuntimeNode {
+            tree.machines
+                .iter()
+                .flat_map(|m| m.runtimes.iter())
+                .find(|r| r.this_runtime)
+                .cloned()
+                .expect("this runtime is in its own tree")
+        };
+
+        let summary = own(&peer_tree(&c, &Query::default()));
+        assert_eq!(
+            summary
+                .newest_claim
+                .as_ref()
+                .and_then(|b| b.issue.as_deref()),
+            Some("#2"),
+            "the newest live claim"
+        );
+        assert_eq!(summary.sessions.len(), 1, "only the active session");
+        let s = &summary.sessions[0];
+        assert_eq!(s.state, SessionState::Active);
+        assert!(s.claims.is_empty(), "counted, not listed");
+        assert_eq!(s.claims_held, 2);
+        assert_eq!(s.reviews.len(), 1, "the review the session asked for");
+
+        let full = own(&peer_tree(
+            &c,
+            &Query {
+                view: Some(View::Full),
+                ..Query::default()
+            },
+        ));
+        assert_eq!(full.sessions.len(), 2, "every session");
+        let s1 = full
+            .sessions
+            .iter()
+            .find(|s| s.state == SessionState::Active)
+            .unwrap();
+        assert_eq!(s1.claims.len(), 2, "every claim listed");
+        assert_eq!(s1.claims_held, 2);
     }
 }

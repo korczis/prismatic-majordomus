@@ -2265,6 +2265,162 @@ fn the_queue_reads_and_keeps_each_heads_shape() {
     assert!(keys.iter().all(|k| k.starts_with(&master)), "{keys:?}");
 }
 
+// ---------------------------------------------------------------- what the process remembers
+
+/// Pull requests of every relation, one stacked on another so that its head contains the
+/// other's, each mirrored as `prs refresh` mirrors it, and an unfetched one; beside them a
+/// later head for #1 that no observation names yet.
+struct RememberedWorld {
+    fixture: RelationFixture,
+    moved: String,
+    now: std::time::SystemTime,
+}
+
+const REMEMBERED: [&str; 8] = [
+    "authored",
+    "derived_only",
+    "conflicting",
+    "derived_conflict",
+    "up_to_date",
+    "same",
+    "absent",
+    "stacked",
+];
+
+fn remembered_world() -> RememberedWorld {
+    let mut fixture = relation_fixture();
+    let dir = fixture.dir.clone();
+    let authored = fixture.heads["authored"].clone();
+    let stacked = commit_on(&dir, "stacked", &authored, &[("e.txt", "e\n")]);
+    let moved = commit_on(&dir, "authored-2", &authored, &[("b.txt", "newer\n")]);
+    fixture.heads.insert("stacked", stacked);
+    let world = RememberedWorld {
+        fixture,
+        moved,
+        now: std::time::SystemTime::now(),
+    };
+    observe_remembered(&world, None);
+    world
+}
+
+/// Record the world's observation, #1 at `one` when given, and mirror every fetched head.
+fn observe_remembered(w: &RememberedWorld, one: Option<&str>) {
+    let RelationFixture { dir, master, heads } = &w.fixture;
+    let prs: Vec<PullRequestObservation> = REMEMBERED
+        .iter()
+        .enumerate()
+        .map(|(i, name)| {
+            let n = i as u64 + 1;
+            let head = one.filter(|_| n == 1).unwrap_or(&heads[name]);
+            if *name != "absent" {
+                git(
+                    dir,
+                    &["update-ref", &format!("refs/majordomus/prs/{n}"), head],
+                );
+            }
+            observed_pr(n, head)
+        })
+        .collect();
+    observed(dir, master, prs);
+}
+
+/// `project.cache-is-invisible`: the queue a remembering process answers, on its first read
+/// and on the next, is the queue decided as if nothing had been read before — and the next
+/// read asks git nothing that is a fact about two commits. Neither writes a file.
+#[test]
+fn the_remembered_queue_equals_the_queue_decided_afresh() {
+    use crate::integration::{memo::Memos, queue_with};
+    let w = remembered_world();
+    let dir = &w.fixture.dir;
+    let (fresh, _) = queue_with(None, dir, w.now).unwrap();
+    assert!(
+        fresh
+            .get(8)
+            .unwrap()
+            .dependencies
+            .iter()
+            .any(|d| d.number == 1),
+        "the stacked head carries #1"
+    );
+    let memos = Memos::new(4);
+    let (first, _) = queue_with(Some(&memos), dir, w.now).unwrap();
+    let decided = memos.decided(dir);
+    assert!(decided.relations > 0 && decided.shapes > 0 && decided.containment > 0);
+    let (second, _) = queue_with(Some(&memos), dir, w.now).unwrap();
+    assert_eq!(first, fresh, "a first read differs from the fresh one");
+    assert_eq!(
+        second, fresh,
+        "a remembered read differs from the fresh one"
+    );
+    assert_eq!(memos.decided(dir), decided, "the second read decided again");
+    assert_eq!(crate::integration::queue_of(dir).unwrap(), fresh);
+    let cache = crate::integration::state_path(dir, crate::integration::RELATIONS_FILE);
+    assert!(!cache.exists(), "a read wrote the relation cache");
+}
+
+/// A pull request that moved is the only one decided again: one relation, one shape, and two
+/// containment questions — its new head against every mirror, its new mirror against every
+/// head — and the answer is the one a fresh read gives.
+#[test]
+fn a_moved_head_is_the_only_one_decided_again() {
+    use crate::integration::{memo::Memos, queue_with};
+    let w = remembered_world();
+    let dir = &w.fixture.dir;
+    let memos = Memos::new(4);
+    let (before, _) = queue_with(Some(&memos), dir, w.now).unwrap();
+    let was = memos.decided(dir);
+    observe_remembered(&w, Some(&w.moved));
+    let (after, _) = queue_with(Some(&memos), dir, w.now).unwrap();
+    let (fresh, _) = queue_with(None, dir, w.now).unwrap();
+    assert_eq!(after, fresh);
+    assert_ne!(
+        after.get(1),
+        before.get(1),
+        "#1 was decided on its new head"
+    );
+    assert!(
+        !after
+            .get(8)
+            .unwrap()
+            .dependencies
+            .iter()
+            .any(|d| d.number == 1),
+        "the stacked head no longer carries #1"
+    );
+    let now = memos.decided(dir);
+    assert_eq!(now.relations - was.relations, 1, "{was:?} -> {now:?}");
+    assert_eq!(now.shapes - was.shapes, 1, "{was:?} -> {now:?}");
+    assert_eq!(now.containment - was.containment, 2, "{was:?} -> {now:?}");
+}
+
+/// Two readers of one checkout at once decide what one reader decides, and both answer the
+/// fresh queue: the second takes its turn and finds the first one's answers.
+#[test]
+fn concurrent_reads_of_one_checkout_decide_each_relation_once() {
+    use crate::integration::{computed, memo, queue_with};
+    let w = remembered_world();
+    let dir = &w.fixture.dir;
+    let memos = memo::Memos::new(4);
+    let barrier = std::sync::Barrier::new(2);
+    let read = || {
+        barrier.wait();
+        queue_with(Some(&memos), dir, w.now).unwrap().0
+    };
+    let (a, b) = std::thread::scope(|s| {
+        let (a, b) = (s.spawn(read), s.spawn(read));
+        (a.join().unwrap(), b.join().unwrap())
+    });
+    let mut alone = memo::CheckoutMemo::default();
+    let (fresh, _) = computed(dir, w.now, &mut alone).unwrap();
+    assert_eq!(a, fresh);
+    assert_eq!(b, fresh);
+    assert_eq!(
+        memos.decided(dir),
+        alone.decided,
+        "two readers decided more than one"
+    );
+}
+
 /// What a merge changes by kind decides overlaps, risk and rank (WP16): two pull requests
 /// that raise the version overlap as a version bump, two that change release records overlap
 /// as a release whatever files they name, a shared path is contention, and of ready pull
@@ -8182,4 +8338,239 @@ fn a_record_a_person_opened_does_not_hide_the_stranded_one_behind_it() {
         "{out:?}"
     );
     assert_eq!((w.standing_calls, w.reopen_calls), (2, 1));
+}
+
+// ---------------------------------------------------------------- allocation at landing, in git
+
+/// The layer's manifest, naming the one section a release policy is read from.
+const AI_MANIFEST: &str =
+    "schema: ai-repository/v1\nrepo:\n  path: repo\nlocal:\n  path: local\n  \
+     tracked: false\n  implicit_context: false\nsections:\n  policy: repo/policy.yaml\n";
+
+const LANDING_POLICY: &str = "version: 1\nrelease:\n  allocation: landing\n  floor: minor\n";
+
+const POLICY: &str = ".ai/repo/policy.yaml";
+
+/// The crate manifest at `version`.
+fn crate_manifest(version: &str) -> String {
+    format!("[package]\nname = \"x\"\nversion = \"{version}\"\n")
+}
+
+/// On `branch`, made from `from`: write each file (`None` removes it) and commit.
+fn commit_tree(
+    dir: &std::path::Path,
+    branch: &str,
+    from: &str,
+    files: &[(&str, Option<&str>)],
+) -> String {
+    git(dir, &["checkout", "-q", "-B", branch, from]);
+    for (p, c) in files {
+        let path = dir.join(p);
+        match c {
+            Some(text) => {
+                std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+                std::fs::write(&path, text).unwrap();
+            }
+            None => std::fs::remove_file(&path).unwrap(),
+        }
+    }
+    git(dir, &["add", "-A"]);
+    git(dir, &["commit", "-q", "-m", branch]);
+    git(dir, &["rev-parse", "HEAD"])
+}
+
+/// A clone whose base commits a release policy that allocates at landing, a crate at 0.1.0,
+/// an empty registry and a `scripts/derive` that regenerates nothing. `master` commits
+/// `master_policy`, raises the crate to 0.3.0 and adds a file; `topic` is made from base
+/// with `topic`'s files. `origin` is a bare repository holding `topic`.
+struct Allocating {
+    dir: std::path::PathBuf,
+    origin: std::path::PathBuf,
+    master: String,
+    head: String,
+}
+
+fn allocating(master_policy: &str, topic: &[(&str, Option<&str>)]) -> Allocating {
+    use std::os::unix::fs::PermissionsExt;
+    let dir = scratch();
+    git(&dir, &["init", "-q", "-b", "master"]);
+    for (k, v) in [
+        ("user.name", "t"),
+        ("user.email", "t@example.com"),
+        ("commit.gpgsign", "false"),
+    ] {
+        git(&dir, &["config", k, v]);
+    }
+    let manifest = crate_manifest("0.1.0");
+    for (p, c) in [
+        (".ai/manifest.yaml", AI_MANIFEST),
+        (POLICY, LANDING_POLICY),
+        (crate::release::version::MANIFEST, manifest.as_str()),
+        (
+            crate::release::surface::REGISTRY,
+            "{\"capabilities\": []}\n",
+        ),
+        ("scripts/derive", "#!/bin/sh\nexit 0\n"),
+    ] {
+        let path = dir.join(p);
+        std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+        std::fs::write(&path, c).unwrap();
+    }
+    std::fs::set_permissions(
+        dir.join("scripts/derive"),
+        std::fs::Permissions::from_mode(0o755),
+    )
+    .unwrap();
+    git(&dir, &["add", "-A"]);
+    git(&dir, &["commit", "-q", "-m", "base"]);
+    let base = git(&dir, &["rev-parse", "HEAD"]);
+    let raised = crate_manifest("0.3.0");
+    let master = commit_tree(
+        &dir,
+        "master",
+        &base,
+        &[
+            (POLICY, Some(master_policy)),
+            (crate::release::version::MANIFEST, Some(raised.as_str())),
+            ("b.txt", Some("b\n")),
+        ],
+    );
+    let head = commit_tree(&dir, "topic", &base, topic);
+    git(&dir, &["checkout", "-q", "master"]);
+    let origin = unique_temp("mj-allocating-origin");
+    git(&origin, &["init", "-q", "--bare"]);
+    git(
+        &dir,
+        &["remote", "add", "origin", &origin.display().to_string()],
+    );
+    git(&dir, &["push", "-q", "origin", "topic"]);
+    Allocating {
+        dir,
+        origin,
+        master,
+        head,
+    }
+}
+
+/// A topic that raises the crate to 0.2.0 beside a change of its own: its merge with master
+/// conflicts on the version line alone.
+fn raised_topic() -> Vec<(&'static str, Option<&'static str>)> {
+    vec![
+        (
+            crate::release::version::MANIFEST,
+            Some("[package]\nname = \"x\"\nversion = \"0.2.0\"\n"),
+        ),
+        ("src/a.rs", Some("pub fn a() {}\n")),
+    ]
+}
+
+/// The assessment of #1 at the fixture's head, decided against its master.
+fn assessed(f: &Allocating) -> PullRequestAssessment {
+    let obs = ForgeObservation {
+        schema: OBSERVATION_SCHEMA,
+        repository: "owner/repo".into(),
+        base: "master".into(),
+        base_sha: f.master.clone(),
+        observed_at: "t0".into(),
+        required_checks: Some(vec!["ci".into()]),
+        review_policy: Some(Default::default()),
+        up_to_date_required: Some(true),
+        merge_methods: vec!["merge".into()],
+        pull_requests: vec![observed_pr(1, &f.head)],
+        resolved: Default::default(),
+        delete_branch_on_merge: None,
+    };
+    let q = build_queue(&obs, &f.master, |_| RelationToMaster::Behind {
+        behind: 1,
+        authored: vec!["src/a.rs".into()],
+    });
+    let mut a = q.get(1).expect("#1 is assessed").clone();
+    a.head_ref = "topic".into();
+    a.evaluated_against.master_sha = f.master.clone();
+    a.evaluated_against.head_sha = f.head.clone();
+    a
+}
+
+/// Under allocation at landing a merge that conflicts on the version line alone is not the
+/// author's to resolve; with allocation off the same merge is a conflict.
+#[test]
+fn a_version_only_conflict_under_allocation_at_landing_is_not_a_persons() {
+    let f = allocating(LANDING_POLICY, &raised_topic());
+    let r = crate::integration::relation_to_master(&f.dir, &f.master, &f.head);
+    let RelationToMaster::Behind { authored, .. } = &r else {
+        panic!("a version-only conflict was a person's: {r:?}");
+    };
+    assert!(authored.contains(&"src/a.rs".to_string()), "{r:?}");
+    let off = allocating("version: 1\nrelease:\n  allocation: off\n", &raised_topic());
+    assert_eq!(
+        crate::integration::relation_to_master(&off.dir, &off.master, &off.head),
+        RelationToMaster::Conflicting {
+            paths: vec![crate::release::version::MANIFEST.to_string()]
+        }
+    );
+}
+
+/// The refresh resolves the version-only conflict to master's number, allocates the next one,
+/// names it in the commit's trailer and pushes the merge onto the branch it observed.
+#[test]
+fn a_refresh_under_allocation_at_landing_resolves_the_version_and_names_its_number() {
+    let f = allocating(LANDING_POLICY, &raised_topic());
+    let mut forge = drain::ForgeIntegrator {
+        root: &f.dir,
+        lease: None,
+    };
+    let pushed = forge
+        .refresh_branch(&assessed(&f), "master")
+        .expect("the refresh pushes");
+    let message = git(&f.dir, &["log", "-1", "--format=%B", &pushed]);
+    assert!(
+        message.contains(&format!("{}: 0.4.0", crate::integration::allocate::TRAILER)),
+        "{message}"
+    );
+    let manifest = git(
+        &f.dir,
+        &[
+            "show",
+            &format!("{pushed}:{}", crate::release::version::MANIFEST),
+        ],
+    );
+    assert!(manifest.contains("version = \"0.4.0\""), "{manifest}");
+    assert_eq!(git(&f.origin, &["rev-parse", "topic"]), pushed);
+}
+
+/// A master whose committed policy cannot be read refreshes nothing: a head refreshed
+/// without its allocation would land owing a number.
+#[test]
+fn a_refresh_against_an_unreadable_policy_pushes_nothing() {
+    let f = allocating(
+        "version: 1\nrelease:\n  allocation: sometimes\n",
+        &raised_topic(),
+    );
+    let mut forge = drain::ForgeIntegrator {
+        root: &f.dir,
+        lease: None,
+    };
+    let err = forge.refresh_branch(&assessed(&f), "master").unwrap_err();
+    assert!(err.contains("could not be read"), "{err}");
+    assert_eq!(git(&f.origin, &["rev-parse", "topic"]), f.head);
+}
+
+/// An allocation that cannot be decided — the head carries no registry to judge — aborts
+/// the merge and pushes nothing.
+#[test]
+fn a_refresh_whose_allocation_cannot_be_decided_pushes_nothing() {
+    let f = allocating(
+        LANDING_POLICY,
+        &[
+            (crate::release::surface::REGISTRY, None),
+            ("src/a.rs", Some("pub fn a() {}\n")),
+        ],
+    );
+    let mut forge = drain::ForgeIntegrator {
+        root: &f.dir,
+        lease: None,
+    };
+    let err = forge.refresh_branch(&assessed(&f), "master").unwrap_err();
+    assert!(err.contains("could not be allocated"), "{err}");
+    assert_eq!(git(&f.origin, &["rev-parse", "topic"]), f.head);
 }

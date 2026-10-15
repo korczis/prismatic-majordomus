@@ -464,29 +464,102 @@ pub fn next_for(
         .map(|c| c.impact)
         .max()
         .unwrap_or(Impact::None);
-    let changed: Vec<String> = git(&["diff", "--name-only", "--no-renames", &fork, head])?
-        .lines()
-        .filter(|l| !l.is_empty())
-        .map(str::to_string)
-        .collect();
-    let added: Vec<String> = git(&[
-        "diff",
-        "--name-only",
-        "--no-renames",
-        "--diff-filter=A",
-        &fork,
-        head,
-    ])?
-    .lines()
-    .filter(|l| !l.is_empty())
-    .map(str::to_string)
-    .collect();
-    Ok(decide_adding(trunk, observed, policy, &changed, &added))
+    let names = |text: String| -> Vec<String> {
+        text.lines()
+            .filter(|l| !l.is_empty())
+            .map(str::to_string)
+            .collect()
+    };
+    git(&["diff", "--name-only", "--no-renames", &fork, head]).and_then(|changed| {
+        git(&[
+            "diff",
+            "--name-only",
+            "--no-renames",
+            "--diff-filter=A",
+            &fork,
+            head,
+        ])
+        .map(|added| decide_adding(trunk, observed, policy, &names(changed), &names(added)))
+    })
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// The decision read from git at two refs, in this crate's own repository: its head
+    /// landed onto itself moves nothing, the trunk's version is the one committed at that
+    /// head, and every step is said. A ref git cannot resolve is refused by name. HEAD on
+    /// both sides holds in a shallow clone, where origin/master may not exist.
+    #[test]
+    fn a_head_landed_onto_itself_is_read_from_git_and_moves_nothing() {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let d =
+            next_for(&root, "HEAD", "HEAD", &ReleasePolicy::default()).expect("readable at HEAD");
+        assert_eq!(d.observed, Impact::None);
+        let committed = std::process::Command::new("git")
+            .current_dir(&root)
+            .args([
+                "show",
+                &format!("HEAD:{}", crate::release::version::MANIFEST),
+            ])
+            .output()
+            .expect("git");
+        let committed =
+            crate::release::version::declared_in(&String::from_utf8_lossy(&committed.stdout));
+        assert_eq!(Some(d.trunk_version.clone()), committed);
+        assert!(!d.explanation.is_empty());
+        assert_eq!(
+            (Allocation::Off.as_str(), Allocation::Landing.as_str()),
+            ("off", "landing")
+        );
+        let refused = next_for(
+            &root,
+            "no-such-ref-of-ours",
+            "HEAD",
+            &ReleasePolicy::default(),
+        )
+        .expect_err("an unknown base is refused");
+        assert!(refused.0.contains("no-such-ref-of-ours"), "{}", refused.0);
+    }
+
+    /// Every input that cannot be read refuses the decision by name: git that cannot start
+    /// in the directory, a head git cannot find, and a trunk whose manifest declares no
+    /// version of three numbers.
+    #[test]
+    fn an_unreadable_input_refuses_the_decision_by_name() {
+        let p = ReleasePolicy::default();
+        let refused = next_for(std::path::Path::new("/no\0where"), "HEAD", "HEAD", &p)
+            .expect_err("no git there");
+        assert!(refused.0.contains("git could not run"), "{}", refused.0);
+
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let refused = next_for(&root, "HEAD", "no-such-head-of-ours", &p).expect_err("unknown");
+        assert!(refused.0.contains("merge-base"), "{}", refused.0);
+
+        let dir = tempfile::tempdir().unwrap();
+        let git = |args: &[&str]| {
+            let out = std::process::Command::new("git")
+                .arg("-C")
+                .arg(dir.path())
+                .args(args)
+                .env("GIT_AUTHOR_NAME", "t")
+                .env("GIT_AUTHOR_EMAIL", "t@example.com")
+                .env("GIT_COMMITTER_NAME", "t")
+                .env("GIT_COMMITTER_EMAIL", "t@example.com")
+                .output()
+                .expect("git");
+            assert!(out.status.success(), "git {args:?}: {out:?}");
+        };
+        git(&["init", "-q"]);
+        let manifest = dir.path().join(crate::release::version::MANIFEST);
+        std::fs::create_dir_all(manifest.parent().unwrap()).unwrap();
+        std::fs::write(&manifest, "[package]\nname = \"x\"\nversion = \"one\"\n").unwrap();
+        git(&["add", "-A"]);
+        git(&["commit", "-qm", "base"]);
+        let refused = next_for(dir.path(), "HEAD", "HEAD", &p).expect_err("no version");
+        assert!(refused.0.contains("declares no version"), "{}", refused.0);
+    }
 
     fn v(text: &str) -> Version {
         Version::parse(text).expect("a version")

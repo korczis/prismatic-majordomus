@@ -19,7 +19,7 @@ use serde_json::Value;
 
 /// Run the executable in `cwd` with the distribution's share, capturing everything.
 fn mj(cwd: &Path, args: &[&str]) -> (i32, String, String) {
-    let out = Command::new(BIN)
+    let out = common::majordomus()
         .args(args)
         .current_dir(cwd)
         .env("MAJORDOMUS_SHARE", dist_share())
@@ -309,11 +309,10 @@ fn a_server_stops_on_a_signal_whether_it_reads_a_pipe_or_runs_unbounded() {
     use std::process::Stdio;
     for piped in [true, false] {
         let f = Fixture::new();
-        let mut child = Command::new(BIN)
+        let mut child = common::majordomus()
             .args(["serve", "--port", "0"])
             .current_dir(f.root())
             .env("MAJORDOMUS_SHARE", dist_share())
-            .env_remove("MAJORDOMUS_HTTP_HOST")
             .stdin(if piped { Stdio::piped() } else { Stdio::null() })
             .stdout(Stdio::null())
             .stderr(Stdio::null())

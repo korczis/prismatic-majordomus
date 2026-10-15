@@ -341,7 +341,18 @@ pub fn trains_of(root: &Path) -> TrainsView {
         Ok(q) => q,
         Err(reason) => return TrainsView::unobserved(reason),
     };
-    let facts = match super::load_observation(root) {
+    trains(
+        &queue,
+        &link_facts(super::load_observation(root)),
+        &prep_refs(root),
+    )
+}
+
+/// The bodies and checks of a loaded observation; none when it could not be read. The queue
+/// [`trains_of`] read a moment before came from the same file, so only a file replaced in
+/// between leaves the links without them.
+fn link_facts(observation: Result<Option<super::ForgeObservation>, String>) -> LinkFacts {
+    match observation {
         Ok(Some(obs)) => LinkFacts {
             bodies: obs
                 .pull_requests
@@ -365,8 +376,7 @@ pub fn trains_of(root: &Path) -> TrainsView {
                 .collect(),
         },
         _ => LinkFacts::default(),
-    };
-    trains(&queue, &facts, &prep_refs(root))
+    }
 }
 
 /// The pull request's page on the forge, for an `owner/name` repository.
@@ -382,12 +392,15 @@ pub fn pull_request_url(repository: &str, number: u64) -> Option<String> {
         .then(|| format!("https://github.com/{repository}/pull/{number}"))
 }
 
-/// The word a relation serialises under.
+/// The word a relation serialises under: its `kind` tag, which every variant carries.
 fn relation_word(relation: &RelationToMaster) -> String {
-    serde_json::to_value(relation)
-        .ok()
-        .and_then(|v| v.get("kind").and_then(|k| k.as_str().map(str::to_string)))
-        .unwrap_or_else(|| "unknown".into())
+    let value = serde_json::to_value(relation).ok();
+    value
+        .as_ref()
+        .and_then(|v| v.get("kind"))
+        .and_then(serde_json::Value::as_str)
+        .unwrap_or("unknown")
+        .to_string()
 }
 
 /// The confirmed dependencies of one assessment, each with how it is declared, in the order
@@ -618,10 +631,9 @@ fn one_train(
             .unwrap_or(0);
         depth.insert(n, d);
         order.push(n);
+        // every link above `n` still waits on it, so it is still in `waiting`
         for up in carries.get(&n).cloned().unwrap_or_default() {
-            if let Some(w) = waiting.get_mut(&up) {
-                *w = w.saturating_sub(1);
-            }
+            waiting.entry(up).and_modify(|w| *w = w.saturating_sub(1));
         }
     }
     // whatever is left waits on itself: a cycle, appended in rank order
@@ -633,8 +645,12 @@ fn one_train(
     let mut links = Vec::new();
     let mut edges = Vec::new();
     let mut beneath: BTreeMap<u64, DependencyState> = BTreeMap::new();
-    for (i, n) in order.iter().enumerate() {
-        let Some(a) = by_number.get(n) else { continue };
+    // every member is an open pull request, so every one has its assessment
+    let assessed = order
+        .iter()
+        .enumerate()
+        .filter_map(|(i, n)| by_number.get(n).map(|a| (i, n, a)));
+    for (i, n, a) in assessed {
         let ds = deps.get(n).cloned().unwrap_or_default();
         for (d, kind, state) in &ds {
             let open = rank.contains_key(d);
@@ -1109,6 +1125,235 @@ mod tests {
         assert!(
             prep_refs(&dir).is_empty(),
             "no repository, no prepared heads"
+        );
+    }
+
+    #[test]
+    fn a_prepared_heads_state_has_the_word_it_serialises_under() {
+        for state in [PrepState::Pushed, PrepState::Pending] {
+            assert_eq!(
+                serde_json::to_value(state).unwrap(),
+                serde_json::json!(state.as_str())
+            );
+        }
+        assert_eq!(PrepState::Pushed.as_str(), "pushed");
+        assert_eq!(PrepState::Pending.as_str(), "pending");
+    }
+
+    #[test]
+    fn a_pull_request_has_a_page_only_in_an_owner_and_name_repository() {
+        assert_eq!(
+            pull_request_url("o/r", 7).as_deref(),
+            Some("https://github.com/o/r/pull/7")
+        );
+        assert_eq!(pull_request_url("", 7), None, "no slash, no repository");
+        assert_eq!(pull_request_url("/r", 7), None, "no owner");
+        assert_eq!(pull_request_url("o/", 7), None, "no name");
+    }
+
+    #[test]
+    fn a_link_counts_behind_only_by_a_relation_that_says_how_far() {
+        let mut up_to_date = pr(1, PullRequestDisposition::Ready);
+        up_to_date.relation = RelationToMaster::UpToDate {
+            authored: Vec::new(),
+            owes_version: None,
+        };
+        let mut contained = pr(2, PullRequestDisposition::Ready);
+        contained.relation = RelationToMaster::Contained;
+        contained.dependencies = vec![dep(1, DependencyState::Open)];
+        let mut unknown = pr(3, PullRequestDisposition::WaitingForDependency);
+        unknown.relation = RelationToMaster::Unknown {
+            reason: "the head is not fetched".into(),
+        };
+        unknown.dependencies = vec![dep(2, DependencyState::Open)];
+        // a reason that is not a stack joins nothing by itself: the body decides the kind
+        unknown.reasons = vec![ReasonCode::Draft];
+        let v = trains(
+            &queue(vec![up_to_date, contained, unknown]),
+            &LinkFacts::default(),
+            &BTreeMap::new(),
+        );
+        let links = &v.trains[0].links;
+        let by = |n: u64| links.iter().find(|l| l.number == n).unwrap();
+        assert_eq!(
+            (by(1).relation_kind.as_str(), by(1).behind),
+            ("up_to_date", Some(0))
+        );
+        assert_eq!(
+            (by(2).relation_kind.as_str(), by(2).behind),
+            ("contained", Some(0))
+        );
+        assert_eq!(
+            (by(3).relation_kind.as_str(), by(3).behind),
+            ("unknown", None)
+        );
+        assert_eq!(
+            v.trains[0]
+                .edges
+                .iter()
+                .find(|e| e.from == 3)
+                .map(|e| e.kind),
+            Some(TrainEdgeKind::DependsOn),
+            "a draft reason is not a stack"
+        );
+    }
+
+    /// `git` in `dir` with an identity of its own, its stdout trimmed.
+    fn git_in(dir: &Path, args: &[&str]) -> String {
+        let out = std::process::Command::new("git")
+            .arg("-C")
+            .arg(dir)
+            .args(["-c", "user.email=t@example.com", "-c", "user.name=t"])
+            .args(args)
+            .output()
+            .unwrap();
+        assert!(out.status.success(), "git {args:?}: {out:?}");
+        String::from_utf8_lossy(&out.stdout).trim().to_string()
+    }
+
+    fn observed(
+        number: u64,
+        head_sha: &str,
+        body: &str,
+        state: CheckRunState,
+    ) -> crate::integration::PullRequestObservation {
+        crate::integration::PullRequestObservation {
+            number,
+            title: format!("change {number}"),
+            author: "someone".into(),
+            head_ref: format!("feature/{number}"),
+            head_sha: head_sha.into(),
+            base_ref: "master".into(),
+            draft: false,
+            labels: vec![],
+            created_at: format!("2026-09-0{number}T00:00:00Z"),
+            updated_at: format!("2026-09-0{number}T00:00:00Z"),
+            body: body.into(),
+            checks: vec![crate::integration::CheckObservation {
+                name: "ci".into(),
+                state,
+                ..Default::default()
+            }],
+            review_decision: String::new(),
+            auto_merge: false,
+            cross_repository: false,
+            latest_reviews: Vec::new(),
+            review_requests: Vec::new(),
+            author_association: "OWNER".into(),
+            cross_references: crate::integration::CrossReferenceRead::Whole,
+        }
+    }
+
+    /// The checkout's recorded observation gives each link its body (a `Stacked on` line is
+    /// a stack) and its checks, and the checkout's `refs/prep/` gives its prepared head.
+    #[test]
+    fn the_trains_of_a_checkout_read_its_observation_and_its_prepared_heads() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+        git_in(root, &["init", "-q", "-b", "master"]);
+        git_in(root, &["commit", "-q", "--allow-empty", "-m", "base"]);
+        let master = git_in(root, &["rev-parse", "HEAD"]);
+        git_in(root, &["update-ref", "refs/remotes/origin/master", &master]);
+        let head = |n: u64| {
+            git_in(
+                root,
+                &["checkout", "-q", "-B", &format!("feature/{n}"), &master],
+            );
+            std::fs::write(root.join(format!("{n}.md")), format!("change {n}\n")).unwrap();
+            git_in(root, &["add", &format!("{n}.md")]);
+            git_in(root, &["commit", "-q", "-m", &format!("change {n}")]);
+            git_in(root, &["rev-parse", "HEAD"])
+        };
+        let (one, two) = (head(1), head(2));
+        git_in(root, &["checkout", "-q", "master"]);
+        crate::integration::store_observation(
+            root,
+            &crate::integration::ForgeObservation {
+                schema: crate::integration::OBSERVATION_SCHEMA,
+                repository: "owner/repo".into(),
+                base: "master".into(),
+                base_sha: master.clone(),
+                observed_at: "2026-10-01T00:00:00Z".into(),
+                required_checks: Some(vec!["ci".into()]),
+                review_policy: Some(Default::default()),
+                up_to_date_required: Some(true),
+                merge_methods: vec!["merge".into()],
+                pull_requests: vec![
+                    observed(1, &one, "", CheckRunState::Passed),
+                    observed(2, &two, "Stacked on #1.", CheckRunState::Pending),
+                ],
+                resolved: Default::default(),
+                delete_branch_on_merge: None,
+            },
+        )
+        .unwrap();
+        // #2's prepared head is another commit than the one the forge serves
+        git_in(root, &["update-ref", "refs/prep/2", &one]);
+
+        let v = trains_of(root);
+        assert!(v.observed, "{v:#?}");
+        assert_eq!(v.repository.as_deref(), Some("owner/repo"));
+        assert_eq!(v.master_sha.as_deref(), Some(master.as_str()));
+        let t = train(&v, "train-1").expect("#2 rides on #1");
+        assert_eq!(t.links.iter().map(|l| l.number).collect::<Vec<_>>(), [1, 2]);
+        assert_eq!(
+            t.edges
+                .iter()
+                .map(|e| (e.from, e.to, e.kind))
+                .collect::<Vec<_>>(),
+            [(2, 1, TrainEdgeKind::StackedOn)],
+            "the body's line is read"
+        );
+        assert_eq!(
+            t.links[1].checks,
+            [LinkCheck {
+                name: "ci".into(),
+                state: CheckRunState::Pending
+            }],
+            "the observation's checks are carried"
+        );
+        assert_eq!(
+            t.links[1].prep.as_ref().map(|p| (p.sha.as_str(), p.state)),
+            Some((one.as_str(), PrepState::Pending))
+        );
+    }
+
+    /// An observation that could not be read, or is not recorded, gives the links no body
+    /// and no check; a recorded one gives each pull request its own.
+    #[test]
+    fn the_facts_of_an_unreadable_observation_are_none() {
+        assert_eq!(link_facts(Ok(None)), LinkFacts::default());
+        assert_eq!(
+            link_facts(Err("replaced in between".into())),
+            LinkFacts::default()
+        );
+        let obs = crate::integration::ForgeObservation {
+            schema: crate::integration::OBSERVATION_SCHEMA,
+            repository: "owner/repo".into(),
+            base: "master".into(),
+            base_sha: "0".repeat(40),
+            observed_at: "2026-10-01T00:00:00Z".into(),
+            required_checks: None,
+            review_policy: None,
+            up_to_date_required: None,
+            merge_methods: vec!["merge".into()],
+            pull_requests: vec![observed(
+                3,
+                &"3".repeat(40),
+                "Stacked on #1.",
+                CheckRunState::Failed,
+            )],
+            resolved: Default::default(),
+            delete_branch_on_merge: None,
+        };
+        let facts = link_facts(Ok(Some(obs)));
+        assert_eq!(
+            facts.bodies.get(&3).map(String::as_str),
+            Some("Stacked on #1.")
+        );
+        assert_eq!(
+            facts.checks.get(&3).map(|c| c[0].state),
+            Some(CheckRunState::Failed)
         );
     }
 }
