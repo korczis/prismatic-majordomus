@@ -796,28 +796,43 @@ unknown tool, method or resource is a protocol error.
 
 ## Failure behaviour
 
+Each row names the failure, what a client observes, and what proves it: the tests that drive
+it, or a stated limitation that says why nothing does. A row with neither, or one citing a
+test or case this tree does not hold, is refused by
+`test/cases/3056_every_failure_class_names_its_proof.sh`.
+
 <div class="overflow-x-auto" tabindex="0">
 
-| state | what happens |
-|---|---|
-| no `.ai/manifest.yaml` above the working directory | exit `12`, the start directory named |
-| project data under `.majordomus/` and no manifest | exit `12`, naming `majordomus migrate` |
-| manifest or `sources.yaml` malformed, unknown key, unsupported schema | exit `10`, the path and the key or line named |
-| one file that cannot become an object | excluded; an error diagnostic names its path and a stable code; the index is `degraded` and still serves; `--strict` exits `10` instead |
-| `git` unusable | `--discovery vcs` (the default) exits `13` naming `--discovery filesystem`; the git block of `majordomus://repository` reads `unavailable` with the reason |
-| no share directory (kinds and schemas) found | exit `12`, every directory tried named, and `--share` / `MAJORDOMUS_SHARE` named as the remedy |
-| a kind schema or a schema file invalid, or a repository redefining a distributed kind | exit `10`, both files named |
-| client closes its pipe | the process ends with `0`, after the last attached peer has left when it was the server |
-| the port is taken | a free port is bound instead; both are logged |
-| the lease names a server that does not answer for this root | it is taken over; `stale lease` is logged with the URL |
-| the shared server a bridge is attached to dies | the bridge takes over on its next message, or re-attaches to the process that did; the client never re-initialises |
-| a bridge cannot take over (its `--strict`, a broken layer) | the client's request is answered with a JSON-RPC error (`-32603`) naming why; the stdio session stays open |
-| the lease file is corrupt, empty, or has had no URL for longer than the bind grace | it is taken over; `corrupt lease`, `empty lease` or `abandoned lease` is logged with the path |
-| the lease cannot be created, joined or replaced (a filesystem refusing writes under `.ai/local/`), or the shared server cannot start | the client is served alone, as `--standalone` would: `cannot use the shared server` is logged with the path and the reason, then `serving this client alone`; no port, no lease, no peers; the layer's own errors still exit as above |
-| the server gets `SIGTERM`, `SIGINT` or `SIGHUP` | it stops in order: sessions and episodes closed, listeners closed, the lease released if it is still the server's own; `serve` exits `0`, a `majordomus mcp` then dies of the signal; a second signal or eight seconds end it at once; its bridges elect again on their next message |
-| `--http-host`, `--host` or `MAJORDOMUS_HTTP_HOST` names an address that is not loopback | served, with a warning that every host reaching that interface can read the layer, its diagnostics and its peers; when the variable supplied it, the line before says so |
-| `MAJORDOMUS_HTTP_HOST` names an address nothing can bind | the process exits non-zero with `cannot bind <address>`, and leaves no lease behind |
-| an HTTP client leaves without `DELETE /mcp` | its session expires after ninety seconds of silence; a server whose owner has already left ends then, never later |
+| state | what happens | proof |
+|---|---|---|
+| no `.ai/manifest.yaml` above the working directory | exit `12`, the start directory named | `test/cases/3015_an_unsupervised_repository_exits_12_from_both_tools.sh` |
+| project data under `.majordomus/` and no manifest | exit `12`, naming `majordomus migrate` | `apps/majordomus-cli/tests/repository_discovery.rs::the_pre_ai_layout_is_refused_by_name` |
+| manifest or `sources.yaml` malformed, unknown key, unsupported schema | exit `10`, the path and the key or line named | `apps/majordomus-cli/tests/repository_discovery.rs::a_nearer_broken_manifest_is_an_error_not_a_skip` |
+| one file that cannot become an object | excluded; an error diagnostic names its path and a stable code; the index is `degraded` and still serves; `--strict` exits `10` instead | `apps/majordomus-cli/tests/metadata_contract.rs::malformed_front_matter_is_named_and_excluded`, `apps/majordomus-cli/tests/mcp_stdio.rs::strict_refuses_a_degraded_layer_before_serving` |
+| `git` unusable | `--discovery vcs` (the default) exits `13` naming `--discovery filesystem`; the git block of `majordomus://repository` reads `unavailable` with the reason | `apps/majordomus-cli/tests/index_behavior.rs::without_git_vcs_discovery_is_refused_and_the_walk_still_works` |
+| no share directory (kinds and schemas) found | exit `12`, every directory tried named, and `--share` / `MAJORDOMUS_SHARE` named as the remedy | `apps/majordomus-cli/tests/metadata_contract.rs::without_a_share_directory_nothing_starts_and_the_search_is_named` |
+| a kind schema or a schema file invalid, or a repository redefining a distributed kind | exit `10`, both files named | `apps/majordomus-cli/tests/external_extension.rs::a_repository_defines_a_new_kind_with_its_schema_and_it_is_served_without_a_rust_change` |
+| client closes its pipe | the process ends with `0`, after the last attached peer has left when it was the server | `apps/majordomus-cli/tests/mcp_stdio.rs::a_client_that_closes_its_read_end_ends_the_session` |
+| the port is taken | a free port is bound instead; both are logged | `apps/majordomus-cli/tests/mcp_shared.rs::a_taken_port_falls_back_to_a_free_one_and_serve_defers_to_the_running_server`, `apps/majordomus-cli/tests/serve_lifecycle.rs::ensure_takes_a_free_port_when_the_one_it_asks_for_is_taken` |
+| the lease names a server that does not answer for this root | it is taken over; `stale lease` is logged with the URL | `apps/majordomus-cli/tests/mcp_shared.rs::a_stale_lease_is_taken_over` |
+| the shared server a bridge is attached to dies | the bridge takes over on its next message, or re-attaches to the process that did; the client never re-initialises | `apps/majordomus-cli/tests/mcp_shared.rs::a_bridged_peer_takes_over_when_its_server_dies`, `apps/majordomus-cli/tests/mcp_shared.rs::a_bridged_peer_re_attaches_when_another_process_took_the_lease_first` |
+| a bridge cannot take over (its `--strict`, a broken layer) | the client's request is answered with a JSON-RPC error (`-32603`) naming why; the stdio session stays open | `apps/majordomus-cli/tests/mcp_shared.rs::a_peer_that_cannot_serve_the_layer_says_so_instead_of_taking_over` |
+| the lease file is corrupt, empty, or has had no URL for longer than the bind grace | it is taken over; `corrupt lease`, `empty lease` or `abandoned lease` is logged with the path | `apps/majordomus-cli/tests/mcp_shared.rs::a_corrupt_lease_is_taken_over`, `apps/majordomus-cli/tests/mcp_shared.rs::a_lease_of_another_schema_and_an_old_empty_file_are_taken_over`, `apps/majordomus-cli/tests/mcp_shared.rs::an_abandoned_lease_is_taken_over_without_waiting_when_it_is_old` |
+| the lease cannot be created, joined or replaced (a filesystem refusing writes under `.ai/local/`), or the shared server cannot start | the client is served alone, as `--standalone` would: `cannot use the shared server` is logged with the path and the reason, then `serving this client alone`; no port, no lease, no peers; the layer's own errors still exit as above | `apps/majordomus-cli/tests/mcp_shared.rs::an_unwritable_lease_directory_degrades_to_a_standalone_session` |
+| the server gets `SIGTERM`, `SIGINT` or `SIGHUP` | it stops in order: sessions and episodes closed, listeners closed, the lease released if it is still the server's own; `serve` exits `0`, a `majordomus mcp` then dies of the signal; a second signal or eight seconds end it at once; its bridges elect again on their next message | `apps/majordomus-cli/tests/mcp_shared.rs::sigterm_removes_the_lease_before_the_process_dies`, `apps/majordomus-cli/tests/mcp_shared.rs::sigint_and_sighup_remove_the_lease_before_the_process_dies`, `apps/majordomus-cli/tests/lease_holder.rs::serve_stop_ends_the_server_in_order_and_closes_its_episodes` |
+| the server is killed with `SIGKILL` | nothing runs on its way out; the lease it leaves names a process that is gone, and the next client takes it over at once | `apps/majordomus-cli/tests/serve_lifecycle.rs::a_stale_lease_and_a_killed_server_are_both_recovered`, `apps/majordomus-cli/tests/lease_busy.rs::a_silent_server_whose_process_is_gone_is_taken_over_at_once` |
+| the lease's owner is alive and frozen: it answers nothing | a contender waits the declared grace, then takes the lease over; the log names the owner given up on | `apps/majordomus-cli/tests/lease_busy.rs::a_live_server_that_stays_silent_loses_its_lease_after_the_grace`, `apps/majordomus-cli/tests/serve_lifecycle.rs::a_live_owner_that_never_answers_is_still_taken_over`, `apps/majordomus-cli/tests/lease_declared.rs::a_busy_owner_is_given_up_on_after_the_declared_grace_and_the_log_names_it` |
+| the server's lease is taken by another process | the server says so, takes on no new client, and an unbounded server ends by itself | `apps/majordomus-cli/tests/lease_lost.rs::a_server_that_lost_its_lease_says_so_and_takes_on_nobody_new`, `apps/majordomus-cli/tests/cov_runtime_a_server.rs::an_unbounded_server_whose_lease_is_taken_over_ends_by_itself` |
+| `--http-host`, `--host` or `MAJORDOMUS_HTTP_HOST` names an address that is not loopback | served, with a warning that every host reaching that interface can read the layer, its diagnostics and its peers; when the variable supplied it, the line before says so | `apps/majordomus-cli/tests/mcp_shared.rs::a_non_loopback_bind_is_warned_about`, `test/cases/992_the_local_bind_is_the_machines_to_name.sh` |
+| `MAJORDOMUS_HTTP_HOST` names an address nothing can bind | the process exits non-zero with `cannot bind <address>`, and leaves no lease behind | `test/cases/992_the_local_bind_is_the_machines_to_name.sh` |
+| an HTTP client leaves without `DELETE /mcp` | its session expires after ninety seconds of silence; a server whose owner has already left ends then, never later | `apps/majordomus-cli/tests/shared_units.rs::the_endpoint_opens_reaps_and_closes_sessions`, `apps/majordomus-cli/tests/serve_in_use.rs::a_server_read_over_http_outlives_its_idle_timeout_and_ends_when_left_alone` |
+| an HTTP client sends its request slowly, or not at all | its connection is closed at the declared read deadline and counted; the other clients are answered | `apps/majordomus-cli/tests/http_slow_client.rs::slow_client_released_test` |
+| every request handler is held | a further request is refused at once as busy; the liveness probe is still answered | `apps/majordomus-cli/tests/http_slow_client.rs::past_the_handler_bound_a_request_is_refused_and_the_probe_is_answered` |
+| a request handler never returns (a frozen worker) | its worker is held for as long as it runs: the read deadline bounds a request's arrival, not its handling | limitation: not tested — no test freezes a handler, and nothing bounds one; the busy refusal above is what a client meets once every handler is held |
+| the disk is full | unmeasured: the lease, the mesh journal and generated output each write through their own error path | limitation: not tested — no test or case fills a filesystem, so what a write refused for space does to each writer is not shown |
+| the mesh journal directory refuses writes (read-only) | on master an own event whose append fails is not reported to its caller as not durable | limitation: not tested on master — PRs #1179 and #1196 (I2706, case 3052) report a refused append as not durable and drive it end to end; until they land, no test on this tree does |
+| the process is killed between creating the lease and its first write | the empty lease left behind is taken over once it is older than the bind grace, as the row for an empty lease says | limitation: not tested as a kill — no test kills a process at that instant; the state it leaves is the one `apps/majordomus-cli/tests/mcp_shared.rs::a_lease_of_another_schema_and_an_old_empty_file_are_taken_over` builds by hand |
+| a lease keep-alive write fails | the failure is dropped and the next tick tries again; nothing is logged or reported | limitation: not tested — `Lease::keep_alive` discards the error by design and no test drives a failing touch |
 
 </div>
 

@@ -366,6 +366,11 @@ ADR 0040, not an architecture.
 </div>
 
 
+How the runtime behaves under each failure it can suffer, and what proves it, is the
+[failure table in `MCP.md`](@/docs/mcp.md#failure-behaviour): every row names the tests that drive
+it or states the limitation that nothing does, and `test/cases/3056` refuses a row with
+neither.
+
 ### Governance and surfaces
 
 <div class="overflow-x-auto" tabindex="0">

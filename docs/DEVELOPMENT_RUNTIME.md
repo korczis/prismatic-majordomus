@@ -320,6 +320,11 @@ ADR 0040, not an architecture.
 | repository / index | `src/repository.rs`, `src/index.rs` | `.ai/manifest.yaml` + the trees it names | `manifest/v1` | manifest, then `sources.yaml` | everything | — | — | `tests/` | [`SCHEMAS.md`](SCHEMAS.md) | `benchmarks`, `ci`, `providers` and `workspaces` are on disk but in no manifest section, alongside several loose baseline files |
 | shared server / lease | `src/lease.rs`, `src/shared.rs` | `.ai/local/state/mcp/server.json` | `LeaseDocument` | — | every attached client | `serve`, `mcp` | — | `test/cases/108` | [`ENTRY.md`](ENTRY.md), ADR 0035 | one server per *checkout*, not per repository |
 
+How the runtime behaves under each failure it can suffer, and what proves it, is the
+[failure table in `MCP.md`](MCP.md#failure-behaviour): every row names the tests that drive
+it or states the limitation that nothing does, and `test/cases/3056` refuses a row with
+neither.
+
 ### Governance and surfaces
 
 | Concept | Canonical owner | Storage | Consumers | Mutation path | Docs | Drift |

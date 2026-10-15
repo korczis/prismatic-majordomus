@@ -36242,6 +36242,46 @@
         }
       },
       {
+        "id": "majordomus://issue/I2731",
+        "kind": "issue",
+        "label": "I2731",
+        "summary": "Every failure class in the published failure table names its test or its stated limitation",
+        "route": "/cockpit/objects/issue/i2731",
+        "source": ".ai/repo/project/issues/I2731.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every row of the 'Failure behaviour' table in docs/MCP.md names a test or case this tree holds, or a limitation with its reason",
+            "Case 3056 fails on a row with neither, on a cited test function or case file that does not exist, and on a table without its proof column"
+          ],
+          "created_at": "2026-10-15",
+          "depends_on": [],
+          "desired_state": "The published failure table has no row without a test or a stated limitation, and a case refuses one; a limitation row is replaced by a citation when a test for its class lands.",
+          "evidence_required": [
+            "failure_class_table"
+          ],
+          "milestone": "failure-is-visible",
+          "non_scope": [
+            "Writing the missing tests themselves (disk full, a frozen handler, a kill between lease creation and its first write, a failing keep-alive write); each is its own issue when taken",
+            "Readiness and request deadlines, which I2157 and I2156 own",
+            "Journal durability, which I2706 delivers in PRs #1179 and #1196"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "docs/MCP.md",
+            "docs/DEVELOPMENT_RUNTIME.md",
+            "test/cases"
+          ],
+          "slug": "every-failure-class-names-its-proof",
+          "updated_at": "2026-10-15",
+          "validation": [
+            "bin/majordomus plan validate",
+            "bash test/run.sh 3056_every_failure_class_names_its_proof"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "label": "a-commit-stood-behind-a-build-lock",
@@ -53070,6 +53110,13 @@
         "label": "test/cases/304_a_provider_is_declared_once.sh",
         "route": "/cockpit/objects/test/test-cases-304-a-provider-is-declared-once-sh",
         "source": "test/cases/304_a_provider_is_declared_once.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3056_every_failure_class_names_its_proof.sh",
+        "kind": "test",
+        "label": "test/cases/3056_every_failure_class_names_its_proof.sh",
+        "route": "/cockpit/objects/test/test-cases-3056-every-failure-class-names-its-proof-sh",
+        "source": "test/cases/3056_every_failure_class_names_its_proof.sh"
       },
       {
         "id": "majordomus://test/test/cases/305_a_command_is_claimed_or_classified.sh",
@@ -78574,6 +78621,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2731",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2731",
+        "target": "majordomus://milestone/failure-is-visible",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -82895,6 +82952,11 @@
       },
       {
         "source": "majordomus://test/test/cases/304_a_provider_is_declared_once.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3056_every_failure_class_names_its_proof.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -88190,8 +88252,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2796,
-      "edges": 6129,
+      "nodes": 2798,
+      "edges": 6132,
       "acyclic": false,
       "truncated": false
     }
