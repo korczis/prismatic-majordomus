@@ -281,6 +281,130 @@ fn record_of(metadata: &Value, diagnostics: &mut Vec<String>) -> Option<Record> 
     })
 }
 
+/// The releases whose window this repository's object database cannot read, by version.
+///
+/// A section of the published changelog is the history between two release commits, and a
+/// repository made from a tree rather than from that history — a fixture exported with
+/// `git archive`, a shallow clone — holds the tree and not the commits. Composed there, every
+/// such section came out with no changes: a different document rather than a newer one, which
+/// `generate --check` reported as stale and `generate` wrote over the committed changelog
+/// (I1409). A release is unreadable when its commit or the previous release's is not an object
+/// here, or when the repository is shallow, whose history ends at a graft whatever it holds.
+/// Asked of git twice, whatever the number of releases.
+pub fn unreadable_releases(root: &Path, objects: &[Object]) -> Vec<String> {
+    let mut ignored = Vec::new();
+    let mut records: Vec<Record> = objects
+        .iter()
+        .filter(|o| o.kind == RELEASE_KIND)
+        .filter_map(|o| record_of(&o.metadata, &mut ignored))
+        .collect();
+    if records.is_empty() {
+        return Vec::new();
+    }
+    // the order `compose_with` reads them in, so "the previous release" is the same one
+    records.sort_by(|a, b| b.date.cmp(&a.date));
+    let shallow = std::process::Command::new("git")
+        .arg("-C")
+        .arg(root)
+        .args(["rev-parse", "--is-shallow-repository"])
+        .output()
+        .is_ok_and(|o| o.status.success() && String::from_utf8_lossy(&o.stdout).trim() == "true");
+    let commits: Vec<&str> = records.iter().map(|r| r.commit.as_str()).collect();
+    let held = held_commits(root, &commits);
+    records
+        .iter()
+        .enumerate()
+        .filter(|(i, r)| {
+            shallow
+                || !held.contains(r.commit.as_str())
+                || records
+                    .get(i + 1)
+                    .is_some_and(|p| !held.contains(p.commit.as_str()))
+        })
+        .map(|(_, r)| r.version.clone())
+        .collect()
+}
+
+/// Which of `commits` this repository holds as commits, asked in one `git cat-file`. Nothing
+/// when git cannot answer, which is the same as holding none of them.
+fn held_commits<'c>(root: &Path, commits: &[&'c str]) -> HashSet<&'c str> {
+    use std::io::Write;
+    use std::process::{Command, Stdio};
+    let Ok(mut child) = Command::new("git")
+        .arg("-C")
+        .arg(root)
+        .args(["cat-file", "--batch-check=%(objecttype)"])
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::null())
+        .spawn()
+    else {
+        return HashSet::new();
+    };
+    let names: String = commits
+        .iter()
+        .map(|c| format!("{c}^{{commit}}\n"))
+        .collect();
+    if let Some(mut stdin) = child.stdin.take() {
+        // a write that fails leaves fewer answers than questions, which the zip reads as absent
+        let _ = stdin.write_all(names.as_bytes());
+    }
+    let Ok(out) = child.wait_with_output() else {
+        return HashSet::new();
+    };
+    if !out.status.success() {
+        return HashSet::new();
+    }
+    // one answer per question, in order: `commit`, or `<name> missing`
+    commits
+        .iter()
+        .zip(String::from_utf8_lossy(&out.stdout).lines())
+        .filter(|(_, answer)| *answer == "commit")
+        .map(|(c, _)| *c)
+        .collect()
+}
+
+/// Keep, for each release in `unreadable`, what the committed changelog already says it
+/// changed, and return the versions kept.
+///
+/// What a release changed is read from history (its commits and the decisions its tree first
+/// holds), and where the history is absent the committed document is the projection that was
+/// made where it was present: keeping its groups and decisions is the one answer that is not
+/// invented. Everything a record carries — version, tag, date, notes, artifacts — is still
+/// composed from the record, so a changed record is still stale; and a section is kept only
+/// when the committed one names the same commit, so a new release, or a record whose commit
+/// changed, is composed and judged rather than passed on an older document.
+pub fn keep_committed(
+    log: &mut Changelog,
+    committed: &Changelog,
+    unreadable: &[String],
+) -> Vec<String> {
+    let mut kept = Vec::new();
+    for section in log
+        .sections
+        .iter_mut()
+        .filter(|s| !s.unreleased && unreadable.contains(&s.version))
+    {
+        let Some(was) = committed
+            .sections
+            .iter()
+            .find(|c| !c.unreleased && c.version == section.version && c.commit == section.commit)
+        else {
+            continue;
+        };
+        section.groups = was.groups.clone();
+        section.decisions = was.decisions.clone();
+        kept.push(section.version.clone());
+    }
+    // the composition said it read nothing for these; what it now carries was read elsewhere
+    log.diagnostics.retain(|d| {
+        !kept
+            .iter()
+            .any(|v| d.starts_with(&format!("no commit was readable for {v} (")))
+    });
+    kept
+}
+
 /// When the file that states a decision was added, as git knows it.
 ///
 /// The date in an ADR's front matter is when the decision was *made*, which is not the same
@@ -1040,5 +1164,77 @@ mod tests {
         let fixed = md.find("### Fixed").expect("no Fixed heading");
         assert!(added < fixed, "the headings are out of order:\n{md}");
         assert!(md.contains("**BREAKING** **commands**: one graph"));
+    }
+
+    /// I1409: a repository that holds the tree and not the history — the release commit is
+    /// not an object in it — names the release as unreadable, and keeping the committed
+    /// changelog's changes for it gives back the document composed where the history was.
+    #[test]
+    fn a_release_without_its_history_keeps_what_the_committed_changelog_says() {
+        let (dir, release) = repo_with_commits(2);
+        let objects = vec![release_record(&release)];
+        assert!(
+            unreadable_releases(dir.path(), &objects).is_empty(),
+            "a repository holding the release commit can read it"
+        );
+        let whole = compose_published(dir.path(), &objects);
+        assert!(!whole.sections[0].groups.is_empty(), "{whole:?}");
+
+        // the same record, in a repository that never had that commit
+        let export = tempfile::tempdir().expect("a temp dir");
+        let init = std::process::Command::new("git")
+            .arg("-C")
+            .arg(export.path())
+            .args(["init", "-q"])
+            .output()
+            .expect("git runs");
+        assert!(init.status.success());
+        assert_eq!(
+            unreadable_releases(export.path(), &objects),
+            vec!["0.1.0".to_string()]
+        );
+        let mut husk = compose_published(export.path(), &objects);
+        assert!(
+            husk.sections[0].groups.is_empty(),
+            "nothing to read: {husk:?}"
+        );
+        assert!(!husk.diagnostics.is_empty(), "the empty read is said");
+
+        let kept = keep_committed(&mut husk, &whole, &["0.1.0".to_string()]);
+        assert_eq!(kept, vec!["0.1.0".to_string()]);
+        assert_eq!(
+            husk, whole,
+            "the kept document is the one composed with history"
+        );
+
+        // a committed section for another commit is not this release's: composed, not kept
+        let mut other = whole.clone();
+        other.sections[0].commit = Some("0".repeat(40));
+        let mut husk = compose_published(export.path(), &objects);
+        assert!(keep_committed(&mut husk, &other, &["0.1.0".to_string()]).is_empty());
+        assert!(husk.sections[0].groups.is_empty());
+    }
+
+    /// A shallow clone holds the release commit and still not the history behind it.
+    #[test]
+    fn a_shallow_clone_cannot_read_a_release() {
+        let (dir, release) = repo_with_commits(3);
+        let objects = vec![release_record(&release)];
+        let shallow = tempfile::tempdir().expect("a temp dir");
+        let url = format!("file://{}", dir.path().display());
+        let clone = std::process::Command::new("git")
+            .args(["clone", "-q", "--depth", "1", &url])
+            .arg(shallow.path().join("c"))
+            .output()
+            .expect("git runs");
+        assert!(
+            clone.status.success(),
+            "{}",
+            String::from_utf8_lossy(&clone.stderr)
+        );
+        assert_eq!(
+            unreadable_releases(&shallow.path().join("c"), &objects),
+            vec!["0.1.0".to_string()]
+        );
     }
 }
