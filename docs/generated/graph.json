@@ -11887,14 +11887,14 @@
             "share/commands.yaml",
             "test/fixtures/commands/",
             ".ai/repo/policy.yaml",
-            ".ai/repo/benchmarks/baseline.json"
+            ".ai/repo/benchmarks/baseline.json",
+            ".ai/local/benchmarks/runs/"
           ],
           "requires_installed": true,
           "requires_repository": true,
           "requires_task": "none",
           "stage": "inspect",
           "summary": "Time every public command of the registry, cold and warm, and compare with the baseline.",
-          "syntax": "majordomus bench [<command>...] [--samples <n>] [--warmup <n>] [--mode cold|warm|both] [--format text|json] [--no-save] [--list] [--check] [--write-baseline [--force]]",
           "visibility": "public",
           "writes": [
             ".ai/local/benchmarks/",
@@ -23166,8 +23166,10 @@
         "facts": {
           "acceptance_criteria": [
             "compare of a run with itself reports zero deltas",
-            "Case 85 proves the ranking on two fixture runs"
+            "Case 3058 proves the ranking on two fixture runs"
           ],
+          "completed_at": "2026-10-15T08:07:52Z",
+          "completed_event": "sha256:0bf984ffd3f544acd4ed94cc76cb664912c590a82766f035416c392a9c7f4f4f",
           "created_at": "2026-09-05",
           "current_state": "Only --check compares, against the baseline.",
           "depends_on": [
@@ -23190,9 +23192,11 @@
             "test/cases"
           ],
           "slug": "bench-compare",
-          "updated_at": "2026-09-05",
+          "started_at": "2026-10-15T08:07:43Z",
+          "started_event": "sha256:101de63890296e715261c859e691030f093d444e0e7c85346a5f7439f232abd2",
+          "updated_at": "2026-10-15T08:07:52Z",
           "validation": [
-            "bash test/run.sh 85_bench_compare"
+            "bash test/run.sh 3058_bench_compares_two_runs"
           ],
           "why": "A wall of numbers hides the one that matters."
         }
@@ -53072,6 +53076,13 @@
         "source": "test/cases/304_a_provider_is_declared_once.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3058_bench_compares_two_runs.sh",
+        "kind": "test",
+        "label": "test/cases/3058_bench_compares_two_runs.sh",
+        "route": "/cockpit/objects/test/test-cases-3058-bench-compares-two-runs-sh",
+        "source": "test/cases/3058_bench_compares_two_runs.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/305_a_command_is_claimed_or_classified.sh",
         "kind": "test",
         "label": "test/cases/305_a_command_is_claimed_or_classified.sh",
@@ -82899,6 +82910,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3058_bench_compares_two_runs.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/305_a_command_is_claimed_or_classified.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -88190,8 +88206,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2796,
-      "edges": 6129,
+      "nodes": 2797,
+      "edges": 6130,
       "acyclic": false,
       "truncated": false
     }
