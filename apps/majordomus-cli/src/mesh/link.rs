@@ -77,6 +77,26 @@ pub const MAX_LINK_SKEW_SECONDS: u64 = super::protocol::MAX_CLOCK_SKEW_SECONDS;
 /// One request's bound.
 pub const REQUEST_TIMEOUT: Duration = Duration::from_secs(5);
 
+/// The largest link reply a dialer reads, as compact JSON: one message under
+/// [`MAX_LINK_MESSAGE`] inside the `{"signed":…}` of a [`LinkReply`]. The answerer builds
+/// its welcome and sync answer under [`MAX_LINK_MESSAGE`], so a reply over this is one no
+/// runtime of this protocol sends, and it is refused before a byte of it is parsed rather
+/// than read up to the HTTP client's general bound of 32 MiB (I2704). The shared server
+/// pretty-prints what it answers, and its whitespace is not counted: the dialer holds the
+/// reply without it.
+///
+/// ```
+/// use majordomus_cli::mesh::link::{MAX_LINK_MESSAGE, MAX_LINK_REPLY};
+///
+/// assert_eq!(MAX_LINK_REPLY, MAX_LINK_MESSAGE + r#"{"signed":}"#.len());
+/// ```
+pub const MAX_LINK_REPLY: usize = MAX_LINK_MESSAGE + r#"{"signed":}"#.len();
+
+/// How long a dialer waits for a whole link reply. [`REQUEST_TIMEOUT`] bounds the silence
+/// between two reads; this bounds a peer that is never silent and never done, which would
+/// otherwise hold the dialer one byte at a time for as long as it liked (I2704).
+pub const LINK_REPLY_WITHIN: Duration = Duration::from_secs(20);
+
 /// The message kinds, each its own signing domain. The domain is mixed into the bytes a
 /// signature covers, so a signature made over one kind of message cannot be presented as
 /// another: a captured welcome cannot be replayed as a sync answer even though both are
@@ -878,7 +898,10 @@ pub trait LinkTransport: Send + Sync {
 /// It refuses an oversized message before opening a socket, so the bound the protocol
 /// states is enforced by the sender too and a peer is never asked to read something it
 /// would have to refuse. An endpoint may be written with or without a scheme, because a
-/// person writing a seed should not have to know which.
+/// person writing a seed should not have to know which. The reply is read the same way in
+/// reverse: at most [`MAX_LINK_REPLY`] of it is held, and all of it within
+/// [`LINK_REPLY_WITHIN`]; past either, the post fails as a transport failure that names the
+/// bound, and nothing of the reply is parsed.
 ///
 /// ```
 /// use majordomus_cli::mesh::link::{HttpTransport, LinkTransport, Signed, MAX_LINK_MESSAGE,
@@ -904,13 +927,17 @@ impl LinkTransport for HttpTransport {
         } else {
             format!("http://{endpoint}")
         };
-        let reply = crate::mcp::bridge::request(
+        let reply = crate::mcp::bridge::request_json_within(
             &base,
             "POST",
             path,
             &[("Content-Type", "application/json")],
             Some(&body),
-            REQUEST_TIMEOUT,
+            crate::mcp::bridge::ReplyBound {
+                bytes: MAX_LINK_REPLY,
+                idle: REQUEST_TIMEOUT,
+                within: LINK_REPLY_WITHIN,
+            },
         )
         .map_err(|e| format!("{base}{path}: {e}"))?;
         if reply.status != 200 {
