@@ -60,6 +60,12 @@ RS
     > "$C/cockpit/pages.rs"
   printf 'classes:\n  - kind: mesh-declaration\n    glob: .ai/repo/mesh/*.yaml\n' \
     > "$F/share/skeleton/ai/repo/knowledge/sources.yaml"
+  # and every field the journal's events carry is listed (I2708; case 3051 drives that check)
+  mkdir -p "$F/.ai/repo/ci"
+  printf 'pub enum EventBody {\n    SessionClosed {\n        session: String,\n    },\n}\n' \
+    > "$C/mesh/journal.rs"
+  printf 'version: 1\nfields:\n  EventBody.SessionClosed.session: clear\n' \
+    > "$F/.ai/repo/ci/mesh-event-fields.yaml"
   printf '%s' "$F"
 }
 

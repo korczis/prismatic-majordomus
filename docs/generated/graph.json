@@ -36194,7 +36194,7 @@
             "test/cases"
           ],
           "slug": "mesh-event-fields-are-listed",
-          "updated_at": "2026-10-14",
+          "updated_at": "2026-10-15T01:29:02Z",
           "validation": [
             "bin/majordomus plan validate",
             "scripts/ci/mesh-check",
@@ -53070,6 +53070,13 @@
         "label": "test/cases/304_a_provider_is_declared_once.sh",
         "route": "/cockpit/objects/test/test-cases-304-a-provider-is-declared-once-sh",
         "source": "test/cases/304_a_provider_is_declared_once.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3051_an_unlisted_event_field_fails_the_mesh_check.sh",
+        "kind": "test",
+        "label": "test/cases/3051_an_unlisted_event_field_fails_the_mesh_check.sh",
+        "route": "/cockpit/objects/test/test-cases-3051-an-unlisted-event-field-fails-the-mesh-check-sh",
+        "source": "test/cases/3051_an_unlisted_event_field_fails_the_mesh_check.sh"
       },
       {
         "id": "majordomus://test/test/cases/305_a_command_is_claimed_or_classified.sh",
@@ -82899,6 +82906,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3051_an_unlisted_event_field_fails_the_mesh_check.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/305_a_command_is_claimed_or_classified.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -88190,8 +88202,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2796,
-      "edges": 6129,
+      "nodes": 2797,
+      "edges": 6130,
       "acyclic": false,
       "truncated": false
     }

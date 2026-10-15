@@ -1,0 +1,84 @@
+# Every field a mesh event carries, and whether its value is redacted before it is signed.
+# `scripts/ci/mesh-check` reads this file against apps/majordomus-cli/src/mesh/journal.rs;
+# test/cases/3051_an_unlisted_event_field_fails_the_mesh_check.sh holds the two to each other.
+#
+# Why this file exists (I2708). The mesh signs each event body into the journal and replicates
+# it, in clear, over plain HTTP to every linked runtime. A field added to `EventBody` reached
+# every machine the day it merged, and nothing asked whether anyone had decided it may. Now
+# the gate fails on:
+#
+#   - a field of an `EventBody` variant that is not listed here;
+#   - a field of a struct a variant carries (`SessionInfo`, `HandoverBody`, and whatever brace
+#     struct of journal.rs a variant names next) that is not listed here;
+#   - an entry whose value is neither `redacted` nor `clear`;
+#   - an entry for a field the source no longer has.
+#
+# The values:
+#
+#   redacted  the value passes redaction::redact_secrets before the event is signed, so a
+#             credential the author pasted travels as a marker (say where, in a comment);
+#   clear     the value is signed and replicated as written. Choosing `clear` is a decision
+#             that the field carries no secret: an identifier, a digest, a path inside the
+#             repository, a word from a fixed vocabulary.
+#
+# A container field (`info`, `handover`) is `clear` as a field; what it carries is decided
+# field by field under its struct's own name below.
+#
+# Free text is where a credential arrives. Today only the handover body is redacted
+# (mesh/handover.rs, before signing). The review subject, body and notes and a claim's or a
+# session's intent are listed `clear` because that is what the code does now, not because it
+# is right: I2708's later slice redacts a review's subject and verdict, and changes the entries
+# here in the same commit.
+version: 1
+fields:
+  # ------------------------------------------------------------- EventBody variants
+  EventBody.SessionOpened.info: clear
+  EventBody.SessionClosed.session: clear
+  EventBody.ClaimAcquired.claim: clear
+  EventBody.ClaimAcquired.session: clear
+  EventBody.ClaimAcquired.scope: clear
+  EventBody.ClaimAcquired.intent: clear
+  EventBody.ClaimAcquired.mode: clear
+  EventBody.ClaimAcquired.issue: clear
+  EventBody.ClaimReleased.claim: clear
+  EventBody.HandoverPublished.handover: clear
+  EventBody.HandoverConsumed.handover: clear
+  EventBody.HandoverConsumed.session: clear
+  EventBody.ReviewRequested.review: clear
+  EventBody.ReviewRequested.session: clear
+  EventBody.ReviewRequested.subject: clear
+  EventBody.ReviewRequested.scope: clear
+  EventBody.ReviewRequested.issue: clear
+  EventBody.ReviewRequested.reviewer: clear
+  EventBody.ReviewRequested.body: clear
+  EventBody.ReviewAnswered.request: clear
+  EventBody.ReviewAnswered.session: clear
+  EventBody.ReviewAnswered.verdict: clear
+  EventBody.ReviewAnswered.note: clear
+  EventBody.ReviewWithdrawn.request: clear
+  EventBody.ReviewWithdrawn.session: clear
+  EventBody.ReviewWithdrawn.note: clear
+  # ------------------------------------------------------------- SessionInfo (session_opened)
+  SessionInfo.session: clear
+  SessionInfo.client: clear
+  SessionInfo.worker: clear
+  SessionInfo.intent: clear
+  SessionInfo.task: clear
+  SessionInfo.issue: clear
+  SessionInfo.milestone: clear
+  SessionInfo.checkout: clear
+  SessionInfo.branch: clear
+  SessionInfo.head: clear
+  SessionInfo.dirty: clear
+  SessionInfo.context: clear
+  # ------------------------------------------------------------- HandoverBody (handover_published)
+  HandoverBody.id: clear
+  HandoverBody.task: clear
+  HandoverBody.issue: clear
+  HandoverBody.milestone: clear
+  HandoverBody.branch: clear
+  HandoverBody.head: clear
+  HandoverBody.created_at: clear
+  HandoverBody.name: clear
+  # mesh::handover::to_body passes the body through redaction::redact_secrets before signing
+  HandoverBody.body: redacted
