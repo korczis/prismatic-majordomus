@@ -56,6 +56,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `distribution-matrix` | `json` | — | share/distribution.yaml and the release records |
 | `economics` | `json`, `markdown`, `yaml` | `majordomus/economics-summary/v1` | the token-economics methodology and every benchmark run committed under .ai/repo/benchmarks/economics |
 | `editors/command` | `markdown` | — | apps/majordomus-cli/src/capability/builtin/intents.rs |
+| `editors/domain` | `markdown` | — | module:artifacts |
 | `editors/skill` | `markdown` | — | .ai/repo/skills/assess-before-deleting/SKILL.md |
 | `editors/zed-tasks` | `json` | — | the recipes of the tracked justfile and .just/*.just |
 | `graph` | `json` | `majordomus/capability-graph/v1` | the composed graph of the registry and the index |
@@ -199,6 +200,63 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `.claude/skills/evolve/SKILL.md` | `editors/skill` | markdown | 864 | `5f7bf124a523cdad` |
 | `.claude/skills/implement/SKILL.md` | `editors/skill` | markdown | 875 | `b8073be4829227d2` |
 | `.claude/skills/intent/SKILL.md` | `editors/command` | markdown | 1461 | `f41d9ac29844c832` |
+| `.claude/skills/mj-artifacts/SKILL.md` | `editors/domain` | markdown | 1393 | `9fed75f54672bde0` |
+| `.claude/skills/mj-brief/SKILL.md` | `editors/domain` | markdown | 1357 | `707c3931ddd48290` |
+| `.claude/skills/mj-capabilities/SKILL.md` | `editors/domain` | markdown | 1751 | `4348ca99777485d6` |
+| `.claude/skills/mj-commands/SKILL.md` | `editors/domain` | markdown | 1599 | `26b865aa91a793ac` |
+| `.claude/skills/mj-commit/SKILL.md` | `editors/domain` | markdown | 1825 | `0645ffa6f629fddc` |
+| `.claude/skills/mj-continuity/SKILL.md` | `editors/domain` | markdown | 2711 | `fd24f7fc40d6892c` |
+| `.claude/skills/mj-convergence/SKILL.md` | `editors/domain` | markdown | 1452 | `baa1c4930b11925c` |
+| `.claude/skills/mj-dashboard/SKILL.md` | `editors/domain` | markdown | 1434 | `588d18c420faab18` |
+| `.claude/skills/mj-delivery/SKILL.md` | `editors/domain` | markdown | 1545 | `4ce86ff1bf26bce9` |
+| `.claude/skills/mj-deploy/SKILL.md` | `editors/domain` | markdown | 1685 | `36290cf127a41b40` |
+| `.claude/skills/mj-design/SKILL.md` | `editors/domain` | markdown | 1723 | `93615c5e07e26002` |
+| `.claude/skills/mj-devcontext/SKILL.md` | `editors/domain` | markdown | 1807 | `36d3aef47f1fce08` |
+| `.claude/skills/mj-devtask/SKILL.md` | `editors/domain` | markdown | 1628 | `236669aa113e5465` |
+| `.claude/skills/mj-directories/SKILL.md` | `editors/domain` | markdown | 1415 | `9934963d78641185` |
+| `.claude/skills/mj-distribution/SKILL.md` | `editors/domain` | markdown | 2018 | `c020d10d607b0092` |
+| `.claude/skills/mj-economics/SKILL.md` | `editors/domain` | markdown | 1879 | `a3d9c9a41791a17a` |
+| `.claude/skills/mj-editors/SKILL.md` | `editors/domain` | markdown | 1379 | `8fbb5832adbc2e78` |
+| `.claude/skills/mj-entity/SKILL.md` | `editors/domain` | markdown | 1559 | `63df81e8622c8e9a` |
+| `.claude/skills/mj-environment/SKILL.md` | `editors/domain` | markdown | 1741 | `6e5b196e54ff6472` |
+| `.claude/skills/mj-episodes/SKILL.md` | `editors/domain` | markdown | 1635 | `91cc195d2863cbd9` |
+| `.claude/skills/mj-evidence/SKILL.md` | `editors/domain` | markdown | 1723 | `509a07c1e7ce3287` |
+| `.claude/skills/mj-executions/SKILL.md` | `editors/domain` | markdown | 2277 | `0b73ecc1a6b29f42` |
+| `.claude/skills/mj-gates/SKILL.md` | `editors/domain` | markdown | 1478 | `b155cd267ad6ab6a` |
+| `.claude/skills/mj-graph/SKILL.md` | `editors/domain` | markdown | 1416 | `1bf0827f19bc2824` |
+| `.claude/skills/mj-health/SKILL.md` | `editors/domain` | markdown | 1359 | `8897bae4d940afdf` |
+| `.claude/skills/mj-integration/SKILL.md` | `editors/domain` | markdown | 2329 | `891691392a8f35c1` |
+| `.claude/skills/mj-intent-realization/SKILL.md` | `editors/domain` | markdown | 1733 | `e6d3a451f9c3ef17` |
+| `.claude/skills/mj-intents/SKILL.md` | `editors/domain` | markdown | 2517 | `5553b58aa47c45f8` |
+| `.claude/skills/mj-knowledge-base/SKILL.md` | `editors/domain` | markdown | 1793 | `e3ca9dca5d977afb` |
+| `.claude/skills/mj-lifecycle/SKILL.md` | `editors/domain` | markdown | 1978 | `7d3301056db6466d` |
+| `.claude/skills/mj-mcp/SKILL.md` | `editors/domain` | markdown | 1365 | `e1b6d36a1b30135a` |
+| `.claude/skills/mj-mesh/SKILL.md` | `editors/domain` | markdown | 3589 | `5837dbf5063fac03` |
+| `.claude/skills/mj-models/SKILL.md` | `editors/domain` | markdown | 1506 | `cbf45b3b60646f7e` |
+| `.claude/skills/mj-monitor/SKILL.md` | `editors/domain` | markdown | 1385 | `45fe6756887b82af` |
+| `.claude/skills/mj-objects/SKILL.md` | `editors/domain` | markdown | 1668 | `3c46e9d75184ffd1` |
+| `.claude/skills/mj-obligations/SKILL.md` | `editors/domain` | markdown | 1538 | `806a471ebc4c3f4b` |
+| `.claude/skills/mj-observatory/SKILL.md` | `editors/domain` | markdown | 1630 | `67c5c39a8156a9fe` |
+| `.claude/skills/mj-pack/SKILL.md` | `editors/domain` | markdown | 1498 | `51716ed550abdf2f` |
+| `.claude/skills/mj-peers/SKILL.md` | `editors/domain` | markdown | 1465 | `875624c23ddf69da` |
+| `.claude/skills/mj-perf/SKILL.md` | `editors/domain` | markdown | 1341 | `7933eab2ebbebad2` |
+| `.claude/skills/mj-plan/SKILL.md` | `editors/domain` | markdown | 2373 | `a478c7b928bcaf23` |
+| `.claude/skills/mj-product/SKILL.md` | `editors/domain` | markdown | 2004 | `43227c91815bb055` |
+| `.claude/skills/mj-quality/SKILL.md` | `editors/domain` | markdown | 1538 | `6a13c5343e17cca0` |
+| `.claude/skills/mj-reasoning/SKILL.md` | `editors/domain` | markdown | 2243 | `5a2d3d736afb8323` |
+| `.claude/skills/mj-recover/SKILL.md` | `editors/domain` | markdown | 1502 | `37e30d0773e2ba56` |
+| `.claude/skills/mj-release/SKILL.md` | `editors/domain` | markdown | 1876 | `5b6a227372643e7e` |
+| `.claude/skills/mj-repository/SKILL.md` | `editors/domain` | markdown | 1656 | `b01b71bebd2ae2da` |
+| `.claude/skills/mj-rules/SKILL.md` | `editors/domain` | markdown | 1664 | `ecf655c436c76079` |
+| `.claude/skills/mj-served/SKILL.md` | `editors/domain` | markdown | 1418 | `3d386140ab82e389` |
+| `.claude/skills/mj-server/SKILL.md` | `editors/domain` | markdown | 1443 | `f2e638d2fbaf2b64` |
+| `.claude/skills/mj-session-domain/SKILL.md` | `editors/domain` | markdown | 1640 | `9752a64ca46f62f4` |
+| `.claude/skills/mj-shell/SKILL.md` | `editors/domain` | markdown | 1379 | `e5b8f2cdee35427e` |
+| `.claude/skills/mj-skills/SKILL.md` | `editors/domain` | markdown | 1754 | `338fcafe9c161647` |
+| `.claude/skills/mj-trace/SKILL.md` | `editors/domain` | markdown | 1630 | `d22ac685aafe24ee` |
+| `.claude/skills/mj-web/SKILL.md` | `editors/domain` | markdown | 1356 | `1bc7cfa4c3fbbaed` |
+| `.claude/skills/mj-why/SKILL.md` | `editors/domain` | markdown | 1915 | `36d3994898c56da1` |
+| `.claude/skills/mj-worktree/SKILL.md` | `editors/domain` | markdown | 2016 | `5955c74d2dd5af80` |
 | `.claude/skills/pack-for-chatgpt/SKILL.md` | `editors/skill` | markdown | 1000 | `fb3cdeee3ea50d4f` |
 | `.claude/skills/pack-for-review/SKILL.md` | `editors/skill` | markdown | 975 | `b46b7f79c496294e` |
 | `.claude/skills/repo-review/SKILL.md` | `editors/skill` | markdown | 852 | `ec8d4d5778d400e8` |
@@ -216,13 +274,13 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/artifacts.json` | `artifacts` | json | — | — (this file) |
 | `docs/generated/artifacts.md` | `artifacts` | markdown | — | — (this file) |
 | `docs/generated/artifacts.yaml` | `artifacts` | yaml | — | — (this file) |
-| `docs/generated/benchmarks.json` | `benchmarks` | json | 56314 | `b567758499a0a187` |
-| `docs/generated/benchmarks.md` | `benchmarks` | markdown | 24800 | `c84179004a631b37` |
-| `docs/generated/benchmarks.yaml` | `benchmarks` | yaml | 39543 | `52a5e3729b2dfe16` |
+| `docs/generated/benchmarks.json` | `benchmarks` | json | 56573 | `339b2af47f23ac93` |
+| `docs/generated/benchmarks.md` | `benchmarks` | markdown | 24919 | `b9bfa2f02f0cfc69` |
+| `docs/generated/benchmarks.yaml` | `benchmarks` | yaml | 39726 | `b5a58c7cce6ed627` |
 | `docs/generated/capabilities.md` | `capabilities` | markdown | 43450 | `a10838d5a5ff4916` |
-| `docs/generated/changelog.json` | `changelog` | json | 1075732 | `cc6b3ea958815fdd` |
-| `docs/generated/changelog.md` | `changelog` | markdown | 250263 | `4cd90d1d336b6536` |
-| `docs/generated/changelog.yaml` | `changelog` | yaml | 853505 | `47e6240103854865` |
+| `docs/generated/changelog.json` | `changelog` | json | 1075732 | `faede46bf8c43f50` |
+| `docs/generated/changelog.md` | `changelog` | markdown | 250263 | `1a97a4d24021f38d` |
+| `docs/generated/changelog.yaml` | `changelog` | yaml | 853505 | `15d99a3e5ca562c8` |
 | `docs/generated/cli.json` | `cli` | json | 1221671 | `6785cce3f81ef39f` |
 | `docs/generated/cli.md` | `cli` | markdown | 531671 | `414be14493209419` |
 | `docs/generated/cli.yaml` | `cli` | yaml | 956345 | `a4db9662059691d6` |
@@ -233,7 +291,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/economics.json` | `economics` | json | 30840 | `1b36e8b245585be6` |
 | `docs/generated/economics.md` | `economics` | markdown | 15299 | `203065d4371e8937` |
 | `docs/generated/economics.yaml` | `economics` | yaml | 25713 | `cb8f392ec1bc8499` |
-| `docs/generated/graph.json` | `graph` | json | 3340653 | `7b83d6e3fff01d43` |
+| `docs/generated/graph.json` | `graph` | json | 3344308 | `e34a84813ab607d7` |
 | `docs/generated/graph.schema.json` | `graph-schema` | json | 7618 | `3be7b604dfd67284` |
 | `docs/generated/modules/artifacts.md` | `modules/artifacts` | markdown | 1742 | `05aef7bdfb4db121` |
 | `docs/generated/modules/brief.md` | `modules/brief` | markdown | 2394 | `25aaada5d15aaaa8` |
@@ -356,10 +414,10 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `share/version.txt` | `version` | text | 231 | `1352fbae838b723b` |
 | `site/data/registry/design.json` | `site-design` | json | 11587 | `3f68ed17decc529c` |
 | `site/data/registry/distribution.json` | `site-distribution` | json | 3005 | `6fee17f193d8d732` |
-| `site/data/registry/evidence-subjects.json` | `site-evidence-subjects` | json | 783374 | `f57242f3a9c913ba` |
-| `site/data/registry/product-graph.json` | `site-product-graph` | json | 98705 | `b14c3caaf6a18248` |
-| `site/data/registry/product.json` | `site-product` | json | 737286 | `cb7d76fe13ed7890` |
-| `site/data/registry/registry.json` | `site-registry` | json | 6762654 | `5d6ed950767bf079` |
+| `site/data/registry/evidence-subjects.json` | `site-evidence-subjects` | json | 784087 | `d48e22033993e445` |
+| `site/data/registry/product-graph.json` | `site-product-graph` | json | 98705 | `f25097f278a6f307` |
+| `site/data/registry/product.json` | `site-product` | json | 737286 | `cc71da0980886442` |
+| `site/data/registry/registry.json` | `site-registry` | json | 6764463 | `dfbdef812b5af7b0` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180163 | `9693904a8c466e33` |
 | `site/data/registry/why.json` | `site-why` | json | 349924 | `532982b657422540` |
 | `site/static/favicon.svg` | `design-mark` | text | 904 | `aa48c069472e09ad` |

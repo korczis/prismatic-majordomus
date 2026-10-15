@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 105,
+      "count": 106,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -23,7 +23,7 @@
       "title": "Rules",
       "description": "Every rule in force here — the vendored doctrine package and this repository's own — with the class it declares, the artefacts it names as its enforcement, whether the tree holds them, and the rules either side of it in the dependency graph.",
       "weight": 46,
-      "count": 179,
+      "count": 180,
       "dir": "rules",
       "statuses": [
         "active"
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 105
+      "count": 106
     },
     {
       "kind": "application",
@@ -245,7 +245,7 @@
       "route": "/rules/",
       "title": "Rules",
       "reason": null,
-      "count": 179
+      "count": 180
     },
     {
       "kind": "scope",
@@ -7409,6 +7409,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0146/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0165",
+          "kind": "adr",
+          "route": "/adrs/adr-0165/",
+          "external": false
         }
       ]
     },
@@ -7779,7 +7786,7 @@
       "slug": "adr-0146",
       "cockpit": "/cockpit/objects/adr/adr-0146",
       "title": "A capability is invoked by name through a generated skill",
-      "status": "proposed",
+      "status": "accepted",
       "tags": [
         "capabilities",
         "providers",
@@ -7837,7 +7844,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0165",
+          "kind": "adr",
+          "route": "/adrs/adr-0165/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -8184,6 +8199,67 @@
           "label": "test/cases/3011_the_observatory_draws_nothing_it_did_not_read.sh",
           "kind": "test",
           "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0165",
+      "identity": "adr-0165",
+      "slug": "adr-0165",
+      "cockpit": "/cockpit/objects/adr/adr-0165",
+      "title": "A skill is derived for every domain of the registry and shown wherever skills are",
+      "status": "accepted",
+      "tags": [
+        "capabilities",
+        "providers",
+        "editors",
+        "skills"
+      ],
+      "source": ".ai/repo/adrs/0165-a-skill-is-derived-for-every-domain-of-the-registry.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/editors/claude.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/editors/mod.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0140",
+          "kind": "adr",
+          "route": "/adrs/adr-0140/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0146",
+          "kind": "adr",
+          "route": "/adrs/adr-0146/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/EDITORS.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.every-domain-is-a-skill@1",
+          "kind": "rule",
+          "route": "/rules/project-every-domain-is-a-skill-1/",
           "external": false
         }
       ],
@@ -13063,6 +13139,40 @@
     },
     {
       "kind": "rule",
+      "id": "majordomus://rule/project.every-domain-is-a-skill@1",
+      "identity": "project.every-domain-is-a-skill@1",
+      "slug": "project-every-domain-is-a-skill-1",
+      "cockpit": "/cockpit/objects/rule/project-every-domain-is-a-skill-1",
+      "title": "Every domain of the registry is a skill, derived and shown wherever skills are",
+      "status": "active",
+      "tags": [
+        "architecture",
+        "capabilities",
+        "skills",
+        "editors"
+      ],
+      "source": ".ai/repo/rules/project/every-domain-is-a-skill.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.interfaces-are-projections@1",
+          "kind": "rule",
+          "route": "/rules/project-interfaces-are-projections-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0165",
+          "kind": "adr",
+          "route": "/adrs/adr-0165/",
+          "external": false
+        }
+      ]
+    },
+    {
+      "kind": "rule",
       "id": "majordomus://rule/project.every-link-and-control-is-tested@1",
       "identity": "project.every-link-and-control-is-tested@1",
       "slug": "project-every-link-and-control-is-tested-1",
@@ -13880,6 +13990,13 @@
           "label": "project.envrc-is-an-adapter@2",
           "kind": "rule",
           "route": "/rules/project-envrc-is-an-adapter-2/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.every-domain-is-a-skill@1",
+          "kind": "rule",
+          "route": "/rules/project-every-domain-is-a-skill-1/",
           "external": false
         },
         {

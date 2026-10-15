@@ -23608,6 +23608,30 @@
       "mechanisms": [],
       "findings": []
     },
+    "rule:project.every-domain-is-a-skill": {
+      "kind": "rule",
+      "id": "project.every-domain-is-a-skill",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:2980_a_capability_is_invoked_by_name_from_claude_code",
+          "path": "test/cases/2980_a_capability_is_invoked_by_name_from_claude_code.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/2980_a_capability_is_invoked_by_name_from_claude_code.sh",
+            ".ai/repo/rules/project/every-domain-is-a-skill.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [
+        "apps/majordomus-cli/src/editors/claude.rs",
+        "scripts/site-check"
+      ],
+      "findings": []
+    },
     "rule:project.every-link-and-control-is-tested": {
       "kind": "rule",
       "id": "project.every-link-and-control-is-tested",
@@ -27510,7 +27534,6 @@
     "suite:279_the_publication_age_is_the_oldest_debt",
     "suite:280_capture_status_states_its_denominator",
     "suite:2978_an_intent_is_proposed_by_a_capability",
-    "suite:2980_a_capability_is_invoked_by_name_from_claude_code",
     "suite:2981_the_cockpit_snapshot_holds_its_routes",
     "suite:2982_two_snapshots_link_what_the_other_holds",
     "suite:3003_the_knowledge_screen_answers",

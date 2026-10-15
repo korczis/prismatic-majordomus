@@ -1164,6 +1164,14 @@ for d in "$PUB"/skills/*/; do
 done
 [ "$sk_n" -gt 0 ] && ok skills "$sk_n skill(s): every page names its URI and file, renders its examples, links its related skills, and the index links each" \
   || ok skills "0 skills in the catalogue and no skill page (an empty section, not a broken one)"
+# every skill Claude Code reads is listed on the skills index, and nothing else is (ADR 0163)
+cl_m="$(jq '[.artifacts[] | select(.document | startswith("editors/")) | select(.path | test("^\\.claude/skills/[^/]+/SKILL\\.md$"))] | length' "$ROOT/docs/generated/artifacts.json")"
+cl_n="$(jq '.claude | length' "$SKJ")"
+[ "$cl_n" = "$cl_m" ] || bad skills "skills.json lists $cl_n Claude Code skill(s); the editors projection writes $cl_m"
+for name in $(jq -r '.claude[].name' "$SKJ"); do
+  grep -qF ">/$name<" "$PUB/skills/index.html" || bad skills "the skills index does not list /$name"
+done
+ok skills "$cl_n Claude Code skill(s), each listed on the skills index by the name it is typed by"
 
 # 13b. graphs: every edge endpoint resolves to a node, and no graph is empty
 for g in architecture claims-graph governance-graph; do

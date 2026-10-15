@@ -2671,6 +2671,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/editors/mod.rs",
+        "kind": "file",
+        "label": "mod.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/editors/mod.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/episodes.rs",
         "kind": "file",
         "label": "episodes.rs",
@@ -7167,7 +7175,7 @@
         "summary": "A capability is invoked by name through a generated skill",
         "route": "/cockpit/objects/adr/adr-0146",
         "source": ".ai/repo/adrs/0146-a-capability-is-invoked-by-name-through-a-generated-skill.md",
-        "status": "proposed",
+        "status": "accepted",
         "facts": {
           "date": "2026-10-12",
           "related": [
@@ -7305,6 +7313,32 @@
             "observatory",
             "evidence",
             "mesh"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0165",
+        "kind": "adr",
+        "label": "adr-0165",
+        "summary": "A skill is derived for every domain of the registry and shown wherever skills are",
+        "route": "/cockpit/objects/adr/adr-0165",
+        "source": ".ai/repo/adrs/0165-a-skill-is-derived-for-every-domain-of-the-registry.md",
+        "status": "accepted",
+        "facts": {
+          "date": "2026-10-15",
+          "related": [
+            "file:.ai/repo/adrs/0140-editors-and-agents-read-projections-of-the-layer-and-cargo-e.md",
+            "file:.ai/repo/adrs/0146-a-capability-is-invoked-by-name-through-a-generated-skill.md",
+            "file:.ai/repo/rules/project/every-domain-is-a-skill.v1.md",
+            "file:apps/majordomus-cli/src/editors/mod.rs",
+            "file:apps/majordomus-cli/src/editors/claude.rs",
+            "file:docs/EDITORS.md"
+          ],
+          "tags": [
+            "capabilities",
+            "providers",
+            "editors",
+            "skills"
           ]
         }
       },
@@ -43812,6 +43846,28 @@
         }
       },
       {
+        "id": "majordomus://rule/project.every-domain-is-a-skill@1",
+        "kind": "rule",
+        "label": "project.every-domain-is-a-skill@1",
+        "summary": "Every domain of the registry is a skill, derived and shown wherever skills are",
+        "route": "/cockpit/objects/rule/project-every-domain-is-a-skill-1",
+        "source": ".ai/repo/rules/project/every-domain-is-a-skill.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.interfaces-are-projections@1"
+          ],
+          "statement": "A skill an agent reads is derived from the registry or the layer's skills section, never written by hand, and every surface that lists skills reads the one projection that derives them.",
+          "tags": [
+            "architecture",
+            "capabilities",
+            "skills",
+            "editors"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.every-link-and-control-is-tested@1",
         "kind": "rule",
         "label": "project.every-link-and-control-is-tested@1",
@@ -65264,6 +65320,41 @@
         "kind": "put_in_force"
       },
       {
+        "source": "majordomus://adr/adr-0165",
+        "target": "file:apps/majordomus-cli/src/editors/claude.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0165",
+        "target": "file:apps/majordomus-cli/src/editors/mod.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0165",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0165",
+        "target": "majordomus://adr/adr-0140",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0165",
+        "target": "majordomus://adr/adr-0146",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0165",
+        "target": "majordomus://document/docs/EDITORS.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0165",
+        "target": "majordomus://rule/project.every-domain-is-a-skill@1",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://application/ci-gated-project",
         "target": "kind:application",
         "kind": "is_a"
@@ -80384,6 +80475,16 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/project.every-domain-is-a-skill@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.every-domain-is-a-skill@1",
+        "target": "majordomus://rule/project.interfaces-are-projections@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.every-link-and-control-is-tested@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -88190,8 +88291,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2796,
-      "edges": 6129,
+      "nodes": 2799,
+      "edges": 6138,
       "acyclic": false,
       "truncated": false
     }

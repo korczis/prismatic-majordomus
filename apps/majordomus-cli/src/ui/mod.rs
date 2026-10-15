@@ -57,6 +57,7 @@ pub(crate) mod prs;
 pub(crate) mod roadmap;
 pub(crate) mod rule;
 pub(crate) mod shell;
+pub(crate) mod skills;
 pub(crate) mod source;
 pub(crate) mod timings;
 pub(crate) mod view;
@@ -156,6 +157,12 @@ pub(crate) const SCREENS: &[Screen] = &[
         title: "Capabilities",
         icon: "puzzle",
         answers: "Everything the product can be asked, and on which surfaces.",
+    },
+    Screen {
+        route: skills::ROUTE,
+        title: "Skills",
+        icon: "sparkles",
+        answers: "What an agent can be asked by name, and where each name comes from.",
     },
     Screen {
         route: mesh::ROUTE,
@@ -338,6 +345,7 @@ impl Ui {
             deployments::ROUTE => deployments::screen(&ctx),
             command::ROUTE => command::screen(&ctx, &req.query),
             capabilities::ROUTE => capabilities::screen(&ctx, &req.query),
+            skills::ROUTE => skills::screen(&ctx),
             docs::ROUTE => docs::screen(&ctx),
             evidence::ROUTE => evidence::screen(&ctx, &req.query),
             knowledge::ROUTE => knowledge::screen(&ctx),
@@ -579,6 +587,7 @@ mod tests {
                 capabilities::screen(&ctx, &[("id".into(), "plan.status".into())]),
             ),
             (deployments::ROUTE, deployments::screen(&ctx)),
+            (skills::ROUTE, skills::screen(&ctx)),
             (docs::ROUTE, docs::screen(&ctx)),
             (knowledge::ROUTE, knowledge::screen(&ctx)),
         ] {

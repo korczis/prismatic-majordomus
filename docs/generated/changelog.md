@@ -144,7 +144,7 @@ Current version: **0.26.0**
 
 ### Decisions
 
-- **ADR-0146** A capability is invoked by name through a generated skill _(proposed)_
+- **ADR-0146** A capability is invoked by name through a generated skill _(accepted)_
 
 ### Added
 

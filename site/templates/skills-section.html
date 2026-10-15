@@ -41,6 +41,24 @@
     </ul>
   </div>
 
+  {#- Every skill an agent reads by name, from the editors projection's manifest (ADR 0165):
+      workflow skills above as pointers, the capability commands, and one skill per domain of
+      the registry. Nothing here is typed in; the rows are the generated files. -#}
+  <section class="mt-12" aria-labelledby="sk-claude">
+    <h2 id="sk-claude" class="text-xl font-semibold tracking-tight text-heading">In Claude Code, by name</h2>
+    <p class="mt-2 max-w-3xl text-body">{{ sk.claude | length }} skills are projected into <code class="font-mono text-heading">.claude/skills/</code>{% for k, n in sk.claude_by_kind %}{% if loop.first %}: {% else %}, {% endif %}{{ n }} {{ k }}{% endfor %}. A <em>domain</em> is one module of the capability registry, typed as <code class="font-mono text-heading">/mj-&lt;module&gt;</code>; a <em>command</em> is a capability that declares its own name; a <em>skill</em> points at a workflow above. A capability that changes something runs only when a person asks for it.</p>
+    <div class="mt-4 overflow-x-auto rounded-base border border-default">
+      <table class="w-full text-left text-sm">
+        <thead class="bg-neutral-secondary-medium text-heading"><tr><th scope="col" class="px-3 py-2">Name</th><th scope="col" class="px-3 py-2">Kind</th><th scope="col" class="px-3 py-2">What it reaches</th></tr></thead>
+        <tbody>
+          {%- for s in sk.claude -%}
+          <tr class="border-t border-default align-top"><td class="px-3 py-2 font-mono text-fg-brand whitespace-nowrap">/{{ s.name }}</td><td class="px-3 py-2 font-mono text-xs text-body-subtle">{{ s.kind }}</td><td class="px-3 py-2 text-body">{{ s.description }}</td></tr>
+          {%- endfor -%}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
   <div class="mt-12 max-w-3xl">
     <h2 class="text-xl font-semibold tracking-tight text-heading">What a skill is, and where these come from</h2>
     <p class="mt-3 text-body">A skill is a provider-neutral procedure for one bounded kind of work: a directory under the repository's skills section holding <code class="font-mono text-heading">SKILL.md</code>, front matter over a body with a purpose, a procedure and an output contract. A worker loads one when the task is about what it covers, never by default.</p>
