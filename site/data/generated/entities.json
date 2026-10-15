@@ -23,7 +23,7 @@
       "title": "Rules",
       "description": "Every rule in force here — the vendored doctrine package and this repository's own — with the class it declares, the artefacts it names as its enforcement, whether the tree holds them, and the rules either side of it in the dependency graph.",
       "weight": 46,
-      "count": 179,
+      "count": 180,
       "dir": "rules",
       "statuses": [
         "active"
@@ -245,7 +245,7 @@
       "route": "/rules/",
       "title": "Rules",
       "reason": null,
-      "count": 179
+      "count": 180
     },
     {
       "kind": "scope",
@@ -11366,6 +11366,32 @@
     },
     {
       "kind": "rule",
+      "id": "majordomus://rule/project.a-standing-approval-is-written-where-permissions-are-read@1",
+      "identity": "project.a-standing-approval-is-written-where-permissions-are-read@1",
+      "slug": "project-a-standing-approval-is-written-where-permissions-are-read-1",
+      "cockpit": "/cockpit/objects/rule/project-a-standing-approval-is-written-where-permissions-are-read-1",
+      "title": "A standing approval is written where the permission layer reads it",
+      "status": "active",
+      "tags": [
+        "process",
+        "governance",
+        "permissions",
+        "evidence"
+      ],
+      "source": ".ai/repo/rules/project/a-standing-approval-is-written-where-permissions-are-read.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.an-expedited-landing-is-the-owners-word@1",
+          "kind": "rule",
+          "route": "/rules/project-an-expedited-landing-is-the-owners-word-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "rule",
       "id": "majordomus://rule/project.a-tool-that-cannot-match-the-tree-refuses@1",
       "identity": "project.a-tool-that-cannot-match-the-tree-refuses@1",
       "slug": "project-a-tool-that-cannot-match-the-tree-refuses-1",
@@ -11654,6 +11680,13 @@
           "label": "adr-0155",
           "kind": "adr",
           "route": "/adrs/adr-0155/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.a-standing-approval-is-written-where-permissions-are-read@1",
+          "kind": "rule",
+          "route": "/rules/project-a-standing-approval-is-written-where-permissions-are-read-1/",
           "external": false
         }
       ]
