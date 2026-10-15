@@ -24,11 +24,10 @@
 # A container field (`info`, `handover`) is `clear` as a field; what it carries is decided
 # field by field under its struct's own name below.
 #
-# Free text is where a credential arrives. Today only the handover body is redacted
-# (mesh/handover.rs, before signing). The review subject, body and notes and a claim's or a
-# session's intent are listed `clear` because that is what the code does now, not because it
-# is right: I2708's later slice redacts a review's subject and verdict, and changes the entries
-# here in the same commit.
+# Free text is where a credential arrives. The handover body is redacted in mesh/handover.rs
+# and a review's subject, body, verdict and notes in mesh/cooperation.rs, each before signing.
+# A claim's or a session's intent is listed `clear` because that is what the code does now, not
+# because it is decided right.
 version: 1
 fields:
   # ------------------------------------------------------------- EventBody variants
@@ -46,18 +45,22 @@ fields:
   EventBody.HandoverConsumed.session: clear
   EventBody.ReviewRequested.review: clear
   EventBody.ReviewRequested.session: clear
-  EventBody.ReviewRequested.subject: clear
+  # mesh::cooperation::request_review passes subject and body through redact_secrets
+  EventBody.ReviewRequested.subject: redacted
   EventBody.ReviewRequested.scope: clear
   EventBody.ReviewRequested.issue: clear
   EventBody.ReviewRequested.reviewer: clear
-  EventBody.ReviewRequested.body: clear
+  EventBody.ReviewRequested.body: redacted
   EventBody.ReviewAnswered.request: clear
   EventBody.ReviewAnswered.session: clear
-  EventBody.ReviewAnswered.verdict: clear
-  EventBody.ReviewAnswered.note: clear
+  # mesh::cooperation::answer_review passes verdict and note through redact_secrets; a verdict
+  # is then one of approved, changes_requested, commented, so a credential there is refused
+  EventBody.ReviewAnswered.verdict: redacted
+  EventBody.ReviewAnswered.note: redacted
   EventBody.ReviewWithdrawn.request: clear
   EventBody.ReviewWithdrawn.session: clear
-  EventBody.ReviewWithdrawn.note: clear
+  # mesh::cooperation::withdraw_review passes the note through redact_secrets
+  EventBody.ReviewWithdrawn.note: redacted
   # ------------------------------------------------------------- SessionInfo (session_opened)
   SessionInfo.session: clear
   SessionInfo.client: clear
