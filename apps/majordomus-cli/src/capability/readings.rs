@@ -227,9 +227,9 @@ pub enum Freshness {
 /// assert!(latest.took >= std::time::Duration::ZERO);
 /// ```
 #[derive(Debug, Clone)]
-pub struct Latest {
+pub struct Latest<V = Value> {
     /// What the source answered, or why it could not. `Err` for a pending reading too.
-    pub value: Result<Value, String>,
+    pub value: Result<V, String>,
     /// How long the executor took to produce this reading.
     pub took: Duration,
     /// When it was read; `None` while pending.
@@ -242,9 +242,9 @@ pub struct Latest {
     pub refreshing: bool,
 }
 
-impl Latest {
+impl<V> Latest<V> {
     /// A reading taken just now, by the caller itself.
-    fn now(value: Result<Value, String>, took: Duration) -> Latest {
+    fn now(value: Result<V, String>, took: Duration) -> Latest<V> {
         Latest {
             value,
             took,
@@ -447,10 +447,29 @@ impl Readings {
 /// assert_eq!(ctx.executor.readings_remembered(), 1);
 /// ```
 pub fn read(ctx: &Context, id: &str, input: Value, patience: Patience) -> Latest {
+    let latest = read_shared(ctx, id, input, patience);
+    Latest {
+        value: latest.value.map(Arc::unwrap_or_clone),
+        took: latest.took,
+        read_at: latest.read_at,
+        age: latest.age,
+        freshness: latest.freshness,
+        refreshing: latest.refreshing,
+    }
+}
+
+/// The same reading, with the answer as the slot shares it rather than a copy of it: what a
+/// screen that only reads the answer asks, so that a large one is copied for nobody.
+pub(crate) fn read_shared(
+    ctx: &Context,
+    id: &str,
+    input: Value,
+    patience: Patience,
+) -> Latest<Arc<Value>> {
     if bypassed() {
         let started = Instant::now();
         let value = ctx.execute(id, input).map_err(|e| e.to_string());
-        return Latest::now(value, started.elapsed());
+        return Latest::now(value.map(Arc::new), started.elapsed());
     }
     let readings = &ctx.executor.readings;
     let world = World::of(ctx);
@@ -549,11 +568,12 @@ pub fn read(ctx: &Context, id: &str, input: Value, patience: Patience) -> Latest
             },
         ),
     };
-    // the caller's own copy is made once the slot is free again, so that a large answer
-    // copied for one page holds up neither the worker landing a reading nor another page
+    // a caller's own copy, when it wants one, is made once the slot is free again, so that a
+    // large answer copied for one page holds up neither the worker landing a reading nor
+    // another page
     drop(state);
     Latest {
-        value: value.map(Arc::unwrap_or_clone),
+        value,
         took,
         read_at,
         age,

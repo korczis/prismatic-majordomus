@@ -1333,7 +1333,7 @@ mod tests {
             source: QUEUE,
             route: Some("GET /api/v1/pull-requests".into()),
             exposure: Exposure::default(),
-            value: Ok(value),
+            value: Ok(value.into()),
             took: Duration::from_millis(5),
             standing: crate::ui::source::Standing::NOW,
         }
@@ -1391,7 +1391,7 @@ mod tests {
             source: EVENTS,
             route: Some("GET /api/v1/pull-requests/events".into()),
             exposure: Exposure::default(),
-            value: Ok(value),
+            value: Ok(value.into()),
             took: Duration::from_millis(1),
             standing: crate::ui::source::Standing::NOW,
         }
@@ -1621,7 +1621,7 @@ mod tests {
             source: ISSUES,
             route: Some("GET /api/v1/plan/issues".into()),
             exposure: Exposure::default(),
-            value: Ok(value),
+            value: Ok(value.into()),
             took: Duration::from_millis(1),
             standing: crate::ui::source::Standing::NOW,
         }

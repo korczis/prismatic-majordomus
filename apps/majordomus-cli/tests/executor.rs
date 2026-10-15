@@ -1079,3 +1079,35 @@ fn a_moved_repository_is_read_again_by_a_bounded_number_of_workers_and_a_waiting
         "{most} readers at once, never more than {WORKERS}"
     );
 }
+
+/// What the cache holds is what the handler answered, handed to a caller as its own copy:
+/// nothing before the capability was asked, and asking this way runs nothing.
+#[test]
+fn a_cached_answer_is_the_handlers_and_asking_for_it_runs_nothing() {
+    let _serial = serial();
+    let repo = majordomus_cli::synthetic::SyntheticRepository::small().unwrap();
+    let ctx = repo.context().unwrap();
+    let describe = json!({ "id": "plan.status" });
+    assert_eq!(
+        ctx.executor
+            .cached(&ctx, "capabilities.describe", &describe),
+        None
+    );
+    assert_eq!(ctx.executor.handler_invocations(), 0);
+    let answer = ctx
+        .execute("capabilities.describe", describe.clone())
+        .unwrap();
+    let held = ctx
+        .executor
+        .cached(&ctx, "capabilities.describe", &describe);
+    assert_eq!(held, Some(answer));
+    assert_eq!(
+        ctx.executor.handler_invocations(),
+        1,
+        "a lookup runs no handler"
+    );
+    assert_eq!(
+        ctx.executor.cached(&ctx, "no.such.capability", &json!({})),
+        None
+    );
+}
