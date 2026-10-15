@@ -740,12 +740,22 @@ jobs:
   # reads jobs that have already decided, and a red suite is exactly the evidence worth
   # keeping. It runs whenever the suite or the crate produced anything, whatever they concluded.
   #
+  # "Produced anything" is decided by the plan, not by the rust job having run (I2717). The rust
+  # job also runs for gates that test no crate (release_record_cases, version_surface, ...), and
+  # a release record's plan selects exactly those: v0.25.0's and v0.26.0's record runs reached
+  # this job with three empty lane artifacts, evidence-collect refused ("the suite and the crate
+  # both left none", exit 12) and every record pull request carried a red check that measured
+  # nothing. A lane the plan selected that then left no report still fails here, as before.
+  #
   # On master, when this commit is still the tip, it then dispatches the pages workflow, so the
   # site that was published at once with the nearest older evidence (labelled stale) republishes
   # with the evidence of the commit it shows. pages.yml stays triggered by the push alone.
   evidence:
     needs: [plan, suite, rust, coverage]
-    if: always() && (needs.suite.result == 'success' || needs.suite.result == 'failure' || needs.rust.result == 'success' || needs.rust.result == 'failure')
+    if: >-
+      always() &&
+      ((needs.plan.outputs.shell_suite == 'true' && (needs.suite.result == 'success' || needs.suite.result == 'failure')) ||
+       ((needs.plan.outputs.rust_check == 'true' || needs.plan.outputs.rust_integration == 'true') && (needs.rust.result == 'success' || needs.rust.result == 'failure')))
     timeout-minutes: 30
     runs-on: ubuntu-latest
     permissions:
