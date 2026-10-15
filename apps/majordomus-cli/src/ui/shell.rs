@@ -8,7 +8,7 @@
 //! is a menu that opens without JavaScript (a checkbox and its label).
 
 use crate::capability::Context;
-use crate::cockpit::html::{document, el, El};
+use crate::cockpit::html::{document, el, empty, El, Node};
 use crate::cockpit::view::{alert, theme_bootstrap};
 use crate::design::DesignSystem;
 
@@ -56,6 +56,10 @@ pub struct Frame<'a> {
     pub graph_lib: String,
     /// Whether the distribution has the UI's asset directory at all.
     pub assets_present: bool,
+    /// Why the share this server serves is not its own, when it is not
+    /// ([`crate::share_watch::skew`]): drawn over the screen, so that a page without its
+    /// stylesheet says why instead of only looking broken.
+    pub skew: Option<String>,
     /// The executable's version.
     pub version: &'a str,
 }
@@ -112,7 +116,14 @@ pub fn page(ctx: &Context, frame: &Frame<'_>, view: &View) -> String {
                             el("main")
                                 .attr("id", "main")
                                 .class("mj-ui-main")
-                                .when(!frame.assets_present, |m| {
+                                .node(match &frame.skew {
+                                    Some(reason) => Node::Element(alert(
+                                        "warn",
+                                        crate::share_watch::banner(reason),
+                                    )),
+                                    None => empty(),
+                                })
+                                .when(!frame.assets_present && frame.skew.is_none(), |m| {
                                     m.child(alert(
                                         "warn",
                                         "This distribution has no share/ui/ directory, so the UI is unstyled. Run scripts/cockpit-assets.",
@@ -328,6 +339,7 @@ mod tests {
             script: "/ui/assets/ui.js?v=1".into(),
             graph_lib: "/ui/assets/vendor/cytoscape.min.js?v=1".into(),
             assets_present: true,
+            skew: None,
             version: "0.0.0",
         }
     }
@@ -371,6 +383,26 @@ mod tests {
         bare.assets_present = false;
         let html = page(&ctx, &bare, &View::new("Dashboard", el("p")));
         assert!(html.contains("the UI is unstyled"), "{html}");
+    }
+
+    /// A server over a share that is not its own says so on every page, with the reason
+    /// and the remedy, in place of the plainer line about a missing directory; a server
+    /// over its own share draws no such line.
+    #[test]
+    fn a_skewed_share_says_so_on_every_page() {
+        let repo = SyntheticRepository::new(Shape::default()).expect("a synthetic repository");
+        let ctx = repo.context().expect("a context");
+        let mut skewed = frame("/ui/kiosk");
+        skewed.assets_present = false;
+        skewed.skew = Some("the share at /s states version 0.21.0".into());
+        let html = page(&ctx, &skewed, &View::new("Kiosk", el("p")));
+        assert!(html.contains("states version 0.21.0"), "{html}");
+        assert!(html.contains("majordomus serve ensure"), "{html}");
+        assert!(
+            !html.contains("the UI is unstyled"),
+            "one line, not two: {html}"
+        );
+        assert!(!render("/ui").contains("not its own"));
     }
 
     fn render(current: &str) -> String {

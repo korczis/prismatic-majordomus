@@ -206,7 +206,10 @@ fn peers_list(ctx: &Context, input: PeerListInput) -> Result<PeerList, Capabilit
             let (standing, reason, read) = server::standing_at(&worktree, &local_half);
             let url = read.document().and_then(|d| d.url.clone());
             let found = match (standing, url.as_deref()) {
-                (ServerStanding::Ready | ServerStanding::Outdated, Some(url)) => board_of(ctx, url),
+                (
+                    ServerStanding::Ready | ServerStanding::Outdated | ServerStanding::Skewed,
+                    Some(url),
+                ) => board_of(ctx, url),
                 // No server, no board, and nobody attached there — which is a complete
                 // answer about that checkout and not a failure to reach one. A stale lease
                 // belongs here too: it names a process that is gone, so its board went

@@ -385,6 +385,7 @@ impl Ui {
                     script: self.assets.url(SCRIPT),
                     graph_lib: self.assets.url(GRAPH_LIB),
                     assets_present: self.assets.present(),
+                    skew: crate::share_watch::skew(),
                     version: self.version,
                 },
                 &screen,
