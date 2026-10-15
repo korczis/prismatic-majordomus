@@ -97,6 +97,66 @@ pub const MAX_LINK_REPLY: usize = MAX_LINK_MESSAGE + r#"{"signed":}"#.len();
 /// otherwise hold the dialer one byte at a time for as long as it liked (I2704).
 pub const LINK_REPLY_WITHIN: Duration = Duration::from_secs(20);
 
+/// The share of a retry's base interval that jitter may add on top of it: a quarter.
+/// Jitter only ever lengthens a pause, so a jittered retry is never sooner than the base
+/// it was drawn from, and never later than a quarter past it (I2704).
+pub const RETRY_JITTER_DIVISOR: u32 = 4;
+
+/// `base` lengthened by a jitter drawn from `seed`, in `[base, base + base / 4]`.
+///
+/// Two runtimes whose links to one peer fail in the same round would otherwise retry it at
+/// the same instant, round after round; each draws its own seed, so their retries drift
+/// apart. The draw is a pure function of `seed`, which is what lets a test pin it; a
+/// runtime draws its seeds with [`retry_seed`].
+///
+/// ```
+/// use std::time::Duration;
+/// use majordomus_cli::mesh::link::{jittered, RETRY_JITTER_DIVISOR};
+///
+/// let base = Duration::from_secs(8);
+/// let ceiling = base + base / RETRY_JITTER_DIVISOR;
+/// let draws: Vec<Duration> = (0..256).map(|seed| jittered(base, seed)).collect();
+/// assert!(draws.iter().all(|d| *d >= base && *d <= ceiling), "bounded both ways");
+/// assert_eq!(jittered(base, 7), jittered(base, 7), "a seed is one draw");
+/// let (min, max) = (draws.iter().min().unwrap(), draws.iter().max().unwrap());
+/// assert!(*max - *min > base / 8, "spread over the range, not one value");
+/// assert_eq!(jittered(Duration::ZERO, 7), Duration::ZERO, "an immediate retry stays one");
+/// ```
+pub fn jittered(base: Duration, seed: u64) -> Duration {
+    let spread = (base / RETRY_JITTER_DIVISOR).as_nanos();
+    if spread == 0 {
+        return base;
+    }
+    // splitmix64: a fixed, well-mixed permutation, so neighbouring seeds land far apart
+    let mut z = seed.wrapping_add(0x9e37_79b9_7f4a_7c15);
+    z = (z ^ (z >> 30)).wrapping_mul(0xbf58_476d_1ce4_e5b9);
+    z = (z ^ (z >> 27)).wrapping_mul(0x94d0_49bb_1331_11eb);
+    z ^= z >> 31;
+    let extra = u128::from(z) % (spread + 1);
+    base + Duration::from_nanos(u64::try_from(extra).unwrap_or(u64::MAX))
+}
+
+/// A fresh seed for [`jittered`], from the operating system's entropy, or from the clock
+/// when there is none: what a runtime draws each time it pauses before a retry.
+///
+/// ```
+/// use majordomus_cli::mesh::link::retry_seed;
+///
+/// let seeds: std::collections::BTreeSet<u64> = (0..16).map(|_| retry_seed()).collect();
+/// assert!(seeds.len() > 1, "a seed is drawn, not fixed");
+/// ```
+pub fn retry_seed() -> u64 {
+    let mut bytes = [0u8; 8];
+    if getrandom::getrandom(&mut bytes).is_err() {
+        let nanos = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.subsec_nanos())
+            .unwrap_or(0);
+        bytes[..4].copy_from_slice(&nanos.to_le_bytes());
+    }
+    u64::from_le_bytes(bytes)
+}
+
 /// The message kinds, each its own signing domain. The domain is mixed into the bytes a
 /// signature covers, so a signature made over one kind of message cannot be presented as
 /// another: a captured welcome cannot be replayed as a sync answer even though both are
