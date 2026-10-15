@@ -716,15 +716,23 @@ fn superseded(doc: &LeaseDocument) -> Option<String> {
     let recorded = doc.executable.as_ref()?;
     let mine = executable_identity()?;
     if recorded.path != mine.path {
-        return None;
-    }
-    if recorded.mtime == mine.mtime && recorded.size == mine.size {
+        // a server started from the build output this process runs a copy of (I2059)
+        let origin = crate::served_executable::copied_from(&mine.path)?;
+        let same = origin == recorded.path
+            || matches!(
+                (fs::canonicalize(&origin), fs::canonicalize(&recorded.path)),
+                (Ok(a), Ok(b)) if a == b
+            );
+        if !same || recorded.replaced().is_none() {
+            return None;
+        }
+    } else if recorded.mtime == mine.mtime && recorded.size == mine.size {
         return None;
     }
     Some(format!(
         "superseded lease: the server was started from {} and that file has been replaced since \
          (it is serving code that is no longer on disk)",
-        mine.path.display()
+        recorded.path.display()
     ))
 }
 
