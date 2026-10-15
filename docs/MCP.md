@@ -85,6 +85,7 @@ where this checkout's own server stands measured against what this executable wo
 | `starting` | a lease without an address, young enough that its owner is still binding |
 | `ready` | the server the lease names answers for this checkout, from the file on disk, at this executable's version |
 | `outdated` | it answers, but from another version, or from a file replaced since it started: everything it says is yesterday's |
+| `skewed` | it answers at this executable's version, over a share that is not its own: another version's `version.txt` or none, or no `ui/` or `cockpit/` (ADR 0163) |
 | `stale` | the lease names a server that does not answer, or is not a lease at all; the reason says which |
 
 The list is what a caller gets by asking nothing, and it costs a lease read and a probe per
@@ -99,6 +100,26 @@ the election, the read-only `serving`, the environment snapshot and the status a
 through the same reading, and it carries the server's `version` beside the executable it
 was started from. `.ai/local/state/mcp/server.json` is still where a person reads it with
 `cat`; the status is where a program does.
+
+The lease also names the share directory the server located (`share`: its path and how it
+was found), and the status measures that directory on every reading against the server's
+`version`: the version its `version.txt` states, whether it holds `ui/` and `cockpit/`, and
+a share standing of `current` or `skewed` with the reason. A server of one release over the
+share of another — the installed executable over a stale checkout's `share/`, through
+`MAJORDOMUS_SHARE` — answers every `/ui/assets/` file with 404; it stands `skewed`, with the
+share's reason, instead of `ready` (ADR 0163, case 3041). `serve status` prints the share under
+each server as `share skewed  version 0.21.0  ui absent  cockpit present  <path> (<origin>)`,
+and the server's log says it once when it starts. `serve ensure` reports a skewed server with
+exit 10 and the remedy, and does not replace it: which share a server picks, and whether a
+skewed one is replaced, are ADR 0163's later steps.
+
+Which share a server picks is `Share::locate`'s (ADR 0163, point 2). `--share` is used as
+given. A share found through `MAJORDOMUS_SHARE` or the repository's `share/` that is skewed
+for the executable is passed over when a later candidate — the repository's `share/`, then
+the installation's `share/` beside the executable — matches, and the lease's `origin` then
+reads `installation; passed over MAJORDOMUS_SHARE: the share at <path> states version
+0.21.0, …`. An installed executable started from a checkout's shell therefore serves its
+own share. When nothing found matches, the first is served as before and reported `skewed`.
 
 ### The server that is no longer the one
 

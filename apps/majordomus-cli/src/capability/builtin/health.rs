@@ -676,6 +676,10 @@ fn health(ctx: &Context, _: Empty) -> Result<Health, CapabilityError> {
                     // to clear; neither stops this process from serving, so neither is a
                     // failure.
                     ServerStanding::Outdated | ServerStanding::Stale => HealthStatus::Warn,
+                    // It answers, over a share that is not its own: its pages have no
+                    // assets and what it reads from `share/` is another release's
+                    // (ADR 0163). It serves, so it is not a failure.
+                    ServerStanding::Skewed => HealthStatus::Warn,
                 }
             },
             detail: if orphaned {

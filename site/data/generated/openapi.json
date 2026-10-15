@@ -1016,6 +1016,7 @@
     "schema-SelectedAdvisor": "docs/api/reasoning/",
     "schema-Selector": "docs/api/devcontext/",
     "schema-SelectorRule": "docs/api/devcontext/",
+    "schema-ServedShare": "docs/api/server/",
     "schema-ServedStanding": "docs/api/served/",
     "schema-ServedVerdict": "docs/api/served/",
     "schema-ServerStanding": "docs/api/shared/",
@@ -1033,6 +1034,7 @@
     "schema-Severity": "docs/api/shared/",
     "schema-ShardLimits": "docs/api/pack/",
     "schema-ShardPlan": "docs/api/pack/",
+    "schema-ShareStanding": "docs/api/server/",
     "schema-ShellFinding": "docs/api/shell/",
     "schema-ShellReport": "docs/api/shell/",
     "schema-ShellUnit": "docs/api/shell/",
@@ -1220,7 +1222,7 @@
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
     "operations": 194,
-    "schemas": 965,
+    "schemas": 967,
     "tags": 57
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -2332,6 +2334,7 @@
     "SelectedAdvisor": "reasoning",
     "Selector": "devcontext",
     "SelectorRule": "devcontext",
+    "ServedShare": "server",
     "ServedStanding": "served",
     "ServedVerdict": "served",
     "ServerStanding": "shared",
@@ -2349,6 +2352,7 @@
     "Severity": "shared",
     "ShardLimits": "pack",
     "ShardPlan": "pack",
+    "ShareStanding": "server",
     "ShellFinding": "shell",
     "ShellReport": "shell",
     "ShellUnit": "shell",
@@ -29090,7 +29094,7 @@
       "variants": []
     },
     {
-      "description": "A lease as a reader sees it: what the server wrote about itself, without the token that\nmakes the file the server's own.\n\n```\nuse majordomus_cli::capability::builtin::server::LeaseView;\nlet view = LeaseView { pid: 7, url: Some(\"http://127.0.0.1:8741\".into()),\n    started_at: \"2026-09-10T00:00:00Z\".into(), executable: None, version: Some(\"1.0.0\".into()) };\nlet v = serde_json::to_value(&view).unwrap();\nassert_eq!(v[\"pid\"], 7);\nassert!(v.get(\"token\").is_none() && v.get(\"root\").is_none());\n```",
+      "description": "A lease as a reader sees it: what the server wrote about itself, without the token that\nmakes the file the server's own.\n\n```\nuse majordomus_cli::capability::builtin::server::LeaseView;\nlet view = LeaseView { pid: 7, url: Some(\"http://127.0.0.1:8741\".into()),\n    started_at: \"2026-09-10T00:00:00Z\".into(), executable: None, version: Some(\"1.0.0\".into()),\n    share: None };\nlet v = serde_json::to_value(&view).unwrap();\nassert_eq!(v[\"pid\"], 7);\nassert!(v.get(\"token\").is_none() && v.get(\"root\").is_none());\nassert!(v.get(\"share\").is_none(), \"a lease that names no share is read without one\");\n```",
       "home": "server",
       "is_enum": false,
       "name": "LeaseView",
@@ -29131,6 +29135,15 @@
           "refs": [],
           "required": false,
           "type": "string | null"
+        },
+        {
+          "description": "The share directory the server serves, measured now against `version`: the version\nit states, whether it holds `ui/`, and `skewed` with the reason when either differs\nfrom what the server's executable needs. Absent when the lease names no share — a\nserver older than this field, or one that has not located its share yet.",
+          "name": "share",
+          "refs": [
+            "ServedShare"
+          ],
+          "required": false,
+          "type": "ServedShare | null"
         }
       ],
       "type": "object",
@@ -48988,6 +49001,72 @@
       "variants": []
     },
     {
+      "description": "A share directory measured against the version of the executable that serves it: where\nit is, how it was found, the version it states, whether it holds the directory of each\nsurface the server serves pages from — `ui/` for `/ui`, `cockpit/` for `/cockpit` — and\nwhether that makes it the executable's own (ADR 0163).\n\nMeasured when it is asked for, never recorded: a checkout moves under a running server,\nand the directory a lease names may state another version an hour later.\n\n```\nuse majordomus_cli::share::{ServedShare, ShareStanding};\nlet dir = tempfile::tempdir().unwrap();\nstd::fs::write(dir.path().join(\"version.txt\"), \"version=0.26.0\\n\").unwrap();\nstd::fs::create_dir(dir.path().join(\"ui\")).unwrap();\nstd::fs::create_dir(dir.path().join(\"cockpit\")).unwrap();\nlet own = ServedShare::inspect(dir.path(), Some(\"installation\"), \"0.26.0\");\nassert_eq!(own.standing, ShareStanding::Current);\nassert!(own.reason.is_none() && own.ui_present);\n\nlet older = ServedShare::inspect(dir.path(), None, \"0.27.0\");\nassert_eq!(older.standing, ShareStanding::Skewed);\nassert!(older.reason.unwrap().contains(\"states version 0.26.0\"));\n\nstd::fs::remove_dir(dir.path().join(\"ui\")).unwrap();\nlet blank = ServedShare::inspect(dir.path(), None, \"0.26.0\");\nassert_eq!(blank.standing, ShareStanding::Skewed);\nassert!(!blank.ui_present && blank.reason.unwrap().contains(\"no ui/\"));\n```",
+      "home": "server",
+      "is_enum": false,
+      "name": "ServedShare",
+      "properties": [
+        {
+          "description": "The share directory.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How it was found, when the server said.",
+          "name": "origin",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The version its `version.txt` states; absent when it states none.",
+          "name": "version",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Whether it holds `ui/`, the UI's stylesheet and scripts.",
+          "name": "ui_present",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Whether it holds `cockpit/`, the Cockpit's stylesheet and scripts.",
+          "name": "cockpit_present",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Whether it is the executable's own.",
+          "name": "standing",
+          "refs": [
+            "ShareStanding"
+          ],
+          "required": true,
+          "type": "ShareStanding"
+        },
+        {
+          "description": "Why it is skewed, when it is.",
+          "name": "reason",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "LeaseView"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "Every deployment's standing against one commit: the answer `served.show` gives on the\ncommand line, over HTTP and to an MCP client, from one derivation.\n\n```\nuse majordomus_cli::capability::builtin::served::{standing, ServedStanding};\nuse majordomus_cli::served::{Ancestry, OBSERVATIONS_PATH};\n#### struct A; impl Ancestry for A {\n####     fn has(&self, _: &str) -> Option<bool> { Some(true) }\n####     fn contains(&self, _: &str, _: &str) -> Option<bool> { Some(true) } }\nlet dir = tempfile::tempdir().unwrap();\nlet s: ServedStanding = standing(dir.path(), &\"a\".repeat(40), None, &A);\nassert_eq!(s.observations, OBSERVATIONS_PATH);\nassert!(s.deployments.is_empty(), \"nothing observed yet\");\nassert_eq!(s.unreadable, 0);\n```",
       "home": "served",
       "is_enum": false,
@@ -49073,12 +49152,12 @@
       "variants": []
     },
     {
-      "description": "Where a checkout's server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable's code.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Stale];\nlet words: Vec<&str> = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\"absent\", \"starting\", \"ready\", \"outdated\", \"stale\"]);\nassert_eq!(serde_json::from_str::<ServerStanding>(\"\\\"stale\\\"\").unwrap(), ServerStanding::Stale);\n```",
+      "description": "Where a checkout's server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable's code.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Skewed, ServerStanding::Stale];\nlet words: Vec<&str> = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\"absent\", \"starting\", \"ready\", \"outdated\", \"skewed\", \"stale\"]);\nassert_eq!(serde_json::from_str::<ServerStanding>(\"\\\"stale\\\"\").unwrap(), ServerStanding::Stale);\n```",
       "home": "shared",
       "is_enum": true,
       "name": "ServerStanding",
       "properties": [],
-      "type": "\"absent\" | \"starting\" | \"ready\" | \"outdated\" | \"stale\"",
+      "type": "\"absent\" | \"starting\" | \"ready\" | \"outdated\" | \"skewed\" | \"stale\"",
       "used_by": [],
       "used_by_schemas": [
         "BoardView",
@@ -49101,6 +49180,10 @@
         {
           "description": "The server answers, but from older code than this executable, or from a file that\nhas been replaced since it started: everything it says is yesterday's.",
           "value": "outdated"
+        },
+        {
+          "description": "The server answers for this checkout at this executable's version, but serves a\nshare directory that is not its own: one that states another version or none, or\nlacks a surface's directory (`ui/`, `cockpit/`), so the pages it serves have no\nassets and what it reads from `share/` is another release's (ADR 0163).",
+          "value": "skewed"
         },
         {
           "description": "The lease names a server that does not answer, or is not a lease at all.",
@@ -49941,6 +50024,29 @@
         "PackPlan"
       ],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "Whether a share directory is the one an executable should serve.\n\n```\nuse majordomus_cli::share::ShareStanding;\nassert_eq!(serde_json::to_value(ShareStanding::Current).unwrap(), \"current\");\nassert_eq!(serde_json::to_value(ShareStanding::Skewed).unwrap(), \"skewed\");\n```",
+      "home": "server",
+      "is_enum": true,
+      "name": "ShareStanding",
+      "properties": [],
+      "type": "\"current\" | \"skewed\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "ServedShare"
+      ],
+      "values": [
+        {
+          "description": "It states the executable's version and holds the directory of every surface the\nserver serves pages from.",
+          "value": "current"
+        },
+        {
+          "description": "It states another version, states none, or lacks `ui/` or `cockpit/`: a server\nserving it answers with one release's code over another release's data, and those\npages are unstyled or blank.",
+          "value": "skewed"
+        }
+      ],
       "variants": []
     },
     {
@@ -68522,7 +68628,7 @@
           "cache_detail": "",
           "cli": "serve status",
           "curl": "curl -s \"http://127.0.0.1:8741/api/v1/server?checkouts=repository\"",
-          "description": "Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; the lease this process holds when it is the server; and, unless `checkouts` narrows it to this one, every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. `checkouts: this` reads one lease and probes one server and enumerates no other checkout, which is what a caller asking only about the checkout it is in should pay. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes.",
+          "description": "Where this checkout's server stands — absent, starting, ready, outdated, skewed or stale — measured against what this executable would serve; the lease this process holds when it is the server; and, unless `checkouts` narrows it to this one, every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. Each lease carries the share directory its server serves, measured on every call: the version its `version.txt` states, whether it holds `ui/`, and `skewed` with the reason when it states another version than the executable of that server or lacks `ui/` or `cockpit/`, the state in which every asset of those pages answers 404; a server that answers at this executable's version over such a share stands `skewed` rather than `ready`. `checkouts: this` reads one lease and probes one server and enumerates no other checkout, which is what a caller asking only about the checkout it is in should pay. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes.",
           "home": "server",
           "id": "server.status",
           "kind": "query",

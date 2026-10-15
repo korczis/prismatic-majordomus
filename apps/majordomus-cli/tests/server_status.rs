@@ -27,6 +27,7 @@ fn the_standing_is_decided_from_the_lease_the_probe_and_the_version() {
         started_at: "2026-09-10T00:00:00Z".into(),
         executable: None,
         version: version.map(str::to_string),
+        share: None,
     };
     let young = Duration::ZERO;
     let old = Duration::from_secs(3600);
@@ -102,6 +103,63 @@ fn the_standing_is_decided_from_the_lease_the_probe_and_the_version() {
     );
     assert_eq!(standing, ServerStanding::Outdated);
     assert!(reason.unwrap().contains("no version"));
+}
+
+/// A server that answers at this executable's version over a share that is not its own —
+/// another release's `version.txt`, or no `ui/` or `cockpit/` — stands `skewed`, with the
+/// reason; the same server over a share of its own version with both surfaces is `ready`
+/// (ADR 0163, case 3041).
+#[test]
+fn a_ready_server_over_a_share_not_its_own_is_skewed() {
+    let share = tempfile::tempdir().unwrap();
+    let doc = |dir: &std::path::Path| LeaseDocument {
+        schema: SCHEMA.into(),
+        pid: 1,
+        token: "t".into(),
+        root: "/r".into(),
+        url: Some("http://127.0.0.1:1".into()),
+        started_at: "2026-10-14T00:00:00Z".into(),
+        executable: None,
+        version: Some(majordomus_cli::VERSION.into()),
+        share: Some(Box::new(majordomus_cli::share::ShareLocation {
+            path: dir.to_path_buf(),
+            origin: "MAJORDOMUS_SHARE".into(),
+        })),
+    };
+    let ask = |dir: &std::path::Path| {
+        standing_of(
+            &LeaseFile::Document(doc(dir)),
+            Duration::ZERO,
+            |_: &str| true,
+            majordomus_cli::VERSION,
+        )
+    };
+    std::fs::write(share.path().join("version.txt"), "version=0.0.1\n").unwrap();
+    let (standing, reason) = ask(share.path());
+    assert_eq!(standing, ServerStanding::Skewed);
+    let reason = reason.unwrap();
+    assert!(reason.contains("states version 0.0.1"), "{reason}");
+    assert!(
+        reason.contains("holds no ui/") && reason.contains("holds no cockpit/"),
+        "{reason}"
+    );
+
+    std::fs::write(
+        share.path().join("version.txt"),
+        format!("version={}\n", majordomus_cli::VERSION),
+    )
+    .unwrap();
+    std::fs::create_dir(share.path().join("ui")).unwrap();
+    let (standing, reason) = ask(share.path());
+    assert_eq!(
+        standing,
+        ServerStanding::Skewed,
+        "cockpit/ is still missing"
+    );
+    assert!(reason.unwrap().contains("holds no cockpit/"));
+
+    std::fs::create_dir(share.path().join("cockpit")).unwrap();
+    assert_eq!(ask(share.path()), (ServerStanding::Ready, None));
 }
 
 #[test]

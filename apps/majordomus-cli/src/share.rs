@@ -72,6 +72,10 @@ pub struct Share {
     /// How it was found, for diagnostics: `--share`, the environment, the repository, or
     /// the executable's own installation.
     pub origin: &'static str,
+    /// The conventional shares found before this one and passed over because they were
+    /// skewed for this executable, each as `passed over <origin>: <reason>`, in the order
+    /// they were found. Empty when the first share found was used.
+    passed_over: Vec<String>,
 }
 
 impl Share {
@@ -80,29 +84,111 @@ impl Share {
     /// itself), and `<directory of the executable>/../share` (an installation laid out as
     /// `bin/` beside `share/`). A candidate that exists but holds no kinds file is skipped
     /// only when it came from a convention; an explicit path that lacks one is an error.
+    ///
+    /// `--share` is used as given. The conventional candidates are judged against this
+    /// executable's version as [`Share::locate_by_convention`] describes (ADR 0163): a skewed
+    /// one is passed over for a later one that matches, and the share used says so in
+    /// [`Share::provenance`].
     pub fn locate(explicit: Option<&Path>, repo_root: &Path) -> Result<Self> {
-        let mut tried = Vec::new();
         if let Some(p) = explicit {
             return Self::open(p, "--share");
         }
-        if let Some(p) = std::env::var_os(SHARE_ENV) {
-            return Self::open(Path::new(&p), SHARE_ENV);
+        let installation = std::env::current_exe()
+            .ok()
+            .and_then(|exe| exe.parent().map(|dir| dir.join("../share")));
+        Self::locate_by_convention(
+            std::env::var_os(SHARE_ENV).map(PathBuf::from),
+            repo_root,
+            installation,
+            crate::VERSION,
+        )
+    }
+
+    /// The conventional half of [`Share::locate`], with what it reads from the process
+    /// named: `env` is the value of `MAJORDOMUS_SHARE`, `installation` the `share/` beside
+    /// the executable, `executable` that executable's version.
+    ///
+    /// The candidates are, in order, `env` (an error when it holds no kinds file, as an
+    /// explicit word in the environment always was), `<repo_root>/share` and
+    /// `installation` (each only when it holds a kinds file). The first one is used when it
+    /// is the executable's own — it states the executable's version and holds `ui/`, as
+    /// [`ServedShare::inspect`] measures it. When it is skewed, the first later candidate
+    /// that is the executable's own is used instead, and every candidate passed over on the
+    /// way is named in [`Share::passed_over`]. When none is, the first is used as before:
+    /// a server is not refused for its share, it reports the skew (ADR 0163, point 3).
+    ///
+    /// ```
+    /// use majordomus_cli::share::Share;
+    /// let share = |root: &std::path::Path, version: &str| {
+    ///     std::fs::create_dir_all(root.join("ui")).unwrap();
+    ///     std::fs::create_dir_all(root.join("cockpit")).unwrap();
+    ///     std::fs::write(root.join("kinds.yaml"), "version: 1\nkinds: []\n").unwrap();
+    ///     std::fs::write(root.join("version.txt"), format!("version={version}\n")).unwrap();
+    ///     root.to_path_buf()
+    /// };
+    /// let checkout = tempfile::tempdir().unwrap();
+    /// let installed = tempfile::tempdir().unwrap();
+    /// let stale = share(&checkout.path().join("share"), "0.21.0");
+    /// let own = share(installed.path(), "0.26.0");
+    ///
+    /// // a checkout's environment reaching an installed 0.26.0 executable
+    /// let used = Share::locate_by_convention(
+    ///     Some(stale), checkout.path(), Some(own.clone()), "0.26.0").unwrap();
+    /// assert_eq!(used.origin, "installation");
+    /// assert_eq!(used.dir(), own.canonicalize().unwrap());
+    /// assert!(used.provenance().starts_with("installation; passed over MAJORDOMUS_SHARE: "));
+    /// ```
+    pub fn locate_by_convention(
+        env: Option<PathBuf>,
+        repo_root: &Path,
+        installation: Option<PathBuf>,
+        executable: &str,
+    ) -> Result<Self> {
+        let mut found: Vec<(PathBuf, &'static str)> = Vec::new();
+        let mut tried = Vec::new();
+        if let Some(p) = env {
+            if !p.join(KINDS_FILE).is_file() {
+                return Err(Error::ShareNotFound { tried: vec![p] });
+            }
+            found.push((p, SHARE_ENV));
         }
         let in_repo = repo_root.join("share");
         if in_repo.join(KINDS_FILE).is_file() {
-            return Self::open(&in_repo, "repository");
+            found.push((in_repo, "repository"));
+        } else {
+            tried.push(in_repo);
         }
-        tried.push(in_repo);
-        if let Ok(exe) = std::env::current_exe() {
-            if let Some(dir) = exe.parent() {
-                let beside = dir.join("../share");
-                if beside.join(KINDS_FILE).is_file() {
-                    return Self::open(&beside, "installation");
-                }
+        if let Some(beside) = installation {
+            if beside.join(KINDS_FILE).is_file() {
+                found.push((beside, "installation"));
+            } else {
                 tried.push(beside);
             }
         }
-        Err(Error::ShareNotFound { tried })
+        let Some((first, first_origin)) = found.first().cloned() else {
+            return Err(Error::ShareNotFound { tried });
+        };
+        let mut passed_over = Vec::new();
+        let mut seen: Vec<PathBuf> = Vec::new();
+        for (dir, origin) in &found {
+            // one directory reached two ways (MAJORDOMUS_SHARE=<checkout>/share inside that
+            // checkout) is judged once, under the first way it was reached
+            let canonical = dir.canonicalize().unwrap_or_else(|_| dir.clone());
+            if seen.contains(&canonical) {
+                continue;
+            }
+            seen.push(canonical);
+            match ServedShare::inspect(dir, Some(origin), executable).reason {
+                None => {
+                    let mut share = Self::open(dir, origin)?;
+                    share.passed_over = passed_over;
+                    return Ok(share);
+                }
+                Some(reason) => passed_over.push(format!("passed over {origin}: {reason}")),
+            }
+        }
+        // nothing found is the executable's own: the first is served, and reported skewed
+        Self::open(&first, first_origin)
     }
 
     fn open(dir: &Path, origin: &'static str) -> Result<Self> {
@@ -113,7 +199,37 @@ impl Share {
             });
         }
         let dir = dir.canonicalize().map_err(|e| Error::io(dir, e))?;
-        Ok(Share { dir, origin })
+        Ok(Share {
+            dir,
+            origin,
+            passed_over: Vec::new(),
+        })
+    }
+
+    /// The conventional shares passed over before this one was found, because they were
+    /// skewed for this executable: `passed over <origin>: <reason>` each, in the order
+    /// they were found. Empty when the first share found was used.
+    pub fn passed_over(&self) -> &[String] {
+        &self.passed_over
+    }
+
+    /// How this share was found, said in full: its [`Share::origin`], followed by every
+    /// share passed over on the way to it and why. This is what a server records as the
+    /// origin of the share it serves, so that a reader learns which share it did not serve.
+    ///
+    /// ```
+    /// use majordomus_cli::share::Share;
+    /// let dir = tempfile::tempdir().unwrap();
+    /// std::fs::write(dir.path().join("kinds.yaml"), "version: 1\nkinds: []\n").unwrap();
+    /// let share = Share::locate(Some(dir.path()), dir.path()).unwrap();
+    /// assert_eq!(share.provenance(), "--share", "a share used as found is named by its origin");
+    /// assert!(share.passed_over().is_empty());
+    /// ```
+    pub fn provenance(&self) -> String {
+        std::iter::once(self.origin.to_string())
+            .chain(self.passed_over.iter().cloned())
+            .collect::<Vec<_>>()
+            .join("; ")
     }
 
     /// The directory, canonical.
@@ -686,9 +802,435 @@ pub fn schema_identity(relative: &str) -> Option<String> {
     Some(format!("{vendor}.{name}/{version}"))
 }
 
+/// The projection of the tool's version inside the share directory, `version.txt`, whose
+/// `version=` line names the release the directory was written for.
+pub const VERSION_FILE: &str = "version.txt";
+
+/// The version a share directory states in its [`VERSION_FILE`]: the value of its first
+/// `version=` line, trimmed. A directory with no such file, or a file with no such line,
+/// states none.
+///
+/// ```
+/// use majordomus_cli::share::stated_version;
+/// let dir = tempfile::tempdir().unwrap();
+/// assert_eq!(stated_version(dir.path()), None, "no version.txt: no version");
+/// std::fs::write(dir.path().join("version.txt"), "# GENERATED\nversion=0.26.0\n").unwrap();
+/// assert_eq!(stated_version(dir.path()).as_deref(), Some("0.26.0"));
+/// ```
+pub fn stated_version(dir: &Path) -> Option<String> {
+    let text = std::fs::read_to_string(dir.join(VERSION_FILE)).ok()?;
+    text.lines()
+        .find_map(|line| line.trim().strip_prefix("version="))
+        .map(|v| v.trim().to_string())
+        .filter(|v| !v.is_empty())
+}
+
+/// Where a server's share directory is and how it was found: what a server records about
+/// the share it serves, so that a reader can measure that directory again.
+///
+/// ```
+/// use majordomus_cli::share::ShareLocation;
+/// let at = ShareLocation { path: "/opt/majordomus/share".into(), origin: "installation".into() };
+/// let text = serde_json::to_string(&at).unwrap();
+/// assert_eq!(serde_json::from_str::<ShareLocation>(&text).unwrap(), at);
+/// ```
+#[derive(
+    Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize, schemars::JsonSchema,
+)]
+pub struct ShareLocation {
+    /// The share directory, canonical.
+    pub path: PathBuf,
+    /// How it was found: `--share`, `MAJORDOMUS_SHARE`, `repository` or `installation`,
+    /// followed by every skewed share passed over on the way and why
+    /// ([`Share::provenance`]).
+    pub origin: String,
+}
+
+impl ShareLocation {
+    /// The location of a located share: its canonical directory and how it was found, said
+    /// in full ([`Share::provenance`]).
+    ///
+    /// ```
+    /// use majordomus_cli::share::{Share, ShareLocation};
+    /// let dir = tempfile::tempdir().unwrap();
+    /// std::fs::write(dir.path().join("kinds.yaml"), "version: 1\nkinds: []\n").unwrap();
+    /// let share = Share::locate(Some(dir.path()), dir.path()).unwrap();
+    /// let at = ShareLocation::of(&share);
+    /// assert_eq!(at.origin, "--share");
+    /// assert_eq!(at.path, dir.path().canonicalize().unwrap());
+    /// ```
+    pub fn of(share: &Share) -> Self {
+        ShareLocation {
+            path: share.dir().to_path_buf(),
+            origin: share.provenance(),
+        }
+    }
+}
+
+/// Whether a share directory is the one an executable should serve.
+///
+/// ```
+/// use majordomus_cli::share::ShareStanding;
+/// assert_eq!(serde_json::to_value(ShareStanding::Current).unwrap(), "current");
+/// assert_eq!(serde_json::to_value(ShareStanding::Skewed).unwrap(), "skewed");
+/// ```
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize, schemars::JsonSchema,
+)]
+#[serde(rename_all = "lowercase")]
+pub enum ShareStanding {
+    /// It states the executable's version and holds the directory of every surface the
+    /// server serves pages from.
+    Current,
+    /// It states another version, states none, or lacks `ui/` or `cockpit/`: a server
+    /// serving it answers with one release's code over another release's data, and those
+    /// pages are unstyled or blank.
+    Skewed,
+}
+
+/// A share directory measured against the version of the executable that serves it: where
+/// it is, how it was found, the version it states, whether it holds the directory of each
+/// surface the server serves pages from — `ui/` for `/ui`, `cockpit/` for `/cockpit` — and
+/// whether that makes it the executable's own (ADR 0163).
+///
+/// Measured when it is asked for, never recorded: a checkout moves under a running server,
+/// and the directory a lease names may state another version an hour later.
+///
+/// ```
+/// use majordomus_cli::share::{ServedShare, ShareStanding};
+/// let dir = tempfile::tempdir().unwrap();
+/// std::fs::write(dir.path().join("version.txt"), "version=0.26.0\n").unwrap();
+/// std::fs::create_dir(dir.path().join("ui")).unwrap();
+/// std::fs::create_dir(dir.path().join("cockpit")).unwrap();
+/// let own = ServedShare::inspect(dir.path(), Some("installation"), "0.26.0");
+/// assert_eq!(own.standing, ShareStanding::Current);
+/// assert!(own.reason.is_none() && own.ui_present);
+///
+/// let older = ServedShare::inspect(dir.path(), None, "0.27.0");
+/// assert_eq!(older.standing, ShareStanding::Skewed);
+/// assert!(older.reason.unwrap().contains("states version 0.26.0"));
+///
+/// std::fs::remove_dir(dir.path().join("ui")).unwrap();
+/// let blank = ServedShare::inspect(dir.path(), None, "0.26.0");
+/// assert_eq!(blank.standing, ShareStanding::Skewed);
+/// assert!(!blank.ui_present && blank.reason.unwrap().contains("no ui/"));
+/// ```
+#[derive(
+    Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize, schemars::JsonSchema,
+)]
+pub struct ServedShare {
+    /// The share directory.
+    pub path: PathBuf,
+    /// How it was found, when the server said.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub origin: Option<String>,
+    /// The version its `version.txt` states; absent when it states none.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub version: Option<String>,
+    /// Whether it holds `ui/`, the UI's stylesheet and scripts.
+    pub ui_present: bool,
+    /// Whether it holds `cockpit/`, the Cockpit's stylesheet and scripts.
+    pub cockpit_present: bool,
+    /// Whether it is the executable's own.
+    pub standing: ShareStanding,
+    /// Why it is skewed, when it is.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub reason: Option<String>,
+}
+
+impl ServedShare {
+    /// Measure the directory at `path` against `executable`, the version of the executable
+    /// serving it. Every way it differs is named in the reason, joined in one sentence.
+    ///
+    /// ```
+    /// use majordomus_cli::share::{ServedShare, ShareStanding};
+    /// let dir = tempfile::tempdir().unwrap();
+    /// std::fs::write(dir.path().join("version.txt"), "version=1.0.0\n").unwrap();
+    /// let measured = ServedShare::inspect(dir.path(), Some("repository"), "1.0.0");
+    /// assert_eq!(measured.standing, ShareStanding::Skewed, "no ui/ and no cockpit/");
+    /// let reason = measured.reason.unwrap();
+    /// assert!(reason.contains("holds no ui/") && reason.contains("holds no cockpit/"));
+    /// assert!(!reason.contains("states version"), "the version is its executable's");
+    /// ```
+    pub fn inspect(path: &Path, origin: Option<&str>, executable: &str) -> Self {
+        let version = stated_version(path);
+        let ui_present = path.join(crate::ui::ASSETS_DIR).is_dir();
+        let cockpit_present = path.join(crate::cockpit::assets::DIR).is_dir();
+        let mut why = Vec::new();
+        if !path.is_dir() {
+            why.push("is not a directory".to_string());
+        } else {
+            match version.as_deref() {
+                Some(v) if v == executable => {}
+                Some(v) => why.push(format!(
+                    "states version {v}, and the executable serving it is {executable}"
+                )),
+                None => why.push(format!(
+                    "states no version (no {VERSION_FILE}), and the executable serving it is {executable}"
+                )),
+            }
+            for (present, dir, prefix) in [
+                (ui_present, crate::ui::ASSETS_DIR, crate::ui::ASSETS_PREFIX),
+                (
+                    cockpit_present,
+                    crate::cockpit::assets::DIR,
+                    crate::cockpit::assets::PREFIX,
+                ),
+            ] {
+                if !present {
+                    why.push(format!(
+                        "holds no {dir}/, so every {prefix} file answers 404"
+                    ));
+                }
+            }
+        }
+        let reason = (!why.is_empty())
+            .then(|| format!("the share at {} {}", path.display(), why.join("; it ")));
+        ServedShare {
+            path: path.to_path_buf(),
+            origin: origin.map(str::to_string),
+            version,
+            ui_present,
+            cockpit_present,
+            standing: if reason.is_some() {
+                ShareStanding::Skewed
+            } else {
+                ShareStanding::Current
+            },
+            reason,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// A share measured against its own version holds no skew, and every way it can differ
+    /// from its executable is named in the reason, each once.
+    #[test]
+    fn a_share_is_skewed_by_its_version_and_by_a_missing_ui() {
+        let dir = tempfile::tempdir().unwrap();
+        let missing = ServedShare::inspect(&dir.path().join("gone"), None, "1.0.0");
+        assert_eq!(missing.standing, ShareStanding::Skewed);
+        assert!(missing.reason.unwrap().contains("is not a directory"));
+
+        let both = ServedShare::inspect(dir.path(), Some("MAJORDOMUS_SHARE"), "1.0.0");
+        assert_eq!(both.standing, ShareStanding::Skewed);
+        let reason = both.reason.unwrap();
+        assert!(reason.contains("states no version"), "{reason}");
+        assert!(reason.contains("holds no ui/"), "{reason}");
+        assert_eq!(both.origin.as_deref(), Some("MAJORDOMUS_SHARE"));
+
+        std::fs::write(dir.path().join(VERSION_FILE), "# x\nversion= 1.0.0 \n").unwrap();
+        std::fs::create_dir(dir.path().join("ui")).unwrap();
+        // the Cockpit is a surface too: a share without cockpit/ is skewed for it alone
+        let half = ServedShare::inspect(dir.path(), None, "1.0.0");
+        assert_eq!(half.standing, ShareStanding::Skewed);
+        assert!(half.ui_present && !half.cockpit_present);
+        let reason = half.reason.unwrap();
+        assert!(reason.contains("holds no cockpit/, so every /cockpit/assets/ file answers 404"));
+        assert!(!reason.contains("version"), "{reason}");
+
+        std::fs::create_dir(dir.path().join("cockpit")).unwrap();
+        let own = ServedShare::inspect(dir.path(), None, "1.0.0");
+        assert_eq!(own.standing, ShareStanding::Current);
+        assert_eq!(own.version.as_deref(), Some("1.0.0"));
+        let json = serde_json::to_value(&own).unwrap();
+        assert!(
+            json.get("reason").is_none(),
+            "a current share writes no reason"
+        );
+        assert_eq!(json["standing"], "current");
+        assert_eq!(json["ui_present"], true);
+        assert_eq!(json["cockpit_present"], true);
+    }
+
+    /// The version the executable under test is said to be in the locate tests below.
+    const EXE: &str = "0.26.0";
+
+    /// A share directory at `dir` that holds a kinds file, states `version` when given, and
+    /// holds `ui/` when `ui` is true. It always holds `cockpit/`, the other surface a server
+    /// serves pages from (ADR 0163, point 1), so that `ui` alone decides the surfaces.
+    fn share_at(dir: &Path, version: Option<&str>, ui: bool) -> PathBuf {
+        std::fs::create_dir_all(dir.join(crate::cockpit::assets::DIR)).unwrap();
+        std::fs::write(dir.join(KINDS_FILE), "version: 1\nkinds: []\n").unwrap();
+        if let Some(v) = version {
+            std::fs::write(dir.join(VERSION_FILE), format!("version={v}\n")).unwrap();
+        }
+        if ui {
+            std::fs::create_dir_all(dir.join("ui")).unwrap();
+        }
+        dir.to_path_buf()
+    }
+
+    /// The incident of 2026-10-14: a checkout's `MAJORDOMUS_SHARE` stating 0.21.0 reached an
+    /// installed 0.26.0 executable. The installation's own share is served instead, and the
+    /// share says which one it passed over and why.
+    #[test]
+    fn a_skewed_environment_share_is_passed_over_for_the_installation() {
+        let t = tempfile::tempdir().unwrap();
+        let env = share_at(&t.path().join("checkout/share"), Some("0.21.0"), false);
+        let installed = share_at(&t.path().join("install/share"), Some(EXE), true);
+        let repo = t.path().join("elsewhere");
+        std::fs::create_dir_all(&repo).unwrap();
+
+        let used =
+            Share::locate_by_convention(Some(env.clone()), &repo, Some(installed.clone()), EXE)
+                .unwrap();
+        assert_eq!(used.origin, "installation");
+        assert_eq!(used.dir(), installed.canonicalize().unwrap());
+        assert_eq!(used.passed_over().len(), 1, "{:?}", used.passed_over());
+        let said = used.provenance();
+        assert!(
+            said.starts_with("installation; passed over MAJORDOMUS_SHARE: "),
+            "{said}"
+        );
+        assert!(said.contains(&env.display().to_string()), "{said}");
+        assert!(said.contains("states version 0.21.0"), "{said}");
+        assert!(said.contains("holds no ui/"), "{said}");
+        assert_eq!(
+            ShareLocation::of(&used).origin,
+            said,
+            "the lease records it in full"
+        );
+    }
+
+    /// An installed executable run inside a checkout whose `share/` is of another release
+    /// serves its own installation's share; a repository share that lacks only `ui/` is
+    /// skewed as well.
+    #[test]
+    fn a_skewed_repository_share_is_passed_over_for_the_installation() {
+        let t = tempfile::tempdir().unwrap();
+        let installed = share_at(&t.path().join("install/share"), Some(EXE), true);
+        for (version, ui, why) in [
+            (Some("0.27.0"), true, "states version 0.27.0"),
+            (Some(EXE), false, "holds no ui/"),
+            (None, true, "states no version"),
+        ] {
+            let repo = t
+                .path()
+                .join(format!("checkout-{}-{ui}", version.unwrap_or("none")));
+            share_at(&repo.join("share"), version, ui);
+            let used =
+                Share::locate_by_convention(None, &repo, Some(installed.clone()), EXE).unwrap();
+            assert_eq!(used.origin, "installation", "{why}");
+            assert_eq!(used.dir(), installed.canonicalize().unwrap());
+            let said = used.provenance();
+            assert!(
+                said.starts_with("installation; passed over repository: "),
+                "{said}"
+            );
+            assert!(said.contains(why), "{said}");
+        }
+    }
+
+    /// The first share that matches is used, whichever convention found it, and the passed
+    /// over ones are named in the order they were found. A share that matches is used as
+    /// found, and one directory reached two ways is named once.
+    #[test]
+    fn the_first_matching_share_is_used_and_every_share_passed_over_is_named() {
+        let t = tempfile::tempdir().unwrap();
+        let env = share_at(&t.path().join("stale/share"), Some("0.21.0"), true);
+        let repo = t.path().join("checkout");
+        share_at(&repo.join("share"), Some("0.25.0"), true);
+        let installed = share_at(&t.path().join("install/share"), Some(EXE), true);
+
+        let used =
+            Share::locate_by_convention(Some(env.clone()), &repo, Some(installed.clone()), EXE)
+                .unwrap();
+        assert_eq!(used.origin, "installation");
+        let passed = used.passed_over();
+        assert_eq!(passed.len(), 2, "{passed:?}");
+        assert!(
+            passed[0].starts_with("passed over MAJORDOMUS_SHARE: "),
+            "{passed:?}"
+        );
+        assert!(
+            passed[1].starts_with("passed over repository: "),
+            "{passed:?}"
+        );
+
+        // a matching repository share is used before the installation is asked
+        share_at(&repo.join("share"), Some(EXE), true);
+        let used =
+            Share::locate_by_convention(Some(env.clone()), &repo, Some(installed.clone()), EXE)
+                .unwrap();
+        assert_eq!(used.origin, "repository");
+        assert_eq!(used.passed_over().len(), 1);
+
+        // a matching environment share is used as found: nothing is passed over
+        let used = Share::locate_by_convention(
+            Some(repo.join("share")),
+            &repo,
+            Some(installed.clone()),
+            EXE,
+        )
+        .unwrap();
+        assert_eq!(used.origin, SHARE_ENV);
+        assert_eq!(used.provenance(), SHARE_ENV);
+
+        // MAJORDOMUS_SHARE=<checkout>/share inside that checkout, both skewed: named once
+        share_at(&repo.join("share"), Some("0.21.0"), true);
+        let used =
+            Share::locate_by_convention(Some(repo.join("share")), &repo, Some(installed), EXE)
+                .unwrap();
+        assert_eq!(used.origin, "installation");
+        assert_eq!(used.passed_over().len(), 1, "{:?}", used.passed_over());
+    }
+
+    /// When no share found is the executable's own — no installation beside it, or one as
+    /// skewed as the rest — the first share found is served as it always was, unjudged in
+    /// its origin, and the skew is what the server reports about it (ADR 0163, point 3).
+    #[test]
+    fn with_no_matching_share_the_first_is_served_and_reported_skewed() {
+        let t = tempfile::tempdir().unwrap();
+        let env = share_at(&t.path().join("checkout/share"), Some("0.21.0"), false);
+        let repo = t.path().join("checkout");
+        let not_installed = t.path().join("target/share");
+
+        let used = Share::locate_by_convention(Some(env.clone()), &repo, Some(not_installed), EXE)
+            .unwrap();
+        assert_eq!(used.origin, SHARE_ENV);
+        assert_eq!(used.dir(), env.canonicalize().unwrap());
+        assert_eq!(used.provenance(), SHARE_ENV, "nothing was passed over");
+        let served = ServedShare::inspect(used.dir(), Some(used.origin), EXE);
+        assert_eq!(
+            served.standing,
+            ShareStanding::Skewed,
+            "and it is reported skewed"
+        );
+
+        let old_install = share_at(&t.path().join("old/share"), Some("0.25.0"), true);
+        let used =
+            Share::locate_by_convention(Some(env.clone()), &repo, Some(old_install), EXE).unwrap();
+        assert_eq!(used.origin, SHARE_ENV, "a skewed installation is no better");
+        assert!(used.passed_over().is_empty());
+
+        let used = Share::locate_by_convention(None, &repo, None, EXE).unwrap();
+        assert_eq!(used.origin, "repository");
+        assert!(used.passed_over().is_empty());
+    }
+
+    /// The errors are the ones `locate` always gave: a `MAJORDOMUS_SHARE` that holds no kinds
+    /// file is refused even when an installation matches, and nothing found names every
+    /// place looked at.
+    #[test]
+    fn a_share_that_cannot_be_opened_is_refused_as_before() {
+        let t = tempfile::tempdir().unwrap();
+        let installed = share_at(&t.path().join("install/share"), Some(EXE), true);
+        let empty = t.path().join("empty");
+        std::fs::create_dir_all(&empty).unwrap();
+        let err = Share::locate_by_convention(Some(empty.clone()), t.path(), Some(installed), EXE)
+            .unwrap_err();
+        assert!(matches!(&err, Error::ShareNotFound { tried } if tried == &vec![empty.clone()]));
+
+        let nowhere = t.path().join("nowhere");
+        let err =
+            Share::locate_by_convention(None, &empty, Some(nowhere.clone()), EXE).unwrap_err();
+        let expected = vec![empty.join("share"), nowhere];
+        assert!(matches!(&err, Error::ShareNotFound { tried } if tried == &expected));
+    }
 
     /// The word each offer is printed as is the word it is declared and serialised as, so a
     /// reader of the table and a reader of the JSON read one vocabulary.
