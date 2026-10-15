@@ -342,9 +342,13 @@ impl Ui {
             evidence::ROUTE => evidence::screen(&ctx, &req.query),
             knowledge::ROUTE => knowledge::screen(&ctx),
             governance::ROUTE => governance::screen(&ctx, &req.query),
-            observatory::ROUTE => {
-                observatory::screen(&ctx, &req.query, &self.assets.url(observatory::LIB), kiosk)
-            }
+            observatory::ROUTE => observatory::screen(
+                &ctx,
+                &req.query,
+                &self.assets.url(observatory::LIB),
+                &self.assets.url(observatory::STREAM_LIB),
+                kiosk,
+            ),
             dashboard::PULL_REQUESTS_PANEL => dashboard::pull_requests_panel(&ctx, &req.query),
             deployments::DELIVERY_PANEL => deployments::delivery_panel(&ctx),
             prs::PANEL => prs::panel_view(&ctx, &req.query),

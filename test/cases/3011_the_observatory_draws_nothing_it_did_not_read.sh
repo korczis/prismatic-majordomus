@@ -5,7 +5,7 @@
 #
 #   /ui/observatory   the one screen: it answers, and carries its whole projection as
 #                     `observatory/v1` in data-observatory: the sources it asked with the
-#                     state each answered in, and eight scenes
+#                     state each answered in, and nine scenes
 #   /ui/kiosk         the same screen and the same projection as a preset, not a second
 #                     application
 #   /ui/screensaver   a permanent redirect to the kiosk; /ui/obsrvatory one to the Observatory
@@ -32,7 +32,7 @@ unset MAJORDOMUS_HTTP_HOST
 "$MJ" init >/dev/null
 git add -A >/dev/null && git commit -qm install
 
-SCENES="mesh activity intents tokens heartbeat delivery coop ambient"
+SCENES="mesh activity executions intents tokens heartbeat delivery coop ambient"
 MESH_SCENES="mesh activity coop"
 
 # projection <page.html> <out.json>: the value of data-observatory, unescaped
@@ -84,7 +84,7 @@ held() {
     grep -qF "data-scene=\"$id\"" "$page" || { echo "    $what: no row for scene $id without script"; return 1; }
   done
   n="$(grep -oE 'data-scene="[a-z]+"' "$page" | LC_ALL=C sort -u | wc -l | tr -d ' ')"
-  [ "$n" = 8 ] || { echo "    $what: $n distinct scene rows, expected 8"; return 1; }
+  [ "$n" = 9 ] || { echo "    $what: $n distinct scene rows, expected 9"; return 1; }
 }
 
 # ---------------------------------------------------------------- the server

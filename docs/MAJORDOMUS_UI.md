@@ -58,7 +58,7 @@ lists it), declared beside the Cockpit in `apps/majordomus-cli/src/web/discover.
 | Knowledge | `/ui/knowledge` | `knowledge_base.status`, `knowledge_base.candidates`: the candidates awaiting review, newest first and bounded with what is left out counted, the subjects they are about, and whether the deriver is still writing. The review's commands are named as text; the screen promotes and rejects nothing |
 | Documentation | `/ui/docs` | `objects.list` (features, documents), `web.surfaces` |
 | Governance | `/ui/governance` | `rules.report`, each rule named and leading to its inspector; one rule (`?rule=`) from `rules.show`: what it states, how it is enforced, the tests that prove it, what is missing, and the rules around it |
-| Observatory | `/ui/observatory`, and `/ui/kiosk` as its preset | `mesh.peers`, `mesh.events`, `mesh.state`, `plan.roadmap`, `distribution.releases`, `release.version`, `health.report`, `economics.runs`, `repository.info`: eight scenes, each drawn from what its sources answered or named as unavailable with the source's reason ([The Observatory](#the-observatory)) |
+| Observatory | `/ui/observatory`, and `/ui/kiosk` as its preset | `mesh.peers`, `mesh.events`, `mesh.state`, `plan.roadmap`, `distribution.releases`, `release.version`, `health.report`, `economics.runs`, `repository.info`, `executions.list`, and the live channel `/events`: nine scenes, each drawn from what its sources answered or named as unavailable with the source's reason ([The Observatory](#the-observatory)) |
 
 The navigation is `SCREENS` in `apps/majordomus-cli/src/ui/mod.rs` and nothing else. A test
 compares it with the dispatcher's arms, so a screen without a route, or a route without a
@@ -274,6 +274,7 @@ the same facts as rows, how long it stays, and its character:
 |---|---|---|---|
 | `mesh` | Mesh Cosmos | `mesh.peers` | Mesh |
 | `activity` | Event River | `mesh.events` | Mesh |
+| `executions` | Execution Flow | `executions.list`, then `/events` | Command |
 | `intents` | Intent Nebula | `plan.roadmap` | Roadmap |
 | `tokens` | Token Spectrum | `economics.runs` | Evidence |
 | `heartbeat` | System Pulse | `health.report` | Dashboard |
@@ -283,6 +284,20 @@ the same facts as rows, how long it stays, and its character:
 
 The table is a reading aid; the list in the module is what the page, the script and case 3011
 read, and the page prints each scene's own `requires`.
+
+The executions scene is the one scene kept current by a pushed channel rather than by reading
+the page again. The page names the channel (`data-observatory-events`, the server's `/events`),
+the snapshot it brings forward (`data-observatory-executions`, the path the registry declares
+for `executions.list`) and the script that follows it (`data-observatory-stream`,
+`share/ui/observatory-stream.js`). That script opens no channel of its own and writes no frame:
+it reads the snapshot once the channel is ready, folds each execution event into it by its
+dense per-execution sequence, drops a duplicate, reads the snapshot again on a gap or a
+`stream.lagged`, retires a channel silent for 2.5 heartbeats, and reconnects with exponential
+backoff and jitter. While the executions scene is shown, the status word is the channel's:
+`LIVE`, `RECONNECTING`, or `STALE` once it has been down for 30 seconds; a lane moves only when
+one of its events arrives, so a channel that is down moves nothing. With no execution
+remembered the scene is unavailable like any other, and it is drawn once the channel hears one.
+Case 3046 runs the script against a real server.
 
 The page carries its whole projection as one document, `observatory/v1`, in the
 `data-observatory` attribute of its section: when it was observed, the revision, every source
