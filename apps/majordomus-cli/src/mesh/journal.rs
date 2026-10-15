@@ -1374,13 +1374,34 @@ pub enum Durability {
 }
 
 impl Durability {
-    /// Whether the event is on this machine's disk.
+    /// Whether the event is on this machine's disk: only an append that was synced is.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::journal::Durability;
+    /// assert!(Durability::Synced.is_on_disk());
+    /// for not in [Durability::Memory, Durability::NotDurable, Durability::Unknown] {
+    ///     assert!(!not.is_on_disk(), "{not:?} is not on disk");
+    /// }
+    /// ```
     pub fn is_on_disk(self) -> bool {
         self == Durability::Synced
     }
 }
 
 /// An event this runtime wrote, with what its append acknowledges about the disk.
+///
+/// ```
+/// use std::sync::Arc;
+/// use majordomus_cli::mesh::identity::NodeIdentity;
+/// use majordomus_cli::mesh::journal::{Appended, Durability, EventBody, Journal};
+///
+/// let j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
+///     "repo".into(), None).unwrap();
+/// let appended: Appended =
+///     j.append_acknowledged(EventBody::SessionClosed { session: "s1".into() }).unwrap();
+/// assert_eq!(appended.event.seq, 1);
+/// assert_eq!(appended.durability, Durability::Memory);
+/// ```
 #[derive(Debug, Clone)]
 pub struct Appended {
     /// The event, signed and stamped, held and offered to peers.
