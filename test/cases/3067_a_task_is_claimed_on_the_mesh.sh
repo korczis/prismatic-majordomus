@@ -56,6 +56,9 @@ expect_grep 'mesh .*task-t-.* the scope is claimed on every linked runtime [(]ad
 id="$(sed -n 's/^id: //p' .ai/local/state/current.yaml)"
 key="$(sed -n 's/^mesh_claim: //p' .ai/local/state/current.yaml)"
 [ -n "$key" ] || { echo "    the task record holds no mesh claim"; exit 1; }
+# the record's schema declares the key it now carries
+"$MJ" check >"$T/check" 2>&1 || true
+grep -q 'unknown key(s).*mesh_claim' "$T/check" && { echo "    the current schema does not declare mesh_claim"; grep mesh_claim "$T/check"; exit 1; }
 C="$(claims_of "task-$id")"
 jq -e -s '[.[] | select(.scope == ["lib"] and .intent == "Teach the parser")] | length >= 1' <<<"$C" >/dev/null \
   || { echo "    the task's claim is not on the mesh: $C"; "$RB" mesh state --full --format json | head -80; exit 1; }
