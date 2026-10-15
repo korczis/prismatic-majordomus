@@ -310,6 +310,19 @@ compare. `majordomus mesh state` and `mesh peers` take the same input as `--full
 refuses it as invalid; the readers in this repository that need the fold (the integration
 lease's claims, the mesh-review advisor) ask again without it, and the answer is the same.
 
+**Paging the raw journal.** `mesh.events` (`mesh events --after`, `/events?after=&limit=`)
+reads forward in causal order and answers `lamport`, the stamp of the last event on the page,
+which is the `after` of the next page. A page never ends inside a run of equal stamps — runtimes
+that wrote concurrently share them — so it can carry more than `limit`, and a walk resumed from
+each answer's `lamport` returns every event once, in order, while the reader's own events, and
+peers' events stamped above the walk's position, keep arriving between pages (I2140; unit tests
+`paging_by_stamp_returns_every_event_exactly_once` and
+`paging_while_events_arrive_returns_every_event_exactly_once`). One arrival is outside that
+walk: an event stamped at or below a position already passed — a runtime that was partitioned
+away and wrote without hearing it. Lamport stamps are their writer's, not the reader's arrival
+order, so such an event is read from an earlier `after` or folded by `mesh state`, not by the
+resumed walk.
+
 ## Claims and leases
 
 A claim is a scope — repository-relative paths — held by a session, `exclusive` (the default)
