@@ -31102,7 +31102,7 @@
             "test/cases"
           ],
           "slug": "knowledge-candidates-never-dirty-a-trunk",
-          "updated_at": "2026-10-15T08:46:34Z",
+          "updated_at": "2026-10-15T10:43:28Z",
           "validation": [
             "bin/majordomus plan validate",
             "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
@@ -53083,6 +53083,13 @@
         "label": "test/cases/3060_trunk_stays_clean.sh",
         "route": "/cockpit/objects/test/test-cases-3060-trunk-stays-clean-sh",
         "source": "test/cases/3060_trunk_stays_clean.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3063_a_branch_episode_drains_the_outbox.sh",
+        "kind": "test",
+        "label": "test/cases/3063_a_branch_episode_drains_the_outbox.sh",
+        "route": "/cockpit/objects/test/test-cases-3063-a-branch-episode-drains-the-outbox-sh",
+        "source": "test/cases/3063_a_branch_episode_drains_the_outbox.sh"
       },
       {
         "id": "majordomus://test/test/cases/30_command_registry.sh",
@@ -82915,6 +82922,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3063_a_branch_episode_drains_the_outbox.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/30_command_registry.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -88201,8 +88213,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2797,
-      "edges": 6130,
+      "nodes": 2798,
+      "edges": 6131,
       "acyclic": false,
       "truncated": false
     }

@@ -870,6 +870,16 @@
       "external": false
     },
     {
+      "id": ".ai/local/state/locks/outbox-drain",
+      "kind": "artifact",
+      "label": "local/state/locks/outbox-drain",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
       "id": ".ai/local/state/locks/session-pointer",
       "kind": "artifact",
       "label": "local/state/locks/session-pointer",
@@ -2129,6 +2139,11 @@
     {
       "source": "lib/search.sh",
       "target": ".ai/local/state/open-questions.md",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/session.sh",
+      "target": ".ai/local/state/locks/outbox-drain",
       "kind": "uses"
     },
     {
