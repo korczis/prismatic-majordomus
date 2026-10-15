@@ -37736,6 +37736,47 @@
         }
       },
       {
+        "id": "majordomus://issue/I2726",
+        "kind": "issue",
+        "label": "I2726",
+        "summary": "A self-cancelled run names the red that ended it",
+        "route": "/cockpit/objects/issue/i2726",
+        "source": ".ai/repo/project/issues/I2726.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A gate job that fails on a pull request annotates '<job> / <step> failed' and writes it to its step summary before its run is cancelled",
+            "The ci job's log and summary start with 'ended at its first red: <job> / <step>' when a step failed",
+            "A jobs listing that cannot be read is reported and fails neither the gate job nor the ci job"
+          ],
+          "created_at": "2026-10-15",
+          "depends_on": [],
+          "evidence_required": [
+            "3054_a_self_cancelled_run_names_its_red"
+          ],
+          "milestone": "M004",
+          "non_scope": [
+            "I2664's cancel step itself, its condition and its place as each job's last step (case 3019)",
+            "the verdict's gate table (scripts/ci/verdict)"
+          ],
+          "objective": "Make a pull request's validate run that I2664 cancelled from its first failed gate job say which job and which step failed, in the run itself, so that nobody reads it as cancelled from outside.",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".github/workflows/validate.yml",
+            "scripts/ci/first-red",
+            ".ai/repo/automation/inventory.jsonl",
+            "docs/CI.md",
+            "test/cases"
+          ],
+          "slug": "a-self-cancelled-run-names-its-red",
+          "updated_at": "2026-10-15",
+          "validation": [
+            "bash test/run.sh 3054_a_self_cancelled_run_names_its_red 3019_a_failed_branch_run_cancels_itself 26_ci_wiring"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "label": "a-commit-stood-behind-a-build-lock",
@@ -54769,6 +54810,13 @@
         "label": "test/cases/304_a_provider_is_declared_once.sh",
         "route": "/cockpit/objects/test/test-cases-304-a-provider-is-declared-once-sh",
         "source": "test/cases/304_a_provider_is_declared_once.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3054_a_self_cancelled_run_names_its_red.sh",
+        "kind": "test",
+        "label": "test/cases/3054_a_self_cancelled_run_names_its_red.sh",
+        "route": "/cockpit/objects/test/test-cases-3054-a-self-cancelled-run-names-its-red-sh",
+        "source": "test/cases/3054_a_self_cancelled_run_names_its_red.sh"
       },
       {
         "id": "majordomus://test/test/cases/305_a_command_is_claimed_or_classified.sh",
@@ -80878,6 +80926,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2726",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2726",
+        "target": "majordomus://milestone/M004",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -85284,6 +85342,11 @@
       },
       {
         "source": "majordomus://test/test/cases/304_a_provider_is_declared_once.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3054_a_self_cancelled_run_names_its_red.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -90589,8 +90652,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2857,
-      "edges": 6269,
+      "nodes": 2859,
+      "edges": 6272,
       "acyclic": false,
       "truncated": false
     }

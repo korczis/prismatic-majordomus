@@ -1,0 +1,106 @@
+#!/usr/bin/env bash
+# first-red — a run that ends at its first red says which red that was (I2726).
+#
+# A pull request's validate run cancels itself from the last step of the first gate job that
+# fails (I2664, case 3019). The cancel turns that job's conclusion into "cancelled" like every
+# other job's, and its log cannot be read until the run is over, so the run reads as if
+# something outside it had stopped it. On 2026-10-15 the grand top's runs 38665445251 (job
+# site, step "derived site data in sync") and 38667725668 (job interactions, step "build the
+# site") were taken for external cancellations twice before anyone found the red.
+#
+#   scripts/ci/first-red job [--jobs FILE]
+#       in a gate job that failed, before its self-cancel: the job and the step that failed,
+#       as an error annotation and at the top of the job's step summary
+#   scripts/ci/first-red run [--jobs FILE]
+#       in the ci job, before the verdict: the first step of the whole run that failed, by
+#       when it completed, as "ended at its first red: <job> / <step>" in the log and the
+#       summary; nothing when no step failed
+#
+# The steps are read from the forge: `gh api` with GH_TOKEN, this run's jobs (GITHUB_RUN_ID,
+# against --repo or GITHUB_REPOSITORY). `job` finds its own job as the one in progress on this
+# runner (RUNNER_NAME). --jobs reads that listing from a file instead, the shape the jobs API
+# answers ({"jobs": [...]}), which is how case 3054 drives it.
+#
+# Neither ever fails the job that asked: a run that cannot be read is said, with the job
+# GITHUB_JOB names when that is all there is, and the self-cancel and the verdict go on.
+#
+# Exit: 0 always once the arguments parse · 2 usage.
+set -eu
+set -o pipefail
+
+usage() { sed -n '2,27p' "$0" | sed 's/^# \{0,1\}//'; }
+[ $# -gt 0 ] || { usage >&2; exit 2; }
+CMD="$1"; shift
+case "$CMD" in job|run) ;; -h|--help) usage; exit 0 ;;
+  *) echo "first-red: unknown command '$CMD' (job, run)" >&2; exit 2 ;;
+esac
+JOBS=""; SLUG="${GITHUB_REPOSITORY:-}"
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --jobs) JOBS="${2:?--jobs needs a file}"; shift 2 ;;
+    --repo) SLUG="${2:?--repo needs owner/name}"; shift 2 ;;
+    *) echo "first-red: unknown option $1" >&2; exit 2 ;;
+  esac
+done
+
+SUMMARY="${GITHUB_STEP_SUMMARY:-/dev/null}"
+work="$(mktemp -d "${TMPDIR:-/tmp}/first-red.XXXXXX")"
+trap 'rm -rf "$work"' EXIT
+
+# this run's jobs as one {"jobs": [...]} document in $work/jobs.json, or a reason on stdout
+read_jobs() {
+  if [ -n "$JOBS" ]; then
+    [ -r "$JOBS" ] || { echo "the listing $JOBS cannot be read"; return 1; }
+    jq -e '.jobs | type == "array"' "$JOBS" >/dev/null 2>&1 || { echo "the listing $JOBS has no jobs array"; return 1; }
+    cp "$JOBS" "$work/jobs.json"; return 0
+  fi
+  command -v jq >/dev/null 2>&1 || { echo "jq is not installed"; return 1; }
+  command -v gh >/dev/null 2>&1 || { echo "gh is not installed"; return 1; }
+  [ -n "${GITHUB_RUN_ID:-}" ] || { echo "GITHUB_RUN_ID is unset"; return 1; }
+  [ -n "$SLUG" ] || { echo "no repository (no --repo, no GITHUB_REPOSITORY)"; return 1; }
+  gh api --paginate "repos/$SLUG/actions/runs/$GITHUB_RUN_ID/jobs?per_page=100" --jq '.jobs[]' \
+    > "$work/lines.json" 2> "$work/gh.err" \
+    || { echo "the jobs of run $GITHUB_RUN_ID could not be listed: $(head -c 300 "$work/gh.err")"; return 1; }
+  jq -s '{jobs: .}' "$work/lines.json" > "$work/jobs.json"
+}
+
+if [ "$CMD" = job ]; then
+  if why="$(read_jobs)"; then
+    # this job: the one in progress on this runner; its first step that concluded failure
+    found="$(jq -r --arg runner "${RUNNER_NAME:-}" '
+      [.jobs[] | select(.status == "in_progress" and ($runner == "" or .runner_name == $runner))]
+      | if length == 1 then .[0] else empty end
+      | [.name, ([.steps[]? | select(.conclusion == "failure")] | sort_by(.number) | .[0].name // "")]
+      | @tsv' "$work/jobs.json")"
+  else
+    found=""
+  fi
+  job="$(printf '%s' "$found" | cut -f1)"; step="$(printf '%s' "$found" | cut -f2)"
+  if [ -n "$job" ] && [ -n "$step" ]; then
+    red="$job / $step"
+  elif [ -n "$job" ]; then
+    red="$job / (the failed step is not in the jobs listing yet)"
+  else
+    red="${GITHUB_JOB:-this job} / (its steps could not be read: ${why:-no job in progress on runner ${RUNNER_NAME:-unknown}})"
+  fi
+  echo "::error title=This run ends at its first red::$red failed; the run is cancelled next (I2664), so this job and every other one read as cancelled"
+  {
+    printf '## This run ends at its first red\n\n'
+    printf '**%s** failed. The next step cancels the run (I2664), so this job and every other ' "$red"
+    printf 'one read as cancelled: nothing outside the run stopped it.\n\n'
+  } >> "$SUMMARY"
+  exit 0
+fi
+
+# run: the first step of the whole run that failed, by when it completed
+if ! why="$(read_jobs)"; then
+  echo "first-red: the run's steps could not be read, so its first red is not named here: $why"
+  exit 0
+fi
+first="$(jq -r '
+  [.jobs[] | .name as $job | .steps[]? | select(.conclusion == "failure")
+    | {job: $job, step: .name, at: (.completed_at // "~")}]
+  | sort_by(.at) | .[0] // empty | "\(.job) / \(.step)"' "$work/jobs.json")"
+[ -n "$first" ] || exit 0
+echo "ended at its first red: $first"
+printf '**ended at its first red: %s**\n\n' "$first" >> "$SUMMARY"

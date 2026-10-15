@@ -185,6 +185,13 @@ jobs:
           name: ci-plan
           path: plan.json
           retention-days: 14
+      # I2726: the cancel below makes this job read as cancelled and hides its log until the run
+      # ends, so the red is named first, in an annotation and the job's summary.
+      - name: the red that ends this run is named
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: scripts/ci/first-red job
       # I2664: a run on a branch ends at its first red. Last, so this job's uploads and
       # summary have run; never on master, the schedule or a dispatch (see `concurrency`).
       - name: a failed branch run ends here
@@ -259,6 +266,13 @@ jobs:
           path: receipts.tsv
           if-no-files-found: ignore
           retention-days: 14
+      # I2726: the cancel below makes this job read as cancelled and hides its log until the run
+      # ends, so the red is named first, in an annotation and the job's summary.
+      - name: the red that ends this run is named
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: scripts/ci/first-red job
       # I2664: a run on a branch ends at its first red. Last, so this job's uploads and
       # summary have run; never on master, the schedule or a dispatch (see `concurrency`).
       - name: a failed branch run ends here
@@ -379,6 +393,13 @@ jobs:
           name: suite-shard-${{ matrix.shard }}
           path: suite.tsv
           retention-days: 3
+      # I2726: the cancel below makes this job read as cancelled and hides its log until the run
+      # ends, so the red is named first, in an annotation and the job's summary.
+      - name: the red that ends this run is named
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: scripts/ci/first-red job
       # I2664: a run on a branch ends at its first red. Last, so this job's uploads and
       # summary have run; never on master, the schedule or a dispatch (see `concurrency`).
       - name: a failed branch run ends here
@@ -471,6 +492,13 @@ jobs:
           path: receipts.tsv
           if-no-files-found: ignore
           retention-days: 14
+      # I2726: the cancel below makes this job read as cancelled and hides its log until the run
+      # ends, so the red is named first, in an annotation and the job's summary.
+      - name: the red that ends this run is named
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: scripts/ci/first-red job
       # I2664: a run on a branch ends at its first red. Last, so this job's uploads and
       # summary have run; never on master, the schedule or a dispatch (see `concurrency`).
       - name: a failed branch run ends here
@@ -652,6 +680,13 @@ jobs:
           path: receipts.tsv
           if-no-files-found: ignore
           retention-days: 14
+      # I2726: the cancel below makes this job read as cancelled and hides its log until the run
+      # ends, so the red is named first, in an annotation and the job's summary.
+      - name: the red that ends this run is named
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: scripts/ci/first-red job
       # I2664: a run on a branch ends at its first red. Last, so this job's uploads and
       # summary have run; never on master, the schedule or a dispatch (see `concurrency`).
       - name: a failed branch run ends here
@@ -740,6 +775,13 @@ jobs:
           retention-days: 14
       - if: always()
         run: ../../scripts/ci/summary --job coverage --fact "rust cache hit=${{ steps.rust.outputs.cache-hit }}" --fact "crate threshold=$(cat ../../scripts/rust-coverage-threshold)" --fact "session domain threshold=$(cat ../../scripts/session-coverage-threshold)"
+      # I2726: the cancel below makes this job read as cancelled and hides its log until the run
+      # ends, so the red is named first, in an annotation and the job's summary.
+      - name: the red that ends this run is named
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: scripts/ci/first-red job
       # I2664: a run on a branch ends at its first red. Last, so this job's uploads and
       # summary have run; never on master, the schedule or a dispatch (see `concurrency`).
       - name: a failed branch run ends here
@@ -856,6 +898,13 @@ jobs:
           path: receipts.tsv
           if-no-files-found: ignore
           retention-days: 14
+      # I2726: the cancel below makes this job read as cancelled and hides its log until the run
+      # ends, so the red is named first, in an annotation and the job's summary.
+      - name: the red that ends this run is named
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: scripts/ci/first-red job
       # I2664: a run on a branch ends at its first red. Last, so this job's uploads and
       # summary have run; never on master, the schedule or a dispatch (see `concurrency`).
       - name: a failed branch run ends here
@@ -954,6 +1003,13 @@ jobs:
           path: receipts.tsv
           if-no-files-found: ignore
           retention-days: 14
+      # I2726: the cancel below makes this job read as cancelled and hides its log until the run
+      # ends, so the red is named first, in an annotation and the job's summary.
+      - name: the red that ends this run is named
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: scripts/ci/first-red job
       # I2664: a run on a branch ends at its first red. Last, so this job's uploads and
       # summary have run; never on master, the schedule or a dispatch (see `concurrency`).
       - name: a failed branch run ends here
@@ -1008,6 +1064,13 @@ jobs:
           path: receipts.tsv
           if-no-files-found: ignore
           retention-days: 14
+      # I2726: the cancel below makes this job read as cancelled and hides its log until the run
+      # ends, so the red is named first, in an annotation and the job's summary.
+      - name: the red that ends this run is named
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: scripts/ci/first-red job
       # I2664: a run on a branch ends at its first red. Last, so this job's uploads and
       # summary have run; never on master, the schedule or a dispatch (see `concurrency`).
       - name: a failed branch run ends here
@@ -1085,6 +1148,13 @@ jobs:
           path: receipts.tsv
           if-no-files-found: ignore
           retention-days: 14
+      # I2726: the cancel below makes this job read as cancelled and hides its log until the run
+      # ends, so the red is named first, in an annotation and the job's summary.
+      - name: the red that ends this run is named
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: scripts/ci/first-red job
       # I2664: a run on a branch ends at its first red. Last, so this job's uploads and
       # summary have run; never on master, the schedule or a dispatch (see `concurrency`).
       - name: a failed branch run ends here
@@ -1136,6 +1206,13 @@ jobs:
           path: receipts.tsv
           if-no-files-found: ignore
           retention-days: 14
+      # I2726: the cancel below makes this job read as cancelled and hides its log until the run
+      # ends, so the red is named first, in an annotation and the job's summary.
+      - name: the red that ends this run is named
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: scripts/ci/first-red job
       # I2664: a run on a branch ends at its first red. Last, so this job's uploads and
       # summary have run; never on master, the schedule or a dispatch (see `concurrency`).
       - name: a failed branch run ends here
@@ -1196,6 +1273,13 @@ jobs:
           path: receipts.tsv
           if-no-files-found: ignore
           retention-days: 14
+      # I2726: the cancel below makes this job read as cancelled and hides its log until the run
+      # ends, so the red is named first, in an annotation and the job's summary.
+      - name: the red that ends this run is named
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: scripts/ci/first-red job
       # I2664: a run on a branch ends at its first red. Last, so this job's uploads and
       # summary have run; never on master, the schedule or a dispatch (see `concurrency`).
       - name: a failed branch run ends here
@@ -1264,6 +1348,13 @@ jobs:
           path: receipts.tsv
           if-no-files-found: ignore
           retention-days: 14
+      # I2726: the cancel below makes this job read as cancelled and hides its log until the run
+      # ends, so the red is named first, in an annotation and the job's summary.
+      - name: the red that ends this run is named
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: scripts/ci/first-red job
       # I2664: a run on a branch ends at its first red. Last, so this job's uploads and
       # summary have run; never on master, the schedule or a dispatch (see `concurrency`).
       - name: a failed branch run ends here
@@ -1310,6 +1401,13 @@ jobs:
           path: receipts.tsv
           if-no-files-found: ignore
           retention-days: 14
+      # I2726: the cancel below makes this job read as cancelled and hides its log until the run
+      # ends, so the red is named first, in an annotation and the job's summary.
+      - name: the red that ends this run is named
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: scripts/ci/first-red job
       # I2664: a run on a branch ends at its first red. Last, so this job's uploads and
       # summary have run; never on master, the schedule or a dispatch (see `concurrency`).
       - name: a failed branch run ends here
@@ -1370,6 +1468,13 @@ jobs:
           path: receipts.tsv
           if-no-files-found: ignore
           retention-days: 14
+      # I2726: the cancel below makes this job read as cancelled and hides its log until the run
+      # ends, so the red is named first, in an annotation and the job's summary.
+      - name: the red that ends this run is named
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: scripts/ci/first-red job
       # I2664: a run on a branch ends at its first red. Last, so this job's uploads and
       # summary have run; never on master, the schedule or a dispatch (see `concurrency`).
       - name: a failed branch run ends here
@@ -1411,9 +1516,12 @@ jobs:
           path: receipts
       - env:
           NEEDS: ${{ toJSON(needs) }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           printf '%s' "$NEEDS" > needs.json
           scripts/ci/metrics metrics > ci-metrics.tsv
+          # I2726: a run a gate job ended at its first red names that job and step first
+          scripts/ci/first-red run
           scripts/ci/verdict --plan plan.json --needs needs.json --receipts receipts
       - if: always()
         uses: actions/upload-artifact@v4

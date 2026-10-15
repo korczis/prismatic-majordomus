@@ -1,0 +1,31 @@
+id: I2726
+milestone: M004
+title: "A self-cancelled run names the red that ended it"
+slug: a-self-cancelled-run-names-its-red
+priority: p1
+profile: implementation
+parallel_safe: true
+depends_on: []
+objective: "Make a pull request's validate run that I2664 cancelled from its first failed gate job say which job and which step failed, in the run itself, so that nobody reads it as cancelled from outside."
+why: "2026-10-15: the grand top's validate runs (#1183, integration/68-top-20261015) 38665445251 and 38667725668 were taken for external cancellations twice, and the landing seat asked every session whether it had cancelled them. The reds were job site, step \"derived site data in sync\", and job interactions, step \"build the site\". I2664's last step of every gate job (`gh run cancel $GITHUB_RUN_ID` on failure() of a pull_request) turns the failing job's conclusion into cancelled like every other job's, and its log cannot be read until the run is over."
+current_state: "A self-cancelled run shows every job as cancelled; the failing job's annotation and log are not readable until the run ends, and the ci verdict lists the gates red without saying which one ended the run."
+desired_state: "Before the self-cancel, the failed gate job names itself and its failed step as an error annotation and at the top of its step summary; the ci job names the run's first red (\"ended at its first red: <job> / <step>\") before its verdict. Reading the steps can never fail a job."
+scope:
+  - .github/workflows/validate.yml
+  - scripts/ci/first-red
+  - .ai/repo/automation/inventory.jsonl
+  - docs/CI.md
+  - test/cases
+non_scope:
+  - "I2664's cancel step itself, its condition and its place as each job's last step (case 3019)"
+  - "the verdict's gate table (scripts/ci/verdict)"
+acceptance_criteria:
+  - "A gate job that fails on a pull request annotates '<job> / <step> failed' and writes it to its step summary before its run is cancelled"
+  - "The ci job's log and summary start with 'ended at its first red: <job> / <step>' when a step failed"
+  - "A jobs listing that cannot be read is reported and fails neither the gate job nor the ci job"
+validation:
+  - "bash test/run.sh 3054_a_self_cancelled_run_names_its_red 3019_a_failed_branch_run_cancels_itself 26_ci_wiring"
+evidence_required:
+  - "3054_a_self_cancelled_run_names_its_red"
+created_at: 2026-10-15
+updated_at: 2026-10-15
