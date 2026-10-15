@@ -756,14 +756,19 @@ fn indexed_plan(app: &App, targets: &[Target]) -> Result<Vec<Artifact>> {
     }
 
     if targets.contains(&Target::Editors) {
+        // reading the policy declares how long `just` is waited for (`workflows:`); one that
+        // cannot be read leaves the compiled default, and the targets that project the policy
+        // refuse it themselves
+        let _ = LoadedPolicy::load(&app.repository);
         let editors = crate::editors::plan(
             &app.context.index,
             &app.context.registry,
             app.repository.root(),
             crate::VERSION,
         );
-        // a projection that would differ by whether this machine has `just` is not derived
-        // from the tree; refuse instead of committing whichever half this runner could see
+        // a projection that would differ by whether this machine has `just`, or by how loaded
+        // it was, is not derived from the tree; refuse instead of committing whichever half
+        // this runner could see
         if let Some(d) = editors
             .diagnostics
             .iter()
