@@ -758,6 +758,19 @@ gates:
     runs: MJ_TEST_JOBS=4 bash test/run.sh --no-skips 84_distribution_model 87_release_pipeline 97_install_gate 103_release_projection 112_version_matches_surface 139_release_record_schema 352_the_version_the_site_shows_is_one_you_can_get 620_mcp_tools_are_invoked_and_answer 743_release_version_answers_with_the_contract 763_a_tag_older_than_the_record_practice_is_a_note 1041_a_release_publishes_its_metadata 1060_the_version_is_allocated_at_landing 1087_the_site_offers_the_release_it_published 3021_a_tag_does_not_freeze_the_queue
     summary: the cases about the committed release record and what is offered from it — the distribution model, the release pipeline and projection, the record's schema, the version the site shows, the install gate, the stable channel the MCP tools resolve — pass against this tree
 
+  # The behavioural cases whose subject is the plan: its issue and milestone records, the
+  # commands that read and write them, the projections of them (docs/PLAN_STATUS.md, the plan
+  # pages, the GitHub projection) and the intents and tasks bound to them. The suite runs them
+  # too; this gate exists for the plan that does not run the suite, the plan-record shape
+  # below. The list is every case that names a plan record path or PLAN_STATUS, or runs a
+  # `plan` subcommand, and test/cases/94_ci_plan.sh holds it to that grep, so a new such case
+  # cannot be left out (I2662: a pull request that records evidence planned the whole suite).
+  - id: plan-record-cases
+    job: rust
+    requires: [rust-integration]
+    runs: MJ_TEST_JOBS=4 bash test/run.sh --no-skips 26_ci_wiring 40_project_model 41_project_status 42_dag_waves 43_plan_command 44_model_doctrine 45_github_projection 46_cross_surface 47_mutation 48_roadmap_graph 49_roadmap_doctrine 51_derived_artifacts_committed 53_status_vocabulary 57_derived_merge_driver 58_home_path_gate 74_knowledge_edges 75_knowledge_mutation 97_github_gate 98_traceability 99_plan_capabilities 99_work_graph_chain 103_release_projection 129_executable_issues 131_completion_gates 133_plan_transition 274_commit_policy 367_an_intent_is_satisfied_only_by_evidence 386_a_plan_is_held_to_its_intent 388_an_intent_is_realised_across_providers_and_held_to_reality 400_derivation_is_one_graph 581_no_plan_stamp_without_its_event 582_the_done_guard_holds_in_both_engines 602_a_spliced_body_is_recognised_as_its_own 620_mcp_tools_are_invoked_and_answer 890_an_intent_criterion_is_met_only_by_current_evidence 892_what_is_said_of_intents_is_what_the_claims_matrix_says 893_preflight_follows_what_an_issue_serves 894_github_sync_applies_only_the_trunk 895_a_finished_task_does_not_satisfy_an_intent 960_a_task_starts_bound_to_what_it_serves 961_a_resumed_task_is_told_its_intent_moved 962_plan_start_asks_the_binding_in_both_engines 1038_a_head_is_judged_against_what_it_changes 1076_the_roadmap_opens_a_milestone 1081_an_intent_opens_what_serves_it
+    summary: the cases about the plan's records and what reads them — the project model, the plan command and its transitions, the DAG and roadmap, the GitHub projection, the intents bound to issues, the completion gates — pass against this tree
+
 # Shapes: changes whose plan is narrower than the union of their classes (the header's last
 # rule). Each names the paths that make a change of its shape (`records`, at least one must
 # change), what every other changed path must be (`others: derived`, the only kind there is),
@@ -812,6 +825,39 @@ shapes:
     records: [.ai/repo/releases/v*.yaml]
     others: derived
     gates: [rust-integration, version-surface, release-check, merge-policy, pack-plan, entity-check, site-basepath, site-build, release-record-cases]
+
+  # Plan records and nothing but their projections: the pull request that records an issue's
+  # evidence or marks it done (`majordomus plan evidence|verify|done`), or a milestone's, and
+  # the derive that follows it. Planned by the union (`layer` and `intent`) it was the full
+  # suite in four shards, the crate's integration lane, the site probe and the UI audit — on
+  # 2026-10-14 #1151 (I0806's record) queued behind six such runs in a pool that verifies about
+  # one pull request at a time (I2662).
+  #
+  # Soundness, as for release-record: every other path is derived and proven equal to its
+  # regeneration (rust-integration runs `generate --check`, core-check runs `generate-site-data
+  # --check` on every plan, merge-policy proves the derived block is the generators'), so the
+  # only authored input is the record, and what can break is what reads it:
+  #   rust-integration    the registry validates with the record as an object of the index,
+  #                       and every projection of the plan is current;
+  #   intent-check        intents link issues; a changed status or evidence can break a link
+  #                       or a criterion;
+  #   intent-realization  an intent's realisation is judged against the issues that serve it;
+  #   github-projection   an issue record is projected to its GitHub issue, and the drift
+  #                       check reads the record;
+  #   entity-check        the record is an addressable object with a route;
+  #   merge-policy        .gitattributes is the generators' (the soundness above);
+  #   diagram-check       a plan page renders the record's body, which must not type a
+  #                       relationship in box art;
+  #   site-build          the plan pages build from the new data and every link resolves;
+  #   plan-record-cases   the behavioural cases about the plan and what reads it.
+  # Left out, deliberately: the shell suite (its plan cases are the gate above), the crate's
+  # own tests and coverage (no code changed), and the browser gates, which measure templates,
+  # styles and controls a record does not change. The master push after the merge is a full
+  # plan and runs every one of them.
+  - id: plan-record
+    records: [.ai/repo/project/issues/I*.yaml, .ai/repo/project/milestones/*.yaml]
+    others: derived
+    gates: [rust-integration, intent-check, intent-realization, github-projection, entity-check, merge-policy, diagram-check, site-build, plan-record-cases]
 
 classes:
   # the pipeline itself: a change here can only be validated by running everything.
