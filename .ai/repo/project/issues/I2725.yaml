@@ -1,0 +1,42 @@
+id: I2725
+milestone: mcp-transports-are-reliable
+title: "notifications/cancelled stops a running tool call within a bound, on stdio and over HTTP"
+slug: cancellation-stops-a-running-call
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Make notifications/cancelled reach the tool call it names while that call is still running, stop the call within a declared bound, and answer it as cancelled rather than with a result, on the stdio session and on the Streamable HTTP endpoint alike."
+why: "Planned 2026-10-14 on master c0e3585dc8. The milestone requires the evidence token cancellation_test and its acceptance criterion reads 'notifications/cancelled stops a running call within a bound', and no issue carried it: I2145 delivered at-most-once delivery and I2147 the transport bounds, so with both done the milestone read VERIFY against evidence nothing in the plan would ever produce. A milestone is held to its evidence, and the gap is planned as work rather than waved through."
+current_state: "notifications/cancelled is accepted and dropped. Session::notification in apps/majordomus-cli/src/mcp/protocol.rs matches only notifications/initialized and logs every other notification as ignored; apps/majordomus-cli/tests/mcp_conformance.rs:463 and tests/mcp_stdio.rs:324 hold only that the session survives the notification. The stdio loop (stdio::serve, apps/majordomus-cli/src/mcp/stdio.rs) handles one message at a time, and the bridge is held under a Mutex (apps/majordomus-cli/src/commands/mcp.rs), so a notification written during a long tools/call is read only after that call answered. The HTTP endpoint (apps/majordomus-cli/src/http/mcp.rs) keeps no handle to a request in flight. The execution engine can already stop a running task (apps/majordomus-cli/tests/engine.rs, cancelling_a_running_task_stops_it_and_cancelling_a_queued_one_never_starts_it)."
+desired_state: "A notifications/cancelled naming the requestId of a tools/call still running stops that call within a declared bound and the call is answered with a typed cancelled error, never with a result, on stdio and over HTTP; a cancellation naming an unknown or already answered requestId is ignored and the session goes on; the bound is declared beside the other MCP timings and docs/MCP.md states it. The engine's existing cancellation is the mechanism; no second one is built."
+scope:
+  - "apps/majordomus-cli/src/mcp/protocol.rs"
+  - "apps/majordomus-cli/src/mcp/stdio.rs"
+  - "apps/majordomus-cli/src/mcp/bridge.rs"
+  - "apps/majordomus-cli/src/commands/mcp.rs"
+  - "apps/majordomus-cli/src/http/mcp.rs"
+  - "apps/majordomus-cli/src/execution/engine.rs"
+  - "apps/majordomus-cli/tests/mcp_cancellation.rs"
+  - "docs/MCP.md"
+non_scope:
+  - "At-most-once delivery on resend, which I2145 delivered"
+  - "The message and reply bounds, the protocol version header and the reaper, which I2147 delivered"
+  - "A GET/SSE stream on the Streamable HTTP endpoint, which the milestone leaves out"
+depends_on:
+  - I2145
+  - I2147
+acceptance_criteria:
+  - "A tools/call that would run longer than the bound is stopped within the bound after notifications/cancelled naming its requestId arrives on the same stdio session, and is answered with a cancelled error, never a result"
+  - "The same holds over Streamable HTTP when the notification arrives as a second POST on the session"
+  - "A cancellation naming an unknown or an already answered requestId changes nothing and the session's next request is answered"
+  - "The bound is one declared value, read by both transports, and docs/MCP.md names it"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test mcp_cancellation"
+  - "cargo test --test mcp_conformance --test mcp_stdio"
+evidence_required:
+  - "cancellation_stops_a_running_call_test"
+  - "unknown_request_cancellation_ignored_test"
+risk: "A cancellation that reaches the call means a second message is read while the first is still being handled: the stdio loop stops being one message at a time, and the client-acceptance test (apps/majordomus-cli/tests/mcp_conformance.rs, every_listed_tool_is_one_a_client_accepts) and the byte-for-byte session tests must stay green. Stopping a writer half-way is the engine's problem already solved; the risk here is answering a cancelled call twice, once as cancelled and once with the late result."
+created_at: 2026-10-14
+updated_at: 2026-10-14

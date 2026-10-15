@@ -39,4 +39,21 @@ validation:
 evidence_required:
   - observation_becomes_grouped_candidate
 created_at: 2026-10-09
-updated_at: 2026-10-09
+updated_at: 2026-10-14T23:41:06Z
+started_at: 2026-10-14T23:40:56Z
+started_event: sha256:670dceb7debec29f496c9b6a70ea439c17f3971f766dc1ddc9b9c394d5c27301
+completed_at: 2026-10-14T23:41:06Z
+completed_event: sha256:ebf917703f49cac26f74e1bc2b2e83f9ffb8a2a8b7cce37b9fbf19a26d0b4cd1
+evidence:
+  - covers: observation_becomes_grouped_candidate
+    type: test
+    command: "MJ_TEST_JOBS=2 bash test/run.sh 981_an_observation_becomes_a_grouped_candidate 563_knowledge_is_derived_at_the_boundary 564_knowledge_derivation_is_idempotent"
+    result: "ok 981_an_observation_becomes_a_grouped_candidate, ok 563_knowledge_is_derived_at_the_boundary, ok 564_knowledge_derivation_is_idempotent (run 2026-10-14 23:31Z on master c0e3585dc8)"
+    commit: c0e3585dc836201089d6b5dd49f5a79fe8bff798
+    recorded_at: 2026-10-14T23:41:01Z
+  - covers: observation_becomes_grouped_candidate
+    type: test
+    command: "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test knowledge_base"
+    result: "test result: ok. 7 passed; 0 failed — the Rust reader groups candidates by what they are about and answers the same on the command line, HTTP and MCP (run 2026-10-14 23:38Z on master c0e3585dc8)"
+    commit: c0e3585dc836201089d6b5dd49f5a79fe8bff798
+    recorded_at: 2026-10-14T23:41:04Z

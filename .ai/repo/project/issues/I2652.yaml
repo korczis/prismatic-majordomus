@@ -39,4 +39,27 @@ evidence_required:
   - "knowledge_screen_case_3003"
   - "knowledge_screen_within_budget"
 created_at: 2026-10-13
-updated_at: 2026-10-13
+updated_at: 2026-10-14T23:49:25Z
+started_at: 2026-10-14T23:49:13Z
+started_event: sha256:f338f975d86e5ce3785ff91ea6fc23da1e3176a9acb713c459a2024fcde2d301
+completed_at: 2026-10-14T23:49:25Z
+completed_event: sha256:0021c896f29a9303f48465c4412b4988f74049b86e0414642d73798cb4bd8704
+evidence:
+  - covers: knowledge_screen_unit_tests
+    type: test
+    command: "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::knowledge"
+    result: "test result: ok. 4 passed; 0 failed — the screen reads two sources and runs nothing, an empty queue says so, a long queue is bounded newest first and says what it left out, the deriver is judged in words (run 2026-10-14 23:40Z on master c0e3585dc8)"
+    commit: c0e3585dc836201089d6b5dd49f5a79fe8bff798
+    recorded_at: 2026-10-14T23:49:18Z
+  - covers: knowledge_screen_case_3003
+    type: test
+    command: "MJ_TEST_JOBS=2 bash test/run.sh 3003_the_knowledge_screen_answers 1096_no_screen_waits_for_a_source"
+    result: "ok 3003_the_knowledge_screen_answers, ok 1096_no_screen_waits_for_a_source (run 2026-10-14 23:31Z on master c0e3585dc8)"
+    commit: c0e3585dc836201089d6b5dd49f5a79fe8bff798
+    recorded_at: 2026-10-14T23:49:20Z
+  - covers: knowledge_screen_within_budget
+    type: test
+    command: "apps/majordomus-cli/target/debug/majordomus bench system.http. --transport system --profile ci --no-write --check"
+    result: "bench --check: within budget — system.http.ui.knowledge warm p95 4312 us and system.http.live.ui.knowledge warm p95 4226 us against a 100000 us budget, every system.http target PASS (run 2026-10-14 23:48Z on master c0e3585dc8, debug build, linux-x86_64; no baseline for linux-x86_64-debug, so nothing was compared against one)"
+    commit: c0e3585dc836201089d6b5dd49f5a79fe8bff798
+    recorded_at: 2026-10-14T23:49:22Z

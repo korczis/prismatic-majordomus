@@ -32053,6 +32053,8 @@
             "An episode with no observation writes no candidate and still appends knowledge.derived with written 0",
             "Cases 563, 564, 565, 707, 709, 710 and 711 still pass"
           ],
+          "completed_at": "2026-10-14T23:41:06Z",
+          "completed_event": "sha256:ebf917703f49cac26f74e1bc2b2e83f9ffb8a2a8b7cce37b9fbf19a26d0b4cd1",
           "created_at": "2026-10-09",
           "current_state": "Four events map to candidates; no record says what it is about; candidates is a flat list.",
           "depends_on": [
@@ -32083,7 +32085,9 @@
             "a-session-leaves-what-it-observed#recurrence-is-grouped"
           ],
           "slug": "an-observation-becomes-a-candidate",
-          "updated_at": "2026-10-09",
+          "started_at": "2026-10-14T23:40:56Z",
+          "started_event": "sha256:670dceb7debec29f496c9b6a70ea439c17f3971f766dc1ddc9b9c394d5c27301",
+          "updated_at": "2026-10-14T23:41:06Z",
           "validation": [
             "bash test/run.sh 981_an_observation_becomes_a_grouped_candidate",
             "bash test/run.sh 563_knowledge_is_derived_at_the_boundary",
@@ -32107,6 +32111,8 @@
             "Two observations with different statements about one subject carry the same route",
             "The derivation emits no event it reads"
           ],
+          "completed_at": "2026-10-14T23:43:47Z",
+          "completed_event": "sha256:112c11d2c302fdb9f7260bbbd7c0d2a4bfdb17a40863955f40d10d9105b5d5ad",
           "created_at": "2026-10-09",
           "current_state": "No candidate carries an owner.",
           "depends_on": [
@@ -32130,7 +32136,9 @@
             "a-session-leaves-what-it-observed#route-is-structural"
           ],
           "slug": "a-candidate-is-routed",
-          "updated_at": "2026-10-09",
+          "started_at": "2026-10-14T23:43:39Z",
+          "started_event": "sha256:2759725dfe7a9a5ce3ecb843fdfc68c102647e8ea37e3cdb86ca97f4a5eae3bd",
+          "updated_at": "2026-10-14T23:43:47Z",
           "validation": [
             "bash test/run.sh 982_a_candidate_is_routed_by_what_it_is_about"
           ],
@@ -32852,6 +32860,8 @@
             "A session whose single request runs longer than the reap interval is not reaped",
             "Session ids are drawn from the operating system's random source"
           ],
+          "completed_at": "2026-10-14T23:40:52Z",
+          "completed_event": "sha256:6c92d5cdd0610a0b36bd8e799d88d9bd18abd169a1ec52c47220b0ff154c0616",
           "created_at": "2026-10-09",
           "current_state": "One oversized line or response can exhaust a client or a server; a long request can lose its session.",
           "depends_on": [],
@@ -32874,7 +32884,9 @@
             "docs/MCP.md"
           ],
           "slug": "mcp-transports-are-bounded",
-          "updated_at": "2026-10-09",
+          "started_at": "2026-10-14T23:40:41Z",
+          "started_event": "sha256:f39679e4e86ff350f4d4fefba3a08c8b579fe8fe2c8e578520ab413091eb30d0",
+          "updated_at": "2026-10-14T23:40:52Z",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --test mcp_conformance --test mcp_conformance_http --test mcp_stdio"
@@ -34038,6 +34050,8 @@
             "scripts/ci/homepage-check, scripts/ci/interaction-check and scripts/site-check pass; the homepage stays within its asset budget",
             "At 390 px the page does not scroll horizontally and the chain stacks into one column"
           ],
+          "completed_at": "2026-10-14T23:50:00Z",
+          "completed_event": "sha256:9b100948504c8baaacdb3eb7244d94bbfbdcd6d6a8f6da36de026ba1fad27573",
           "created_at": "2026-10-11",
           "depends_on": [],
           "evidence_required": [
@@ -34060,7 +34074,9 @@
             "scripts/lib/interaction-specs/evidence-chain.mjs"
           ],
           "slug": "the-landing-page-is-a-click-through-story",
-          "updated_at": "2026-10-11",
+          "started_at": "2026-10-14T23:49:50Z",
+          "started_event": "sha256:3d35ab95c8f06aadcc78ed650ba795e38d9c38d317f677ae7fd4868eb08f73ca",
+          "updated_at": "2026-10-14T23:50:00Z",
           "validation": [
             "bin/majordomus plan validate",
             "scripts/ci/interaction-check",
@@ -35367,6 +35383,8 @@
             "No handler under src/ui executes a capability on the request, which case 1096 holds, and the route is within the UI's latency budget, which bench --check holds",
             "Every screen's navigation leads to it"
           ],
+          "completed_at": "2026-10-14T23:49:25Z",
+          "completed_event": "sha256:0021c896f29a9303f48465c4412b4988f74049b86e0414642d73798cb4bd8704",
           "created_at": "2026-10-13",
           "depends_on": [
             "I2486"
@@ -35394,7 +35412,9 @@
             ".ai/repo/project/issues/I2652.yaml"
           ],
           "slug": "the-ui-shows-what-the-knowledge-base-holds",
-          "updated_at": "2026-10-13",
+          "started_at": "2026-10-14T23:49:13Z",
+          "started_event": "sha256:f338f975d86e5ce3785ff91ea6fc23da1e3176a9acb713c459a2024fcde2d301",
+          "updated_at": "2026-10-14T23:49:25Z",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::knowledge",
@@ -36238,6 +36258,51 @@
           "updated_at": "2026-10-14",
           "validation": [
             "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2725",
+        "kind": "issue",
+        "label": "I2725",
+        "summary": "notifications/cancelled stops a running tool call within a bound, on stdio and over HTTP",
+        "route": "/cockpit/objects/issue/i2725",
+        "source": ".ai/repo/project/issues/I2725.yaml",
+        "facts": {
+          "created_at": "2026-10-14",
+          "depends_on": [
+            "I2145",
+            "I2147"
+          ],
+          "evidence_required": [
+            "cancellation_stops_a_running_call_test",
+            "unknown_request_cancellation_ignored_test"
+          ],
+          "milestone": "mcp-transports-are-reliable",
+          "non_scope": [
+            "At-most-once delivery on resend, which I2145 delivered",
+            "The message and reply bounds, the protocol version header and the reaper, which I2147 delivered",
+            "A GET/SSE stream on the Streamable HTTP endpoint, which the milestone leaves out"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mcp/protocol.rs",
+            "apps/majordomus-cli/src/mcp/stdio.rs",
+            "apps/majordomus-cli/src/mcp/bridge.rs",
+            "apps/majordomus-cli/src/commands/mcp.rs",
+            "apps/majordomus-cli/src/http/mcp.rs",
+            "apps/majordomus-cli/src/execution/engine.rs",
+            "apps/majordomus-cli/tests/mcp_cancellation.rs",
+            "docs/MCP.md"
+          ],
+          "slug": "cancellation-stops-a-running-call",
+          "updated_at": "2026-10-14",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test mcp_cancellation",
+            "cargo test --test mcp_conformance --test mcp_stdio"
           ]
         }
       },
@@ -37513,7 +37578,7 @@
             "docs/MCP.md"
           ],
           "slug": "mcp-transports-are-reliable",
-          "updated_at": "2026-10-09",
+          "updated_at": "2026-10-14T23:46:38Z",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --test mcp_shared --test mcp_conformance --test mcp_conformance_http --test shared_units --test providers_projection",
@@ -78574,6 +78639,26 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2725",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2725",
+        "target": "majordomus://issue/I2145",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2725",
+        "target": "majordomus://issue/I2147",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2725",
+        "target": "majordomus://milestone/mcp-transports-are-reliable",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -88190,8 +88275,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2796,
-      "edges": 6129,
+      "nodes": 2797,
+      "edges": 6133,
       "acyclic": false,
       "truncated": false
     }

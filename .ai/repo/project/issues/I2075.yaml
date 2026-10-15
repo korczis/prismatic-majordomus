@@ -28,4 +28,15 @@ validation:
 evidence_required:
   - candidate_routed
 created_at: 2026-10-09
-updated_at: 2026-10-09
+updated_at: 2026-10-14T23:43:47Z
+started_at: 2026-10-14T23:43:39Z
+started_event: sha256:2759725dfe7a9a5ce3ecb843fdfc68c102647e8ea37e3cdb86ca97f4a5eae3bd
+completed_at: 2026-10-14T23:43:47Z
+completed_event: sha256:112c11d2c302fdb9f7260bbbd7c0d2a4bfdb17a40863955f40d10d9105b5d5ad
+evidence:
+  - covers: candidate_routed
+    type: test
+    command: "MJ_TEST_JOBS=1 bash test/run.sh 982_a_candidate_is_routed_by_what_it_is_about"
+    result: "ok 982_a_candidate_is_routed_by_what_it_is_about — tests: 1 passed, 0 failed (run 2026-10-14 23:52Z on master c0e3585dc8); each of the five routes is reached in this repository, a fresh repository routes project and platform as declared, and the derivation emits no event it reads"
+    commit: c0e3585dc836201089d6b5dd49f5a79fe8bff798
+    recorded_at: 2026-10-14T23:43:45Z
