@@ -52,6 +52,7 @@ fn query(id: &str, exposure: Exposure, stability: Stability, module: &str) -> Ex
             benchmark: BenchmarkPolicy::Required,
             cache: CachePolicy::Disabled,
             execution: majordomus_cli::capability::ExecutionPolicy::classify(kind),
+            skill: None,
         },
         handler: handler::<serde_json::Value, Out, _>(|_, v| {
             Ok(Out {
@@ -281,6 +282,41 @@ fn invalid_ids_routes_and_names_are_refused_with_provenance() {
     assert!(
         matches!(&errs[..], [RegistryError::InvalidExposure { projection, .. }] if projection == "CLI"),
         "{errs:?}"
+    );
+}
+
+/// A skill is a second way to call a capability, and the registry holds everything it says
+/// to the declaration: the name, that nobody else took it, and that the typed text has one
+/// place to go.
+#[test]
+fn a_skill_is_held_to_the_capability_it_adapts() {
+    let with = |id: &str, alias: &str, argument: &str| {
+        query(id, tool(&id.replace('.', "_")), Stability::Implemented, "m").skill(alias, argument)
+    };
+    let refused = |execs: Vec<Executable>, said: &str| {
+        let errs = errors_of(execs);
+        assert!(
+            matches!(&errs[..], [RegistryError::InvalidExposure { projection, reason, .. }]
+                if projection == "skill" && reason.contains(said)),
+            "expected a skill refusal saying {said:?}, got {errs:?}"
+        );
+    };
+    // the fixture input is one required string field, `name`: a valid place for the text
+    let ok = CapabilityRegistry::builder()
+        .with_builtin(vec![with("a.one", "one", "name")])
+        .build()
+        .expect("a well-formed skill builds");
+    assert_eq!(ok.by_skill("one").map(|c| c.id.as_str()), Some("a.one"));
+    assert_eq!(ok.skills().count(), 1);
+    assert!(ok.by_skill("absent").is_none());
+
+    refused(vec![with("a.one", "One", "name")], "not lowercase");
+    refused(vec![with("a.one", "review", "name")], "reserved");
+    refused(vec![with("a.one", "one", "")], "names no input field");
+    refused(vec![with("a.one", "one", "absent")], "not a string field");
+    refused(
+        vec![with("a.one", "same", "name"), with("a.two", "same", "name")],
+        "already the skill of a.one",
     );
 }
 
@@ -590,4 +626,23 @@ fn a_query_read_as_a_resource_accepts_an_empty_input() {
     let (c, matched) = r.by_mcp_uri("majordomus://b").unwrap();
     assert_eq!((c.id.as_str(), matched.name.as_str()), ("a.two", "n"));
     assert!(r.by_mcp_uri("majordomus://a").is_none());
+}
+
+#[test]
+fn a_query_that_declares_writing_the_repository_is_refused_naming_both_policies() {
+    let mut writer = query(
+        "a.one",
+        tool("majordomus_a_one"),
+        Stability::Implemented,
+        "m",
+    );
+    writer.capability.execution = writer.capability.execution.writes_repository();
+    let errs = errors_of(vec![writer]);
+    assert!(
+        matches!(&errs[..], [RegistryError::Shape { id, reason, .. }]
+            if id == "a.one"
+                && reason.contains("declares the execution policy")
+                && reason.contains("its kind makes it")),
+        "{errs:?}"
+    );
 }

@@ -1,10 +1,11 @@
 # The homepage's story, declared once.
 #
-# A landing page is an argument with an order, told overview first: what this is, what goes
-# wrong without it, what it controls, how one task moves through it, the proof that "done" can
-# be refused, how one declaration reaches every interface, the evidence, and how to try it. This file is that order, as the `id`s of the sections the homepage renders
-# inside <main>. It is not prose and carries no claim; the words are manifesto.toml's and
-# marketing.toml's, and every figure beside them is derived.
+# A landing page answers a visitor's questions in the order they are asked: what this is
+# (hero), why they should care (recognise), how it works (how), what they can do with it
+# (map, surfaces), how they know it works (refuses, proof), and how to start (install). This
+# file is that order, as the `id`s of the sections the homepage renders inside <main>. It is
+# not prose and carries no claim; the words are manifesto.toml's and marketing.toml's, and
+# every figure beside them is derived.
 #
 # scripts/ci/homepage-check holds the rendered page to it in both directions, and the rule
 # project.homepage-tells-a-declared-story makes that blocking: a section the page renders and
@@ -13,11 +14,13 @@
 # stack of twenty-two sections once, each defensible alone; this is what stops it happening
 # again without a person deciding it should. In 2026-10 it became eight sections in a progressive
 # order — overview before reference — with the transcripts, the full failure catalogue and the
-# refusal corpus moved behind disclosures on the same page rather than off it.
+# refusal corpus moved behind disclosures on the same page; later that month the order became
+# the five questions above, and the transcripts and the replay became links to the pages that
+# already carried them, because a page that inlines its evidence is a page nobody finishes.
 #
 # To add a section: write it in site/templates/index.html with an id, name the id here where
 # it belongs in the argument, and give it at least one link or one derived figure.
-order = ["hero", "recognise", "map", "how", "refuses", "surfaces", "proof", "install"]
+order = ["hero", "recognise", "how", "map", "surfaces", "refuses", "proof", "install"]
 
 # The failures the homepage puts first, as the ids of the product domains whose `problem` it
 # shows (.ai/repo/features/domains/, ADR 0104). Editorial: which three, and in what order. The
@@ -25,11 +28,15 @@ order = ["hero", "recognise", "map", "how", "refuses", "surfaces", "proof", "ins
 # does not show or a problem the page does not render.
 problems = ["context", "coordination", "completion"]
 
-# What the homepage may make every visitor download from this site before they scroll: the
-# scripts and stylesheets it links, and graph data carried inline in the HTML. A figure is
-# measured, never aspired to — scripts/ci/homepage-check reports the current weight on every
-# build, and raising a budget is a reviewed change to this file. The HTML is not budgeted here:
-# its size follows the recorded runs the page replays.
+# What the homepage may make every visitor download from this site before they scroll: its own
+# HTML, the scripts and stylesheets it links, and graph data carried inline in the HTML. A
+# figure is measured, never aspired to — scripts/ci/homepage-check reports the current weight
+# on every build, and raising a budget is a reviewed change to this file.
+#
+# The HTML was not budgeted until 2026-10-12, on the reasoning that its size follows the
+# recorded runs the page replays. It reached 243,477 bytes: a navigation rendered three times
+# on every page and four sets of transcripts inline. The runs are evidence and they are still
+# published — on the pages that record them, which this one links.
 #
 # And how it renders: the largest contentful paint, in milliseconds, and the cumulative layout
 # shift the page itself reports, each the median of three cold loads at the narrowest and the
@@ -39,6 +46,7 @@ problems = ["context", "coordination", "completion"]
 # needs: about nine times the paint and an absolute 0.05 of shift. The record asks for three
 # runs on the CI runner; when they are in, the paint budget follows them with a stated margin.
 [budget]
+html_bytes = 160000
 assets_bytes = 340000
 inline_json_bytes = 8000
 largest_contentful_paint_ms = 1000

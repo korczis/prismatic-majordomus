@@ -111,6 +111,11 @@ pub struct GateClass {
     /// The pathspecs it covers, in the subset the model's header defines.
     pub paths: Vec<String>,
     #[serde(default)]
+    /// Single paths its patterns cover and the class does not: a data file under an
+    /// escalating directory, read by named gates only. Each one is a path, never a
+    /// pattern, so a file that appears under the directory tomorrow still falls in it.
+    pub except: Vec<String>,
+    #[serde(default)]
     /// `full`, or the gates it names.
     pub gates: Option<GateClassSelects>,
 }
@@ -139,8 +144,12 @@ impl GateClass {
     /// segments, so it does. Nothing is decided over a directory here — the paths are
     /// `git diff --name-only`'s, which are files — so the two agree over every input either
     /// is given, and `test/cases/131_completion_gates.sh` asserts that on this model.
+    ///
+    /// A path the class excepts is not in it, whatever its patterns say; it still falls in
+    /// every other class that matches it, and in none it is unclassified.
     pub(crate) fn matches(&self, path: &str) -> bool {
-        self.paths.iter().any(|p| Glob::new(p).matches(path))
+        !self.except.iter().any(|e| e == path)
+            && self.paths.iter().any(|p| Glob::new(p).matches(path))
     }
 }
 
@@ -532,6 +541,37 @@ classes:
 
     fn model() -> GateModel {
         yaml::parse_into(MODEL).expect("the fixture model parses")
+    }
+
+    #[test]
+    fn an_excepted_path_leaves_its_class_and_falls_in_the_others() {
+        let mut m = model();
+        let pipeline = m.classes.iter_mut().find(|c| c.id == "pipeline").unwrap();
+        pipeline.except = vec![".ai/repo/ci/durations.tsv".into()];
+        m.classes.push(GateClass {
+            id: "pipeline-data".into(),
+            paths: vec![".ai/repo/ci/durations.tsv".into()],
+            except: vec![],
+            gates: Some(GateClassSelects::Named(vec!["build".into()])),
+        });
+        let p = plan(&m, &[".ai/repo/ci/durations.tsv".into()], false);
+        assert_eq!(
+            p.mode,
+            GatePlanMode::Affected,
+            "a named data file does not escalate"
+        );
+        assert!(p.selects("build"), "its readers' class plans it");
+        assert!(!p.selects("site"), "and nothing else");
+
+        // the directory stays escalating around the one path it names
+        let p = plan(&m, &[".ai/repo/ci/gates.yaml".into()], false);
+        assert_eq!(p.mode, GatePlanMode::Full);
+        let p = plan(&m, &[".ai/repo/ci/added-tomorrow.tsv".into()], false);
+        assert_eq!(
+            p.mode,
+            GatePlanMode::Full,
+            "an unnamed file still escalates"
+        );
     }
 
     #[test]

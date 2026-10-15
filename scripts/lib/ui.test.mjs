@@ -8,7 +8,7 @@ import { join } from 'node:path';
 import assert from 'node:assert/strict';
 
 import { breakpointsFromCss, commonPrefix, criticalWidths, discoverPages, tierPages, viewports, REFLOW_FLOOR } from './ui-discover.mjs';
-import { escapes, nameTaskCheckboxes, normalise, normaliseRendered, plainClasses, scan, scrollingTags, textOf } from './ui-static.mjs';
+import { alignCells, escapes, nameTaskCheckboxes, normalise, normaliseRendered, plainClasses, scan, scrollingTags, textOf } from './ui-static.mjs';
 import { contrast, enforce, measure, raise, MINIMUM } from './ui-contrast.mjs';
 import { sample, siblingFamilies } from './ui-routes.mjs';
 
@@ -137,12 +137,43 @@ test('a checkbox inside a label is left alone, and an arrow function is not a ta
   assert.equal(nameTaskCheckboxes(label).text, label);
 });
 
+test('a Markdown table keeps its alignment and loses its inline style', () => {
+  const page = '<table><thead><tr><th>source</th><th style="text-align: right">before</th></tr></thead>'
+    + '<tbody><tr><td class="n" style="text-align:center;">a</td><td style="text-align: left">b</td></tr></tbody></table>';
+  const r = alignCells(page);
+  assert.equal(r.changed, 3);
+  assert.doesNotMatch(r.text, /style=/, 'no inline style is left');
+  assert.match(r.text, /<th class="text-right">before<\/th>/);
+  assert.match(r.text, /<td class="n text-center">a<\/td>/);
+  assert.match(r.text, /<td class="text-left">b<\/td>/);
+  assert.equal(textOf(r.text), textOf(page), 'the reader sees the same words');
+  assert.equal(alignCells(r.text).changed, 0, 'a second pass changes nothing');
+});
+
+test('an inline style a renderer did not write is left for the check to refuse', () => {
+  for (const kept of [
+    '<td style="color: red">a</td>',
+    '<td style="text-align: right; color: red">a</td>',
+    '<td style="text-align: justify">a</td>',
+    '<p style="text-align: right">a</p>',
+    '<td data-x="a > b" style="width: 3em">a</td>',
+  ]) {
+    const r = alignCells(kept);
+    assert.equal(r.changed, 0, kept);
+    assert.equal(r.text, kept);
+  }
+});
+
 test('a normalisation that changed what the page says is refused, not written', () => {
   const page = '<li><input type="checkbox">do the thing<pre>code</pre>';
   const r = normaliseRendered(page, { scrollingTagNames: ['pre'] });
   assert.equal(textOf(r.text), textOf(page), 'the reader sees the same words');
   assert.equal(r.scrolling, 1);
   assert.equal(r.named, 1);
+  assert.equal(r.aligned, 0);
+  const table = normaliseRendered('<td style="text-align: right">3</td>');
+  assert.equal(table.aligned, 1);
+  assert.equal(table.text, '<td class="text-right">3</td>');
 });
 
 // ------------------------------------------------------------------ contrast

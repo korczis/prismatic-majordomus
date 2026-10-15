@@ -50,6 +50,14 @@ deploy:
   output: site/public
   # the served file that names the commit the public site was built from; the probe reads it
   identity: build.json
+  # How long after GitHub publishes a release the homepage and /releases/latest.json may still
+  # name an older one before `scripts/pages release-live` refuses the site. A release reaches
+  # the three in order: GitHub, then latest.json from the release's publish job, then the pages
+  # from the build of master that job asks for, which waits in the Actions queue like any other
+  # run. The bound is the deploy window scripts/ci/pages-check judges an owed publication by
+  # (OWED_AFTER, 1800s), for the same measured reason: a queue of 25 minutes is weather.
+  # project.the-site-offers-the-release-it-published.
+  release_window: 1800
   publish: scripts/site-deploy --skip-build
   # What the publishing clone must be able to answer, and therefore what it must be given.
   #
@@ -84,13 +92,40 @@ deploy:
   # templates render for exactly this, never a sentence, so the words can change freely.
   smoke:
     - route: /
-      marker: data-challenge-replay
+      marker: data-recorded-story
     - route: /
       marker: data-cta
     - route: /challenge/
       marker: data-challenge-replay
     - route: /challenge/
       marker: /guarantees/
+  # What a publication holds that the site build does not compose: a surface a process serves,
+  # read once at the published commit by that commit's own executable and written as files
+  # (ADR 0141). `surface` is the topology's id of the served surface (docs/generated/web.json),
+  # and its mount there is where the publication holds the snapshot, so no mount is written
+  # here; `artifact` is where the producer writes it, `producer` is the command that does, and
+  # `marker` is the attribute every page of it states the commit it was read at with.
+  #
+  # Declared here because until 2026-10-12 only .github/workflows/pages.yml knew: its deploy
+  # job placed the snapshot and nothing else could tell that a site without one was short of a
+  # surface. A person's `scripts/site-deploy` published the site without it, the public probes
+  # read /build.json and never the mount, and a snapshot read at an older commit than the
+  # pages beside it was nobody's finding. `scripts/pages snapshots` resolves these rows;
+  # `scripts/site-deploy` refuses a tree that lacks one, `scripts/pages verify-ui` asks the
+  # public site for it, and section 2c of scripts/ci/pages-check holds the live site to it
+  # (project.the-published-ui-is-the-trunks). test/cases/2983_the_published_ui_is_the_trunks.sh
+  # holds the workflow to this entry, so the two cannot drift.
+  snapshots:
+    - surface: ui
+      artifact: target/web/ui-snapshot
+      producer: majordomus web report ui-snapshot
+      marker: data-snapshot-of
+    # the Cockpit, by the same exporter (ADR 0147). Written after the UI's, because it reads
+    # first the pages the UI's snapshot links to, and then leads those links to its own pages.
+    - surface: cockpit
+      artifact: target/web/cockpit-snapshot
+      producer: majordomus web report cockpit-snapshot
+      marker: data-snapshot-of
 
 # ---------------------------------------------------------------- what the fast path may spend
 # Seconds, wall clock, on a GitHub-hosted Linux runner with the caches warm. Derived from

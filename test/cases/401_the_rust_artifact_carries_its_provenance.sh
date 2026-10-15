@@ -49,7 +49,8 @@ SH
       CARGO_TARGET_DIR="$T/target" bash "$F/scripts/rust-check" --integration --artifact "$T/dist" \
       > "$T/rust-check.out" 2>&1 || rc=$?
   [ "$rc" = 0 ] || { tail -20 "$T/rust-check.out"; echo "    scripts/rust-check --integration --artifact exited $rc"; exit 1; }
-  grep -qx 'build --quiet' "$LOG" || { cat "$LOG"; echo "    scripts/rust-check did not build before publishing the artifact"; exit 1; }
+  # the gate builds through mj_cargo_bounded, which keeps --quiet for itself so that cargo's own "Blocking" line stays readable (case 3002)
+  grep -qx 'build' "$LOG" || { cat "$LOG"; echo "    scripts/rust-check did not build before publishing the artifact"; exit 1; }
   # the artifact is the executable the gate built, byte for byte
   [ -x "$T/dist/majordomus" ] || { echo "    the artifact directory holds no executable"; exit 1; }
   cmp -s "$T/dist/majordomus" "$T/target/debug/majordomus" \

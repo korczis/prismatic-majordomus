@@ -1,7 +1,7 @@
 +++
 title = "A projection that stops being applied turns a build red, and a gate that cannot reach GitHub reports that it cannot rather than passing"
 description = "The neighbouring claim — [GitHub milestones and issues are generated from the canonical"
-weight = 109
+weight = 110
 [extra]
 claim_id = "github-projection-gated"
 status = "guaranteed"
@@ -88,9 +88,10 @@ is what a claim citing a script that exists, rather than a gate that runs, buys 
 
 ## What it does not cover
 
-Applying stays a human act. CI proves agreement; it does not create issues.
-`scripts/github-sync --apply` is run by a person, deliberately, and the gate's baseline is
-lowered in the same commit. The baseline is a ceiling, and nothing lowers it by itself: on
+This gate applies nothing; it proves agreement. Since 2026-10-12 the apply is a consequence
+of the landing (`.github/workflows/github.yml`,
+`project.the-projection-is-applied-at-landing`), and a person's `scripts/github-sync --apply`
+is the fallback. The gate's baseline is still lowered by a person. The baseline is a ceiling, and nothing lowers it by itself: on
 2026-10-10 it read 192 `missing` while GitHub lacked 3 records, so a new record counts as
 `missing` and passes until somebody writes the baseline down.
 

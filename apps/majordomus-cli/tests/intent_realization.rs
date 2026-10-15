@@ -6,14 +6,14 @@
 mod common;
 
 use std::io::Write;
-use std::process::{Command, Stdio};
+use std::process::Stdio;
 
-use common::{run_in, Fixture, Served, BIN};
+use common::{run_in, Fixture, Served};
 use majordomus_cli::evidence::{digest_of, Execution, Ledger, Origin, Outcome, Runner, TestId};
 use serde_json::{json, Value};
 
 fn tool(f: &Fixture, name: &str, arguments: Value) -> Value {
-    let mut child = Command::new(BIN)
+    let mut child = common::majordomus()
         .arg("mcp")
         .env("MAJORDOMUS_SHARE", common::dist_share())
         .current_dir(f.root())
@@ -569,7 +569,7 @@ fn with_stdout_gone(f: &Fixture, args: &[&str]) -> (i32, String) {
     use std::os::unix::net::UnixStream;
     let (stdout, reader) = UnixStream::pair().expect("a socket pair");
     drop(reader);
-    let out = Command::new(BIN)
+    let out = common::majordomus()
         .args(args)
         .current_dir(f.root())
         .env("MAJORDOMUS_SHARE", common::dist_share())

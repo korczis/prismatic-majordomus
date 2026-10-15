@@ -78,7 +78,17 @@ impl App {
                         reason: format!("{reason}; discovery through the version-control index needs git (or pass --discovery filesystem)"),
                     });
                 }
-                Box::new(VcsIndex::default())
+                // A layer git was never given is read from the work tree (ADR 0145): the
+                // index would describe a layer with no files in it, and every answer about a
+                // personal-mode repository would be an answer about nothing.
+                if crate::discovery::layer_is_untracked(repository.root()) {
+                    tracing::info!("the layer is tracked nowhere; discovery walks the work tree");
+                    Box::new(FileSystem {
+                        excluded: vec![".git".into(), repository.local_path()],
+                    })
+                } else {
+                    Box::new(VcsIndex::default())
+                }
             }
             DiscoveryMode::Filesystem => Box::new(FileSystem {
                 excluded: vec![".git".into(), repository.local_path()],

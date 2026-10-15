@@ -49,6 +49,22 @@ jq -r '.artifacts[] | [.path, (.bytes // "-"), (.sha256 // "-"), .format, .docum
   [ "$gh" = "$sha" ] || { echo "    $path hashes to $gh and the manifest records $sha"; exit 1; }
   # --- and it carries a provenance header in the form its encoding allows
   case "$document" in providers/*) continue ;; esac
+  # An editor reads these files, and its format decides where the banner can go (ADR 0140):
+  # after the front matter of a skill, which must open the file, and as `//` lines in a task
+  # list, which is a JSON array and has no member to carry it. `editors::banner_is_present`
+  # is the source; this is the same two forms.
+  case "$document" in editors/*)
+    case "$format" in
+      markdown) awk 'NR==1 && $0!="---" {exit 1} NR>1 && $0=="---" {getline; exit ($0 ~ /^<!-- GENERATED FILE/) ? 0 : 1} NR>20 {exit 1}' "$f" \
+                  || { echo "    $path carries no banner after its front matter"; exit 1; } ;;
+      json) head -n 1 "$f" | grep -q '^// GENERATED FILE' \
+              || { echo "    $path carries no // banner"; exit 1; }
+            grep -v '^//' "$f" | jq -e . >/dev/null \
+              || { echo "    $path is not JSON below its banner"; exit 1; } ;;
+      *) echo "    $path is an editor projection in the unexpected encoding $format"; exit 1 ;;
+    esac
+    continue ;;
+  esac
   case "$format" in
     markdown) head -n 2 "$f" | grep -q '^<!-- GENERATED FILE' || { echo "    $path carries no banner"; exit 1; } ;;
     # A generated script cannot carry its banner first: the first line belongs to the

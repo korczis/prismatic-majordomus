@@ -1,0 +1,49 @@
+id: surfaces-never-disagree
+title: "Every surface projects the same state, says when it was observed, and keeps no list of its own"
+slug: surfaces-never-disagree
+order: 140
+priority: p1
+problem: "The core projection holds: the live server's 181 /api/v1 routes equal the 181 OpenAPI operations, which equal the committed docs/generated/openapi.json, and the executor is the only dispatch path (apps/majordomus-cli/src/capability/executor.rs:156). Around it: freshness is not uniform, since dashboard/overview, episodes, lifecycle/runtime, plan/status, served and mesh carry no observed_at, the overview badge is permanently stale on an idle repository (apps/majordomus-cli/src/index.rs:44, apps/majordomus-cli/src/live.rs:250-252) and GET / said stale: null while serving a build 12 commits behind HEAD. The parity property compares HTTP only for GET routes and excludes the coordination read models (apps/majordomus-cli/tests/properties.rs:166-168,300), and nothing compares CLI JSON with HTTP. /swagger has no CSP and no SRI on the same origin as the write routes (apps/majordomus-cli/src/http/swagger.rs:52,79). The Cockpit and the site keep at least nine consumer-side catalogues of what the registry declares, and ADR 0004 says nothing has a second registry. Measured in the runtime baseline audit of 2026-10-09 at master 1fb8d6be44 (plan/RUNTIME_BASELINE.md)."
+outcome: "A reader on any surface sees the same value, the time it was observed and whether it is stale; a capability added to or removed from the registry appears or disappears everywhere with no consumer edit; a page served beside the write routes runs only script it shipped."
+current_state: "Implemented: routes, OpenAPI, MCP and the generated registry dataset are registry-derived and drift-checked. Partial: freshness, parity, Cockpit data access (five pages read ctx.registry directly, .ai/repo/ui-integrity-baseline.txt:9-13). Second registries: the clap tree (checked both ways by apps/majordomus-cli/src/capability/closure.rs), cli/local.rs LOCAL (89 commands), native web surfaces (apps/majordomus-cli/src/web/discover.rs:150), Cockpit routes (three lists, cross-checked), and the consumer copies listed in plan/RUNTIME_BASELINE.md."
+desired_state: "Every state-reporting answer carries observed_at and source, enforced over the registry; the parity property covers writers and the CLI; no Cockpit or site file names a value an enum, a capability or HttpExposure already declares; /swagger and every GET refuse what a hostile page or rebinding host could do."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin"
+  - "apps/majordomus-cli/src/cockpit"
+  - "apps/majordomus-cli/src/http"
+  - "apps/majordomus-cli/src/live.rs"
+  - "apps/majordomus-cli/src/index.rs"
+  - "apps/majordomus-cli/src/site.rs"
+  - "apps/majordomus-cli/src/web/discover.rs"
+  - "share/cockpit"
+  - "site/templates"
+  - "apps/majordomus-cli/tests/properties.rs"
+  - "apps/majordomus-cli/tests/dashboard.rs"
+  - "test/cases"
+  - "docs/SURFACES.md"
+  - "docs/COCKPIT.md"
+  - ".ai/repo/adrs/0004-canonical-architecture-and-performance-truth.md"
+non_scope:
+  - "Removing the clap tree or cli/local.rs LOCAL; both are measured second declarations (SURFACES F-1, F-4) and this milestone records them rather than rewriting the CLI."
+  - "Writing a static site that claims live state; the site stays a picture labelled as one."
+  - "Reporting a replaced executable, which is I1502."
+acceptance_criteria:
+  - "A test over the registry fails when a state-reporting capability answers without observed_at"
+  - "The parity test covers every capability with an HTTP route and every capability with a CLI path"
+  - "GET /swagger answers with a CSP and integrity hashes, and a foreign Host is refused on GET"
+  - "A gate fails on a literal /api/v1/ path or a copied enum value in Cockpit or site code"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test properties --test projections --test dashboard --test http_serve --test http_host"
+  - "bin/majordomus-cli generate --check"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 545_every_answer_says_when_it_was_observed 406_one_declaration_every_surface"
+evidence_required:
+  - "uniform_freshness"
+  - "parity_with_writers_and_cli"
+  - "no_consumer_catalogue"
+depends_on: []
+risks:
+  - "Adding observed_at to capability outputs changes their schemas and so the public surface; version-surface will price it as a change, which is correct."
+  - "Extending parity to POST routes runs writers in tests; each must run against a synthetic repository, never the checkout."
+created_at: 2026-10-09
+updated_at: 2026-10-09
