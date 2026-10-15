@@ -302,7 +302,7 @@ mod tests {
 
     #[test]
     fn the_sole_udp_provider_listens_and_counts_what_it_hears() {
-        let (tx, rx) = std::sync::mpsc::channel();
+        let (tx, rx) = crate::mesh::provider::ObservationSender::bounded(64);
         let stop = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
         let ctx = crate::mesh::provider::ProviderContext {
             tx,

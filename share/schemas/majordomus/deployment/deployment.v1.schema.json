@@ -3,7 +3,7 @@
   "$id": "https://majordomus.dev/schemas/majordomus/deployment/deployment.v1.schema.json",
   "x-majordomus-schema": "majordomus.deployment/v1",
   "title": "Deployment",
-  "description": "A deployment of this repository's executable, under .ai/repo/deployments/: the one place the application identity, the package and binary that are shipped, the address the process listens on, the routes a platform polls, the resources and machine count it is granted, the region it runs in, the inputs its image is built from and the budgets it is held to are stated. Every provider artifact — the container image definition, its ignore file, the provider configuration — is generated from this object and none of them is authoritative. Provider-specific facts live in the named provider block, never mixed through the generic ones.",
+  "description": "A deployment of this repository's executable, under .ai/repo/deployments/: the one place the application identity, the package and binary that are shipped, the address the process listens on, the routes a platform polls, the resources and machine count it is granted, the region it runs in, the inputs its image is built from and the budgets it is held to are stated. Every artifact built from it — the container image definition and its ignore file — is generated from this object and none of them is authoritative. No hosting provider is named: no provider is a target, so no provider configuration is generated.",
   "x-majordomus-allow": "deployment",
   "type": "object",
   "additionalProperties": false,
@@ -18,8 +18,7 @@
     "health",
     "resources",
     "machines",
-    "region",
-    "provider"
+    "region"
   ],
   "properties": {
     "schema": {
@@ -52,7 +51,7 @@
       ]
     },
     "application": {
-      "description": "The application's name at the provider. One deployment, one application; the provider block never restates it.",
+      "description": "The application's name: what the deployment is known by in a listing. One deployment, one application.",
       "type": "string",
       "pattern": "^[a-z][a-z0-9-]*$"
     },
@@ -78,9 +77,6 @@
     },
     "budgets": {
       "$ref": "#/$defs/budgets"
-    },
-    "provider": {
-      "$ref": "#/$defs/provider"
     },
     "created_at": {
       "type": "string"
@@ -132,7 +128,7 @@
       }
     },
     "listen": {
-      "description": "The address the process listens on. The port is stated here once; the process, the image and the provider configuration all read this one.",
+      "description": "The address the process listens on. The port is stated here once; the process and the image both read this one.",
       "type": "object",
       "additionalProperties": false,
       "required": [
@@ -290,56 +286,6 @@
           "description": "Longest accepted p99 for a served request.",
           "type": "integer",
           "minimum": 1
-        }
-      }
-    },
-    "provider": {
-      "description": "The hosting provider and the facts that belong to it alone. The generic keys above are never restated here.",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "name"
-      ],
-      "properties": {
-        "name": {
-          "description": "The provider this deployment targets. One provider is supported; a second one is an object of its own, not an abstraction over this one.",
-          "enum": [
-            "fly"
-          ]
-        },
-        "fly": {
-          "$ref": "#/$defs/fly"
-        }
-      }
-    },
-    "fly": {
-      "description": "Fly.io's own facts: what has no meaning for any other provider.",
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "org": {
-          "description": "The organisation the application belongs to.",
-          "type": "string",
-          "minLength": 1
-        },
-        "force_https": {
-          "description": "Whether the edge redirects plain HTTP to HTTPS.",
-          "type": "boolean"
-        },
-        "concurrency": {
-          "description": "When the edge considers a machine loaded, in requests.",
-          "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "soft_limit": {
-              "type": "integer",
-              "minimum": 1
-            },
-            "hard_limit": {
-              "type": "integer",
-              "minimum": 1
-            }
-          }
         }
       }
     }

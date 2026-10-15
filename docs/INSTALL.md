@@ -2,7 +2,7 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/install/INSTALL.md.in (the prose) and share/distribution.yaml (every platform, name and URL);
      regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.20.0 -->
+     Generator: majordomus-cli 0.26.0 -->
 
 ## Quick install
 
@@ -26,6 +26,46 @@ curl -fsSL https://majordomus.dev/install.sh | sh -s -- --init
 installed, by its absolute path, so it does not depend on your `PATH` having been reloaded.
 If installation succeeds and initialisation fails, the installer says so in those words and
 leaves the working installation in place.
+
+## Personal mode
+
+```bash
+curl -fsSL https://majordomus.dev/install.sh | sh -s -- --personal
+```
+
+For using the tool as your own in a repository other people share: your team's, a
+client's, an open-source project's. `--personal` runs `majordomus init --personal` in the
+current directory. It creates the same layer a plain `init` creates and changes nothing the
+repository shares.
+
+- No tracked file is changed and nothing is added to `.gitignore`. The layer is covered by
+  a marked block in the git directory's `info/exclude`, a file git never commits, pushes or
+  clones.
+- `majordomus init --personal` reads `git status` before it writes and exits 10 unless it
+  reads the same afterwards. The installer then compares the status again by itself and
+  prints `Verified (personal)`.
+- `majordomus update` and `majordomus capture install` cover each file before they write it and
+  leave a file the project already tracks alone. `majordomus doctor` re-verifies the cover on
+  every run.
+- The layer is this checkout's. It does not travel with a clone, a push or a stash.
+
+When the trial has made its case, hand the layer to the team:
+
+```bash
+majordomus init --extend --shared
+```
+
+It removes the cover, adds the two `.gitignore` lines a plain `init` adds, and prints what
+is now the repository's to commit. It commits nothing; that step is yours. A file that is
+one person's by its own name, such as `CLAUDE.local.md`, stays covered and stays yours.
+
+To stop instead, delete the block between `# >>> majordomus personal >>>` and
+`# <<< majordomus personal <<<` and the files it lists.
+
+Personal mode keeps a layer apart from what a repository shares. It is not access control,
+and it is not a way around an organisation's rules about tools. The decision is ADR 0145;
+[`PERSONAL_MODE.md`](PERSONAL_MODE.md) is the whole account: what it is for, what stays
+visible, and the way from a personal layer to a shared one.
 
 ## Verify
 
@@ -89,10 +129,10 @@ MAJORDOMUS_INSTALL_DIR="$HOME/bin" curl -fsSL https://majordomus.dev/install.sh 
 ## Pinning a version
 
 ```bash
-curl -fsSL https://majordomus.dev/install.sh | sh -s -- --version v0.20.0
+curl -fsSL https://majordomus.dev/install.sh | sh -s -- --version v0.26.0
 ```
 
-A pinned installation resolves `https://majordomus.dev/releases/v0.20.0.json`, which names the exact artifact and its
+A pinned installation resolves `https://majordomus.dev/releases/v0.26.0.json`, which names the exact artifact and its
 sha256 digest, and therefore installs the same bytes every time. An unpinned
 installation resolves `https://majordomus.dev/releases/latest.json`, which is the latest stable release and moves
 forward as releases are published. Use the pinned form in CI.
@@ -100,7 +140,7 @@ forward as releases are published. Use the pinned form in CI.
 ## Using it in CI
 
 ```bash
-curl -fsSL https://majordomus.dev/install.sh | sh -s -- --version v0.20.0
+curl -fsSL https://majordomus.dev/install.sh | sh -s -- --version v0.26.0
 export PATH="$HOME/.local/bin:$PATH"
 majordomus --version
 ```
@@ -134,7 +174,13 @@ the tool's, and no command of this project deletes them.
 
 | Release | Published | Channel | Artifacts | Metadata |
 |---|---|---|---|---|
-| `v0.20.0` (latest) | 2026-10-10 | stable | 6 | [`v0.20.0.json`](https://majordomus.dev/releases/v0.20.0.json) |
+| `v0.26.0` (latest) | 2026-10-14 | stable | 6 | [`v0.26.0.json`](https://majordomus.dev/releases/v0.26.0.json) |
+| `v0.25.0` | 2026-10-14 | stable | 6 | [`v0.25.0.json`](https://majordomus.dev/releases/v0.25.0.json) |
+| `v0.24.1` | 2026-10-14 | stable | 6 | [`v0.24.1.json`](https://majordomus.dev/releases/v0.24.1.json) |
+| `v0.23.0` | 2026-10-13 | stable | 6 | [`v0.23.0.json`](https://majordomus.dev/releases/v0.23.0.json) |
+| `v0.22.0` | 2026-10-13 | stable | 6 | [`v0.22.0.json`](https://majordomus.dev/releases/v0.22.0.json) |
+| `v0.21.0` | 2026-10-12 | stable | 6 | [`v0.21.0.json`](https://majordomus.dev/releases/v0.21.0.json) |
+| `v0.20.0` | 2026-10-10 | stable | 6 | [`v0.20.0.json`](https://majordomus.dev/releases/v0.20.0.json) |
 | `v0.19.1` | 2026-10-10 | stable | 6 | [`v0.19.1.json`](https://majordomus.dev/releases/v0.19.1.json) |
 | `v0.19.0` | 2026-10-09 | stable | 6 | [`v0.19.0.json`](https://majordomus.dev/releases/v0.19.0.json) |
 | `v0.18.0` | 2026-10-09 | stable | 6 | [`v0.18.0.json`](https://majordomus.dev/releases/v0.18.0.json) |

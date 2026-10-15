@@ -535,12 +535,25 @@ person rewritten the region since it was posted, and has the canonical record mo
 and, of a remote record rather than a canonical one, `unmanaged`: an issue claiming a
 canonical id this repository does not have.
 
-Applying is a deliberate act; agreement is a gate. `scripts/ci/github-check` reads the
+Applying is a consequence of landing; agreement is a gate. Every push to the default branch
+starts `.github/workflows/github.yml`, which runs `--check`, then `--apply` when something is
+owed, then the gate (`project.the-projection-is-applied-at-landing@1`); a person's `--apply`
+from the trunk is the fallback when that run fails. `scripts/ci/github-check` reads the
 remote on every change that can move either side, refuses the first six states outright,
 and ratchets `missing` and `adopt` against `.ai/repo/ci/github-drift-baseline.txt`, which
 may fall and may never rise. It exists because the detector was written, never called, and
 the projection decayed to a tenth of the model over five days with every build green
 (`project.github-projection-gated@1`).
+
+A head is judged against what it changes. GitHub shows the trunk's plan and nothing else,
+so a record a pull request edits is `behind` there until the pull request has merged and
+the landing has applied it. The gate reports the four states an apply writes (`behind`, `state`,
+`milestone`, `closed`) as `PENDING` instead of refusing them, for the records the head
+changed since its merge base, and on the trunk for the records that changed in a landing
+younger than `apply.window` in `.ai/repo/ci/github.yaml`. Past that window the trunk is
+refused and the refusal names `scripts/github-sync --apply`. A record counts as changed
+when its file or its rendering differs, because closing one issue moves the status of every
+issue that waited for it. Drift on a record the head did not change is refused as before.
 
 The network calls live in `scripts/github-sync`, outside the tool. `bin/`, `lib/`, `share/`
 and `test/` contain no network client, and `test/cases/08_no_forbidden_constructs.sh` proves
@@ -588,7 +601,8 @@ disagree with the first.
 record; splitting them lets one be read without the other.
 
 **A mapping file from canonical id to GitHub number.** State that has to be kept in step with
-two systems. The id prefixes the title instead, and matching is a string comparison.
+two systems. An issue carries its id in a marker inside its generated region, a milestone as
+the prefix of its title, and matching is a string comparison.
 
 **Estimates, velocity, burndown.** None of them changes what a worker should do next, which
 is the only question this layer answers.

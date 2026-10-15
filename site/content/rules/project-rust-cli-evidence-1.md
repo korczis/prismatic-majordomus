@@ -1,7 +1,7 @@
 +++
 title = "The Rust executable carries its evidence with it"
 description = "The Rust executable carries its evidence with it"
-weight = 142
+weight = 150
 [extra]
 kind = "rule"
 slug = "project-rust-cli-evidence-1"

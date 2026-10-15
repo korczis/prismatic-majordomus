@@ -171,6 +171,11 @@ pub struct CheckObservation {
     /// or when the forge did not say. The newest report of a context is its verdict.
     #[serde(default)]
     pub completed_at: String,
+    /// When a check run started, RFC 3339; empty for a status context, for a run that has not
+    /// started, and in an observation recorded before this was read. With `completed_at` it
+    /// is how long the run took (`integration::timings`).
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub started_at: String,
 }
 
 /// Where one check run stands.
@@ -257,6 +262,23 @@ pub enum RelationToMaster {
     },
     /// The head already contains master and merges cleanly.
     UpToDate {
+        /// Authored (non-derived) paths the merge changes.
+        authored: Vec<String>,
+        /// The version a landing of this head allocates, when master allocates at landing
+        /// (ADR 0134) and the head does not carry it: the head owes a refresh even though it
+        /// contains master. Absent when the policy does not allocate, or the head carries it.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        owes_version: Option<String>,
+    },
+    /// The head does not contain master, yet master holds nothing the head lacks: merging it
+    /// writes the head's own tree, and every commit master has beyond it is a merge commit.
+    /// That is a head stacked on a pull request that has since landed. A verdict on the head
+    /// is then a verdict on what master becomes, tree and listed history alike, exactly as
+    /// when the head contains master; and no path is merged at all, so the forge needs no
+    /// driver for it.
+    CarriesMaster {
+        /// Commits on master the head does not have.
+        behind: u64,
         /// Authored (non-derived) paths the merge changes.
         authored: Vec<String>,
     },
@@ -697,8 +719,10 @@ const REASON_VOCABULARY: &str = "A reason code, `code` or `code:payload`, one of
 `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, \
 `relation_unknown:WHY`, \
 `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, \
-`required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, \
-`no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, \
+`required_check_failed`, `behind_master:COMMITS`, `fork_head`, \
+`version_unallocated:VERSION`, `required_checks:STATE`, \
+`no_required_checks`, `required_checks_unread`, `contains_master`, `carries_master`, \
+`required_checks_passed`, \
 `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, \
 `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, \
 `dependency_unread:#N`, `declarations_unread`. \
@@ -797,6 +821,12 @@ pub enum ReasonCode {
     },
     /// `fork_head`: the head is a fork's branch, which cannot be refreshed from here.
     ForkHead,
+    /// `version_unallocated:VERSION`: master allocates the version at landing (ADR 0134) and
+    /// the head, though it contains master, does not carry the version its landing takes.
+    VersionUnallocated {
+        /// The version the landing allocates.
+        version: String,
+    },
     /// `required_checks:STATE`: the required checks have not all passed.
     RequiredChecks {
         /// Their verdict.
@@ -808,6 +838,9 @@ pub enum ReasonCode {
     RequiredChecksUnread,
     /// `contains_master`: why a ready one is ready.
     ContainsMaster,
+    /// `carries_master`: why a ready one is ready when its head lacks only merge commits of
+    /// master and its merge yields the head's own tree.
+    CarriesMaster,
     /// `required_checks_passed`: why a ready one is ready.
     RequiredChecksPassed,
     /// `required_checks_skipped`: ready, a permitted skip among its checks.
@@ -881,10 +914,12 @@ impl ReasonCode {
             ReasonCode::RequiredCheckFailed => "required_check_failed",
             ReasonCode::BehindMaster { .. } => "behind_master",
             ReasonCode::ForkHead => "fork_head",
+            ReasonCode::VersionUnallocated { .. } => "version_unallocated",
             ReasonCode::RequiredChecks { .. } => "required_checks",
             ReasonCode::NoRequiredChecks => "no_required_checks",
             ReasonCode::RequiredChecksUnread => "required_checks_unread",
             ReasonCode::ContainsMaster => "contains_master",
+            ReasonCode::CarriesMaster => "carries_master",
             ReasonCode::RequiredChecksPassed => "required_checks_passed",
             ReasonCode::RequiredChecksSkipped => "required_checks_skipped",
             ReasonCode::ExecutorMergeRefused { .. } => "executor_merge_refused",
@@ -925,6 +960,7 @@ impl std::fmt::Display for ReasonCode {
             | ReasonCode::Label { name: s }
             | ReasonCode::LabelObsolete { name: s }
             | ReasonCode::RelationUnknown { reason: s }
+            | ReasonCode::VersionUnallocated { version: s }
             | ReasonCode::ExecutorMergeRefused { head: s }
             | ReasonCode::ExecutorRefreshFailed { master: s } => write!(f, "{}:{s}", self.code()),
             ReasonCode::ConflictsOn { count } => write!(f, "{}:{count}", self.code()),
@@ -984,6 +1020,9 @@ impl std::str::FromStr for ReasonCode {
             ("label", Some(p)) => ReasonCode::Label { name: p.into() },
             ("label_obsolete", Some(p)) => ReasonCode::LabelObsolete { name: p.into() },
             ("relation_unknown", Some(p)) => ReasonCode::RelationUnknown { reason: p.into() },
+            ("version_unallocated", Some(p)) => {
+                ReasonCode::VersionUnallocated { version: p.into() }
+            }
             ("conflicts_on", Some(p)) => ReasonCode::ConflictsOn {
                 count: p.parse().map_err(|_| bad())?,
             },
@@ -1009,6 +1048,7 @@ impl std::str::FromStr for ReasonCode {
             ("no_required_checks", None) => ReasonCode::NoRequiredChecks,
             ("required_checks_unread", None) => ReasonCode::RequiredChecksUnread,
             ("contains_master", None) => ReasonCode::ContainsMaster,
+            ("carries_master", None) => ReasonCode::CarriesMaster,
             ("required_checks_passed", None) => ReasonCode::RequiredChecksPassed,
             ("required_checks_skipped", None) => ReasonCode::RequiredChecksSkipped,
             ("declarations_unread", None) => ReasonCode::DeclarationsUnread,

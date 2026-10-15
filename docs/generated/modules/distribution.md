@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the `distribution` module of the canonical Majordomus capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.20.0 -->
+     Generator: majordomus-cli 0.26.0 -->
 # Module `distribution` — Distribution
 
 How this project is packaged, published and installed: the platforms a release builds, the artifact names the one naming function derives, the installer's canonical command, the releases that were published, and what this build itself is. Every answer comes from share/distribution.yaml and the release records; no surface here states a fact of its own.
@@ -81,7 +81,7 @@ Every release this repository recorded, newest first, and the one an unpinned in
 | MCP tool | `majordomus_releases` |
 | HTTP | `GET /api/v1/distribution/releases` |
 | CLI | `majordomus distribution releases` |
-| cache | — |
+| cache | process, 1 entries, per generation |
 | benchmark | required |
 | provenance | builtin majordomus_cli::capability::builtin::distribution |
 | tags | distribution, release |

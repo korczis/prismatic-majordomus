@@ -450,6 +450,39 @@ start_http() {
 
 stop_http() { [ -n "${HTTP_PID:-}" ] && kill "$HTTP_PID" 2>/dev/null; HTTP_PID=""; return 0; }
 
+# What a publication holds that the site build does not compose (deploy.snapshots of the
+# publication model: the UI read once at a commit, ADR 0141), as a stand-in in a site
+# directory. The real one is written by the Rust executable and placed by the deploy job of
+# the pages workflow; a case that deploys or serves a fixture site is not about that producer
+# and must not need it built, but the site it handles is short of a surface without one, and
+# `scripts/site-deploy` and the live gate both refuse a site that is. So the case places the
+# smallest whole snapshot: the declaration, a landing page whose banner states the commit, the
+# run's record, and the one other page that record lists.
+#   publication_snapshots <repository> <site-directory> <commit>
+# Which snapshots, and at which mount, is <repository>'s own model, read through its own
+# `scripts/pages snapshots`, so a snapshot the model gains is placed because it was declared.
+# The commit is abbreviated to ten characters, as the producer states it. Answers 1 when the
+# model cannot be read.
+publication_snapshots() {
+  local repo="$1" site="$2" commit="${3:0:10}" rows s_id s_mount s_marker
+  rows="$(cd "$repo" && env -u MAJORDOMUS_ROOT -u MAJORDOMUS_SHARE scripts/pages snapshots)" || return 1
+  while IFS="$(printf '\t')" read -r s_id s_mount _ _ s_marker; do
+    [ -n "$s_id" ] || continue
+    mkdir -p "$site$s_mount/one"
+    jq -n --arg i "$s_id-snapshot" --arg m "$s_mount" --arg c "$commit" \
+      '{schema: "web-surface/v1", id: $i, mount: $m, index: "index.html", availability: "published-only", built_from: $c}' \
+      > "$site$s_mount/surface.json"
+    printf '<html><body data-snapshot><p %s="%s">a snapshot read at %s</p><a href="one/index.html">one</a></body></html>\n' \
+      "$s_marker" "$commit" "$commit" > "$site$s_mount/index.html"
+    printf '<html><body data-snapshot><p %s="%s">one</p></body></html>\n' "$s_marker" "$commit" > "$site$s_mount/one/index.html"
+    jq -n --arg m "$s_mount" --arg c "$commit" \
+      '{origin: {revision: $c}, pages: {($m): "index.html", ($m + "/one"): "one/index.html"}, left_out: [], stopped_by: "complete"}' \
+      > "$site$s_mount/snapshot.json"
+  done <<EOF
+$rows
+EOF
+}
+
 # `majordomus serve` of the current directory on an ephemeral port, for the cases that ask a
 # real socket. Once it listens, SRV is its pid and U its base URL (http://127.0.0.1:<port>);
 # `serve_down` stops it. The caller has set RB (rust_bin) and kills $SRV in its EXIT trap, as
