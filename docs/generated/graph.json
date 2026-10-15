@@ -31339,7 +31339,7 @@
             "test/cases"
           ],
           "slug": "pre-push-judges-the-pushed-refs",
-          "updated_at": "2026-10-14T23:19:09Z",
+          "updated_at": "2026-10-15T11:59:22Z",
           "validation": [
             "bin/majordomus plan validate",
             "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
@@ -53101,6 +53101,13 @@
         "label": "test/cases/305_a_command_is_claimed_or_classified.sh",
         "route": "/cockpit/objects/test/test-cases-305-a-command-is-claimed-or-classified-sh",
         "source": "test/cases/305_a_command_is_claimed_or_classified.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3064_a_pushed_branch_is_judged_by_its_holder.sh",
+        "kind": "test",
+        "label": "test/cases/3064_a_pushed_branch_is_judged_by_its_holder.sh",
+        "route": "/cockpit/objects/test/test-cases-3064-a-pushed-branch-is-judged-by-its-holder-sh",
+        "source": "test/cases/3064_a_pushed_branch_is_judged_by_its_holder.sh"
       },
       {
         "id": "majordomus://test/test/cases/30_command_registry.sh",
@@ -82938,6 +82945,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3064_a_pushed_branch_is_judged_by_its_holder.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/30_command_registry.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -88224,8 +88236,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2798,
-      "edges": 6131,
+      "nodes": 2799,
+      "edges": 6132,
       "acyclic": false,
       "truncated": false
     }
