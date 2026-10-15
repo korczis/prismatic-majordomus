@@ -1,0 +1,37 @@
+version: 1
+
+# ---------------------------------------------------------------- what this workflow is for
+# The release cadence (ADR 0151, rule project.a-release-is-cut-on-the-hour): each hour the
+# trunk is asked whether a release can be cut, and when it can, it is cut, with no person in
+# the loop. .github/workflows/cadence.yml is an adapter over scripts/release-cadence; which
+# commit is the candidate, what "green" means and which version is cut are that script's, and
+# test/cases/2990_a_release_is_cut_on_the_hour.sh holds both to it.
+#
+# WHAT IT DELIBERATELY DOES NOT DO. It creates one tag at a first-parent trunk commit whose
+# `ci` concluded success and dispatches release.yml with it. It never pushes to master, never
+# raises the version (a landing does), never merges a pull request, and never tags a red or
+# an unjudged commit; release.yml asks the same verdict again before it builds anything
+# (release.yaml). An hour with nothing to cut is reported with its reason, never silence.
+trigger:
+  branch: master
+  schedule: '7 * * * *'
+  # a person may ask for one decision, and may ask for it without any change (dry_run)
+  dispatch: [dry_run]
+
+# One decision at a time: two runs cannot both decide to cut the same version, and a waiting
+# run is not cancelled; it decides after the one before it, on what that one left.
+concurrency:
+  group: release-cadence
+  cancel_in_progress: false
+
+# contents: write for the one tag; actions: write to dispatch release.yml; checks: read for
+# the verdict. Nothing here can change a branch.
+permissions: [contents-write, actions-write, checks-read]
+
+cut:
+  command: scripts/release-cadence --trunk HEAD
+  # exit 0 is a decision either way, a tag cut or a stated reason for none; exit 12 is "the
+  # verdict could not be read" (no gh, no slug, an unreadable trunk) and fails the job, since
+  # an hour that could not decide is not an hour with nothing to cut.
+  fails_on: unusable
+  report: run summary

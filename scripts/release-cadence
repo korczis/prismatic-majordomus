@@ -1,0 +1,183 @@
+#!/usr/bin/env bash
+# release-cadence — the actor that cuts a release when one can be cut, without a person.
+#
+# The repository had every judge a release needs and no actor that asks them on a clock:
+# `scripts/release-version` reads the version from the one place it is authored,
+# `scripts/ci/release-verdict` refuses a commit whose `ci` did not conclude success, and
+# `.github/workflows/release.yml` builds, publishes and records a tag. What nothing did was
+# look at the trunk and create that tag. `.github/workflows/version.yml` stops before it on
+# purpose ("creating that tag is a decision"), so a green, raised master waited for whoever
+# remembered. On 2026-10-12 the owner made the decision a standing one: a version every hour,
+# arranged without a human in the loop.
+#
+# So, each time it is asked, this takes the newest commit of the trunk's first-parent history
+# since the last release whose `ci` concluded success, and:
+#
+#   cut        the commit declares a version above the last release and no tag holds it:
+#              the tag is created at THAT commit and the release workflow is dispatched with
+#              it. The tag need not be the trunk's tip, and a red commit is never tagged.
+#   nothing    there is nothing to cut, and the reason is the answer:
+#                current      the trunk has not moved since the last release
+#                no-verdict   no commit since the last release has a green `ci` yet
+#                not-raised   the newest green commit still declares the released version
+#                record-owed  the last release's record is not in that commit yet
+#                tagged       the version it declares already has a tag
+#
+# A release is finished by its record: the release workflow writes `.ai/repo/releases/<tag>.yaml`
+# and it reaches the trunk as a pull request. Until it has, the trunk still describes the release
+# before, and a second tag cut from it would be a release built on an unrecorded one. So the next
+# release waits for a green commit that holds the last one's record, and says so while it waits.
+#
+# It judges nothing itself. The verdict is release-verdict's, asked per commit; the version is
+# the manifest's at that commit; whether the tag agrees with the tool is release.yml's first
+# step, and it refuses a release this script should not have asked for. A tag created through
+# the API with the workflow's own token starts no workflow, which is why the release is
+# dispatched by name and not left to the tag.
+#
+#   scripts/release-cadence                 decide and act
+#   scripts/release-cadence --dry-run       decide, say what would be done, change nothing
+#   scripts/release-cadence --trunk <ref>   the trunk to read (default origin/master)
+#   scripts/release-cadence --max <n>       how many commits back to ask for a verdict (default 30)
+#   RELEASE_CADENCE_WORKFLOW=<file>         the workflow to dispatch (default release.yml)
+#   GITHUB_REPOSITORY=<owner/repo>          the repository (default: from origin)
+#   GITHUB_OUTPUT=<file>                    receives decision=, reason=, tag=, commit=
+#
+# Exit: 0 a release was cut, or there was nothing to cut and the reason is printed ·
+# 2 usage · 12 the question could not be answered (no gh, no slug, no trunk, an API that did
+# not answer, a tag or a dispatch that was refused). Never 0 for something it did not read.
+set -euo pipefail
+
+DRY=0; TRUNK="origin/master"; MAX=30
+WORKFLOW="${RELEASE_CADENCE_WORKFLOW:-release.yml}"
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --dry-run) DRY=1; shift ;;
+    --trunk) TRUNK="${2:?--trunk needs a ref}"; shift 2 ;;
+    --max) MAX="${2:?--max needs a count}"; shift 2 ;;
+    -h|--help) sed -n '2,47p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    *) echo "release-cadence: unknown option $1" >&2; exit 2 ;;
+  esac
+done
+case "$MAX" in ''|0|*[!0-9]*) echo "release-cadence: --max takes a count of one or more, not '$MAX'" >&2; exit 2 ;; esac
+
+ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || { echo "release-cadence: not in a git repository" >&2; exit 12; }
+cd "$ROOT"
+VERDICT="$ROOT/scripts/ci/release-verdict"
+MANIFEST="apps/majordomus-cli/Cargo.toml"
+RECORDS=".ai/repo/releases"
+[ -x "$VERDICT" ] || { echo "release-cadence: scripts/ci/release-verdict is missing; nothing here can say a commit passed" >&2; exit 12; }
+command -v gh >/dev/null 2>&1 || { echo "release-cadence: gh is not installed, so no verdict can be read and no tag created" >&2; exit 12; }
+SLUG="${GITHUB_REPOSITORY:-}"
+[ -n "$SLUG" ] || SLUG="$(git remote get-url origin 2>/dev/null | sed -n 's|.*[:/]\([^/][^/]*/[^/][^/]*\)$|\1|p' | sed 's|\.git$||')"
+[ -n "$SLUG" ] || { echo "release-cadence: no repository slug (no GITHUB_REPOSITORY, no origin)" >&2; exit 12; }
+tip="$(git rev-parse --verify -q "$TRUNK^{commit}" 2>/dev/null)" \
+  || { echo "release-cadence: $TRUNK names no commit in this clone; fetch the trunk first" >&2; exit 12; }
+
+# what a decision is reported with: one line a person reads, and the same facts for a workflow
+say() {   # <decision> <reason> <tag> <commit> <sentence>
+  printf 'release-cadence: %s\n' "$5"
+  [ -z "${GITHUB_OUTPUT:-}" ] || printf 'decision=%s\nreason=%s\ntag=%s\ncommit=%s\n' "$1" "$2" "$3" "$4" >> "$GITHUB_OUTPUT"
+}
+# the version a commit declares, read from the manifest as that commit holds it
+declared() {
+  git show "$1:$MANIFEST" 2>/dev/null \
+    | awk '/^\[package\]/{p=1; next} /^\[/{p=0} p && /^version[[:space:]]*=/{gsub(/[" ]/,"",$0); sub(/^version=/,"",$0); print; exit}'
+}
+# is version $1 above version $2, by the numbers and not by the letters
+above() { [ "$1" != "$2" ] && [ "$(printf '%s\n%s\n' "$1" "$2" | LC_ALL=C sort -t. -k1,1n -k2,2n -k3,3n | tail -n 1)" = "$1" ]; }
+
+# The last release: the highest version tag the trunk contains. A tag on another line of
+# history is not a release of this trunk.
+last=""
+while read -r t; do
+  [ -n "$t" ] || continue
+  if git merge-base --is-ancestor "$t^{commit}" "$tip" 2>/dev/null; then last="$t"; break; fi
+done <<EOF
+$(git tag --list 'v[0-9]*.[0-9]*.[0-9]*' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sed 's/^v//' | LC_ALL=C sort -t. -k1,1nr -k2,2nr -k3,3nr | sed 's/^/v/')
+EOF
+if [ -n "$last" ]; then
+  base="$(git rev-parse "$last^{commit}")"; released="${last#v}"; range="$base..$tip"
+else
+  base=""; released="0.0.0"; range="$tip"
+fi
+
+if [ -n "$base" ] && [ "$base" = "$tip" ]; then
+  say nothing current "" "$tip" "nothing to cut: $TRUNK is $last itself (${tip:0:12}); the trunk has not moved since the last release"
+  exit 0
+fi
+
+# Newest first, along the first parent: the commits the trunk itself was at. The first one
+# whose `ci` concluded success is the candidate; a red or an unjudged one is passed over and
+# counted, because "no green commit" and "we did not look far enough" are different answers.
+candidate=""; asked=0; red=0; unjudged=0
+ERR="$(mktemp "${TMPDIR:-/tmp}/release-cadence.XXXXXX")"; trap 'rm -f "$ERR"' EXIT
+while read -r sha; do
+  [ -n "$sha" ] || continue
+  asked=$((asked + 1))
+  rc=0; GITHUB_REPOSITORY="$SLUG" "$VERDICT" --commit "$sha" >/dev/null 2>"$ERR" || rc=$?
+  case "$rc" in
+    0)  candidate="$sha"; break ;;
+    10) red=$((red + 1)) ;;
+    12) # no check-run yet, or one still running, is a commit not yet judged; an API that
+        # could not be read at all is this script's own failure to see
+        if grep -q 'could not be read\|is not installed\|no repository slug' "$ERR"; then
+          cat "$ERR" >&2
+          echo "release-cadence: the verdict of ${sha:0:12} could not be read, so nothing is cut" >&2
+          exit 12
+        fi
+        unjudged=$((unjudged + 1)) ;;
+    *)  cat "$ERR" >&2
+        echo "release-cadence: release-verdict answered $rc for ${sha:0:12}, which is not an answer it has" >&2
+        exit 12 ;;
+  esac
+done <<EOF
+$(git rev-list --first-parent --max-count="$MAX" "$range")
+EOF
+
+if [ -z "$candidate" ]; then
+  say nothing no-verdict "" "$tip" "nothing to cut: none of the $asked newest commit(s) of $TRUNK since ${last:-the first commit} has a green ci ($red concluded otherwise, $unjudged not judged yet); a release follows the verdict"
+  exit 0
+fi
+
+version="$(declared "$candidate")"
+[ -n "$version" ] || { echo "release-cadence: ${candidate:0:12} declares no version in $MANIFEST" >&2; exit 12; }
+tag="v$version"
+if ! above "$version" "$released"; then
+  say nothing not-raised "$tag" "$candidate" "nothing to cut: the newest green commit ${candidate:0:12} declares $version and the last release is ${last:-none}; the version is raised by a landing (majordomus release bump), not here"
+  exit 0
+fi
+if [ -n "$last" ] && ! git cat-file -e "$candidate:$RECORDS/$last.yaml" 2>/dev/null; then
+  say nothing record-owed "$tag" "$candidate" "nothing to cut: the newest green commit ${candidate:0:12} declares $version, and the record of $last ($RECORDS/$last.yaml) is not in it; a release follows the record of the one before it"
+  exit 0
+fi
+if git rev-parse --verify -q "refs/tags/$tag" >/dev/null 2>&1; then
+  say nothing tagged "$tag" "$candidate" "nothing to cut: $tag already exists (at $(git rev-parse --short=12 "$tag^{commit}")), and ${candidate:0:12} declares the same version"
+  exit 0
+fi
+
+if [ "$DRY" = 1 ]; then
+  say cut dry-run "$tag" "$candidate" "would cut $tag at ${candidate:0:12} (green ci, $version above ${last:-no release}) and dispatch $WORKFLOW with it; --dry-run changes nothing"
+  exit 0
+fi
+
+# The tag, at the candidate and nowhere else. A tag that appeared since this run looked is
+# somebody else's cut of the same version: said, and not an error.
+out=""; rc=0
+out="$(gh api -X POST "repos/$SLUG/git/refs" -f "ref=refs/tags/$tag" -f "sha=$candidate" 2>&1)" || rc=$?
+if [ "$rc" != 0 ]; then
+  if printf '%s' "$out" | grep -q 'Reference already exists'; then
+    say nothing tagged "$tag" "$candidate" "nothing to cut: $tag was created by someone else while this run was deciding"
+    exit 0
+  fi
+  echo "release-cadence: the tag $tag could not be created at ${candidate:0:12}: $out" >&2
+  echo "  the token needs contents:write; reproduce: gh api -X POST repos/$SLUG/git/refs -f ref=refs/tags/$tag -f sha=$candidate" >&2
+  exit 12
+fi
+rc=0
+out="$(gh workflow run "$WORKFLOW" -R "$SLUG" -f "tag=$tag" 2>&1)" || rc=$?
+if [ "$rc" != 0 ]; then
+  echo "release-cadence: $tag is created at ${candidate:0:12}, and $WORKFLOW could not be dispatched with it: $out" >&2
+  echo "  the tag stands; release it with: gh workflow run $WORKFLOW -R $SLUG -f tag=$tag" >&2
+  exit 12
+fi
+say cut released "$tag" "$candidate" "cut $tag at ${candidate:0:12} (green ci, $version above ${last:-no release}) and dispatched $WORKFLOW with it"

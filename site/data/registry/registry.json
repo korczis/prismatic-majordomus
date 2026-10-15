@@ -6,23 +6,23 @@
     "version": "0.26.0"
   },
   "registry": {
-    "fingerprint": "dcd73504305fb981edaa3320c23c9994f922898e6750a89a9804ff556fc13e5b",
+    "fingerprint": "0947065f7f21d9a7e939e44ef366ecbc51fac8c5c1573a9ccf0486293cace862",
     "summary": {
-      "total": 2379,
+      "total": 2382,
       "builtin": 199,
-      "declarative": 2180,
+      "declarative": 2183,
       "by_kind": {
         "command": 30,
         "query": 169,
-        "resource": 2180
+        "resource": 2183
       },
       "by_stability": {
         "behaviorally_verified": 139,
         "experimental": 51,
-        "implemented": 2189
+        "implemented": 2192
       },
       "mcp_tools": 190,
-      "mcp_resources": 2235,
+      "mcp_resources": 2238,
       "http_routes": 194,
       "cli_commands": 107,
       "modules": 91,
@@ -80579,7 +80579,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 105,
+        "capabilities": 106,
         "capability_ids": []
       },
       {
@@ -81616,7 +81616,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 179,
+        "capabilities": 180,
         "capability_ids": []
       },
       {
@@ -81760,7 +81760,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 481,
+        "capabilities": 482,
         "capability_ids": []
       },
       {
@@ -81850,7 +81850,7 @@
     ]
   },
   "index": {
-    "fingerprint": "989c3406d092f52a3c8908b082b7356ee825e5fdd9d03625425c0523881962d0",
+    "fingerprint": "3c84715e3c15560c2d8f4bfb6c223cdea0425bb27c798a114d2e5d993bb1af81",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -81873,7 +81873,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 105,
+      "adr": 106,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -81899,12 +81899,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 26,
-      "rule": 179,
+      "rule": 180,
       "scope": 1,
       "session": 89,
       "skill": 8,
       "taxonomy": 10,
-      "test": 481,
+      "test": 482,
       "use-case": 49,
       "workspace": 1
     },
@@ -83612,6 +83612,22 @@
           "language",
           "governance",
           "derivation"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0151",
+        "kind": "adr",
+        "identity": "adr-0151",
+        "title": "A release is cut by a clock when the trunk has earned one",
+        "description": "A release is cut by a clock when the trunk has earned one",
+        "path": ".ai/repo/adrs/0151-a-release-is-cut-by-a-clock-when-the-trunk-has-earned-one.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 5733,
+        "tags": [
+          "release",
+          "ci",
+          "automation"
         ]
       },
       {
@@ -87974,7 +87990,7 @@
         "title": "The release — a changelog nobody writes, and one writer for the version",
         "path": "docs/RELEASE.md",
         "source_class": "document",
-        "bytes": 41705
+        "bytes": 44339
       },
       {
         "uri": "majordomus://document/docs/ROADMAP.md",
@@ -97891,6 +97907,22 @@
         ]
       },
       {
+        "uri": "majordomus://rule/project.a-release-is-cut-on-the-hour@1",
+        "kind": "rule",
+        "identity": "project.a-release-is-cut-on-the-hour@1",
+        "title": "A release is cut by a clock when the trunk has earned one, and an hour without one says why",
+        "description": "Each hour an actor takes the newest commit of the trunk since the last release whose ci concluded success and, when it declares a version above that release and no tag holds it, creates the tag at that commit and dispatches the release; otherwise it cuts nothing and states which condition was not met. It never tags a red or an unjudged commit, changes no branch, raises no version and merges nothing.",
+        "path": ".ai/repo/rules/project/a-release-is-cut-on-the-hour.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 4622,
+        "tags": [
+          "release",
+          "ci",
+          "cadence"
+        ]
+      },
+      {
         "uri": "majordomus://rule/project.a-tool-that-cannot-match-the-tree-refuses@1",
         "kind": "rule",
         "identity": "project.a-tool-that-cannot-match-the-tree-refuses@1",
@@ -102247,6 +102279,14 @@
         "bytes": 8281
       },
       {
+        "uri": "majordomus://test/test/cases/2990_a_release_is_cut_on_the_hour.sh",
+        "kind": "test",
+        "identity": "test/cases/2990_a_release_is_cut_on_the_hour.sh",
+        "path": "test/cases/2990_a_release_is_cut_on_the_hour.sh",
+        "source_class": "case",
+        "bytes": 12144
+      },
+      {
         "uri": "majordomus://test/test/cases/2999_delivery_is_expedited_only_where_the_rule_says.sh",
         "kind": "test",
         "identity": "test/cases/2999_delivery_is_expedited_only_where_the_rule_says.sh",
@@ -105286,7 +105326,7 @@
       "identity": [
         "id"
       ],
-      "objects": 105
+      "objects": 106
     },
     {
       "name": "application",
@@ -105546,7 +105586,7 @@
         "id",
         "version"
       ],
-      "objects": 179
+      "objects": 180
     },
     {
       "name": "scope",
@@ -105601,7 +105641,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 481
+      "objects": 482
     },
     {
       "name": "use-case",
