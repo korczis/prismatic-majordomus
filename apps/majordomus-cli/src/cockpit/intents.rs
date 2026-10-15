@@ -183,8 +183,22 @@ pub fn list(ctx: &Context) -> Page {
                     r.orphans.to_string(),
                     "units of work serving no intent",
                     "intent_realization.work",
+                ))
+                .child(statistic(
+                    r.empty.to_string(),
+                    "empty session records, not orphan work",
+                    "intent_realization.work",
+                ))
+                .child(statistic(
+                    r.before_intents.to_string(),
+                    "units started before the first intent, not orphan work",
+                    "intent_realization.work",
                 )),
         )
+        .child(unlinked_card(
+            &r,
+            object_link(ctx, "adr", "adr-0075", "ADR 0075, amendment of 2026-10-15"),
+        ))
         .child(card(
             "Intents",
             if rows.is_empty() {
@@ -202,6 +216,41 @@ pub fn list(ctx: &Context) -> Page {
             "What must become true, derived from the plan and the recorded evidence on every read",
         )
         .trail(vec![("Cockpit", Some("/cockpit")), ("Intents", None)])
+}
+
+/// What the three counts of unlinked work mean: only `orphan` is work serving no intent, and
+/// each of the other two is said in one line, with the decision that defines the classes
+/// (ADR 0075, amendment of 2026-10-15). The counts are the capability's; nothing is recounted.
+fn unlinked_card(r: &IntentRealization, adr: El) -> El {
+    card(
+        "Work no intent links",
+        el("div")
+            .child(
+                el("ul")
+                    .class("mj-list")
+                    .child(el("li").text(format!(
+                        "{} orphan: work done, or being done, while an intent existed, with no \
+                         fact linking it to one. Only this is work serving no intent.",
+                        r.orphans
+                    )))
+                    .child(el("li").text(format!(
+                        "{} empty: session records that list no issue, no commit and no changed \
+                         path, so they did no work a link could be read from.",
+                        r.empty
+                    )))
+                    .child(el("li").text(format!(
+                        "{} before the first intent: finished work that started before any \
+                         intent record was written.",
+                        r.before_intents
+                    ))),
+            )
+            .child(
+                el("p")
+                    .class("mj-prose")
+                    .text("No class is a link, and none is bound to an intent: ")
+                    .child(adr),
+            ),
+    )
 }
 
 fn findings_card(findings: &[crate::intent::IntentFinding]) -> El {
@@ -513,6 +562,43 @@ mod tests {
         let page = intent(&ctx, "absent");
         assert_eq!(page.status, 404);
         assert!(page.main.render().contains("no intent"));
+    }
+
+    #[test]
+    fn only_orphan_work_is_counted_as_serving_no_intent() {
+        let r = IntentRealization {
+            intents: vec![],
+            work: vec![],
+            orphans: 1,
+            empty: 66,
+            before_intents: 14,
+            findings: vec![],
+        };
+        let html = unlinked_card(&r, link("/adr", "ADR 0075")).render();
+        for line in [
+            "1 orphan: work done",
+            "Only this is work serving no intent.",
+            "66 empty: session records",
+            "14 before the first intent: finished work",
+            r#"href="/adr""#,
+        ] {
+            assert!(html.contains(line), "missing {line}:\n{html}");
+        }
+        assert_eq!(html.matches("serving no intent").count(), 1, "{html}");
+
+        // the list page shows the three counts and names the decision behind them
+        let repo = SyntheticRepository::small().unwrap();
+        let ctx = repo.context().unwrap();
+        let html = list(&ctx).main.render();
+        for label in [
+            "units of work serving no intent",
+            "empty session records, not orphan work",
+            "units started before the first intent, not orphan work",
+            "Work no intent links",
+            "ADR 0075, amendment of 2026-10-15",
+        ] {
+            assert!(html.contains(label), "missing {label}:\n{html}");
+        }
     }
 
     #[test]
