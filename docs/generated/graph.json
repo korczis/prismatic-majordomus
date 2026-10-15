@@ -32882,6 +32882,60 @@
         }
       },
       {
+        "id": "majordomus://issue/I2148",
+        "kind": "issue",
+        "label": "I2148",
+        "summary": "Every provider's MCP launch configuration is a projection of one declaration, and a drifted one fails a gate",
+        "route": "/cockpit/objects/issue/i2148",
+        "source": ".ai/repo/project/issues/I2148.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The three committed configurations are byte-identical to what majordomus update renders from share/providers.yaml",
+            "A test case edits one generated configuration (the command of .mcp.json's majordomus server) and the projection gate exits non-zero naming the file and the field; restoring it makes the gate pass",
+            "A .codex/config.toml whose server table is removed but whose comment names the launcher is reported not wired",
+            "init in a fresh repository writes the three configurations, and majordomus update regenerates them from share/providers.yaml without losing .gemini/settings.json's tools.allowed",
+            "A configuration whose timeout is shorter than the bridge's request timeout is reported with both values"
+          ],
+          "created_at": "2026-10-09",
+          "depends_on": [],
+          "evidence_required": [
+            "drifted_client_config_fails_gate_case",
+            "parsed_provider_diagnosis_test",
+            "init_writes_client_configs_case"
+          ],
+          "milestone": "mcp-transports-are-reliable",
+          "non_scope": [
+            "A user-scope client configuration (~/.claude.json, ~/.gemini/settings.json, ~/.codex/config.toml): only the project-scoped files the repository commits",
+            "The SSH permission projection into .gemini/settings.json and .claude/settings.json, which providers-check already owns; it is preserved, not moved"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin/mcp.rs",
+            "share/providers.yaml",
+            "lib/update.sh",
+            "lib/init.sh",
+            "share/skeleton",
+            "scripts/ci/providers-check",
+            ".mcp.json",
+            ".gemini/settings.json",
+            ".codex/config.toml",
+            "apps/majordomus-cli/tests/providers_projection.rs",
+            "test/cases",
+            "docs/MCP.md",
+            ".ai/repo/project/issues/I2148.yaml"
+          ],
+          "slug": "client-configs-are-generated-and-parsed",
+          "updated_at": "2026-10-15",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test providers_projection",
+            "MJ_TEST_JOBS=4 bash test/run.sh 940_mcp_says_nothing_its_capability_does_not <the case this issue adds>"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I2151",
         "kind": "issue",
         "label": "I2151",
@@ -77639,6 +77693,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2148",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2148",
+        "target": "majordomus://milestone/mcp-transports-are-reliable",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I2151",
         "target": "kind:issue",
         "kind": "is_a"
@@ -88190,8 +88254,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2796,
-      "edges": 6129,
+      "nodes": 2797,
+      "edges": 6131,
       "acyclic": false,
       "truncated": false
     }
