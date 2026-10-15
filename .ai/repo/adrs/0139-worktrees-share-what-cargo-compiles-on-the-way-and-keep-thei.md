@@ -86,6 +86,15 @@ on by a default.
   was not measured; it is expected to be, since a path source's identity includes its path.
 - Builds that share the directory serialise on cargo's file lock: two worktrees building
   at once wait for each other. That is the cost, and `derive` already runs one at a time.
+  **Amended 2026-10-13.** The sentence counted one builder. The commit hook's launcher, the
+  lints, the tests and the documentation build start cargo as well, in every worktree, and
+  on that day one of them stood behind the lock for fourteen minutes in silence, because
+  `--quiet` removes the line in which cargo says it is blocked. The cost is now bounded
+  rather than accepted: a build waits `MAJORDOMUS_BUILD_LOCK_WAIT` seconds at most, says
+  what it waited behind, and then builds in the tree's own directory
+  (`mj_cargo_bounded`, `project.a-build-never-waits-in-silence-on-anothers-lock`). Sharing
+  stays the default and is what a build gets when nobody is in the way; a private
+  directory is the price of not waiting, paid only by the build that would have waited.
 - Intermediates are in one place, so `cargo clean` in a worktree cleans its artifacts and
   not the shared directory, which is what the ownership rule wants.
 - The shared directory is outside every checkout, so removing a worktree never frees it;

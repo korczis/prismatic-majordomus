@@ -622,7 +622,17 @@ fn three_runtimes_in_a_line_converge_through_the_middle_without_loops() {
     for s in [&sa, &sb, &sc] {
         let events = s.get("/api/v1/mesh/events?limit=1000").1;
         assert_eq!(events["count"], json!(4), "{events}");
+        // The journal as it stands now: `newest` answers its last events, in the same order,
+        // and names the newest stamp, where the default page answers its first ones.
+        let newest = s.get("/api/v1/mesh/events?limit=2&newest=true").1;
+        assert_eq!(newest["count"], json!(2), "{newest}");
+        assert_eq!(newest["events"][0], events["events"][2], "{newest}");
+        assert_eq!(newest["events"][1], events["events"][3], "{newest}");
+        assert_eq!(newest["lamport"], events["lamport"], "{newest}");
+        let first = s.get("/api/v1/mesh/events?limit=2").1;
+        assert_eq!(first["events"][0], events["events"][0], "{first}");
     }
+
     // Quiet rounds carry nothing further: replication stopped rather than looping.
     let served = |s: &Served| {
         s.get("/api/v1/mesh/cooperation").1["counters"]["events_served"]
@@ -648,6 +658,58 @@ fn three_runtimes_in_a_line_converge_through_the_middle_without_loops() {
         json!({"session": "a2", "scope": ["docs/MESH.md"]}),
     );
     assert_eq!(status, 422, "C's claim excludes A through B");
+    // The Observatory follows this journal from a cursor (I2679): the newest page, then only
+    // what was appended above the cursor, a duplicate delivery carries the same identity, and
+    // a cursor this journal never reached is expired rather than answered empty.
+    let newest = sa.get("/api/v1/observatory/events").1;
+    assert_eq!(newest["active"], json!(true), "{newest}");
+    let marks = newest["events"].as_array().cloned().unwrap_or_default();
+    assert!(!marks.is_empty(), "{newest}");
+    assert!(
+        marks.iter().all(|m| m.get("body").is_none()),
+        "a mark carries no body: {newest}"
+    );
+    let cursor = newest["cursor"].as_u64().expect("a cursor");
+    let quiet = sa
+        .get(&format!("/api/v1/observatory/events?after={cursor}"))
+        .1;
+    assert_eq!(
+        (quiet["events"].clone(), quiet["expired"].clone()),
+        (json!([]), json!(false)),
+        "{quiet}"
+    );
+    post(
+        &sa,
+        "/api/v1/mesh/claims",
+        json!({"session": "a3", "scope": ["site"]}),
+    );
+    let mut appended = Value::Null;
+    wait_until(
+        "the appended claim reaches the cursor",
+        Duration::from_secs(10),
+        || {
+            appended = sa
+                .get(&format!("/api/v1/observatory/events?after={cursor}"))
+                .1;
+            appended["events"].as_array().is_some_and(|e| !e.is_empty())
+        },
+    );
+    assert!(appended["cursor"].as_u64().unwrap() > cursor, "{appended}");
+    let again = sa
+        .get(&format!("/api/v1/observatory/events?after={cursor}"))
+        .1;
+    assert_eq!(
+        again["events"][0]["id"], appended["events"][0]["id"],
+        "the same event, the same identity"
+    );
+    let lost = sa
+        .get(&format!(
+            "/api/v1/observatory/events?after={}",
+            cursor + 1_000_000
+        ))
+        .1;
+    assert_eq!(lost["expired"], json!(true), "{lost}");
+    assert_eq!(lost["events"], json!([]), "{lost}");
 }
 
 #[test]

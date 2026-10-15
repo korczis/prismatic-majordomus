@@ -295,9 +295,11 @@ impl BenchmarkCases for KnowledgeRecordInput {
 
 /// How a typed reference resolved.
 ///
-/// Three words and no fourth: a reference names an object of the index, or something only
-/// the ledger and git can vouch for, or nothing. `external` is not a weaker `object` — a
-/// commit or a task is exactly as real as a rule — it says which reader answered.
+/// Four words and no fifth: a reference names an object of the index, or something only
+/// the ledger and git can vouch for, or a file the tree no longer holds and git history
+/// does, or nothing. `external` is not a weaker `object` — a commit or a task is exactly as
+/// real as a rule — it says which reader answered; `historical` resolves as well, and is
+/// named apart so a reader sees which provenance outlived its file (I1987).
 ///
 /// ```
 /// use majordomus_cli::capability::builtin::knowledge_base::ReferenceResolution;
@@ -315,6 +317,10 @@ pub enum ReferenceResolution {
     Object,
     /// Vouched for by the ledger, the task store or git: a session, a task, a decision, a commit.
     External,
+    /// A `file:` or `test:` the tree no longer holds and git history does: cited before the
+    /// file was deleted, or pinned as `file:<path>@<commit>`. The `target` is the blob that
+    /// answers, `<commit>:<path>`, which `git show` reads.
+    Historical,
     /// Nothing answers to it. A dangling reference is the integrity validator's finding.
     Missing,
 }
@@ -331,6 +337,7 @@ impl ReferenceResolution {
         match self {
             ReferenceResolution::Object => "object",
             ReferenceResolution::External => "external",
+            ReferenceResolution::Historical => "historical",
             ReferenceResolution::Missing => "missing",
         }
     }
@@ -892,7 +899,7 @@ fn resolve(
     events: &[Value],
     reference: &str,
 ) -> (ReferenceResolution, Option<String>, String) {
-    use ReferenceResolution::{External, Missing, Object};
+    use ReferenceResolution::{External, Historical, Missing, Object};
     let Some((prefix, value)) = reference.split_once(':') else {
         return (
             Missing,
@@ -991,7 +998,14 @@ fn resolve(
             if crate::policy::is_safe_relative(value) && root.join(value).exists() {
                 return (External, Some(value.to_string()), String::new());
             }
-            (Missing, None, format!("no such path in the tree: {value}"))
+            if let Some(blob) = file_in_history(root, value) {
+                return (Historical, Some(blob), String::new());
+            }
+            (
+                Missing,
+                None,
+                format!("no such path in the tree or in its history: {value}"),
+            )
         }
         "knowledge" | "rule" | "adr" | "issue" => match by_kind(prefix) {
             Some(uri) => (Object, Some(uri), String::new()),
@@ -1006,6 +1020,55 @@ fn resolve(
             None,
             format!("`{other}:` is not a reference prefix the knowledge schema admits"),
         ),
+    }
+}
+
+/// A `file:` or `test:` reference the tree no longer holds, found in git history: the blob
+/// that answers, as `<commit>:<path>`, or `None` when no commit of this history held the
+/// path.
+///
+/// The shell check asks the same question in `mj_knowledge_file_in_history`
+/// (lib/knowledge.sh), and the two must agree (I1987). A record's provenance says what it was
+/// derived from when it was written; deleting the file later does not make that false, and
+/// OSCILLA's 5467193 failed `knowledge check` on exactly that. Two forms:
+///
+/// - `<path>@<commit>`, with 7 to 40 hex digits: the path at that commit, and only there;
+/// - `<path>`: the newest commit reachable from HEAD that touched it, which either still
+///   holds it or deleted it — then the parent does.
+///
+/// Literal pathspecs, so `file:*.md` names one path rather than a glob. A shallow clone that
+/// lacks the commit answers `None`, as it does for a `commit:` reference.
+fn file_in_history(root: &Path, value: &str) -> Option<String> {
+    let git = |args: &[&str]| {
+        crate::git::read_only(root)
+            .args(args)
+            .output()
+            .ok()
+            .filter(|o| o.status.success())
+    };
+    if let Some((path, commit)) = value.rsplit_once('@') {
+        let hex = (7..=40).contains(&commit.len())
+            && commit
+                .bytes()
+                .all(|b| matches!(b, b'0'..=b'9' | b'a'..=b'f'));
+        if !path.is_empty() && hex {
+            let blob = format!("{commit}:{path}");
+            return git(&["cat-file", "-e", &blob]).map(|_| blob);
+        }
+    }
+    if !crate::policy::is_safe_relative(value) {
+        return None;
+    }
+    let out = git(&["--literal-pathspecs", "rev-list", "-1", "HEAD", "--", value])?;
+    let last = String::from_utf8_lossy(&out.stdout).trim().to_string();
+    if last.is_empty() {
+        return None;
+    }
+    let held = format!("{last}:{value}");
+    if git(&["cat-file", "-e", &held]).is_some() {
+        Some(held)
+    } else {
+        Some(format!("{last}^:{value}"))
     }
 }
 
@@ -1546,6 +1609,7 @@ mod tests {
         for r in [
             ReferenceResolution::Object,
             ReferenceResolution::External,
+            ReferenceResolution::Historical,
             ReferenceResolution::Missing,
         ] {
             assert_eq!(
@@ -1763,6 +1827,76 @@ mod tests {
             assert_eq!(got, resolution, "{reference}: {why}");
             assert_eq!(at.as_deref(), target, "{reference}");
             assert!(why.contains(reason), "{reference}: {why}");
+        }
+    }
+
+    /// A file the tree no longer holds resolves through git history, as historical: at the
+    /// newest commit that touched it, or at a commit the reference pins. A path no commit
+    /// ever held, a pin at a commit that did not hold it, and a glob still resolve to nothing
+    /// (I1987: OSCILLA's notes cited tests/engine.cjs after its V2 removed it).
+    #[test]
+    fn a_deleted_file_resolves_through_history_and_one_that_never_existed_does_not() {
+        use ReferenceResolution::{Historical, Missing};
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let root = repo.root().to_path_buf();
+        // an identity and no hooks of the machine's: the CI runner has none, a laptop may
+        let git = |args: &[&str]| {
+            let out = std::process::Command::new("git")
+                .arg("-C")
+                .arg(&root)
+                .args(["-c", "user.name=t", "-c", "user.email=t@example.com"])
+                .args([
+                    "-c",
+                    "commit.gpgsign=false",
+                    "-c",
+                    "core.hooksPath=/dev/null",
+                ])
+                .args(args)
+                .output()
+                .expect("git");
+            assert!(
+                out.status.success(),
+                "git {args:?}: {}",
+                String::from_utf8_lossy(&out.stderr)
+            );
+            String::from_utf8_lossy(&out.stdout).trim().to_string()
+        };
+        git(&["init", "-q"]);
+        std::fs::create_dir_all(root.join("tests")).unwrap();
+        std::fs::write(root.join("tests/engine.cjs"), "the engine\n").unwrap();
+        git(&["add", "tests/engine.cjs"]);
+        git(&["commit", "-q", "-m", "an engine"]);
+        let added = git(&["rev-parse", "--short=10", "HEAD"]);
+        git(&["rm", "-q", "tests/engine.cjs"]);
+        git(&["commit", "-q", "-m", "V2 removes it"]);
+        let removed = git(&["rev-parse", "HEAD"]);
+        assert!(!root.join("tests/engine.cjs").exists());
+
+        let ctx = context_with(&repo, vec![]);
+        let resolve = |reference: &str| resolve(&ctx, &root, &[], reference);
+
+        let (got, at, why) = resolve("file:tests/engine.cjs");
+        assert_eq!(got, Historical, "{why}");
+        assert!(got.resolves(), "a historical reference resolves");
+        assert_eq!(at, Some(format!("{removed}^:tests/engine.cjs")));
+        let pinned = format!("file:tests/engine.cjs@{added}");
+        let (got, at, why) = resolve(&pinned);
+        assert_eq!(got, Historical, "{pinned}: {why}");
+        assert_eq!(at, Some(format!("{added}:tests/engine.cjs")));
+        let short = &removed[..10];
+        for (reference, reason) in [
+            ("file:tests/smoke.cjs".to_string(), "never existed"),
+            (
+                format!("file:tests/engine.cjs@{short}"),
+                "pinned where it was already gone",
+            ),
+            ("test:tests/*.cjs".to_string(), "a glob is one literal path"),
+            ("file:../engine.cjs".to_string(), "outside the repository"),
+        ] {
+            let (got, at, why) = resolve(&reference);
+            assert_eq!(got, Missing, "{reference} ({reason})");
+            assert_eq!(at, None, "{reference}");
+            assert!(why.contains("no such path"), "{reference}: {why}");
         }
     }
 

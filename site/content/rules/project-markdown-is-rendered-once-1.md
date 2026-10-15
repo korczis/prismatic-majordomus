@@ -1,7 +1,7 @@
 +++
 title = "A Markdown body is drawn by one renderer, wherever it is shown"
 description = "A Markdown body is drawn by one renderer, wherever it is shown"
-weight = 116
+weight = 118
 [extra]
 kind = "rule"
 slug = "project-markdown-is-rendered-once-1"

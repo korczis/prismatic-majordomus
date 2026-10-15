@@ -55,8 +55,10 @@ lists it), declared beside the Cockpit in `apps/majordomus-cli/src/web/discover.
 | CI/CD & Releases | `/ui/delivery` | `distribution.releases`, `release.version`, `deploy.list`, `gates.model`, `integration.timings` (each check's median, 90th percentile and longest run, and the open heads that waited longest, each leading to its pull request) |
 | Deployments | `/ui/deployments` | `deploy.list` (what the layer declares); `deploy.observed` (what the forge recorded: where each environment stands, every deployment to every environment — GitHub Pages among them — and every release, each commit, ref, environment, run and release a link); `delivery.report` on its own route |
 | Evidence | `/ui/evidence` | `evidence.report`; one claim (`?claim=`) in its inspector from `evidence.claim`: what settles it, its last run, what changed since, how to reproduce it, and the claims its test also proves |
+| Knowledge | `/ui/knowledge` | `knowledge_base.status`, `knowledge_base.candidates`: the candidates awaiting review, newest first and bounded with what is left out counted, the subjects they are about, and whether the deriver is still writing. The review's commands are named as text; the screen promotes and rejects nothing |
 | Documentation | `/ui/docs` | `objects.list` (features, documents), `web.surfaces` |
 | Governance | `/ui/governance` | `rules.report`, each rule named and leading to its inspector; one rule (`?rule=`) from `rules.show`: what it states, how it is enforced, the tests that prove it, what is missing, and the rules around it |
+| Observatory | `/ui/observatory`, and `/ui/kiosk` as its preset | `mesh.peers`, `mesh.events`, `mesh.state`, `plan.roadmap`, `distribution.releases`, `release.version`, `health.report`, `economics.runs`, `repository.info`: eight scenes, each drawn from what its sources answered or named as unavailable with the source's reason ([The Observatory](#the-observatory)) |
 
 The navigation is `SCREENS` in `apps/majordomus-cli/src/ui/mod.rs` and nothing else. A test
 compares it with the dispatcher's arms, so a screen without a route, or a route without a
@@ -249,6 +251,98 @@ Cytoscape, loaded only by a screen that has a graph, draws them:
 The table of the same edges stays beneath the graph, and it is what a reader without
 JavaScript, or without the library, reads. Only nodes that take part in an edge are drawn.
 
+## The Observatory
+
+The other screens are rows for a person who came to decide something. The Observatory is the
+same facts as a picture, for a display nobody is sitting at (ADR 0158). It is one screen and it
+adds no capability:
+
+| Route | What it is |
+|---|---|
+| `/ui/observatory` | the screen, inside the application's frame |
+| `/ui/kiosk` | the same screen, projection and script, filling the window over the frame, for a display left running |
+| `/ui/screensaver` | a permanent redirect to `/ui/kiosk`, its better name |
+| `/ui/obsrvatory` | a permanent redirect to `/ui/observatory` |
+
+The scenes are one list, `SCENES` in `apps/majordomus-cli/src/ui/observatory.rs`. Each
+declares its label, the capabilities it requires, what its marks mean, the screen that shows
+the same facts as rows, how long it stays, and its character:
+- a **semantic** scene binds marks to records: a machine, an event, a milestone, a release;
+- an **ambient** scene is decoration, is labelled as decoration, and stands for no fact.
+
+| Scene | Label | Requires | Its rows |
+|---|---|---|---|
+| `mesh` | Mesh Cosmos | `mesh.peers` | Mesh |
+| `activity` | Event River | `mesh.events` | Mesh |
+| `intents` | Intent Nebula | `plan.roadmap` | Roadmap |
+| `tokens` | Token Spectrum | `economics.runs` | Evidence |
+| `heartbeat` | System Pulse | `health.report` | Dashboard |
+| `delivery` | Delivery Tree | `distribution.releases` | CI/CD & Releases |
+| `coop` | Cooperation Choreography | `mesh.state` | Mesh |
+| `ambient` | Ambient Intelligence | nothing: it is decoration | Dashboard |
+
+The table is a reading aid; the list in the module is what the page, the script and case 3011
+read, and the page prints each scene's own `requires`.
+
+The page carries its whole projection as one document, `observatory/v1`, in the
+`data-observatory` attribute of its section: when it was observed, the revision, every source
+asked with the state it answered in (`answered` or `failed`, with the reason and the time
+taken), and every scene with its model. The rule of the screen is in that document:
+
+| A scene's sources | The scene |
+|---|---|
+| answered, with something to draw | `available`, with a model |
+| answered with nothing to draw, or could not answer | unavailable: no model, the source's own reason, and the script does not rotate to it |
+
+A scene is never drawn empty, never drawn with stand-in marks and never replaced by a picture
+of health. An event of the mesh is projected as its identity (stream and sequence), its kind,
+its node, its logical time and its wall time, and never as its body.
+
+The status word says how the page was read:
+- `LIVE`: read again within 90 seconds. The script asks for its own page every 60 seconds, and
+  between those readings follows the mesh journal from a cursor every 3 seconds through
+  `observatory.events`, which answers only the events above the cursor, projected exactly as
+  the scene projects them. An event delivered twice is one mark, the river holds at most 200,
+  and both readers back off to 120 seconds when the server does not answer;
+- `RESYNCED`: for ten seconds after the cursor named a clock the journal never reached (another
+  runtime's journal, or one that restarted); the page was read again at once;
+- `STALE`: not read again within the bound;
+- `REPLAY`: a scene of the mesh drawn from the repository's recording, with the time it was
+  recorded;
+- `SNAPSHOT`: the public site, which reads nothing again and names its revision.
+
+Without JavaScript the same projection is a table: one row per scene, with its state in words
+(`available`, `decorative` or `unavailable`), its meaning or its reason, what it requires and
+the link to its rows.
+
+A reader's choice of a scene holds for five minutes, then the rotation resumes. New events of
+the journal interrupt the rotation for the river once the scene shown has had 12 seconds, and
+at most once every 120 seconds, so a busy journal cannot hold the display; a reader's choice is
+never interrupted. A scene whose
+renderer throws is quarantined for the rest of the display's life: the rotation skips it, the
+others go on, and the scene says `QUARANTINED` with what failed when a reader asks for it.
+Nothing on the screen starts work or writes a record.
+
+The display's own state is readable for an inspector or an evidence run: the section's
+`observatory` property answers `data()` (the projection it is drawing now), `quarantined()`
+and `trace()` (the last 24 choices of the rotation with their reasons). The evidence of the
+gates is taken through it by `scripts/lib/ui-observatory.mjs`.
+
+On the public site the process that takes the snapshot runs no mesh. There `mesh`, `activity`
+and `coop` draw the recording the repository carries (`.ai/repo/observatory/recording.json`,
+read by `observatory.replay`), and the status says `REPLAY` with the time it was recorded and
+`not live`. A scene the recording does not carry is unavailable and says why; a recording that
+cannot be read is a failed source, never a scene. `tokens` is unavailable while no run is
+recorded.
+
+The recording is the answer of `observatory.capture` on a server that runs the mesh, saved as
+it came and committed. It names nothing by its identity: machines are `machine 1`, `machine 2`
+in the order the mesh listed them, runtimes and sessions are ordinals, and an event keeps its
+kind, its logical clock and its time. Its manifest names the capabilities it was read from,
+the window of events it holds (first and last time and logical clock) and what was removed
+and why; `observatory.replay` refuses a recording with an event that lacks its kind, clock or
+time, naming the event. A recording is a moment; it is replaced by capturing again. What is still open is in [What it does not do yet](#what-it-does-not-do-yet).
+
 ## Without JavaScript
 
 Every screen is complete HTML, and the menu of a narrow screen opens with a checkbox and its
@@ -321,7 +415,8 @@ they cost. It renders nothing itself. What it changes is only what a file cannot
 | In the UI | In the snapshot |
 |---|---|
 | a link to another screen or inspector | a relative link to that page's file; an inspector's query is a directory (`governance/_rule/<id>/`) |
-| a link to a page past the bound, a filter of several fields, a form, the Cockpit, the API | the snapshot's page about the live UI, carrying the path the link meant |
+| a link to a page past the bound, a filter of several fields, a form, the API | the snapshot's page about the live UI, carrying the path the link meant |
+| a link to a page of the Cockpit: the "technical view" of a source or of an object | that page of the Cockpit's own snapshot at `/cockpit/` when it holds it (ADR 0147), and the page about the live UI when it does not |
 | a link to a surface a publication holds (`/rustdoc`, `/openapi.json`) | unchanged |
 | a link into the served documentation (`/docs/…`) | the same page of the published site |
 | a slow panel is a placeholder the script fills once the screen has painted (`data-panel-src`) | the panel is written into the page: no process will answer later, so the placeholder would be all a reader ever saw |
@@ -342,6 +437,13 @@ collision. `snapshot.json` beside it lists every page written, every page left t
 UI, and what ended the reading (`complete`, `limit` or `budget`). `test/cases/1092_the_ui_snapshot_holds_every_screen.sh` and
 `test/cases/1093_the_ui_snapshot_links_nothing_absent.sh` hold it to this.
 
+The Cockpit is published the same way, by the same exporter (ADR 0147,
+[`COCKPIT.md`](COCKPIT.md#on-the-public-site-a-snapshot)). It is written after the UI's
+snapshot: it reads first the Cockpit pages the UI's snapshot wanted to link to, and then leads
+those links to the pages it wrote, so a capability a screen cites is a page a reader can
+open. Each surface is read once. `test/cases/2982_two_snapshots_link_what_the_other_holds.sh`
+holds it.
+
 The published snapshot is held to the trunk (`project.the-published-ui-is-the-trunks`). The
 publication model declares that a publication holds it (`deploy.snapshots` in
 `.ai/repo/ci/pages.yaml`), `scripts/site-deploy` refuses to publish a site without one read at
@@ -351,6 +453,15 @@ page the record lists. A snapshot that stopped at its bound passes and the probe
 it left out; one that is missing, names an older commit or does not say what ended its
 reading fails. `docs/GITHUB_PAGES_ARCHITECTURE.md` has the details and
 `test/cases/2983_the_published_ui_is_the_trunks.sh` holds them.
+
+The first screen leads only with figures the reader of a snapshot can decide. That process is
+no server, so `health.report` says `unknown` for the attached clients and the mesh runtime and
+therefore for the whole report. The Dashboard's health figure is the report's `repository`
+verdict instead: the worst of the dimensions that describe the repository and not the process
+serving it. The Health panel below it still lists every dimension with its own word. Where no
+mesh runtime is active the mesh figure reads `Mesh active: no` and counts no machines. The
+probe refuses a published first screen with an undecided figure, and
+`test/cases/1092_the_ui_snapshot_holds_every_screen.sh` holds the snapshot to the same.
 
 ## What it does not do yet
 
@@ -364,3 +475,8 @@ reading fails. `docs/GITHUB_PAGES_ARCHITECTURE.md` has the details and
   forge observation (`integration.timings`); there is no history of runs yet, so no trend is
   drawn.
 - Milestones carry no dates, so the roadmap is a sequence and a graph, never a calendar.
+- The Observatory's replay on the public site is as old as the last capture that was
+  committed; nothing captures one on a schedule. Between readings of its page it follows the
+  journal by asking for the events above its cursor; nothing is pushed to it. Its gates and
+  the measurements behind them are in `.ai/repo/benchmarks/observatory/manifest.json`; a
+  frame rate there is headless Chromium's on the machine it names, not a panel's.
