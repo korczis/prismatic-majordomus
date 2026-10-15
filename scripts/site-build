@@ -24,6 +24,27 @@
 #                                 the Pages workflow composes it in a step of its own)
 #   scripts/site-build --since-deploy REPO OUT   only the since-deploy composition below, for REPO's
 #                                 HEAD against the previous commit the two options above name, into OUT
+#   scripts/site-build --release  only the release this build offers, as JSON on stdout (below)
+#     [--release-record FILE]     the record's projection to read instead of
+#                                 site/data/registry/distribution.json
+#     [--release-published FILE]  a published releases/latest.json to read instead of the ref
+#     [--release-ref REF]         the published branch to read it from (default origin/gh-pages,
+#                                 or $MJ_SITE_RELEASE_REF); all three apply to a full build too
+#
+# THE RELEASE THIS SITE OFFERS is derived here, once, and every page reads it from
+# data/build.json (`build.release`) — the navbar badge, the homepage's hero and trust strip,
+# the Cockpit pictures — and /build.json serves it. It is the newer of two readings of one
+# fact: the newest release record on this tree (site/data/registry/distribution.json, the
+# projection of .ai/repo/releases/) and the release metadata gh-pages already serves
+# (releases/latest.json, which the release's publish job writes minutes after its archives,
+# ahead of its record: ADR 0131). Until 2026-10-12 the pages read the record alone, and the
+# record reaches master only through a pull request that needs its own full validation, so
+# for hours after every release the installer resolved v0.21.0 while the homepage beside the
+# install command offered v0.20.0. The published metadata is read from the git ref, never
+# fetched over the network here: the build is a function of two commits, and build.json
+# names both (`published_from`). When the published release wins, its two files are copied
+# into the build, so the bytes this build publishes at /releases/latest.json are the release
+# its pages offer. The rule is project.the-site-offers-the-release-it-published.
 #
 # Every build, published or served, also COMPOSES the other published static surfaces into
 # its output at their mounts (ADR 0086): each surface of docs/generated/web.json of kind
@@ -56,8 +77,70 @@ while [ $# -gt 0 ]; do case "$1" in
   --since-deploy-record) SINCE_RECORD="$2"; shift 2 ;;
   --since-deploy) [ $# -ge 3 ] || { echo "site-build: --since-deploy REPO OUT" >&2; exit 2; }
     DELTA_REPO="$2"; DELTA_OUT="$3"; shift 3 ;;
+  --release) RELEASE_ONLY=1; shift ;;
+  --release-record) REL_RECORD="${2:?--release-record needs a file}"; shift 2 ;;
+  --release-published) REL_PUBLISHED="${2:?--release-published needs a file}"; shift 2 ;;
+  --release-ref) REL_REF="${2:?--release-ref needs a ref}"; shift 2 ;;
   *) echo "site-build: unknown option $1" >&2; exit 2 ;;
 esac; done
+# ---------------------------------------------------------------- the release this site offers
+# release_offered <dir>: writes <dir>/release.json — the release object build.json carries, or
+# null when neither reading names a release — and, when the published release is the newer,
+# <dir>/latest.json with the published bytes. Exit 10 when the published branch serves a
+# releases/latest.json that is not a release document, or a tag file that differs from it;
+# 12 when the record's projection cannot be read.
+REL_RECORD="${REL_RECORD:-$SITE/data/registry/distribution.json}"
+REL_PUBLISHED="${REL_PUBLISHED:-}"
+REL_REF="${REL_REF:-${MJ_SITE_RELEASE_REF:-origin/gh-pages}}"
+release_offered() {
+  local dir="$1" from="" sha="" tag
+  [ -f "$REL_RECORD" ] && jq -e . "$REL_RECORD" >/dev/null 2>&1 \
+    || { echo "site-build: $REL_RECORD cannot be read; run majordomus generate" >&2; exit 12; }
+  rm -f "$dir/published.json" "$dir/latest.json"
+  if [ -n "$REL_PUBLISHED" ]; then
+    cp "$REL_PUBLISHED" "$dir/published.json"; from="file:${REL_PUBLISHED##*/}"
+  elif sha="$(git -C "$ROOT" rev-parse --verify -q "$REL_REF^{commit}" 2>/dev/null)" \
+       && git -C "$ROOT" cat-file -e "$sha:releases/latest.json" 2>/dev/null; then
+    git -C "$ROOT" show "$sha:releases/latest.json" > "$dir/published.json"; from="$REL_REF@$sha"
+  fi
+  if [ -f "$dir/published.json" ]; then
+    jq -e '.schema == "release/v1" and (.version | type == "string") and .tag == ("v" + .version)' \
+      "$dir/published.json" >/dev/null 2>&1 \
+      || { echo "site-build: ${from} serves a releases/latest.json that is not a release/v1 document naming its own tag" >&2; exit 10; }
+    tag="$(jq -r .tag "$dir/published.json")"
+    if [ -z "$REL_PUBLISHED" ] && git -C "$ROOT" cat-file -e "$sha:releases/$tag.json" 2>/dev/null; then
+      git -C "$ROOT" show "$sha:releases/$tag.json" | cmp -s - "$dir/published.json" \
+        || { echo "site-build: ${from} serves releases/latest.json and releases/$tag.json that differ; one of them is stale" >&2; exit 10; }
+    fi
+  else
+    printf 'null\n' > "$dir/published.json"
+  fi
+  # Versions compare numerically per dot-separated field, anything after `-` or `+` ignored, as
+  # scripts/site-deploy compares them; the record wins a tie, being the same release.
+  jq -n --slurpfile d "$REL_RECORD" --slurpfile p "$dir/published.json" --arg from "$from" '
+    def ver: split("-")[0] | split("+")[0] | split(".") | map(tonumber? // 0);
+    ($d[0].latest // null) as $r | $p[0] as $q
+    | if $q != null and ($r == null or ($q.version | ver) > ($r.version | ver)) then
+        {version: $q.version, tag: $q.tag, published_at: $q.published_at, notes_url: $q.notes_url,
+         url: (($d[0].latest_url // "") | sub("latest\\.json$"; $q.tag + ".json")), source: "published"}
+      elif $r != null then
+        {version: $r.version, tag: $r.tag, published_at: $r.published_at, notes_url: $r.notes_url,
+         url: $r.url, source: "record"}
+      else null end
+    | if . == null then null
+      else . + {record: ($r.version // null), published: ($q.version // null),
+                published_from: (if $from == "" then null else $from end)} end' > "$dir/release.json" \
+    || { echo "site-build: the release this site offers could not be derived" >&2; exit 13; }
+  if [ "$(jq -r '.source // empty' "$dir/release.json")" = published ]; then
+    cp "$dir/published.json" "$dir/latest.json"
+  fi
+  rm -f "$dir/published.json"
+}
+if [ "${RELEASE_ONLY:-0}" = 1 ]; then
+  command -v jq >/dev/null || { echo "site-build: jq is required" >&2; exit 12; }
+  RELDIR="$(mktemp -d "${TMPDIR:-/tmp}/mj-site-release.XXXXXX")"
+  release_offered "$RELDIR"; cat "$RELDIR/release.json"; rm -rf "$RELDIR"; exit 0
+fi
 # pin_source_refs <built dir> <build.json>: a committed page's link into its own source names the
 # commit the site was built from. scripts/lib/project-links.awk writes those links into committed
 # content with the placeholder ref @source-ref@, because a committed file cannot name the commit it
@@ -294,7 +377,28 @@ cp "$ROOT/docs/generated/openapi.json" "$SITE/static/openapi.json"
 # from outside that a composed surface is this commit's, from the one identity file it serves.
 commit="$(git -C "$ROOT" rev-parse HEAD 2>/dev/null || echo unknown)"
 dirty=false; [ -z "$(git -C "$ROOT" status --porcelain --untracked-files=no 2>/dev/null)" ] || dirty=true
-SURFACES="$(mktemp "${TMPDIR:-/tmp}/mj-site-surfaces.XXXXXX")"; trap 'rm -f "$SURFACES"; mj_cleanup' EXIT
+SURFACES="$(mktemp "${TMPDIR:-/tmp}/mj-site-surfaces.XXXXXX")"
+SNAPSHOTS="$(mktemp "${TMPDIR:-/tmp}/mj-site-snapshots.XXXXXX")"
+RELDIR="$(mktemp -d "${TMPDIR:-/tmp}/mj-site-release.XXXXXX")"
+trap 'rm -f "$SURFACES" "$SNAPSHOTS"; rm -rf "$RELDIR"; mj_cleanup' EXIT
+# `snapshots` is what the PUBLICATION holds beside this build and this build does not compose:
+# a served surface read once at the published commit and placed at its mount by the deploy
+# (ADR 0141), as the publication model declares it (.ai/repo/ci/pages.yaml deploy.snapshots,
+# read through `scripts/pages snapshots`, its one reading). It is what lets a page link the
+# published copy of a surface a process otherwise serves, without typing a mount: the
+# homepage's interfaces and the bar's menu read it. A build for the running server holds none:
+# there the process answers at the mount itself. A tree with no publication model has none.
+if [ "$SERVE" = 0 ] && [ -x "$ROOT/scripts/pages" ] && [ -f "$ROOT/.ai/repo/ci/pages.yaml" ]; then
+  snap_rows="$("$ROOT/scripts/pages" snapshots)" || { echo "site-build: the publication model's snapshots cannot be read (scripts/pages snapshots)" >&2; exit 12; }
+  while IFS="$MJ_TAB" read -r sn_id sn_mount _; do
+    [ -n "$sn_id" ] || continue
+    jq -n --arg id "$sn_id" --arg mount "$sn_mount" '{id: $id, mount: $mount}' >> "$SNAPSHOTS"
+  done <<EOF
+$snap_rows
+EOF
+fi
+release_offered "$RELDIR"
+echo "== release $(jq -r 'if . == null then "none: no record and nothing published" else "v\(.version) (from the \(.source); record \(.record // "none"), published \(.published // "none")\(if .published_from then " at " + .published_from else "" end))" end' "$RELDIR/release.json")"
 while IFS="$MJ_TAB" read -r c_id c_mount c_artifact c_producer; do
   [ -n "$c_id" ] || continue
   c_built=""
@@ -306,12 +410,12 @@ $COMPOSED
 EOF
 jq -n --arg commit "$commit" --argjson dirty "$dirty" \
   --slurpfile src "$SITE/data/generated/source.json" --slurpfile reg "$SITE/data/registry/registry.json" \
-  --slurpfile surfaces "$SURFACES" \
+  --slurpfile surfaces "$SURFACES" --slurpfile snapshots "$SNAPSHOTS" --slurpfile release "$RELDIR/release.json" \
   '{schema: 1, commit: $commit, dirty: $dirty,
     source_version: $src[0].source_version, source_hash: $src[0].source_hash, site_generator_version: $src[0].generator_version,
     registry_fingerprint: $reg[0].registry.fingerprint, index_fingerprint: $reg[0].index.fingerprint,
     registry_generator: ($reg[0].generator.id + " " + $reg[0].generator.version), registry_dataset: $reg[0].schema,
-    surfaces: $surfaces}' \
+    surfaces: $surfaces, snapshots: $snapshots, release: $release[0]}' \
   > "$SITE/data/build.json"
 cp "$SITE/data/build.json" "$SITE/static/build.json"
 # what moved since the deployment this build replaces, beside build.json and ignored like it
@@ -351,6 +455,9 @@ cp "$SITE/api-anchors.js" "$SITE/static/js/api-anchors.js"
 cp "$SITE/nav.js" "$SITE/static/js/nav.js"
 # the kit's behaviour (copy, tabs, the table of contents), loaded by the base layout
 cp "$SITE/kit.js" "$SITE/static/js/kit.js"
+# the site's one search, the navbar's dialog and the documentation hub's field, over the
+# /docs/index.json this build writes last; loaded by the base layout
+cp "$SITE/search.js" "$SITE/static/js/search.js"
 if [ "$NOCSS" = 0 ]; then
   echo "== css"
   ( cd "$ROOT" && node_modules/.bin/tailwindcss -i "$SITE/tailwind.css" -o "$SITE/static/app.css" --minify )
@@ -384,6 +491,14 @@ if [ -n "$OUT" ]; then case "$OUT" in /*) PUBLIC="$OUT" ;; *) PUBLIC="$ROOT/$OUT
 )
 echo "== source refs"
 pin_source_refs "$PUBLIC" "$SITE/data/build.json"
+# The published release, when it is newer than the record, is what this build serves at
+# /releases/latest.json and at its tag's own path: the pages above offer it, so the metadata
+# beside them names it too (see THE RELEASE THIS SITE OFFERS at the top).
+if [ -f "$RELDIR/latest.json" ]; then
+  mkdir -p "$PUBLIC/releases"
+  cp "$RELDIR/latest.json" "$PUBLIC/releases/latest.json"
+  cp "$RELDIR/latest.json" "$PUBLIC/releases/$(jq -r .tag "$RELDIR/latest.json").json"
+fi
 # Zola wrote the two highlighting themes into static/ and public/; scope the dark one under .dark
 # (generated CSS, not hand-written) so class-based dark mode picks the right palette.
 if [ -f "$PUBLIC/giallo-dark.css" ]; then
@@ -429,7 +544,7 @@ const pages = [];
     else if (entry.name.endsWith(".html")) pages.push(path);
   }
 })("'"$PUBLIC"'");
-let touched = 0, elements = 0, named = 0;
+let touched = 0, elements = 0, named = 0, aligned = 0;
 for (const page of pages) {
   const before = readFileSync(page, "utf8");
   let result;
@@ -439,11 +554,11 @@ for (const page of pages) {
     console.error(`site-build: ${page}: ${error.message}`);
     process.exit(10);
   }
-  if (!result.scrolling && !result.named) continue;
+  if (!result.scrolling && !result.named && !result.aligned) continue;
   writeFileSync(page, result.text);
-  touched += 1; elements += result.scrolling; named += result.named;
+  touched += 1; elements += result.scrolling; named += result.named; aligned += result.aligned;
 }
-console.log(`  ${elements} scrolling element(s) put in the tab order (${scrollingTagNames.join(", ")}), ${named} task checkbox(es) named, over ${touched} page(s)`);
+console.log(`  ${elements} scrolling element(s) put in the tab order (${scrollingTagNames.join(", ")}), ${named} task checkbox(es) named, ${aligned} table cell(s) aligned by class instead of inline style, over ${touched} page(s)`);
 '
 fi
 # the site's own routes, counted before another surface's pages join them

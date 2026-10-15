@@ -62,7 +62,7 @@ MODULE='Prismatic\.[A-Z]'
 
 # The subject: what a person committed to the surfaces that build, run or deploy the tool.
 files="$(git ls-files -- bin lib share apps scripts .github .githooks deploy \
-    .envrc justfile fly.toml 'Dockerfile*' package.json package-lock.json \
+    .envrc justfile 'Dockerfile*' package.json package-lock.json \
     '*Cargo.toml' '*Cargo.lock' .mcp.json .gemini .codex \
   | grep -vxF "$SELF" | LC_ALL=C sort -u || true)"
 [ -n "$files" ] || { echo "prismatic-independence-check: no build, run or deploy surface is tracked here; nothing to measure" >&2; exit 12; }

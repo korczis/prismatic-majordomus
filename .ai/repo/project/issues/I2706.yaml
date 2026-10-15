@@ -1,0 +1,32 @@
+id: I2706
+milestone: mesh-journal-converges
+title: "An own event whose append failed is never acknowledged as durable, and a journal reload is bounded in size"
+slug: a-lost-append-is-not-acknowledged
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Refuse to acknowledge an own mesh event as durable when its append failed, and bound how much a journal reload reads."
+why: "Split from I2137 on 2026-10-14. I2137 made appends synced and failure-counting, reloads count unreadable lines, compaction atomic and the file owner-only, and its desired_state said 'Not done here' of a reload size bound and of refusing to acknowledge an own event whose append failed (it is held in memory and replicated, and the loss is reported), while its acceptance criteria still required that the event not be acknowledged as durable, so it could never close. Baseline audit of 2026-10-09 at master 1fb8d6be44, failure gap 4 and the failure-class rows disk full and truncated journal."
+current_state: "Journal::append_own (apps/majordomus-cli/src/mesh/journal.rs) returns Ok when the write to disk fails: the event is held in memory and replicated, and JournalTallies.write_failures counts the loss, which mesh doctor reports (apps/majordomus-cli/src/mesh/doctor.rs, journal_check). The test a_failed_append_is_counted_and_the_file_is_the_owners_alone asserts exactly that Ok. Reload reads the whole file with no size bound."
+desired_state: "An own event whose append failed is reported to its caller as not durable (held and replicated, but not acknowledged), so a capability that writes it does not claim it is on disk; a reload reads at most a declared number of bytes and reports what it left unread, and mesh doctor names it."
+scope:
+  - "apps/majordomus-cli/src/mesh/journal.rs"
+  - "apps/majordomus-cli/src/mesh/doctor.rs"
+  - "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+  - "test/cases"
+  - "docs/MESH.md"
+non_scope:
+  - "Synced appends, the write-failure and unreadable-line tallies, atomic compaction and owner-only creation, which I2137 delivered"
+depends_on:
+  - I2137
+acceptance_criteria:
+  - "A failed write on a read-only or full file system in a test leaves its event not acknowledged as durable to the caller that appended it"
+  - "A journal larger than the reload bound is reloaded up to the bound, and the part left unread is counted and reported by mesh doctor"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --lib mesh::journal"
+evidence_required:
+  - "failed_append_not_acknowledged_test"
+  - "reload_size_bound_test"
+created_at: 2026-10-14
+updated_at: 2026-10-14

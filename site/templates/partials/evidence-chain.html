@@ -1,0 +1,76 @@
+{#- The evidence chain: from what the repository declares to what a recorded run supports, as
+    a figure a reader steps through. Every node is a button that opens what is known about it —
+    the figure, the sentence the data gives it and where it lives — in the panel below; every
+    count is derived from the product model, the claims matrix or the catalogue, and no word of
+    a node is typed here: its label and its sentence are the ones the homepage's other sections
+    already render from marketing.toml and the datasets.
+
+    An edge is solid where a machine holds the link (a projection that disagrees fails the
+    build; a blocking rule is decided by a validator or a gate's tests) and dashed where it is
+    declared and a recorded run does not yet support it, which is decided here from the
+    evidence verdict: the last edge is solid only when every guaranteed claim is supported.
+
+    Without JavaScript the panel shows every node's detail in order, so nothing is hidden from
+    a reader who cannot click. With it, Alpine shows the one chosen (spec: evidence-chain).
+
+    Expects from the caller: model, caps, cat, blocking, base, m. -#}
+{%- set guaranteed = [c for c in caps.claims if c.status == "guaranteed"] | length -%}
+{%- set supported = "unknown" -%}{%- set held = false -%}
+{%- if model.evidence.available %}{% set supported = model.evidence.supported %}{% set held = model.evidence.supported >= guaranteed and guaranteed > 0 %}{% endif -%}
+{%- set nodes = [
+  {"id": "declared", "lane": "made", "label": m.surfaces.source, "v": model.telemetry.objects, "unit": "objects of the layer", "text": m.hero.lead, "href": "/docs/product/"},
+  {"id": "registry", "lane": "made", "label": m.surfaces.registry, "v": model.telemetry.capabilities, "unit": "capabilities in the registry", "text": m.surfaces.lead, "href": "/registry/capabilities/"},
+  {"id": "surfaces", "lane": "made", "label": "interfaces from one registry", "v": model.surfaces | length, "unit": [s.title for s in model.surfaces] | join(sep=" · "), "text": m.surfaces.title ~ ". " ~ m.providers.boundary, "href": "/features/matrix/"},
+  {"id": "rules", "lane": "held", "label": "rules that stop the command", "v": blocking | length, "unit": "blocking, decided by a machine", "text": m.contract.caption, "href": "/doctrines/"},
+  {"id": "claims", "lane": "held", "label": "guaranteed claims, declared", "v": guaranteed, "unit": "of " ~ (caps.claims | length) ~ " claims", "text": caps.statuses.guaranteed, "href": "/guarantees/"},
+  {"id": "use-cases", "lane": "held", "label": "executable use cases, run to build this page", "v": cat.use_cases | length, "unit": (cat.categories | length) ~ " areas", "text": m.hero.console_caption, "href": "/use-cases/"},
+  {"id": "evidence", "lane": "held", "label": "supported by a recorded run at this revision", "v": supported, "unit": "of " ~ guaranteed ~ " guaranteed", "text": m.chain.legend, "href": "/evidence/"}
+] -%}
+<figure class="not-format min-w-0 overflow-hidden rounded-xl border border-default bg-neutral-primary shadow-2xl ring-1 ring-brand-subtle" data-chain
+        x-data="{ open: 'declared', choose(id) { this.open = id } }">
+  <figcaption class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2 border-b border-default px-5 py-4">
+    <span class="font-mono text-xs uppercase tracking-[0.2em] text-fg-brand">{{ m.surfaces.kicker }} &middot; {{ x.proof.kicker }}</span>
+    <span class="flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-xs text-body" data-chain-legend>
+      <span class="inline-flex items-center gap-2"><span aria-hidden="true" class="inline-block h-0 w-8 border-t-2 border-brand"></span>held</span>
+      <span class="inline-flex items-center gap-2"><span aria-hidden="true" class="inline-block h-0 w-8 border-t-2 border-dashed border-warning"></span>declared</span>
+    </span>
+  </figcaption>
+  <div class="grid gap-6 p-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] lg:p-6">
+    <div class="min-w-0 space-y-5">
+      {%- for lane in ["made", "held"] %}
+      {%- set row = [n for n in nodes if n.lane == lane] %}
+      <ol class="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-stretch sm:gap-0" aria-label="{% if lane == 'made' %}{{ m.surfaces.title }}{% else %}{{ x.proof.title }}{% endif %}">
+        {%- for n in row %}
+        {%- if not loop.first %}
+        {#- the edge into this node: dashed only for the last link of the held lane while the
+            evidence does not yet support every guaranteed claim -#}
+        {%- set dashed = n.id == "evidence" and not held %}
+        <li aria-hidden="true" class="flex shrink-0 items-center justify-center sm:w-8">
+          <span class="block h-5 w-0 sm:h-0 sm:w-full {% if dashed %}border-l-2 border-dashed border-warning sm:border-l-0 sm:border-t-2{% else %}border-l-2 border-brand sm:border-l-0 sm:border-t-2{% endif %}" data-chain-edge="{{ n.id }}" data-chain-edge-kind="{% if dashed %}declared{% else %}held{% endif %}"></span>
+        </li>
+        {%- endif %}
+        <li class="min-w-0 sm:flex-1">
+          <button type="button" data-chain-node="{{ n.id }}" aria-controls="chain-detail-{{ n.id }}"
+                  x-on:click="choose('{{ n.id }}')" x-bind:aria-pressed="(open === '{{ n.id }}').toString()"
+                  class="group flex h-full w-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft px-3 py-3 text-start transition-colors hover:border-brand-subtle focus:outline-none focus-visible:ring-4 focus-visible:ring-brand-medium aria-pressed:border-brand aria-pressed:bg-brand-softer motion-reduce:transition-none">
+            <span class="font-mono text-2xl font-bold tracking-tight text-heading">{{ n.v }}</span>
+            <span class="mt-1 text-xs leading-snug text-body">{{ n.label }}</span>
+          </button>
+        </li>
+        {%- endfor %}
+      </ol>
+      {%- endfor %}
+    </div>
+    <div class="min-w-0 space-y-6 rounded-base border border-default bg-neutral-primary-soft p-5" data-chain-panel aria-live="polite">
+      {%- for n in nodes %}
+      <div id="chain-detail-{{ n.id }}" data-chain-detail="{{ n.id }}" x-show="open === '{{ n.id }}'">
+        <p class="font-mono text-xs uppercase tracking-[0.2em] text-body-subtle">{{ n.label }}</p>
+        <p class="mt-2 font-serif text-5xl font-semibold leading-none tracking-tight text-heading">{{ n.v }}</p>
+        <p class="mt-1 font-mono text-xs text-body">{{ n.unit }}</p>
+        <p class="mt-4 text-sm leading-relaxed text-heading">{{ n.text }}</p>
+        <p class="mt-4 text-sm font-medium"><a href="{{ get_url(path=n.href, trailing_slash=true) }}" class="text-fg-brand hover:underline">{{ n.label }} &rarr;</a></p>
+      </div>
+      {%- endfor %}
+    </div>
+  </div>
+</figure>

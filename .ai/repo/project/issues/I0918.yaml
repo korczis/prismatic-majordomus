@@ -33,4 +33,6 @@ evidence_required:
   - no_platform_dependency
 risk: "A convenience that reads the operator's other environment is exactly the dependency this issue exists to prevent. Bootstrap happens in a person's shell, not in this repository's code."
 created_at: 2026-09-06
-updated_at: 2026-09-06
+updated_at: 2026-10-14
+cancelled: true
+completion: "Cancelled 2026-10-14 on master e28daccd9b: it is about how a Fly bootstrap token is found; publishing to GHCR uses the workflow's own GITHUB_TOKEN. The owner disconnected Fly.io on 2026-10-12; this repository deploys release binaries, the GHCR image and GitHub Pages (commit 9af3fa65a4 removed fly.toml)."

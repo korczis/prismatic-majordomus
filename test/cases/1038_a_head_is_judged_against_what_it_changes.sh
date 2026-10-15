@@ -2,9 +2,9 @@
 # A head is judged against what it changes, not against GitHub's live state
 # (project.github-projection-gated, claim projected-record-edit-is-landable).
 #
-# `scripts/github-sync --apply` projects the trunk and nothing else, and nothing runs it
-# automatically. So a record a pull request edits is `behind` on GitHub for as long as the
-# pull request is open, and the gate that refused every `behind` made such a pull request red
+# `scripts/github-sync --apply` projects the trunk and nothing else, and it runs when a pull
+# request has landed (.github/workflows/github.yml, test/cases/1097). So a record a pull
+# request edits is `behind` on GitHub for as long as the pull request is open, and the gate that refused every `behind` made such a pull request red
 # from birth: #855 changed one line of I1900 and could not go green on its own head, #820
 # closed eight records and met the same wall. After a landing the trunk itself would have
 # been red until somebody applied by hand.
@@ -176,7 +176,7 @@ git checkout -q -b landed-just-now "$base"
 git merge -q --no-ff the-pull-request -m "land the head" >/dev/null
 expect_exit 0 trunk_push
 expect_grep 'PENDING github-check  3 record\(s\) behind, landed on master less than 1800s ago'
-expect_grep 'the executor applies after landing'
+expect_grep 'the landing applies'
 expect_grep 'PENDING github-check  1 record\(s\) state'
 expect_grep '^github-check: 0 finding\(s\), 2 pending$'
 expect_no_grep 'FAIL'
@@ -192,7 +192,7 @@ GIT_AUTHOR_DATE="$((now - 7200)) +0000" GIT_COMMITTER_DATE="$((now - 7200)) +000
 expect_exit 10 trunk_push
 expect_grep 'FAIL github-check  3 record\(s\) behind'
 expect_grep 'FAIL github-check  1 record\(s\) state'
-expect_grep 'inside the 1800s the executor is given after a landing'
+expect_grep 'inside the 1800s a landing is given to apply them'
 expect_grep 'run: scripts/github-sync --apply from master'
 expect_no_grep 'PENDING'
 
@@ -209,6 +209,49 @@ declared="$(sed -n 's/^ *window: *\([0-9][0-9]*\) *$/\1/p' "$ROOT/.ai/repo/ci/gi
 if grep -qw -- "$declared" "$ROOT/scripts/ci/github-check"; then
   fail "scripts/ci/github-check carries the literal $declared; the window is declared in .ai/repo/ci/github.yaml and read from there"
 fi
+
+# ---------------------------------------------------------------- 5b. a record the head added
+# The head adds I0004. GitHub cannot hold it: the adapter projects the trunk. The ratchet
+# counted it as backlog and refused, so a pull request that added a record was red from
+# birth (#1058: 54 records, "73 record(s) missing, over the baseline of 19").
+# MUTATION, RUN: never fill the list of added records (`added_files` -> `true` at its call)
+# -> the gate exits 10 here with `FAIL ... 1 record(s) missing, over the baseline of 0`.
+git checkout -q -b adds-a-record "$base"
+pj_issue I0004 M000
+commit_at 1728000 "the head adds I0004"
+expect_exit 0 pull_request
+expect_grep 'PENDING github-check  1 record\(s\) missing, added by this head since its merge base'
+expect_grep 'the landing creates them once this has merged'
+expect_grep 'DRIFT  missing +issue I0004'
+expect_grep 'OK   github-check  0 record\(s\) missing, at the baseline'
+expect_no_grep 'FAIL'
+
+# a record that is missing and that the head did not add is the backlog, and the ratchet
+# holds it as before: GitHub loses I0003, which the base already had
+# MUTATION, RUN: call every missing record added (`($4 in c)` -> `1` in the ratchet) -> the
+# gate exits 0 here with two records pending.
+{ row 7 'I0001 — Issue I0001' I0001 < "$T/at-base.I0001"
+  row 8 'I0002 — Issue I0002' I0002 < "$T/at-base.I0002"; } > "$FX_I"
+expect_exit 10 pull_request
+expect_grep 'FAIL github-check  1 record\(s\) missing, over the baseline of 0'
+expect_grep 'PENDING github-check  1 record\(s\) missing, added by this head'
+expect_grep 'DRIFT  missing +issue I0003'
+remote "$T/at-base.I0001"
+
+# on the trunk the added record waits for the landing's apply, for the window and no longer
+git checkout -q -b added-landed-just-now "$base"
+git merge -q --no-ff adds-a-record -m "land the added record" >/dev/null
+expect_exit 0 trunk_push
+expect_grep 'PENDING github-check  1 record\(s\) missing, added in a landing on master less than 1800s ago'
+expect_grep 'the landing applies'
+expect_no_grep 'FAIL'
+git checkout -q -b added-landed-long-ago "$base"
+GIT_AUTHOR_DATE="$((now - 7200)) +0000" GIT_COMMITTER_DATE="$((now - 7200)) +0000" \
+  git merge -q --no-ff adds-a-record -m "land the added record" >/dev/null
+expect_exit 10 trunk_push
+expect_grep 'FAIL github-check  1 record\(s\) missing, over the baseline of 0'
+expect_grep 'run: scripts/github-sync --apply'
+expect_no_grep 'PENDING github-check  [0-9]+ record\(s\) missing'
 
 # ---------------------------------------------------------------- 6. what cannot be measured is not a pass
 # No declared window: no landing can be called young, the gate says so and refuses.

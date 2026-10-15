@@ -84,6 +84,11 @@ pub enum Target {
     /// bootstrap still has providers, and a fixture that checks its bootstraps alone is not
     /// asked for a document it never wrote.
     Providers,
+    /// The files Zed and Google Antigravity read from a project: one
+    /// `.agents/skills/<id>/SKILL.md` per active skill and `.zed/tasks.json` from the tracked
+    /// justfile
+    /// (see the `editors` module, ADR 0140).
+    Editors,
     /// `site/data/registry/registry.json`: the registry dataset GitHub Pages renders
     /// (see [`crate::site`]).
     Site,
@@ -113,8 +118,8 @@ pub enum Target {
     /// with its encoding, schema, source and hash. Always planned over the whole set, so
     /// that a manifest naming half the artifacts cannot exist.
     Manifest,
-    /// The provider artifacts of every deployment object: `deploy/Dockerfile`,
-    /// `.dockerignore` and `fly.toml` (see [`crate::deploy::render`]).
+    /// The artifacts of every deployment object: `deploy/Dockerfile` and `.dockerignore`
+    /// (see [`crate::deploy::render`]).
     Deployment,
     /// `docs/generated/graph.json`: the composed graph as data, and
     /// `docs/generated/graph.schema.json`: its schema, generated from the types.
@@ -142,6 +147,7 @@ impl Target {
         Target::Allow,
         Target::Documents,
         Target::Providers,
+        Target::Editors,
         Target::Site,
         Target::Web,
         Target::Design,
@@ -177,6 +183,7 @@ impl Target {
             Target::Allow => "allow",
             Target::Documents => "documents",
             Target::Providers => "providers",
+            Target::Editors => "editors",
             Target::Site => "site",
             Target::Web => "web",
             Target::Changelog => "changelog",
@@ -632,6 +639,7 @@ pub fn artifacts(
             | Target::Allow
             | Target::Documents
             | Target::Providers
+            | Target::Editors
             | Target::Site
             | Target::Web
             | Target::Changelog
@@ -747,6 +755,28 @@ fn indexed_plan(app: &App, targets: &[Target]) -> Result<Vec<Artifact>> {
         ));
     }
 
+    if targets.contains(&Target::Editors) {
+        let editors = crate::editors::plan(
+            &app.context.index,
+            &app.context.registry,
+            app.repository.root(),
+            crate::VERSION,
+        );
+        // a projection that would differ by whether this machine has `just` is not derived
+        // from the tree; refuse instead of committing whichever half this runner could see
+        if let Some(d) = editors
+            .diagnostics
+            .iter()
+            .find(|d| d.code == crate::editors::WORKFLOWS_UNREADABLE)
+        {
+            return Err(Error::Refused {
+                code: 12,
+                reason: format!("generate editors: {}; {}", d.message, d.remedy),
+            });
+        }
+        out.extend(editors.artifacts);
+    }
+
     let needs_policy = targets.contains(&Target::Providers) || targets.contains(&Target::Site);
     if needs_policy {
         let policy = LoadedPolicy::load(&app.repository)?;
@@ -817,9 +847,14 @@ fn indexed_plan(app: &App, targets: &[Target]) -> Result<Vec<Artifact>> {
                     reason: refusal.to_string(),
                 }
             })?;
+            // The builder pins the toolchain the repository builds with, read from the one
+            // file that declares it; a repository without an exact pin cannot render one.
+            let rust = crate::deploy::render::builder_rust(app.repository.root())
+                .map_err(|reason| Error::InvalidDeployment { reason })?;
             out.extend(crate::deploy::render::artifacts(
                 &deployment,
                 &object.provenance.path,
+                &rust,
             ));
         }
     }
@@ -963,6 +998,11 @@ pub fn distribution_artifacts(app: &App) -> Result<Vec<Artifact>> {
     Ok(out)
 }
 
+/// A source file a projection compiles, read as text: a failure names the path it read.
+fn read_source(path: &Path) -> Result<String> {
+    std::fs::read_to_string(path).map_err(|e| Error::io(path, e))
+}
+
 /// A file of the tool's data directory, read as text.
 /// Every projection of the design system. The declaration is read from the tool's data
 /// directory, validated, and rendered by [`crate::design::render`]; a stylesheet that would
@@ -1036,6 +1076,7 @@ pub(crate) fn design_artifacts(app: &App) -> Result<Vec<Artifact>> {
     for path in [
         render::COMPILED_MARK,
         "share/cockpit/favicon.svg",
+        crate::ui::FAVICON,
         "site/static/favicon.svg",
         "site/static/images/logo-mark.svg",
     ] {
@@ -1054,6 +1095,23 @@ pub(crate) fn design_artifacts(app: &App) -> Result<Vec<Artifact>> {
         version,
         &logo,
     ));
+
+    // the kit's icons, declared once beside the site's templates and compiled into the
+    // crate for the UI's shell (ADR 0135), so the two surfaces draw one icon set. A tree
+    // without the site (a design fixture holds `share/` alone) has no set to compile and no
+    // crate to compile it into; in this repository the set is present, and `ui::icons`
+    // holds the compiled copy equal to it in a test, so its absence cannot pass unnoticed.
+    let icons_path = app.repository.root().join(crate::ui::icons::SOURCE);
+    if icons_path.is_file() {
+        let icons = read_source(&icons_path)?;
+        out.push(Artifact::comment_text(
+            crate::ui::icons::COMPILED,
+            "ui-icons",
+            format!("{}, the kit's icons", crate::ui::icons::SOURCE),
+            version,
+            &icons,
+        ));
+    }
 
     // the site's dataset and the reference documents
     out.push(Artifact::verbatim(
@@ -1546,16 +1604,7 @@ pub fn benchmark_matrix(ctx: &Context) -> String {
             })
             .collect();
         cases.dedup();
-        let cache = match c.cache {
-            crate::capability::CachePolicy::Disabled => "—".to_string(),
-            crate::capability::CachePolicy::Process {
-                max_entries,
-                ttl_seconds,
-            } => match ttl_seconds {
-                Some(ttl) => format!("process, {max_entries} entries, {ttl}s"),
-                None => format!("process, {max_entries} entries"),
-            },
-        };
+        let cache = c.cache.summary();
         let kind = serde_json::to_value(c.kind)
             .ok()
             .and_then(|v| v.as_str().map(str::to_string))
@@ -1584,6 +1633,22 @@ pub fn benchmark_matrix(ctx: &Context) -> String {
             t.transport().name(),
             t.description()
         ));
+    }
+    s.push_str("\n## UI pages\n\nEvery screen and panel of the UI's own route list, read with `GET` and `Accept: text/html`: a screen over the pinned context and over the live view a served process answers from (which pays the per-request git stamp), a panel over the pinned context only. Each is measured cold (the capability cache cleared before every sample) and warm. A deferred panel is one the UI pulls in after the screen, because its source is slow; only the `full` profile measures it, with `cold_spawns` samples.\n\n| key | route | view | deferred |\n|---|---|---|---|\n");
+    for t in projection.pages() {
+        if let crate::bench::TargetKind::Page {
+            route,
+            view,
+            deferred,
+        } = &t.kind
+        {
+            s.push_str(&format!(
+                "| `{}` | `{route}` | {} | {} |\n",
+                t.key,
+                view.name(),
+                if *deferred { "yes" } else { "—" }
+            ));
+        }
     }
     s.push_str("\nCache modes: a cached capability is measured cold (the cache cleared before every sample) and warm (the same input repeated); the direct transport reports the handler invocations of each. Evidence: `.ai/local/benchmarks/` for local runs, `.ai/repo/benchmarks/rust/` for the accepted baselines and the regression policy.\n");
     s
@@ -1772,6 +1837,15 @@ pub fn benchmark_document(ctx: &Context) -> Value {
             "transport": s.transport().name(),
             "measures": s.description(),
         })).collect::<Vec<_>>(),
+        "pages": projection.pages().filter_map(|t| match &t.kind {
+            crate::bench::TargetKind::Page { route, view, deferred } => Some(serde_json::json!({
+                "key": t.key,
+                "route": route,
+                "view": view.name(),
+                "deferred": deferred,
+            })),
+            _ => None,
+        }).collect::<Vec<_>>(),
     })
 }
 
@@ -2221,6 +2295,20 @@ pub fn violations(artifacts: &[Artifact], schemas: &GeneratedSchemas) -> Vec<Vio
         // a region projection owns part of a file it did not write, and a header at the
         // top of it would be a claim over text this generator does not own
         let stamped_elsewhere = a.document.starts_with("providers/");
+        // an editor's file is read by the editor, whose format decides where the banner can
+        // go: after the front matter of a skill, as `//` lines in JSONC (ADR 0140)
+        if a.document.starts_with(crate::editors::DOCUMENT_PREFIX) {
+            if !crate::editors::banner_is_present(&a.content) {
+                out.push(at(&a.path, "carries no generated-file banner".into()));
+            }
+            if a.format == ArtifactFormat::Json {
+                let body = crate::editors::jsonc_body(&a.content).unwrap_or(&a.content);
+                if let Err(e) = serde_json::from_str::<Value>(body) {
+                    out.push(at(&a.path, format!("is not JSON below its banner: {e}")));
+                }
+            }
+            continue;
+        }
         // the opening an encoding wraps the banner in: an HTML comment in Markdown, a `#`
         // comment in YAML and in line-oriented text, and nothing here for JSON, which
         // carries it as members and is checked below
@@ -2347,15 +2435,33 @@ pub fn verify(artifacts: &[Artifact], schemas: &GeneratedSchemas) -> Result<()> 
     }
 }
 
-/// Write every artifact under `root`, creating the directory. Returns the paths written.
+/// Write every artifact under `root`, creating the directory. Returns every artifact's path.
+///
+/// A file whose bytes are already the artifact's is left alone, so its modification time
+/// says when it last changed rather than when it was last generated; any other is written to
+/// a temporary sibling and renamed over the target, so a reader never sees half a file and
+/// an interrupted run leaves the old one intact.
 pub fn write(root: &Path, artifacts: &[Artifact]) -> Result<Vec<PathBuf>> {
     let mut written = Vec::new();
     for a in artifacts {
         let path = root.join(&a.path);
+        if std::fs::read(&path).is_ok_and(|on_disk| on_disk == a.content.as_bytes()) {
+            written.push(path);
+            continue;
+        }
         if let Some(dir) = path.parent() {
             std::fs::create_dir_all(dir).map_err(|e| Error::io(dir, e))?;
         }
-        std::fs::write(&path, &a.content).map_err(|e| Error::io(&path, e))?;
+        let name = path
+            .file_name()
+            .map(|n| n.to_string_lossy().into_owned())
+            .unwrap_or_default();
+        let staging = path.with_file_name(format!(".{name}.mj-tmp.{}", std::process::id()));
+        std::fs::write(&staging, &a.content).map_err(|e| Error::io(&staging, e))?;
+        if let Err(e) = std::fs::rename(&staging, &path) {
+            let _ = std::fs::remove_file(&staging);
+            return Err(Error::io(&path, e));
+        }
         written.push(path);
     }
     Ok(written)
@@ -2711,17 +2817,7 @@ fn enum_name<T: serde::Serialize>(v: T) -> String {
 }
 
 fn cache_cell(policy: crate::capability::CachePolicy) -> String {
-    match policy {
-        crate::capability::CachePolicy::Disabled => "—".into(),
-        crate::capability::CachePolicy::Process {
-            max_entries,
-            ttl_seconds: None,
-        } => format!("process, {max_entries} entries"),
-        crate::capability::CachePolicy::Process {
-            max_entries,
-            ttl_seconds: Some(ttl),
-        } => format!("process, {max_entries} entries, {ttl}s"),
-    }
+    policy.summary()
 }
 
 fn benchmark_cell(policy: crate::capability::BenchmarkPolicy) -> String {
@@ -2740,6 +2836,19 @@ fn benchmark_cell(policy: crate::capability::BenchmarkPolicy) -> String {
 mod tests {
     use super::*;
     use serde_json::json;
+
+    /// A source that cannot be read is refused with its path, never compiled as empty.
+    #[test]
+    fn a_source_that_cannot_be_read_is_refused_with_its_path() {
+        let tmp = tempfile::tempdir().unwrap();
+        let path = tmp.path().join("icons.toml");
+        let Err(Error::Io { path: named, .. }) = read_source(&path) else {
+            panic!("a missing source was read");
+        };
+        assert_eq!(named, path);
+        std::fs::write(&path, "[icons]\n").unwrap();
+        assert_eq!(read_source(&path).unwrap(), "[icons]\n");
+    }
 
     /// `docs/generated/web.json` is committed and `generate --check` compares it, so it
     /// may hold nothing that depends on which producers ran in the checkout that wrote it.
@@ -3140,5 +3249,103 @@ mod tests {
                 .contains(HEADER),
             "JSON carries its provenance as a field, having no comment to carry it in"
         );
+    }
+
+    /// An editor reads these files, so their banner sits where the editor's format allows;
+    /// the contract still refuses one without it, and one whose JSON is broken below it.
+    #[test]
+    fn an_editor_artifact_without_its_banner_or_with_broken_json_is_refused() {
+        let dir = tempfile::tempdir().unwrap();
+        let schemas = GeneratedSchemas::load(dir.path()).unwrap();
+        let json = |content: &str| {
+            Artifact::verbatim(
+                ".zed/tasks.json",
+                "editors/zed-tasks",
+                ArtifactFormat::Json,
+                None,
+                "the justfile",
+                content.to_string(),
+            )
+        };
+        let reasons = |a: Artifact| -> Vec<String> {
+            violations(&[a], &schemas)
+                .into_iter()
+                .map(|v| v.reason)
+                .collect()
+        };
+        assert_eq!(reasons(json("[1]\n")), ["carries no generated-file banner"]);
+        let banner = crate::editors::jsonc_banner("the justfile", "0.0.0");
+        assert!(reasons(json(&format!("{banner}[1]\n"))).is_empty());
+        let broken = reasons(json(&format!("{banner}[1,\n")));
+        assert_eq!(broken.len(), 1, "{broken:?}");
+        assert!(
+            broken[0].starts_with("is not JSON below its banner"),
+            "{broken:?}"
+        );
+    }
+
+    /// A write that cannot land leaves the old file and no staging file behind.
+    #[test]
+    fn a_write_that_cannot_land_leaves_nothing_half_written() {
+        let dir = tempfile::tempdir().unwrap();
+        // a non-empty directory sits where the file should go: the rename cannot replace it
+        std::fs::create_dir_all(dir.path().join("out/file.txt/inside")).unwrap();
+        let a = Artifact::verbatim(
+            "out/file.txt",
+            "doc",
+            ArtifactFormat::Text,
+            None,
+            "s",
+            "x\n".into(),
+        );
+        assert!(write(dir.path(), &[a]).is_err());
+        let left: Vec<String> = std::fs::read_dir(dir.path().join("out"))
+            .unwrap()
+            .map(|e| e.unwrap().file_name().to_string_lossy().into_owned())
+            .collect();
+        assert_eq!(left, ["file.txt"], "no staging file remains");
+
+        // a directory nothing can be written into refuses at the staging file
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            let locked = dir.path().join("locked");
+            std::fs::create_dir_all(&locked).unwrap();
+            std::fs::set_permissions(&locked, std::fs::Permissions::from_mode(0o555)).unwrap();
+            let c = Artifact::verbatim(
+                "locked/new.txt",
+                "doc",
+                ArtifactFormat::Text,
+                None,
+                "s",
+                "x\n".into(),
+            );
+            // root writes anywhere; where that is so there is nothing to observe
+            if std::fs::write(locked.join("probe"), "x").is_err() {
+                assert!(write(dir.path(), &[c]).is_err());
+            }
+            std::fs::set_permissions(&locked, std::fs::Permissions::from_mode(0o755)).unwrap();
+        }
+
+        // and an unchanged file is not rewritten
+        let b = Artifact::verbatim(
+            "kept.txt",
+            "doc",
+            ArtifactFormat::Text,
+            None,
+            "s",
+            "same\n".into(),
+        );
+        write(dir.path(), std::slice::from_ref(&b)).unwrap();
+        let before = std::fs::metadata(dir.path().join("kept.txt"))
+            .unwrap()
+            .modified()
+            .unwrap();
+        write(dir.path(), std::slice::from_ref(&b)).unwrap();
+        let after = std::fs::metadata(dir.path().join("kept.txt"))
+            .unwrap()
+            .modified()
+            .unwrap();
+        assert_eq!(before, after);
     }
 }

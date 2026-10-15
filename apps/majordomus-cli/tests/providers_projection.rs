@@ -228,3 +228,62 @@ projections:
     assert_eq!(code, 10);
     assert!(err.contains("policy") && err.contains("colour"), "{err}");
 }
+
+#[test]
+fn a_comment_in_the_policy_moves_no_stamp_and_both_tools_read_it_alike() {
+    // the executable: a comment, a blank line and a trailing comment leave the stamp where
+    // it was, so `--check` stays clean and nothing is rewritten (I1991)
+    let f = Fixture::new();
+    let root = f.root();
+    let (code, _, err) = run_in(&root, &["generate", "providers"], "");
+    assert_eq!(code, 0, "{err}");
+    let first = std::fs::read_to_string(f.path("AGENTS.md")).unwrap();
+    let policy = std::fs::read_to_string(f.path(".ai/repo/policy.yaml")).unwrap();
+    let commented = format!(
+        "# a note for whoever edits this next\n\n{}",
+        policy.replace(
+            "checkpoint_interval_default: 15m",
+            "checkpoint_interval_default: 15m   # a quarter of an hour",
+        )
+    );
+    assert_ne!(commented, policy);
+    f.write(".ai/repo/policy.yaml", &commented);
+    let (code, stdout, err) = run_in(&root, &["generate", "providers", "--check"], "");
+    assert_eq!(
+        code, 0,
+        "a comment made the bootstraps stale: {stdout}{err}"
+    );
+    assert_eq!(std::fs::read_to_string(f.path("AGENTS.md")).unwrap(), first);
+
+    // the shell tool: lib/common.sh's mj_yaml_normal and policy::normal_form produce the
+    // same bytes on every shape the normal form distinguishes, so the stamp each renderer
+    // writes is current to the other
+    let sample = "# head\nversion: 1   # v\r\n\n  # indented comment\ncontext:  \n  name: \"a #b\"  # kept: the line holds a quote\n  list: [a, b] #l\n  word: e#f\n  tab: x\t# t\t\n- item # c\nlast: 1";
+    let lib = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../lib/common.sh");
+    let mut child = std::process::Command::new("bash")
+        .arg("-c")
+        .arg(". \"$1\" && mj_yaml_normal")
+        .arg("bash")
+        .arg(&lib)
+        .stdin(std::process::Stdio::piped())
+        .stdout(std::process::Stdio::piped())
+        .spawn()
+        .expect("bash runs");
+    {
+        use std::io::Write;
+        child
+            .stdin
+            .take()
+            .unwrap()
+            .write_all(sample.as_bytes())
+            .unwrap();
+    }
+    let out = child.wait_with_output().unwrap();
+    assert!(out.status.success(), "mj_yaml_normal failed");
+    let shell = String::from_utf8(out.stdout).unwrap();
+    assert_eq!(shell, majordomus_cli::policy::normal_form(sample));
+    assert_eq!(
+        shell,
+        "version: 1\ncontext:\n  name: \"a #b\"  # kept: the line holds a quote\n  list: [a, b]\n  word: e#f\n  tab: x\n- item\nlast: 1\n"
+    );
+}
