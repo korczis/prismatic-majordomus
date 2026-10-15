@@ -23,6 +23,13 @@
 #     labelled ci:full do and a routine push does not. It is not a weaker gate: it is one
 #     whose runner this repository cannot get on demand, and a plan that selects it on every
 #     push is a plan that never completes. The three that carry it say why, below.
+#   - a gate with `builds: true` compiles the crate before it measures (`cargo run`, `cargo
+#     test`). It is true or absent, and scripts/ci-plan refuses a gate whose command calls
+#     cargo without it. CI's runner has the build cached, so the seconds it records for such a
+#     gate leave the build out; on a workstation the build is minutes, and on 2026-10-15 two of
+#     them (skills-proof, economics-claims, 5 and 6 s in CI) made the pre-push step take 641 to
+#     1693 s. scripts/ci/run-plan --before-push therefore leaves every such gate to CI and says
+#     so (project.a-push-runs-what-ci-would-find-first);
 #   - a `shape` is the one rule that narrows. A change of a shape — at least one changed path
 #     matches the shape's `records`, and every other changed path is a derived file — plans
 #     the `always` gates and the shape's own `gates` (with `implies` and `requires` applied)
@@ -258,6 +265,7 @@ gates:
   - id: skills-proof
     job: structure
     runs: cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- skills verify
+    builds: true
     summary: every active skill is named by a test and invoked by a workflow, prompt, profile, provider template, recipe or CI workflow; no test or invocation names a skill that does not exist
 
   # Two tests demand to name every active skill — the crate's tests/skills.rs in its header
@@ -277,6 +285,7 @@ gates:
   - id: pack-plan
     job: structure
     runs: cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- pack plan chatgpt
+    builds: true
     summary: the chatgpt pack plans clean — every file within a shard's token budget, the shards within the file count, no source naming the checkout, never a binary, worktree, link or build artifact
 
   - id: rule-proof
@@ -323,6 +332,7 @@ gates:
     job: structure
     always: true
     runs: cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- economics check
+    builds: true
     summary: no quantity about tokens, context or cost is typed into hand-written prose, and every claim bound to an economics metric is guaranteed only while its evidence is current and meets the binding
 
   # The third population. A public command must have an executable use case and doctor fails
@@ -341,6 +351,7 @@ gates:
   - id: rust-quality
     job: structure
     runs: cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- quality report --summary
+    builds: true
     summary: the crate's own exported surface — documentation beyond the signature, an executable example on everything that carries behaviour, a module boundary something exercises — and every command of the command line accounted for against the capability registry
 
   - id: generation-converges
@@ -364,6 +375,7 @@ gates:
     job: bench
     on-demand: true
     runs: cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- bench --profile ci --check --no-write
+    builds: true
     summary: the benchmark check against the committed baseline of its platform (macOS, the one platform with a baseline under .ai/repo/benchmarks/rust/)
 
   - id: projection-closure
@@ -374,6 +386,7 @@ gates:
   - id: web-topology
     job: rust
     runs: cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- web validate
+    builds: true
     summary: the repository's web surfaces resolve into one topology with no collision, no nested claim and no directory outside the generated root
 
   # An intent names the milestones that realise it and the evidence that settles it; a link
@@ -386,6 +399,7 @@ gates:
   - id: intent-check
     job: rust
     runs: cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- intent validate
+    builds: true
     summary: every intent names a milestone and a criterion, and every milestone, evidence reference and governance entry it names resolves; every serves link names a criterion of an intent that realises the issue's milestone, every issue under such a milestone serves a criterion, and a criterion of an intent with work has an issue serving it; the gap and critique hold together, and no serving issue started without a critique or with a blocking finding open; a milestone no intent serves, and weaker coverage, are reported as warnings
 
   # Closed work that the evidence contradicts. The plan can say every milestone of an intent is
@@ -401,6 +415,7 @@ gates:
   - id: intent-realization
     job: rust
     runs: cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- intent realization
+    builds: true
     summary: no intent whose counted milestones are all DONE has a criterion whose latest recorded run is failing or no longer current evidence at the checkout; criteria never evidenced and work serving no intent are warnings; the work realising each intent, its providers and handovers, and each link's provenance are reported
 
   - id: cockpit-assets
@@ -521,9 +536,13 @@ gates:
     runs: scripts/ci/step-bound-check
     summary: every timed step of a workflow declares a bound, and every bound is smaller than the bound of the job that runs it, so a step that runs out of time fails with a message instead of being killed by its job and reported as a cancellation
 
+  # network: true marks a gate that reaches beyond this machine (GitHub's API, the live
+  # site, the published installer). It is true or absent. scripts/ci/run-plan --before-push
+  # never runs such a gate before a push and says so (project.a-push-runs-what-ci-would-find-first).
   - id: github-projection
     job: structure
     runs: scripts/ci/github-check
+    network: true
     summary: the GitHub projection still agrees with the canonical model — no record behind, edited, in conflict or unmanaged, and the backlog of unprojected records no larger than its baseline
 
   - id: providers-data
@@ -561,6 +580,7 @@ gates:
     job: rust
     requires: [rust-check]
     runs: cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- quality rustdoc
+    builds: true
     summary: the crate's published rustdoc tree is this commit's and complete — every exported item has its page at its derived route, no page is an orphan, the crate index and its assets are present, every internal link resolves, and no machine path or secret is published
 
   # Every interactive control on every page of the built site, exercised in a browser by the behaviour spec
@@ -577,6 +597,7 @@ gates:
     job: ui
     requires: [site-build]
     runs: scripts/rust-check --doc && cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- bench system.http. --transport system --profile ci --no-write --check && scripts/ui audit --report
+    builds: true
     summary: every warm screen of the UI within the latency budget the benchmark policy declares, measured over a real socket; then every discovered page of every surface the executable serves — built directories and the routes it renders itself — at every width the theme implies, in a browser, against the responsive, semantic, component and WCAG invariants; the report is rendered at /tests/ui
 
   # The one gate that measures the published site rather than this tree: the advertised
@@ -630,6 +651,7 @@ gates:
     job: pages
     at-finish: true
     runs: scripts/ci/pages-check
+    network: true
     summary: the site GitHub Pages serves was built from a commit on master, no publication has been owed longer than the deploy window, the live site is serving what gh-pages published, the UI it holds at the UI's mount was read at that same commit and every page its record lists answers, GitHub's own build of that branch did not error, and the homepage, /releases/latest.json and the newest GitHub release name one release once the release window has passed
 
   # On demand: half of its matrix is a macOS runner, and `needs.install.result` is one value
@@ -641,6 +663,7 @@ gates:
     job: install
     on-demand: true
     runs: scripts/ci/install-check --wait 300
+    network: true
     summary: the install command the project advertises, fetched and run from the published site, installing the published release on this runner
 
   # The measurement this repository's macOS gates were made on-demand by, on 2026-09-10: four
@@ -658,6 +681,7 @@ gates:
     job: macos
     on-demand: true
     runs: MJ_TEST_JOBS=3 bash test/run.sh && cargo test --no-fail-fast --manifest-path apps/majordomus-cli/Cargo.toml
+    builds: true
     summary: the behavioural suite under the stock macOS shell and userland, and the crate's suites on macOS
 
   # The campaign briefs under campaigns/ are provenance: nothing reads them at run time, which is
