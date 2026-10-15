@@ -1028,6 +1028,11 @@
     },
     {
       "source": "lib/init.sh",
+      "target": ".ai/repo/policy.yaml",
+      "kind": "reads"
+    },
+    {
+      "source": "lib/init.sh",
       "target": ".ai/repo/rules/vendor",
       "kind": "reads"
     },
@@ -1898,11 +1903,6 @@
     },
     {
       "source": "lib/init.sh",
-      "target": ".ai/repo/policy.yaml",
-      "kind": "uses"
-    },
-    {
-      "source": "lib/init.sh",
       "target": ".ai/repo/profiles/README.md",
       "kind": "uses"
     },
@@ -2164,6 +2164,11 @@
     {
       "source": "lib/update.sh",
       "target": ".ai/local/state/handovers",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/update.sh",
+      "target": ".ai/repo/policy.yaml",
       "kind": "uses"
     },
     {
