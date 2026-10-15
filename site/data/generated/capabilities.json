@@ -2668,7 +2668,7 @@
     {
       "id": "mesh-cooperation-links",
       "claim": "Two runtimes of one repository link only through a signed, replay-protected handshake that checks protocol, repository identity and trust, and every refusal is typed and visible",
-      "source": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md",
+      "source": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v2.md",
       "implementation": "apps/majordomus-cli/src/mesh/cooperation.rs",
       "test": "apps/majordomus-cli/tests/mesh_cooperation.rs",
       "status": "guaranteed",
@@ -2681,7 +2681,7 @@
     {
       "id": "mesh-claims-cross-runtime",
       "claim": "An exclusive claim made on one runtime excludes an overlapping claim on every linked runtime, and concurrent claims resolve to one named winner everywhere",
-      "source": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md",
+      "source": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v2.md",
       "implementation": "apps/majordomus-cli/src/mesh/state.rs",
       "test": "apps/majordomus-cli/tests/mesh_cooperation.rs",
       "status": "guaranteed",
@@ -2694,7 +2694,7 @@
     {
       "id": "mesh-repository-isolation",
       "claim": "Runtimes serving different repositories never form a cooperative link, even when they discover each other",
-      "source": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md",
+      "source": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v2.md",
       "implementation": "apps/majordomus-cli/src/mesh/repository.rs",
       "test": "apps/majordomus-cli/tests/mesh_cooperation.rs",
       "status": "guaranteed",
