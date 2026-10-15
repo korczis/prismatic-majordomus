@@ -373,12 +373,20 @@ generator, not from a conflict marker. The design leans on `scripts/pages curren
 `.githooks/pre-commit` to refuse the stale result one command later — and **a `pre-commit`
 hook cannot run for a merge the server creates.** Merging a pull request on GitHub produces a
 commit with `committer=GitHub`, and no client-side hook exists on that path. It is not a
-bypass; it is the action this repository tells people to take. With no branch protection
-(`gh api repos/<owner>/<repo>/branches/master/protection` answers *404 Branch not protected*)
-nothing server-side compensates, and the `site` gate that does check currency is advisory and
-reports after the merge. So the first thing in the pipeline that can actually refuse is the
-Pages build, and it refuses by failing publication rather than by failing a pull request. The
-symptom is always "the site is stale" and never "the branch is red".
+bypass; it is the action this repository tells people to take. On 2026-09-10 there was no
+branch protection (`gh api repos/<owner>/<repo>/branches/master/protection` answered *404
+Branch not protected*), so nothing server-side compensated, and the `site` gate that checks
+currency was advisory and reported after the merge. The first thing in the pipeline that could
+refuse was the Pages build, and it refused by failing publication rather than by failing a
+pull request. The symptom was always "the site is stale" and never "the branch is red".
+
+What guards that path now (I1409, ADR 0101 amendment of 2026-10-15) is the ci-time freshness
+gate, and the hook plays no part in it. The `ci` check is required (`strict: false`). It runs
+`derived site data in sync` and `generate --check` on the pull request's merge ref. The forge
+runs no merge driver, so two branches that both changed a canonical input conflict on
+`source_hash` and cannot be merged by the forge at all. The merged commit is checked again on
+push, and `scripts/pages build` refuses stale site data before the `publish` step. The
+pre-commit hook guards only a merge a person commits.
 
 The vivid form: a stale recording rides through a merge untouched, so two consecutive master
 merges can carry the *same* `source_hash` — nothing regenerated between them. A guard whose
