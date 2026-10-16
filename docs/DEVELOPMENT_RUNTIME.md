@@ -104,17 +104,17 @@ command graph, not a third scheduler.
 
 ```mermaid
 flowchart TD
-  layer["THE LAYER · storage<br/><small>.ai/repo (shared) + .ai/local<br/>typed by share/kinds.yaml<br/>discovered by .ai/repo/knowledge/sources.yaml</small>"]
+  store["THE LAYER · storage<br/><small>.ai/repo (shared) + .ai/local<br/>typed by share/kinds.yaml<br/>discovered by .ai/repo/knowledge/sources.yaml</small>"]
   runtime["THE CANONICAL RUNTIME · semantics<br/><small>apps/majordomus-cli/src/capability/<br/>one capability! per operation, typed in/out<br/>exposure derived by command_graph/policy.rs</small><br/>docs/CAPABILITIES.md"]
-  layer <-->|"reads and writes"| runtime
+  store <-->|"reads and writes"| runtime
   subgraph surfaces["projections · surfaces"]
-    cockpit["Cockpit<br/>docs/COCKPIT.md"]
+    cockpitui["Cockpit<br/>docs/COCKPIT.md"]
     http["HTTP + WS"]
     openapi["OpenAPI"]
     mcp["MCP<br/>docs/MCP.md"]
     cli["CLI<br/>docs/CLI.md"]
   end
-  runtime --> cockpit
+  runtime --> cockpitui
   runtime --> http
   runtime --> openapi
   runtime --> mcp
