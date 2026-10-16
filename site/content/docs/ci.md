@@ -350,7 +350,8 @@ verdict and the Pages deploy that publishes it sat queued behind two pull reques
 holding all twenty slots; the site offered the previous release until a person cancelled one
 of them by hand. The release path is three kinds of run, read from what GitHub lists rather
 than from the release workflow: a run of `release.yml`, the validate run on a
-`release/record-<tag>` branch (the record's verdict), and a `pages.yml` run of master that the
+`release/record-<tag>` branch (the early reading the release dispatches, and the record pull
+request's own run once a person starts it), and a `pages.yml` run of master that the
 release's token dispatched. While any of them is queued or running:
 
 - a pull request's validate yields at the first step of its plan job, before any job of its
