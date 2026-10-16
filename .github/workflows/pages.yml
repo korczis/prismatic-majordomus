@@ -292,6 +292,16 @@ jobs:
         with:
           fetch-depth: 0
       - uses: ./.github/actions/setup-rust
+      # The Observatory's proof scenes are drawn with p5 (ADR 0160), which the UI loads from
+      # share/ui/vendor/ and which is built, not committed. Installed from the lockfile and
+      # copied here, so the published kiosk draws them; without this step it says "p5 is not
+      # built here" and keeps the facts as rows.
+      - id: site
+        uses: ./.github/actions/setup-site
+      - name: the drawing library the UI loads, built
+        run: |
+          mkdir -p share/ui/vendor
+          cp node_modules/p5/lib/p5.min.js share/ui/vendor/p5.min.js
       - name: the executable that reads the UI
         run: RUSTFLAGS='' cargo build --quiet --locked --manifest-path apps/majordomus-cli/Cargo.toml --bin majordomus
       # The forge, observed with its own tool before the UI is read: the pull requests the PR

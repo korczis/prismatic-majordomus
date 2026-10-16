@@ -106,6 +106,9 @@ cp "$ROOT/node_modules/p5/lib/p5.min.js" "$OUT/vendor/p5.min.js"
 # own asset directory; not committed, for the same reason
 mkdir -p "$ROOT/share/ui/vendor"
 cp "$ROOT/node_modules/cytoscape/dist/cytoscape.min.js" "$ROOT/share/ui/vendor/cytoscape.min.js"
+# the Observatory's proof scenes (ADR 0160) are drawn with the same pinned p5, loaded only
+# by that screen; a checkout without it says so on the stage and keeps the scenes as rows
+cp "$ROOT/node_modules/p5/lib/p5.min.js" "$ROOT/share/ui/vendor/p5.min.js"
 
 printf '==> cockpit-assets: done\n'
 ls -l "$OUT" "$OUT/vendor" | sed 's/^/    /'

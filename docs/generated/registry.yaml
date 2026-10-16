@@ -1,9 +1,9 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the canonical capability registry; regenerate with `majordomus generate`
-# Generator: majordomus-cli 0.26.0
+# Generator: majordomus-cli 0.27.0
 schema: majordomus/capability-registry/v1
 generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the canonical capability registry; regenerate with `majordomus generate`"
-generator: majordomus-cli 0.26.0
+generator: majordomus-cli 0.27.0
 modules:
   - id: artifacts
     title: Generated artifacts
@@ -133,10 +133,10 @@ modules:
     capabilities: 5
   - id: executions
     title: Executions
-    description: "Running a capability of this registry as work that can be watched: started, followed event by event over the live channel, read back afterwards, and asked to stop. In memory; an execution does not outlive the process that accepted it."
+    description: "Running a capability of this registry as work that can be watched: started, followed event by event over the live channel, read back afterwards, and asked to stop. One plane per checkout: `majordomus run` executes in its own process and reports the execution to the server already serving the checkout, so that server lists it beside its own; with no server it says that nothing else can see the run. In memory; an execution does not outlive the server that holds it."
     stability: behaviorally_verified
     source: builtin
-    capabilities: 7
+    capabilities: 8
   - id: gates
     title: Completion gates
     description: "Completion as a state the repository decides rather than a claim a worker makes: the validation gates this repository declares in its CI model, which of them a task's own change set selects, what each one last reported, whether that verdict still describes the tree it was taken over, and therefore whether the task may be called finished. A gate that has never reported is `queued` and not `pass`, a run whose files have changed since is `stale` and refuses exactly as a failure does, and a gate the change cannot affect is `exempt` rather than unknown."
@@ -352,7 +352,7 @@ modules:
     description: "Where every linked git worktree of this repository belongs and where each one is. The container is the primary checkout's sibling named with `-wt`, the path under it is the branch name with its hierarchy kept, and both are derived from git's own identity — the common directory, the registered worktrees, the branches — never from a registry, a configuration or the current directory. A worktree somewhere else is a typed diagnostic with a remedy; the migration that repairs it is a command-line operation of the same service."
     stability: behaviorally_verified
     source: builtin
-    capabilities: 4
+    capabilities: 5
 capabilities:
   - id: artifacts.list
     module: artifacts
@@ -19246,6 +19246,13 @@ capabilities:
                   - string
                   - "null"
                 description: "The peer id, for a call that arrived through an MCP session."
+              pid:
+                type:
+                  - integer
+                  - "null"
+                format: uint32
+                minimum: 0
+                description: "The process that ran it, for an execution another process ran and reported to this\none: the work happened there, and this process holds what it was told about it."
             required:
               - kind
             description: "Who asked, and which peer they are when this process knows."
@@ -19259,7 +19266,7 @@ capabilities:
                 description: An MCP client attached to this process.
               - type: string
                 const: cli
-                description: The command line of this process.
+                description: "A command line: this process's own, or `majordomus run` in another process of the\nsame checkout that reported its execution to this server, with its pid."
               - type: string
                 const: internal
                 description: "This executable's own tests and benchmarks."
@@ -20149,6 +20156,13 @@ capabilities:
                   - string
                   - "null"
                 description: "The peer id, for a call that arrived through an MCP session."
+              pid:
+                type:
+                  - integer
+                  - "null"
+                format: uint32
+                minimum: 0
+                description: "The process that ran it, for an execution another process ran and reported to this\none: the work happened there, and this process holds what it was told about it."
             required:
               - kind
             description: "Who asked, and which peer they are when this process knows."
@@ -20162,7 +20176,7 @@ capabilities:
                 description: An MCP client attached to this process.
               - type: string
                 const: cli
-                description: The command line of this process.
+                description: "A command line: this process's own, or `majordomus run` in another process of the\nsame checkout that reported its execution to this server, with its pid."
               - type: string
                 const: internal
                 description: "This executable's own tests and benchmarks."
@@ -20243,7 +20257,7 @@ capabilities:
     module: executions
     kind: query
     title: List executions
-    description: "Every execution this process remembers, newest first, narrowed by state or by capability. The counts beside them — remembered, active, queued, live channels — are what a control plane shows without asking a second question."
+    description: "Every execution this process remembers, newest first, narrowed by state or by capability: the ones it ran and the ones `majordomus run` in another process of the checkout reported to it, each with who started it. The counts beside them — remembered, active, queued, live channels — are what a control plane shows without asking a second question."
     input:
       name: ListInput
       schema:
@@ -20601,6 +20615,13 @@ capabilities:
                   - string
                   - "null"
                 description: "The peer id, for a call that arrived through an MCP session."
+              pid:
+                type:
+                  - integer
+                  - "null"
+                format: uint32
+                minimum: 0
+                description: "The process that ran it, for an execution another process ran and reported to this\none: the work happened there, and this process holds what it was told about it."
             required:
               - kind
             description: "Who asked, and which peer they are when this process knows."
@@ -20614,7 +20635,7 @@ capabilities:
                 description: An MCP client attached to this process.
               - type: string
                 const: cli
-                description: The command line of this process.
+                description: "A command line: this process's own, or `majordomus run` in another process of the\nsame checkout that reported its execution to this server, with its pid."
               - type: string
                 const: internal
                 description: "This executable's own tests and benchmarks."
@@ -20852,11 +20873,768 @@ capabilities:
       cancellable: false
       concurrency: unrestricted
     source_path: apps/majordomus-cli/src/capability/builtin/executions.rs
+  - id: executions.report
+    module: executions
+    kind: command
+    title: Report an execution another process runs
+    description: "What `majordomus run` posts while it runs a capability in its own process and a server already serves the checkout: the execution's description and its events after the last sequence this server took. The server holds it as an execution started by the command line, with the pid, in the same store, listing, Cockpit pages and live channel as its own; applies each event once and in order, answering where the next report starts; tells the reporter when somebody asked it to stop; and fails it with `unavailable` once the reporter has been silent for 30 s. Nothing runs here. Changes this process's memory only."
+    input:
+      name: ReportInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          id:
+            type: string
+            description: "The execution's id, as the reporting process minted it."
+          capability:
+            type: string
+            description: "The capability it runs, by its canonical id."
+          title:
+            type: string
+            description: "That capability's title."
+          input:
+            description: "The input it was given, as the reporting process stored it: already redacted there,\nand redacted again here by this registry's schema when this registry knows it."
+            default: null
+          cancellable:
+            type: boolean
+            description: "Whether the capability stops when asked. When it does, a cancel asked of this server\nreaches the reporter in the answer to its next report."
+            default: false
+          pid:
+            type: integer
+            format: uint32
+            minimum: 0
+            description: The process that runs it.
+          events:
+            type: array
+            items:
+              "$ref": "#/$defs/ExecutionEvent"
+            description: "Its events after the last sequence this server answered `through`, in its own\nsequence, oldest first; at most 500. Empty is a heartbeat."
+            default: []
+        required:
+          - id
+          - capability
+          - title
+          - pid
+        description: "The input of `executions.report`: what a process that runs an execution says about it to\nthe server serving the same checkout."
+        title: ReportInput
+        "$defs":
+          ExecutionEvent:
+            type: object
+            properties:
+              schema_version:
+                type: string
+                description: "The protocol version, `PROTOCOL_VERSION`."
+              event_id:
+                type: string
+                description: "The identity of this event: the execution's id and the sequence, so a client that\ndeduplicates needs no composite key of its own."
+              execution_id:
+                "$ref": "#/$defs/ExecutionId"
+                description: The execution it is about.
+              sequence:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "Its position in that execution's stream, from 1, without gaps."
+              timestamp:
+                type: string
+                description: "When the event was produced, RFC 3339 in UTC."
+            required:
+              - schema_version
+              - event_id
+              - execution_id
+              - sequence
+              - timestamp
+            oneOf:
+              - type: object
+                properties:
+                  type:
+                    type: string
+                    const: execution.created
+                  data:
+                    type: object
+                    properties:
+                      capability:
+                        description: "The capability's canonical id."
+                        type: string
+                      title:
+                        description: Its title.
+                        type: string
+                      input:
+                        description: "The input, with sensitive values already replaced."
+                    required:
+                      - capability
+                      - title
+                      - input
+                required:
+                  - type
+                  - data
+                description: "The execution was accepted and exists. Carries what it will run and with what,\nredacted, so a client that joins at the first event needs nothing else to render a\nheading."
+              - type: object
+                properties:
+                  type:
+                    type: string
+                    const: execution.queued
+                  data:
+                    type: object
+                    properties:
+                      ahead:
+                        description: How many executions are ahead of it.
+                        type: integer
+                        format: uint
+                        minimum: 0
+                    required:
+                      - ahead
+                required:
+                  - type
+                  - data
+                description: It is waiting for a worker.
+              - type: object
+                properties:
+                  type:
+                    type: string
+                    const: execution.started
+                required:
+                  - type
+                description: A worker picked it up and is about to enter the handler.
+              - type: object
+                properties:
+                  type:
+                    type: string
+                    const: execution.progress
+                  data:
+                    "$ref": "#/$defs/ProgressView"
+                required:
+                  - type
+                  - data
+                description: How far along it is.
+              - type: object
+                properties:
+                  type:
+                    type: string
+                    const: execution.step.started
+                  data:
+                    type: object
+                    properties:
+                      name:
+                        description: "The step's stable name."
+                        type: string
+                      title:
+                        description: One line for a reader.
+                        type: string
+                    required:
+                      - name
+                      - title
+                required:
+                  - type
+                  - data
+                description: A named phase was entered.
+              - type: object
+                properties:
+                  type:
+                    type: string
+                    const: execution.step.completed
+                  data:
+                    type: object
+                    properties:
+                      name:
+                        description: "The step's stable name."
+                        type: string
+                      ok:
+                        description: Whether what it was asked to do happened.
+                        type: boolean
+                      detail:
+                        description: "What it said, when it said anything."
+                        type:
+                          - string
+                          - "null"
+                    required:
+                      - name
+                      - ok
+                required:
+                  - type
+                  - data
+                description: A named phase finished.
+              - type: object
+                properties:
+                  type:
+                    type: string
+                    const: execution.log
+                  data:
+                    type: object
+                    properties:
+                      stream:
+                        description: Which stream it came from.
+                        "$ref": "#/$defs/LogStream"
+                      message:
+                        description: "The text, with control characters and terminal escapes already removed."
+                        type: string
+                    required:
+                      - stream
+                      - message
+                required:
+                  - type
+                  - data
+                description: A line of output.
+              - type: object
+                properties:
+                  type:
+                    type: string
+                    const: execution.diagnostic
+                  data:
+                    "$ref": "#/$defs/ExecutionDiagnostic"
+                required:
+                  - type
+                  - data
+                description: "A structured finding, distinct from the outcome."
+              - type: object
+                properties:
+                  type:
+                    type: string
+                    const: execution.cancelling
+                  data:
+                    type: object
+                    properties:
+                      by:
+                        description: "Who asked, in one word."
+                        type: string
+                    required:
+                      - by
+                required:
+                  - type
+                  - data
+                description: Cancellation was asked for; the handler has not stopped yet.
+              - type: object
+                properties:
+                  type:
+                    type: string
+                    const: execution.cancelled
+                required:
+                  - type
+                description: It stopped because it was asked to.
+              - type: object
+                properties:
+                  type:
+                    type: string
+                    const: execution.completed
+                  data:
+                    type: object
+                    properties:
+                      output:
+                        description: What the handler returned.
+                    required:
+                      - output
+                required:
+                  - type
+                  - data
+                description: "It finished, and the handler returned an output.\n\nThe output is on this event and not on one of its own, because a client must never\nbe able to read \"succeeded\" and find no result: the state and the value it produced\nare one fact and travel together."
+              - type: object
+                properties:
+                  type:
+                    type: string
+                    const: execution.failed
+                  data:
+                    type: object
+                    properties:
+                      error:
+                        description: Why.
+                        "$ref": "#/$defs/ExecutionError"
+                    required:
+                      - error
+                required:
+                  - type
+                  - data
+                description: "It finished, and it did not."
+            description: "One event about one execution.\n\n`sequence` is dense and starts at 1 within an execution: a client that has seen\nsequence `n` knows it has missed something when the next event it reads is not `n + 1`,\nand asks for the gap by cursor rather than reloading the world."
+          ExecutionId:
+            type: string
+            description: "The identity of one execution: `x-<UTC timestamp>-<8 hex>`.\n\nThe shape is the layer's own — a task is `t-20260905034523-a9f1` — so that an id read\nin a log, a URL or a browser tab is recognisable as this repository's without a\ndependency on a UUID crate. The timestamp orders ids by creation for a reader; the\nsuffix, not the timestamp, is what makes two ids created in the same second differ."
+          ProgressView:
+            type: object
+            properties:
+              current:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: Units done.
+              total:
+                type:
+                  - integer
+                  - "null"
+                format: uint64
+                minimum: 0
+                description: "Units in total, when the handler knows how many."
+              message:
+                type:
+                  - string
+                  - "null"
+                description: "What is being done, for a reader."
+            required:
+              - current
+            description: How far along an execution is.
+          LogStream:
+            oneOf:
+              - type: string
+                const: stdout
+                description: The standard output of a child process the handler ran.
+              - type: string
+                const: stderr
+                description: Its standard error.
+              - type: string
+                const: handler
+                description: "The handler itself, saying something it wants a reader to see."
+            description: Which stream a log line came from.
+          ExecutionDiagnostic:
+            type: object
+            properties:
+              severity:
+                "$ref": "#/$defs/Severity"
+                description: How bad.
+              code:
+                type: string
+                description: A stable machine-readable code.
+              summary:
+                type: string
+                description: "One line, for a person."
+              detail:
+                type:
+                  - string
+                  - "null"
+                description: "The rest, when there is more."
+              suggestion:
+                type:
+                  - string
+                  - "null"
+                description: "What to do about it, when there is something."
+            required:
+              - severity
+              - code
+              - summary
+            description: "A structured finding an execution reported on its way, distinct from its outcome."
+          Severity:
+            oneOf:
+              - type: string
+                const: info
+                description: Worth knowing; changes nothing.
+              - type: string
+                const: warning
+                description: Something to look at; the object is still served.
+              - type: string
+                const: error
+                description: The file is excluded and the index is degraded.
+            description: "How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts\nthe index into the degraded state; `Warning` and `Info` do neither."
+          ExecutionError:
+            type: object
+            properties:
+              code:
+                type: string
+                description: "`invalid_input`, `not_found`, `refused`, `forbidden`, `internal`, `cancelled`, `unavailable`."
+              message:
+                type: string
+                description: "What went wrong, for a person."
+              suggestion:
+                type:
+                  - string
+                  - "null"
+                description: "What to do about it, when there is something."
+              correlation_id:
+                type: string
+                description: "The execution this failure belongs to, so a log line and a UI agree."
+            required:
+              - code
+              - message
+              - correlation_id
+            description: "Why an execution ended badly, in the repository's diagnostic vocabulary rather than in\nRust's: a code a program branches on, a sentence a person reads, and where to look.\n\nA panic message and a backtrace are never in here. The engine catches a panicking\nhandler and reports `internal` with the execution's correlation id; the panic itself is\non the process's own error stream, where the operator running the server can read it."
+    output:
+      name: ReportAnswer
+      schema:
+        type: object
+        properties:
+          applied:
+            type: integer
+            format: uint
+            minimum: 0
+            description: How many of the reported events were applied.
+          through:
+            type: integer
+            format: uint64
+            minimum: 0
+            description: "The reporter's sequence this server holds everything up to: the next report sends\nthe events after it, so a lost or repeated report costs nothing."
+          cancel_requested:
+            type: boolean
+            description: "Whether somebody asked this server to stop the execution. The reporter runs it, so\nthe reporter cancels it."
+          execution:
+            "$ref": "#/$defs/ExecutionView"
+            description: The execution as this server now holds it.
+        required:
+          - applied
+          - through
+          - cancel_requested
+          - execution
+        description: "The answer of `executions.report`."
+        title: ReportAnswer
+        "$defs":
+          ExecutionView:
+            type: object
+            properties:
+              id:
+                "$ref": "#/$defs/ExecutionId"
+                description: The identity.
+              capability:
+                type: string
+                description: "The capability that ran, by its canonical id."
+              title:
+                type: string
+                description: "That capability's title, so a list needs no second lookup."
+              state:
+                "$ref": "#/$defs/ExecutionState"
+                description: Where it is.
+              created_at:
+                type: string
+                description: "When it was accepted, RFC 3339 in UTC."
+              started_at:
+                type:
+                  - string
+                  - "null"
+                description: When the handler was entered.
+              finished_at:
+                type:
+                  - string
+                  - "null"
+                description: When it reached a final state.
+              duration_ms:
+                type:
+                  - integer
+                  - "null"
+                format: uint64
+                minimum: 0
+                description: "How long it ran, in milliseconds, once it has finished."
+              input:
+                description: "The input it was given, with every value the input schema marks sensitive replaced."
+              output:
+                description: "What the handler returned, for a succeeded execution and never before."
+              error:
+                anyOf:
+                  - "$ref": "#/$defs/ExecutionError"
+                  - type: "null"
+                description: "Why it failed, for a failed execution and never before."
+              progress:
+                anyOf:
+                  - "$ref": "#/$defs/ProgressView"
+                  - type: "null"
+                description: The last progress the handler reported.
+              steps:
+                type: array
+                items:
+                  "$ref": "#/$defs/StepView"
+                description: "The steps it entered, in order."
+              diagnostics:
+                type: array
+                items:
+                  "$ref": "#/$defs/ExecutionDiagnostic"
+                description: The findings it reported.
+              last_sequence:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "The sequence number of the last event: the cursor a client subscribes from."
+              event_count:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "How many events it has produced, including the ones no longer retained."
+              events_truncated:
+                type: boolean
+                description: Whether the retained event history has lost its oldest entries to the bound.
+              cancellable:
+                type: boolean
+                description: "Whether asking to cancel this execution will do anything: the capability's policy."
+              actor:
+                "$ref": "#/$defs/Actor"
+                description: Who asked for it.
+              repository:
+                "$ref": "#/$defs/RepositoryRef"
+                description: Which repository it ran against.
+              correlation_id:
+                type: string
+                description: "The id used in this process's logs and tracing spans for this execution; the\nexecution id itself, carried under the name a reader of a log expects."
+              links:
+                "$ref": "#/$defs/ExecutionLinks"
+                description: Where to read more.
+            required:
+              - id
+              - capability
+              - title
+              - state
+              - created_at
+              - input
+              - last_sequence
+              - event_count
+              - events_truncated
+              - cancellable
+              - actor
+              - repository
+              - correlation_id
+              - links
+            description: One execution with the links to everything else about it.
+          ExecutionId:
+            type: string
+            description: "The identity of one execution: `x-<UTC timestamp>-<8 hex>`.\n\nThe shape is the layer's own — a task is `t-20260905034523-a9f1` — so that an id read\nin a log, a URL or a browser tab is recognisable as this repository's without a\ndependency on a UUID crate. The timestamp orders ids by creation for a reader; the\nsuffix, not the timestamp, is what makes two ids created in the same second differ."
+          ExecutionState:
+            oneOf:
+              - type: string
+                const: queued
+                description: "Accepted, and no worker has picked it up."
+              - type: string
+                const: running
+                description: The handler is running.
+              - type: string
+                const: cancelling
+                description: Cancellation was asked for and the handler has not stopped yet.
+              - type: string
+                const: succeeded
+                description: The handler returned an output.
+              - type: string
+                const: failed
+                description: "The handler returned an error, or the worker could not run it."
+              - type: string
+                const: cancelled
+                description: It stopped because it was asked to.
+            description: "Where an execution is in its life.\n\nThe transitions are the whole contract, and `ExecutionState::may_move_to` is the one\nplace they are written down: the engine asks before every change, the store refuses a\nmove it did not allow, and a client that reads a final state never sees it move again.\n\n```text\n  queued ──► running ──┬──► succeeded\n     │                 ├──► failed\n     │                 └──► cancelling ──┬──► cancelled\n     │                                   ├──► succeeded\n     └──► cancelled                      └──► failed\n```\n\nThere is no `starting`. An in-process engine claims an execution and enters its handler\nin the same instant, so a state between the two would be one no client could ever\nobserve and every client would have to handle."
+          ExecutionError:
+            type: object
+            properties:
+              code:
+                type: string
+                description: "`invalid_input`, `not_found`, `refused`, `forbidden`, `internal`, `cancelled`, `unavailable`."
+              message:
+                type: string
+                description: "What went wrong, for a person."
+              suggestion:
+                type:
+                  - string
+                  - "null"
+                description: "What to do about it, when there is something."
+              correlation_id:
+                type: string
+                description: "The execution this failure belongs to, so a log line and a UI agree."
+            required:
+              - code
+              - message
+              - correlation_id
+            description: "Why an execution ended badly, in the repository's diagnostic vocabulary rather than in\nRust's: a code a program branches on, a sentence a person reads, and where to look.\n\nA panic message and a backtrace are never in here. The engine catches a panicking\nhandler and reports `internal` with the execution's correlation id; the panic itself is\non the process's own error stream, where the operator running the server can read it."
+          ProgressView:
+            type: object
+            properties:
+              current:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: Units done.
+              total:
+                type:
+                  - integer
+                  - "null"
+                format: uint64
+                minimum: 0
+                description: "Units in total, when the handler knows how many."
+              message:
+                type:
+                  - string
+                  - "null"
+                description: "What is being done, for a reader."
+            required:
+              - current
+            description: How far along an execution is.
+          StepView:
+            type: object
+            properties:
+              name:
+                type: string
+                description: "A stable name, unique within the execution."
+              title:
+                type: string
+                description: One line for a reader.
+              state:
+                "$ref": "#/$defs/StepState"
+                description: Where it stands.
+              started_at:
+                type: string
+                description: "When it was entered, RFC 3339 in UTC."
+              finished_at:
+                type:
+                  - string
+                  - "null"
+                description: "When it finished, when it has."
+              detail:
+                type:
+                  - string
+                  - "null"
+                description: "What it said when it finished, when it said anything."
+            required:
+              - name
+              - title
+              - state
+              - started_at
+            description: "One named phase of an execution, as the handler reported it."
+          StepState:
+            oneOf:
+              - type: string
+                const: running
+                description: Entered and not finished.
+              - type: string
+                const: completed
+                description: "Finished, and what it was asked to do happened."
+              - type: string
+                const: failed
+                description: "Finished, and it did not."
+            description: Where a step of an execution stands.
+          ExecutionDiagnostic:
+            type: object
+            properties:
+              severity:
+                "$ref": "#/$defs/Severity"
+                description: How bad.
+              code:
+                type: string
+                description: A stable machine-readable code.
+              summary:
+                type: string
+                description: "One line, for a person."
+              detail:
+                type:
+                  - string
+                  - "null"
+                description: "The rest, when there is more."
+              suggestion:
+                type:
+                  - string
+                  - "null"
+                description: "What to do about it, when there is something."
+            required:
+              - severity
+              - code
+              - summary
+            description: "A structured finding an execution reported on its way, distinct from its outcome."
+          Severity:
+            oneOf:
+              - type: string
+                const: info
+                description: Worth knowing; changes nothing.
+              - type: string
+                const: warning
+                description: Something to look at; the object is still served.
+              - type: string
+                const: error
+                description: The file is excluded and the index is degraded.
+            description: "How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts\nthe index into the degraded state; `Warning` and `Info` do neither."
+          Actor:
+            type: object
+            properties:
+              kind:
+                "$ref": "#/$defs/ActorKind"
+                description: Where the request came from.
+              peer:
+                type:
+                  - string
+                  - "null"
+                description: "The peer id, for a call that arrived through an MCP session."
+              pid:
+                type:
+                  - integer
+                  - "null"
+                format: uint32
+                minimum: 0
+                description: "The process that ran it, for an execution another process ran and reported to this\none: the work happened there, and this process holds what it was told about it."
+            required:
+              - kind
+            description: "Who asked, and which peer they are when this process knows."
+          ActorKind:
+            oneOf:
+              - type: string
+                const: http
+                description: "An HTTP client, which includes the Cockpit."
+              - type: string
+                const: mcp
+                description: An MCP client attached to this process.
+              - type: string
+                const: cli
+                description: "A command line: this process's own, or `majordomus run` in another process of the\nsame checkout that reported its execution to this server, with its pid."
+              - type: string
+                const: internal
+                description: "This executable's own tests and benchmarks."
+            description: "Who asked for the execution. Not an authorisation decision — this server authenticates\nnobody — but a fact worth carrying into the audit line and the UI."
+          RepositoryRef:
+            type: object
+            properties:
+              name:
+                type: string
+                description: "The repository's name: the last component of its root."
+              id:
+                type: string
+                description: The stable identity two processes over one checkout both compute.
+              branch:
+                type:
+                  - string
+                  - "null"
+                description: "The branch checked out, when git can say."
+            required:
+              - name
+              - id
+            description: "Which repository, and which checkout of it, an execution ran against.\n\nAn execution is never run against \"wherever this process happens to be\": the engine\nstamps the repository the index was read from, and a request that names a different one\nis refused. The path itself is not here — this value is served to whoever can reach the\nsocket, and where the checkout sits on the host is of no use to them."
+          ExecutionLinks:
+            type: object
+            properties:
+              self:
+                type: string
+                description: "The snapshot: `GET /api/v1/executions/get?id=…`."
+              events:
+                type: string
+                description: "The retained history: `GET /api/v1/executions/events?id=…`."
+              cancel:
+                type: string
+                description: "Where to ask it to stop: `POST /api/v1/executions/cancel`."
+              websocket:
+                type: string
+                description: "The live channel, from the beginning: `GET /events?execution=…`."
+              cockpit:
+                type: string
+                description: The page a person opens.
+            required:
+              - self
+              - events
+              - cancel
+              - websocket
+              - cockpit
+            description: "Where to read more about one execution, in this server's own terms.\n\nEvery value is derived from the registry's declared routes and from the live channel's\nown constant, so a route that moves moves here too and no client holds a path this\nserver does not serve."
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::executions
+    exposure:
+      http:
+        method: POST
+        path: /api/v1/executions/report
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - executions
+      - control-plane
+    benchmark:
+      policy: waived
+      reason: transient_state
+    cache:
+      policy: disabled
+    execution:
+      effect: process_state
+      cancellable: false
+      concurrency: serial
+    source_path: apps/majordomus-cli/src/capability/builtin/executions.rs
   - id: executions.start
     module: executions
     kind: command
     title: Start a capability as an execution
-    description: "Run any executable capability of this registry as an execution: the input is checked against that capability's own input schema, the work is queued, and this answers at once with the execution's id and the links to follow it. Nothing waits for the handler. The capability runs through the same executor every other interface calls, so there is no second implementation of anything."
+    description: "Run any executable capability of this registry as an execution: the input is checked against that capability's own input schema, the work is queued, and this answers at once with the execution's id and the links to follow it. Nothing waits for the handler. The capability runs through the same executor every other interface calls, so there is no second implementation of anything. On the command line (`majordomus run`) it runs in that process and is reported to the server serving the checkout, when one is, through executions.report; a run never starts a server."
     input:
       name: StartInput
       schema:
@@ -21142,6 +21920,13 @@ capabilities:
                   - string
                   - "null"
                 description: "The peer id, for a call that arrived through an MCP session."
+              pid:
+                type:
+                  - integer
+                  - "null"
+                format: uint32
+                minimum: 0
+                description: "The process that ran it, for an execution another process ran and reported to this\none: the work happened there, and this process holds what it was told about it."
             required:
               - kind
             description: "Who asked, and which peer they are when this process knows."
@@ -21155,7 +21940,7 @@ capabilities:
                 description: An MCP client attached to this process.
               - type: string
                 const: cli
-                description: The command line of this process.
+                description: "A command line: this process's own, or `majordomus run` in another process of the\nsame checkout that reported its execution to this server, with its pid."
               - type: string
                 const: internal
                 description: "This executable's own tests and benchmarks."
@@ -56345,6 +57130,11 @@ capabilities:
                   - "$ref": "#/$defs/EnvrcApproval"
                   - type: "null"
                 description: "What became of its `.envrc` under direnv once it was at its new path: the primary\ncheckout's approval carried there, or why it was not. Only on a moved step."
+              hooks:
+                anyOf:
+                  - "$ref": "#/$defs/HooksPath"
+                  - type: "null"
+                description: "Which hooks it runs at its new path: a per-worktree `core.hooksPath` names the old\none, so a moved worktree is bound again to its own tree's (I2718). Only on a moved\nstep."
             required:
               - branch
               - from
@@ -56634,6 +57424,87 @@ capabilities:
                   - message
                 description: "direnv was asked and refused, or could not be run; the message is its own."
             description: "What became of the `.envrc` of a worktree that was just created, found, or moved."
+          HooksPath:
+            oneOf:
+              - type: object
+                properties:
+                  outcome:
+                    type: string
+                    const: not_configured
+                required:
+                  - outcome
+                description: "The repository's configuration sets no `core.hooksPath`: git's own hooks directory\nin the common directory (or a value of the user's) serves every worktree, and there\nis no tracked directory to follow."
+              - type: object
+                properties:
+                  path:
+                    type: string
+                    description: The directory git runs the hooks from.
+                  outcome:
+                    type: string
+                    const: own
+                required:
+                  - outcome
+                  - path
+                description: "Git already resolves this worktree's hooks to its own directory; nothing was set."
+              - type: object
+                properties:
+                  path:
+                    type: string
+                    description: The directory it now runs the hooks from.
+                  enabled:
+                    type: array
+                    items:
+                      type: string
+                    description: "Repository settings switched on so that a per-worktree value is honoured, as\n`key=value`; empty when they were on already."
+                  outcome:
+                    type: string
+                    const: set
+                required:
+                  - outcome
+                  - path
+                  - enabled
+                description: "This worktree's `core.hooksPath` was set, per worktree, to its own directory."
+              - type: object
+                properties:
+                  path:
+                    type: string
+                    description: The directory every worktree runs the hooks from.
+                  outcome:
+                    type: string
+                    const: shared
+                required:
+                  - outcome
+                  - path
+                description: "The hooks directory is outside the primary checkout — one directory shared on\npurpose — and every worktree runs it; nothing was set."
+              - type: object
+                properties:
+                  missing:
+                    type: string
+                    description: "The directory that would be the worktree's own, and is not there."
+                  runs:
+                    type: string
+                    description: The directory the worktree runs the hooks from instead.
+                  outcome:
+                    type: string
+                    const: untracked
+                required:
+                  - outcome
+                  - missing
+                  - runs
+                description: "The primary checkout's hooks directory has no counterpart in this worktree's tree,\nso the worktree keeps running the primary's: pointing it at a directory that does\nnot exist would switch its hooks off."
+              - type: object
+                properties:
+                  message:
+                    type: string
+                    description: What went wrong.
+                  outcome:
+                    type: string
+                    const: failed
+                required:
+                  - outcome
+                  - message
+                description: "Git was asked and refused, or could not be run; the message is its own."
+            description: "What became of the hooks directory of a worktree that was just created, found or moved.\n\nIt travels in the JSON of `worktree create`, `ensure`, `migrate` and `repair`, tagged by\n`outcome`, so a reader branches on one word rather than parsing the line:\n\n```\nuse majordomus_cli::worktree::HooksPath;\n\nlet set = HooksPath::Set {\n    path: \"/r-wt/fix/x/.githooks\".into(),\n    enabled: vec![],\n};\nlet json = serde_json::to_value(&set).unwrap();\nassert_eq!(json[\"outcome\"], \"set\");\nassert_eq!(json[\"path\"], \"/r-wt/fix/x/.githooks\");\nlet back: HooksPath = serde_json::from_value(json).unwrap();\nassert_eq!(back, set);\n```"
     provenance:
       source: builtin
       module: majordomus_cli::capability::builtin::worktree
@@ -57669,6 +58540,291 @@ capabilities:
       - worktree
       - git
       - topology
+      - introspection
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/worktree.rs
+  - id: worktree.uncommitted
+    module: worktree
+    kind: query
+    title: "Uncommitted work in the linked worktrees, and what holds it"
+    description: "Every linked worktree whose index or working tree holds changes no commit carries: how many paths (staged, unstaged, untracked, conflicted), when the oldest change was made (the earliest modification time among the changed paths, the index file's standing in for a deleted one), and what holds the work — an active task record, an open episode that is not stranded, or a process whose working directory is inside. Work nothing holds and older than the threshold is `abandoned`, with the command that would put it on a remote `rescue/` ref; it is suggested, never run. The threshold is the policy's `session.stranded_after` unless `older_than` names another. Reads every worktree and writes none: every status runs without optional locks, so no index is refreshed."
+    input:
+      name: UncommittedInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          older_than:
+            type:
+              - string
+              - "null"
+            description: "The age past which work nothing holds is abandoned, as a person writes it (`90s`,\n`30m`, `12h`, `1d`). Default: the policy's `session.stranded_after`, which is also\nhow long an open episode may be silent and still hold the work."
+        description: What to judge uncommitted work against.
+        title: UncommittedInput
+    output:
+      name: UncommittedReport
+      schema:
+        type: object
+        properties:
+          schema:
+            type: string
+            description: "`UNCOMMITTED_SCHEMA`."
+          observed_at:
+            type: string
+            description: "When the reading was taken, RFC 3339 in UTC."
+          threshold:
+            "$ref": "#/$defs/Threshold"
+            description: The threshold it was judged against.
+          worktrees:
+            type: array
+            items:
+              "$ref": "#/$defs/UncommittedWorktree"
+            description: "Every linked work tree with uncommitted work, abandoned first, then oldest first."
+          tallies:
+            "$ref": "#/$defs/UncommittedTallies"
+            description: The counts.
+          findings:
+            type: array
+            items:
+              type: string
+            description: "What could not be read or judged, in words."
+        required:
+          - schema
+          - observed_at
+          - threshold
+          - worktrees
+          - tallies
+          - findings
+        description: "Every linked work tree holding uncommitted work, with what holds it: the answer of\n`worktree.uncommitted` on every surface, and what `doctor` renders.\n\n```\nuse majordomus_cli::worktree::uncommitted::UNCOMMITTED_SCHEMA;\nuse majordomus_cli::worktree::{Threshold, UncommittedReport, WorktreeService};\nlet dir = tempfile::tempdir().unwrap();\nlet init = std::process::Command::new(\"git\")\n    .args([\"init\", \"-q\"])\n    .current_dir(dir.path())\n    .status()\n    .unwrap();\nassert!(init.success());\n// a repository with no linked work tree, and a policy that declares no threshold\nlet threshold = Threshold::resolve(None, None).unwrap();\nlet report: UncommittedReport =\n    WorktreeService::open(dir.path()).unwrap().uncommitted(&threshold).unwrap();\nassert_eq!(report.schema, UNCOMMITTED_SCHEMA);\nassert!(report.worktrees.is_empty());\nassert_eq!(report.tallies.measured, 0);\nassert_eq!(report.findings.len(), 1, \"a missing threshold is said, not assumed\");\n```"
+        title: UncommittedReport
+        "$defs":
+          Threshold:
+            type: object
+            properties:
+              declared:
+                type:
+                  - string
+                  - "null"
+                description: "The value as written (`12h`). Absent when nothing declares one."
+              seconds:
+                type:
+                  - integer
+                  - "null"
+                format: uint64
+                minimum: 0
+                description: "The same value, in seconds."
+              source:
+                type: string
+                description: "`THRESHOLD_KEY`, `older_than` when the caller named one, or `absent`."
+            required:
+              - source
+            description: "The age past which uncommitted work nothing holds is abandoned, and where it came from.\n\nIt is reported with every reading, so a reader can see what the verdicts were judged\nagainst; a threshold nothing declares is carried as absent, not filled in.\n\n```\nuse majordomus_cli::worktree::Threshold;\nlet declared = Threshold::resolve(Some(\"12h\"), None).unwrap();\nlet wire = serde_json::to_value(&declared).unwrap();\nassert_eq!(wire[\"declared\"], \"12h\");\nassert_eq!(wire[\"seconds\"], 43_200);\nlet absent: Threshold =\n    serde_json::from_value(serde_json::json!({\"source\": \"absent\"})).unwrap();\nassert_eq!((absent.declared, absent.seconds), (None, None), \"absent is not a default\");\n```"
+          UncommittedWorktree:
+            type: object
+            properties:
+              path:
+                type: string
+                description: "Absolute, as git holds it."
+              branch:
+                type:
+                  - string
+                  - "null"
+                description: The branch checked out there. Absent when detached.
+              label:
+                type: string
+                description: "The branch, or `detached/<short commit>`."
+              work:
+                "$ref": "#/$defs/DirtyState"
+                description: "The counts, as `worktree status` gives them."
+              paths:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "Every changed path: staged, unstaged, untracked and conflicted together."
+              oldest_change:
+                type:
+                  - string
+                  - "null"
+                description: "When the oldest change was made: the earliest modification time among the changed\npaths, the index file's standing in for a path that no longer exists. RFC 3339."
+              age_seconds:
+                type:
+                  - integer
+                  - "null"
+                format: uint64
+                minimum: 0
+                description: Seconds since then.
+              age:
+                type:
+                  - string
+                  - "null"
+                description: "The same, for a person (`3d`, `5h`, `40m`)."
+              task:
+                type:
+                  - string
+                  - "null"
+                description: The active task recorded there.
+              episodes:
+                type: array
+                items:
+                  "$ref": "#/$defs/OpenEpisode"
+                description: The episodes open there.
+              process_inside:
+                type:
+                  - boolean
+                  - "null"
+                description: A process has its working directory inside it. Absent when that could not be read.
+              held_by:
+                type: array
+                items:
+                  type: string
+                description: "What holds it, in words; empty when nothing does."
+              standing:
+                "$ref": "#/$defs/WorkStanding"
+                description: The verdict.
+              remedy:
+                type: string
+                description: "The command that would put this work on a remote ref. Suggested, never run."
+            required:
+              - path
+              - label
+              - work
+              - paths
+              - episodes
+              - held_by
+              - standing
+              - remedy
+            description: "One linked work tree holding uncommitted work: how much, how old, what holds it, the\nverdict, and the command that would preserve it. A listing is in canonical order —\nabandoned first, then recent, then held, the oldest first inside each.\n\n```\nuse majordomus_cli::worktree::{DirtyState, UncommittedWorktree, WorkStanding};\nlet entry = |path: &str, standing: WorkStanding, age: u64| UncommittedWorktree {\n    path: path.into(),\n    branch: None,\n    label: path.into(),\n    work: DirtyState { staged: 1, ..DirtyState::default() },\n    paths: 1,\n    oldest_change: None,\n    age_seconds: Some(age),\n    age: None,\n    task: None,\n    episodes: Vec::new(),\n    process_inside: None,\n    held_by: Vec::new(),\n    standing,\n    remedy: String::new(),\n};\nlet mut listing = vec![\n    entry(\"/wt/held-old\", WorkStanding::Held, 900_000),\n    entry(\"/wt/young\", WorkStanding::Abandoned, 50_000),\n    entry(\"/wt/older\", WorkStanding::Abandoned, 90_000),\n];\nmajordomus_cli::order::canonical(&mut listing);\nlet paths: Vec<&str> = listing.iter().map(|w| w.path.as_str()).collect();\nassert_eq!(paths, [\"/wt/older\", \"/wt/young\", \"/wt/held-old\"]);\n```"
+          DirtyState:
+            type: object
+            properties:
+              staged:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Entries with a change in the index.
+              unstaged:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Entries with a change in the work tree that is not in the index.
+              untracked:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "Untracked, not ignored, files."
+              conflicted:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Entries with an unresolved merge conflict.
+              clean:
+                type: boolean
+                description: Nothing above is non-zero.
+              in_progress:
+                type:
+                  - string
+                  - "null"
+                description: "A merge, rebase, cherry-pick, revert or bisect is in progress here."
+            required:
+              - staged
+              - unstaged
+              - untracked
+              - conflicted
+              - clean
+            description: "Uncommitted work in a work tree, counted from `git status --porcelain`. Untracked\ncontent counts: it is exactly what a careless move loses."
+          OpenEpisode:
+            type: object
+            properties:
+              id:
+                type: string
+                description: The episode.
+              last_sign_of_life:
+                type:
+                  - string
+                  - "null"
+                description: "Its newest sign of life, RFC 3339 in UTC."
+              stranded:
+                type:
+                  - boolean
+                  - "null"
+                description: "Silent longer than the threshold. Absent when that cannot be judged — no threshold,\nor no readable sign of life — and then it holds nothing."
+            required:
+              - id
+            description: "An open episode in a work tree, as far as holding its work goes: it holds the work only\nwhile `stranded` is `Some(false)`; a stranded or unjudgeable one holds nothing.\n\n```\nuse majordomus_cli::worktree::OpenEpisode;\nlet unjudged = OpenEpisode {\n    id: \"s-20260101000000-0a0a\".into(),\n    last_sign_of_life: None,\n    stranded: None,\n};\nlet wire = serde_json::to_value(&unjudged).unwrap();\nassert!(wire.get(\"stranded\").is_none(), \"what could not be judged is absent, not false\");\nlet back: OpenEpisode = serde_json::from_value(wire).unwrap();\nassert_eq!(back, unjudged);\n```"
+          WorkStanding:
+            oneOf:
+              - type: string
+                const: held
+                description: "A task, an episode or a process holds it."
+              - type: string
+                const: recent
+                description: "Nothing holds it, and it is younger than the threshold."
+              - type: string
+                const: abandoned
+                description: "Nothing holds it, and it is older than the threshold — or its age cannot be read."
+            description: "What a work tree's uncommitted work is, judged: held by something, recent, or abandoned.\n`judge` is the one place it is decided, and `doctor` warns only on `abandoned`.\n\n```\nuse majordomus_cli::worktree::uncommitted::{judge, WorkStanding};\nlet standing = judge(false, Some(90_000), Some(43_200));\nassert_eq!(standing, WorkStanding::Abandoned);\nassert_eq!(serde_json::to_value(standing).unwrap(), \"abandoned\");\n```"
+          UncommittedTallies:
+            type: object
+            properties:
+              measured:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Linked work trees whose status was read.
+              uncommitted:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "Of those, the ones holding uncommitted work: every entry of the listing."
+              held:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "Held by a task, an episode or a process."
+              recent:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "Held by nothing, younger than the threshold."
+              abandoned:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "Held by nothing, older than the threshold."
+            required:
+              - measured
+              - uncommitted
+              - held
+              - recent
+              - abandoned
+            description: "The counts of an `UncommittedReport`: how many linked work trees were read, how many\nhold uncommitted work, and how those split into held, recent and abandoned. The three\nstandings always add up to `uncommitted`; `doctor` reads `abandoned` to decide whether it\nhas anything to warn about.\n\n```\nuse majordomus_cli::worktree::UncommittedTallies;\nlet wire = serde_json::json!(\n    {\"measured\": 4, \"uncommitted\": 3, \"held\": 1, \"recent\": 1, \"abandoned\": 1}\n);\nlet t: UncommittedTallies = serde_json::from_value(wire.clone()).unwrap();\nassert_eq!(t.held + t.recent + t.abandoned, t.uncommitted);\nassert_eq!(serde_json::to_value(&t).unwrap(), wire, \"the shape doctor's jq reads\");\nassert_eq!(UncommittedTallies::default().abandoned, 0, \"nothing read, nothing abandoned\");\n```"
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::worktree
+    exposure:
+      mcp:
+        tool: majordomus_worktree_uncommitted
+      http:
+        method: GET
+        path: /api/v1/worktrees/uncommitted
+      cli:
+        path:
+          - worktree
+          - uncommitted
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - worktree
+      - git
+      - continuity
       - introspection
     benchmark:
       policy: required

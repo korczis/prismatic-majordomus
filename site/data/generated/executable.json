@@ -1190,6 +1190,23 @@
       "tool": "majordomus_execution_protocol"
     },
     {
+      "api_anchor": "/docs/api/executions/#op-executions-report",
+      "claims": [],
+      "cli": null,
+      "id": "executions.report",
+      "kind": "command",
+      "module": "executions",
+      "module_route": "/registry/modules/executions/",
+      "resource": null,
+      "route": "/registry/capabilities/executions-report/",
+      "slug": "executions-report",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/executions.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/executions.rs",
+      "tests": [],
+      "title": "Report an execution another process runs",
+      "tool": null
+    },
+    {
       "api_anchor": "/docs/api/executions/#op-executions-start",
       "claims": [],
       "cli": "majordomus run",
@@ -3569,6 +3586,23 @@
       "tests": [],
       "title": "The whole topology",
       "tool": "majordomus_worktrees"
+    },
+    {
+      "api_anchor": "/docs/api/worktree/#op-worktree-uncommitted",
+      "claims": [],
+      "cli": "majordomus worktree uncommitted",
+      "id": "worktree.uncommitted",
+      "kind": "query",
+      "module": "worktree",
+      "module_route": "/registry/modules/worktree/",
+      "resource": null,
+      "route": "/registry/capabilities/worktree-uncommitted/",
+      "slug": "worktree-uncommitted",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/worktree.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/worktree.rs",
+      "tests": [],
+      "title": "Uncommitted work in the linked worktrees, and what holds it",
+      "tool": "majordomus_worktree_uncommitted"
     }
   ],
   "claims": {
@@ -4207,11 +4241,11 @@
     ]
   },
   "counts": {
-    "capabilities": 200,
+    "capabilities": 202,
     "claims": 93,
     "modules": 58
   },
-  "generator": "majordomus-cli 0.26.0",
+  "generator": "majordomus-cli 0.27.0",
   "modules": [
     {
       "capabilities": [
@@ -4788,6 +4822,11 @@
           "id": "executions.protocol",
           "route": "/registry/capabilities/executions-protocol/",
           "slug": "executions-protocol"
+        },
+        {
+          "id": "executions.report",
+          "route": "/registry/capabilities/executions-report/",
+          "slug": "executions-report"
         },
         {
           "id": "executions.start",
@@ -5873,6 +5912,11 @@
           "id": "worktree.topology",
           "route": "/registry/capabilities/worktree-topology/",
           "slug": "worktree-topology"
+        },
+        {
+          "id": "worktree.uncommitted",
+          "route": "/registry/capabilities/worktree-uncommitted/",
+          "slug": "worktree-uncommitted"
         }
       ],
       "claims": [],

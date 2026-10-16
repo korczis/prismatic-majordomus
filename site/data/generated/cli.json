@@ -11804,6 +11804,12 @@
           "route": "/docs/cli/worktree/cleanup/"
         },
         {
+          "about": "Every linked worktree holding uncommitted work: how many paths, how old the oldest change, what holds it (an active task, an open episode, a process inside) and whether it is abandoned, with the command that would put it on a remote ref. Reads every worktree and writes none",
+          "command": "majordomus worktree uncommitted",
+          "name": "uncommitted",
+          "route": "/docs/cli/worktree/uncommitted/"
+        },
+        {
           "about": "Every local branch, one per line, for a shell completion that wants the live set",
           "command": "majordomus worktree branches",
           "name": "branches",
@@ -14024,6 +14030,147 @@
       ],
       "route": "/docs/cli/worktree/cleanup/",
       "usage": "majordomus worktree cleanup [OPTIONS]"
+    },
+    {
+      "about": "Every linked worktree holding uncommitted work: how many paths, how old the oldest change, what holds it (an active task, an open episode, a process inside) and whether it is abandoned, with the command that would put it on a remote ref. Reads every worktree and writes none",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus worktree",
+          "name": "worktree",
+          "route": "/docs/cli/worktree/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Judge against this age instead of the policy's session.stranded_after (90s, 30m, 12h, 1d)",
+          "long": "older-than",
+          "name": "older_than",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DURATION"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus worktree uncommitted",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "worktree",
+            "uncommitted"
+          ],
+          "command": "majordomus worktree uncommitted",
+          "description": "Every linked worktree holding staged, unstaged, untracked or conflicted paths, with the count, the age of the oldest change, the task, episode or process that holds it, and `abandoned` when nothing does and it is older than the policy's session.stranded_after. A repository with no linked worktree has nothing to list; the reading writes nothing either way.",
+          "expectation": "exits 0; prints 0 with uncommitted work, nothing was changed",
+          "id": "worktree-uncommitted-none",
+          "setup": [],
+          "title": "Work no commit carries, and whether anything holds it"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "uncommitted",
+      "parent_route": "/docs/cli/worktree/",
+      "path": [
+        "majordomus",
+        "worktree",
+        "uncommitted"
+      ],
+      "route": "/docs/cli/worktree/uncommitted/",
+      "usage": "majordomus worktree uncommitted [OPTIONS]"
     },
     {
       "about": "Every local branch, one per line, for a shell completion that wants the live set",
@@ -37069,13 +37216,13 @@
     }
   ],
   "counts": {
-    "arguments": 1607,
-    "commands": 233,
-    "examples": 236,
-    "runnable": 205
+    "arguments": 1613,
+    "commands": 234,
+    "examples": 237,
+    "runnable": 206
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
-  "generator_version": "0.26.0",
+  "generator_version": "0.27.0",
   "route_prefix": "/docs/cli",
   "schema": 1,
   "source": "docs/generated/cli.json"
