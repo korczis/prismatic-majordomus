@@ -9000,6 +9000,88 @@ paths:
       x-majordomus-mcp:
         tool: majordomus_plan_delivery
       x-majordomus-cli: plan delivery
+  "/api/v1/plan/drift":
+    get:
+      operationId: plan.drift
+      summary: "Where the plan's stamps contradict the delivered work"
+      description: "Every contradiction between an issue's declared status and its delivery (plan.delivery), each with the objects that prove it: `merged_not_recorded` — READY, BLOCKED or ACTIVE, with a merge on the trunk naming it (pull request, merge commit, release) and no open pull request naming it; `active_without_work` — ACTIVE since before the window, with no branch, pull request, merge or live mesh claim naming it; `done_without_trace` — DONE with no merge naming it, advisory because record-only issues exist. Each finding carries its age, whether it is past the window `.ai/repo/ci/plan.yaml` declares (`drift.window`, seconds), the sources that were not read and could have dissolved it, and the command that settles it (`majordomus plan verify|done <id>`). With `gate`, judged as a gate: on a `head` every merged_not_recorded is pending; on the `trunk` one merged longer than the window ago is refused and a younger one pending; the other classes never refuse; a missing or unreadable window refuses (exit 12); refusals fail the gate (exit 10) only under `drift.enforcement: blocking`, and are reported with exit 0 under `advisory`. Observed live, or `at` a commit as plan.delivery is. Inferred on every call; it never writes a stamp."
+      tags:
+        - plan
+      parameters:
+        - name: issue
+          in: query
+          required: false
+          schema:
+            type: string
+          description: "One issue id. Default: every issue of the plan."
+          examples:
+            one-issue-at-head-as-trunk-gate:
+              value: I0001
+        - name: at
+          in: query
+          required: false
+          schema:
+            type: string
+          description: "Observe as of this commit, as `plan.delivery` does. Default: live."
+          examples:
+            one-issue-at-head-as-trunk-gate:
+              value: HEAD
+        - name: gate
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - "$ref": "#/components/schemas/DriftGate"
+              - type: "null"
+          description: "Judge as a gate on a `head` or on the `trunk`. Default: report only, exit 0."
+          examples:
+            one-issue-at-head-as-trunk-gate:
+              value: trunk
+      responses:
+        "200":
+          description: "Where the plan's stamps contradict the delivered work: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/DriftReport"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: plan.drift
+      x-majordomus-kind: query
+      x-majordomus-stability: experimental
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::plan
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: read
+      x-majordomus-mcp:
+        tool: majordomus_plan_drift
+      x-majordomus-cli: plan drift
   "/api/v1/plan/issues":
     get:
       operationId: plan.issues
@@ -18549,7 +18631,7 @@ components:
           description: "The pull request's title, when the merge carries one, or the commit's subject."
         via:
           type: string
-          description: "How it names the issue: `title_or_branch` or `slug` for a merge, `subject` for a\ncommit."
+          description: "How it names the issue: `title_or_branch` or `slug` for a merge, `subject` for a\ncommit, `forge_title` for a merged pull request's title as the forge recorded it."
         merged_at:
           type: string
           description: "When it was committed, RFC 3339."
@@ -20219,6 +20301,257 @@ components:
         - source
         - remediation
       description: "```\nuse majordomus_cli::gates::{DoneQuestion, GateStatus};\n\nlet q = DoneQuestion {\n    id: \"pushed\".into(),\n    question: \"Has the commit reached the remote?\".into(),\n    status: GateStatus::Queued,\n    evidence: \"the obligation is owed\".into(),\n    source: \"obligation push (obligations.closure)\".into(),\n    remediation: \"git push\".into(),\n};\n// every question names what answered it and what would settle it: a question with\n// neither is a checklist line, which is the artifact this type exists instead of\nassert!(!q.source.is_empty() && !q.remediation.is_empty());\nassert!(q.status.unverified());\n```\nOne question of the done invariant, and what answered it."
+    DriftClass:
+      oneOf:
+        - type: string
+          const: merged_not_recorded
+          description: "READY, BLOCKED or ACTIVE, with merged work and no open pull request naming it."
+        - type: string
+          const: active_without_work
+          description: "ACTIVE since before the window, with no branch, pull request, merge or mesh claim."
+        - type: string
+          const: done_without_trace
+          description: "DONE with no merge naming it. Advisory: record-only issues exist."
+      description: One kind of contradiction between the stamps and the work.
+    DriftFinding:
+      type: object
+      properties:
+        issue:
+          type: string
+          description: The issue id.
+        title:
+          type: string
+          description: Its title.
+        milestone:
+          type: string
+          description: Its milestone.
+        status:
+          type: string
+          description: Its declared status.
+        stage:
+          "$ref": "#/components/schemas/DeliveryStage"
+          description: Its inferred delivery stage.
+        class:
+          "$ref": "#/components/schemas/DriftClass"
+          description: The contradiction.
+        advisory:
+          type: boolean
+          description: True for a class that never refuses.
+        proof:
+          "$ref": "#/components/schemas/DriftProof"
+          description: What proves it.
+        since:
+          type:
+            - string
+            - "null"
+          description: "Since when the contradiction holds: the merge for `merged_not_recorded`, the start\nstamp for `active_without_work`."
+        age_seconds:
+          type:
+            - integer
+            - "null"
+          format: uint64
+          minimum: 0
+          description: "Seconds from `since` to the observation."
+        past_window:
+          type:
+            - boolean
+            - "null"
+          description: Whether that is longer than the window; absent when either is unknown.
+        settled:
+          type: boolean
+          description: True when no unread source could have dissolved it.
+        unread:
+          type: array
+          items:
+            type: string
+          description: The sources that were not read and could have dissolved it.
+        remedy:
+          type: string
+          description: The command that settles it.
+        verdict:
+          anyOf:
+            - "$ref": "#/components/schemas/DriftVerdict"
+            - type: "null"
+          description: "What the gate made of it, when a gate was asked."
+      required:
+        - issue
+        - title
+        - milestone
+        - status
+        - stage
+        - class
+        - advisory
+        - proof
+        - settled
+        - unread
+        - remedy
+      description: "One contradiction between an issue's stamps and its delivery."
+    DriftGate:
+      oneOf:
+        - type: string
+          const: head
+          description: "A head: not the shared plan, so every merged_not_recorded is pending."
+        - type: string
+          const: trunk
+          description: "The trunk: merged work unrecorded past the window is refused."
+      description: "Which tree a `plan.drift` gate judges.\n\n```\nuse majordomus_cli::capability::builtin::plan::DriftGate;\nassert_eq!(serde_json::to_value(DriftGate::Trunk).unwrap(), \"trunk\");\nassert_eq!(serde_json::from_str::<DriftGate>(r#\"\"head\"\"#).unwrap(), DriftGate::Head);\n```"
+    DriftProof:
+      type: object
+      properties:
+        pull_request:
+          type:
+            - integer
+            - "null"
+          format: uint64
+          minimum: 0
+          description: The pull request the newest merge naming the issue merged.
+        merge_commit:
+          type:
+            - string
+            - "null"
+          description: "The newest commit in the trunk's history that names the issue."
+        merged_at:
+          type:
+            - string
+            - "null"
+          description: When that commit was made.
+        via:
+          type:
+            - string
+            - "null"
+          description: "How it names the issue (`title_or_branch`, `slug`, `subject`, `forge_title`)."
+        release:
+          type:
+            - string
+            - "null"
+          description: The first release that contains it.
+        started_at:
+          type:
+            - string
+            - "null"
+          description: "When execution was recorded to have begun, for `active_without_work`."
+      description: The objects that prove a finding.
+    DriftReport:
+      type: object
+      properties:
+        schema:
+          type: integer
+          format: uint32
+          minimum: 0
+          description: The version of this shape.
+        observed:
+          "$ref": "#/components/schemas/DeliveryObservation"
+          description: Where and when the delivery was observed.
+        window:
+          "$ref": "#/components/schemas/DriftWindow"
+          description: The declared window.
+        gate:
+          anyOf:
+            - "$ref": "#/components/schemas/DriftGate"
+            - type: "null"
+          description: "The tree a gate judged, when one was asked."
+        sources:
+          type: array
+          items:
+            "$ref": "#/components/schemas/DeliverySource"
+          description: "Every source, read or not: the delivery's, and the mesh claims."
+        classes:
+          type: array
+          items:
+            "$ref": "#/components/schemas/DriftClass"
+          description: "The class vocabulary, in order."
+        tallies:
+          type: object
+          additionalProperties:
+            type: integer
+            format: uint
+            minimum: 0
+          description: "How many findings of each class, keyed by every class."
+        findings:
+          type: array
+          items:
+            "$ref": "#/components/schemas/DriftFinding"
+          description: "The findings, in issue order, then class order."
+        refused:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many findings the gate refused.
+        pending:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many it reported as pending.
+        enforced:
+          type: boolean
+          description: "Whether a refusal fails the gate (`drift.enforcement: blocking`)."
+        verdict:
+          type: string
+          description: "`report` (no gate), `clean`, `pending`, `advisory` (refusals not enforced),\n`refused`, or `unjudged` (no window)."
+        exit_code:
+          type: integer
+          format: uint8
+          minimum: 0
+          maximum: 255
+          description: "The exit code the gate ends with: 0, `EXIT_REFUSED` or `EXIT_UNJUDGED`."
+      required:
+        - schema
+        - observed
+        - window
+        - sources
+        - classes
+        - tallies
+        - findings
+        - refused
+        - pending
+        - enforced
+        - verdict
+        - exit_code
+      description: "Every contradiction between the plan's stamps and its delivery, and, when a gate was\nasked, its verdict."
+    DriftVerdict:
+      oneOf:
+        - type: string
+          const: refused
+          description: "Refused: merged work the trunk has carried unrecorded past the window."
+        - type: string
+          const: pending
+          description: "Reported and not refused: on a head, or inside the window."
+        - type: string
+          const: reported
+          description: Reported; this class never refuses.
+        - type: string
+          const: advisory
+          description: "Advisory; this class never refuses (`done_without_trace`)."
+      description: What a gate made of one finding.
+    DriftWindow:
+      type: object
+      properties:
+        model:
+          type: string
+          description: The file it is declared in.
+        state:
+          "$ref": "#/components/schemas/DeliveryReading"
+          description: "Read, or unread with `detail` saying why."
+        seconds:
+          type:
+            - integer
+            - "null"
+          format: uint64
+          minimum: 0
+          description: The seconds the trunk may carry merged work the plan has not recorded.
+        enforcement:
+          type:
+            - string
+            - "null"
+          description: "`advisory` (refusals are reported, the gate passes) or `blocking`."
+        detail:
+          type: string
+          description: "What was read, or why nothing was."
+      required:
+        - model
+        - state
+        - detail
+      description: "The declared window, or why there is none."
     DriftedObject:
       type: object
       properties:

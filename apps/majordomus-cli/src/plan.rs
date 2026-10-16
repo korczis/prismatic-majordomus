@@ -31,6 +31,7 @@ use serde_json::Value;
 use crate::index::Index;
 
 pub(crate) mod delivery;
+pub(crate) mod drift;
 
 /// The kind of a milestone record.
 pub const MILESTONE: &str = "milestone";

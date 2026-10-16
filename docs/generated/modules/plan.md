@@ -5,7 +5,7 @@
 
 The milestone and issue model of this repository, and everything derived from it that nobody authored: the status of each record, the dependency graphs above and below the milestone boundary, the topological execution waves, the roadmap order, the milestone being executed and the one issue to take next. Status is never stored — a record says what happened to it and the status follows from that and from the state of its dependencies — so no file can contradict the graph. This capability reads; writing a lifecycle marker into a record is `plan.transition`, which declares that it writes the repository.
 
-Stability: behaviorally_verified. Capabilities: 10.
+Stability: behaviorally_verified. Capabilities: 11.
 
 ## `plan.delivery` — How far each issue's work has travelled
 
@@ -31,6 +31,30 @@ declare is not found, never answered as `none`. |
 records, and nothing live — no branch, forge, deployment or clock. Default: live. |
 
 Output: `IssueDeliveryReport`.
+
+## `plan.drift` — Where the plan's stamps contradict the delivered work
+
+Every contradiction between an issue's declared status and its delivery (plan.delivery), each with the objects that prove it: `merged_not_recorded` — READY, BLOCKED or ACTIVE, with a merge on the trunk naming it (pull request, merge commit, release) and no open pull request naming it; `active_without_work` — ACTIVE since before the window, with no branch, pull request, merge or live mesh claim naming it; `done_without_trace` — DONE with no merge naming it, advisory because record-only issues exist. Each finding carries its age, whether it is past the window `.ai/repo/ci/plan.yaml` declares (`drift.window`, seconds), the sources that were not read and could have dissolved it, and the command that settles it (`majordomus plan verify|done <id>`). With `gate`, judged as a gate: on a `head` every merged_not_recorded is pending; on the `trunk` one merged longer than the window ago is refused and a younger one pending; the other classes never refuse; a missing or unreadable window refuses (exit 12); refusals fail the gate (exit 10) only under `drift.enforcement: blocking`, and are reported with exit 0 under `advisory`. Observed live, or `at` a commit as plan.delivery is. Inferred on every call; it never writes a stamp.
+
+| | |
+|---|---|
+| kind | query |
+| stability | experimental |
+| MCP tool | `majordomus_plan_drift` |
+| HTTP | `GET /api/v1/plan/drift` |
+| CLI | `majordomus plan drift` |
+| cache | — |
+| benchmark | required |
+| provenance | builtin majordomus_cli::capability::builtin::plan |
+| tags | plan, project, delivery, drift, gate |
+
+| input | type | required | description |
+|---|---|---|---|
+| `issue` | string or null | no | One issue id. Default: every issue of the plan. |
+| `at` | string or null | no | Observe as of this commit, as `plan.delivery` does. Default: live. |
+| `gate` | object | no | Judge as a gate on a `head` or on the `trunk`. Default: report only, exit 0. |
+
+Output: `DriftReport`.
 
 ## `plan.issues` — The issues, filtered by what the graph derived
 

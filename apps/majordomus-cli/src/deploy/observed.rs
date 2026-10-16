@@ -9,7 +9,10 @@
 //! the first time something is deployed there and no file names it.
 //!
 //! The reading is one GraphQL question through `gh`, asked by `majordomus served forge` and
-//! recorded beside the pull-request observation, which `majordomus prs refresh` takes.
+//! recorded beside the pull-request observation, which `majordomus prs refresh` takes. The
+//! same command also reads the newest merged pull requests, a page at a time, because their
+//! titles are the forge's and `plan.delivery` reads the issues they name from here; the
+//! executor's `prs refresh` never asks for them, so they stay off its hot path.
 //! Every reader — `deploy.observed`, the Deployments screen, the published snapshot — reads
 //! the record and never the network, and a checkout that has never observed says so rather
 //! than showing an empty table.
@@ -37,6 +40,38 @@ const QUERY: &str = "query($owner:String!,$name:String!,$n:Int!){repository(owne
 deployments(last:$n){nodes{databaseId environment createdAt task commitOid ref{name} creator{login} \
 latestStatus{state environmentUrl logUrl}}} \
 releases(first:$n,orderBy:{field:CREATED_AT,direction:DESC}){nodes{tagName name publishedAt url isPrerelease isDraft}}}}";
+
+/// How many merged pull requests one observation reads, newest first: the title a merge on
+/// the trunk does not carry in git (a pull request merged inside a combined top reaches the
+/// trunk through an octopus merge that names it only in prose) is the forge's, and
+/// `plan.delivery` reads it from here (ADR 0166). Read a page at a time, [`MERGED_PAGE`] each.
+pub const MERGED_WINDOW: usize = 1000;
+
+/// One page of merged pull requests: the forge's largest.
+pub const MERGED_PAGE: usize = 100;
+
+/// The question asked for each page of merged pull requests, walking back from the newest.
+const MERGED_QUERY: &str = "query($owner:String!,$name:String!,$n:Int!,$before:String){repository(owner:$owner,name:$name){\
+pullRequests(states:MERGED,last:$n,before:$before){pageInfo{hasPreviousPage startCursor} \
+nodes{number title headRefName headRefOid mergedAt mergeCommit{oid}}}}}";
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+/// One merged pull request, as the forge recorded it: what names the issues it realised.
+pub struct ObservedMergedPullRequest {
+    /// The number.
+    pub number: u64,
+    /// The title: the words that name an issue (`... (I2741)`).
+    pub title: String,
+    /// The branch it merged.
+    pub head_ref: String,
+    /// The head commit that merged.
+    pub head_sha: String,
+    /// The merge commit the forge names; empty when it names none.
+    #[serde(default)]
+    pub merge_commit: String,
+    /// When it merged, RFC 3339.
+    pub merged_at: String,
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 /// One deployment the forge recorded.
@@ -108,6 +143,11 @@ pub struct DeploymentObservation {
     pub deployments: Vec<ObservedDeployment>,
     /// The newest releases, newest first.
     pub releases: Vec<ObservedRelease>,
+    /// The newest merged pull requests (up to [`MERGED_WINDOW`]), newest first; `None` when
+    /// they were not read — an observation recorded before they were, or a read the forge
+    /// refused — which is unread, never "nothing merged".
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub merged_pull_requests: Option<Vec<ObservedMergedPullRequest>>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
@@ -218,7 +258,59 @@ pub fn parse(repository: &str, observed_at: &str, answer: &Value) -> DeploymentO
         observed_at: observed_at.to_string(),
         deployments,
         releases,
+        merged_pull_requests: None,
     }
+}
+
+/// The merged pull requests one page of [`MERGED_QUERY`] holds, newest first, and the cursor
+/// of the page before it when there is one. A node that names no number, no head or no
+/// merge time is not one anybody could follow, and is left out.
+pub fn parse_merged(answer: &Value) -> (Vec<ObservedMergedPullRequest>, Option<String>) {
+    let repo = answer.pointer("/data/repository").unwrap_or(&Value::Null);
+    let mut merged: Vec<ObservedMergedPullRequest> = nodes(repo, "pullRequests")
+        .iter()
+        .filter_map(|p| {
+            Some(ObservedMergedPullRequest {
+                number: p.get("number").and_then(Value::as_u64)?,
+                title: string(p, "/title").unwrap_or_default(),
+                head_ref: string(p, "/headRefName").unwrap_or_default(),
+                head_sha: string(p, "/headRefOid")?,
+                merge_commit: string(p, "/mergeCommit/oid").unwrap_or_default(),
+                merged_at: string(p, "/mergedAt")?,
+            })
+        })
+        .collect();
+    merged.sort_by_key(|p| std::cmp::Reverse(p.number));
+    let more = repo.pointer("/pullRequests/pageInfo/hasPreviousPage") == Some(&Value::Bool(true));
+    let earlier = more
+        .then(|| string(repo, "/pullRequests/pageInfo/startCursor"))
+        .flatten();
+    (merged, earlier)
+}
+
+/// Every page of merged pull requests, newest first, up to [`MERGED_WINDOW`]; `ask` answers
+/// one page given the cursor before which it lies (`None` for the newest). A page the forge
+/// refuses fails the whole read: a partial list would read as "nothing older merged".
+pub fn merged_pages(
+    mut ask: impl FnMut(Option<&str>) -> Result<Value, String>,
+) -> Result<Vec<ObservedMergedPullRequest>, String> {
+    let mut all: Vec<ObservedMergedPullRequest> = Vec::new();
+    let mut before: Option<String> = None;
+    loop {
+        let (page, earlier) = parse_merged(&ask(before.as_deref())?);
+        let empty = page.is_empty();
+        all.extend(page);
+        match earlier {
+            Some(cursor)
+                if !empty && all.len() < MERGED_WINDOW && before.as_deref() != Some(&cursor) =>
+            {
+                before = Some(cursor);
+            }
+            _ => break,
+        }
+    }
+    all.truncate(MERGED_WINDOW);
+    Ok(all)
 }
 
 fn run(program: &str, root: &Path, args: &[&str]) -> Result<Value, String> {
@@ -262,11 +354,34 @@ pub fn observe_with(program: &str, root: &Path) -> Result<DeploymentObservation,
             &format!("n={WINDOW}"),
         ],
     )?;
-    Ok(parse(
+    let mut observation = parse(
         &repository,
         &crate::evidence::record::now_rfc3339(),
         &answer,
-    ))
+    );
+    // the merged pull requests are a second question, a page at a time; a refusal leaves
+    // them unread and keeps what the deployments said
+    observation.merged_pull_requests = merged_pages(|before| {
+        let mut args: Vec<String> = vec![
+            "api".into(),
+            "graphql".into(),
+            "-f".into(),
+            format!("query={MERGED_QUERY}"),
+            "-F".into(),
+            format!("owner={owner}"),
+            "-F".into(),
+            format!("name={name}"),
+            "-F".into(),
+            format!("n={MERGED_PAGE}"),
+        ];
+        if let Some(cursor) = before {
+            args.extend(["-f".into(), format!("before={cursor}")]);
+        }
+        let argv: Vec<&str> = args.iter().map(String::as_str).collect();
+        run(program, root, &argv)
+    })
+    .ok();
+    Ok(observation)
 }
 
 /// The forge's own tool, as it is found on the path.
@@ -439,6 +554,72 @@ mod tests {
         );
     }
 
+    fn merged_page(numbers: &[u64], earlier: Option<&str>) -> Value {
+        let nodes: Vec<Value> = numbers
+            .iter()
+            .map(|n| {
+                json!({"number": n, "title": format!("fix: thing (I{n:04})"), "headRefName": format!("fix/{n}"),
+                       "headRefOid": format!("h{n}"), "mergedAt": "2026-10-16T10:00:00Z",
+                       "mergeCommit": {"oid": format!("m{n}")}})
+            })
+            .chain([json!({"number": 99, "title": "no head, not followable"})])
+            .collect();
+        json!({"data": {"repository": {"pullRequests": {
+            "pageInfo": {"hasPreviousPage": earlier.is_some(), "startCursor": earlier},
+            "nodes": nodes
+        }}}})
+    }
+
+    #[test]
+    fn merged_pull_requests_are_read_page_by_page_newest_first_and_a_refusal_fails_the_read() {
+        let (page, earlier) = parse_merged(&merged_page(&[3, 4], Some("c1")));
+        assert_eq!(
+            page.iter().map(|p| p.number).collect::<Vec<_>>(),
+            [4, 3],
+            "newest first; a node with no head is left out"
+        );
+        assert_eq!(page[0].merge_commit, "m4");
+        assert_eq!(earlier.as_deref(), Some("c1"));
+
+        let mut asked: Vec<Option<String>> = Vec::new();
+        let all = merged_pages(|before| {
+            asked.push(before.map(str::to_string));
+            Ok(match before {
+                None => merged_page(&[3, 4], Some("c1")),
+                Some(_) => merged_page(&[1, 2], None),
+            })
+        })
+        .unwrap();
+        assert_eq!(asked, [None, Some("c1".to_string())]);
+        assert_eq!(
+            all.iter().map(|p| p.number).collect::<Vec<_>>(),
+            [4, 3, 2, 1]
+        );
+
+        // a forge that hands back the same cursor is not walked forever
+        let mut calls = 0;
+        merged_pages(|_| {
+            calls += 1;
+            Ok(merged_page(&[1], Some("same")))
+        })
+        .unwrap();
+        assert_eq!(calls, 2);
+
+        let mut first = true;
+        let refused = merged_pages(|_| {
+            if std::mem::take(&mut first) {
+                Ok(merged_page(&[2], Some("c")))
+            } else {
+                Err("rate limited".into())
+            }
+        });
+        assert_eq!(
+            refused,
+            Err("rate limited".to_string()),
+            "partial is not whole"
+        );
+    }
+
     #[test]
     fn an_answer_with_no_repository_is_an_empty_observation_not_a_panic() {
         let o = parse("o/r", "t", &json!({"data": {}}));
@@ -514,6 +695,11 @@ mod tests {
         let o = observe_with(&gh, dir.path()).unwrap();
         assert_eq!(o.repository, "o/r");
         assert_eq!(o.deployments.len(), 3);
+        assert_eq!(
+            o.merged_pull_requests,
+            Some(vec![]),
+            "an answer holding no merged pull request is read as none"
+        );
 
         std::fs::write(dir.path().join("answer.json"), "not json").unwrap();
         assert!(observe_with(&gh, dir.path()).unwrap_err().contains("api"));

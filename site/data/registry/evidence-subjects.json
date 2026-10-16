@@ -764,6 +764,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:plan.drift",
+      "path": "/evidence/capabilities/plan-drift/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:plan.issues",
       "path": "/evidence/capabilities/plan-issues/"
     },
@@ -2981,6 +2986,11 @@
       "kind": "command",
       "subject": "command:plan delivery",
       "path": "/evidence/commands/plan-delivery/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:plan drift",
+      "path": "/evidence/commands/plan-drift/"
     },
     {
       "kind": "command",
@@ -5495,6 +5505,18 @@
       "programs": [],
       "members": [
         "command:plan delivery"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:plan.drift": {
+      "kind": "capability",
+      "id": "plan.drift",
+      "page": "/evidence/capabilities/plan-drift/",
+      "programs": [],
+      "members": [
+        "command:plan drift"
       ],
       "routes": [],
       "mechanisms": [],
@@ -15793,6 +15815,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:3101_merged_work_unrecorded_is_drift",
+          "path": "test/cases/3101_merged_work_unrecorded_is_drift.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:40_project_model",
           "path": "test/cases/40_project_model.sh",
           "category": "e2e"
@@ -15907,6 +15935,25 @@
       "kind": "command",
       "id": "plan delivery",
       "page": "/evidence/commands/plan-delivery/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:plan drift": {
+      "kind": "command",
+      "id": "plan drift",
+      "page": "/evidence/commands/plan-drift/",
       "programs": [
         "native"
       ],
@@ -20647,6 +20694,18 @@
       "programs": [],
       "members": [
         "capability:plan.delivery"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_plan_drift": {
+      "kind": "mcp",
+      "id": "majordomus_plan_drift",
+      "alias_of": "capability:plan.drift",
+      "programs": [],
+      "members": [
+        "capability:plan.drift"
       ],
       "routes": [],
       "mechanisms": [],
@@ -27713,6 +27772,7 @@
     "crate:pack",
     "crate:peer_claims",
     "crate:plan_delivery",
+    "crate:plan_drift",
     "crate:properties",
     "crate:providers_projection",
     "crate:reasoning_mesh",

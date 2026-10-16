@@ -550,6 +550,17 @@ gates:
     runs: scripts/ci/github-check
     summary: the GitHub projection still agrees with the canonical model — no record behind, edited, in conflict or unmanaged, and the backlog of unprojected records no larger than its baseline
 
+  # ADR 0166, decision 2: merged work the plan has not recorded is drift. The executable judges
+  # it (`majordomus plan drift --gate head|trunk`, capability plan.drift) against the window
+  # .ai/repo/ci/plan.yaml declares; the script only says which tree the runner is. Every plan
+  # runs it because a stamp, a merge and a clock each move the verdict, and none of them is a
+  # changed path. Advisory under `drift.enforcement: advisory` until I2748 settles today's drift.
+  - id: plan-drift
+    job: structure
+    always: true
+    runs: scripts/ci/plan-drift-check
+    summary: merged work the plan has not recorded is pending on a head and inside the window declared in .ai/repo/ci/plan.yaml, and refused on the trunk past it with `majordomus plan verify|done <id>` named; active_without_work and done_without_trace are reported and never refuse; a missing or unreadable window refuses
+
   - id: providers-data
     job: structure
     runs: scripts/ci/providers-check
@@ -780,7 +791,7 @@ gates:
   - id: release-record-cases
     job: rust
     requires: [rust-integration]
-    runs: MJ_TEST_JOBS=4 bash test/run.sh --no-skips 84_distribution_model 87_release_pipeline 97_install_gate 103_release_projection 112_version_matches_surface 139_release_record_schema 352_the_version_the_site_shows_is_one_you_can_get 620_mcp_tools_are_invoked_and_answer 743_release_version_answers_with_the_contract 763_a_tag_older_than_the_record_practice_is_a_note 1041_a_release_publishes_its_metadata 1060_the_version_is_allocated_at_landing 1087_the_site_offers_the_release_it_published 3021_a_tag_does_not_freeze_the_queue 3029_a_tag_in_flight_is_pending
+    runs: MJ_TEST_JOBS=4 bash test/run.sh --no-skips 84_distribution_model 87_release_pipeline 97_install_gate 103_release_projection 112_version_matches_surface 139_release_record_schema 352_the_version_the_site_shows_is_one_you_can_get 620_mcp_tools_are_invoked_and_answer 743_release_version_answers_with_the_contract 763_a_tag_older_than_the_record_practice_is_a_note 1041_a_release_publishes_its_metadata 1060_the_version_is_allocated_at_landing 1087_the_site_offers_the_release_it_published 3021_a_tag_does_not_freeze_the_queue 3029_a_tag_in_flight_is_pending 3100_an_issue_delivery_is_inferred
     summary: the cases about the committed release record and what is offered from it — the distribution model, the release pipeline and projection, the record's schema, the version the site shows, the install gate, the stable channel the MCP tools resolve — pass against this tree
 
 # Shapes: changes whose plan is narrower than the union of their classes (the header's last

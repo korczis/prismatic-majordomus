@@ -269,9 +269,20 @@ fn plan_delivery_reads_each_stage_with_the_object_that_proved_it() {
     // a body that mentions an issue names nothing
     f.write("lib/body.sh", "echo body\n");
     f.git(&["add", "-A"]);
-    f.git(&["commit", "-q", "-m", "chore: unrelated", "-m", "I0002 builds on this later."]);
+    f.git(&[
+        "commit",
+        "-q",
+        "-m",
+        "chore: unrelated",
+        "-m",
+        "I0002 builds on this later.",
+    ]);
     let (_, v, _) = cli(&f, &["I0002"]);
-    assert_eq!(by_id(&v, "I0002")["stage"], "branch", "a commit body named I0002");
+    assert_eq!(
+        by_id(&v, "I0002")["stage"],
+        "branch",
+        "a commit body named I0002"
+    );
 
     // ---- an id the plan does not declare is not found, never "none"
     let (code, _, err) = cli(&f, &["I9999"]);

@@ -464,6 +464,49 @@ A source that was not read is reported unread with its reason, never as none. An
 unread source could have moved further is not `settled` and names that source in `unread`.
 The same answer is `GET /api/v1/plan/delivery` and the MCP tool `majordomus_plan_delivery`.
 
+A pull request merged inside a combined top reaches the trunk through an octopus merge that
+names it only in prose, and its title is the forge's, not git's. `majordomus served forge`
+therefore also records the newest merged pull requests (up to 1000, a page of 100 at a time)
+in the deployment observation, and the live answer counts a merged pull request's title when
+its merge commit or head is in the history read (`via: forge_title`). That is how #1097 is
+seen to have realised I2653, which its commits name only in a body. The source is
+`merged_titles`; at a commit it is unread, so the committed data stays a function of the
+commit's history.
+
+## Drift: where the stamps contradict the work
+
+Inference never writes a stamp, so the two can disagree. `majordomus plan drift [<id>]
+[--at <rev>] [--gate head|trunk] [--json]` names every disagreement with the objects that
+prove it (ADR 0166, decision 2):
+
+| class | declared | delivered |
+|---|---|---|
+| `merged_not_recorded` | READY, BLOCKED or ACTIVE | a merge names it (pull request, merge commit, release), and no open pull request names it |
+| `active_without_work` | ACTIVE, started before the window | no branch, pull request, merge or live mesh claim names it |
+| `done_without_trace` | DONE | no merge names it; advisory, because record-only issues exist |
+
+Each finding carries its age, whether that is past the window, the sources that were not
+read and could have dissolved it (`unread`; a finding with the forge unread is still a
+finding, and is not `settled`), and the command that settles it:
+`majordomus plan verify|done <id>`.
+
+`.ai/repo/ci/plan.yaml` declares `drift.window` (seconds) and `drift.enforcement`
+(`advisory` or `blocking`). The gate `plan-drift` (`scripts/ci/plan-drift-check`, every
+plan) asks `plan drift --gate trunk` on a push to the default branch and `--gate head`
+everywhere else:
+
+- on a head, every `merged_not_recorded` is PENDING;
+- on the trunk, one merged longer than the window ago is REFUSED, naming the settling
+  command, and a younger one is PENDING;
+- `active_without_work` is a NOTE and `done_without_trace` ADVISORY: neither refuses;
+- a missing or unreadable window refuses (exit 12);
+- refusals fail the gate (exit 10) under `blocking`, and are reported with exit 0 under
+  `advisory`. The gate lands advisory, so that it does not turn the trunk red on drift it
+  predates; I2748 settles that drift and makes it blocking.
+
+The same answer is `GET /api/v1/plan/drift` and the MCP tool `majordomus_plan_drift`.
+`test/cases/3101_merged_work_unrecorded_is_drift.sh` proves the classes, the window and the gate, with six code mutations failing it.
+
 ## Projections
 
 The canonical files are the only source. Everything else is generated from them by one

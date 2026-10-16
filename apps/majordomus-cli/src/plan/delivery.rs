@@ -10,7 +10,8 @@
 //! | `none`     | nothing that was read names the issue                                  |
 //! | `branch`   | a local or remote-tracking branch names it                             |
 //! | `pr_open`  | an open pull request in the recorded forge observation names it        |
-//! | `merged`   | a merge (title or branch) or a commit (subject) in the trunk's history |
+//! | `merged`   | a merge (title or branch) or a commit (subject) in the trunk's history, |
+//! |            | or a merged pull request's forge title whose merge or head is in it     |
 //! | `released` | the first release record whose `commit` contains that merge            |
 //! | `deployed` | the published `latest.json` names that release or a later one          |
 //!
@@ -67,6 +68,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
+use crate::deploy::observed::ObservedMergedPullRequest;
 use crate::distribution::release::{Release, Releases, LATEST, PUBLIC_DIR};
 use crate::integration::ForgeObservation;
 use crate::plan::{Plan, PlanIssue};
@@ -207,7 +209,7 @@ pub(crate) struct DeliveryMerge {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub title: Option<String>,
     /// How it names the issue: `title_or_branch` or `slug` for a merge, `subject` for a
-    /// commit.
+    /// commit, `forge_title` for a merged pull request's title as the forge recorded it.
     pub via: String,
     /// When it was committed, RFC 3339.
     pub merged_at: String,
@@ -668,7 +670,7 @@ fn first_releases(
 /// Releases in version order, lowest first, keeping only `v*` versions.
 fn in_version_order(mut releases: Vec<(String, String)>) -> Vec<(String, String)> {
     releases.retain(|(tag, _)| tag.starts_with('v') && version_key(tag).is_some());
-    releases.sort_by(|a, b| version_key(&a.0).cmp(&version_key(&b.0)));
+    releases.sort_by_key(|r| version_key(&r.0));
     releases
 }
 
@@ -711,6 +713,23 @@ fn published_live(root: &Path) -> Result<(String, String, String), String> {
     })?;
     let version = latest_version(&text).map_err(|e| format!("{at}: {e}"))?;
     Ok((version, at, observation.observed_at))
+}
+
+/// The merged pull requests the deployment observation holds, and when it was made.
+fn merged_titles(root: &Path) -> Result<(Vec<ObservedMergedPullRequest>, String), String> {
+    let observation = crate::deploy::observed::load(root)?.ok_or_else(|| {
+        "the forge's merged pull requests have not been observed from this checkout; \
+         `majordomus served forge` records them"
+            .to_string()
+    })?;
+    let merged = observation.merged_pull_requests.ok_or_else(|| {
+        format!(
+            "the deployment observation of {} holds no merged pull requests; \
+             `majordomus served forge` records them",
+            observation.observed_at
+        )
+    })?;
+    Ok((merged, observation.observed_at))
 }
 
 /// Every branch that names an issue, local first: issue → its first naming ref.
@@ -768,7 +787,7 @@ fn open_pulls(
     slugs: &BTreeMap<String, String>,
 ) -> BTreeMap<String, DeliveryPullRequest> {
     let mut pulls: Vec<_> = observation.pull_requests.iter().collect();
-    pulls.sort_by(|a, b| b.number.cmp(&a.number));
+    pulls.sort_by_key(|p| std::cmp::Reverse(p.number));
     let mut found: BTreeMap<String, DeliveryPullRequest> = BTreeMap::new();
     for pr in pulls {
         for (id, via) in named_by(Some(&pr.title), Some(&pr.head_ref), declared, slugs) {
@@ -875,20 +894,76 @@ pub(crate) fn infer(
             merges.entry(id).or_default().push((c.clone(), "subject"));
         }
     }
+    // The forge's titles of merged pull requests, live only: a pull request merged inside a
+    // combined top has its title nowhere in git, and its commits' subjects may not name the
+    // issue (#1097 realised I2653 and named it only in a body). A title counts when the
+    // pull request's merge commit or head is in the history read, at that commit's time.
+    // They only add to what the history proves, so an unread list leaves the history's own
+    // edges deciding, and the source says it was not read.
+    let titles = if mode == "live" {
+        merged_titles(root)
+    } else {
+        Err(
+            "the titles of merged pull requests are the forge's, and an answer at a commit \
+             reads that commit's history only; the live answer (no `at`) reads them"
+                .to_string(),
+        )
+    };
+    if let Ok((list, _)) = &titles {
+        let times: BTreeMap<&str, u64> = all_merges
+            .iter()
+            .chain(&all_subjects)
+            .map(|c| (c.commit.as_str(), c.time))
+            .collect();
+        for pr in list {
+            let landed = [pr.merge_commit.as_str(), pr.head_sha.as_str()]
+                .into_iter()
+                .find_map(|c| times.get(c).map(|t| (c, *t)));
+            let Some((commit, time)) = landed else {
+                continue;
+            };
+            for (id, _) in named_by(Some(&pr.title), Some(&pr.head_ref), &declared, &slugs) {
+                let named = merges.entry(id).or_default();
+                if named.iter().any(|(m, _)| m.commit == commit) {
+                    continue;
+                }
+                named.push((
+                    MergeCommit {
+                        commit: commit.to_string(),
+                        time,
+                        pull_request: Some(pr.number),
+                        branch: Some(pr.head_ref.clone()),
+                        title: Some(pr.title.clone()),
+                    },
+                    "forge_title",
+                ));
+            }
+        }
+    }
     for named in merges.values_mut() {
         // newest first; a merge before the commits it brought in at the same second
-        named.sort_by(|a, b| b.0.time.cmp(&a.0.time));
+        named.sort_by_key(|n| std::cmp::Reverse(n.0.time));
     }
 
-    let mut sources = vec![source(
-        "history",
-        Ok(format!(
-            "{} merge commit(s) and {} other commit(s) in the history of {history}",
-            all_merges.len(),
-            all_subjects.len()
-        )),
-        Some(&observed_at),
-    )];
+    let mut sources = vec![
+        source(
+            "history",
+            Ok(format!(
+                "{} merge commit(s) and {} other commit(s) in the history of {history}",
+                all_merges.len(),
+                all_subjects.len()
+            )),
+            Some(&observed_at),
+        ),
+        source(
+            "merged_titles",
+            titles
+                .as_ref()
+                .map(|(l, _)| format!("{} merged pull request title(s) of the forge", l.len()))
+                .map_err(Clone::clone),
+            titles.as_ref().ok().map(|(_, o)| o.as_str()),
+        ),
+    ];
 
     // releases: the tree's release records, in both modes. A record names the commit it
     // released, and it is a file of the tree, so the answer at a commit is a function of the

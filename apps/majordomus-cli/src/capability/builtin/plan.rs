@@ -29,6 +29,7 @@
 //!
 //! [ADR 0040]: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md
 
+use std::collections::BTreeMap;
 use std::path::Path;
 
 use schemars::JsonSchema;
@@ -42,7 +43,8 @@ use crate::capability::model::{
     McpResource, Stability,
 };
 use crate::capability::module::ModuleDescriptor;
-use crate::plan::delivery::{self, IssueDeliveryReport};
+use crate::plan::delivery::{self, DeliveryReading, DeliverySource, IssueDeliveryReport};
+use crate::plan::drift::{self, DriftReport};
 use crate::plan::{
     Plan, PlanCounts, PlanFinding, PlanIssue, PlanMilestone, PlanProject, PlanVocabulary, PlanWave,
     Transition, TransitionError,
@@ -697,6 +699,22 @@ pub fn module() -> ModuleDescriptor {
                 cache: CachePolicy::Disabled,
                 handler: plan_delivery,
             },
+            capability! {
+                id: "plan.drift",
+                title: "Where the plan's stamps contradict the delivered work",
+                description: "Every contradiction between an issue's declared status and its delivery (plan.delivery), each with the objects that prove it: `merged_not_recorded` — READY, BLOCKED or ACTIVE, with a merge on the trunk naming it (pull request, merge commit, release) and no open pull request naming it; `active_without_work` — ACTIVE since before the window, with no branch, pull request, merge or live mesh claim naming it; `done_without_trace` — DONE with no merge naming it, advisory because record-only issues exist. Each finding carries its age, whether it is past the window `.ai/repo/ci/plan.yaml` declares (`drift.window`, seconds), the sources that were not read and could have dissolved it, and the command that settles it (`majordomus plan verify|done <id>`). With `gate`, judged as a gate: on a `head` every merged_not_recorded is pending; on the `trunk` one merged longer than the window ago is refused and a younger one pending; the other classes never refuse; a missing or unreadable window refuses (exit 12); refusals fail the gate (exit 10) only under `drift.enforcement: blocking`, and are reported with exit 0 under `advisory`. Observed live, or `at` a commit as plan.delivery is. Inferred on every call; it never writes a stamp.",
+                input: PlanDriftInput,
+                output: DriftReport,
+                stability: Stability::Experimental,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_plan_drift"),
+                    http: get("/api/v1/plan/drift"),
+                    cli: Some(CliExposure { path: vec!["plan".into(), "drift".into()] }),
+                },
+                tags: ["plan", "project", "delivery", "drift", "gate"],
+                cache: CachePolicy::Disabled,
+                handler: plan_drift,
+            },
         ],
     }
 }
@@ -774,6 +792,144 @@ fn plan_delivery(
         input.issue.as_deref(),
     )
     .map_err(CapabilityError::Refused)
+}
+
+// ---------------------------------------------------------------- plan.drift
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+/// Which tree a `plan.drift` gate judges.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::plan::DriftGate;
+/// assert_eq!(serde_json::to_value(DriftGate::Trunk).unwrap(), "trunk");
+/// assert_eq!(serde_json::from_str::<DriftGate>(r#""head""#).unwrap(), DriftGate::Head);
+/// ```
+pub enum DriftGate {
+    /// A head: not the shared plan, so every merged_not_recorded is pending.
+    Head,
+    /// The trunk: merged work unrecorded past the window is refused.
+    Trunk,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+/// Which issues, as of when, and judged as which gate: the input of `plan.drift`.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::plan::{DriftGate, PlanDriftInput};
+///
+/// let every: PlanDriftInput = serde_json::from_str("{}").unwrap();
+/// assert!(every.issue.is_none() && every.at.is_none() && every.gate.is_none());
+/// let gate: PlanDriftInput = serde_json::from_value(serde_json::json!({ "gate": "trunk" })).unwrap();
+/// assert_eq!(gate.gate, Some(DriftGate::Trunk));
+/// assert!(serde_json::from_str::<PlanDriftInput>(r#"{"gate":"main"}"#).is_err());
+/// assert!(serde_json::from_str::<PlanDriftInput>(r#"{"window":60}"#).is_err());
+/// ```
+pub struct PlanDriftInput {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// One issue id. Default: every issue of the plan.
+    pub issue: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// Observe as of this commit, as `plan.delivery` does. Default: live.
+    pub at: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// Judge as a gate on a `head` or on the `trunk`. Default: report only, exit 0.
+    pub gate: Option<DriftGate>,
+}
+
+impl BenchmarkCases for PlanDriftInput {
+    fn benchmark_cases(ctx: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        let plan = Plan::build(ctx.index);
+        let issue = plan
+            .issues
+            .first()
+            .map_or_else(|| "I0001".to_string(), |i| i.id.clone());
+        vec![
+            NamedCase::new("every-issue", PlanDriftInput::default()),
+            NamedCase::new(
+                "one-issue-at-head-as-trunk-gate",
+                PlanDriftInput {
+                    issue: Some(issue),
+                    at: Some("HEAD".into()),
+                    gate: Some(DriftGate::Trunk),
+                },
+            ),
+        ]
+    }
+}
+
+/// The live mesh claims that name an issue, by issue, and the source that says so.
+fn issue_claims(ctx: &Context) -> (Option<BTreeMap<String, String>>, DeliverySource) {
+    let Some(c) = ctx.mesh.cooperation() else {
+        let reason = ctx.mesh.cooperation_status().reason.unwrap_or_else(|| {
+            "mesh cooperation does not run in this process; the served answer reads it".into()
+        });
+        return (
+            None,
+            DeliverySource {
+                name: "claims".into(),
+                state: DeliveryReading::Unread,
+                detail: reason,
+                observed_at: None,
+            },
+        );
+    };
+    let mut by_issue: BTreeMap<String, String> = BTreeMap::new();
+    let state = c.state();
+    for claim in state.claims.iter().filter(|c| c.state.is_live()) {
+        if let Some(issue) = claim.issue.as_deref() {
+            by_issue
+                .entry(issue.trim().to_string())
+                .or_insert_with(|| claim.key.clone());
+        }
+    }
+    let detail = format!("{} issue(s) named by a live mesh claim", by_issue.len());
+    (
+        Some(by_issue),
+        DeliverySource {
+            name: "claims".into(),
+            state: DeliveryReading::Read,
+            detail,
+            observed_at: None,
+        },
+    )
+}
+
+fn plan_drift(ctx: &Context, input: PlanDriftInput) -> Result<DriftReport, CapabilityError> {
+    let plan = plan_of(ctx)?;
+    if let Some(id) = input.issue.as_deref() {
+        if plan.issue(id).is_none() {
+            return Err(CapabilityError::NotFound(format!(
+                "no issue '{id}' in this plan; `plan.issues` lists every one"
+            )));
+        }
+    }
+    let root = Path::new(&ctx.index.repository.root);
+    let identity = crate::worktree::RepositoryIdentity::discover(root)
+        .map_err(|e| CapabilityError::Refused(e.to_string()))?;
+    let delivered = delivery::infer(
+        root,
+        &plan,
+        identity.trunk(),
+        input.at.as_deref(),
+        input.issue.as_deref(),
+    )
+    .map_err(CapabilityError::Refused)?;
+    let started: BTreeMap<String, String> = plan
+        .issues
+        .iter()
+        .map(|i| (i.id.clone(), i.started_at.clone()))
+        .collect();
+    let (claims, claims_source) = issue_claims(ctx);
+    Ok(drift::judge(
+        delivered,
+        &started,
+        claims.as_ref(),
+        claims_source,
+        drift::read_window(root),
+        input.gate,
+    ))
 }
 
 // ---------------------------------------------------------------- plan.transition
@@ -1041,6 +1197,7 @@ mod tests {
                 "majordomus_plan_delivery",
                 "/api/v1/plan/delivery",
             ),
+            ("plan.drift", "majordomus_plan_drift", "/api/v1/plan/drift"),
         ];
         let ids: Vec<&str> = m
             .capabilities

@@ -27901,6 +27901,178 @@
               }
             ],
             "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "plan",
+              "drift"
+            ],
+            "route": "/docs/cli/plan/drift/",
+            "executable": true,
+            "usage": "majordomus plan drift [OPTIONS] [ISSUE]",
+            "about": "Every contradiction between an issue's declared status and its delivery — merged_not_recorded, active_without_work, done_without_trace — each with its proof; with --gate, judged against the window .ai/repo/ci/plan.yaml declares",
+            "args": [
+              {
+                "name": "issue",
+                "positional": true,
+                "help": "One issue; default every issue of the plan",
+                "value_name": "ISSUE",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "at",
+                "long": "at",
+                "positional": false,
+                "help": "Observe as of this commit, as `plan delivery --at` does",
+                "value_name": "REV",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "gate",
+                "long": "gate",
+                "positional": false,
+                "help": "Judge as a gate: on a `head` merged work is pending, on the `trunk` past the window it is refused (exit 10 under blocking enforcement); a missing window exits 12",
+                "value_name": "TREE",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [
+                  {
+                    "name": "head",
+                    "help": "A head: merged work the plan has not recorded is pending"
+                  },
+                  {
+                    "name": "trunk",
+                    "help": "The trunk: merged work unrecorded past the window is refused"
+                  }
+                ],
+                "defaults": []
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "plan-drift-json",
+                "title": "Where the plan's stamps contradict the delivered work",
+                "description": "The same answer `GET /api/v1/plan/drift` and the MCP tool `majordomus_plan_drift` return: every merged_not_recorded, active_without_work and done_without_trace finding with the pull request, merge commit and release that prove it, its age against the window `.ai/repo/ci/plan.yaml` declares, and the command that settles it.",
+                "argv": [
+                  "plan",
+                  "drift",
+                  "--format",
+                  "json"
+                ],
+                "command": "majordomus plan drift --format json",
+                "setup": [],
+                "expectation": "exits 0; prints one JSON document carrying /observed/commit, /window/model, /tallies/merged_not_recorded, /verdict"
+              },
+              {
+                "id": "plan-drift-at",
+                "title": "As of a commit",
+                "description": "`--at` reads that commit's history and the tree's records only, as `plan delivery --at` does, so the open pull requests are unread and a finding says it is not settled. `--gate head|trunk` judges the answer as `scripts/ci/plan-drift-check` does: on a head merged work the plan has not recorded is pending; on the trunk one merged longer than the window ago is refused, naming `majordomus plan verify|done <id>`, and a missing window refuses with exit 12.",
+                "argv": [
+                  "plan",
+                  "drift",
+                  "--at",
+                  "HEAD"
+                ],
+                "command": "majordomus plan drift --at HEAD",
+                "setup": [],
+                "expectation": "exits 0; prints plan drift, window"
+              }
+            ],
+            "subcommands": []
           }
         ]
       },

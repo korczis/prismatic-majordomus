@@ -1,7 +1,7 @@
 +++
 title = "majordomus economics explain"
 description = "One metric and everything it rests on: formula, class, pairs, runs, exclusions, and how to reproduce it"
-weight = 203
+weight = 204
 [extra]
 route = "/docs/cli/economics/explain/"
 command = "majordomus economics explain"

@@ -2619,6 +2619,23 @@
       "tool": "majordomus_plan_delivery"
     },
     {
+      "api_anchor": "/docs/api/plan/#op-plan-drift",
+      "claims": [],
+      "cli": "majordomus plan drift",
+      "id": "plan.drift",
+      "kind": "query",
+      "module": "plan",
+      "module_route": "/registry/modules/plan/",
+      "resource": null,
+      "route": "/registry/capabilities/plan-drift/",
+      "slug": "plan-drift",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/plan.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/plan.rs",
+      "tests": [],
+      "title": "Where the plan's stamps contradict the delivered work",
+      "tool": "majordomus_plan_drift"
+    },
+    {
       "api_anchor": "/docs/api/plan/#op-plan-issues",
       "claims": [],
       "cli": null,
@@ -4258,7 +4275,7 @@
     ]
   },
   "counts": {
-    "capabilities": 203,
+    "capabilities": 204,
     "claims": 93,
     "modules": 58
   },
@@ -5468,6 +5485,11 @@
           "id": "plan.delivery",
           "route": "/registry/capabilities/plan-delivery/",
           "slug": "plan-delivery"
+        },
+        {
+          "id": "plan.drift",
+          "route": "/registry/capabilities/plan-drift/",
+          "slug": "plan-drift"
         },
         {
           "id": "plan.issues",

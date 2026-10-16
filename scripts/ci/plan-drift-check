@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+# plan-drift-check — the gate of the plan's drift: merged work the plan has not recorded is
+# pending on a head and inside the window, and refused on the trunk past it (ADR 0166,
+# decision 2; capability plan.drift).
+#
+# The judgement is the executable's, `majordomus plan drift --gate head|trunk`: which issues
+# are merged_not_recorded, active_without_work or done_without_trace, how old each is, the
+# window and its enforcement read from .ai/repo/ci/plan.yaml, and the verdict. Nothing of it
+# is computed here. What this adapter decides is the one thing the executable cannot see:
+# which tree the runner is judging.
+#
+#   trunk   a run whose GITHUB_REF is the default branch, or, with no CI event, a HEAD the
+#           remote's default branch contains (a checkout of the trunk), or one whose remote
+#           trunk does not resolve here: the stricter reading of a measurement not made
+#   head    every other run: a pull request, a branch push, a checkout ahead of the trunk
+#
+# MJ_DRIFT_ON=head|trunk names the tree instead, for a person and for the case that proves
+# this gate (test/cases/3101_merged_work_unrecorded_is_drift.sh).
+#
+# Verdicts, as the executable prints them:
+#   PENDING   merged_not_recorded on a head, or on the trunk inside the window
+#   REFUSED   merged_not_recorded on the trunk past the window, naming
+#             `majordomus plan verify|done <id>`; fails the gate under
+#             `drift.enforcement: blocking`, reported with exit 0 under `advisory`
+#   NOTE      active_without_work: reported, never refused
+#   ADVISORY  done_without_trace: never refused, because record-only issues exist
+#
+#   scripts/ci/plan-drift-check               judge this checkout
+#   MJ_ROOT=<dir> scripts/ci/plan-drift-check judge another tree with this tool
+#
+# Exit: 0 clean, pending or advisory; 10 refused; 12 the gate cannot judge (no window it can
+# read, no executable, a plan it cannot read); 2 usage.
+set -eu
+set -o pipefail
+unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_COMMON_DIR GIT_PREFIX
+SELF="$(cd "$(dirname "$0")" && pwd)"
+ROOT="${MJ_ROOT:-$(cd "$SELF/../.." && pwd)}"
+CLI="$SELF/../../bin/majordomus-cli"
+REMOTE="${MJ_DRIFT_REMOTE:-origin}"
+[ $# -eq 0 ] || { echo "plan-drift-check: takes no arguments (MJ_DRIFT_ON=head|trunk names the tree)" >&2; exit 2; }
+cd "$ROOT"
+
+on="${MJ_DRIFT_ON:-}"
+case "$on" in
+  head|trunk) echo "NOTE plan-drift-check: judged as the $on, because MJ_DRIFT_ON says so" ;;
+  "")
+    trunk="$(sed -n 's/^default_branch: *//p' .ai/repo/project/project.yaml 2>/dev/null | head -1 | tr -d "\"'" || true)"
+    trunk="${trunk:-master}"
+    if [ -n "${GITHUB_REF:-}" ]; then
+      if [ "$GITHUB_REF" = "refs/heads/$trunk" ]; then on="trunk"; else on="head"; fi
+    elif ! git rev-parse --verify --quiet "$REMOTE/$trunk^{commit}" >/dev/null 2>&1; then
+      on="trunk"
+      echo "NOTE plan-drift-check: $REMOTE/$trunk does not resolve here, so this tree is judged as the trunk"
+    elif git merge-base --is-ancestor HEAD "$REMOTE/$trunk" 2>/dev/null; then
+      on="trunk"
+    else
+      on="head"
+    fi ;;
+  *) echo "plan-drift-check: MJ_DRIFT_ON is '$on', not head or trunk" >&2; exit 2 ;;
+esac
+
+set +e
+"$CLI" plan drift --repo "$ROOT" --gate "$on"
+rc=$?
+set -e
+case "$rc" in
+  0|10|12) exit "$rc" ;;
+  *) echo "plan-drift-check: the executable could not judge the drift (exit $rc)" >&2; exit 12 ;;
+esac
