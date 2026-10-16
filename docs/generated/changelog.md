@@ -11,7 +11,10 @@ Current version: **0.28.0**
 
 ### Decisions
 
+- **ADR-0161** A mesh node follows the published release, through the one installer, forward only _(proposed)_
 - **ADR-0160** The kiosk draws what the repository proves, from the sources that already answer it, and draws it with p5 only where the build has it _(proposed)_
+- **ADR-0152** A diagram and a chart on the site are one viewer each, over what the build derived: interactive, linkable, and linked by inference _(proposed)_
+- **ADR-0069** A capability may be scripted, and repository automation is scripted capabilities rather than shell _(proposed)_
 
 ### Added
 
