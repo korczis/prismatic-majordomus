@@ -5,26 +5,26 @@
   "coverage": [
     {
       "scope": "direct",
-      "required": 202,
-      "covered": 171,
+      "required": 205,
+      "covered": 172,
       "missing": 0,
-      "waived": 31,
+      "waived": 33,
       "inapplicable": 0
     },
     {
       "scope": "http",
-      "required": 197,
-      "covered": 171,
+      "required": 200,
+      "covered": 172,
       "missing": 0,
-      "waived": 26,
+      "waived": 28,
       "inapplicable": 0
     },
     {
       "scope": "mcp",
-      "required": 192,
-      "covered": 167,
+      "required": 195,
+      "covered": 168,
       "missing": 0,
-      "waived": 25,
+      "waived": 27,
       "inapplicable": 0
     },
     {
@@ -37,10 +37,10 @@
     },
     {
       "scope": "total",
-      "required": 605,
-      "covered": 523,
+      "required": 614,
+      "covered": 526,
       "missing": 0,
-      "waived": 82,
+      "waived": 88,
       "inapplicable": 0
     }
   ],
@@ -899,6 +899,18 @@
       ]
     },
     {
+      "id": "gates.state",
+      "module": "gates",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
       "id": "graph.get",
       "module": "graph",
       "kind": "query",
@@ -1309,6 +1321,16 @@
       "cases": [
         "default"
       ]
+    },
+    {
+      "id": "mesh.enrol",
+      "module": "mesh",
+      "kind": "command",
+      "cache": "—",
+      "direct": "waived",
+      "mcp": "waived",
+      "http": "waived",
+      "cases": []
     },
     {
       "id": "mesh.events",
@@ -2086,6 +2108,16 @@
       "cases": []
     },
     {
+      "id": "release.site",
+      "module": "release",
+      "kind": "query",
+      "cache": "—",
+      "direct": "waived",
+      "mcp": "waived",
+      "http": "waived",
+      "cases": []
+    },
+    {
       "id": "release.version",
       "module": "release",
       "kind": "query",
@@ -2577,6 +2609,12 @@
       "deferred": false
     },
     {
+      "key": "system.http.ui.waves",
+      "route": "/ui/waves",
+      "view": "pinned",
+      "deferred": false
+    },
+    {
       "key": "system.http.ui.issues",
       "route": "/ui/issues",
       "view": "pinned",
@@ -2669,6 +2707,12 @@
     {
       "key": "system.http.live.ui.work",
       "route": "/ui/work",
+      "view": "live",
+      "deferred": false
+    },
+    {
+      "key": "system.http.live.ui.waves",
+      "route": "/ui/waves",
       "view": "live",
       "deferred": false
     },

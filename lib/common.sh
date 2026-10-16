@@ -1846,19 +1846,77 @@ mj_mesh_task_bin() {
   return 0
 }
 
+# Always returns 0 (its callers run under set -e); MJ_MESH_CLAIMED says whether the scope is
+# now claimed, and MJ_MESH_WHY why not when it is not.
 mj_mesh_task_claim() { # <task id> <scope, one path per word> <intent> <issue>
   local id="$1" scope="$2" intent="$3" issue="$4" out key
-  mj_mesh_task_bin || return 0
+  MJ_MESH_CLAIMED=0; MJ_MESH_WHY=""
+  mj_mesh_task_bin || { MJ_MESH_WHY="there is no executable to ask a server with (jq or the majordomus executable is missing)"; return 0; }
   set -- --session "task-$id" --advisory --task "$id" --repo "$MJ_ROOT" --format json
   [ -n "$intent" ] && set -- "$@" --intent "$intent"
   [ -n "$issue" ] && set -- "$@" --issue "$issue"
   # shellcheck disable=SC2086 # the scope is one path per word
   out="$("$MJ_MESH_BIN" mesh claim $scope "$@" 2>/dev/null)" || true
   key="$(printf '%s' "$out" | jq -r '.key // empty' 2>/dev/null || true)"
-  [ -n "$key" ] || return 0
+  [ -n "$key" ] || { MJ_MESH_WHY="no shared server of this checkout answered with a running mesh"; return 0; }
   printf 'mesh_claim: %s
 ' "$key" >> "$MJ_CUR"
+  MJ_MESH_CLAIMED=1
   mj_info mesh "task-$id" "the scope is claimed on every linked runtime (advisory) as $key" "majordomus mesh state --full"
+  return 0
+}
+
+# A task is claimed when it starts (I2288). In a fresh linked worktree no server runs yet —
+# no provider start event fired there, so nothing brought one up — and a claim asked of
+# nobody left the task off the mesh until the pre-push `finish --check` refused it, curable
+# only by finishing the task partial and starting it again. So on a repository that declares
+# its mesh enabled, `start` brings this checkout's shared server up itself before it claims:
+# the same `serve ensure` the provider's start event and the shell entry run, under the same
+# switches (`session.ensure_server_on_start`; `MAJORDOMUS_RUNTIME=off` for one person's
+# shell). `serve ensure` is runtime-lifecycle's bounded election: one server per checkout, a
+# ready one left alone, nothing stopped, the wait its own `--wait`. What it starts is said on
+# stderr. Returns 0 when a ready server serves the checkout, 1 with MJ_MESH_WHY otherwise.
+mj_mesh_task_ensure_server() {
+  MJ_MESH_WHY=""
+  if [ "${MAJORDOMUS_RUNTIME:-}" = off ]; then
+    MJ_MESH_WHY="MAJORDOMUS_RUNTIME=off, so start brought no server up"; return 1
+  fi
+  if [ "$(mj_pol session.ensure_server_on_start)" = false ]; then
+    MJ_MESH_WHY="session.ensure_server_on_start is false, so start brought no server up"; return 1
+  fi
+  mj_mesh_task_bin || { MJ_MESH_WHY="there is no executable to bring a server up with (jq or the majordomus executable is missing)"; return 1; }
+  if mj_rust_stale "$MJ_HOME" "$MJ_MESH_BIN"; then
+    MJ_MESH_WHY="the executable is older than its sources, and no server is started from stale code (run: just build)"; return 1
+  fi
+  local line
+  [ -s "$MJ_STATE_DIR/mcp/server.json" ] \
+    || mj_err "start: no shared server serves this checkout; ensuring one for the task's mesh claim (serve ensure, bounded by its --wait)"
+  mkdir -p "$MJ_STATE_DIR/mcp" 2>/dev/null || true
+  line="$("$MJ_MESH_BIN" serve ensure --repo "$MJ_ROOT" 2>>"$MJ_STATE_DIR/mcp/ensure.log")" || true
+  case "$line" in
+    ready\ *"(started by this call)"*) mj_err "start: $line" ;;
+    ready\ *) ;;
+    *) MJ_MESH_WHY="serve ensure did not converge: ${line:-it said nothing} (log: $(mj_rel "$MJ_STATE_DIR/mcp/ensure.log"))"; return 1 ;;
+  esac
+  return 0
+}
+
+# start's half. On an enabled mesh: ensure the server, claim, and when the claim still did
+# not happen say so as a WARN finding naming why and the repair — never silence, and never a
+# refused start (a worker with no server still works; finish judges it). On a repository that
+# declares no enabled mesh: claim only if a server already answers, as before.
+mj_mesh_task_start_claim() { # <task id> <scope, one path per word> <intent> <issue>
+  if ! mj_mesh_declared_enabled; then
+    mj_mesh_task_claim "$@"
+    return 0
+  fi
+  local why=""
+  mj_mesh_task_ensure_server || why="$MJ_MESH_WHY"
+  mj_mesh_task_claim "$@"
+  [ "$MJ_MESH_CLAIMED" = 1 ] && return 0
+  mj_warn mesh "task-$1" \
+    "the repository declares its mesh enabled and this task's scope is not claimed on it: ${why:-$MJ_MESH_WHY}; a completed finish, and the pre-push finish --check, refuse it until it is" \
+    "majordomus serve ensure, then majordomus check (check claims the running task's scope once a server answers)"
   return 0
 }
 
@@ -1871,20 +1929,42 @@ mj_mesh_task_release() { # <task id>
 }
 
 # Whether the repository declares its mesh enabled: a tracked declaration under
-# .ai/repo/mesh/ whose top-level `enabled` is true. The declaration is what the server obeys
-# (ADR 0059); whether a server runs right now is another question, and a task is judged
-# against what the repository declared, not against which processes happen to be up.
+# .ai/repo/mesh/ whose top-level `enabled` is true, and whose trust admits some machine. The
+# declaration is what the server obeys (ADR 0059); whether a server runs right now is another
+# question, and a task is judged against what the repository declared, not against which
+# processes happen to be up.
+#
+# A declaration that is enabled and closed — `trust.policy: deny_unknown` with an empty
+# `allow` — is the one `init` seeds (ADR 0168): the mesh is on in principle and runs on no
+# machine until `majordomus mesh enrol` lists one. Nothing can claim on it, so it asks nothing
+# of a task; read as enabled, every fresh adopter's completed `finish` was refused by
+# task-on-the-mesh (found merging #947 into master, 2026-10-16).
 mj_mesh_declared_enabled() {
   local f
   for f in $(mj_git ls-files -- '.ai/repo/mesh/*.yaml' '.ai/repo/mesh/*.yml' 2>/dev/null); do
-    grep -qE '^enabled:[[:space:]]*true[[:space:]]*$' "$MJ_ROOT/$f" 2>/dev/null && return 0
+    grep -qE '^enabled:[[:space:]]*true[[:space:]]*$' "$MJ_ROOT/$f" 2>/dev/null || continue
+    mj_mesh_declaration_admits "$MJ_ROOT/$f" && return 0
   done
   return 1
+}
+# Whether a declaration's trust admits any machine: any policy but deny_unknown, or an
+# `allow` list with at least one key, inline or as items. No trust block admits (the
+# runtime's default policy is not deny_unknown).
+mj_mesh_declaration_admits() {
+  awk '
+    /^trust:/ { t = 1; next }
+    t && /^[^[:space:]#]/ { t = 0 }
+    t && /^[[:space:]]+policy:/ { p = $2; gsub(/["\047]/, "", p) }
+    t && /^[[:space:]]+allow:[[:space:]]*\[[[:space:]]*[^][:space:]]/ { n++ }
+    t && /^[[:space:]]+-[[:space:]]+[^[:space:]]/ { n++ }
+    END { exit !(p != "deny_unknown" || n > 0) }
+  ' "$1"
 }
 
 # A task works on the mesh (I2289, project.a-task-works-on-the-mesh). On a repository that
 # declares its mesh enabled, an active task's scope must have been claimed on it — `start`
-# does that when a server runs (I2288) and `finish` tries again before it judges — so that no
+# brings the checkout's server up and claims (I2288), `check` claims again when a server
+# answers, and `finish` tries again before it judges — so that no
 # machine builds what another machine never saw being built. Only a completed finish is
 # refused: a worker whose server never came up still leaves by partial, blocked or failed.
 mj_validate_task_on_the_mesh() {
@@ -1907,7 +1987,7 @@ mj_validate_task_on_the_mesh() {
     MJ_DOCTRINE_SKIPPED=1; return 0
   fi
   mj_doctrine_fail mesh "$id" \
-    "the repository declares its mesh enabled and this task's scope was never claimed on it: no shared server answered when it started, so no other machine saw what it works on" \
-    "majordomus serve ensure, then majordomus finish (finish claims the scope again when a server answers)"
+    "the repository declares its mesh enabled and this task's scope was never claimed on it: no shared server answered when it started or since, so no other machine saw what it works on" \
+    "majordomus serve ensure, then majordomus check (check, and finish, claim the running task's scope once a server answers)"
   return 0
 }

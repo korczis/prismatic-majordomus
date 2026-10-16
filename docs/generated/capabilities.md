@@ -31,7 +31,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `episodes` | Episodes | behaviorally_verified | 3 | [`modules/episodes.md`](modules/episodes.md) |
 | `evidence` | Evidence | behaviorally_verified | 5 | [`modules/evidence.md`](modules/evidence.md) |
 | `executions` | Executions | behaviorally_verified | 8 | [`modules/executions.md`](modules/executions.md) |
-| `gates` | Completion gates | behaviorally_verified | 2 | [`modules/gates.md`](modules/gates.md) |
+| `gates` | Completion gates | behaviorally_verified | 3 | [`modules/gates.md`](modules/gates.md) |
 | `graph` | Graphs | behaviorally_verified | 2 | [`modules/graph.md`](modules/graph.md) |
 | `guard` | Edit guard | experimental | 1 | [`modules/guard.md`](modules/guard.md) |
 | `health` | Health | behaviorally_verified | 3 | [`modules/health.md`](modules/health.md) |
@@ -41,7 +41,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `knowledge_base` | Knowledge base | behaviorally_verified | 3 | [`modules/knowledge_base.md`](modules/knowledge_base.md) |
 | `lifecycle` | Session lifecycle | behaviorally_verified | 5 | [`modules/lifecycle.md`](modules/lifecycle.md) |
 | `mcp` | MCP projection | experimental | 1 | [`modules/mcp.md`](modules/mcp.md) |
-| `mesh` | Mesh | experimental | 24 | [`modules/mesh.md`](modules/mesh.md) |
+| `mesh` | Mesh | experimental | 25 | [`modules/mesh.md`](modules/mesh.md) |
 | `models` | Models | experimental | 2 | [`modules/models.md`](modules/models.md) |
 | `monitor` | The monitor | experimental | 1 | [`modules/monitor.md`](modules/monitor.md) |
 | `objects` | Objects | behaviorally_verified | 4 | [`modules/objects.md`](modules/objects.md) |
@@ -55,7 +55,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `quality` | Public API quality | behaviorally_verified | 2 | [`modules/quality.md`](modules/quality.md) |
 | `reasoning` | Reasoning | experimental | 6 | [`modules/reasoning.md`](modules/reasoning.md) |
 | `recover` | Recovery of the record stores | behaviorally_verified | 1 | [`modules/recover.md`](modules/recover.md) |
-| `release` | Release | implemented | 4 | [`modules/release.md`](modules/release.md) |
+| `release` | Release | implemented | 5 | [`modules/release.md`](modules/release.md) |
 | `repository` | Repository | behaviorally_verified | 3 | [`modules/repository.md`](modules/repository.md) |
 | `rules` | Rules | behaviorally_verified | 3 | [`modules/rules.md`](modules/rules.md) |
 | `served` | Served deployments | behaviorally_verified | 3 | [`modules/served.md`](modules/served.md) |
@@ -143,6 +143,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `executions.start` | `executions` | command | behaviorally_verified | `majordomus_execution_start` | — | `POST /api/v1/executions/start` | `majordomus run` | — | required |
 | `gates.completion` | `gates` | query | behaviorally_verified | `majordomus_completion` | `majordomus://gates/completion` | `GET /api/v1/gates/completion` | — | — | required |
 | `gates.model` | `gates` | query | behaviorally_verified | `majordomus_gates` | `majordomus://gates` | `GET /api/v1/gates` | — | process, 4 entries, 5s | required |
+| `gates.state` | `gates` | query | behaviorally_verified | `majordomus_gate_state` | `majordomus://gates/state` | `GET /api/v1/gates/state` | — | — | required |
 | `graph.get` | `graph` | query | behaviorally_verified | `majordomus_graph` | — | `GET /api/v1/graph` | — | process, 16 entries | required |
 | `graph.list` | `graph` | query | behaviorally_verified | `majordomus_graphs` | `majordomus://graphs` | `GET /api/v1/graphs` | — | — | required |
 | `guard.edit` | `guard` | query | experimental | `majordomus_guard_edit` | — | `GET /api/v1/guard/edit` | — | — | required |
@@ -177,6 +178,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `mesh.claim` | `mesh` | command | experimental | `majordomus_mesh_claim` | — | `POST /api/v1/mesh/claims` | — | — | waived (transient_state) |
 | `mesh.cooperation` | `mesh` | query | experimental | `majordomus_mesh_cooperation` | — | `GET /api/v1/mesh/cooperation` | — | — | required |
 | `mesh.doctor` | `mesh` | query | experimental | `majordomus_mesh_doctor` | — | `GET /api/v1/mesh/doctor` | `majordomus mesh doctor` | — | required |
+| `mesh.enrol` | `mesh` | command | experimental | `majordomus_mesh_enrol` | — | `POST /api/v1/mesh/enrol` | `majordomus mesh enrol` | — | waived (destructive) |
 | `mesh.events` | `mesh` | query | experimental | `majordomus_mesh_events` | — | `GET /api/v1/mesh/events` | — | — | required |
 | `mesh.firewall` | `mesh` | query | experimental | `majordomus_mesh_firewall` | — | `GET /api/v1/mesh/firewall` | `majordomus mesh firewall` | — | waived (external_dependency) |
 | `mesh.firewall.apply` | `mesh` | command | experimental | — | — | — | `majordomus mesh firewall apply` | — | waived (destructive) |
@@ -242,6 +244,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `release.analysis` | `release` | query | implemented | `majordomus_release_analysis` | — | `GET /api/v1/release/analysis` | — | — | waived (published_history) |
 | `release.changelog` | `release` | query | implemented | `majordomus_changelog` | `majordomus://changelog` | `GET /api/v1/changelog` | — | — | required |
 | `release.next` | `release` | query | implemented | `majordomus_release_next` | — | `GET /api/v1/release/next` | — | — | waived (published_history) |
+| `release.site` | `release` | query | implemented | `majordomus_release_site` | — | `GET /api/v1/release/site` | — | — | waived (published_history) |
 | `release.version` | `release` | query | implemented | `majordomus_release_version` | — | `GET /api/v1/release/version` | — | process, 2 entries, per checkout state | required |
 | `repository.info` | `repository` | query | behaviorally_verified | `majordomus_repository` | `majordomus://repository` | `GET /api/v1/repository` | — | process, 1 entries, per generation | required |
 | `repository.scope` | `repository` | query | behaviorally_verified | `majordomus_scope` | `majordomus://scope` | `GET /api/v1/scope` | `majordomus scope` | — | required |

@@ -5,7 +5,7 @@
 
 Completion as a state the repository decides rather than a claim a worker makes: the validation gates this repository declares in its CI model, which of them a task's own change set selects, what each one last reported, whether that verdict still describes the tree it was taken over, and therefore whether the task may be called finished. A gate that has never reported is `queued` and not `pass`, a run whose files have changed since is `stale` and refuses exactly as a failure does, and a gate the change cannot affect is `exempt` rather than unknown.
 
-Stability: behaviorally_verified. Capabilities: 2.
+Stability: behaviorally_verified. Capabilities: 3.
 
 ## `gates.completion` — Whether this task may be called finished
 
@@ -52,4 +52,24 @@ Every validation gate this repository declares — the job that runs it, the com
 Input: none.
 
 Output: `GateModelReport`.
+
+## `gates.state` — How each gate last went
+
+Every gate the CI model declares with the standing of its last recorded run in this checkout, whichever task recorded it: `pass` or `fail` over the files as they stand now, `stale` when those files have changed since the run, `queued` when no run has ever reported — listed again under `never_reported`, because a missing verdict is the case an absent reader renders green — and `unknown` when a run exists and cannot be checked against this tree. Each run carries the commit it was taken at and whether that is the commit checked out now. Read offline from this checkout's own record; what it did not consult, the forge's CI runs, is named under `unreached` rather than left out.
+
+| | |
+|---|---|
+| kind | query |
+| stability | behaviorally_verified |
+| MCP tool | `majordomus_gate_state` |
+| MCP resource | `majordomus://gates/state` |
+| HTTP | `GET /api/v1/gates/state` |
+| cache | — |
+| benchmark | required |
+| provenance | builtin majordomus_cli::capability::builtin::gates |
+| tags | gates, ci, evidence, introspection |
+
+Input: none.
+
+Output: `GateStateReport`.
 

@@ -525,6 +525,51 @@ A `git log` that fails is not an error here: it yields no commits, and the calle
 the gap. That is what lets the changelog render at all in a shallow CI checkout, where
 refusing would make the document unavailable exactly where it is read from a machine.
 
+## What a release owes the site
+
+Every release leaves the published site better than the release before it found it
+([`project.a-release-leaves-the-site-better`](../.ai/repo/rules/project/a-release-leaves-the-site-better.v1.md)).
+The site's gates are floors: they hold the site to the tree it is built from, and a release
+that met them yesterday meets them again today without the site a visitor reads having become
+any better, or without noticing that it became worse in a way no floor measures. So a release
+owes the site two things, and `majordomus release site` takes the verdict on both:
+
+1. **Nothing the repository measures got worse.** Each measure is computed by the executable
+   from the tree at the previous release's recorded commit and at the commit being released,
+   and the release is refused when any one of them moved the wrong way, naming it with both
+   values and the delta:
+
+   | Measure | Better |
+   |---|---|
+   | `contrast.light.failing`, `contrast.dark.failing`: text pairs of the design below WCAG AA | lower |
+   | `contrast.light.weakest`, `contrast.dark.weakest`: the weakest text contrast in each theme | higher |
+   | `site.pages-by-hand`: page files under `site/content` and `site/content-src` that `.gitattributes` does not mark generated | lower |
+
+   The binary measures (dead links, unreachable pages, stale generated data, prose counts
+   typed by hand, the browser probes) are held at zero by the `ci` verdict every release
+   already requires, so they are the floor these sit on.
+2. **At least one change improves the site through a source it is generated from.** A commit
+   of the window counts when its type is one of `release.kinds` in
+   [`.ai/repo/ci/pages.yaml`](../.ai/repo/ci/pages.yaml) and it changes, outside every file
+   marked `merge=derived`, a path of the gate classes `release.classes` names (the site's
+   templates, styles, scripts and the design declaration), or any canonical source while its
+   scope is one of `release.scopes`. A commit whose every file is generated output counts for
+   nothing: a page edited by hand is a defect, never an improvement.
+
+```bash
+majordomus release site --format json
+```
+
+It exits `0` when the release passes, `10` with a finding per failure
+(`site-measure-regressed`, `site-measure-unreadable`, `site-not-improved`), and `12` when
+there is nothing to compare with. The release workflow asks it in its `plan` job, after the
+`ci` verdict and before any target is built, so a refused release publishes nothing; the
+verdict goes to the job summary and the JSON is kept as the run's `release-site` artifact.
+Both trees are read from git at their recorded commits, so the verdict can be taken again at
+any time and reads the same: `--since` and `--head` name any two releases. **A release that is
+due therefore plans its site improvement before the tag, not after:** `majordomus release
+site` on the head to be tagged says whether it would pass.
+
 ## Releasing
 
 The release procedure itself — the tag, the pipeline, the build matrix, the record written
@@ -561,6 +606,12 @@ a schedule, without anybody choosing it. `test/cases/353` asserts exactly that, 
 assertion is a mutation rather than a description: a variant of the workflow with `git tag`
 appended is refused, naming the tag.
 
+Since 2026-10-16 that decision has an owner and a cadence: the release seat of
+[rule `project.the-cooperation-model-is-the-owners-word`](../.ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v1.md)
+(ADR 0167) cuts a release whenever master holds landed work past the last tag, not once per
+milestone, and verifies what the site serves after it. The rule says which mesh claim makes a
+session that seat; the tag still waits for `scripts/ci/release-verdict`.
+
 ## What proves it
 
 | | |
@@ -574,6 +625,8 @@ appended is refused, naming the tag.
 | `scripts/ci/release-check` | the manifest the writer names is the one the release script reads, the shell tool prints what it declares on every plan rather than only at publication, the lock records it, no hand-kept changelog has appeared, the tree is not behind the newest release the layer records, and every published tag has a record — or, for at most a day, a `release/record-<tag>` branch proposing one ([`DISTRIBUTION.md`](DISTRIBUTION.md#releasing) says why the tag comes first); before that branch exists, a tag whose release run is queued or running, or that has neither run nor GitHub release yet within the same day, is pending with its run named — asked of the forge with `gh`, and where the forge cannot be asked (no `gh`, no token, no GitHub repository known) the tag is not excused |
 | `test/cases/3021_a_tag_does_not_freeze_the_queue.sh` | a head that changes no release file passes while a tag's record is proposed, naming the tag pending; the record's own branch passes as recorded; a record branch without the record, a proposal past its grace and no proposal at all are refused |
 | `test/cases/3029_a_tag_in_flight_is_pending.sh` | before the record branch exists, a tag whose release run is queued or running — or that has no run listed and no GitHub release yet, inside the grace — is pending with its run named; a concluded run, a published GitHub release, a forge that cannot be read and an unknown repository leave the finding standing, each with a note |
+| `test/cases/3170_a_release_leaves_the_site_better.sh` | against a repository with a recorded release and a real history: a window with no site change is refused as unimproved; a window whose only site change is a hand edit of generated output is refused, naming the commit as generated output; an improvement of a site source passes with every measure held; a canonical document whose commit names the site counts; a page written by hand regresses `site.pages-by-hand` and is refused with the delta; a commit no recorded release precedes is exit 12 |
+| `apps/majordomus-cli/src/release/site.rs` | the directions of the measures, the comparison (held, improved, regressed, unmeasured, unreadable), the classification of every kind of commit, the publication model's refusals, and the contrast of the design that ships in both themes |
 | gate `version-authored-once` | `bin/majordomus-cli release version`: the projection is current and no version is written by hand where the tool's files live |
 | `scripts/rust-check` (gate `rust-check`) | `generate --check`: the committed changelog and `share/version.txt` still describe the tree |
 | `scripts/release-version --check` | the shell tool prints the version the manifest declares — the question `generate --check` leaves open |

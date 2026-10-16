@@ -9,7 +9,10 @@
 //!
 //! A run that succeeded is news only on the trunk (master's checks, a deploy, a release);
 //! a pull request's green run is the expected and is counted as suppressed. A failed run is
-//! always news.
+//! always news, and so is a cancelled one: a person or a newer push stopped it, and nobody
+//! learns which by its silence. A failed deploy workflow is asked for its jobs, because a
+//! Pages run fails when its publisher asks for help even after the deploy job went out:
+//! that is `deploy_needs_help`, not `deploy_failed`.
 
 use std::io::Read;
 use std::path::{Path, PathBuf};
@@ -110,7 +113,31 @@ fn fetch_now(program: &str, root: &Path) -> Fetch {
             "databaseId,workflowName,displayTitle,status,conclusion,event,headBranch,updatedAt,url",
         ],
     )?;
-    Ok(Fetched { prs, runs })
+    Ok(Fetched {
+        prs,
+        runs: with_deploy_jobs(program, root, runs),
+    })
+}
+
+/// `runs` with the jobs of every failed deploy run attached under `jobs`, each asked within
+/// [`BUDGET`]; a run whose jobs could not be read keeps its plain verdict.
+fn with_deploy_jobs(program: &str, root: &Path, mut runs: Value) -> Value {
+    for item in runs.as_array_mut().into_iter().flatten() {
+        let failed_deploy = text(item, "status") == "completed"
+            && verdict(&text(item, "conclusion")) == Verdict::Failed
+            && family(&text(item, "workflowName")) == "deploy";
+        let Some(id) = item["databaseId"].as_u64().filter(|_| failed_deploy) else {
+            continue;
+        };
+        if let Ok(view) = run(
+            program,
+            root,
+            &["run", "view", &id.to_string(), "--json", "jobs"],
+        ) {
+            item["jobs"] = view["jobs"].clone();
+        }
+    }
+    runs
 }
 
 /// One call of `program`, bounded by [`BUDGET`], its stdout parsed as JSON; every failure is
@@ -283,40 +310,87 @@ fn workflow_run(run: &Value, reader: &Reader) -> Option<(u64, Option<MonitorSign
     let conclusion = text(run, "conclusion");
     let workflow = text(run, "workflowName");
     let branch = text(run, "headBranch");
-    let failed = !matches!(
-        conclusion.as_str(),
-        "success" | "skipped" | "neutral" | "cancelled"
-    );
-    if !failed && branch != TRUNK {
+    let trunk = branch == TRUNK;
+    let verdict = verdict(&conclusion);
+    if verdict == Verdict::Succeeded && !trunk {
         return Some((at, None));
     }
-    let lower = workflow.to_lowercase();
-    let family = if lower.contains("release") {
-        "release"
-    } else if lower.contains("pages") || lower.contains("deploy") {
-        "deploy"
-    } else {
-        "run"
+    let family = family(&workflow);
+    let failed_jobs = failed_jobs(run);
+    let deployed = family == "deploy" && verdict == Verdict::Failed && job_succeeded(run, "deploy");
+    let (outcome, severity) = match verdict {
+        Verdict::Failed if deployed => ("needs_help", MonitorSeverity::Attention),
+        Verdict::Failed => ("failed", MonitorSeverity::Attention),
+        Verdict::Cancelled if trunk => ("cancelled", MonitorSeverity::Attention),
+        Verdict::Cancelled => ("cancelled", MonitorSeverity::Info),
+        Verdict::Succeeded => ("succeeded", MonitorSeverity::Info),
     };
-    let kind = format!("{family}_{}", if failed { "failed" } else { "succeeded" });
+    let detail = if deployed {
+        format!(" (deployed; {} failed)", failed_jobs.join(", "))
+    } else {
+        String::new()
+    };
     let mut s = MonitorSignal::new(
         at,
         MonitorSource::Github,
-        &kind,
-        if failed {
-            MonitorSeverity::Attention
-        } else {
-            MonitorSeverity::Info
-        },
+        &format!("{family}_{outcome}"),
+        severity,
         &format!(
-            "{workflow} {conclusion} on {branch}: {}",
+            "{workflow} {conclusion} on {branch}{detail}: {}",
             text(run, "displayTitle")
         ),
     );
     s.branch = Some(branch.clone()).filter(|b| !b.is_empty());
     s.link = Some(text(run, "url")).filter(|u| !u.is_empty());
-    s.for_you = failed && reader.named_in(&branch);
+    s.for_you = verdict != Verdict::Succeeded && reader.named_in(&branch);
     Some((at, Some(s)))
+}
+
+/// What a finished run's conclusion says about it.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Verdict {
+    Succeeded,
+    Cancelled,
+    Failed,
+}
+
+fn verdict(conclusion: &str) -> Verdict {
+    match conclusion {
+        "success" | "skipped" | "neutral" => Verdict::Succeeded,
+        "cancelled" => Verdict::Cancelled,
+        _ => Verdict::Failed,
+    }
+}
+
+/// The family a workflow's signals are named by: `release`, `deploy` or `run`.
+fn family(workflow: &str) -> &'static str {
+    let lower = workflow.to_lowercase();
+    if lower.contains("release") {
+        "release"
+    } else if lower.contains("pages") || lower.contains("deploy") {
+        "deploy"
+    } else {
+        "run"
+    }
+}
+
+/// The names of a run's jobs that failed, when its jobs were read.
+fn failed_jobs(run: &Value) -> Vec<String> {
+    run["jobs"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter(|j| verdict(j["conclusion"].as_str().unwrap_or("failure")) == Verdict::Failed)
+        .map(|j| text(j, "name"))
+        .collect()
+}
+
+fn job_succeeded(run: &Value, name: &str) -> bool {
+    run["jobs"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .any(|j| text(j, "name") == name && j["conclusion"].as_str() == Some("success"))
 }
 
 #[cfg(test)]
@@ -378,6 +452,59 @@ mod tests {
             Some("https://github.com/o/r/pull/868")
         );
         assert_eq!(read.high, parse_rfc3339("2026-10-10T20:45:00Z"));
+    }
+
+    #[test]
+    fn a_cancelled_run_is_news_and_a_deployed_pages_run_needs_help_rather_than_failed() {
+        let fetched = Fetched {
+            prs: json!([]),
+            runs: json!([
+                {"status": "completed", "conclusion": "cancelled", "workflowName": "ci",
+                 "headBranch": "fix/1b-lane", "updatedAt": "2026-10-11T09:53:00Z",
+                 "displayTitle": "lane"},
+                {"status": "completed", "conclusion": "cancelled", "workflowName": "pages",
+                 "headBranch": "master", "updatedAt": "2026-10-11T09:54:00Z",
+                 "displayTitle": "schedule"},
+                {"status": "completed", "conclusion": "failure", "workflowName": "pages",
+                 "headBranch": "master", "updatedAt": "2026-10-11T13:33:34Z",
+                 "displayTitle": "schedule",
+                 "jobs": [{"name": "owed", "conclusion": "success"},
+                          {"name": "deploy", "conclusion": "success"},
+                          {"name": "intervention", "conclusion": "failure"}]},
+                {"status": "completed", "conclusion": "failure", "workflowName": "pages",
+                 "headBranch": "master", "updatedAt": "2026-10-11T14:00:00Z",
+                 "displayTitle": "schedule",
+                 "jobs": [{"name": "deploy", "conclusion": "failure"}]},
+                {"status": "completed", "conclusion": "failure", "workflowName": "pages",
+                 "headBranch": "master", "updatedAt": "2026-10-11T14:30:00Z",
+                 "displayTitle": "jobs unread"}
+            ]),
+        };
+        let read = fold(&fetched, Some(0), 0, &Reader::named(Some("1b")));
+        let seen: Vec<(&str, MonitorSeverity, bool)> = read
+            .signals
+            .iter()
+            .map(|(_, s)| (s.kind.as_str(), s.severity, s.for_you))
+            .collect();
+        assert_eq!(
+            seen,
+            vec![
+                ("run_cancelled", MonitorSeverity::Info, true),
+                ("deploy_cancelled", MonitorSeverity::Attention, false),
+                ("deploy_needs_help", MonitorSeverity::Attention, false),
+                ("deploy_failed", MonitorSeverity::Attention, false),
+                ("deploy_failed", MonitorSeverity::Attention, false),
+            ]
+        );
+        assert_eq!(read.suppressed, 0, "nothing that stopped is folded away");
+        assert!(
+            read.signals[2]
+                .1
+                .summary
+                .contains("(deployed; intervention failed)"),
+            "{}",
+            read.signals[2].1.summary
+        );
     }
 
     #[test]

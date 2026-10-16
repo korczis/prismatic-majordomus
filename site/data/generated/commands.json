@@ -64,7 +64,8 @@
           "01_init",
           "15_command_surface",
           "284_a_record_reads_the_whole_declaration",
-          "2979_a_personal_layer_changes_nothing_shared"
+          "2979_a_personal_layer_changes_nothing_shared",
+          "3113_the_adoption_footprint_is_inventoried"
         ],
         "negative": [
           "01_init",
@@ -184,6 +185,7 @@
           "15_command_surface",
           "19_end_to_end",
           "284_a_record_reads_the_whole_declaration",
+          "3113_the_adoption_footprint_is_inventoried",
           "33_event_registry"
         ],
         "negative": [
@@ -521,6 +523,8 @@
           "19_end_to_end",
           "25_continuity_lifecycle",
           "3067_a_task_is_claimed_on_the_mesh",
+          "3151_a_task_is_claimed_when_it_starts",
+          "3160_a_scope_entry_is_one_path",
           "32_refusal_lifecycle",
           "33_event_registry",
           "821_a_session_moves_between_machines",
@@ -530,6 +534,7 @@
           "04_start_check",
           "05_handover",
           "16_profiles",
+          "3160_a_scope_entry_is_one_path",
           "32_refusal_lifecycle"
         ]
       },
@@ -633,6 +638,7 @@
           "23_context",
           "25_continuity_lifecycle",
           "3073_context_knowledge_slice",
+          "3160_a_scope_entry_is_one_path",
           "710_briefing_names_the_candidates",
           "886_the_timing_report_is_json"
         ],
@@ -941,6 +947,7 @@
           "25_continuity_lifecycle",
           "2988_a_scope_admits_what_its_derive_wrote",
           "3023_a_knowledge_record_outlives_the_file_it_cites",
+          "3151_a_task_is_claimed_when_it_starts",
           "32_refusal_lifecycle",
           "578_an_unknown_gate_refuses_completed",
           "707_knowledge_check_refuses_malformed_records"
@@ -1058,8 +1065,10 @@
           "25_continuity_lifecycle",
           "275_publication_is_current",
           "2988_a_scope_admits_what_its_derive_wrote",
+          "3059_gate_state_is_answerable",
           "3067_a_task_is_claimed_on_the_mesh",
           "3068_a_task_off_the_mesh_is_refused",
+          "3151_a_task_is_claimed_when_it_starts",
           "32_refusal_lifecycle",
           "33_event_registry",
           "572_verification_records_the_tree_it_proved",
@@ -1662,7 +1671,8 @@
       "tests": {
         "behaviour": [
           "103_obligations",
-          "131_completion_gates"
+          "131_completion_gates",
+          "3059_gate_state_is_answerable"
         ],
         "negative": [
           "103_obligations",
@@ -1942,6 +1952,7 @@
           "224_continuity_crosses_machines",
           "282_the_ledger_envelope_is_reserved",
           "29_prompt_capture",
+          "3113_the_adoption_footprint_is_inventoried",
           "408_a_receipt_is_provider_neutral",
           "494_the_mesh_is_declared_and_held",
           "54_session_lifecycle_hooks",
@@ -3561,9 +3572,9 @@
       "requires_repository": true,
       "requires_installed": true,
       "json_output": true,
-      "syntax": "majordomus bench [<command>...] [--samples <n>] [--warmup <n>] [--mode cold|warm|both] [--format text|json] [--no-save] [--list] [--check] [--write-baseline [--force]]",
+      "syntax": "majordomus bench [<command>...] [--samples <n>] [--warmup <n>] [--cold-samples <n>] [--mode cold|warm|both] [--format text|json] [--no-save] [--list] [--check] [--write-baseline [--force]]",
       "demo": "benchmark-run",
-      "note": "The targets are the registry's public commands; the scenarios are the command fixtures when the suite is present. A run is local evidence; only --write-baseline writes the tracked baseline, and --check refuses a regression over the policy's thresholds.",
+      "note": "The targets are the registry's public commands; the scenarios are the command fixtures when the suite is present. A run is local evidence; only --write-baseline writes the tracked baseline, and --check refuses a regression over the policy's thresholds when two samples agree; one sample over is a warning to re-measure, and every finding names its sample count, the runner and its load average.",
       "reads": [
         "share/commands.yaml",
         "test/fixtures/commands/",

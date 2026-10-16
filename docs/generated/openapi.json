@@ -7408,6 +7408,90 @@
         }
       }
     },
+    "/api/v1/gates/state": {
+      "get": {
+        "operationId": "gates.state",
+        "summary": "How each gate last went",
+        "description": "Every gate the CI model declares with the standing of its last recorded run in this checkout, whichever task recorded it: `pass` or `fail` over the files as they stand now, `stale` when those files have changed since the run, `queued` when no run has ever reported — listed again under `never_reported`, because a missing verdict is the case an absent reader renders green — and `unknown` when a run exists and cannot be checked against this tree. Each run carries the commit it was taken at and whether that is the commit checked out now. Read offline from this checkout's own record; what it did not consult, the forge's CI runs, is named under `unreached` rather than left out.",
+        "tags": [
+          "gates"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "How each gate last went: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GateStateReport"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "gates.state",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::gates"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-effect": "read",
+        "x-majordomus-mcp": {
+          "tool": "majordomus_gate_state",
+          "resource": {
+            "uri": "majordomus://gates/state",
+            "name": "gate-state"
+          }
+        }
+      }
+    },
     "/api/v1/graph": {
       "get": {
         "operationId": "graph.get",
@@ -10031,6 +10115,113 @@
           "tool": "majordomus_mesh_doctor"
         },
         "x-majordomus-cli": "mesh doctor"
+      }
+    },
+    "/api/v1/mesh/enrol": {
+      "post": {
+        "operationId": "mesh.enrol",
+        "summary": "Enrol this machine in the mesh",
+        "description": "Add this machine's public key to trust.allow of the repository's mesh declaration, under a comment naming the machine, creating the node identity first when there is none. Idempotent: a listed key changes nothing. The comments and every other line of the declaration stay as they were, and an edit that would not parse back as a declaration is refused before anything is written. Under deny_unknown a machine opens its mesh only once its key is listed, so this is the one step that joins a machine; commit the file and restart the server.",
+        "tags": [
+          "mesh"
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "The input of `mesh.enrol`.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Empty"
+              },
+              "examples": {
+                "default": {
+                  "value": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Enrol this machine in the mesh: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeshEnrolment"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "`refused`: The command was understood and turned down for the reason the message gives.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "mesh.enrol",
+        "x-majordomus-kind": "command",
+        "x-majordomus-stability": "experimental",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::mesh"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "waived",
+          "reason": "destructive"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-effect": "repository_mutation",
+        "x-majordomus-mcp": {
+          "tool": "majordomus_mesh_enrol"
+        },
+        "x-majordomus-cli": "mesh enrol"
       }
     },
     "/api/v1/mesh/events": {
@@ -17060,6 +17251,106 @@
         }
       }
     },
+    "/api/v1/release/site": {
+      "get": {
+        "operationId": "release.site",
+        "summary": "Whether a release leaves the site better than it found it",
+        "description": "The verdict of `project.a-release-leaves-the-site-better` on one release: every measure of the site this executable computes from a tree — the text pairs below WCAG AA and the weakest text contrast in each theme, from the design declaration and the stylesheets that consume it, and how many of the site's page files are written by hand rather than generated — at the previous release's recorded commit and at the commit being released, each named with its delta and whether it held, improved or regressed; then every commit of the window between them that touched the site or named it as its subject, with whether it counts as an improvement and why. A change counts when its type is one the publication model's `release` section counts and it changes, outside every file `.gitattributes` marks `merge=derived`, a source of the site's gate classes, or any source while its scope names the site; a change whose every file is generated output counts for nothing. The release passes when no measure regressed or could not be taken and at least one change counts; otherwise each finding names the measure and its delta, or the commits that touched the site and why none counts. A repository with no recorded release that is an ancestor of the commit has nothing to compare with, and is refused rather than passed.",
+        "tags": [
+          "release"
+        ],
+        "parameters": [
+          {
+            "name": "since",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The previous release: a recorded tag or version, or any commit; the newest recorded\nstable release that is an ancestor of `head` when absent."
+          },
+          {
+            "name": "head",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The commit being released; `HEAD` when absent."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Whether a release leaves the site better than it found it: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReleaseSiteVerdict"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "release.site",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "implemented",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::release"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "waived",
+          "reason": "published_history"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-effect": "read",
+        "x-majordomus-mcp": {
+          "tool": "majordomus_release_site"
+        }
+      }
+    },
     "/api/v1/release/version": {
       "get": {
         "operationId": "release.version",
@@ -18001,7 +18292,7 @@
       "get": {
         "operationId": "server.status",
         "summary": "The shared server, and every server of the repository",
-        "description": "Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; the lease this process holds when it is the server; and, unless `checkouts` narrows it to this one, every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. `checkouts: this` reads one lease and probes one server and enumerates no other checkout, which is what a caller asking only about the checkout it is in should pay. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes.",
+        "description": "Where this checkout's server stands — absent, starting, ready, outdated, skewed or stale — measured against what this executable would serve; the lease this process holds when it is the server; and, unless `checkouts` narrows it to this one, every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. Each lease carries the share directory its server serves, measured on every call: the version its `version.txt` states, whether it holds `ui/`, and `skewed` with the reason when it states another version than the executable of that server or lacks `ui/` or `cockpit/`, the state in which every asset of those pages answers 404; a server that answers at this executable's version over such a share stands `skewed` rather than `ready`. `checkouts: this` reads one lease and probes one server and enumerates no other checkout, which is what a caller asking only about the checkout it is in should pay. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes.",
         "tags": [
           "server"
         ],
@@ -35928,6 +36219,145 @@
         ],
         "description": "```\nuse majordomus_cli::gates::GateRun;\n\n// what `majordomus evidence --gate` writes: a run, and the tree it was taken over\nlet run = GateRun {\n    recorded_at: \"2026-01-01T00:00:00Z\".into(),\n    head: \"9b1e2d4\".into(),\n    branch: \"master\".into(),\n    exit: 0,\n    command: \"scripts/rust-check --ci\".into(),\n    inputs_hash: \"3f0a\".into(),\n    session: \"s-1\".into(),\n};\n// the hash is what makes a run go stale rather than merely old: the same run read\n// against a different tree is evidence about a tree that no longer exists\nassert_eq!(run.exit, 0);\nassert_ne!(run.inputs_hash, \"0000\");\n```\nThe `task.gate` ledger line that last reported a gate, as the ledger holds it."
       },
+      "GateState": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The gate's identity in the model."
+          },
+          "job": {
+            "type": "string",
+            "description": "The CI job that runs it."
+          },
+          "always": {
+            "type": "boolean",
+            "description": "Whether every plan selects it."
+          },
+          "on_demand": {
+            "type": "boolean",
+            "description": "Whether its runner can be had only on demand, so no routine plan runs it."
+          },
+          "status": {
+            "$ref": "#/components/schemas/GateStatus",
+            "description": "What is known about its last run: `pass`, `fail`, `stale`, `queued` (never\nreported) or `unknown` (a run exists and cannot be checked against this tree)."
+          },
+          "reason": {
+            "type": "string",
+            "description": "Why it is in that status, in words a person can act on."
+          },
+          "last_run": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GateRun"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The run that last reported, whichever task recorded it."
+          },
+          "on_head": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Whether that run was taken at the commit this checkout is at now. Absent when there\nis no run or when the current commit could not be read."
+          },
+          "inputs_hash": {
+            "type": "string",
+            "description": "The hash of the gate's inputs as they stand now, when it could be taken."
+          }
+        },
+        "required": [
+          "id",
+          "job",
+          "always",
+          "on_demand",
+          "status",
+          "reason"
+        ],
+        "description": "One declared gate and the standing of its last recorded run.\n\n```\nuse majordomus_cli::gates::{GateState, GateStatus};\n\nlet never: GateState = serde_json::from_value(serde_json::json!({\n    \"id\": \"rust-check\",\n    \"job\": \"rust\",\n    \"always\": true,\n    \"on_demand\": false,\n    \"status\": \"queued\",\n    \"reason\": \"no run of this gate has ever been recorded in this checkout\",\n}))\n.unwrap();\n// no run, no head, and a word that is not `pass`\nassert!(never.last_run.is_none() && never.on_head.is_none());\nassert_eq!(never.status, GateStatus::Queued);\n```"
+      },
+      "GateStateReport": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string",
+            "description": "Where the gate set was read from, repository-relative."
+          },
+          "ledger": {
+            "type": "string",
+            "description": "Where the recorded runs were read from, repository-relative."
+          },
+          "head": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The commit this checkout is at, when git could say."
+          },
+          "count": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many gates the model declares; measured."
+          },
+          "tallies": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0
+            },
+            "description": "How many gates stand in each status, by the status word."
+          },
+          "never_reported": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The gates no run has ever reported, in declaration order."
+          },
+          "gates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GateState"
+            },
+            "description": "Every declared gate, in declaration order."
+          },
+          "unreached": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "What this answer did not consult, so its silence about it is not read as a verdict."
+          },
+          "findings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "What could not be read, and what that means for the answer."
+          },
+          "evaluated_at": {
+            "type": "string",
+            "description": "When this answer was taken, RFC 3339 UTC."
+          }
+        },
+        "required": [
+          "source",
+          "ledger",
+          "count",
+          "tallies",
+          "never_reported",
+          "gates",
+          "unreached",
+          "findings",
+          "evaluated_at"
+        ],
+        "description": "The declared gate set and the standing of each gate's last recorded run.\n\n`count`, `tallies` and `never_reported` are measured from `gates`, never written down,\nand `unreached` always names what was not consulted.\n\n```\nuse majordomus_cli::gates::GateStateReport;\n\nlet r: GateStateReport = serde_json::from_value(serde_json::json!({\n    \"source\": \".ai/repo/ci/gates.yaml\",\n    \"ledger\": \".ai/local/state/ledger.jsonl\",\n    \"count\": 0,\n    \"tallies\": {},\n    \"never_reported\": [],\n    \"gates\": [],\n    \"unreached\": [\"the forge's CI runs were not consulted\"],\n    \"findings\": [],\n    \"evaluated_at\": \"2026-10-15T00:00:00Z\",\n}))\n.unwrap();\nassert_eq!(r.count, r.gates.len());\nassert!(r.head.is_none(), \"a checkout without git still answers, and says so\");\nassert!(!r.unreached.is_empty());\n```"
+      },
       "GateStatus": {
         "oneOf": [
           {
@@ -39188,7 +39618,21 @@
             "type": "integer",
             "format": "uint",
             "minimum": 0,
-            "description": "How many units of work realise no intent."
+            "description": "How many units of work serve no intent: the unlinked units of class `orphan` alone."
+          },
+          "empty": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many unlinked units are `empty`: session records that did no work a link could be\nread from.",
+            "default": 0
+          },
+          "before_intents": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many unlinked units are `before_intents`: finished work that started before the\nfirst intent record was written, or while none was declared.",
+            "default": 0
           },
           "findings": {
             "type": "array",
@@ -39204,7 +39648,7 @@
           "orphans",
           "findings"
         ],
-        "description": "Every intent, realised, and every unit of work, joined: what `majordomus intent realization`\nanswers.\n\n```\nuse majordomus_cli::intent_realization::IntentRealization;\nlet r = IntentRealization { intents: vec![], work: vec![], orphans: 0, findings: vec![] };\nassert_eq!(r.orphans, 0);\n```"
+        "description": "Every intent, realised, and every unit of work, joined: what `majordomus intent realization`\nanswers.\n\n```\nuse majordomus_cli::intent_realization::IntentRealization;\nlet r = IntentRealization {\n    intents: vec![], work: vec![], orphans: 0, empty: 0, before_intents: 0, findings: vec![],\n};\nassert_eq!(r.orphans + r.empty + r.before_intents, 0);\n```"
       },
       "IntentRealizationView": {
         "type": "object",
@@ -39295,13 +39739,24 @@
               "null"
             ],
             "description": "When it realises none: the first link that is missing."
+          },
+          "class": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/IntentUnlinkedClass"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "When it realises none: what it is, by the facts it records. `realize` sets it on every\nunlinked unit; `link` alone, which knows neither liveness nor the first intent, leaves\nit empty."
           }
         },
         "required": [
           "work",
           "links"
         ],
-        "description": "A unit of work with every intent it realises, or the reason it realises none.\n\n```\nuse majordomus_cli::intent_realization::{IntentRealizedWork, IntentWorkKind, IntentWorkUnit};\nlet w = IntentRealizedWork {\n    work: IntentWorkUnit::new(IntentWorkKind::Task, \"t-1\"),\n    links: vec![],\n    unlinked: Some(\"it names no issue\".into()),\n};\nassert!(w.links.is_empty() && w.unlinked.is_some());\n```"
+        "description": "A unit of work with every intent it realises, or the reason it realises none.\n\n```\nuse majordomus_cli::intent_realization::{IntentRealizedWork, IntentWorkKind, IntentWorkUnit};\nlet w = IntentRealizedWork {\n    work: IntentWorkUnit::new(IntentWorkKind::Task, \"t-1\"),\n    links: vec![],\n    unlinked: Some(\"it names no issue\".into()),\n    class: None,\n};\nassert!(w.links.is_empty() && w.unlinked.is_some());\n```"
       },
       "IntentStage": {
         "oneOf": [
@@ -39342,6 +39797,26 @@
           }
         ],
         "description": "Where an intent stands, derived on every read and stored nowhere.\n\n```\nuse majordomus_cli::intent::IntentStage;\n// one word every surface prints, and an order that follows the work\nassert_eq!(IntentStage::Executing.as_str(), \"executing\");\nassert!(IntentStage::Declared < IntentStage::Satisfied);\n```"
+      },
+      "IntentUnlinkedClass": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "empty",
+            "description": "A session record that lists no issue, no commit and no changed path outside the session\nrecords, and whose own words cite no issue: it did no work a link could be read from."
+          },
+          {
+            "type": "string",
+            "const": "before_intents",
+            "description": "Not live, not empty, and its earliest episode started before the first intent record\nwas written — or no intent is declared at all."
+          },
+          {
+            "type": "string",
+            "const": "orphan",
+            "description": "Anything else unlinked: work done, or being done, while an intent existed, with no fact\nlinking it to one."
+          }
+        ],
+        "description": "What a unit of work that realises no intent is, by the facts it records (ADR 0075,\namendment of 2026-10-15). Only `IntentUnlinkedClass::Orphan` is work serving no intent;\nthe other two classes say why a unit is not, and neither is a link.\n\n```\nuse majordomus_cli::intent_realization::IntentUnlinkedClass;\nassert_eq!(\n    serde_json::to_string(&IntentUnlinkedClass::BeforeIntents).unwrap(),\n    \"\\\"before_intents\\\"\"\n);\nassert!(IntentUnlinkedClass::Empty < IntentUnlinkedClass::Orphan);\n```"
       },
       "IntentUnmetCriterion": {
         "type": "object",
@@ -39704,6 +40179,17 @@
               "type": "string"
             },
             "description": "Issue ids a recorded event shows it moving."
+          },
+          "started_at": {
+            "type": "string",
+            "description": "When its earliest episode started, as its record says: a session record's `started_at`,\na task's first `task.started`, a claim's `at`. Empty when no record says."
+          },
+          "commits": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The commits a session record lists."
           }
         },
         "required": [
@@ -40752,13 +41238,24 @@
               "null"
             ],
             "description": "The executable's version; absent for a server too old to have written one."
+          },
+          "share": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ServedShare"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The share directory the server serves, measured now against `version`: the version\nit states, whether it holds `ui/`, and `skewed` with the reason when either differs\nfrom what the server's executable needs. Absent when the lease names no share — a\nserver older than this field, or one that has not located its share yet."
           }
         },
         "required": [
           "pid",
           "started_at"
         ],
-        "description": "A lease as a reader sees it: what the server wrote about itself, without the token that\nmakes the file the server's own.\n\n```\nuse majordomus_cli::capability::builtin::server::LeaseView;\nlet view = LeaseView { pid: 7, url: Some(\"http://127.0.0.1:8741\".into()),\n    started_at: \"2026-09-10T00:00:00Z\".into(), executable: None, version: Some(\"1.0.0\".into()) };\nlet v = serde_json::to_value(&view).unwrap();\nassert_eq!(v[\"pid\"], 7);\nassert!(v.get(\"token\").is_none() && v.get(\"root\").is_none());\n```"
+        "description": "A lease as a reader sees it: what the server wrote about itself, without the token that\nmakes the file the server's own.\n\n```\nuse majordomus_cli::capability::builtin::server::LeaseView;\nlet view = LeaseView { pid: 7, url: Some(\"http://127.0.0.1:8741\".into()),\n    started_at: \"2026-09-10T00:00:00Z\".into(), executable: None, version: Some(\"1.0.0\".into()),\n    share: None };\nlet v = serde_json::to_value(&view).unwrap();\nassert_eq!(v[\"pid\"], 7);\nassert!(v.get(\"token\").is_none() && v.get(\"root\").is_none());\nassert!(v.get(\"share\").is_none(), \"a lease that names no share is read without one\");\n```"
       },
       "LedgerMark": {
         "type": "object",
@@ -42024,6 +42521,34 @@
         ],
         "description": "The whole self-check."
       },
+      "MeshEnrolment": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "The declaration file, repository-relative."
+          },
+          "key": {
+            "type": "string",
+            "description": "This machine's public key: what is listed, never a secret."
+          },
+          "added": {
+            "type": "boolean",
+            "description": "Whether the key was added now; `false` when it was listed already."
+          },
+          "next": {
+            "type": "string",
+            "description": "What to do next: commit the file, or nothing."
+          }
+        },
+        "required": [
+          "path",
+          "key",
+          "added",
+          "next"
+        ],
+        "description": "The answer of `mesh.enrol`: which declaration, which key, and whether it changed."
+      },
       "MeshEvent": {
         "type": "object",
         "properties": {
@@ -42374,6 +42899,11 @@
             "type": "string",
             "const": "rendezvous",
             "description": "A rendezvous answer or registration."
+          },
+          {
+            "type": "string",
+            "const": "tailscale",
+            "description": "A tailnet peer asked as a rendezvous."
           },
           {
             "type": "string",
@@ -52436,6 +52966,284 @@
         ],
         "description": "How much a diagnostic matters.\n\nAn error says the plan itself cannot be trusted and blocks the verdict; a warning says\nsomething about the release state is wrong and the verdict stands anyway; a note says\nsomething true and not wrong, so that the warnings keep meaning what they say.\n\n```\nuse majordomus_cli::release::compat::Severity;\nassert_ne!(Severity::Error, Severity::Warning);\nassert_ne!(Severity::Warning, Severity::Note);\n```"
       },
+      "ReleaseSiteBaseline": {
+        "type": "object",
+        "properties": {
+          "tag": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The previous release's tag, when the baseline is a recorded release."
+          },
+          "commit": {
+            "type": "string",
+            "description": "The commit the previous release was built from."
+          }
+        },
+        "required": [
+          "commit"
+        ],
+        "description": "The release the verdict compares with.\n\n```\nuse majordomus_cli::release::site::SiteBaseline;\nlet b = SiteBaseline { tag: Some(\"v0.27.0\".into()), commit: \"c1a430dcf\".into() };\nassert_eq!(b.tag.as_deref(), Some(\"v0.27.0\"));\n```"
+      },
+      "ReleaseSiteBetter": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "higher",
+            "description": "A larger value is better: a contrast ratio."
+          },
+          {
+            "type": "string",
+            "const": "lower",
+            "description": "A smaller value is better: a count of failures, of pages written by hand."
+          }
+        ],
+        "description": "Which way a measure improves, which is what decides whether a movement between two\nreleases is a regression that refuses the later one: a ratio must not fall, a count of\nfailures or of hand-written pages must not grow, and a difference below rounding is none.\n\n```\nuse majordomus_cli::release::site::Better;\nassert!(Better::Higher.regressed(4.5, 4.4));\nassert!(!Better::Higher.regressed(4.5, 4.6));\nassert!(Better::Lower.regressed(3.0, 4.0));\nassert!(!Better::Lower.regressed(3.0, 3.0));\n```"
+      },
+      "ReleaseSiteChange": {
+        "type": "object",
+        "properties": {
+          "commit": {
+            "type": "string",
+            "description": "The commit, abbreviated."
+          },
+          "subject": {
+            "type": "string",
+            "description": "Its subject line, as written."
+          },
+          "authored": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The files it changed that are not generated output and that make it a site change."
+          },
+          "generated": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The site's generated files it changed."
+          },
+          "counts": {
+            "type": "boolean",
+            "description": "Whether it counts as the release's improvement of the site."
+          },
+          "why": {
+            "type": "string",
+            "description": "Why it counts, or why it does not."
+          }
+        },
+        "required": [
+          "commit",
+          "subject",
+          "counts",
+          "why"
+        ],
+        "description": "One commit of the window that touched the site or named it as its subject.\n\n```\nuse majordomus_cli::release::site::SiteChange;\nlet c = SiteChange {\n    commit: \"3024cbcc0\".into(),\n    subject: \"fix(site): a diagram's node text is readable in both themes\".into(),\n    authored: vec![\"lib/mermaid.awk\".into()],\n    generated: vec![],\n    counts: true,\n    why: \"names the site as its subject and changes a source\".into(),\n};\nassert!(c.counts);\n```"
+      },
+      "ReleaseSiteFinding": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "`site-measure-regressed`, `site-measure-unreadable` or `site-not-improved`."
+          },
+          "message": {
+            "type": "string",
+            "description": "What was found, naming the measure and the delta or the commits."
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "description": "A reason the release is refused.\n\n```\nuse majordomus_cli::release::site::SiteFinding;\nlet f = SiteFinding { code: \"site-not-improved\".into(), message: \"nothing\".into() };\nassert_eq!(f.code, \"site-not-improved\");\n```"
+      },
+      "ReleaseSiteMeasure": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The measure's identity: `contrast.light.failing`, `site.pages-by-hand`."
+          },
+          "title": {
+            "type": "string",
+            "description": "What it measures, in a sentence fragment."
+          },
+          "better": {
+            "$ref": "#/components/schemas/ReleaseSiteBetter",
+            "description": "Which way it improves."
+          },
+          "previous": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double",
+            "description": "Its value in the previous release's tree, when that tree could be measured."
+          },
+          "current": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double",
+            "description": "Its value in the released tree, when that tree could be measured."
+          },
+          "delta": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double",
+            "description": "`current - previous`, when both were measured."
+          },
+          "verdict": {
+            "$ref": "#/components/schemas/ReleaseSiteMeasureVerdict",
+            "description": "How it moved."
+          },
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Why a side could not be measured."
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "better",
+          "verdict"
+        ],
+        "description": "One measure, at the previous release and at this one.\n\n```\nuse majordomus_cli::release::site::{Better, MeasureDelta, MeasureVerdict};\nlet d = MeasureDelta {\n    id: \"contrast.dark.weakest\".into(),\n    title: \"the weakest text contrast in the dark theme\".into(),\n    better: Better::Higher,\n    previous: Some(4.8),\n    current: Some(4.6),\n    delta: Some(-0.2),\n    verdict: MeasureVerdict::Regressed,\n    note: None,\n};\nassert!(d.verdict.refuses());\n```"
+      },
+      "ReleaseSiteMeasureVerdict": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "held",
+            "description": "The same value at both releases."
+          },
+          {
+            "type": "string",
+            "const": "improved",
+            "description": "Better at this release."
+          },
+          {
+            "type": "string",
+            "const": "regressed",
+            "description": "Worse at this release: the release is refused."
+          },
+          {
+            "type": "string",
+            "const": "unmeasured",
+            "description": "The previous release's tree cannot be measured this way (it predates what the measure\nreads), so there is nothing to compare with; stated, and not a refusal."
+          },
+          {
+            "type": "string",
+            "const": "unreadable",
+            "description": "The released tree itself cannot be measured: the release is refused, because a\nmeasure that could not be taken is never a pass."
+          }
+        ],
+        "description": "How one measure moved between the two releases.\n\n```\nuse majordomus_cli::release::site::MeasureVerdict;\nassert!(MeasureVerdict::Regressed.refuses());\nassert!(MeasureVerdict::Unreadable.refuses());\nassert!(!MeasureVerdict::Held.refuses());\nassert!(!MeasureVerdict::Unmeasured.refuses(), \"a baseline that cannot be read is said, not failed\");\n```"
+      },
+      "ReleaseSiteSubject": {
+        "type": "object",
+        "properties": {
+          "classes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The gates.yaml classes whose paths are the site's own sources.",
+            "default": []
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The conventional scopes that name the site as a change's subject.",
+            "default": []
+          },
+          "kinds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The conventional types a change must carry to count.",
+            "default": []
+          }
+        },
+        "description": "What has the site as its subject, as the publication model declares it.\n\n```\nuse majordomus_cli::release::site::SiteSubject;\nlet s = SiteSubject { classes: vec![\"site\".into()], scopes: vec![\"site\".into()], kinds: vec![\"fix\".into()] };\nassert!(s.names_scope(Some(\"site,ui\")));\nassert!(!s.names_scope(Some(\"ci\")));\n```"
+      },
+      "ReleaseSiteVerdict": {
+        "type": "object",
+        "properties": {
+          "rule": {
+            "type": "string",
+            "description": "The rule the verdict is taken under."
+          },
+          "previous": {
+            "$ref": "#/components/schemas/ReleaseSiteBaseline",
+            "description": "The previous release."
+          },
+          "head": {
+            "type": "string",
+            "description": "The commit being released."
+          },
+          "measures": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReleaseSiteMeasure"
+            },
+            "description": "Every measure, at both releases."
+          },
+          "subject": {
+            "$ref": "#/components/schemas/ReleaseSiteSubject",
+            "description": "The declaration that decided which change has the site as its subject."
+          },
+          "changes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReleaseSiteChange"
+            },
+            "description": "Every commit of the window that touched the site or named it, and whether it counts."
+          },
+          "improvements": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many of `Self::changes` count as an improvement of the site."
+          },
+          "findings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReleaseSiteFinding"
+            },
+            "description": "Every reason the release is refused; empty when it passes."
+          },
+          "passes": {
+            "type": "boolean",
+            "description": "Whether the release leaves the site better than it found it."
+          }
+        },
+        "required": [
+          "rule",
+          "previous",
+          "head",
+          "measures",
+          "subject",
+          "changes",
+          "improvements",
+          "findings",
+          "passes"
+        ],
+        "description": "The verdict on one release: its site measured against the previous release's, and the\nchanges in its window that have the site as their subject.\n\n```\nuse majordomus_cli::release::site::{judge, SiteVerdict};\nlet repo = majordomus_cli::synthetic::SyntheticRepository::small().expect(\"a synthetic repository\");\n// a repository that has released nothing has no baseline, and says so rather than passing\nlet refused: Result<SiteVerdict, String> = judge(repo.root(), None, None);\nassert!(refused.is_err());\n```"
+      },
       "ReleaseStatus": {
         "oneOf": [
           {
@@ -56197,6 +57005,55 @@
         ],
         "description": "One selector, and whether what it produces was declared or inferred.\n\nTwo fields, and the second is the whole reason the projection exists: a caller consuming\na compiled context needs to know which selectors it can trust as repository fact, and\nderiving that from the answer would mean inferring it from confidence values. Published\nhere, it is a rule rather than a pattern a reader noticed.\n\n```\nuse majordomus_cli::devcontext::{policy, Selector, SelectorRule};\nuse majordomus_cli::synthetic::SyntheticRepository;\n\nlet repo = SyntheticRepository::small().unwrap();\nlet ctx = repo.context().unwrap();\nlet rules = policy(&ctx).unwrap();\n\n// every selector is published, and each row agrees with the selector it names\nlet selectors: &[SelectorRule] = &rules.selectors;\nassert_eq!(selectors.len(), Selector::ALL.len());\nfor r in selectors {\n    assert_eq!(r.declared, r.selector.declared());\n}\n\n// and the inferring one is named, so the guessed half of an answer can be found\nlet inferred: Vec<Selector> =\n    selectors.iter().filter(|r| !r.declared).map(|r| r.selector).collect();\nassert_eq!(inferred, [Selector::IntentMatch]);\n```"
       },
+      "ServedShare": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "The share directory."
+          },
+          "origin": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "How it was found, when the server said."
+          },
+          "version": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The version its `version.txt` states; absent when it states none."
+          },
+          "ui_present": {
+            "type": "boolean",
+            "description": "Whether it holds `ui/`, the UI's stylesheet and scripts."
+          },
+          "cockpit_present": {
+            "type": "boolean",
+            "description": "Whether it holds `cockpit/`, the Cockpit's stylesheet and scripts."
+          },
+          "standing": {
+            "$ref": "#/components/schemas/ShareStanding",
+            "description": "Whether it is the executable's own."
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Why it is skewed, when it is."
+          }
+        },
+        "required": [
+          "path",
+          "ui_present",
+          "cockpit_present",
+          "standing"
+        ],
+        "description": "A share directory measured against the version of the executable that serves it: where\nit is, how it was found, the version it states, whether it holds the directory of each\nsurface the server serves pages from — `ui/` for `/ui`, `cockpit/` for `/cockpit` — and\nwhether that makes it the executable's own (ADR 0163).\n\nMeasured when it is asked for, never recorded: a checkout moves under a running server,\nand the directory a lease names may state another version an hour later.\n\n```\nuse majordomus_cli::share::{ServedShare, ShareStanding};\nlet dir = tempfile::tempdir().unwrap();\nstd::fs::write(dir.path().join(\"version.txt\"), \"version=0.26.0\\n\").unwrap();\nstd::fs::create_dir(dir.path().join(\"ui\")).unwrap();\nstd::fs::create_dir(dir.path().join(\"cockpit\")).unwrap();\nlet own = ServedShare::inspect(dir.path(), Some(\"installation\"), \"0.26.0\");\nassert_eq!(own.standing, ShareStanding::Current);\nassert!(own.reason.is_none() && own.ui_present);\n\nlet older = ServedShare::inspect(dir.path(), None, \"0.27.0\");\nassert_eq!(older.standing, ShareStanding::Skewed);\nassert!(older.reason.unwrap().contains(\"states version 0.26.0\"));\n\nstd::fs::remove_dir(dir.path().join(\"ui\")).unwrap();\nlet blank = ServedShare::inspect(dir.path(), None, \"0.26.0\");\nassert_eq!(blank.standing, ShareStanding::Skewed);\nassert!(!blank.ui_present && blank.reason.unwrap().contains(\"no ui/\"));\n```"
+      },
       "ServedStanding": {
         "type": "object",
         "properties": {
@@ -56289,11 +57146,16 @@
           },
           {
             "type": "string",
+            "const": "skewed",
+            "description": "The server answers for this checkout at this executable's version, but serves a\nshare directory that is not its own: one that states another version or none, or\nlacks a surface's directory (`ui/`, `cockpit/`), so the pages it serves have no\nassets and what it reads from `share/` is another release's (ADR 0163)."
+          },
+          {
+            "type": "string",
             "const": "stale",
             "description": "The lease names a server that does not answer, or is not a lease at all."
           }
         ],
-        "description": "Where a checkout's server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable's code.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Stale];\nlet words: Vec<&str> = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\"absent\", \"starting\", \"ready\", \"outdated\", \"stale\"]);\nassert_eq!(serde_json::from_str::<ServerStanding>(\"\\\"stale\\\"\").unwrap(), ServerStanding::Stale);\n```"
+        "description": "Where a checkout's server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable's code.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Skewed, ServerStanding::Stale];\nlet words: Vec<&str> = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\"absent\", \"starting\", \"ready\", \"outdated\", \"skewed\", \"stale\"]);\nassert_eq!(serde_json::from_str::<ServerStanding>(\"\\\"stale\\\"\").unwrap(), ServerStanding::Stale);\n```"
       },
       "ServerStatus": {
         "type": "object",
@@ -56931,6 +57793,21 @@
           "tokens"
         ],
         "description": "One planned shard: a Markdown file of the pack, the paths it carries from first to last,\nand what it weighs in bytes and in tokens.\n\nThe examples below plan a repository holding `main.rs` and a `logo.png` whose content is\nbinary, with a distribution whose `chat` profile has limits and whose `bare` one has none.\n\n```\nuse majordomus_cli::pack::{plan, ShardPlan};\n# use std::process::Command;\n# let dir = tempfile::tempdir().unwrap();\n# let (root, share) = (dir.path().join(\"repo\"), dir.path().join(\"share\"));\n# std::fs::create_dir_all(&root).unwrap();\n# std::fs::create_dir_all(&share).unwrap();\n# std::fs::write(share.join(\"archive.yaml\"), \"default: chat\\nprofiles:\\n  - id: chat\\n    binary: drop\\n    artifacts: drop\\n    shards:\\n      max_count: 5\\n      max_tokens: 4000\\n  - id: bare\\n    binary: drop\\n\").unwrap();\n# let git = |a: &[&str]| assert!(Command::new(\"git\").arg(\"-C\").arg(&root)\n#     .args([\"-c\", \"user.email=t@example.com\", \"-c\", \"user.name=t\"]).args(a)\n#     .status().unwrap().success());\n# git(&[\"init\", \"-q\"]);\n# std::fs::write(root.join(\"main.rs\"), \"fn main() {}\\n\").unwrap();\n# std::fs::write(root.join(\"logo.png\"), b\"\\x89PNG\\0\\x01\").unwrap();\n# git(&[\"add\", \"-A\"]);\n# git(&[\"commit\", \"-q\", \"-m\", \"one\"]);\nlet planned = plan(&root, &share, None);\nlet first: &ShardPlan = &planned.plan.shards[0];\nassert_eq!((first.files, first.first.as_str(), first.last.as_str()), (1, \"main.rs\", \"main.rs\"));\nassert!(first.file.ends_with(\".md\") && first.tokens > 0);\n```"
+      },
+      "ShareStanding": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "current",
+            "description": "It states the executable's version and holds the directory of every surface the\nserver serves pages from."
+          },
+          {
+            "type": "string",
+            "const": "skewed",
+            "description": "It states another version, states none, or lacks `ui/` or `cockpit/`: a server\nserving it answers with one release's code over another release's data, and those\npages are unstyled or blank."
+          }
+        ],
+        "description": "Whether a share directory is the one an executable should serve.\n\n```\nuse majordomus_cli::share::ShareStanding;\nassert_eq!(serde_json::to_value(ShareStanding::Current).unwrap(), \"current\");\nassert_eq!(serde_json::to_value(ShareStanding::Skewed).unwrap(), \"skewed\");\n```"
       },
       "ShellFinding": {
         "type": "object",
@@ -60972,6 +61849,23 @@
               "detail"
             ],
             "description": "The policy rejected this node; `detail` says why (for instance a TOFU key\nchange). A rejected node stays listed — an operator debugging a mesh needs to\nsee what was refused, not wonder about silence."
+          },
+          {
+            "type": "object",
+            "properties": {
+              "state": {
+                "type": "string",
+                "const": "retired"
+              },
+              "detail": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "state",
+              "detail"
+            ],
+            "description": "The key was succeeded by a trusted successor, whose key is the `detail`: its history\nstays legitimate, and it is trusted for nothing new. Retired, not withdrawn."
           }
         ],
         "description": "What the policy decided about one node."

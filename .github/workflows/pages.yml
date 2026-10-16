@@ -446,9 +446,55 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: scripts/pages evidence --commit "$GITHUB_SHA"
 
-      # the committed derived data proved current by hash, then rendered; no generation
+      # What moved since the deployment this run replaces is a fact of this build (scripts/site-build
+      # `since_deploy`, the "Since the last deploy" section of /changelog/), measured by the
+      # executable, which this job does not build: validate.yml's rust job keeps it as the artifact
+      # majordomus-cli-<triple> of the commit it built. The one of this commit or its nearest
+      # ancestor is fetched; site-build refuses one that does not describe this commit (its analysis
+      # against the registry committed here finds a movement), and without one the page says the
+      # delta is unknown. The previous deployment is read from gh-pages, whose every commit names
+      # its source. Composed here, before the build, so the build row keeps measuring rendering;
+      # the build adopts the record only when it names this commit. Never a gate.
+      - name: since the last deploy
+        id: since
+        timeout-minutes: 2
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git fetch -q origin gh-pages || echo "::notice::gh-pages could not be fetched; the changelog will say what moved since the last deploy is unknown"
+          dir="$RUNNER_TEMP/since-deploy"; mkdir -p "$dir"
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts?name=majordomus-cli-x86_64-unknown-linux-gnu&per_page=100" \
+            --jq '.artifacts[] | select(.expired | not) | select(.workflow_run.head_branch == "master") | "\(.id)\t\(.workflow_run.head_sha)"' \
+            > "$dir/list" 2>/dev/null || : > "$dir/list"
+          # the nearest ancestor, not the newest upload, as the evidence step chooses
+          while IFS="$(printf '\t')" read -r aid sha; do
+            [ -n "$sha" ] || continue
+            git merge-base --is-ancestor "$sha" "$GITHUB_SHA" 2>/dev/null || continue
+            printf '%s\t%s\n' "$(git rev-list --count "$sha")" "$aid"
+          done < "$dir/list" | LC_ALL=C sort -t "$(printf '\t')" -k1,1nr > "$dir/candidates"
+          best="$(head -1 "$dir/candidates" | cut -f2)"
+          bin=""
+          if [ -n "$best" ] && gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$best/zip" > "$dir/cli.zip" 2>/dev/null \
+             && unzip -qo "$dir/cli.zip" -d "$dir/cli" && chmod +x "$dir/cli/majordomus"; then
+            bin="$dir/cli/majordomus"
+            echo "the executable of $(jq -r '.commit // "an unrecorded commit"' "$dir/cli/majordomus-cli.json" 2>/dev/null) measures what moved since the last deploy"
+          else
+            echo "::notice::no executable of this commit or an ancestor is kept; the changelog will say what moved since the last deploy is unknown"
+          fi
+          # never a build here: without a kept executable the record says the delta is unknown
+          if MJ_SITE_PREVIOUS_DEPLOY=origin/gh-pages MAJORDOMUS_BIN="$bin" MAJORDOMUS_NO_BUILD=1 \
+               scripts/site-build --since-deploy "$PWD" "$dir/since-deploy.json"; then
+            echo "record=$dir/since-deploy.json" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::what moved since the last deploy could not be composed; the changelog will say it is unknown"
+          fi
+
+      # the committed derived data proved current by hash, then rendered; no generation. What moved
+      # since the last deploy is the record the step above composed, adopted when it names this commit
       - name: build
         timeout-minutes: 3
+        env:
+          MJ_SITE_SINCE_DEPLOY_RECORD: ${{ steps.since.outputs.record }}
         run: scripts/pages build
 
       # every static check over the output; the browser probe stays in validate.yml
@@ -649,24 +695,12 @@ jobs:
         env:
           PUBLISH: ${{ steps.publish.outcome }}
           SERVED: ${{ steps.public.outcome }}
-        run: |
-          if [ "$PUBLISH" = success ]; then
-            echo "::notice title=Published::gh-pages was pushed with $GITHUB_SHA before this run ended"
-            printf '\nPublication: **pushed** — gh-pages carries %s.\n' "$GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
-            # The public probe's verdict, stated rather than left as a grey icon inside a
-            # green run. The probe stays continue-on-error (see its step for why), so without
-            # this line a site still serving an older commit after ten minutes looked, from
-            # the run page, exactly like a site that served this one.
-            if [ "$SERVED" = success ]; then
-              printf 'Public site: **serves** %s.\n' "$GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
-            else
-              echo "::warning title=Public site not verified::after the probe's window the public site did not serve $GITHUB_SHA (probe: ${SERVED:-not run}); pages-live will refuse if it still does not"
-              printf 'Public site: **not verified** (probe: %s) — it did not serve %s within the window.\n' "${SERVED:-not run}" "$GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
-            fi
-          else
-            echo "::error title=Not published::this run ended (publish: $PUBLISH) without pushing gh-pages; the site still serves an older commit"
-            printf '\nPublication: **not pushed** (publish step: %s). The site still serves an older\ncommit; if no newer run of this workflow follows, the pages-live gate will refuse.\n' "$PUBLISH" >> "$GITHUB_STEP_SUMMARY"
-          fi
+          GH_TOKEN: ${{ github.token }}
+        # Stated by the tool and not here, so a person and this run say the same thing and a
+        # case can break the wait and read the three signals (I2661): the summary line, the
+        # annotation, and a `not served` row in the timing table naming what production does
+        # serve and, when GitHub's own build is still waiting, since when.
+        run: scripts/pages publication --commit "$GITHUB_SHA" --published "$PUBLISH" --served "$SERVED" --timings "$MJ_PAGES_TIMINGS"
 
       # The measurement of a deployment that has already happened — and therefore a report,
       # for the same reason the publication probe above is `continue-on-error`.

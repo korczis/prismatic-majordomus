@@ -1831,13 +1831,13 @@ claims:
     note: '`freshness::aggregate` is the one aggregation: failing if any part is failing, otherwise the weakest of the parts that can carry proof, otherwise the weakest of all. The declared order ranks failing above not_run, so a plain weakest-of over a failing test and a skipped one read not_run, which is not a finding, and hid the failure.'
 
   - id: mesh-off-by-default
-    claim: No mesh discovery socket opens until the repository commits an enabled mesh declaration, and a disabled or absent declaration is reported as the reason, not an error
+    claim: No mesh discovery socket opens until the repository commits an enabled mesh declaration that lists this machine's key, and a disabled, absent or unlisting declaration is reported as the reason, not an error
     source: docs/MESH.md
     implementation: apps/majordomus-cli/src/shared.rs
     test: apps/majordomus-cli/tests/mesh.rs
     status: guaranteed
     responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
-    note: The shared server activates the mesh runtime only from an enabled mesh-declaration object (kind, schema and source class in the layer); tests prove a disabled declaration opens nothing, creates no identity, and answers why, and that activation never delays serving. The skeleton a new repository starts from ships no declaration (ADR 0050); this repository commits its own enabled, a reviewed decision that docs/MESH.md describes and test/cases/491_the_mesh_is_on_here.sh holds.
+    note: The shared server activates the mesh runtime only from an enabled mesh-declaration object (kind, schema and source class in the layer); tests prove a disabled declaration opens nothing, creates no identity, and answers why, and that activation never delays serving. A machine whose key the declaration does not list stays closed (I2261), so the skeleton ships an enabled declaration with an empty allowlist and `majordomus mesh enrol` is the one step that joins a machine (ADR 0168, amending ADR 0050); this repository commits its own enabled, a reviewed decision that docs/MESH.md describes and test/cases/491_the_mesh_is_on_here.sh holds.
 
   - id: mesh-one-registry
     claim: Every discovery observation converges into one bounded registry, deduplicated by node and runtime identity across sources, replay-protected per instance, and every surface projects that registry and holds no peers of its own
@@ -1850,7 +1850,7 @@ claims:
 
   - id: mesh-cooperation-links
     claim: Two runtimes of one repository link only through a signed, replay-protected handshake that checks protocol, repository identity and trust, and every refusal is typed and visible
-    source: .ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md
+    source: .ai/repo/rules/project/mesh-cooperation-is-authenticated.v2.md
     implementation: apps/majordomus-cli/src/mesh/cooperation.rs
     test: apps/majordomus-cli/tests/mesh_cooperation.rs
     status: guaranteed
@@ -1859,7 +1859,7 @@ claims:
 
   - id: mesh-claims-cross-runtime
     claim: An exclusive claim made on one runtime excludes an overlapping claim on every linked runtime, and concurrent claims resolve to one named winner everywhere
-    source: .ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md
+    source: .ai/repo/rules/project/mesh-cooperation-is-authenticated.v2.md
     implementation: apps/majordomus-cli/src/mesh/state.rs
     test: apps/majordomus-cli/tests/mesh_cooperation.rs
     status: guaranteed
@@ -1868,7 +1868,7 @@ claims:
 
   - id: mesh-repository-isolation
     claim: Runtimes serving different repositories never form a cooperative link, even when they discover each other
-    source: .ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md
+    source: .ai/repo/rules/project/mesh-cooperation-is-authenticated.v2.md
     implementation: apps/majordomus-cli/src/mesh/repository.rs
     test: apps/majordomus-cli/tests/mesh_cooperation.rs
     status: guaranteed

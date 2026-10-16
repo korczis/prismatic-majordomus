@@ -71,7 +71,9 @@ impl Node {
 
     fn declare(&self, repository: &str, allow: &[&str], seeds: &[&Served]) {
         let mut yaml = String::from(
-            "schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\nmulticast:\n  enabled: false\ntrust:\n  policy: deny_unknown\n  allow:\n",
+            // the tailnet stays quiet: a fixture on a machine that runs Tailscale would
+            // otherwise register with the real hubs of the tailnet and meet its siblings there
+            "schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\nmulticast:\n  enabled: false\ntailscale:\n  enabled: false\ntrust:\n  policy: deny_unknown\n  allow:\n",
         );
         for key in allow {
             yaml.push_str(&format!("    - {key}\n"));

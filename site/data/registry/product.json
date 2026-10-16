@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "0.28.0"
   },
-  "fingerprint": "f97eb29ac880e66c54074f68db8565ef8c31c67be7bbc0d20c245176506c33ac",
+  "fingerprint": "44886c07b98c0e8dc02980d898aa11e6d0337b4f440dd37725b444f1ee66618f",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -1005,7 +1005,7 @@
         },
         {
           "id": "mesh-off-by-default",
-          "claim": "No mesh discovery socket opens until the repository commits an enabled mesh declaration, and a disabled or absent declaration is reported as the reason, not an error",
+          "claim": "No mesh discovery socket opens until the repository commits an enabled mesh declaration that lists this machine's key, and a disabled, absent or unlisting declaration is reported as the reason, not an error",
           "status": "guaranteed",
           "test": "apps/majordomus-cli/tests/mesh.rs"
         },
@@ -1162,7 +1162,7 @@
         "use_cases": 6,
         "rules": 13,
         "enforced_rules": 11,
-        "capabilities": 70,
+        "capabilities": 71,
         "moments": 17
       },
       "evidence": {
@@ -2569,7 +2569,7 @@
         "use_cases": 8,
         "rules": 12,
         "enforced_rules": 10,
-        "capabilities": 4,
+        "capabilities": 5,
         "moments": 31
       },
       "evidence": {
@@ -3229,7 +3229,7 @@
         "use_cases": 10,
         "rules": 15,
         "enforced_rules": 14,
-        "capabilities": 126,
+        "capabilities": 129,
         "moments": 38
       },
       "evidence": {
@@ -5458,6 +5458,15 @@
               "cli": "majordomus mesh doctor"
             },
             {
+              "id": "mesh.enrol",
+              "title": "Enrol this machine in the mesh",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_enrol",
+              "route": "POST /api/v1/mesh/enrol",
+              "cli": "majordomus mesh enrol"
+            },
+            {
               "id": "mesh.events",
               "title": "The cooperation journal",
               "kind": "query",
@@ -5646,11 +5655,11 @@
         },
         {
           "id": "project.mesh-cooperation-is-authenticated",
-          "identity": "project.mesh-cooperation-is-authenticated@1",
+          "identity": "project.mesh-cooperation-is-authenticated@2",
           "title": "Mesh cooperation is admitted per link, replicated through one journal, and projected by every surface alike",
           "class": "blocking",
           "enforced": true,
-          "path": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md"
+          "path": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v2.md"
         }
       ],
       "doc_refs": [
@@ -5724,7 +5733,7 @@
         },
         {
           "id": "mesh-off-by-default",
-          "claim": "No mesh discovery socket opens until the repository commits an enabled mesh declaration, and a disabled or absent declaration is reported as the reason, not an error",
+          "claim": "No mesh discovery socket opens until the repository commits an enabled mesh declaration that lists this machine's key, and a disabled, absent or unlisting declaration is reported as the reason, not an error",
           "status": "guaranteed",
           "test": "apps/majordomus-cli/tests/mesh.rs"
         }
@@ -5744,11 +5753,11 @@
         "reasoning"
       ],
       "counts": {
-        "capabilities": 24,
-        "mcp_tools": 21,
+        "capabilities": 25,
+        "mcp_tools": 22,
         "mcp_resources": 2,
-        "http_routes": 23,
-        "cli_paths": 4,
+        "http_routes": 24,
+        "cli_paths": 5,
         "commands": 0,
         "objects": 1,
         "rules": 2,
@@ -7266,7 +7275,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 115
+          "objects": 118
         },
         {
           "name": "knowledge",
@@ -7547,11 +7556,11 @@
       "counts": {
         "capabilities": 5,
         "mcp_tools": 5,
-        "mcp_resources": 469,
+        "mcp_resources": 472,
         "http_routes": 5,
         "cli_paths": 3,
         "commands": 6,
-        "objects": 466,
+        "objects": 469,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -7767,7 +7776,7 @@
       "kind_refs": [
         {
           "name": "rule",
-          "objects": 184
+          "objects": 187
         }
       ],
       "rule_refs": [
@@ -8143,11 +8152,11 @@
       "counts": {
         "capabilities": 6,
         "mcp_tools": 4,
-        "mcp_resources": 186,
+        "mcp_resources": 189,
         "http_routes": 6,
         "cli_paths": 3,
         "commands": 5,
-        "objects": 184,
+        "objects": 187,
         "rules": 7,
         "enforced_rules": 7,
         "docs": 2,
@@ -8381,6 +8390,15 @@
               "tool": "majordomus_gates",
               "resource": "majordomus://gates",
               "route": "GET /api/v1/gates"
+            },
+            {
+              "id": "gates.state",
+              "title": "How each gate last went",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_gate_state",
+              "resource": "majordomus://gates/state",
+              "route": "GET /api/v1/gates/state"
             }
           ]
         },
@@ -8730,10 +8748,10 @@
         "planning"
       ],
       "counts": {
-        "capabilities": 4,
-        "mcp_tools": 4,
-        "mcp_resources": 4,
-        "http_routes": 4,
+        "capabilities": 5,
+        "mcp_tools": 5,
+        "mcp_resources": 5,
+        "http_routes": 5,
         "cli_paths": 0,
         "commands": 4,
         "objects": 0,
@@ -9338,6 +9356,15 @@
               "cli": "majordomus mesh doctor"
             },
             {
+              "id": "mesh.enrol",
+              "title": "Enrol this machine in the mesh",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_enrol",
+              "route": "POST /api/v1/mesh/enrol",
+              "cli": "majordomus mesh enrol"
+            },
+            {
               "id": "mesh.events",
               "title": "The cooperation journal",
               "kind": "query",
@@ -9676,6 +9703,14 @@
               "route": "GET /api/v1/release/next"
             },
             {
+              "id": "release.site",
+              "title": "Whether a release leaves the site better than it found it",
+              "kind": "query",
+              "stability": "implemented",
+              "tool": "majordomus_release_site",
+              "route": "GET /api/v1/release/site"
+            },
+            {
               "id": "release.version",
               "title": "The version, and the one the contract requires next",
               "kind": "query",
@@ -9976,11 +10011,11 @@
       ],
       "backlinks": [],
       "counts": {
-        "capabilities": 55,
-        "mcp_tools": 50,
+        "capabilities": 57,
+        "mcp_tools": 52,
         "mcp_resources": 7,
-        "http_routes": 54,
-        "cli_paths": 14,
+        "http_routes": 56,
+        "cli_paths": 15,
         "commands": 0,
         "objects": 0,
         "rules": 2,
@@ -10179,6 +10214,14 @@
               "stability": "implemented",
               "tool": "majordomus_release_next",
               "route": "GET /api/v1/release/next"
+            },
+            {
+              "id": "release.site",
+              "title": "Whether a release leaves the site better than it found it",
+              "kind": "query",
+              "stability": "implemented",
+              "tool": "majordomus_release_site",
+              "route": "GET /api/v1/release/site"
             },
             {
               "id": "release.version",
@@ -10430,6 +10473,15 @@
               "tool": "majordomus_mesh_doctor",
               "route": "GET /api/v1/mesh/doctor",
               "cli": "majordomus mesh doctor"
+            },
+            {
+              "id": "mesh.enrol",
+              "title": "Enrol this machine in the mesh",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_enrol",
+              "route": "POST /api/v1/mesh/enrol",
+              "cli": "majordomus mesh enrol"
             },
             {
               "id": "mesh.events",
@@ -10764,6 +10816,15 @@
               "tool": "majordomus_gates",
               "resource": "majordomus://gates",
               "route": "GET /api/v1/gates"
+            },
+            {
+              "id": "gates.state",
+              "title": "How each gate last went",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_gate_state",
+              "resource": "majordomus://gates/state",
+              "route": "GET /api/v1/gates/state"
             }
           ]
         },
@@ -11341,11 +11402,11 @@
         "observatory"
       ],
       "counts": {
-        "capabilities": 97,
-        "mcp_tools": 89,
-        "mcp_resources": 16,
-        "http_routes": 94,
-        "cli_paths": 41,
+        "capabilities": 100,
+        "mcp_tools": 92,
+        "mcp_resources": 17,
+        "http_routes": 97,
+        "cli_paths": 42,
         "commands": 0,
         "objects": 0,
         "rules": 3,
@@ -12261,6 +12322,14 @@
               "route": "GET /api/v1/release/next"
             },
             {
+              "id": "release.site",
+              "title": "Whether a release leaves the site better than it found it",
+              "kind": "query",
+              "stability": "implemented",
+              "tool": "majordomus_release_site",
+              "route": "GET /api/v1/release/site"
+            },
+            {
               "id": "release.version",
               "title": "The version, and the one the contract requires next",
               "kind": "query",
@@ -12470,10 +12539,10 @@
       ],
       "backlinks": [],
       "counts": {
-        "capabilities": 9,
-        "mcp_tools": 9,
+        "capabilities": 10,
+        "mcp_tools": 10,
         "mcp_resources": 29,
-        "http_routes": 9,
+        "http_routes": 10,
         "cli_paths": 5,
         "commands": 4,
         "objects": 28,
@@ -12843,7 +12912,7 @@
         },
         {
           "name": "issue",
-          "objects": 419
+          "objects": 423
         },
         {
           "name": "intent",
@@ -13045,11 +13114,11 @@
       "counts": {
         "capabilities": 23,
         "mcp_tools": 23,
-        "mcp_resources": 466,
+        "mcp_resources": 470,
         "http_routes": 23,
         "cli_paths": 11,
         "commands": 1,
-        "objects": 463,
+        "objects": 467,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -16737,7 +16806,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (115)",
+        "title": "adr (118)",
         "features": [
           "knowledge"
         ]
@@ -16834,7 +16903,7 @@
       },
       {
         "id": "issue",
-        "title": "issue (419)",
+        "title": "issue (423)",
         "features": [
           "planning"
         ]
@@ -16897,7 +16966,7 @@
       },
       {
         "id": "rule",
-        "title": "rule (184)",
+        "title": "rule (187)",
         "features": [
           "doctrine"
         ]
@@ -17502,11 +17571,11 @@
     },
     {
       "id": "project.mesh-cooperation-is-authenticated",
-      "identity": "project.mesh-cooperation-is-authenticated@1",
+      "identity": "project.mesh-cooperation-is-authenticated@2",
       "title": "Mesh cooperation is admitted per link, replicated through one journal, and projected by every surface alike",
       "class": "blocking",
       "enforced": true,
-      "path": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md"
+      "path": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v2.md"
     },
     {
       "id": "project.mesh-is-observation-not-authority",
@@ -17853,19 +17922,19 @@
     }
   ],
   "telemetry": {
-    "capabilities": 2503,
-    "builtin": 202,
-    "declarative": 2301,
+    "capabilities": 2531,
+    "builtin": 205,
+    "declarative": 2326,
     "modules": 58,
-    "mcp_tools": 192,
-    "mcp_resources": 2356,
-    "http_routes": 197,
-    "cli_commands": 206,
+    "mcp_tools": 195,
+    "mcp_resources": 2382,
+    "http_routes": 200,
+    "cli_commands": 208,
     "shell_commands": 30,
     "kinds": 34,
-    "objects": 2301,
+    "objects": 2326,
     "by_kind": {
-      "adr": 115,
+      "adr": 118,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -17882,7 +17951,7 @@
       "gap": 3,
       "implementation": 52,
       "intent": 4,
-      "issue": 419,
+      "issue": 423,
       "knowledge": 4,
       "mesh-declaration": 1,
       "milestone": 40,
@@ -17891,12 +17960,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 27,
-      "rule": 184,
+      "rule": 187,
       "scope": 1,
       "session": 90,
       "skill": 8,
       "taxonomy": 10,
-      "test": 519,
+      "test": 534,
       "use-case": 49,
       "workspace": 1
     },

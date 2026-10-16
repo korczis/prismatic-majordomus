@@ -159,6 +159,10 @@ pub struct Policy {
     /// that could not be read, does not silently change how a server is taken over.
     #[serde(default)]
     pub server: ServerPolicy,
+    /// `workflows:` — how long a derivation waits for the workflow runner. Absent keeps
+    /// `environment::workflows::DESCRIBE_TIMEOUT`.
+    #[serde(default)]
+    pub workflows: WorkflowsPolicy,
     /// `commit:` — what this repository holds a commit message to. Absent is the default,
     /// which is what this repository's own history already satisfies.
     #[serde(default)]
@@ -416,6 +420,7 @@ impl LoadedPolicy {
         // timings can be declared for this process. `declare_timings` is a OnceLock set, so
         // reading the policy twice does not move a judgement already in flight.
         crate::lease::declare_timings(&policy.server);
+        crate::environment::workflows::declare_describe_timeout(&policy.workflows);
         let mut hasher = Sha256::new();
         hasher.update(normal_form(&text).as_bytes());
         for profile in profile_files(repository)? {
@@ -665,4 +670,25 @@ pub struct ServerPolicy {
     /// by itself. `--idle` on the command line overrides it.
     #[serde(default)]
     pub idle_seconds: Option<u64>,
+}
+
+/// `workflows:` — how a derivation asks the workflow runner (`just`) about the justfile.
+///
+/// Absent means "keep the compiled default", which lives in one place,
+/// `environment::workflows::DESCRIBE_TIMEOUT`; this block only says whether this repository
+/// overrides it (I2730).
+///
+/// ```
+/// use majordomus_cli::policy::WorkflowsPolicy;
+/// assert_eq!(WorkflowsPolicy::default().describe_timeout_seconds, None);
+/// let p: WorkflowsPolicy =
+///     serde_json::from_str(r#"{"describe_timeout_seconds": 45}"#).expect("a workflows block");
+/// assert_eq!(p.describe_timeout_seconds, Some(45));
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Default)]
+pub struct WorkflowsPolicy {
+    /// `workflows.describe_timeout_seconds:` — how long a derivation waits for `just --dump`
+    /// and `just --groups` before it refuses, naming the command and this bound.
+    #[serde(default)]
+    pub describe_timeout_seconds: Option<u64>,
 }

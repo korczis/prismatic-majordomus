@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 115,
+      "count": 118,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -23,7 +23,7 @@
       "title": "Rules",
       "description": "Every rule in force here — the vendored doctrine package and this repository's own — with the class it declares, the artefacts it names as its enforcement, whether the tree holds them, and the rules either side of it in the dependency graph.",
       "weight": 46,
-      "count": 184,
+      "count": 187,
       "dir": "rules",
       "statuses": [
         "active"
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 115
+      "count": 118
     },
     {
       "kind": "application",
@@ -173,7 +173,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 419
+      "count": 423
     },
     {
       "kind": "knowledge",
@@ -245,7 +245,7 @@
       "route": "/rules/",
       "title": "Rules",
       "reason": null,
-      "count": 184
+      "count": 187
     },
     {
       "kind": "scope",
@@ -285,7 +285,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 519
+      "count": 534
     },
     {
       "kind": "use-case",
@@ -1232,7 +1232,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0169",
+          "kind": "adr",
+          "route": "/adrs/adr-0169/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -3334,6 +3342,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0067/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0168",
+          "kind": "adr",
+          "route": "/adrs/adr-0168/",
+          "external": false
         }
       ]
     },
@@ -3914,7 +3929,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0168",
+          "kind": "adr",
+          "route": "/adrs/adr-0168/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -4078,9 +4101,9 @@
         },
         {
           "edge": "put_in_force",
-          "label": "project.mesh-cooperation-is-authenticated@1",
+          "label": "project.mesh-cooperation-is-authenticated@2",
           "kind": "rule",
-          "route": "/rules/project-mesh-cooperation-is-authenticated-1/",
+          "route": "/rules/project-mesh-cooperation-is-authenticated-2/",
           "external": false
         },
         {
@@ -6207,6 +6230,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0155/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0167",
+          "kind": "adr",
+          "route": "/adrs/adr-0167/",
+          "external": false
         }
       ]
     },
@@ -6982,9 +7012,9 @@
         },
         {
           "edge": "put_in_force",
-          "label": "project.mesh-cooperation-is-authenticated@1",
+          "label": "project.mesh-cooperation-is-authenticated@2",
           "kind": "rule",
-          "route": "/rules/project-mesh-cooperation-is-authenticated-1/",
+          "route": "/rules/project-mesh-cooperation-is-authenticated-2/",
           "external": false
         },
         {
@@ -7121,7 +7151,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0167",
+          "kind": "adr",
+          "route": "/adrs/adr-0167/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -8470,6 +8508,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0161/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0167",
+          "kind": "adr",
+          "route": "/adrs/adr-0167/",
+          "external": false
         }
       ]
     },
@@ -9139,6 +9184,279 @@
           "label": "project.the-published-ui-is-the-trunks@1",
           "kind": "rule",
           "route": "/rules/project-the-published-ui-is-the-trunks-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0167",
+      "identity": "adr-0167",
+      "slug": "adr-0167",
+      "cockpit": "/cockpit/objects/adr/adr-0167",
+      "title": "Work moves through seats on the mesh, lands in combined tops, and every checkout is kept current",
+      "status": "proposed",
+      "tags": [
+        "integration",
+        "governance",
+        "mesh",
+        "release"
+      ],
+      "source": ".ai/repo/adrs/0167-work-moves-through-seats-on-the-mesh-and-lands-in-combined-tops.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/ui/mesh.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0101",
+          "kind": "adr",
+          "route": "/adrs/adr-0101/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0129",
+          "kind": "adr",
+          "route": "/adrs/adr-0129/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0155",
+          "kind": "adr",
+          "route": "/adrs/adr-0155/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/INTEGRATION.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/MESH.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/RELEASE.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.an-expedited-landing-is-the-owners-word@1",
+          "kind": "rule",
+          "route": "/rules/project-an-expedited-landing-is-the-owners-word-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.integration-follows-the-current-master@3",
+          "kind": "rule",
+          "route": "/rules/project-integration-follows-the-current-master-3/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.the-cooperation-model-is-the-owners-word@1",
+          "kind": "rule",
+          "route": "/rules/project-the-cooperation-model-is-the-owners-word-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.work-is-claimed-before-it-is-built@1",
+          "kind": "rule",
+          "route": "/rules/project-work-is-claimed-before-it-is-built-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/3150_the_cooperation_model_is_one_record.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0168",
+      "identity": "adr-0168",
+      "slug": "adr-0168",
+      "cockpit": "/cockpit/objects/adr/adr-0168",
+      "title": "Init declares the mesh, closed until a machine is enrolled",
+      "status": "proposed",
+      "tags": [
+        "mesh",
+        "init",
+        "trust"
+      ],
+      "source": ".ai/repo/adrs/0168-init-declares-the-mesh-closed-until-a-machine-is-enrolled.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/mesh/enrol.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/mesh/manager.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "share/skeleton/ai/repo/mesh/mesh.yaml",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0050",
+          "kind": "adr",
+          "route": "/adrs/adr-0050/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0059",
+          "kind": "adr",
+          "route": "/adrs/adr-0059/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/01_init.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0169",
+      "identity": "adr-0169",
+      "slug": "adr-0169",
+      "cockpit": "/cockpit/objects/adr/adr-0169",
+      "title": "What an adoption leaves behind is measured, not remembered",
+      "status": "proposed",
+      "tags": [
+        "adoption",
+        "two-folder",
+        "ownership",
+        "footprint"
+      ],
+      "source": ".ai/repo/adrs/0169-what-an-adoption-leaves-behind-is-measured-not-remembered.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/editors/mod.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/generate.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0021",
+          "kind": "adr",
+          "route": "/adrs/adr-0021/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/ADOPTION.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/TWO_FOLDER_CONSOLIDATION.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "lib/capture.sh",
+          "kind": "implementation",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "lib/common.sh",
+          "kind": "implementation",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "lib/init.sh",
+          "kind": "implementation",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "lib/update.sh",
+          "kind": "implementation",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "I1101",
+          "kind": "issue",
+          "route": "/plan/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "two-folder-integration",
+          "kind": "milestone",
+          "route": "/plan/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/3113_the_adoption_footprint_is_inventoried.sh",
+          "kind": "test",
+          "route": null,
           "external": false
         }
       ],
@@ -12386,6 +12704,61 @@
     },
     {
       "kind": "rule",
+      "id": "majordomus://rule/project.a-release-leaves-the-site-better@1",
+      "identity": "project.a-release-leaves-the-site-better@1",
+      "slug": "project-a-release-leaves-the-site-better-1",
+      "cockpit": "/cockpit/objects/rule/project-a-release-leaves-the-site-better-1",
+      "title": "A release leaves the site better than it found it",
+      "status": "active",
+      "tags": [
+        "release",
+        "web",
+        "publication",
+        "design",
+        "projections"
+      ],
+      "source": ".ai/repo/rules/project/a-release-leaves-the-site-better.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.derived-files-regenerated@1",
+          "kind": "rule",
+          "route": "/rules/project-derived-files-regenerated-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.design-tokens-declared-once@2",
+          "kind": "rule",
+          "route": "/rules/project-design-tokens-declared-once-2/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.homepage-tells-a-declared-story@1",
+          "kind": "rule",
+          "route": "/rules/project-homepage-tells-a-declared-story-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.release-is-a-projection@2",
+          "kind": "rule",
+          "route": "/rules/project-release-is-a-projection-2/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.the-site-offers-the-release-it-published@1",
+          "kind": "rule",
+          "route": "/rules/project-the-site-offers-the-release-it-published-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "rule",
       "id": "majordomus://rule/project.a-standing-approval-is-written-where-permissions-are-read@1",
       "identity": "project.a-standing-approval-is-written-where-permissions-are-read@1",
       "slug": "project-a-standing-approval-is-written-where-permissions-are-read-1",
@@ -12703,10 +13076,24 @@
           "external": false
         },
         {
+          "edge": "put_in_force",
+          "label": "adr-0167",
+          "kind": "adr",
+          "route": "/adrs/adr-0167/",
+          "external": false
+        },
+        {
           "edge": "depends_on",
           "label": "project.a-standing-approval-is-written-where-permissions-are-read@1",
           "kind": "rule",
           "route": "/rules/project-a-standing-approval-is-written-where-permissions-are-read-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.the-cooperation-model-is-the-owners-word@1",
+          "kind": "rule",
+          "route": "/rules/project-the-cooperation-model-is-the-owners-word-1/",
           "external": false
         }
       ]
@@ -13174,6 +13561,13 @@
         },
         {
           "edge": "depends_on",
+          "label": "project.a-release-leaves-the-site-better@1",
+          "kind": "rule",
+          "route": "/rules/project-a-release-leaves-the-site-better-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
           "label": "project.a-tool-that-cannot-match-the-tree-refuses@1",
           "kind": "rule",
           "route": "/rules/project-a-tool-that-cannot-match-the-tree-refuses-1/",
@@ -13525,6 +13919,20 @@
           "label": "adr-0036",
           "kind": "adr",
           "route": "/adrs/adr-0036/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.a-release-leaves-the-site-better@1",
+          "kind": "rule",
+          "route": "/rules/project-a-release-leaves-the-site-better-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.the-ui-wears-the-sites-navbar@1",
+          "kind": "rule",
+          "route": "/rules/project-the-ui-wears-the-sites-navbar-1/",
           "external": false
         }
       ]
@@ -14641,6 +15049,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0152/",
           "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.a-release-leaves-the-site-better@1",
+          "kind": "rule",
+          "route": "/rules/project-a-release-leaves-the-site-better-1/",
+          "external": false
         }
       ]
     },
@@ -14770,10 +15185,24 @@
           "external": false
         },
         {
+          "edge": "put_in_force",
+          "label": "adr-0167",
+          "kind": "adr",
+          "route": "/adrs/adr-0167/",
+          "external": false
+        },
+        {
           "edge": "depends_on",
           "label": "project.an-expedited-landing-is-the-owners-word@1",
           "kind": "rule",
           "route": "/rules/project-an-expedited-landing-is-the-owners-word-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.the-cooperation-model-is-the-owners-word@1",
+          "kind": "rule",
+          "route": "/rules/project-the-cooperation-model-is-the-owners-word-1/",
           "external": false
         }
       ]
@@ -15273,10 +15702,10 @@
     },
     {
       "kind": "rule",
-      "id": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
-      "identity": "project.mesh-cooperation-is-authenticated@1",
-      "slug": "project-mesh-cooperation-is-authenticated-1",
-      "cockpit": "/cockpit/objects/rule/project-mesh-cooperation-is-authenticated-1",
+      "id": "majordomus://rule/project.mesh-cooperation-is-authenticated@2",
+      "identity": "project.mesh-cooperation-is-authenticated@2",
+      "slug": "project-mesh-cooperation-is-authenticated-2",
+      "cockpit": "/cockpit/objects/rule/project-mesh-cooperation-is-authenticated-2",
       "title": "Mesh cooperation is admitted per link, replicated through one journal, and projected by every surface alike",
       "status": "active",
       "tags": [
@@ -15285,7 +15714,7 @@
         "cooperation",
         "doctrine"
       ],
-      "source": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md",
+      "source": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v2.md",
       "references": [
         {
           "edge": "depends_on",
@@ -15329,6 +15758,13 @@
           "label": "mesh-repository-isolation",
           "kind": "claim",
           "route": "/guarantees/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.the-cooperation-model-is-the-owners-word@1",
+          "kind": "rule",
+          "route": "/rules/project-the-cooperation-model-is-the-owners-word-1/",
           "external": false
         }
       ]
@@ -15379,9 +15815,9 @@
         },
         {
           "edge": "depends_on",
-          "label": "project.mesh-cooperation-is-authenticated@1",
+          "label": "project.mesh-cooperation-is-authenticated@2",
           "kind": "rule",
-          "route": "/rules/project-mesh-cooperation-is-authenticated-1/",
+          "route": "/rules/project-mesh-cooperation-is-authenticated-2/",
           "external": false
         }
       ]
@@ -15471,6 +15907,13 @@
           "label": "project.homepage-tells-a-declared-story@1",
           "kind": "rule",
           "route": "/rules/project-homepage-tells-a-declared-story-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.the-ui-wears-the-sites-navbar@1",
+          "kind": "rule",
+          "route": "/rules/project-the-ui-wears-the-sites-navbar-1/",
           "external": false
         }
       ]
@@ -16692,6 +17135,13 @@
         },
         {
           "edge": "depends_on",
+          "label": "project.a-release-leaves-the-site-better@1",
+          "kind": "rule",
+          "route": "/rules/project-a-release-leaves-the-site-better-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
           "label": "project.prose-states-no-version@1",
           "kind": "rule",
           "route": "/rules/project-prose-states-no-version-1/",
@@ -17231,6 +17681,62 @@
     },
     {
       "kind": "rule",
+      "id": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@1",
+      "identity": "project.the-cooperation-model-is-the-owners-word@1",
+      "slug": "project-the-cooperation-model-is-the-owners-word-1",
+      "cockpit": "/cockpit/objects/rule/project-the-cooperation-model-is-the-owners-word-1",
+      "title": "Work moves through seats held as mesh claims, lands in combined tops, and every checkout is kept current",
+      "status": "active",
+      "tags": [
+        "process",
+        "integration",
+        "mesh",
+        "release",
+        "governance"
+      ],
+      "source": ".ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.an-expedited-landing-is-the-owners-word@1",
+          "kind": "rule",
+          "route": "/rules/project-an-expedited-landing-is-the-owners-word-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.integration-follows-the-current-master@3",
+          "kind": "rule",
+          "route": "/rules/project-integration-follows-the-current-master-3/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.mesh-cooperation-is-authenticated@2",
+          "kind": "rule",
+          "route": "/rules/project-mesh-cooperation-is-authenticated-2/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.work-is-claimed-before-it-is-built@1",
+          "kind": "rule",
+          "route": "/rules/project-work-is-claimed-before-it-is-built-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0167",
+          "kind": "adr",
+          "route": "/adrs/adr-0167/",
+          "external": false
+        }
+      ]
+    },
+    {
+      "kind": "rule",
       "id": "majordomus://rule/project.the-crate-reference-is-published@1",
       "identity": "project.the-crate-reference-is-published@1",
       "slug": "project-the-crate-reference-is-published-1",
@@ -17602,6 +18108,56 @@
           "external": false
         }
       ],
+      "referenced_by": [
+        {
+          "edge": "depends_on",
+          "label": "project.a-release-leaves-the-site-better@1",
+          "kind": "rule",
+          "route": "/rules/project-a-release-leaves-the-site-better-1/",
+          "external": false
+        }
+      ]
+    },
+    {
+      "kind": "rule",
+      "id": "majordomus://rule/project.the-ui-wears-the-sites-navbar@1",
+      "identity": "project.the-ui-wears-the-sites-navbar@1",
+      "slug": "project-the-ui-wears-the-sites-navbar-1",
+      "cockpit": "/cockpit/objects/rule/project-the-ui-wears-the-sites-navbar-1",
+      "title": "majordomus.dev is the reference for how the product looks, and every page of the UI and the Cockpit wears the site's own navbar",
+      "status": "active",
+      "tags": [
+        "design",
+        "ui",
+        "navigation",
+        "derived",
+        "projections",
+        "site"
+      ],
+      "source": ".ai/repo/rules/project/the-ui-wears-the-sites-navbar.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.design-tokens-declared-once@2",
+          "kind": "rule",
+          "route": "/rules/project-design-tokens-declared-once-2/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.navigation-is-declared-once@1",
+          "kind": "rule",
+          "route": "/rules/project-navigation-is-declared-once-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.ui-conformance@1",
+          "kind": "rule",
+          "route": "/rules/project-ui-conformance-1/",
+          "external": false
+        }
+      ],
       "referenced_by": []
     },
     {
@@ -17752,6 +18308,13 @@
           "label": "project.every-link-and-control-is-tested@1",
           "kind": "rule",
           "route": "/rules/project-every-link-and-control-is-tested-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.the-ui-wears-the-sites-navbar@1",
+          "kind": "rule",
+          "route": "/rules/project-the-ui-wears-the-sites-navbar-1/",
           "external": false
         }
       ]
@@ -18081,6 +18644,13 @@
           "external": false
         },
         {
+          "edge": "put_in_force",
+          "label": "adr-0167",
+          "kind": "adr",
+          "route": "/adrs/adr-0167/",
+          "external": false
+        },
+        {
           "edge": "depends_on",
           "label": "project.a-number-names-one-case@1",
           "kind": "rule",
@@ -18099,6 +18669,13 @@
           "label": "project.accumulation-is-measured@2",
           "kind": "rule",
           "route": "/rules/project-accumulation-is-measured-2/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.the-cooperation-model-is-the-owners-word@1",
+          "kind": "rule",
+          "route": "/rules/project-the-cooperation-model-is-the-owners-word-1/",
           "external": false
         }
       ]

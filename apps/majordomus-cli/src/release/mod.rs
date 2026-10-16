@@ -40,6 +40,7 @@ pub mod commits;
 pub mod compat;
 pub mod landing;
 pub mod model;
+pub mod site;
 pub mod surface;
 pub mod version;
 

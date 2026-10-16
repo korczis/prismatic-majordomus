@@ -83,6 +83,7 @@ pub mod rules;
 pub mod scope;
 pub(crate) mod script;
 pub mod served;
+pub mod served_executable;
 pub mod session;
 pub mod share;
 pub(crate) mod shared;

@@ -100,6 +100,7 @@ where this checkout's own server stands measured against what this executable wo
 | `starting` | a lease without an address, young enough that its owner is still binding |
 | `ready` | the server the lease names answers for this checkout, from the file on disk, at this executable's version |
 | `outdated` | it answers, but from another version, or from a file replaced since it started: everything it says is yesterday's |
+| `skewed` | it answers at this executable's version, over a share that is not its own: another version's `version.txt` or none, or no `ui/` or `cockpit/` (ADR 0163) |
 | `stale` | the lease names a server that does not answer, or is not a lease at all; the reason says which |
 
 </div>
@@ -117,6 +118,18 @@ the election, the read-only `serving`, the environment snapshot and the status a
 through the same reading, and it carries the server's `version` beside the executable it
 was started from. `.ai/local/state/mcp/server.json` is still where a person reads it with
 `cat`; the status is where a program does.
+
+The lease also names the share directory the server located (`share`: its path and how it
+was found), and the status measures that directory on every reading against the server's
+`version`: the version its `version.txt` states, whether it holds `ui/` and `cockpit/`, and
+a share standing of `current` or `skewed` with the reason. A server of one release over the
+share of another — the installed executable over a stale checkout's `share/`, through
+`MAJORDOMUS_SHARE` — answers every `/ui/assets/` file with 404; it stands `skewed`, with the
+share's reason, instead of `ready` (ADR 0163, case 3041). `serve status` prints the share under
+each server as `share skewed  version 0.21.0  ui absent  cockpit present  <path> (<origin>)`,
+and the server's log says it once when it starts. `serve ensure` reports a skewed server with
+exit 10 and the remedy, and does not replace it: which share a server picks, and whether a
+skewed one is replaced, are ADR 0163's later steps.
 
 ### The server that is no longer the one
 
@@ -145,6 +158,20 @@ fight over the lease: the newer one holds it (I2163). The superseded process is 
 keeps its socket, its peer board and the generation of the layer it loaded, and it goes on
 serving the sessions it already had until they end. That is deliberate: a client mid-answer
 should not lose its server because somebody ran `cargo build`.
+
+Nor, since I2059, does a build take the lease. A process that may hold it — `majordomus mcp`,
+and `majordomus serve` without a subcommand — started from a cargo build output (the file
+under a directory carrying cargo's `CACHEDIR.TAG`) first replaces its own process image with a
+copy of that file, `<profile dir>/served/majordomus-<mtime>-<size>` — a second link to the
+build's own file where the filesystem allows one, the bytes otherwise — made once per build,
+never replaced, and shared by every server started from it (`served_executable`). The lease names the copy; a
+rebuild replaces `target/debug/majordomus` and never the copy, so the server stays `ready`
+on the address it had, and a launcher of the new build attaches to it, because a lease
+naming another path makes no rebuild claim. The new build serves once something restarts
+the server on purpose: `serve stop`, or its idle timeout. Copies older than a week are removed
+when a new one is made; a copy that cannot be made is said on stderr and the server runs in
+place, as before. An installed release is never copied: its path is already versioned.
+`test/cases/3061` holds it, and `test/cases/885` the server run from a file that is replaced.
 
 What it must not do is go on being *the* server. From the moment its own reader finds the
 lease no longer carries its token:

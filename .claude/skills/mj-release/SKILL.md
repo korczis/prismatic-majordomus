@@ -1,6 +1,6 @@
 ---
 name: mj-release
-description: "Majordomus release: What the public contract did, and the smallest version it allows; The changelog; The version a landing allocates, and why; The version, and the one the contract requires next."
+description: "Majordomus release: What the public contract did, and the smallest version it allows; The changelog; The version a landing allocates, and why; Whether a release leaves the site better than it found it; The version, and the one the contract requires next."
 argument-hint: "[request]"
 ---
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
@@ -18,6 +18,7 @@ $ARGUMENTS
 | `release.analysis` | What the public contract did, and the smallest version it allows | `majordomus_release_analysis` | — | reads |
 | `release.changelog` | The changelog | `majordomus_changelog` | — | reads |
 | `release.next` | The version a landing allocates, and why | `majordomus_release_next` | — | reads |
+| `release.site` | Whether a release leaves the site better than it found it | `majordomus_release_site` | — | reads |
 | `release.version` | The version, and the one the contract requires next | `majordomus_release_version` | — | reads |
 
 A capability that *changes* something runs only when the person asked for that change: call it once, and if it is refused or its outcome is not known, report that as it is and do not try again by another way. One that *reads* may be called whenever the request needs it.

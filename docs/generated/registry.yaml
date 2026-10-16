@@ -142,7 +142,7 @@ modules:
     description: "Completion as a state the repository decides rather than a claim a worker makes: the validation gates this repository declares in its CI model, which of them a task's own change set selects, what each one last reported, whether that verdict still describes the tree it was taken over, and therefore whether the task may be called finished. A gate that has never reported is `queued` and not `pass`, a run whose files have changed since is `stale` and refuses exactly as a failure does, and a gate the change cannot affect is `exempt` rather than unknown."
     stability: behaviorally_verified
     source: builtin
-    capabilities: 2
+    capabilities: 3
   - id: graph
     title: Graphs
     description: "The graphs derived from the registry and the index: the executable's own capability registry, the shape of the layer, the rule dependencies, the decisions and what they put in force, and the use cases and what they exercise. Canonical nodes and edges; a rendering library is a consumer, never the shape."
@@ -202,7 +202,7 @@ modules:
     description: "The mesh of this process: discovery — authenticated observations of other running Majordomus instances in one registry — and cooperation — authenticated links to trusted runtimes of the same repository, replicating sessions, claims, handovers and reviews through one journal every runtime folds into the same state. Discovery grants nothing; a link is admitted per peer, and nothing a peer sends executes anything here."
     stability: experimental
     source: builtin
-    capabilities: 24
+    capabilities: 25
   - id: models
     title: Models
     description: "The model catalogue the distribution declares — vendors, canonical model references, typed capabilities, context windows, lifecycle — and the explainable routing over it: what a stated need selects, what stands behind it, and why every excluded model fell out. Declared data; nothing here calls a model or reads a credential's value."
@@ -286,7 +286,7 @@ modules:
     description: "What this project has shipped and what it would ship next, derived rather than maintained: the changelog composes the layer's release records, the decisions dated inside each release's window and the conventional commits in its range; the version report reads the one place the version is authored and the projection the shell tool prints, and says what the public contract requires it to become — or that it cannot be measured, and so decides nothing — with what the commits since the last release imply beside it as evidence."
     stability: implemented
     source: builtin
-    capabilities: 4
+    capabilities: 5
   - id: repository
     title: Repository
     description: "The repository this process serves: its layer, its git state, the state of the index built from it, and its scope: what a worker reads of it and what it never reads."
@@ -22620,6 +22620,208 @@ capabilities:
       cancellable: false
       concurrency: unrestricted
     source_path: apps/majordomus-cli/src/capability/builtin/gates.rs
+  - id: gates.state
+    module: gates
+    kind: query
+    title: How each gate last went
+    description: "Every gate the CI model declares with the standing of its last recorded run in this checkout, whichever task recorded it: `pass` or `fail` over the files as they stand now, `stale` when those files have changed since the run, `queued` when no run has ever reported — listed again under `never_reported`, because a missing verdict is the case an absent reader renders green — and `unknown` when a run exists and cannot be checked against this tree. Each run carries the commit it was taken at and whether that is the commit checked out now. Read offline from this checkout's own record; what it did not consult, the forge's CI runs, is named under `unreached` rather than left out."
+    input:
+      name: Empty
+      schema:
+        type: object
+        additionalProperties: false
+        description: No input.
+        title: Empty
+    output:
+      name: GateStateReport
+      schema:
+        type: object
+        properties:
+          source:
+            type: string
+            description: "Where the gate set was read from, repository-relative."
+          ledger:
+            type: string
+            description: "Where the recorded runs were read from, repository-relative."
+          head:
+            type:
+              - string
+              - "null"
+            description: "The commit this checkout is at, when git could say."
+          count:
+            type: integer
+            format: uint
+            minimum: 0
+            description: How many gates the model declares; measured.
+          tallies:
+            type: object
+            additionalProperties:
+              type: integer
+              format: uint
+              minimum: 0
+            description: "How many gates stand in each status, by the status word."
+          never_reported:
+            type: array
+            items:
+              type: string
+            description: "The gates no run has ever reported, in declaration order."
+          gates:
+            type: array
+            items:
+              "$ref": "#/$defs/GateState"
+            description: "Every declared gate, in declaration order."
+          unreached:
+            type: array
+            items:
+              type: string
+            description: "What this answer did not consult, so its silence about it is not read as a verdict."
+          findings:
+            type: array
+            items:
+              type: string
+            description: "What could not be read, and what that means for the answer."
+          evaluated_at:
+            type: string
+            description: "When this answer was taken, RFC 3339 UTC."
+        required:
+          - source
+          - ledger
+          - count
+          - tallies
+          - never_reported
+          - gates
+          - unreached
+          - findings
+          - evaluated_at
+        description: "The declared gate set and the standing of each gate's last recorded run.\n\n`count`, `tallies` and `never_reported` are measured from `gates`, never written down,\nand `unreached` always names what was not consulted.\n\n```\nuse majordomus_cli::gates::GateStateReport;\n\nlet r: GateStateReport = serde_json::from_value(serde_json::json!({\n    \"source\": \".ai/repo/ci/gates.yaml\",\n    \"ledger\": \".ai/local/state/ledger.jsonl\",\n    \"count\": 0,\n    \"tallies\": {},\n    \"never_reported\": [],\n    \"gates\": [],\n    \"unreached\": [\"the forge's CI runs were not consulted\"],\n    \"findings\": [],\n    \"evaluated_at\": \"2026-10-15T00:00:00Z\",\n}))\n.unwrap();\nassert_eq!(r.count, r.gates.len());\nassert!(r.head.is_none(), \"a checkout without git still answers, and says so\");\nassert!(!r.unreached.is_empty());\n```"
+        title: GateStateReport
+        "$defs":
+          GateState:
+            type: object
+            properties:
+              id:
+                type: string
+                description: "The gate's identity in the model."
+              job:
+                type: string
+                description: The CI job that runs it.
+              always:
+                type: boolean
+                description: Whether every plan selects it.
+              on_demand:
+                type: boolean
+                description: "Whether its runner can be had only on demand, so no routine plan runs it."
+              status:
+                "$ref": "#/$defs/GateStatus"
+                description: "What is known about its last run: `pass`, `fail`, `stale`, `queued` (never\nreported) or `unknown` (a run exists and cannot be checked against this tree)."
+              reason:
+                type: string
+                description: "Why it is in that status, in words a person can act on."
+              last_run:
+                anyOf:
+                  - "$ref": "#/$defs/GateRun"
+                  - type: "null"
+                description: "The run that last reported, whichever task recorded it."
+              on_head:
+                type:
+                  - boolean
+                  - "null"
+                description: "Whether that run was taken at the commit this checkout is at now. Absent when there\nis no run or when the current commit could not be read."
+              inputs_hash:
+                type: string
+                description: "The hash of the gate's inputs as they stand now, when it could be taken."
+            required:
+              - id
+              - job
+              - always
+              - on_demand
+              - status
+              - reason
+            description: "One declared gate and the standing of its last recorded run.\n\n```\nuse majordomus_cli::gates::{GateState, GateStatus};\n\nlet never: GateState = serde_json::from_value(serde_json::json!({\n    \"id\": \"rust-check\",\n    \"job\": \"rust\",\n    \"always\": true,\n    \"on_demand\": false,\n    \"status\": \"queued\",\n    \"reason\": \"no run of this gate has ever been recorded in this checkout\",\n}))\n.unwrap();\n// no run, no head, and a word that is not `pass`\nassert!(never.last_run.is_none() && never.on_head.is_none());\nassert_eq!(never.status, GateStatus::Queued);\n```"
+          GateStatus:
+            oneOf:
+              - type: string
+                const: pass
+                description: It ran over these inputs and succeeded. The only word that discharges anything.
+              - type: string
+                const: fail
+                description: It ran over these inputs and failed. Completion is refused.
+              - type: string
+                const: stale
+                description: "It ran, and the files that select it have changed since; what it proved is about a\ntree that no longer exists. Completion is refused, because the alternative is\ntreating a claim about the past as a claim about the present."
+              - type: string
+                const: blocked
+                description: "Something it cannot run without has not passed, so its own silence means nothing."
+              - type: string
+                const: queued
+                description: "The plan selects it and no run has ever reported. Not `unknown`: the question was\nasked and no answer came, which is a debt somebody owes, and not `pass`, which is\nthe mistake this word exists to make impossible."
+              - type: string
+                const: exempt
+                description: "The plan does not select it: nothing the task changed can make it true or false."
+              - type: string
+                const: unknown
+                description: "It cannot be judged here at all — no model, no git, a ledger that would not read.\nAn honest gap, and never a pass."
+            description: "```\nuse majordomus_cli::gates::GateStatus;\n\n// the three answers a reader is entitled to, and they are different answers\nassert!(GateStatus::Fail.refuses(), \"a run that failed refuses\");\nassert!(GateStatus::Queued.unverified(), \"asked and unanswered is a debt\");\nassert!(!GateStatus::Exempt.refuses() && !GateStatus::Exempt.unverified());\n\n// and the one that is neither: a run whose tree has moved proves nothing about this one\nassert!(GateStatus::Stale.refuses());\nassert_eq!(GateStatus::Stale.as_str(), \"stale\");\n```\nWhat is known about one gate. Every word is one this repository's design tokens already\ncarry (`share/design/tokens.yaml`, `status.states`), so a surface renders it without\nbeing taught a sixth vocabulary and the design gate does not refuse it."
+          GateRun:
+            type: object
+            properties:
+              recorded_at:
+                type: string
+                description: "When it was recorded, RFC 3339 UTC."
+              head:
+                type: string
+                description: "The commit the ledger's envelope stamped on it."
+              branch:
+                type: string
+                description: The branch it was recorded on.
+              exit:
+                type: integer
+                format: int64
+                description: "The exit status the gate reported. `0` is a pass."
+              command:
+                type: string
+                description: The command that produced it — narrative is not evidence.
+              inputs_hash:
+                type: string
+                description: "The hash of the files that select the gate, as they stood when it ran."
+              session:
+                type: string
+                description: The session that recorded it.
+            required:
+              - recorded_at
+              - head
+              - branch
+              - exit
+            description: "```\nuse majordomus_cli::gates::GateRun;\n\n// what `majordomus evidence --gate` writes: a run, and the tree it was taken over\nlet run = GateRun {\n    recorded_at: \"2026-01-01T00:00:00Z\".into(),\n    head: \"9b1e2d4\".into(),\n    branch: \"master\".into(),\n    exit: 0,\n    command: \"scripts/rust-check --ci\".into(),\n    inputs_hash: \"3f0a\".into(),\n    session: \"s-1\".into(),\n};\n// the hash is what makes a run go stale rather than merely old: the same run read\n// against a different tree is evidence about a tree that no longer exists\nassert_eq!(run.exit, 0);\nassert_ne!(run.inputs_hash, \"0000\");\n```\nThe `task.gate` ledger line that last reported a gate, as the ledger holds it."
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::gates
+    exposure:
+      mcp:
+        tool: majordomus_gate_state
+        resource:
+          uri: majordomus://gates/state
+          name: gate-state
+      http:
+        method: GET
+        path: /api/v1/gates/state
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - gates
+      - ci
+      - evidence
+      - introspection
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/gates.rs
   - id: graph.get
     module: graph
     kind: query
@@ -27698,10 +27900,15 @@ capabilities:
                   - string
                   - "null"
                 description: "When it realises none: the first link that is missing."
+              class:
+                anyOf:
+                  - "$ref": "#/$defs/IntentUnlinkedClass"
+                  - type: "null"
+                description: "When it realises none: what it is, by the facts it records. `realize` sets it on every\nunlinked unit; `link` alone, which knows neither liveness nor the first intent, leaves\nit empty."
             required:
               - work
               - links
-            description: "A unit of work with every intent it realises, or the reason it realises none.\n\n```\nuse majordomus_cli::intent_realization::{IntentRealizedWork, IntentWorkKind, IntentWorkUnit};\nlet w = IntentRealizedWork {\n    work: IntentWorkUnit::new(IntentWorkKind::Task, \"t-1\"),\n    links: vec![],\n    unlinked: Some(\"it names no issue\".into()),\n};\nassert!(w.links.is_empty() && w.unlinked.is_some());\n```"
+            description: "A unit of work with every intent it realises, or the reason it realises none.\n\n```\nuse majordomus_cli::intent_realization::{IntentRealizedWork, IntentWorkKind, IntentWorkUnit};\nlet w = IntentRealizedWork {\n    work: IntentWorkUnit::new(IntentWorkKind::Task, \"t-1\"),\n    links: vec![],\n    unlinked: Some(\"it names no issue\".into()),\n    class: None,\n};\nassert!(w.links.is_empty() && w.unlinked.is_some());\n```"
           IntentWorkUnit:
             type: object
             properties:
@@ -27747,6 +27954,14 @@ capabilities:
                 items:
                   type: string
                 description: Issue ids a recorded event shows it moving.
+              started_at:
+                type: string
+                description: "When its earliest episode started, as its record says: a session record's `started_at`,\na task's first `task.started`, a claim's `at`. Empty when no record says."
+              commits:
+                type: array
+                items:
+                  type: string
+                description: The commits a session record lists.
             required:
               - kind
               - id
@@ -27813,6 +28028,18 @@ capabilities:
                 const: scope_overlap
                 description: "An open issue's scope overlaps the work's scope."
             description: "The fact a link was read from.\n\n```\nuse majordomus_cli::intent_realization::IntentLinkVia;\nassert_eq!(serde_json::to_string(&IntentLinkVia::BranchIssue).unwrap(), \"\\\"branch_issue\\\"\");\nassert_eq!(IntentLinkVia::ScopeOverlap.provenance().as_str(), \"inferred\");\n```"
+          IntentUnlinkedClass:
+            oneOf:
+              - type: string
+                const: empty
+                description: "A session record that lists no issue, no commit and no changed path outside the session\nrecords, and whose own words cite no issue: it did no work a link could be read from."
+              - type: string
+                const: before_intents
+                description: "Not live, not empty, and its earliest episode started before the first intent record\nwas written — or no intent is declared at all."
+              - type: string
+                const: orphan
+                description: "Anything else unlinked: work done, or being done, while an intent existed, with no fact\nlinking it to one."
+            description: "What a unit of work that realises no intent is, by the facts it records (ADR 0075,\namendment of 2026-10-15). Only `IntentUnlinkedClass::Orphan` is work serving no intent;\nthe other two classes say why a unit is not, and neither is a link.\n\n```\nuse majordomus_cli::intent_realization::IntentUnlinkedClass;\nassert_eq!(\n    serde_json::to_string(&IntentUnlinkedClass::BeforeIntents).unwrap(),\n    \"\\\"before_intents\\\"\"\n);\nassert!(IntentUnlinkedClass::Empty < IntentUnlinkedClass::Orphan);\n```"
     provenance:
       source: builtin
       module: majordomus_cli::capability::builtin::intent_realization
@@ -27879,7 +28106,19 @@ capabilities:
             type: integer
             format: uint
             minimum: 0
-            description: How many units of work realise no intent.
+            description: "How many units of work serve no intent: the unlinked units of class `orphan` alone."
+          empty:
+            type: integer
+            format: uint
+            minimum: 0
+            description: "How many unlinked units are `empty`: session records that did no work a link could be\nread from."
+            default: 0
+          before_intents:
+            type: integer
+            format: uint
+            minimum: 0
+            description: "How many unlinked units are `before_intents`: finished work that started before the\nfirst intent record was written, or while none was declared."
+            default: 0
           findings:
             type: array
             items:
@@ -27890,7 +28129,7 @@ capabilities:
           - work
           - orphans
           - findings
-        description: "Every intent, realised, and every unit of work, joined: what `majordomus intent realization`\nanswers.\n\n```\nuse majordomus_cli::intent_realization::IntentRealization;\nlet r = IntentRealization { intents: vec![], work: vec![], orphans: 0, findings: vec![] };\nassert_eq!(r.orphans, 0);\n```"
+        description: "Every intent, realised, and every unit of work, joined: what `majordomus intent realization`\nanswers.\n\n```\nuse majordomus_cli::intent_realization::IntentRealization;\nlet r = IntentRealization {\n    intents: vec![], work: vec![], orphans: 0, empty: 0, before_intents: 0, findings: vec![],\n};\nassert_eq!(r.orphans + r.empty + r.before_intents, 0);\n```"
         title: IntentRealization
         "$defs":
           IntentRealizationView:
@@ -28121,10 +28360,15 @@ capabilities:
                   - string
                   - "null"
                 description: "When it realises none: the first link that is missing."
+              class:
+                anyOf:
+                  - "$ref": "#/$defs/IntentUnlinkedClass"
+                  - type: "null"
+                description: "When it realises none: what it is, by the facts it records. `realize` sets it on every\nunlinked unit; `link` alone, which knows neither liveness nor the first intent, leaves\nit empty."
             required:
               - work
               - links
-            description: "A unit of work with every intent it realises, or the reason it realises none.\n\n```\nuse majordomus_cli::intent_realization::{IntentRealizedWork, IntentWorkKind, IntentWorkUnit};\nlet w = IntentRealizedWork {\n    work: IntentWorkUnit::new(IntentWorkKind::Task, \"t-1\"),\n    links: vec![],\n    unlinked: Some(\"it names no issue\".into()),\n};\nassert!(w.links.is_empty() && w.unlinked.is_some());\n```"
+            description: "A unit of work with every intent it realises, or the reason it realises none.\n\n```\nuse majordomus_cli::intent_realization::{IntentRealizedWork, IntentWorkKind, IntentWorkUnit};\nlet w = IntentRealizedWork {\n    work: IntentWorkUnit::new(IntentWorkKind::Task, \"t-1\"),\n    links: vec![],\n    unlinked: Some(\"it names no issue\".into()),\n    class: None,\n};\nassert!(w.links.is_empty() && w.unlinked.is_some());\n```"
           IntentWorkUnit:
             type: object
             properties:
@@ -28170,6 +28414,14 @@ capabilities:
                 items:
                   type: string
                 description: Issue ids a recorded event shows it moving.
+              started_at:
+                type: string
+                description: "When its earliest episode started, as its record says: a session record's `started_at`,\na task's first `task.started`, a claim's `at`. Empty when no record says."
+              commits:
+                type: array
+                items:
+                  type: string
+                description: The commits a session record lists.
             required:
               - kind
               - id
@@ -28236,6 +28488,18 @@ capabilities:
                 const: scope_overlap
                 description: "An open issue's scope overlaps the work's scope."
             description: "The fact a link was read from.\n\n```\nuse majordomus_cli::intent_realization::IntentLinkVia;\nassert_eq!(serde_json::to_string(&IntentLinkVia::BranchIssue).unwrap(), \"\\\"branch_issue\\\"\");\nassert_eq!(IntentLinkVia::ScopeOverlap.provenance().as_str(), \"inferred\");\n```"
+          IntentUnlinkedClass:
+            oneOf:
+              - type: string
+                const: empty
+                description: "A session record that lists no issue, no commit and no changed path outside the session\nrecords, and whose own words cite no issue: it did no work a link could be read from."
+              - type: string
+                const: before_intents
+                description: "Not live, not empty, and its earliest episode started before the first intent record\nwas written — or no intent is declared at all."
+              - type: string
+                const: orphan
+                description: "Anything else unlinked: work done, or being done, while an intent existed, with no fact\nlinking it to one."
+            description: "What a unit of work that realises no intent is, by the facts it records (ADR 0075,\namendment of 2026-10-15). Only `IntentUnlinkedClass::Orphan` is work serving no intent;\nthe other two classes say why a unit is not, and neither is a link.\n\n```\nuse majordomus_cli::intent_realization::IntentUnlinkedClass;\nassert_eq!(\n    serde_json::to_string(&IntentUnlinkedClass::BeforeIntents).unwrap(),\n    \"\\\"before_intents\\\"\"\n);\nassert!(IntentUnlinkedClass::Empty < IntentUnlinkedClass::Orphan);\n```"
     provenance:
       source: builtin
       module: majordomus_cli::capability::builtin::intent_realization
@@ -32404,6 +32668,17 @@ capabilities:
                   - state
                   - detail
                 description: "The policy rejected this node; `detail` says why (for instance a TOFU key\nchange). A rejected node stays listed — an operator debugging a mesh needs to\nsee what was refused, not wonder about silence."
+              - type: object
+                properties:
+                  state:
+                    type: string
+                    const: retired
+                  detail:
+                    type: string
+                required:
+                  - state
+                  - detail
+                description: "The key was succeeded by a trusted successor, whose key is the `detail`: its history\nstays legitimate, and it is trusted for nothing new. Retired, not withdrawn."
             description: What the policy decided about one node.
           LinkState:
             oneOf:
@@ -32811,6 +33086,72 @@ capabilities:
       effect: read
       cancellable: false
       concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/mesh.rs
+  - id: mesh.enrol
+    module: mesh
+    kind: command
+    title: Enrol this machine in the mesh
+    description: "Add this machine's public key to trust.allow of the repository's mesh declaration, under a comment naming the machine, creating the node identity first when there is none. Idempotent: a listed key changes nothing. The comments and every other line of the declaration stay as they were, and an edit that would not parse back as a declaration is refused before anything is written. Under deny_unknown a machine opens its mesh only once its key is listed, so this is the one step that joins a machine; commit the file and restart the server."
+    input:
+      name: Empty
+      schema:
+        type: object
+        additionalProperties: false
+        description: No input.
+        title: Empty
+    output:
+      name: MeshEnrolment
+      schema:
+        type: object
+        properties:
+          path:
+            type: string
+            description: "The declaration file, repository-relative."
+          key:
+            type: string
+            description: "This machine's public key: what is listed, never a secret."
+          added:
+            type: boolean
+            description: "Whether the key was added now; `false` when it was listed already."
+          next:
+            type: string
+            description: "What to do next: commit the file, or nothing."
+        required:
+          - path
+          - key
+          - added
+          - next
+        description: "The answer of `mesh.enrol`: which declaration, which key, and whether it changed."
+        title: MeshEnrolment
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::mesh
+    exposure:
+      mcp:
+        tool: majordomus_mesh_enrol
+      http:
+        method: POST
+        path: /api/v1/mesh/enrol
+      cli:
+        path:
+          - mesh
+          - enrol
+    availability: runtime
+    visibility: public
+    stability: experimental
+    tags:
+      - mesh
+      - identity
+      - trust
+    benchmark:
+      policy: waived
+      reason: destructive
+    cache:
+      policy: disabled
+    execution:
+      effect: repository_mutation
+      cancellable: false
+      concurrency: serial
     source_path: apps/majordomus-cli/src/capability/builtin/mesh.rs
   - id: mesh.events
     module: mesh
@@ -34362,6 +34703,17 @@ capabilities:
                   - state
                   - detail
                 description: "The policy rejected this node; `detail` says why (for instance a TOFU key\nchange). A rejected node stays listed — an operator debugging a mesh needs to\nsee what was refused, not wonder about silence."
+              - type: object
+                properties:
+                  state:
+                    type: string
+                    const: retired
+                  detail:
+                    type: string
+                required:
+                  - state
+                  - detail
+                description: "The key was succeeded by a trusted successor, whose key is the `detail`: its history\nstays legitimate, and it is trusted for nothing new. Retired, not withdrawn."
             description: What the policy decided about one node.
           Presence:
             oneOf:
@@ -34400,6 +34752,9 @@ capabilities:
               - type: string
                 const: rendezvous
                 description: A rendezvous answer or registration.
+              - type: string
+                const: tailscale
+                description: A tailnet peer asked as a rendezvous.
               - type: string
                 const: synthetic
                 description: "A synthetic provider (tests, self-check)."
@@ -34680,6 +35035,17 @@ capabilities:
                   - state
                   - detail
                 description: "The policy rejected this node; `detail` says why (for instance a TOFU key\nchange). A rejected node stays listed — an operator debugging a mesh needs to\nsee what was refused, not wonder about silence."
+              - type: object
+                properties:
+                  state:
+                    type: string
+                    const: retired
+                  detail:
+                    type: string
+                required:
+                  - state
+                  - detail
+                description: "The key was succeeded by a trusted successor, whose key is the `detail`: its history\nstays legitimate, and it is trusted for nothing new. Retired, not withdrawn."
             description: What the policy decided about one node.
           LinkState:
             oneOf:
@@ -35458,6 +35824,17 @@ capabilities:
                   - state
                   - detail
                 description: "The policy rejected this node; `detail` says why (for instance a TOFU key\nchange). A rejected node stays listed — an operator debugging a mesh needs to\nsee what was refused, not wonder about silence."
+              - type: object
+                properties:
+                  state:
+                    type: string
+                    const: retired
+                  detail:
+                    type: string
+                required:
+                  - state
+                  - detail
+                description: "The key was succeeded by a trusted successor, whose key is the `detail`: its history\nstays legitimate, and it is trusted for nothing new. Retired, not withdrawn."
             description: What the policy decided about one node.
           LinkState:
             oneOf:
@@ -40750,9 +41127,12 @@ capabilities:
                 const: outdated
                 description: "The server answers, but from older code than this executable, or from a file that\nhas been replaced since it started: everything it says is yesterday's."
               - type: string
+                const: skewed
+                description: "The server answers for this checkout at this executable's version, but serves a\nshare directory that is not its own: one that states another version or none, or\nlacks a surface's directory (`ui/`, `cockpit/`), so the pages it serves have no\nassets and what it reads from `share/` is another release's (ADR 0163)."
+              - type: string
                 const: stale
                 description: "The lease names a server that does not answer, or is not a lease at all."
-            description: "Where a checkout's server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable's code.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Stale];\nlet words: Vec<&str> = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\"absent\", \"starting\", \"ready\", \"outdated\", \"stale\"]);\nassert_eq!(serde_json::from_str::<ServerStanding>(\"\\\"stale\\\"\").unwrap(), ServerStanding::Stale);\n```"
+            description: "Where a checkout's server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable's code.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Skewed, ServerStanding::Stale];\nlet words: Vec<&str> = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\"absent\", \"starting\", \"ready\", \"outdated\", \"skewed\", \"stale\"]);\nassert_eq!(serde_json::from_str::<ServerStanding>(\"\\\"stale\\\"\").unwrap(), ServerStanding::Stale);\n```"
     provenance:
       source: builtin
       module: majordomus_cli::capability::builtin::peers
@@ -50158,6 +50538,259 @@ capabilities:
       cancellable: false
       concurrency: unrestricted
     source_path: apps/majordomus-cli/src/capability/builtin/release.rs
+  - id: release.site
+    module: release
+    kind: query
+    title: Whether a release leaves the site better than it found it
+    description: "The verdict of `project.a-release-leaves-the-site-better` on one release: every measure of the site this executable computes from a tree — the text pairs below WCAG AA and the weakest text contrast in each theme, from the design declaration and the stylesheets that consume it, and how many of the site's page files are written by hand rather than generated — at the previous release's recorded commit and at the commit being released, each named with its delta and whether it held, improved or regressed; then every commit of the window between them that touched the site or named it as its subject, with whether it counts as an improvement and why. A change counts when its type is one the publication model's `release` section counts and it changes, outside every file `.gitattributes` marks `merge=derived`, a source of the site's gate classes, or any source while its scope names the site; a change whose every file is generated output counts for nothing. The release passes when no measure regressed or could not be taken and at least one change counts; otherwise each finding names the measure and its delta, or the commits that touched the site and why none counts. A repository with no recorded release that is an ancestor of the commit has nothing to compare with, and is refused rather than passed."
+    input:
+      name: ReleaseSiteInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          since:
+            type:
+              - string
+              - "null"
+            description: "The previous release: a recorded tag or version, or any commit; the newest recorded\nstable release that is an ancestor of `head` when absent."
+          head:
+            type:
+              - string
+              - "null"
+            description: "The commit being released; `HEAD` when absent."
+        description: "The input of `release.site`: the release judged, and the one it is judged against.\n\n```\nuse majordomus_cli::capability::builtin::release::SiteInput;\n// nothing named is this commit against the newest recorded release that is its ancestor\nlet input = SiteInput::default();\nassert!(input.since.is_none() && input.head.is_none());\n```"
+        title: ReleaseSiteInput
+    output:
+      name: ReleaseSiteVerdict
+      schema:
+        type: object
+        properties:
+          rule:
+            type: string
+            description: The rule the verdict is taken under.
+          previous:
+            "$ref": "#/$defs/ReleaseSiteBaseline"
+            description: The previous release.
+          head:
+            type: string
+            description: The commit being released.
+          measures:
+            type: array
+            items:
+              "$ref": "#/$defs/ReleaseSiteMeasure"
+            description: "Every measure, at both releases."
+          subject:
+            "$ref": "#/$defs/ReleaseSiteSubject"
+            description: The declaration that decided which change has the site as its subject.
+          changes:
+            type: array
+            items:
+              "$ref": "#/$defs/ReleaseSiteChange"
+            description: "Every commit of the window that touched the site or named it, and whether it counts."
+          improvements:
+            type: integer
+            format: uint
+            minimum: 0
+            description: "How many of `Self::changes` count as an improvement of the site."
+          findings:
+            type: array
+            items:
+              "$ref": "#/$defs/ReleaseSiteFinding"
+            description: Every reason the release is refused; empty when it passes.
+          passes:
+            type: boolean
+            description: Whether the release leaves the site better than it found it.
+        required:
+          - rule
+          - previous
+          - head
+          - measures
+          - subject
+          - changes
+          - improvements
+          - findings
+          - passes
+        description: "The verdict on one release: its site measured against the previous release's, and the\nchanges in its window that have the site as their subject.\n\n```\nuse majordomus_cli::release::site::{judge, SiteVerdict};\nlet repo = majordomus_cli::synthetic::SyntheticRepository::small().expect(\"a synthetic repository\");\n// a repository that has released nothing has no baseline, and says so rather than passing\nlet refused: Result<SiteVerdict, String> = judge(repo.root(), None, None);\nassert!(refused.is_err());\n```"
+        title: ReleaseSiteVerdict
+        "$defs":
+          ReleaseSiteBaseline:
+            type: object
+            properties:
+              tag:
+                type:
+                  - string
+                  - "null"
+                description: "The previous release's tag, when the baseline is a recorded release."
+              commit:
+                type: string
+                description: The commit the previous release was built from.
+            required:
+              - commit
+            description: "The release the verdict compares with.\n\n```\nuse majordomus_cli::release::site::SiteBaseline;\nlet b = SiteBaseline { tag: Some(\"v0.27.0\".into()), commit: \"c1a430dcf\".into() };\nassert_eq!(b.tag.as_deref(), Some(\"v0.27.0\"));\n```"
+          ReleaseSiteMeasure:
+            type: object
+            properties:
+              id:
+                type: string
+                description: "The measure's identity: `contrast.light.failing`, `site.pages-by-hand`."
+              title:
+                type: string
+                description: "What it measures, in a sentence fragment."
+              better:
+                "$ref": "#/$defs/ReleaseSiteBetter"
+                description: Which way it improves.
+              previous:
+                type:
+                  - number
+                  - "null"
+                format: double
+                description: "Its value in the previous release's tree, when that tree could be measured."
+              current:
+                type:
+                  - number
+                  - "null"
+                format: double
+                description: "Its value in the released tree, when that tree could be measured."
+              delta:
+                type:
+                  - number
+                  - "null"
+                format: double
+                description: "`current - previous`, when both were measured."
+              verdict:
+                "$ref": "#/$defs/ReleaseSiteMeasureVerdict"
+                description: How it moved.
+              note:
+                type:
+                  - string
+                  - "null"
+                description: Why a side could not be measured.
+            required:
+              - id
+              - title
+              - better
+              - verdict
+            description: "One measure, at the previous release and at this one.\n\n```\nuse majordomus_cli::release::site::{Better, MeasureDelta, MeasureVerdict};\nlet d = MeasureDelta {\n    id: \"contrast.dark.weakest\".into(),\n    title: \"the weakest text contrast in the dark theme\".into(),\n    better: Better::Higher,\n    previous: Some(4.8),\n    current: Some(4.6),\n    delta: Some(-0.2),\n    verdict: MeasureVerdict::Regressed,\n    note: None,\n};\nassert!(d.verdict.refuses());\n```"
+          ReleaseSiteBetter:
+            oneOf:
+              - type: string
+                const: higher
+                description: "A larger value is better: a contrast ratio."
+              - type: string
+                const: lower
+                description: "A smaller value is better: a count of failures, of pages written by hand."
+            description: "Which way a measure improves, which is what decides whether a movement between two\nreleases is a regression that refuses the later one: a ratio must not fall, a count of\nfailures or of hand-written pages must not grow, and a difference below rounding is none.\n\n```\nuse majordomus_cli::release::site::Better;\nassert!(Better::Higher.regressed(4.5, 4.4));\nassert!(!Better::Higher.regressed(4.5, 4.6));\nassert!(Better::Lower.regressed(3.0, 4.0));\nassert!(!Better::Lower.regressed(3.0, 3.0));\n```"
+          ReleaseSiteMeasureVerdict:
+            oneOf:
+              - type: string
+                const: held
+                description: The same value at both releases.
+              - type: string
+                const: improved
+                description: Better at this release.
+              - type: string
+                const: regressed
+                description: "Worse at this release: the release is refused."
+              - type: string
+                const: unmeasured
+                description: "The previous release's tree cannot be measured this way (it predates what the measure\nreads), so there is nothing to compare with; stated, and not a refusal."
+              - type: string
+                const: unreadable
+                description: "The released tree itself cannot be measured: the release is refused, because a\nmeasure that could not be taken is never a pass."
+            description: "How one measure moved between the two releases.\n\n```\nuse majordomus_cli::release::site::MeasureVerdict;\nassert!(MeasureVerdict::Regressed.refuses());\nassert!(MeasureVerdict::Unreadable.refuses());\nassert!(!MeasureVerdict::Held.refuses());\nassert!(!MeasureVerdict::Unmeasured.refuses(), \"a baseline that cannot be read is said, not failed\");\n```"
+          ReleaseSiteSubject:
+            type: object
+            properties:
+              classes:
+                type: array
+                items:
+                  type: string
+                description: "The gates.yaml classes whose paths are the site's own sources."
+                default: []
+              scopes:
+                type: array
+                items:
+                  type: string
+                description: "The conventional scopes that name the site as a change's subject."
+                default: []
+              kinds:
+                type: array
+                items:
+                  type: string
+                description: The conventional types a change must carry to count.
+                default: []
+            description: "What has the site as its subject, as the publication model declares it.\n\n```\nuse majordomus_cli::release::site::SiteSubject;\nlet s = SiteSubject { classes: vec![\"site\".into()], scopes: vec![\"site\".into()], kinds: vec![\"fix\".into()] };\nassert!(s.names_scope(Some(\"site,ui\")));\nassert!(!s.names_scope(Some(\"ci\")));\n```"
+          ReleaseSiteChange:
+            type: object
+            properties:
+              commit:
+                type: string
+                description: "The commit, abbreviated."
+              subject:
+                type: string
+                description: "Its subject line, as written."
+              authored:
+                type: array
+                items:
+                  type: string
+                description: The files it changed that are not generated output and that make it a site change.
+              generated:
+                type: array
+                items:
+                  type: string
+                description: "The site's generated files it changed."
+              counts:
+                type: boolean
+                description: "Whether it counts as the release's improvement of the site."
+              why:
+                type: string
+                description: "Why it counts, or why it does not."
+            required:
+              - commit
+              - subject
+              - counts
+              - why
+            description: "One commit of the window that touched the site or named it as its subject.\n\n```\nuse majordomus_cli::release::site::SiteChange;\nlet c = SiteChange {\n    commit: \"3024cbcc0\".into(),\n    subject: \"fix(site): a diagram's node text is readable in both themes\".into(),\n    authored: vec![\"lib/mermaid.awk\".into()],\n    generated: vec![],\n    counts: true,\n    why: \"names the site as its subject and changes a source\".into(),\n};\nassert!(c.counts);\n```"
+          ReleaseSiteFinding:
+            type: object
+            properties:
+              code:
+                type: string
+                description: "`site-measure-regressed`, `site-measure-unreadable` or `site-not-improved`."
+              message:
+                type: string
+                description: "What was found, naming the measure and the delta or the commits."
+            required:
+              - code
+              - message
+            description: "A reason the release is refused.\n\n```\nuse majordomus_cli::release::site::SiteFinding;\nlet f = SiteFinding { code: \"site-not-improved\".into(), message: \"nothing\".into() };\nassert_eq!(f.code, \"site-not-improved\");\n```"
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::release
+    exposure:
+      mcp:
+        tool: majordomus_release_site
+      http:
+        method: GET
+        path: /api/v1/release/site
+    availability: runtime
+    visibility: public
+    stability: implemented
+    tags:
+      - release
+      - site
+      - web
+    benchmark:
+      policy: waived
+      reason: published_history
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/release.rs
   - id: release.version
     module: release
     kind: query
@@ -53034,7 +53667,7 @@ capabilities:
     module: server
     kind: query
     title: "The shared server, and every server of the repository"
-    description: "Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; the lease this process holds when it is the server; and, unless `checkouts` narrows it to this one, every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. `checkouts: this` reads one lease and probes one server and enumerates no other checkout, which is what a caller asking only about the checkout it is in should pay. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes."
+    description: "Where this checkout's server stands — absent, starting, ready, outdated, skewed or stale — measured against what this executable would serve; the lease this process holds when it is the server; and, unless `checkouts` narrows it to this one, every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. Each lease carries the share directory its server serves, measured on every call: the version its `version.txt` states, whether it holds `ui/`, and `skewed` with the reason when it states another version than the executable of that server or lacks `ui/` or `cockpit/`, the state in which every asset of those pages answers 404; a server that answers at this executable's version over such a share stands `skewed` rather than `ready`. `checkouts: this` reads one lease and probes one server and enumerates no other checkout, which is what a caller asking only about the checkout it is in should pay. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes."
     input:
       name: ServerStatusInput
       schema:
@@ -53188,10 +53821,60 @@ capabilities:
                   - string
                   - "null"
                 description: "The executable's version; absent for a server too old to have written one."
+              share:
+                anyOf:
+                  - "$ref": "#/$defs/ServedShare"
+                  - type: "null"
+                description: "The share directory the server serves, measured now against `version`: the version\nit states, whether it holds `ui/`, and `skewed` with the reason when either differs\nfrom what the server's executable needs. Absent when the lease names no share — a\nserver older than this field, or one that has not located its share yet."
             required:
               - pid
               - started_at
-            description: "A lease as a reader sees it: what the server wrote about itself, without the token that\nmakes the file the server's own.\n\n```\nuse majordomus_cli::capability::builtin::server::LeaseView;\nlet view = LeaseView { pid: 7, url: Some(\"http://127.0.0.1:8741\".into()),\n    started_at: \"2026-09-10T00:00:00Z\".into(), executable: None, version: Some(\"1.0.0\".into()) };\nlet v = serde_json::to_value(&view).unwrap();\nassert_eq!(v[\"pid\"], 7);\nassert!(v.get(\"token\").is_none() && v.get(\"root\").is_none());\n```"
+            description: "A lease as a reader sees it: what the server wrote about itself, without the token that\nmakes the file the server's own.\n\n```\nuse majordomus_cli::capability::builtin::server::LeaseView;\nlet view = LeaseView { pid: 7, url: Some(\"http://127.0.0.1:8741\".into()),\n    started_at: \"2026-09-10T00:00:00Z\".into(), executable: None, version: Some(\"1.0.0\".into()),\n    share: None };\nlet v = serde_json::to_value(&view).unwrap();\nassert_eq!(v[\"pid\"], 7);\nassert!(v.get(\"token\").is_none() && v.get(\"root\").is_none());\nassert!(v.get(\"share\").is_none(), \"a lease that names no share is read without one\");\n```"
+          ServedShare:
+            type: object
+            properties:
+              path:
+                type: string
+                description: The share directory.
+              origin:
+                type:
+                  - string
+                  - "null"
+                description: "How it was found, when the server said."
+              version:
+                type:
+                  - string
+                  - "null"
+                description: "The version its `version.txt` states; absent when it states none."
+              ui_present:
+                type: boolean
+                description: "Whether it holds `ui/`, the UI's stylesheet and scripts."
+              cockpit_present:
+                type: boolean
+                description: "Whether it holds `cockpit/`, the Cockpit's stylesheet and scripts."
+              standing:
+                "$ref": "#/$defs/ShareStanding"
+                description: "Whether it is the executable's own."
+              reason:
+                type:
+                  - string
+                  - "null"
+                description: "Why it is skewed, when it is."
+            required:
+              - path
+              - ui_present
+              - cockpit_present
+              - standing
+            description: "A share directory measured against the version of the executable that serves it: where\nit is, how it was found, the version it states, whether it holds the directory of each\nsurface the server serves pages from — `ui/` for `/ui`, `cockpit/` for `/cockpit` — and\nwhether that makes it the executable's own (ADR 0163).\n\nMeasured when it is asked for, never recorded: a checkout moves under a running server,\nand the directory a lease names may state another version an hour later.\n\n```\nuse majordomus_cli::share::{ServedShare, ShareStanding};\nlet dir = tempfile::tempdir().unwrap();\nstd::fs::write(dir.path().join(\"version.txt\"), \"version=0.26.0\\n\").unwrap();\nstd::fs::create_dir(dir.path().join(\"ui\")).unwrap();\nstd::fs::create_dir(dir.path().join(\"cockpit\")).unwrap();\nlet own = ServedShare::inspect(dir.path(), Some(\"installation\"), \"0.26.0\");\nassert_eq!(own.standing, ShareStanding::Current);\nassert!(own.reason.is_none() && own.ui_present);\n\nlet older = ServedShare::inspect(dir.path(), None, \"0.27.0\");\nassert_eq!(older.standing, ShareStanding::Skewed);\nassert!(older.reason.unwrap().contains(\"states version 0.26.0\"));\n\nstd::fs::remove_dir(dir.path().join(\"ui\")).unwrap();\nlet blank = ServedShare::inspect(dir.path(), None, \"0.26.0\");\nassert_eq!(blank.standing, ShareStanding::Skewed);\nassert!(!blank.ui_present && blank.reason.unwrap().contains(\"no ui/\"));\n```"
+          ShareStanding:
+            oneOf:
+              - type: string
+                const: current
+                description: "It states the executable's version and holds the directory of every surface the\nserver serves pages from."
+              - type: string
+                const: skewed
+                description: "It states another version, states none, or lacks `ui/` or `cockpit/`: a server\nserving it answers with one release's code over another release's data, and those\npages are unstyled or blank."
+            description: "Whether a share directory is the one an executable should serve.\n\n```\nuse majordomus_cli::share::ShareStanding;\nassert_eq!(serde_json::to_value(ShareStanding::Current).unwrap(), \"current\");\nassert_eq!(serde_json::to_value(ShareStanding::Skewed).unwrap(), \"skewed\");\n```"
           ServerStanding:
             oneOf:
               - type: string
@@ -53207,9 +53890,12 @@ capabilities:
                 const: outdated
                 description: "The server answers, but from older code than this executable, or from a file that\nhas been replaced since it started: everything it says is yesterday's."
               - type: string
+                const: skewed
+                description: "The server answers for this checkout at this executable's version, but serves a\nshare directory that is not its own: one that states another version or none, or\nlacks a surface's directory (`ui/`, `cockpit/`), so the pages it serves have no\nassets and what it reads from `share/` is another release's (ADR 0163)."
+              - type: string
                 const: stale
                 description: "The lease names a server that does not answer, or is not a lease at all."
-            description: "Where a checkout's server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable's code.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Stale];\nlet words: Vec<&str> = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\"absent\", \"starting\", \"ready\", \"outdated\", \"stale\"]);\nassert_eq!(serde_json::from_str::<ServerStanding>(\"\\\"stale\\\"\").unwrap(), ServerStanding::Stale);\n```"
+            description: "Where a checkout's server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable's code.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Skewed, ServerStanding::Stale];\nlet words: Vec<&str> = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\"absent\", \"starting\", \"ready\", \"outdated\", \"skewed\", \"stale\"]);\nassert_eq!(serde_json::from_str::<ServerStanding>(\"\\\"stale\\\"\").unwrap(), ServerStanding::Stale);\n```"
           ServerView:
             type: object
             properties:

@@ -35,6 +35,10 @@ refused_by_mesh() {
 }
 
 # ---------------------------------------------------------------- 1. no enabled mesh: not judged
+# `init` seeds an enabled, closed declaration (ADR 0168: deny_unknown, nobody listed). It runs on
+# no machine until one is enrolled, so it is judged as no mesh, not as one nobody claimed on.
+grep -q '^enabled: true' .ai/repo/mesh/mesh.yaml 2>/dev/null \
+  || { echo "    init did not seed the enabled, closed declaration this section stands on"; exit 1; }
 expect_exit 0 "$MJ" start "No mesh here" --scope lib
 "$MJ" check >"$T/check0" 2>&1 || true
 grep -q '^FAIL mesh' "$T/check0" && { echo "    a repository without a mesh was judged"; cat "$T/check0"; exit 1; }
@@ -48,7 +52,9 @@ printf 'schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\n
 printf 'multicast:\n  enabled: false\ntrust:\n  policy: tofu\n' >> .ai/repo/mesh/majordomus.yaml
 printf 'cooperation:\n  heartbeat_seconds: 1\n  expiry_seconds: 30\n  repository: case-3068\n' >> .ai/repo/mesh/majordomus.yaml
 git add -A && git commit -qm "mesh enabled"
-expect_exit 0 "$MJ" start "Off the mesh" --scope lib
+# `start` brings the checkout's server up itself on an enabled mesh (case 3151); the runtime
+# switched off is how a start that reaches no server is made here
+expect_exit 0 env MAJORDOMUS_RUNTIME=off "$MJ" start "Off the mesh" --scope lib
 grep -q '^mesh_claim: ' .ai/local/state/current.yaml && { echo "    a claim was recorded with no server"; exit 1; }
 "$MJ" check >"$T/check1" 2>&1 || true
 grep -q '^FAIL mesh .*never claimed on it' "$T/check1" \
@@ -60,7 +66,7 @@ refused_by_mesh || { echo "    the refusal does not name the rule"; tail -n 2 "$
   || { echo "    partial was refused"; "$MJ" finish --outcome partial --note "$T/note.md"; exit 1; }
 
 # ---------------------------------------------------------------- 3. a server came up after start: finish claims and passes the rule
-expect_exit 0 "$MJ" start "Server later" --scope lib
+expect_exit 0 env MAJORDOMUS_RUNTIME=off "$MJ" start "Server later" --scope lib
 grep -q '^mesh_claim: ' .ai/local/state/current.yaml && { echo "    a claim was recorded with no server"; exit 1; }
 ( exec "$RB" serve --port 0 --idle 0 --discovery filesystem </dev/null >"$T/serve.log" 2>&1 ) &
 PIDS="$PIDS $!"

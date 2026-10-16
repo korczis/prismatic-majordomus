@@ -32,7 +32,7 @@ view of what a screen read (ADR 0135), and in the frame:
 - the technical view of an object a screen names and the UI has no screen of its own for (a
   document, a test, a declaring file, a feature's or a deployment's record), to the Cockpit's
   page for that object;
-- the Cockpit entry among the other surfaces in the top bar, and the top bar's search, which
+- the Cockpit entry among the other surfaces in the tool bar, and the tool bar's search, which
   is the Cockpit's search (`/cockpit/search`) until the UI has a search of its own.
 
 Both surfaces are projections (ADR 0012): they hold no data, they compose capabilities
@@ -51,7 +51,7 @@ lists it), declared beside the Cockpit in `apps/majordomus-cli/src/web/discover.
 | Issues | `/ui/issues` | `plan.issues`, `plan.status`, `plan.roadmap`: every issue, narrowed by `?status=` (the plan's own statuses as tabs), `?milestone=`, `?priority=` and `?q=`, each leading to its inspector |
 | PR Drain | `/ui/prs` | `plan.status`, `plan.issues` (one issue, `?issue=`); `integration.queue` and `integration.events` on its own route (`/ui/panels/drain`), narrowed by `?disposition=`, `?lane=` and `?q=`, one pull request (`?pr=`) in the inspector with what the executor did to it, the lane's recent activity, and its merges per day over the fortnight the trail ends on |
 | Capabilities | `/ui/capabilities` | `repository.info`, `capabilities.list` by kind; one capability (`?id=`) from `capabilities.describe` |
-| Mesh | `/ui/mesh` | `mesh.peers`, `mesh.events`; one machine (`?node=`) in the inspector |
+| Mesh | `/ui/mesh` | `mesh.peers`, `mesh.events`, `mesh.state` (live claims); one machine (`?node=`) in the inspector, and who holds each seat of [rule `project.the-cooperation-model-is-the-owners-word`](../.ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v1.md) read from the claims |
 | CI/CD & Releases | `/ui/delivery` | `distribution.releases`, `release.version`, `deploy.list`, `gates.model`, `integration.timings` (each check's median, 90th percentile and longest run, and the open heads that waited longest, each leading to its pull request) |
 | Deployments | `/ui/deployments` | `deploy.list` (what the layer declares); `deploy.observed` (what the forge recorded: where each environment stands, every deployment to every environment — GitHub Pages among them — and every release, each commit, ref, environment, run and release a link); `delivery.report` on its own route |
 | Evidence | `/ui/evidence` | `evidence.report`; one claim (`?claim=`) in its inspector from `evidence.claim`: what settles it, its last run, what changed since, how to reproduce it, and the claims its test also proves |
@@ -69,9 +69,44 @@ Every screen has the same shape:
 - a hero band, with the screen's glyph, title, tagline and lead, the brand mark lit behind
   them, and a row of KPI tiles;
 - a grid of panels;
-- the frame around both: the sidebar of screens with the version card at its foot, and the top
-  bar with the search, the time the screen was read, and the other surfaces (documentation,
-  API, Cockpit).
+- the frame around both: at the top the site's navbar ([below](#the-navbar-is-the-sites)),
+  beneath it the sidebar of screens with the version card at its foot, and the tool bar with
+  the search, the time the screen was read, and the other surfaces (documentation, API,
+  Cockpit).
+
+## The navbar is the site's
+
+majordomus.dev is the reference for how the product looks, and the bar at the top of every
+screen — and of every page of the Cockpit — is the site's own navbar (`project.the-ui-wears-the-sites-navbar`), not a bar drawn
+after it: the brand and the version, the site's four questions as menus, the search, the theme
+toggle, the product, GitHub and the call to action.
+
+```mermaid
+flowchart LR
+  nav["site/data/nav.toml<br>the declaration"] --> partial["site/templates/partials/navbar.html<br>the one renderer"]
+  partial --> built["site/public/404.html<br>the built bar"]
+  built -->|"scripts/ui navbar --write"| copy["apps/majordomus-cli/src/ui/navbar.html<br>compiled in"]
+  copy --> shell["ui/shell.rs<br>every screen"]
+  copy -->|"@source"| css["share/ui/ui.css<br>the same utilities"]
+  sitejs["site/nav.js, site/theme.js"] -->|"scripts/cockpit-assets"| uijs["share/ui/nav.js, theme.js"]
+```
+
+| What | Where it comes from |
+|---|---|
+| the markup | the site's partial over `site/data/nav.toml`, cut out of the built site by `scripts/ui navbar --write` into `apps/majordomus-cli/src/ui/navbar.html` and compiled in ([`ui/navbar.rs`](../apps/majordomus-cli/src/ui/navbar.rs)) |
+| the styles | the utilities that file names, compiled into `share/ui/ui.css` and `share/cockpit/cockpit.css` from the same Tailwind, Flowbite theme and design sheets as the site's `app.css` |
+| the menus and the theme toggle | the site's `nav.js` and `theme.js`, served from `share/ui/` and `share/cockpit/` as byte copies `scripts/cockpit-assets` writes and `--check` holds; the theme contract is on `<html>`, where the site's script reads it |
+| the search button | the surface's: on the UI it, `/` and Ctrl/Cmd+K lead to the tool bar's search; on the Cockpit it opens the palette |
+| the version in the badge | the executable's, where the site names the release it offers |
+| the product entry | the UI itself, where the site leads to its published snapshot |
+| every other link | the site, at its own address |
+
+To change the bar, change the site — the declaration or the partial — then rebuild and let
+the copy follow: `scripts/site-build && scripts/ui navbar --write && scripts/cockpit-assets`.
+`scripts/ui navbar`, which `scripts/ui audit` runs first in the `ui` job, refuses a copy that
+is not the built bar, and then compares the bar a browser draws on the site's front page with
+the ones it draws on `/ui` and `/cockpit`: every element, its box and its computed styles, in both themes, at
+every width the design declares, with the bar closed and with a menu open.
 
 KPI tiles lead to the screen that explains them. A panel whose whole is on another screen
 says "View all". A milestone row leads to that milestone on the Roadmap, where the row it
@@ -205,7 +240,7 @@ queue (`integration.queue`) is `/ui/panels/pull-requests`:
 - without JavaScript the placeholder is a link to the same route.
 
 While a screen is visible, `ui.js` asks the server for it again every minute, puts the new
-rendering in place, and updates the time in the top bar. That time is when the page was
+rendering in place, and updates the time in the tool bar. That time is when the page was
 rendered; each source line says when its own reading is older. This is a refresh and is said
 as one; nothing claims a live stream. A streamed page and one stream of changed readings
 replace it in I2487.
@@ -364,7 +399,8 @@ time, naming the event. A recording is a moment; it is replaced by capturing aga
 
 Every screen is complete HTML, and the menu of a narrow screen opens with a checkbox and its
 label. `share/ui/ui.js` is the only script of the UI's own: it pulls in slow panels, refreshes
-the screen, draws graphs and reveals the theme toggle. The one inline script is the theme
+the screen, draws graphs, reveals the bar's search button and keeps the sidebar beneath the
+bar. The bar's menus and theme toggle run on the site's own two scripts. The one inline script is the theme
 statement the policy allows by its digest, the same one the Cockpit ships. A served test
 asserts that the UI and the Cockpit carry one identical policy.
 
@@ -375,6 +411,7 @@ The UI's files live in `share/ui/`.
 | File | How it is made | Committed |
 |---|---|---|
 | `ui.css` | compiled from `share/ui/src/ui.css` by `scripts/cockpit-assets`, beside the Cockpit's stylesheet; `--check` fails when either is stale | yes |
+| `nav.js`, `theme.js` | copied byte for byte from `site/nav.js` and `site/theme.js` by `scripts/cockpit-assets`; `--check` fails when either differs | yes |
 | `favicon.svg` | written from the canonical mark by `majordomus generate` | yes |
 | `vendor/cytoscape.min.js` | copied from the pinned npm package by `scripts/cockpit-assets` | no |
 
@@ -385,7 +422,8 @@ the design gate and the UI audit whenever a file under `share/ui/` or
 The stylesheet imports the tokens, the status vocabulary, the primitives and the kit from
 `share/design/`, where the site and the Cockpit import the same files. Every colour is a role,
 a status or a tone; none is a literal. The markup names what a thing is, never a utility
-class, because the stylesheet compiles only what is written in it. The icons are the kit's,
+class, because the stylesheet compiles only what is written in it — except the site's bar,
+which is the site's markup and is compiled from its copy. The icons are the kit's,
 declared once in `site/data/kit/icons.toml` and compiled into the crate by `majordomus
 generate` (`apps/majordomus-cli/src/ui/icons.toml`); a test holds the two equal.
 
@@ -437,7 +475,7 @@ they cost. It renders nothing itself. What it changes is only what a file cannot
 | a link to a surface a publication holds (`/rustdoc`, `/openapi.json`) | unchanged |
 | a link into the served documentation (`/docs/…`) | the same page of the published site |
 | the script reads the screen again every minute and pulls in slow panels | it does neither: the body carries `data-snapshot` |
-| "Read at" in the top bar | also a notice on every page: the commit, the time, the executable, and a link to the live UI |
+| "Read at" in the tool bar | also a notice on every page: the commit, the time, the executable, and a link to the live UI |
 
 A snapshot knows what the UI could read where it was taken. A Pages runner has no mesh, no
 recorded forge observation and no running execution, so those panels read `none`, `unknown`

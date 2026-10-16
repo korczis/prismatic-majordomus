@@ -709,6 +709,15 @@
         "status": "query"
       },
       {
+        "id": "capability:gates.state",
+        "kind": "capability",
+        "label": "gates.state",
+        "summary": "How each gate last went",
+        "route": "/cockpit/capabilities/gates.state",
+        "source": "apps/majordomus-cli/src/capability/builtin/gates.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:graph.get",
         "kind": "capability",
         "label": "graph.get",
@@ -1013,6 +1022,15 @@
         "route": "/cockpit/capabilities/mesh.doctor",
         "source": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
         "status": "query"
+      },
+      {
+        "id": "capability:mesh.enrol",
+        "kind": "capability",
+        "label": "mesh.enrol",
+        "summary": "Enrol this machine in the mesh",
+        "route": "/cockpit/capabilities/mesh.enrol",
+        "source": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+        "status": "command"
       },
       {
         "id": "capability:mesh.events",
@@ -1600,6 +1618,15 @@
         "status": "query"
       },
       {
+        "id": "capability:release.site",
+        "kind": "capability",
+        "label": "release.site",
+        "summary": "Whether a release leaves the site better than it found it",
+        "route": "/cockpit/capabilities/release.site",
+        "source": "apps/majordomus-cli/src/capability/builtin/release.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:release.version",
         "kind": "capability",
         "label": "release.version",
@@ -2159,6 +2186,14 @@
         "label": "rule-proof-baseline.txt",
         "summary": "named by the layer; not an object of this index",
         "source": ".ai/repo/rule-proof-baseline.txt",
+        "external": true
+      },
+      {
+        "id": "file:.ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md",
+        "kind": "file",
+        "label": "mesh-cooperation-is-authenticated.v1.md",
+        "summary": "named by the layer; not an object of this index",
+        "source": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md",
         "external": true
       },
       {
@@ -3066,6 +3101,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/mesh/enrol.rs",
+        "kind": "file",
+        "label": "enrol.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/mesh/enrol.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/mesh/firewall.rs",
         "kind": "file",
         "label": "firewall.rs",
@@ -3079,6 +3122,14 @@
         "label": "journal.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/mesh/journal.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/mesh/manager.rs",
+        "kind": "file",
+        "label": "manager.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/mesh/manager.rs",
         "external": true
       },
       {
@@ -3367,6 +3418,14 @@
         "label": "dashboard.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/ui/dashboard.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/ui/mesh.rs",
+        "kind": "file",
+        "label": "mesh.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/ui/mesh.rs",
         "external": true
       },
       {
@@ -4239,6 +4298,14 @@
         "label": "README.md",
         "summary": "named by the layer; not an object of this index",
         "source": "share/skeleton/ai/repo/knowledge/candidates/README.md",
+        "external": true
+      },
+      {
+        "id": "file:share/skeleton/ai/repo/mesh/mesh.yaml",
+        "kind": "file",
+        "label": "mesh.yaml",
+        "summary": "named by the layer; not an object of this index",
+        "source": "share/skeleton/ai/repo/mesh/mesh.yaml",
         "external": true
       },
       {
@@ -7722,6 +7789,96 @@
         }
       },
       {
+        "id": "majordomus://adr/adr-0167",
+        "kind": "adr",
+        "label": "adr-0167",
+        "summary": "Work moves through seats on the mesh, lands in combined tops, and every checkout is kept current",
+        "route": "/cockpit/objects/adr/adr-0167",
+        "source": ".ai/repo/adrs/0167-work-moves-through-seats-on-the-mesh-and-lands-in-combined-tops.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-16",
+          "related": [
+            "file:.ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v1.md",
+            "file:.ai/repo/adrs/0101-pull-requests-are-integrated-one-at-a-time-against-the-current-master.md",
+            "file:.ai/repo/adrs/0129-a-train-of-pull-requests-lands-in-one-run-of-the-required-check.md",
+            "file:.ai/repo/adrs/0155-an-expedited-landing-is-the-owners-word.md",
+            "file:.ai/repo/rules/project/integration-follows-the-current-master.v3.md",
+            "file:.ai/repo/rules/project/an-expedited-landing-is-the-owners-word.v1.md",
+            "file:.ai/repo/rules/project/work-is-claimed-before-it-is-built.v1.md",
+            "file:.ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md",
+            "file:docs/INTEGRATION.md",
+            "file:docs/MESH.md",
+            "file:docs/RELEASE.md",
+            "file:apps/majordomus-cli/src/ui/mesh.rs",
+            "test:test/cases/3150_the_cooperation_model_is_one_record.sh"
+          ],
+          "tags": [
+            "integration",
+            "governance",
+            "mesh",
+            "release"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0168",
+        "kind": "adr",
+        "label": "adr-0168",
+        "summary": "Init declares the mesh, closed until a machine is enrolled",
+        "route": "/cockpit/objects/adr/adr-0168",
+        "source": ".ai/repo/adrs/0168-init-declares-the-mesh-closed-until-a-machine-is-enrolled.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-11",
+          "related": [
+            "file:.ai/repo/adrs/0050-mesh-peer-discovery-is-provider-based-observation-with-authe.md",
+            "file:.ai/repo/adrs/0059-the-mesh-is-on-for-this-repository-and-every-session-start-h.md",
+            "file:share/skeleton/ai/repo/mesh/mesh.yaml",
+            "file:apps/majordomus-cli/src/mesh/enrol.rs",
+            "file:apps/majordomus-cli/src/mesh/manager.rs",
+            "test:test/cases/01_init.sh"
+          ],
+          "tags": [
+            "mesh",
+            "init",
+            "trust"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0169",
+        "kind": "adr",
+        "label": "adr-0169",
+        "summary": "What an adoption leaves behind is measured, not remembered",
+        "route": "/cockpit/objects/adr/adr-0169",
+        "source": ".ai/repo/adrs/0169-what-an-adoption-leaves-behind-is-measured-not-remembered.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-16",
+          "related": [
+            "file:.ai/repo/project/milestones/two-folder-integration.yaml",
+            "file:.ai/repo/project/issues/I1101.yaml",
+            "file:docs/TWO_FOLDER_CONSOLIDATION.md",
+            "file:docs/ADOPTION.md",
+            "file:lib/init.sh",
+            "file:lib/update.sh",
+            "file:lib/capture.sh",
+            "file:lib/common.sh",
+            "file:apps/majordomus-cli/src/editors/mod.rs",
+            "file:apps/majordomus-cli/src/generate.rs",
+            "file:.ai/repo/adrs/0021-the-branch-to-worktree-topology-is-derived-from-git-identity-and-enfor.md",
+            "test:test/cases/3113_the_adoption_footprint_is_inventoried.sh"
+          ],
+          "tags": [
+            "adoption",
+            "two-folder",
+            "ownership",
+            "footprint"
+          ]
+        }
+      },
+      {
         "id": "majordomus://application/ci-gated-project",
         "kind": "application",
         "label": "ci-gated-project",
@@ -10415,7 +10572,7 @@
           "claim": "An exclusive claim made on one runtime excludes an overlapping claim on every linked runtime, and concurrent claims resolve to one named winner everywhere",
           "implementation": "apps/majordomus-cli/src/mesh/state.rs",
           "responsibility": "none",
-          "source": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md",
+          "source": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v2.md",
           "test": "apps/majordomus-cli/tests/mesh_cooperation.rs"
         }
       },
@@ -10446,7 +10603,7 @@
           "claim": "Two runtimes of one repository link only through a signed, replay-protected handshake that checks protocol, repository identity and trust, and every refusal is typed and visible",
           "implementation": "apps/majordomus-cli/src/mesh/cooperation.rs",
           "responsibility": "none",
-          "source": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md",
+          "source": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v2.md",
           "test": "apps/majordomus-cli/tests/mesh_cooperation.rs"
         }
       },
@@ -10531,12 +10688,11 @@
         "id": "majordomus://claim/mesh-off-by-default",
         "kind": "claim",
         "label": "mesh-off-by-default",
-        "summary": "No mesh discovery socket opens until the repository commits an enabled mesh declaration, and a disabled or absent declaration is reported as the reason, not an error",
+        "summary": "No mesh discovery socket opens until the repository commits an enabled mesh declaration that lists this machine's key, and a disabled, absent or unlisting declaration is reported as the reason, not an error",
         "route": "/cockpit/objects/claim/mesh-off-by-default",
         "source": "docs/CLAIMS.yaml",
         "status": "guaranteed",
         "facts": {
-          "claim": "No mesh discovery socket opens until the repository commits an enabled mesh declaration, and a disabled or absent declaration is reported as the reason, not an error",
           "implementation": "apps/majordomus-cli/src/shared.rs",
           "responsibility": "none",
           "source": "docs/MESH.md",
@@ -10570,7 +10726,7 @@
           "claim": "Runtimes serving different repositories never form a cooperative link, even when they discover each other",
           "implementation": "apps/majordomus-cli/src/mesh/repository.rs",
           "responsibility": "none",
-          "source": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md",
+          "source": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v2.md",
           "test": "apps/majordomus-cli/tests/mesh_cooperation.rs"
         }
       },
@@ -12322,7 +12478,7 @@
           "requires_task": "none",
           "stage": "inspect",
           "summary": "Time every public command of the registry, cold and warm, and compare with the baseline.",
-          "syntax": "majordomus bench [<command>...] [--samples <n>] [--warmup <n>] [--mode cold|warm|both] [--format text|json] [--no-save] [--list] [--check] [--write-baseline [--force]]",
+          "syntax": "majordomus bench [<command>...] [--samples <n>] [--warmup <n>] [--cold-samples <n>] [--mode cold|warm|both] [--format text|json] [--no-save] [--list] [--check] [--write-baseline [--force]]",
           "visibility": "public",
           "writes": [
             ".ai/local/benchmarks/",
@@ -15106,7 +15262,7 @@
         "id": "majordomus://document/docs/TWO_FOLDER_CONSOLIDATION.md",
         "kind": "document",
         "label": "docs/TWO_FOLDER_CONSOLIDATION.md",
-        "summary": "Two-folder consolidation — forensic findings and migration plan",
+        "summary": "Two-folder consolidation — the adoption footprint, and the plan it justifies",
         "route": "/cockpit/objects/document/docs-two-folder-consolidation-md",
         "source": "docs/TWO_FOLDER_CONSOLIDATION.md"
       },
@@ -26889,15 +27045,19 @@
           "profile": "deep-work",
           "risk": "A forensic phase can become a rewrite the moment it finds something ugly. It records; the phases that follow change.",
           "scope": [
-            "docs/INTEGRATION.md",
+            "docs/TWO_FOLDER_CONSOLIDATION.md",
             ".ai/repo/adrs"
           ],
           "slug": "adoption-footprint-forensics",
-          "updated_at": "2026-09-06",
+          "started_at": "2026-10-16T11:25:07Z",
+          "started_event": "sha256:31ae9ab3d028d055e36f98af540f82d1b50d13822270862f9e092fc74c8d034b",
+          "updated_at": "2026-10-16T12:15:38Z",
           "validation": [
             "bin/majordomus doctor",
             "bash test/run.sh"
-          ]
+          ],
+          "verified_at": "2026-10-16T12:15:38Z",
+          "verified_event": "sha256:f31eddc643482230f2ae58b767aba250a1c2f92dc035fe10519028cab7d56f92"
         }
       },
       {
@@ -29778,8 +29938,9 @@
             "A gate that has never reported is distinguished from a gate that passed",
             "The capability answers without network access, saying what it could not reach"
           ],
+          "completed_at": "2026-10-15T08:49:02Z",
+          "completed_event": "sha256:38aa9c3f50e73ff304b9b57d284172dcba21f9d210ea23503a900e77c894fa75",
           "created_at": "2026-09-11",
-          "current_state": "Gates are declared and planned. Their run state is read by a person on GitHub and by nothing in this repository. No capability, no route, no page.",
           "depends_on": [],
           "desired_state": "The runtime answers the gate set and the standing of each gate's last run, including the case where no run has reported, which is the case that matters most and the one an absent reader hides.",
           "evidence_required": [
@@ -29803,11 +29964,15 @@
             "test/cases"
           ],
           "slug": "ci-status-is-a-capability",
-          "updated_at": "2026-09-11",
+          "started_at": "2026-10-15T08:07:51Z",
+          "started_event": "sha256:26c99efa25b484a96bd66d2420777c12d1d80f2926a267eb56254f8766400297",
+          "updated_at": "2026-10-15T08:49:02Z",
           "validation": [
             "bin/majordomus-cli capabilities validate",
             "bash test/run.sh"
-          ]
+          ],
+          "verified_at": "2026-10-15T08:48:52Z",
+          "verified_event": "sha256:84a013d887cf5f12e756472c65f86bf4fda4b77e263242650fbe46db10815a6a"
         }
       },
       {
@@ -32669,7 +32834,7 @@
             "test/cases"
           ],
           "slug": "a-rebuild-never-replaces-a-leased-executable",
-          "updated_at": "2026-10-08",
+          "updated_at": "2026-10-15",
           "validation": [
             "bin/majordomus plan validate",
             "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
@@ -32707,11 +32872,15 @@
             "apps/majordomus-cli/src/bench"
           ],
           "slug": "a-timing-verdict-names-its-runner",
-          "updated_at": "2026-10-09",
+          "started_at": "2026-10-16T07:54:07Z",
+          "started_event": "sha256:1bf19af5c327183822f9e928ca69962e7ff713ce8886670c96854bb2ded0442f",
+          "updated_at": "2026-10-16T07:54:22Z",
           "validation": [
             "bash test/run.sh 82_bench_check",
             "bash test/run.sh 417_the_suite_finishes_inside_its_bound"
-          ]
+          ],
+          "verified_at": "2026-10-16T07:54:13Z",
+          "verified_event": "sha256:5fff9f2e3500b4bfed3b1f868ed034c4a5ea2ed0b635140bc5488dd2f5677f0b"
         }
       },
       {
@@ -33264,11 +33433,14 @@
             "A hello captured from a link to runtime A and replayed to runtime B within the skew window is refused with a typed refusal and changes no link of B",
             "A hello replayed to A after A restarts cannot displace an established link"
           ],
+          "completed_at": "2026-10-15T02:25:52Z",
+          "completed_event": "sha256:0d54c9be900260c6b4ca0ca1afc4d9d34ab7e4514e8b445ea5da634baeac0136",
           "created_at": "2026-10-09",
           "current_state": "A valid hello is accepted by any runtime of the repository that trusts its key and has not seen its nonce.",
           "depends_on": [],
           "evidence_required": [
-            "hello_replay_to_another_runtime_refused_test"
+            "hello_replay_to_another_runtime_refused_test",
+            "hello_replay_after_restart_refused_test"
           ],
           "milestone": "runtime-trust",
           "objective": "Bind each link hello to its intended recipient inside the signed bytes, refuse a hello addressed elsewhere, and make the documented check order the one the code runs.",
@@ -33283,12 +33455,16 @@
             ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md"
           ],
           "slug": "a-hello-names-its-recipient",
-          "updated_at": "2026-10-14",
+          "started_at": "2026-10-15T01:41:59Z",
+          "started_event": "sha256:2d3792ec1b2beaa4c0ec8fda08ce6ba0311e5135c25d583bf04e28323041cc26",
+          "updated_at": "2026-10-15T02:25:52Z",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --test mesh_cooperation",
             "cargo test --lib mesh::cooperation"
-          ]
+          ],
+          "verified_at": "2026-10-15T02:25:40Z",
+          "verified_event": "sha256:14a07de235b6fbbf6ba88f10d71058a3711aa4e21e058e9c962670af39985f32"
         }
       },
       {
@@ -33539,6 +33715,8 @@
             "Walking mesh.events with limit 1 over a journal where several streams share a lamport returns every event once, in causal order",
             "The cursor the schema documents is the cursor the next page accepts"
           ],
+          "completed_at": "2026-10-15T04:37:49Z",
+          "completed_event": "sha256:92098a9b746ae5d0f8151bc5adc7a1d47df24816766c6687263ac0b477c1a756",
           "created_at": "2026-10-09",
           "current_state": "A client that follows the documented cursor misses events.",
           "depends_on": [],
@@ -33559,12 +33737,16 @@
             "docs/MESH.md"
           ],
           "slug": "mesh-events-paging-is-complete",
-          "updated_at": "2026-10-09",
+          "started_at": "2026-10-15T04:37:34Z",
+          "started_event": "sha256:f17e2518e90371183dc9b28c8d198f296443fd257f1b2b84f69a893b57565093",
+          "updated_at": "2026-10-15T04:37:49Z",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --test mesh",
             "cargo test --lib mesh::journal"
-          ]
+          ],
+          "verified_at": "2026-10-15T04:37:41Z",
+          "verified_event": "sha256:09c4ba653a8fa9ff7ef38dfdbc4f88f55a82b41cb46d34c0e6b01b6b88d08dbb"
         }
       },
       {
@@ -37822,6 +38004,8 @@
           "acceptance_criteria": [
             "The rule's check order and the code's check order are the same, and a test names the order"
           ],
+          "completed_at": "2026-10-15T09:49:54Z",
+          "completed_event": "sha256:81e5061412cf39d14b2c0e1fb371b4faf81bf281f2a6c66c88b7415173db52c8",
           "created_at": "2026-10-14",
           "depends_on": [
             "I2132"
@@ -37845,7 +38029,9 @@
             "docs/MESH.md"
           ],
           "slug": "the-rule-states-the-hello-check-order",
-          "updated_at": "2026-10-14",
+          "started_at": "2026-10-15T08:05:22Z",
+          "started_event": "sha256:fb240e74c28d131e5525e03d404a9831a1a12526efe7cd7436380c45936f559b",
+          "updated_at": "2026-10-15T09:49:54Z",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --lib mesh::cooperation",
@@ -38711,6 +38897,48 @@
         }
       },
       {
+        "id": "majordomus://issue/I2730",
+        "kind": "issue",
+        "label": "I2730",
+        "summary": "A derive does not depend on how loaded the machine is",
+        "route": "/cockpit/objects/issue/i2730",
+        "source": ".ai/repo/project/issues/I2730.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A stand-in runner slower than a configured bound yields a refusal naming `just --dump --dump-format json` and the bound, and one within the bound describes the justfile",
+            "A group listing slower than the bound is a refusal, not an empty group order",
+            "The bound is declared in policy.yaml under workflows: and validated by the policy schema"
+          ],
+          "created_at": "2026-10-15",
+          "evidence_required": [
+            "describe_timeout_refusal_test"
+          ],
+          "milestone": "derived-data-integrity",
+          "non_scope": [
+            "The environment snapshot's own 2 s budget, which serves a shell prompt rather than a committed projection",
+            "Other bounded probes (toolchain versions, evidence provenance), which commit nothing load-dependent"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/environment/workflows.rs",
+            "apps/majordomus-cli/src/environment/probe.rs",
+            "apps/majordomus-cli/src/editors/mod.rs",
+            "apps/majordomus-cli/src/generate.rs",
+            "apps/majordomus-cli/src/policy.rs",
+            ".ai/repo/policy.yaml",
+            "share/schemas/majordomus/policy"
+          ],
+          "slug": "a-derive-does-not-depend-on-load",
+          "updated_at": "2026-10-15",
+          "validation": [
+            "cargo test -p majordomus-cli environment::workflows",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I2731",
         "kind": "issue",
         "label": "I2731",
@@ -39283,6 +39511,150 @@
           "validation": [
             "bin/majordomus plan drift --json",
             "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2760",
+        "kind": "issue",
+        "label": "I2760",
+        "summary": "A scope entry is one path, and a path context would refuse is refused at start",
+        "route": "/cockpit/objects/issue/i2760",
+        "source": ".ai/repo/project/issues/I2760.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "majordomus start refuses a scope entry holding whitespace with exit 2, writes no task record, and names the entry",
+            "majordomus start refuses a scope entry that resolves outside the repository through a symbolic link",
+            "majordomus context, over a recorded scope that names `/`, prints that entry as refused, still prints the other scope paths' documents, and exits 0",
+            "majordomus context resolve <outside path> still refuses with the same message and exit code",
+            "case 3160 fails against master without the change"
+          ],
+          "created_at": "2026-10-16",
+          "depends_on": [],
+          "evidence_required": [
+            "scope_entry_case"
+          ],
+          "milestone": "development-runtime",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/start.sh",
+            "lib/context.sh",
+            "lib/context_docs.sh",
+            "test/cases/3160_a_scope_entry_is_one_path.sh",
+            ".ai/repo/project/issues/I2760.yaml"
+          ],
+          "slug": "a-scope-entry-is-one-path",
+          "updated_at": "2026-10-16",
+          "validation": [
+            "bash test/run.sh 3160_a_scope_entry_is_one_path 04_start_check",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2761",
+        "kind": "issue",
+        "label": "I2761",
+        "summary": "A branch that renumbered its decision away claims nothing at the old number",
+        "route": "/cockpit/objects/issue/i2761",
+        "source": ".ai/repo/project/issues/I2761.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "adr check passes on a branch taking an identity whose other claimant renumbered its document away and pushed",
+            "the renumbered document still collides at its new number, naming the branch",
+            "case 271 fails against master without the change"
+          ],
+          "created_at": "2026-10-16",
+          "current_state": "mj_adr_collisions reports a collision for every path that any ref's history ever added, for as long as any ref contains that add-commit, whether or not the document still exists at the ref's tip.",
+          "depends_on": [],
+          "evidence_required": [
+            "renumbered_claim_case"
+          ],
+          "milestone": "development-runtime",
+          "objective": "Count a ref as claiming an ADR identity only while its tip carries the document, so that renumbering one of two colliding decisions clears the collision for the other branch.",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/adr.sh",
+            "test/cases/271_adr_allocation.sh",
+            ".ai/repo/project/issues/I2761.yaml"
+          ],
+          "slug": "a-renumbered-adr-claims-nothing",
+          "updated_at": "2026-10-16",
+          "validation": [
+            "bash test/run.sh 271_adr_allocation",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2770",
+        "kind": "issue",
+        "label": "I2770",
+        "summary": "majordomus ui and the Cockpit wear the site's navbar: one renderer, the same styles and scripts, and a browser comparison that refuses a difference",
+        "route": "/cockpit/objects/issue/i2770",
+        "source": ".ai/repo/project/issues/I2770.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every UI screen and Cockpit page carries exactly one nav[aria-label=Main], the site's, with the executable's version and the product entry leading to /ui",
+            "scripts/ui navbar reports no difference between the bar on the site's front page and on /ui and /cockpit at every declared width, light and dark, closed and with a menu open",
+            "A copy that is not the built bar, and a share/ui script that is not the site's bytes, each fail their check"
+          ],
+          "created_at": "2026-10-16",
+          "depends_on": [],
+          "evidence_required": [
+            "navbar_parity_run",
+            "navbar_unit_tests"
+          ],
+          "milestone": "surfaces-never-disagree",
+          "non_scope": [
+            "The published Cockpit snapshot keeps no script, so its copy of the bar has no working menus there; giving the snapshot the bar's two scripts is a change to the exporter's subject",
+            "A second navigation declaration or a second renderer of the bar for any surface"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "site/templates/partials/navbar.html",
+            "apps/majordomus-cli/src/ui/navbar.rs",
+            "apps/majordomus-cli/src/ui/navbar.html",
+            "apps/majordomus-cli/src/ui/shell.rs",
+            "apps/majordomus-cli/src/ui/mod.rs",
+            "apps/majordomus-cli/src/cockpit/html.rs",
+            "apps/majordomus-cli/src/cockpit/view.rs",
+            "apps/majordomus-cli/src/cockpit/mod.rs",
+            "share/cockpit/src/cockpit.css",
+            "share/cockpit/cockpit.css",
+            "share/cockpit/cockpit.js",
+            "share/cockpit/nav.js",
+            "share/cockpit/theme.js",
+            "scripts/lib/cockpit-probe.mjs",
+            "docs/COCKPIT.md",
+            "apps/majordomus-cli/src/design/render.rs",
+            "share/ui/src/ui.css",
+            "share/ui/ui.css",
+            "share/ui/ui.js",
+            "share/ui/nav.js",
+            "share/ui/theme.js",
+            "scripts/ui",
+            "scripts/lib/ui-navbar.mjs",
+            "scripts/lib/ui.test.mjs",
+            "scripts/cockpit-assets",
+            ".ai/repo/rules/project/the-ui-wears-the-sites-navbar.v1.md",
+            "docs/DESIGN_SYSTEM.md",
+            "docs/MAJORDOMUS_UI.md",
+            ".ai/repo/project/issues/I2770.yaml"
+          ],
+          "slug": "the-ui-wears-the-sites-navbar",
+          "updated_at": "2026-10-16",
+          "validation": [
+            "scripts/site-build && scripts/ui navbar",
+            "scripts/ui test",
+            "scripts/cockpit-assets --check",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- ui::navbar ui::shell cockpit::html"
           ]
         }
       },
@@ -46546,6 +46918,32 @@
         }
       },
       {
+        "id": "majordomus://rule/project.a-release-leaves-the-site-better@1",
+        "kind": "rule",
+        "label": "project.a-release-leaves-the-site-better@1",
+        "summary": "A release leaves the site better than it found it",
+        "route": "/cockpit/objects/rule/project-a-release-leaves-the-site-better-1",
+        "source": ".ai/repo/rules/project/a-release-leaves-the-site-better.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.release-is-a-projection@2",
+            "project.the-site-offers-the-release-it-published@1",
+            "project.homepage-tells-a-declared-story@1",
+            "project.derived-files-regenerated@1",
+            "project.design-tokens-declared-once@2"
+          ],
+          "tags": [
+            "release",
+            "web",
+            "publication",
+            "design",
+            "projections"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.a-standing-approval-is-written-where-permissions-are-read@1",
         "kind": "rule",
         "label": "project.a-standing-approval-is-written-where-permissions-are-read@1",
@@ -47541,12 +47939,12 @@
         }
       },
       {
-        "id": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
+        "id": "majordomus://rule/project.mesh-cooperation-is-authenticated@2",
         "kind": "rule",
-        "label": "project.mesh-cooperation-is-authenticated@1",
+        "label": "project.mesh-cooperation-is-authenticated@2",
         "summary": "Mesh cooperation is admitted per link, replicated through one journal, and projected by every surface alike",
-        "route": "/cockpit/objects/rule/project-mesh-cooperation-is-authenticated-1",
-        "source": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md",
+        "route": "/cockpit/objects/rule/project-mesh-cooperation-is-authenticated-2",
+        "source": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v2.md",
         "status": "active",
         "facts": {
           "class": "blocking",
@@ -48398,6 +48796,31 @@
         }
       },
       {
+        "id": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@1",
+        "kind": "rule",
+        "label": "project.the-cooperation-model-is-the-owners-word@1",
+        "summary": "Work moves through seats held as mesh claims, lands in combined tops, and every checkout is kept current",
+        "route": "/cockpit/objects/rule/project-the-cooperation-model-is-the-owners-word-1",
+        "source": ".ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.integration-follows-the-current-master@3",
+            "project.an-expedited-landing-is-the-owners-word@1",
+            "project.work-is-claimed-before-it-is-built@1",
+            "project.mesh-cooperation-is-authenticated@2"
+          ],
+          "tags": [
+            "process",
+            "integration",
+            "mesh",
+            "release",
+            "governance"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.the-crate-reference-is-published@1",
         "kind": "rule",
         "label": "project.the-crate-reference-is-published@1",
@@ -48576,6 +48999,31 @@
             "publication",
             "web",
             "distribution"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://rule/project.the-ui-wears-the-sites-navbar@1",
+        "kind": "rule",
+        "label": "project.the-ui-wears-the-sites-navbar@1",
+        "summary": "majordomus.dev is the reference for how the product looks, and every page of the UI and the Cockpit wears the site's own navbar",
+        "route": "/cockpit/objects/rule/project-the-ui-wears-the-sites-navbar-1",
+        "source": ".ai/repo/rules/project/the-ui-wears-the-sites-navbar.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.navigation-is-declared-once@1",
+            "project.design-tokens-declared-once@2",
+            "project.ui-conformance@1"
+          ],
+          "tags": [
+            "design",
+            "ui",
+            "navigation",
+            "derived",
+            "projections",
+            "site"
           ]
         }
       },
@@ -56654,6 +57102,13 @@
         "source": "test/cases/303_one_source_serves_two_mounts.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3041_a_server_reports_the_share_it_serves.sh",
+        "kind": "test",
+        "label": "test/cases/3041_a_server_reports_the_share_it_serves.sh",
+        "route": "/cockpit/objects/test/test-cases-3041-a-server-reports-the-share-it-serves-sh",
+        "source": "test/cases/3041_a_server_reports_the_share_it_serves.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/3042_the_observatory_asks_again_when_it_is_seen.sh",
         "kind": "test",
         "label": "test/cases/3042_the_observatory_asks_again_when_it_is_seen.sh",
@@ -56666,6 +57121,13 @@
         "label": "test/cases/3043_site_json_cannot_close_its_script.sh",
         "route": "/cockpit/objects/test/test-cases-3043-site-json-cannot-close-its-script-sh",
         "source": "test/cases/3043_site_json_cannot_close_its_script.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3045_the_site_shows_what_changed_since_it_was_deployed.sh",
+        "kind": "test",
+        "label": "test/cases/3045_the_site_shows_what_changed_since_it_was_deployed.sh",
+        "route": "/cockpit/objects/test/test-cases-3045-the-site-shows-what-changed-since-it-was-deployed-sh",
+        "source": "test/cases/3045_the_site_shows_what_changed_since_it_was_deployed.sh"
       },
       {
         "id": "majordomus://test/test/cases/3047_a_leak_finding_names_where_it_is.sh",
@@ -56710,6 +57172,13 @@
         "source": "test/cases/3051_an_unlisted_event_field_fails_the_mesh_check.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3052_a_lost_append_is_said_end_to_end.sh",
+        "kind": "test",
+        "label": "test/cases/3052_a_lost_append_is_said_end_to_end.sh",
+        "route": "/cockpit/objects/test/test-cases-3052-a-lost-append-is-said-end-to-end-sh",
+        "source": "test/cases/3052_a_lost_append_is_said_end_to_end.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/3053_a_repository_of_n_records_costs_n.sh",
         "kind": "test",
         "label": "test/cases/3053_a_repository_of_n_records_costs_n.sh",
@@ -56731,6 +57200,20 @@
         "source": "test/cases/3056_every_failure_class_names_its_proof.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3057_unlinked_work_is_classed_end_to_end.sh",
+        "kind": "test",
+        "label": "test/cases/3057_unlinked_work_is_classed_end_to_end.sh",
+        "route": "/cockpit/objects/test/test-cases-3057-unlinked-work-is-classed-end-to-end-sh",
+        "source": "test/cases/3057_unlinked_work_is_classed_end_to_end.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3059_gate_state_is_answerable.sh",
+        "kind": "test",
+        "label": "test/cases/3059_gate_state_is_answerable.sh",
+        "route": "/cockpit/objects/test/test-cases-3059-gate-state-is-answerable-sh",
+        "source": "test/cases/3059_gate_state_is_answerable.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/305_a_command_is_claimed_or_classified.sh",
         "kind": "test",
         "label": "test/cases/305_a_command_is_claimed_or_classified.sh",
@@ -56743,6 +57226,13 @@
         "label": "test/cases/3060_trunk_stays_clean.sh",
         "route": "/cockpit/objects/test/test-cases-3060-trunk-stays-clean-sh",
         "source": "test/cases/3060_trunk_stays_clean.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3061_a_rebuild_leaves_its_server_ready.sh",
+        "kind": "test",
+        "label": "test/cases/3061_a_rebuild_leaves_its_server_ready.sh",
+        "route": "/cockpit/objects/test/test-cases-3061-a-rebuild-leaves-its-server-ready-sh",
+        "source": "test/cases/3061_a_rebuild_leaves_its_server_ready.sh"
       },
       {
         "id": "majordomus://test/test/cases/3063_a_branch_episode_drains_the_outbox.sh",
@@ -56794,6 +57284,20 @@
         "source": "test/cases/3075_knowledge_validate_judges_the_graph.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3080_idle_incremental_sessions_are_pruned.sh",
+        "kind": "test",
+        "label": "test/cases/3080_idle_incremental_sessions_are_pruned.sh",
+        "route": "/cockpit/objects/test/test-cases-3080-idle-incremental-sessions-are-pruned-sh",
+        "source": "test/cases/3080_idle_incremental_sessions_are_pruned.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3084_a_case_near_its_budget_is_named.sh",
+        "kind": "test",
+        "label": "test/cases/3084_a_case_near_its_budget_is_named.sh",
+        "route": "/cockpit/objects/test/test-cases-3084-a-case-near-its-budget-is-named-sh",
+        "source": "test/cases/3084_a_case_near_its_budget_is_named.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/30_command_registry.sh",
         "kind": "test",
         "label": "test/cases/30_command_registry.sh",
@@ -56822,11 +57326,60 @@
         "source": "test/cases/310_rustdoc_projection.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3112_a_publication_that_did_not_arrive_is_a_finding.sh",
+        "kind": "test",
+        "label": "test/cases/3112_a_publication_that_did_not_arrive_is_a_finding.sh",
+        "route": "/cockpit/objects/test/test-cases-3112-a-publication-that-did-not-arrive-is-a-finding-sh",
+        "source": "test/cases/3112_a_publication_that_did_not_arrive_is_a_finding.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3113_the_adoption_footprint_is_inventoried.sh",
+        "kind": "test",
+        "label": "test/cases/3113_the_adoption_footprint_is_inventoried.sh",
+        "route": "/cockpit/objects/test/test-cases-3113-the-adoption-footprint-is-inventoried-sh",
+        "source": "test/cases/3113_the_adoption_footprint_is_inventoried.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/3125_the_reaper_asks_cargo_for_the_build_dir.sh",
         "kind": "test",
         "label": "test/cases/3125_the_reaper_asks_cargo_for_the_build_dir.sh",
         "route": "/cockpit/objects/test/test-cases-3125-the-reaper-asks-cargo-for-the-build-dir-sh",
         "source": "test/cases/3125_the_reaper_asks_cargo_for_the_build_dir.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3131_a_new_worktree_starts_from_the_remote_trunk.sh",
+        "kind": "test",
+        "label": "test/cases/3131_a_new_worktree_starts_from_the_remote_trunk.sh",
+        "route": "/cockpit/objects/test/test-cases-3131-a-new-worktree-starts-from-the-remote-trunk-sh",
+        "source": "test/cases/3131_a_new_worktree_starts_from_the_remote_trunk.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3150_the_cooperation_model_is_one_record.sh",
+        "kind": "test",
+        "label": "test/cases/3150_the_cooperation_model_is_one_record.sh",
+        "route": "/cockpit/objects/test/test-cases-3150-the-cooperation-model-is-one-record-sh",
+        "source": "test/cases/3150_the_cooperation_model_is_one_record.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3151_a_task_is_claimed_when_it_starts.sh",
+        "kind": "test",
+        "label": "test/cases/3151_a_task_is_claimed_when_it_starts.sh",
+        "route": "/cockpit/objects/test/test-cases-3151-a-task-is-claimed-when-it-starts-sh",
+        "source": "test/cases/3151_a_task_is_claimed_when_it_starts.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3160_a_scope_entry_is_one_path.sh",
+        "kind": "test",
+        "label": "test/cases/3160_a_scope_entry_is_one_path.sh",
+        "route": "/cockpit/objects/test/test-cases-3160-a-scope-entry-is-one-path-sh",
+        "source": "test/cases/3160_a_scope_entry_is_one_path.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3170_a_release_leaves_the_site_better.sh",
+        "kind": "test",
+        "label": "test/cases/3170_a_release_leaves_the_site_better.sh",
+        "route": "/cockpit/objects/test/test-cases-3170-a-release-leaves-the-site-better-sh",
+        "source": "test/cases/3170_a_release_leaves_the_site_better.sh"
       },
       {
         "id": "majordomus://test/test/cases/318_a_partial_sweep_says_so.sh",
@@ -62555,6 +63108,21 @@
         "kind": "projects"
       },
       {
+        "source": "capability:gates.state",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:gates.state",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:gates.state",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
         "source": "capability:graph.get",
         "target": "projection:cockpit",
         "kind": "projects"
@@ -63141,6 +63709,26 @@
       },
       {
         "source": "capability:mesh.doctor",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.enrol",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.enrol",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.enrol",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.enrol",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -64201,6 +64789,21 @@
       },
       {
         "source": "capability:release.next",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:release.site",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:release.site",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:release.site",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -66626,7 +67229,7 @@
       },
       {
         "source": "majordomus://adr/adr-0067",
-        "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
+        "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@2",
         "kind": "put_in_force"
       },
       {
@@ -68306,7 +68909,7 @@
       },
       {
         "source": "majordomus://adr/adr-0126",
-        "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
+        "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@2",
         "kind": "put_in_force"
       },
       {
@@ -69517,6 +70120,176 @@
       {
         "source": "majordomus://adr/adr-0166",
         "target": "majordomus://rule/project.the-published-ui-is-the-trunks@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0167",
+        "target": "file:.ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0167",
+        "target": "file:apps/majordomus-cli/src/ui/mesh.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0167",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0167",
+        "target": "majordomus://adr/adr-0101",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0167",
+        "target": "majordomus://adr/adr-0129",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0167",
+        "target": "majordomus://adr/adr-0155",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0167",
+        "target": "majordomus://document/docs/INTEGRATION.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0167",
+        "target": "majordomus://document/docs/MESH.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0167",
+        "target": "majordomus://document/docs/RELEASE.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0167",
+        "target": "majordomus://rule/project.an-expedited-landing-is-the-owners-word@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0167",
+        "target": "majordomus://rule/project.integration-follows-the-current-master@3",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0167",
+        "target": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0167",
+        "target": "majordomus://rule/project.work-is-claimed-before-it-is-built@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0167",
+        "target": "majordomus://test/test/cases/3150_the_cooperation_model_is_one_record.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0168",
+        "target": "file:apps/majordomus-cli/src/mesh/enrol.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0168",
+        "target": "file:apps/majordomus-cli/src/mesh/manager.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0168",
+        "target": "file:share/skeleton/ai/repo/mesh/mesh.yaml",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0168",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0168",
+        "target": "majordomus://adr/adr-0050",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0168",
+        "target": "majordomus://adr/adr-0059",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0168",
+        "target": "majordomus://test/test/cases/01_init.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0169",
+        "target": "file:apps/majordomus-cli/src/editors/mod.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0169",
+        "target": "file:apps/majordomus-cli/src/generate.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0169",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0169",
+        "target": "majordomus://adr/adr-0021",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0169",
+        "target": "majordomus://document/docs/ADOPTION.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0169",
+        "target": "majordomus://document/docs/TWO_FOLDER_CONSOLIDATION.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0169",
+        "target": "majordomus://implementation/lib/capture.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0169",
+        "target": "majordomus://implementation/lib/common.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0169",
+        "target": "majordomus://implementation/lib/init.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0169",
+        "target": "majordomus://implementation/lib/update.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0169",
+        "target": "majordomus://issue/I1101",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0169",
+        "target": "majordomus://milestone/two-folder-integration",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0169",
+        "target": "majordomus://test/test/cases/3113_the_adoption_footprint_is_inventoried.sh",
         "kind": "put_in_force"
       },
       {
@@ -72341,7 +73114,7 @@
       },
       {
         "source": "majordomus://claim/mesh-claims-cross-runtime",
-        "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
+        "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@2",
         "kind": "defined_in"
       },
       {
@@ -72381,7 +73154,7 @@
       },
       {
         "source": "majordomus://claim/mesh-cooperation-links",
-        "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
+        "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@2",
         "kind": "defined_in"
       },
       {
@@ -72541,7 +73314,7 @@
       },
       {
         "source": "majordomus://claim/mesh-repository-isolation",
-        "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
+        "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@2",
         "kind": "defined_in"
       },
       {
@@ -83410,6 +84183,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2730",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2730",
+        "target": "majordomus://milestone/derived-data-integrity",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I2731",
         "target": "kind:issue",
         "kind": "is_a"
@@ -83572,6 +84355,36 @@
       {
         "source": "majordomus://issue/I2748",
         "target": "majordomus://milestone/truthful-plan-surfaces",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2760",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2760",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2761",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2761",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2770",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2770",
+        "target": "majordomus://milestone/surfaces-never-disagree",
         "kind": "belongs_to"
       },
       {
@@ -85000,6 +85813,36 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://rule/project.a-release-leaves-the-site-better@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.a-release-leaves-the-site-better@1",
+        "target": "majordomus://rule/project.derived-files-regenerated@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.a-release-leaves-the-site-better@1",
+        "target": "majordomus://rule/project.design-tokens-declared-once@2",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.a-release-leaves-the-site-better@1",
+        "target": "majordomus://rule/project.homepage-tells-a-declared-story@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.a-release-leaves-the-site-better@1",
+        "target": "majordomus://rule/project.release-is-a-projection@2",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.a-release-leaves-the-site-better@1",
+        "target": "majordomus://rule/project.the-site-offers-the-release-it-published@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.a-standing-approval-is-written-where-permissions-are-read@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -85635,12 +86478,12 @@
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
+        "source": "majordomus://rule/project.mesh-cooperation-is-authenticated@2",
         "target": "kind:rule",
         "kind": "is_a"
       },
       {
-        "source": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
+        "source": "majordomus://rule/project.mesh-cooperation-is-authenticated@2",
         "target": "majordomus://rule/project.mesh-is-observation-not-authority@1",
         "kind": "depends_on"
       },
@@ -86060,6 +86903,31 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@1",
+        "target": "majordomus://rule/project.an-expedited-landing-is-the-owners-word@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@1",
+        "target": "majordomus://rule/project.integration-follows-the-current-master@3",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@1",
+        "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@2",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@1",
+        "target": "majordomus://rule/project.work-is-claimed-before-it-is-built@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.the-crate-reference-is-published@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -86202,6 +87070,26 @@
       {
         "source": "majordomus://rule/project.the-site-offers-the-release-it-published@1",
         "target": "majordomus://rule/project.release-is-a-projection@2",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.the-ui-wears-the-sites-navbar@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.the-ui-wears-the-sites-navbar@1",
+        "target": "majordomus://rule/project.design-tokens-declared-once@2",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.the-ui-wears-the-sites-navbar@1",
+        "target": "majordomus://rule/project.navigation-is-declared-once@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.the-ui-wears-the-sites-navbar@1",
+        "target": "majordomus://rule/project.ui-conformance@1",
         "kind": "depends_on"
       },
       {
@@ -88050,12 +88938,22 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3041_a_server_reports_the_share_it_serves.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/3042_the_observatory_asks_again_when_it_is_seen.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
       {
         "source": "majordomus://test/test/cases/3043_site_json_cannot_close_its_script.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3045_the_site_shows_what_changed_since_it_was_deployed.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -88090,6 +88988,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3052_a_lost_append_is_said_end_to_end.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/3053_a_repository_of_n_records_costs_n.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -88105,12 +89008,27 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3057_unlinked_work_is_classed_end_to_end.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3059_gate_state_is_answerable.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/305_a_command_is_claimed_or_classified.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
       {
         "source": "majordomus://test/test/cases/3060_trunk_stays_clean.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3061_a_rebuild_leaves_its_server_ready.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -88150,6 +89068,16 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3080_idle_incremental_sessions_are_pruned.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3084_a_case_near_its_budget_is_named.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/30_command_registry.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -88170,7 +89098,42 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3112_a_publication_that_did_not_arrive_is_a_finding.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3113_the_adoption_footprint_is_inventoried.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/3125_the_reaper_asks_cargo_for_the_build_dir.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3131_a_new_worktree_starts_from_the_remote_trunk.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3150_the_cooperation_model_is_one_record.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3151_a_task_is_claimed_when_it_starts.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3160_a_scope_entry_is_one_path.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3170_a_release_leaves_the_site_better.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -92810,6 +93773,11 @@
         "kind": "composes"
       },
       {
+        "source": "module:gates",
+        "target": "capability:gates.state",
+        "kind": "composes"
+      },
+      {
         "source": "module:graph",
         "target": "capability:graph.get",
         "kind": "composes"
@@ -92977,6 +93945,11 @@
       {
         "source": "module:mesh",
         "target": "capability:mesh.doctor",
+        "kind": "composes"
+      },
+      {
+        "source": "module:mesh",
+        "target": "capability:mesh.enrol",
         "kind": "composes"
       },
       {
@@ -93306,6 +94279,11 @@
       },
       {
         "source": "module:release",
+        "target": "capability:release.site",
+        "kind": "composes"
+      },
+      {
+        "source": "module:release",
         "target": "capability:release.version",
         "kind": "composes"
       },
@@ -93466,8 +94444,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2934,
-      "edges": 6436,
+      "nodes": 2967,
+      "edges": 6521,
       "acyclic": false,
       "truncated": false
     }

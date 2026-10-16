@@ -198,7 +198,7 @@ majordomus worktree cleanup --remove           # removes those worktrees, refusi
 | `worktree root` | the container, one path | |
 | `worktree path <branch>` | the canonical path of a branch, one path; the branch need not exist | the name is invalid |
 | `worktree inspect <branch>` | canonical path, whether the branch exists, what occupies the path, what stands in the way | |
-| `worktree create <branch> [--base REF] [--issue ID]` | the canonical worktree, the branch created from the trunk when new | occupied, checked out elsewhere, invalid |
+| `worktree create <branch> [--base REF] [--issue ID]` | the canonical worktree; a branch the trunk's remote has is taken up and tracks it, a new one starts at the remote's trunk fetched now, and the line names the exact commit | occupied, checked out elsewhere, invalid |
 | `worktree ensure <branch>` | the same, answering an existing canonical worktree instead of refusing | checked out elsewhere |
 | `worktree migrate [--plan] [--only B]… [--allow-copy] [--include-ephemeral]` | bring misplaced worktrees home, fingerprint-verified | a step was blocked or failed |
 | `worktree validate` / `worktree doctor` | the errors, or every diagnostic | an error stands |
@@ -253,6 +253,37 @@ flowchart TD
 A handover records the branch and the worktree; a session resumed elsewhere derives the
 worktree from the branch rather than trusting the recorded path, because the path is
 ephemeral and the branch is not.
+
+### Where a new branch starts
+
+The primary checkout hosts the trunk, and nothing advances it: on 2026-10-16 its local
+`master` was 779 commits behind `origin/master`. A branch cut from it carried none of that
+work, the report said `(new, from master)` as if that were current, and every worker reset
+the new worktree to `origin/master` by hand. A branch that existed only on the remote was
+worse: it was started again from that stale `master` rather than taken up.
+
+So `create` and `ensure`, for a branch that does not exist here, ask the trunk's remote —
+the remote whose HEAD names the trunk, else the one `branch.<trunk>.remote` names — with two
+quiet, bounded fetches (`--no-tags`, no prompt, killed after 60 seconds) of the trunk and of
+the branch into their remote-tracking refs. The local trunk is never moved.
+
+<div class="overflow-x-auto" tabindex="0">
+
+| the remote | the branch starts | the report |
+|---|---|---|
+| has the branch | where the remote's branch stands, tracking it | `branch  fix/x (from origin/fix/x at <sha>, tracking it)` |
+| answers, has no such branch | at the remote's trunk as fetched now, tracking nothing until its first push | `branch  feature/x (new, from origin/master at <sha>)` |
+| cannot be read | at the local trunk, or at the remote's branch as last fetched when one is known | the same line from `master`, and a `warning` line naming the remote, git's reason, how many commits the local trunk is behind the remote's trunk as last fetched, and the reset to run once it answers |
+| there is none | at the local trunk; nothing is fetched and nothing is said | `branch  feature/x (new, from master at <sha>)` |
+
+</div>
+
+
+`--base REF` is taken as given and never fetched. The JSON carries the decision as `start`
+(`from`: `remote_trunk`, `remote_branch`, `local_trunk`, `given`, `head`, with the remote,
+the reason and the distance) and the commit read back from the new worktree as
+`start_commit`. This is the one place a worktree command reaches the network; every other
+read and decision works offline.
 
 ### The `.envrc` of a new path
 
@@ -407,7 +438,9 @@ says where to `cd`.
 | `direnv: error .envrc is blocked` in a worktree | `envrc   differs …` or `envrc   the primary checkout's is not approved …` on the create or migrate report | read the file, then `direnv allow` there; approve the primary checkout's first when that is what the report names. A worktree older than the report: `majordomus worktree ensure <branch>` carries the approval now |
 | a commit in a worktree judged by stale hooks | `FAIL wiring hooks-path … runs <primary>/.githooks, not its own` from `doctor` | the command doctor prints, or `majordomus worktree repair`, which binds every linked worktree to its own `.githooks` |
 | the primary checkout on a feature branch | `worktree.primary_on_non_trunk`; the guard refuses | when clean, `git switch <trunk>`; then `worktree create <branch>` |
+| a new worktree started behind the remote | `warning could not fetch <trunk> from <remote> (…): started from the local <trunk>, N commits behind …` on the create report | once the remote answers, the `git fetch` and `git reset --hard` the warning prints, in the new worktree, before its first commit |
 | a scratch checkout of a session on a branch | `worktree.ephemeral`; the guard refuses | `git switch --detach` there and continue in the canonical worktree, or `migrate --include-ephemeral --only <branch>` |
+| a task in a fresh worktree off the mesh | `WARN mesh … not claimed on it` from `start`, then `FAIL mesh … never claimed on it` from the pre-push `finish --check` | `start` ensures the worktree's own server before it claims, so this appears only when it could not (`MAJORDOMUS_RUNTIME=off`, a stale executable, a server that did not converge): `majordomus serve ensure`, then `majordomus check`, which claims the running task's scope. No partial finish and second start (`docs/MESH.md`) |
 | a move that crossed devices | `worktree.cross_device` on the step, or a refusal | `migrate --allow-copy` |
 | a fingerprint mismatch | `worktree.migration_verification_failed`, the differences listed | inspect the worktree where git registers it before touching anything; a rename cannot lose content, so something wrote to it during the move |
 | a built executable that was there a minute ago | `MAJORDOMUS_BIN is not an executable`, or a test failing on a branch that was green | an environment event, not a defect in the branch under test: another worker reclaimed the build directory. Rebuild in **your own** worktree and re-measure. `project.reclaim-only-what-you-own` says whose it was |
@@ -551,4 +584,34 @@ the tree's own directory and is never replaced. The rule is
 `project.a-build-never-waits-in-silence-on-anothers-lock`; `scripts/liveness-check` refuses
 a tracked script that calls cargo any other way, and
 `test/cases/3002_a_build_never_waits_in_silence.sh` proves each row above.
+
+## Idle incremental sessions in the shared build directory
+
+rustc keeps a crate's incremental state as session directories under
+`<build-dir>/<profile>/incremental/<crate>-<hash>/`, and only a later compile of the same crate
+removes a finished one. A crate that stops being compiled leaves its last session behind, and in
+the build directory every worktree shares that means every worktree's leftovers. On 2026-10-16
+the shared directory held 79 GB of them in 454 sessions, five of them live, with 6.9 GiB of the
+disk left free.
+
+So before a build starts, `mj_cargo_bounded` and the disk floor's check (`lib/rust_bin.sh`)
+remove the idle sessions of the build directory that build uses:
+
+<div class="overflow-x-auto" tabindex="0">
+
+| what | what happens |
+|---|---|
+| a finished session (`s-*`, not `-working`) unwritten for over `MAJORDOMUS_INCREMENTAL_IDLE_MIN` minutes (default 30) | removed, after its age and size are printed; then one line says how many were removed, what du counted in them, and the volume's free space before and after |
+| a `-working` session, a younger one, the lock files beside them | never touched |
+| another build directory, a target directory, a profile directory that is a symlink out of the build directory | never touched |
+| cargo does not say where the build directory is, it carries no mark of cargo's, or a listing cannot be read whole | nothing is removed, and one line says why |
+| free space is still under the floor after that | the build refuses, and the refusal names the five largest build directories with their sizes |
+
+</div>
+
+
+The build directory is the one `cargo metadata` reports, asked from inside the crate so that
+the pinned toolchain answers. `MAJORDOMUS_INCREMENTAL_IDLE_MIN=0` removes nothing.
+`test/cases/3080_idle_incremental_sessions_are_pruned.sh` proves each row against a fixture
+build directory.
 {% endraw %}

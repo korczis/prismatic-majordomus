@@ -48,7 +48,7 @@ flowchart TD
     registry["MeshRegistry&lt;br&gt;one record per node × runtime"]
   end
   subgraph cooperationLayer["cooperation (ADR 0067)"]
-    link["link handshake (link.rs)&lt;br&gt;signature · freshness · nonce · protocol ·&lt;br&gt;self · repository · trust"]
+    link["link handshake (cooperation.rs)&lt;br&gt;size · shape · signature · freshness · nonce ·&lt;br&gt;protocol · self · recipient · repository ·&lt;br&gt;trust · link age · nonce cache · capacity"]
     table["peer-link table (cooperation.rs)&lt;br&gt;connecting · connected · degraded ·&lt;br&gt;unreachable · expired"]
     journal["Journal (journal.rs)&lt;br&gt;signed events (stream, seq), Lamport,&lt;br&gt;beats, marks"]
     fold["fold (state.rs)&lt;br&gt;sessions · claims · conflicts ·&lt;br&gt;handovers · reviews · digest"]
@@ -107,6 +107,25 @@ path in `mesh::manager` (size → shape → version → bounds → staleness →
 skip → trust policy) into one registry keyed by node and runtime. Envelopes are at most 1200
 bytes, signed, and carry the key, runtime, instance, endpoints, transports, repository
 identities and version; never a secret, a path or repository content.
+
+A tailnet is a discovery source too. When the declaration's `tailscale.enabled` is on (the
+default), the Tailscale provider reads `tailscale status --json` every `interval_seconds`
+(60) and asks every peer listed online as a rendezvous at
+`http://<tailnet address>:<port>` (port 8791 unless declared). What comes back is the same
+signed `mesh.register` answer a declared rendezvous gives, through the same verification
+path, so the provider proposes addresses and decides nothing: a machine that joins the
+tailnet is found with no address written by hand, and the trust list still decides what
+links. Without the Tailscale CLI the provider is listed `stopped` with the reason, which is
+no fault, so `mesh doctor` never fails a repository whose machines do not run Tailscale. A
+CLI that is there and answers an error is listed `failed`; the others run on either way.
+
+```yaml
+tailscale:
+  enabled: true        # the default
+  port: 8791           # where a peer's server answers mesh.register
+  interval_seconds: 60
+  command: tailscale   # the CLI to ask
+```
 
 Discovery protocol **2** added the runtime slot. A version-2 reader reads version 1 (as the
 node's unnamed runtime); a version-1 reader refuses version 2 and counts it as `version`, so
@@ -171,22 +190,35 @@ other, or any runtime with a declared seed — posts a signed **hello** to
 `POST /api/v1/mesh/link/hello`: its runtime card (key, runtime, instance, repository, name,
 version, features, endpoints), a 32-hex nonce, a timestamp, its link protocol range and,
 when the dialer knows whom it dials, the runtime key it means to reach (`to`). The answerer
-admits it only if, in the order the code checks:
+admits it only if, in the order the code checks (`Cooperation::accept_hello`; the first check
+that fails decides the refusal, and rule `project.mesh-cooperation-is-authenticated` v2 lists
+the same order):
 
-1. the message is within 900 KiB and has the shape of a hello;
-2. the Ed25519 signature verifies under the hello domain (a signature over another message
-   kind can never be replayed as a hello);
-3. the timestamp is within ±300 s of its clock;
-4. the nonce has 32 hex characters;
-5. the protocol ranges meet (link protocol 1..1 today; the highest common version is chosen);
-6. the peer is not this runtime;
-7. a hello that names its recipient names this runtime — a copy captured on its way to
-   another runtime of the repository is refused `misaddressed`;
-8. the peer's repository identity equals its own;
-9. the peer's key is trusted by its policy;
-10. the nonce has not been answered before. It is checked last on purpose: the replay cache
-    holds only nonces of trusted keys of this repository, so a stranger's hellos can neither
-    fill it nor evict a real peer's nonce.
+1. cooperation is running on it (`not_active`);
+2. the message is within 900 KiB (`oversized`);
+3. it has the shape of a hello and a well-formed card (`malformed`);
+4. the Ed25519 signature verifies under the hello domain — a signature over another message
+   kind can never be replayed as a hello (`signature`);
+5. the timestamp is within ±300 s of its clock (`stale`);
+6. the nonce has 32 hex characters (`malformed`);
+7. the protocol ranges meet — link protocol 1..1 today; the highest common version is
+   chosen (`protocol_unsupported`);
+8. the peer is not this runtime (`self_link`);
+9. a hello that names its recipient names this runtime — a copy captured on its way to
+   another runtime of the repository is refused before its nonce is spent (`misaddressed`);
+10. the peer's repository identity equals its own (`repository_mismatch`);
+11. the peer's key is trusted by its policy (`untrusted`);
+12. the hello is no older than the one that made the peer's live link (`replay`);
+13. its nonce has not been answered before (`replay`);
+14. a peer it does not know yet fits the peer table (`capacity`).
+
+The two replay checks come after trust on purpose: the replay cache holds only nonces of
+trusted keys of this repository, so a stranger's hellos can neither fill it nor evict a real
+peer's nonce. The age check is what the cache cannot be after a restart: a hello captured
+before this runtime restarted, replayed within the skew window once the peer has linked
+again, is refused `replay` rather than displacing that link. The unit test
+`the_hello_checks_run_in_the_order_the_rule_lists` sends hellos that fail each check and
+each adjacent pair, and reads this list and the rule's to hold all three to one order.
 
 A hello without `to` — from a seed, a first contact, or a release before it — is still
 admitted, and is protected from replay to another runtime only by the per-runtime nonce cache
@@ -310,6 +342,19 @@ compare. `majordomus mesh state` and `mesh peers` take the same input as `--full
 refuses it as invalid; the readers in this repository that need the fold (the integration
 lease's claims, the mesh-review advisor) ask again without it, and the answer is the same.
 
+**Paging the raw journal.** `mesh.events` (`mesh events --after`, `/events?after=&limit=`)
+reads forward in causal order and answers `lamport`, the stamp of the last event on the page,
+which is the `after` of the next page. A page never ends inside a run of equal stamps — runtimes
+that wrote concurrently share them — so it can carry more than `limit`, and a walk resumed from
+each answer's `lamport` returns every event once, in order, while the reader's own events, and
+peers' events stamped above the walk's position, keep arriving between pages (I2140; unit tests
+`paging_by_stamp_returns_every_event_exactly_once` and
+`paging_while_events_arrive_returns_every_event_exactly_once`). One arrival is outside that
+walk: an event stamped at or below a position already passed — a runtime that was partitioned
+away and wrote without hearing it. Lamport stamps are their writer's, not the reader's arrival
+order, so such an event is read from an earlier `after` or folded by `mesh state`, not by the
+resumed walk.
+
 ## Claims and leases
 
 A claim is a scope — repository-relative paths — held by a session, `exclusive` (the default)
@@ -329,6 +374,17 @@ meets `apps/majordomus-cli`; `app` does not.
   holder's claim expires instead.
 - **Advisory** claims report overlaps and refuse nothing. The peer board's announcements are
   projected as advisory claims of the announcing MCP session.
+
+### Seats are claims
+
+The repository's way of working puts sessions in seats: the one that lands, the one that
+releases, the lanes that repair conflicting branches, and the workers. A seat is held by
+holding its exclusive claim, so it is subject to everything above: it is refused to a second
+session while it is held, it moves when the claim is released, and it falls vacant when its
+holder stops beating. Which seats there are and which scope each one claims is
+[rule `project.the-cooperation-model-is-the-owners-word`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v1.md)
+(ADR 0167), the one record of it; this document does not copy the table. The Mesh screen of
+the UI (`/ui/mesh`) asks `mesh.state` for the live claims and draws who holds each seat now.
 
 ## Handovers
 
@@ -446,15 +502,24 @@ A task is on the mesh while it works (I2288). `majordomus start` claims the task
 an advisory claim of the mesh session `task-<id>`, with the task's title as its intent and its
 issue, and keeps the claim's key on the task record as `mesh_claim`; `finish` closes that
 session, which ends its claims on every linked runtime. Every machine sees what the task works
-on and reports an overlap; an exclusive claim before building stays the worker's own act. With
-no server, or a mesh that does not run, nothing is claimed and `start` does not fail.
+on and reports an overlap; an exclusive claim before building stays the worker's own act. On
+a repository whose mesh declaration is enabled, `start` first ensures the checkout's shared
+server — a fresh linked worktree has none until something brings it up, since no provider
+start event fired there — with the same bounded `serve ensure` the start event and the shell
+entry run, under the same switches (`session.ensure_server_on_start`, `MAJORDOMUS_RUNTIME=off`),
+and says on stderr when it starts one. When the claim still does not happen (the runtime
+switched off, a stale or missing executable, a server that did not converge) `start` does not
+fail: it reports `WARN mesh` naming why and the repair. With no enabled mesh, `start` claims
+only through a server that already answers.
 
 That claim is enforced (I2289, rule `majordomus.task-on-the-mesh`). On a repository whose
 tracked declaration says `enabled: true`, `check` reports an active task whose record carries
 no `mesh_claim` under `mesh`, and `finish --outcome completed` refuses it, the refusal recorded
-with the rule named. `finish` claims the scope again first, so a server started after the task
-is all the task needs (`majordomus serve ensure`). `partial`, `blocked`, `no_match` and
-`failed` are not refused, and a repository with no enabled mesh is not judged.
+with the rule named. The state is repairable without ending the task: `majordomus serve
+ensure`, then `majordomus check`, which claims the running task's scope once a server answers
+and records the key; `finish` claims again first as well. `finish --check`, the pre-push gate,
+is a question and claims nothing. `partial`, `blocked`, `no_match` and `failed` are not
+refused, and a repository with no enabled mesh is not judged.
 
 An edit is asked for its claim before it happens (I2735). With `session.edits_require_claim:
 true` in the policy, the provider's pre-tool hook (`.claude/hooks/majordomus-edit-guard`, for
@@ -509,7 +574,7 @@ What the mesh defends against, and how:
 | threat | answer |
 |---|---|
 | forged advertisement, hello, welcome, sync or event | Ed25519 over canonical bytes under per-message domains; the node id is derived from the key, never carried |
-| replayed hello or sync round | nonce cache; per-link rising counter; per-instance sequence for advertisements and events; a hello that names its recipient is refused `misaddressed` by every other runtime (I2132) |
+| replayed hello or sync round | nonce cache; per-link rising counter; per-instance sequence for advertisements and events; a hello that names its recipient is refused `misaddressed` by every other runtime, and a hello older than the one that made the peer's live link cannot replace it, even after a restart emptied the cache (I2132) |
 | a runtime of another repository | `repository_mismatch` at the handshake, `repository` rejection at ingest |
 | an unknown or untrusted key on the network | observed by discovery, refused `untrusted` at the handshake; its relayed events refused `untrusted` at ingest |
 | a key withdrawn from `trust.allow`, then a restart | the journal file is input: a reloaded event passes the checks and the trust decision a received one does, and what is refused is reported by reason (`untrusted`); only this machine's own key needs no allowing |
@@ -585,9 +650,10 @@ would be written into the other checkout.
 
 This repository runs its own mesh: `.ai/repo/mesh/majordomus.yaml` is committed with
 `enabled: true`, so every server of every worktree of it announces, listens and links. That is
-this repository's reviewed decision, not the tool's default: the skeleton a new repository
-starts from ships no declaration, and nothing opens there until its own operator commits one
-(the guarantee `mesh-off-by-default`).
+this repository's reviewed decision about who is listed. The tool's default is the same shape
+with an empty trust list: `majordomus init` seeds `.ai/repo/mesh/mesh.yaml` enabled and
+`deny_unknown`, so nothing opens until a machine runs `majordomus mesh enrol` and the change
+is committed (ADR 0168; the guarantee `mesh-off-by-default`).
 
 <div class="overflow-x-auto" tabindex="0">
 
@@ -792,6 +858,7 @@ majordomus mesh doctor            # prerequisites, the host firewall, and the se
 majordomus mesh firewall          # what the host firewall must admit, whether it does, and the commands; exits 10 when it does not
 sudo majordomus mesh firewall apply   # admit it; needs root, refuses without
 majordomus mesh identity          # this machine's key, for trust.allow
+majordomus mesh enrol             # list this machine's key in trust.allow, once; then commit
 majordomus mesh status            # discovery: providers, tallies, refusals
 majordomus mesh nodes             # discovery: one row per node × runtime
 majordomus mesh peers             # machines → runtimes → active sessions, each link's state; --full for all

@@ -340,6 +340,13 @@ verdict is `satisfied` while the stage is `planned` or `executing`) and
 `closed_work_not_satisfied` (every milestone DONE, the verdict `unsatisfied` or `unknown`, with
 the criteria holding it back).
 
+A unit of work no intent links is classified by the facts it records (ADR 0075, amendment of
+2026-10-15), and only the last class is work serving no intent: `empty` (a session record that
+lists no issue, no commit and no changed path), `before_intents` (finished work that started
+before the first intent record), `orphan` (anything else). The text summary reads
+`N serving no intent (E empty records, B before the first intent)`, each unlinked line names its
+class, and the JSON answer carries `orphans`, `empty` and `before_intents`.
+
 In the Cockpit, `/cockpit/intents` lists every intent with its stage and the work realising it,
 and `/cockpit/intents/<id>` shows one: each criterion with its evidence state, linked to the test
 object it names and to the issues serving it, and each unit of work with the provenance of its

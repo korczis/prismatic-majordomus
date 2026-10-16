@@ -88,7 +88,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus worktree root`](#majordomus-worktree-root) | `/docs/cli/worktree/root/` | Print the container every linked worktree belongs under, and nothing else: `cd "$(majordomus worktree root)"` |
 | [`majordomus worktree path`](#majordomus-worktree-path) | `/docs/cli/worktree/path/` | Print the canonical path of a branch, and nothing else: `cd "$(majordomus worktree path feature/x)"`. Derived from the name; the branch need not exist |
 | [`majordomus worktree inspect`](#majordomus-worktree-inspect) | `/docs/cli/worktree/inspect/` | One branch: its canonical path, whether it exists, what occupies the path, the worktree holding it, and what stands in the way |
-| [`majordomus worktree create`](#majordomus-worktree-create) | `/docs/cli/worktree/create/` | Create the canonical worktree of a branch, creating the branch from --base (default: the trunk) when it does not exist. The path is derived; none may be given |
+| [`majordomus worktree create`](#majordomus-worktree-create) | `/docs/cli/worktree/create/` | Create the canonical worktree of a branch. A branch that does not exist here is fetched from the trunk's remote and taken up when the remote has it; otherwise it is created from --base, else from the remote's trunk fetched now (the local trunk only when the remote cannot be read, and then said, with how far behind). The path is derived; none may be given |
 | [`majordomus worktree ensure`](#majordomus-worktree-ensure) | `/docs/cli/worktree/ensure/` | The canonical worktree of a branch: created when absent, answered when present, refused when the branch is checked out somewhere else |
 | [`majordomus worktree migrate`](#majordomus-worktree-migrate) | `/docs/cli/worktree/migrate/` | Bring every misplaced worktree to its canonical path, dirty state included, with a fingerprint taken before and after each move; --plan shows the steps and changes nothing |
 | [`majordomus worktree validate`](#majordomus-worktree-validate) | `/docs/cli/worktree/validate/` | Every error of the topology, and nothing else; exit 10 when there is one |
@@ -133,6 +133,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus release version`](#majordomus-release-version) | `/docs/cli/release/version/` | The version the crate manifest declares, whether the projection the shell tool reads states it, any version written by hand where the tool's files live, and the bump the commits since the last release imply |
 | [`majordomus release analyze`](#majordomus-release-analyze) | `/docs/cli/release/analyze/` | What the public contract did since the last release, and the smallest version this tree may therefore declare |
 | [`majordomus release next`](#majordomus-release-next) | `/docs/cli/release/next/` | The version a landing of HEAD onto the trunk allocates, and why: the trunk's version, the measured movement, the policy floor and any exemption (ADR 0134) |
+| [`majordomus release site`](#majordomus-release-site) | `/docs/cli/release/site/` | Whether a release leaves the site better than the previous one found it: no measure of the site regressed, and at least one change in the window improves it through a source it is generated from |
 | [`majordomus release bump`](#majordomus-release-bump) | `/docs/cli/release/bump/` | Raise the version in the one place it is authored, to at least what the public contract requires; scripts/derive derives the rest |
 | [`majordomus quality`](#majordomus-quality) | `/docs/cli/quality/` | What this executable's own public surface is held to: documentation, executable examples, module coverage, and every command accounted for against the capability registry |
 | [`majordomus quality report`](#majordomus-quality-report) | `/docs/cli/quality/report/` | Measure the crate and report every finding, with the rule it breaks and what to do about it |
@@ -154,6 +155,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus mesh status`](#majordomus-mesh-status) | `/docs/cli/mesh/status/` | Whether the mesh runs in this checkout's server and why not when it does not, with every provider's state and the registry's tallies |
 | [`majordomus mesh nodes`](#majordomus-mesh-nodes) | `/docs/cli/mesh/nodes/` | Every node the running server has observed, deduplicated by node identity, with trust, presence, endpoints and provenance |
 | [`majordomus mesh identity`](#majordomus-mesh-identity) | `/docs/cli/mesh/identity/` | This machine's node identity, public half only; absent is an answer, not an error |
+| [`majordomus mesh enrol`](#majordomus-mesh-enrol) | `/docs/cli/mesh/enrol/` | Add this machine's public key to the mesh declaration's trust list, once; commit it to join |
 | [`majordomus mesh doctor`](#majordomus-mesh-doctor) | `/docs/cli/mesh/doctor/` | Prove the mesh prerequisites on this machine alone: declaration, identity, sockets, multicast, broadcast, the protocol end to end, and the host firewall |
 | [`majordomus mesh firewall`](#majordomus-mesh-firewall) | `/docs/cli/mesh/firewall/` | What the host firewall must admit for the declared mesh and whether it does; `apply` admits it, as root |
 | [`majordomus mesh firewall apply`](#majordomus-mesh-firewall-apply) | `/docs/cli/mesh/firewall/apply/` | Run the commands that admit the plan on this host's firewall; needs root, and exits 10 when it refuses or the firewall still does not admit the mesh |
@@ -2521,7 +2523,7 @@ Examples:
 <a id="majordomus-worktree-create"></a>
 ## `majordomus worktree create`
 
-Create the canonical worktree of a branch, creating the branch from --base (default: the trunk) when it does not exist. The path is derived; none may be given
+Create the canonical worktree of a branch. A branch that does not exist here is fetched from the trunk's remote and taken up when the remote has it; otherwise it is created from --base, else from the remote's trunk fetched now (the local trunk only when the remote cannot be read, and then said, with how far behind). The path is derived; none may be given
 
 ```text
 majordomus worktree create [OPTIONS] [BRANCH]
@@ -3717,7 +3719,7 @@ Examples:
 
 What this project has shipped and what it would ship next: the changelog derived from the layer's own records, the version authored in one place and projected for the shell tool, and the one command that raises it
 
-Subcommands: [`majordomus release changelog`](#majordomus-release-changelog), [`majordomus release version`](#majordomus-release-version), [`majordomus release analyze`](#majordomus-release-analyze), [`majordomus release next`](#majordomus-release-next), [`majordomus release bump`](#majordomus-release-bump).
+Subcommands: [`majordomus release changelog`](#majordomus-release-changelog), [`majordomus release version`](#majordomus-release-version), [`majordomus release analyze`](#majordomus-release-analyze), [`majordomus release next`](#majordomus-release-next), [`majordomus release site`](#majordomus-release-site), [`majordomus release bump`](#majordomus-release-bump).
 
 ```text
 majordomus release [OPTIONS] [COMMAND]
@@ -3849,6 +3851,35 @@ Examples:
 
   ```console
   $ majordomus release next --format json
+  ```
+
+  Verified: exits 12.
+
+<a id="majordomus-release-site"></a>
+## `majordomus release site`
+
+Whether a release leaves the site better than the previous one found it: no measure of the site regressed, and at least one change in the window improves it through a source it is generated from
+
+```text
+majordomus release site [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--since` | `<REF>` | — | The previous release: a recorded tag or version, or any commit; the newest recorded stable release that is an ancestor of the head when absent |
+| `--head` | `<REF>` | `HEAD` | The commit being released |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | How to render the answer (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Whether a release leaves the site better than it found it** — The verdict of project.a-release-leaves-the-site-better: every measure of the site the executable computes — the text pairs below WCAG AA and the weakest text contrast in each theme, and the page files written by hand — at the previous release's recorded commit and at the commit being released, each with its delta; then every commit of the window that touched the site or named it, and whether it counts as an improvement. Exit 0 passes, 10 is a regression or a window with no improvement, each finding naming the measure and its delta or the commits and why none counts. The release workflow asks it before it builds anything. This fixture has recorded no release, so there is nothing to compare with, and it says so with exit 12 rather than passing.
+
+  ```console
+  $ majordomus release site --format json
   ```
 
   Verified: exits 12.
@@ -4344,7 +4375,7 @@ Examples:
 
 The mesh: the nodes this repository's running server has discovered on the network, this machine's node identity, and the self-check that proves the prerequisites on this machine alone
 
-Subcommands: [`majordomus mesh status`](#majordomus-mesh-status), [`majordomus mesh nodes`](#majordomus-mesh-nodes), [`majordomus mesh identity`](#majordomus-mesh-identity), [`majordomus mesh doctor`](#majordomus-mesh-doctor), [`majordomus mesh firewall`](#majordomus-mesh-firewall), [`majordomus mesh peers`](#majordomus-mesh-peers), [`majordomus mesh peer`](#majordomus-mesh-peer), [`majordomus mesh state`](#majordomus-mesh-state), [`majordomus mesh events`](#majordomus-mesh-events), [`majordomus mesh verify`](#majordomus-mesh-verify), [`majordomus mesh claim`](#majordomus-mesh-claim), [`majordomus mesh release`](#majordomus-mesh-release), [`majordomus mesh session`](#majordomus-mesh-session), [`majordomus mesh handover`](#majordomus-mesh-handover), [`majordomus mesh review`](#majordomus-mesh-review).
+Subcommands: [`majordomus mesh status`](#majordomus-mesh-status), [`majordomus mesh nodes`](#majordomus-mesh-nodes), [`majordomus mesh identity`](#majordomus-mesh-identity), [`majordomus mesh enrol`](#majordomus-mesh-enrol), [`majordomus mesh doctor`](#majordomus-mesh-doctor), [`majordomus mesh firewall`](#majordomus-mesh-firewall), [`majordomus mesh peers`](#majordomus-mesh-peers), [`majordomus mesh peer`](#majordomus-mesh-peer), [`majordomus mesh state`](#majordomus-mesh-state), [`majordomus mesh events`](#majordomus-mesh-events), [`majordomus mesh verify`](#majordomus-mesh-verify), [`majordomus mesh claim`](#majordomus-mesh-claim), [`majordomus mesh release`](#majordomus-mesh-release), [`majordomus mesh session`](#majordomus-mesh-session), [`majordomus mesh handover`](#majordomus-mesh-handover), [`majordomus mesh review`](#majordomus-mesh-review).
 
 ```text
 majordomus mesh <COMMAND>
@@ -4432,6 +4463,33 @@ Examples:
   ```
 
   Verified: exits 0; prints present.
+
+<a id="majordomus-mesh-enrol"></a>
+## `majordomus mesh enrol`
+
+Add this machine's public key to the mesh declaration's trust list, once; commit it to join
+
+```text
+majordomus mesh enrol [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | `text` for a person, `json` for a machine; both render the same answer — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Enrol this machine in the repository's mesh** — Adds this machine's public key to trust.allow under a comment naming the machine, once; a listed key changes nothing. A repository that declares no mesh is refused (exit 13) before an identity is created or a file is touched: `majordomus init --extend` seeds the declaration.
+
+  ```console
+  $ majordomus mesh enrol
+  ```
+
+  Verified: exits 13.
 
 <a id="majordomus-mesh-doctor"></a>
 ## `majordomus mesh doctor`
@@ -5014,6 +5072,7 @@ majordomus monitor [OPTIONS]
 |---|---|---|---|
 | `--follow` | flag | — | Keep following: ask again every `--interval` seconds and print only what is new |
 | `--after` | `<AFTER>` | — | Start after this cursor (a page's `cursor`), instead of the newest signals |
+| `--cursor-file` | `<FILE>` | — | Keep the cursor in this file: start after the one it holds (unless `--after` is given) and write each page's cursor back, so a restarted watcher repeats nothing |
 | `--limit` | `<LIMIT>` | — | At most this many signals per page (default 50, at most 500) |
 | `--sources` | `<SOURCES>` | — | A comma-separated subset of mesh, executor and github (default: all three) |
 | `--for` | `<READER>` | — | Your names, comma-separated (a worker such as 1b, a role, a login): what names them is marked for you; default $MAJORDOMUS_MONITOR_FOR |

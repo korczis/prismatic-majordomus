@@ -330,6 +330,8 @@ mod tests {
                 "continuity.publish",
                 "continuity.resume",
                 "continuity.sync",
+                // the mesh declaration's trust list, this machine's key only (ADR 0168)
+                "mesh.enrol",
                 // runs any executable capability, writers included (ADR 0126)
                 "executions.start",
                 // writes one new intent record, never a stage (ADR 0144)

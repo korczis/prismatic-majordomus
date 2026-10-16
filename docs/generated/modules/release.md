@@ -5,7 +5,7 @@
 
 What this project has shipped and what it would ship next, derived rather than maintained: the changelog composes the layer's release records, the decisions dated inside each release's window and the conventional commits in its range; the version report reads the one place the version is authored and the projection the shell tool prints, and says what the public contract requires it to become — or that it cannot be measured, and so decides nothing — with what the commits since the last release imply beside it as evidence.
 
-Stability: implemented. Capabilities: 4.
+Stability: implemented. Capabilities: 5.
 
 ## `release.analysis` — What the public contract did, and the smallest version it allows
 
@@ -72,6 +72,29 @@ What the integration executor raises the trunk's version to when it lands a head
 | `head` | string or null | no | What lands; `HEAD` when absent. |
 
 Output: `LandingDecision`.
+
+## `release.site` — Whether a release leaves the site better than it found it
+
+The verdict of `project.a-release-leaves-the-site-better` on one release: every measure of the site this executable computes from a tree — the text pairs below WCAG AA and the weakest text contrast in each theme, from the design declaration and the stylesheets that consume it, and how many of the site's page files are written by hand rather than generated — at the previous release's recorded commit and at the commit being released, each named with its delta and whether it held, improved or regressed; then every commit of the window between them that touched the site or named it as its subject, with whether it counts as an improvement and why. A change counts when its type is one the publication model's `release` section counts and it changes, outside every file `.gitattributes` marks `merge=derived`, a source of the site's gate classes, or any source while its scope names the site; a change whose every file is generated output counts for nothing. The release passes when no measure regressed or could not be taken and at least one change counts; otherwise each finding names the measure and its delta, or the commits that touched the site and why none counts. A repository with no recorded release that is an ancestor of the commit has nothing to compare with, and is refused rather than passed.
+
+| | |
+|---|---|
+| kind | query |
+| stability | implemented |
+| MCP tool | `majordomus_release_site` |
+| HTTP | `GET /api/v1/release/site` |
+| cache | — |
+| benchmark | waived (published_history) |
+| provenance | builtin majordomus_cli::capability::builtin::release |
+| tags | release, site, web |
+
+| input | type | required | description |
+|---|---|---|---|
+| `since` | string or null | no | The previous release: a recorded tag or version, or any commit; the newest recorded
+stable release that is an ancestor of `head` when absent. |
+| `head` | string or null | no | The commit being released; `HEAD` when absent. |
+
+Output: `ReleaseSiteVerdict`.
 
 ## `release.version` — The version, and the one the contract requires next
 

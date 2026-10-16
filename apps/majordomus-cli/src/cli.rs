@@ -722,6 +722,8 @@ pub enum MeshCommand {
     Nodes(MeshQueryArgs),
     /// This machine's node identity, public half only; absent is an answer, not an error
     Identity(MeshQueryArgs),
+    /// Add this machine's public key to the mesh declaration's trust list, once; commit it to join
+    Enrol(MeshQueryArgs),
     /// Prove the mesh prerequisites on this machine alone: declaration, identity, sockets, multicast, broadcast, the protocol end to end, and the host firewall
     Doctor(MeshQueryArgs),
     /// What the host firewall must admit for the declared mesh and whether it does; `apply` admits it, as root
@@ -1552,6 +1554,9 @@ pub struct MonitorArgs {
     /// Start after this cursor (a page's `cursor`), instead of the newest signals
     #[arg(long)]
     pub after: Option<String>,
+    /// Keep the cursor in this file: start after the one it holds (unless `--after` is given) and write each page's cursor back, so a restarted watcher repeats nothing
+    #[arg(long, value_name = "FILE")]
+    pub cursor_file: Option<std::path::PathBuf>,
     /// At most this many signals per page (default 50, at most 500)
     #[arg(long)]
     pub limit: Option<u64>,
@@ -1850,6 +1855,15 @@ pub enum ReleaseCommand {
         #[arg(long, value_name = "REF", default_value = "origin/master")]
         base: String,
         /// What lands
+        #[arg(long, value_name = "REF", default_value = "HEAD")]
+        head: String,
+    },
+    /// Whether a release leaves the site better than the previous one found it: no measure of the site regressed, and at least one change in the window improves it through a source it is generated from
+    Site {
+        /// The previous release: a recorded tag or version, or any commit; the newest recorded stable release that is an ancestor of the head when absent
+        #[arg(long, value_name = "REF")]
+        since: Option<String>,
+        /// The commit being released
         #[arg(long, value_name = "REF", default_value = "HEAD")]
         head: String,
     },
@@ -3753,7 +3767,7 @@ pub enum WorktreeCommand {
         /// The branch, full name
         branch: String,
     },
-    /// Create the canonical worktree of a branch, creating the branch from --base (default: the trunk) when it does not exist. The path is derived; none may be given
+    /// Create the canonical worktree of a branch. A branch that does not exist here is fetched from the trunk's remote and taken up when the remote has it; otherwise it is created from --base, else from the remote's trunk fetched now (the local trunk only when the remote cannot be read, and then said, with how far behind). The path is derived; none may be given
     Create {
         /// The branch, full name (`feature/improve-cli`)
         #[arg(value_name = "BRANCH", required_unless_present = "issue")]
@@ -5019,6 +5033,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             title: "What a landing would raise the version to",
             description: "The version the integration executor allocates when it lands a head on the trunk (ADR 0134): the trunk's version, the head's movement of the public contract measured against the trunk's committed registry, the policy floor and any exemption, and the larger of the requirement and the floor — read from git at the two refs, never from the branch's own version. This fixture has no trunk to raise from, and says so with exit 12 rather than inventing a number.",
             argv: &["release", "next", "--format", "json"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
+        }],
+    },
+    CommandExamples {
+        command: "release site",
+        examples: &[ExampleDoc {
+            id: "release-site",
+            title: "Whether a release leaves the site better than it found it",
+            description: "The verdict of project.a-release-leaves-the-site-better: every measure of the site the executable computes — the text pairs below WCAG AA and the weakest text contrast in each theme, and the page files written by hand — at the previous release's recorded commit and at the commit being released, each with its delta; then every commit of the window that touched the site or named it, and whether it counts as an improvement. Exit 0 passes, 10 is a regression or a window with no improvement, each finding naming the measure and its delta or the commits and why none counts. The release workflow asks it before it builds anything. This fixture has recorded no release, so there is nothing to compare with, and it says so with exit 12 rather than passing.",
+            argv: &["release", "site", "--format", "json"],
             setup: &[],
             expect: Expect::ExitCode(12),
         }],
@@ -7086,6 +7111,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["mesh", "nodes"],
             setup: &[],
             expect: Expect::StdoutContains(&["mesh"]),
+        }],
+    },
+    CommandExamples {
+        command: "mesh enrol",
+        examples: &[ExampleDoc {
+            id: "mesh-enrol",
+            title: "Enrol this machine in the repository's mesh",
+            description: "Adds this machine's public key to trust.allow under a comment naming the machine, once; a listed key changes nothing. A repository that declares no mesh is refused (exit 13) before an identity is created or a file is touched: `majordomus init --extend` seeds the declaration.",
+            argv: &["mesh", "enrol"],
+            setup: &[],
+            expect: Expect::ExitCode(13),
         }],
     },
     CommandExamples {

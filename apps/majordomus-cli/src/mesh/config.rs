@@ -63,6 +63,10 @@ pub struct MeshConfig {
     /// Rendezvous endpoints, for networks multicast cannot cross.
     #[serde(default)]
     pub rendezvous: RendezvousConfig,
+    /// The tailnet: every online Tailscale peer is asked as a rendezvous, so a machine
+    /// joining the tailnet is found with no address written by hand.
+    #[serde(default)]
+    pub tailscale: TailscaleConfig,
     /// Who to trust.
     #[serde(default)]
     pub trust: TrustConfig,
@@ -248,6 +252,57 @@ impl Default for RendezvousConfig {
             interval_seconds: rendezvous_interval(),
         }
     }
+}
+
+/// Tailscale discovery: the peers `tailscale status --json` lists online are asked as
+/// rendezvous at `http://<tailnet address>:<port>`. On by default; a machine without the
+/// Tailscale CLI reports the provider failed and the others run on. It proposes addresses
+/// only: what links is still decided by the signed answers and the trust list.
+///
+/// ```
+/// use majordomus_cli::mesh::config::TailscaleConfig;
+///
+/// let default = TailscaleConfig::default();
+/// assert!(default.enabled);
+/// assert_eq!((default.port, default.command.as_str()), (8791, "tailscale"));
+/// let stated: TailscaleConfig =
+///     serde_json::from_value(serde_json::json!({ "enabled": false })).unwrap();
+/// assert!(!stated.enabled && stated.interval_seconds == default.interval_seconds);
+/// ```
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct TailscaleConfig {
+    /// Whether the tailnet is asked at all.
+    #[serde(default = "yes")]
+    pub enabled: bool,
+    /// The port a peer's Majordomus server answers `mesh.register` on.
+    #[serde(default = "tailscale_port")]
+    pub port: u16,
+    /// Seconds between two readings of the tailnet and two registrations per peer.
+    #[serde(default = "rendezvous_interval")]
+    pub interval_seconds: u64,
+    /// The Tailscale CLI to ask; `tailscale` on the PATH unless stated.
+    #[serde(default = "tailscale_command")]
+    pub command: String,
+}
+
+impl Default for TailscaleConfig {
+    fn default() -> Self {
+        TailscaleConfig {
+            enabled: true,
+            port: tailscale_port(),
+            interval_seconds: rendezvous_interval(),
+            command: tailscale_command(),
+        }
+    }
+}
+
+fn tailscale_port() -> u16 {
+    8791
+}
+
+fn tailscale_command() -> String {
+    "tailscale".into()
 }
 
 /// Trust settings: the policy, and the public keys trusted regardless of it.

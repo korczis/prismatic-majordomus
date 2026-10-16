@@ -1258,6 +1258,23 @@
       "tool": "majordomus_gates"
     },
     {
+      "api_anchor": "/docs/api/gates/#op-gates-state",
+      "claims": [],
+      "cli": null,
+      "id": "gates.state",
+      "kind": "query",
+      "module": "gates",
+      "module_route": "/registry/modules/gates/",
+      "resource": "majordomus://gates/state",
+      "route": "/registry/capabilities/gates-state/",
+      "slug": "gates-state",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/gates.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/gates.rs",
+      "tests": [],
+      "title": "How each gate last went",
+      "tool": "majordomus_gate_state"
+    },
+    {
       "api_anchor": "/docs/api/graph/#op-graph-get",
       "claims": [],
       "cli": null,
@@ -1914,6 +1931,23 @@
       "tests": [],
       "title": "The mesh self-check",
       "tool": "majordomus_mesh_doctor"
+    },
+    {
+      "api_anchor": "/docs/api/mesh/#op-mesh-enrol",
+      "claims": [],
+      "cli": "majordomus mesh enrol",
+      "id": "mesh.enrol",
+      "kind": "command",
+      "module": "mesh",
+      "module_route": "/registry/modules/mesh/",
+      "resource": null,
+      "route": "/registry/capabilities/mesh-enrol/",
+      "slug": "mesh-enrol",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "tests": [],
+      "title": "Enrol this machine in the mesh",
+      "tool": "majordomus_mesh_enrol"
     },
     {
       "api_anchor": "/docs/api/mesh/#op-mesh-events",
@@ -3059,6 +3093,23 @@
       "tests": [],
       "title": "The version a landing allocates, and why",
       "tool": "majordomus_release_next"
+    },
+    {
+      "api_anchor": "/docs/api/release/#op-release-site",
+      "claims": [],
+      "cli": null,
+      "id": "release.site",
+      "kind": "query",
+      "module": "release",
+      "module_route": "/registry/modules/release/",
+      "resource": null,
+      "route": "/registry/capabilities/release-site/",
+      "slug": "release-site",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/release.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/release.rs",
+      "tests": [],
+      "title": "Whether a release leaves the site better than it found it",
+      "tool": "majordomus_release_site"
     },
     {
       "api_anchor": "/docs/api/release/#op-release-version",
@@ -4241,7 +4292,7 @@
     ]
   },
   "counts": {
-    "capabilities": 202,
+    "capabilities": 205,
     "claims": 93,
     "modules": 58
   },
@@ -4853,6 +4904,11 @@
           "id": "gates.model",
           "route": "/registry/capabilities/gates-model/",
           "slug": "gates-model"
+        },
+        {
+          "id": "gates.state",
+          "route": "/registry/capabilities/gates-state/",
+          "slug": "gates-state"
         }
       ],
       "claims": [],
@@ -5149,6 +5205,11 @@
           "id": "mesh.doctor",
           "route": "/registry/capabilities/mesh-doctor/",
           "slug": "mesh-doctor"
+        },
+        {
+          "id": "mesh.enrol",
+          "route": "/registry/capabilities/mesh-enrol/",
+          "slug": "mesh-enrol"
         },
         {
           "id": "mesh.events",
@@ -5636,6 +5697,11 @@
           "id": "release.next",
           "route": "/registry/capabilities/release-next/",
           "slug": "release-next"
+        },
+        {
+          "id": "release.site",
+          "route": "/registry/capabilities/release-site/",
+          "slug": "release-site"
         },
         {
           "id": "release.version",
