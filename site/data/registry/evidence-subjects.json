@@ -3,7 +3,7 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the claims, rules, features, use cases, commands, documented command-line examples and builtin capabilities this repository declares, and the first coverage and negative headers of its test cases; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.26.0"
+    "version": "0.27.0"
   },
   "route": "/evidence/",
   "kinds": [
@@ -379,6 +379,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:executions.report",
+      "path": "/evidence/capabilities/executions-report/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:executions.start",
       "path": "/evidence/capabilities/executions-start/"
     },
@@ -401,6 +406,11 @@
       "kind": "capability",
       "subject": "capability:graph.list",
       "path": "/evidence/capabilities/graph-list/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:guard.edit",
+      "path": "/evidence/capabilities/guard-edit/"
     },
     {
       "kind": "capability",
@@ -1038,9 +1048,19 @@
       "path": "/evidence/capabilities/worktree-topology/"
     },
     {
+      "kind": "capability",
+      "subject": "capability:worktree.uncommitted",
+      "path": "/evidence/capabilities/worktree-uncommitted/"
+    },
+    {
       "kind": "claim",
       "subject": "claim:a-candidate-is-routed-by-what-it-is-about",
       "path": "/evidence/claims/a-candidate-is-routed-by-what-it-is-about/"
+    },
+    {
+      "kind": "claim",
+      "subject": "claim:a-diagram-is-named-linked-and-addressable",
+      "path": "/evidence/claims/a-diagram-is-named-linked-and-addressable/"
     },
     {
       "kind": "claim",
@@ -2714,6 +2734,11 @@
     },
     {
       "kind": "command",
+      "subject": "command:guard hook",
+      "path": "/evidence/commands/guard-hook/"
+    },
+    {
+      "kind": "command",
       "subject": "command:handover",
       "path": "/evidence/commands/handover/"
     },
@@ -3421,6 +3446,11 @@
       "kind": "command",
       "subject": "command:worktree topology",
       "path": "/evidence/commands/worktree-topology/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:worktree uncommitted",
+      "path": "/evidence/commands/worktree-uncommitted/"
     },
     {
       "kind": "command",
@@ -4589,6 +4619,16 @@
       "mechanisms": [],
       "findings": []
     },
+    "capability:executions.report": {
+      "kind": "capability",
+      "id": "executions.report",
+      "page": "/evidence/capabilities/executions-report/",
+      "programs": [],
+      "members": [],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
     "capability:executions.start": {
       "kind": "capability",
       "id": "executions.start",
@@ -4635,6 +4675,16 @@
       "kind": "capability",
       "id": "graph.list",
       "page": "/evidence/capabilities/graph-list/",
+      "programs": [],
+      "members": [],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:guard.edit": {
+      "kind": "capability",
+      "id": "guard.edit",
+      "page": "/evidence/capabilities/guard-edit/",
       "programs": [],
       "members": [],
       "routes": [],
@@ -6080,6 +6130,18 @@
       "mechanisms": [],
       "findings": []
     },
+    "capability:worktree.uncommitted": {
+      "kind": "capability",
+      "id": "worktree.uncommitted",
+      "page": "/evidence/capabilities/worktree-uncommitted/",
+      "programs": [],
+      "members": [
+        "command:worktree uncommitted"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
     "claim:a-candidate-is-routed-by-what-it-is-about": {
       "kind": "claim",
       "id": "a-candidate-is-routed-by-what-it-is-about",
@@ -6097,6 +6159,29 @@
             "docs/KNOWLEDGE.md",
             "lib/knowledge.sh",
             "test/cases/982_a_candidate_is_routed_by_what_it_is_about.sh"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "claim:a-diagram-is-named-linked-and-addressable": {
+      "kind": "claim",
+      "id": "a-diagram-is-named-linked-and-addressable",
+      "status": "guaranteed",
+      "page": "/evidence/claims/a-diagram-is-named-linked-and-addressable/",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "claim",
+          "test": "suite:3006_diagrams_are_interactive_and_linkable",
+          "path": "test/cases/3006_diagrams_are_interactive_and_linkable.sh",
+          "category": "e2e",
+          "inputs": [
+            "docs/DIAGRAMS.md",
+            "scripts/lib/diagrams.mjs",
+            "test/cases/3006_diagrams_are_interactive_and_linkable.sh"
           ]
         }
       ],
@@ -13392,6 +13477,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:3036_a_worktree_runs_its_own_hooks",
+          "path": "test/cases/3036_a_worktree_runs_its_own_hooks.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:36_command_doctrines",
           "path": "test/cases/36_command_doctrines.sh",
           "category": "e2e"
@@ -14274,6 +14365,18 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:3067_a_task_is_claimed_on_the_mesh",
+          "path": "test/cases/3067_a_task_is_claimed_on_the_mesh.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:3068_a_task_off_the_mesh_is_refused",
+          "path": "test/cases/3068_a_task_off_the_mesh_is_refused.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:32_refusal_lifecycle",
           "path": "test/cases/32_refusal_lifecycle.sh",
           "category": "e2e"
@@ -14376,6 +14479,25 @@
       "kind": "command",
       "id": "generate",
       "page": "/evidence/commands/generate/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:guard hook": {
+      "kind": "command",
+      "id": "guard hook",
+      "page": "/evidence/commands/guard-hook/",
       "programs": [
         "native"
       ],
@@ -14828,6 +14950,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:3037_a_knowledge_lookup_explains_its_order",
+          "path": "test/cases/3037_a_knowledge_lookup_explains_its_order.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:405_the_knowledge_reader_honours_the_schema",
           "path": "test/cases/405_the_knowledge_reader_honours_the_schema.sh",
           "category": "e2e"
@@ -14914,6 +15042,12 @@
           "via": "negative",
           "test": "suite:3015_an_unsupervised_repository_exits_12_from_both_tools",
           "path": "test/cases/3015_an_unsupervised_repository_exits_12_from_both_tools.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:3037_a_knowledge_lookup_explains_its_order",
+          "path": "test/cases/3037_a_knowledge_lookup_explains_its_order.sh",
           "category": "e2e"
         },
         {
@@ -17212,6 +17346,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:3067_a_task_is_claimed_on_the_mesh",
+          "path": "test/cases/3067_a_task_is_claimed_on_the_mesh.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:32_refusal_lifecycle",
           "path": "test/cases/32_refusal_lifecycle.sh",
           "category": "e2e"
@@ -18143,6 +18283,25 @@
       "kind": "command",
       "id": "worktree topology",
       "page": "/evidence/commands/worktree-topology/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:worktree uncommitted": {
+      "kind": "command",
+      "id": "worktree uncommitted",
+      "page": "/evidence/commands/worktree-uncommitted/",
       "programs": [
         "native"
       ],
@@ -19738,6 +19897,18 @@
       "mechanisms": [],
       "findings": []
     },
+    "mcp:majordomus_guard_edit": {
+      "kind": "mcp",
+      "id": "majordomus_guard_edit",
+      "alias_of": "capability:guard.edit",
+      "programs": [],
+      "members": [
+        "capability:guard.edit"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
     "mcp:majordomus_health": {
       "kind": "mcp",
       "id": "majordomus_health",
@@ -21178,6 +21349,18 @@
       "mechanisms": [],
       "findings": []
     },
+    "mcp:majordomus_worktree_uncommitted": {
+      "kind": "mcp",
+      "id": "majordomus_worktree_uncommitted",
+      "alias_of": "capability:worktree.uncommitted",
+      "programs": [],
+      "members": [
+        "capability:worktree.uncommitted"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
     "mcp:majordomus_worktrees": {
       "kind": "mcp",
       "id": "majordomus_worktrees",
@@ -22341,6 +22524,37 @@
           "inputs": [
             "test/cases/25_continuity_lifecycle.sh",
             ".ai/repo/rules/vendor/majordomus/rules/task-continuity.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "rule:majordomus.task-on-the-mesh": {
+      "kind": "rule",
+      "id": "majordomus.task-on-the-mesh",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:3067_a_task_is_claimed_on_the_mesh",
+          "path": "test/cases/3067_a_task_is_claimed_on_the_mesh.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/3067_a_task_is_claimed_on_the_mesh.sh",
+            ".ai/repo/rules/vendor/majordomus/rules/task-on-the-mesh.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:3068_a_task_off_the_mesh_is_refused",
+          "path": "test/cases/3068_a_task_off_the_mesh_is_refused.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/3068_a_task_off_the_mesh_is_refused.sh",
+            ".ai/repo/rules/vendor/majordomus/rules/task-on-the-mesh.v1.md"
           ]
         }
       ],
@@ -27414,6 +27628,7 @@
     "crate:cov_runtime_b_http_channel",
     "crate:cov_runtime_b_http_stop",
     "crate:cov_runtime_b_lease_handed_on",
+    "crate:cov_worktree_hooks_git_refuses",
     "crate:dashboard",
     "crate:directories",
     "crate:economics",
@@ -27423,6 +27638,7 @@
     "crate:external_extension",
     "crate:generate_check",
     "crate:generated_documents",
+    "crate:guard_hook",
     "crate:health_server",
     "crate:hot_path",
     "crate:http_busy_probe",
@@ -27451,6 +27667,7 @@
     "crate:mcp_stdio",
     "crate:mcp_transport_bounds",
     "crate:mesh_compaction",
+    "crate:mesh_lease_retirement",
     "crate:mesh_sync_bound",
     "crate:mesh_trust_reload",
     "crate:mesh_trust_root",
@@ -27528,6 +27745,7 @@
     "suite:181_local_is_never_published",
     "suite:182_sessions_published_are_the_records",
     "suite:190_graph_drawing",
+    "suite:194_audit_rows_are_planned",
     "suite:240_the_session_domain_is_typed",
     "suite:241_merge_policy_claims_only_generator_output",
     "suite:278_the_gate_runner_clears_the_share",
@@ -27536,17 +27754,30 @@
     "suite:2978_an_intent_is_proposed_by_a_capability",
     "suite:2981_the_cockpit_snapshot_holds_its_routes",
     "suite:2982_two_snapshots_link_what_the_other_holds",
+    "suite:2998_evidence_reaches_the_subcommands_the_executable_owns",
     "suite:3003_the_knowledge_screen_answers",
     "suite:300_a_pipeline_cannot_hide_a_failure",
+    "suite:3014_the_kiosk_draws_what_the_repository_proves",
     "suite:3016_init_seeds_the_scope_of_the_stack_it_finds",
     "suite:3017_doctor_holds_an_adopter_to_what_it_adopted",
     "suite:3018_a_comment_in_the_policy_moves_no_bootstrap",
     "suite:301_the_mesh_stays_one_subsystem",
     "suite:3021_a_tag_does_not_freeze_the_queue",
     "suite:3022_the_rule_package_is_stamped_and_adopter_neutral",
+    "suite:3024_a_run_is_seen_by_the_server",
+    "suite:3025_abandoned_work_in_a_worktree_is_named",
+    "suite:3027_the_release_path_goes_first",
+    "suite:3028_the_pages_job_waits_for_its_deployment",
+    "suite:3029_a_tag_in_flight_is_pending",
     "suite:302_the_topology_rule_has_one_source",
+    "suite:3032_the_quality_verdict_comes_first",
+    "suite:3033_a_release_record_case_is_listed_by_a_structure_gate",
+    "suite:3035_a_release_names_its_archive_from_the_matrix",
     "suite:303_one_source_serves_two_mounts",
+    "suite:3042_the_observatory_asks_again_when_it_is_seen",
     "suite:305_a_command_is_claimed_or_classified",
+    "suite:3066_a_session_joins_the_mesh_at_start",
+    "suite:3069_an_edit_no_claim_covers_is_refused",
     "suite:310_rustdoc_projection",
     "suite:318_a_partial_sweep_says_so",
     "suite:330_a_contract_is_the_kind_it_declares",

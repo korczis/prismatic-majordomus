@@ -1,11 +1,136 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the layer's release records, the decisions dated in each release's window, and the commits in its range; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.26.0 -->
+     Generator: majordomus-cli 0.27.0 -->
 # Changelog
 
 Every entry below is derived: a section per release the layer records, its decisions the ADRs dated inside that release's window, its changes the conventional commits in its range, its artifacts the record's own evidence. Nothing here is written by hand, and `majordomus generate changelog --check` fails when it stops matching the tree.
 
-Current version: **0.26.0**
+Current version: **0.27.0**
+
+## v0.27.0 — 2026-10-16
+
+### Decisions
+
+- **ADR-0161** A mesh node follows the published release, through the one installer, forward only _(proposed)_
+- **ADR-0160** The kiosk draws what the repository proves, from the sources that already answer it, and draws it with p5 only where the build has it _(proposed)_
+- **ADR-0152** A diagram and a chart on the site are one viewer each, over what the build derived: interactive, linkable, and linked by inference _(proposed)_
+- **ADR-0069** A capability may be scripted, and repository automation is scripted capabilities rather than shell _(proposed)_
+
+### Added
+
+- **mesh**: an edit no claim covers is refused (I2735) (`ed994d5d0`)
+- **mesh**: a task built off the mesh is refused (`23b7f645e`)
+- **mesh**: a task's scope is claimed on the mesh while it works (`8bb8a2238`)
+- **capture**: a session joins the mesh at its start and leaves it at its end (`e81e054a5`)
+- **capability**: the sandboxed engine a scripted capability runs in (I1800, ADR 0069) (`7ac2fde4a`)
+- **knowledge**: a lookup answers in an order it can explain, and asking writes nothing (`f36a4c554`)
+- **worktree**: work a session left uncommitted in a worktree is named (`dfbbc29db`)
+- **ci**: a gap the audit calls planned names an issue that exists (`9f8c41b68`)
+- **executions**: a run started from the command line is seen by the server (`2be92697c`)
+- **ui**: two more kiosk scenes, and the snapshot carries the scenes and p5 (ADR 0160, I2697) (`75db37541`)
+- **ui**: the kiosk draws what the repository proves, with p5 where it is built (ADR 0160) (`1ed8a4c87`)
+- **site**: a diagram is interactive and linkable, a table draws as a chart (`bbb94fc2d`)
+- **site**: the landing page speaks to a buyer, and holds on every device (`239df858c`)
+- **providers**: Gemini and Antigravity read the repository through the projection (`60e97fb0c`)
+- **site**: hand-written copy promises only what a claim permits (`2e26a3d36`)
+
+### Fixed
+
+- **mesh**: the edit guard passes the structure gates (`93063e327`)
+- **test**: case 3067 names its commands on one covers header (`c6b42cf6d`)
+- **top**: case 1096 counts a shared reading as a reading (`3c12372e3`)
+- **mesh**: the task record declares the claim it carries (`70e60d531`)
+- **plan**: the milestone is the bytes its first branches carry (`3acf2cf68`)
+- **top**: the grand top's new code is covered and the command screen is within its budget (`ee944b18b`)
+- **ci**: an integration top runs to the end and shows every red (`2c56a6fb8`)
+- **test**: case 532 reads a table row up to its own </tr> (`8080ea219`)
+- **top**: the crate boundary is told about rhai (`a0dcdeaaa`)
+- **top**: the launcher's help reader takes no pipe, and I2718 names no home directory (`51faa7a5c`)
+- **doctor**: no linked worktree reads the same whether or not the executable is at hand (`4bf88bed4`)
+- **site**: the grand top carries its members' authored site data (`692d067f0`)
+- **ci**: the release path never waits behind pull-request validates (`ba11bd6bf`)
+- **site**: a surface card's title fits a 320px screen (`5f4964a3b`)
+- **ui**: the Observatory asks again when it is seen (`11567a0b0`)
+- **serve**: ensure starts its server with the share it was given (`4dada2c87`)
+- **release**: a release names its archive from the matrix, without a debug build (`c2fa59702`)
+- **handbook**: a copied link names the artifact the handbook is published at (`f56d54cbf`)
+- **executions**: the reported store shows itself in examples, and the case waits bounded (`2dec71329`)
+- **evidence**: the launcher hands evidence subcommands to the executable (I2601) (`c4a8f9c56`)
+- **init**: a personal layer is seeded with a policy update can write (`f83ff2c7a`)
+- **docs**: no heading of the handbook skips a level (`962472c96`)
+- **events**: each execution's cursor is set as its replay is collected (`e9ee93dd5`)
+- **site**: a missing copy file is a finding of promises, not the end of homepage-check (`367e4f86b`)
+- **mesh**: a borrowed server publishes no handover of another checkout (`ad249172c`)
+- **http**: keep a live-event cursor per execution (`b7b675cf7`)
+- **mesh**: a linked worktree cooperates through its repository's running server (`e8235eece`)
+- **mesh**: a board intent past the journal bound is projected once (`d4ce8f995`)
+- **mesh**: a retired server leaves the mesh (`f0a739905`)
+
+### Performance
+
+- **ui**: a screen reads the answer its source shares instead of copying it (`43204ad13`)
+
+### Documentation
+
+- **adr**: a capability may be scripted, and the automation milestone is on master (ADR 0069) (`fbb9aaf47`)
+- **plan**: four of the day's defects are planned so their carriers can close them (`b1e0d8d12`)
+- **adr**: what the Observatory is told arrives on /events, the one live channel (ADR 0158) (`2f759351d`)
+- **convergence**: the baseline of the 10-14 pack is measured against master e8505a431d (`5b0e28630`)
+- **adr**: a mesh node follows the published release (ADR 0161, safe-self-update) (`5addc860b`)
+
+### Tests
+
+- **mesh**: the edit guard owes its examples and its coverage (`2a90f49ab`)
+- **coverage**: the grand top's new Rust code is covered by a test (`2396be3f4`)
+
+### Pipeline
+
+- **pages**: the UI snapshot job builds p5, so the published kiosk draws its scenes (I2697) (`f4cda1016`)
+
+### Housekeeping
+
+- **derive**: the derived data follows the merged case header fix (`0a6e6c127`)
+- **derive**: the derived data follows the merged task record schema (`92d335db2`)
+- **derive**: the derived data follows the merged milestone (`417eab2ce`)
+- **derive**: the grand top's derived documents follow its canonical inputs (`a3ba14a7e`)
+- **plan**: I2127 and I2163 are recorded done with the tests that prove them (`540b3ca5c`)
+- **derive**: the derived data follows the merged tree (`1b82abaf6`)
+- **plan**: the MCP transport bounds are recorded done with master's own evidence (`0c0a7211f`)
+- **derive**: the projections of the landing page on master c0e3585dc83 (`8340a04bf`)
+- **derive**: the derived data follows master c0e3585dc8 into I1403's record (`fa049026e`)
+- **derive**: the projections follow master e8505a431d (`8e180b845`)
+- **derive**: the derived data follows master e8505a431d (`7e1f2ac80`)
+- **derive**: the derived data follows master e8505a431d into I0806's record (`289cbbe4d`)
+- **plan**: I1403 is done — the GitHub projection has no backlog, and the ratchet says so (`4f3c9bddd`)
+- **plan**: I0806 is done — master already holds the session rules (`266d5af14`)
+- **campaigns**: the convergence, trust and product proof pack of 10-14 is tracked (`af070b47f`)
+- **release**: record v0.26.0 and the metadata it publishes (`f937ac387`)
+- **derive**: the derived data follows the merge of master 97c4521f91 (`a20d963d9`)
+- **derive**: the derived data follows the merge of master (`a71bccb80`)
+- **derive**: the derived data follows the merge of master ff38297096 (`927f2f7e4`)
+- **derive**: the derived data follows master ff38297096 and the I1600 record (`ca4401900`)
+- **derive**: the projections follow master ff38297096 (`bf8179aa8`)
+- **derive**: the projections of the landing page on the master of its landing (`bce111701`)
+- **plan**: I2601 is in VERIFY, and the derived plan pages follow (I2601) (`6f4a83658`)
+- **derive**: the projections of the landing page on the master of its landing (`5a679909e`)
+- **derive**: the derived data follows master e506c041a4 (`783e7cf70`)
+- **derive**: the derived data follows master e506c041a4 (`aa0395953`)
+- **plan**: the public-proof milestone is done, on the evidence of I1600 (`9ee0a66a7`)
+- **plan**: I1600 is done, the challenge master already replays (`de14385dd`)
+
+### Formatting
+
+- **mesh**: rustfmt the edit guard; the derived data follows the merged stack (`04986858e`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v0.27.0-aarch64-apple-darwin.tar.gz (`283ce45eb568`)
+- `macos-x86_64` — majordomus-v0.27.0-x86_64-apple-darwin.tar.gz (`178bb10c8fab`)
+- `linux-x86_64-gnu` — majordomus-v0.27.0-x86_64-unknown-linux-gnu.tar.gz (`dd5cd97cfc51`)
+- `linux-x86_64-musl` — majordomus-v0.27.0-x86_64-unknown-linux-musl.tar.gz (`1679e7eaa6b0`)
+- `linux-aarch64-gnu` — majordomus-v0.27.0-aarch64-unknown-linux-gnu.tar.gz (`64a0114471e0`)
+- `linux-aarch64-musl` — majordomus-v0.27.0-aarch64-unknown-linux-musl.tar.gz (`c3d8d14d28c6`)
+
 
 ## v0.26.0 — 2026-10-14
 
