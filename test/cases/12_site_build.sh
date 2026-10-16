@@ -76,7 +76,10 @@ expect_grep 'stateDiagram-v2' "$P/getting-started/index.html"
 # the typography container is on a rendered document; /docs/cli/ is the generated command
 # tree, and the shell CLI's own prose lives at its own slug (doc_slug, CLI_SPEC_SLUG)
 expect_grep 'class="format' "$P/docs/cli-specification/index.html"
-expect_grep 'class="z-[a-z]' "$P/render-test/index.html"   # Zola/giallo class-based highlighting
+# Zola/giallo class-based highlighting with the one generated theme (ADR 0166 §7): the frame,
+# and tokens whose class names a kind, coloured by share/design/code.css inside app.css
+expect_grep 'class="giallo z-code"' "$P/render-test/index.html"
+expect_grep 'class="z-[0-9]' "$P/render-test/index.html"
 expect_grep 'id="second-level-heading"' "$P/render-test/index.html"
 expect_grep 'overflow-x-auto' "$P/render-test/index.html"
 expect_grep 'role="note"' "$P/render-test/index.html"

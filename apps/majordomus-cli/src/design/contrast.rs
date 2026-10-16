@@ -78,11 +78,13 @@ pub const MINIMUM_NON_TEXT: f64 = 3.0;
 
 /// The stylesheets that consume the declaration, relative to the distribution's share
 /// directory. Every colour a person writes over the tokens is in one of these; the
-/// generated sheets declare values and pair nothing.
+/// generated sheets declare values and pair nothing — except `design/code.css`, generated from
+/// the highlighter's kinds (ADR 0166 §7), whose every rule puts a code role on a code block.
 pub const CONSUMERS: &[&str] = &[
     "design/primitives.css",
     "design/kit.css",
     "design/base.css",
+    "design/code.css",
     "cockpit/src/cockpit.css",
 ];
 

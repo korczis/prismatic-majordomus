@@ -273,7 +273,7 @@ WORK="$(mktemp -d "${TMPDIR:-/tmp}/mj-probe.XXXXXX")"; trap 'rm -rf "$WORK"; [ -
 BASE="http://127.0.0.1:$PORT$PREFIX"
 ( cd "$SITE" && zola build --force --base-url "$BASE" --output-dir "$WORK/out" >/dev/null 2>&1 ) || { echo "site-probe: zola build for the probe origin failed" >&2; exit 12; }
 [ -f "$WORK/out/index.html" ] || { echo "site-probe: probe build produced no index.html in $WORK/out" >&2; exit 12; }
-for a in app.css giallo-light.css giallo-dark.css js images; do [ -e "$PUB/$a" ] && cp -R "$PUB/$a" "$WORK/out/" 2>/dev/null || true; done
+for a in app.css js images; do [ -e "$PUB/$a" ] && cp -R "$PUB/$a" "$WORK/out/" 2>/dev/null || true; done
 # Mount the build where the production prefix puts it. `ln -s A B` writes *into* B when B
 # already exists as a directory, so with an empty prefix — which is what a base_url with no
 # path gives, and majordomus.dev has none — `ln -s "$WORK/out" "$WORK/srv"` created

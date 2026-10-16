@@ -6,7 +6,6 @@
   var CDN = 'https://cdnjs.cloudflare.com/ajax/libs/';
   var LIB = {
     md: 'markdown-it/13.0.2/markdown-it.min.js',
-    hl: 'highlight.js/11.9.0/highlight.min.js',
     pure: 'dompurify/3.1.6/purify.min.js',
     mermaid: 'mermaid/10.9.1/mermaid.min.js',
     echarts: 'echarts/5.5.0/echarts.min.js'
@@ -61,20 +60,31 @@
     });
     return scripts[name];
   }
-  var texts = null, textsP = null;
-  function corpus() {
-    if (textsP) return textsP;
-    textsP = new Promise(function (ok, fail) {
+  /* An embedded, gzipped JSON value: the corpus, and its code blocks as the site highlights them. */
+  function unpack(id) {
+    return new Promise(function (ok, fail) {
       try {
-        var b64 = $('data-corpus').textContent.trim();
+        var b64 = $(id).textContent.trim();
         var bin = atob(b64), n = bin.length, u8 = new Uint8Array(n);
         for (var i = 0; i < n; i++) u8[i] = bin.charCodeAt(i);
         if (typeof DecompressionStream !== 'function') { fail(new Error('prohlížeč neumí rozbalit vložená data')); return; }
         var stream = new Blob([u8]).stream().pipeThrough(new DecompressionStream('gzip'));
-        new Response(stream).text().then(function (t) { texts = JSON.parse(t); ok(texts); }, fail);
+        new Response(stream).text().then(function (t) { ok(JSON.parse(t)); }, fail);
       } catch (e) { fail(e); }
     });
+  }
+  var texts = null, textsP = null;
+  function corpus() {
+    if (!textsP) textsP = unpack('data-corpus').then(function (t) { texts = t; return t; });
     return textsP;
+  }
+  /* Every code block of the corpus, highlighted at build time by the site's own engine (Zola's
+     giallo, handbook/code.py) and coloured by share/design/code.css: one highlighter on every
+     surface (ADR 0166 §7). Keyed by the language and the text markdown-it hands its hook. */
+  var CODE = {}, codeP = null;
+  function code() {
+    if (!codeP) codeP = $('data-code') ? unpack('data-code').then(function (t) { CODE = t; return t; }) : Promise.resolve(CODE);
+    return codeP;
   }
 
   /* ---------- link resolution ---------- */
@@ -182,11 +192,10 @@
       html: true, linkify: true, typographer: false,
       highlight: function (str, lang) {
         if (lang === 'mermaid') return '<pre class="mermaid-src">' + esc(str) + '</pre>';
-        var code = esc(str);
-        try {
-          if (lang && window.hljs && window.hljs.getLanguage(lang)) code = window.hljs.highlight(str, { language: lang, ignoreIllegals: true }).value;
-        } catch (e) { /* plain */ }
-        return '<pre class="md-pre"><code class="hljs">' + code + '</code></pre>';
+        var lit = CODE[lang + '\u0000' + str];
+        if (lit) return lit;
+        /* a block the build read differently: plain text, in the same frame */
+        return '<pre class="giallo z-code"><code' + (lang ? ' data-lang="' + esc(lang).replace(/"/g, '&quot;') + '"' : '') + '>' + esc(str) + '</code></pre>';
       }
     });
     return mdi;
@@ -397,7 +406,7 @@
     if (trail[trail.length - 1] !== path) trail.push(path);
     window.mjDocHash = docHref(path, frag).slice(1); window.mjDocUntil = Date.now() + 2500;
     try { history.replaceState(null, '', docHref(path, frag)); } catch (e) { /* sandboxed frame */ }
-    Promise.all([corpus(), load('md'), load('pure'), load('hl').catch(function () {})]).then(function () {
+    Promise.all([corpus(), code(), load('md'), load('pure')]).then(function () {
       if (mine !== seq) return;
       if (state.cur !== d || !body.querySelector('.md-done')) {
         state.cur = d;

@@ -76,6 +76,12 @@ gates:
     runs: scripts/ci/argv-limit-check
     summary: a whole file's JSON may not travel to jq on the command line — Linux refuses a single argument over 131072 bytes and macOS never will, so the shape is checked rather than the size
 
+  - id: highlighter-check
+    job: structure
+    always: true
+    runs: scripts/ci/highlighter-check
+    summary: every code block on every surface is highlighted by one engine, giallo (ADR 0166 §7) — no surface loads, calls or styles highlight.js, Prism, Shiki or a CDN copy of one
+
   - id: doc-command-check
     job: structure
     always: true

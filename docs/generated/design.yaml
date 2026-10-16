@@ -4,8 +4,8 @@
 schema: majordomus/design-system/v1
 generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: share/design/tokens.yaml, the one declaration of the design; regenerate with `majordomus generate`"
 generator: majordomus-cli 0.27.0
-fingerprint: 944a896b2646060d5dc100adcc36737fd5d8086e2f53d43d6858ac6fdad39540
-design: 944a896b2646
+fingerprint: 30bdab9e80dfad3b946d79c9bc04faba51b4f4d2d024a1646d21ce71b6462ea3
+design: 30bdab9e80df
 source: share/design/tokens.yaml
 projections:
   - share/design/theme.css
@@ -20,7 +20,7 @@ projections:
   - docs/generated/design.md
 counts:
   font: 2
-  role: 22
+  role: 29
   status: 5
   state: 105
   tone: 6
@@ -654,6 +654,188 @@ tokens:
           reference: fuchsia-400
           css: "oklch(74% 0.238 322.16)"
           literal: "oklch(74% 0.238 322.16)"
+    projections:
+      - share/design/theme.css
+      - share/design/surface.css
+      - share/design/status.css
+      - apps/majordomus-cli/src/web/tokens.css
+      - site/data/registry/design.json
+      - apps/majordomus-cli/src/design/tokens.yaml
+      - docs/generated/design.json
+      - docs/generated/design.yaml
+      - docs/generated/design.md
+  - name: code-comment
+    kind: role
+    about: "a comment in a code block; quiet, like every secondary text"
+    css:
+      - "--mj-code-comment"
+    parts:
+      - part: fg
+        css: "--mj-code-comment"
+        light:
+          reference: gray-500
+          css: "oklch(55.1% 0.027 264.364)"
+          literal: "oklch(55.1% 0.027 264.364)"
+        dark:
+          reference: gray-400
+          css: "oklch(70.7% 0.022 261.325)"
+          literal: "oklch(70.7% 0.022 261.325)"
+    projections:
+      - share/design/theme.css
+      - share/design/surface.css
+      - share/design/status.css
+      - apps/majordomus-cli/src/web/tokens.css
+      - site/data/registry/design.json
+      - apps/majordomus-cli/src/design/tokens.yaml
+      - docs/generated/design.json
+      - docs/generated/design.yaml
+      - docs/generated/design.md
+  - name: code-keyword
+    kind: role
+    about: "a keyword or a storage word in a code block (fn, let, if, return)"
+    css:
+      - "--mj-code-keyword"
+    parts:
+      - part: fg
+        css: "--mj-code-keyword"
+        light:
+          reference: violet-700
+          css: "oklch(49.1% 0.27 292.581)"
+          literal: "oklch(49.1% 0.27 292.581)"
+        dark:
+          reference: violet-400
+          css: "oklch(70.2% 0.183 293.541)"
+          literal: "oklch(70.2% 0.183 293.541)"
+    projections:
+      - share/design/theme.css
+      - share/design/surface.css
+      - share/design/status.css
+      - apps/majordomus-cli/src/web/tokens.css
+      - site/data/registry/design.json
+      - apps/majordomus-cli/src/design/tokens.yaml
+      - docs/generated/design.json
+      - docs/generated/design.yaml
+      - docs/generated/design.md
+  - name: code-string
+    kind: role
+    about: "a string, a plain YAML value, an inserted diff line in a code block"
+    css:
+      - "--mj-code-string"
+    parts:
+      - part: fg
+        css: "--mj-code-string"
+        light:
+          reference: emerald-700
+          css: "oklch(50.8% 0.118 165.612)"
+          literal: "oklch(50.8% 0.118 165.612)"
+        dark:
+          reference: emerald-400
+          css: "oklch(76.5% 0.177 163.223)"
+          literal: "oklch(76.5% 0.177 163.223)"
+    projections:
+      - share/design/theme.css
+      - share/design/surface.css
+      - share/design/status.css
+      - apps/majordomus-cli/src/web/tokens.css
+      - site/data/registry/design.json
+      - apps/majordomus-cli/src/design/tokens.yaml
+      - docs/generated/design.json
+      - docs/generated/design.yaml
+      - docs/generated/design.md
+  - name: code-constant
+    kind: role
+    about: "a number, a boolean, a language constant in a code block"
+    css:
+      - "--mj-code-constant"
+    parts:
+      - part: fg
+        css: "--mj-code-constant"
+        light:
+          reference: orange-700
+          css: "oklch(55.3% 0.195 38.402)"
+          literal: "oklch(55.3% 0.195 38.402)"
+        dark:
+          reference: orange-400
+          css: "oklch(75% 0.183 55.934)"
+          literal: "oklch(75% 0.183 55.934)"
+    projections:
+      - share/design/theme.css
+      - share/design/surface.css
+      - share/design/status.css
+      - apps/majordomus-cli/src/web/tokens.css
+      - site/data/registry/design.json
+      - apps/majordomus-cli/src/design/tokens.yaml
+      - docs/generated/design.json
+      - docs/generated/design.yaml
+      - docs/generated/design.md
+  - name: code-function
+    kind: role
+    about: "a function, a command, a heading or a link in a code block"
+    css:
+      - "--mj-code-function"
+    parts:
+      - part: fg
+        css: "--mj-code-function"
+        light:
+          reference: blue-700
+          css: "oklch(48.8% 0.243 264.376)"
+          literal: "oklch(48.8% 0.243 264.376)"
+        dark:
+          reference: blue-400
+          css: "oklch(70.7% 0.165 254.624)"
+          literal: "oklch(70.7% 0.165 254.624)"
+    projections:
+      - share/design/theme.css
+      - share/design/surface.css
+      - share/design/status.css
+      - apps/majordomus-cli/src/web/tokens.css
+      - site/data/registry/design.json
+      - apps/majordomus-cli/src/design/tokens.yaml
+      - docs/generated/design.json
+      - docs/generated/design.yaml
+      - docs/generated/design.md
+  - name: code-type
+    kind: role
+    about: "a type, a class, a namespace or a section in a code block"
+    css:
+      - "--mj-code-type"
+    parts:
+      - part: fg
+        css: "--mj-code-type"
+        light:
+          reference: cyan-700
+          css: "oklch(52% 0.105 223.128)"
+          literal: "oklch(52% 0.105 223.128)"
+        dark:
+          reference: cyan-400
+          css: "oklch(78.9% 0.154 211.53)"
+          literal: "oklch(78.9% 0.154 211.53)"
+    projections:
+      - share/design/theme.css
+      - share/design/surface.css
+      - share/design/status.css
+      - apps/majordomus-cli/src/web/tokens.css
+      - site/data/registry/design.json
+      - apps/majordomus-cli/src/design/tokens.yaml
+      - docs/generated/design.json
+      - docs/generated/design.yaml
+      - docs/generated/design.md
+  - name: code-tag
+    kind: role
+    about: "a key, a tag, an attribute, a variable, a deleted diff line in a code block"
+    css:
+      - "--mj-code-tag"
+    parts:
+      - part: fg
+        css: "--mj-code-tag"
+        light:
+          reference: rose-700
+          css: "oklch(51.4% 0.222 16.935)"
+          literal: "oklch(51.4% 0.222 16.935)"
+        dark:
+          reference: rose-400
+          css: "oklch(71.2% 0.194 13.428)"
+          literal: "oklch(71.2% 0.194 13.428)"
     projections:
       - share/design/theme.css
       - share/design/surface.css
@@ -3887,6 +4069,34 @@ declaration:
       about: the eighth colour of the categorical series
       light: fuchsia-600
       dark: fuchsia-400
+    code-comment:
+      about: "a comment in a code block; quiet, like every secondary text"
+      light: gray-500
+      dark: gray-400
+    code-keyword:
+      about: "a keyword or a storage word in a code block (fn, let, if, return)"
+      light: violet-700
+      dark: violet-400
+    code-string:
+      about: "a string, a plain YAML value, an inserted diff line in a code block"
+      light: emerald-700
+      dark: emerald-400
+    code-constant:
+      about: "a number, a boolean, a language constant in a code block"
+      light: orange-700
+      dark: orange-400
+    code-function:
+      about: "a function, a command, a heading or a link in a code block"
+      light: blue-700
+      dark: blue-400
+    code-type:
+      about: "a type, a class, a namespace or a section in a code block"
+      light: cyan-700
+      dark: cyan-400
+    code-tag:
+      about: "a key, a tag, an attribute, a variable, a deleted diff line in a code block"
+      light: rose-700
+      dark: rose-400
   status:
     roles:
       ok:

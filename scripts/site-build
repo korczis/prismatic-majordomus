@@ -317,28 +317,11 @@ if [ -f "$RELDIR/latest.json" ]; then
   cp "$RELDIR/latest.json" "$PUBLIC/releases/latest.json"
   cp "$RELDIR/latest.json" "$PUBLIC/releases/$(jq -r .tag "$RELDIR/latest.json").json"
 fi
-# Zola wrote the two highlighting themes into static/ and public/; scope the dark one under .dark
-# (generated CSS, not hand-written) so class-based dark mode picks the right palette.
-if [ -f "$PUBLIC/giallo-dark.css" ]; then
-  sed -E 's/(^|,|\})[[:space:]]*(\.[a-z])/\1 .dark \2/g; s/^\.([a-z])/.dark .\1/' "$PUBLIC/giallo-dark.css" > "$PUBLIC/giallo-dark.css.tmp" && mv "$PUBLIC/giallo-dark.css.tmp" "$PUBLIC/giallo-dark.css"
-fi
-echo "== a11y (palette)"
-# Raise every colour of the generated highlighting palettes to the WCAG AA threshold against
-# the background the same stylesheet declares. A theme is chosen for how it reads, by somebody
-# who was not measuring contrast; this makes the choice safe rather than making it again. Hue
-# and saturation are untouched, a palette that already passes is rewritten to itself, and a
-# second pass over the result changes nothing.
-for f in "$PUBLIC/giallo-light.css" "$PUBLIC/giallo-dark.css"; do
-  [ -f "$f" ] || continue
-  node --input-type=module -e '
-import { readFileSync, writeFileSync } from "node:fs";
-import { enforce, MINIMUM } from "'"$ROOT"'/scripts/lib/ui-contrast.mjs";
-const path = process.argv[1];
-const { css, changed, background } = enforce(readFileSync(path, "utf8"));
-if (changed) writeFileSync(path, css);
-console.log(`  ${path.split("/").pop()}: ${changed} colour(s) raised to ${MINIMUM}:1 against ${background}`);
-' "$f"
-done
+# One highlighter, one palette (ADR 0166 §7). Zola writes the palette of the configured theme
+# as giallo.css; that theme's colours are sentinels that name a kind of token, and the colours
+# are share/design/code.css's, compiled into app.css and measured by `design.contrast` with
+# every other colour of the design. So the file Zola writes is removed, not published.
+rm -f "$PUBLIC"/giallo*.css
 # Every horizontally scrolling box of the built site is reachable from the keyboard (WCAG
 # 2.1.1), and a markdown task list's checkbox carries the name of the text beside it. The
 # elements this reaches are the ones a third party emits — the syntax highlighter's <pre>,
