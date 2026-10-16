@@ -187,6 +187,10 @@ if [ "$NOCSS" = 0 ]; then
   cp "$ROOT/node_modules/mermaid/dist/mermaid.min.js" "$SITE/static/js/mermaid.min.js"
   # loaded on demand by graph.js, never by the base layout: it is the largest asset on the site
   cp "$ROOT/node_modules/cytoscape/dist/cytoscape.min.js" "$SITE/static/js/cytoscape.min.js"
+  # Apache ECharts, for the charts drawn from the site's own tables (site/charts.js, ADR 0152):
+  # the `common` build, which holds the bar and line series the component draws and is two
+  # thirds the size of the full one. Fetched by charts.js when a chart nears the viewport.
+  cp "$ROOT/node_modules/echarts/dist/echarts.common.min.js" "$SITE/static/js/echarts.min.js"
 fi
 # the OpenAPI document the executable generated, served raw at /openapi.json: byte for byte the
 # committed file, so what the site offers is what `majordomus generate --check` verified
@@ -246,6 +250,7 @@ jq -n --arg commit "$commit" --argjson dirty "$dirty" \
 cp "$SITE/data/build.json" "$SITE/static/build.json"
 cp "$SITE/theme.js" "$SITE/static/js/theme.js"
 cp "$SITE/diagrams.js" "$SITE/static/js/diagrams.js"
+cp "$SITE/charts.js" "$SITE/static/js/charts.js"
 cp "$SITE/graph.js" "$SITE/static/js/graph.js"
 # a published copy of the composed product graph, fetched by graph.js where a page links to the
 # list instead of carrying the graph inline (the homepage); byte for byte the committed dataset
@@ -373,6 +378,18 @@ for (const page of pages) {
 }
 console.log(`  ${elements} scrolling element(s) put in the tab order (${scrollingTagNames.join(", ")}), ${named} task checkbox(es) named, ${aligned} table cell(s) aligned by class instead of inline style, over ${touched} page(s)`);
 '
+fi
+# Every diagram of the built site is named, described and linked (ADR 0152): an id its
+# address lands on, the nodes its source declares, and beside it a link for every node that is
+# the identity of an object this build wrote a page for. Nothing is typed: the identities and
+# routes are site/data/generated's, and a link is ordinary markup that scripts/ci/link-check
+# decides with the rest. Before the composition below, because another producer's pages are
+# not this site's to edit; needs no node_modules, so it runs under --no-css as well.
+if [ -d "$PUBLIC" ]; then
+  echo "== diagrams"
+  DIAGRAM_BASE="$BASE"
+  [ -n "$DIAGRAM_BASE" ] || DIAGRAM_BASE="$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$SITE/config.toml")"
+  node "$ROOT/scripts/lib/diagrams.mjs" "$PUBLIC" "$SITE/data/generated" "$DIAGRAM_BASE"
 fi
 # the site's own routes, counted before another surface's pages join them
 routes="$(find "$PUBLIC" -name 'index.html' | wc -l | tr -d ' ')"

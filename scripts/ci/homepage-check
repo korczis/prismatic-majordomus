@@ -40,6 +40,10 @@
 #   declared    the homepage proof band gives the declared guaranteed figure of the matrix and,
 #               apart from it, the figure a recorded run supports, or `unknown` when the evidence
 #               is not available; and it never says a test proves it while fewer are supported
+#   promises    a capability word site/data/homepage.toml [promises] declares appears in the
+#               hand-written copy (marketing.toml, manifesto.toml) only while the claim it names is
+#               guaranteed and supported by a recorded run; a declaration naming a claim that does
+#               not exist fails, and so does the name of a feature the model does not call stable
 #   interfaces  the working interfaces the homepage lists are the data's, both ways: the stable
 #               features the web topology gives an `interface` surface, in the features' order,
 #               then the product model's other surfaces — and an interface is linked as
@@ -47,6 +51,11 @@
 #               a surface a publication carries, or the build names a snapshot of that surface
 #               (build.json `snapshots`, the publication model's); one only a running process
 #               answers states its mount and links no copy
+#   product     the hero opens the product: the first interface a person opens, as the data
+#               orders them — exactly once, named by its feature, at its mount when a
+#               publication holds it there and at no such address when only a running process
+#               answers it; the view beside it is of that product, and the issues it counts
+#               are the plan's, by the plan's statuses, in the plan's order
 #   weight      the homepage's own HTML, the scripts and stylesheets it loads from this site, and
 #               any graph data it carries inline, weigh no more than site/data/homepage.toml's
 #               [budget] declares
@@ -467,6 +476,77 @@ else:
     else:
         ok("declared", f"the proof band says {declared} declared guaranteed and {want} supported by a recorded run, as the matrix and the evidence give them")
 
+# ---------------------------------------------------------------- promises
+# The site's two hand-written files are the only words on it nothing derives, so they are the
+# only place a capability can be promised that the repository does not have. homepage.toml
+# [promises] declares each such word with the claim that permits it ("" when no claim does
+# yet), and a word is allowed only while that claim is guaranteed and a recorded run supports
+# it. This decides the declared words and the feature names the model gives, and nothing else:
+# whether a sentence is conditional, or what it means, is not something a check can read.
+promise_decl = homepage_decl.get("promises")
+claim_status = {c.get("id"): c.get("status") for c in caps.get("claims") or []}
+ev_claims = ev.get("claims") if isinstance(ev, dict) and isinstance(ev.get("claims"), dict) else {}
+ev_available = isinstance(ev, dict) and ev.get("available") is True
+copy_lines = []
+problems, permits = [], []
+# A copy file that is missing or is not TOML is a finding of this check, never a clean pass and
+# never the end of the run: the other checks (and a caller asking --only for one of them) do
+# not read these files and must not be stopped by them.
+for rel in ("site/data/marketing.toml", "site/data/manifesto.toml"):
+    p = os.path.join(root, rel)
+    try:
+        with open(p, "rb") as f:
+            tomllib.load(f)
+    except (OSError, tomllib.TOMLDecodeError) as e:
+        problems.append(f"{rel} cannot be read as TOML ({e.__class__.__name__}), so its copy is not judged")
+        continue
+    for n, line in enumerate(open(p), 1):
+        if not line.lstrip().startswith("#"):
+            copy_lines.append((rel, n, line))
+if not isinstance(promise_decl, dict) or not promise_decl:
+    problems.append("site/data/homepage.toml declares no [promises], so nothing holds the hand-written copy to the claims")
+else:
+    for word, cid in sorted(promise_decl.items()):
+        if not isinstance(cid, str):
+            problems.append(f"site/data/homepage.toml [promises] {word!r} names no claim id (a string, \"\" when none permits it)")
+            continue
+        if cid and cid not in claim_status:
+            problems.append(f"site/data/homepage.toml [promises] {word!r} is permitted by claim {cid!r}, which docs/CLAIMS.yaml does not hold")
+            continue
+        status = claim_status.get(cid) if cid else None
+        supported = ev_available and (ev_claims.get(cid) or {}).get("supported") is True
+        if not cid:
+            why = "no claim permits it"
+        elif status != "guaranteed":
+            why = f"claim {cid!r} is {status}"
+        elif not supported:
+            why = f"claim {cid!r} is guaranteed and no recorded run supports it"
+        else:
+            why = ""
+        permits.append(f"{word} ({cid or 'no claim'}: {'permitted' if not why else why})")
+        pat = re.compile(r"(?<![\w-])" + re.escape(word) + r"(?![\w-])", re.I)
+        for rel, n, line in copy_lines:
+            if why and pat.search(line):
+                problems.append(f"{rel}:{n} promises {word!r}: {why}")
+not_stable_names = []
+for f in product.get("features", []):
+    if f.get("status") == "stable":
+        continue
+    for name in {f.get("title"), f.get("short_title")} - {None, ""}:
+        not_stable_names.append((name, f.get("status"), f.get("id")))
+for name, status, fid in not_stable_names:
+    pat = re.compile(r"(?<![\w-])" + re.escape(name) + r"(?![\w-])")
+    for rel, n, line in copy_lines:
+        if pat.search(line):
+            problems.append(f"{rel}:{n} names feature {fid!r} ({name!r}), which the product model calls {status}")
+if problems:
+    for p in problems[:12]:
+        bad("promises", p)
+    if len(problems) > 12:
+        bad("promises", f"... and {len(problems) - 12} more")
+else:
+    ok("promises", f"the hand-written copy uses no declared word its claim does not permit and names no feature that is not stable: {'; '.join(permits)}")
+
 # ---------------------------------------------------------------- interfaces
 # The working interfaces are the data's, both ways. Which ones a person opens is the web
 # topology's answer (a public surface of category `interface` that names a feature), which of
@@ -480,6 +560,7 @@ else:
 web_path = os.path.join(root, "site", "data", "generated", "web.json")
 rendered_faces = re.findall(r'<li\b[^>]*\bdata-interface="([^"]+)"', home)
 model_surfaces = product.get("surfaces") or []
+faces, by_feature, web_surfaces, snapshots = [], {}, [], []
 if not os.path.exists(web_path):
     if rendered_faces or model_surfaces:
         bad("interfaces", "site/data/generated/web.json is missing; where an interface runs cannot be held to the topology (regenerate: scripts/generate-site-data)")
@@ -527,6 +608,69 @@ else:
     if not problems:
         n_pub = sum(1 for _, fid in starts if f'data-published="{fid}"' in home)
         ok("interfaces", f"the homepage lists the {len(want)} interface(s) the data gives, in its order ({len(faces)} a person opens, {n_pub} of them held by the publication and linked as a snapshot; each states the mount a local server answers at)")
+
+# ---------------------------------------------------------------- product
+# The landing page is the product's front door, so the hero opens the product rather than
+# describing it: the first interface a person opens, in the order the list above is held
+# to. Where the call leads is decided the way an interface's own entry is — the published
+# copy exactly when a publication holds one — and the view the hero draws beside it is a
+# reading of this project's plan, so each figure in it is the plan's own count.
+hero_m = re.search(r'<section\b[^>]*\bid="hero".*?</section>', home, re.S)
+hero = hero_m.group(0) if hero_m else ""
+opened = re.findall(r'<a\b[^>]*\bdata-cta="product"[^>]*>', hero)
+views = re.findall(r'\bdata-product-view="([^"]+)"', hero)
+pp = []
+if not faces:
+    if opened or views:
+        pp.append("the hero opens a product, and the data gives no interface a person opens")
+else:
+    pid = faces[0]["id"]
+    pmount = by_feature[pid].get("mount") or ""
+    held = [p.get("id") for p in web_surfaces if p.get("mount") == pmount and p.get("visibility") == "public"
+            and p.get("availability") in ("both", "published-only")]
+    held += [f"a snapshot of {s.get('id')}" for s in snapshots if s.get("id") == by_feature[pid].get("id")]
+    if len(opened) != 1:
+        pp.append(f"the hero carries {len(opened)} call(s) to open the product; {pid} is the first interface the data gives, and the hero opens it once")
+    else:
+        named = re.search(r'\bdata-product="([^"]+)"', opened[0])
+        href = re.search(r'\bhref="([^"]*)"', opened[0])
+        # the page about the product may itself end in the mount's last word (/features/ui
+        # against /ui), so an address is the mount only when it is not that page's
+        about = next((x.get("route") for x in model_surfaces if x.get("id") == pid), None) or faces[0].get("route") or ""
+        target = href.group(1).split("#")[0].rstrip("/") if href else ""
+        leads = bool(pmount) and target.endswith(pmount) and not (about.rstrip("/") and target.endswith(about.rstrip("/")))
+        said = "data-published-product=" in opened[0]
+        if not named or named.group(1) != pid:
+            pp.append(f"the hero opens {named.group(1) if named else 'an unnamed product'}, and the first interface the data gives is {pid}")
+        if held and not (leads and said):
+            pp.append(f"the publication holds {held[0]} at {pmount}, and the hero's call to open {pid} does not lead there")
+        if not held and (leads or said):
+            pp.append(f"the hero opens {pid} at {pmount}, and no publication holds it: only a running process answers that address")
+    if views != [pid]:
+        pp.append(f"the hero shows the product view(s) [{', '.join(views)}], and the product is {pid}")
+    shown = [(st, int(n)) for st, n in re.findall(r'\bdata-issues="([^"]+)"[^>]*>\s*([0-9]+)', hero)]
+    plan_path = os.path.join(root, "site", "data", "generated", "plan.json")
+    if shown and not os.path.exists(plan_path):
+        pp.append("the product view counts issues, and site/data/generated/plan.json is missing (regenerate: scripts/generate-site-data)")
+    elif os.path.exists(plan_path):
+        with open(plan_path) as f:
+            plan = json.load(f)
+        tally = {}
+        for i in plan.get("issues") or []:
+            tally[i.get("status")] = tally.get(i.get("status"), 0) + 1
+        want_counts = [(st, tally[st]) for st in (plan.get("statuses") or {}).get("issue") or [] if tally.get(st)]
+        if views and shown != want_counts:
+            pp.append("the product view counts the issues as [" + ", ".join(f"{st} {n}" for st, n in shown)
+                      + "], and the plan gives [" + ", ".join(f"{st} {n}" for st, n in want_counts) + "]")
+for pr in pp:
+    bad("product", pr)
+if not pp:
+    if faces:
+        ok("product", f"the hero opens {faces[0]['id']}, the first interface the data gives, "
+                      + ("at the copy the publication holds" if held else "at the page that says how to open it")
+                      + ", and the view beside it counts what the plan counts")
+    else:
+        ok("product", "the data gives no interface a person opens, and the hero opens none")
 
 # ---------------------------------------------------------------- weight
 # What this page decides: its own HTML, the same-origin scripts and stylesheets it links, and

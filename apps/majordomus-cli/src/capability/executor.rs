@@ -124,8 +124,17 @@ pub fn bypassed() -> bool {
 
 #[derive(Debug)]
 struct CacheEntry {
-    value: Value,
+    /// Shared, so that a hit takes the cache's lock only for as long as it takes to count a
+    /// reference: the copy a caller is handed is made after the lock is released, and a
+    /// large answer copied for one caller never holds up every other capability's lookup.
+    value: Arc<Value>,
     stored: Instant,
+}
+
+/// The answer a caller owns: the shared one itself when nothing else holds it, a copy of it
+/// otherwise. Never made under the cache's lock.
+fn owned(value: Arc<Value>) -> Value {
+    Arc::unwrap_or_clone(value)
 }
 
 impl CapabilityExecutor {
@@ -136,6 +145,18 @@ impl CapabilityExecutor {
 
     /// Execute a capability by id with a JSON input. The one place a handler runs.
     pub fn execute(&self, ctx: &Context, id: &str, input: Value) -> Result<Value, CapabilityError> {
+        self.execute_shared(ctx, id, input).map(owned)
+    }
+
+    /// The same call, answered with the value the cache shares rather than a copy of it:
+    /// what the latest reading of a source keeps (`capability::readings`), so that reading a
+    /// source again whose answer is cached copies nothing.
+    pub(crate) fn execute_shared(
+        &self,
+        ctx: &Context,
+        id: &str,
+        input: Value,
+    ) -> Result<Arc<Value>, CapabilityError> {
         let policy = ctx.registry.get(id).map(|c| c.cache);
         self.run(ctx, id, input, policy)
     }
@@ -157,6 +178,7 @@ impl CapabilityExecutor {
         input: Value,
     ) -> Result<Value, CapabilityError> {
         self.run(ctx, id, input, Some(CachePolicy::Disabled))
+            .map(owned)
     }
 
     fn run(
@@ -165,7 +187,7 @@ impl CapabilityExecutor {
         id: &str,
         input: Value,
         policy: Option<CachePolicy>,
-    ) -> Result<Value, CapabilityError> {
+    ) -> Result<Arc<Value>, CapabilityError> {
         Counters::bump(&COUNTERS.executions);
         let policy = policy.ok_or_else(|| CapabilityError::NotFound(format!("capability {id}")))?;
         let policy = if bypassed() {
@@ -174,7 +196,7 @@ impl CapabilityExecutor {
             policy
         };
         let Some(key) = key_of(ctx, id, &input, policy) else {
-            return self.invoke(ctx, id, input);
+            return self.invoke(ctx, id, input).map(Arc::new);
         };
         let ttl = policy.ttl_seconds();
         if let Some(value) = self.lookup(&key, ttl) {
@@ -190,7 +212,7 @@ impl CapabilityExecutor {
         if let Some(value) = self.peek(&key, ttl) {
             return Ok(value);
         }
-        let value = self.invoke(ctx, id, input);
+        let value = self.invoke(ctx, id, input).map(Arc::new);
         let mut cache = lock(&self.cache);
         if cache
             .flights
@@ -215,7 +237,7 @@ impl CapabilityExecutor {
         entries.insert(
             key,
             CacheEntry {
-                value: value.clone(),
+                value: Arc::clone(&value),
                 stored: Instant::now(),
             },
         );
@@ -223,7 +245,7 @@ impl CapabilityExecutor {
     }
 
     /// The stored answer for `key` when it is still fresh, counted as a hit or a miss.
-    fn lookup(&self, key: &CacheKey, ttl: Option<u64>) -> Option<Value> {
+    fn lookup(&self, key: &CacheKey, ttl: Option<u64>) -> Option<Arc<Value>> {
         let _guard = perf::phase(Phase::CacheLookup);
         let mut cache = lock(&self.cache);
         let fresh = cache
@@ -233,7 +255,7 @@ impl CapabilityExecutor {
         match fresh {
             Some(true) => {
                 Counters::bump(&COUNTERS.cache_hits);
-                return cache.entries.get(key).map(|e| e.value.clone());
+                return cache.entries.get(key).map(|e| Arc::clone(&e.value));
             }
             Some(false) => {
                 cache.entries.remove(key);
@@ -247,13 +269,13 @@ impl CapabilityExecutor {
 
     /// The stored answer for `key` once its flight is ours: what the handler a caller waited
     /// for stored. Counted as a hit, since no handler runs for it.
-    fn peek(&self, key: &CacheKey, ttl: Option<u64>) -> Option<Value> {
+    fn peek(&self, key: &CacheKey, ttl: Option<u64>) -> Option<Arc<Value>> {
         let cache = lock(&self.cache);
         let value = cache
             .entries
             .get(key)
             .filter(|e| ttl.is_none_or(|ttl| e.stored.elapsed() < Duration::from_secs(ttl)))
-            .map(|e| e.value.clone());
+            .map(|e| Arc::clone(&e.value));
         if value.is_some() {
             Counters::bump(&COUNTERS.cache_hits);
         }
@@ -345,6 +367,16 @@ impl CapabilityExecutor {
     /// assert_eq!(ctx.executor.cached(&ctx, "no.such.capability", &json!({})), None);
     /// ```
     pub fn cached(&self, ctx: &Context, id: &str, input: &Value) -> Option<Value> {
+        self.cached_shared(ctx, id, input).map(owned)
+    }
+
+    /// The same answer, shared rather than copied.
+    pub(crate) fn cached_shared(
+        &self,
+        ctx: &Context,
+        id: &str,
+        input: &Value,
+    ) -> Option<Arc<Value>> {
         if bypassed() {
             return None;
         }

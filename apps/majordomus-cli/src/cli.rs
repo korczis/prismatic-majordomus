@@ -85,6 +85,8 @@ pub enum Command {
     Executions(ExecutionsArgs),
     /// The context a development session should be given, compiled from the repository: for an issue, a milestone, an intent or a set of paths, what is selected and why, what was left out and why, what collapsed into what, and the budget
     Devcontext(DevcontextArgs),
+    /// The edit guard: whether a provider's tool may write a file of this checkout now, judged from the active task's scope and the writing session's live mesh claims
+    Guard(GuardArgs),
     /// The mesh: the nodes this repository's running server has discovered on the network, this machine's node identity, and the self-check that proves the prerequisites on this machine alone
     Mesh(MeshArgs),
     /// Everything that happens around this repository, followed in one stream: mesh sessions, claims, handovers and reviews on every linked machine, the executor's merges and failures, and GitHub's pull requests and runs, with what is addressed to you marked
@@ -640,6 +642,67 @@ pub struct ModelsRouteArgs {
     #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
     /// `text` for a person, `json` for a machine; both render the same answer.
     pub format: OutputFormat,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus guard`: the edit guard (I2735).
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, GuardArgs, GuardCommand};
+/// use clap::Parser;
+///
+/// let cli = Cli::try_parse_from(["majordomus", "guard", "hook", "--provider", "claude-code"]).unwrap();
+/// let Command::Guard(guard) = cli.command else { panic!("expected `guard`") };
+/// let GuardArgs { command: GuardCommand::Hook(hook) } = guard;
+/// assert_eq!(hook.provider, "claude-code");
+///
+/// // the group has no behaviour of its own
+/// assert!(Cli::try_parse_from(["majordomus", "guard"]).is_err());
+/// ```
+pub struct GuardArgs {
+    #[command(subcommand)]
+    /// `hook`.
+    pub command: GuardCommand,
+}
+
+#[derive(Debug, Subcommand)]
+/// The `guard` subcommands: one today, `hook`, which a provider's pre-tool hook runs before
+/// every write; an unknown subcommand is refused rather than read as a path.
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, GuardCommand};
+/// use clap::Parser;
+///
+/// let cli = Cli::try_parse_from(["majordomus", "guard", "hook"]).unwrap();
+/// let Command::Guard(guard) = cli.command else { panic!("expected `guard`") };
+/// assert!(matches!(guard.command, GuardCommand::Hook(_)));
+/// assert!(Cli::try_parse_from(["majordomus", "guard", "docs/a.md"]).is_err());
+/// ```
+pub enum GuardCommand {
+    /// Judge the edit a provider's pre-tool payload (on stdin) is about to make; exit 2 with the reason and the remedy when no claim covers it, 0 otherwise
+    Hook(GuardHookArgs),
+}
+
+#[derive(Debug, Args)]
+/// `guard hook`: the provider whose payload stdin carries, and the repository.
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, GuardCommand, GuardHookArgs};
+/// use clap::Parser;
+///
+/// let cli = Cli::try_parse_from(["majordomus", "guard", "hook"]).unwrap();
+/// let Command::Guard(guard) = cli.command else { panic!("expected `guard`") };
+/// let GuardCommand::Hook(GuardHookArgs { provider, repo }) = guard.command;
+/// assert_eq!(provider, "claude-code", "the provider whose payload shape is known");
+/// assert_eq!(repo, None);
+/// ```
+pub struct GuardHookArgs {
+    /// The provider whose payload stdin carries; its session id on the mesh is `<provider>-<session_id>`
+    #[arg(long, default_value = "claude-code")]
+    pub provider: String,
+    /// Where a relative path in the payload is resolved from (default: the current directory); the checkout judged is the one the written file belongs to
+    #[arg(long, value_name = "PATH")]
+    pub repo: Option<PathBuf>,
 }
 
 #[derive(Debug, Args)]
@@ -3768,6 +3831,12 @@ pub enum WorktreeCommand {
         #[arg(long)]
         remove: bool,
     },
+    /// Every linked worktree holding uncommitted work: how many paths, how old the oldest change, what holds it (an active task, an open episode, a process inside) and whether it is abandoned, with the command that would put it on a remote ref. Reads every worktree and writes none
+    Uncommitted {
+        /// Judge against this age instead of the policy's session.stranded_after (90s, 30m, 12h, 1d)
+        #[arg(long, value_name = "DURATION")]
+        older_than: Option<String>,
+    },
     /// Every local branch, one per line, for a shell completion that wants the live set
     Branches {
         /// Only branches with no worktree
@@ -3843,6 +3912,9 @@ pub enum HostOrigin {
     Environment,
     /// Neither: [`LOOPBACK_HOST`].
     Default,
+    /// [`HTTP_HOST_ENV`] named one, and the checkout is a linked worktree, which does not
+    /// take it: [`LOOPBACK_HOST`] ([`checkout_http_host`]).
+    LinkedWorktree,
 }
 
 /// The interface a local server binds: the flag when one was given, else what
@@ -3899,6 +3971,75 @@ pub fn local_http_host(flag: Option<&str>) -> (String, HostOrigin) {
         );
     }
     (host, origin)
+}
+
+/// The machine's interface for one checkout: a linked worktree does not take the one
+/// [`HTTP_HOST_ENV`] names. The variable is the machine's face on its network, and that
+/// face is the repository's primary server — the one other machines dial and whose mesh
+/// the worktrees cooperate through; a worktree's own server serves its own sessions, and
+/// a variable inherited by every shell would otherwise put each of them on the network
+/// beside it. A flag still binds where it says, because a person typed it.
+///
+/// ```
+/// use majordomus_cli::cli::{checkout_http_host, HostOrigin};
+/// // a directory that is not a linked worktree reads the machine's resolution unchanged
+/// let plain = tempfile::tempdir().unwrap();
+/// assert_eq!(
+///     checkout_http_host(Some("10.0.0.1"), plain.path()),
+///     ("10.0.0.1".to_string(), HostOrigin::Flag)
+/// );
+/// ```
+pub fn checkout_http_host(flag: Option<&str>, root: &std::path::Path) -> (String, HostOrigin) {
+    let environment = std::env::var(HTTP_HOST_ENV).ok();
+    let linked = crate::repository::git_identity(root).is_some_and(|g| g.linked);
+    let (host, origin) = resolve_checkout_http_host(flag, environment.as_deref(), linked);
+    match origin {
+        HostOrigin::Environment => tracing::info!(
+            host = %host,
+            "binding {host}: {HTTP_HOST_ENV} names it for this machine"
+        ),
+        HostOrigin::LinkedWorktree => tracing::info!(
+            "binding {LOOPBACK_HOST}: {HTTP_HOST_ENV} names the machine's interface, and a \
+             linked worktree leaves it to the primary checkout's server (--host binds one)"
+        ),
+        _ => {}
+    }
+    (host, origin)
+}
+
+/// [`resolve_http_host`] for a checkout that is, or is not, a linked worktree: an
+/// environment's interface becomes loopback in a linked worktree; a flag never changes.
+///
+/// ```
+/// use majordomus_cli::cli::{resolve_checkout_http_host, HostOrigin};
+/// assert_eq!(
+///     resolve_checkout_http_host(None, Some("0.0.0.0"), true),
+///     ("127.0.0.1".to_string(), HostOrigin::LinkedWorktree)
+/// );
+/// assert_eq!(
+///     resolve_checkout_http_host(None, Some("0.0.0.0"), false),
+///     ("0.0.0.0".to_string(), HostOrigin::Environment)
+/// );
+/// assert_eq!(
+///     resolve_checkout_http_host(Some("0.0.0.0"), None, true),
+///     ("0.0.0.0".to_string(), HostOrigin::Flag)
+/// );
+/// assert_eq!(
+///     resolve_checkout_http_host(None, None, true),
+///     ("127.0.0.1".to_string(), HostOrigin::Default)
+/// );
+/// ```
+pub fn resolve_checkout_http_host(
+    flag: Option<&str>,
+    environment: Option<&str>,
+    linked: bool,
+) -> (String, HostOrigin) {
+    match resolve_http_host(flag, environment) {
+        (_, HostOrigin::Environment) if linked => {
+            (LOOPBACK_HOST.to_string(), HostOrigin::LinkedWorktree)
+        }
+        resolved => resolved,
+    }
 }
 
 #[derive(Debug, Args)]
@@ -5681,6 +5822,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
         }],
     },
     CommandExamples {
+        command: "worktree uncommitted",
+        examples: &[ExampleDoc {
+            id: "worktree-uncommitted-none",
+            title: "Work no commit carries, and whether anything holds it",
+            description: "Every linked worktree holding staged, unstaged, untracked or conflicted paths, with the count, the age of the oldest change, the task, episode or process that holds it, and `abandoned` when nothing does and it is older than the policy's session.stranded_after. A repository with no linked worktree has nothing to list; the reading writes nothing either way.",
+            argv: &["worktree", "uncommitted"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["0 with uncommitted work", "nothing was changed"]),
+        }],
+    },
+    CommandExamples {
         command: "worktree branches",
         examples: &[ExampleDoc {
             id: "worktree-branches-list",
@@ -6837,6 +6989,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["offload", "derive", "."],
             setup: &[],
             expect: Expect::ExitCode(12),
+        }],
+    },
+    CommandExamples {
+        command: "guard hook",
+        examples: &[ExampleDoc {
+            id: "guard-hook",
+            title: "Judge the edit a provider's pre-tool payload names",
+            description: "What a provider's pre-tool hook runs before an edit: the payload arrives on stdin, and the command exits 2 with the reason and the remedy when no claim covers the path it names, 0 otherwise. Here stdin is empty, so it names no path, and the command lets the tool run.",
+            argv: &["guard", "hook", "--provider", "claude-code"],
+            setup: &[],
+            expect: Expect::Success,
         }],
     },
     CommandExamples {

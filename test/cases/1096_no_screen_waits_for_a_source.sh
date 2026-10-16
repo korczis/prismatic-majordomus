@@ -28,7 +28,8 @@ for file in "$ROOT"/apps/majordomus-cli/src/ui/*.rs; do
   }
 done
 [ "$found" = 0 ] || exit 1
-grep -q 'ctx\.read(' "$ROOT/apps/majordomus-cli/src/ui/source.rs" \
+# a screen's source asks for a reading, owned or shared (`ctx.read`, `read_shared(ctx, ...)`)
+grep -qE 'ctx\.read\(|read_shared\(ctx,' "$ROOT/apps/majordomus-cli/src/ui/source.rs" \
   || { echo "    ui/source.rs asks for no reading: the scan above would hold nothing"; exit 1; }
 
 # ---------------------------------------------------------------- a moved repository
