@@ -19,9 +19,10 @@ use serde_json::Value;
 use crate::cli::{OutputFormat, WorktreeArgs, WorktreeCommand};
 use crate::error::{Error, Result};
 use crate::worktree::{
-    migrate, BranchState, CreateRequest, Detail, DirtyState, MigrationAction, MigrationOptions,
-    MigrationPlan, RepositoryTopology, Severity, Standing, StatusReport, StepOutcome,
-    TopologyDiagnostic, WorktreeService, WorktreeState, EXIT_REFUSED,
+    migrate, BranchState, CreateRequest, Detail, DirtyState, HooksPath, MigrationAction,
+    MigrationOptions, MigrationPlan, RepositoryTopology, Severity, Standing, StatusReport,
+    StepOutcome, Threshold, TopologyDiagnostic, UncommittedReport, WorkStanding, WorktreeService,
+    WorktreeState, EXIT_REFUSED,
 };
 
 /// Run `majordomus worktree`.
@@ -86,13 +87,24 @@ pub fn run(args: WorktreeArgs) -> Result<u8> {
             remove(&svc()?, &selector, force, format, &mut out)
         }
         Some(WorktreeCommand::Cleanup { remove }) => cleanup(&svc()?, format, remove, &mut out),
+        Some(WorktreeCommand::Uncommitted { older_than }) => {
+            let threshold = Threshold::declared_at(&start, older_than.as_deref()).map_err(|r| {
+                Error::Refused {
+                    code: crate::cli::EXIT_USAGE,
+                    reason: format!("worktree uncommitted: {r}"),
+                }
+            })?;
+            uncommitted(svc()?.uncommitted(&threshold), &threshold, format, &mut out)
+        }
         Some(WorktreeCommand::Branches { without_worktree }) => {
             branches(&svc()?, without_worktree, &mut out)
         }
     }
 }
 
-type Out<'a> = std::io::StdoutLock<'a>;
+/// Where a rendering goes: standard output when run, any writer under test, so that a write
+/// that fails is a case a test can make.
+type Out<'a> = dyn Write + 'a;
 
 fn w(out: &mut Out<'_>, s: impl AsRef<str>) -> Result<()> {
     writeln!(out, "{}", s.as_ref()).map_err(Error::Transport)
@@ -564,25 +576,72 @@ fn cleanup(
     Ok(0)
 }
 
-/// Is anything working inside this directory right now?
-///
-/// `lsof -a -d cwd` asks the kernel which processes have their working directory there, which
-/// is the only reading that is true at the moment it is taken. The mtime of a worktree is not:
-/// two of the four swept on 2026-09-15 looked untouched since the 12th and had live processes
-/// inside them. A missing `lsof` is not "nothing is running" — it is not knowing, and the
-/// caller refuses on `None` rather than removing.
+/// `worktree uncommitted`: the service's reading, one block per worktree, abandoned first.
+/// Exit 0 whatever it finds: it is a reading, and `doctor` is what warns.
+fn uncommitted(
+    reading: crate::worktree::Result<UncommittedReport>,
+    threshold: &Threshold,
+    format: OutputFormat,
+    out: &mut Out<'_>,
+) -> Result<u8> {
+    let r = reading.map_err(refuse)?;
+    if format == OutputFormat::Json {
+        json(out, &r)?;
+        return Ok(0);
+    }
+    let against = match (&threshold.declared, threshold.seconds) {
+        (Some(d), Some(_)) => format!("{d} ({})", threshold.source),
+        _ => "no threshold".into(),
+    };
+    w(
+        out,
+        format!("uncommitted work in linked worktrees, judged against {against}:"),
+    )?;
+    for e in &r.worktrees {
+        w(
+            out,
+            format!(
+                "  {:<9} {}  {}  {} path(s) ({}), oldest changed {} ago",
+                e.standing.as_str(),
+                e.label,
+                e.path,
+                e.paths,
+                e.work.summary(),
+                e.age.as_deref().unwrap_or("an unknown time")
+            ),
+        )?;
+        if e.held_by.is_empty() {
+            w(
+                out,
+                "            held by nothing: no active task, open episode or process",
+            )?;
+        } else {
+            w(out, format!("            held by {}", e.held_by.join(", ")))?;
+        }
+        if e.standing == WorkStanding::Abandoned {
+            w(out, format!("            preserve: {}", e.remedy))?;
+        }
+    }
+    for f in &r.findings {
+        w(out, format!("  note: {f}"))?;
+    }
+    let t = &r.tallies;
+    w(
+        out,
+        format!(
+            "worktree uncommitted: {} linked worktree(s) read, {} with uncommitted work — {} abandoned, {} recent, {} held; nothing was changed",
+            t.measured, t.uncommitted, t.abandoned, t.recent, t.held
+        ),
+    )?;
+    Ok(0)
+}
+
+/// Is anything working inside this directory right now? The service's one reading of it
+/// ([`crate::worktree::state::processes_inside`]); a missing `lsof` is not "nothing is
+/// running" — it is not knowing, and the caller refuses on `None` rather than removing.
 fn occupied(path: &str) -> Option<bool> {
-    let real = std::fs::canonicalize(path).ok()?;
-    let real = real.to_string_lossy().to_string();
-    let out = std::process::Command::new("lsof")
-        .args(["-a", "-d", "cwd", "-Fn"])
-        .output()
-        .ok()?;
-    let text = String::from_utf8_lossy(&out.stdout);
-    Some(text.lines().any(|l| {
-        l.strip_prefix('n')
-            .is_some_and(|p| p == real || p.starts_with(&format!("{real}/")))
-    }))
+    crate::worktree::state::processes_inside(&[std::path::Path::new(path)])
+        .and_then(|inside| inside.first().copied())
 }
 
 /// Remove the worktrees the listing offers, each re-measured immediately before it goes.
@@ -737,6 +796,7 @@ fn create(
             }
             w(out, report.envrc.describe())?;
             w(out, report.envrc_local.describe())?;
+            w(out, report.hooks.describe())?;
             w(
                 out,
                 format!("cd \"$(majordomus worktree path {})\"", report.branch),
@@ -841,6 +901,9 @@ fn render_plan(plan: &MigrationPlan, out: &mut Out<'_>) -> Result<()> {
                 if let Some(envrc) = &step.envrc {
                     w(out, format!("  {}", envrc.describe()))?;
                 }
+                if let Some(hooks) = &step.hooks {
+                    w(out, format!("  {}", hooks.describe()))?;
+                }
             }
             StepOutcome::Blocked => {
                 w(out, "  outcome BLOCKED")?;
@@ -942,6 +1005,13 @@ fn repair(
             for line in &report.repaired {
                 w(out, line)?;
             }
+            // Only what changed or still runs somebody else's hooks; a worktree already on
+            // its own is the quiet case.
+            for (path, hooks) in &report.hooks {
+                if !matches!(hooks, HooksPath::Own { .. } | HooksPath::NotConfigured) {
+                    w(out, format!("{path}\n  {}", hooks.describe()))?;
+                }
+            }
             if report.applied {
                 w(
                     out,
@@ -1004,6 +1074,7 @@ fn remove(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::worktree::UncommittedWorktree;
     use std::path::Path;
 
     fn git(cwd: &Path, args: &[&str]) {
@@ -1120,5 +1191,253 @@ mod tests {
         .expect("write");
         let why = refusal(&svc, &b.name, &path).expect("refused");
         assert!(why.contains("uncommitted work"), "{why}");
+    }
+
+    /// A writer that takes `lines` whole lines and refuses every write after them: a closed
+    /// pipe, at a chosen line.
+    struct Refusing {
+        lines: usize,
+        seen: usize,
+        text: String,
+    }
+
+    impl Write for Refusing {
+        fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+            if self.seen >= self.lines {
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::BrokenPipe,
+                    "the reader went away",
+                ));
+            }
+            self.seen += buf.iter().filter(|b| **b == b'\n').count();
+            self.text.push_str(&String::from_utf8_lossy(buf));
+            Ok(buf.len())
+        }
+
+        fn flush(&mut self) -> std::io::Result<()> {
+            Ok(())
+        }
+    }
+
+    /// Render once with the writer refusing at each line in turn — every write's failure is
+    /// a transport error, never a panic or a silent success — and answer the whole text of
+    /// the run that was let finish.
+    fn at_every_line(mut render: impl FnMut(&mut Out<'_>) -> Result<u8>) -> String {
+        for lines in 0..10_000 {
+            let mut out = Refusing {
+                lines,
+                seen: 0,
+                text: String::new(),
+            };
+            match render(&mut out) {
+                Ok(code) => {
+                    assert_eq!(code, 0);
+                    return out.text;
+                }
+                Err(Error::Transport(_)) => {}
+                Err(e) => panic!("a refused write became {e:?}"),
+            }
+        }
+        panic!("the rendering never finished");
+    }
+
+    fn repo_args(at: &Path) -> crate::cli::RepoArgs {
+        crate::cli::RepoArgs {
+            repo: Some(at.to_path_buf()),
+            discovery: crate::cli::DiscoveryMode::Vcs,
+            strict: false,
+            share: None,
+        }
+    }
+
+    /// A repository whose tracked `.githooks/` the shared configuration names by its absolute
+    /// path in the primary checkout: the value that sent every worktree to the primary's
+    /// hooks (I2718).
+    fn hooked() -> (tempfile::TempDir, std::path::PathBuf) {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let root = tmp.path().canonicalize().expect("canonical tempdir");
+        git(&root, &["init", "-q", "repo"]);
+        let repo = root.join("repo");
+        std::fs::create_dir_all(repo.join(".githooks")).expect("mkdir");
+        std::fs::write(repo.join(".githooks/pre-commit"), "#!/bin/sh\n").expect("write");
+        git(&repo, &["add", "-A"]);
+        git(&repo, &["commit", "-qm", "hooks"]);
+        let hooks = repo.join(".githooks").to_string_lossy().to_string();
+        git(&repo, &["config", "core.hooksPath", hooks.as_str()]);
+        (tmp, repo)
+    }
+
+    fn worktree_entry(label: &str, standing: WorkStanding) -> UncommittedWorktree {
+        UncommittedWorktree {
+            path: format!("/r-wt/{label}"),
+            branch: Some(label.into()),
+            label: label.into(),
+            work: DirtyState {
+                untracked: 1,
+                ..DirtyState::default()
+            },
+            paths: 1,
+            oldest_change: None,
+            age_seconds: None,
+            age: None,
+            task: None,
+            episodes: Vec::new(),
+            process_inside: None,
+            held_by: Vec::new(),
+            standing,
+            remedy: format!("git -C /r-wt/{label} stash push --include-untracked"),
+        }
+    }
+
+    #[test]
+    fn the_uncommitted_reading_renders_every_standing_and_refuses_with_the_services_words() {
+        let declared = Threshold::resolve(Some("12h"), None).expect("a threshold");
+        let mut held = worktree_entry("held", WorkStanding::Held);
+        held.held_by = vec!["task t-1".into()];
+        held.age = Some("3 hours".into());
+        let report = UncommittedReport {
+            schema: "test".into(),
+            observed_at: "2026-10-15T00:00:00Z".into(),
+            threshold: declared.clone(),
+            worktrees: vec![worktree_entry("gone", WorkStanding::Abandoned), held],
+            tallies: crate::worktree::UncommittedTallies {
+                measured: 2,
+                uncommitted: 2,
+                held: 1,
+                recent: 0,
+                abandoned: 1,
+            },
+            findings: vec!["one work tree would not answer".into()],
+        };
+        let text = at_every_line(|out| {
+            uncommitted(Ok(report.clone()), &declared, OutputFormat::Text, out)
+        });
+        assert!(
+            text.contains("judged against 12h (session.stranded_after)"),
+            "{text}"
+        );
+        assert!(
+            text.contains("oldest changed an unknown time ago"),
+            "{text}"
+        );
+        assert!(text.contains("held by nothing"), "{text}");
+        assert!(text.contains("held by task t-1"), "{text}");
+        assert!(text.contains("preserve: git -C /r-wt/gone"), "{text}");
+        assert!(
+            text.contains("note: one work tree would not answer"),
+            "{text}"
+        );
+        assert!(text.contains("1 abandoned, 0 recent, 1 held"), "{text}");
+
+        let absent = Threshold::resolve(None, None).expect("no threshold");
+        let text =
+            at_every_line(|out| uncommitted(Ok(report.clone()), &absent, OutputFormat::Text, out));
+        assert!(text.contains("judged against no threshold"), "{text}");
+        let json =
+            at_every_line(|out| uncommitted(Ok(report.clone()), &absent, OutputFormat::Json, out));
+        assert!(json.contains("\"worktrees\""), "{json}");
+
+        let refused = crate::worktree::WorktreeError::GitUnavailable {
+            reason: "no git".into(),
+        };
+        let mut out = Vec::new();
+        match uncommitted(Err(refused), &absent, OutputFormat::Text, &mut out) {
+            Err(Error::Refused { reason, .. }) => assert!(reason.contains("no git"), "{reason}"),
+            other => panic!("expected the service's refusal, got {other:?}"),
+        }
+        assert!(out.is_empty(), "nothing is printed for a refused reading");
+    }
+
+    #[test]
+    fn worktree_uncommitted_refuses_a_threshold_that_is_not_a_duration_and_reads_a_repository() {
+        let run_with = |at: &Path, older_than: &str| {
+            run(WorktreeArgs {
+                repo: repo_args(at),
+                command: Some(WorktreeCommand::Uncommitted {
+                    older_than: Some(older_than.into()),
+                }),
+                format: OutputFormat::Json,
+            })
+        };
+        let (_tmp, repo) = hooked();
+        match run_with(&repo, "soon") {
+            Err(Error::Refused { code, reason }) => {
+                assert_eq!(code, crate::cli::EXIT_USAGE);
+                assert!(reason.starts_with("worktree uncommitted: "), "{reason}");
+            }
+            other => panic!("expected a usage refusal, got {other:?}"),
+        }
+        assert_eq!(run_with(&repo, "1h").expect("a reading"), 0);
+        // a directory that is no repository: the threshold is read, the service refuses
+        let plain = tempfile::tempdir().expect("tempdir");
+        assert!(matches!(
+            run_with(plain.path(), "1h"),
+            Err(Error::Refused { .. })
+        ));
+    }
+
+    #[test]
+    fn create_migrate_and_repair_say_which_hooks_a_worktree_runs() {
+        let (tmp, repo) = hooked();
+        let svc = WorktreeService::open(&repo).expect("open the service");
+
+        // ensure, so that every rerun of the rendering finds the worktree it made
+        let text = at_every_line(|out| create(&svc, "topic", None, true, OutputFormat::Text, out));
+        assert!(text.contains(".githooks, its own"), "{text}");
+
+        // a worktree made by hand outside the container is moved home and bound again
+        let root = tmp.path().canonicalize().expect("canonical tempdir");
+        let away = root.join("away").to_string_lossy().to_string();
+        git(
+            &repo,
+            &["worktree", "add", "-q", "-b", "moved", away.as_str()],
+        );
+        // the service reads the registrations when it is opened
+        let svc = WorktreeService::open(&repo).expect("open the service again");
+        let plan = migrate::apply(
+            &svc,
+            &MigrationOptions {
+                allow_copy: false,
+                only: Vec::new(),
+                include_ephemeral: true,
+            },
+        )
+        .expect("the migration");
+        let step = plan
+            .steps
+            .iter()
+            .find(|s| s.branch == "moved")
+            .unwrap_or_else(|| panic!("the moved step: {plan:?}"));
+        assert_eq!(step.outcome, StepOutcome::Moved, "{step:?}");
+        assert!(
+            matches!(step.hooks, Some(HooksPath::Set { .. })),
+            "{:?}",
+            step.hooks
+        );
+        let text = at_every_line(|out| render_plan(&plan, out).map(|()| 0));
+        assert!(text.contains("  hooks   "), "{text}");
+        // a plan recorded before moves carried hooks has none to say
+        let mut older = plan.clone();
+        for s in older.steps.iter_mut() {
+            s.hooks = None;
+        }
+        let text = at_every_line(|out| render_plan(&older, out).map(|()| 0));
+        assert!(
+            text.contains("outcome moved") && !text.contains("  hooks   "),
+            "{text}"
+        );
+
+        // a worktree whose tree lost the directory keeps the primary's, and repair says so
+        // on every run; one already on its own is the quiet case
+        let bare = root.join("bare").to_string_lossy().to_string();
+        git(
+            &repo,
+            &["worktree", "add", "-q", "-b", "bare", bare.as_str()],
+        );
+        std::fs::remove_dir_all(Path::new(&bare).join(".githooks")).expect("rm");
+        let svc = WorktreeService::open(&repo).expect("open the service again");
+        let text = at_every_line(|out| repair(&svc, false, OutputFormat::Text, out));
+        assert!(text.contains("the primary checkout's"), "{text}");
+        assert!(!text.contains("its own"), "{text}");
     }
 }

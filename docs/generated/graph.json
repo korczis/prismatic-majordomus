@@ -1,7 +1,7 @@
 {
   "schema": "majordomus/capability-graph/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and every object of the index; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.26.0",
+  "generator": "majordomus-cli 0.27.0",
   "graph": {
     "id": "composed",
     "title": "Everything, composed",
@@ -671,6 +671,15 @@
         "route": "/cockpit/capabilities/executions.protocol",
         "source": "apps/majordomus-cli/src/capability/builtin/executions.rs",
         "status": "query"
+      },
+      {
+        "id": "capability:executions.report",
+        "kind": "capability",
+        "label": "executions.report",
+        "summary": "Report an execution another process runs",
+        "route": "/cockpit/capabilities/executions.report",
+        "source": "apps/majordomus-cli/src/capability/builtin/executions.rs",
+        "status": "command"
       },
       {
         "id": "capability:executions.start",
@@ -1857,6 +1866,15 @@
         "label": "worktree.topology",
         "summary": "The whole topology",
         "route": "/cockpit/capabilities/worktree.topology",
+        "source": "apps/majordomus-cli/src/capability/builtin/worktree.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:worktree.uncommitted",
+        "kind": "capability",
+        "label": "worktree.uncommitted",
+        "summary": "Uncommitted work in the linked worktrees, and what holds it",
+        "route": "/cockpit/capabilities/worktree.uncommitted",
         "source": "apps/majordomus-cli/src/capability/builtin/worktree.rs",
         "status": "query"
       },
@@ -3767,6 +3785,14 @@
         "external": true
       },
       {
+        "id": "file:scripts/lib/diagrams.mjs",
+        "kind": "file",
+        "label": "diagrams.mjs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "scripts/lib/diagrams.mjs",
+        "external": true
+      },
+      {
         "id": "file:scripts/lib/executable-site.jq",
         "kind": "file",
         "label": "executable-site.jq",
@@ -3972,6 +3998,14 @@
         "label": "trains.js",
         "summary": "named by the layer; not an object of this index",
         "source": "share/cockpit/trains.js",
+        "external": true
+      },
+      {
+        "id": "file:share/design/figure.css",
+        "kind": "file",
+        "label": "figure.css",
+        "summary": "named by the layer; not an object of this index",
+        "source": "share/design/figure.css",
         "external": true
       },
       {
@@ -4231,11 +4265,27 @@
         "external": true
       },
       {
+        "id": "file:share/ui/observatory-kiosk.js",
+        "kind": "file",
+        "label": "observatory-kiosk.js",
+        "summary": "named by the layer; not an object of this index",
+        "source": "share/ui/observatory-kiosk.js",
+        "external": true
+      },
+      {
         "id": "file:share/ui/observatory.js",
         "kind": "file",
         "label": "observatory.js",
         "summary": "named by the layer; not an object of this index",
         "source": "share/ui/observatory.js",
+        "external": true
+      },
+      {
+        "id": "file:site/charts.js",
+        "kind": "file",
+        "label": "charts.js",
+        "summary": "named by the layer; not an object of this index",
+        "source": "site/charts.js",
         "external": true
       },
       {
@@ -4252,6 +4302,22 @@
         "label": "proof-carrying-documentation.md",
         "summary": "named by the layer; not an object of this index",
         "source": "site/content-src/proof-carrying-documentation.md",
+        "external": true
+      },
+      {
+        "id": "file:site/diagrams.js",
+        "kind": "file",
+        "label": "diagrams.js",
+        "summary": "named by the layer; not an object of this index",
+        "source": "site/diagrams.js",
+        "external": true
+      },
+      {
+        "id": "file:site/static/install.sh",
+        "kind": "file",
+        "label": "install.sh",
+        "summary": "named by the layer; not an object of this index",
+        "source": "site/static/install.sh",
         "external": true
       },
       {
@@ -5997,6 +6063,34 @@
         }
       },
       {
+        "id": "majordomus://adr/adr-0069",
+        "kind": "adr",
+        "label": "adr-0069",
+        "summary": "A capability may be scripted, and repository automation is scripted capabilities rather than shell",
+        "route": "/cockpit/objects/adr/adr-0069",
+        "source": ".ai/repo/adrs/0069-a-capability-may-be-scripted.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-09-15",
+          "related": [
+            "rule:project.no-network-no-eval",
+            "rule:project.no-new-nouns",
+            "rule:project.optional-complexity",
+            "rule:project.interfaces-are-projections",
+            "rule:project.executions-carry-no-secret",
+            "file:docs/CONCEPTS.md",
+            "file:SECURITY.md"
+          ],
+          "tags": [
+            "automation",
+            "capabilities",
+            "architecture",
+            "portability",
+            "security"
+          ]
+        }
+      },
+      {
         "id": "majordomus://adr/adr-0070",
         "kind": "adr",
         "label": "adr-0070",
@@ -7251,6 +7345,39 @@
         }
       },
       {
+        "id": "majordomus://adr/adr-0152",
+        "kind": "adr",
+        "label": "adr-0152",
+        "summary": "A diagram and a chart on the site are one viewer each, over what the build derived: interactive, linkable, and linked by inference",
+        "route": "/cockpit/objects/adr/adr-0152",
+        "source": ".ai/repo/adrs/0152-a-diagram-and-a-chart-on-the-site-are-one-viewer-each-over-w.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-13",
+          "related": [
+            "rule:project.a-diagram-is-drawn-not-typed",
+            "rule:project.derived-once",
+            "rule:project.interfaces-are-projections",
+            "rule:project.homepage-tells-a-declared-story",
+            "rule:project.every-link-and-control-is-tested",
+            "file:.ai/repo/adrs/0135-majordomus-ui-is-the-primary-surface.md",
+            "file:scripts/lib/diagrams.mjs",
+            "file:site/diagrams.js",
+            "file:site/charts.js",
+            "file:share/design/figure.css",
+            "file:scripts/ci/link-check",
+            "file:docs/DIAGRAMS.md",
+            "file:test/cases/3006_diagrams_are_interactive_and_linkable.sh"
+          ],
+          "tags": [
+            "site",
+            "diagrams",
+            "charts",
+            "derivation"
+          ]
+        }
+      },
+      {
         "id": "majordomus://adr/adr-0155",
         "kind": "adr",
         "label": "adr-0155",
@@ -7298,13 +7425,71 @@
             "test:test/cases/3011_the_observatory_draws_nothing_it_did_not_read.sh",
             "file:docs/MAJORDOMUS_UI.md",
             "file:apps/majordomus-cli/src/ui/observatory.rs",
-            "file:share/ui/observatory.js"
+            "file:share/ui/observatory.js",
+            "file:apps/majordomus-cli/src/http/events.rs",
+            "file:.ai/repo/adrs/0126-a-caller-beyond-loopback-reads-and-changes-nothing-it-cannot-authenticate.md"
           ],
           "tags": [
             "ui",
             "observatory",
             "evidence",
             "mesh"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0160",
+        "kind": "adr",
+        "label": "adr-0160",
+        "summary": "The kiosk draws what the repository proves, from the sources that already answer it, and draws it with p5 only where the build has it",
+        "route": "/cockpit/objects/adr/adr-0160",
+        "source": ".ai/repo/adrs/0160-the-kiosk-draws-what-the-repository-proves.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-14",
+          "related": [
+            "file:.ai/repo/adrs/0158-the-observatory-draws-only-what-was-observed.md",
+            "file:.ai/repo/adrs/0135-majordomus-ui-is-the-primary-surface.md",
+            "file:.ai/repo/adrs/0012-the-cockpit-is-a-projection-not-an-application.md",
+            "file:.ai/repo/adrs/0142-no-screen-waits-for-a-source.md",
+            "file:.ai/repo/rules/project/ui-derived-state.v1.md",
+            "test:test/cases/3014_the_kiosk_draws_what_the_repository_proves.sh",
+            "file:apps/majordomus-cli/src/ui/observatory.rs",
+            "file:share/ui/observatory-kiosk.js"
+          ],
+          "tags": [
+            "ui",
+            "observatory",
+            "evidence",
+            "p5"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0161",
+        "kind": "adr",
+        "label": "adr-0161",
+        "summary": "A mesh node follows the published release, through the one installer, forward only",
+        "route": "/cockpit/objects/adr/adr-0161",
+        "source": ".ai/repo/adrs/0161-a-mesh-node-follows-the-published-release.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-14",
+          "related": [
+            "file:.ai/repo/project/milestones/safe-self-update.yaml",
+            "file:.ai/repo/adrs/0131-a-release-publishes-its-metadata-before-its-record-lands.md",
+            "file:.ai/repo/adrs/0155-an-expedited-landing-is-the-owners-word.md",
+            "file:docs/DISTRIBUTION.md",
+            "file:docs/MESH.md",
+            "file:site/static/install.sh",
+            "file:apps/majordomus-cli/src/lease.rs",
+            "test:test/cases/85_installer.sh"
+          ],
+          "tags": [
+            "distribution",
+            "release",
+            "mesh",
+            "runtime"
           ]
         }
       },
@@ -7881,6 +8066,21 @@
           "responsibility": "layer",
           "source": "docs/KNOWLEDGE.md",
           "test": "test/cases/982_a_candidate_is_routed_by_what_it_is_about.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/a-diagram-is-named-linked-and-addressable",
+        "kind": "claim",
+        "label": "a-diagram-is-named-linked-and-addressable",
+        "summary": "Every Mermaid diagram of the built site gets an id (diagram-<name>), the list of its nodes, the viewer's controls and a link for each node that is the identity of an object the site has a page for, all derived at build; a link to",
+        "route": "/cockpit/objects/claim/a-diagram-is-named-linked-and-addressable",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "scripts/lib/diagrams.mjs",
+          "responsibility": "none",
+          "source": "docs/DIAGRAMS.md",
+          "test": "test/cases/3006_diagrams_are_interactive_and_linkable.sh"
         }
       },
       {
@@ -12191,7 +12391,6 @@
           "requires_repository": true,
           "requires_task": "required",
           "stage": "work",
-          "syntax": "majordomus evidence (--covers <token> [--type <kind>] (--command <cmd> | --artifact <ref>) | --gate <id> --exit <status>) [--result <r>] [--json]",
           "visibility": "public",
           "writes": [
             ".ai/local/state/ledger.jsonl"
@@ -14101,6 +14300,14 @@
         "source": "CONTRIBUTING.md"
       },
       {
+        "id": "majordomus://document/GEMINI.md",
+        "kind": "document",
+        "label": "GEMINI.md",
+        "summary": "GEMINI.md",
+        "route": "/cockpit/objects/document/gemini-md",
+        "source": "GEMINI.md"
+      },
+      {
         "id": "majordomus://document/README.md",
         "kind": "document",
         "label": "README.md",
@@ -14283,6 +14490,14 @@
         "summary": "The development runtime",
         "route": "/cockpit/objects/document/docs-development-runtime-md",
         "source": "docs/DEVELOPMENT_RUNTIME.md"
+      },
+      {
+        "id": "majordomus://document/docs/DIAGRAMS.md",
+        "kind": "document",
+        "label": "docs/DIAGRAMS.md",
+        "summary": "Diagrams and charts",
+        "route": "/cockpit/objects/document/docs-diagrams-md",
+        "source": "docs/DIAGRAMS.md"
       },
       {
         "id": "majordomus://document/docs/DISTRIBUTION.md",
@@ -14715,6 +14930,14 @@
         "summary": "Every observation candidate is routed by the structure of what it is about",
         "route": "/cockpit/objects/document/docs-claims-a-candidate-is-routed-by-what-it-is-about-md",
         "source": "docs/claims/a-candidate-is-routed-by-what-it-is-about.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/a-diagram-is-named-linked-and-addressable.md",
+        "kind": "document",
+        "label": "docs/claims/a-diagram-is-named-linked-and-addressable.md",
+        "summary": "Every Mermaid diagram of the built site gets an id (diagram-<name>), the list of its nodes, the viewer's controls and a link for each node that is the identity of an object the site has a page for, all derived at build; a link to #diagram-<name>:<node> fails the build when the diagram does not declare the node",
+        "route": "/cockpit/objects/document/docs-claims-a-diagram-is-named-linked-and-addressable-md",
+        "source": "docs/claims/a-diagram-is-named-linked-and-addressable.md"
       },
       {
         "id": "majordomus://document/docs/claims/a-finding-names-how-to-see-it-again.md",
@@ -21610,6 +21833,8 @@
             "Archiving moves records without deleting them and refuses to overwrite an existing archive",
             "A session left open longer than the policy allows is reported by watch and does not block anything"
           ],
+          "completed_at": "2026-10-14T19:35:58Z",
+          "completed_event": "sha256:5151c14740bafd62181ef52fcaafa6bd899813c465223384000ab7dbf989f4ca",
           "created_at": "2026-09-04",
           "depends_on": [
             "I0805"
@@ -21637,12 +21862,16 @@
             "test/cases/63_session_records.sh"
           ],
           "slug": "session-doctrines-retention",
-          "updated_at": "2026-10-08",
+          "started_at": "2026-10-14T19:34:23Z",
+          "started_event": "sha256:7f8f33c075ed30ee3be88897763928c13dcaf0bca2a30d766defb0dec90cb341",
+          "updated_at": "2026-10-14T19:35:58Z",
           "validation": [
             "bash test/run.sh 63_session_records",
             "bin/majordomus doctor",
             "bin/majordomus watch"
-          ]
+          ],
+          "verified_at": "2026-10-14T19:35:35Z",
+          "verified_event": "sha256:fe3d53818c1d3ce465215e8d8118f6e43b69500eab62830fb43333b5db7d9271"
         }
       },
       {
@@ -21861,6 +22090,8 @@
             "A stale index is reported as stale by every read command, and none of them rebuilds it",
             "The existing search command's output and exit codes are unchanged, proved by its own case still passing"
           ],
+          "completed_at": "2026-10-14T20:18:28Z",
+          "completed_event": "sha256:2ac642e9b5b38cd41d1d1ee356b600f917385c4886d01b8b21917fdeff1d0dc8",
           "created_at": "2026-09-04",
           "current_state": "`majordomus search` is a literal grep over the six operational record kinds and must keep that contract unchanged. Nothing searches the repository's canonical artifacts.",
           "depends_on": [
@@ -21886,11 +22117,15 @@
             "test/cases"
           ],
           "slug": "knowledge-query",
-          "updated_at": "2026-09-04",
+          "started_at": "2026-10-14T20:17:07Z",
+          "started_event": "sha256:206123f199756074b223279273edf04bcc1f39706649179f8390c51ea2bfb5ce",
+          "updated_at": "2026-10-14T20:18:28Z",
           "validation": [
             "bash test/run.sh 69_knowledge_query",
             "bash test/run.sh 24_prompt_search"
-          ]
+          ],
+          "verified_at": "2026-10-14T20:18:06Z",
+          "verified_event": "sha256:426a9b753236b1baa453d1250cf24140efddae8ec920d7ac6ac131619352a914"
         }
       },
       {
@@ -28436,6 +28671,8 @@
             "The gate's baseline is lowered to zero in the same commit, so the backlog cannot silently return",
             "The run is recorded as evidence naming the date, the counts and the commit"
           ],
+          "completed_at": "2026-10-14T19:49:23Z",
+          "completed_event": "sha256:f07995a5dced3349311f082c9b4455e8fb904e81f3d53d776622f78fd2272781",
           "created_at": "2026-09-09",
           "depends_on": [
             "I1401",
@@ -28460,11 +28697,15 @@
             ".ai/repo/ci/github-drift-baseline.txt"
           ],
           "slug": "projection-backfill",
-          "updated_at": "2026-10-08",
+          "started_at": "2026-10-14T19:48:10Z",
+          "started_event": "sha256:d82aee5726a933064bce2b9fd69c726547235e4be39ccd151198fa8396dedd02",
+          "updated_at": "2026-10-14T19:49:23Z",
           "validation": [
             "scripts/github-sync --plan",
             "scripts/github-sync --check"
-          ]
+          ],
+          "verified_at": "2026-10-14T19:48:46Z",
+          "verified_event": "sha256:3beb6b9dc4112691daa24ec30a89cffd2d3a0b817eae4f7e42e2969c853f5ed9"
         }
       },
       {
@@ -28783,6 +29024,8 @@
             "The claim is proved by polling the server while a run is in flight, not by reading the source",
             "No surface describes an execution history that no writer reaches"
           ],
+          "completed_at": "2026-10-14T16:47:12Z",
+          "completed_event": "sha256:2de75be2d181a8ab00c6c2bdc0851ea5ed72d899a8197d829d90c9e6405813b4",
           "created_at": "2026-09-11",
           "depends_on": [],
           "evidence_required": [
@@ -28805,7 +29048,9 @@
             "test/cases"
           ],
           "slug": "execution-planes-converge",
-          "updated_at": "2026-09-11",
+          "started_at": "2026-10-14T16:47:04Z",
+          "started_event": "sha256:010948b9443b764eb34755011574199405c1a3c7f7dd2e0a8205e9415854d461",
+          "updated_at": "2026-10-14T16:47:12Z",
           "validation": [
             "bash test/run.sh 100_execution_plane",
             "bin/majordomus-cli capabilities validate"
@@ -29197,6 +29442,8 @@
             "A row naming an issue that exists passes",
             "The check runs in the repository's own suite as test case 194"
           ],
+          "completed_at": "2026-10-14T17:42:45Z",
+          "completed_event": "sha256:0f306de9e3312cb471881f0d2b7767734764eb2d70d1630adc5c81da9e716c5b",
           "created_at": "2026-09-11",
           "depends_on": [],
           "evidence_required": [
@@ -29217,7 +29464,9 @@
             "docs/COCKPIT_IDE_AUDIT.md"
           ],
           "slug": "audit-rows-are-checked-against-the-plan",
-          "updated_at": "2026-09-11",
+          "started_at": "2026-10-14T17:42:28Z",
+          "started_event": "sha256:84d042cc0bc6f2461636cad6b7163bfa4bb4a4c538948ab2a3235ff42160c3bf",
+          "updated_at": "2026-10-14T17:42:45Z",
           "validation": [
             "bash test/run.sh 194_audit_rows_are_planned",
             "bin/majordomus doctor"
@@ -29473,6 +29722,226 @@
           ],
           "verified_at": "2026-10-11T04:40:44Z",
           "verified_event": "sha256:35b76a1925bdd703d2fdf0186dd0caaca452c84965a9af1b2f7ede749f19d732"
+        }
+      },
+      {
+        "id": "majordomus://issue/I1800",
+        "kind": "issue",
+        "label": "I1800",
+        "summary": "The sandboxed engine a scripted capability runs in",
+        "route": "/cockpit/objects/issue/i1800",
+        "source": ".ai/repo/project/issues/I1800.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "eval does not compile in a script",
+            "a script has no clock function",
+            "an endless loop ends with the operation limit, and a string cannot grow past its limit",
+            "a cancelled execution stops at its next operation",
+            "the engine is Send and Sync"
+          ],
+          "created_at": "2026-09-15",
+          "current_state": "No interpreter is embedded; every orchestration is shell.",
+          "depends_on": [],
+          "desired_state": "apps/majordomus-cli/src/script builds the one engine; each guarantee it makes is proved by a unit test.",
+          "evidence_required": [
+            "sandbox_engine_proved"
+          ],
+          "milestone": "automation",
+          "non_scope": [
+            "Binding the engine to a capability; that is I1801"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli",
+            ".ai/repo/adrs"
+          ],
+          "slug": "the-sandboxed-engine",
+          "updated_at": "2026-09-15",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib script::"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I1801",
+        "kind": "issue",
+        "label": "I1801",
+        "summary": "A scripted capability is a kind, discovered and registered, runnable and projected like any capability",
+        "route": "/cockpit/objects/issue/i1801",
+        "source": ".ai/repo/project/issues/I1801.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "a definition with an unknown key or a missing script is refused naming the file and field",
+            "a compile error names the script file, line and column",
+            "a runtime error names the script file, line and column",
+            "a call to a capability whose effect exceeds the declared effect is refused",
+            "a cancelled execution of a scripted capability stops",
+            "the scripted capability appears in capabilities list, OpenAPI and MCP after generate with no edit elsewhere"
+          ],
+          "created_at": "2026-09-15",
+          "current_state": "Capabilities come from Rust modules and from declarative objects as resources only; nothing turns a layer file into an executable capability.",
+          "depends_on": [
+            "I1800"
+          ],
+          "evidence_required": [
+            "scripted_capability_projected_everywhere",
+            "effect_ceiling_enforced"
+          ],
+          "milestone": "automation",
+          "non_scope": [
+            "Migrating shell scripts; that is I1804",
+            "A function that takes a shell command string"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli",
+            "share",
+            ".ai/repo",
+            "docs",
+            "test",
+            "SECURITY.md"
+          ],
+          "slug": "a-scripted-capability-is-a-kind",
+          "updated_at": "2026-09-15",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib script::",
+            "bash test/run.sh 383_a_scripted_capability_runs"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I1802",
+        "kind": "issue",
+        "label": "I1802",
+        "summary": "Nothing runs Perl",
+        "route": "/cockpit/objects/issue/i1802",
+        "source": ".ai/repo/project/issues/I1802.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "no tracked file invokes perl or shasum",
+            "a gate refuses a new invocation"
+          ],
+          "completed_at": "2026-10-14T21:35:47Z",
+          "completed_event": "sha256:a18220b3fe25e752edd8e1585c9abdb5837ffa023ba9b736d68a6bee73e99536",
+          "created_at": "2026-09-15",
+          "current_state": "shasum is called from shell under scripts and lib.",
+          "depends_on": [],
+          "desired_state": "No tracked file invokes perl or shasum; a gate refuses a new one.",
+          "evidence_required": [
+            "no_perl"
+          ],
+          "milestone": "automation",
+          "non_scope": [
+            "Replacing shell as a whole; that is the rest of the milestone"
+          ],
+          "objective": "Remove every invocation of Perl from tracked files, including indirect ones such as shasum on macOS, and hold the absence with a gate.",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "scripts",
+            "lib",
+            "bin",
+            "test"
+          ],
+          "slug": "nothing-runs-perl",
+          "started_at": "2026-10-14T21:35:18Z",
+          "started_event": "sha256:e1010724aa2bea80113a987af0ea98e5387cb6f3a4bd5fb088c447e66390681c",
+          "updated_at": "2026-10-14T21:35:47Z",
+          "validation": [
+            "bash test/run.sh"
+          ],
+          "why": "The repository owner ruled Perl out on 2026-09-15. shasum is a Perl script on macOS, so a digest taken with it runs Perl without the word appearing anywhere. Worked on branch fix/nothing-runs-perl."
+        }
+      },
+      {
+        "id": "majordomus://issue/I1803",
+        "kind": "issue",
+        "label": "I1803",
+        "summary": "New shell is refused without a declared exemption, and the migration inventory is tracked",
+        "route": "/cockpit/objects/issue/i1803",
+        "source": ".ai/repo/project/issues/I1803.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "a new shell file under a governed path without an exemption fails the gate",
+            "every existing shell unit appears in the inventory with its disposition"
+          ],
+          "completed_at": "2026-10-14T21:36:57Z",
+          "completed_event": "sha256:8bd2954dc8472e024fce8922dc93211e8f134049b3a363ab5aa09b645f092b62",
+          "created_at": "2026-09-15",
+          "current_state": "Nothing refuses a new shell file; the inventory exists only as an audit report.",
+          "depends_on": [],
+          "desired_state": "A gate and an exemption list; the inventory is a tracked, machine-readable record each migration updates.",
+          "evidence_required": [
+            "new_shell_refused"
+          ],
+          "milestone": "automation",
+          "non_scope": [
+            "Migrating any unit"
+          ],
+          "objective": "Refuse a new shell file under a governed path unless a machine-readable exemption list names it, and track the inventory of existing shell with each unit's disposition.",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "scripts",
+            ".ai/repo",
+            "test"
+          ],
+          "slug": "new-shell-is-refused",
+          "started_at": "2026-10-14T21:36:29Z",
+          "started_event": "sha256:8199848a3bc7f9aba7d178f6f925b9c323192535a807917fd6d5305874b1ba89",
+          "updated_at": "2026-10-14T21:36:57Z",
+          "validation": [
+            "bash test/run.sh"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I1804",
+        "kind": "issue",
+        "label": "I1804",
+        "summary": "The first shell scripts become scripted capabilities over typed Rust",
+        "route": "/cockpit/objects/issue/i1804",
+        "source": ".ai/repo/project/issues/I1804.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "the ratchet is one typed capability with tests",
+            "each migrated gate produces the same verdict on the same tree as its shell predecessor"
+          ],
+          "created_at": "2026-09-15",
+          "current_state": "Ten scripts/ci gates each carry their own copy of the baseline comparison.",
+          "depends_on": [
+            "I1801"
+          ],
+          "desired_state": "One Rust capability compares a finding set with its baseline; the migrated gates are scripted capabilities; their shell is deleted and the inventory updated.",
+          "evidence_required": [
+            "ratchet_is_one_capability"
+          ],
+          "milestone": "automation",
+          "non_scope": [
+            "Gates whose logic is not the ratchet"
+          ],
+          "objective": "Migrate the baseline-ratchet logic copied into ten scripts/ci gates to one typed Rust capability, and the gates that use it to scripted capabilities that orchestrate it.",
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli",
+            "scripts/ci",
+            "share",
+            ".ai/repo",
+            "test"
+          ],
+          "slug": "first-scripts-become-scripted-capabilities",
+          "updated_at": "2026-09-15",
+          "validation": [
+            "bash test/run.sh"
+          ]
         }
       },
       {
@@ -31446,6 +31915,8 @@
             "A worktree with uncommitted work and an active task or attached session is listed and not warned about",
             "The reading writes nothing: `git status` of every worktree is the same before and after it"
           ],
+          "completed_at": "2026-10-14T17:17:04Z",
+          "completed_event": "sha256:f16e26b2e313440cea006371c32e3c6b786d4177989d5b5748d127c810fc0f1d",
           "created_at": "2026-10-08",
           "evidence_required": [
             "abandoned_index_named_case",
@@ -31462,7 +31933,9 @@
             "test/cases"
           ],
           "slug": "uncommitted-work-in-a-worktree-is-named",
-          "updated_at": "2026-10-08",
+          "started_at": "2026-10-14T17:16:55Z",
+          "started_event": "sha256:d7ae87a85d350c67030156194ad7b0b61a83d7fb2ab60ab98ad2afc23553f56a",
+          "updated_at": "2026-10-14T17:17:04Z",
           "validation": [
             "bin/majordomus plan validate",
             "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
@@ -32317,6 +32790,8 @@
             "A request in flight at the moment of supersession receives its own answer, not a 404",
             "docs/MCP.md states the grace and that a lost server ends"
           ],
+          "completed_at": "2026-10-14T22:13:35Z",
+          "completed_event": "sha256:085b40f580faf092b37e6211cf83b49bb8d0d01d3e12401de84c09be6e8807bd",
           "created_at": "2026-10-09",
           "depends_on": [],
           "evidence_required": [
@@ -32337,11 +32812,15 @@
             "docs/MCP.md"
           ],
           "slug": "a-lost-server-hands-on-and-ends",
-          "updated_at": "2026-10-09",
+          "started_at": "2026-10-14T22:12:56Z",
+          "started_event": "sha256:86bad7968a101dc289fab416beff882f24364f759548541e5d21962ca7c443b3",
+          "updated_at": "2026-10-14T22:13:35Z",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --test lease_lost --test mcp_shared"
-          ]
+          ],
+          "verified_at": "2026-10-14T22:13:14Z",
+          "verified_event": "sha256:c13e91e7d8d2590bc6061b8abf036e6a9de9eb24e617f15d49a280818099c12b"
         }
       },
       {
@@ -32852,6 +33331,8 @@
             "A session whose single request runs longer than the reap interval is not reaped",
             "Session ids are drawn from the operating system's random source"
           ],
+          "completed_at": "2026-10-14T23:26:47Z",
+          "completed_event": "sha256:6cbcd54c84ab922b398cabaa4188d96e6d90dc6cb0172ae1807bc9d2843a57dc",
           "created_at": "2026-10-09",
           "current_state": "One oversized line or response can exhaust a client or a server; a long request can lose its session.",
           "depends_on": [],
@@ -32874,11 +33355,15 @@
             "docs/MCP.md"
           ],
           "slug": "mcp-transports-are-bounded",
-          "updated_at": "2026-10-09",
+          "started_at": "2026-10-14T23:26:13Z",
+          "started_event": "sha256:06c1c731cf88425f70e38b672ec8f81d6d4ab8f4ae1197ebfa7a4a911d2e2099",
+          "updated_at": "2026-10-14T23:26:47Z",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --test mcp_conformance --test mcp_conformance_http --test mcp_stdio"
-          ]
+          ],
+          "verified_at": "2026-10-14T23:26:24Z",
+          "verified_event": "sha256:2512c30270366a8c2048a62d9799b9500c0de3fb1c9456ea9de3878873dd5b41"
         }
       },
       {
@@ -33123,6 +33608,8 @@
             "A client of version N-1 attaching to a server of version N reports the difference in its initialize answer",
             "One function decides the version verdict for elect, serve ensure and server.status"
           ],
+          "completed_at": "2026-10-14T22:15:01Z",
+          "completed_event": "sha256:c9efeaaccd43fb37945cebd8bccd22b7a1c6d8f340e1dc5d381ab23fe8e327fd",
           "created_at": "2026-10-09",
           "current_state": "After an upgrade through the installer, new clients are served by the old version until it idles out.",
           "depends_on": [
@@ -33147,12 +33634,16 @@
             "docs/MCP.md"
           ],
           "slug": "versions-meet-safely",
-          "updated_at": "2026-10-09",
+          "started_at": "2026-10-14T22:14:26Z",
+          "started_event": "sha256:8303f42aa02bcb737ee972ac7ed00bbb36808a25b15ad88fef8f4f2703328620",
+          "updated_at": "2026-10-14T22:15:01Z",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --test serve_lifecycle --test server_status",
             "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
-          ]
+          ],
+          "verified_at": "2026-10-14T22:14:44Z",
+          "verified_event": "sha256:d3b69c3b2984807ed8c423cbc64517f787eb9a6569145cbf5fa6c6001d2d18d7"
         }
       },
       {
@@ -33180,7 +33671,7 @@
           "milestone": "safe-self-update",
           "objective": "Attest each release archive in the publish job, verify the attestation in install.sh when the tooling is present, and state in docs/DISTRIBUTION.md what each install path verifies.",
           "parallel_safe": true,
-          "priority": "p3",
+          "priority": "p1",
           "profile": "implementation",
           "scope": [
             ".github/workflows/release.yml",
@@ -33191,7 +33682,7 @@
           "slug": "releases-carry-provenance",
           "started_at": "2026-10-14T08:02:21Z",
           "started_event": "sha256:0690a02a2d4cbf22b57e38c5bc9b63ce06badc1bb25d393152a1496c551cf7cd",
-          "updated_at": "2026-10-14T08:02:30Z",
+          "updated_at": "2026-10-14",
           "validation": [
             "bin/majordomus plan validate",
             "MJ_TEST_JOBS=4 bash test/run.sh 85_installer"
@@ -35352,6 +35843,51 @@
         }
       },
       {
+        "id": "majordomus://issue/I2601",
+        "kind": "issue",
+        "label": "I2601",
+        "summary": "majordomus evidence reaches record, stamp and show",
+        "route": "/cockpit/objects/issue/i2601",
+        "source": ".ai/repo/project/issues/I2601.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "`majordomus evidence show`, `record --help` and `stamp --help` answer through the launcher",
+            "`majordomus evidence --covers` behaves as before",
+            "The documented-command check runs the EVIDENCE.md lines it names"
+          ],
+          "created_at": "2026-10-13",
+          "current_state": "bin/majordomus:162 routes `evidence` to lib/evidence.sh, which parses options only and dies on the word `record`.",
+          "depends_on": [],
+          "desired_state": "The shell command hands the subcommands the executable owns to it, keeps --covers and --gate, and its help lists both.",
+          "evidence_required": [
+            "evidence_subcommands_through_launcher_case"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "objective": "Make the documented `majordomus evidence record|stamp|show` work from the launcher.",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/evidence.sh",
+            "bin/majordomus",
+            "share/commands.yaml",
+            "docs/EVIDENCE.md",
+            "docs/CLI.md",
+            "test/cases"
+          ],
+          "slug": "majordomus-evidence-reaches-its-subcommands",
+          "started_at": "2026-10-13T11:36:41Z",
+          "started_event": "sha256:f6548a9a76dd197f58827bb78a2f525a918ae153a84a0d3a56716c34724b7506",
+          "updated_at": "2026-10-13T17:54:58Z",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ],
+          "verified_at": "2026-10-13T17:54:58Z",
+          "verified_event": "sha256:49a8e6426351f50e05d4fe095ed08a09530cdb99b24c4347eda656cfc4ba3d54"
+        }
+      },
+      {
         "id": "majordomus://issue/I2652",
         "kind": "issue",
         "label": "I2652",
@@ -35400,6 +35936,219 @@
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::knowledge",
             "MJ_TEST_JOBS=2 bash test/run.sh 3003_the_knowledge_screen_answers 1096_no_screen_waits_for_a_source",
             "majordomus bench system.http. --transport system --profile ci --no-write --check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2653",
+        "kind": "issue",
+        "label": "I2653",
+        "summary": "Every diagram on the site is one interactive, linkable viewer whose node links are inferred, and a derived table can be drawn as a chart",
+        "route": "/cockpit/objects/issue/i2653",
+        "source": ".ai/repo/project/issues/I2653.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every <pre class=\\\"mermaid\\\"> of the built site carries a unique id diagram-<name>, the list of its nodes, and tabindex=0; a build that would publish two diagrams with one id on a page is refused",
+            "A node whose id or label is the identity of an object the site has a page for is listed beside the diagram as a link to that page, and scripts/ci/link-check resolves every such link",
+            "A link to #diagram-<name>:<node> is refused by scripts/ci/link-check when the diagram does not declare that node",
+            "In a browser, the viewer zooms, pans and resets from its toolbar and from the keyboard, copies its own link, and opens the diagram and node a fragment names",
+            "A <figure data-chart> is drawn from the table inside it, and the table stays on the page",
+            "The hand-drawn-diagram ratchet stays at diagrams=0"
+          ],
+          "created_at": "2026-10-13",
+          "depends_on": [],
+          "evidence_required": [
+            "diagram_pass_unit_tests",
+            "diagram_case_3006",
+            "site_check_passes"
+          ],
+          "milestone": "surfaces-never-disagree",
+          "non_scope": [
+            "The homepage: its story and its byte budget are declared (site/data/homepage.toml) and it carries no diagram by decision; I2655 asks that question on its own",
+            "The Cockpit and majordomus ui: they render their own graphs; sharing this viewer with them is I2656",
+            "Typing links into a diagram's source with Mermaid's click directive: a link is inferred from an identity or it does not exist"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "site/diagrams.js",
+            "site/charts.js",
+            "site/tailwind.css",
+            "site/templates/partials/mermaid.html",
+            "site/templates/partials/charts.html",
+            "site/templates/components.html",
+            "site/templates/argument.html",
+            "site/templates/dag.html",
+            "site/templates/milestone.html",
+            "site/templates/plan-section.html",
+            "site/templates/economics.html",
+            "share/design/figure.css",
+            "scripts/lib/diagrams.mjs",
+            "scripts/lib/diagrams.test.mjs",
+            "scripts/lib/interaction-specs/diagram.mjs",
+            "scripts/lib/interaction-specs/scroll-region.mjs",
+            "scripts/site-build",
+            "scripts/site-check",
+            "scripts/ci/link-check",
+            "test/cases/3006_diagrams_are_interactive_and_linkable.sh",
+            "docs/DIAGRAMS.md",
+            "docs/claims/a-diagram-is-named-linked-and-addressable.md",
+            "docs/CLAIMS.yaml",
+            "docs/README.md",
+            "docs/DESIGN_SYSTEM.md",
+            "docs/GITHUB_PAGES_ARCHITECTURE.md",
+            "package.json",
+            "package-lock.json",
+            ".ai/repo/automation/inventory.jsonl",
+            ".ai/repo/adrs/0152-a-diagram-and-a-chart-on-the-site-are-one-viewer-each-over-w.md",
+            ".ai/repo/project/issues/I2653.yaml",
+            ".ai/repo/project/issues/I2654.yaml",
+            ".ai/repo/project/issues/I2655.yaml",
+            ".ai/repo/project/issues/I2656.yaml"
+          ],
+          "slug": "every-diagram-is-interactive-and-linkable",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "node --test scripts/lib/diagrams.test.mjs",
+            "MJ_TEST_JOBS=2 bash test/run.sh 3006_diagrams_are_interactive_and_linkable 12_site_build 272_diagrams_are_drawn",
+            "scripts/site-build && scripts/site-check",
+            "scripts/ci/diagram-check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2654",
+        "kind": "issue",
+        "label": "I2654",
+        "summary": "A chart is held to its table by a gate, and the tables that are measured series are drawn",
+        "route": "/cockpit/objects/issue/i2654",
+        "source": ".ai/repo/project/issues/I2654.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A figure[data-chart] whose drawn series differs from its table fails a check that names the figure",
+            "A figure[data-chart] without a table, a data-series header or an id fails scripts/site-check",
+            "Each newly declared chart is listed in docs/DIAGRAMS.md with the dataset it reads"
+          ],
+          "created_at": "2026-10-13",
+          "current_state": "Two figures carry data-chart (/plan/, /economics/). No case builds a fixture figure and asserts the series; no behaviour spec opens a chart; ECharts is loaded only where those two pages ask for it.",
+          "depends_on": [
+            "I2653"
+          ],
+          "evidence_required": [
+            "chart_table_agreement_check",
+            "chart_markup_check"
+          ],
+          "milestone": "surfaces-never-disagree",
+          "non_scope": [
+            "A second charting library, or a chart whose data is not a table on the same page"
+          ],
+          "parallel_safe": true,
+          "priority": "p3",
+          "profile": "implementation",
+          "scope": [
+            "site/charts.js",
+            "site/templates/registry-benchmarks.html",
+            "site/templates/economics.html",
+            "site/templates/features-matrix.html",
+            "scripts/site-check",
+            "scripts/lib/interaction-specs/chart.mjs",
+            "docs/DIAGRAMS.md",
+            ".ai/repo/project/issues/I2654.yaml"
+          ],
+          "slug": "a-chart-is-held-to-its-table",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "scripts/site-build && scripts/site-check",
+            "scripts/interaction-probe --only /plan/"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2655",
+        "kind": "issue",
+        "label": "I2655",
+        "summary": "The homepage decides whether it carries a derived figure, within its declared story and budget",
+        "route": "/cockpit/objects/issue/i2655",
+        "source": ".ai/repo/project/issues/I2655.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "scripts/ci/homepage-check passes with the section order and the budget as declared",
+            "The homepage reaches the diagrams page in one click"
+          ],
+          "created_at": "2026-10-13",
+          "current_state": "The homepage loads neither the Mermaid nor the ECharts build and links docs/DIAGRAMS.md from nowhere.",
+          "depends_on": [
+            "I2653"
+          ],
+          "evidence_required": [
+            "homepage_check_passes"
+          ],
+          "milestone": "surfaces-never-disagree",
+          "non_scope": [
+            "Loading a diagram or chart library on the homepage without a figure that uses it"
+          ],
+          "parallel_safe": true,
+          "priority": "p3",
+          "profile": "implementation",
+          "scope": [
+            "site/templates/index.html",
+            "site/data/homepage.toml",
+            "site/data/marketing.toml",
+            "scripts/ci/homepage-check",
+            ".ai/repo/project/issues/I2655.yaml"
+          ],
+          "slug": "the-homepage-decides-about-a-figure",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "scripts/site-build && scripts/ci/homepage-check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2656",
+        "kind": "issue",
+        "label": "I2656",
+        "summary": "The diagram viewer serves the Cockpit and majordomus ui, and a node that is a repository file links to its source",
+        "route": "/cockpit/objects/issue/i2656",
+        "source": ".ai/repo/project/issues/I2656.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A diagram in the Cockpit is drawn by site/diagrams.js under the Cockpit content policy",
+            "A node labelled with a tracked path is listed as a link to that file and link-check passes it; an untracked path is not linked",
+            "majordomus design contrast measures the pairs figure.css uses"
+          ],
+          "created_at": "2026-10-13",
+          "current_state": "share/design/figure.css is imported by the site only; share/cockpit and share/ui load no diagram viewer; the link index holds site routes only.",
+          "depends_on": [
+            "I2653"
+          ],
+          "evidence_required": [
+            "cockpit_viewer_case",
+            "file_link_unit_tests"
+          ],
+          "milestone": "surfaces-never-disagree",
+          "non_scope": [
+            "A second viewer for any surface"
+          ],
+          "parallel_safe": true,
+          "priority": "p3",
+          "profile": "implementation",
+          "scope": [
+            "site/diagrams.js",
+            "share/design/figure.css",
+            "share/cockpit/src/cockpit.css",
+            "share/ui/src/ui.css",
+            "apps/majordomus-cli/src/design/contrast.rs",
+            "scripts/lib/diagrams.mjs",
+            "scripts/lib/diagrams.test.mjs",
+            ".ai/repo/project/issues/I2656.yaml"
+          ],
+          "slug": "one-viewer-across-the-surfaces",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "node --test scripts/lib/diagrams.test.mjs",
+            "scripts/rust-check"
           ]
         }
       },
@@ -35802,6 +36551,165 @@
             "bin/majordomus plan validate",
             "bin/majordomus knowledge check"
           ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2695",
+        "kind": "issue",
+        "label": "I2695",
+        "summary": "The Observatory draws the proof, claim, surface, wave and release scenes from the capabilities that already answer them",
+        "route": "/cockpit/objects/issue/i2695",
+        "source": ".ai/repo/project/issues/I2695.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The five scenes are in SCENES with the capability each requires",
+            "A scene whose source holds nothing is unavailable with the source reason",
+            "Unit tests hold the models on constructed answers, including empty ones"
+          ],
+          "created_at": "2026-10-14",
+          "current_state": "ADR 0160 proposes the scenes; the Observatory of ADR 0158 has eight.",
+          "depends_on": [],
+          "desired_state": "The kiosk shows thirteen scenes, five more of which read what the repository proves, and says why for any that has nothing to draw.",
+          "evidence_required": [
+            "observatory_proof_scenes"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Stating a frame rate or a figure that was not measured"
+          ],
+          "objective": "The kiosk shows thirteen scenes, five more of which read what the repository proves, and says why for any that has nothing to draw.",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui/observatory.rs",
+            "share/ui/observatory.js",
+            "share/ui/observatory-kiosk.js"
+          ],
+          "slug": "ui-observatory-proof-scenes",
+          "updated_at": "2026-10-14",
+          "validation": [
+            "bin/majordomus plan validate"
+          ],
+          "why": "Five scenes of ADR 0160 are in the Observatory inventory, each a function of one capability answer, counted and never estimated."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2696",
+        "kind": "issue",
+        "label": "I2696",
+        "summary": "p5 is a built, optional asset of the UI and the page says where it is",
+        "route": "/cockpit/objects/issue/i2696",
+        "source": ".ai/repo/project/issues/I2696.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "share/ui/vendor/p5.min.js is built and not committed",
+            "The page carries data-p5-lib",
+            "Without the library the stage says p5 is not built here and the rows hold the facts"
+          ],
+          "created_at": "2026-10-14",
+          "current_state": "ADR 0160 proposes the scenes; the Observatory of ADR 0158 has eight.",
+          "depends_on": [],
+          "desired_state": "A p5 scene is drawn when the library is served and is an honest statement when it is not.",
+          "evidence_required": [
+            "observatory_proof_scenes"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Stating a frame rate or a figure that was not measured"
+          ],
+          "objective": "A p5 scene is drawn when the library is served and is an honest statement when it is not.",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "scripts/cockpit-assets",
+            "share/ui/observatory-kiosk.js"
+          ],
+          "slug": "ui-p5-is-a-built-optional-asset",
+          "updated_at": "2026-10-14",
+          "validation": [
+            "bin/majordomus plan validate"
+          ],
+          "why": "scripts/cockpit-assets copies the pinned p5 into share/ui/vendor, the screen names it, and a checkout without it says so on the stage."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2697",
+        "kind": "issue",
+        "label": "I2697",
+        "summary": "The public snapshot carries the p5 library, or says which scenes it cannot draw",
+        "route": "/cockpit/objects/issue/i2697",
+        "source": ".ai/repo/project/issues/I2697.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The snapshot lists vendor/p5.min.js among its assets",
+            "The snapshot status word is SNAPSHOT on every new scene"
+          ],
+          "created_at": "2026-10-14",
+          "current_state": "ADR 0160 proposes the scenes; the Observatory of ADR 0158 has eight.",
+          "depends_on": [],
+          "desired_state": "The kiosk on the public site draws the proof scenes with p5, from the one reading taken at the published commit.",
+          "evidence_required": [
+            "observatory_proof_scenes"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Stating a frame rate or a figure that was not measured"
+          ],
+          "objective": "The kiosk on the public site draws the proof scenes with p5, from the one reading taken at the published commit.",
+          "parallel_safe": true,
+          "priority": "p3",
+          "profile": "implementation",
+          "scope": [
+            "scripts/site-build",
+            "apps/majordomus-cli/src/ui/mod.rs"
+          ],
+          "slug": "ui-snapshot-carries-p5",
+          "updated_at": "2026-10-14",
+          "validation": [
+            "bin/majordomus plan validate"
+          ],
+          "why": "A published UI snapshot (ADR 0141) must serve vendor/p5.min.js beside the scenes script, or the kiosk there draws the new scenes as unavailable."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2698",
+        "kind": "issue",
+        "label": "I2698",
+        "summary": "The new scenes have screenshot evidence at 1080p and 4K on a named revision",
+        "route": "/cockpit/objects/issue/i2698",
+        "source": ".ai/repo/project/issues/I2698.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A screenshot of each of the five scenes at 1920x1080 is evidence of a named revision",
+            "A screenshot of each at 3840x2160 is evidence of the same revision",
+            "The display with reduced motion is drawn still"
+          ],
+          "created_at": "2026-10-14",
+          "current_state": "ADR 0160 proposes the scenes; the Observatory of ADR 0158 has eight.",
+          "depends_on": [],
+          "desired_state": "A manifest names the revision and holds a screenshot of each new scene at 1920x1080 and 3840x2160.",
+          "evidence_required": [
+            "observatory_proof_scenes"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Stating a frame rate or a figure that was not measured"
+          ],
+          "objective": "A manifest names the revision and holds a screenshot of each new scene at 1920x1080 and 3840x2160.",
+          "parallel_safe": true,
+          "priority": "p3",
+          "profile": "verification",
+          "scope": [
+            ".ai/repo/project/issues/I2698.yaml"
+          ],
+          "slug": "ui-proof-scenes-have-screenshots",
+          "updated_at": "2026-10-14",
+          "validation": [
+            "bin/majordomus plan validate"
+          ],
+          "why": "The scenes are drawn in a browser; only a screenshot proves they are drawn legibly at wall size."
         }
       },
       {
@@ -36242,6 +37150,592 @@
         }
       },
       {
+        "id": "majordomus://issue/I2710",
+        "kind": "issue",
+        "label": "I2710",
+        "summary": "A release run never waits behind pull-request validates for a job slot",
+        "route": "/cockpit/objects/issue/i2710",
+        "source": ".ai/repo/project/issues/I2710.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "With a release run or record verdict queued, a pull-request validate yields within one minute and says which release run it yielded to",
+            "A yielded validate is re-requested once the release path is done, without a person",
+            "Master's validate and the release path themselves are never cancelled by the rule"
+          ],
+          "completed_at": "2026-10-14T22:02:16Z",
+          "completed_event": "sha256:1a17ad59de0626364df99c43d796ba5cf9892986aba3cfdd303ff679f2feee05",
+          "created_at": "2026-10-14",
+          "current_state": "Every workflow competes for the same runner pool first come, first served. Nothing makes a pull-request validate yield while a release, its record verdict or its Pages deploy waits for a slot.",
+          "depends_on": [],
+          "evidence_required": [
+            "release_path_has_priority_case"
+          ],
+          "milestone": "M004",
+          "non_scope": [
+            "Buying runners or changing the pool's size"
+          ],
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            ".github/workflows/validate.yml",
+            ".github/workflows/release.yml",
+            "scripts/ci",
+            "docs/CI.md",
+            "docs/RELEASE.md",
+            "test/cases"
+          ],
+          "slug": "a-release-run-never-starves",
+          "started_at": "2026-10-14T22:00:40Z",
+          "started_event": "sha256:1fece0319e55694f6646b2269bb596c8208afe53001fe89460a061a16e8323bc",
+          "updated_at": "2026-10-14T22:02:16Z",
+          "validation": [
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2711",
+        "kind": "issue",
+        "label": "I2711",
+        "summary": "The pages job judges production only after the deployment of its own commit has arrived",
+        "route": "/cockpit/objects/issue/i2711",
+        "source": ".ai/repo/project/issues/I2711.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The pages job passes when the deployment of its commit arrives within the declared bound after the job starts",
+            "It fails, naming both commits, when production serves an older commit after the bound",
+            "The wait is bounded and declared, and liveness-check accepts it"
+          ],
+          "completed_at": "2026-10-14T22:02:38Z",
+          "completed_event": "sha256:a1bc76379a2745d5e3ceaa39d92a092cbfae8d8bab6cd8a628c4e41267d5b104",
+          "created_at": "2026-10-14",
+          "current_state": "The step reads production's build.json once, at the time the job reaches it, and fails when the deployment of its commit has not finished yet.",
+          "depends_on": [],
+          "evidence_required": [
+            "pages_waits_for_its_deployment_case"
+          ],
+          "milestone": "M004",
+          "non_scope": [
+            "Making the Pages deployment itself faster"
+          ],
+          "objective": "Stop validate's `pages` job on master from reporting red because it read majordomus.dev before the deployment of the commit it judges had been served.",
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            ".github/workflows/validate.yml",
+            "scripts/ci/pages-check",
+            "scripts/site-check",
+            "docs/CI.md",
+            "test/cases"
+          ],
+          "slug": "the-pages-job-waits-for-its-deployment",
+          "started_at": "2026-10-14T22:01:02Z",
+          "started_event": "sha256:80ed06b6058b86c7a10c5493435d27450578ecf7aa7af9cebb49ed5cdbe6b675",
+          "updated_at": "2026-10-14T22:02:38Z",
+          "validation": [
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2712",
+        "kind": "issue",
+        "label": "I2712",
+        "summary": "release-check treats a tag whose release run is still going as pending, not as a missing record",
+        "route": "/cockpit/objects/issue/i2712",
+        "source": ".ai/repo/project/issues/I2712.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Between a tag push and its record branch, release-check reports the tag as pending with its run and exits 0",
+            "After the release run concluded with no record and no record branch, it is still a finding"
+          ],
+          "completed_at": "2026-10-14T22:02:55Z",
+          "completed_event": "sha256:c635dd6ed62bc6fce042f9d66f6321192e0182e6eb7b71d214e565db6e0b01dd",
+          "created_at": "2026-10-14",
+          "current_state": "release-check counts a pushed tag as published and demands a record or a record branch at once.",
+          "depends_on": [
+            "I2054"
+          ],
+          "evidence_required": [
+            "tag_in_flight_is_pending_case"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "What the release workflow itself does"
+          ],
+          "objective": "Make scripts/ci/release-check tell a tag whose release workflow is still running (or whose record branch is about to be opened by it) from a published release that nobody recorded.",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "scripts/ci/release-check",
+            "docs/RELEASE.md",
+            "test/cases"
+          ],
+          "slug": "a-tag-in-flight-is-pending",
+          "started_at": "2026-10-14T22:01:24Z",
+          "started_event": "sha256:31e54c2864bd6ef23accd2311aa33df387f47fb178d7ca404de50bd4ed8e643c",
+          "updated_at": "2026-10-14T22:02:55Z",
+          "validation": [
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2713",
+        "kind": "issue",
+        "label": "I2713",
+        "summary": "A build never lets idle incremental sessions fill the disk",
+        "route": "/cockpit/objects/issue/i2713",
+        "source": ".ai/repo/project/issues/I2713.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A build prunes idle incremental sessions of its own build directory and says how much it reclaimed",
+            "A live (-working) session and other build directories are never touched",
+            "Under the floor after pruning, the refusal names the largest build directories"
+          ],
+          "created_at": "2026-10-14",
+          "current_state": "lib/rust_bin.sh's bounded build refuses below a free-space floor but never reclaims; cargo keeps every finished incremental session until a clean.",
+          "depends_on": [],
+          "evidence_required": [
+            "idle_sessions_are_pruned_case"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Deleting another worktree's build output or any target directory"
+          ],
+          "objective": "Make the repository's own build entry points keep a build directory's incremental cache bounded, so that concurrent sessions building on one machine cannot run the disk out.",
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "lib/rust_bin.sh",
+            "scripts/derive",
+            "docs/DEVELOPMENT_RUNTIME.md",
+            ".ai/repo/policy.yaml",
+            "test/cases"
+          ],
+          "slug": "idle-incremental-sessions-are-pruned",
+          "updated_at": "2026-10-14",
+          "validation": [
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2714",
+        "kind": "issue",
+        "label": "I2714",
+        "summary": "One build directory never serves two worktrees' jobs at once",
+        "route": "/cockpit/objects/issue/i2714",
+        "source": ".ai/repo/project/issues/I2714.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Two worktrees building with the same CARGO_BUILD_BUILD_DIR at once: the second refuses or relocates with a line naming the holder",
+            "One worktree's repeated builds in its own directory are unaffected"
+          ],
+          "created_at": "2026-10-14",
+          "depends_on": [],
+          "evidence_required": [
+            "build_dir_has_one_holder_case"
+          ],
+          "milestone": "development-runtime",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/rust_bin.sh",
+            "docs/DEVELOPMENT_RUNTIME.md",
+            ".ai/repo/adrs/0139-*.md",
+            "test/cases"
+          ],
+          "slug": "a-build-dir-serves-one-worktree",
+          "updated_at": "2026-10-14",
+          "validation": [
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2715",
+        "kind": "issue",
+        "label": "I2715",
+        "summary": "New public Rust code meets rust-quality before the structure job does",
+        "route": "/cockpit/objects/issue/i2715",
+        "source": ".ai/repo/project/issues/I2715.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A new exported item without an example is refused by the local rust check with the structure job's finding",
+            "The documented proof list for a Rust change names it"
+          ],
+          "completed_at": "2026-10-14T22:50:02Z",
+          "completed_event": "sha256:9cbb60871b07f0689be8adea16a27217e6b796562ebb4308438ff4a7b6a97678",
+          "created_at": "2026-10-14",
+          "current_state": "rust-quality runs only as a structure gate (`cargo run -- quality report --summary`). scripts/rust-check, the pre-commit hook and the documented proof list for a Rust change do not include it.",
+          "depends_on": [],
+          "evidence_required": [
+            "local_rust_check_runs_quality_case"
+          ],
+          "milestone": "development-runtime",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "scripts/rust-check",
+            "docs/RUST.md",
+            "docs/INTEGRATION.md",
+            ".ai/repo/workflows",
+            "test/cases"
+          ],
+          "slug": "rust-quality-runs-before-the-structure-job",
+          "started_at": "2026-10-14T22:49:53Z",
+          "started_event": "sha256:3bac226950a500e295ca7d9019f83b2d8b18c94f22c3da7aaa14779129bb87d5",
+          "updated_at": "2026-10-14T22:50:02Z",
+          "validation": [
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2716",
+        "kind": "issue",
+        "label": "I2716",
+        "summary": "A case derives its budgets and lists from what it tests, never pins them",
+        "route": "/cockpit/objects/issue/i2716",
+        "source": ".ai/repo/project/issues/I2716.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Adding a case that names the release record without listing it fails a structure gate, not only case 94",
+            "A hand-pinned budget in a case without a stated margin is reported"
+          ],
+          "created_at": "2026-10-14",
+          "current_state": "Cases pin numbers and lists freely; a gate's hand list (release-record-cases) and a case's literal budget are found only when they break.",
+          "depends_on": [],
+          "evidence_required": [
+            "pinned_values_are_reported_case"
+          ],
+          "milestone": "M004",
+          "objective": "Keep a case from failing because its subject grew: a budget, a count or a list of names that a case states by hand is derived from the model or carries the margin and the reason it holds.",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "scripts/liveness-check",
+            ".ai/repo/ci/gates.yaml",
+            "test/cases"
+          ],
+          "slug": "a-case-derives-what-it-would-pin",
+          "started_at": "2026-10-14T22:50:08Z",
+          "started_event": "sha256:b7c1824e422782365720dc1ff59631bfa4da5ad046f243aeefe503b7e5e8a094",
+          "updated_at": "2026-10-14T22:50:08Z",
+          "validation": [
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2717",
+        "kind": "issue",
+        "label": "I2717",
+        "summary": "A release record pull request gets a verdict that can pass",
+        "route": "/cockpit/objects/issue/i2717",
+        "source": ".ai/repo/project/issues/I2717.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A record PR's validate concludes success when every gate its plan selects passes",
+            "The evidence job on a plan without suite and crate lanes records a planned-empty report and passes",
+            "The record PR shows that verdict as a check on its head without a person approving a run"
+          ],
+          "created_at": "2026-10-14",
+          "depends_on": [],
+          "evidence_required": [
+            "record_pr_verdict_can_pass_case"
+          ],
+          "milestone": "M004",
+          "non_scope": [
+            "release.yml's build and publish jobs (another worker owns them)"
+          ],
+          "objective": "Give the record pull request the release workflow opens a ci verdict it can earn, so that it lands on that verdict and not on a lander's local judgement.",
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            ".github/workflows/validate.yml",
+            "scripts/ci/evidence-collect",
+            "scripts/ci/verdict",
+            "docs/RELEASE.md",
+            "docs/CI.md",
+            "test/cases"
+          ],
+          "slug": "a-record-pr-gets-a-passing-verdict",
+          "updated_at": "2026-10-14",
+          "validation": [
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2718",
+        "kind": "issue",
+        "label": "I2718",
+        "summary": "A linked worktree runs its own hooks, never the primary checkout's",
+        "route": "/cockpit/objects/issue/i2718",
+        "source": ".ai/repo/project/issues/I2718.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A worktree made by `majordomus worktree create` answers its own .githooks to `git rev-parse --git-path hooks`",
+            "doctor in a linked worktree whose hooks resolve to another tree fails with the fixing command",
+            "The main worktree's hooks path is unchanged"
+          ],
+          "created_at": "2026-10-14",
+          "depends_on": [],
+          "evidence_required": [
+            "worktree_runs_its_own_hooks_case"
+          ],
+          "milestone": "development-runtime",
+          "objective": "Make every linked worktree run, and doctor judge, the hooks of its own tree, so that a stale primary checkout cannot refuse or weaken the commits of every other worktree.",
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/worktree",
+            "apps/majordomus-cli/src/commands/worktree.rs",
+            "lib/doctor.sh",
+            "docs/WORKTREES.md",
+            "test/cases"
+          ],
+          "slug": "a-worktree-runs-its-own-hooks",
+          "updated_at": "2026-10-14",
+          "validation": [
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2720",
+        "kind": "issue",
+        "label": "I2720",
+        "summary": "majordomus self update re-runs the published installer, and never reimplements it",
+        "route": "/cockpit/objects/issue/i2720",
+        "source": ".ai/repo/project/issues/I2720.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "self update --check names the running and the stable version and whether an upgrade applies, without a network write",
+            "self update --apply installs the stable release through install.sh and the new launcher reports it",
+            "A downgrade, a pre-release and an unlisted version are refused with the reason"
+          ],
+          "created_at": "2026-10-14",
+          "current_state": "There is no self-update command; a person reruns install.sh with --version on each machine.",
+          "depends_on": [],
+          "evidence_required": [
+            "self_update_wraps_installer_test",
+            "self_update_refuses_downgrade_test"
+          ],
+          "milestone": "safe-self-update",
+          "non_scope": [
+            "A second implementation of download, verification or swap",
+            "Activating the new version in a running server (I2722, I2163)"
+          ],
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin",
+            "apps/majordomus-cli/src/release",
+            "share/commands.yaml",
+            "docs/DISTRIBUTION.md",
+            "docs/CLI.md",
+            "test/cases"
+          ],
+          "slug": "self-update-wraps-the-installer",
+          "updated_at": "2026-10-14",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh 85_installer <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2721",
+        "kind": "issue",
+        "label": "I2721",
+        "summary": "An enrolled mesh node follows the stable pointer by itself",
+        "route": "/cockpit/objects/issue/i2721",
+        "source": ".ai/repo/project/issues/I2721.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A following node whose installed version is behind the stable pointer is upgraded within one check interval with no person on it",
+            "A pinned node and a node with follow: off are left alone, and say so in mesh doctor",
+            "A mesh announcement naming a version the metadata does not list changes nothing"
+          ],
+          "created_at": "2026-10-14",
+          "current_state": "No process reads releases/latest.json except install.sh run by a person.",
+          "depends_on": [
+            "I2720"
+          ],
+          "evidence_required": [
+            "node_follows_stable_pointer_test",
+            "peer_announcement_not_trusted_test"
+          ],
+          "milestone": "safe-self-update",
+          "non_scope": [
+            "A network fetch on entering a repository",
+            "Repositories that adopt Majordomus without enrolling machines in this mesh"
+          ],
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh",
+            "apps/majordomus-cli/src/commands/serve.rs",
+            "apps/majordomus-cli/src/release",
+            ".ai/repo/mesh/majordomus.yaml",
+            "share/schemas",
+            "docs/MESH.md",
+            "docs/DISTRIBUTION.md",
+            "test/cases"
+          ],
+          "slug": "a-node-follows-the-stable-pointer",
+          "updated_at": "2026-10-14",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ],
+          "why": "ADR 0161. On 2026-10-14 v0.25.0 reached the five mesh nodes only after one session upgraded each by hand, and v0.26.0 sat on the stable pointer while every node ran 0.25.0."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2722",
+        "kind": "issue",
+        "label": "I2722",
+        "summary": "A hub activates a new version under its service manager, checks its health and rolls back by itself",
+        "route": "/cockpit/objects/issue/i2722",
+        "source": ".ai/repo/project/issues/I2722.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A hub with a newer installed version ends serving it, with no session lost that was attached before the grace",
+            "A version whose readiness or mesh verify fails is rolled back within the grace and the board names node, version and failed check",
+            "The hub service unit is written by a capability, not by hand"
+          ],
+          "created_at": "2026-10-14",
+          "current_state": "Updating a hub is a fetch, a build and a service restart by hand; the macOS hub is started by hand.",
+          "depends_on": [
+            "I2720"
+          ],
+          "evidence_required": [
+            "hub_activates_new_version_test",
+            "hub_rolls_back_failed_version_test"
+          ],
+          "milestone": "safe-self-update",
+          "non_scope": [
+            "Checkout servers' hand-off, which I2163 and I2127 carry"
+          ],
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh",
+            "apps/majordomus-cli/src/capability/builtin",
+            "apps/majordomus-cli/src/lease.rs",
+            "share/install",
+            "docs/MESH.md",
+            "test/cases"
+          ],
+          "slug": "a-hub-activates-and-rolls-back",
+          "updated_at": "2026-10-14",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ],
+          "why": "ADR 0161. Hubs run unattended (docs/MESH.md, The hubs as services); the launchd agent is the operator's to install and an installer that writes either unit is owed as a typed capability (ADR 0059)."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2723",
+        "kind": "issue",
+        "label": "I2723",
+        "summary": "The mesh shows each node's version and how far a release has rolled out",
+        "route": "/cockpit/objects/issue/i2723",
+        "source": ".ai/repo/project/issues/I2723.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "mesh peers prints each runtime's version and follow setting",
+            "mesh doctor names a node more than one release behind the stable pointer"
+          ],
+          "created_at": "2026-10-14",
+          "current_state": "serve status reports an outdated server for one checkout; the mesh carries no versions.",
+          "depends_on": [],
+          "desired_state": "Runtime info on the mesh carries version and follow; mesh peers and the Cockpit show them; mesh doctor and the dashboard show rollout progress per release.",
+          "evidence_required": [
+            "mesh_reports_versions_test"
+          ],
+          "milestone": "safe-self-update",
+          "non_scope": [],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh",
+            "apps/majordomus-cli/src/ui",
+            "docs/MESH.md",
+            "test/cases"
+          ],
+          "slug": "the-mesh-shows-the-rollout",
+          "updated_at": "2026-10-14",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ],
+          "why": "ADR 0161. On 2026-10-14 the primary checkout's server was a 0.21.0 debug build beside a 0.25.0 CLI, and nothing on the board said so."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2724",
+        "kind": "issue",
+        "label": "I2724",
+        "summary": "A node without a route to the site takes the archive from a peer and still verifies it itself",
+        "route": "/cockpit/objects/issue/i2724",
+        "source": ".ai/repo/project/issues/I2724.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A node with no route to the site upgrades from a peer's archive and verifies it before unpacking",
+            "A peer archive whose digest differs from the metadata is refused and reported"
+          ],
+          "created_at": "2026-10-14",
+          "current_state": "A node without a route to the site is upgraded by copying an archive to it by hand.",
+          "depends_on": [
+            "I2720",
+            "I2165"
+          ],
+          "evidence_required": [
+            "relayed_archive_verified_test"
+          ],
+          "milestone": "safe-self-update",
+          "non_scope": [
+            "Trusting a digest a peer sends without metadata the node can verify"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh",
+            "apps/majordomus-cli/src/release",
+            "site/static/install.sh",
+            "docs/MESH.md",
+            "test/cases"
+          ],
+          "slug": "a-relayed-archive-is-still-verified",
+          "updated_at": "2026-10-14",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ],
+          "why": "ADR 0161. jetson has no route to github.com; on 2026-10-14 its v0.25.0 archive was copied over the LAN by hand."
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "label": "a-commit-stood-behind-a-build-lock",
@@ -36619,6 +38113,44 @@
         }
       },
       {
+        "id": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "milestone",
+        "label": "a-second-adopter-is-served",
+        "summary": "A second adopter is served: what a foreign repository met on its first day is fixed in the tool",
+        "route": "/cockpit/objects/milestone/a-second-adopter-is-served",
+        "source": ".ai/repo/project/milestones/a-second-adopter-is-served.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every issue of this milestone is DONE or CANCELLED with its reason",
+            "No fix decides by the identity of the repository it runs in"
+          ],
+          "created_at": "2026-10-13",
+          "evidence_required": [
+            "findings_recorded"
+          ],
+          "non_scope": [
+            "The adopting repository itself: it is the evidence, read only",
+            "I1982 and I1996 of adopter-upgrades, which I2597 and I2587 widen rather than replace",
+            "Accepting any ADR these issues propose; acceptance is the owner's act"
+          ],
+          "order": 116,
+          "priority": "p1",
+          "scope": [
+            "lib",
+            "apps/majordomus-cli/src",
+            "share",
+            "docs",
+            "test/cases"
+          ],
+          "slug": "a-second-adopter-is-served",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "bin/majordomus plan validate",
+            "scripts/derive-check"
+          ]
+        }
+      },
+      {
         "id": "majordomus://milestone/a-session-leaves-what-it-observed",
         "kind": "milestone",
         "label": "a-session-leaves-what-it-observed",
@@ -36771,6 +38303,58 @@
             "bin/majordomus plan validate",
             "scripts/ci/core-check",
             "MJ_TEST_JOBS=4 bash test/run.sh <the cases these issues add>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/automation",
+        "kind": "milestone",
+        "label": "automation",
+        "summary": "Repository automation is scripted capabilities over typed Rust, not shell",
+        "route": "/cockpit/objects/milestone/automation",
+        "source": ".ai/repo/project/milestones/automation.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A Rhai script runs only inside the sandbox engine, with eval disabled, no clock, bounded work and cancellation",
+            "A scripted capability declared in the layer appears in the registry, capabilities list, OpenAPI and MCP with no edit anywhere else",
+            "A script calling a capability whose effect exceeds its own declared effect is refused at run time",
+            "No tracked file invokes Perl, held by a gate",
+            "A new shell file under a governed path without an exemption entry is refused, and the migration inventory is machine-readable"
+          ],
+          "created_at": "2026-09-15",
+          "depends_on": [],
+          "evidence_required": [
+            "sandbox_engine_proved",
+            "scripted_capability_projected_everywhere",
+            "effect_ceiling_enforced",
+            "no_perl",
+            "new_shell_refused"
+          ],
+          "non_scope": [
+            "Transliterating shell scripts into Rhai. Domain logic moves to typed Rust capabilities; a script only orchestrates capabilities",
+            "A generic shell or exec capability, or any function that takes a command string",
+            "Perl, Python or Node as a portable layer"
+          ],
+          "order": 130,
+          "priority": "p1",
+          "scope": [
+            "apps/majordomus-cli",
+            "share",
+            "scripts",
+            "lib",
+            "bin",
+            ".ai/repo",
+            "docs",
+            "test",
+            "SECURITY.md"
+          ],
+          "slug": "automation",
+          "updated_at": "2026-09-15",
+          "validation": [
+            "majordomus plan validate",
+            "bin/majordomus-cli capabilities validate",
+            "bin/majordomus-cli generate --check",
+            "bash test/run.sh 383_a_scripted_capability_runs"
           ]
         }
       },
@@ -37838,11 +39422,13 @@
         "id": "majordomus://milestone/safe-self-update",
         "kind": "milestone",
         "label": "safe-self-update",
-        "summary": "Clients and servers of different versions meet safely, and a release's provenance can be checked",
+        "summary": "Every mesh node follows the published release by itself, versions meet safely, and a release's provenance can be checked",
         "route": "/cockpit/objects/milestone/safe-self-update",
         "source": ".ai/repo/project/milestones/safe-self-update.yaml",
         "facts": {
           "acceptance_criteria": [
+            "An enrolled, following node is on the version releases/latest.json names within one check interval of a release, with no person on it",
+            "A failed activation rolls back to the previous version by itself and the board names node, version and failed check",
             "A client of version N+1 beside a server of version N at another path ends with one server of N+1 and no lost session",
             "A wire or lease or journal schema change without a version bump fails version-surface",
             "Each release archive carries an attestation that verifies for this repository"
@@ -37852,17 +39438,20 @@
           "evidence_required": [
             "version_hand_off_test",
             "wire_versions_gated",
+            "node_follows_stable_pointer_test",
+            "hub_rolls_back_failed_version_test",
             "release_attestation"
           ],
           "non_scope": [
-            "A second installer or updater; install.sh stays the one path (pack M11).",
+            "A second installer or updater; install.sh stays the one path (pack M11), and self update re-runs it (ADR 0161).",
             "A network fetch on entering a repository.",
             "Restarting a client's server while it has work in flight; hand-off goes through I2127's session move."
           ],
           "order": 144,
-          "priority": "p2",
+          "priority": "p0",
           "risks": [
             "A hand-off between versions depends on the old server ending its sessions (I2127); landing I2163 first would strand clients on the old server.",
+            "Following automatically raises the cost of a bad archive; I2165 (attestation) is raised to p1 with ADR 0161.",
             "Attestation needs repository permissions in the publish job; the release workflow's permissions block changes with it."
           ],
           "scope": [
@@ -37878,10 +39467,13 @@
             "test/fixtures",
             "test/cases",
             "docs/DISTRIBUTION.md",
-            "docs/MCP.md"
+            "docs/MCP.md",
+            "docs/MESH.md",
+            "apps/majordomus-cli/src/mesh",
+            ".ai/repo/mesh/majordomus.yaml"
           ],
           "slug": "safe-self-update",
-          "updated_at": "2026-10-09",
+          "updated_at": "2026-10-14",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --test serve_lifecycle",
@@ -45449,6 +47041,7 @@
             ".githooks/**",
             ".codex/**",
             ".gemini/**",
+            ".agents/**",
             ".mcp.json",
             ".editorconfig",
             ".envrc",
@@ -45457,6 +47050,7 @@
             "README.md",
             "AGENTS.md",
             "CLAUDE.md",
+            "GEMINI.md",
             "CONTRIBUTING.md",
             "SECURITY.md",
             "Cargo.toml",
@@ -52631,6 +54225,13 @@
         "source": "test/cases/192_entry_across_checkouts_and_clients.sh"
       },
       {
+        "id": "majordomus://test/test/cases/194_audit_rows_are_planned.sh",
+        "kind": "test",
+        "label": "test/cases/194_audit_rows_are_planned.sh",
+        "route": "/cockpit/objects/test/test-cases-194-audit-rows-are-planned-sh",
+        "source": "test/cases/194_audit_rows_are_planned.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/19_end_to_end.sh",
         "kind": "test",
         "label": "test/cases/19_end_to_end.sh",
@@ -52932,6 +54533,13 @@
         "source": "test/cases/2985_session_records_are_capped_and_archived.sh"
       },
       {
+        "id": "majordomus://test/test/cases/2998_evidence_reaches_the_subcommands_the_executable_owns.sh",
+        "kind": "test",
+        "label": "test/cases/2998_evidence_reaches_the_subcommands_the_executable_owns.sh",
+        "route": "/cockpit/objects/test/test-cases-2998-evidence-reaches-the-subcommands-the-executable-owns-sh",
+        "source": "test/cases/2998_evidence_reaches_the_subcommands_the_executable_owns.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/2999_delivery_is_expedited_only_where_the_rule_says.sh",
         "kind": "test",
         "label": "test/cases/2999_delivery_is_expedited_only_where_the_rule_says.sh",
@@ -52967,6 +54575,13 @@
         "source": "test/cases/3004_evolve_is_a_procedure_of_existing_commands.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3006_diagrams_are_interactive_and_linkable.sh",
+        "kind": "test",
+        "label": "test/cases/3006_diagrams_are_interactive_and_linkable.sh",
+        "route": "/cockpit/objects/test/test-cases-3006-diagrams-are-interactive-and-linkable-sh",
+        "source": "test/cases/3006_diagrams_are_interactive_and_linkable.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/300_a_pipeline_cannot_hide_a_failure.sh",
         "kind": "test",
         "label": "test/cases/300_a_pipeline_cannot_hide_a_failure.sh",
@@ -52979,6 +54594,13 @@
         "label": "test/cases/3011_the_observatory_draws_nothing_it_did_not_read.sh",
         "route": "/cockpit/objects/test/test-cases-3011-the-observatory-draws-nothing-it-did-not-read-sh",
         "source": "test/cases/3011_the_observatory_draws_nothing_it_did_not_read.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3014_the_kiosk_draws_what_the_repository_proves.sh",
+        "kind": "test",
+        "label": "test/cases/3014_the_kiosk_draws_what_the_repository_proves.sh",
+        "route": "/cockpit/objects/test/test-cases-3014-the-kiosk-draws-what-the-repository-proves-sh",
+        "source": "test/cases/3014_the_kiosk_draws_what_the_repository_proves.sh"
       },
       {
         "id": "majordomus://test/test/cases/3015_an_unsupervised_repository_exits_12_from_both_tools.sh",
@@ -53051,6 +54673,41 @@
         "source": "test/cases/3023_a_knowledge_record_outlives_the_file_it_cites.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3024_a_run_is_seen_by_the_server.sh",
+        "kind": "test",
+        "label": "test/cases/3024_a_run_is_seen_by_the_server.sh",
+        "route": "/cockpit/objects/test/test-cases-3024-a-run-is-seen-by-the-server-sh",
+        "source": "test/cases/3024_a_run_is_seen_by_the_server.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3025_abandoned_work_in_a_worktree_is_named.sh",
+        "kind": "test",
+        "label": "test/cases/3025_abandoned_work_in_a_worktree_is_named.sh",
+        "route": "/cockpit/objects/test/test-cases-3025-abandoned-work-in-a-worktree-is-named-sh",
+        "source": "test/cases/3025_abandoned_work_in_a_worktree_is_named.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3027_the_release_path_goes_first.sh",
+        "kind": "test",
+        "label": "test/cases/3027_the_release_path_goes_first.sh",
+        "route": "/cockpit/objects/test/test-cases-3027-the-release-path-goes-first-sh",
+        "source": "test/cases/3027_the_release_path_goes_first.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3028_the_pages_job_waits_for_its_deployment.sh",
+        "kind": "test",
+        "label": "test/cases/3028_the_pages_job_waits_for_its_deployment.sh",
+        "route": "/cockpit/objects/test/test-cases-3028-the-pages-job-waits-for-its-deployment-sh",
+        "source": "test/cases/3028_the_pages_job_waits_for_its_deployment.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3029_a_tag_in_flight_is_pending.sh",
+        "kind": "test",
+        "label": "test/cases/3029_a_tag_in_flight_is_pending.sh",
+        "route": "/cockpit/objects/test/test-cases-3029-a-tag-in-flight-is-pending-sh",
+        "source": "test/cases/3029_a_tag_in_flight_is_pending.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/302_the_topology_rule_has_one_source.sh",
         "kind": "test",
         "label": "test/cases/302_the_topology_rule_has_one_source.sh",
@@ -53058,11 +54715,53 @@
         "source": "test/cases/302_the_topology_rule_has_one_source.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3032_the_quality_verdict_comes_first.sh",
+        "kind": "test",
+        "label": "test/cases/3032_the_quality_verdict_comes_first.sh",
+        "route": "/cockpit/objects/test/test-cases-3032-the-quality-verdict-comes-first-sh",
+        "source": "test/cases/3032_the_quality_verdict_comes_first.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3033_a_release_record_case_is_listed_by_a_structure_gate.sh",
+        "kind": "test",
+        "label": "test/cases/3033_a_release_record_case_is_listed_by_a_structure_gate.sh",
+        "route": "/cockpit/objects/test/test-cases-3033-a-release-record-case-is-listed-by-a-structure-gate-sh",
+        "source": "test/cases/3033_a_release_record_case_is_listed_by_a_structure_gate.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3035_a_release_names_its_archive_from_the_matrix.sh",
+        "kind": "test",
+        "label": "test/cases/3035_a_release_names_its_archive_from_the_matrix.sh",
+        "route": "/cockpit/objects/test/test-cases-3035-a-release-names-its-archive-from-the-matrix-sh",
+        "source": "test/cases/3035_a_release_names_its_archive_from_the_matrix.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3036_a_worktree_runs_its_own_hooks.sh",
+        "kind": "test",
+        "label": "test/cases/3036_a_worktree_runs_its_own_hooks.sh",
+        "route": "/cockpit/objects/test/test-cases-3036-a-worktree-runs-its-own-hooks-sh",
+        "source": "test/cases/3036_a_worktree_runs_its_own_hooks.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3037_a_knowledge_lookup_explains_its_order.sh",
+        "kind": "test",
+        "label": "test/cases/3037_a_knowledge_lookup_explains_its_order.sh",
+        "route": "/cockpit/objects/test/test-cases-3037-a-knowledge-lookup-explains-its-order-sh",
+        "source": "test/cases/3037_a_knowledge_lookup_explains_its_order.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/303_one_source_serves_two_mounts.sh",
         "kind": "test",
         "label": "test/cases/303_one_source_serves_two_mounts.sh",
         "route": "/cockpit/objects/test/test-cases-303-one-source-serves-two-mounts-sh",
         "source": "test/cases/303_one_source_serves_two_mounts.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3042_the_observatory_asks_again_when_it_is_seen.sh",
+        "kind": "test",
+        "label": "test/cases/3042_the_observatory_asks_again_when_it_is_seen.sh",
+        "route": "/cockpit/objects/test/test-cases-3042-the-observatory-asks-again-when-it-is-seen-sh",
+        "source": "test/cases/3042_the_observatory_asks_again_when_it_is_seen.sh"
       },
       {
         "id": "majordomus://test/test/cases/304_a_provider_is_declared_once.sh",
@@ -58754,6 +60453,16 @@
         "kind": "projects"
       },
       {
+        "source": "capability:executions.report",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:executions.report",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
         "source": "capability:executions.start",
         "target": "projection:cli",
         "kind": "projects"
@@ -60990,6 +62699,26 @@
       },
       {
         "source": "capability:worktree.topology",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:worktree.uncommitted",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:worktree.uncommitted",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:worktree.uncommitted",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:worktree.uncommitted",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -62876,6 +64605,46 @@
       {
         "source": "majordomus://adr/adr-0068",
         "target": "majordomus://document/docs/EVIDENCE.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0069",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0069",
+        "target": "majordomus://document/SECURITY.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0069",
+        "target": "majordomus://document/docs/CONCEPTS.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0069",
+        "target": "majordomus://rule/project.executions-carry-no-secret@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0069",
+        "target": "majordomus://rule/project.interfaces-are-projections@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0069",
+        "target": "majordomus://rule/project.no-network-no-eval@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0069",
+        "target": "majordomus://rule/project.no-new-nouns@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0069",
+        "target": "majordomus://rule/project.optional-complexity@1",
         "kind": "put_in_force"
       },
       {
@@ -65164,6 +66933,76 @@
         "kind": "put_in_force"
       },
       {
+        "source": "majordomus://adr/adr-0152",
+        "target": "file:scripts/ci/link-check",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0152",
+        "target": "file:scripts/lib/diagrams.mjs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0152",
+        "target": "file:share/design/figure.css",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0152",
+        "target": "file:site/charts.js",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0152",
+        "target": "file:site/diagrams.js",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0152",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0152",
+        "target": "majordomus://adr/adr-0135",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0152",
+        "target": "majordomus://document/docs/DIAGRAMS.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0152",
+        "target": "majordomus://rule/project.a-diagram-is-drawn-not-typed@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0152",
+        "target": "majordomus://rule/project.derived-once@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0152",
+        "target": "majordomus://rule/project.every-link-and-control-is-tested@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0152",
+        "target": "majordomus://rule/project.homepage-tells-a-declared-story@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0152",
+        "target": "majordomus://rule/project.interfaces-are-projections@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0152",
+        "target": "majordomus://test/test/cases/3006_diagrams_are_interactive_and_linkable.sh",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://adr/adr-0155",
         "target": "file:scripts/ci/release-verdict",
         "kind": "put_in_force"
@@ -65220,6 +67059,11 @@
       },
       {
         "source": "majordomus://adr/adr-0158",
+        "target": "file:apps/majordomus-cli/src/http/events.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0158",
         "target": "file:apps/majordomus-cli/src/ui/observatory.rs",
         "kind": "put_in_force"
       },
@@ -65232,6 +67076,11 @@
         "source": "majordomus://adr/adr-0158",
         "target": "kind:adr",
         "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0158",
+        "target": "majordomus://adr/adr-0126",
+        "kind": "put_in_force"
       },
       {
         "source": "majordomus://adr/adr-0158",
@@ -65261,6 +67110,96 @@
       {
         "source": "majordomus://adr/adr-0158",
         "target": "majordomus://test/test/cases/3011_the_observatory_draws_nothing_it_did_not_read.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0160",
+        "target": "file:apps/majordomus-cli/src/ui/observatory.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0160",
+        "target": "file:share/ui/observatory-kiosk.js",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0160",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0160",
+        "target": "majordomus://adr/adr-0012",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0160",
+        "target": "majordomus://adr/adr-0135",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0160",
+        "target": "majordomus://adr/adr-0142",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0160",
+        "target": "majordomus://adr/adr-0158",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0160",
+        "target": "majordomus://rule/project.ui-derived-state@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0160",
+        "target": "majordomus://test/test/cases/3014_the_kiosk_draws_what_the_repository_proves.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0161",
+        "target": "file:apps/majordomus-cli/src/lease.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0161",
+        "target": "file:site/static/install.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0161",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0161",
+        "target": "majordomus://adr/adr-0131",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0161",
+        "target": "majordomus://adr/adr-0155",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0161",
+        "target": "majordomus://document/docs/DISTRIBUTION.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0161",
+        "target": "majordomus://document/docs/MESH.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0161",
+        "target": "majordomus://milestone/safe-self-update",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0161",
+        "target": "majordomus://test/test/cases/85_installer.sh",
         "kind": "put_in_force"
       },
       {
@@ -65466,6 +67405,26 @@
       {
         "source": "majordomus://claim/a-candidate-is-routed-by-what-it-is-about",
         "target": "majordomus://test/test/cases/982_a_candidate_is_routed_by_what_it_is_about.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/a-diagram-is-named-linked-and-addressable",
+        "target": "file:scripts/lib/diagrams.mjs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/a-diagram-is-named-linked-and-addressable",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/a-diagram-is-named-linked-and-addressable",
+        "target": "majordomus://document/docs/DIAGRAMS.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/a-diagram-is-named-linked-and-addressable",
+        "target": "majordomus://test/test/cases/3006_diagrams_are_interactive_and_linkable.sh",
         "kind": "tested_by"
       },
       {
@@ -71024,6 +72983,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/GEMINI.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/README.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -71135,6 +73099,11 @@
       },
       {
         "source": "majordomus://document/docs/DEVELOPMENT_RUNTIME.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/DIAGRAMS.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -71405,6 +73374,11 @@
       },
       {
         "source": "majordomus://document/docs/claims/a-candidate-is-routed-by-what-it-is-about.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/a-diagram-is-named-linked-and-addressable.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -76694,6 +78668,66 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I1800",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1800",
+        "target": "majordomus://milestone/automation",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1801",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1801",
+        "target": "majordomus://issue/I1800",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I1801",
+        "target": "majordomus://milestone/automation",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1802",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1802",
+        "target": "majordomus://milestone/automation",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1803",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1803",
+        "target": "majordomus://milestone/automation",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1804",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1804",
+        "target": "majordomus://issue/I1801",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I1804",
+        "target": "majordomus://milestone/automation",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I1900",
         "target": "kind:issue",
         "kind": "is_a"
@@ -78314,6 +80348,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2601",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2601",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I2652",
         "target": "kind:issue",
         "kind": "is_a"
@@ -78326,6 +80370,61 @@
       {
         "source": "majordomus://issue/I2652",
         "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2653",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2653",
+        "target": "majordomus://milestone/surfaces-never-disagree",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2654",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2654",
+        "target": "majordomus://issue/I2653",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2654",
+        "target": "majordomus://milestone/surfaces-never-disagree",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2655",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2655",
+        "target": "majordomus://issue/I2653",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2655",
+        "target": "majordomus://milestone/surfaces-never-disagree",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2656",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2656",
+        "target": "majordomus://issue/I2653",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2656",
+        "target": "majordomus://milestone/surfaces-never-disagree",
         "kind": "belongs_to"
       },
       {
@@ -78420,6 +80519,46 @@
       },
       {
         "source": "majordomus://issue/I2694",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2695",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2695",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2696",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2696",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2697",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2697",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2698",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2698",
         "target": "majordomus://milestone/development-runtime",
         "kind": "belongs_to"
       },
@@ -78574,6 +80713,171 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2710",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2710",
+        "target": "majordomus://milestone/M004",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2711",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2711",
+        "target": "majordomus://milestone/M004",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2712",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2712",
+        "target": "majordomus://issue/I2054",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2712",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2713",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2713",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2714",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2714",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2715",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2715",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2716",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2716",
+        "target": "majordomus://milestone/M004",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2717",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2717",
+        "target": "majordomus://milestone/M004",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2718",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2718",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2720",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2720",
+        "target": "majordomus://milestone/safe-self-update",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2721",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2721",
+        "target": "majordomus://issue/I2720",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2721",
+        "target": "majordomus://milestone/safe-self-update",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2722",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2722",
+        "target": "majordomus://issue/I2720",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2722",
+        "target": "majordomus://milestone/safe-self-update",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2723",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2723",
+        "target": "majordomus://milestone/safe-self-update",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2724",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2724",
+        "target": "majordomus://issue/I2165",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2724",
+        "target": "majordomus://issue/I2720",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2724",
+        "target": "majordomus://milestone/safe-self-update",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -78624,6 +80928,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://milestone/a-second-adopter-is-served",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://milestone/a-session-leaves-what-it-observed",
         "target": "kind:milestone",
         "kind": "is_a"
@@ -78635,6 +80944,11 @@
       },
       {
         "source": "majordomus://milestone/architecture-is-enforced",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/automation",
         "target": "kind:milestone",
         "kind": "is_a"
       },
@@ -82584,6 +84898,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/194_audit_rows_are_planned.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/19_end_to_end.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -82799,6 +85118,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/2998_evidence_reaches_the_subcommands_the_executable_owns.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/2999_delivery_is_expedited_only_where_the_rule_says.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -82824,12 +85148,22 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3006_diagrams_are_interactive_and_linkable.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/300_a_pipeline_cannot_hide_a_failure.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
       {
         "source": "majordomus://test/test/cases/3011_the_observatory_draws_nothing_it_did_not_read.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3014_the_kiosk_draws_what_the_repository_proves.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -82884,12 +85218,67 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3024_a_run_is_seen_by_the_server.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3025_abandoned_work_in_a_worktree_is_named.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3027_the_release_path_goes_first.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3028_the_pages_job_waits_for_its_deployment.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3029_a_tag_in_flight_is_pending.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/302_the_topology_rule_has_one_source.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3032_the_quality_verdict_comes_first.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3033_a_release_record_case_is_listed_by_a_structure_gate.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3035_a_release_names_its_archive_from_the_matrix.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3036_a_worktree_runs_its_own_hooks.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3037_a_knowledge_lookup_explains_its_order.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/303_one_source_serves_two_mounts.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3042_the_observatory_asks_again_when_it_is_seen.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -87530,6 +89919,11 @@
       },
       {
         "source": "module:executions",
+        "target": "capability:executions.report",
+        "kind": "composes"
+      },
+      {
+        "source": "module:executions",
         "target": "capability:executions.start",
         "kind": "composes"
       },
@@ -88187,11 +90581,16 @@
         "source": "module:worktree",
         "target": "capability:worktree.topology",
         "kind": "composes"
+      },
+      {
+        "source": "module:worktree",
+        "target": "capability:worktree.uncommitted",
+        "kind": "composes"
       }
     ],
     "metadata": {
-      "nodes": 2796,
-      "edges": 6129,
+      "nodes": 2857,
+      "edges": 6269,
       "acyclic": false,
       "truncated": false
     }

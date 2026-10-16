@@ -2229,6 +2229,15 @@
       "note": "the readings are the repository's, not one worker's; the case adds an entry to a baseline, creates a branch and a worktree, and breaks the task's starting commit to see unknown instead of pass."
     },
     {
+      "id": "claim:a-diagram-is-named-linked-and-addressable",
+      "kind": "claim",
+      "label": "Every Mermaid diagram of the built site gets an id (diagram-<name>), the list of its nodes, the viewer's controls and a link for each node that is the identity of an object the site has a page for, all derived at build; a link to",
+      "status": "guaranteed",
+      "route": "/guarantees/a-diagram-is-named-linked-and-addressable/",
+      "external": false,
+      "note": "the case builds a fixture site, runs the pass and scripts/ci/link-check over it, and plants an undeclared node, another diagram's node, an absent diagram and a duplicate declared name; the viewer's behaviour in a browser is the diagram spec of scripts/interaction-probe, which this claim does not cover."
+    },
+    {
       "id": "impl:.github/workflows/pages.yml",
       "kind": "implementation",
       "label": ".github/workflows/pages.yml",
@@ -3055,6 +3064,13 @@
       "external": false
     },
     {
+      "id": "impl:scripts/lib/diagrams.mjs",
+      "kind": "implementation",
+      "label": "scripts/lib/diagrams.mjs",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "impl:scripts/lib/executable-site.jq",
       "kind": "implementation",
       "label": "scripts/lib/executable-site.jq",
@@ -3297,6 +3313,13 @@
       "kind": "source",
       "label": "docs/DESIGN.md",
       "route": "/docs/design/",
+      "external": false
+    },
+    {
+      "id": "source:docs/DIAGRAMS.md",
+      "kind": "source",
+      "label": "docs/DIAGRAMS.md",
+      "route": "/docs/diagrams/",
       "external": false
     },
     {
@@ -3893,6 +3916,13 @@
       "label": "test/cases/29_prompt_capture.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/29_prompt_capture.sh"
+    },
+    {
+      "id": "test:test/cases/3006_diagrams_are_interactive_and_linkable.sh",
+      "kind": "test",
+      "label": "test/cases/3006_diagrams_are_interactive_and_linkable.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/3006_diagrams_are_interactive_and_linkable.sh"
     },
     {
       "id": "test:test/cases/3011_the_observatory_draws_nothing_it_did_not_read.sh",
@@ -5757,6 +5787,11 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:a-diagram-is-named-linked-and-addressable",
+      "target": "source:docs/DIAGRAMS.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:distribution-canonical-model",
       "target": "impl:apps/majordomus-cli/src/distribution/mod.rs",
       "kind": "implemented_by"
@@ -6927,6 +6962,11 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:a-diagram-is-named-linked-and-addressable",
+      "target": "impl:scripts/lib/diagrams.mjs",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:distribution-canonical-model",
       "target": "test:test/cases/84_distribution_model.sh",
       "kind": "proved_by"
@@ -8094,6 +8134,11 @@
     {
       "source": "claim:the-closing-question-is-measured",
       "target": "test:test/cases/1037_the_closing_question_is_measured.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:a-diagram-is-named-linked-and-addressable",
+      "target": "test:test/cases/3006_diagrams_are_interactive_and_linkable.sh",
       "kind": "proved_by"
     }
   ]

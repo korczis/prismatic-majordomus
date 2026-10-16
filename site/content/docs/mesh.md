@@ -525,6 +525,14 @@ configuration — it names the interface every local server of this machine bind
 starts it — and [`MCP.md`](@/docs/mcp.md#the-machine-names-the-interface) says what it
 exposes.
 
+A linked worktree does not take that variable: its own server stays on loopback unless
+`--host` says otherwise, because the machine's face on the network is the primary checkout's
+server. A worktree needs no server of its own for the mesh either. `majordomus mesh` in a
+checkout with no running server asks a ready server of the same repository — the primary's
+first — and names it on stderr (`asking the server of <checkout> at <url>`). The one command
+it refuses there is `mesh handover consume` without `--no-materialize`, because the handover
+would be written into the other checkout.
+
 ## This repository's mesh
 
 This repository runs its own mesh: `.ai/repo/mesh/majordomus.yaml` is committed with
@@ -592,6 +600,14 @@ the checkout a person works in already runs its own shared server and a second o
 The launchd agent of the same shape — `~/Library/LaunchAgents/dev.majordomus.hub.plist` with
 `RunAtLoad`, `KeepAlive` and those arguments — is the operator's to install, and an installer
 that writes either unit is still owed as a typed capability (ADR 0059).
+
+**Hubs follow the release (ADR 0161).** A hub is a node like any other: with `follow: stable`
+it keeps its installed Majordomus at the version `releases/latest.json` names, restarts onto it
+under its service manager when no session is attached or after a bounded grace, checks its
+readiness and a live `mesh verify` round, and rolls back to the previous version by itself when
+either fails, naming node, version and failed check on the board. A typed capability writes
+the systemd unit and the launchd agent (I2722). Until that lands, the release seat upgrades the
+hubs by hand after each release and reads each version back.
 
 **Turning it off.** Commit `enabled: false`; a server started after that opens nothing,
 `mesh status` says why, and the briefing says `Mesh: off, as declared`. That reverses ADR 0059,

@@ -164,7 +164,7 @@ mod tests {
             source,
             route: None,
             exposure: Default::default(),
-            value: Ok(value),
+            value: Ok(value.into()),
             took: Duration::ZERO,
             standing: crate::ui::source::Standing::NOW,
         }

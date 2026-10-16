@@ -2,7 +2,7 @@
   'use strict';
   /* Reading room: the repository's Markdown, embedded at build time, rendered in place. */
   var GH = 'https://github.com/korczis/prismatic-majordomus';
-  var ARTIFACT = 'https://claude.ai/artifact/CBgdBRrXSimNAgQZuxt5JU';
+  var ARTIFACT = 'https://claude.ai/artifact/XgCzwV1MFNDL1ssJHstPQ1';
   var CDN = 'https://cdnjs.cloudflare.com/ajax/libs/';
   var LIB = {
     md: 'markdown-it/13.0.2/markdown-it.min.js',
