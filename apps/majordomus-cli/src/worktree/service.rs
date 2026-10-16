@@ -19,6 +19,7 @@ use serde::{Deserialize, Serialize};
 use super::direnv::{self, EnvrcApproval, LocalOverrides};
 use super::error::{Result, WorktreeError};
 use super::git;
+use super::hooks::{self, HooksPath};
 use super::identity::{RepositoryIdentity, ResolvedPath, TrunkSource};
 use super::lock::WorktreeLock;
 use super::model::{
@@ -73,10 +74,18 @@ pub struct CreateReport {
     /// What became of the primary checkout's machine-local `.envrc.local` here.
     #[serde(default = "default_local")]
     pub envrc_local: LocalOverrides,
+    /// Which hooks it runs: its own tree's, bound per worktree when the shared
+    /// `core.hooksPath` would have sent it to the primary checkout's (I2718).
+    #[serde(default = "default_hooks")]
+    pub hooks: HooksPath,
 }
 
 fn default_local() -> LocalOverrides {
     LocalOverrides::NonePrimary
+}
+
+fn default_hooks() -> HooksPath {
+    HooksPath::NotConfigured
 }
 
 /// What a remove did.
@@ -856,6 +865,7 @@ impl WorktreeService {
                     // exists and is blocked is what `ensure` is most often asked about.
                     let envrc = direnv::approve(&primary, &existing.path);
                     let envrc_local = direnv::link_local(&primary, &existing.path);
+                    let hooks = hooks::carry_hooks_path(&primary, &existing.path);
                     return Ok(CreateReport {
                         path: display(&existing.path),
                         branch: name.as_str().to_string(),
@@ -866,6 +876,7 @@ impl WorktreeService {
                         existed: true,
                         envrc,
                         envrc_local,
+                        hooks,
                     });
                 }
                 return Err(WorktreeError::WorktreeAlreadyExists {
@@ -942,6 +953,8 @@ impl WorktreeService {
         // The path exists now; this is the moment direnv's approval is carried to it.
         let envrc = direnv::approve(&primary, &registered.path);
         let envrc_local = direnv::link_local(&primary, &registered.path);
+        // And the moment it is bound to the hooks of its own tree, before its first commit.
+        let hooks = hooks::carry_hooks_path(&primary, &registered.path);
         Ok(CreateReport {
             path: display(&registered.path),
             branch: name.as_str().to_string(),
@@ -952,6 +965,7 @@ impl WorktreeService {
             existed: false,
             envrc,
             envrc_local,
+            hooks,
         })
     }
 
@@ -1049,9 +1063,23 @@ impl WorktreeService {
             lines.extend(lines_of(out.stderr.as_bytes()));
             lines
         };
+        // With the links repaired, each linked worktree is bound to the hooks of its own
+        // tree: the repair is how a worktree moved or made by hand rejoins the topology.
+        let hooks = if dry_run {
+            BTreeMap::new()
+        } else {
+            self.identity
+                .registered_worktrees()
+                .iter()
+                .skip(1)
+                .filter(|r| r.path.is_dir())
+                .map(|r| (display(&r.path), hooks::carry_hooks_path(primary, &r.path)))
+                .collect()
+        };
         Ok(RepairReport {
             pruned,
             repaired,
+            hooks,
             applied: !dry_run,
         })
     }
@@ -1433,5 +1461,32 @@ mod tests {
         );
         let sibling = ResolvedPath::of(home.path().join("sibling"));
         assert!(svc.ephemeral_root_of(&sibling).is_none(), "the repository lives in the temporary directory, so nothing beside it is a scratch checkout");
+    }
+
+    /// A report written before the hooks were carried reads as hooks that were not
+    /// configured, never as a parse failure.
+    #[test]
+    fn a_create_report_without_hooks_reads_as_not_configured() {
+        assert_eq!(default_hooks(), HooksPath::NotConfigured);
+    }
+
+    /// A repair binds every existing linked worktree to its hooks and says which, by path;
+    /// a dry run changes nothing and binds nothing.
+    #[test]
+    fn a_repair_names_the_hooks_of_every_linked_worktree_and_a_dry_run_none() {
+        let repo = Repo::new();
+        let home = repo.service().expected_path_of("topic").expect("a path");
+        repo.worktree("topic", &home);
+        let svc = repo.service();
+
+        let dry = svc.repair(true).expect("a dry run");
+        assert!(!dry.applied);
+        assert!(dry.hooks.is_empty(), "{dry:?}");
+
+        let applied = svc.repair(false).expect("a repair");
+        assert!(applied.applied);
+        let paths: Vec<&String> = applied.hooks.keys().collect();
+        assert_eq!(paths.len(), 1, "{applied:?}");
+        assert!(paths[0].ends_with("topic"), "{applied:?}");
     }
 }

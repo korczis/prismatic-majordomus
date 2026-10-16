@@ -33,6 +33,7 @@
 //! Nothing here kills a server of another checkout, and nothing kills a server that was not
 //! asked for by name.
 
+use std::ffi::OsString;
 use std::fs;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
@@ -46,7 +47,7 @@ use serde_json::{json, Value};
 
 use crate::app::App;
 use crate::capability::builtin::server::{standing_of, Checkouts, ServerStanding};
-use crate::cli::{OutputFormat, ServeArgs, ServeCommand};
+use crate::cli::{DiscoveryMode, OutputFormat, RepoArgs, ServeArgs, ServeCommand};
 use crate::deploy::{Deployment, Listen, KIND};
 use crate::error::{Error, Result};
 use crate::http::server::stdin_is_a_pipe;
@@ -63,6 +64,7 @@ pub fn run(args: ServeArgs) -> Result<u8> {
         None => std::env::current_dir().map_err(|e| Error::io(".", e))?,
     };
     let repo = Repository::discover(&start)?;
+    let layer = layer_args(&args.repo)?;
     match &args.command {
         None => serve(&args, &repo),
         Some(ServeCommand::Status { checkouts, format }) => status(&args, *checkouts, *format),
@@ -71,7 +73,19 @@ pub fn run(args: ServeArgs) -> Result<u8> {
             idle,
             wait,
             format,
-        }) => ensure(&repo, *port, *idle, Duration::from_secs(*wait), *format),
+        }) => {
+            // the declared server timings, the idle life among them, read before the lease
+            // is judged; `--idle` given here overrides the declaration (I2701)
+            let _ = crate::policy::LoadedPolicy::load(&repo);
+            ensure(
+                &repo,
+                port.unwrap_or_else(|| crate::cli::checkout_port(repo.root())),
+                idle.unwrap_or_else(|| lease::timings().idle.as_secs()),
+                Duration::from_secs(*wait),
+                *format,
+                &layer,
+            )
+        }
         Some(ServeCommand::Stop { wait }) => stop(&repo, Duration::from_secs(*wait)),
     }
 }
@@ -109,8 +123,14 @@ fn serve(args: &ServeArgs, repo: &Repository) -> Result<u8> {
     let (host, port) = match &declared {
         Some((_, listen)) => (listen.interface.host().to_string(), listen.port.get()),
         None => (
-            crate::cli::local_http_host(args.host.as_deref()).0,
-            args.port,
+            crate::cli::checkout_http_host(
+                args.host.as_deref(),
+                std::path::Path::new(&app.context.index.repository.root),
+            )
+            .0,
+            // the port this checkout asks for on every start, unless one was given (I2702)
+            args.port
+                .unwrap_or_else(|| crate::cli::checkout_port(repo.root())),
         ),
     };
     // The server outlives many commits. It follows the repository rather than freezing
@@ -563,6 +583,19 @@ impl Convergence {
 /// later. Nothing is lost by not waiting: the election in the started process is what
 /// decides who serves, and it decides that whether or not anybody is watching.
 pub fn converge(repo: &Repository, port: u16, idle: u64, wait: Duration) -> Result<Convergence> {
+    converge_with(repo, port, idle, wait, &[])
+}
+
+/// [`converge`], with the layer options a server it starts is given ([`layer_args`]): what
+/// `serve ensure` runs, so that `serve --share <dir> ensure` starts a server that reads
+/// `<dir>` rather than locating a share of its own.
+pub fn converge_with(
+    repo: &Repository,
+    port: u16,
+    idle: u64,
+    wait: Duration,
+    layer: &[OsString],
+) -> Result<Convergence> {
     let path = lease::lease_path(repo);
     let log = server_log(repo);
     let deadline = Instant::now() + wait;
@@ -616,7 +649,7 @@ pub fn converge(repo: &Repository, port: u16, idle: u64, wait: Duration) -> Resu
                     .flatten();
                 match claim_spawn(repo)? {
                     SpawnTurn::Mine(mut claim) => {
-                        match spawn_server(repo, port, idle, &log, judged) {
+                        match spawn_server(repo, port, idle, &log, judged, layer) {
                             Ok(pid) => {
                                 // the pid fills the claim in: from here on another call can
                                 // tell a process that is deciding from one that is gone
@@ -652,7 +685,7 @@ pub fn converge(repo: &Repository, port: u16, idle: u64, wait: Duration) -> Resu
                 });
                 let takes_over = rebuilt || newer;
                 if takes_over && !started {
-                    spawn_server(repo, port, idle, &log, None)?;
+                    spawn_server(repo, port, idle, &log, None, layer)?;
                     started = true;
                 } else if !started || Instant::now() >= deadline {
                     return Ok(settle(started, false));
@@ -676,8 +709,9 @@ fn ensure(
     idle: u64,
     wait: Duration,
     format: OutputFormat,
+    layer: &[OsString],
 ) -> Result<u8> {
-    let c = converge(repo, port, idle, wait)?;
+    let c = converge_with(repo, port, idle, wait, layer)?;
     let reason = if c.ready() {
         None
     } else if c.timed_out {
@@ -756,6 +790,58 @@ fn report(
     })
 }
 
+/// The layer options of this call that a server it starts must be given, as arguments:
+/// `--share`, `--discovery` and `--strict`, each only when it was given.
+///
+/// They are global options of `serve`, so `serve --share <dir> ensure` parses, and until
+/// these were forwarded the started server never saw them: it located a share of its own —
+/// `MAJORDOMUS_SHARE`, then the checkout's `share/` — and on 2026-10-14 a 0.26.0 server
+/// started that way served a stale checkout's 0.21.0 share, which has no `ui/`, and every
+/// screen of the UI lost its stylesheet and scripts. A relative share is made absolute
+/// here, because the started server's directory is not promised to be this one's.
+fn layer_args(repo: &RepoArgs) -> Result<Vec<OsString>> {
+    let mut out = Vec::new();
+    if let Some(share) = &repo.share {
+        let share = std::path::absolute(share).map_err(|e| Error::io(share, e))?;
+        out.push(OsString::from("--share"));
+        out.push(share.into_os_string());
+    }
+    if repo.discovery != DiscoveryMode::default() {
+        out.push(OsString::from("--discovery"));
+        out.push(OsString::from(discovery_word(repo.discovery)));
+    }
+    if repo.strict {
+        out.push(OsString::from("--strict"));
+    }
+    Ok(out)
+}
+
+/// A discovery mode as `--discovery` takes it.
+fn discovery_word(mode: DiscoveryMode) -> &'static str {
+    match mode {
+        DiscoveryMode::Vcs => "vcs",
+        DiscoveryMode::Filesystem => "filesystem",
+    }
+}
+
+/// The command a started server runs: this executable, `serve` for the checkout at `root`,
+/// the port with a free one as the fallback, its idle life, and the layer options
+/// [`layer_args`] carried over. Separate from [`spawn_server`] so that what the child is
+/// told can be read without starting it.
+fn server_command(exe: &Path, root: &Path, port: u16, idle: u64, layer: &[OsString]) -> Command {
+    let mut cmd = Command::new(exe);
+    cmd.arg("serve")
+        .arg("--repo")
+        .arg(root)
+        .arg("--port")
+        .arg(port.to_string())
+        .arg("--idle")
+        .arg(idle.to_string())
+        .arg("--fallback")
+        .args(layer);
+    cmd
+}
+
 /// Start a server for this checkout as a process of its own: this executable, `serve`, the
 /// port asked for with a free one as the fallback, the idle life it was given, its log
 /// beside the lease, in its own process group so that it outlives the shell that asked, and
@@ -767,7 +853,7 @@ fn report(
 /// Standard input, output and error are redirected here, and for a long time that looked
 /// like enough. It is not: `Command` only replaces those three, and **every other descriptor
 /// the parent had open is inherited by the child**, which then holds it for its whole life —
-/// fifteen minutes, by `DEFAULT_IDLE_SECONDS`.
+/// fifteen minutes, by `DEFAULT_IDLE_SECONDS`, or the declared `server.idle_seconds`.
 ///
 /// direnv is where that stops being theoretical. It hands the file it evaluates an extra
 /// descriptor of its own (fd 6 here), and it does not return until that pipe closes. On
@@ -794,6 +880,7 @@ fn spawn_server(
     idle: u64,
     log: &Path,
     judged: Option<&str>,
+    layer: &[OsString],
 ) -> Result<u32> {
     let exe = std::env::current_exe().map_err(|e| Error::io("the executable", e))?;
     if let Some(dir) = log.parent() {
@@ -804,16 +891,8 @@ fn spawn_server(
         .append(true)
         .open(log)
         .map_err(|e| Error::io(log, e))?;
-    let mut cmd = Command::new(exe);
-    cmd.arg("serve")
-        .arg("--repo")
-        .arg(repo.root())
-        .arg("--port")
-        .arg(port.to_string())
-        .arg("--idle")
-        .arg(idle.to_string())
-        .arg("--fallback")
-        .stdin(Stdio::null())
+    let mut cmd = server_command(&exe, repo.root(), port, idle, layer);
+    cmd.stdin(Stdio::null())
         .stdout(Stdio::null())
         .stderr(Stdio::from(file));
     if std::env::var_os("MAJORDOMUS_LOG").is_none() {
@@ -1024,6 +1103,166 @@ mod tests {
     use super::*;
 
     const YOUNG: Duration = Duration::ZERO;
+
+    fn argv(cmd: &Command) -> Vec<String> {
+        cmd.get_args()
+            .map(|a| a.to_string_lossy().into_owned())
+            .collect()
+    }
+
+    #[test]
+    fn a_started_server_is_given_the_share_this_call_was_given() {
+        let repo = RepoArgs {
+            share: Some(PathBuf::from("/opt/majordomus/share")),
+            discovery: DiscoveryMode::Filesystem,
+            strict: true,
+            ..RepoArgs::default()
+        };
+        let layer = layer_args(&repo).unwrap();
+        let cmd = server_command(Path::new("/bin/mj"), Path::new("/r"), 8741, 900, &layer);
+        let args = argv(&cmd);
+        let after = |flag: &str| {
+            args.iter()
+                .position(|a| a == flag)
+                .and_then(|i| args.get(i + 1).cloned())
+        };
+        assert_eq!(
+            after("--share").as_deref(),
+            Some("/opt/majordomus/share"),
+            "{args:?}"
+        );
+        assert_eq!(
+            after("--discovery").as_deref(),
+            Some("filesystem"),
+            "{args:?}"
+        );
+        assert!(args.iter().any(|a| a == "--strict"), "{args:?}");
+        assert_eq!(
+            args[0], "serve",
+            "the layer options follow `serve`, never precede it"
+        );
+    }
+
+    #[test]
+    fn a_started_server_is_given_no_layer_option_this_call_was_not_given() {
+        let layer = layer_args(&RepoArgs::default()).unwrap();
+        assert!(layer.is_empty(), "{layer:?}");
+        let args = argv(&server_command(
+            Path::new("/bin/mj"),
+            Path::new("/r"),
+            1,
+            2,
+            &layer,
+        ));
+        assert_eq!(
+            args,
+            [
+                "serve",
+                "--repo",
+                "/r",
+                "--port",
+                "1",
+                "--idle",
+                "2",
+                "--fallback"
+            ],
+            "a call that names no share leaves the started server to locate its own"
+        );
+    }
+
+    #[test]
+    fn every_discovery_mode_is_the_word_its_option_takes() {
+        use clap::ValueEnum;
+        for mode in [DiscoveryMode::Vcs, DiscoveryMode::Filesystem] {
+            let word = mode
+                .to_possible_value()
+                .expect("a value")
+                .get_name()
+                .to_string();
+            assert_eq!(discovery_word(mode), word);
+        }
+    }
+
+    /// A small layer in a temporary directory: what `Repository::discover` needs.
+    fn layer_only() -> (crate::synthetic::SyntheticRepository, PathBuf) {
+        let fixture = crate::synthetic::SyntheticRepository::small().unwrap();
+        let root = fixture.root().canonicalize().unwrap();
+        (fixture, root)
+    }
+
+    /// A share that cannot be made absolute is refused before any subcommand runs, so
+    /// nothing is started with a share it would not find.
+    #[test]
+    fn a_share_that_cannot_be_made_absolute_is_refused_before_anything_runs() {
+        use clap::Parser;
+        let (_dir, root) = layer_only();
+        let cli = crate::cli::Cli::try_parse_from([
+            "majordomus",
+            "serve",
+            "--repo",
+            root.to_str().unwrap(),
+            "stop",
+        ])
+        .unwrap();
+        let crate::cli::Command::Serve(mut args) = cli.command else {
+            panic!("not the serve command")
+        };
+        args.repo.share = Some(PathBuf::new());
+        let err = run(args).expect_err("an empty share is refused");
+        assert!(matches!(err, Error::Io { .. }), "{err:?}");
+    }
+
+    /// `converge` with no wait and a start another live process has claimed starts
+    /// nothing: it waits on that start, and with no time left says it ran out.
+    #[test]
+    fn converge_with_no_wait_and_a_claimed_start_starts_nothing() {
+        let (_dir, root) = layer_only();
+        let repo = Repository::discover(&root).unwrap();
+        let claim = spawn_claim_path(&repo);
+        fs::create_dir_all(claim.parent().unwrap()).unwrap();
+        fs::write(&claim, std::process::id().to_string()).unwrap();
+        let c = converge(&repo, 0, 0, Duration::ZERO).unwrap();
+        assert!(!c.started, "{c:?}");
+        assert!(c.timed_out, "{c:?}");
+        assert_eq!(c.standing, ServerStanding::Absent);
+        assert!(
+            !lease::lease_path(&repo).exists(),
+            "no server was started, so no lease was written"
+        );
+    }
+
+    #[test]
+    fn a_relative_share_reaches_the_started_server_absolute() {
+        let repo = RepoArgs {
+            share: Some(PathBuf::from("dist/share")),
+            ..RepoArgs::default()
+        };
+        let layer = layer_args(&repo).unwrap();
+        let share = PathBuf::from(&layer[1]);
+        assert!(share.is_absolute(), "{share:?}");
+        assert!(share.ends_with("dist/share"), "{share:?}");
+    }
+
+    #[test]
+    fn serve_ensure_parses_the_share_it_forwards() {
+        use clap::Parser;
+        let cli = crate::cli::Cli::try_parse_from([
+            "majordomus",
+            "serve",
+            "--share",
+            "/s",
+            "ensure",
+            "--idle",
+            "5",
+        ])
+        .unwrap();
+        let crate::cli::Command::Serve(args) = cli.command else {
+            panic!("not the serve command")
+        };
+        assert!(matches!(args.command, Some(ServeCommand::Ensure { .. })));
+        let layer = layer_args(&args.repo).unwrap();
+        assert_eq!(layer, [OsString::from("--share"), OsString::from("/s")]);
+    }
 
     #[test]
     fn a_claim_naming_a_live_process_is_a_start_in_progress() {

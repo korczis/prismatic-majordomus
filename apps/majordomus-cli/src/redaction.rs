@@ -10,7 +10,8 @@
 //! it did not write (I2161): every HTTP error body (`http::router::error_response`, which
 //! `http::router::Response::error` returns), every JSON-RPC error (`mcp::protocol::error`)
 //! and MCP tool refusal (`mcp::surface::Surface::call_from`), the request fields the server
-//! logs (`http::router::Router::foreign_origin`, `http::server::answer_http`), and a
+//! logs (`http::router::Router::foreign_origin`, `http::server::answer_http`), every field of
+//! every event and span the log writes, whoever logged it (`logging::redact`, I2708), and a
 //! handover body before it is signed into the mesh journal and replicated in clear
 //! (`mesh::handover::to_body`). Two records use it to find a credential rather than to send
 //! one: `continuity::record::portability` refuses a continuity record that carries one, and
@@ -708,11 +709,11 @@ mod tests {
             .collect();
         let ours: Vec<(String, String)> = SHAPES
             .iter()
-            .map(|s| (s.name.to_string(), ere(s.kept) + &ere(s.secret)))
+            .map(|s| (s.name.to_string(), ere(s.kept) + ere(s.secret).as_str()))
             .collect();
         assert_eq!(ours, table, "the port and lib/capture.sh's table disagree");
         assert_eq!(
-            ere(ASSIGNMENT.kept) + &ere(ASSIGNMENT.secret),
+            ere(ASSIGNMENT.kept) + ere(ASSIGNMENT.secret).as_str(),
             shell_value(&source, "MJ_CAPTURE_SECRET_ASSIGN")
         );
     }

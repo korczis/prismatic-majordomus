@@ -150,6 +150,40 @@ pub struct CommandRef {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+/// One capability of a domain, as its skill lists it.
+pub struct DomainEntry {
+    /// The capability's id.
+    pub capability: String,
+    /// The capability's own title.
+    pub title: String,
+    /// Its MCP tool; every entry of a domain has one.
+    pub tool: String,
+    /// The words after `majordomus` on the command line, when it has them.
+    pub cli: Option<String>,
+    /// Whether running it changes anything, so that only a person's request runs it.
+    pub changes_something: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+/// A module of the registry as one skill (ADR 0165): every public capability of the module
+/// that has an MCP tool, reachable as `/mj-<module>` and discoverable by the model from the
+/// skill's description. Derived; nothing names a domain.
+pub struct DomainRef {
+    /// The module the capabilities are declared in.
+    pub module: String,
+    /// The skill's name: `mj-` and the module, underscores as hyphens.
+    pub alias: String,
+    /// Its capabilities, by id.
+    pub entries: Vec<DomainEntry>,
+    /// The content address of every entry's descriptor, in id order.
+    pub sha256: String,
+}
+
+/// The prefix every derived domain skill carries, so that the listing groups them and no
+/// domain takes a name a product or a workflow skill wants.
+pub const DOMAIN_PREFIX: &str = "mj-";
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 /// A workflow as an editor sees it: a recipe a person may run with one keystroke.
 pub struct TaskRef {
     /// What `just` is given: the recipe, prefixed by its module path when it has one.
@@ -399,6 +433,48 @@ pub fn commands(registry: &crate::capability::CapabilityRegistry) -> Vec<Command
         .collect()
 }
 
+/// Every module of the registry that offers at least one public capability with an MCP tool,
+/// as one skill (ADR 0165). Nothing here is listed: a capability joins its module's skill by
+/// having a tool, and the module is the one its declaration already names.
+pub fn domains(registry: &crate::capability::CapabilityRegistry) -> Vec<DomainRef> {
+    let mut by_module: std::collections::BTreeMap<String, Vec<(DomainEntry, String)>> =
+        std::collections::BTreeMap::new();
+    for c in registry.iter() {
+        if c.visibility != crate::capability::Visibility::Public {
+            continue;
+        }
+        let Some(tool) = c.exposure.mcp.as_ref().and_then(|m| m.tool.clone()) else {
+            continue;
+        };
+        let entry = DomainEntry {
+            capability: c.id.to_string(),
+            title: c.title.clone(),
+            tool,
+            cli: c.exposure.cli.as_ref().map(|cli| cli.path.join(" ")),
+            changes_something: c.execution.effect != crate::capability::Effect::Read,
+        };
+        let digest = sha256_hex(&serde_json::to_string(c).unwrap_or_default());
+        by_module
+            .entry(c.module.as_str().to_string())
+            .or_default()
+            .push((entry, digest));
+    }
+    by_module
+        .into_iter()
+        .map(|(module, mut entries)| {
+            entries.sort_by(|a, b| a.0.capability.cmp(&b.0.capability));
+            let digests: String = entries.iter().map(|(_, d)| d.as_str()).collect();
+            DomainRef {
+                alias: format!("{DOMAIN_PREFIX}{}", module.replace('_', "-")),
+                module,
+                entries: entries.into_iter().map(|(e, _)| e).collect(),
+                sha256: sha256_hex(&digests),
+            }
+        })
+        .filter(|d| is_skill_name(&d.alias))
+        .collect()
+}
+
 /// The recipes of the *tracked* justfile: `justfile` and `.just/*.just`, read through `just`
 /// from a private copy. The root justfile also imports `.ai/local/cache/command-graph/
 /// bridge.just`, which each checkout materialises for itself; read in place, a checkout that
@@ -561,12 +637,21 @@ pub fn plan(
 ) -> Plan {
     let mut env = environment(index, root);
     let commands = commands(registry);
+    let domains = claude::reachable_domains(domains(registry), &commands, &env.skills);
     // a command's input is its capability's descriptor, named by the capability
     for c in &commands {
         env.inputs.push(EditorInput {
             path: format!("capability:{}", c.capability),
             mutability: EditorInputClass::Repository,
             sha256: c.sha256.clone(),
+        });
+    }
+    // a domain's input is the descriptors of its capabilities, named by the module
+    for d in &domains {
+        env.inputs.push(EditorInput {
+            path: format!("module:{}", d.module),
+            mutability: EditorInputClass::Repository,
+            sha256: d.sha256.clone(),
         });
     }
     crate::order::canonical(&mut env.inputs);
@@ -599,6 +684,17 @@ pub fn plan(
                 a,
                 vec![claude::ID.to_string()],
                 vec![format!("capability:{}", c.capability)],
+            ),
+        );
+    }
+    for d in &domains {
+        let a = claude::domain_artifact(d, version);
+        for_claude.insert(
+            a.path.clone(),
+            (
+                a,
+                vec![claude::ID.to_string()],
+                vec![format!("module:{}", d.module)],
             ),
         );
     }
@@ -651,7 +747,7 @@ pub fn plan(
         .collect();
     let adapters = vec![
         antigravity::adapter(&env),
-        claude::adapter(&commands, &env.skills),
+        claude::adapter(&commands, &domains, &env.skills),
         zed::adapter(&env),
     ];
     Plan {

@@ -33,6 +33,13 @@ expect_exit 0 build
 expect_grep 'cs edition holds'
 expect_grep 'every anchor resolves'
 [ -s "$DERIVED/cs/prirucka-majordomusu.html" ] || { echo "    the build wrote no page"; exit 1; }
+# No heading of the built page skips a level: the outline a screen reader walks has no gap.
+python3 - "$DERIVED/cs/prirucka-majordomusu.html" <<'PY' || { echo "    a heading of the built page skips a level"; exit 1; }
+import re, sys
+body = open(sys.argv[1], encoding="utf-8").read().partition("<script")[0]
+levels = [int(x) for x in re.findall(r"<h([1-6])\b", body)]
+sys.exit(1 if not levels or any(b > a + 1 for a, b in zip(levels, levels[1:])) else 0)
+PY
 # The build reads the handbook and writes beside it nothing at all: no bytecode cache, no
 # scratch file. A cache was tracked once, and every tree that ran this gate was dirty after it.
 left="$(find "$HB" -name '__pycache__' -o -name '*.pyc' | head -3)"

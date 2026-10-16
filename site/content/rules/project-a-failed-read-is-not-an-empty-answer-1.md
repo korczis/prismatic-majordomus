@@ -1,7 +1,7 @@
 +++
 title = "A source that did not answer is not a source with nothing in it"
 description = "A source that did not answer is not a source with nothing in it"
-weight = 66
+weight = 68
 [extra]
 kind = "rule"
 slug = "project-a-failed-read-is-not-an-empty-answer-1"

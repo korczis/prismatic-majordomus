@@ -27,7 +27,7 @@
       "id": "M002",
       "kind": "milestone",
       "label": "M002",
-      "status": "PLANNED",
+      "status": "ACTIVE",
       "route": "/plan/m002/",
       "external": false,
       "summary": "A durable record names the worker that wrote it"
@@ -108,7 +108,7 @@
       "id": "derived-data-integrity",
       "kind": "milestone",
       "label": "0.5  derived-data-integrity",
-      "status": "PLANNED",
+      "status": "VERIFY",
       "route": "/plan/derived-data-integrity/",
       "external": false,
       "summary": "A committed derivation describes something it can be a projection of"
@@ -117,7 +117,7 @@
       "id": "work-graph-github",
       "kind": "milestone",
       "label": "work-graph-github",
-      "status": "ACTIVE",
+      "status": "VERIFY",
       "route": "/plan/work-graph-github/",
       "external": false,
       "summary": "The projection to GitHub is gated, identified and traversable, and a merged pull request leads back to the outcome it served"
@@ -168,13 +168,31 @@
       "summary": "An adopting repository survives a Majordomus upgrade, and what the tool vendors into it is adopter-neutral"
     },
     {
+      "id": "a-second-adopter-is-served",
+      "kind": "milestone",
+      "label": "a-second-adopter-is-served",
+      "status": "ACTIVE",
+      "route": "/plan/a-second-adopter-is-served/",
+      "external": false,
+      "summary": "A second adopter is served: what a foreign repository met on its first day is fixed in the tool"
+    },
+    {
       "id": "a-session-leaves-what-it-observed",
       "kind": "milestone",
       "label": "a-session-leaves-what-it-observed",
-      "status": "ACTIVE",
+      "status": "DONE",
       "route": "/plan/a-session-leaves-what-it-observed/",
       "external": false,
       "summary": "A session leaves what it observed, and the repository routes it"
+    },
+    {
+      "id": "automation",
+      "kind": "milestone",
+      "label": "automation",
+      "status": "ACTIVE",
+      "route": "/plan/automation/",
+      "external": false,
+      "summary": "Repository automation is scripted capabilities over typed Rust, not shell"
     },
     {
       "id": "runtime-trust",
@@ -207,7 +225,7 @@
       "id": "mcp-transports-are-reliable",
       "kind": "milestone",
       "label": "mcp-transports-are-reliable",
-      "status": "ACTIVE",
+      "status": "VERIFY",
       "route": "/plan/mcp-transports-are-reliable/",
       "external": false,
       "summary": "Every MCP transport delivers each request at most once, bounds what it carries, and honours cancellation"
@@ -216,7 +234,7 @@
       "id": "surfaces-never-disagree",
       "kind": "milestone",
       "label": "surfaces-never-disagree",
-      "status": "PLANNED",
+      "status": "ACTIVE",
       "route": "/plan/surfaces-never-disagree/",
       "external": false,
       "summary": "Every surface projects the same state, says when it was observed, and keeps no list of its own"
@@ -246,7 +264,25 @@
       "status": "ACTIVE",
       "route": "/plan/safe-self-update/",
       "external": false,
-      "summary": "Clients and servers of different versions meet safely, and a release's provenance can be checked"
+      "summary": "Every mesh node follows the published release by itself, versions meet safely, and a release's provenance can be checked"
+    },
+    {
+      "id": "every-session-joins-the-mesh",
+      "kind": "milestone",
+      "label": "every-session-joins-the-mesh",
+      "status": "PLANNED",
+      "route": "/plan/every-session-joins-the-mesh/",
+      "external": false,
+      "summary": "Every LLM session joins the Majordomus mesh at start, told the mesh as work"
+    },
+    {
+      "id": "truthful-plan-surfaces",
+      "kind": "milestone",
+      "label": "truthful-plan-surfaces",
+      "status": "ACTIVE",
+      "route": "/plan/truthful-plan-surfaces/",
+      "external": false,
+      "summary": "The plan's surfaces are inferred from delivery, and nothing they show is typed beside the repository"
     },
     {
       "id": "everything-is-followed-in-one-stream",
@@ -256,6 +292,15 @@
       "route": "/plan/everything-is-followed-in-one-stream/",
       "external": false,
       "summary": "Everything that happens in the repository is followed in one stream"
+    },
+    {
+      "id": "the-mesh-works-out-of-the-box",
+      "kind": "milestone",
+      "label": "the-mesh-works-out-of-the-box",
+      "status": "PLANNED",
+      "route": "/plan/the-mesh-works-out-of-the-box/",
+      "external": false,
+      "summary": "The mesh works out of the box: trusted machines find each other by every means and their sessions cooperate from the first turn"
     },
     {
       "id": "runtime-adapters",

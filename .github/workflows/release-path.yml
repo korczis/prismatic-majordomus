@@ -1,0 +1,51 @@
+# The release path goes first on the shared runner pool (I2710). An adapter over
+# scripts/ci/release-path; the model is .ai/repo/ci/release-path.yaml and the prose docs/CI.md.
+#
+# On 2026-10-14 v0.26.0 was published while its record's verdict and its Pages deploy waited
+# for job slots that pull-request validates held. Three things now keep the release path from
+# waiting: a pull request's validate yields at its first step while the path holds
+# (validate.yml, plan job); a tag push preempts the branch runs already going (here, on the same
+# push that starts the release); and the runs that yielded run again once the path is clear
+# (validate.yml's ci job on every run that is not a pull request's, and this schedule).
+#
+# The release workflow is not touched and not asked: the release path is read from the runs
+# GitHub lists. Case 3027 holds this file and the enforcer to the model.
+name: release-path
+on:
+  push:
+    tags:
+      - 'v*'
+  schedule:
+    - cron: '7,22,37,52 * * * *'
+  workflow_dispatch:
+
+# Cancelling and re-running another run is Actions write; the label and the note on a pull
+# request are pull-requests write. Nothing here reads or writes the tree beyond its checkout.
+permissions:
+  contents: read
+  actions: write
+  pull-requests: write
+
+# One run per event at a time, never cancelling one in flight: a pending tag push must not be
+# replaced by the schedule's next tick, which would drop the preemption.
+concurrency:
+  group: release-path-${{ github.event_name }}
+  cancel-in-progress: false
+
+jobs:
+  release-path:
+    runs-on: ubuntu-latest
+    # a handful of API calls; the bound turns a hung call into a failure
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: branch validates yield to the release this tag starts
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: scripts/ci/release-path preempt --self "$GITHUB_RUN_ID"
+      - name: the runs that yielded run again once the release path is clear
+        if: github.event_name != 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: scripts/ci/release-path resume --self "$GITHUB_RUN_ID"
