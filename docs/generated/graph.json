@@ -3330,6 +3330,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/ui/mesh.rs",
+        "kind": "file",
+        "label": "mesh.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/ui/mesh.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/ui/mod.rs",
         "kind": "file",
         "label": "mod.rs",
@@ -7499,6 +7507,39 @@
             "release",
             "mesh",
             "runtime"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0167",
+        "kind": "adr",
+        "label": "adr-0167",
+        "summary": "Work moves through seats on the mesh, lands in combined tops, and every checkout is kept current",
+        "route": "/cockpit/objects/adr/adr-0167",
+        "source": ".ai/repo/adrs/0167-work-moves-through-seats-on-the-mesh-and-lands-in-combined-tops.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-16",
+          "related": [
+            "file:.ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v1.md",
+            "file:.ai/repo/adrs/0101-pull-requests-are-integrated-one-at-a-time-against-the-current-master.md",
+            "file:.ai/repo/adrs/0129-a-train-of-pull-requests-lands-in-one-run-of-the-required-check.md",
+            "file:.ai/repo/adrs/0155-an-expedited-landing-is-the-owners-word.md",
+            "file:.ai/repo/rules/project/integration-follows-the-current-master.v3.md",
+            "file:.ai/repo/rules/project/an-expedited-landing-is-the-owners-word.v1.md",
+            "file:.ai/repo/rules/project/work-is-claimed-before-it-is-built.v1.md",
+            "file:.ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md",
+            "file:docs/INTEGRATION.md",
+            "file:docs/MESH.md",
+            "file:docs/RELEASE.md",
+            "file:apps/majordomus-cli/src/ui/mesh.rs",
+            "test:test/cases/3150_the_cooperation_model_is_one_record.sh"
+          ],
+          "tags": [
+            "integration",
+            "governance",
+            "mesh",
+            "release"
           ]
         }
       },
@@ -46836,6 +46877,31 @@
         }
       },
       {
+        "id": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@1",
+        "kind": "rule",
+        "label": "project.the-cooperation-model-is-the-owners-word@1",
+        "summary": "Work moves through seats held as mesh claims, lands in combined tops, and every checkout is kept current",
+        "route": "/cockpit/objects/rule/project-the-cooperation-model-is-the-owners-word-1",
+        "source": ".ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.integration-follows-the-current-master@3",
+            "project.an-expedited-landing-is-the-owners-word@1",
+            "project.work-is-claimed-before-it-is-built@1",
+            "project.mesh-cooperation-is-authenticated@1"
+          ],
+          "tags": [
+            "process",
+            "integration",
+            "mesh",
+            "release",
+            "governance"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.the-crate-reference-is-published@1",
         "kind": "rule",
         "label": "project.the-crate-reference-is-published@1",
@@ -55095,6 +55161,13 @@
         "label": "test/cases/310_rustdoc_projection.sh",
         "route": "/cockpit/objects/test/test-cases-310-rustdoc-projection-sh",
         "source": "test/cases/310_rustdoc_projection.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3150_the_cooperation_model_is_one_record.sh",
+        "kind": "test",
+        "label": "test/cases/3150_the_cooperation_model_is_one_record.sh",
+        "route": "/cockpit/objects/test/test-cases-3150-the-cooperation-model-is-one-record-sh",
+        "source": "test/cases/3150_the_cooperation_model_is_one_record.sh"
       },
       {
         "id": "majordomus://test/test/cases/318_a_partial_sweep_says_so.sh",
@@ -67525,6 +67598,76 @@
       {
         "source": "majordomus://adr/adr-0161",
         "target": "majordomus://test/test/cases/85_installer.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0167",
+        "target": "file:apps/majordomus-cli/src/ui/mesh.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0167",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0167",
+        "target": "majordomus://adr/adr-0101",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0167",
+        "target": "majordomus://adr/adr-0129",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0167",
+        "target": "majordomus://adr/adr-0155",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0167",
+        "target": "majordomus://document/docs/INTEGRATION.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0167",
+        "target": "majordomus://document/docs/MESH.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0167",
+        "target": "majordomus://document/docs/RELEASE.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0167",
+        "target": "majordomus://rule/project.an-expedited-landing-is-the-owners-word@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0167",
+        "target": "majordomus://rule/project.integration-follows-the-current-master@3",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0167",
+        "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0167",
+        "target": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0167",
+        "target": "majordomus://rule/project.work-is-claimed-before-it-is-built@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0167",
+        "target": "majordomus://test/test/cases/3150_the_cooperation_model_is_one_record.sh",
         "kind": "put_in_force"
       },
       {
@@ -83703,6 +83846,31 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@1",
+        "target": "majordomus://rule/project.an-expedited-landing-is-the-owners-word@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@1",
+        "target": "majordomus://rule/project.integration-follows-the-current-master@3",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@1",
+        "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@1",
+        "target": "majordomus://rule/project.work-is-claimed-before-it-is-built@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.the-crate-reference-is-published@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -85714,6 +85882,11 @@
       },
       {
         "source": "majordomus://test/test/cases/310_rustdoc_projection.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3150_the_cooperation_model_is_one_record.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -91009,8 +91182,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2870,
-      "edges": 6291,
+      "nodes": 2874,
+      "edges": 6311,
       "acyclic": false,
       "truncated": false
     }

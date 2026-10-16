@@ -28,6 +28,68 @@ pub const ROUTE: &str = "/ui/mesh";
 const PEERS: Source = Source::of("mesh.peers");
 /// The journal as it stands now: its newest events, not the first page from its beginning.
 const EVENTS: Source = Source::with("mesh.events", r#"{"newest":true}"#);
+/// Every claim that still holds, with its scope, mode, session and intent: what the seats
+/// are read from.
+const CLAIMS: Source = Source::with(
+    "mesh.state",
+    r#"{"view":"full","kind":"claims","open":true}"#,
+);
+
+/// A seat of the cooperation model and the claim scope that holds it
+/// (`project.the-cooperation-model-is-the-owners-word`, ADR 0167). A `*` stands for one or
+/// more characters. A session holds a seat by holding an exclusive claim on its scope, so
+/// who holds it is read from the live claims, never from a list of names.
+struct Seat {
+    name: &'static str,
+    scope: &'static str,
+    does: &'static str,
+}
+
+/// The seats, in the order the rule lists them. Any other exclusive claim is a worker's.
+const SEATS: &[Seat] = &[
+    Seat {
+        name: "Landing seat",
+        scope: "campaign/*/landing",
+        does: "lands every green head, alone, pinned to the head CI judged",
+    },
+    Seat {
+        name: "Release seat",
+        scope: "release/seat",
+        does: "bumps, tags, records and verifies the site after landings",
+    },
+    Seat {
+        name: "Repair lane",
+        scope: "refs/heads/*",
+        does: "merges master into a conflicting pull request, on its own branch",
+    },
+];
+
+/// Whether a claimed path is a seat's scope: equal, or, with a `*`, the same text around it
+/// with at least one character in its place.
+fn seat_matches(pattern: &str, path: &str) -> bool {
+    match pattern.split_once('*') {
+        None => pattern == path,
+        Some((head, tail)) => {
+            path.len() > head.len() + tail.len() && path.starts_with(head) && path.ends_with(tail)
+        }
+    }
+}
+
+/// The seat an exclusive claim holds, or `None` for a worker's claim; an advisory claim
+/// holds no seat.
+fn seat_of(claim: &Value) -> Option<&'static Seat> {
+    if claim.get("mode").and_then(Value::as_str) != Some("exclusive") {
+        return None;
+    }
+    let paths: Vec<&str> = claim
+        .get("scope")
+        .and_then(Value::as_array)
+        .map(|s| s.iter().filter_map(Value::as_str).collect())
+        .unwrap_or_default();
+    SEATS
+        .iter()
+        .find(|seat| paths.iter().any(|p| seat_matches(seat.scope, p)))
+}
 
 /// The tone a runtime's liveness is drawn in: presentation of the runtime's own word.
 fn liveness_tone(word: &str) -> &'static str {
@@ -72,16 +134,21 @@ fn short(id: &str) -> String {
 
 /// The Mesh screen; `query` may select one machine (`node`).
 pub fn screen(ctx: &Context, query: &[(String, String)]) -> View {
-    let answers = ask_all(ctx, &[PEERS, EVENTS]);
+    let answers = ask_all(ctx, &[PEERS, EVENTS, CLAIMS]);
     let selected = query
         .iter()
         .find(|(k, _)| k == "node")
         .map(|(_, v)| v.as_str());
-    render(&answers[&PEERS], &answers[&EVENTS], selected)
+    render(
+        &answers[&PEERS],
+        &answers[&EVENTS],
+        &answers[&CLAIMS],
+        selected,
+    )
 }
 
-/// The screen drawn from the two answers it reads, with `selected` the machine to inspect.
-fn render(peers: &Answer, events: &Answer, selected: Option<&str>) -> View {
+/// The screen drawn from the three answers it reads, with `selected` the machine to inspect.
+fn render(peers: &Answer, events: &Answer, claims: &Answer, selected: Option<&str>) -> View {
     let machines = list(peers, "/machines");
 
     let top = hero(
@@ -181,6 +248,12 @@ fn render(peers: &Answer, events: &Answer, selected: Option<&str>) -> View {
             "Every machine, runtime and session the mesh runtime knows; select one to inspect it.",
             topology,
             &[peers],
+        )))
+        .child(wide(panel(
+            "Seats",
+            "Who holds each seat of the cooperation model now, read from the live exclusive claims (rule project.the-cooperation-model-is-the-owners-word, ADR 0167). A seat nobody claims is said as vacant.",
+            seats(claims),
+            &[claims],
         )))
         .child(panel(
             "Journal",
@@ -421,6 +494,117 @@ fn journal(events: &Answer, node: Option<&str>) -> El {
     })
 }
 
+/// A claim's intent cut for its row, and the whole of it for the row's title.
+fn said(claim: &Value) -> (String, Option<String>) {
+    let whole = text(claim, "intent");
+    if whole.is_empty() {
+        return ("none".into(), None);
+    }
+    let cut = if whole.chars().count() > INTENT {
+        format!("{}…", whole.chars().take(INTENT).collect::<String>())
+    } else {
+        whole.clone()
+    };
+    (cut, Some(whole))
+}
+
+/// One row of the seat table: the seat, who holds it, what it claims and what it said.
+fn seat_row(seat: &str, holder: Option<&Value>, scope: String) -> El {
+    let (who, intent, title) = match holder {
+        Some(c) => {
+            let session = text(c, "session");
+            let who = session.rsplit('/').next().unwrap_or(&session).to_string();
+            let (intent, title) = said(c);
+            (who, intent, title)
+        }
+        None => ("vacant".into(), "nobody holds this claim now".into(), None),
+    };
+    el("tr")
+        .child(el("td").class("mj-ui-cell-title").text(seat))
+        .child(el("td").class("mj-ui-mono").text(who))
+        .child(el("td").class("mj-ui-mono mj-ui-dim").text(scope))
+        .child(
+            el("td")
+                .class("mj-ui-dim")
+                .attr_if("title", title)
+                .text(intent),
+        )
+}
+
+/// The seats and who holds each, then every worker's exclusive claim: all of it read from
+/// the live claims, so a seat moves when its claim moves and a crashed holder's seat falls
+/// vacant when its claim expires.
+fn seats(claims: &Answer) -> El {
+    unanswered(claims).unwrap_or_else(|| {
+        if claims
+            .ok()
+            .and_then(|v| v.get("active"))
+            .and_then(Value::as_bool)
+            != Some(true)
+        {
+            return nothing(
+                "The mesh does not run here, so no seat can be held and none is drawn.",
+            );
+        }
+        let live = list(claims, "/state/claims");
+        let mut rows: Vec<El> = Vec::new();
+        for seat in SEATS {
+            let holders: Vec<&Value> = live
+                .iter()
+                .filter(|c| seat_of(c).is_some_and(|s| s.name == seat.name))
+                .collect();
+            if holders.is_empty() {
+                rows.push(seat_row(seat.name, None, seat.scope.into()).attr("title", seat.does));
+            }
+            for c in holders {
+                let scope = c
+                    .get("scope")
+                    .and_then(Value::as_array)
+                    .and_then(|s| {
+                        s.iter()
+                            .filter_map(Value::as_str)
+                            .find(|p| seat_matches(seat.scope, p))
+                    })
+                    .unwrap_or(seat.scope)
+                    .to_string();
+                rows.push(seat_row(seat.name, Some(c), scope));
+            }
+        }
+        let workers: Vec<&Value> = live
+            .iter()
+            .filter(|c| {
+                c.get("mode").and_then(Value::as_str) == Some("exclusive") && seat_of(c).is_none()
+            })
+            .collect();
+        for c in workers.iter().take(ROWS * 2) {
+            let scope = c
+                .get("scope")
+                .and_then(Value::as_array)
+                .map(|s| {
+                    let paths: Vec<&str> = s.iter().filter_map(Value::as_str).collect();
+                    match paths.len() {
+                        0 => String::new(),
+                        1 => paths[0].to_string(),
+                        n => format!("{} and {} more", paths[0], n - 1),
+                    }
+                })
+                .unwrap_or_default();
+            rows.push(seat_row("Worker", Some(c), scope));
+        }
+        el("div")
+            .child(table(
+                &["Seat", "Held by", "Claims", "What it said"],
+                rows,
+                "",
+            ))
+            .children(super::view::more(
+                (ROWS * 2).min(workers.len()),
+                workers.len(),
+                None,
+            ))
+    })
+}
+
 fn refused(peers: &Answer) -> El {
     unanswered(peers).unwrap_or_else(|| {
         let rows = list(peers, "/refused")
@@ -597,11 +781,131 @@ mod tests {
         )
     }
 
+    /// A `mesh.state` answer of live claims in the shape `CooperationState` serialises to: the
+    /// landing seat held, the release seat vacant, a repair lane on one branch, a worker on
+    /// two paths, and an advisory announcement that holds no seat.
+    fn claims() -> Answer {
+        answer(
+            CLAIMS,
+            Ok(serde_json::json!({
+                "active": true,
+                "view": "full",
+                "state": {
+                    "claims": [
+                        {
+                            "session": "641bdb94aa-r1abcdef1234/board-a3",
+                            "scope": ["campaign/majordomus-autonomous-convergence/landing"],
+                            "mode": "exclusive",
+                            "intent": "landing top 70"
+                        },
+                        {
+                            "session": "77aa-r9/board-p1",
+                            "scope": ["refs/heads/fix/a", "refs/heads/fix/b"],
+                            "mode": "exclusive",
+                            "intent": "repair #1 and #2 against master"
+                        },
+                        {
+                            "session": "77aa-r9/board-p2",
+                            "scope": ["lib/a.sh", "test/cases/1_a.sh"],
+                            "mode": "exclusive",
+                            "intent": "I0001"
+                        },
+                        {
+                            "session": "77aa-r9/board-p3",
+                            "scope": ["release/seat"],
+                            "mode": "advisory",
+                            "intent": "only an announcement"
+                        }
+                    ]
+                },
+                "streams": []
+            })),
+        )
+    }
+
+    /// A claimed path is a seat's scope only where its pattern says: equal, or the same text
+    /// around a `*` with something in its place.
+    #[test]
+    fn a_seat_is_matched_by_its_scope() {
+        assert!(seat_matches("release/seat", "release/seat"));
+        assert!(!seat_matches("release/seat", "release/seats"));
+        assert!(seat_matches("campaign/*/landing", "campaign/x/landing"));
+        assert!(!seat_matches("campaign/*/landing", "campaign//landing"));
+        assert!(!seat_matches(
+            "campaign/*/landing",
+            "campaign/x/landing/more"
+        ));
+        assert!(seat_matches("refs/heads/*", "refs/heads/fix/a"));
+        assert!(!seat_matches("refs/heads/*", "refs/heads/"));
+    }
+
+    /// The seats are read from the live claims: the held one names its session, the vacant
+    /// one says so, a repair lane and a worker are drawn, and an advisory claim holds nothing.
+    #[test]
+    fn the_seats_are_read_from_the_live_claims() {
+        let html = render(&peers(), &events(), &claims(), None).main.render();
+        for drawn in [
+            "Seats",
+            "Landing seat",
+            "board-a3",
+            "campaign/majordomus-autonomous-convergence/landing",
+            "landing top 70",
+            "Release seat",
+            ">vacant<",
+            "Repair lane",
+            "board-p1",
+            "refs/heads/fix/a",
+            "Worker",
+            "board-p2",
+            "lib/a.sh and 1 more",
+        ] {
+            assert!(html.contains(drawn), "{drawn} is not drawn: {html}");
+        }
+        assert!(
+            !html.contains("only an announcement"),
+            "an advisory claim holds no seat: {html}"
+        );
+    }
+
+    /// A mesh that does not run draws no seat, and a claims source that cannot answer is said.
+    #[test]
+    fn no_seat_is_drawn_without_the_mesh() {
+        let off = answer(
+            CLAIMS,
+            Ok(serde_json::json!({ "active": false, "view": "full" })),
+        );
+        let html = render(&peers(), &events(), &off, None).main.render();
+        assert!(html.contains("no seat can be held"), "{html}");
+        assert!(!html.contains(">vacant<"), "{html}");
+        let failed = answer(CLAIMS, Err("no journal".into()));
+        let html = render(&peers(), &events(), &failed, None).main.render();
+        assert!(
+            html.contains("mesh.state could not answer: no journal"),
+            "{html}"
+        );
+    }
+
+    /// Every seat the screen draws is a scope the rule names, in its own words; case 3150
+    /// holds the converse.
+    #[test]
+    fn every_seat_is_named_by_the_rule() {
+        let rule = include_str!(
+            "../../../../.ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v1.md"
+        );
+        for seat in SEATS {
+            let row = format!("| {} | `{}` |", seat.name.to_lowercase(), seat.scope);
+            assert!(
+                rule.contains(&row),
+                "the rule does not name the seat: {row}"
+            );
+        }
+    }
+
     /// Every machine, runtime and session becomes a node of the graph and a row of its table,
     /// in the words the mesh runtime used, and the journal and the refused links are listed.
     #[test]
     fn the_topology_draws_every_machine_runtime_and_session() {
-        let view = render(&peers(), &events(), None);
+        let view = render(&peers(), &events(), &claims(), None);
         assert_eq!(view.status, 200);
         let html = view.main.render();
         // the graph: machines, their runtimes by short id, and the sessions those hold
@@ -649,7 +953,9 @@ mod tests {
     /// the sessions they hold with their claims, and only its own events.
     #[test]
     fn a_selected_machine_opens_its_inspector() {
-        let html = render(&peers(), &events(), Some("studio")).main.render();
+        let html = render(&peers(), &events(), &claims(), Some("studio"))
+            .main
+            .render();
         assert!(html.contains("id=\"node\""), "{html}");
         assert!(html.contains("641bdb94aa"));
         assert!(
@@ -696,7 +1002,7 @@ mod tests {
     fn a_mesh_that_cannot_answer_is_said_and_never_drawn() {
         let peers = answer(PEERS, Err("the mesh is off".into()));
         let events = answer(EVENTS, Err("no journal".into()));
-        let html = render(&peers, &events, None).main.render();
+        let html = render(&peers, &events, &claims(), None).main.render();
         assert!(
             html.contains("mesh.peers could not answer: the mesh is off"),
             "{html}"
@@ -719,7 +1025,7 @@ mod tests {
             Ok(serde_json::json!({ "machines": [], "refused": [] })),
         );
         let events = answer(EVENTS, Ok(serde_json::json!({ "events": [] })));
-        let html = render(&peers, &events, None).main.render();
+        let html = render(&peers, &events, &claims(), None).main.render();
         assert!(html.contains("No machine is known to the mesh runtime."));
         assert!(html.contains("No link was refused."));
         assert!(html.contains("The journal holds no event from here."));
@@ -753,7 +1059,9 @@ mod tests {
             .map(|i| serde_json::json!({ "stream": "aa-r1", "at": 1_760_000_000u64 + i as u64, "body": { "kind": "beat" } }))
             .collect();
         let events = answer(EVENTS, Ok(serde_json::json!({ "events": many })));
-        let html = render(&peers, &events, Some("studio")).main.render();
+        let html = render(&peers, &events, &claims(), Some("studio"))
+            .main
+            .render();
         assert!(
             html.contains(&format!("title=\"{long}\"")),
             "the whole intent is in the title"

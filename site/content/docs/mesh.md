@@ -330,6 +330,17 @@ meets `apps/majordomus-cli`; `app` does not.
 - **Advisory** claims report overlaps and refuse nothing. The peer board's announcements are
   projected as advisory claims of the announcing MCP session.
 
+### Seats are claims
+
+The repository's way of working puts sessions in seats: the one that lands, the one that
+releases, the lanes that repair conflicting branches, and the workers. A seat is held by
+holding its exclusive claim, so it is subject to everything above: it is refused to a second
+session while it is held, it moves when the claim is released, and it falls vacant when its
+holder stops beating. Which seats there are and which scope each one claims is
+[rule `project.the-cooperation-model-is-the-owners-word`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v1.md)
+(ADR 0167), the one record of it; this document does not copy the table. The Mesh screen of
+the UI (`/ui/mesh`) asks `mesh.state` for the live claims and draws who holds each seat now.
+
 ## Handovers
 
 `majordomus handover` writes a record under the checkout's `.ai/local/state/handovers/`.
