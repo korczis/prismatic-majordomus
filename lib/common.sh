@@ -545,6 +545,37 @@ mj_git_trunk_ref() {
   return 0
 }
 
+# Is this checkout on the trunk? True when HEAD is the local branch named like the trunk's
+# remote-tracking branch (`main` for refs/remotes/origin/main). No trunk known (no remote,
+# or no refs/remotes/<remote>/HEAD) and a detached HEAD are both "not on the trunk", so a
+# repository without a remote keeps writing its records where it always has. ADR 0091,
+# amendment of 2026-10-15: a trunk that changes only through pull requests cannot commit
+# what an episode boundary writes there, so a trunk episode stages it in the outbox.
+mj_on_trunk() {
+  local trunk br
+  trunk="$(mj_git_trunk_ref)"
+  [ -n "$trunk" ] || return 1
+  br="$(mj_git symbolic-ref -q --short HEAD 2>/dev/null)" || return 1
+  trunk="${trunk#refs/remotes/}"
+  [ "${trunk#*/}" = "$br" ]
+}
+
+# Where a trunk episode stages what it would have written into a tracked section: the
+# closed session record under sessions/, the derived knowledge candidates under
+# candidates/. Checkout-local and never tracked; a branch episode moves it into the tracked
+# sections, and that branch's pull request carries it to the trunk.
+mj_outbox_dir() { printf '%s/outbox' "$MJ_STATE_DIR"; }
+
+# "<sessions> <candidates>": how many records wait in the outbox. `context` and `doctor`
+# name a non-empty outbox, so a clone that never branches again still says what it holds.
+mj_outbox_counts() {
+  local d s=0 c=0 f
+  d="$(mj_outbox_dir)"
+  for f in "$d"/sessions/*.md; do [ -f "$f" ] && s=$((s + 1)); done
+  for f in "$d"/candidates/*.md; do [ -f "$f" ] && c=$((c + 1)); done
+  printf '%s %s' "$s" "$c"
+}
+
 # Every commit this checkout made, sorted: the HEAD reflog's entries that created one.
 # A linked worktree has a HEAD reflog of its own, so this is this checkout's, not the
 # repository's. `pull --rebase (pick)` and `rebase -i (pick)` carry the action in
@@ -808,7 +839,132 @@ MJ_FLATTEN_AWK='
   }'
 mj_yaml_flatten() {
   mj_count yaml_flatten
+  if [ -n "$MJ_FLAT_CACHE_DIR" ] && [ -f "$1" ] && [ -r "$1" ]; then
+    mj_yaml_flatten_cached "$1"; return
+  fi
   awk -v outdir="" -v front=0 "$MJ_FLATTEN_AWK" "$1"
+}
+
+# ---------------------------------------------------------------- the flatten cache
+# A flatten is one awk process, and a command parses the same unchanged files again and
+# again: doctor alone flattens several hundred, and the hook, watch and context each start
+# over. The cache under .ai/local/cache/flat/ keeps each file's flat lines, so a second
+# command on an unchanged file starts no process to read it (I0821).
+#
+# It is keyed by content, never by path or time: an entry holds the exact bytes of the file
+# it was parsed from, and it is served only when the file asked about is those bytes,
+# compared in full. The entry's name is only where to look — the content's length and a few
+# of its characters, computed with builtins — because a SHA-256 of the file costs one
+# process, which is what the flatten costs, and a cache that forks to learn whether it may
+# skip a fork saves nothing (measured: hash 2.8 ms, flatten 3.1 ms on a 35-line file). Two
+# files that land in one slot evict each other; neither is ever served the other's lines.
+# The directory above the entries is the flattener's own identity, the hash of
+# MJ_FLATTEN_AWK, so a changed parser never reads what an older one wrote.
+#
+# An entry is one file: a header line `mjflat 1 <source length> <flat length>`, the
+# source, the flat lines. Anything else — truncated, edited, unreadable, a header that
+# does not add up, a source that differs — is a miss, and the miss rewrites it. A miss
+# parses with the same awk, prints what it printed, and keeps it only when the parse
+# succeeded and the file did not change while it ran; the entry is written beside the
+# others and renamed into place, so a reader sees an old entry or a new one, never half of
+# one. After every new entry the directory holds at most `cache.flatten_max_entries`
+# (policy), the oldest written removed first. A policy without the key, or with 0, has
+# no cache. There is never a default: a reader's own number is a second source of truth.
+#
+# Set by mj_flat_cache_init, which mj_load_policy calls: an empty directory is no cache.
+MJ_FLAT_CACHE_DIR=""; MJ_FLAT_CACHE_CAP=0; MJ_FLAT_CACHE_KEY=""
+mj_flat_cache_init() {
+  local line cap="" dir
+  MJ_FLAT_CACHE_DIR=""; MJ_FLAT_CACHE_CAP=0
+  [ -n "${MJ_AI_LOCAL_DIR:-}" ] && [ -d "$MJ_AI_LOCAL_DIR" ] && [ -w "$MJ_AI_LOCAL_DIR" ] || return 0
+  [ -n "${MJ_POL_FLAT:-}" ] && [ -r "$MJ_POL_FLAT" ] || return 0
+  while IFS= read -r line; do
+    case "$line" in cache.flatten_max_entries=*) cap="${line#*=}"; break ;; esac
+  done < "$MJ_POL_FLAT"
+  case "$cap" in '' | *[!0-9]*) return 0 ;; esac
+  [ "$cap" -gt 0 ] || return 0
+  if [ -z "$MJ_FLAT_CACHE_KEY" ]; then
+    MJ_FLAT_CACHE_KEY="$(printf '%s' "$MJ_FLATTEN_AWK" | mj_sha256_hex 2>/dev/null)" || MJ_FLAT_CACHE_KEY=""
+    case "$MJ_FLAT_CACHE_KEY" in
+      [0-9a-f][0-9a-f][0-9a-f][0-9a-f]*) MJ_FLAT_CACHE_KEY="${MJ_FLAT_CACHE_KEY:0:16}" ;;
+      *) MJ_FLAT_CACHE_KEY=""; return 0 ;;
+    esac
+  fi
+  dir="$MJ_AI_LOCAL_DIR/cache/flat/$MJ_FLAT_CACHE_KEY"
+  [ -d "$dir" ] || mkdir -p "$dir" 2>/dev/null || return 0
+  MJ_FLAT_CACHE_DIR="$dir"; MJ_FLAT_CACHE_CAP="$cap"
+}
+# The slot an entry for this content is looked up in, into the variable named by $1: the
+# content's length and sixteen of its characters, evenly spaced, as numbers. Builtins only.
+mj_flat_cache_slot() {
+  # names of its own: printf -v into the caller's variable must not land on a local here
+  local _fs_n="${#2}" _fs_i _fs_p _fs_v _fs_s
+  _fs_s="$_fs_n"
+  if [ "$_fs_n" -gt 0 ]; then
+    for _fs_i in 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
+      _fs_p=$(( (_fs_n - 1) * _fs_i / 15 ))
+      printf -v _fs_v '%d' "'${2:_fs_p:1}" 2>/dev/null || _fs_v=0
+      _fs_s="$_fs_s-${_fs_v#-}"
+    done
+  fi
+  printf -v "$1" '%s' "$_fs_s"
+}
+mj_yaml_flatten_cached() {
+  local f="$1" nl='
+' src="" rs=unopened again e head rest flat slot entry tmp st fl new
+  # read -d '' stops at a NUL byte and returns 0 there: a file with one is not text a shell
+  # variable can hold. A file that would not open leaves rs as it was. Either is parsed as
+  # it always was, error and all. Stderr is closed before the file is opened, or bash's own
+  # complaint about the redirection would print where the parser's never did.
+  { IFS= read -r -d '' src && rs=0 || rs=$?; } 2>/dev/null < "$f" || :
+  case "$rs" in 0 | unopened) awk -v outdir="" -v front=0 "$MJ_FLATTEN_AWK" "$f"; return ;; esac
+  mj_flat_cache_slot slot "$src"
+  entry="$MJ_FLAT_CACHE_DIR/$slot"
+  if [ -f "$entry" ]; then
+    e=""; IFS= read -r -d '' e 2>/dev/null < "$entry" || :
+    head="${e%%"$nl"*}"; rest="${e#*"$nl"}"; fl="${head##* }"
+    case "$head" in "mjflat 1 ${#src} "*[0-9]) case "$fl" in *[!0-9]*) fl="" ;; esac ;; *) fl="" ;; esac
+    if [ -n "$fl" ] && [ "${#e}" -eq $(( ${#head} + 1 + ${#src} + fl )) ] \
+      && [ "${rest:0:${#src}}" = "$src" ]; then
+      mj_count flatten_cache_hit
+      printf '%s' "${rest:${#src}}"
+      return 0
+    fi
+  fi
+  tmp="$MJ_FLAT_CACHE_DIR/.w.${BASHPID:-$$}.$RANDOM"
+  # st=$? on the next line would never run under set -e when the parse fails, and the lines
+  # it printed before failing would stay in the temporary file
+  st=0; awk -v outdir="" -v front=0 "$MJ_FLATTEN_AWK" "$f" > "$tmp" || st=$?
+  flat=""; IFS= read -r -d '' flat 2>/dev/null < "$tmp" || :
+  printf '%s' "$flat"
+  again=""; IFS= read -r -d '' again 2>/dev/null < "$f" || :
+  if [ "$st" -eq 0 ] && [ "$again" = "$src" ] \
+    && printf 'mjflat 1 %s %s\n%s%s' "${#src}" "${#flat}" "$src" "$flat" > "$tmp" 2>/dev/null; then
+    new=0; [ -e "$entry" ] || new=1
+    if mv -f "$tmp" "$entry" 2>/dev/null; then
+      [ "$new" = 0 ] || mj_flat_cache_trim
+    else
+      rm -f "$tmp"
+    fi
+  else
+    rm -f "$tmp"
+  fi
+  return "$st"
+}
+# Past the cap the oldest written go first, until the directory holds the cap again. The
+# count is a glob, so a write from a subshell or another process is counted too. A `.w.*`
+# file an hour old is a writer that died between its write and its rename.
+mj_flat_cache_trim() {
+  local entries old=() name n=0
+  entries=("$MJ_FLAT_CACHE_DIR"/[!.]*)
+  [ "${#entries[@]}" -gt "$MJ_FLAT_CACHE_CAP" ] || return 0
+  while IFS= read -r name; do
+    n=$(( n + 1 ))
+    [ "$n" -le "$MJ_FLAT_CACHE_CAP" ] || old+=("$MJ_FLAT_CACHE_DIR/$name")
+  done < <(ls -t "$MJ_FLAT_CACHE_DIR")
+  [ "${#old[@]}" -eq 0 ] || rm -f -- "${old[@]}"
+  find "$MJ_FLAT_CACHE_DIR" -maxdepth 1 -name '.w.*' -mmin +60 -exec rm -f {} + 2>/dev/null
+  return 0
 }
 # --numbered names the outputs 1, 2, 3 ... in argument order, for callers whose files
 # may share a basename; the caller keeps the number-to-path map.
@@ -1199,6 +1355,7 @@ mj_cur() { [ -n "${MJ_CUR_FLAT:-}" ] || return 0; mj_yget "$MJ_CUR_FLAT" "$1"; }
 mj_load_policy() {
   MJ_POL_FLAT="$(mktemp "${TMPDIR:-/tmp}/mj.pol.XXXXXX")"
   mj_yaml_flatten "$MJ_POLICY_FILE" > "$MJ_POL_FLAT" || return 1
+  mj_flat_cache_init
 }
 mj_pol() { [ -n "${MJ_POL_FLAT:-}" ] || return 0; mj_yget "$MJ_POL_FLAT" "$1"; }
 # A policy value the code depends on. There is no default here on purpose: a fallback

@@ -26,10 +26,12 @@
     available (docs/generated/web.json, projected by the generator). The interfaces block reads
     a mount and an availability from it and types neither. -#}
 {%- set web = load_data(path="data/generated/web.json") -%}
-{#- the plan and its milestones, as the product's own first screen reads them: the hero shows
-    this project's delivery from the same two datasets /roadmap/ and /plan/ are built from -#}
+{#- the plan and the releases, as the product's own first screen reads them: the hero counts
+    this project's issues from the dataset /plan/ is built from, and says what the newest
+    release record carried from the dataset /changelog/ is built from. Neither is described in
+    prose: the copy beside them names where they were read, never how the work stands. -#}
 {%- set plan = load_data(path="data/generated/plan.json") -%}
-{%- set road = load_data(path="data/generated/roadmap.json") -%}
+{%- set log = load_data(path="data/generated/changelog.json") -%}
 {#- the build's provenance is a fact of the build, written by scripts/site-build and never
     committed; a plain `zola serve` has none, and the trust strip then says so -#}
 {%- set build = load_data(path="data/build.json", required=false) -%}
@@ -104,12 +106,14 @@
 
     {#- the product, in the hero: the first screen of the interface a person opens, drawn here
         from the datasets that screen's facts are published in — the release this site
-        offers, the plan's issues counted by the plan's own statuses in the plan's order, and
-        the milestones that are under way (some of their issues done, not all), in the
-        roadmap's order. A count that is zero is not drawn. It is a picture read at this
-        build's commit and says so; the link under it opens the product itself. -#}
+        offers, the plan's issues counted by the status their records declare, in the plan's
+        order, and what the newest release record carried, counted by the changelog's own
+        groups. A count that is zero is not drawn. There is no progress bar: /roadmap/ says why
+        it has none, and a share of done issues per milestone is a stamp count, not delivery
+        (ADR 0166). It is a picture read at this build's commit and names it; the link under it
+        opens the product itself. -#}
     {%- if product %}
-    {%- set under_way = [x for x in road.milestones | sort(attribute="order") if x.issues.total > 0 and x.issues.by_status.DONE > 0 and x.issues.by_status.DONE < x.issues.total] -%}
+    {%- set released = [s for s in log.sections if not s.unreleased] -%}
     <figure class="relative min-w-0 self-start overflow-hidden rounded-xl border border-default bg-neutral-primary-soft shadow-2xl ring-1 ring-brand-subtle" data-product-view="{{ product.id }}">
       <figcaption class="flex min-w-0 items-center gap-2.5 border-b border-default px-5 py-3">
         <span class="inline-flex h-5 w-5 shrink-0 text-fg-brand [&>svg]:h-full [&>svg]:w-full" aria-hidden="true">{{ load_data(path="static/images/logo-mark.svg", format="plain") | safe }}</span>
@@ -120,30 +124,28 @@
       <div class="px-5 py-4">
         <p class="font-mono text-xs uppercase tracking-widest text-body-subtle">{{ m.hero.product_kicker }}</p>
         <p class="mt-2 text-base font-semibold leading-snug text-heading">{{ m.hero.product_title }}</p>
-        <p class="mt-4 text-xs text-body-subtle">Issues of the plan, by status</p>
+        <p class="mt-4 text-xs text-body-subtle">Issues of the plan, by the status their records declare</p>
         <dl class="mt-2 flex flex-wrap gap-2" data-product-issues>
           {%- for st in plan.statuses.issue %}{% set n = [i for i in plan.issues if i.status == st] | length %}{% if n > 0 %}
           <div class="min-w-14 flex-1 rounded-base border border-default bg-neutral-primary px-2 py-2 sm:min-w-16 sm:px-3"><dt class="text-xs text-body">{{ st | lower }}</dt><dd class="mt-0.5 font-mono text-xl font-bold tracking-tight text-heading" data-issues="{{ st }}">{{ n }}</dd></div>
           {%- endif %}{% endfor %}
         </dl>
-        {%- if under_way | length %}
-        <p class="mt-4 hidden text-xs text-body-subtle sm:block">Milestones under way, issues done</p>
-        <ul class="mt-2 hidden space-y-3 sm:block" aria-label="Milestones under way" data-product-milestones>
-          {%- for x in under_way[:3] %}
-          <li class="min-w-0">
-            <p class="flex min-w-0 items-baseline justify-between gap-3 text-sm"><a href="{{ get_url(path="/plan/" ~ (x.id | lower) ~ "/", trailing_slash=true) }}" class="min-w-0 text-heading hover:underline sm:truncate">{{ x.title }}</a><span class="shrink-0 font-mono text-xs text-body-subtle">{{ x.issues.by_status.DONE }} of {{ x.issues.total }}</span></p>
-            <svg class="mt-1.5 h-1.5 w-full text-fg-brand" viewBox="0 0 100 2" preserveAspectRatio="none" aria-hidden="true"><rect width="100" height="2" fill="currentColor" opacity="0.18"/><rect width="{{ (x.issues.by_status.DONE * 100 / x.issues.total) | round }}" height="2" fill="currentColor"/></svg>
-          </li>
-          {%- endfor %}
-        </ul>
+        {%- if released | length %}{% set rel = released[0] %}
+        <p class="mt-4 text-xs text-body-subtle">Changes the release record of <a href="{{ rel.notes_url }}" class="font-mono text-heading hover:underline" data-product-release="{{ rel.version }}">v{{ rel.version }}</a> carries, {{ rel.date | truncate(length=10, end="") }}</p>
+        <dl class="mt-2 flex flex-wrap gap-x-4 gap-y-1" data-product-landings="{{ rel.version }}">
+          {%- for g in rel.groups %}{% if g.changes | length > 0 %}
+          <div class="inline-flex items-baseline gap-1.5"><dt class="text-xs text-body">{{ g.heading | lower }}</dt><dd class="font-mono text-sm font-bold text-heading" data-landings="{{ g.kind }}">{{ g.changes | length }}</dd></div>
+          {%- endif %}{% endfor %}
+        </dl>
+        <p class="mt-2 text-xs"><a href="{{ get_url(path="/changelog/", trailing_slash=true) }}" class="text-fg-brand hover:underline">Every change, release by release &rarr;</a></p>
         {%- endif %}
       </div>
-      <p class="border-t border-default px-5 py-3 text-sm font-medium"><a href="{{ p_href }}" class="text-fg-brand hover:underline" data-product-open="{{ product.id }}">{{ m.hero.cta_product }} &rarr;</a>{% if p_published %} <span class="ms-1 text-xs font-normal text-body-subtle">{{ m.hero.product_snapshot }}</span>{% endif %}</p>
+      <p class="border-t border-default px-5 py-3 text-sm font-medium"><a href="{{ p_href }}" class="text-fg-brand hover:underline" data-product-open="{{ product.id }}">{{ m.hero.cta_product }} &rarr;</a>{% if p_published %} <span class="ms-1 text-xs font-normal text-body-subtle">{{ m.hero.product_snapshot }}{% if build and build.commit and build.commit != "unknown" %} <a href="{{ project.repository_url }}/commit/{{ build.commit }}" class="font-mono hover:underline" data-product-commit="{{ build.commit }}">{{ build.commit | truncate(length=7, end="") }}</a>{% endif %}</span>{% endif %}</p>
     </figure>
     {%- endif %}
   </div>
 
-  {#- the strip: what this repository measures about itself today, in a visitor's words, each
+  {#- the strip: what this repository measures about itself at this build, in a visitor's words, each
       figure derived from the product model or the recorded corpus, none typed here. -#}
   <div class="border-t border-default bg-neutral-primary-soft">
     <dl class="mx-auto grid max-w-screen-xl grid-cols-2 gap-px px-4 sm:px-6 md:grid-cols-4 lg:px-8" data-hero-figures>
@@ -425,9 +427,11 @@
     </dl>
     {#- what is built and what is not, said in its title and opened by whoever wants the list:
         the honest half of the page stays on the page, and stops being a wall on a phone -#}
+    {%- set ic = [c for c in caps.claims if c.id is starting_with(pat=x.direction.claim_prefix)] %}
     <details class="group mt-6 min-w-0 rounded-base border border-warning-subtle bg-warning-soft">
       <summary class="flex cursor-pointer list-none items-start justify-between gap-3 p-5 focus:outline-none focus-visible:ring-4 focus-visible:ring-brand-medium [&::-webkit-details-marker]:hidden">
-        <h3 class="text-lg font-bold leading-snug tracking-tight text-heading">{{ x.direction.planned_title }}</h3>
+        <div class="min-w-0"><h3 class="text-lg font-bold leading-snug tracking-tight text-heading">{{ x.direction.planned_title }}</h3>
+          <p class="mt-1 font-mono text-xs text-body">{% for sid in caps.status_order %}{% set n = [c for c in ic if c.status == sid] | length %}{% if n > 0 %}<span class="me-3" data-direction-count="{{ sid }}">{{ n }} {{ sid }}</span>{% endif %}{% endfor %}</p></div>
         <svg aria-hidden="true" class="mt-1 h-4 w-4 shrink-0 text-body-subtle transition-transform group-open:rotate-180 motion-reduce:transition-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg>
       </summary>
       <div class="border-t border-warning-subtle px-5 pb-5 pt-4">
@@ -436,7 +440,6 @@
           whose id carries the prefix the data names, grouped by status in the matrix's own
           order. No sentence of these lists is written in the manifesto, so the prose above
           cannot deny a guarantee the matrix holds, nor list a planned claim as built. -#}
-      {%- set ic = [c for c in caps.claims if c.id is starting_with(pat=x.direction.claim_prefix)] %}
       <div class="mt-4 grid gap-4 md:grid-cols-2" data-direction-claims="{{ x.direction.claim_prefix }}">
         {%- for sid in caps.status_order %}{% set mine = [c for c in ic if c.status == sid] %}{% if mine | length > 0 %}
         <div class="min-w-0" data-direction-status="{{ sid }}">
@@ -450,7 +453,7 @@
         {%- endif %}{% endfor %}
       </div>
       <p class="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm font-medium">
-        <a href="{{ get_url(path="/roadmap/", trailing_slash=true) }}" class="text-fg-brand underline">What is scheduled, wave by wave &rarr;</a>
+        <a href="{{ get_url(path="/roadmap/", trailing_slash=true) }}" class="text-fg-brand underline">The milestones, in the order their graph derives &rarr;</a>
         <a href="{{ get_url(path="/method/argument/", trailing_slash=true) }}" class="text-fg-brand underline">The model stage by stage &rarr;</a>
       </p>
       </div>

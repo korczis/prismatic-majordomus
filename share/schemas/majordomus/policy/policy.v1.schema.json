@@ -248,6 +248,18 @@
         }
       }
     },
+    "cache": {
+      "type": "object",
+      "description": "Rebuildable caches under the local section's cache/ directory, which no commit carries. Deleting one costs only the work it saved.",
+      "additionalProperties": false,
+      "properties": {
+        "flatten_max_entries": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "How many parsed YAML files the shell tool keeps under cache/flat/, each served only to a file with exactly the bytes it was parsed from. Past this the oldest written are removed first; 0, or no key, is no cache."
+        }
+      }
+    },
     "enforcement": {
       "type": "array",
       "items": {
@@ -552,6 +564,11 @@
           "type": "integer",
           "minimum": 1,
           "description": "How long the shared server lets a connection go without a request read in full on it — waiting for a head, kept alive between requests, or reading a body — before it closes the connection and counts it in server.status. A connection whose request is being answered is never closed by it."
+        },
+        "idle_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "How long a server started for a checkout no client owns — by `serve ensure` or by a shell entering the checkout — outlives its last peer before it stops by itself. Absent means 900. `--idle` on the command line overrides it."
         }
       }
     }

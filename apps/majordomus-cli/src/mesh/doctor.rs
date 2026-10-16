@@ -124,8 +124,9 @@ pub fn declaration_source(resolved: &super::root::Resolved) -> Option<DoctorChec
 }
 
 /// The `journal` check: whether the cooperation journal's file holds what the journal
-/// holds. A failed append keeps the event in memory and in replication and loses it from this
-/// machine's disk; an unreadable line is one the last reload could not use.
+/// holds. A failed append keeps the event in memory and in replication, loses it from this
+/// machine's disk and is not acknowledged as durable; an unreadable line is one the last
+/// reload could not use; unread bytes lie beyond the reload bound.
 ///
 /// ```
 /// use majordomus_cli::mesh::doctor::journal_check;
@@ -134,13 +135,16 @@ pub fn declaration_source(resolved: &super::root::Resolved) -> Option<DoctorChec
 /// let lost = JournalTallies { write_failures: 2, ..Default::default() };
 /// let check = journal_check(&lost);
 /// assert!(!check.ok && check.detail.contains("2 event(s)"));
+/// let beyond = JournalTallies { unread_bytes: 4096, ..Default::default() };
+/// let check = journal_check(&beyond);
+/// assert!(!check.ok && check.detail.contains("4096 byte(s)"));
 /// ```
 pub fn journal_check(tallies: &super::journal::JournalTallies) -> DoctorCheck {
-    if tallies.write_failures == 0 && tallies.unreadable == 0 {
+    if tallies.write_failures == 0 && tallies.unreadable == 0 && tallies.unread_bytes == 0 {
         return DoctorCheck::pass(
             "journal",
             format!(
-                "{} event(s) held, every append synced to disk, no unreadable line on reload",
+                "{} event(s) held, every append synced to disk, the file reloaded whole with no unreadable line",
                 tallies.events
             ),
         );
@@ -148,11 +152,14 @@ pub fn journal_check(tallies: &super::journal::JournalTallies) -> DoctorCheck {
     DoctorCheck::fail(
         "journal",
         format!(
-            "{} event(s) did not reach the journal file; {} line(s) of it did not read on reload",
-            tallies.write_failures, tallies.unreadable
+            "{} event(s) did not reach the journal file and were not acknowledged as durable; {} line(s) of it did not read on reload; {} byte(s) of it lie beyond the {}-byte reload bound and were left on disk unread",
+            tallies.write_failures,
+            tallies.unreadable,
+            tallies.unread_bytes,
+            super::journal::MAX_RELOAD_BYTES
         ),
-        "an event that is not on disk is lost to this machine when the runtime restarts, unless a peer still holds it",
-        "free disk space or fix the permissions of the mesh state directory; a torn line is left as one unreadable line, and the events after it read",
+        "an event that is not on disk is lost to this machine when the runtime restarts, unless a peer still holds it; the events beyond the reload bound are not held, so this runtime neither folds nor relays them",
+        "free disk space or fix the permissions of the mesh state directory; a torn line is left as one unreadable line, and the events after it read; a journal beyond the bound was not written by this executable's compaction — move it aside and let the peers refill it",
     )
 }
 

@@ -170,6 +170,13 @@ knowledge:
   candidate_max_age_minutes: 20160       # 14d: a candidate this old was not reviewed, it was
                                          # ignored; doctor names it
 
+# Rebuildable caches under .ai/local/cache/, which no commit carries. Each parsed YAML file
+# is kept under cache/flat/ and served only to a file with exactly the bytes it was parsed
+# from, so a command on unchanged files reads them instead of parsing them again. Past the
+# cap the oldest written go first; 0 is no cache.
+cache:
+  flatten_max_entries: 2000
+
 # `majordomus bench` samples every public command this many times after the warm-up runs;
 # `bench --check` refuses a regression larger than these fractions of the baseline's
 # p50, p95 and p99; doctor and watch report their own wall time against these budgets
@@ -292,6 +299,14 @@ enforcement:
     path: bin/majordomus
     args: [finish, --check]
     wired_by: git-hook:pre-push
+  # What CI would find, found first: the plan's structure gates that CI recorded as cheap and
+  # that reach no network, and the suite's fast cases, within a stated bound
+  # (rule project.a-push-runs-what-ci-would-find-first). Doctor refuses a clone whose hook
+  # stops calling it.
+  - name: structure-gates-on-push
+    path: scripts/ci/run-plan
+    args: [--before-push]
+    wired_by: git-hook:pre-push
   # .gitattributes marks the derived artifacts `merge=derived`, but the driver that name
   # resolves to is declared per clone and per worktree. Git says nothing when it is missing:
   # it falls back to the default text merge and conflicts on every generated file, which is
@@ -301,6 +316,15 @@ enforcement:
     path: scripts/merge-derived
     args: []
     wired_by: git-config:merge.derived.driver
+  # `scripts/derive` builds the Rust executable, and with it everything that regenerates
+  # derived data: the pre-commit gate, `majordomus prs repair --apply`, the integration
+  # executor. On a machine without the pinned toolchain each of them fails late, after the
+  # merge and the lock, naming `cargo` and nothing about this repository. Declaring it here
+  # makes doctor — and therefore the pre-commit hook — refuse that clone before it starts.
+  - name: derive-toolchain
+    path: scripts/derive
+    args: []
+    wired_by: toolchain:rust-toolchain.toml
   - name: prompt-capture
     path: bin/majordomus
     args: [capture, prompt]
@@ -367,12 +391,16 @@ commit:
 # The values below are the constants they replace, so declaring them changed no behaviour.
 # Changing them here changes behaviour, and test/cases holds that it does — otherwise this
 # would be a constant moved to another file rather than a value the model owns.
+#
+# `idle_seconds` is how long a server started for a checkout no client owns (`serve ensure`,
+# a shell entering the checkout) outlives its last peer; `serve --idle` overrides it (I2701).
 server:
   probe_timeout_seconds: 2
   bind_grace_seconds: 15
   join_timeout_seconds: 20
   busy_grace_seconds: 10
   read_deadline_seconds: 30
+  idle_seconds: 900
 
 projections:
   - provider: agents

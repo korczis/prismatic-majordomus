@@ -71,6 +71,12 @@ pub const JOIN_TIMEOUT: Duration = Duration::from_secs(20);
 /// that would let a handful of slow sockets outlast a [`BUSY_GRACE`] contest many times over.
 pub const READ_DEADLINE: Duration = Duration::from_secs(30);
 
+/// How long a server started for a checkout no client owns — by `serve ensure` or by a shell
+/// entering the checkout — outlives its last peer before it stops by itself:
+/// [`crate::cli::DEFAULT_IDLE_SECONDS`]. `serve --idle` on a command line overrides whatever
+/// is declared (I2701).
+pub const IDLE: Duration = Duration::from_secs(crate::cli::DEFAULT_IDLE_SECONDS);
+
 /// The timings above are the defaults. What a process actually judges a lease contest by is
 /// declared in `.ai/repo/policy.yaml`'s `server:` block and read once, here.
 ///
@@ -86,7 +92,7 @@ pub const READ_DEADLINE: Duration = Duration::from_secs(30);
 ///
 /// ```
 /// use majordomus_cli::lease::{
-///     Timings, BIND_GRACE, BUSY_GRACE, JOIN_TIMEOUT, PROBE_TIMEOUT, READ_DEADLINE,
+///     Timings, BIND_GRACE, BUSY_GRACE, IDLE, JOIN_TIMEOUT, PROBE_TIMEOUT, READ_DEADLINE,
 /// };
 /// // the defaults are the compiled constants, one for one
 /// let t = Timings::default();
@@ -95,6 +101,7 @@ pub const READ_DEADLINE: Duration = Duration::from_secs(30);
 /// assert_eq!(t.join_timeout, JOIN_TIMEOUT);
 /// assert_eq!(t.busy_grace, BUSY_GRACE);
 /// assert_eq!(t.read_deadline, READ_DEADLINE);
+/// assert_eq!(t.idle, IDLE);
 /// // a busy owner is given up on before the election that waits on it gives up itself
 /// assert!(t.busy_grace < t.join_timeout);
 /// ```
@@ -110,6 +117,8 @@ pub struct Timings {
     pub busy_grace: Duration,
     /// `server.read_deadline_seconds:`
     pub read_deadline: Duration,
+    /// `server.idle_seconds:`
+    pub idle: Duration,
 }
 
 impl Default for Timings {
@@ -120,6 +129,7 @@ impl Default for Timings {
             join_timeout: JOIN_TIMEOUT,
             busy_grace: BUSY_GRACE,
             read_deadline: READ_DEADLINE,
+            idle: IDLE,
         }
     }
 }
@@ -165,6 +175,10 @@ impl Timings {
     /// assert_ne!(t.probe_timeout, Timings::default().probe_timeout);
     /// // the keys it says nothing about are untouched
     /// assert_eq!(t.bind_grace, Timings::default().bind_grace);
+    ///
+    /// // the idle timeout is declared beside the others (I2701)
+    /// let declared = ServerPolicy { idle_seconds: Some(3), ..ServerPolicy::default() };
+    /// assert_eq!(Timings::from_policy(&declared).idle, Duration::from_secs(3));
     /// ```
     pub fn from_policy(policy: &crate::policy::ServerPolicy) -> Self {
         let d = Self::default();
@@ -189,6 +203,10 @@ impl Timings {
                 .read_deadline_seconds
                 .map(Duration::from_secs)
                 .unwrap_or(d.read_deadline),
+            idle: policy
+                .idle_seconds
+                .map(Duration::from_secs)
+                .unwrap_or(d.idle),
         }
     }
 }
