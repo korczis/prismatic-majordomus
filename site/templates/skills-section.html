@@ -47,7 +47,7 @@
   <section class="mt-12" aria-labelledby="sk-claude">
     <h2 id="sk-claude" class="text-xl font-semibold tracking-tight text-heading">In Claude Code, by name</h2>
     <p class="mt-2 max-w-3xl text-body">{{ sk.claude | length }} skills are projected into <code class="font-mono text-heading">.claude/skills/</code>{% for k, n in sk.claude_by_kind %}{% if loop.first %}: {% else %}, {% endif %}{{ n }} {{ k }}{% endfor %}. A <em>domain</em> is one module of the capability registry, typed as <code class="font-mono text-heading">/mj-&lt;module&gt;</code>; a <em>command</em> is a capability that declares its own name; a <em>skill</em> points at a workflow above. A capability that changes something runs only when a person asks for it.</p>
-    <div class="mt-4 overflow-x-auto rounded-base border border-default">
+    <div class="mt-4 overflow-x-auto rounded-base border border-default" tabindex="0">
       <table class="w-full text-left text-sm">
         <thead class="bg-neutral-secondary-medium text-heading"><tr><th scope="col" class="px-3 py-2">Name</th><th scope="col" class="px-3 py-2">Kind</th><th scope="col" class="px-3 py-2">What it reaches</th></tr></thead>
         <tbody>
