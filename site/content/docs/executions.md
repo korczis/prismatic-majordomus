@@ -18,18 +18,24 @@ the rules are [`project.execution-events-are-typed`](https://github.com/korczis/
 and [`project.executions-carry-no-secret`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/rules/project/executions-carry-no-secret.v1.md);
 the registry it runs on is [`CAPABILITIES.md`](@/docs/capabilities.md).
 
-```text
-ONE CANONICAL DECLARATION   capability! { … handler: verify }.cancellable()
-        ↓
-CAPABILITY REGISTRY         the same registry MCP, HTTP, OpenAPI, the CLI and the Cockpit read
-        ↓
-EXECUTION ENGINE            validate · create · queue · run on a worker · catch · complete
-        ↓
-EXECUTION STORE             the snapshot, the retained events, the subscribers — all bounded
-        ↓
-DERIVED PROJECTIONS         the live channel (WebSocket) · executions.get · executions.events
-                            · the Cockpit's Executions pages · `majordomus run` · MCP tools
-```
+<pre class="mermaid">
+flowchart TD
+  declaration["ONE CANONICAL DECLARATION&lt;br/&gt;&lt;small&gt;capability! { … handler: verify }.cancellable()&lt;/small&gt;"]
+  registry["CAPABILITY REGISTRY&lt;br/&gt;&lt;small&gt;the same registry MCP, HTTP, OpenAPI, the CLI and the Cockpit read&lt;/small&gt;"]
+  engine["EXECUTION ENGINE&lt;br/&gt;&lt;small&gt;validate · create · queue · run on a worker · catch · complete&lt;/small&gt;"]
+  store["EXECUTION STORE&lt;br/&gt;&lt;small&gt;the snapshot, the retained events, the subscribers, all bounded&lt;/small&gt;"]
+  declaration --&gt; registry --&gt; engine --&gt; store
+  subgraph projections["DERIVED PROJECTIONS"]
+    channel["the live channel&lt;br/&gt;&lt;small&gt;WebSocket&lt;/small&gt;"]
+    get["executions.get"]
+    events["executions.events"]
+    pages["the Cockpit's Executions pages"]
+    run["majordomus run"]
+    tools["MCP tools"]
+  end
+  store --&gt; projections
+</pre>
+
 
 There is no action registry, no action definition and no second implementation of anything.
 An execution is a capability call a process gave an identity to — and, since

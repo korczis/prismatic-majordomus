@@ -1,7 +1,7 @@
 +++
 title = "A checkout serves the current trunk, and says how far it is from it"
 description = "A checkout serves the current trunk, and says how far it is from it"
-weight = 63
+weight = 64
 [extra]
 kind = "rule"
 slug = "project-a-checkout-serves-the-current-trunk-1"

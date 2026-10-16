@@ -122,6 +122,7 @@ jobs:
       intent_check: ${{ steps.plan.outputs.intent_check }}
       intent_realization: ${{ steps.plan.outputs.intent_realization }}
       release_record_cases: ${{ steps.plan.outputs.release_record_cases }}
+      plan_record_cases: ${{ steps.plan.outputs.plan_record_cases }}
       cockpit_assets: ${{ steps.plan.outputs.cockpit_assets }}
       cockpit_probe: ${{ steps.plan.outputs.cockpit_probe }}
       site_build: ${{ steps.plan.outputs.site_build }}
@@ -494,7 +495,7 @@ jobs:
   # executable is the artifact majordomus-cli-<target> for a later job or a later phase.
   rust:
     needs: plan
-    if: needs.plan.outputs.rust_check == 'true' || needs.plan.outputs.rust_integration == 'true' || needs.plan.outputs.projection_closure == 'true' || needs.plan.outputs.web_topology == 'true' || needs.plan.outputs.command_graph == 'true' || needs.plan.outputs.version_surface == 'true' || needs.plan.outputs.rustdoc == 'true' || needs.plan.outputs.intent_check == 'true' || needs.plan.outputs.intent_realization == 'true' || needs.plan.outputs.release_record_cases == 'true'
+    if: needs.plan.outputs.rust_check == 'true' || needs.plan.outputs.rust_integration == 'true' || needs.plan.outputs.projection_closure == 'true' || needs.plan.outputs.web_topology == 'true' || needs.plan.outputs.command_graph == 'true' || needs.plan.outputs.version_surface == 'true' || needs.plan.outputs.rustdoc == 'true' || needs.plan.outputs.intent_check == 'true' || needs.plan.outputs.intent_realization == 'true' || needs.plan.outputs.release_record_cases == 'true' || needs.plan.outputs.plan_record_cases == 'true'
     # The bound. 30 minutes was set on 2026-09-09 from the observed maximum of twenty runs
     # plus headroom, and the work grew into it: of the 110 rust jobs that reached a verdict
     # from 2026-09-20 to 09-28 the slowest took 29.9 minutes (feature/mesh-cooperation, runs

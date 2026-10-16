@@ -1,8 +1,8 @@
 {
   "schema": "majordomus/cli/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.27.0",
-  "version": "0.27.0",
+  "generator": "majordomus-cli 0.28.0",
+  "version": "0.28.0",
   "source": "apps/majordomus-cli/src/cli.rs",
   "route_prefix": "/docs/cli",
   "cli": {
@@ -174,15 +174,13 @@
             "name": "http_port",
             "long": "http-port",
             "positional": false,
-            "help": "Port the shared server binds when this process starts it; when it is taken, a free port is used instead and the URL is logged on stderr either way",
+            "help": "Port the shared server binds when this process starts it; without it, the port this checkout derives (8741 for the primary checkout). When it is taken, a free port is used instead and the URL is logged on stderr either way",
             "value_name": "PORT",
             "takes_value": true,
             "required": false,
             "global": false,
             "possible_values": [],
-            "defaults": [
-              "8741"
-            ]
+            "defaults": []
           }
         ],
         "examples": [
@@ -314,15 +312,13 @@
             "name": "port",
             "long": "port",
             "positional": false,
-            "help": "Port to bind; 0 picks a free one and the address is logged on stderr",
+            "help": "Port to bind; without it, the port this checkout derives (8741 for the primary checkout); 0 picks a free one and the address is logged on stderr",
             "value_name": "PORT",
             "takes_value": true,
             "required": false,
             "global": false,
             "possible_values": [],
-            "defaults": [
-              "8741"
-            ]
+            "defaults": []
           },
           {
             "name": "fallback",
@@ -531,29 +527,25 @@
                 "name": "port",
                 "long": "port",
                 "positional": false,
-                "help": "The port the started server asks for first; a taken one is replaced by a free one",
+                "help": "The port the started server asks for first, without it the one this checkout derives (8741 for the primary checkout); a taken one is replaced by a free one",
                 "value_name": "PORT",
                 "takes_value": true,
                 "required": false,
                 "global": false,
                 "possible_values": [],
-                "defaults": [
-                  "8741"
-                ]
+                "defaults": []
               },
               {
                 "name": "idle",
                 "long": "idle",
                 "positional": false,
-                "help": "The started server stops when no peer has been attached for this many seconds",
+                "help": "The started server stops when no peer has been attached for this many seconds; without it, the policy's declared `server.idle_seconds`, 900 when none is declared",
                 "value_name": "SECONDS",
                 "takes_value": true,
                 "required": false,
                 "global": false,
                 "possible_values": [],
-                "defaults": [
-                  "900"
-                ]
+                "defaults": []
               },
               {
                 "name": "wait",

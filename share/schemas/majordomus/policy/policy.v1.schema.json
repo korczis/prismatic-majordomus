@@ -575,7 +575,12 @@
         "read_deadline_seconds": {
           "type": "integer",
           "minimum": 1,
-          "description": "How long the shared server lets a connection go without a request read in full on it \u2014 waiting for a head, kept alive between requests, or reading a body \u2014 before it closes the connection and counts it in server.status. A connection whose request is being answered is never closed by it."
+          "description": "How long the shared server lets a connection go without a request read in full on it — waiting for a head, kept alive between requests, or reading a body — before it closes the connection and counts it in server.status. A connection whose request is being answered is never closed by it."
+        },
+        "idle_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "How long a server started for a checkout no client owns — by `serve ensure` or by a shell entering the checkout — outlives its last peer before it stops by itself. Absent means 900. `--idle` on the command line overrides it."
         }
       }
     }
