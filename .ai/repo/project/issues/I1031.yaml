@@ -11,6 +11,9 @@ current_state: "Half of this landed on 2026-09-10 outside the plan. ADR 0035 add
 desired_state: "Every served surface carries the repository root and identity it is answering for, close enough to the content that a reader sees it without asking for it."
 scope:
   - apps/majordomus-cli/src/http/router.rs
+  - apps/majordomus-cli/src/http/swagger.rs
+  - apps/majordomus-cli/src/web/home.rs
+  - test/cases/3110_a_served_surface_names_its_checkout.sh
 non_scope:
   - Publishing an absolute developer path to anything but a loopback surface
   - A second identity beside the one the repository model already holds
@@ -30,4 +33,21 @@ evidence_required:
   - published_carries_no_path
 risk: "The obvious fix — printing the root — is the one to refuse: it would leak the host's directory layout to whoever can reach the socket, and the incident is solved by saying which checkout answered, not where it lives."
 created_at: 2026-09-06
-updated_at: 2026-09-10
+updated_at: 2026-10-16T13:51:16Z
+started_at: 2026-10-16T11:59:02Z
+started_event: sha256:b481964783b38998b04ba4805d010bde2f50aa134a27b91000a53a42ecc4e9c9
+verified_at: 2026-10-16T13:51:16Z
+verified_event: sha256:967b4aa5b0abe20d7da48d0066ed2bf41fbea25f3e2fa7cbca09ad042b983d11
+evidence:
+  - covers: identity_on_surfaces
+    type: test
+    command: "bash test/run.sh 3110_a_served_surface_names_its_checkout"
+    result: "ok 3110: two roots (primary + linked worktree) served at once; / JSON, / HTML and /swagger each name their own repository_id, the shared git_repository_id, branch and head, never the other's; FAIL on master binary d116266"
+    commit: d1162668036170d42b6c9038d82dfa67064ba561
+    recorded_at: 2026-10-16T13:51:02Z
+  - covers: published_carries_no_path
+    type: test
+    command: "bash test/run.sh 3110_a_served_surface_names_its_checkout"
+    result: "ok 3110 section 3: /, /swagger, /openapi.json, /api/v1/ of both roots carry no fixture root, $ROOT, $HOME or leak-patterns.tsv machine path; scripts/ci/no-machine-paths $ROOT exits 0"
+    commit: d1162668036170d42b6c9038d82dfa67064ba561
+    recorded_at: 2026-10-16T13:51:07Z

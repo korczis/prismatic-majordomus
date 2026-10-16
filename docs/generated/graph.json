@@ -26615,14 +26615,21 @@
           "priority": "p1",
           "profile": "implementation",
           "scope": [
-            "apps/majordomus-cli/src/http/router.rs"
+            "apps/majordomus-cli/src/http/router.rs",
+            "apps/majordomus-cli/src/http/swagger.rs",
+            "apps/majordomus-cli/src/web/home.rs",
+            "test/cases/3110_a_served_surface_names_its_checkout.sh"
           ],
           "slug": "served-identity-visible",
-          "updated_at": "2026-09-10",
+          "started_at": "2026-10-16T11:59:02Z",
+          "started_event": "sha256:b481964783b38998b04ba4805d010bde2f50aa134a27b91000a53a42ecc4e9c9",
+          "updated_at": "2026-10-16T13:51:16Z",
           "validation": [
             "cargo test --workspace --all-features",
             "bash test/run.sh"
-          ]
+          ],
+          "verified_at": "2026-10-16T13:51:16Z",
+          "verified_event": "sha256:967b4aa5b0abe20d7da48d0066ed2bf41fbea25f3e2fa7cbca09ad042b983d11"
         }
       },
       {
@@ -55095,6 +55102,13 @@
         "label": "test/cases/310_rustdoc_projection.sh",
         "route": "/cockpit/objects/test/test-cases-310-rustdoc-projection-sh",
         "source": "test/cases/310_rustdoc_projection.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3110_a_served_surface_names_its_checkout.sh",
+        "kind": "test",
+        "label": "test/cases/3110_a_served_surface_names_its_checkout.sh",
+        "route": "/cockpit/objects/test/test-cases-3110-a-served-surface-names-its-checkout-sh",
+        "source": "test/cases/3110_a_served_surface_names_its_checkout.sh"
       },
       {
         "id": "majordomus://test/test/cases/318_a_partial_sweep_says_so.sh",
@@ -85718,6 +85732,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3110_a_served_surface_names_its_checkout.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/318_a_partial_sweep_says_so.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -91009,8 +91028,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2870,
-      "edges": 6291,
+      "nodes": 2871,
+      "edges": 6292,
       "acyclic": false,
       "truncated": false
     }
