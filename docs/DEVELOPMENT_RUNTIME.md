@@ -102,23 +102,23 @@ command graph, not a third scheduler.
 
 ## Ownership boundaries
 
-```text
-                    ┌───────────────────────────────────────────────┐
-                    │  THE LAYER  .ai/repo (shared) + .ai/local     │  storage
-                    │  typed by share/kinds.yaml,                   │
-                    │  discovered by .ai/repo/knowledge/sources.yaml│
-                    └───────────────────────┬───────────────────────┘
-                                            │  reads and writes
-                    ┌───────────────────────▼───────────────────────┐
-                    │  THE CANONICAL RUNTIME                        │
-                    │  apps/majordomus-cli/src/capability/          │
-                    │  one capability! per operation, typed in/out  │  semantics
-                    │  exposure derived by command_graph/policy.rs  │
-                    └──┬────────┬────────┬─────────┬────────┬───────┘
-                       │        │        │         │        │         projections
-                  ┌────▼──┐ ┌───▼───┐ ┌──▼───┐ ┌───▼───┐ ┌──▼─────┐
-                  │Cockpit│ │HTTP+WS│ │OpenAPI│ │  MCP  │ │  CLI   │  surfaces
-                  └───────┘ └───────┘ └───────┘ └───────┘ └────────┘
+```mermaid
+flowchart TD
+  layer["THE LAYER · storage<br/><small>.ai/repo (shared) + .ai/local<br/>typed by share/kinds.yaml<br/>discovered by .ai/repo/knowledge/sources.yaml</small>"]
+  runtime["THE CANONICAL RUNTIME · semantics<br/><small>apps/majordomus-cli/src/capability/<br/>one capability! per operation, typed in/out<br/>exposure derived by command_graph/policy.rs</small><br/>docs/CAPABILITIES.md"]
+  layer <-->|"reads and writes"| runtime
+  subgraph surfaces["projections · surfaces"]
+    cockpit["Cockpit<br/>docs/COCKPIT.md"]
+    http["HTTP + WS"]
+    openapi["OpenAPI"]
+    mcp["MCP<br/>docs/MCP.md"]
+    cli["CLI<br/>docs/CLI.md"]
+  end
+  runtime --> cockpit
+  runtime --> http
+  runtime --> openapi
+  runtime --> mcp
+  runtime --> cli
 ```
 
 **The layer owns storage.** Every development object is a typed file of `.ai/`. Its kind is

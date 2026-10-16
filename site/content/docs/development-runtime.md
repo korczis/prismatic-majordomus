@@ -120,24 +120,25 @@ command graph, not a third scheduler.
 
 ## Ownership boundaries
 
-```text
-                    ┌───────────────────────────────────────────────┐
-                    │  THE LAYER  .ai/repo (shared) + .ai/local     │  storage
-                    │  typed by share/kinds.yaml,                   │
-                    │  discovered by .ai/repo/knowledge/sources.yaml│
-                    └───────────────────────┬───────────────────────┘
-                                            │  reads and writes
-                    ┌───────────────────────▼───────────────────────┐
-                    │  THE CANONICAL RUNTIME                        │
-                    │  apps/majordomus-cli/src/capability/          │
-                    │  one capability! per operation, typed in/out  │  semantics
-                    │  exposure derived by command_graph/policy.rs  │
-                    └──┬────────┬────────┬─────────┬────────┬───────┘
-                       │        │        │         │        │         projections
-                  ┌────▼──┐ ┌───▼───┐ ┌──▼───┐ ┌───▼───┐ ┌──▼─────┐
-                  │Cockpit│ │HTTP+WS│ │OpenAPI│ │  MCP  │ │  CLI   │  surfaces
-                  └───────┘ └───────┘ └───────┘ └───────┘ └────────┘
-```
+<pre class="mermaid">
+flowchart TD
+  layer["THE LAYER · storage&lt;br/&gt;&lt;small&gt;.ai/repo (shared) + .ai/local&lt;br/&gt;typed by share/kinds.yaml&lt;br/&gt;discovered by .ai/repo/knowledge/sources.yaml&lt;/small&gt;"]
+  runtime["THE CANONICAL RUNTIME · semantics&lt;br/&gt;&lt;small&gt;apps/majordomus-cli/src/capability/&lt;br/&gt;one capability! per operation, typed in/out&lt;br/&gt;exposure derived by command_graph/policy.rs&lt;/small&gt;&lt;br/&gt;docs/CAPABILITIES.md"]
+  layer &lt;--&gt;|"reads and writes"| runtime
+  subgraph surfaces["projections · surfaces"]
+    cockpit["Cockpit&lt;br/&gt;docs/COCKPIT.md"]
+    http["HTTP + WS"]
+    openapi["OpenAPI"]
+    mcp["MCP&lt;br/&gt;docs/MCP.md"]
+    cli["CLI&lt;br/&gt;docs/CLI.md"]
+  end
+  runtime --&gt; cockpit
+  runtime --&gt; http
+  runtime --&gt; openapi
+  runtime --&gt; mcp
+  runtime --&gt; cli
+</pre>
+
 
 **The layer owns storage.** Every development object is a typed file of `.ai/`. Its kind is
 declared in `share/kinds.yaml`, whose declarative kinds the registry projection lists, its

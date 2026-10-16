@@ -7531,7 +7531,7 @@
           "related": [
             "file:.ai/repo/project/milestones/truthful-plan-surfaces.yaml",
             "file:.ai/repo/adrs/0152-a-diagram-and-a-chart-on-the-site-are-one-viewer-each-over-w.md",
-            "file:.ai/repo/rules/project/a-diagram-is-drawn-not-typed.v1.md",
+            "file:.ai/repo/rules/project/a-diagram-is-drawn-not-typed.v2.md",
             "file:.ai/repo/rules/project/the-published-ui-is-the-trunks.v1.md",
             "file:site/templates/roadmap.html",
             "file:site/templates/index.html",
@@ -38265,7 +38265,9 @@
             "test/cases/3106_every_published_tree_draws_its_diagrams.sh"
           ],
           "slug": "every-published-tree-draws-its-diagrams",
-          "updated_at": "2026-10-16",
+          "started_at": "2026-10-16T09:03:11Z",
+          "started_event": "sha256:724c9d42189144390be95b63f0a06b7261a2ecfacb1cc470169ceb4ac4c529e0",
+          "updated_at": "2026-10-16T09:03:11Z",
           "validation": [
             "scripts/ci/diagram-check",
             "bash test/run.sh 272_diagrams_are_drawn 3106_every_published_tree_draws_its_diagrams"
@@ -45380,12 +45382,12 @@
         }
       },
       {
-        "id": "majordomus://rule/project.a-diagram-is-drawn-not-typed@1",
+        "id": "majordomus://rule/project.a-diagram-is-drawn-not-typed@2",
         "kind": "rule",
-        "label": "project.a-diagram-is-drawn-not-typed@1",
+        "label": "project.a-diagram-is-drawn-not-typed@2",
         "summary": "An architectural relationship in a published document is drawn, never typed in box art",
-        "route": "/cockpit/objects/rule/project-a-diagram-is-drawn-not-typed-1",
-        "source": ".ai/repo/rules/project/a-diagram-is-drawn-not-typed.v1.md",
+        "route": "/cockpit/objects/rule/project-a-diagram-is-drawn-not-typed-2",
+        "source": ".ai/repo/rules/project/a-diagram-is-drawn-not-typed.v2.md",
         "status": "active",
         "facts": {
           "class": "blocking",
@@ -55596,6 +55598,13 @@
         "label": "test/cases/30_command_registry.sh",
         "route": "/cockpit/objects/test/test-cases-30-command-registry-sh",
         "source": "test/cases/30_command_registry.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3106_every_published_tree_draws_its_diagrams.sh",
+        "kind": "test",
+        "label": "test/cases/3106_every_published_tree_draws_its_diagrams.sh",
+        "route": "/cockpit/objects/test/test-cases-3106-every-published-tree-draws-its-diagrams-sh",
+        "source": "test/cases/3106_every_published_tree_draws_its_diagrams.sh"
       },
       {
         "id": "majordomus://test/test/cases/310_rustdoc_projection.sh",
@@ -67807,7 +67816,7 @@
       },
       {
         "source": "majordomus://adr/adr-0152",
-        "target": "majordomus://rule/project.a-diagram-is-drawn-not-typed@1",
+        "target": "majordomus://rule/project.a-diagram-is-drawn-not-typed@2",
         "kind": "put_in_force"
       },
       {
@@ -68077,7 +68086,7 @@
       },
       {
         "source": "majordomus://adr/adr-0166",
-        "target": "majordomus://rule/project.a-diagram-is-drawn-not-typed@1",
+        "target": "majordomus://rule/project.a-diagram-is-drawn-not-typed@2",
         "kind": "put_in_force"
       },
       {
@@ -83231,17 +83240,17 @@
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.a-diagram-is-drawn-not-typed@1",
+        "source": "majordomus://rule/project.a-diagram-is-drawn-not-typed@2",
         "target": "kind:rule",
         "kind": "is_a"
       },
       {
-        "source": "majordomus://rule/project.a-diagram-is-drawn-not-typed@1",
+        "source": "majordomus://rule/project.a-diagram-is-drawn-not-typed@2",
         "target": "majordomus://rule/project.derived-once@1",
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.a-diagram-is-drawn-not-typed@1",
+        "source": "majordomus://rule/project.a-diagram-is-drawn-not-typed@2",
         "target": "majordomus://rule/project.interfaces-are-projections@1",
         "kind": "depends_on"
       },
@@ -86387,6 +86396,11 @@
       },
       {
         "source": "majordomus://test/test/cases/30_command_registry.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3106_every_published_tree_draws_its_diagrams.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -91687,8 +91701,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2883,
-      "edges": 6325,
+      "nodes": 2884,
+      "edges": 6326,
       "acyclic": false,
       "truncated": false
     }

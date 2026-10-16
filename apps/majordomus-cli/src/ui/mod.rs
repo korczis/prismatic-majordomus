@@ -16,10 +16,12 @@
 //! - the content-security policy, with its one hash-pinned inline script;
 //! - the design tokens, the kit and the icon set every surface draws from.
 //!
-//! ```text
-//!   capability! ── registry ── executor ──┬── MCP, HTTP, command line
-//!                                         ├── UI       /ui       (the product)
-//!                                         └── Cockpit  /cockpit  (its technical reference)
+//! ```mermaid
+//! flowchart LR
+//!   declaration["capability!"] --> registry["registry"] --> executor["executor"]
+//!   executor --> api["MCP, HTTP, command line"]
+//!   executor --> ui["UI · /ui<br/>(the product)"]
+//!   executor --> cockpit["Cockpit · /cockpit<br/>(its technical reference)"]
 //! ```
 //!
 //! With no JavaScript, every screen is complete HTML and the menu still opens. The one
