@@ -111,6 +111,8 @@ pub enum Command {
     Entity(EntityArgs),
     /// The repository's shell automation against the tracked migration inventory: every shell unit declared with an exemption, and every exemption naming a unit the tree still has
     Shell(ShellArgs),
+    /// How much a coding-agent session in this checkout may do unasked, read from the facts: the client's settings layers, the isolation evidence, the profile they support, the decision for one shell command, and what the permission layer actually cost
+    Autonomy(AutonomyArgs),
     /// The tracked tree as token-bounded text shards for a language model's file search: plan what a profile carries and leaves out, build it under tmp/packs/, and verify a written pack against its manifest; never a binary, a worktree, a link or build output
     Pack(PackArgs),
     /// The Dashboard Suite: each page a projection of the capabilities that hold its facts, every card carrying its source capability, the JSON pointer its value was read from, the Cockpit page with the evidence and the command that acts on it
@@ -426,6 +428,87 @@ pub enum ShellCommand {
         #[arg(long)]
         canonical: bool,
     },
+}
+
+#[derive(Debug, Args)]
+/// `majordomus autonomy`. The output shape is global, so it reads the way a person writes it.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{AutonomyArgs, AutonomyCommand, Cli, Command, OutputFormat};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "autonomy", "status", "--format", "json"]).unwrap();
+/// let Command::Autonomy(args) = cli.command else { panic!("not the autonomy command") };
+/// let args: AutonomyArgs = args;
+/// assert!(matches!(args.format, OutputFormat::Json));
+/// assert!(matches!(args.command, AutonomyCommand::Status));
+/// ```
+pub struct AutonomyArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `status`, `explain` or `friction`. Required: the group runs nothing of its own.
+    pub command: AutonomyCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus autonomy`.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{AutonomyCommand, AutonomyProfileArg, Cli, Command};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(
+///     ["majordomus", "autonomy", "explain", "git status", "--profile", "trusted"],
+/// ).unwrap();
+/// let Command::Autonomy(args) = cli.command else { panic!("not the autonomy command") };
+/// let AutonomyCommand::Explain { command, profile } = args.command else { panic!("explain") };
+/// assert_eq!((command.as_str(), profile), ("git status", Some(AutonomyProfileArg::Trusted)));
+/// ```
+pub enum AutonomyCommand {
+    /// The settings layers, the isolation evidence and the profile they support, with the recommended permission mode and what refused every stronger profile
+    Status,
+    /// What a static permission rule may do with one shell command: exit 0 when it may run unasked, 10 when the client's own permission layer decides, 11 when a person approves it under every profile
+    Explain {
+        /// The shell command, quoted as one argument
+        command: String,
+        /// The profile to judge it under; the checkout's own when absent
+        #[arg(long, value_enum)]
+        profile: Option<AutonomyProfileArg>,
+    },
+    /// Every refusal the permission layer made in this repository's Claude Code transcripts, by kind, reason and tool, with the rate per thousand tool calls
+    Friction {
+        /// How many days back to count, 1 to 90
+        #[arg(long, default_value_t = 7)]
+        since_days: u32,
+    },
+}
+
+/// The profiles `autonomy explain --profile` judges a command under.
+///
+/// ```
+/// use clap::ValueEnum;
+/// use majordomus_cli::cli::AutonomyProfileArg;
+///
+/// let name = AutonomyProfileArg::Isolated.to_possible_value().unwrap();
+/// assert_eq!(name.get_name(), "isolated");
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+pub enum AutonomyProfileArg {
+    /// Reads only run unasked; Claude Code's `default` mode.
+    Conservative,
+    /// Reads and quality operations; `acceptEdits`, the profile of an untrusted checkout.
+    Balanced,
+    /// Also local history; `auto`, once the person accepted the checkout's trust dialog.
+    Trusted,
+    /// `bypassPermissions` inside a verified container with no credential in reach.
+    Isolated,
 }
 
 #[derive(Debug, Args)]
@@ -5258,6 +5341,49 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["shell", "check", "--format", "json"],
             setup: &[],
             expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "autonomy status",
+        examples: &[ExampleDoc {
+            id: "autonomy-status-json",
+            title: "The autonomy this checkout supports, and why no more",
+            description: "The Claude Code settings layers with their default mode, rule counts and hooks (never rule text), the isolation evidence with credential variables named and never valued, and the profile the facts support as `/profile` and `/recommended_mode`, with `/refused` naming the fact that refused every stronger profile. Reads only; always exit 0.",
+            argv: &["autonomy", "status", "--format", "json"],
+            setup: &[],
+            expect: Expect::ExitCode(0),
+        }],
+    },
+    CommandExamples {
+        command: "autonomy explain",
+        examples: &[
+            ExampleDoc {
+                id: "autonomy-explain-routine",
+                title: "A repository-local quality operation runs unasked",
+                description: "`cargo test` under the trusted profile is a repository-local quality operation: the decision is allow, exit 0.",
+                argv: &["autonomy", "explain", "cargo test --lib", "--profile", "trusted"],
+                setup: &[],
+                expect: Expect::ExitCode(0),
+            },
+            ExampleDoc {
+                id: "autonomy-explain-boundary",
+                title: "A history rewrite needs a person even inside isolation",
+                description: "`git reset --hard` is destructive: under every profile, isolated included, the decision is require_approval, exit 11.",
+                argv: &["autonomy", "explain", "git reset --hard", "--profile", "isolated"],
+                setup: &[],
+                expect: Expect::ExitCode(11),
+            },
+        ],
+    },
+    CommandExamples {
+        command: "autonomy friction",
+        examples: &[ExampleDoc {
+            id: "autonomy-friction-day",
+            title: "What the permission layer cost today",
+            description: "Every refusal in this repository's Claude Code transcripts of the last day, by kind, by the classifier's reason and by tool, with the rate per thousand tool calls. Counts only; a machine with no transcripts answers zero calls and no rate. Always exit 0.",
+            argv: &["autonomy", "friction", "--since-days", "1", "--format", "json"],
+            setup: &[],
+            expect: Expect::ExitCode(0),
         }],
     },
     CommandExamples {

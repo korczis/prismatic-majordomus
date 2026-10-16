@@ -31,6 +31,7 @@
 //! ```
 
 pub mod artifacts;
+pub(crate) mod autonomy;
 pub(crate) mod brief;
 pub(crate) mod capabilities;
 pub mod commands;
@@ -186,6 +187,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         commands,
         graph,
         guard,
+        autonomy,
         health,
         dashboard,
         continuity,

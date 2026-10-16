@@ -1,7 +1,7 @@
 +++
 title = "majordomus continuity plan"
 description = "Decide, writing nothing, whether and how a published handover can be resumed here: trust, lineage, source compatibility, uncommitted work at the origin"
-weight = 231
+weight = 235
 [extra]
 route = "/docs/cli/continuity/plan/"
 command = "majordomus continuity plan"

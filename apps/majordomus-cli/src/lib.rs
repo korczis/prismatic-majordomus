@@ -14,6 +14,7 @@
 pub mod about;
 pub mod app;
 pub(crate) mod automation;
+pub(crate) mod autonomy;
 pub mod bench;
 pub mod build_identity;
 pub mod capability;

@@ -6,27 +6,27 @@
     "version": "0.27.0"
   },
   "registry": {
-    "fingerprint": "039c3c240f2a65253fe430b394e20fc2d0230868bc9dc775a9fdc93d3bfd479f",
+    "fingerprint": "b6a62b9717b377044fecb28de17f1e28c948e16c2a3c208874e8d6cd80fedbf5",
     "summary": {
-      "total": 2446,
-      "builtin": 202,
-      "declarative": 2244,
+      "total": 2452,
+      "builtin": 205,
+      "declarative": 2247,
       "by_kind": {
         "command": 31,
-        "query": 171,
-        "resource": 2244
+        "query": 174,
+        "resource": 2247
       },
       "by_stability": {
         "behaviorally_verified": 141,
-        "experimental": 52,
-        "implemented": 2253
+        "experimental": 55,
+        "implemented": 2256
       },
-      "mcp_tools": 192,
-      "mcp_resources": 2299,
-      "http_routes": 197,
-      "cli_commands": 108,
-      "modules": 92,
-      "benchmark_required": 171,
+      "mcp_tools": 195,
+      "mcp_resources": 2302,
+      "http_routes": 200,
+      "cli_commands": 111,
+      "modules": 93,
+      "benchmark_required": 174,
       "benchmark_waived": 31,
       "cached": 54
     },
@@ -416,6 +416,750 @@
           "concurrency": "unrestricted"
         },
         "source_path": "apps/majordomus-cli/src/capability/builtin/artifacts.rs"
+      },
+      {
+        "id": "autonomy.explain",
+        "module": "autonomy",
+        "kind": "query",
+        "title": "Judge one shell command",
+        "description": "What a static permission rule may do with one shell command under a profile: allow (it runs unasked), defer (the client's own classifier or prompt decides) or require_approval (a person approves it under every profile), with its risk class, the reason and the table entry that matched. A compound command — chaining, a pipe, a redirection, a substitution, a leading assignment, find -exec — never earns an allow; history rewrites, destructive removal, privilege and external effects require approval even inside isolation.",
+        "input": {
+          "name": "AutonomyExplainInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "command": {
+                "type": "string",
+                "description": "The shell command, as a session would run it."
+              },
+              "profile": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/AutonomyProfile"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "The profile to judge it under; the checkout's own, as `autonomy.status` derives it,\nwhen absent."
+              }
+            },
+            "required": [
+              "command"
+            ],
+            "description": "Which command to judge, and under which profile.",
+            "title": "AutonomyExplainInput",
+            "$defs": {
+              "AutonomyProfile": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "conservative",
+                    "description": "The client's own defaults: every side effect is asked for."
+                  },
+                  {
+                    "type": "string",
+                    "const": "balanced",
+                    "description": "Reads, repository edits, local builds and tests run unasked; external effects are asked."
+                  },
+                  {
+                    "type": "string",
+                    "const": "trusted",
+                    "description": "Repository-local development runs unasked, including local commits; the client's own\nclassifier judges the rest, and the risk boundaries stay."
+                  },
+                  {
+                    "type": "string",
+                    "const": "isolated",
+                    "description": "Hard isolation was verified and no credential is in reach: the client's permission\nprompts may be bypassed, and the risk boundaries still stand."
+                  }
+                ],
+                "description": "An autonomy profile: how much a session may do without a person's approval."
+              }
+            }
+          }
+        },
+        "output": {
+          "name": "CommandDecision",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "command": {
+                "type": "string",
+                "description": "The command, as asked."
+              },
+              "profile": {
+                "$ref": "#/$defs/AutonomyProfile",
+                "description": "The profile it was judged under."
+              },
+              "decision": {
+                "$ref": "#/$defs/Decision",
+                "description": "The decision."
+              },
+              "risk": {
+                "$ref": "#/$defs/RiskClass",
+                "description": "The risk class."
+              },
+              "reason": {
+                "type": "string",
+                "description": "Why, in a sentence."
+              },
+              "rule": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The table entry that matched, when one did."
+              }
+            },
+            "required": [
+              "command",
+              "profile",
+              "decision",
+              "risk",
+              "reason"
+            ],
+            "description": "The answer of `autonomy.explain`.",
+            "title": "CommandDecision",
+            "$defs": {
+              "AutonomyProfile": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "conservative",
+                    "description": "The client's own defaults: every side effect is asked for."
+                  },
+                  {
+                    "type": "string",
+                    "const": "balanced",
+                    "description": "Reads, repository edits, local builds and tests run unasked; external effects are asked."
+                  },
+                  {
+                    "type": "string",
+                    "const": "trusted",
+                    "description": "Repository-local development runs unasked, including local commits; the client's own\nclassifier judges the rest, and the risk boundaries stay."
+                  },
+                  {
+                    "type": "string",
+                    "const": "isolated",
+                    "description": "Hard isolation was verified and no credential is in reach: the client's permission\nprompts may be bypassed, and the risk boundaries still stand."
+                  }
+                ],
+                "description": "An autonomy profile: how much a session may do without a person's approval."
+              },
+              "Decision": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "allow",
+                    "description": "A static allow rule may run it unasked under this profile."
+                  },
+                  {
+                    "type": "string",
+                    "const": "defer",
+                    "description": "No static rule decides it: the client's own permission layer (its classifier, or a\nprompt) does."
+                  },
+                  {
+                    "type": "string",
+                    "const": "require_approval",
+                    "description": "A person approves it, under every profile."
+                  }
+                ],
+                "description": "What a static rule may do with one command."
+              },
+              "RiskClass": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "read",
+                    "description": "Reads the repository or the machine."
+                  },
+                  {
+                    "type": "string",
+                    "const": "quality",
+                    "description": "Builds, tests, formats or lints the repository."
+                  },
+                  {
+                    "type": "string",
+                    "const": "local_history",
+                    "description": "Writes local history (`git add`, `git commit`)."
+                  },
+                  {
+                    "type": "string",
+                    "const": "compound",
+                    "description": "More than one command, or a redirection: the first word does not say what it does."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unknown",
+                    "description": "Not in the table."
+                  },
+                  {
+                    "type": "string",
+                    "const": "destructive",
+                    "description": "Rewrites or destroys history or files."
+                  },
+                  {
+                    "type": "string",
+                    "const": "privileged",
+                    "description": "Raises privilege or stops processes."
+                  },
+                  {
+                    "type": "string",
+                    "const": "external",
+                    "description": "Reaches a remote system or publishes."
+                  }
+                ],
+                "description": "The risk class of a command."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::autonomy"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_autonomy_explain"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/autonomy/explain"
+          },
+          "cli": {
+            "path": [
+              "autonomy",
+              "explain"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "experimental",
+        "tags": [
+          "autonomy",
+          "permissions",
+          "security"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/autonomy.rs"
+      },
+      {
+        "id": "autonomy.friction",
+        "module": "autonomy",
+        "kind": "query",
+        "title": "What the permission layer cost",
+        "description": "Counted from Claude Code's own transcripts of this repository's checkouts (the primary and every <repository>-wt/ worktree) over the last since_days days: tool calls, and every refusal by kind (classifier_denial, hook_block, safety_check, user_rejection), by the classifier's stated reason and by tool, with the rate per thousand calls. Counts only: no command, path or payload leaves a transcript. A prompt the person approved leaves no trace and is not counted.",
+        "input": {
+          "name": "AutonomyFrictionInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "since_days": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "format": "uint32",
+                "minimum": 0,
+                "description": "How many days back to count, 1 to 90; 7 when absent."
+              }
+            },
+            "description": "The window to count.",
+            "title": "AutonomyFrictionInput"
+          }
+        },
+        "output": {
+          "name": "Friction",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "schema": {
+                "type": "string",
+                "description": "`majordomus.autonomy.friction/v1`."
+              },
+              "since": {
+                "type": "string",
+                "description": "The first instant counted (RFC 3339, UTC)."
+              },
+              "directories": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The transcript directories read, written from `~`."
+              },
+              "transcripts": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "Transcripts read."
+              },
+              "tool_calls": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "Tool calls made in the window."
+              },
+              "by_kind": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0
+                },
+                "description": "Refusals by kind: `classifier_denial`, `hook_block`, `safety_check`,\n`user_rejection`."
+              },
+              "by_reason": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0
+                },
+                "description": "Classifier denials by the reason the classifier gave."
+              },
+              "by_tool": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0
+                },
+                "description": "Refusals by tool."
+              },
+              "per_thousand_calls": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "format": "double",
+                "description": "Every refusal, per thousand tool calls; absent when no tool was called."
+              },
+              "limitations": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "What a transcript does not record."
+              }
+            },
+            "required": [
+              "schema",
+              "since",
+              "directories",
+              "transcripts",
+              "tool_calls",
+              "by_kind",
+              "by_reason",
+              "by_tool",
+              "limitations"
+            ],
+            "description": "The answer of `autonomy.friction`.",
+            "title": "Friction"
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::autonomy"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_autonomy_friction"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/autonomy/friction"
+          },
+          "cli": {
+            "path": [
+              "autonomy",
+              "friction"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "experimental",
+        "tags": [
+          "autonomy",
+          "permissions",
+          "measurement"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/autonomy.rs"
+      },
+      {
+        "id": "autonomy.status",
+        "module": "autonomy",
+        "kind": "query",
+        "title": "The autonomy this checkout supports",
+        "description": "The Claude Code settings layers (managed, local, project, user: presence, default mode, rule counts, hooks, never rule text), the isolation evidence (container markers, the client's sandbox, credential variables by name and credential files), the person's trust-dialog acceptance of the checkout, and the profile those facts support — conservative, balanced, trusted or isolated — with its recommended permission mode, the reason for it and the fact that refused every stronger one. isolated (bypassPermissions) needs a container marker and no credential in reach; trusted (auto) needs the person's acceptance, which the repository cannot check in; an unreadable layer or a managed default mode is a ceiling.",
+        "input": {
+          "name": "Empty",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "No input.",
+            "title": "Empty"
+          }
+        },
+        "output": {
+          "name": "AutonomyStatus",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "schema": {
+                "type": "string",
+                "description": "`majordomus.autonomy.status/v1`."
+              },
+              "root": {
+                "type": "string",
+                "description": "The checkout judged."
+              },
+              "client_version": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The client's version, when this process runs under it (`CLAUDE_CODE_VERSION`)."
+              },
+              "inside_client": {
+                "type": "boolean",
+                "description": "Whether this process runs inside a Claude Code session (`CLAUDECODE`)."
+              },
+              "layers": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/SettingsLayer"
+                },
+                "description": "The settings layers, highest precedence first."
+              },
+              "configured_mode": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The mode the layers configure, from the highest-precedence layer that sets one."
+              },
+              "checkout_trusted": {
+                "type": [
+                  "boolean",
+                  "null"
+                ],
+                "description": "Whether the person accepted this checkout in the client's trust dialog, read from\nthe person's own `~/.claude.json`; absent when that could not be read."
+              },
+              "isolation": {
+                "$ref": "#/$defs/IsolationEvidence",
+                "description": "The isolation evidence."
+              },
+              "profile": {
+                "$ref": "#/$defs/AutonomyProfile",
+                "description": "The profile the facts support."
+              },
+              "recommended_mode": {
+                "$ref": "#/$defs/PermissionMode",
+                "description": "The permission mode that profile launches with."
+              },
+              "reasons": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Why this profile, one fact per line."
+              },
+              "refused": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/ProfileRefusal"
+                },
+                "description": "Every stronger profile, and what refused it."
+              },
+              "limitations": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "What this answer cannot see. The running session's effective mode is the client's\nand is not observable from a child process."
+              }
+            },
+            "required": [
+              "schema",
+              "root",
+              "inside_client",
+              "layers",
+              "isolation",
+              "profile",
+              "recommended_mode",
+              "reasons",
+              "refused",
+              "limitations"
+            ],
+            "description": "The answer of `autonomy.status`.",
+            "title": "AutonomyStatus",
+            "$defs": {
+              "SettingsLayer": {
+                "type": "object",
+                "properties": {
+                  "scope": {
+                    "type": "string",
+                    "description": "`managed`, `user`, `project` or `local`, highest precedence first."
+                  },
+                  "path": {
+                    "type": "string",
+                    "description": "Where the file is, with the home directory written `~`."
+                  },
+                  "present": {
+                    "type": "boolean",
+                    "description": "Whether the file exists."
+                  },
+                  "error": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Why a present file could not be read as JSON; absent when it could."
+                  },
+                  "default_mode": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "`permissions.defaultMode`, as written."
+                  },
+                  "allow": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "How many `permissions.allow` rules."
+                  },
+                  "ask": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "How many `permissions.ask` rules."
+                  },
+                  "deny": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "How many `permissions.deny` rules."
+                  },
+                  "auto_mode_allow": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "How many `autoMode.allow` entries, `$defaults` included."
+                  },
+                  "bypass_disabled": {
+                    "type": "boolean",
+                    "description": "Whether `permissions.disableBypassPermissionsMode` is `disable`."
+                  },
+                  "sandbox_enabled": {
+                    "type": "boolean",
+                    "description": "Whether `sandbox.enabled` is true."
+                  },
+                  "hooks": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The hook events the file wires, sorted."
+                  }
+                },
+                "required": [
+                  "scope",
+                  "path",
+                  "present",
+                  "allow",
+                  "ask",
+                  "deny",
+                  "auto_mode_allow",
+                  "bypass_disabled",
+                  "sandbox_enabled",
+                  "hooks"
+                ],
+                "description": "One settings file the client reads, and what it declares about permissions. Rule text is\nnot carried, only counts: a rule may name a host, a path or a person."
+              },
+              "IsolationEvidence": {
+                "type": "object",
+                "properties": {
+                  "container_markers": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Container markers found (`/.dockerenv`, `/run/.containerenv`, the `container`\nvariable). Empty means no container was observed, which is not proof there is none."
+                  },
+                  "client_sandbox": {
+                    "type": "boolean",
+                    "description": "Whether a settings layer enables the client's own sandbox."
+                  },
+                  "credential_variables": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Names (never values) of environment variables that carry a credential."
+                  },
+                  "credential_files": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Credential files present under the home directory, written from `~`."
+                  },
+                  "verified": {
+                    "type": "boolean",
+                    "description": "Whether isolation counts as verified: a container marker, and no credential in reach."
+                  }
+                },
+                "required": [
+                  "container_markers",
+                  "client_sandbox",
+                  "credential_variables",
+                  "credential_files",
+                  "verified"
+                ],
+                "description": "What this process can observe about the boundary it runs in."
+              },
+              "AutonomyProfile": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "conservative",
+                    "description": "The client's own defaults: every side effect is asked for."
+                  },
+                  {
+                    "type": "string",
+                    "const": "balanced",
+                    "description": "Reads, repository edits, local builds and tests run unasked; external effects are asked."
+                  },
+                  {
+                    "type": "string",
+                    "const": "trusted",
+                    "description": "Repository-local development runs unasked, including local commits; the client's own\nclassifier judges the rest, and the risk boundaries stay."
+                  },
+                  {
+                    "type": "string",
+                    "const": "isolated",
+                    "description": "Hard isolation was verified and no credential is in reach: the client's permission\nprompts may be bypassed, and the risk boundaries still stand."
+                  }
+                ],
+                "description": "An autonomy profile: how much a session may do without a person's approval."
+              },
+              "PermissionMode": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "default",
+                    "description": "Ask for everything not allowed by a rule."
+                  },
+                  {
+                    "type": "string",
+                    "const": "acceptEdits",
+                    "description": "Accept file edits in the working directory; ask for the rest."
+                  },
+                  {
+                    "type": "string",
+                    "const": "auto",
+                    "description": "The client's classifier decides what a rule does not."
+                  },
+                  {
+                    "type": "string",
+                    "const": "dontAsk",
+                    "description": "Never prompt; refuse what no rule allows."
+                  },
+                  {
+                    "type": "string",
+                    "const": "bypassPermissions",
+                    "description": "No permission prompts at all. Only inside verified isolation."
+                  }
+                ],
+                "description": "A Claude Code permission mode, as the client spells it in `permissions.defaultMode` and\n`--permission-mode`."
+              },
+              "ProfileRefusal": {
+                "type": "object",
+                "properties": {
+                  "profile": {
+                    "$ref": "#/$defs/AutonomyProfile",
+                    "description": "The profile refused."
+                  },
+                  "because": {
+                    "type": "string",
+                    "description": "Why."
+                  }
+                },
+                "required": [
+                  "profile",
+                  "because"
+                ],
+                "description": "One profile this checkout was not given, and the fact that refused it."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::autonomy"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_autonomy"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/autonomy"
+          },
+          "cli": {
+            "path": [
+              "autonomy",
+              "status"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "experimental",
+        "tags": [
+          "autonomy",
+          "permissions",
+          "security"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/autonomy.rs"
       },
       {
         "id": "brief.session",
@@ -82360,6 +83104,20 @@
         "capability_ids": []
       },
       {
+        "id": "autonomy",
+        "title": "Autonomy",
+        "description": "How much a coding-agent session in this checkout may do without a person's approval, read from the facts: the client's settings layers, the evidence for hard isolation, the person's own trust in the checkout, and what the permission layer actually cost. Fails closed; reads only; never grants itself anything.",
+        "stability": "experimental",
+        "source": "builtin",
+        "capabilities": 3,
+        "capability_ids": [
+          "autonomy.explain",
+          "autonomy.friction",
+          "autonomy.status"
+        ],
+        "source_path": "apps/majordomus-cli/src/capability/builtin/autonomy.rs"
+      },
+      {
         "id": "brief",
         "title": "The session brief",
         "description": "What surrounds one working session, in one line and in a few: its episode and task, the peers of every board, the mesh, the integration queue and the derive queue, each section asked of its owner once and saying whether it could be read. The answer a session reports on itself from without being asked, and the one a provider mod shows as its status line (ADR 0136). Writes nothing.",
@@ -82641,7 +83399,7 @@
         "title": "document",
         "description": "Declarative objects of kind 'document' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 347,
+        "capabilities": 348,
         "capability_ids": []
       },
       {
@@ -82938,7 +83696,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 394,
+        "capabilities": 395,
         "capability_ids": []
       },
       {
@@ -83509,7 +84267,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 500,
+        "capabilities": 501,
         "capability_ids": []
       },
       {
@@ -83600,7 +84358,7 @@
     ]
   },
   "index": {
-    "fingerprint": "d145fb9a0df194ae88563f0ac078bcdc65ec3e4202c2c15329351b61177ace6a",
+    "fingerprint": "6bdb6ccb64ec3461739eda59f3749d73c9aa261c8d081ec643aa8c532b39a68b",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -83634,13 +84392,13 @@
       "deployment": 1,
       "derive-offload": 1,
       "distribution-model": 1,
-      "document": 347,
+      "document": 348,
       "domain": 6,
       "feature": 29,
       "gap": 3,
       "implementation": 52,
       "intent": 4,
-      "issue": 394,
+      "issue": 395,
       "knowledge": 4,
       "mesh-declaration": 1,
       "milestone": 38,
@@ -83654,7 +84412,7 @@
       "session": 89,
       "skill": 8,
       "taxonomy": 10,
-      "test": 500,
+      "test": 501,
       "use-case": 49,
       "workspace": 1
     },
@@ -89302,6 +90060,15 @@
         "bytes": 9932
       },
       {
+        "uri": "majordomus://document/docs/AUTONOMY.md",
+        "kind": "document",
+        "identity": "docs/AUTONOMY.md",
+        "title": "Autonomy",
+        "path": "docs/AUTONOMY.md",
+        "source_class": "document",
+        "bytes": 5237
+      },
+      {
         "uri": "majordomus://document/docs/BACKLOG.md",
         "kind": "document",
         "identity": "docs/BACKLOG.md",
@@ -89767,7 +90534,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 158951
+        "bytes": 161723
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -89803,7 +90570,7 @@
         "title": "Documentation index",
         "path": "docs/README.md",
         "source_class": "document",
-        "bytes": 25645
+        "bytes": 26071
       },
       {
         "uri": "majordomus://document/docs/REASONING.md",
@@ -97552,6 +98319,17 @@
         "bytes": 2836
       },
       {
+        "uri": "majordomus://issue/I2790",
+        "kind": "issue",
+        "identity": "I2790",
+        "title": "The autonomy a session has is read from the facts, explained per command, and its cost measured",
+        "description": "Three read-only capabilities say how much a coding-agent session in this checkout may do unasked: autonomy.status derives a profile (conservative, balanced, trusted, isolated) and the Claude Code permission mode it launches with from the client's settings layers, the person's trust-dialog acceptance and the isolation evidence, failing closed; autonomy.explain gives one shell command a structural decision (allow, defer, require_approval); autonomy.friction counts every refusal the permission layer made in this repository's transcripts.",
+        "path": ".ai/repo/project/issues/I2790.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3987
+      },
+      {
         "uri": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "identity": "a-commit-stood-behind-a-build-lock",
@@ -104851,6 +105629,14 @@
         "bytes": 6660
       },
       {
+        "uri": "majordomus://test/test/cases/3177_the_autonomy_a_session_has_is_read.sh",
+        "kind": "test",
+        "identity": "test/cases/3177_the_autonomy_a_session_has_is_read.sh",
+        "path": "test/cases/3177_the_autonomy_a_session_has_is_read.sh",
+        "source_class": "case",
+        "bytes": 6529
+      },
+      {
         "uri": "majordomus://test/test/cases/318_a_partial_sweep_says_so.sh",
         "kind": "test",
         "identity": "test/cases/318_a_partial_sweep_says_so.sh",
@@ -107812,7 +108598,7 @@
       "front_matter": "optional",
       "schema": "majordomus.document/v1",
       "identity": [],
-      "objects": 347
+      "objects": 348
     },
     {
       "name": "domain",
@@ -107869,7 +108655,7 @@
       "identity": [
         "id"
       ],
-      "objects": 394
+      "objects": 395
     },
     {
       "name": "knowledge",
@@ -108021,7 +108807,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 500
+      "objects": 501
     },
     {
       "name": "use-case",
@@ -137305,6 +138091,519 @@
       {
         "path": [
           "majordomus",
+          "autonomy"
+        ],
+        "route": "/docs/cli/autonomy/",
+        "executable": false,
+        "usage": "majordomus autonomy [OPTIONS] <COMMAND>",
+        "about": "How much a coding-agent session in this checkout may do unasked, read from the facts: the client's settings layers, the isolation evidence, the profile they support, the decision for one shell command, and what the permission layer actually cost",
+        "args": [
+          {
+            "name": "repo",
+            "long": "repo",
+            "positional": false,
+            "help": "Start the search for the repository root here (default: the current directory)",
+            "value_name": "PATH",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "discovery",
+            "long": "discovery",
+            "positional": false,
+            "help": "How declarative files are enumerated",
+            "value_name": "DISCOVERY",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "vcs",
+                "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+              },
+              {
+                "name": "filesystem",
+                "help": "A walk of the work tree with the same glob semantics; untracked files included"
+              }
+            ],
+            "defaults": [
+              "vcs"
+            ]
+          },
+          {
+            "name": "strict",
+            "long": "strict",
+            "positional": false,
+            "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+            "value_name": "STRICT",
+            "takes_value": false,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": [
+              "false"
+            ]
+          },
+          {
+            "name": "share",
+            "long": "share",
+            "positional": false,
+            "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+            "value_name": "DIR",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "format",
+            "long": "format",
+            "positional": false,
+            "help": "Output shape",
+            "value_name": "FORMAT",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "text",
+                "help": "Lines for a person"
+              },
+              {
+                "name": "json",
+                "help": "One JSON document, deterministic"
+              }
+            ],
+            "defaults": [
+              "text"
+            ]
+          }
+        ],
+        "examples": [],
+        "subcommands": [
+          {
+            "path": [
+              "majordomus",
+              "autonomy",
+              "status"
+            ],
+            "route": "/docs/cli/autonomy/status/",
+            "executable": true,
+            "usage": "majordomus autonomy status [OPTIONS]",
+            "about": "The settings layers, the isolation evidence and the profile they support, with the recommended permission mode and what refused every stronger profile",
+            "args": [
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "autonomy-status-json",
+                "title": "The autonomy this checkout supports, and why no more",
+                "description": "The Claude Code settings layers with their default mode, rule counts and hooks (never rule text), the isolation evidence with credential variables named and never valued, and the profile the facts support as `/profile` and `/recommended_mode`, with `/refused` naming the fact that refused every stronger profile. Reads only; always exit 0.",
+                "argv": [
+                  "autonomy",
+                  "status",
+                  "--format",
+                  "json"
+                ],
+                "command": "majordomus autonomy status --format json",
+                "setup": [],
+                "expectation": "exits 0"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "autonomy",
+              "explain"
+            ],
+            "route": "/docs/cli/autonomy/explain/",
+            "executable": true,
+            "usage": "majordomus autonomy explain [OPTIONS] <COMMAND>",
+            "about": "What a static permission rule may do with one shell command: exit 0 when it may run unasked, 10 when the client's own permission layer decides, 11 when a person approves it under every profile",
+            "args": [
+              {
+                "name": "command",
+                "positional": true,
+                "help": "The shell command, quoted as one argument",
+                "value_name": "COMMAND",
+                "takes_value": true,
+                "required": true,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "profile",
+                "long": "profile",
+                "positional": false,
+                "help": "The profile to judge it under; the checkout's own when absent",
+                "value_name": "PROFILE",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [
+                  {
+                    "name": "conservative",
+                    "help": "Reads only run unasked; Claude Code's `default` mode"
+                  },
+                  {
+                    "name": "balanced",
+                    "help": "Reads and quality operations; `acceptEdits`, the profile of an untrusted checkout"
+                  },
+                  {
+                    "name": "trusted",
+                    "help": "Also local history; `auto`, once the person accepted the checkout's trust dialog"
+                  },
+                  {
+                    "name": "isolated",
+                    "help": "`bypassPermissions` inside a verified container with no credential in reach"
+                  }
+                ],
+                "defaults": []
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "autonomy-explain-routine",
+                "title": "A repository-local quality operation runs unasked",
+                "description": "`cargo test` under the trusted profile is a repository-local quality operation: the decision is allow, exit 0.",
+                "argv": [
+                  "autonomy",
+                  "explain",
+                  "cargo test --lib",
+                  "--profile",
+                  "trusted"
+                ],
+                "command": "majordomus autonomy explain 'cargo test --lib' --profile trusted",
+                "setup": [],
+                "expectation": "exits 0"
+              },
+              {
+                "id": "autonomy-explain-boundary",
+                "title": "A history rewrite needs a person even inside isolation",
+                "description": "`git reset --hard` is destructive: under every profile, isolated included, the decision is require_approval, exit 11.",
+                "argv": [
+                  "autonomy",
+                  "explain",
+                  "git reset --hard",
+                  "--profile",
+                  "isolated"
+                ],
+                "command": "majordomus autonomy explain 'git reset --hard' --profile isolated",
+                "setup": [],
+                "expectation": "exits 11"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "autonomy",
+              "friction"
+            ],
+            "route": "/docs/cli/autonomy/friction/",
+            "executable": true,
+            "usage": "majordomus autonomy friction [OPTIONS]",
+            "about": "Every refusal the permission layer made in this repository's Claude Code transcripts, by kind, reason and tool, with the rate per thousand tool calls",
+            "args": [
+              {
+                "name": "since_days",
+                "long": "since-days",
+                "positional": false,
+                "help": "How many days back to count, 1 to 90",
+                "value_name": "SINCE_DAYS",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "7"
+                ]
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "autonomy-friction-day",
+                "title": "What the permission layer cost today",
+                "description": "Every refusal in this repository's Claude Code transcripts of the last day, by kind, by the classifier's reason and by tool, with the rate per thousand tool calls. Counts only; a machine with no transcripts answers zero calls and no rate. Always exit 0.",
+                "argv": [
+                  "autonomy",
+                  "friction",
+                  "--since-days",
+                  "1",
+                  "--format",
+                  "json"
+                ],
+                "command": "majordomus autonomy friction --since-days 1 --format json",
+                "setup": [],
+                "expectation": "exits 0"
+              }
+            ],
+            "subcommands": []
+          }
+        ]
+      },
+      {
+        "path": [
+          "majordomus",
           "pack"
         ],
         "route": "/docs/cli/pack/",
@@ -140095,6 +141394,57 @@
         },
         "input": "ArtifactsInput",
         "output": "ArtifactReport"
+      },
+      {
+        "name": "majordomus_autonomy_explain",
+        "id": "autonomy.explain",
+        "title": "Judge one shell command",
+        "description": "What a static permission rule may do with one shell command under a profile: allow (it runs unasked), defer (the client's own classifier or prompt decides) or require_approval (a person approves it under every profile), with its risk class, the reason and the table entry that matched. A compound command — chaining, a pipe, a redirection, a substitution, a leading assignment, find -exec — never earns an allow; history rewrites, destructive removal, privilege and external effects require approval even inside isolation.",
+        "kind": "query",
+        "read_only": true,
+        "effect": "read",
+        "hints": {
+          "read_only": true,
+          "destructive": false,
+          "idempotent": true,
+          "open_world": false
+        },
+        "input": "AutonomyExplainInput",
+        "output": "CommandDecision"
+      },
+      {
+        "name": "majordomus_autonomy_friction",
+        "id": "autonomy.friction",
+        "title": "What the permission layer cost",
+        "description": "Counted from Claude Code's own transcripts of this repository's checkouts (the primary and every <repository>-wt/ worktree) over the last since_days days: tool calls, and every refusal by kind (classifier_denial, hook_block, safety_check, user_rejection), by the classifier's stated reason and by tool, with the rate per thousand calls. Counts only: no command, path or payload leaves a transcript. A prompt the person approved leaves no trace and is not counted.",
+        "kind": "query",
+        "read_only": true,
+        "effect": "read",
+        "hints": {
+          "read_only": true,
+          "destructive": false,
+          "idempotent": true,
+          "open_world": false
+        },
+        "input": "AutonomyFrictionInput",
+        "output": "Friction"
+      },
+      {
+        "name": "majordomus_autonomy",
+        "id": "autonomy.status",
+        "title": "The autonomy this checkout supports",
+        "description": "The Claude Code settings layers (managed, local, project, user: presence, default mode, rule counts, hooks, never rule text), the isolation evidence (container markers, the client's sandbox, credential variables by name and credential files), the person's trust-dialog acceptance of the checkout, and the profile those facts support — conservative, balanced, trusted or isolated — with its recommended permission mode, the reason for it and the fact that refused every stronger one. isolated (bypassPermissions) needs a container marker and no credential in reach; trusted (auto) needs the person's acceptance, which the repository cannot check in; an unreadable layer or a managed default mode is a ceiling.",
+        "kind": "query",
+        "read_only": true,
+        "effect": "read",
+        "hints": {
+          "read_only": true,
+          "destructive": false,
+          "idempotent": true,
+          "open_world": false
+        },
+        "input": "Empty",
+        "output": "AutonomyStatus"
       },
       {
         "name": "majordomus_brief",
@@ -143743,6 +145093,24 @@
       },
       {
         "method": "GET",
+        "path": "/api/v1/autonomy/explain",
+        "id": "autonomy.explain",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/autonomy/friction",
+        "id": "autonomy.friction",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/autonomy",
+        "id": "autonomy.status",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
         "path": "/api/v1/brief",
         "id": "brief.session",
         "kind": "query"
@@ -145029,6 +146397,122 @@
         "case": "one-encoding",
         "cached": true,
         "route": "GET /api/v1/artifacts"
+      },
+      {
+        "key": "autonomy.explain|direct|routine",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "autonomy.explain",
+        "module": "autonomy",
+        "case": "routine",
+        "cached": false
+      },
+      {
+        "key": "autonomy.explain|direct|boundary",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "autonomy.explain",
+        "module": "autonomy",
+        "case": "boundary",
+        "cached": false
+      },
+      {
+        "key": "autonomy.explain|mcp|routine",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "autonomy.explain",
+        "module": "autonomy",
+        "case": "routine",
+        "cached": false,
+        "tool": "majordomus_autonomy_explain"
+      },
+      {
+        "key": "autonomy.explain|mcp|boundary",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "autonomy.explain",
+        "module": "autonomy",
+        "case": "boundary",
+        "cached": false,
+        "tool": "majordomus_autonomy_explain"
+      },
+      {
+        "key": "autonomy.explain|http|routine",
+        "kind": "capability",
+        "transport": "http",
+        "id": "autonomy.explain",
+        "module": "autonomy",
+        "case": "routine",
+        "cached": false,
+        "route": "GET /api/v1/autonomy/explain"
+      },
+      {
+        "key": "autonomy.explain|http|boundary",
+        "kind": "capability",
+        "transport": "http",
+        "id": "autonomy.explain",
+        "module": "autonomy",
+        "case": "boundary",
+        "cached": false,
+        "route": "GET /api/v1/autonomy/explain"
+      },
+      {
+        "key": "autonomy.friction|direct|one-day",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "autonomy.friction",
+        "module": "autonomy",
+        "case": "one-day",
+        "cached": false
+      },
+      {
+        "key": "autonomy.friction|mcp|one-day",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "autonomy.friction",
+        "module": "autonomy",
+        "case": "one-day",
+        "cached": false,
+        "tool": "majordomus_autonomy_friction"
+      },
+      {
+        "key": "autonomy.friction|http|one-day",
+        "kind": "capability",
+        "transport": "http",
+        "id": "autonomy.friction",
+        "module": "autonomy",
+        "case": "one-day",
+        "cached": false,
+        "route": "GET /api/v1/autonomy/friction"
+      },
+      {
+        "key": "autonomy.status|direct|default",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "autonomy.status",
+        "module": "autonomy",
+        "case": "default",
+        "cached": false
+      },
+      {
+        "key": "autonomy.status|mcp|default",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "autonomy.status",
+        "module": "autonomy",
+        "case": "default",
+        "cached": false,
+        "tool": "majordomus_autonomy"
+      },
+      {
+        "key": "autonomy.status|http|default",
+        "kind": "capability",
+        "transport": "http",
+        "id": "autonomy.status",
+        "module": "autonomy",
+        "case": "default",
+        "cached": false,
+        "route": "GET /api/v1/autonomy"
       },
       {
         "key": "brief.session|direct|default",
@@ -152338,6 +153822,69 @@
           "cases": 2
         },
         {
+          "subject": "autonomy.explain",
+          "module": "autonomy",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "autonomy.explain",
+          "module": "autonomy",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "autonomy.explain",
+          "module": "autonomy",
+          "transport": "http",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "autonomy.friction",
+          "module": "autonomy",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "autonomy.friction",
+          "module": "autonomy",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "autonomy.friction",
+          "module": "autonomy",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "autonomy.status",
+          "module": "autonomy",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "autonomy.status",
+          "module": "autonomy",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "autonomy.status",
+          "module": "autonomy",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
           "subject": "brief.session",
           "module": "brief",
           "transport": "direct",
@@ -156636,22 +158183,22 @@
       ],
       "tallies": {
         "direct": {
-          "required": 202,
-          "covered": 171,
+          "required": 205,
+          "covered": 174,
           "missing": 0,
           "waived": 31,
           "inapplicable": 0
         },
         "http": {
-          "required": 197,
-          "covered": 171,
+          "required": 200,
+          "covered": 174,
           "missing": 0,
           "waived": 26,
           "inapplicable": 0
         },
         "mcp": {
-          "required": 192,
-          "covered": 167,
+          "required": 195,
+          "covered": 170,
           "missing": 0,
           "waived": 25,
           "inapplicable": 0
@@ -156664,8 +158211,8 @@
           "inapplicable": 0
         },
         "total": {
-          "required": 605,
-          "covered": 523,
+          "required": 614,
+          "covered": 532,
           "missing": 0,
           "waived": 82,
           "inapplicable": 0
