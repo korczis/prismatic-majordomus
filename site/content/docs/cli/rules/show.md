@@ -1,7 +1,7 @@
 +++
 title = "majordomus rules show"
 description = "One rule: what proves it, what it depends on, and what is missing"
-weight = 181
+weight = 184
 [extra]
 route = "/docs/cli/rules/show/"
 command = "majordomus rules show"

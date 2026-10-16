@@ -13,19 +13,34 @@
 # tools named nowhere, a trust card that disagrees with its dataset, a trust card missing, and a
 # trust card reading as known when its dataset is gone,
 # the homepage's HTML, scripts or inline JSON over the declared budget, no budget declared, a
-# budget that leaves the HTML out, and a linked asset the build did not produce; and the
+# budget that leaves the HTML out, and a linked asset the build did not produce; the
 # working interfaces: an interface of the data the page does not list, one it lists that the
 # data does not give, a link to a published copy the topology does not carry, a published
-# surface the page still calls local, and a local one whose mount is not stated.
+# surface the page still calls local, and a local one whose mount is not stated; and a
+# declared capability word in the hand-written copy whose claim is absent, planned or
+# unsupported by a recorded run, a declaration naming a claim that does not exist, and a
+# draft feature named in the copy; a sentence of the homepage's template that states how the
+# work stands (case 3105 holds every form of that, and the real files); and a product view
+# whose release changes are not the newest release record's, counted by the changelog's groups.
 # Rule: project.homepage-tells-a-declared-story.
 . "$ROOT/test/lib.sh"
 CHECK="$ROOT/scripts/ci/homepage-check"
 [ -x "$CHECK" ] || { echo "    scripts/ci/homepage-check is missing or not executable"; exit 1; }
 
 F="$PWD/fixture"
+# the declared promise words: one no claim permits; the promises section below adds two that
+# name claims of its own matrix
+promises() { printf '\n[promises]\n"unattended" = ""\n' >> "$F/site/data/homepage.toml"; }
 fresh() {
   rm -rf "$F"; mkdir -p "$F/site/data/registry" "$F/site/public/plan/i0001" "$F/site/public/features/good" "$F/site/public/features/draft"
   printf 'order = ["hero", "how", "install"]\n\n[budget]\nhtml_bytes = 4000\nassets_bytes = 100\ninline_json_bytes = 20\n' > "$F/site/data/homepage.toml"
+  promises
+  # the hand-written copy, clean: no declared word, no feature that is not stable
+  printf '[hero]\ntitle = "Keep the work moving"\n' > "$F/site/data/marketing.toml"
+  printf '# a comment may say unattended: comments are not copy\n[intro]\nlead = "The repository decides what is done."\n' > "$F/site/data/manifesto.toml"
+  # the homepage's template, clean: a comment may say today, the text says nothing of the present
+  mkdir -p "$F/site/templates"
+  printf '{#- a comment may say what is shipped today: comments are not text -#}\n<section id="hero"><h1>{{ m.hero.title }}</h1></section>\n' > "$F/site/templates/index.html"
   mkdir -p "$F/site/public/js" "$F/site/public/docs/plain" "$F/site/public/docs/diagram"
   printf 'x%.0s' $(seq 1 40) > "$F/site/public/js/app.js"
   printf '<html><head><title>p</title></head><body>plain</body></html>\n' > "$F/site/public/docs/plain/index.html"
@@ -84,7 +99,7 @@ expect_finding() { # <exit> <pattern> <what>
 # --- a clean tree passes, every check reporting
 fresh
 expect_finding 0 '^OK   narrative ' "a clean tree"
-for c in substance honesty map install runtime providers trust surfaces interfaces evidence declared weight indexing; do grep -q "^OK   $c " out.txt || { echo "    a clean tree did not report $c"; cat out.txt; exit 1; }; done
+for c in substance honesty map install runtime providers trust surfaces interfaces product evidence declared promises present weight indexing; do grep -q "^OK   $c " out.txt || { echo "    a clean tree did not report $c"; cat out.txt; exit 1; }; done
 
 # --- narrative, both directions and the order
 fresh; sed -i.bak 's#<section id="how">#<section id="extra"><a href="/x/">x</a></section><section id="how">#' "$F/site/public/index.html"
@@ -153,6 +168,9 @@ faces() {
   printf '%s\n' '{"features":[{"id":"good","route":"/features/good/","status":"stable","weight":5},{"id":"draft","route":"/features/draft/","status":"draft"}],"surfaces":[{"id":"cli","title":"Command line","route":"/docs/cli/"}],"domains":[],"providers":[{"id":"one","title":"Tool One"},{"id":"two","title":"Tool Two","route":"/providers/two/"}],"evidence":{"available":false,"claims":{}}}' > "$F/site/data/registry/product.json"
   printf '%s\n' '{"surfaces":[{"id":"good","category":"interface","feature":"good","mount":"/good","visibility":"public","availability":"served-only"}]}' > "$F/site/data/generated/web.json"
   sed -i.bak 's#<section id="how">#<section id="how"><ul><li data-interface="good">Good, at <code>/good</code></li><li data-interface="cli">Command line</li></ul>#' "$F/site/public/index.html"
+  # and the hero opens the first of them, at the page about it, beside a view of it
+  sed -i.bak 's#<h1>t</h1>#<h1>t</h1><a href="/features/good/" data-cta="product" data-product="good">open</a><figure data-product-view="good"><dl><dd data-issues="READY">2</dd><dd data-issues="DONE">1</dd></dl></figure>#' "$F/site/public/index.html"
+  printf '%s\n' '{"statuses":{"issue":["READY","BLOCKED","DONE"]},"issues":[{"id":"I1","status":"READY"},{"id":"I2","status":"DONE"},{"id":"I3","status":"READY"}]}' > "$F/site/data/generated/plan.json"
 }
 fresh; faces
 expect_finding 0 '^OK   interfaces +the homepage lists the 2 interface' "an interface list that is the data's"
@@ -167,7 +185,41 @@ expect_finding 10 'its entry does not state that mount' "an interface with no ad
 fresh; faces; printf '%s\n' '{"surfaces":[{"id":"good","category":"interface","feature":"good","mount":"/good","visibility":"public","availability":"served-only"},{"id":"good-snapshot","category":"interface","feature":"good","mount":"/good","visibility":"public","availability":"published-only"}]}' > "$F/site/data/generated/web.json"
 expect_finding 10 'the publication holds good-snapshot at /good, and the homepage still describes good as running only locally' "a published surface the page calls local"
 sed -i.bak 's#Good, at <code>/good</code>#<a href="/good/" data-published="good">open the snapshot</a>, live at <code>/good</code>#' "$F/site/public/index.html"
+expect_finding 10 "the publication holds good-snapshot at /good, and the hero's call to open good does not lead there" "a published product the hero still sends to the page about it"
+sed -i.bak 's#<a href="/features/good/" data-cta="product" data-product="good">#<a href="/good/" data-cta="product" data-product="good" data-published-product="good">#' "$F/site/public/index.html"
 expect_finding 0 '1 of them held by the publication' "a published surface linked as one"
+expect_finding 0 '^OK   product +the hero opens good, the first interface the data gives, at the copy the publication holds' "a published product the hero opens"
+
+# --- product: the hero opens the first interface the data gives, once, where the data says it
+#     is, and the view beside it counts what the plan counts
+fresh; faces
+expect_finding 0 '^OK   product +the hero opens good, the first interface the data gives, at the page that says how to open it' "a hero that opens the product"
+fresh; faces; sed -i.bak 's#<a href="/features/good/" data-cta="product" data-product="good">open</a>##' "$F/site/public/index.html"
+expect_finding 10 'the hero carries 0 call\(s\) to open the product' "a hero that opens nothing"
+fresh; faces; sed -i.bak 's#data-product="good"#data-product="typed"#' "$F/site/public/index.html"
+expect_finding 10 'the hero opens typed, and the first interface the data gives is good' "a product typed into the template"
+fresh; faces; sed -i.bak 's#<a href="/features/good/" data-cta="product"#<a href="/good/" data-cta="product"#' "$F/site/public/index.html"
+expect_finding 10 'the hero opens good at /good, and no publication holds it' "a hero that sends a visitor to an address only a process answers"
+fresh; faces; sed -i.bak 's#data-product-view="good"#data-product-view="other"#' "$F/site/public/index.html"
+expect_finding 10 'the hero shows the product view\(s\) \[other\], and the product is good' "a view of something else"
+fresh; faces; sed -i.bak 's#data-issues="READY">2#data-issues="READY">7#' "$F/site/public/index.html"
+expect_finding 10 'counts the issues as \[READY 7, DONE 1\], and the plan gives \[READY 2, DONE 1\]' "a figure the plan does not give"
+# and the changes it counts are the newest release record's, group by group, in the
+# changelog's order: what landed is read from the records, never said in a sentence
+landings() {
+  printf '%s\n' '{"sections":[{"version":"2.0.0","unreleased":false,"groups":[{"kind":"feat","changes":[{},{}]},{"kind":"fix","changes":[]},{"kind":"chore","changes":[{}]}]},{"version":"1.0.0","unreleased":false,"groups":[{"kind":"feat","changes":[{}]}]}]}' > "$F/site/data/generated/changelog.json"
+  sed -i.bak 's#</dl></figure>#</dl><dl data-product-landings="2.0.0"><dd data-landings="feat">2</dd><dd data-landings="chore">1</dd></dl></figure>#' "$F/site/public/index.html"
+}
+fresh; faces; landings
+expect_finding 0 '^OK   product .*counts what the plan and the newest release record count' "a view counting what the newest release carried"
+fresh; faces; landings; sed -i.bak 's#data-landings="feat">2#data-landings="feat">5#' "$F/site/public/index.html"
+expect_finding 10 "counts v2.0.0's changes as \[feat 5, chore 1\], and the changelog gives \[feat 2, chore 1\]" "a change count the changelog does not give"
+fresh; faces; landings; sed -i.bak 's#data-product-landings="2.0.0"#data-product-landings="1.0.0"#' "$F/site/public/index.html"
+expect_finding 10 'counts the changes of v1.0.0, and the newest release record is v2.0.0' "an older release presented as the newest"
+fresh; faces; landings; sed -i.bak 's#<dl data-product-landings="2.0.0">.*</dl></figure>#</figure>#' "$F/site/public/index.html"
+expect_finding 10 'says nothing of what v2.0.0 carried' "a view silent about the release the records hold"
+fresh; sed -i.bak 's#<h1>t</h1>#<h1>t</h1><a href="/x/" data-cta="product" data-product="x">open</a>#' "$F/site/public/index.html"
+expect_finding 10 'the hero opens a product, and the data gives no interface a person opens' "a product where the data gives none"
 # the other way a publication holds a surface: the build names a snapshot of it (ADR 0141),
 # which the topology does not carry because it exists only where its producer ran
 snap() { printf '%s\n' '{"commit":"abcdef1234567890","dirty":false,"snapshots":[{"id":"good","mount":"/good"}],"release":{"version":"9.9.9","published_at":"2026-09-16T00:00:00Z"}}' > "$F/site/data/build.json"; }
@@ -176,6 +228,7 @@ expect_finding 10 'the publication holds a snapshot of good at /good, and the ho
 sed -i.bak 's#Good, at <code>/good</code>#<a href="/elsewhere/" data-published="good">open</a>, live at <code>/good</code>#' "$F/site/public/index.html"
 expect_finding 10 'the link does not lead to its mount /good/' "a snapshot link that leads somewhere else"
 fresh; faces; snap; sed -i.bak 's#Good, at <code>/good</code>#<a href="/good/" data-published="good">open the snapshot</a>, live at <code>/good</code>#' "$F/site/public/index.html"
+sed -i.bak 's#<a href="/features/good/" data-cta="product" data-product="good">#<a href="/good/" data-cta="product" data-product="good" data-published-product="good">#' "$F/site/public/index.html"
 expect_finding 0 '1 of them held by the publication' "a snapshot linked as one"
 fresh; faces; rm "$F/site/data/generated/web.json"
 expect_finding 10 'site/data/generated/web.json is missing' "an interface list with no topology to hold it to"
@@ -209,6 +262,7 @@ expect_finding 12 'web.json is missing' "a topology that cannot be read"
 domains() { # the model shows domain alpha, whose one member is the stable feature `good`
   printf '%s\n' '{"features":[{"id":"good","route":"/features/good/","status":"stable"},{"id":"draft","route":"/features/draft/","status":"draft"}],"domains":[{"id":"alpha","route":"/domains/alpha/","status":"stable","features":[{"id":"good","route":"/features/good/"}]},{"id":"empty","route":"/domains/empty/","status":"stable","features":[]}],"providers":[{"id":"one","title":"Tool One"},{"id":"two","title":"Tool Two","route":"/providers/two/"}],"evidence":{"available":false,"claims":{}}}' > "$F/site/data/registry/product.json"
   printf 'order = ["hero", "how", "install"]\nproblems = ["alpha"]\n\n[budget]\nhtml_bytes = 4000\nassets_bytes = 100\ninline_json_bytes = 20\n' > "$F/site/data/homepage.toml"
+  promises
   sed -i.bak 's#<section id="how">#<section id="how"><a href="\#domain-alpha" data-problem="alpha">p</a><ol><li id="domain-alpha" data-domain="alpha"><a href="/features/good/">good</a><a href="/domains/alpha/">alpha</a></li></ol>#' "$F/site/public/index.html"
 }
 fresh; domains
@@ -223,4 +277,50 @@ fresh; sed -i.bak 's#"domains":\[\],##' "$F/site/data/registry/product.json"
 expect_finding 10 'carries no domains key' "a model with no domains key is not a model with no domains"
 fresh; domains; printf 'order = ["hero", "how", "install"]\nproblems = ["empty"]\n\n[budget]\nhtml_bytes = 4000\nassets_bytes = 100\ninline_json_bytes = 20\n' > "$F/site/data/homepage.toml"
 expect_finding 10 "problem 'empty', which is not a domain the map shows" "a problem whose domain is not shown"
+
+# --- promises: a declared word is held to its claim, and a feature that is not stable is not named
+# Run with --only promises: the claims these mutations add would move the proof band's figure,
+# which is the declared check's business, not this one's.
+promise_finding() { # <exit> <pattern> <what>
+  rc=0; MJ_ROOT="$F" "$CHECK" --only promises > out.txt 2>&1 || rc=$?
+  [ "$rc" = "$1" ] || { echo "    $3: exit $rc, expected $1"; cat out.txt; exit 1; }
+  grep -qE "$2" out.txt || { echo "    $3: no finding matching '$2'"; cat out.txt; exit 1; }
+}
+claims() { # <status of c-ok> <supported true|false>
+  printf '{"status_order":["guaranteed","planned"],"claims":[{"id":"c-ok","status":"%s"},{"id":"c-planned","status":"planned"}]}\n' "$1" > "$F/site/data/generated/capabilities.json"
+  printf '"self-healing" = "c-ok"\n"autonomous" = "c-planned"\n' >> "$F/site/data/homepage.toml"
+  sed -i.bak "s#\"evidence\":{\"available\":false,\"claims\":{}}#\"evidence\":{\"available\":true,\"claims\":{\"c-ok\":{\"supported\":$2}}}#" "$F/site/data/registry/product.json"
+}
+copy() { printf '[hero]\ntitle = "x"\nlead = "%s"\n' "$1" > "$F/site/data/marketing.toml"; }
+fresh; claims guaranteed true
+promise_finding 0 '^OK   promises .*self-healing \(c-ok: permitted\)' "a clean copy with every declaration resolving"
+fresh; claims guaranteed true; copy "It works Autonomous of you."
+promise_finding 10 "site/data/marketing.toml:3 promises 'autonomous': claim 'c-planned' is planned" "a word whose claim is planned"
+fresh; claims guaranteed true; copy "Unattended runs, all night."
+promise_finding 10 "site/data/marketing.toml:3 promises 'unattended': no claim permits it" "a word no claim permits"
+fresh; claims guaranteed true; copy "A self-healing queue."
+promise_finding 0 '^OK   promises ' "a word whose claim is guaranteed and supported by a recorded run"
+fresh; claims guaranteed false; copy "A self-healing queue."
+promise_finding 10 "promises 'self-healing': claim 'c-ok' is guaranteed and no recorded run supports it" "a guaranteed claim no run supports"
+fresh; claims planned true; copy "A self-healing queue."
+promise_finding 10 "promises 'self-healing': claim 'c-ok' is planned" "the same word once its claim is only planned"
+fresh; claims guaranteed true; printf '"zero-touch" = "c-missing"\n' >> "$F/site/data/homepage.toml"
+promise_finding 10 "\[promises\] 'zero-touch' is permitted by claim 'c-missing', which docs/CLAIMS.yaml does not hold" "a declaration naming a claim that does not exist"
+fresh; claims guaranteed true; printf 'order = ["hero", "how", "install"]\n' > "$F/site/data/homepage.toml"
+promise_finding 10 'declares no \[promises\]' "no declaration at all"
+fresh; claims guaranteed true
+sed -i.bak 's#{"id":"draft","route":"/features/draft/","status":"draft"}#{"id":"draft","route":"/features/draft/","status":"draft","short_title":"Deployments"}#' "$F/site/data/registry/product.json"
+printf '[intro]\nlead = "Deployments are one object."\n' > "$F/site/data/manifesto.toml"
+promise_finding 10 "site/data/manifesto.toml:2 names feature 'draft' \('Deployments'\), which the product model calls draft" "a draft feature named in the copy"
+# --- present: the template's text states no present it does not read (case 3105 holds the rest)
+fresh; printf '<p>Milestones under way</p>\n' >> "$F/site/templates/index.html"
+expect_finding 10 "present +site/templates/index.html:3 states the present \('under way'\)" "a template sentence stating how the work stands"
+
+# a copy file that is missing is a finding of promises alone: every other check still runs, and a
+# caller asking --only for another check is not stopped (case 544 builds a tree without them)
+fresh; rm "$F/site/data/marketing.toml"
+expect_finding 10 'promises +site/data/marketing.toml cannot be read as TOML' "a missing copy file"
+grep -q '^OK   narrative ' out.txt || { echo "    a missing copy file stopped the other checks"; cat out.txt; exit 1; }
+rc=0; MJ_ROOT="$F" "$CHECK" --only narrative > out.txt 2>&1 || rc=$?
+[ "$rc" = 0 ] || { echo "    --only narrative exited $rc when a copy file was missing"; cat out.txt; exit 1; }
 exit 0

@@ -293,7 +293,7 @@ awk '/^shapes:/{s=1} s && /^    gates: /{print "    gates: [release-check, no-su
 grep -q 'no-such-gate' shape-gate.yaml || { echo "    the shape mutation did not take"; exit 1; }
 expect_exit 10 "$PLAN" --model shape-gate.yaml --check
 expect_grep 'shape release-record names a gate that does not exist: no-such-gate'
-awk '/^shapes:/{s=1} s && /^    records: /{s=0; next} {print}' "$MODEL" > shape-norec.yaml
+awk '/^shapes:/{s=1} /^classes:/{s=0} s && /^    records: /{next} {print}' "$MODEL" > shape-norec.yaml
 grep -q '^    records: ' shape-norec.yaml && { echo "    the records mutation did not take"; exit 1; }
 expect_exit 10 "$PLAN" --model shape-norec.yaml --check
 expect_grep 'shape release-record names no record pattern'
@@ -302,17 +302,63 @@ expect_exit 10 "$PLAN" --model shape-others.yaml --check
 expect_grep 'others must be derived'
 
 # the cases the shape keeps: every case that names the release record or reads what is offered
-# from it is in release-record-cases, and every case that gate names exists. Read from the
-# model, so the list cannot fall behind the cases silently. This case names those paths too,
-# as fixtures of the planner it is about, and is the one left out of the grep.
-runs="$(awk '/^  - id: release-record-cases$/{f=1} f && /^    runs: /{sub(/^    runs: /, ""); print; exit}' "$MODEL")"
-case "$runs" in *'test/run.sh --no-skips '*) ;; *) echo "    release-record-cases does not run named cases with --no-skips: $runs"; exit 1 ;; esac
+# from it is in release-record-cases, and every case that gate names exists. Which cases
+# those are is defined once, in scripts/ci/release-record-cases-check, the structure gate
+# that asks it on every change to a case (I2716); this case asks the same script about this
+# tree, so the definition has one home. This case names those paths too, as fixtures of the
+# planner it is about, and the script exempts it by name.
+expect_exit 0 "$ROOT/scripts/ci/release-record-cases-check"
+expect_grep 'case\(s\) name the release record, each run by release-record-cases'
+
+# --- the plan-record shape (I2662): a plan record and its projections plan the always gates
+#     and the shape's own, never the union. The change is #1151's (I0806 recorded done), path
+#     for path; with one Rust file, or one authored document, it is planned exactly as today.
+cat > rec1151.txt <<'L'
+.ai/repo/project/issues/I0806.yaml
+docs/PAGES_STATUS.md
+docs/PLAN_STATUS.md
+docs/generated/artifacts.json
+docs/generated/artifacts.md
+docs/generated/artifacts.yaml
+docs/generated/graph.json
+site/content/docs/pages-status.md
+site/data/generated/plan.json
+site/data/generated/roadmap.json
+site/data/generated/source.json
+site/data/registry/registry.json
+L
+p="$(rplan < rec1151.txt)"
+[ "$(printf '%s' "$p" | jq -r '.shape.id // ""')" = plan-record ] || { printf '%s' "$p" | jq -r .reason; echo "    #1151's change is not of the plan-record shape"; exit 1; }
+[ "$(printf '%s' "$p" | jq -r '.shape.derived')" = 11 ] || { echo "    the shape did not count #1151's 11 derived files: $(printf '%s' "$p" | jq -c .shape)"; exit 1; }
+s="$(printf '%s' "$p" | jq -r '.selected | join(" ")')"
+pr_gates="$(awk '/^  - id: plan-record$/{f=1} f && /^    gates: /{sub(/^    gates: \[/, ""); sub(/\]$/, ""); gsub(/, /, " "); print; exit}' "$MODEL")"
+[ -n "$pr_gates" ] || { echo "    the model's plan-record shape names no gate"; exit 1; }
+for g in $always $pr_gates; do has "$s" "$g" || { echo "    the plan-record plan lacks $g: $s"; exit 1; }; done
+for g in $s; do has "$always_w $pr_gates" "$g" || { echo "    the plan-record plan selected $g, which neither runs always nor belongs to the shape"; exit 1; }; done
+for g in shell-suite site-probe ui-audit interaction-probe rust-check; do lacks "$s" "$g" || { echo "    the plan-record plan selected $g: $s"; exit 1; }; done
+u="$(as_today < rec1151.txt)"; has "$u" shell-suite || { echo "    the mutation is vacuous: without the shape #1151 did not plan the suite: $u"; exit 1; }
+for extra in apps/majordomus-cli/src/plan.rs docs/DESIGN.md; do
+  { cat rec1151.txt; echo "$extra"; } > plus.txt
+  p="$(rplan < plus.txt)"
+  [ "$(printf '%s' "$p" | jq -r '.shape')" = null ] || { echo "    #1151 plus $extra was narrowed by a shape"; exit 1; }
+  s="$(printf '%s' "$p" | jq -r '.selected | join(" ")')"
+  [ "$s" = "$(as_today < plus.txt)" ] || { echo "    #1151 plus $extra is not planned as without the shape"; exit 1; }
+  has "$s" shell-suite || { echo "    #1151 plus $extra did not plan the suite: $s"; exit 1; }
+done
+{ cat rec1151.txt; echo apps/majordomus-cli/src/plan.rs; } > plus.txt
+has "$(rplan < plus.txt | jq -r '.selected | join(" ")')" rust-check || { echo "    a record with a Rust file did not plan rust-check"; exit 1; }
+
+# the cases the plan-record shape keeps: every case that names a plan record path or
+# PLAN_STATUS, or runs a `plan` subcommand, is in plan-record-cases, and every case that gate
+# names exists. This case names those paths as fixtures and is left out of the grep.
+runs="$(awk '/^  - id: plan-record-cases$/{f=1} f && /^    runs: /{sub(/^    runs: /, ""); print; exit}' "$MODEL")"
+case "$runs" in *'test/run.sh --no-skips '*) ;; *) echo "    plan-record-cases does not run named cases with --no-skips: $runs"; exit 1 ;; esac
 named=" ${runs#*--no-skips } "
-want="$(grep -l -E '\.ai/repo/releases|release-record|site/static/releases|ci/release-check|\$ROOT/(docs/INSTALL\.md|site/data/registry/distribution\.json|docs/generated/changelog)' "$ROOT"/test/cases/*.sh \
+want="$(grep -l -E '\.ai/repo/project/(issues|milestones)|PLAN_STATUS|majordomus"? plan |mj_plan|"\$MJ" plan |\bplan (validate|status|show|done|evidence|list|next|waves|ready|blocked|roadmap|verify|start|body|graph|rgraph)\b' "$ROOT"/test/cases/*.sh \
   | sed 's#.*/##; s#\.sh$##' | grep -vx 94_ci_plan)"
-[ -n "$want" ] || { echo "    no case names a release-record path; the assertion is vacuous"; exit 1; }
-for c in $want; do has "$named" "$c" || { echo "    $c names the release record and release-record-cases does not run it"; exit 1; }; done
-for c in $named; do [ -f "$ROOT/test/cases/$c.sh" ] || { echo "    release-record-cases names $c, which is not a case"; exit 1; }; done
+[ -n "$want" ] || { echo "    no case names a plan record; the assertion is vacuous"; exit 1; }
+for c in $want; do has "$named" "$c" || { echo "    $c reads the plan and plan-record-cases does not run it"; exit 1; }; done
+for c in $named; do [ -f "$ROOT/test/cases/$c.sh" ] || { echo "    plan-record-cases names $c, which is not a case"; exit 1; }; done
 
 # --- the verdict: green only when every selected gate's job succeeded; red on a failure, a
 #     cancellation, a selected gate whose job was skipped, a failed plan, or an empty selection

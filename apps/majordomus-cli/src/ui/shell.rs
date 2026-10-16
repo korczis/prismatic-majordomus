@@ -344,7 +344,8 @@ mod tests {
                 "version": "0.20.0",
                 "published_at": "2026-10-10T16:38:00Z",
                 "commit": "c8f0e4c50123456789",
-            }})),
+            }})
+            .into()),
             took: std::time::Duration::ZERO,
             standing: crate::ui::source::Standing::NOW,
         };

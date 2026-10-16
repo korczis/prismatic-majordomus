@@ -1179,3 +1179,108 @@ fn an_issue_is_inferred_only_from_an_exact_id_component_and_create_names_it_that
     assert_eq!(issue_of("feature/I00420-not-it"), Value::Null);
     assert_eq!(issue_of("feature/live-page"), Value::Null);
 }
+
+// ------------------------------------------------- uncommitted work nobody holds (I1995)
+
+/// A linked work tree whose staged work nothing holds is named, one whose work an active task
+/// holds is listed and held, a clean one is not listed, and the reading writes nothing: the
+/// index of the staged work tree is byte-identical after the command line and the registry
+/// have both read it, and the two give one answer.
+#[test]
+fn uncommitted_work_is_named_with_what_holds_it_and_reading_it_writes_nothing() {
+    let f = Fixture::new();
+    let root = f.root();
+    for b in ["feature/left", "feature/held", "feature/clean"] {
+        ok(&root, &["worktree", "create", b]);
+    }
+    let left = f.container().join("feature/left");
+    std::fs::write(left.join("a.txt"), "a\n").unwrap();
+    git(&left, &["add", "a.txt"]);
+    let held = f.container().join("feature/held");
+    std::fs::write(held.join("b.txt"), "b\n").unwrap();
+    std::fs::create_dir_all(held.join(".ai/local/state")).unwrap();
+    std::fs::write(
+        held.join(".ai/local/state/current.yaml"),
+        "id: t-20260101000000-beef\noutcome: active\n",
+    )
+    .unwrap();
+    // years old, so any threshold calls it old
+    for p in [left.join("a.txt"), held.join("b.txt")] {
+        let out = std::process::Command::new("touch")
+            .args(["-t", "202001010000"])
+            .arg(&p)
+            .output()
+            .expect("run touch");
+        assert!(out.status.success());
+    }
+    let index = PathBuf::from(git(
+        &left,
+        &["rev-parse", "--path-format=absolute", "--git-path", "index"],
+    ));
+    let before = std::fs::read(&index).unwrap();
+
+    let cli = json(&root, &["worktree", "uncommitted", "--older-than", "1h"]);
+    let app = common::load_app(&f);
+    let registry = app
+        .context
+        .execute(
+            "worktree.uncommitted",
+            serde_json::json!({ "older_than": "1h" }),
+        )
+        .expect("the capability answers");
+    let rows = |v: &Value| -> Vec<(String, String, u64)> {
+        v["worktrees"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|w| {
+                (
+                    w["label"].as_str().unwrap().to_string(),
+                    w["standing"].as_str().unwrap().to_string(),
+                    w["paths"].as_u64().unwrap(),
+                )
+            })
+            .collect()
+    };
+    assert_eq!(rows(&cli), rows(&registry), "one answer on two surfaces");
+    assert_eq!(cli["tallies"], registry["tallies"]);
+    assert_eq!(cli["threshold"]["source"], "older_than");
+
+    let row = |label: &str| {
+        cli["worktrees"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|w| w["label"] == label)
+            .cloned()
+            .unwrap_or_else(|| panic!("{label} is listed: {cli:#}"))
+    };
+    let l = row("feature/left");
+    assert_eq!(l["standing"], "abandoned", "{l:#}");
+    assert_eq!(
+        (l["paths"].as_u64(), l["work"]["staged"].as_u64()),
+        (Some(1), Some(1))
+    );
+    assert!(l["age_seconds"].as_u64().unwrap() > 3600, "{l:#}");
+    assert!(l["remedy"]
+        .as_str()
+        .unwrap()
+        .contains("HEAD:refs/heads/rescue/feature-left-"));
+    let h = row("feature/held");
+    assert_eq!(h["standing"], "held", "{h:#}");
+    assert_eq!(h["task"], "t-20260101000000-beef");
+    assert!(
+        rows(&cli)
+            .iter()
+            .all(|(label, _, _)| label != "feature/clean"),
+        "a clean work tree is not listed"
+    );
+    assert_eq!(cli["tallies"]["abandoned"], 1);
+    assert_eq!(cli["tallies"]["held"], 1);
+
+    assert_eq!(
+        std::fs::read(&index).unwrap(),
+        before,
+        "the index was written"
+    );
+}
