@@ -7,7 +7,7 @@ a table the page already renders. What makes them interactive, addressable and l
 derived at build time from what the repository already knows. The decision is
 [ADR 0152](../.ai/repo/adrs/0152-a-diagram-and-a-chart-on-the-site-are-one-viewer-each-over-w.md);
 the rule that a diagram is drawn and never typed is
-[`project.a-diagram-is-drawn-not-typed`](../.ai/repo/rules/project/a-diagram-is-drawn-not-typed.v1.md).
+[`project.a-diagram-is-drawn-not-typed`](../.ai/repo/rules/project/a-diagram-is-drawn-not-typed.v2.md).
 
 ## The path of one diagram
 

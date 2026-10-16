@@ -603,7 +603,8 @@ fn server_status(ctx: &Context, input: ServerStatusInput) -> Result<ServerStatus
         git,
         desired: Desired {
             host: desired_host(linked),
-            port: crate::cli::DEFAULT_PORT,
+            // the port this checkout asks for on every start (I2702)
+            port: crate::cli::checkout_port(&root),
             version: crate::VERSION.into(),
             executable: lease::executable_identity(),
         },

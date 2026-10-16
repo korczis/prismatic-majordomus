@@ -274,39 +274,59 @@
     });
     return out;
   }
-  function mermaids() {
-    var blocks = body.querySelectorAll('pre.mermaid-src');
+  /* A diagram is Mermaid source in a pre.mermaid-src, from a document in the reader or written
+     into a chapter (project.a-diagram-is-drawn-not-typed@2). It is drawn in the page's own colours
+     and drawn again when the theme changes, so it reads in both; its source stays beside it. */
+  function mermaidInit() {
+    window.mermaid.initialize({
+      startOnLoad: false, securityLevel: 'strict', theme: 'base',
+      fontFamily: cssv('--body') || 'sans-serif',
+      themeVariables: {
+        darkMode: dark(), background: paint('--panel'), primaryColor: paint('--tint') || paint('--code-bg'),
+        primaryTextColor: paint('--fg'), primaryBorderColor: paint('--s1'), lineColor: paint('--muted'),
+        secondaryColor: paint('--code-bg'), tertiaryColor: paint('--panel'), textColor: paint('--fg'),
+        mainBkg: paint('--tint') || paint('--code-bg'), nodeBorder: paint('--s1'), clusterBkg: paint('--panel'),
+        clusterBorder: paint('--line'), edgeLabelBackground: paint('--panel'), actorBkg: paint('--tint') || paint('--code-bg'),
+        actorBorder: paint('--s1'), actorTextColor: paint('--fg'), signalColor: paint('--fg'), signalTextColor: paint('--fg'),
+        noteBkgColor: paint('--tldr-bg'), noteTextColor: paint('--fg'), noteBorderColor: paint('--tldr-line'), fontSize: '14px'
+      }
+    });
+  }
+  var drawn = 0;
+  function mermaidDraw(fig) {
+    var src = fig.getAttribute('data-src');
+    window.mermaid.render('mmd-' + Date.now() + '-' + (drawn++), src).then(function (r) {
+      clear(fig);
+      fig.insertAdjacentHTML('afterbegin', r.svg);
+      var det = el('details', { 'class': 'md-src' }, fig);
+      el('summary', null, det, 'Zdroj diagramu');
+      el('pre', { 'class': 'md-pre' }, det, src);
+    }, function () {
+      clear(fig);
+      el('pre', { 'class': 'md-pre' }, fig, src);
+    });
+  }
+  function mermaids(root) {
+    var blocks = (root || body).querySelectorAll('pre.mermaid-src');
     if (!blocks.length) return;
     load('mermaid').then(function () {
-      var m = window.mermaid;
-      m.initialize({
-        startOnLoad: false, securityLevel: 'strict', theme: 'base',
-        fontFamily: cssv('--body') || 'sans-serif',
-        themeVariables: {
-          darkMode: dark(), background: paint('--panel'), primaryColor: paint('--tint') || paint('--code-bg'),
-          primaryTextColor: paint('--fg'), primaryBorderColor: paint('--s1'), lineColor: paint('--muted'),
-          secondaryColor: paint('--code-bg'), tertiaryColor: paint('--panel'), textColor: paint('--fg'),
-          mainBkg: paint('--tint') || paint('--code-bg'), nodeBorder: paint('--s1'), clusterBkg: paint('--panel'),
-          clusterBorder: paint('--line'), edgeLabelBackground: paint('--panel'), actorBkg: paint('--tint') || paint('--code-bg'),
-          actorBorder: paint('--s1'), actorTextColor: paint('--fg'), signalColor: paint('--fg'), signalTextColor: paint('--fg'),
-          noteBkgColor: paint('--tldr-bg'), noteTextColor: paint('--fg'), noteBorderColor: paint('--tldr-line'), fontSize: '14px'
-        }
-      });
-      Array.prototype.forEach.call(blocks, function (pre, i) {
+      mermaidInit();
+      Array.prototype.forEach.call(blocks, function (pre) {
         if (!pre.parentNode) return;
-        var src = pre.textContent, fig = el('figure', { 'class': 'md-mermaid' });
+        var fig = el('figure', { 'class': 'md-mermaid', 'data-src': pre.textContent });
         pre.parentNode.replaceChild(fig, pre);
-        m.render('mmd-' + Date.now() + '-' + i, src).then(function (r) {
-          fig.innerHTML = r.svg;
-          var det = el('details', { 'class': 'md-src' }, fig);
-          el('summary', null, det, 'Zdroj diagramu');
-          el('pre', { 'class': 'md-pre' }, det, src);
-        }, function () {
-          el('pre', { 'class': 'md-pre' }, fig, src);
-        });
+        mermaidDraw(fig);
       });
     }, function () { /* the source stays readable */ });
   }
+  function mermaidsAgain() {
+    var figs = document.querySelectorAll('figure.md-mermaid[data-src]');
+    if (!figs.length || !window.mermaid) return;
+    mermaidInit();
+    Array.prototype.forEach.call(figs, mermaidDraw);
+  }
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', mermaidsAgain);
+  new MutationObserver(mermaidsAgain).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
   function sideBlock(title, items, more) {
     if (!items.length) return;
     var box = el('div', { 'class': 'rd-box' }, side);
@@ -540,4 +560,5 @@
 
   kindButtons();
   renderList();
+  mermaids(document);
 })();
