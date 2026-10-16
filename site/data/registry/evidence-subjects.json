@@ -21852,6 +21852,37 @@
       "mechanisms": [],
       "findings": []
     },
+    "rule:majordomus.knowledge-graph": {
+      "kind": "rule",
+      "id": "majordomus.knowledge-graph",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:3075_knowledge_validate_judges_the_graph",
+          "path": "test/cases/3075_knowledge_validate_judges_the_graph.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/3075_knowledge_validate_judges_the_graph.sh",
+            ".ai/repo/rules/vendor/majordomus/rules/knowledge-graph.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:74_knowledge_edges",
+          "path": "test/cases/74_knowledge_edges.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/74_knowledge_edges.sh",
+            ".ai/repo/rules/vendor/majordomus/rules/knowledge-graph.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "rule:majordomus.knowledge-integrity": {
       "kind": "rule",
       "id": "majordomus.knowledge-integrity",
@@ -27819,7 +27850,6 @@
     "suite:73_knowledge_nodes",
     "suite:743_release_version_answers_with_the_contract",
     "suite:744_an_installed_tool_finds_its_own_executable",
-    "suite:74_knowledge_edges",
     "suite:75_knowledge_mutation",
     "suite:760_the_cockpit_route_table_is_what_it_serves",
     "suite:763_a_tag_older_than_the_record_practice_is_a_note",

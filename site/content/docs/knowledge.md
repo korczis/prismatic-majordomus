@@ -239,6 +239,7 @@ target — never staged, and prints the path written on the last line, the way `
 | `knowledge promote <id> [--class <c>] < evidence` | the candidate, stdin, the open episode | `curated/<id>.md`; removes the candidate; `knowledge.promoted` | `0`, `2` usage, `10` empty or transcript stdin, status not candidate, class outside the enumeration, `12` no such candidate, `13` write failure |
 | `knowledge reject <id> --reason "<why>" [--by <id>]` | the candidate, both directories for `--by` | the candidate rewritten in place; `knowledge.rejected` | `0`, `2` usage or empty reason, `10` status not candidate or `--by` names no record, `12` no such candidate, `13` write failure |
 | `knowledge check [--json]` | both record directories, `share/allow/knowledge.txt`, the sessions store, the ledger, git | nothing | `0` no failure, `2` usage, `10` any failure |
+| `knowledge validate [--json]` | the same nodes and edges `nodes` compiles, and the executable's index for the schema | nothing | `0` no owned failure, `2` usage, `10` an owned reference is broken |
 | `knowledge sources`, `nodes`, `edges` | unchanged; `edges --type derived_from` now lists a record's provenance edges | nothing | unchanged |
 
 </div>
@@ -272,6 +273,7 @@ ADR 0052 met the same constraint and answered it the same way.
 | Rule | Class | Validator | Enforced by | Finding |
 |---|---|---|---|---|
 | `majordomus.knowledge-observed` | blocking | `mj_validate_knowledge_lifecycle` | `doctor`, `watch` | the newest `session.closed` names an episode no `knowledge.derived` names and is older than `session.freshness.stale_minutes`; or the switch is on and the lifecycle source never calls the deriver |
+| `majordomus.knowledge-graph` | advisory | `mj_validate_knowledge_graph` | `doctor`, `watch` | a duplicate node id, an edge with a missing end or without provenance, a declared path or a tracked source that no longer exists; and whether the graph can be built in this checkout at all |
 | `majordomus.knowledge-integrity` | blocking | `mj_validate_knowledge_integrity` | `check`, `doctor` | a record that is not schema-valid, uniquely identified, evidenced when verified, fully resolved, correctly superseded, or that is a candidate claiming `verified`, or that carries a conversation |
 | `majordomus.candidates-reviewed` | advisory | `mj_validate_knowledge_accumulation` | `doctor` | more candidates than the cap, a candidate whose review age exceeds the policy age, or a candidate version control does not track |
 
@@ -292,6 +294,21 @@ entry — the oldest `knowledge.derived` line naming the file, then the commit t
 then the record's `date` — and the finding says which source it used. It is dispatched from
 `doctor` only: under `watch` an advisory finding is drift, and a full review queue must not
 turn `watch` red in a hook.
+
+The graph rule judges what the compiler built rather than what a record asserts, and it has
+one judge: every finding is one the compiler emits while it extracts, and `knowledge
+validate`, `doctor` and `watch` only classify it. Which break fails is decided by where the
+relationship was stated. One Majordomus derives from a structured field — an issue's
+`milestone` and `depends_on`, a claim's `source`, `implementation` and `test`, a rule's
+dependency — is owned, and a broken one fails the command (exit 10), warns under `doctor`,
+where the rule is advisory, and is drift under `watch`. A link an author wrote in prose may
+point outside the repository on purpose, so a target it names that resolves to nothing is
+reported and never fails; `doctor` and `watch` summarise those in one line. A tracked source
+the working tree no longer holds is reported as `source_missing` — a deletion in progress —
+and is drift under `watch`. No generated graph is stored (I0810 was cancelled because none
+exists), so there is no index to go stale and no stored hash to mismatch; the command says
+so on every run, and `doctor` answers whether the graph can be built here by compiling it
+into a temporary file it removes. Nothing is rebuilt or repaired.
 
 Each rule names its tests and its claims; `scripts/ci/rule-proof-check` and
 `scripts/ci/claim-proof-check` refuse a rule whose proof is missing and a claim whose test

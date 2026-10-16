@@ -6387,7 +6387,7 @@
       ],
       "scope": [
         "lib/knowledge.sh",
-        "share/doctrines.yaml",
+        "share/standard/majordomus/rules/knowledge-graph.v1.md",
         "lib/doctor.sh",
         "lib/watch.sh",
         "test/cases"
@@ -6408,7 +6408,8 @@
         "doctor reports whether the index is buildable here without leaving one behind"
       ],
       "validation": [
-        "bash test/run.sh 70_knowledge_validate",
+        "bash test/run.sh 3075_knowledge_validate_judges_the_graph",
+        "bin/majordomus knowledge validate",
         "bin/majordomus doctor",
         "bin/majordomus watch"
       ],

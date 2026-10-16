@@ -1,7 +1,7 @@
 +++
 title = "Whether the work is done is answered by measurement, never by the worker's recollection"
 description = "Whether the work is done is answered by measurement, never by the worker's recollection"
-weight = 63
+weight = 64
 [extra]
 kind = "rule"
 slug = "project-a-closing-question-is-answered-by-measurement-1"

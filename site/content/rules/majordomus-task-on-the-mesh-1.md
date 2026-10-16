@@ -1,7 +1,7 @@
 +++
 title = "A task on a repository whose mesh is enabled works on the mesh"
 description = "A task on a repository whose mesh is enabled works on the mesh"
-weight = 57
+weight = 58
 [extra]
 kind = "rule"
 slug = "majordomus-task-on-the-mesh-1"
