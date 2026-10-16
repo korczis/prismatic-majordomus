@@ -37918,6 +37918,43 @@
         }
       },
       {
+        "id": "majordomus://issue/I2787",
+        "kind": "issue",
+        "label": "I2787",
+        "summary": "A build never lets the shared build directory's crate artifacts fill the disk",
+        "route": "/cockpit/objects/issue/i2787",
+        "source": ".ai/repo/project/issues/I2787.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A stale crate artifact in debug/deps older than the declared age, held open by no process, is removed before a bounded build and named on stderr",
+            "An artifact a running process holds open, a recent one, and a dependency crate's artifact all survive",
+            "Free space stays above the declared floor through a day of concurrent sessions on the shared machine"
+          ],
+          "created_at": "2026-10-17",
+          "current_state": "lib/rust_bin.sh refuses a build below a free-space floor; I2713 (#1279) prunes idle incremental sessions; nothing prunes debug/deps.",
+          "depends_on": [
+            "I2713"
+          ],
+          "evidence_required": [
+            "case_deps_pruned"
+          ],
+          "milestone": "development-runtime",
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "lib/rust_bin.sh",
+            "test/cases",
+            "docs/WORKTREES.md"
+          ],
+          "slug": "build-dir-deps-are-pruned",
+          "updated_at": "2026-10-17",
+          "validation": [
+            "majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "label": "a-commit-stood-behind-a-build-lock",
@@ -81258,6 +81295,21 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2787",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2787",
+        "target": "majordomus://issue/I2713",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2787",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -91009,8 +91061,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2870,
-      "edges": 6291,
+      "nodes": 2871,
+      "edges": 6294,
       "acyclic": false,
       "truncated": false
     }
