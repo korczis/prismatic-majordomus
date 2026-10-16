@@ -6,23 +6,23 @@
     "version": "0.27.0"
   },
   "registry": {
-    "fingerprint": "039c3c240f2a65253fe430b394e20fc2d0230868bc9dc775a9fdc93d3bfd479f",
+    "fingerprint": "5067e36a39eba0a0f8b135464399b4d2d67e7cbe765c6ebb7f599845af7dca61",
     "summary": {
-      "total": 2446,
+      "total": 2447,
       "builtin": 202,
-      "declarative": 2244,
+      "declarative": 2245,
       "by_kind": {
         "command": 31,
         "query": 171,
-        "resource": 2244
+        "resource": 2245
       },
       "by_stability": {
         "behaviorally_verified": 141,
         "experimental": 52,
-        "implemented": 2253
+        "implemented": 2254
       },
       "mcp_tools": 192,
-      "mcp_resources": 2299,
+      "mcp_resources": 2300,
       "http_routes": 197,
       "cli_commands": 108,
       "modules": 92,
@@ -82938,7 +82938,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 394,
+        "capabilities": 395,
         "capability_ids": []
       },
       {
@@ -83600,7 +83600,7 @@
     ]
   },
   "index": {
-    "fingerprint": "d145fb9a0df194ae88563f0ac078bcdc65ec3e4202c2c15329351b61177ace6a",
+    "fingerprint": "5780ece9feb15e77853784521424e756f65962d83bb80669483c44eb55503208",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -83640,7 +83640,7 @@
       "gap": 3,
       "implementation": 52,
       "intent": 4,
-      "issue": 394,
+      "issue": 395,
       "knowledge": 4,
       "mesh-declaration": 1,
       "milestone": 38,
@@ -89767,7 +89767,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 158951
+        "bytes": 159130
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -97550,6 +97550,17 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 2836
+      },
+      {
+        "uri": "majordomus://issue/I2787",
+        "kind": "issue",
+        "identity": "I2787",
+        "title": "A build never lets the shared build directory's crate artifacts fill the disk",
+        "description": "Bound the shared build directory's debug/deps the way I2713 bounds debug/incremental: before a bounded build starts, remove the crate's own test binaries and libraries (majordomus_cli-*, libmajordomus_cli-*, and each tests/*.rs binary) of generations no live tree is building and older than a declared age, never a file a running process holds open, never another crate's dependency artifacts, and say on stderr what was reclaimed.",
+        "path": ".ai/repo/project/issues/I2787.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2258
       },
       {
         "uri": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
@@ -107869,7 +107880,7 @@
       "identity": [
         "id"
       ],
-      "objects": 394
+      "objects": 395
     },
     {
       "name": "knowledge",
@@ -152065,6 +152076,14 @@
         "route": "GET /ui/command"
       },
       {
+        "key": "system.http.ui.idd",
+        "kind": "page",
+        "transport": "http",
+        "module": "system",
+        "cached": true,
+        "route": "GET /ui/idd"
+      },
+      {
         "key": "system.http.ui.roadmap",
         "kind": "page",
         "transport": "http",
@@ -152183,6 +152202,14 @@
         "module": "system",
         "cached": true,
         "route": "GET /ui/command"
+      },
+      {
+        "key": "system.http.live.ui.idd",
+        "kind": "page",
+        "transport": "http",
+        "module": "system",
+        "cached": true,
+        "route": "GET /ui/idd"
       },
       {
         "key": "system.http.live.ui.roadmap",
