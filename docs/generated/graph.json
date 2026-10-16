@@ -37918,6 +37918,49 @@
         }
       },
       {
+        "id": "majordomus://issue/I2786",
+        "kind": "issue",
+        "label": "I2786",
+        "summary": "The published UI reads the evidence CI recorded, and a publication that would show tests as not run is refused",
+        "route": "/cockpit/objects/issue/i2786",
+        "source": ".ai/repo/project/issues/I2786.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "scripts/pages evidence --ledger-out puts the run's ledger in place only for an artifact of the published history",
+            "scripts/pages published-evidence exits 10 over the baseline, 0 within it, 12 when the report or the baseline cannot be read",
+            "The published kiosk shows no claim as not run that CI ran"
+          ],
+          "created_at": "2026-10-17",
+          "current_state": "The ui-snapshot job reads the tracked ledger alone, and nothing counts what a publication shows as not run.",
+          "depends_on": [],
+          "desired_state": "The ui-snapshot job puts the run's ledger in place and refuses a publication whose not-run count exceeds the declared baseline of 0.",
+          "evidence_required": [
+            "case_3178"
+          ],
+          "milestone": "test-evidence",
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            ".github/workflows/pages.yml",
+            "scripts/pages",
+            ".ai/repo/evidence/published-not-run.txt",
+            ".ai/repo/rules/project/published-evidence-is-what-ci-recorded.v1.md",
+            ".ai/repo/adrs/0087-evidence-is-indexed-by-subject-and-judged-at-the-presented-revision.md",
+            "test/cases/3178_the_published_ui_reads_the_evidence_ci_recorded.sh",
+            "docs/EVIDENCE.md",
+            "docs/MAJORDOMUS_UI.md"
+          ],
+          "slug": "the-published-ui-reads-the-evidence-ci-recorded",
+          "updated_at": "2026-10-17",
+          "validation": [
+            "majordomus plan validate",
+            "bash test/run.sh 3178_the_published_ui_reads_the_evidence_ci_recorded",
+            "bash test/run.sh 357_ci_records_evidence"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "label": "a-commit-stood-behind-a-build-lock",
@@ -46480,6 +46523,28 @@
             "documentation",
             "provider",
             "derivation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://rule/project.published-evidence-is-what-ci-recorded@1",
+        "kind": "rule",
+        "label": "project.published-evidence-is-what-ci-recorded@1",
+        "summary": "A published UI shows the evidence CI recorded, never \"not run\" for what CI ran",
+        "route": "/cockpit/objects/rule/project-published-evidence-is-what-ci-recorded-1",
+        "source": ".ai/repo/rules/project/published-evidence-is-what-ci-recorded.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.never-reported-is-not-green@1",
+            "project.ui-derived-state@1"
+          ],
+          "tags": [
+            "evidence",
+            "publication",
+            "site",
+            "ui"
           ]
         }
       },
@@ -55095,6 +55160,13 @@
         "label": "test/cases/310_rustdoc_projection.sh",
         "route": "/cockpit/objects/test/test-cases-310-rustdoc-projection-sh",
         "source": "test/cases/310_rustdoc_projection.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3178_the_published_ui_reads_the_evidence_ci_recorded.sh",
+        "kind": "test",
+        "label": "test/cases/3178_the_published_ui_reads_the_evidence_ci_recorded.sh",
+        "route": "/cockpit/objects/test/test-cases-3178-the-published-ui-reads-the-evidence-ci-recorded-sh",
+        "source": "test/cases/3178_the_published_ui_reads_the_evidence_ci_recorded.sh"
       },
       {
         "id": "majordomus://test/test/cases/318_a_partial_sweep_says_so.sh",
@@ -81258,6 +81330,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2786",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2786",
+        "target": "majordomus://milestone/test-evidence",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -83543,6 +83625,21 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/project.published-evidence-is-what-ci-recorded@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.published-evidence-is-what-ci-recorded@1",
+        "target": "majordomus://rule/project.never-reported-is-not-green@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.published-evidence-is-what-ci-recorded@1",
+        "target": "majordomus://rule/project.ui-derived-state@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.reclaim-only-what-you-own@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -85714,6 +85811,11 @@
       },
       {
         "source": "majordomus://test/test/cases/310_rustdoc_projection.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3178_the_published_ui_reads_the_evidence_ci_recorded.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -91009,8 +91111,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2870,
-      "edges": 6291,
+      "nodes": 2873,
+      "edges": 6297,
       "acyclic": false,
       "truncated": false
     }

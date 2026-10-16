@@ -6,23 +6,23 @@
     "version": "0.27.0"
   },
   "registry": {
-    "fingerprint": "039c3c240f2a65253fe430b394e20fc2d0230868bc9dc775a9fdc93d3bfd479f",
+    "fingerprint": "42e033ec73f7c098c14aad1934e28b7a11a9282e4525ef6ba52a6fcc6d91217d",
     "summary": {
-      "total": 2446,
+      "total": 2449,
       "builtin": 202,
-      "declarative": 2244,
+      "declarative": 2247,
       "by_kind": {
         "command": 31,
         "query": 171,
-        "resource": 2244
+        "resource": 2247
       },
       "by_stability": {
         "behaviorally_verified": 141,
         "experimental": 52,
-        "implemented": 2253
+        "implemented": 2256
       },
       "mcp_tools": 192,
-      "mcp_resources": 2299,
+      "mcp_resources": 2302,
       "http_routes": 197,
       "cli_commands": 108,
       "modules": 92,
@@ -82938,7 +82938,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 394,
+        "capabilities": 395,
         "capability_ids": []
       },
       {
@@ -83365,7 +83365,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 180,
+        "capabilities": 181,
         "capability_ids": []
       },
       {
@@ -83509,7 +83509,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 500,
+        "capabilities": 501,
         "capability_ids": []
       },
       {
@@ -83600,7 +83600,7 @@
     ]
   },
   "index": {
-    "fingerprint": "d145fb9a0df194ae88563f0ac078bcdc65ec3e4202c2c15329351b61177ace6a",
+    "fingerprint": "122e57b15e829866f90f372d32a321d8895462a417357bbc809b210243411e66",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -83640,7 +83640,7 @@
       "gap": 3,
       "implementation": 52,
       "intent": 4,
-      "issue": 394,
+      "issue": 395,
       "knowledge": 4,
       "mesh-declaration": 1,
       "milestone": 38,
@@ -83649,12 +83649,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 27,
-      "rule": 180,
+      "rule": 181,
       "scope": 1,
       "session": 89,
       "skill": 8,
       "taxonomy": 10,
-      "test": 500,
+      "test": 501,
       "use-case": 49,
       "workspace": 1
     },
@@ -84845,7 +84845,7 @@
         "path": ".ai/repo/adrs/0087-evidence-is-indexed-by-subject-and-judged-at-the-presented-revision.md",
         "section": "adrs",
         "source_class": "adr",
-        "bytes": 40431,
+        "bytes": 42015,
         "tags": [
           "evidence",
           "claims",
@@ -89560,7 +89560,7 @@
         "title": "Evidence — what ran, against which commit, and whether it still proves anything",
         "path": "docs/EVIDENCE.md",
         "source_class": "document",
-        "bytes": 61235
+        "bytes": 62133
       },
       {
         "uri": "majordomus://document/docs/EXECUTIONS.md",
@@ -89677,7 +89677,7 @@
         "title": "`majordomus ui` — the product",
         "path": "docs/MAJORDOMUS_UI.md",
         "source_class": "document",
-        "bytes": 34125
+        "bytes": 34581
       },
       {
         "uri": "majordomus://document/docs/MCP.md",
@@ -89767,7 +89767,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 158951
+        "bytes": 161959
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -97552,6 +97552,17 @@
         "bytes": 2836
       },
       {
+        "uri": "majordomus://issue/I2786",
+        "kind": "issue",
+        "identity": "I2786",
+        "title": "The published UI reads the evidence CI recorded, and a publication that would show tests as not run is refused",
+        "description": "Give the Pages workflow's UI snapshot job the ledger the validation of the published commit, or of its nearest validated ancestor, recorded (scripts/pages evidence --ledger-out), before the UI is read; then refuse to publish when evidence.report still counts more not-run claims than .ai/repo/evidence/published-not-run.txt declares (scripts/pages published-evidence); with the rule, a case and the documentation.",
+        "path": ".ai/repo/project/issues/I2786.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2348
+      },
+      {
         "uri": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "identity": "a-commit-stood-behind-a-build-lock",
@@ -101293,6 +101304,23 @@
         ]
       },
       {
+        "uri": "majordomus://rule/project.published-evidence-is-what-ci-recorded@1",
+        "kind": "rule",
+        "identity": "project.published-evidence-is-what-ci-recorded@1",
+        "title": "A published UI shows the evidence CI recorded, never \"not run\" for what CI ran",
+        "description": "The UI a publication carries reads the ledger the validation of the published commit, or of its nearest validated ancestor, recorded; and a publication whose evidence report still holds more not-run claims than the declared baseline is refused rather than published.",
+        "path": ".ai/repo/rules/project/published-evidence-is-what-ci-recorded.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 3642,
+        "tags": [
+          "evidence",
+          "publication",
+          "site",
+          "ui"
+        ]
+      },
+      {
         "uri": "majordomus://rule/project.reclaim-only-what-you-own@1",
         "kind": "rule",
         "identity": "project.reclaim-only-what-you-own@1",
@@ -104851,6 +104879,14 @@
         "bytes": 6660
       },
       {
+        "uri": "majordomus://test/test/cases/3178_the_published_ui_reads_the_evidence_ci_recorded.sh",
+        "kind": "test",
+        "identity": "test/cases/3178_the_published_ui_reads_the_evidence_ci_recorded.sh",
+        "path": "test/cases/3178_the_published_ui_reads_the_evidence_ci_recorded.sh",
+        "source_class": "case",
+        "bytes": 5393
+      },
+      {
         "uri": "majordomus://test/test/cases/318_a_partial_sweep_says_so.sh",
         "kind": "test",
         "identity": "test/cases/318_a_partial_sweep_says_so.sh",
@@ -107869,7 +107905,7 @@
       "identity": [
         "id"
       ],
-      "objects": 394
+      "objects": 395
     },
     {
       "name": "knowledge",
@@ -107966,7 +108002,7 @@
         "id",
         "version"
       ],
-      "objects": 180
+      "objects": 181
     },
     {
       "name": "scope",
@@ -108021,7 +108057,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 500
+      "objects": 501
     },
     {
       "name": "use-case",
@@ -152065,6 +152101,14 @@
         "route": "GET /ui/command"
       },
       {
+        "key": "system.http.ui.idd",
+        "kind": "page",
+        "transport": "http",
+        "module": "system",
+        "cached": true,
+        "route": "GET /ui/idd"
+      },
+      {
         "key": "system.http.ui.roadmap",
         "kind": "page",
         "transport": "http",
@@ -152183,6 +152227,14 @@
         "module": "system",
         "cached": true,
         "route": "GET /ui/command"
+      },
+      {
+        "key": "system.http.live.ui.idd",
+        "kind": "page",
+        "transport": "http",
+        "module": "system",
+        "cached": true,
+        "route": "GET /ui/idd"
       },
       {
         "key": "system.http.live.ui.roadmap",
