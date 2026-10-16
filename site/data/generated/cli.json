@@ -150,6 +150,12 @@
           "route": "/docs/cli/devcontext/"
         },
         {
+          "about": "The edit guard: whether a provider's tool may write a file of this checkout now, judged from the active task's scope and the writing session's live mesh claims",
+          "command": "majordomus guard",
+          "name": "guard",
+          "route": "/docs/cli/guard/"
+        },
+        {
           "about": "The mesh: the nodes this repository's running server has discovered on the network, this machine's node identity, and the self-check that proves the prerequisites on this machine alone",
           "command": "majordomus mesh",
           "name": "mesh",
@@ -22372,6 +22378,111 @@
       "usage": "majordomus devcontext policy [OPTIONS]"
     },
     {
+      "about": "The edit guard: whether a provider's tool may write a file of this checkout now, judged from the active task's scope and the writing session's live mesh claims",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        }
+      ],
+      "args": [],
+      "children": [
+        {
+          "about": "Judge the edit a provider's pre-tool payload (on stdin) is about to make; exit 2 with the reason and the remedy when no claim covers it, 0 otherwise",
+          "command": "majordomus guard hook",
+          "name": "hook",
+          "route": "/docs/cli/guard/hook/"
+        }
+      ],
+      "command": "majordomus guard",
+      "depth": 1,
+      "examples": [],
+      "executable": false,
+      "long_about": null,
+      "name": "guard",
+      "parent_route": "/docs/cli/",
+      "path": [
+        "majordomus",
+        "guard"
+      ],
+      "route": "/docs/cli/guard/",
+      "usage": "majordomus guard <COMMAND>"
+    },
+    {
+      "about": "Judge the edit a provider's pre-tool payload (on stdin) is about to make; exit 2 with the reason and the remedy when no claim covers it, 0 otherwise",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus guard",
+          "name": "guard",
+          "route": "/docs/cli/guard/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [
+            "claude-code"
+          ],
+          "global": false,
+          "help": "The provider whose payload stdin carries; its session id on the mesh is `<provider>-<session_id>`",
+          "long": "provider",
+          "name": "provider",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PROVIDER"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Where a relative path in the payload is resolved from (default: the current directory); the checkout judged is the one the written file belongs to",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        }
+      ],
+      "children": [],
+      "command": "majordomus guard hook",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "guard",
+            "hook",
+            "--provider",
+            "claude-code"
+          ],
+          "command": "majordomus guard hook --provider claude-code",
+          "description": "What a provider's pre-tool hook runs before an edit: the payload arrives on stdin, and the command exits 2 with the reason and the remedy when no claim covers the path it names, 0 otherwise. Here stdin is empty, so it names no path, and the command lets the tool run.",
+          "expectation": "exits 0",
+          "id": "guard-hook",
+          "setup": [],
+          "title": "Judge the edit a provider's pre-tool payload names"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "hook",
+      "parent_route": "/docs/cli/guard/",
+      "path": [
+        "majordomus",
+        "guard",
+        "hook"
+      ],
+      "route": "/docs/cli/guard/hook/",
+      "usage": "majordomus guard hook [OPTIONS]"
+    },
+    {
       "about": "The mesh: the nodes this repository's running server has discovered on the network, this machine's node identity, and the self-check that proves the prerequisites on this machine alone",
       "ancestors": [
         {
@@ -37105,10 +37216,10 @@
     }
   ],
   "counts": {
-    "arguments": 1611,
-    "commands": 232,
-    "examples": 236,
-    "runnable": 205
+    "arguments": 1613,
+    "commands": 234,
+    "examples": 237,
+    "runnable": 206
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
   "generator_version": "0.27.0",

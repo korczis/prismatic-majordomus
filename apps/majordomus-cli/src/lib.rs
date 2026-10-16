@@ -45,6 +45,7 @@ pub mod generate;
 pub mod generation;
 pub mod git;
 pub mod graph;
+pub mod guard;
 pub mod http;
 pub mod index;
 pub(crate) mod integration;

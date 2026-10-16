@@ -6,20 +6,20 @@ generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark proje
 generator: majordomus-cli 0.27.0
 coverage:
   - scope: direct
-    required: 201
-    covered: 170
+    required: 202
+    covered: 171
     missing: 0
     waived: 31
     inapplicable: 0
   - scope: http
-    required: 196
-    covered: 170
+    required: 197
+    covered: 171
     missing: 0
     waived: 26
     inapplicable: 0
   - scope: mcp
-    required: 191
-    covered: 166
+    required: 192
+    covered: 167
     missing: 0
     waived: 25
     inapplicable: 0
@@ -30,8 +30,8 @@ coverage:
     waived: 0
     inapplicable: 0
   - scope: total
-    required: 602
-    covered: 520
+    required: 605
+    covered: 523
     missing: 0
     waived: 82
     inapplicable: 0
@@ -713,6 +713,16 @@ capabilities:
     http: covered
     cases:
       - default
+  - id: guard.edit
+    module: guard
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - in-repository
+      - outside
   - id: health.live
     module: health
     kind: query

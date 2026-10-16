@@ -1,7 +1,7 @@
 +++
 title = "Use-case coverage"
 description = "Use-case coverage"
-weight = 57
+weight = 58
 [extra]
 kind = "rule"
 slug = "majordomus-use-case-coverage-1"

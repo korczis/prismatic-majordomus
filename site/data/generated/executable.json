@@ -1292,6 +1292,23 @@
       "tool": "majordomus_graphs"
     },
     {
+      "api_anchor": "/docs/api/guard/#op-guard-edit",
+      "claims": [],
+      "cli": null,
+      "id": "guard.edit",
+      "kind": "query",
+      "module": "guard",
+      "module_route": "/registry/modules/guard/",
+      "resource": null,
+      "route": "/registry/capabilities/guard-edit/",
+      "slug": "guard-edit",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/guard.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/guard.rs",
+      "tests": [],
+      "title": "Judge one edit",
+      "tool": "majordomus_guard_edit"
+    },
+    {
       "api_anchor": "/docs/api/health/#op-health-live",
       "claims": [],
       "cli": null,
@@ -4224,9 +4241,9 @@
     ]
   },
   "counts": {
-    "capabilities": 201,
+    "capabilities": 202,
     "claims": 93,
-    "modules": 57
+    "modules": 58
   },
   "generator": "majordomus-cli 0.27.0",
   "modules": [
@@ -4866,6 +4883,22 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/graph.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/graph.rs",
       "title": "Graphs"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "guard.edit",
+          "route": "/registry/capabilities/guard-edit/",
+          "slug": "guard-edit"
+        }
+      ],
+      "claims": [],
+      "id": "guard",
+      "route": "/registry/modules/guard/",
+      "slug": "guard",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/guard.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/guard.rs",
+      "title": "Edit guard"
     },
     {
       "capabilities": [

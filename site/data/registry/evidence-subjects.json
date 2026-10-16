@@ -409,6 +409,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:guard.edit",
+      "path": "/evidence/capabilities/guard-edit/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:health.live",
       "path": "/evidence/capabilities/health-live/"
     },
@@ -2729,6 +2734,11 @@
     },
     {
       "kind": "command",
+      "subject": "command:guard hook",
+      "path": "/evidence/commands/guard-hook/"
+    },
+    {
+      "kind": "command",
       "subject": "command:handover",
       "path": "/evidence/commands/handover/"
     },
@@ -4665,6 +4675,16 @@
       "kind": "capability",
       "id": "graph.list",
       "page": "/evidence/capabilities/graph-list/",
+      "programs": [],
+      "members": [],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:guard.edit": {
+      "kind": "capability",
+      "id": "guard.edit",
+      "page": "/evidence/capabilities/guard-edit/",
       "programs": [],
       "members": [],
       "routes": [],
@@ -14345,6 +14365,18 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:3067_a_task_is_claimed_on_the_mesh",
+          "path": "test/cases/3067_a_task_is_claimed_on_the_mesh.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:3068_a_task_off_the_mesh_is_refused",
+          "path": "test/cases/3068_a_task_off_the_mesh_is_refused.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:32_refusal_lifecycle",
           "path": "test/cases/32_refusal_lifecycle.sh",
           "category": "e2e"
@@ -14447,6 +14479,25 @@
       "kind": "command",
       "id": "generate",
       "page": "/evidence/commands/generate/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:guard hook": {
+      "kind": "command",
+      "id": "guard hook",
+      "page": "/evidence/commands/guard-hook/",
       "programs": [
         "native"
       ],
@@ -17295,6 +17346,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:3067_a_task_is_claimed_on_the_mesh",
+          "path": "test/cases/3067_a_task_is_claimed_on_the_mesh.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:32_refusal_lifecycle",
           "path": "test/cases/32_refusal_lifecycle.sh",
           "category": "e2e"
@@ -19835,6 +19892,18 @@
       "programs": [],
       "members": [
         "capability:graph.list"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_guard_edit": {
+      "kind": "mcp",
+      "id": "majordomus_guard_edit",
+      "alias_of": "capability:guard.edit",
+      "programs": [],
+      "members": [
+        "capability:guard.edit"
       ],
       "routes": [],
       "mechanisms": [],
@@ -22455,6 +22524,37 @@
           "inputs": [
             "test/cases/25_continuity_lifecycle.sh",
             ".ai/repo/rules/vendor/majordomus/rules/task-continuity.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "rule:majordomus.task-on-the-mesh": {
+      "kind": "rule",
+      "id": "majordomus.task-on-the-mesh",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:3067_a_task_is_claimed_on_the_mesh",
+          "path": "test/cases/3067_a_task_is_claimed_on_the_mesh.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/3067_a_task_is_claimed_on_the_mesh.sh",
+            ".ai/repo/rules/vendor/majordomus/rules/task-on-the-mesh.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:3068_a_task_off_the_mesh_is_refused",
+          "path": "test/cases/3068_a_task_off_the_mesh_is_refused.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/3068_a_task_off_the_mesh_is_refused.sh",
+            ".ai/repo/rules/vendor/majordomus/rules/task-on-the-mesh.v1.md"
           ]
         }
       ],
@@ -27514,6 +27614,7 @@
     "crate:external_extension",
     "crate:generate_check",
     "crate:generated_documents",
+    "crate:guard_hook",
     "crate:health_server",
     "crate:hot_path",
     "crate:http_busy_probe",
@@ -27652,6 +27753,8 @@
     "suite:303_one_source_serves_two_mounts",
     "suite:3042_the_observatory_asks_again_when_it_is_seen",
     "suite:305_a_command_is_claimed_or_classified",
+    "suite:3066_a_session_joins_the_mesh_at_start",
+    "suite:3069_an_edit_no_claim_covers_is_refused",
     "suite:310_rustdoc_projection",
     "suite:318_a_partial_sweep_says_so",
     "suite:330_a_contract_is_the_kind_it_declares",

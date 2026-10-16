@@ -69,6 +69,8 @@ tags:
     description: "Completion as a state the repository decides rather than a claim a worker makes: the validation gates this repository declares in its CI model, which of them a task's own change set selects, what each one last reported, whether that verdict still describes the tree it was taken over, and therefore whether the task may be called finished. A gate that has never reported is `queued` and not `pass`, a run whose files have changed since is `stale` and refuses exactly as a failure does, and a gate the change cannot affect is `exempt` rather than unknown."
   - name: graph
     description: "The graphs derived from the registry and the index: the executable's own capability registry, the shape of the layer, the rule dependencies, the decisions and what they put in force, and the use cases and what they exercise. Canonical nodes and edges; a rendering library is a consumer, never the shape."
+  - name: guard
+    description: "Whether a write to a file of this checkout is covered by a claim: the active task's scope, or a live mesh claim of the writing session. The judgement a provider's pre-tool hook asks before every edit (majordomus guard hook), switched by session.edits_require_claim."
   - name: health
     description: "Whether what this process serves is healthy, decided by the engines that already decide it: the index's diagnostics, the registry builder, the benchmark projection's coverage, the comparison `generate --check` makes and the lease reading `server.status` answers from. No check here has an opinion of its own."
   - name: integration
@@ -4909,6 +4911,78 @@ paths:
         resource:
           uri: majordomus://graphs
           name: graphs
+  "/api/v1/guard/edit":
+    get:
+      operationId: guard.edit
+      summary: Judge one edit
+      description: "Whether the given session may write the given path now: allowed when the policy's session.edits_require_claim is off, the path is outside the checkout or its local state, the repository declares no enabled mesh, the active task's scope covers it, or a live mesh claim of the session covers it; refused as unclaimed otherwise, with the remedy. What cannot be read — the policy, the mesh — is let through and named, never refused."
+      tags:
+        - guard
+      parameters:
+        - name: path
+          in: query
+          required: true
+          schema:
+            type: string
+          description: "The path about to be written: absolute, or relative to the repository root."
+          examples:
+            in-repository:
+              value: docs/MESH.md
+            outside:
+              value: /nonexistent/outside.txt
+        - name: session
+          in: query
+          required: false
+          schema:
+            type: string
+          description: "The writing session's id on the mesh (`claude-code-<session id>` for Claude Code);\nwithout it only the active task's scope can cover the write."
+          examples:
+            in-repository:
+              value: claude-code-bench
+      responses:
+        "200":
+          description: "Judge one edit: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/EditVerdict"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: guard.edit
+      x-majordomus-kind: query
+      x-majordomus-stability: experimental
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::guard
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: read
+      x-majordomus-mcp:
+        tool: majordomus_guard_edit
   "/api/v1/health":
     get:
       operationId: health.report
@@ -21098,6 +21172,32 @@ components:
         - reason
         - refused
       description: "One edge of the composed graph, and what the compiler does with it.\n\nEvery edge kind the graph declares gets a row, followed or not, which is the property\nthat makes this projection worth reading: an edge added to the graph and not to the\ntraversal table appears here as `refused` with a reason saying the compiler has no rule\nfor it, rather than being silently unfollowed. A table that only listed the edges it\nfollowed could not tell you what it was ignoring.\n\n`forward` and `reverse` are absent rather than zero when the edge is not followed that\nway, so \"not followed\" is one representation and not two. `means` is the graph's own\naccount of the relation; `reason` is this compiler's account of why it is or is not\ncontext, in both directions.\n\n```\nuse majordomus_cli::devcontext::{edge_policy, policy, EdgeRule};\nuse majordomus_cli::synthetic::SyntheticRepository;\n\nlet repo = SyntheticRepository::small().unwrap();\nlet ctx = repo.context().unwrap();\nlet rules = policy(&ctx).unwrap();\n\n// one row per edge kind the graph declares, followed or refused\nlet edges: &[EdgeRule] = &rules.edges;\nassert!(!edges.is_empty(), \"the graph declares edges\");\nfor e in edges {\n    // the row always says what the relation is and what was decided about it\n    assert!(!e.means.is_empty() && !e.reason.is_empty(), \"{}\", e.edge);\n\n    if e.refused {\n        // not followed in either direction, and absent rather than zero\n        assert!(e.forward.is_none() && e.reverse.is_none(), \"{}\", e.edge);\n        assert!(edge_policy(&e.edge).is_none(), \"{} is refused and in the table\", e.edge);\n    } else {\n        // followed at least one way, at a weight the table declares\n        assert!(e.forward.is_some() || e.reverse.is_some(), \"{}\", e.edge);\n        let p = edge_policy(&e.edge).expect(\"a followed edge has a policy\");\n        assert_eq!(e.forward, (p.forward > 0.0).then_some(p.forward));\n        assert_eq!(e.reverse, (p.reverse > 0.0).then_some(p.reverse));\n    }\n}\n```"
+    EditVerdict:
+      type: object
+      properties:
+        allowed:
+          type: boolean
+          description: Whether the edit may proceed.
+        path:
+          type: string
+          description: "The path asked about, repository-relative when it is inside the checkout."
+        ground:
+          type: string
+          description: "Why, as one word: `off`, `outside`, `local`, `no_mesh`, `task`, `claim`,\n`undecided` or `unclaimed`. Only `unclaimed` refuses."
+        detail:
+          type: string
+          description: The sentence a person reads.
+        remedy:
+          type:
+            - string
+            - "null"
+          description: "What makes the edit allowed, when it is refused."
+      required:
+        - allowed
+        - path
+        - ground
+        - detail
+      description: "The answer to one edit: whether it may proceed, the one word it was decided on, the\nsentence a person reads and, for a refusal, what would allow it. `guard.edit` returns it\nas it is; `guard hook` turns it into an exit code.\n\n```\nuse majordomus_cli::guard::{judge_facts, ClaimSource, EditFacts, EditVerdict};\n\nlet facts = EditFacts {\n    required: Ok(false),\n    mesh_enabled: true,\n    task: None,\n    session: None,\n    claims: ClaimSource::Claims(vec![]),\n};\nlet v: EditVerdict = judge_facts(\"a.md\", Some(\"a.md\"), facts);\nassert!(v.allowed);\nassert_eq!(v.ground, \"off\");\nlet json = serde_json::to_value(&v).unwrap();\nassert!(json.get(\"remedy\").is_none(), \"an allowed edit carries no remedy\");\n```"
     EditorAdapter:
       type: object
       properties:

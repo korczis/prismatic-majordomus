@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "source_version": "0.27.0",
-  "source_hash": "bc0cc9f03f82a5d49985e662261e03376c3511b0263c0c6b9797f9e1ab754a9f",
+  "source_hash": "c44a0187181c4550cccab1284f9699ee41fc298f64c6658a9f3e66c47458300d",
   "generator_version": 1,
   "input_files": [
     "bin/majordomus",
@@ -92,6 +92,7 @@
     "share/standard/majordomus/rules/skill-integrity.v1.md",
     "share/standard/majordomus/rules/state-consistency.v1.md",
     "share/standard/majordomus/rules/task-continuity.v1.md",
+    "share/standard/majordomus/rules/task-on-the-mesh.v1.md",
     "share/standard/majordomus/rules/use-case-coverage.v1.md",
     "share/standard/majordomus/rules/verification-integrity.v1.md",
     "docs/ADOPTION.md",
@@ -645,6 +646,10 @@
     "test/cases/3042_the_observatory_asks_again_when_it_is_seen.sh",
     "test/cases/304_a_provider_is_declared_once.sh",
     "test/cases/305_a_command_is_claimed_or_classified.sh",
+    "test/cases/3066_a_session_joins_the_mesh_at_start.sh",
+    "test/cases/3067_a_task_is_claimed_on_the_mesh.sh",
+    "test/cases/3068_a_task_off_the_mesh_is_refused.sh",
+    "test/cases/3069_an_edit_no_claim_covers_is_refused.sh",
     "test/cases/30_command_registry.sh",
     "test/cases/310_rustdoc_projection.sh",
     "test/cases/318_a_partial_sweep_says_so.sh",
@@ -1133,6 +1138,7 @@
     ".ai/repo/project/milestones/cost-per-accepted-outcome.yaml",
     ".ai/repo/project/milestones/derived-data-integrity.yaml",
     ".ai/repo/project/milestones/development-runtime.yaml",
+    ".ai/repo/project/milestones/every-session-joins-the-mesh.yaml",
     ".ai/repo/project/milestones/everything-is-followed-in-one-stream.yaml",
     ".ai/repo/project/milestones/execution-telemetry.yaml",
     ".ai/repo/project/milestones/external-workspaces.yaml",
@@ -1460,6 +1466,8 @@
     ".ai/repo/project/issues/I2163.yaml",
     ".ai/repo/project/issues/I2165.yaml",
     ".ai/repo/project/issues/I2282.yaml",
+    ".ai/repo/project/issues/I2288.yaml",
+    ".ai/repo/project/issues/I2289.yaml",
     ".ai/repo/project/issues/I2296.yaml",
     ".ai/repo/project/issues/I2298.yaml",
     ".ai/repo/project/issues/I2300.yaml",
@@ -1545,6 +1553,8 @@
     ".ai/repo/project/issues/I2721.yaml",
     ".ai/repo/project/issues/I2722.yaml",
     ".ai/repo/project/issues/I2723.yaml",
-    ".ai/repo/project/issues/I2724.yaml"
+    ".ai/repo/project/issues/I2724.yaml",
+    ".ai/repo/project/issues/I2734.yaml",
+    ".ai/repo/project/issues/I2735.yaml"
   ]
 }

@@ -933,11 +933,6 @@
     },
     {
       "source": "lib/common.sh",
-      "target": ".ai/local/state/current.yaml",
-      "kind": "reads"
-    },
-    {
-      "source": "lib/common.sh",
       "target": ".ai/manifest.yaml",
       "kind": "reads"
     },
@@ -1369,6 +1364,11 @@
     {
       "source": "lib/common.sh",
       "target": "lib/changed.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/common.sh",
+      "target": "lib/rust_bin.sh",
       "kind": "sources"
     },
     {
@@ -2203,6 +2203,11 @@
     },
     {
       "source": "lib/checkpoint.sh",
+      "target": ".ai/local/state/current.yaml",
+      "kind": "writes"
+    },
+    {
+      "source": "lib/common.sh",
       "target": ".ai/local/state/current.yaml",
       "kind": "writes"
     },

@@ -432,6 +432,47 @@ a changed announcement releases and re-claims; a detached session is closed. An 
 `majordomus_mesh_claim` without a `session` acts for the caller's own `board-<peer>` session.
 Branch and head are read when a session changes, never on a heartbeat.
 
+A provider session is on the mesh before its worker says anything (I2734). The provider's
+start event opens `<provider>-<provider session id>` — `claude-code-<uuid>` for Claude Code —
+on the checkout's shared server with its client, branch and head, and with the task and its
+title while one is active; the briefing prints that id under the `Mesh:` line, so a worker
+can claim under it (`majordomus_mesh_claim` with that `session`). A resume or a compaction
+says it again; the end event closes it, which ends its claims on every linked runtime at
+once. The id is the provider's own, so anything holding the provider's payload names the
+same session. With no ready server, or a mesh that does not run, nothing is opened and the
+event is unaffected.
+
+A task is on the mesh while it works (I2288). `majordomus start` claims the task's scope as
+an advisory claim of the mesh session `task-<id>`, with the task's title as its intent and its
+issue, and keeps the claim's key on the task record as `mesh_claim`; `finish` closes that
+session, which ends its claims on every linked runtime. Every machine sees what the task works
+on and reports an overlap; an exclusive claim before building stays the worker's own act. With
+no server, or a mesh that does not run, nothing is claimed and `start` does not fail.
+
+That claim is enforced (I2289, rule `majordomus.task-on-the-mesh`). On a repository whose
+tracked declaration says `enabled: true`, `check` reports an active task whose record carries
+no `mesh_claim` under `mesh`, and `finish --outcome completed` refuses it, the refusal recorded
+with the rule named. `finish` claims the scope again first, so a server started after the task
+is all the task needs (`majordomus serve ensure`). `partial`, `blocked`, `no_match` and
+`failed` are not refused, and a repository with no enabled mesh is not judged.
+
+An edit is asked for its claim before it happens (I2735). With `session.edits_require_claim:
+true` in the policy, the provider's pre-tool hook (`.claude/hooks/majordomus-edit-guard`, for
+Edit, Write, MultiEdit and NotebookEdit) runs `majordomus guard hook`, which exits 2 — the
+provider's refusal — when neither the active task's scope nor a live mesh claim of the writing
+session (`<provider>-<session id>`, the id the start event opened) covers the path, naming the
+path and the remedy: `majordomus start "<task>" --scope <path>`, or `majordomus mesh claim
+<path> --session <id> --advisory`. The checkout judged is the one the file belongs to, so a
+session started in one checkout editing another's file is judged by the other's task and
+claims. Local state, a path outside the checkout, a repository with no enabled mesh and a
+server that does not answer are let through. The same judgement is `guard.edit` over MCP and
+HTTP. The hook is wired in the provider's configuration:
+
+```json
+"PreToolUse": [ { "matcher": "Edit|Write|MultiEdit|NotebookEdit",
+  "hooks": [ { "type": "command", "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/majordomus-edit-guard" } ] } ]
+```
+
 What a session shares is metadata — intent, issue, task, milestone, branch, head, dirtiness,
 a context revision identifier. Context bodies are not replicated; a handover is the
 referenced artifact a peer materialises.

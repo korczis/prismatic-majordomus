@@ -1,0 +1,30 @@
+id: I2734
+milestone: every-session-joins-the-mesh
+title: "A session joins the mesh at its start and leaves it at its end"
+slug: a-session-joins-the-mesh-at-start
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "The provider's start event opens the session on the mesh of the checkout's shared server as <provider>-<provider session>, with client, branch, head and the active task; the briefing names that id; a resume says it again; the end event closes it."
+why: "On 2026-10-15 the owner asked why a new session did not join the mesh, report or start working, neither through direnv nor at session start, and why nothing enforces it. Measured: the start hook only printed the mesh's health (lib/capture.sh mj_capture_mesh_line); the only mesh session a Claude Code session got was its nameless board connection board-pN, with no intent and no claim, until the worker chose to announce. The milestone's first branches (I2285..I2292, 2026-10-10) never reached a pull request."
+current_state: "The start event prints one health line about the mesh and opens no mesh session; the end event closes none."
+desired_state: "Every provider session with a session id is on the mesh from its start event under a durable id the provider's payload names again, and off it at its end event, best-effort and never failing the event."
+scope:
+  - "lib/capture.sh"
+  - "test/cases/3066_a_session_joins_the_mesh_at_start.sh"
+  - ".ai/repo/project/issues/I2734.yaml"
+  - ".ai/repo/project/milestones/every-session-joins-the-mesh.yaml"
+depends_on: []
+acceptance_criteria:
+  - "A start event with a ready server whose mesh runs opens claude-code-<session id> on the mesh with client, branch and head"
+  - "The briefing names the mesh session id under the Mesh line"
+  - "A resume after majordomus start carries the active task and its title"
+  - "The end event closes the mesh session"
+  - "Without a server the start event opens the episode and names no mesh session"
+validation:
+  - "bin/majordomus plan validate"
+  - "bash test/run.sh 3066_a_session_joins_the_mesh_at_start 54_session_lifecycle_hooks 1054_every_session_is_told_the_stream"
+evidence_required:
+  - "case_3066"
+created_at: 2026-10-15
+updated_at: 2026-10-15
