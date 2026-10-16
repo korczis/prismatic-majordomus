@@ -1,7 +1,7 @@
 +++
 title = "Every Mermaid diagram of the built site gets an id (diagram-<name>), the list of its nodes, the viewer's controls and a link for each node that is the identity of an object the site has a page for, all derived at build; a link to"
 description = "A diagram on the site is a  mermaid  fence in a document, or Mermaid source a template"
-weight = 261
+weight = 263
 [extra]
 claim_id = "a-diagram-is-named-linked-and-addressable"
 status = "guaranteed"

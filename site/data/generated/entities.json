@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 109,
+      "count": 110,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 109
+      "count": 110
     },
     {
       "kind": "application",
@@ -69,7 +69,7 @@
       "route": "/guarantees/",
       "title": null,
       "reason": null,
-      "count": 247
+      "count": 249
     },
     {
       "kind": "command",
@@ -125,7 +125,7 @@
       "route": null,
       "title": null,
       "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-      "count": 347
+      "count": 349
     },
     {
       "kind": "domain",
@@ -229,7 +229,7 @@
       "route": null,
       "title": null,
       "reason": "A prompt is an input to a provider, rendered with the repository's own state. Published on its own it would read as documentation of something a visitor cannot run.",
-      "count": 4
+      "count": 5
     },
     {
       "kind": "release-record",
@@ -285,7 +285,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 500
+      "count": 502
     },
     {
       "kind": "use-case",
@@ -2783,7 +2783,15 @@
       ],
       "source": ".ai/repo/adrs/0043-entering-the-repository-brings-its-runtime-up.md",
       "references": [],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0172",
+          "kind": "adr",
+          "route": "/adrs/adr-0172/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -8585,6 +8593,96 @@
         {
           "edge": "put_in_force",
           "label": "test/cases/85_installer.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0172",
+          "kind": "adr",
+          "route": "/adrs/adr-0172/",
+          "external": false
+        }
+      ]
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0172",
+      "identity": "adr-0172",
+      "slug": "adr-0172",
+      "cockpit": "/cockpit/objects/adr/adr-0172",
+      "title": "A client always gets a server, and a session that is opened starts by joining the cluster",
+      "status": "proposed",
+      "tags": [
+        "coordination",
+        "mesh",
+        "mcp",
+        "enforcement"
+      ],
+      "source": ".ai/repo/adrs/0172-a-client-always-gets-a-server-and-a-session-starts-by-joining.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "share/shell/session-start.sh",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0043",
+          "kind": "adr",
+          "route": "/adrs/adr-0043/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0161",
+          "kind": "adr",
+          "route": "/adrs/adr-0161/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/MCP.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "bin/majordomus-cli",
+          "kind": "implementation",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "every-session-joins-the-mesh",
+          "kind": "milestone",
+          "route": "/plan/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.shared-server-resilience@1",
+          "kind": "rule",
+          "route": "/rules/project-shared-server-resilience-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/3177_a_client_always_gets_a_server.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/3178_a_bare_session_start_joins_the_cluster.sh",
           "kind": "test",
           "route": null,
           "external": false
@@ -16436,6 +16534,13 @@
         }
       ],
       "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0172",
+          "kind": "adr",
+          "route": "/adrs/adr-0172/",
+          "external": false
+        },
         {
           "edge": "depends_on",
           "label": "project.entry-converges@2",
