@@ -10,7 +10,7 @@ use super::nav::Area;
 use super::pages::{ask, failed, Page};
 use super::view::{
     alert, asked_statistic, badge, card, card_with, cell, chips, facts, id_cell, link, mono,
-    nothing, pre, row, table, tag, text_cell,
+    nothing, row, table, tag, text_cell,
 };
 use crate::capability::builtin::mcp::{McpClientStanding, McpProjection, LAUNCHER};
 use crate::capability::closure::Matrix;
@@ -292,12 +292,9 @@ fn rendered(p: &McpProjection, matrix: &Matrix, asked_effect: Option<&str>) -> P
         .child(el("p").class("mj-prose").text(
             "A client is connected by one entry in the file it reads: a stdio server whose command is the launcher. It needs no argument, no environment variable and no secret.",
         ))
-        .child(pre(
-            serde_json::to_string_pretty(&json!({
-                "mcpServers": { "majordomus": { "type": "stdio", "command": command, "args": [] } }
-            }))
-            .unwrap_or_default(),
-        ))
+        .child(super::view::json(&json!({
+            "mcpServers": { "majordomus": { "type": "stdio", "command": command, "args": [] } }
+        })))
         .child(el("p").class("mj-note").text(
             "The launcher starts the server in the repository the client was opened in, wherever inside it the client's working directory is, and attaches to the one already running when there is one.",
         ));

@@ -1052,6 +1052,38 @@ pub(crate) fn design_artifacts(app: &App) -> Result<Vec<Artifact>> {
         ));
     }
 
+    // highlighted code (ADR 0166 §7): the one stylesheet every surface colours code with,
+    // each class of the highlighter given the design's role for that kind of token
+    let code_css =
+        crate::highlight::stylesheet(&design).map_err(|reason| Error::InvalidDesign {
+            path: crate::highlight::STYLESHEET.to_string(),
+            reason,
+        })?;
+    render::well_formed(&code_css).map_err(|reason| Error::InvalidDesign {
+        path: crate::highlight::STYLESHEET.to_string(),
+        reason,
+    })?;
+    out.push(Artifact::comment_text(
+        crate::highlight::STYLESHEET,
+        "design-code",
+        source,
+        version,
+        &code_css,
+    ));
+    // and the highlighter's theme, which the site's Zola registers (`extra_themes`) and the
+    // executable registers in-process from the same bytes. A tree without the site's Zola
+    // configuration (a design fixture holds `share/` alone, and this run may itself write
+    // `site/static/`) has no Zola to hand it to.
+    if app.repository.root().join("site/config.toml").is_file() {
+        out.push(Artifact::json_extension(
+            crate::highlight::THEME_FILE,
+            "highlight-theme",
+            "apps/majordomus-cli/src/highlight.rs, the kinds of token the highlighter tells apart",
+            version,
+            crate::highlight::theme_value(),
+        ));
+    }
+
     // the declaration itself, compiled into the crate so the executable answers from the
     // design its stylesheets were projected from
     out.push(Artifact::verbatim(

@@ -72,6 +72,13 @@ rhai = { version = "1.26", default-features = false, features = ["std", "sync", 
 # four. It is not the tokenizer of every model, and every count it produces says which one
 # it is; provider-reported usage is recorded as the provider reported it and never recounted.
 tiktoken-rs = "=0.12.0"
+# giallo: every code block on every surface is highlighted by one engine (ADR 0166 §7). The
+# site is built by Zola 0.23, which highlights with giallo 0.5.2, so the executable uses the
+# same crate at the same version: the UI's markup for a block is the site's markup for that
+# block, token for token, because it is the same program. Pinned exactly: a giallo release
+# that tokenised differently from the one Zola embeds would make the two surfaces disagree.
+# `dump` carries the built-in grammars (VS Code's TextMate grammars, ~1.2 MiB compressed).
+giallo = { version = "=0.5.2", features = ["dump"] }
 
 [build-dependencies]
 # sha2: build.rs takes the generation — the digest of the crate sources this build read —

@@ -3,7 +3,7 @@
      Generator: majordomus-cli 0.27.0 -->
 # The design system
 
-One declaration, `share/design/tokens.yaml`, projected into every surface. Fingerprint `944a896b2646060d5dc100adcc36737fd5d8086e2f53d43d6858ac6fdad39540` (`--mj-design: "944a896b2646"` on every page that carries it). Explain any token with `majordomus_design_explain`, `GET /api/v1/design/explain?token=<name>` or the Cockpit's Design page.
+One declaration, `share/design/tokens.yaml`, projected into every surface. Fingerprint `30bdab9e80dfad3b946d79c9bc04faba51b4f4d2d024a1646d21ce71b6462ea3` (`--mj-design: "30bdab9e80df"` on every page that carries it). Explain any token with `majordomus_design_explain`, `GET /api/v1/design/explain?token=<name>` or the Cockpit's Design page.
 
 ## Type
 
@@ -49,6 +49,13 @@ Each role is one custom property; its value follows the theme.
 | `--mj-series-6` | `rose-600` | `rose-400` | — | the sixth colour of the categorical series |
 | `--mj-series-7` | `lime-600` | `lime-400` | — | the seventh colour of the categorical series |
 | `--mj-series-8` | `fuchsia-600` | `fuchsia-400` | — | the eighth colour of the categorical series |
+| `--mj-code-comment` | `gray-500` | `gray-400` | — | a comment in a code block; quiet, like every secondary text |
+| `--mj-code-keyword` | `violet-700` | `violet-400` | — | a keyword or a storage word in a code block (fn, let, if, return) |
+| `--mj-code-string` | `emerald-700` | `emerald-400` | — | a string, a plain YAML value, an inserted diff line in a code block |
+| `--mj-code-constant` | `orange-700` | `orange-400` | — | a number, a boolean, a language constant in a code block |
+| `--mj-code-function` | `blue-700` | `blue-400` | — | a function, a command, a heading or a link in a code block |
+| `--mj-code-type` | `cyan-700` | `cyan-400` | — | a type, a class, a namespace or a section in a code block |
+| `--mj-code-tag` | `rose-700` | `rose-400` | — | a key, a tag, an attribute, a variable, a deleted diff line in a code block |
 
 ## Status
 

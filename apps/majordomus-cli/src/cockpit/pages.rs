@@ -40,8 +40,9 @@ use crate::capability::builtin::lifecycle::{
 use super::html::{el, empty, El, Node};
 use super::nav::Area;
 use super::view::{
-    alert, badge, card, card_with, cell, chips, details, facts, id_cell, kind_badge, link, mono,
-    nothing, pagination, pre, row, statistic, table, tag, text_cell, word_badge, Window, PER_PAGE,
+    alert, badge, card, card_with, cell, chips, code, details, facts, file, id_cell, json,
+    kind_badge, link, mono, nothing, pagination, pre, row, statistic, table, tag, text_cell,
+    word_badge, Window, PER_PAGE,
 };
 
 /// What a page hands back: the area it belongs to, its title and subtitle, its trail, and
@@ -1093,14 +1094,14 @@ pub fn capability(ctx: &Context, id: &str) -> Page {
                     "Input · {}",
                     c.input.name.as_deref().unwrap_or("(anonymous)")
                 ),
-                pre(serde_json::to_string_pretty(&c.input.schema).unwrap_or_default()),
+                json(&c.input.schema),
             ))
             .child(details(
                 format!(
                     "Output · {}",
                     c.output.name.as_deref().unwrap_or("(anonymous)")
                 ),
-                pre(serde_json::to_string_pretty(&c.output.schema).unwrap_or_default()),
+                json(&c.output.schema),
             )),
     );
 
@@ -1130,10 +1131,7 @@ pub fn capability(ctx: &Context, id: &str) -> Page {
                             details(
                                 case.name,
                                 el("div")
-                                    .child(pre(
-                                        serde_json::to_string_pretty(&case.input)
-                                            .unwrap_or_default(),
-                                    ))
+                                    .child(json(&case.input))
                                     .when(c.exposure.http.is_some(), |d| {
                                         d.child(
                                             el("button")
@@ -1712,12 +1710,7 @@ pub fn object(ctx: &Context, uri: &str) -> Page {
     let metadata = value
         .get("metadata")
         .filter(|m| !m.is_null())
-        .map(|m| {
-            card(
-                "Front matter",
-                pre(serde_json::to_string_pretty(m).unwrap_or_default()),
-            )
-        })
+        .map(|m| card("Front matter", json(m)))
         .unwrap_or_else(|| card("Front matter", nothing("This object carries none.")));
 
     Page::new(
@@ -1733,7 +1726,7 @@ pub fn object(ctx: &Context, uri: &str) -> Page {
                 ))
             })
             .child(metadata)
-            .child(card("Content", pre(content))),
+            .child(card("Content", file(&path, content))),
     )
     .subtitle(if title.is_empty() {
         format!("An object of kind {kind}")
@@ -4900,7 +4893,7 @@ pub fn worktrees(ctx: &Context) -> Page {
                         })
                         .collect(),
                 ))
-                .child(pre(format!(
+                .child(code("bash", format!(
                     "majordomus worktree migrate --plan   # the same plan, from a terminal\nmajordomus worktree migrate          # apply the {} movable step(s), verified\n{}",
                     p.movable,
                     if p.blocked > 0 { "# blocked steps say what to do; nothing is overwritten or forced\n" } else { "" }
@@ -4914,7 +4907,8 @@ pub fn worktrees(ctx: &Context) -> Page {
             .child(el("p").class("mj-prose").text(
                 "The Cockpit reads; the command line changes things. Every command below is the same service this page renders, and none of them takes a path — the path is derived.",
             ))
-            .child(pre(
+            .child(code(
+                "bash",
                 "majordomus worktree                          # where am I, and is that where I belong\nmajordomus worktree create <branch>          # start work: the branch from the trunk, the worktree at its path\ncd \"$(majordomus worktree path <branch>)\"\nmajordomus worktree migrate --plan           # what would move; nothing changes\nmajordomus worktree migrate                  # move, verify, report\nmajordomus worktree repair                   # drop stale registrations; deletes no directory\nmajordomus worktree cleanup                  # merged and clean: what could go, and how; deletes nothing\nmajordomus worktree remove <branch>          # one linked worktree; never dirty work unforced, never a branch",
             )),
     );
@@ -5327,7 +5321,8 @@ pub fn integration(ctx: &Context) -> Page {
             .child(el("p").class("mj-prose").text(
                 "The Cockpit reads; the command line acts, one merge at a time, each against a master observed a moment before, under the base branch's lease. Nothing here reaches the forge.",
             ))
-            .child(pre(
+            .child(code(
+                "bash",
                 "majordomus prs refresh                  # observe the forge now; the one network read\nmajordomus prs status                   # this queue, in rank order\nmajordomus prs explain <n>              # why one pull request is where it is\nmajordomus prs trains                   # the stacked pull requests, in landing order\nmajordomus prs drain --dry-run          # what the executor would do; changes nothing\nmajordomus prs drain --max 1            # merge the next provably safe one, verify, re-plan\nmajordomus prs drain --continuous       # drain, wait, drain again, until Ctrl-C\nmajordomus prs cleanup                  # list what is provably on master; --apply closes",
             )),
     );
@@ -6649,7 +6644,7 @@ pub fn execution(ctx: &Context, id: &str) -> Page {
     let output_card = card(
         "Output",
         match (&e.output, &e.error) {
-            (Some(output), _) => pre(serde_json::to_string_pretty(output).unwrap_or_default()),
+            (Some(output), _) => json(output),
             (None, Some(error)) => el("div")
                 .child(alert("fail", format!("{}: {}", error.code, error.message)))
                 .child(match &error.suggestion {
@@ -6684,9 +6679,7 @@ pub fn execution(ctx: &Context, id: &str) -> Page {
     let input_card = card(
         "Input",
         el("div")
-            .child(pre(
-                serde_json::to_string_pretty(&e.input).unwrap_or_default()
-            ))
+            .child(json(&e.input))
             .child(el("p").class("mj-note").text(
                 "As it was stored: every value the capability's input schema marks sensitive was replaced before this was written down.",
             )),
@@ -7257,10 +7250,7 @@ pub fn entity(ctx: &Context, kind: &str, slug: &str) -> Page {
 
     let metadata = match &view.metadata {
         Value::Null => card("Front matter", nothing("This object carries none.")),
-        m => card(
-            "Front matter",
-            pre(serde_json::to_string_pretty(m).unwrap_or_default()),
-        ),
+        m => card("Front matter", json(m)),
     };
 
     Page::new(
@@ -7279,7 +7269,7 @@ pub fn entity(ctx: &Context, kind: &str, slug: &str) -> Page {
             .child(relations_card)
             .child(surfaces_card)
             .child(metadata)
-            .child(details("The file as it is", pre(&view.content))),
+            .child(details("The file as it is", file(&view.provenance.path, &view.content))),
     )
     .subtitle(
         view.title

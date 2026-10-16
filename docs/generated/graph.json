@@ -38312,7 +38312,9 @@
             "test/cases/3107_one_highlighter.sh"
           ],
           "slug": "one-highlighter",
-          "updated_at": "2026-10-16",
+          "started_at": "2026-10-16T10:21:43Z",
+          "started_event": "sha256:21d84989640d094780d4cc28233da244e1f13e6ab74df0c713f51a7facac1bc3",
+          "updated_at": "2026-10-16T10:21:43Z",
           "validation": [
             "scripts/ci/highlighter-check",
             "bash test/run.sh 3107_one_highlighter"
@@ -55596,6 +55598,13 @@
         "label": "test/cases/30_command_registry.sh",
         "route": "/cockpit/objects/test/test-cases-30-command-registry-sh",
         "source": "test/cases/30_command_registry.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3107_one_highlighter.sh",
+        "kind": "test",
+        "label": "test/cases/3107_one_highlighter.sh",
+        "route": "/cockpit/objects/test/test-cases-3107-one-highlighter-sh",
+        "source": "test/cases/3107_one_highlighter.sh"
       },
       {
         "id": "majordomus://test/test/cases/310_rustdoc_projection.sh",
@@ -86391,6 +86400,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3107_one_highlighter.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/310_rustdoc_projection.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -91687,8 +91701,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2883,
-      "edges": 6325,
+      "nodes": 2884,
+      "edges": 6326,
       "acyclic": false,
       "truncated": false
     }

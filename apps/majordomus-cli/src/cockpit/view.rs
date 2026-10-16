@@ -475,6 +475,34 @@ pub fn pre(value: impl Into<String>) -> El {
         .child(el("code").text(value))
 }
 
+/// A block of code in a known language, highlighted as the site highlights it: the same
+/// engine, the same classes, the one stylesheet (`crate::highlight`, ADR 0166 §7). `info` is
+/// what a Markdown author would write after the fence (`json`, `yaml`), empty for plain text.
+///
+/// The engine writes the `<pre>`; this adds what [`pre`] adds to its own: the scrolling box
+/// (`mj-pre`) and its place in the keyboard order (`tabindex="0"`).
+pub fn code(info: &str, value: impl AsRef<str>) -> El {
+    let block = crate::highlight::code_block(info, value.as_ref());
+    let block = match block.strip_prefix("<pre class=\"") {
+        Some(rest) => format!("<pre tabindex=\"0\" class=\"mj-pre {rest}"),
+        None => block,
+    };
+    el("div").class("mj-code").raw(block)
+}
+
+/// A file's content, highlighted in the language its name says it is written in.
+pub fn file(path: &str, content: impl AsRef<str>) -> El {
+    code(crate::highlight::language_of(path), content)
+}
+
+/// A value as pretty-printed JSON, highlighted.
+pub fn json(value: &serde_json::Value) -> El {
+    code(
+        "json",
+        serde_json::to_string_pretty(value).unwrap_or_default(),
+    )
+}
+
 /// An alert: `ok`, `warn`, `fail`, `info`.
 pub fn alert(level: &str, message: impl Into<String>) -> El {
     el("div")
@@ -839,6 +867,23 @@ mod tests {
         let rendered = pagination(Window::new(1, 50, 12), |n| format!("?page={n}")).render();
         assert!(rendered.contains("1–12 of 12"), "{rendered}");
         assert!(!rendered.contains("mj-page-link"), "{rendered}");
+    }
+
+    #[test]
+    fn code_is_highlighted_scrolls_and_stays_text() {
+        let rendered = code("json", "{\"a\": \"<script>\"}").render();
+        assert!(
+            rendered.starts_with(
+                r#"<div class="mj-code"><pre tabindex="0" class="mj-pre giallo z-code" >"#
+            ),
+            "{rendered}"
+        );
+        assert!(rendered.contains(r#"data-lang="json""#), "{rendered}");
+        assert!(!rendered.contains("<script>"), "{rendered}");
+        let yaml = file(".ai/repo/project/issues/I1.yaml", "id: I1\n").render();
+        assert!(yaml.contains(r#"data-lang="yaml""#), "{yaml}");
+        let value = json(&serde_json::json!({"n": 1})).render();
+        assert!(value.contains(r#"data-lang="json""#), "{value}");
     }
 
     #[test]

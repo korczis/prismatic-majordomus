@@ -380,11 +380,14 @@ data_scripts += '<script type="application/json" id="data-corpus-index">%s</scri
 data_scripts += '<script type="application/json" id="data-repo-paths">%s</script>\n' % json.dumps(REPO_PATHS).replace("</", "<\\/")
 data_scripts += '<script type="application/octet-stream" id="data-graphdb">%s</script>\n' % read(os.path.join(GEN, "graph.b64"))
 data_scripts += '<script type="application/octet-stream" id="data-corpus">%s</script>\n' % read(os.path.join(GEN, "corpus.b64"))
+data_scripts += '<script type="application/octet-stream" id="data-code">%s</script>\n' % read(os.path.join(GEN, "code.b64"))
 ROOT = os.environ.get("HANDBOOK_ROOT") or os.path.dirname(os.path.dirname(HERE))
 # The design is declared once, in share/design/tokens.yaml. The projection that gives its
 # roles their values is inlined as generated, and the class that selects the dark theme is
 # read from the declaration; this edition chooses neither.
 DESIGN = read(os.path.join(ROOT, "share", "design", "surface.css"))
+# and the one stylesheet of highlighted code every surface reads (ADR 0166 §7)
+DESIGN += "\n" + read(os.path.join(ROOT, "share", "design", "code.css"))
 _theme = re.search(r"^theme:\n(?:[ \t]+.*\n)*?[ \t]+class:[ \t]*([A-Za-z0-9_-]+)", read(os.path.join(ROOT, "share", "design", "tokens.yaml")), re.M)
 if not _theme:
     sys.exit("share/design/tokens.yaml declares no theme class")
