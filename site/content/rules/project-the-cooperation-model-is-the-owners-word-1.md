@@ -90,11 +90,14 @@ never expedited, and every decision leaves its evidence.
 - `test/cases/2999_delivery_is_expedited_only_where_the_rule_says.sh` and
   `test/cases/720_integration_follows_the_current_master.sh`: the executor still never names
   `--admin`, and a release still waits for its verdict.
-- Carried by other workers on 2026-10-16 and named here as they land: a new worktree starts
-  from the remote trunk rather than a stale local master (`majordomus worktree create`, branch
-  `fix/a-new-worktree-starts-from-the-remote-trunk`); `majordomus start` makes sure the
-  checkout's server runs before a task begins; and a checkout that has fallen behind master is
-  detected and named, so clause 3 has a starter.
+- Carried by other workers on 2026-10-16, each its own pull request, and named here so that
+  clause 3 has a starter: a new worktree starts from the remote trunk rather than a stale local
+  master (`majordomus worktree create`, pull request #1291, case 3131); `majordomus start`
+  makes sure the checkout's server runs before its task claims its scope on the mesh (pull
+  request #1288, case 3151); and a checkout reports how far it stands behind the remote trunk
+  wherever it is read (rule `project.a-checkout-serves-the-current-trunk`, branch
+  `feature/a-checkout-serves-the-current-trunk`, case 3176). When they land, their cases join
+  this rule's tests.
 
 Clauses 2 and 3 are also acts of a session, and are decided by the record: the landing claim
 on the mesh, the members and the judged head named in the top's pull request, and the rescue
