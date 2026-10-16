@@ -1366,6 +1366,15 @@
         "status": "query"
       },
       {
+        "id": "capability:plan.drift",
+        "kind": "capability",
+        "label": "plan.drift",
+        "summary": "Where the plan's stamps contradict the delivered work",
+        "route": "/cockpit/capabilities/plan.drift",
+        "source": "apps/majordomus-cli/src/capability/builtin/plan.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:plan.flight",
         "kind": "capability",
         "label": "plan.flight",
@@ -38068,7 +38077,7 @@
             "test/cases/3101_merged_work_unrecorded_is_drift.sh"
           ],
           "slug": "merged-work-unrecorded-is-drift",
-          "updated_at": "2026-10-16",
+          "updated_at": "2026-10-16T16:07:33Z",
           "validation": [
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test plan_drift",
             "bash test/run.sh 3101_merged_work_unrecorded_is_drift"
@@ -55627,6 +55636,13 @@
         "source": "test/cases/3100_an_issue_delivery_is_inferred.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3101_merged_work_unrecorded_is_drift.sh",
+        "kind": "test",
+        "label": "test/cases/3101_merged_work_unrecorded_is_drift.sh",
+        "route": "/cockpit/objects/test/test-cases-3101-merged-work-unrecorded-is-drift-sh",
+        "source": "test/cases/3101_merged_work_unrecorded_is_drift.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/3104_the_ui_roadmap_reads_delivery.sh",
         "kind": "test",
         "label": "test/cases/3104_the_ui_roadmap_reads_delivery.sh",
@@ -62558,6 +62574,26 @@
       },
       {
         "source": "capability:plan.delivery",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:plan.drift",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:plan.drift",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:plan.drift",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:plan.drift",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -86467,6 +86503,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3101_merged_work_unrecorded_is_drift.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/3104_the_ui_roadmap_reads_delivery.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -91478,6 +91519,11 @@
       },
       {
         "source": "module:plan",
+        "target": "capability:plan.drift",
+        "kind": "composes"
+      },
+      {
+        "source": "module:plan",
         "target": "capability:plan.flight",
         "kind": "composes"
       },
@@ -91778,8 +91824,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2887,
-      "edges": 6336,
+      "nodes": 2889,
+      "edges": 6342,
       "acyclic": false,
       "truncated": false
     }

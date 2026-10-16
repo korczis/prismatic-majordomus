@@ -424,10 +424,10 @@ fn release_panel(flight: &Answer) -> El {
                     }))
             })
             .collect::<Vec<_>>();
+        // an answered flight always says whether this executable is tagged
         let tagged = match flight.read("/release/executable_tagged").text().as_deref() {
             Some("true") => "is tagged",
-            Some(_) => "is not tagged",
-            None => "is not known to be tagged",
+            _ => "is not tagged",
         };
         el("div")
             .child(el("p").class("mj-ui-line").text(format!(

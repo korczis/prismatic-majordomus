@@ -141,6 +141,7 @@
     "op-peers-list": "docs/api/peers/",
     "op-perf-counters": "docs/api/perf/",
     "op-plan-delivery": "docs/api/plan/",
+    "op-plan-drift": "docs/api/plan/",
     "op-plan-flight": "docs/api/plan/",
     "op-plan-issues": "docs/api/plan/",
     "op-plan-model": "docs/api/plan/",
@@ -439,6 +440,13 @@
     "schema-DomainMember": "docs/api/product/",
     "schema-DomainRef": "docs/api/product/",
     "schema-DoneQuestion": "docs/api/gates/",
+    "schema-DriftClass": "docs/api/plan/",
+    "schema-DriftFinding": "docs/api/plan/",
+    "schema-DriftGate": "docs/api/plan/",
+    "schema-DriftProof": "docs/api/plan/",
+    "schema-DriftReport": "docs/api/plan/",
+    "schema-DriftVerdict": "docs/api/plan/",
+    "schema-DriftWindow": "docs/api/plan/",
     "schema-DriftedObject": "docs/api/objects/",
     "schema-DropReason": "docs/api/pack/",
     "schema-DroppedFile": "docs/api/pack/",
@@ -1253,8 +1261,8 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 199,
-    "schemas": 993,
+    "operations": 200,
+    "schemas": 1000,
     "tags": 58
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1487,6 +1495,7 @@
     "peers.list": "peers",
     "perf.counters": "perf",
     "plan.delivery": "plan",
+    "plan.drift": "plan",
     "plan.flight": "plan",
     "plan.issues": "plan",
     "plan.model": "plan",
@@ -1789,6 +1798,13 @@
     "DomainMember": "product",
     "DomainRef": "product",
     "DoneQuestion": "gates",
+    "DriftClass": "plan",
+    "DriftFinding": "plan",
+    "DriftGate": "plan",
+    "DriftProof": "plan",
+    "DriftReport": "plan",
+    "DriftVerdict": "plan",
+    "DriftWindow": "plan",
     "DriftedObject": "objects",
     "DropReason": "pack",
     "DroppedFile": "pack",
@@ -12475,7 +12491,7 @@
           "type": "string | null"
         },
         {
-          "description": "How it names the issue: `title_or_branch` or `slug` for a merge, `subject` for a\ncommit.",
+          "description": "How it names the issue: `title_or_branch` or `slug` for a merge, `subject` for a\ncommit, `forge_title` for a merged pull request's title as the forge recorded it.",
           "name": "via",
           "refs": [],
           "required": true,
@@ -12549,6 +12565,7 @@
       "type": "object",
       "used_by": [],
       "used_by_schemas": [
+        "DriftReport",
         "IssueDeliveryReport",
         "PlanFlight"
       ],
@@ -12622,6 +12639,7 @@
       "used_by": [],
       "used_by_schemas": [
         "DeliverySource",
+        "DriftWindow",
         "ReleaseReading"
       ],
       "values": [
@@ -12768,6 +12786,7 @@
       "type": "object",
       "used_by": [],
       "used_by_schemas": [
+        "DriftReport",
         "IssueDeliveryReport",
         "PlanFlight"
       ],
@@ -12783,6 +12802,7 @@
       "type": "\"none\" | \"branch\" | \"pr_open\" | \"merged\" | \"released\" | \"deployed\"",
       "used_by": [],
       "used_by_schemas": [
+        "DriftFinding",
         "FlightIssue",
         "IssueDelivery",
         "IssueDeliveryReport"
@@ -15663,6 +15683,445 @@
       "used_by": [],
       "used_by_schemas": [
         "Completion"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One kind of contradiction between the stamps and the work.",
+      "home": "plan",
+      "is_enum": true,
+      "name": "DriftClass",
+      "properties": [],
+      "type": "\"merged_not_recorded\" | \"active_without_work\" | \"done_without_trace\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "DriftFinding",
+        "DriftReport"
+      ],
+      "values": [
+        {
+          "description": "READY, BLOCKED or ACTIVE, with merged work and no open pull request naming it.",
+          "value": "merged_not_recorded"
+        },
+        {
+          "description": "ACTIVE since before the window, with no branch, pull request, merge or mesh claim.",
+          "value": "active_without_work"
+        },
+        {
+          "description": "DONE with no merge naming it. Advisory: record-only issues exist.",
+          "value": "done_without_trace"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "One contradiction between an issue's stamps and its delivery.",
+      "home": "plan",
+      "is_enum": false,
+      "name": "DriftFinding",
+      "properties": [
+        {
+          "description": "The issue id.",
+          "name": "issue",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its title.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its milestone.",
+          "name": "milestone",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its declared status.",
+          "name": "status",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its inferred delivery stage.",
+          "name": "stage",
+          "refs": [
+            "DeliveryStage"
+          ],
+          "required": true,
+          "type": "DeliveryStage"
+        },
+        {
+          "description": "The contradiction.",
+          "name": "class",
+          "refs": [
+            "DriftClass"
+          ],
+          "required": true,
+          "type": "DriftClass"
+        },
+        {
+          "description": "True for a class that never refuses.",
+          "name": "advisory",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "What proves it.",
+          "name": "proof",
+          "refs": [
+            "DriftProof"
+          ],
+          "required": true,
+          "type": "DriftProof"
+        },
+        {
+          "description": "Since when the contradiction holds: the merge for `merged_not_recorded`, the start\nstamp for `active_without_work`.",
+          "name": "since",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Seconds from `since` to the observation.",
+          "name": "age_seconds",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "Whether that is longer than the window; absent when either is unknown.",
+          "name": "past_window",
+          "refs": [],
+          "required": false,
+          "type": "boolean | null"
+        },
+        {
+          "description": "True when no unread source could have dissolved it.",
+          "name": "settled",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The sources that were not read and could have dissolved it.",
+          "name": "unread",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The command that settles it.",
+          "name": "remedy",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What the gate made of it, when a gate was asked.",
+          "name": "verdict",
+          "refs": [
+            "DriftVerdict"
+          ],
+          "required": false,
+          "type": "DriftVerdict | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "DriftReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Which tree a `plan.drift` gate judges.\n\n```\nuse majordomus_cli::capability::builtin::plan::DriftGate;\nassert_eq!(serde_json::to_value(DriftGate::Trunk).unwrap(), \"trunk\");\nassert_eq!(serde_json::from_str::<DriftGate>(r#\"\"head\"\"#).unwrap(), DriftGate::Head);\n```",
+      "home": "plan",
+      "is_enum": true,
+      "name": "DriftGate",
+      "properties": [],
+      "type": "\"head\" | \"trunk\"",
+      "used_by": [
+        "plan.drift"
+      ],
+      "used_by_schemas": [
+        "DriftReport"
+      ],
+      "values": [
+        {
+          "description": "A head: not the shared plan, so every merged_not_recorded is pending.",
+          "value": "head"
+        },
+        {
+          "description": "The trunk: merged work unrecorded past the window is refused.",
+          "value": "trunk"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "The objects that prove a finding.",
+      "home": "plan",
+      "is_enum": false,
+      "name": "DriftProof",
+      "properties": [
+        {
+          "description": "The pull request the newest merge naming the issue merged.",
+          "name": "pull_request",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "The newest commit in the trunk's history that names the issue.",
+          "name": "merge_commit",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "When that commit was made.",
+          "name": "merged_at",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "How it names the issue (`title_or_branch`, `slug`, `subject`, `forge_title`).",
+          "name": "via",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The first release that contains it.",
+          "name": "release",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "When execution was recorded to have begun, for `active_without_work`.",
+          "name": "started_at",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "DriftFinding"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Every contradiction between the plan's stamps and its delivery, and, when a gate was\nasked, its verdict.",
+      "home": "plan",
+      "is_enum": false,
+      "name": "DriftReport",
+      "properties": [
+        {
+          "description": "The version of this shape.",
+          "name": "schema",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "Where and when the delivery was observed.",
+          "name": "observed",
+          "refs": [
+            "DeliveryObservation"
+          ],
+          "required": true,
+          "type": "DeliveryObservation"
+        },
+        {
+          "description": "The declared window.",
+          "name": "window",
+          "refs": [
+            "DriftWindow"
+          ],
+          "required": true,
+          "type": "DriftWindow"
+        },
+        {
+          "description": "The tree a gate judged, when one was asked.",
+          "name": "gate",
+          "refs": [
+            "DriftGate"
+          ],
+          "required": false,
+          "type": "DriftGate | null"
+        },
+        {
+          "description": "Every source, read or not: the delivery's, and the mesh claims.",
+          "name": "sources",
+          "refs": [
+            "DeliverySource"
+          ],
+          "required": true,
+          "type": "array of DeliverySource"
+        },
+        {
+          "description": "The class vocabulary, in order.",
+          "name": "classes",
+          "refs": [
+            "DriftClass"
+          ],
+          "required": true,
+          "type": "array of DriftClass"
+        },
+        {
+          "description": "How many findings of each class, keyed by every class.",
+          "name": "tallies",
+          "refs": [],
+          "required": true,
+          "type": "map of integer (uint)"
+        },
+        {
+          "description": "The findings, in issue order, then class order.",
+          "name": "findings",
+          "refs": [
+            "DriftFinding"
+          ],
+          "required": true,
+          "type": "array of DriftFinding"
+        },
+        {
+          "description": "How many findings the gate refused.",
+          "name": "refused",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many it reported as pending.",
+          "name": "pending",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Whether a refusal fails the gate (`drift.enforcement: blocking`).",
+          "name": "enforced",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "`report` (no gate), `clean`, `pending`, `advisory` (refusals not enforced),\n`refused`, or `unjudged` (no window).",
+          "name": "verdict",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The exit code the gate ends with: 0, `EXIT_REFUSED` or `EXIT_UNJUDGED`.",
+          "name": "exit_code",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint8)"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "plan.drift"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What a gate made of one finding.",
+      "home": "plan",
+      "is_enum": true,
+      "name": "DriftVerdict",
+      "properties": [],
+      "type": "\"refused\" | \"pending\" | \"reported\" | \"advisory\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "DriftFinding"
+      ],
+      "values": [
+        {
+          "description": "Refused: merged work the trunk has carried unrecorded past the window.",
+          "value": "refused"
+        },
+        {
+          "description": "Reported and not refused: on a head, or inside the window.",
+          "value": "pending"
+        },
+        {
+          "description": "Reported; this class never refuses.",
+          "value": "reported"
+        },
+        {
+          "description": "Advisory; this class never refuses (`done_without_trace`).",
+          "value": "advisory"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "The declared window, or why there is none.",
+      "home": "plan",
+      "is_enum": false,
+      "name": "DriftWindow",
+      "properties": [
+        {
+          "description": "The file it is declared in.",
+          "name": "model",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Read, or unread with `detail` saying why.",
+          "name": "state",
+          "refs": [
+            "DeliveryReading"
+          ],
+          "required": true,
+          "type": "DeliveryReading"
+        },
+        {
+          "description": "The seconds the trunk may carry merged work the plan has not recorded.",
+          "name": "seconds",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "`advisory` (refusals are reported, the gate passes) or `blocking`.",
+          "name": "enforcement",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "What was read, or why nothing was.",
+          "name": "detail",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "DriftReport"
       ],
       "values": [],
       "variants": []
@@ -19511,6 +19970,7 @@
         "perf.counters",
         "plan.model",
         "plan.delivery",
+        "plan.drift",
         "plan.flight",
         "plan.issues",
         "plan.next",
@@ -67986,6 +68446,97 @@
           "result_schema": "IssueDeliveryReport",
           "stability": "experimental",
           "summary": "How far each issue's work has travelled"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "plan drift",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/plan/drift?issue=I0001&at=HEAD&gate=trunk\"",
+          "description": "Every contradiction between an issue's declared status and its delivery (plan.delivery), each with the objects that prove it: `merged_not_recorded` — READY, BLOCKED or ACTIVE, with a merge on the trunk naming it (pull request, merge commit, release) and no open pull request naming it; `active_without_work` — ACTIVE since before the window, with no branch, pull request, merge or live mesh claim naming it; `done_without_trace` — DONE with no merge naming it, advisory because record-only issues exist. Each finding carries its age, whether it is past the window `.ai/repo/ci/plan.yaml` declares (`drift.window`, seconds), the sources that were not read and could have dissolved it, and the command that settles it (`majordomus plan verify|done <id>`). With `gate`, judged as a gate: on a `head` every merged_not_recorded is pending; on the `trunk` one merged longer than the window ago is refused and a younger one pending; the other classes never refuse; a missing or unreadable window refuses (exit 12); refusals fail the gate (exit 10) only under `drift.enforcement: blocking`, and are reported with exit 0 under `advisory`. Observed live, or `at` a commit as plan.delivery is. Inferred on every call; it never writes a stamp.",
+          "home": "plan",
+          "id": "plan.drift",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_plan_drift",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "One issue id. Default: every issue of the plan.",
+              "examples": [
+                {
+                  "case": "one-issue-at-head-as-trunk-gate",
+                  "value": "\"I0001\""
+                }
+              ],
+              "name": "issue",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "Observe as of this commit, as `plan.delivery` does. Default: live.",
+              "examples": [
+                {
+                  "case": "one-issue-at-head-as-trunk-gate",
+                  "value": "\"HEAD\""
+                }
+              ],
+              "name": "at",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "Judge as a gate on a `head` or on the `trunk`. Default: report only, exit 0.",
+              "examples": [
+                {
+                  "case": "one-issue-at-head-as-trunk-gate",
+                  "value": "\"trunk\""
+                }
+              ],
+              "name": "gate",
+              "required": false,
+              "type": "DriftGate | null"
+            }
+          ],
+          "path": "/api/v1/plan/drift",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::plan",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Where the plan's stamps contradict the delivered work: the result.",
+              "schema": "DriftReport",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "DriftReport",
+          "stability": "experimental",
+          "summary": "Where the plan's stamps contradict the delivered work"
         },
         {
           "benchmark": "required",

@@ -196,15 +196,16 @@ pub(crate) fn github_repository(url: &str) -> Option<String> {
         .map(|(_, r)| r)?;
     let r = rest.trim_end_matches('/').trim_end_matches(".git");
     let mut parts = r.split('/');
-    let (owner, name) = (parts.next()?, parts.next()?);
+    // a split always yields a first part; an empty one is no owner
+    let (owner, name) = (parts.next().unwrap_or_default(), parts.next()?);
     (parts.next().is_none() && !owner.is_empty() && !name.is_empty())
         .then(|| format!("{owner}/{name}"))
 }
 
 /// Which forge repository the proofs link into: the plan's own `repository`, else the one
 /// the recorded forge observation names, else the one the `origin` remote names.
-pub(crate) fn forge_of(root: &Path, plan: &Plan) -> Option<String> {
-    forge_url(&plan.project.repository)
+pub(crate) fn forge_of(root: &Path, repository: &str) -> Option<String> {
+    forge_url(repository)
         .or_else(|| {
             crate::integration::load_observation(root)
                 .ok()
@@ -212,10 +213,9 @@ pub(crate) fn forge_of(root: &Path, plan: &Plan) -> Option<String> {
                 .and_then(|o| forge_url(&o.repository))
         })
         .or_else(|| {
-            let out = crate::worktree::git::try_run(root, &["remote", "get-url", "origin"]).ok()?;
-            (out.status == Some(0))
-                .then(|| github_repository(&String::from_utf8_lossy(&out.stdout)))
-                .flatten()
+            crate::worktree::git::run(root, &["remote", "get-url", "origin"])
+                .ok()
+                .and_then(|out| github_repository(&String::from_utf8_lossy(&out.stdout)))
                 .and_then(|r| forge_url(&r))
         })
 }
@@ -393,23 +393,23 @@ pub(crate) fn derive(
     (now, next, milestones, inspected)
 }
 
-/// A version as [`delivery::version_key`] orders it.
-type VersionKey = (Vec<u64>, bool, String);
+/// A stable version: one [`crate::order::version_cmp`] can order, with no pre-release part —
+/// what an unpinned installation resolves to.
+fn is_stable(version: &str) -> bool {
+    crate::order::is_version(version) && !version.contains('-')
+}
 
 /// The highest stable version among the read readings, the first source in their order
 /// winning a tie.
 pub(crate) fn latest_of(readings: &[ReleaseReading]) -> Option<&ReleaseReading> {
-    let mut best: Option<(&ReleaseReading, VersionKey)> = None;
+    let mut best: Option<(&ReleaseReading, &str)> = None;
     for r in readings.iter().filter(|r| r.state == DeliveryReading::Read) {
-        let Some(key) = r.version.as_deref().and_then(delivery::version_key) else {
+        let Some(version) = r.version.as_deref().filter(|v| is_stable(v)) else {
+            // no version, or a pre-release
             continue;
         };
-        if !key.1 {
-            // a pre-release is not what an unpinned installation resolves to
-            continue;
-        }
-        if best.as_ref().is_none_or(|(_, b)| key > *b) {
-            best = Some((r, key));
+        if best.is_none_or(|(_, b)| crate::order::version_cmp(version, b).is_gt()) {
+            best = Some((r, version));
         }
     }
     best.map(|(r, _)| r)
@@ -419,11 +419,9 @@ pub(crate) fn latest_of(readings: &[ReleaseReading]) -> Option<&ReleaseReading> 
 pub(crate) fn highest_tag(tags: &str) -> Option<String> {
     tags.lines()
         .map(str::trim)
-        .filter(|t| t.starts_with('v'))
-        .filter_map(|t| delivery::version_key(t).map(|k| (k, t)))
-        .filter(|(k, _)| k.1)
-        .max_by(|a, b| a.0.cmp(&b.0))
-        .map(|(_, t)| t.to_string())
+        .filter(|t| t.starts_with('v') && is_stable(t))
+        .max_by(|a, b| crate::order::version_cmp(a, b))
+        .map(str::to_string)
 }
 
 // ---------------------------------------------------------------- the live half
@@ -476,9 +474,8 @@ pub(crate) fn release(root: &Path, forge: Option<&str>, executable: &str) -> Fli
         },
         Err(e) => unread("records", e.to_string()),
     };
-    let tags_out = crate::worktree::git::try_run(root, &["tag", "--list", "v*"]);
-    let (tags, own_tagged) = match tags_out {
-        Ok(out) if out.status == Some(0) => {
+    let (tags, own_tagged) = match crate::worktree::git::run(root, &["tag", "--list", "v*"]) {
+        Ok(out) => {
             let text = String::from_utf8_lossy(&out.stdout).into_owned();
             let own = format!("v{executable}");
             let tagged = text.lines().any(|t| t.trim() == own);
@@ -493,13 +490,6 @@ pub(crate) fn release(root: &Path, forge: Option<&str>, executable: &str) -> Fli
             };
             (reading, tagged)
         }
-        Ok(out) => (
-            unread(
-                "tags",
-                format!("`git tag --list` failed: {}", out.stderr.trim()),
-            ),
-            false,
-        ),
         Err(e) => (unread("tags", e.to_string()), false),
     };
     let publication = match delivery::published_live(root) {
@@ -548,7 +538,7 @@ pub(crate) fn observe(
             observed_at: None,
         },
     });
-    let forge = forge_of(root, plan);
+    let forge = forge_of(root, &plan.project.repository);
     let (now, next, milestones, inspected) = derive(
         plan,
         &report,
@@ -645,5 +635,169 @@ mod tests {
             );
         }
         assert_eq!(github_repository("https://gitlab.com/o/r.git"), None);
+    }
+
+    fn delivery(id: &str) -> IssueDelivery {
+        IssueDelivery {
+            issue: id.into(),
+            title: format!("the {id}"),
+            milestone: "m".into(),
+            status: "READY".into(),
+            stage: DeliveryStage::Deployed,
+            settled: true,
+            unread: vec![],
+            branch: None,
+            pr_open: None,
+            merged: None,
+            released: None,
+            deployed: None,
+        }
+    }
+
+    /// A remote-tracking branch is linked on the forge without its remote's name, a local one
+    /// is not linked at all, and a publication links the pointer the deployment published.
+    #[test]
+    fn every_proof_links_where_the_forge_has_it_and_only_there() {
+        use super::delivery::{DeliveryBranch, DeliveryDeployment};
+        let forge = Some("https://github.com/o/r");
+        let branch = |name: &str, remote: bool| DeliveryBranch {
+            name: name.into(),
+            head: "h".into(),
+            remote,
+            via: "slug".into(),
+            observed_at: "t".into(),
+        };
+        let mut d = delivery("I0001");
+        d.branch = Some(branch("origin/feature/x", true));
+        d.deployed = Some(DeliveryDeployment {
+            version: "0.2.0".into(),
+            latest_json: "abc:site/static/releases/latest.json".into(),
+            observed_at: "t".into(),
+        });
+        let p = proofs(&d, forge);
+        assert_eq!(
+            p.iter()
+                .map(|p| (p.kind.as_str(), p.href.as_deref()))
+                .collect::<Vec<_>>(),
+            [
+                ("branch", Some("https://github.com/o/r/tree/feature/x")),
+                (
+                    "publication",
+                    Some("https://github.com/o/r/blob/abc/site/static/releases/latest.json")
+                ),
+            ]
+        );
+        assert_eq!(p[1].label, "latest.json names 0.2.0");
+        d.branch = Some(branch("feature/x", false));
+        assert_eq!(
+            proofs(&d, forge)[0].href,
+            None,
+            "a local branch is only here"
+        );
+        assert_eq!(proofs(&d, None)[1].href, None, "no forge, no link");
+        // a commit whose subject names the issue is its merge, with no pull request
+        let mut direct = delivery("I0002");
+        direct.merged = Some(super::delivery::DeliveryMerge {
+            commit: "0123456789abcdef".into(),
+            pull_request: None,
+            branch: None,
+            title: Some("fix: it (I0002)".into()),
+            via: "subject".into(),
+            merged_at: "t".into(),
+            merges: 1,
+            observed_at: "t".into(),
+        });
+        assert_eq!(
+            proofs(&direct, forge)
+                .iter()
+                .map(|p| (p.kind.as_str(), p.label.as_str()))
+                .collect::<Vec<_>>(),
+            [("merge", "0123456789a")]
+        );
+
+        // a live claim puts an open issue in flight and is one of its proofs
+        let claims = [IssueClaim {
+            issue: "I0001".into(),
+            key: "c-1".into(),
+        }];
+        let claimed: BTreeSet<&str> = ["I0001"].into();
+        let i = flight_issue(&d, &claims, &claimed, forge);
+        assert_eq!(i.in_flight, [InFlight::Claim]);
+        assert_eq!(
+            i.proofs
+                .last()
+                .map(|p| (p.kind.as_str(), p.label.as_str(), p.href.as_deref())),
+            Some(("claim", "c-1", None))
+        );
+    }
+
+    /// The forge is the plan's repository, else the recorded observation's, else the one the
+    /// `origin` remote names; a remote on no forge this links names none.
+    #[test]
+    fn the_forge_falls_back_to_the_origin_remote() {
+        assert_eq!(github_repository("https://github.com/only-an-owner"), None);
+        assert_eq!(github_repository("https://github.com/o/r/extra"), None);
+        let dir = tempfile::tempdir().unwrap();
+        assert_eq!(forge_of(dir.path(), ""), None, "no repository, no remote");
+        let git = |args: &[&str]| {
+            let out = std::process::Command::new("git")
+                .arg("-C")
+                .arg(dir.path())
+                .args(args)
+                .env_remove("GIT_DIR")
+                .env_remove("GIT_WORK_TREE")
+                .output()
+                .unwrap();
+            assert!(out.status.success(), "git {args:?}");
+        };
+        git(&["init", "-q"]);
+        git(&["remote", "add", "origin", "git@github.com:o/r.git"]);
+        assert_eq!(
+            forge_of(dir.path(), "").as_deref(),
+            Some("https://github.com/o/r")
+        );
+        assert_eq!(
+            forge_of(dir.path(), "p/q").as_deref(),
+            Some("https://github.com/p/q"),
+            "the plan's own repository first"
+        );
+    }
+
+    /// Each source of the release says what it read or why it could not: no record, no
+    /// repository to list tags in, no deployment observed, and a record that does not parse.
+    #[test]
+    fn every_source_of_the_release_says_what_it_read_or_why_not() {
+        let dir = tempfile::tempdir().unwrap();
+        let r = release(dir.path(), Some("https://github.com/o/r"), "0.1.0");
+        let states: Vec<(&str, DeliveryReading)> = r
+            .readings
+            .iter()
+            .map(|r| (r.source.as_str(), r.state))
+            .collect();
+        assert_eq!(
+            states,
+            [
+                ("records", DeliveryReading::Read),
+                ("tags", DeliveryReading::Unread),
+                ("publication", DeliveryReading::Unread),
+            ]
+        );
+        assert!(r.readings[0].detail.starts_with("no stable release record"));
+        assert_eq!((r.latest, r.executable_tagged), (None, false));
+
+        let records = dir.path().join(crate::distribution::release::DIR);
+        std::fs::create_dir_all(&records).unwrap();
+        std::fs::write(
+            records.join("v0.1.0.yaml"),
+            "schema: release/v1\nversion: [\n",
+        )
+        .unwrap();
+        let r = release(dir.path(), None, "0.1.0");
+        assert_eq!(
+            r.readings[0].state,
+            DeliveryReading::Unread,
+            "{:?}",
+            r.readings[0]
+        );
     }
 }

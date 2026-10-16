@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "0.27.0"
   },
-  "fingerprint": "fac2a453a9885f2b4f6ad97138fb87c7fbcb2e390d3f2e8c7bac2d09ab9ae8de",
+  "fingerprint": "d5508cd257877175abafc5a06f3f0e8ec6a9e394d37ac3b8d44e1df7b08f24bb",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -1162,7 +1162,7 @@
         "use_cases": 6,
         "rules": 13,
         "enforced_rules": 11,
-        "capabilities": 72,
+        "capabilities": 73,
         "moments": 17
       },
       "evidence": {
@@ -3229,7 +3229,7 @@
         "use_cases": 10,
         "rules": 15,
         "enforced_rules": 14,
-        "capabilities": 128,
+        "capabilities": 129,
         "moments": 38
       },
       "evidence": {
@@ -9524,6 +9524,15 @@
               "cli": "majordomus plan delivery"
             },
             {
+              "id": "plan.drift",
+              "title": "Where the plan's stamps contradict the delivered work",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_plan_drift",
+              "route": "GET /api/v1/plan/drift",
+              "cli": "majordomus plan drift"
+            },
+            {
               "id": "plan.flight",
               "title": "Where the work is now",
               "kind": "query",
@@ -9993,11 +10002,11 @@
       ],
       "backlinks": [],
       "counts": {
-        "capabilities": 57,
-        "mcp_tools": 52,
+        "capabilities": 58,
+        "mcp_tools": 53,
         "mcp_resources": 7,
-        "http_routes": 56,
-        "cli_paths": 15,
+        "http_routes": 57,
+        "cli_paths": 16,
         "commands": 0,
         "objects": 0,
         "rules": 2,
@@ -10276,6 +10285,15 @@
               "tool": "majordomus_plan_delivery",
               "route": "GET /api/v1/plan/delivery",
               "cli": "majordomus plan delivery"
+            },
+            {
+              "id": "plan.drift",
+              "title": "Where the plan's stamps contradict the delivered work",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_plan_drift",
+              "route": "GET /api/v1/plan/drift",
+              "cli": "majordomus plan drift"
             },
             {
               "id": "plan.flight",
@@ -11375,11 +11393,11 @@
         "observatory"
       ],
       "counts": {
-        "capabilities": 99,
-        "mcp_tools": 91,
+        "capabilities": 100,
+        "mcp_tools": 92,
         "mcp_resources": 16,
-        "http_routes": 96,
-        "cli_paths": 42,
+        "http_routes": 97,
+        "cli_paths": 43,
         "commands": 0,
         "objects": 0,
         "rules": 3,
@@ -12669,6 +12687,15 @@
               "cli": "majordomus plan delivery"
             },
             {
+              "id": "plan.drift",
+              "title": "Where the plan's stamps contradict the delivered work",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_plan_drift",
+              "route": "GET /api/v1/plan/drift",
+              "cli": "majordomus plan drift"
+            },
+            {
               "id": "plan.flight",
               "title": "Where the work is now",
               "kind": "query",
@@ -13094,11 +13121,11 @@
       ],
       "backlinks": [],
       "counts": {
-        "capabilities": 25,
-        "mcp_tools": 25,
+        "capabilities": 26,
+        "mcp_tools": 26,
         "mcp_resources": 449,
-        "http_routes": 25,
-        "cli_paths": 12,
+        "http_routes": 26,
+        "cli_paths": 13,
         "commands": 1,
         "objects": 446,
         "rules": 3,
@@ -17904,17 +17931,17 @@
     }
   ],
   "telemetry": {
-    "capabilities": 2461,
-    "builtin": 204,
-    "declarative": 2257,
+    "capabilities": 2463,
+    "builtin": 205,
+    "declarative": 2258,
     "modules": 58,
-    "mcp_tools": 194,
-    "mcp_resources": 2312,
-    "http_routes": 199,
-    "cli_commands": 207,
+    "mcp_tools": 195,
+    "mcp_resources": 2313,
+    "http_routes": 200,
+    "cli_commands": 208,
     "shell_commands": 30,
     "kinds": 34,
-    "objects": 2257,
+    "objects": 2258,
     "by_kind": {
       "adr": 110,
       "application": 5,
@@ -17947,7 +17974,7 @@
       "session": 89,
       "skill": 8,
       "taxonomy": 10,
-      "test": 502,
+      "test": 503,
       "use-case": 49,
       "workspace": 1
     },

@@ -255,3 +255,142 @@ fn now_is_where_the_work_is_and_the_release_is_the_releases() {
     );
     s.stop();
 }
+
+/// A plan with no work in flight says so, and an executable whose version no tag names is
+/// said to be untagged.
+#[test]
+fn nothing_in_flight_is_said_and_an_untagged_executable_too() {
+    let f = Fixture::new();
+    let mut s = Served::start(&f.root(), &[]);
+    let html = page(&s, "/ui/roadmap");
+    let (status, refused) = s.get("/api/v1/plan/flight?milestone=m-nope");
+    s.stop();
+    assert!(html.contains("No work is in flight"), "{html}");
+    assert!(html.contains("is not tagged"), "{html}");
+    assert_eq!(status, 404, "{refused}");
+}
+
+/// Where the mesh runs, a live claim puts its issue in flight and is shown as a proof; a
+/// cancelled milestone is never now, next is the first open milestone whose prerequisites are
+/// all now, and every proof a stage has is shown: a remote-tracking branch linked on the
+/// forge, a local one unlinked, and the published pointer.
+#[test]
+fn a_live_claim_puts_its_issue_in_flight_and_every_proof_is_shown() {
+    let (f, merge) = fixture();
+    f.write(
+        ".ai/repo/project/milestones/m-dropped.yaml",
+        &format!(
+            "{}cancelled: true\n",
+            milestone("m-dropped", 4, "The dropped milestone")
+        ),
+    );
+    f.write(
+        "site/static/releases/latest.json",
+        "{\"schema\":\"release/v1\",\"version\":\"0.1.0\",\"tag\":\"v0.1.0\"}\n",
+    );
+    f.commit("plan: a dropped milestone; publish the pointer");
+    let published = f.git(&["rev-parse", "HEAD"]).trim().to_string();
+    f.write(
+        ".ai/local/state/integration/deployments.json",
+        &serde_json::to_string_pretty(&json!({
+            "schema": 1,
+            "repository": "example/fixture",
+            "repository_url": "https://github.com/example/fixture",
+            "observed_at": "2026-10-16T09:00:00Z",
+            "deployments": [{"id": "1", "environment": "github-pages", "sha": published,
+                             "created_at": "2026-10-16T08:30:00Z", "state": "success"}],
+            "releases": []
+        }))
+        .unwrap(),
+    );
+    f.git(&["branch", "fix/the-later-piece"]);
+    f.git(&[
+        "update-ref",
+        "refs/remotes/origin/feature/the-busy-piece",
+        &merge,
+    ]);
+
+    let state = f.parent().join("xdg-state");
+    let key = majordomus_cli::mesh::identity::NodeIdentity::load_or_create(
+        &state.join("majordomus").join("node.json"),
+    )
+    .expect("a node identity")
+    .public
+    .public_key;
+    f.write(
+        ".ai/repo/mesh/majordomus.yaml",
+        &format!(
+            "schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\n\
+             multicast:\n  enabled: false\ntrust:\n  policy: deny_unknown\n  allow:\n    - {key}\n\
+             cooperation:\n  heartbeat_seconds: 1\n  expiry_seconds: 30\n  repository: fixture\n"
+        ),
+    );
+    let mut s = Served::start_with_env(
+        &f.root(),
+        &["--discovery", "filesystem"],
+        &[("XDG_STATE_HOME", state.to_str().unwrap())],
+    );
+    let post = |path: &str, body: Value| {
+        let (status, _, text) = s.request("POST", path, Some(&body.to_string()));
+        assert_eq!(status, 200, "{path}: {text}");
+    };
+    post(
+        "/api/v1/mesh/sessions",
+        json!({"session": "s1", "client": "test", "intent": "the work", "issue": "I0001"}),
+    );
+    post(
+        "/api/v1/mesh/claims",
+        json!({"session": "s1", "scope": ["lib"], "issue": "I0001", "intent": "the work"}),
+    );
+    post(
+        "/api/v1/mesh/claims",
+        json!({"session": "s1", "scope": ["docs"], "intent": "no issue named"}),
+    );
+
+    let (status, flight) = s.get("/api/v1/plan/flight?milestone=m-later");
+    assert_eq!(status, 200, "{flight}");
+    assert_eq!(
+        flight["now"],
+        json!(["fixture-milestone", "m-busy", "m-started"]),
+        "the claimed issue's milestone is now; the dropped one never is: {flight}"
+    );
+    assert_eq!(flight["next"], "m-later", "{flight}");
+    let fixture_now = &flight["milestones"][0]["issues"][0];
+    assert_eq!(fixture_now["in_flight"], json!(["claim"]), "{fixture_now}");
+    let kinds: Vec<&str> = fixture_now["proofs"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|p| p["kind"].as_str().unwrap())
+        .collect();
+    assert_eq!(
+        kinds,
+        ["pull_request", "merge", "release", "publication", "claim"],
+        "{fixture_now}"
+    );
+    let busy = &flight["milestones"][1]["issues"][0]["proofs"][0];
+    assert_eq!(
+        busy["href"], "https://github.com/example/fixture/tree/feature/the-busy-piece",
+        "{busy}"
+    );
+    let later = &flight["inspected"]["issues"][0]["proofs"][0];
+    assert_eq!(
+        (later["kind"].as_str(), later.get("href")),
+        (Some("branch"), None),
+        "{later}"
+    );
+    let publication = flight["release"]["readings"]
+        .as_array()
+        .and_then(|r| r.iter().find(|r| r["source"] == "publication"))
+        .cloned()
+        .unwrap_or(Value::Null);
+    assert_eq!(publication["version"], "0.1.0", "{flight}");
+
+    let html = page(&s, "/ui/roadmap?milestone=m-later");
+    s.stop();
+    assert!(html.contains("claim "), "the claim is shown: {html}");
+    assert!(
+        html.contains("branch fix/the-later-piece"),
+        "a local branch is shown, unlinked: {html}"
+    );
+}

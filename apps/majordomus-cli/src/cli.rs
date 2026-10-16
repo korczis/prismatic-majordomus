@@ -2764,6 +2764,10 @@ pub struct PlanArgs {
 /// }
 /// assert!(matches!(parse(&["majordomus", "plan", "delivery"]), PlanCommand::Delivery { issue: None, at: None }));
 /// assert!(matches!(
+///     parse(&["majordomus", "plan", "drift", "--gate", "trunk"]),
+///     PlanCommand::Drift { issue: None, at: None, gate: Some(majordomus_cli::cli::DriftGateArg::Trunk) }
+/// ));
+/// assert!(matches!(
 ///     parse(&["majordomus", "plan", "delivery", "I0001"]),
 ///     PlanCommand::Delivery { issue: Some(ref i), at: None } if i == "I0001"
 /// ));
@@ -2777,6 +2781,33 @@ pub enum PlanCommand {
         #[arg(long, value_name = "REV")]
         at: Option<String>,
     },
+    /// Every contradiction between an issue's declared status and its delivery — merged_not_recorded, active_without_work, done_without_trace — each with its proof; with --gate, judged against the window .ai/repo/ci/plan.yaml declares
+    Drift {
+        /// One issue; default every issue of the plan
+        issue: Option<String>,
+        /// Observe as of this commit, as `plan delivery --at` does
+        #[arg(long, value_name = "REV")]
+        at: Option<String>,
+        /// Judge as a gate: on a `head` merged work is pending, on the `trunk` past the window it is refused (exit 10 under blocking enforcement); a missing window exits 12
+        #[arg(long, value_enum, value_name = "TREE")]
+        gate: Option<DriftGateArg>,
+    },
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+/// The tree `majordomus plan drift --gate` judges.
+///
+/// ```
+/// use clap::ValueEnum;
+/// use majordomus_cli::cli::DriftGateArg;
+/// assert_eq!(DriftGateArg::from_str("trunk", false), Ok(DriftGateArg::Trunk));
+/// assert!(DriftGateArg::from_str("main", false).is_err(), "only a head or the trunk");
+/// ```
+pub enum DriftGateArg {
+    /// A head: merged work the plan has not recorded is pending
+    Head,
+    /// The trunk: merged work unrecorded past the window is refused
+    Trunk,
 }
 
 #[derive(Debug, Args)]
@@ -5232,6 +5263,27 @@ pub const EXAMPLES: &[CommandExamples] = &[
                 argv: &["plan", "delivery", "I0001", "--at", "HEAD"],
                 setup: &[],
                 expect: Expect::StdoutContains(&["I0001", "none", "unread"]),
+            },
+        ],
+    },
+    CommandExamples {
+        command: "plan drift",
+        examples: &[
+            ExampleDoc {
+                id: "plan-drift-json",
+                title: "Where the plan's stamps contradict the delivered work",
+                description: "The same answer `GET /api/v1/plan/drift` and the MCP tool `majordomus_plan_drift` return: every merged_not_recorded, active_without_work and done_without_trace finding with the pull request, merge commit and release that prove it, its age against the window `.ai/repo/ci/plan.yaml` declares, and the command that settles it.",
+                argv: &["plan", "drift", "--format", "json"],
+                setup: &[],
+                expect: Expect::Json(&["/observed/commit", "/window/model", "/tallies/merged_not_recorded", "/verdict"]),
+            },
+            ExampleDoc {
+                id: "plan-drift-at",
+                title: "As of a commit",
+                description: "`--at` reads that commit's history and the tree's records only, as `plan delivery --at` does, so the open pull requests are unread and a finding says it is not settled. `--gate head|trunk` judges the answer as `scripts/ci/plan-drift-check` does: on a head merged work the plan has not recorded is pending; on the trunk one merged longer than the window ago is refused, naming `majordomus plan verify|done <id>`, and a missing window refuses with exit 12.",
+                argv: &["plan", "drift", "--at", "HEAD"],
+                setup: &[],
+                expect: Expect::StdoutContains(&["plan drift", "window"]),
             },
         ],
     },
