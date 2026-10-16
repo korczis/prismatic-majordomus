@@ -217,3 +217,79 @@ fn plan_drift_is_one_answer_on_the_command_line_http_and_mcp() {
     assert_eq!(norm(&from_cli), norm(&from_http));
     assert_eq!(from_cli["findings"][0]["class"], "merged_not_recorded");
 }
+
+#[test]
+fn plan_drift_of_one_issue_as_a_heads_gate_and_what_it_refuses_to_judge() {
+    let (f, merge) = fixture();
+    model(&f, 86_400, "blocking");
+    let (code, v, err) = cli(&f, &["I0001", "--gate", "head", "--at", &merge]);
+    assert_eq!(code, 0, "{err}");
+    assert_eq!(v["gate"], "head");
+    assert_eq!(v["verdict"], "pending", "{v}");
+    assert_eq!(v["findings"].as_array().unwrap().len(), 1);
+
+    let (code, _, err) = cli(&f, &["I9999"]);
+    assert_ne!(code, 0);
+    assert!(err.contains("I9999"), "{err}");
+    let (code, _, err) = cli(&f, &["--at", "no-such-rev"]);
+    assert_ne!(code, 0);
+    assert!(err.contains("no-such-rev"), "{err}");
+}
+
+#[test]
+fn plan_drift_reads_the_mesh_claims_where_the_mesh_runs() {
+    let (f, _) = fixture();
+    model(&f, 86_400, "advisory");
+    let state = f.parent().join("xdg-state");
+    let key = majordomus_cli::mesh::identity::NodeIdentity::load_or_create(
+        &state.join("majordomus").join("node.json"),
+    )
+    .expect("a node identity")
+    .public
+    .public_key;
+    f.write(
+        ".ai/repo/mesh/majordomus.yaml",
+        &format!(
+            "schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\n\
+             multicast:\n  enabled: false\ntrust:\n  policy: deny_unknown\n  allow:\n    - {key}\n\
+             cooperation:\n  heartbeat_seconds: 1\n  expiry_seconds: 30\n  repository: fixture\n"
+        ),
+    );
+    let mut served = Served::start_with_env(
+        &f.root(),
+        &["--discovery", "filesystem"],
+        &[("XDG_STATE_HOME", state.to_str().unwrap())],
+    );
+    let post = |path: &str, body: Value| -> (u16, Value) {
+        let (status, _, text) = served.request("POST", path, Some(&body.to_string()));
+        (status, serde_json::from_str(&text).unwrap_or(Value::Null))
+    };
+    let (status, opened) = post(
+        "/api/v1/mesh/sessions",
+        json!({"session": "s1", "client": "test", "intent": "the work", "issue": "I0001"}),
+    );
+    assert_eq!(status, 200, "{opened}");
+    let (status, claimed) = post(
+        "/api/v1/mesh/claims",
+        json!({"session": "s1", "scope": ["lib"], "issue": "I0001", "intent": "the work"}),
+    );
+    assert_eq!(status, 200, "{claimed}");
+    // a claim that names no issue names nothing the plan holds
+    let (status, claimed) = post(
+        "/api/v1/mesh/claims",
+        json!({"session": "s1", "scope": ["docs"], "intent": "something else"}),
+    );
+    assert_eq!(status, 200, "{claimed}");
+    let (status, v) = served.get("/api/v1/plan/drift");
+    served.stop();
+    assert_eq!(status, 200, "{v}");
+    let claims = v["sources"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|s| s["name"] == "claims")
+        .cloned()
+        .unwrap();
+    assert_eq!(claims["state"], "read", "{claims}");
+    assert_eq!(claims["detail"], "1 issue(s) named by a live mesh claim");
+}

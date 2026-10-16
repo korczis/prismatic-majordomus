@@ -49,7 +49,7 @@ pub fn run(args: PlanArgs) -> Result<u8> {
     };
     let drift = matches!(args.command, PlanCommand::Drift { .. });
     let body = match args.format {
-        OutputFormat::Json => serde_json::to_string_pretty(&v).unwrap_or_else(|_| v.to_string()),
+        OutputFormat::Json => format!("{v:#}"),
         OutputFormat::Text if drift => drift_text(&v),
         OutputFormat::Text => delivery_text(&v),
     };
@@ -363,5 +363,83 @@ mod tests {
             "{t}"
         );
         assert!(t.contains("plan drift (trunk): advisory — 1 refused, 0 pending (drift.enforcement is advisory"), "{t}");
+    }
+
+    #[test]
+    fn every_verdict_has_its_tag_and_a_report_names_no_gate() {
+        let v = json!({
+            "observed": {"mode": "at", "trunk": "abc", "commit": "abc", "observed_at": "t"},
+            "window": {"model": "m", "state": "unread", "detail": "no window"},
+            "sources": [],
+            "classes": ["merged_not_recorded"],
+            "tallies": {"merged_not_recorded": 3},
+            "findings": [
+                {"issue": "I0001", "status": "READY", "class": "merged_not_recorded", "verdict": "pending",
+                 "proof": {"release": "v0.2.0"}, "unread": [], "remedy": "r1"},
+                {"issue": "I0002", "status": "ACTIVE", "class": "active_without_work", "verdict": "reported",
+                 "proof": {"started_at": "2026-10-01"}, "unread": [], "remedy": "r2"},
+                {"issue": "I0003", "status": "READY", "class": "merged_not_recorded",
+                 "proof": {}, "unread": [], "remedy": "r3"}
+            ],
+            "refused": 0, "pending": 1, "verdict": "report", "exit_code": 0
+        });
+        let t = drift_text(&v);
+        assert!(
+            t.contains("PENDING  I0001  READY    merged_not_recorded in v0.2.0 — r1"),
+            "{t}"
+        );
+        assert!(
+            t.contains("NOTE     I0002  ACTIVE   active_without_work started 2026-10-01 — r2"),
+            "{t}"
+        );
+        assert!(t.contains("FINDING  I0003"), "{t}");
+        assert!(
+            t.ends_with("plan drift: 3 finding(s), reported; no gate was asked"),
+            "{t}"
+        );
+
+        let mut unjudged = v.clone();
+        unjudged["gate"] = json!("head");
+        unjudged["verdict"] = json!("unjudged");
+        assert!(
+            drift_text(&unjudged).ends_with("(no window: nothing can be called young)"),
+            "{}",
+            drift_text(&unjudged)
+        );
+        let mut clean = v;
+        clean["gate"] = json!("head");
+        clean["verdict"] = json!("clean");
+        assert!(drift_text(&clean).ends_with("plan drift (head): clean — 0 refused, 1 pending"));
+    }
+
+    #[test]
+    fn a_capability_the_registry_lacks_or_refuses_is_a_typed_error() {
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a repository");
+        let bare = Context::new(
+            std::sync::Arc::new(repo.index().expect("an index")),
+            std::sync::Arc::new(
+                crate::capability::CapabilityRegistry::builder()
+                    .build()
+                    .expect("an empty registry"),
+            ),
+        );
+        match execute(&bare, &["plan", "drift"], json!({})) {
+            Err(Error::Protocol { reason }) => {
+                assert_eq!(
+                    reason,
+                    "no capability is exposed as `majordomus plan drift`"
+                )
+            }
+            other => panic!("expected a protocol error, got {other:?}"),
+        }
+        let ctx = repo.context().expect("a context");
+        match execute(&ctx, &["plan", "delivery"], json!({"issue": "I9999"})) {
+            Err(Error::NotFound { reason }) => assert!(reason.contains("I9999"), "{reason}"),
+            other => panic!("expected not found, got {other:?}"),
+        }
+        match execute(&ctx, &["plan", "drift"], json!({"window": 60})) {
+            Err(Error::Protocol { reason }) => assert!(reason.contains("window"), "{reason}"),
+            other => panic!("expected a protocol error, got {other:?}"),
+        }
     }
 }

@@ -73,6 +73,13 @@ pub struct ObservedMergedPullRequest {
     pub merged_at: String,
 }
 
+/// Newest first: a pull request's number only grows, so the largest is the latest opened.
+impl crate::order::Ordered for ObservedMergedPullRequest {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::plain(&self.title, &self.head_sha).descending(self.number)
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 /// One deployment the forge recorded.
 pub struct ObservedDeployment {
@@ -280,7 +287,7 @@ pub fn parse_merged(answer: &Value) -> (Vec<ObservedMergedPullRequest>, Option<S
             })
         })
         .collect();
-    merged.sort_by_key(|p| std::cmp::Reverse(p.number));
+    crate::order::canonical(&mut merged);
     let more = repo.pointer("/pullRequests/pageInfo/hasPreviousPage") == Some(&Value::Bool(true));
     let earlier = more
         .then(|| string(repo, "/pullRequests/pageInfo/startCursor"))
@@ -562,7 +569,11 @@ mod tests {
                        "headRefOid": format!("h{n}"), "mergedAt": "2026-10-16T10:00:00Z",
                        "mergeCommit": {"oid": format!("m{n}")}})
             })
-            .chain([json!({"number": 99, "title": "no head, not followable"})])
+            .chain([
+                json!({"number": 99, "title": "no head, not followable"}),
+                json!({"title": "no number", "headRefOid": "h", "mergedAt": "2026-10-16T10:00:00Z"}),
+                json!({"number": 98, "title": "never merged", "headRefOid": "h98"}),
+            ])
             .collect();
         json!({"data": {"repository": {"pullRequests": {
             "pageInfo": {"hasPreviousPage": earlier.is_some(), "startCursor": earlier},
@@ -576,7 +587,7 @@ mod tests {
         assert_eq!(
             page.iter().map(|p| p.number).collect::<Vec<_>>(),
             [4, 3],
-            "newest first; a node with no head is left out"
+            "newest first; a node with no head, number or merge time is left out"
         );
         assert_eq!(page[0].merge_commit, "m4");
         assert_eq!(earlier.as_deref(), Some("c1"));
@@ -721,6 +732,26 @@ mod tests {
         assert!(observe_with("/no/such/program", dir.path())
             .unwrap_err()
             .contains("could not run"));
+
+        // the merged pull requests are asked a page at a time, the next one before the
+        // cursor the last one named; this forge names the same cursor again, which ends it
+        std::fs::write(
+            dir.path().join("answer.json"),
+            merged_page(&[5, 6], Some("c1")).to_string(),
+        )
+        .unwrap();
+        let paged = observe_with(&gh, dir.path()).unwrap();
+        let numbers: Vec<u64> = paged
+            .merged_pull_requests
+            .unwrap()
+            .iter()
+            .map(|p| p.number)
+            .collect();
+        assert_eq!(
+            numbers,
+            [6, 5, 6, 5],
+            "two pages asked, the second before c1"
+        );
 
         // refreshed: asked and recorded, and a record that cannot be written is said
         std::fs::write(dir.path().join("answer.json"), answer().to_string()).unwrap();
