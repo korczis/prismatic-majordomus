@@ -237,7 +237,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/economics.json` | `economics` | json | 30840 | `1de2389cb8411920` |
 | `docs/generated/economics.md` | `economics` | markdown | 15299 | `9c43ea5b26be4794` |
 | `docs/generated/economics.yaml` | `economics` | yaml | 25713 | `6a9c9ce8d2e3be30` |
-| `docs/generated/graph.json` | `graph` | json | 3486346 | `8e6ccee6d33b0c6b` |
+| `docs/generated/graph.json` | `graph` | json | 3494324 | `4097d5da29b750b7` |
 | `docs/generated/graph.schema.json` | `graph-schema` | json | 7618 | `43ccf18683490d8e` |
 | `docs/generated/modules/artifacts.md` | `modules/artifacts` | markdown | 1742 | `fb0572caf7390a97` |
 | `docs/generated/modules/brief.md` | `modules/brief` | markdown | 2394 | `a387ebc16af4bdc2` |
@@ -362,9 +362,9 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `site/data/registry/design.json` | `site-design` | json | 11587 | `aea1587bd61aed11` |
 | `site/data/registry/distribution.json` | `site-distribution` | json | 3005 | `4ad7ea2e0bb5dc96` |
 | `site/data/registry/evidence-subjects.json` | `site-evidence-subjects` | json | 793752 | `2c9f7cbe3595c179` |
-| `site/data/registry/product-graph.json` | `site-product-graph` | json | 98812 | `0a80a2e0a1f5172c` |
-| `site/data/registry/product.json` | `site-product` | json | 741668 | `516743fdab55e4bc` |
-| `site/data/registry/registry.json` | `site-registry` | json | 6969076 | `ad4fd79321c61afe` |
+| `site/data/registry/product-graph.json` | `site-product-graph` | json | 98812 | `950c8f7840ccd3ab` |
+| `site/data/registry/product.json` | `site-product` | json | 741668 | `198996fc5951b46f` |
+| `site/data/registry/registry.json` | `site-registry` | json | 6970287 | `7a724ff5b8730d6f` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180163 | `e09a32741332ab86` |
 | `site/data/registry/why.json` | `site-why` | json | 349924 | `90d1c602ea71e363` |
 | `site/static/favicon.svg` | `design-mark` | text | 904 | `d690a33109fe888c` |

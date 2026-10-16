@@ -6,23 +6,23 @@
     "version": "0.27.0"
   },
   "registry": {
-    "fingerprint": "92ffa5787184bba6a8182979a7ef0815736ba3e4bc8e7affe87a42c1812f8ec6",
+    "fingerprint": "2c756a0c7615d50049ce81f30962a4551b5cd399964770edeaddf94fb8cd2653",
     "summary": {
-      "total": 2461,
+      "total": 2463,
       "builtin": 204,
-      "declarative": 2257,
+      "declarative": 2259,
       "by_kind": {
         "command": 31,
         "query": 173,
-        "resource": 2257
+        "resource": 2259
       },
       "by_stability": {
         "behaviorally_verified": 141,
         "experimental": 54,
-        "implemented": 2266
+        "implemented": 2268
       },
       "mcp_tools": 194,
-      "mcp_resources": 2312,
+      "mcp_resources": 2314,
       "http_routes": 199,
       "cli_commands": 110,
       "modules": 92,
@@ -84030,7 +84030,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 403,
+        "capabilities": 405,
         "capability_ids": []
       },
       {
@@ -84694,7 +84694,7 @@
     ]
   },
   "index": {
-    "fingerprint": "ffe57835b7b73dc5df698249ac9712871944d30e3c183658f4b7934d21b7c763",
+    "fingerprint": "cd8542700112080a77f9167b9bbd6225f4b3faa6b280d3b14a149bed66c80f6c",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -84734,7 +84734,7 @@
       "gap": 3,
       "implementation": 52,
       "intent": 4,
-      "issue": 403,
+      "issue": 405,
       "knowledge": 4,
       "mesh-declaration": 1,
       "milestone": 39,
@@ -90879,7 +90879,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 173435
+        "bytes": 164104
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -96736,7 +96736,7 @@
         "path": ".ai/repo/project/issues/I1800.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1510
+        "bytes": 2542
       },
       {
         "uri": "majordomus://issue/I1801",
@@ -97891,7 +97891,7 @@
         "path": ".ai/repo/project/issues/I2417.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3692
+        "bytes": 5163
       },
       {
         "uri": "majordomus://issue/I2460",
@@ -98067,7 +98067,7 @@
         "path": ".ai/repo/project/issues/I2482.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2314
+        "bytes": 3713
       },
       {
         "uri": "majordomus://issue/I2483",
@@ -98188,7 +98188,7 @@
         "path": ".ai/repo/project/issues/I2652.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3595
+        "bytes": 5286
       },
       {
         "uri": "majordomus://issue/I2653",
@@ -98199,7 +98199,7 @@
         "path": ".ai/repo/project/issues/I2653.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 5060
+        "bytes": 7038
       },
       {
         "uri": "majordomus://issue/I2654",
@@ -98364,7 +98364,7 @@
         "path": ".ai/repo/project/issues/I2697.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1154
+        "bytes": 2383
       },
       {
         "uri": "majordomus://issue/I2698",
@@ -98584,7 +98584,7 @@
         "path": ".ai/repo/project/issues/I2718.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2423
+        "bytes": 3429
       },
       {
         "uri": "majordomus://issue/I2720",
@@ -98650,7 +98650,7 @@
         "path": ".ai/repo/project/issues/I2734.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2223
+        "bytes": 3174
       },
       {
         "uri": "majordomus://issue/I2735",
@@ -98760,7 +98760,29 @@
         "path": ".ai/repo/project/issues/I2748.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1460
+        "bytes": 2130
+      },
+      {
+        "uri": "majordomus://issue/I2749",
+        "kind": "issue",
+        "identity": "I2749",
+        "title": "A commit that only plans an issue is not its delivery",
+        "description": "plan.delivery stops counting as a merge of an issue a commit or pull request that names it while changing only the plan's own records and what is derived from them, so that plan.drift's merged_not_recorded holds only work that was delivered.",
+        "path": ".ai/repo/project/issues/I2749.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3032
+      },
+      {
+        "uri": "majordomus://issue/I2750",
+        "kind": "issue",
+        "identity": "I2750",
+        "title": "The trunk's drift gate reads the forge before it judges",
+        "description": "The structure job that runs scripts/ci/plan-drift-check on the trunk records the forge first (open pull requests and merged pull request titles), and a finding the gate could not settle because the forge went unread is reported as unjudged rather than refused.",
+        "path": ".ai/repo/project/issues/I2750.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2433
       },
       {
         "uri": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
@@ -109107,7 +109129,7 @@
       "identity": [
         "id"
       ],
-      "objects": 403
+      "objects": 405
     },
     {
       "name": "knowledge",

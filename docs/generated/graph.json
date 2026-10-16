@@ -29812,6 +29812,8 @@
             "a cancelled execution stops at its next operation",
             "the engine is Send and Sync"
           ],
+          "completed_at": "2026-10-16T16:43:20Z",
+          "completed_event": "sha256:2befb4528dd380121eee6504931ea2ae58241feae92704bd7216671a9ac10578",
           "created_at": "2026-09-15",
           "current_state": "No interpreter is embedded; every orchestration is shell.",
           "depends_on": [],
@@ -29831,10 +29833,14 @@
             ".ai/repo/adrs"
           ],
           "slug": "the-sandboxed-engine",
-          "updated_at": "2026-09-15",
+          "started_at": "2026-10-16T16:43:09Z",
+          "started_event": "sha256:0ace6d842453e4a00b22d09cfcfb0aacd27ffe7644388a28615267a54a28f89d",
+          "updated_at": "2026-10-16T16:43:20Z",
           "validation": [
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib script::"
-          ]
+          ],
+          "verified_at": "2026-10-16T16:43:13Z",
+          "verified_event": "sha256:5335256d1dfaf2dad35b9b591f0e76c9803db6018fcd3e11ee1a2cee29e4bcf3"
         }
       },
       {
@@ -34679,12 +34685,8 @@
         "route": "/cockpit/objects/issue/i2417",
         "source": ".ai/repo/project/issues/I2417.yaml",
         "facts": {
-          "acceptance_criteria": [
-            "Every node of the chain is a button; choosing one shows its detail alone and marks it pressed; the behaviour spec evidence-chain claims exactly those buttons",
-            "Every figure in the chain is derived; the evidence edge is dashed while the supported count is below the guaranteed count",
-            "scripts/ci/homepage-check, scripts/ci/interaction-check and scripts/site-check pass; the homepage stays within its asset budget",
-            "At 390 px the page does not scroll horizontally and the chain stacks into one column"
-          ],
+          "completed_at": "2026-10-16T17:03:20Z",
+          "completed_event": "sha256:23c4bcb369e9a378a17b6d654f6ec61c9a210af0b99509f3094a9d9c53f13295",
           "created_at": "2026-10-11",
           "depends_on": [],
           "evidence_required": [
@@ -34707,13 +34709,17 @@
             "scripts/lib/interaction-specs/evidence-chain.mjs"
           ],
           "slug": "the-landing-page-is-a-click-through-story",
-          "updated_at": "2026-10-11",
+          "started_at": "2026-10-16T17:03:09Z",
+          "started_event": "sha256:87b52fd8662c0a608d4d8343258a8fdb29123b4c5cb56d4dd43f97f8b18004e6",
+          "updated_at": "2026-10-16T17:03:20Z",
           "validation": [
             "bin/majordomus plan validate",
             "scripts/ci/interaction-check",
             "scripts/ci/homepage-check",
             "scripts/interaction-probe --only '/'"
-          ]
+          ],
+          "verified_at": "2026-10-16T17:03:13Z",
+          "verified_event": "sha256:2d454b9a0d03f1fb8a72e52132788adfc32a354d26874988928bad5d3c42bb80"
         }
       },
       {
@@ -35495,6 +35501,8 @@
             "governance.rs has unit tests",
             "every link under /ui and /cockpit/object the screens draw answers 200, and a test fails when one does not"
           ],
+          "completed_at": "2026-10-16T16:43:38Z",
+          "completed_event": "sha256:1862b4930ced384605a9d85d4f0bbf39e04ecb13518c9467b58117a31c265940",
           "created_at": "2026-10-12",
           "depends_on": [
             "I2481"
@@ -35518,12 +35526,16 @@
             ".ai/repo/project/issues/I2482.yaml"
           ],
           "slug": "every-ui-screen-has-a-case",
-          "updated_at": "2026-10-12",
+          "started_at": "2026-10-16T16:43:24Z",
+          "started_event": "sha256:2781941fc97529d010620168e49c5f32561161dafb040ea6a43b5a6eb10de42f",
+          "updated_at": "2026-10-16T16:43:38Z",
           "validation": [
             "cargo test --lib ui::governance",
             "cargo test --test ui_links",
             "test/run.sh 1088_the_command_and_capability_screens_answer"
-          ]
+          ],
+          "verified_at": "2026-10-16T16:43:29Z",
+          "verified_event": "sha256:fe4030ca6ff44d6a05209e413cda27f547fe98fe648bfe8915dac5c62ede4bdb"
         }
       },
       {
@@ -36059,6 +36071,8 @@
             "No handler under src/ui executes a capability on the request, which case 1096 holds, and the route is within the UI's latency budget, which bench --check holds",
             "Every screen's navigation leads to it"
           ],
+          "completed_at": "2026-10-16T16:43:58Z",
+          "completed_event": "sha256:716b3a5ac795e138d43e2454e43c96aa373bfa50343c86cdbee055e873679bf2",
           "created_at": "2026-10-13",
           "depends_on": [
             "I2486"
@@ -36086,13 +36100,17 @@
             ".ai/repo/project/issues/I2652.yaml"
           ],
           "slug": "the-ui-shows-what-the-knowledge-base-holds",
-          "updated_at": "2026-10-13",
+          "started_at": "2026-10-16T16:43:42Z",
+          "started_event": "sha256:04b27df54b7560bd3e6623faeba48272c0308fcd22a7a59ad42af1db88b2a11c",
+          "updated_at": "2026-10-16T16:43:58Z",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::knowledge",
             "MJ_TEST_JOBS=2 bash test/run.sh 3003_the_knowledge_screen_answers 1096_no_screen_waits_for_a_source",
             "majordomus bench system.http. --transport system --profile ci --no-write --check"
-          ]
+          ],
+          "verified_at": "2026-10-16T16:43:47Z",
+          "verified_event": "sha256:7cf7c58b17543d3116b918084fad0e9d6f9c627a872ccb7de1d79edbbabae324"
         }
       },
       {
@@ -36111,6 +36129,8 @@
             "A <figure data-chart> is drawn from the table inside it, and the table stays on the page",
             "The hand-drawn-diagram ratchet stays at diagrams=0"
           ],
+          "completed_at": "2026-10-16T17:05:34Z",
+          "completed_event": "sha256:96a762214263c92fb271bf9528742f7ed4269bb1c663c58c9f54c49ae0549aea",
           "created_at": "2026-10-13",
           "depends_on": [],
           "evidence_required": [
@@ -36164,13 +36184,17 @@
             ".ai/repo/project/issues/I2656.yaml"
           ],
           "slug": "every-diagram-is-interactive-and-linkable",
-          "updated_at": "2026-10-13",
+          "started_at": "2026-10-16T17:05:18Z",
+          "started_event": "sha256:22925d03a3cd93616831edf617107d1393fda58068c916d0838041cbf1a3e72c",
+          "updated_at": "2026-10-16T17:05:34Z",
           "validation": [
             "node --test scripts/lib/diagrams.test.mjs",
             "MJ_TEST_JOBS=2 bash test/run.sh 3006_diagrams_are_interactive_and_linkable 12_site_build 272_diagrams_are_drawn",
             "scripts/site-build && scripts/site-check",
             "scripts/ci/diagram-check"
-          ]
+          ],
+          "verified_at": "2026-10-16T17:05:23Z",
+          "verified_event": "sha256:cbfe6cba6ed0da8be25e45fe512e8b843652609a71b721a28f11f48f77db32eb"
         }
       },
       {
@@ -36802,6 +36826,8 @@
             "The snapshot lists vendor/p5.min.js among its assets",
             "The snapshot status word is SNAPSHOT on every new scene"
           ],
+          "completed_at": "2026-10-16T16:54:05Z",
+          "completed_event": "sha256:43b4609a42b915d276cbe62fc192b14c06275757af849b8244e34cb16dd2def1",
           "created_at": "2026-10-14",
           "current_state": "ADR 0160 proposes the scenes; the Observatory of ADR 0158 has eight.",
           "depends_on": [],
@@ -36822,10 +36848,14 @@
             "apps/majordomus-cli/src/ui/mod.rs"
           ],
           "slug": "ui-snapshot-carries-p5",
-          "updated_at": "2026-10-14",
+          "started_at": "2026-10-16T16:53:48Z",
+          "started_event": "sha256:84a51666c15609fc5c00a2c646f896168031b74b62cca865686bc291a97aae3f",
+          "updated_at": "2026-10-16T16:54:05Z",
           "validation": [
             "bin/majordomus plan validate"
           ],
+          "verified_at": "2026-10-16T16:53:54Z",
+          "verified_event": "sha256:9d9da6056c869b760f6b6da90f447f451e4a6fbe59050984b915765e6245519a",
           "why": "A published UI snapshot (ADR 0141) must serve vendor/p5.min.js beside the scenes script, or the kiosk there draws the new scenes as unavailable."
         }
       },
@@ -37645,6 +37675,8 @@
             "doctor in a linked worktree whose hooks resolve to another tree fails with the fixing command",
             "The main worktree's hooks path is unchanged"
           ],
+          "completed_at": "2026-10-16T16:39:25Z",
+          "completed_event": "sha256:de4867a9c408fd12c65aefeac1e89551fdc0a49d986033dc95e941f69bf89ac7",
           "created_at": "2026-10-14",
           "depends_on": [],
           "evidence_required": [
@@ -37663,10 +37695,14 @@
             "test/cases"
           ],
           "slug": "a-worktree-runs-its-own-hooks",
-          "updated_at": "2026-10-14",
+          "started_at": "2026-10-16T16:39:12Z",
+          "started_event": "sha256:ddfb3712cc65bf055efba9a866fba83e51442fd78f4fc6180470055f7d353cc9",
+          "updated_at": "2026-10-16T16:39:25Z",
           "validation": [
             "bin/majordomus plan validate"
-          ]
+          ],
+          "verified_at": "2026-10-16T16:39:17Z",
+          "verified_event": "sha256:c600594a0c7f92a5a5f0e9be7d58c3599da450067e5e38738481ea892d5a336a"
         }
       },
       {
@@ -37906,6 +37942,8 @@
             "The end event closes the mesh session",
             "Without a server the start event opens the episode and names no mesh session"
           ],
+          "completed_at": "2026-10-16T16:39:01Z",
+          "completed_event": "sha256:037518e95a4ce3e4f28802afba330af4407256f46ad924a11527dccb7ad18789",
           "created_at": "2026-10-15",
           "current_state": "The start event prints one health line about the mesh and opens no mesh session; the end event closes none.",
           "depends_on": [],
@@ -37923,11 +37961,15 @@
             ".ai/repo/project/milestones/every-session-joins-the-mesh.yaml"
           ],
           "slug": "a-session-joins-the-mesh-at-start",
-          "updated_at": "2026-10-15",
+          "started_at": "2026-10-16T16:38:48Z",
+          "started_event": "sha256:6efe6a9d734b4eac328a81e9ba0fbf5ecb529151067a00f322324790e797e6f0",
+          "updated_at": "2026-10-16T16:39:01Z",
           "validation": [
             "bin/majordomus plan validate",
             "bash test/run.sh 3066_a_session_joins_the_mesh_at_start 54_session_lifecycle_hooks 1054_every_session_is_told_the_stream"
-          ]
+          ],
+          "verified_at": "2026-10-16T16:38:53Z",
+          "verified_event": "sha256:a75174af18e8c56a79d239a7214a2019ddae819f5e944a1aef3ecce094c2b623"
         }
       },
       {
@@ -38355,9 +38397,10 @@
             "Every issue recorded DONE carries evidence from commands run at the recording commit"
           ],
           "created_at": "2026-10-16",
-          "current_state": "Unknown count of merged but unrecorded issues on the trunk.",
           "depends_on": [
-            "I2741"
+            "I2741",
+            "I2749",
+            "I2750"
           ],
           "desired_state": "plan drift on the trunk reports no merged_not_recorded, and the gate is blocking.",
           "evidence_required": [
@@ -38380,6 +38423,92 @@
           "validation": [
             "bin/majordomus plan drift --json",
             "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2749",
+        "kind": "issue",
+        "label": "I2749",
+        "summary": "A commit that only plans an issue is not its delivery",
+        "route": "/cockpit/objects/issue/i2749",
+        "source": ".ai/repo/project/issues/I2749.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A commit naming an issue that changes only its record and derived projections leaves the issue at the stage it had without that commit",
+            "A commit naming an issue that changes any other path still makes it merged",
+            "plan drift on the trunk no longer reports I1302, I1305, I1900, I1962, I1980 or I2484 as merged_not_recorded"
+          ],
+          "created_at": "2026-10-16",
+          "current_state": "delivery.rs takes the newest commit or merge in the trunk's history whose subject, title or branch names the issue as its merge, whatever that commit changed.",
+          "depends_on": [
+            "I2741"
+          ],
+          "evidence_required": [
+            "planning_commit_is_not_delivery"
+          ],
+          "milestone": "truthful-plan-surfaces",
+          "non_scope": [
+            "Writing a stamp from inference: a merge is not acceptance (ADR 0166, alternatives).",
+            "Reading prose in commit bodies to decide what a commit meant."
+          ],
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/plan/delivery.rs",
+            "apps/majordomus-cli/src/plan/drift.rs",
+            "apps/majordomus-cli/tests/plan_delivery.rs",
+            "test/cases/3100_an_issue_delivery_is_inferred.sh",
+            "docs/PLANNING.md"
+          ],
+          "slug": "a-commit-that-only-plans-an-issue-is-not-its-delivery",
+          "updated_at": "2026-10-16",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test plan_delivery",
+            "bash test/run.sh 3100_an_issue_delivery_is_inferred 3101_merged_work_unrecorded_is_drift",
+            "bin/majordomus plan drift --json"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2750",
+        "kind": "issue",
+        "label": "I2750",
+        "summary": "The trunk's drift gate reads the forge before it judges",
+        "route": "/cockpit/objects/issue/i2750",
+        "source": ".ai/repo/project/issues/I2750.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The trunk's plan-drift step reads the forge before it judges, and its output names how many open pull requests it read",
+            "A merged_not_recorded finding whose forge is unread is never refused on the trunk",
+            "A settled finding past the window is still refused under blocking enforcement"
+          ],
+          "created_at": "2026-10-16",
+          "depends_on": [
+            "I2741"
+          ],
+          "evidence_required": [
+            "unread_forge_never_refuses"
+          ],
+          "milestone": "truthful-plan-surfaces",
+          "non_scope": [
+            "A token with write access: the gate reads the forge and nothing else."
+          ],
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "scripts/ci/plan-drift-check",
+            ".github/workflows/validate.yml",
+            ".ai/repo/ci/gates.yaml",
+            "apps/majordomus-cli/src/plan/drift.rs",
+            "test/cases/3101_merged_work_unrecorded_is_drift.sh"
+          ],
+          "slug": "the-trunks-drift-gate-reads-the-forge",
+          "updated_at": "2026-10-16",
+          "validation": [
+            "bash test/run.sh 3101_merged_work_unrecorded_is_drift"
           ]
         }
       },
@@ -82003,6 +82132,46 @@
       },
       {
         "source": "majordomus://issue/I2748",
+        "target": "majordomus://issue/I2749",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2748",
+        "target": "majordomus://issue/I2750",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2748",
+        "target": "majordomus://milestone/truthful-plan-surfaces",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2749",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2749",
+        "target": "majordomus://issue/I2741",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2749",
+        "target": "majordomus://milestone/truthful-plan-surfaces",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2750",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2750",
+        "target": "majordomus://issue/I2741",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2750",
         "target": "majordomus://milestone/truthful-plan-surfaces",
         "kind": "belongs_to"
       },
@@ -91783,8 +91952,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2887,
-      "edges": 6337,
+      "nodes": 2889,
+      "edges": 6345,
       "acyclic": false,
       "truncated": false
     }
