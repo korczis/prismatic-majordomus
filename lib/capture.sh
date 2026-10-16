@@ -1591,12 +1591,18 @@ mj_capture_session_start() {
   # an argument rather than as a variable the briefing reaches for: two files sharing a name
   # is a data flow no reader — and no shellcheck — can follow.
   local server; server="$(mj_capture_ensure_server "$provider")"
+  # The session joins the mesh before anything is said to it (I2734): until it does, every
+  # other machine sees at most a nameless board connection, and a worker that never
+  # announces stays that way for its whole life. Whether or not a briefing follows.
+  local joined; joined="$(mj_capture_mesh_join "$provider" "$psession" "$server")"
   [ "$(mj_pol session.briefing_on_start)" = false ] && return 0
   # The mesh, in the block that names the server it lives in: a declaration that says
   # `enabled: true` and a server whose mesh is not active is the drift this repository paid
   # for on 2026-09-12 (ADR 0059), and the briefing is where a worker hears of it before its
   # first tool call. It travels as an argument, like the server line.
   local mesh; mesh="$(mj_capture_mesh_line "$server")"
+  [ -n "$mesh" ] && [ -n "$joined" ] && mesh="$mesh
+Mesh session: $joined — this session is on the mesh under that id; claim the paths you work on under it (majordomus_mesh_claim, session \"$joined\") before you edit them"
   # What happened around the repository since the last hour, under the mesh (ADR 0133): a
   # review asked of this worker or a handover for it is told before its first tool call.
   local monitor=""
@@ -1655,6 +1661,51 @@ mj_capture_ensure_server() {
   line="$("$bin" serve ensure --repo "$MJ_ROOT" 2>>"$MJ_STATE_DIR/mcp/ensure.log")" \
     || mj_session_context_log "$provider start event: the server did not converge: $line"
   printf '%s\n' "${line:-not ensured: serve ensure said nothing}"
+}
+
+# The id a provider session has on the mesh: the provider's own durable name for the
+# sitting, so that a start, a resume, a compaction and the end of one sitting all speak of
+# the same session, and anything holding the provider's payload can name it again.
+mj_capture_mesh_session() { printf '%s-%s' "$1" "$2"; }
+
+# Open, or say again, this provider session on the mesh of the checkout's shared server,
+# and answer its id; nothing when there is no provider session, no ready server, no
+# executable, or the server's mesh refuses. The executable's `mesh session open` asks the
+# server: the mesh lives in its memory, and no request leaves this file. A task is named
+# only while it is active — a handed-over task from last week is not what this session does.
+mj_capture_mesh_join() {
+  local provider="$1" psession="$2" server="$3" bin share id
+  [ -n "$psession" ] || return 0
+  case "$server" in ready\ http://*) ;; *) return 0 ;; esac
+  # shellcheck source=rust_bin.sh
+  . "$MJ_LIB_DIR/rust_bin.sh"
+  bin="$(mj_rust_bin "$MJ_HOME")"; [ -x "$bin" ] || return 0
+  share="$(mj_rust_share "$MJ_ROOT")"
+  [ -n "$share" ] && export MAJORDOMUS_SHARE="$share"
+  id="$(mj_capture_mesh_session "$provider" "$psession")"
+  set -- mesh session open --repo "$MJ_ROOT" --session "$id" --client "$provider" \
+    --branch "$(mj_git_branch)" --head "$(mj_git_head)" --format json
+  if mj_load_current && [ "$(mj_cur outcome)" = active ]; then
+    set -- "$@" --task "$(mj_cur id)" --intent "$(mj_cur task)"
+  fi
+  if "$bin" "$@" >/dev/null 2>&1; then printf '%s\n' "$id"
+  else mj_session_context_log "$provider start event: the session did not join the mesh as $id"; fi
+  return 0
+}
+
+# Close this provider session on the mesh at its end, so that its claims end everywhere at
+# once rather than when its runtime stops beating. Best-effort, like the join.
+mj_capture_mesh_leave() {
+  local provider="$1" psession="$2" bin share
+  [ -n "$psession" ] || return 0
+  # shellcheck source=rust_bin.sh
+  . "$MJ_LIB_DIR/rust_bin.sh"
+  bin="$(mj_rust_bin "$MJ_HOME")"; [ -x "$bin" ] || return 0
+  share="$(mj_rust_share "$MJ_ROOT")"
+  [ -n "$share" ] && export MAJORDOMUS_SHARE="$share"
+  "$bin" mesh session close --repo "$MJ_ROOT" --format json \
+    --session "$(mj_capture_mesh_session "$provider" "$psession")" >/dev/null 2>&1 || true
+  return 0
 }
 
 # One line about the mesh for the briefing, whenever the repository tracks a declaration
@@ -1805,6 +1856,9 @@ mj_capture_session_end() {
   # checkout, so the second window to be shut ended the first window's episode — and the
   # first window went on writing ledger lines into an episode that had already been closed
   # and published.
+  # Off the mesh before the episode closes: the session's claims end on every machine now,
+  # not when its runtime next misses a beat (I2734).
+  mj_capture_mesh_leave "$provider" "$psession"
   set -- --if-none ignore --outcome "$outcome"
   [ -n "$psession" ] && set -- "$@" --provider-session "$psession"
   out="$( (mj_session_close "$@" < /dev/null) 2>&1 )" || {

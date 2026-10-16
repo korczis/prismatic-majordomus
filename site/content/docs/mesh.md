@@ -436,6 +436,47 @@ a changed announcement releases and re-claims; a detached session is closed. An 
 `majordomus_mesh_claim` without a `session` acts for the caller's own `board-<peer>` session.
 Branch and head are read when a session changes, never on a heartbeat.
 
+A provider session is on the mesh before its worker says anything (I2734). The provider's
+start event opens `<provider>-<provider session id>` — `claude-code-<uuid>` for Claude Code —
+on the checkout's shared server with its client, branch and head, and with the task and its
+title while one is active; the briefing prints that id under the `Mesh:` line, so a worker
+can claim under it (`majordomus_mesh_claim` with that `session`). A resume or a compaction
+says it again; the end event closes it, which ends its claims on every linked runtime at
+once. The id is the provider's own, so anything holding the provider's payload names the
+same session. With no ready server, or a mesh that does not run, nothing is opened and the
+event is unaffected.
+
+A task is on the mesh while it works (I2288). `majordomus start` claims the task's scope as
+an advisory claim of the mesh session `task-<id>`, with the task's title as its intent and its
+issue, and keeps the claim's key on the task record as `mesh_claim`; `finish` closes that
+session, which ends its claims on every linked runtime. Every machine sees what the task works
+on and reports an overlap; an exclusive claim before building stays the worker's own act. With
+no server, or a mesh that does not run, nothing is claimed and `start` does not fail.
+
+That claim is enforced (I2289, rule `majordomus.task-on-the-mesh`). On a repository whose
+tracked declaration says `enabled: true`, `check` reports an active task whose record carries
+no `mesh_claim` under `mesh`, and `finish --outcome completed` refuses it, the refusal recorded
+with the rule named. `finish` claims the scope again first, so a server started after the task
+is all the task needs (`majordomus serve ensure`). `partial`, `blocked`, `no_match` and
+`failed` are not refused, and a repository with no enabled mesh is not judged.
+
+An edit is asked for its claim before it happens (I2735). With `session.edits_require_claim:
+true` in the policy, the provider's pre-tool hook (`.claude/hooks/majordomus-edit-guard`, for
+Edit, Write, MultiEdit and NotebookEdit) runs `majordomus guard hook`, which exits 2 — the
+provider's refusal — when neither the active task's scope nor a live mesh claim of the writing
+session (`<provider>-<session id>`, the id the start event opened) covers the path, naming the
+path and the remedy: `majordomus start "<task>" --scope <path>`, or `majordomus mesh claim
+<path> --session <id> --advisory`. The checkout judged is the one the file belongs to, so a
+session started in one checkout editing another's file is judged by the other's task and
+claims. Local state, a path outside the checkout, a repository with no enabled mesh and a
+server that does not answer are let through. The same judgement is `guard.edit` over MCP and
+HTTP. The hook is wired in the provider's configuration:
+
+```json
+"PreToolUse": [ { "matcher": "Edit|Write|MultiEdit|NotebookEdit",
+  "hooks": [ { "type": "command", "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/majordomus-edit-guard" } ] } ]
+```
+
 What a session shares is metadata — intent, issue, task, milestone, branch, head, dirtiness,
 a context revision identifier. Context bodies are not replicated; a handover is the
 referenced artifact a peer materialises.
@@ -451,10 +492,17 @@ referenced artifact a peer materialises.
 | a peer restarts while linked | the answerer refuses the old link id as `unknown_link`; the dialer says hello again | the table row is kept, `restarts` counts |
 | a relay dies in a line A–B–C | A and C expire each other's streams through lost beats | when B returns, marks re-align and nothing is duplicated |
 | hostile or broken input | typed refusal, counted, listed; the runtime keeps serving | nothing enters the journal |
-| a crash tears the journal file, or the disk refuses an append | an append writes a missing newline first and syncs; a failed append is counted (`write_failures`), a line that does not read on reload is counted (`unreadable`), and `mesh doctor` fails its `journal` check; compaction writes a synced file and renames it over the old one; the file is the owner's alone (0600) | every complete event reloads, the event after a torn line reads, and an event that did not reach the disk is still replicated from memory and from peers |
+| a crash tears the journal file, or the disk refuses an append | an append writes a missing newline first and syncs; a failed append is counted (`write_failures`) and its operation answers `"durability": "not_durable"` — never acknowledged as durable, and `mesh claim`, `mesh session open` and the other writes print `NOT DURABLE`; a line that does not read on reload is counted (`unreadable`), and `mesh doctor` fails its `journal` check; compaction writes a synced file and renames it over the old one; the file is the owner's alone (0600) | every complete event reloads, the event after a torn line reads, and an event that did not reach the disk is still replicated from memory and from peers |
+| a journal file larger than the reload bound (64 MiB) | a reload reads up to the bound, to the last whole line, and leaves the rest on disk: counted (`unread_bytes`), named by `mesh doctor`'s `journal` check, and copied byte for byte into the file compaction writes | the events within the bound reload; the rest is neither folded nor relayed by this runtime until the file is moved aside and peers refill it |
 
 </div>
 
+
+An operation's answer says what reached the disk: `durability` is `synced` when the event was
+appended to the journal file and its data synced before the answer, `memory` when the journal
+has no file by configuration, and `not_durable` when the write failed. "Synced" is the
+operating system's data sync of the journal file (`fdatasync` on Linux, `fsync` on macOS, which
+does not flush the drive's own cache), not a promise about the storage under it.
 
 ## Security model
 
@@ -530,6 +578,14 @@ configuration — it names the interface every local server of this machine bind
 starts it — and [`MCP.md`](@/docs/mcp.md#the-machine-names-the-interface) says what it
 exposes.
 
+A linked worktree does not take that variable: its own server stays on loopback unless
+`--host` says otherwise, because the machine's face on the network is the primary checkout's
+server. A worktree needs no server of its own for the mesh either. `majordomus mesh` in a
+checkout with no running server asks a ready server of the same repository — the primary's
+first — and names it on stderr (`asking the server of <checkout> at <url>`). The one command
+it refuses there is `mesh handover consume` without `--no-materialize`, because the handover
+would be written into the other checkout.
+
 ## This repository's mesh
 
 This repository runs its own mesh: `.ai/repo/mesh/majordomus.yaml` is committed with
@@ -597,6 +653,14 @@ the checkout a person works in already runs its own shared server and a second o
 The launchd agent of the same shape — `~/Library/LaunchAgents/dev.majordomus.hub.plist` with
 `RunAtLoad`, `KeepAlive` and those arguments — is the operator's to install, and an installer
 that writes either unit is still owed as a typed capability (ADR 0059).
+
+**Hubs follow the release (ADR 0161).** A hub is a node like any other: with `follow: stable`
+it keeps its installed Majordomus at the version `releases/latest.json` names, restarts onto it
+under its service manager when no session is attached or after a bounded grace, checks its
+readiness and a live `mesh verify` round, and rolls back to the previous version by itself when
+either fails, naming node, version and failed check on the board. A typed capability writes
+the systemd unit and the launchd agent (I2722). Until that lands, the release seat upgrades the
+hubs by hand after each release and reads each version back.
 
 **Turning it off.** Commit `enabled: false`; a server started after that opens nothing,
 `mesh status` says why, and the briefing says `Mesh: off, as declared`. That reverses ADR 0059,

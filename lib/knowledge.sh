@@ -70,10 +70,13 @@ mj_ksrc_count() { printf '%s' "$MJ_KSRC_COUNT"; }
 # Sets MJ_KDISC_EMPTY to the space-separated ids of required classes that found nothing.
 MJ_KDISC_EMPTY=""
 MJ_KDISC_COUNT=0
+# The tracked sources the working tree no longer holds, one path per line. Each is a node
+# that would have been and is not, so it is reported rather than skipped in silence (I0812).
+MJ_KDISC_GONE=""
 mj_knowledge_discover() {
   local want_scope="${1:-all}" i n cls kind scope disc spec req found
   mj_ksrc_load
-  MJ_KDISC_EMPTY=""; MJ_KDISC_COUNT=0
+  MJ_KDISC_EMPTY=""; MJ_KDISC_COUNT=0; MJ_KDISC_GONE=""
   # every class lists its files into one buffer; one hashing process then covers all of
   # them, and the rows come out in the order the classes produced them
   local buf; buf="$(mktemp "${TMPDIR:-/tmp}/mj.kdb.XXXXXX")"
@@ -119,7 +122,8 @@ mj_kdisc_vcs() {
   local cls="$1" kind="$2" scope="$3" spec="$4" p any=0
   while IFS= read -r -d '' p; do
     [ -n "$p" ] || continue
-    [ -f "$MJ_ROOT/$p" ] || continue      # tracked but deleted in the working tree
+    # tracked but deleted in the working tree: no node, and a finding that says so
+    [ -f "$MJ_ROOT/$p" ] || { MJ_KDISC_GONE="$MJ_KDISC_GONE$p"$'\n'; continue; }
     printf '%s\t%s\t%s\t%s\t%s\n' "$cls" "$scope" "$kind" "$MJ_ROOT/$p" "$p"
     MJ_KDISC_COUNT=$((MJ_KDISC_COUNT + 1)); any=1
   done < <(mj_git ls-files -z -- "$spec" 2>/dev/null)
@@ -236,7 +240,7 @@ mj_cmd_knowledge() {
   local sub="${1:-sources}"
   case "$sub" in
     --help|-h|help) mj_knowledge_usage; return 0 ;;
-    sources|nodes|edges|derive|candidates|promote|reject|check|observe) shift || true ;;
+    sources|nodes|edges|search|show|related|derive|candidates|promote|reject|check|validate|observe) shift || true ;;
     *) mj_die "$MJ_EX_USAGE" "knowledge: unknown subcommand '$sub' (see: majordomus knowledge --help)" ;;
   esac
   mj_require_installed
@@ -244,11 +248,15 @@ mj_cmd_knowledge() {
     sources)    mj_knowledge_sources "$@" ;;
     nodes)      mj_knowledge_nodes_cmd "$@" ;;
     edges)      mj_knowledge_edges_cmd "$@" ;;
+    search)     mj_knowledge_search_cmd "$@" ;;
+    show)       mj_knowledge_show_cmd "$@" ;;
+    related)    mj_knowledge_related_cmd "$@" ;;
     derive)     mj_knowledge_derive_cmd "$@" ;;
     candidates) mj_knowledge_candidates_cmd "$@" ;;
     promote)    mj_knowledge_promote_cmd "$@" ;;
     reject)     mj_knowledge_reject_cmd "$@" ;;
     check)      mj_knowledge_check_cmd "$@" ;;
+    validate)   mj_knowledge_validate_cmd "$@" ;;
     observe)    mj_knowledge_observe_cmd "$@" ;;
   esac
 }
@@ -263,6 +271,13 @@ usage: majordomus knowledge <subcommand> [options]
         one node per canonical object, with its identity and kind      (read-only)
   edges [--scope ...] [--type <t>] [--json]
         one edge per stated relationship, with where it was observed   (read-only)
+  search <query> [--scope ...] [--json]
+        the nodes the query matches, best rung of the ladder first, each with the
+        field it matched on: id, title, title-prefix, path, body        (read-only)
+  show <id> [--scope ...] [--json]
+        one node with its kind, source path and content hash           (read-only)
+  related <id> [--scope ...] [--json]
+        the edges into and out of one node, each with its provenance   (read-only)
   derive [--episode <id>] [--dry-run] [--json]
         write what one episode's ledger lines state into candidate records under
         the knowledge section; deterministic, idempotent, no model
@@ -274,6 +289,10 @@ usage: majordomus knowledge <subcommand> [options]
         supersede a candidate in place, recording why and what replaces it
   check [--json]
         every record is schema-valid, evidenced and resolves what it names  (read-only)
+  validate [--json]
+        the graph itself: duplicate ids, edges with a missing end or no provenance,
+        declared paths and tracked sources that no longer exist; each finding with
+        its severity and whether the broken reference is owned or an author's (read-only)
   observe --kind <friction|workaround|defect|drift|repetition> --subject <ref>
           [--evidence <ref>]... "<one-line statement>"
         record what this session met: one observation.recorded line in the ledger, inside a
@@ -547,14 +566,25 @@ mj_knowledge_refused() {
 # The node set, sorted. Sorting happens here rather than in the awk because awk has no
 # portable sort, and it is done under the C collation so that two machines with different
 # locales produce the same bytes.
+#
+# $2, when given, is a file naming the part of the graph a caller needs, one `kind:<kind>`
+# or `path:<repository-relative path>` line each: every discovered source neither line
+# names is dropped before anything is read. It narrows what is compiled, never what a
+# kept source means — a kept file is extracted exactly as in the whole graph. `context`
+# asks for its knowledge pointers this way (I0814), because compiling every source for a
+# handful of pointers costs seconds on each briefing.
 mj_knowledge_nodes() {
-  local scope="${1:-all}" disc rows refused rc
+  local scope="${1:-all}" keep="${2:-}" disc rows refused rc
   disc="$(mktemp "${TMPDIR:-/tmp}/mj.kd.XXXXXX")"
   rows="$(mktemp "${TMPDIR:-/tmp}/mj.kr.XXXXXX")"
   refused="$(mktemp "${TMPDIR:-/tmp}/mj.kf.XXXXXX")"
   local t0
   t0="$(mj_phase_begin knowledge:discover)"
   mj_knowledge_discover "$scope" > "$disc" || { rm -f "$disc" "$rows" "$refused"; return "$MJ_EX_INTERNAL"; }
+  if [ -n "$keep" ]; then
+    awk -F'\t' 'NR == FNR { k[$0] = 1; next } (("kind:" $3) in k) || (("path:" $5) in k)' "$keep" "$disc" > "$disc.kept"
+    mv "$disc.kept" "$disc"
+  fi
   mj_phase_end knowledge:discover "$t0"; t0="$(mj_phase_begin knowledge:refused)"
   # A file the index refused is not a node here either: its discovery row is dropped and the
   # index's own verdict is reported against it, code and message as the index wrote them.
@@ -566,12 +596,22 @@ mj_knowledge_nodes() {
   mj_phase_end knowledge:refused "$t0"; t0="$(mj_phase_begin knowledge:rows)"
   {
     if [ "$rc" = 0 ]; then
-      awk -F'\t' '{ printf "X\tFAIL\trefused_source\t%s\tthe index refused it (%s): %s; no node was extracted from it\n", $1, $2, $3 }' "$refused"
+      # A tracked source the working tree no longer holds is one fact, reported once below
+      # as source_missing; the index's "unreadable" verdict on the same path is that fact
+      # again, so it is not repeated as a failure.
+      # (The list goes in through ENVIRON: it may be empty, and an empty first file
+      # would make NR == FNR true of the second.)
+      MJ_KG="$MJ_KDISC_GONE" awk -F'\t' 'BEGIN { n = split(ENVIRON["MJ_KG"], g, "\n"); for (i = 1; i <= n; i++) if (g[i] != "") gone[g[i]] = 1 }
+        !($1 in gone) { printf "X\tFAIL\trefused_source\t%s\tthe index refused it (%s): %s; no node was extracted from it\n", $1, $2, $3 }' "$refused"
     elif [ "$rc" = 3 ]; then
       printf 'X\tINFO\tschema_unasked\t.\tthe schema check was not asked for (MAJORDOMUS_KNOWLEDGE_SCHEMA=unasked), so no file was checked against the schema of its kind\n'
     else
       printf 'X\tWARN\tschema_unchecked\t.\tthe index could not be asked (no executable built, or no jq), so no file was checked against the schema of its kind; run bin/majordomus-cli once to build it\n'
     fi
+    # A source git tracks and the working tree no longer holds is a deletion in progress:
+    # reported, never a failure, because work in progress is reported and not blocked.
+    [ -z "$MJ_KDISC_GONE" ] || printf '%s' "$MJ_KDISC_GONE" | LC_ALL=C sort -u | awk 'NF {
+      printf "X\tWARN\tsource_missing\t%s\tis a tracked source the working tree no longer holds; no node was extracted from it\n", $0 }'
     mj_knowledge_rows "$disc"
   } > "$rows"
   rm -f "$refused"
@@ -691,6 +731,265 @@ mj_knowledge_edges_cmd() {
   return 0
 }
 
+# ================================================================ validation (I0812)
+# `knowledge validate` judges the graph the compiler above produces, and the doctrine
+# `majordomus.knowledge-graph` asks the same judge from doctor and watch. There is one
+# judge: every finding is one the compiler already emits while it extracts, and this
+# section only classifies it. A second copy of the logic would be the copy that stops
+# being run.
+#
+# WHICH BREAK IS OWNED. An edge or a path Majordomus derives from a structured field — an
+# issue's milestone or depends_on, a claim's source, implementation and test, a rule's
+# dependency, a declared path — is a relationship Majordomus itself defines, so a broken one
+# is a broken promise and fails. A link an author wrote in prose, and a `references` edge
+# taken from one, is the author's: it may deliberately point at something outside the
+# repository, so a target that resolves to nothing is reported and never fails. A ledger or
+# git target (a task, a commit, a session) is outside this graph altogether and is judged by
+# `majordomus.knowledge-integrity`, which reads the ledger and git.
+#
+# NO STORED INDEX. Nothing here is compared against a stored graph, because none is written:
+# every read compiles the checkout from the version-control index, so there is no generated
+# index to go stale and no stored hash to mismatch (I0810, the manifest that would have made
+# one, was cancelled for exactly that reason). The command says so on every run rather than
+# leaving the absence to be inferred, and it writes nothing.
+#
+# Prints the ownership of one finding code: owned | source | external | model.
+mj_knowledge_finding_owner() {
+  case "$1" in
+    duplicate_id|dangling_edge|missing_target|edge_incomplete|edge_type|refused_source) printf owned ;;
+    source_missing) printf source ;;
+    unresolved_reference|broken_link) printf external ;;
+    *) printf model ;;
+  esac
+}
+
+MJ_KNOWLEDGE_VALIDATE_REPRO="majordomus knowledge validate"
+
+mj_knowledge_validate_cmd() {
+  while [ $# -gt 0 ]; do case "$1" in
+    --help|-h) mj_knowledge_usage; return 0 ;;
+    *) mj_die "$MJ_EX_USAGE" "knowledge validate: unknown option $1" ;;
+  esac; done
+  local out nn ne fails=0 warns=0 t lvl code subj msg owner first=1
+  out="$(mktemp "${TMPDIR:-/tmp}/mj.kva.XXXXXX")"
+  mj_knowledge_nodes all > "$out" || { rm -f "$out"; return "$MJ_EX_INTERNAL"; }
+  nn="$(grep -c "^N$MJ_TAB" "$out" || true)"; ne="$(grep -c "^E$MJ_TAB" "$out" || true)"
+  if [ "$MJ_JSON" = 1 ]; then
+    printf '{"schema":1,"nodes":%s,"edges":%s,"index":"none","findings":[' "${nn:-0}" "${ne:-0}"
+  fi
+  while IFS="$MJ_TAB" read -r t lvl code subj msg; do
+    [ "$t" = X ] || continue
+    owner="$(mj_knowledge_finding_owner "$code")"
+    case "$lvl" in FAIL) fails=$((fails + 1)) ;; WARN) warns=$((warns + 1)) ;; esac
+    if [ "$MJ_JSON" = 1 ]; then
+      [ "$first" = 1 ] || printf ','; first=0
+      printf '{"level":"%s","code":"%s","owner":"%s","subject":"%s","message":"%s","reproduce":"%s"}' \
+        "$lvl" "$code" "$owner" "$(mj_json_esc "$subj")" "$(mj_json_esc "$msg")" "$MJ_KNOWLEDGE_VALIDATE_REPRO"
+    else
+      case "$lvl" in
+        FAIL) mj_fail knowledge "$subj" "$code ($owner): $msg" "$MJ_KNOWLEDGE_VALIDATE_REPRO" ;;
+        INFO) mj_info knowledge "$subj" "$code: $msg" ;;
+        *)    mj_warn knowledge "$subj" "$code ($owner): $msg" "$MJ_KNOWLEDGE_VALIDATE_REPRO" ;;
+      esac
+    fi
+  done < "$out"
+  rm -f "$out"
+  if [ "$MJ_JSON" = 1 ]; then
+    printf '],"failures":%s,"warnings":%s}\n' "$fails" "$warns"
+  else
+    printf 'knowledge validate: %s node(s), %s edge(s); %s failure(s), %s warning(s); no stored index (every read compiles the checkout, so none can be stale); nothing written\n' \
+      "${nn:-0}" "${ne:-0}" "$fails" "$warns"
+  fi
+  [ "$fails" = 0 ] || return "$MJ_EX_CONTRACT"
+  return 0
+}
+
+# The doctrine: the same compile and the same classification, under doctor and watch. It
+# compiles into a temporary file it removes, so the answer to "can the graph be built here"
+# leaves nothing behind. The compile runs in a subshell, so a source list that does not
+# parse is reported as an unbuildable graph instead of ending the command that asked. The
+# schema check is not asked here: it builds the executable's whole index, which doctor
+# already judges, and this doctrine is about the graph's own references.
+mj_validate_knowledge_graph() {
+  local out err rc=0 nn ne t lvl code subj msg owner ext=0 model=0 why
+  out="$(mktemp "${TMPDIR:-/tmp}/mj.kvg.XXXXXX")"; err="$(mktemp "${TMPDIR:-/tmp}/mj.kvge.XXXXXX")"
+  ( export MAJORDOMUS_KNOWLEDGE_SCHEMA=unasked; mj_knowledge_nodes all ) > "$out" 2> "$err" || rc=$?
+  if [ "$rc" != 0 ]; then
+    why="$(grep -v '^[[:space:]]*$' "$err" | head -n 1)"
+    mj_doctrine_fail knowledge "graph" "the graph cannot be built in this checkout (exit $rc)${why:+: $why}" "$MJ_KNOWLEDGE_VALIDATE_REPRO"
+    rm -f "$out" "$err"; return 0
+  fi
+  nn="$(grep -c "^N$MJ_TAB" "$out" || true)"; ne="$(grep -c "^E$MJ_TAB" "$out" || true)"
+  mj_doctrine_ok knowledge "graph" "buildable here: ${nn:-0} node(s), ${ne:-0} edge(s), compiled into a temporary file and removed; no stored index to go stale"
+  while IFS="$MJ_TAB" read -r t lvl code subj msg; do
+    [ "$t" = X ] || continue
+    owner="$(mj_knowledge_finding_owner "$code")"
+    case "$owner" in
+      owned|source) mj_doctrine_fail knowledge "$subj" "$code ($owner): $msg" "$MJ_KNOWLEDGE_VALIDATE_REPRO" ;;
+      external) ext=$((ext + 1)) ;;
+      *) [ "$lvl" = INFO ] || model=$((model + 1)) ;;
+    esac
+  done < "$out"
+  [ "$ext" = 0 ] || mj_info knowledge "links" "$ext link(s) written in prose resolve to nothing in the graph; an author's link may point outside it, so none fails ($MJ_KNOWLEDGE_VALIDATE_REPRO lists them)"
+  [ "$model" = 0 ] || mj_info knowledge "model" "$model finding(s) about what the compiler models rather than what a file breaks ($MJ_KNOWLEDGE_VALIDATE_REPRO lists them)"
+  rm -f "$out" "$err"
+  return 0
+}
+
+# ================================================================ lookup (I0811)
+# search, show and related answer a question about the nodes and edges above and write
+# nothing. There is no stored index to go stale: every call compiles the nodes from the
+# version-control index and the owned state directories, exactly as `nodes` does, so what a
+# lookup reads is what the checkout holds at that moment and a read can never rebuild
+# anything as a side effect.
+#
+# The order of a search is a rule, not a score. A node is placed on the first rung it
+# reaches, and the rungs are tried in this order:
+#
+#   id            the query is the node's canonical id (case-insensitive)
+#   title         the query is the node's title (case-insensitive)
+#   title-prefix  the node's title begins with the query
+#   path          the node's source path contains the query
+#   body          the node's source file contains the query, literally
+#
+# Within a rung, nodes are in byte order of their id. Every result names the rung it was
+# placed on, so the reason a node is where it is can be read off the answer. Nothing
+# similar, nothing weighted, nothing embedded: a ranking nobody can explain is a ranking
+# nobody can debug. The nodes do not carry tags, so there is no tag rung.
+MJ_KNOWLEDGE_LADDER="id title title-prefix path body"
+
+# Shared option parsing for the three lookups: one positional argument, a scope.
+mj_knowledge_lookup_args() {
+  local what="$1"; shift
+  MJ_KQ_SCOPE=all; MJ_KQ_ARG=""
+  while [ $# -gt 0 ]; do case "$1" in
+    --scope) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--scope needs a value"; MJ_KQ_SCOPE="$2"; shift 2 ;;
+    --scope=*) MJ_KQ_SCOPE="${1#--scope=}"; shift ;;
+    --help|-h) mj_knowledge_usage; exit 0 ;;
+    -*) mj_die "$MJ_EX_USAGE" "knowledge $what: unknown option $1" ;;
+    *) [ -z "$MJ_KQ_ARG" ] || mj_die "$MJ_EX_USAGE" "knowledge $what: one argument, not two ('$MJ_KQ_ARG', '$1')"
+       MJ_KQ_ARG="$1"; shift ;;
+  esac; done
+  case "$MJ_KQ_SCOPE" in shared|operational|all) ;;
+    *) mj_die "$MJ_EX_USAGE" "knowledge $what: --scope must be shared, operational or all" ;;
+  esac
+  [ -n "$MJ_KQ_ARG" ] || mj_die "$MJ_EX_USAGE" "knowledge $what: name what to look up (see: majordomus knowledge --help)"
+}
+
+mj_knowledge_search_cmd() {
+  mj_knowledge_lookup_args search "$@"
+  local q="$MJ_KQ_ARG" scope="$MJ_KQ_SCOPE" out ranked rest hits n=0
+  out="$(mktemp "${TMPDIR:-/tmp}/mj.ksq.XXXXXX")"
+  ranked="$(mktemp "${TMPDIR:-/tmp}/mj.ksr.XXXXXX")"
+  rest="$(mktemp "${TMPDIR:-/tmp}/mj.kss.XXXXXX")"
+  hits="$(mktemp "${TMPDIR:-/tmp}/mj.ksh.XXXXXX")"
+  mj_knowledge_nodes "$scope" > "$out" || { rm -f "$out" "$ranked" "$rest" "$hits"; return "$MJ_EX_INTERNAL"; }
+
+  # rungs 1-4 from the node row itself; the sources of every node they did not place are
+  # the only files the body rung reads
+  awk -F'\t' -v q="$q" -v ranked="$ranked" -v rest="$rest" '
+    BEGIN { lq = tolower(q) }
+    $1 != "N" { next }
+    {
+      id = $2; title = $7; src = $5; rung = 0
+      if (tolower(id) == lq) { rung = 1; m = "id" }
+      else if (tolower(title) == lq) { rung = 2; m = "title" }
+      else if (substr(tolower(title), 1, length(lq)) == lq) { rung = 3; m = "title-prefix" }
+      else if (index(tolower(src), lq) > 0) { rung = 4; m = "path" }
+      if (rung) printf "%d\t%s\t%s\t%s\t%s\t%s\n", rung, m, id, $3, title, src > ranked
+      else printf "%s\t%s\t%s\t%s\n", src, id, $3, title > rest
+    }' "$out"
+  if [ -s "$rest" ]; then
+    cut -f1 "$rest" | LC_ALL=C sort -u \
+      | ( cd "$MJ_ROOT" && while IFS= read -r p; do [ -f "$p" ] && printf '%s\n' "$p"; done ) \
+      | ( cd "$MJ_ROOT" && tr '\n' '\0' | xargs -0 grep -F -i -l -- "$q" 2>/dev/null ) > "$hits" || true
+    awk -F'\t' 'NR == FNR { hit[$0] = 1; next } ($1 in hit) { printf "5\tbody\t%s\t%s\t%s\t%s\n", $2, $3, $4, $1 }' \
+      "$hits" "$rest" >> "$ranked"
+  fi
+  LC_ALL=C sort -t "$MJ_TAB" -k1,1n -k3,3 "$ranked" -o "$ranked"
+
+  local rung m id kind title src first=1
+  if [ "$MJ_JSON" = 1 ]; then
+    printf '{"schema":1,"query":"%s","scope":"%s","ladder":["id","title","title-prefix","path","body"],"results":[' \
+      "$(mj_json_esc "$q")" "$scope"
+    while IFS="$MJ_TAB" read -r rung m id kind title src; do
+      [ "$first" = 1 ] || printf ','; first=0
+      printf '{"id":"%s","kind":"%s","title":"%s","source":"%s","matched":"%s","rung":%s}' \
+        "$(mj_json_esc "$id")" "$kind" "$(mj_json_esc "$title")" "$(mj_json_esc "$src")" "$m" "$rung"
+    done < "$ranked"
+    printf ']}\n'
+  else
+    while IFS="$MJ_TAB" read -r rung m id kind title src; do
+      printf '%-12s %-11s %-52s %s\n' "$m" "$kind" "$id" "$title"
+      n=$((n + 1))
+    done < "$ranked"
+    printf 'knowledge search: %s node(s) match "%s" in scope %s (ladder: %s)\n' "$n" "$q" "$scope" "$MJ_KNOWLEDGE_LADDER"
+  fi
+  rm -f "$out" "$ranked" "$rest" "$hits"
+  return 0
+}
+
+mj_knowledge_show_cmd() {
+  mj_knowledge_lookup_args show "$@"
+  local want="$MJ_KQ_ARG" scope="$MJ_KQ_SCOPE" out row
+  out="$(mktemp "${TMPDIR:-/tmp}/mj.ksw.XXXXXX")"
+  mj_knowledge_nodes "$scope" > "$out" || { rm -f "$out"; return "$MJ_EX_INTERNAL"; }
+  row="$(awk -F'\t' -v w="$want" '$1 == "N" && $2 == w { print; exit }' "$out")"
+  rm -f "$out"
+  [ -n "$row" ] || mj_die "$MJ_EX_MISSING" "knowledge show: no node '$want' in scope $scope (find one with: majordomus knowledge search <query>)"
+  local t id kind sc src hash title
+  IFS="$MJ_TAB" read -r t id kind sc src hash title <<EOF
+$row
+EOF
+  if [ "$MJ_JSON" = 1 ]; then
+    printf '{"schema":1,"node":{"id":"%s","kind":"%s","scope":"%s","source":"%s","hash":"%s","title":"%s"}}\n' \
+      "$(mj_json_esc "$id")" "$kind" "$sc" "$(mj_json_esc "$src")" "$hash" "$(mj_json_esc "$title")"
+  else
+    printf 'id      %s\nkind    %s\nscope   %s\ntitle   %s\nsource  %s\nhash    %s\n' "$id" "$kind" "$sc" "$title" "$src" "$hash"
+  fi
+  return 0
+}
+
+mj_knowledge_related_cmd() {
+  mj_knowledge_lookup_args related "$@"
+  local want="$MJ_KQ_ARG" scope="$MJ_KQ_SCOPE" out edges n=0
+  out="$(mktemp "${TMPDIR:-/tmp}/mj.kre.XXXXXX")"
+  mj_knowledge_nodes "$scope" > "$out" || { rm -f "$out"; return "$MJ_EX_INTERNAL"; }
+  awk -F'\t' -v w="$want" '$1 == "N" && $2 == w { f = 1 } END { exit !f }' "$out" || {
+    rm -f "$out"
+    mj_die "$MJ_EX_MISSING" "knowledge related: no node '$want' in scope $scope (find one with: majordomus knowledge search <query>)"; }
+  # out first, then in; within a direction, the compiler's byte order
+  edges="$(awk -F'\t' -v w="$want" '
+    $1 == "E" && $2 == w { o[++no] = "out\t" $4 "\t" $2 "\t" $3 "\t" $5 }
+    $1 == "E" && $3 == w { i[++ni] = "in\t" $4 "\t" $2 "\t" $3 "\t" $5 }
+    END { for (k = 1; k <= no; k++) print o[k]; for (k = 1; k <= ni; k++) print i[k] }' "$out")"
+  rm -f "$out"
+  local dir type from to prov first=1
+  if [ "$MJ_JSON" = 1 ]; then
+    printf '{"schema":1,"id":"%s","scope":"%s","edges":[' "$(mj_json_esc "$want")" "$scope"
+    while IFS="$MJ_TAB" read -r dir type from to prov; do
+      [ -n "$dir" ] || continue
+      [ "$first" = 1 ] || printf ','; first=0
+      printf '{"direction":"%s","type":"%s","from":"%s","to":"%s","provenance":"%s"}' \
+        "$dir" "$type" "$(mj_json_esc "$from")" "$(mj_json_esc "$to")" "$(mj_json_esc "$prov")"
+    done <<EOF
+$edges
+EOF
+    printf ']}\n'
+  else
+    while IFS="$MJ_TAB" read -r dir type from to prov; do
+      [ -n "$dir" ] || continue
+      if [ "$dir" = out ]; then printf '%-4s %-15s %-46s %s\n' "$dir" "$type" "$to" "$prov"
+      else printf '%-4s %-15s %-46s %s\n' "$dir" "$type" "$from" "$prov"; fi
+      n=$((n + 1))
+    done <<EOF
+$edges
+EOF
+    printf 'knowledge related: %s edge(s) into and out of %s in scope %s\n' "$n" "$want" "$scope"
+  fi
+  return 0
+}
+
 # ================================================================ the writer (ADR 0091)
 # Everything above reads. What follows is the one place the knowledge kind is written by
 # the tool, and it writes exactly one thing: what an episode's ledger lines already state,
@@ -719,6 +1018,9 @@ mj_knowledge_edges_cmd() {
 
 mj_knowledge_candidates_dir() { printf '%s/candidates' "$MJ_KNOWLEDGE_DIR"; }
 mj_knowledge_curated_dir()    { printf '%s/curated' "$MJ_KNOWLEDGE_DIR"; }
+# Where a trunk episode's candidates wait for a branch to carry them (ADR 0091, amendment
+# of 2026-10-15): the tracked section on the trunk is a file only a pull request may bring.
+mj_knowledge_outbox_dir()     { printf '%s/candidates' "$(mj_outbox_dir)"; }
 mj_knowledge_ledger()         { printf '%s/ledger.jsonl' "$MJ_STATE_DIR"; }
 MJ_KNOWLEDGE_CLASSES="fact convention constraint memory lesson"
 MJ_KNOWLEDGE_STATUSES="candidate verified superseded"
@@ -992,8 +1294,11 @@ mj_knowledge_derive_cmd() {
     return 0
   fi
   local t0; t0="$(mj_phase_begin knowledge:derive)"
-  local tmp cdir kdir; tmp="$(mktemp -d "${TMPDIR:-/tmp}/mj.kdv.XXXXXX")"
+  local tmp cdir kdir wdir; tmp="$(mktemp -d "${TMPDIR:-/tmp}/mj.kdv.XXXXXX")"
   cdir="$(mj_knowledge_candidates_dir)"; kdir="$(mj_knowledge_curated_dir)"
+  # What is written goes to wdir: the tracked section, or on the trunk the outbox. What is
+  # already decided (promoted, superseded, the same bytes tracked) is still read from cdir.
+  wdir="$cdir"; mj_on_trunk && wdir="$(mj_knowledge_outbox_dir)"
   mj_knowledge_evidence "$sid" > "$tmp/rows"
   mj_knowledge_episode_commits "$sid" > "$tmp/commits"
   mj_knowledge_episode_refs "$tmp/commits" > "$tmp/refs"
@@ -1005,7 +1310,7 @@ mj_knowledge_derive_cmd() {
 $row
 EOF
     id="$(mj_knowledge_compose "$sid" "$row" "$tmp/refs" "$tmp/rec")"
-    rel="$(mj_rel "$cdir")/$id.md"
+    rel="$(mj_rel "$wdir")/$id.md"
     mj_count knowledge_evidence
     # Refused at derive time rather than written for the validator to fail: a title or a
     # description that opens like a turn of a conversation is not an assertion.
@@ -1015,12 +1320,19 @@ EOF
       verb="skipped (promoted)"; s=$((s + 1)); S="$S$rel"$'\n'
     elif [ -f "$cdir/$id.md" ] && [ "$(mj_knowledge_record_status "$cdir/$id.md")" != candidate ]; then
       verb="skipped (superseded)"; s=$((s + 1)); S="$S$rel"$'\n'
+    elif [ "$wdir" != "$cdir" ] && [ -f "$cdir/$id.md" ] && cmp -s "$tmp/rec" "$cdir/$id.md"; then
+      # tracked already, byte for byte: nothing for the outbox to carry
+      verb=unchanged; u=$((u + 1)); U="$U$(mj_rel "$cdir")/$id.md"$'\n'
     elif [ "$dry" = 1 ]; then
-      if [ -f "$cdir/$id.md" ] && cmp -s "$tmp/rec" "$cdir/$id.md"; then verb=unchanged; u=$((u + 1)); U="$U$rel"$'\n'
+      if [ -f "$wdir/$id.md" ] && cmp -s "$tmp/rec" "$wdir/$id.md"; then verb=unchanged; u=$((u + 1)); U="$U$rel"$'\n'
       else verb="would write"; w=$((w + 1)); W="$W$rel"$'\n'; fi
     else
-      mj_knowledge_candidates_ready || { rm -rf "$tmp"; mj_die "$MJ_EX_INTERNAL" "knowledge derive: cannot create $(mj_rel "$cdir")/"; }
-      verb="$(mj_knowledge_write_record "$cdir" "$id" "$tmp/rec")" \
+      if [ "$wdir" = "$cdir" ]; then
+        mj_knowledge_candidates_ready || { rm -rf "$tmp"; mj_die "$MJ_EX_INTERNAL" "knowledge derive: cannot create $(mj_rel "$cdir")/"; }
+      else
+        mkdir -p "$wdir" 2>/dev/null || { rm -rf "$tmp"; mj_die "$MJ_EX_INTERNAL" "knowledge derive: cannot create $(mj_rel "$wdir")/"; }
+      fi
+      verb="$(mj_knowledge_write_record "$wdir" "$id" "$tmp/rec")" \
         || { rm -rf "$tmp"; mj_die "$MJ_EX_INTERNAL" "knowledge derive: could not write $rel"; }
       case "$verb" in
         written) w=$((w + 1)); W="$W$rel"$'\n'; paths="$paths${paths:+ }$rel" ;;

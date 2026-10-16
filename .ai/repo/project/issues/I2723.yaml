@@ -1,0 +1,28 @@
+id: I2723
+milestone: safe-self-update
+title: "The mesh shows each node's version and how far a release has rolled out"
+slug: the-mesh-shows-the-rollout
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make every runtime publish its version and follow setting to the mesh, mesh peers print them, and mesh doctor name a node more than one release behind the stable pointer; a release is rolled out when every enrolled following node reports it."
+why: "ADR 0161. On 2026-10-14 the primary checkout's server was a 0.21.0 debug build beside a 0.25.0 CLI, and nothing on the board said so."
+current_state: "serve status reports an outdated server for one checkout; the mesh carries no versions."
+desired_state: "Runtime info on the mesh carries version and follow; mesh peers and the Cockpit show them; mesh doctor and the dashboard show rollout progress per release."
+scope:
+  - "apps/majordomus-cli/src/mesh"
+  - "apps/majordomus-cli/src/ui"
+  - "docs/MESH.md"
+  - "test/cases"
+non_scope: []
+depends_on: []
+acceptance_criteria:
+  - "mesh peers prints each runtime's version and follow setting"
+  - "mesh doctor names a node more than one release behind the stable pointer"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "mesh_reports_versions_test"
+created_at: 2026-10-14
+updated_at: 2026-10-14

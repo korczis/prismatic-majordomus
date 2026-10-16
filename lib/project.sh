@@ -250,7 +250,7 @@ mj_project_unknown_keys() {
 # graph and the issue graph are separate diagrams on purpose: one says which outcomes are
 # reachable, the other says what a worker may execute inside one of them.
 mj_project_roadmap_mermaid() {
-  local id st ver cls
+  local id st ver
   printf 'flowchart LR\n'
   mj_pj_roadmap | while read -r id; do
     st="$(mj_pj_m_status "$id")"
@@ -266,11 +266,8 @@ mj_project_roadmap_mermaid() {
       "$(printf '%s' "$from" | tr -c 'A-Za-z0-9' '_')" \
       "$(printf '%s' "$to" | tr -c 'A-Za-z0-9' '_')"
   done
-  for cls in "done:#16a34a:#052e16" "active:#2563eb:#eff6ff" "verify:#7c3aed:#f5f3ff" \
-             "planned:#0891b2:#ecfeff" "blocked:#b45309:#fffbeb" \
-             "cancelled:#6b7280:#f9fafb" "superseded:#6b7280:#f9fafb"; do
-    printf '    classDef %s stroke:%s,fill:%s,stroke-width:2px\n' "${cls%%:*}" "$(printf '%s' "$cls" | cut -d: -f2)" "$(printf '%s' "$cls" | cut -d: -f3)"
-  done
+  # the one status palette, shared with the issue graph (lib/mermaid.awk)
+  awk -v classes_only=1 -f "$MJ_LIB_DIR/mermaid.awk" /dev/null
 }
 
 mj_project_mermaid() {
