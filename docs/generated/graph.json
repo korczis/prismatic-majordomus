@@ -38143,6 +38143,8 @@
             "site/content-src",
             "site/content/roadmap.md",
             "scripts/site-check",
+            "scripts/site-build",
+            "docs/GITHUB_PAGES_ARCHITECTURE.md",
             "test/cases/3103_the_roadmap_draws_every_milestone.sh"
           ],
           "slug": "the-roadmap-draws-every-milestone",
@@ -55606,6 +55608,13 @@
         "label": "test/cases/3102_a_milestone_version_is_inferred.sh",
         "route": "/cockpit/objects/test/test-cases-3102-a-milestone-version-is-inferred-sh",
         "source": "test/cases/3102_a_milestone_version_is_inferred.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3103_the_roadmap_draws_every_milestone.sh",
+        "kind": "test",
+        "label": "test/cases/3103_the_roadmap_draws_every_milestone.sh",
+        "route": "/cockpit/objects/test/test-cases-3103-the-roadmap-draws-every-milestone-sh",
+        "source": "test/cases/3103_the_roadmap_draws_every_milestone.sh"
       },
       {
         "id": "majordomus://test/test/cases/310_rustdoc_projection.sh",
@@ -86406,6 +86415,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3103_the_roadmap_draws_every_milestone.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/310_rustdoc_projection.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -91702,8 +91716,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2884,
-      "edges": 6326,
+      "nodes": 2885,
+      "edges": 6327,
       "acyclic": false,
       "truncated": false
     }
