@@ -14099,6 +14099,18 @@
         }
       },
       {
+        "id": "majordomus://critique/the-owner-directs-work-from-the-ui",
+        "kind": "critique",
+        "label": "the-owner-directs-work-from-the-ui",
+        "summary": "the-owner-directs-work-from-the-ui",
+        "route": "/cockpit/objects/critique/the-owner-directs-work-from-the-ui",
+        "source": ".ai/repo/project/critiques/the-owner-directs-work-from-the-ui.yaml",
+        "facts": {
+          "intent": "the-owner-directs-work-from-the-ui",
+          "reviewed_at": "d116266803"
+        }
+      },
+      {
         "id": "majordomus://deployment/majordomus",
         "kind": "deployment",
         "label": "majordomus",
@@ -18915,6 +18927,20 @@
         }
       },
       {
+        "id": "majordomus://gap/the-owner-directs-work-from-the-ui",
+        "kind": "gap",
+        "label": "the-owner-directs-work-from-the-ui",
+        "summary": "the-owner-directs-work-from-the-ui",
+        "route": "/cockpit/objects/gap/the-owner-directs-work-from-the-ui",
+        "source": ".ai/repo/project/gaps/the-owner-directs-work-from-the-ui.yaml",
+        "facts": {
+          "intent": "the-owner-directs-work-from-the-ui",
+          "observed_at": "d116266803",
+          "recorded_at": "2026-10-16",
+          "recorded_by": "claude-code (session 21616f1e, worktree feature/the-ui-is-an-idd-workspace; read-only inventory of /ui, /cockpit, the plan capabilities and the open pull requests at master)"
+        }
+      },
+      {
         "id": "majordomus://implementation/bin/majordomus",
         "kind": "implementation",
         "label": "bin/majordomus",
@@ -19393,6 +19419,33 @@
             "Judging whether a criterion is met; that is the evidence's question (ADR 0070)"
           ],
           "updated_at": "2026-09-15"
+        }
+      },
+      {
+        "id": "majordomus://intent/the-owner-directs-work-from-the-ui",
+        "kind": "intent",
+        "label": "the-owner-directs-work-from-the-ui",
+        "summary": "The owner directs the repository's development from the UI, from an intent to the move that starts its next issue",
+        "route": "/cockpit/objects/intent/the-owner-directs-work-from-the-ui",
+        "source": ".ai/repo/project/intents/the-owner-directs-work-from-the-ui.yaml",
+        "facts": {
+          "governance": [
+            "rule:project.work-serves-a-declared-intent",
+            "rule:project.derived-once"
+          ],
+          "invariants": [
+            "The workspace is a projection of intents.list, plan.roadmap, plan.issues and plan.waves; it stores nothing and decides no status, wave or readiness of its own",
+            "A new intent, milestone or issue appears in the workspace with no registration anywhere but its own record",
+            "A move is made by plan.transition as an execution on the server, which refuses an illegal move and names why; the screen never edits a record",
+            "A reading that is not of the repository as it is now says so on the panel it fed"
+          ],
+          "milestones": [
+            "idd-workspace"
+          ],
+          "non_goals": [
+            "A second planning engine, wave allocator or status vocabulary in the UI",
+            "Mutation from the published site, which serves no runtime"
+          ]
         }
       },
       {
@@ -37918,6 +37971,54 @@
         }
       },
       {
+        "id": "majordomus://issue/I2780",
+        "kind": "issue",
+        "label": "I2780",
+        "summary": "The UI has an intent workspace: an intent, its milestones, issues, waves and graph on one screen",
+        "route": "/cockpit/objects/issue/i2780",
+        "source": ".ai/repo/project/issues/I2780.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The intent the query names, or the first executing then planned one in intents.list's order, is shown, and the rule is printed",
+            "Milestones, issues and waves come from plan.roadmap, plan.issues and plan.waves and no list of the screen's own",
+            "An issue added to the plan appears with no other edit",
+            "An intent that is not recorded is refused by name, and a capability that cannot answer says so in its panel"
+          ],
+          "created_at": "2026-10-16",
+          "current_state": "No /ui/idd; the plan is read on four screens, the waves on none.",
+          "depends_on": [],
+          "desired_state": "/ui/idd answers with a hero, the intent choice, the criteria, milestones, issues, waves and graph panels, each naming its sources, and refuses an unknown intent by name.",
+          "evidence_required": [
+            "ui_idd_tests"
+          ],
+          "milestone": "idd-workspace",
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui",
+            "apps/majordomus-cli/tests/ui_idd.rs",
+            "docs/MAJORDOMUS_UI.md",
+            ".ai/repo/project"
+          ],
+          "serves": [
+            "the-owner-directs-work-from-the-ui#workspace-is-derived"
+          ],
+          "slug": "the-ui-is-an-idd-workspace",
+          "started_at": "2026-10-16T21:12:37Z",
+          "started_event": "sha256:da83452b38cd139d71c5d90d7e5ca56c062dbad34446d39aa840959e43583cfc",
+          "updated_at": "2026-10-16T21:13:23Z",
+          "validation": [
+            "majordomus plan validate",
+            "majordomus intent validate",
+            "cargo test --lib ui::",
+            "cargo test --test ui_idd"
+          ],
+          "verified_at": "2026-10-16T21:13:23Z",
+          "verified_event": "sha256:d901ca8456495a20970dff1cc4b909f5ef4175721d4232ea73c6d96a0f21db7e"
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "label": "a-commit-stood-behind-a-build-lock",
@@ -39133,6 +39234,49 @@
           "validation": [
             "bash test/run.sh",
             "bin/majordomus doctor"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/idd-workspace",
+        "kind": "milestone",
+        "label": "idd-workspace",
+        "summary": "The UI is where the owner directs the work, from an intent to its next move",
+        "route": "/cockpit/objects/milestone/idd-workspace",
+        "source": ".ai/repo/project/milestones/idd-workspace.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "/ui/idd renders a chosen intent's milestones, issues, waves and graph from the plan's capabilities alone, with the selection rule shown",
+            "An issue added to the plan appears in the workspace with no other edit",
+            "Every ready issue leads to the move that starts it"
+          ],
+          "created_at": "2026-10-16",
+          "current_state": "No /ui/idd. Intents, milestones and issues are read on the Roadmap and Issues screens; plan.waves is read by no /ui screen; plan.transition is offered on /cockpit/plan/issues/<id> only.",
+          "depends_on": [],
+          "evidence_required": [],
+          "non_scope": [
+            "A second plan engine, wave allocator or status vocabulary",
+            "Mutation from the published site",
+            "Provider-assisted plan authoring"
+          ],
+          "order": 146,
+          "priority": "p0",
+          "risks": [
+            "#1184 (/ui/waves) and #1302 (roadmap reads delivery) touch ui/mod.rs's screen list; each lands as a textual neighbour and needs one merge."
+          ],
+          "scope": [
+            "apps/majordomus-cli/src/ui",
+            "share/ui",
+            "docs/UI.md",
+            ".ai/repo/project",
+            "test/cases"
+          ],
+          "slug": "idd-workspace",
+          "updated_at": "2026-10-16",
+          "validation": [
+            "majordomus plan validate",
+            "majordomus intent validate",
+            "cargo test --lib ui::"
           ]
         }
       },
@@ -73183,6 +73327,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://critique/the-owner-directs-work-from-the-ui",
+        "target": "kind:critique",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://deployment/majordomus",
         "target": "kind:deployment",
         "kind": "is_a"
@@ -75123,6 +75272,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://gap/the-owner-directs-work-from-the-ui",
+        "target": "kind:gap",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://implementation/bin/majordomus",
         "target": "kind:implementation",
         "kind": "is_a"
@@ -75399,6 +75553,11 @@
       },
       {
         "source": "majordomus://intent/intent-planning",
+        "target": "kind:intent",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://intent/the-owner-directs-work-from-the-ui",
         "target": "kind:intent",
         "kind": "is_a"
       },
@@ -81258,6 +81417,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2780",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2780",
+        "target": "majordomus://milestone/idd-workspace",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -81404,6 +81573,11 @@
       },
       {
         "source": "majordomus://milestone/foundation",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/idd-workspace",
         "target": "kind:milestone",
         "kind": "is_a"
       },
@@ -91009,8 +91183,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2870,
-      "edges": 6291,
+      "nodes": 2875,
+      "edges": 6297,
       "acyclic": false,
       "truncated": false
     }
