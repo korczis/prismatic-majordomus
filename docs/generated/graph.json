@@ -3346,6 +3346,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/ui/roadmap.rs",
+        "kind": "file",
+        "label": "roadmap.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/ui/roadmap.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/ui/source.rs",
         "kind": "file",
         "label": "source.rs",
@@ -4383,6 +4391,14 @@
         "label": "domain-map.html",
         "summary": "named by the layer; not an object of this index",
         "source": "site/templates/partials/domain-map.html",
+        "external": true
+      },
+      {
+        "id": "file:site/templates/roadmap.html",
+        "kind": "file",
+        "label": "roadmap.html",
+        "summary": "named by the layer; not an object of this index",
+        "source": "site/templates/roadmap.html",
         "external": true
       },
       {
@@ -7499,6 +7515,36 @@
             "release",
             "mesh",
             "runtime"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0166",
+        "kind": "adr",
+        "label": "adr-0166",
+        "summary": "The plan's surfaces are inferred from delivery, and nothing the plan shows is typed beside it",
+        "route": "/cockpit/objects/adr/adr-0166",
+        "source": ".ai/repo/adrs/0166-the-plan-surfaces-are-inferred-from-delivery.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-16",
+          "related": [
+            "file:.ai/repo/project/milestones/truthful-plan-surfaces.yaml",
+            "file:.ai/repo/adrs/0152-a-diagram-and-a-chart-on-the-site-are-one-viewer-each-over-w.md",
+            "file:.ai/repo/rules/project/a-diagram-is-drawn-not-typed.v1.md",
+            "file:.ai/repo/rules/project/the-published-ui-is-the-trunks.v1.md",
+            "file:site/templates/roadmap.html",
+            "file:site/templates/index.html",
+            "file:apps/majordomus-cli/src/ui/roadmap.rs",
+            "file:apps/majordomus-cli/src/plan.rs",
+            "file:lib/project.awk"
+          ],
+          "tags": [
+            "plan",
+            "site",
+            "ui",
+            "derivation",
+            "diagrams"
           ]
         }
       },
@@ -37918,6 +37964,404 @@
         }
       },
       {
+        "id": "majordomus://issue/I2740",
+        "kind": "issue",
+        "label": "I2740",
+        "summary": "An issue's delivery is inferred from branches, pull requests, merges, tags and the published site",
+        "route": "/cockpit/objects/issue/i2740",
+        "source": ".ai/repo/project/issues/I2740.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "An issue named by a merged pull request in a fixture repository reads merged with the merge commit, and released once a v* tag contains it",
+            "An issue with only an open pull request reads pr_open with its number; with an unread forge the answer says unread",
+            "The capability is declared once and reaches CLI, HTTP and MCP through majordomus generate",
+            "site/data/generated/delivery.json is produced by the executable and checked by generate-site-data --check"
+          ],
+          "created_at": "2026-10-16",
+          "current_state": "trace.issue (capability/builtin/trace.rs, worktree/trace.rs) gives an issue's branches and merged commits; the served forge cache holds pull requests and releases; nothing answers a stage per issue.",
+          "depends_on": [],
+          "evidence_required": [
+            "delivery_stage_case",
+            "mutations_fail_the_case"
+          ],
+          "milestone": "truthful-plan-surfaces",
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin/plan.rs",
+            "apps/majordomus-cli/src/plan",
+            "apps/majordomus-cli/src/plan.rs",
+            "apps/majordomus-cli/tests/plan_delivery.rs",
+            "scripts/generate-site-data",
+            "site/data/generated/delivery.json",
+            "docs/PLANNING.md",
+            "docs/generated",
+            "test/cases/3100_an_issue_delivery_is_inferred.sh"
+          ],
+          "slug": "an-issue-delivery-is-inferred",
+          "updated_at": "2026-10-16",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test plan_delivery",
+            "bash test/run.sh 3100_an_issue_delivery_is_inferred"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2741",
+        "kind": "issue",
+        "label": "I2741",
+        "summary": "Merged work the plan has not recorded is drift, and on the trunk past a window it is red",
+        "route": "/cockpit/objects/issue/i2741",
+        "source": ".ai/repo/project/issues/I2741.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A READY issue whose merged pull request names it is reported merged_not_recorded with the pull request and merge commit",
+            "The trunk's gate refuses it past the window and passes it inside the window, naming the settling command",
+            "done_without_trace never refuses"
+          ],
+          "created_at": "2026-10-16",
+          "current_state": "No drift report exists between an issue's stamps and its delivery.",
+          "depends_on": [
+            "I2740"
+          ],
+          "evidence_required": [
+            "drift_case",
+            "mutations_fail_the_case"
+          ],
+          "milestone": "truthful-plan-surfaces",
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin/plan.rs",
+            "apps/majordomus-cli/src/plan",
+            "apps/majordomus-cli/tests/plan_drift.rs",
+            "scripts/ci/plan-drift-check",
+            ".ai/repo/ci/plan.yaml",
+            ".ai/repo/ci/README.md",
+            ".github/workflows/validate.yml",
+            ".ai/repo/automation/inventory.jsonl",
+            "docs/PLANNING.md",
+            "test/cases/3101_merged_work_unrecorded_is_drift.sh"
+          ],
+          "slug": "merged-work-unrecorded-is-drift",
+          "updated_at": "2026-10-16",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test plan_drift",
+            "bash test/run.sh 3101_merged_work_unrecorded_is_drift"
+          ],
+          "why": "ADR 0166 decision 2. Nothing compares declared status with merged work; the drift is what made the public roadmap a parallel universe."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2742",
+        "kind": "issue",
+        "label": "I2742",
+        "summary": "A milestone's version is inferred from the release that carried it, never typed",
+        "route": "/cockpit/objects/issue/i2742",
+        "source": ".ai/repo/project/issues/I2742.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "plan validate refuses a milestone record carrying version",
+            "A milestone whose last issue's merge is contained in v0.27.0 reads released_in v0.27.0; an open one reads unreleased",
+            "The awk and Rust engines agree (case 99)"
+          ],
+          "created_at": "2026-10-16",
+          "current_state": "lib/project.awk:359 and plan.rs:289 emit the raw field; site/templates/roadmap.html filters on it; lib/doctor.sh mj_validate_roadmap checks a README table against it.",
+          "depends_on": [],
+          "desired_state": "No version field anywhere in .ai/repo/project/milestones; plan.roadmap and roadmap.json carry released_in with its tag; the README roadmap table and its validator use released_in.",
+          "evidence_required": [
+            "version_inferred_case"
+          ],
+          "milestone": "truthful-plan-surfaces",
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/milestones",
+            "share/schemas",
+            "share/allow",
+            "lib/project.awk",
+            "lib/project.sh",
+            "lib/plan.sh",
+            "lib/doctor.sh",
+            "apps/majordomus-cli/src/plan.rs",
+            ".ai/repo/rules/vendor/majordomus/rules/roadmap-integrity.v1.md",
+            "share/standard/majordomus/rules/roadmap-integrity.v1.md",
+            "README.md",
+            "docs/PLANNING.md",
+            "site/data/generated",
+            "docs/generated",
+            "test/cases/49_roadmap_integrity.sh",
+            "test/cases/3102_a_milestone_version_is_inferred.sh"
+          ],
+          "slug": "a-milestone-version-is-inferred",
+          "updated_at": "2026-10-16",
+          "validation": [
+            "bin/majordomus plan validate",
+            "bash test/run.sh 49_roadmap_integrity 99_engines_agree 3102_a_milestone_version_is_inferred"
+          ],
+          "why": "ADR 0166 decision 3. version is typed by hand: 0.1 to 1.0 on eight milestones written before releases existed, two of them 0.5, out of rank order, beside a product at v0.27.0."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2743",
+        "kind": "issue",
+        "label": "I2743",
+        "summary": "The public roadmap draws every milestone in the graph's order, each issue with its inferred delivery",
+        "route": "/cockpit/objects/issue/i2743",
+        "source": ".ai/repo/project/issues/I2743.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every milestone id in plan.json appears on the built /roadmap/, in the graph's order",
+            "An issue with a merged pull request shows merged with a link to that pull request",
+            "The page names the commit and time its data was observed"
+          ],
+          "created_at": "2026-10-16",
+          "current_state": "roadmap.html keeps milestones whose version is set; the issue counts are stamp-derived; nothing links a stage to its proof.",
+          "depends_on": [
+            "I2740",
+            "I2742"
+          ],
+          "desired_state": "One template over roadmap.json and delivery.json; scripts/site-check asserts that every milestone id of plan.json appears on /roadmap/.",
+          "evidence_required": [
+            "roadmap_complete_case"
+          ],
+          "milestone": "truthful-plan-surfaces",
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "site/templates/roadmap.html",
+            "site/templates/plan-section.html",
+            "site/templates/milestone.html",
+            "site/content-src",
+            "site/content/roadmap.md",
+            "scripts/site-check",
+            "test/cases/3103_the_roadmap_draws_every_milestone.sh"
+          ],
+          "slug": "the-roadmap-draws-every-milestone",
+          "updated_at": "2026-10-16",
+          "validation": [
+            "bash test/run.sh 12_site_build 3103_the_roadmap_draws_every_milestone"
+          ],
+          "why": "ADR 0166 decisions 4 and 6. The page lists 8 of 38 milestones and none of the work in flight; its front matter still names .majordomus/project/milestones/."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2744",
+        "kind": "issue",
+        "label": "I2744",
+        "summary": "The UI roadmap reads delivery and the releases themselves, and its now is where work is",
+        "route": "/cockpit/objects/issue/i2744",
+        "source": ".ai/repo/project/issues/I2744.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "/ui/roadmap shows an issue's inferred stage linked to its proof",
+            "Now names only milestones with work in flight",
+            "The latest release shown is never older than the executable's own version when that version is tagged"
+          ],
+          "created_at": "2026-10-16",
+          "current_state": "ui/roadmap.rs reads plan.roadmap, plan.status, intents.list and plan.issues; latest release comes from the committed release records.",
+          "depends_on": [
+            "I2740"
+          ],
+          "desired_state": "The screen and its snapshot state stages with proof links, Now and Next as derived, and the release from the releases; the snapshot test fails on a release older than the drawing executable.",
+          "evidence_required": [
+            "ui_roadmap_case"
+          ],
+          "milestone": "truthful-plan-surfaces",
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui/roadmap.rs",
+            "apps/majordomus-cli/src/ui/dashboard.rs",
+            "apps/majordomus-cli/src/ui/chrome.rs",
+            "apps/majordomus-cli/tests/ui_roadmap.rs",
+            "test/cases/3104_the_ui_roadmap_reads_delivery.sh"
+          ],
+          "slug": "the-ui-roadmap-reads-delivery",
+          "updated_at": "2026-10-16",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test ui_roadmap",
+            "bash test/run.sh 3104_the_ui_roadmap_reads_delivery"
+          ],
+          "why": "ADR 0166 decision 4. The 07:15Z snapshot of 2026-10-16 said Latest release 0.26.0 under a 0.27.0 header and Now M002, a milestone with no work."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2745",
+        "kind": "issue",
+        "label": "I2745",
+        "summary": "The landing page states no present it does not read",
+        "route": "/cockpit/objects/issue/i2745",
+        "source": ".ai/repo/project/issues/I2745.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "homepage-check refuses a present-state sentence planted in site/data",
+            "The built homepage carries no hand-written state claim, and its plan and release figures come from generated data"
+          ],
+          "created_at": "2026-10-16",
+          "current_state": "Hand-written present-tense claims sit in three toml files the homepage renders.",
+          "depends_on": [],
+          "desired_state": "The homepage's state sentences come from generated data; homepage-check refuses the vocabulary; case 333 and a new case prove both.",
+          "evidence_required": [
+            "homepage_present_case"
+          ],
+          "milestone": "truthful-plan-surfaces",
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "site/data/marketing.toml",
+            "site/data/manifesto.toml",
+            "site/data/homepage.toml",
+            "site/templates/index.html",
+            "scripts/ci/homepage-check",
+            "test/cases/333_homepage_narrative.sh",
+            "test/cases/3105_the_homepage_states_no_present_it_does_not_read.sh"
+          ],
+          "slug": "the-homepage-states-no-present-it-does-not-read",
+          "updated_at": "2026-10-16",
+          "validation": [
+            "bash test/run.sh 333_homepage_narrative 3105_the_homepage_states_no_present_it_does_not_read"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2746",
+        "kind": "issue",
+        "label": "I2746",
+        "summary": "Every published tree draws its diagrams, and every diagram is the interactive viewer",
+        "route": "/cockpit/objects/issue/i2746",
+        "source": ".ai/repo/project/issues/I2746.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "diagram-check fails on box art planted in an ADR, a rule, the handbook or UI markdown",
+            "No box-art diagram remains in any covered tree"
+          ],
+          "created_at": "2026-10-16",
+          "current_state": "The rule covers docs, site/content-src and site/templates; box art elsewhere is invisible to the gate.",
+          "depends_on": [],
+          "desired_state": "diagram-check reads the wider scope and finds nothing; declared exemptions stay for literal terminal output.",
+          "evidence_required": [
+            "diagram_scope_case"
+          ],
+          "milestone": "truthful-plan-surfaces",
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/rules/project/a-diagram-is-drawn-not-typed.v1.md",
+            ".ai/repo/rules/project/a-diagram-is-drawn-not-typed.v2.md",
+            "scripts/ci/diagram-check",
+            ".ai/repo/adrs",
+            "handbook",
+            "docs",
+            "apps/majordomus-cli/src/ui",
+            "test/cases/272_diagrams_are_drawn.sh",
+            "test/cases/3106_every_published_tree_draws_its_diagrams.sh"
+          ],
+          "slug": "every-published-tree-draws-its-diagrams",
+          "updated_at": "2026-10-16",
+          "validation": [
+            "scripts/ci/diagram-check",
+            "bash test/run.sh 272_diagrams_are_drawn 3106_every_published_tree_draws_its_diagrams"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2747",
+        "kind": "issue",
+        "label": "I2747",
+        "summary": "Every code block on every surface is highlighted by one engine with one palette",
+        "route": "/cockpit/objects/issue/i2747",
+        "source": ".ai/repo/project/issues/I2747.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A code block rendered by majordomus ui carries the same classes as the same block on the site",
+            "No surface loads highlight.js or a CDN highlighter, and the gate refuses one planted",
+            "The executable's build time and size change are measured and stated in the pull request"
+          ],
+          "created_at": "2026-10-16",
+          "current_state": "site/config.toml highlights with ayu-light and ayu-dark classes; share/ui/ui.js loads highlight.js from cdnjs; the handbook has its own.",
+          "depends_on": [],
+          "desired_state": "One engine, one class vocabulary, one generated palette; scripts/ci/highlighter-check refuses hljs, highlight.js, prism or shiki on any surface.",
+          "evidence_required": [
+            "one_highlighter_case"
+          ],
+          "milestone": "truthful-plan-surfaces",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/Cargo.toml",
+            "Cargo.lock",
+            "apps/majordomus-cli/src/ui",
+            "apps/majordomus-cli/src/web",
+            "share/ui/ui.js",
+            "share/ui/ui.css",
+            "share/design",
+            "site/config.toml",
+            "scripts/site-build",
+            "handbook",
+            "scripts/ci/highlighter-check",
+            ".ai/repo/automation/inventory.jsonl",
+            "test/cases/3107_one_highlighter.sh"
+          ],
+          "slug": "one-highlighter",
+          "updated_at": "2026-10-16",
+          "validation": [
+            "scripts/ci/highlighter-check",
+            "bash test/run.sh 3107_one_highlighter"
+          ],
+          "why": "ADR 0166 decision 7. Code is highlighted by syntect (site), highlight.js 11.9 fetched from a CDN (share/ui/ui.js) and the handbook's own scripts, with three palettes."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2748",
+        "kind": "issue",
+        "label": "I2748",
+        "summary": "The drift already on the trunk is settled before the gate is made blocking",
+        "route": "/cockpit/objects/issue/i2748",
+        "source": ".ai/repo/project/issues/I2748.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "plan drift on the trunk reports zero merged_not_recorded",
+            "Every issue recorded DONE carries evidence from commands run at the recording commit"
+          ],
+          "created_at": "2026-10-16",
+          "current_state": "Unknown count of merged but unrecorded issues on the trunk.",
+          "depends_on": [
+            "I2741"
+          ],
+          "desired_state": "plan drift on the trunk reports no merged_not_recorded, and the gate is blocking.",
+          "evidence_required": [
+            "trunk_drift_zero"
+          ],
+          "milestone": "truthful-plan-surfaces",
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues",
+            ".ai/repo/ci/plan.yaml",
+            "docs/PLAN_STATUS.md",
+            "docs/generated",
+            "site/data/generated",
+            "site/data/registry"
+          ],
+          "slug": "the-drift-on-the-trunk-is-settled",
+          "updated_at": "2026-10-16",
+          "validation": [
+            "bin/majordomus plan drift --json",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "label": "a-commit-stood-behind-a-build-lock",
@@ -39896,6 +40340,70 @@
             "majordomus generate --check",
             "scripts/ci/pages-check"
           ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/truthful-plan-surfaces",
+        "kind": "milestone",
+        "label": "truthful-plan-surfaces",
+        "summary": "The plan's surfaces are inferred from delivery, and nothing they show is typed beside the repository",
+        "route": "/cockpit/objects/milestone/truthful-plan-surfaces",
+        "source": ".ai/repo/project/milestones/truthful-plan-surfaces.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "plan.delivery answers a stage with its proving object for every issue, and an unread forge is reported as unread",
+            "The trunk's ci refuses an issue merged and unrecorded past the declared window, naming the command that settles it",
+            "No milestone record carries version, and the schema refuses one",
+            "/roadmap/ and /ui/roadmap list every milestone of the plan in the graph's order, with the inferred stage of each issue linked to its proof",
+            "homepage-check refuses a present-state sentence in site/data",
+            "The diagram gate covers ADRs, rules, the handbook and UI markdown, and finds no box art",
+            "One highlighter: no highlight.js and no CDN highlighter on any surface, and a gate refuses one"
+          ],
+          "created_at": "2026-10-16",
+          "current_state": "Status from stamps; roadmap filtered by a hand field; landing prose hand-written; three highlighters; diagram rule covers docs, site sources and templates only.",
+          "depends_on": [],
+          "evidence_required": [
+            "delivery_inferred",
+            "drift_gated",
+            "surfaces_read_one_derivation",
+            "diagrams_and_code_unified"
+          ],
+          "non_scope": [
+            "Writing lifecycle stamps from inference; a merge is not acceptance and evidence still decides DONE (ADR 0166, alternatives).",
+            "Rewriting the awk status engine; delivery is Rust only."
+          ],
+          "order": 146,
+          "priority": "p0",
+          "risks": [
+            "The drift gate turns the trunk red on landing for every issue already merged and unrecorded; I2748 records them before the gate is made blocking.",
+            "syntect adds to the executable's build time and size; measured in I2747 before it lands."
+          ],
+          "scope": [
+            "apps/majordomus-cli/src/plan.rs",
+            "apps/majordomus-cli/src/capability/builtin/plan.rs",
+            "apps/majordomus-cli/src/ui",
+            "apps/majordomus-cli/src/web",
+            "lib/project.awk",
+            "lib/project.sh",
+            "lib/plan.sh",
+            "scripts/generate-site-data",
+            "scripts/ci",
+            "site/templates",
+            "site/content-src",
+            "site/data",
+            "share/ui",
+            "share/design",
+            "share/schemas",
+            "handbook",
+            ".ai/repo/project/milestones",
+            ".ai/repo/rules/project",
+            ".ai/repo/adrs",
+            "docs/PLANNING.md",
+            "docs/DIAGRAMS.md",
+            "test/cases"
+          ],
+          "slug": "truthful-plan-surfaces",
+          "updated_at": "2026-10-16"
         }
       },
       {
@@ -67528,6 +68036,56 @@
         "kind": "put_in_force"
       },
       {
+        "source": "majordomus://adr/adr-0166",
+        "target": "file:apps/majordomus-cli/src/plan.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0166",
+        "target": "file:apps/majordomus-cli/src/ui/roadmap.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0166",
+        "target": "file:site/templates/index.html",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0166",
+        "target": "file:site/templates/roadmap.html",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0166",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0166",
+        "target": "majordomus://adr/adr-0152",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0166",
+        "target": "majordomus://implementation/lib/project.awk",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0166",
+        "target": "majordomus://milestone/truthful-plan-surfaces",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0166",
+        "target": "majordomus://rule/project.a-diagram-is-drawn-not-typed@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0166",
+        "target": "majordomus://rule/project.the-published-ui-is-the-trunks@1",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://application/ci-gated-project",
         "target": "kind:application",
         "kind": "is_a"
@@ -81258,6 +81816,121 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2740",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2740",
+        "target": "majordomus://milestone/truthful-plan-surfaces",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2741",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2741",
+        "target": "majordomus://issue/I2740",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2741",
+        "target": "majordomus://milestone/truthful-plan-surfaces",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2742",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2742",
+        "target": "majordomus://milestone/truthful-plan-surfaces",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2743",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2743",
+        "target": "majordomus://issue/I2740",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2743",
+        "target": "majordomus://issue/I2742",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2743",
+        "target": "majordomus://milestone/truthful-plan-surfaces",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2744",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2744",
+        "target": "majordomus://issue/I2740",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2744",
+        "target": "majordomus://milestone/truthful-plan-surfaces",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2745",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2745",
+        "target": "majordomus://milestone/truthful-plan-surfaces",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2746",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2746",
+        "target": "majordomus://milestone/truthful-plan-surfaces",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2747",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2747",
+        "target": "majordomus://milestone/truthful-plan-surfaces",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2748",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2748",
+        "target": "majordomus://issue/I2741",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2748",
+        "target": "majordomus://milestone/truthful-plan-surfaces",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -81514,6 +82187,11 @@
       },
       {
         "source": "majordomus://milestone/test-evidence",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/truthful-plan-surfaces",
         "target": "kind:milestone",
         "kind": "is_a"
       },
@@ -91009,8 +91687,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2870,
-      "edges": 6291,
+      "nodes": 2883,
+      "edges": 6325,
       "acyclic": false,
       "truncated": false
     }

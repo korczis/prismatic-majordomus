@@ -6,23 +6,23 @@
     "version": "0.27.0"
   },
   "registry": {
-    "fingerprint": "039c3c240f2a65253fe430b394e20fc2d0230868bc9dc775a9fdc93d3bfd479f",
+    "fingerprint": "d60f48dbcfcf2ed1fd81e88267d2089f748060093d9a57501dd4bf6d98d0eb36",
     "summary": {
-      "total": 2446,
+      "total": 2457,
       "builtin": 202,
-      "declarative": 2244,
+      "declarative": 2255,
       "by_kind": {
         "command": 31,
         "query": 171,
-        "resource": 2244
+        "resource": 2255
       },
       "by_stability": {
         "behaviorally_verified": 141,
         "experimental": 52,
-        "implemented": 2253
+        "implemented": 2264
       },
       "mcp_tools": 192,
-      "mcp_resources": 2299,
+      "mcp_resources": 2310,
       "http_routes": 197,
       "cli_commands": 108,
       "modules": 92,
@@ -82315,7 +82315,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 109,
+        "capabilities": 110,
         "capability_ids": []
       },
       {
@@ -82938,7 +82938,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 394,
+        "capabilities": 403,
         "capability_ids": []
       },
       {
@@ -83054,7 +83054,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 38,
+        "capabilities": 39,
         "capability_ids": []
       },
       {
@@ -83600,7 +83600,7 @@
     ]
   },
   "index": {
-    "fingerprint": "d145fb9a0df194ae88563f0ac078bcdc65ec3e4202c2c15329351b61177ace6a",
+    "fingerprint": "c391d4c1e9e77e85ed6164c1070e310356c32854f1aee3d53bd8891463381e10",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -83623,7 +83623,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 109,
+      "adr": 110,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -83640,10 +83640,10 @@
       "gap": 3,
       "implementation": 52,
       "intent": 4,
-      "issue": 394,
+      "issue": 403,
       "knowledge": 4,
       "mesh-declaration": 1,
-      "milestone": 38,
+      "milestone": 39,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -85465,6 +85465,24 @@
           "release",
           "mesh",
           "runtime"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0166",
+        "kind": "adr",
+        "identity": "adr-0166",
+        "title": "The plan's surfaces are inferred from delivery, and nothing the plan shows is typed beside it",
+        "description": "The plan's surfaces are inferred from delivery, and nothing the plan shows is typed beside it",
+        "path": ".ai/repo/adrs/0166-the-plan-surfaces-are-inferred-from-delivery.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 8828,
+        "tags": [
+          "plan",
+          "site",
+          "ui",
+          "derivation",
+          "diagrams"
         ]
       },
       {
@@ -89767,7 +89785,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 158951
+        "bytes": 176245
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -97552,6 +97570,105 @@
         "bytes": 2836
       },
       {
+        "uri": "majordomus://issue/I2740",
+        "kind": "issue",
+        "identity": "I2740",
+        "title": "An issue's delivery is inferred from branches, pull requests, merges, tags and the published site",
+        "description": "Add the capability plan.delivery (CLI majordomus plan delivery [--json] [<id>], HTTP and MCP from the one capability declaration) that answers, for every issue, the furthest stage of none, branch, pr_open, merged, released, deployed, each with the object that proved it and when it was observed, and expose it in the site data the plan pages read.",
+        "path": ".ai/repo/project/issues/I2740.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2624
+      },
+      {
+        "uri": "majordomus://issue/I2741",
+        "kind": "issue",
+        "identity": "I2741",
+        "title": "Merged work the plan has not recorded is drift, and on the trunk past a window it is red",
+        "description": "Add plan.drift over plan.delivery with the classes merged_not_recorded, active_without_work and done_without_trace (advisory), and a gate scripts/ci/plan-drift-check that refuses merged_not_recorded older than a window declared in .ai/repo/ci/plan.yaml on the trunk, naming majordomus plan verify|done <id>.",
+        "path": ".ai/repo/project/issues/I2741.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1988
+      },
+      {
+        "uri": "majordomus://issue/I2742",
+        "kind": "issue",
+        "identity": "I2742",
+        "title": "A milestone's version is inferred from the release that carried it, never typed",
+        "description": "Remove version from the milestone schema and the eight records that carry it, refuse a record that carries one, and derive released_in for a milestone as the first v* tag containing the merge of its last accepted issue (unreleased while open), in both the awk and the Rust engines' output; rewrite the vendored roadmap-integrity rule and its validator to match.",
+        "path": ".ai/repo/project/issues/I2742.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2188
+      },
+      {
+        "uri": "majordomus://issue/I2743",
+        "kind": "issue",
+        "identity": "I2743",
+        "title": "The public roadmap draws every milestone in the graph's order, each issue with its inferred delivery",
+        "description": "Rewrite site/templates/roadmap.html and site/content-src roadmap so /roadmap/ lists every milestone of the plan in the milestone graph's order (no filter on any hand field), shows released_in, each issue's declared status beside its inferred stage linked to the pull request, commit and tag that prove it, states the commit and time observed, and draws the milestone graph through the ADR 0152 viewer with nodes linked to milestone pages.",
+        "path": ".ai/repo/project/issues/I2743.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1884
+      },
+      {
+        "uri": "majordomus://issue/I2744",
+        "kind": "issue",
+        "identity": "I2744",
+        "title": "The UI roadmap reads delivery and the releases themselves, and its now is where work is",
+        "description": "Make /ui/roadmap (apps/majordomus-cli/src/ui/roadmap.rs) show each issue's inferred stage from plan.delivery beside its declared status, derive Now as the milestones with work in flight (open pull requests, mesh claims, ACTIVE) and Next from the graph, and read the latest release from the releases (tags and the published latest.json) at the moment it renders, so a snapshot never shows an older release than the executable that drew it.",
+        "path": ".ai/repo/project/issues/I2744.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1947
+      },
+      {
+        "uri": "majordomus://issue/I2745",
+        "kind": "issue",
+        "identity": "I2745",
+        "title": "The landing page states no present it does not read",
+        "description": "Replace every sentence in site/data/marketing.toml, manifesto.toml and homepage.toml that describes the current state of the product with a rendered datum from site/data/generated (release, plan figures, delivery, recent landings) or remove it, fix the link text that promises waves the roadmap does not show, and extend scripts/ci/homepage-check to refuse present-state vocabulary (today, not yet, nothing ... yet, no command ... today, is shipped) in those files.",
+        "path": ".ai/repo/project/issues/I2745.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1868
+      },
+      {
+        "uri": "majordomus://issue/I2746",
+        "kind": "issue",
+        "identity": "I2746",
+        "title": "Every published tree draws its diagrams, and every diagram is the interactive viewer",
+        "description": "Raise project.a-diagram-is-drawn-not-typed to version 2 covering .ai/repo/adrs, .ai/repo/rules, handbook and every markdown string majordomus ui renders, convert every box-art diagram those trees hold to Mermaid (Cytoscape where the graph is data) through the ADR 0152 viewer with inferred node links, and extend scripts/ci/diagram-check and case 272 to the new scope.",
+        "path": ".ai/repo/project/issues/I2746.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1846
+      },
+      {
+        "uri": "majordomus://issue/I2747",
+        "kind": "issue",
+        "identity": "I2747",
+        "title": "Every code block on every surface is highlighted by one engine with one palette",
+        "description": "Highlight every code block majordomus ui and the executable's reports render with syntect, the engine Zola already uses for the site, emitting the same class vocabulary; generate one stylesheet for both themes from the design tokens and use it on the site, the UI and the handbook; remove highlight.js and any CDN highlighter; add a gate that refuses a second highlighter.",
+        "path": ".ai/repo/project/issues/I2747.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1963
+      },
+      {
+        "uri": "majordomus://issue/I2748",
+        "kind": "issue",
+        "identity": "I2748",
+        "title": "The drift already on the trunk is settled before the gate is made blocking",
+        "description": "Run plan.drift on the trunk and, for every merged_not_recorded issue, either record it through plan verify|evidence|done with evidence actually run, or record why it is not done (a slice) by narrowing the issue or opening its remainder as a new issue; then make the drift gate blocking.",
+        "path": ".ai/repo/project/issues/I2748.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1460
+      },
+      {
         "uri": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "identity": "a-commit-stood-behind-a-build-lock",
@@ -98008,6 +98125,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 9891
+      },
+      {
+        "uri": "majordomus://milestone/truthful-plan-surfaces",
+        "kind": "milestone",
+        "identity": "truthful-plan-surfaces",
+        "title": "The plan's surfaces are inferred from delivery, and nothing they show is typed beside the repository",
+        "description": "Every plan surface draws every milestone in the graph's order, each issue with its declared status beside the delivery stage inferred from branches, pull requests, merges, tags and the published site; a merged but unrecorded issue turns the trunk red past a window; no milestone carries a typed version; every relationship is a drawn, clickable diagram; every code block is highlighted by one engine with one token-derived palette.",
+        "path": ".ai/repo/project/milestones/truthful-plan-surfaces.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 3936
       },
       {
         "uri": "majordomus://milestone/two-folder-integration",
@@ -107706,7 +107834,7 @@
       "identity": [
         "id"
       ],
-      "objects": 109
+      "objects": 110
     },
     {
       "name": "application",
@@ -107869,7 +107997,7 @@
       "identity": [
         "id"
       ],
-      "objects": 394
+      "objects": 403
     },
     {
       "name": "knowledge",
@@ -107899,7 +108027,7 @@
       "identity": [
         "id"
       ],
-      "objects": 38
+      "objects": 39
     },
     {
       "name": "moment",
