@@ -37028,7 +37028,7 @@
           "type": "string"
         },
         {
-          "description": "The release that carried the milestone — the first release tag containing the merge\nof its last accepted issue, else `unreleased` — when the reader asked git for it\n(`released_in`); the roadmap always does. Never a typed field (ADR 0166).",
+          "description": "The release that carried the milestone — the first release record whose commit\ncontains the merge of its last accepted issue, else `unreleased` — when the reader\nasked for it\n(`released_in`); the roadmap always does. Never a typed field (ADR 0166).",
           "name": "released_in",
           "refs": [],
           "required": false,
@@ -37278,7 +37278,7 @@
       "name": "PlanRoadmap",
       "properties": [
         {
-          "description": "The milestones ordered by rank, then order, then id, each with the release that\ncarried it (`released_in`). The sequence is derived from the milestone graph and the\nrelease from the tags; no list of versions is maintained anywhere.",
+          "description": "The milestones ordered by rank, then order, then id, each with the release that\ncarried it (`released_in`). The sequence is derived from the milestone graph and the\nrelease from the release records; no list of versions is maintained anywhere.",
           "name": "milestones",
           "refs": [
             "PlanMilestone"

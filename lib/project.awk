@@ -17,8 +17,8 @@
 #      dependents  claims
 #      `last` is the last accepted issue of a DONE milestone — its DONE issue with the latest
 #      completed_at, the greater id on a tie — and empty otherwise. The release that carried
-#      the milestone (released_in) is that issue's merge looked up in the tags, which is git's
-#      to answer and not this file's: lib/project.sh mj_pj_m_released_in resolves it.
+#      the milestone (released_in) is that issue's merge looked up in the release records,
+#      which is git's to answer and not this file's: lib/project.sh mj_pj_m_released_in.
 #   S  kind  status...                  the status vocabulary, one record per record kind
 #   R  from  to                          one record per milestone dependency edge, sorted
 #   I  id  milestone  status  wave  priority  profile  parallel_safe  title  slug \

@@ -101,7 +101,7 @@ mj_cmd_plan() {
 # The roadmap is a projection over the milestone graph, in derived order. Nothing here is
 # authored: the sequence comes from the dependency ranks, the status from the issues and the
 # gate, and "now" and "next" from the first unblocked milestones in that sequence, and the
-# release each one shipped in from the tags (mj_pj_m_released_in), never from a typed field.
+# release each one shipped in from the release records (mj_pj_m_released_in), never typed.
 mj_plan_roadmap() {
   local id st ver ttl now="" nxt="" blk
   if [ "$MJ_JSON" = 1 ]; then
@@ -179,7 +179,7 @@ mj_plan_validate() {
       # a typed milestone version is the one unknown key with a known replacement
       case " $keys " in
         *" version "*) mj_pj_is_milestone "$rec" \
-          && keys="$keys (a milestone's release is inferred as released_in from the tags, never typed; ADR 0166)" ;;
+          && keys="$keys (a milestone's release is inferred as released_in from the release records, never typed; ADR 0166)" ;;
       esac
       mj_fail schema "$rec" "unknown keys: $keys" "majordomus plan validate"
     done

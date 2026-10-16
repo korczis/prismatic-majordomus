@@ -46,16 +46,23 @@ GitHub binding all key on the slug, so nothing breaks when the plan is reordered
 A typed `version:` is refused by `plan validate` as an unknown key (ADR 0166): it was typed
 by hand before the project had releases, and it disagreed with the releases it shipped in.
 
-The release that carried a milestone is a fact about the tags, read as `released_in` in
-`plan roadmap` (the `RELEASED` column, the `released_in` field of `--json`):
+The release that carried a milestone is a fact about the release records, read as
+`released_in` in `plan roadmap` (the `RELEASED` column, the `released_in` field of `--json`):
 
 - a milestone's **last accepted issue** is its DONE issue with the latest `completed_at`;
 - its merge is found through the commit that wrote that stamp, or failing that the latest
   merge whose message names the issue;
-- `released_in` is the first release tag, `vMAJOR.MINOR.PATCH` in version order, that
-  contains it. A pre-release or a named tag is not a release.
+- `released_in` is the first release record (`.ai/repo/releases/v*.yaml`, the tracked
+  statement of a `vMAJOR.MINOR.PATCH` tag), in version order, whose `commit:` contains it:
+  `git merge-base --is-ancestor <merge> <commit>`. A pre-release or a named tag is not a
+  release, and a tag without a record is not one either.
 
-A milestone that is not DONE, or that no release tag contains yet, reads `unreleased`. The
+Records and not tags, because derived data must not depend on refs outside the tree: the
+answer is a function of the commit, and it changes only when a record lands, in the record
+pull request that re-derives anyway. Releases before the first record (v0.3.1) have none, so
+a milestone finished before it reads v0.3.1, the earliest release this layer records.
+
+A milestone that is not DONE, or that no record's commit contains yet, reads `unreleased`. The
 shell engine (`mj_pj_m_released_in` in `lib/project.sh`) and the executable
 (`plan::released_in`) answer it command for command, and case 99 holds them equal.
 

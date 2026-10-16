@@ -6,7 +6,7 @@
     "version": "0.27.0"
   },
   "registry": {
-    "fingerprint": "9d1e97b6cbeb35c1d5599b535436d917d6fce1bb9f0976f3c0df573b6af1d327",
+    "fingerprint": "1ba46cad3ab4a70f1a48350fcb7039d444e2f6e381bfb560c245b31b139c2500",
     "summary": {
       "total": 2458,
       "builtin": 202,
@@ -57479,7 +57479,7 @@
                       "string",
                       "null"
                     ],
-                    "description": "The release that carried the milestone — the first release tag containing the merge\nof its last accepted issue, else `unreleased` — when the reader asked git for it\n(`released_in`); the roadmap always does. Never a typed field (ADR 0166)."
+                    "description": "The release that carried the milestone — the first release record whose commit\ncontains the merge of its last accepted issue, else `unreleased` — when the reader\nasked for it\n(`released_in`); the roadmap always does. Never a typed field (ADR 0166)."
                   },
                   "rank": {
                     "type": "integer",
@@ -58157,7 +58157,7 @@
                       "string",
                       "null"
                     ],
-                    "description": "The release that carried the milestone — the first release tag containing the merge\nof its last accepted issue, else `unreleased` — when the reader asked git for it\n(`released_in`); the roadmap always does. Never a typed field (ADR 0166)."
+                    "description": "The release that carried the milestone — the first release record whose commit\ncontains the merge of its last accepted issue, else `unreleased` — when the reader\nasked for it\n(`released_in`); the roadmap always does. Never a typed field (ADR 0166)."
                   },
                   "rank": {
                     "type": "integer",
@@ -58451,7 +58451,7 @@
                 "items": {
                   "$ref": "#/$defs/PlanMilestone"
                 },
-                "description": "The milestones ordered by rank, then order, then id, each with the release that\ncarried it (`released_in`). The sequence is derived from the milestone graph and the\nrelease from the tags; no list of versions is maintained anywhere."
+                "description": "The milestones ordered by rank, then order, then id, each with the release that\ncarried it (`released_in`). The sequence is derived from the milestone graph and the\nrelease from the release records; no list of versions is maintained anywhere."
               },
               "now": {
                 "type": [
@@ -58511,7 +58511,7 @@
                       "string",
                       "null"
                     ],
-                    "description": "The release that carried the milestone — the first release tag containing the merge\nof its last accepted issue, else `unreleased` — when the reader asked git for it\n(`released_in`); the roadmap always does. Never a typed field (ADR 0166)."
+                    "description": "The release that carried the milestone — the first release record whose commit\ncontains the merge of its last accepted issue, else `unreleased` — when the reader\nasked for it\n(`released_in`); the roadmap always does. Never a typed field (ADR 0166)."
                   },
                   "rank": {
                     "type": "integer",
@@ -83618,7 +83618,7 @@
     ]
   },
   "index": {
-    "fingerprint": "51e8a2a8957e8d664904ca81f090d293169b65ddbeed1b2d618ded7daeb5b03d",
+    "fingerprint": "31fe1e8fb685db553be6ca7f32c6fc981820e53978c21568a037436fba8fc02f",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -85494,7 +85494,7 @@
         "path": ".ai/repo/adrs/0166-the-plan-surfaces-are-inferred-from-delivery.md",
         "section": "adrs",
         "source_class": "adr",
-        "bytes": 8828,
+        "bytes": 9101,
         "tags": [
           "plan",
           "site",
@@ -89794,7 +89794,7 @@
         "title": "Planning — milestones, issues, and the graph between them",
         "path": "docs/PLANNING.md",
         "source_class": "document",
-        "bytes": 32235
+        "bytes": 32249
       },
       {
         "uri": "majordomus://document/docs/PLAN_STATUS.md",
@@ -89866,7 +89866,7 @@
         "title": "The roadmap — milestones as a graph",
         "path": "docs/ROADMAP.md",
         "source_class": "document",
-        "bytes": 5942
+        "bytes": 6492
       },
       {
         "uri": "majordomus://document/docs/RUSTDOC.md",
@@ -92943,7 +92943,7 @@
         "identity": "lib/doctor.sh",
         "path": "lib/doctor.sh",
         "source_class": "library",
-        "bytes": 94352
+        "bytes": 94366
       },
       {
         "uri": "majordomus://implementation/lib/doctrine.sh",
@@ -93071,7 +93071,7 @@
         "identity": "lib/plan.sh",
         "path": "lib/plan.sh",
         "source_class": "library",
-        "bytes": 28173
+        "bytes": 28182
       },
       {
         "uri": "majordomus://implementation/lib/plan_json.awk",
@@ -93087,7 +93087,7 @@
         "identity": "lib/project.awk",
         "path": "lib/project.awk",
         "source_class": "engine",
-        "bytes": 21512
+        "bytes": 21511
       },
       {
         "uri": "majordomus://implementation/lib/project.sh",
@@ -93095,7 +93095,7 @@
         "identity": "lib/project.sh",
         "path": "lib/project.sh",
         "source_class": "library",
-        "bytes": 17784
+        "bytes": 19083
       },
       {
         "uri": "majordomus://implementation/lib/prompt.sh",
@@ -97614,11 +97614,11 @@
         "kind": "issue",
         "identity": "I2742",
         "title": "A milestone's version is inferred from the release that carried it, never typed",
-        "description": "Remove version from the milestone schema and the eight records that carry it, refuse a record that carries one, and derive released_in for a milestone as the first v* tag containing the merge of its last accepted issue (unreleased while open), in both the awk and the Rust engines' output; rewrite the vendored roadmap-integrity rule and its validator to match.",
+        "description": "Remove version from the milestone schema and the eight records that carry it, refuse a record that carries one, and derive released_in for a milestone as the first release record (the tracked statement of a tag) whose commit contains the merge of its last accepted issue (unreleased while open), in both the awk and the Rust engines' output; rewrite the vendored roadmap-integrity rule and its validator to match.",
         "path": ".ai/repo/project/issues/I2742.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2995
+        "bytes": 3677
       },
       {
         "uri": "majordomus://issue/I2743",
@@ -99895,11 +99895,11 @@
         "kind": "rule",
         "identity": "majordomus.roadmap-integrity@1",
         "title": "The roadmap is a projection, never a document",
-        "description": "No document is a second authority for the roadmap, and no milestone types its own version. While a hand-written roadmap table exists, it can neither list a release no milestone was released in nor hide one that carried a milestone; a milestone's release (released_in) is inferred from the tags, never typed.",
+        "description": "No document is a second authority for the roadmap, and no milestone types its own version. While a hand-written roadmap table exists, it can neither list a release no milestone was released in nor hide one that carried a milestone; a milestone's release (released_in) is inferred from the release records, never typed.",
         "path": ".ai/repo/rules/vendor/majordomus/rules/roadmap-integrity.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 2575,
+        "bytes": 2947,
         "tags": [
           "plan",
           "roadmap"
@@ -104994,7 +104994,7 @@
         "identity": "test/cases/3102_a_milestone_version_is_inferred.sh",
         "path": "test/cases/3102_a_milestone_version_is_inferred.sh",
         "source_class": "case",
-        "bytes": 4988
+        "bytes": 5730
       },
       {
         "uri": "majordomus://test/test/cases/310_rustdoc_projection.sh",
@@ -105634,7 +105634,7 @@
         "identity": "test/cases/49_roadmap_doctrine.sh",
         "path": "test/cases/49_roadmap_doctrine.sh",
         "source_class": "case",
-        "bytes": 5458
+        "bytes": 6144
       },
       {
         "uri": "majordomus://test/test/cases/500_docs_index.sh",

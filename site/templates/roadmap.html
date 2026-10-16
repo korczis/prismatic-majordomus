@@ -15,7 +15,7 @@
 
 <ol class="mt-8 space-y-4">
   {#- every milestone of the plan in the graph's order; a typed version no longer filters any
-      out, and the release that carried one is inferred from the tags (released_in) -#}
+      out, and the release that carried one is inferred from the release records (released_in) -#}
   {%- for m in roadmap.milestones %}
   <li class="min-w-0 rounded-base border p-5 {% if m.status == 'DONE' %}border-success-subtle bg-success-soft{% elif m.status == 'ACTIVE' or m.status == 'VERIFY' %}border-brand-subtle bg-brand-softer{% else %}border-default bg-neutral-primary-soft{% endif %}">
     <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">

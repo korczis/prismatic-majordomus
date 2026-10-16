@@ -96,8 +96,8 @@ A milestone is never `DONE` because a count of closed issues reached its total. 
 is the milestone's own acceptance, and it is evidence-gated like every other step.
 
 A milestone has no version either. Which release carried it is inferred, never typed: its
-`released_in` is the first release tag containing the merge of its last accepted issue, and
-`unreleased` while it is open ([`ROADMAP.md`](@/docs/roadmap.md), ADR 0166). A record that carries
+`released_in` is the first release record whose commit contains the merge of its last
+accepted issue, and `unreleased` while it is open ([`ROADMAP.md`](@/docs/roadmap.md), ADR 0166). A record that carries
 `version` is refused.
 
 The **active milestone** is derived the same way: the lowest-ordered milestone that is

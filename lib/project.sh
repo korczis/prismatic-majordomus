@@ -162,24 +162,45 @@ mj_pj_m_deps()    { mj_pj_col M "$1" 11; }
 mj_pj_m_blocked() { mj_pj_col M "$1" 12; }
 mj_pj_m_claims()  { mj_pj_col M "$1" 14; }
 # The release that carried a milestone, inferred and never typed (ADR 0166): the first
-# release tag, vMAJOR.MINOR.PATCH in version order, that contains the merge of its last
-# accepted issue, and `unreleased` for a milestone that is not DONE or whose last issue no
-# tag contains yet. The merge is found through the commit that wrote the issue's completed_at
-# stamp (the oldest commit whose diff of the record adds or removes that stamp), and failing
-# that through the latest merge whose message names the issue. Any tag containing either
-# contains the merge that brought it to the trunk. The executable answers the same question
-# the same way: `released_in` in apps/majordomus-cli/src/plan.rs.
+# release record (.ai/repo/releases/v*.yaml, the tracked statement of a tag), in version
+# order, whose `commit:` contains the merge of the milestone's last accepted issue, and
+# `unreleased` for a milestone that is not DONE or that no record's commit contains yet.
+# Records, not tags: derived data must not depend on refs outside the tree, so the answer is
+# a function of the commit and changes only when a record lands. Releases before the first
+# record (v0.3.1 here) have none, so work finished before it reads as that release, the
+# earliest one this layer records. The merge is found through the commit that wrote the
+# issue's completed_at stamp (the oldest commit whose diff of the record adds or removes that
+# stamp), and failing that through the latest merge whose message names the issue; a release
+# commit containing either contains the merge that brought it to the trunk. The executable
+# answers the same question the same way: `released_in` in apps/majordomus-cli/src/plan.rs.
 mj_pj_m_released_in() {
-  local last stamp sha="" tag=""
+  local last stamp sha="" tag commit
   last="$(mj_pj_m_last "$1")"
   [ -n "$last" ] || { printf 'unreleased'; return 0; }
   stamp="$(sed -n 's/^completed_at=//p' "$MJ_PJ/flat/$last" 2>/dev/null | head -n 1)"
   [ -n "$stamp" ] && sha="$(mj_git log --format=%H -S"$stamp" -- "$MJ_PROJECT_DIR/issues/$last.yaml" 2>/dev/null | tail -n 1)"
   [ -n "$sha" ] || sha="$(mj_git log --merges -1 --format=%H -E \
     --grep="(^|[^A-Za-z0-9])$last([^A-Za-z0-9]|\$)" 2>/dev/null || :)"
-  [ -n "$sha" ] && tag="$(mj_git tag --list 'v*' --contains "$sha" --sort=v:refname 2>/dev/null \
-    | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1)"
-  printf '%s' "${tag:-unreleased}"
+  [ -n "$sha" ] || { printf 'unreleased'; return 0; }
+  [ -f "$MJ_PJ/releases.tsv" ] || mj_pj_release_records > "$MJ_PJ/releases.tsv"
+  while IFS="$MJ_TAB" read -r tag commit; do
+    if mj_git merge-base --is-ancestor "$sha" "$commit" 2>/dev/null; then printf '%s' "$tag"; return 0; fi
+  done < "$MJ_PJ/releases.tsv"
+  printf 'unreleased'
+}
+# The release records, "<tag><TAB><commit>" in ascending version order: every
+# .ai/repo/releases/*.yaml whose top-level tag is vMAJOR.MINOR.PATCH and which names a commit.
+mj_pj_release_records() {
+  local f
+  set --
+  for f in "$MJ_ROOT/.ai/repo/releases/"*.yaml; do [ -f "$f" ] && set -- "$@" "$f"; done
+  [ $# -gt 0 ] || return 0
+  awk 'function val(x) { sub(/^[a-z_]+:[ \t]*/, "", x); sub(/[ \t]+$/, "", x); gsub(/"/, "", x); return x }
+    FNR == 1 { if (t != "" && c != "") print t "\t" c; t = ""; c = "" }
+    /^tag:/ { t = val($0) } /^commit:/ { c = val($0) }
+    END { if (t != "" && c != "") print t "\t" c }' "$@" \
+    | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+'"$MJ_TAB" \
+    | sed 's/^v//' | LC_ALL=C sort -t. -k1,1n -k2,2n -k3,3n | sed 's/^/v/' || :
 }
 # One count out of a milestone's counts field, by name: total, required, or any status the
 # vocabulary declares. Nothing outside project.awk decides which counts exist.

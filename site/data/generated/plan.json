@@ -26115,10 +26115,10 @@
         "test/cases/3102_a_milestone_version_is_inferred.sh"
       ],
       "non_scope": [],
-      "objective": "Remove version from the milestone schema and the eight records that carry it, refuse a record that carries one, and derive released_in for a milestone as the first v* tag containing the merge of its last accepted issue (unreleased while open), in both the awk and the Rust engines' output; rewrite the vendored roadmap-integrity rule and its validator to match.",
+      "objective": "Remove version from the milestone schema and the eight records that carry it, refuse a record that carries one, and derive released_in for a milestone as the first release record (the tracked statement of a tag) whose commit contains the merge of its last accepted issue (unreleased while open), in both the awk and the Rust engines' output; rewrite the vendored roadmap-integrity rule and its validator to match.",
       "why": "ADR 0166 decision 3. version is typed by hand: 0.1 to 1.0 on eight milestones written before releases existed, two of them 0.5, out of rank order, beside a product at v0.27.0.",
       "current_state": "lib/project.awk:359 and plan.rs:289 emit the raw field; site/templates/roadmap.html filters on it; lib/doctor.sh mj_validate_roadmap checks a README table against it.",
-      "desired_state": "No version field anywhere in .ai/repo/project/milestones; plan.roadmap and roadmap.json carry released_in with its tag; the README roadmap table and its validator use released_in.",
+      "desired_state": "No version field anywhere in .ai/repo/project/milestones; plan.roadmap and roadmap.json carry released_in with its release record; the README roadmap table and its validator use released_in.",
       "acceptance_criteria": [
         "plan validate refuses a milestone record carrying version",
         "A milestone whose last issue's merge is contained in v0.27.0 reads released_in v0.27.0; an open one reads unreleased",
@@ -26140,6 +26140,15 @@
           "artifact": "",
           "commit": "f8fe913323851de2997b6f7159c9051fe7da337e",
           "recorded_at": "2026-10-16T10:37:15Z"
+        },
+        {
+          "covers": "version_inferred_case",
+          "type": "test",
+          "command": "bash test/run.sh 3102_a_milestone_version_is_inferred 49_roadmap_doctrine 99_plan_capabilities 48_roadmap_graph 47_mutation",
+          "result": "ok 3102, 49, 99, 48, 47 with released_in read from release records: a typed version is refused; v0.26.0 record -> unreleased on reopen -> v0.27.0 record (rc record and a bare tag ignored, a later record does not move it); open milestone unreleased; shell and executable agree (this repo M000/M001 v0.3.1, the earliest record)",
+          "artifact": "",
+          "commit": "8642d74374bb89aa4c49c88f724a3412723f7106",
+          "recorded_at": "2026-10-16T11:52:23Z"
         }
       ],
       "risk": "",

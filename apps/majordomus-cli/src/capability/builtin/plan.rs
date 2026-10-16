@@ -262,7 +262,7 @@ pub struct PlanNextIssue {
 pub struct PlanRoadmap {
     /// The milestones ordered by rank, then order, then id, each with the release that
     /// carried it (`released_in`). The sequence is derived from the milestone graph and the
-    /// release from the tags; no list of versions is maintained anywhere.
+    /// release from the release records; no list of versions is maintained anywhere.
     pub milestones: Vec<PlanMilestone>,
     #[serde(skip_serializing_if = "Option::is_none")]
     /// The first unfinished, unblocked milestone in that sequence.
@@ -442,7 +442,7 @@ fn plan_next(ctx: &Context, input: PlanMilestoneFilter) -> Result<PlanNextIssue,
 
 fn plan_roadmap(ctx: &Context, _: Empty) -> Result<PlanRoadmap, CapabilityError> {
     let plan = plan_of(ctx)?;
-    // the release each milestone shipped in, from the tags: only a DONE one asks git
+    // the release each milestone shipped in, from the release records: only a DONE one asks git
     let ordered: Vec<PlanMilestone> = plan
         .roadmap()
         .into_iter()

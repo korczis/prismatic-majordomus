@@ -2,9 +2,9 @@
 #
 # A doctrine that only passes is not evidence of anything, so this case moves the exit code
 # in both directions: a document that invents a release, and a document that hides one. The
-# releases are not typed anywhere: a milestone's release is the first release tag containing
-# the merge of its last accepted issue (released_in, ADR 0166), so the fixture accepts real
-# work, commits it and tags it. The last cases are the ones that matter longest — with no
+# releases are not typed anywhere: a milestone's release is the first release record
+# (.ai/repo/releases/v*.yaml) whose commit contains the merge of its last accepted issue
+# (released_in, ADR 0166), so the fixture accepts real work, commits it and records it. The last cases are the ones that matter longest — with no
 # roadmap section at all, the check holds trivially, because the doctrine exists to refuse
 # the regression rather than to require the table.
 . "$ROOT/test/lib.sh"
@@ -42,6 +42,13 @@ accept() { # ISSUE MILESTONE — the issue accepted with its evidence, the miles
     >> ".ai/repo/project/milestones/$2.yaml"
   git add -A >/dev/null && git commit -qm "feat: accept $1 ($2)"
 }
+record() { # TAG — the release record of HEAD, as scripts/release-record writes one
+  local c; c="$(git rev-parse HEAD)"; mkdir -p .ai/repo/releases
+  # the directory's own context document, as the repository carries it
+  [ -f .ai/repo/releases/README.md ] || cp "$ROOT/.ai/repo/releases/README.md" .ai/repo/releases/README.md
+  printf 'schema: release/v1\nversion: "%s"\ntag: %s\nchannel: stable\ncommit: %s\npublished_at: "2026-10-16T07:01:16Z"\nartifacts: []\n' \
+    "${1#v}" "$1" "$c" > ".ai/repo/releases/$1.yaml"
+}
 readme() { # write a README with the given release rows
   { printf '# Fixture\n\n## Roadmap\n\n| release | adds |\n|---|---|\n'
     for v in "$@"; do printf '| %s | something |\n' "$v"; done
@@ -53,12 +60,12 @@ rm_milestone alpha 10
 rm_milestone beta  20 alpha
 rm_milestone gamma 30 beta
 expect_exit 0 "$MJ" plan validate
-accept A1 alpha; git tag v0.1.0
-accept B1 beta;  git tag v0.2.0
-accept G1 gamma  # accepted, merged, not yet tagged: unreleased
+accept A1 alpha; record v0.1.0
+accept B1 beta;  record v0.2.0
+accept G1 gamma  # accepted and committed with both records, but none of them carries it: unreleased
 [ "$("$MJ" plan roadmap --json | jq -r '[.milestones[] | "\(.id)=\(.released_in)"] | join(" ")')" \
   = "alpha=v0.1.0 beta=v0.2.0 gamma=unreleased" ] \
-  || { echo "    the releases are not inferred from the tags:"; "$MJ" plan roadmap | sed 's/^/    | /'; exit 1; }
+  || { echo "    the releases are not inferred from the records:"; "$MJ" plan roadmap | sed 's/^/    | /'; exit 1; }
 
 # A fresh checkout has neither declared enforcement hook, and their absence is a real doctor
 # failure that would mask the ones this case is about. Written after the history above, so
@@ -85,20 +92,22 @@ expect_grep 'lists release\(s\) no milestone was released in: v2.0.0'
 # and watch reports the same thing as drift rather than passing it
 expect_exit 11 "$MJ" watch
 
-# --- a document that hides a release the tags show
+# --- a document that hides a release the records show
 readme v0.1.0
 expect_exit 10 "$MJ" doctor
-expect_grep 'omits release\(s\) the tags show a milestone was released in: v0.2.0'
+expect_grep 'omits release\(s\) the records show a milestone was released in: v0.2.0'
 
-# --- a tag makes a previously honest table dishonest, with the table and the records
-#     untouched; a pre-release tag is not a release and does not
+# --- a release record makes a previously honest table dishonest, with the table and the
+#     plan untouched; a pre-release record is not a release, and a bare tag is not a record
 readme v0.1.0 v0.2.0
 expect_exit 0 "$MJ" doctor
-git tag v0.3.0-rc.1
+record v0.3.0-rc.1
 expect_exit 0 "$MJ" doctor
 git tag v0.3.0
+expect_exit 0 "$MJ" doctor
+record v0.3.0
 expect_exit 10 "$MJ" doctor
-expect_grep 'omits release\(s\) the tags show a milestone was released in: v0.3.0'
+expect_grep 'omits release\(s\) the records show a milestone was released in: v0.3.0'
 
 # --- a roadmap section that lists no releases is prose pointing at the projection, not a
 #     second authority. This is the intended end state once the table is replaced by a link.

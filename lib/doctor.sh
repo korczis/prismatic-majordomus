@@ -1210,7 +1210,7 @@ mj_validate_project() {
 # blocked, and only a graph that cannot be executed is a failure.
 # The roadmap is a projection of milestone state, so no document may be a second authority
 # for it. While a hand-written roadmap table survives anywhere, every release it lists has to
-# be one a milestone was released in — inferred from the tags (released_in), never typed —
+# be one a milestone was released in — inferred from the release records (released_in), never typed —
 # and every such release has to appear in it: a table that can neither invent a release nor
 # hide one. When the table is gone the check holds trivially, which is the point: this
 # refuses the regression, it does not require the table.
@@ -1243,7 +1243,7 @@ mj_validate_roadmap() {
     return 0
   fi
   if [ -n "$missing" ]; then
-    mj_doctrine_fail roadmap "README.md" "omits release(s) the tags show a milestone was released in: $missing" "majordomus plan roadmap"
+    mj_doctrine_fail roadmap "README.md" "omits release(s) the records show a milestone was released in: $missing" "majordomus plan roadmap"
     return 0
   fi
   mj_doctrine_ok roadmap "README.md" "every release it lists carried a milestone, and no release that did is hidden from it"

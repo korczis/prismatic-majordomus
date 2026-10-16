@@ -417,8 +417,9 @@ pub struct PlanMilestone {
     /// that is DONE with no issue. Which release carried it is [`released_in`]'s to answer.
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub last_accepted: String,
-    /// The release that carried the milestone — the first release tag containing the merge
-    /// of its last accepted issue, else `unreleased` — when the reader asked git for it
+    /// The release that carried the milestone — the first release record whose commit
+    /// contains the merge of its last accepted issue, else `unreleased` — when the reader
+    /// asked for it
     /// ([`released_in`]); the roadmap always does. Never a typed field (ADR 0166).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub released_in: Option<String>,
@@ -1304,20 +1305,25 @@ fn derive(mut header: PlanProject, mraw: Vec<PlanMilestoneRaw>, iraw: Vec<PlanIs
     }
 }
 
-/// `order` as a number: the awk compares it with `+ 0`, which makes anything unparseable
-/// zero. A milestone with no `order` is not an error, it is order zero.
 /// What [`released_in`] answers for a milestone no release carried, or not yet.
 pub const UNRELEASED: &str = "unreleased";
 
-/// The release that carried a milestone: the first release tag, `vMAJOR.MINOR.PATCH` in
-/// version order, containing the merge of its last accepted issue, and [`UNRELEASED`] for
-/// a milestone that is not DONE, has no issue, or whose last issue no tag contains yet.
+/// The release that carried a milestone: the first release record
+/// (`.ai/repo/releases/v*.yaml`, the tracked statement of a tag), in version order, whose
+/// `commit:` contains the merge of its last accepted issue, and [`UNRELEASED`] for a
+/// milestone that is not DONE, has no issue, or that no record's commit contains yet.
+///
+/// Records and not tags, because derived data must not depend on refs outside the tree: the
+/// answer is a function of the commit, and it changes only when a record lands. Releases
+/// before the first record have none, so work finished before it reads as the earliest
+/// release this layer records.
 ///
 /// The merge is found through the commit that wrote the issue's `completed_at` stamp — the
 /// oldest commit whose diff of the record adds or removes that text — and failing that
-/// through the latest merge whose message names the issue. A tag containing either contains
-/// the merge that brought it to the trunk. This is `mj_pj_m_released_in` in `lib/project.sh`,
-/// command for command, so the two engines agree (`test/cases/99_plan_capabilities.sh`).
+/// through the latest merge whose message names the issue. A release commit containing
+/// either contains the merge that brought it to the trunk. This is `mj_pj_m_released_in` in
+/// `lib/project.sh`, command for command, so the two engines agree
+/// (`test/cases/99_plan_capabilities.sh`).
 ///
 /// ```no_run
 /// # use majordomus_cli::index::Index;
@@ -1339,19 +1345,20 @@ pub fn released_in(index: &Index, plan: &Plan, milestone: &str) -> String {
     else {
         return UNRELEASED.to_string();
     };
-    let git = |args: &[&str]| -> Vec<String> {
+    let git = |args: &[&str]| -> Option<std::process::Output> {
         crate::git::read_only(root)
             .args(args)
             .output()
             .ok()
             .filter(|o| o.status.success())
-            .map(|o| {
-                String::from_utf8_lossy(&o.stdout)
-                    .lines()
-                    .map(str::to_string)
-                    .collect()
-            })
-            .unwrap_or_default()
+    };
+    let last_line = |args: &[&str]| -> Option<String> {
+        git(args).and_then(|o| {
+            String::from_utf8_lossy(&o.stdout)
+                .lines()
+                .last()
+                .map(str::to_string)
+        })
     };
     let stamp = plan
         .issue(last)
@@ -1362,43 +1369,64 @@ pub fn released_in(index: &Index, plan: &Plan, milestone: &str) -> String {
         .iter()
         .find(|o| o.kind == ISSUE && o.identity == last)
         .map(|o| o.provenance.path.as_str());
-    let mut sha = path
-        .and_then(|path| git(&["log", "--format=%H", &format!("-S{stamp}"), "--", path]).pop())
-        .unwrap_or_default();
-    if sha.is_empty() {
-        let grep = format!("--grep=(^|[^A-Za-z0-9]){last}([^A-Za-z0-9]|$)");
-        sha = git(&["log", "--merges", "-1", "--format=%H", "-E", &grep])
-            .pop()
-            .unwrap_or_default();
-    }
-    if sha.is_empty() {
+    let grep = format!("--grep=(^|[^A-Za-z0-9]){last}([^A-Za-z0-9]|$)");
+    let Some(sha) = path
+        .and_then(|path| last_line(&["log", "--format=%H", &format!("-S{stamp}"), "--", path]))
+        .or_else(|| last_line(&["log", "--merges", "-1", "--format=%H", "-E", &grep]))
+    else {
         return UNRELEASED.to_string();
-    }
-    git(&[
-        "tag",
-        "--list",
-        "v*",
-        "--contains",
-        &sha,
-        "--sort=v:refname",
-    ])
-    .into_iter()
-    .find(|t| is_release_tag(t))
-    .unwrap_or_else(|| UNRELEASED.to_string())
-}
-
-/// `vMAJOR.MINOR.PATCH` and nothing else: a pre-release or a named tag is not a release.
-fn is_release_tag(tag: &str) -> bool {
-    let Some(rest) = tag.strip_prefix('v') else {
-        return false;
     };
-    let parts: Vec<&str> = rest.split('.').collect();
-    parts.len() == 3
-        && parts
-            .iter()
-            .all(|p| !p.is_empty() && p.bytes().all(|b| b.is_ascii_digit()))
+    release_records(root)
+        .into_iter()
+        .find(|(_, commit)| git(&["merge-base", "--is-ancestor", &sha, commit]).is_some())
+        .map_or_else(|| UNRELEASED.to_string(), |(tag, _)| tag)
 }
 
+/// The release records under `<root>/.ai/repo/releases/`, `(tag, commit)` in ascending
+/// version order: every record whose top-level `tag:` is a release tag and that names a
+/// `commit:`. Read line by line, the way `mj_pj_release_records` reads them.
+fn release_records(root: &std::path::Path) -> Vec<(String, String)> {
+    let dir = root.join(crate::distribution::release::DIR);
+    let mut out: Vec<((u64, u64, u64), String, String)> = std::fs::read_dir(dir)
+        .into_iter()
+        .flatten()
+        .flatten()
+        .map(|e| e.path())
+        .filter(|p| p.extension().is_some_and(|x| x == "yaml"))
+        .filter_map(|p| {
+            let text = std::fs::read_to_string(p).ok()?;
+            let top = |key: &str| {
+                text.lines()
+                    .find_map(|l| l.strip_prefix(key))
+                    .map(|v| v.trim().replace('"', ""))
+            };
+            let tag = top("tag:")?;
+            let commit = top("commit:").filter(|c| !c.is_empty())?;
+            Some((release_key(&tag)?, tag, commit))
+        })
+        .collect();
+    out.sort();
+    out.into_iter()
+        .map(|(_, tag, commit)| (tag, commit))
+        .collect()
+}
+
+/// `vMAJOR.MINOR.PATCH` as numbers, and nothing else: a pre-release or a named tag is not a
+/// release.
+fn release_key(tag: &str) -> Option<(u64, u64, u64)> {
+    let mut parts = tag.strip_prefix('v')?.split('.');
+    let mut num = || -> Option<u64> {
+        let p = parts
+            .next()
+            .filter(|p| !p.is_empty() && p.bytes().all(|b| b.is_ascii_digit()))?;
+        p.parse().ok()
+    };
+    let key = (num()?, num()?, num()?);
+    parts.next().is_none().then_some(key)
+}
+
+/// `order` as a number: the awk compares it with `+ 0`, which makes anything unparseable
+/// zero. A milestone with no `order` is not an error, it is order zero.
 fn order_of(raw: &str) -> i64 {
     raw.trim().parse::<i64>().unwrap_or(0)
 }
@@ -2447,12 +2475,34 @@ mod seal_tests {
         })
     }
 
-    /// A milestone's release is the first release tag containing its last accepted issue's
-    /// stamp commit, or failing that the merge naming the issue; a pre-release tag is not a
-    /// release, an open milestone and one no tag contains are `unreleased`. The same history
+    /// A release record (`tag`, `commit`) as the tool writes one, enough for the reader.
+    fn record(root: &std::path::Path, tag: &str, commit: &str) {
+        let dir = root.join(crate::distribution::release::DIR);
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::write(
+            dir.join(format!("{tag}.yaml")),
+            format!("schema: release/v1\nversion: \"{}\"\ntag: {tag}\nchannel: stable\ncommit: {commit}\n", &tag[1..]),
+        )
+        .unwrap();
+    }
+
+    fn head(root: &std::path::Path) -> String {
+        let out = std::process::Command::new("git")
+            .arg("-C")
+            .arg(root)
+            .args(["rev-parse", "HEAD"])
+            .output()
+            .unwrap();
+        String::from_utf8_lossy(&out.stdout).trim().to_string()
+    }
+
+    /// A milestone's release is the first release record whose commit contains its last
+    /// accepted issue's stamp commit, or failing that the merge naming the issue; a
+    /// pre-release record and a record without a commit are not releases; an open milestone
+    /// and one no record contains are `unreleased`. The same history
     /// `test/cases/3102_a_milestone_version_is_inferred.sh` builds for both engines.
     #[test]
-    fn a_milestone_is_released_in_the_first_tag_carrying_its_last_issue() {
+    fn a_milestone_is_released_in_the_first_record_carrying_its_last_issue() {
         let dir = tempfile::tempdir().unwrap();
         let root = dir.path();
         git_in(root, &["init", "-q", "-b", "master"]);
@@ -2521,7 +2571,7 @@ mod seal_tests {
         assert_eq!(plan.milestone("shipped").unwrap().last_accepted, "I0002");
         assert_eq!(plan.milestone("open").unwrap().last_accepted, "");
 
-        // I0001 is committed and tagged v0.1.0; I0002, the last accepted, only later
+        // I0001 is committed and recorded as v0.1.0; I0002, the last accepted, only later
         let issues = root.join(".ai/repo/project/issues");
         std::fs::create_dir_all(&issues).unwrap();
         let write = |id: &str, at: &str| {
@@ -2534,12 +2584,12 @@ mod seal_tests {
         write("I0001", "2026-10-01T00:00:00Z");
         git_in(root, &["add", "-A"]);
         git_in(root, &["commit", "-qm", "I0001"]);
-        git_in(root, &["tag", "v0.1.0"]);
+        record(root, "v0.1.0", &head(root));
         write("I0002", "2026-10-02T00:00:00Z");
         git_in(root, &["add", "-A"]);
         git_in(root, &["commit", "-qm", "I0002"]);
         assert_eq!(released_in(&ix, &plan, "shipped"), UNRELEASED);
-        git_in(root, &["tag", "v0.2.0-rc.1"]);
+        record(root, "v0.2.0-rc.1", &head(root));
         assert_eq!(
             released_in(&ix, &plan, "shipped"),
             UNRELEASED,
@@ -2553,8 +2603,11 @@ mod seal_tests {
             root,
             &["merge", "-q", "--no-ff", "-m", "Merge work (I0003)", "work"],
         );
-        git_in(root, &["tag", "v0.2.0"]);
-        git_in(root, &["tag", "v0.3.0"]);
+        let merged = head(root);
+        // the records are read in version order, not in file-name order
+        record(root, "v0.10.0", &merged);
+        record(root, "v0.2.0", &merged);
+        std::fs::write(root.join(".ai/repo/releases/v0.3.0.yaml"), "tag: v0.3.0\n").unwrap();
         assert_eq!(released_in(&ix, &plan, "shipped"), "v0.2.0");
         assert_eq!(released_in(&ix, &plan, "merged"), "v0.2.0");
         // neither a stamp commit nor a merge names I0004; I0005 is open; nothing is unknown
@@ -2565,12 +2618,13 @@ mod seal_tests {
 
     #[test]
     fn only_a_plain_version_tag_is_a_release() {
-        assert!(is_release_tag("v0.27.0"));
-        assert!(is_release_tag("v10.0.1"));
-        assert!(!is_release_tag("0.27.0"));
-        assert!(!is_release_tag("v0.27"));
-        assert!(!is_release_tag("v0.27.0-rc.1"));
-        assert!(!is_release_tag("v0.2.0-ai-documents"));
-        assert!(!is_release_tag("v0..1"));
+        assert_eq!(release_key("v0.27.0"), Some((0, 27, 0)));
+        assert_eq!(release_key("v10.0.1"), Some((10, 0, 1)));
+        assert_eq!(release_key("0.27.0"), None);
+        assert_eq!(release_key("v0.27"), None);
+        assert_eq!(release_key("v0.27.0.1"), None);
+        assert_eq!(release_key("v0.27.0-rc.1"), None);
+        assert_eq!(release_key("v0.2.0-ai-documents"), None);
+        assert_eq!(release_key("v0..1"), None);
     }
 }
