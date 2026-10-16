@@ -1,7 +1,7 @@
 +++
 title = "Every exported Rust item explains itself, shows itself running, and is exercised by something"
 description = "Every exported Rust item explains itself, shows itself running, and is exercised by something"
-weight = 152
+weight = 153
 [extra]
 kind = "rule"
 slug = "project-rust-public-api-quality-1"

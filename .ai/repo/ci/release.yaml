@@ -43,12 +43,12 @@ phases:
 
   - id: build
     job: build
-    runs: scripts/release-package --target "$TARGET" --tag "$TAG" --out dist
-    summary: one archive per supported target, built on the runner the model names
+    runs: scripts/release-package --target "$TARGET" --tag "$TAG" --out dist --names-from docs/generated/distribution-matrix.json
+    summary: one archive per supported target, built on the runner the model names, named from the matrix the plan phase held to the model, so no runner builds a debug executable only to ask for two names
 
   - id: verify
     job: build
-    runs: scripts/release-verify --archive "dist/$ARTIFACT" --target "$TARGET" --tag "$TAG"
+    runs: scripts/release-verify --archive "dist/$ARTIFACT" --target "$TARGET" --tag "$TAG" --names-from docs/generated/distribution-matrix.json
     summary: the archive is what the model says it is; where the runner can execute it, the unpacked tool reports the release's own version
 
   - id: publish

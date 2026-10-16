@@ -1190,6 +1190,23 @@
       "tool": "majordomus_execution_protocol"
     },
     {
+      "api_anchor": "/docs/api/executions/#op-executions-report",
+      "claims": [],
+      "cli": null,
+      "id": "executions.report",
+      "kind": "command",
+      "module": "executions",
+      "module_route": "/registry/modules/executions/",
+      "resource": null,
+      "route": "/registry/capabilities/executions-report/",
+      "slug": "executions-report",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/executions.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/executions.rs",
+      "tests": [],
+      "title": "Report an execution another process runs",
+      "tool": null
+    },
+    {
       "api_anchor": "/docs/api/executions/#op-executions-start",
       "claims": [],
       "cli": "majordomus run",
@@ -1273,6 +1290,23 @@
       "tests": [],
       "title": "List graphs",
       "tool": "majordomus_graphs"
+    },
+    {
+      "api_anchor": "/docs/api/guard/#op-guard-edit",
+      "claims": [],
+      "cli": null,
+      "id": "guard.edit",
+      "kind": "query",
+      "module": "guard",
+      "module_route": "/registry/modules/guard/",
+      "resource": null,
+      "route": "/registry/capabilities/guard-edit/",
+      "slug": "guard-edit",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/guard.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/guard.rs",
+      "tests": [],
+      "title": "Judge one edit",
+      "tool": "majordomus_guard_edit"
     },
     {
       "api_anchor": "/docs/api/health/#op-health-live",
@@ -3552,6 +3586,23 @@
       "tests": [],
       "title": "The whole topology",
       "tool": "majordomus_worktrees"
+    },
+    {
+      "api_anchor": "/docs/api/worktree/#op-worktree-uncommitted",
+      "claims": [],
+      "cli": "majordomus worktree uncommitted",
+      "id": "worktree.uncommitted",
+      "kind": "query",
+      "module": "worktree",
+      "module_route": "/registry/modules/worktree/",
+      "resource": null,
+      "route": "/registry/capabilities/worktree-uncommitted/",
+      "slug": "worktree-uncommitted",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/worktree.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/worktree.rs",
+      "tests": [],
+      "title": "Uncommitted work in the linked worktrees, and what holds it",
+      "tool": "majordomus_worktree_uncommitted"
     }
   ],
   "claims": {
@@ -4190,11 +4241,11 @@
     ]
   },
   "counts": {
-    "capabilities": 199,
+    "capabilities": 202,
     "claims": 93,
-    "modules": 57
+    "modules": 58
   },
-  "generator": "majordomus-cli 0.26.0",
+  "generator": "majordomus-cli 0.27.0",
   "modules": [
     {
       "capabilities": [
@@ -4773,6 +4824,11 @@
           "slug": "executions-protocol"
         },
         {
+          "id": "executions.report",
+          "route": "/registry/capabilities/executions-report/",
+          "slug": "executions-report"
+        },
+        {
           "id": "executions.start",
           "route": "/registry/capabilities/executions-start/",
           "slug": "executions-start"
@@ -4827,6 +4883,22 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/graph.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/graph.rs",
       "title": "Graphs"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "guard.edit",
+          "route": "/registry/capabilities/guard-edit/",
+          "slug": "guard-edit"
+        }
+      ],
+      "claims": [],
+      "id": "guard",
+      "route": "/registry/modules/guard/",
+      "slug": "guard",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/guard.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/guard.rs",
+      "title": "Edit guard"
     },
     {
       "capabilities": [
@@ -5840,6 +5912,11 @@
           "id": "worktree.topology",
           "route": "/registry/capabilities/worktree-topology/",
           "slug": "worktree-topology"
+        },
+        {
+          "id": "worktree.uncommitted",
+          "route": "/registry/capabilities/worktree-uncommitted/",
+          "slug": "worktree-uncommitted"
         }
       ],
       "claims": [],

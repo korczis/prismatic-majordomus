@@ -738,7 +738,7 @@ mod tests {
 
         // where a runtime is active the figure is the count of the machines it knows
         let mut active = ask(&ctx, MESH);
-        active.value = Ok(serde_json::json!({ "active": true, "machines": [{}, {}] }));
+        active.value = Ok(serde_json::json!({ "active": true, "machines": [{}, {}] }).into());
         let figure = mesh_kpi(&active).render();
         assert!(figure.contains("Mesh machines"), "{figure}");
         assert!(figure.contains(">2<"), "{figure}");
@@ -759,7 +759,7 @@ mod tests {
                     "gates": [{ "gate": "base", "passed": true }, { "gate": "ci", "passed": false }],
                     "reasons": ["behind_master:2"], "next_action": "bring master in"
                 }]}
-            })),
+            }).into()),
             took: std::time::Duration::ZERO,
             standing: crate::ui::source::Standing::NOW,
         };
@@ -800,7 +800,7 @@ mod tests {
         assert!(health_panel(&failed).render().contains("could not answer"));
         let unobserved = Answer {
             source: QUEUE,
-            value: Ok(serde_json::json!({ "observed": false, "reason": "never refreshed" })),
+            value: Ok(serde_json::json!({ "observed": false, "reason": "never refreshed" }).into()),
             ..failed.clone()
         };
         assert!(queue_panel(&unobserved, None)
@@ -814,7 +814,7 @@ mod tests {
             source,
             route: None,
             exposure: Exposure::default(),
-            value: Ok(value),
+            value: Ok(value.into()),
             took: std::time::Duration::ZERO,
             standing: crate::ui::source::Standing::NOW,
         }

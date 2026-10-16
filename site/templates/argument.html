@@ -98,7 +98,7 @@
     {{ <section_head number="03" kicker={x.pipeline.kicker} title={x.pipeline.title} lead={x.pipeline.lead} /> }}
     <div class="grid gap-6 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)] lg:gap-10">
       <figure class="m-0 min-w-0 self-start rounded-base border border-default bg-neutral-primary-soft">
-        <div class="overflow-x-auto p-4" tabindex="0"><pre class="mermaid m-0 min-w-[14rem] bg-transparent font-mono text-xs text-heading [&_svg]:mx-auto [&_svg]:block">flowchart TD
+        <div class="overflow-x-auto p-4" tabindex="0"><pre class="mermaid m-0 min-w-[14rem] bg-transparent font-mono text-xs text-heading [&_svg]:mx-auto [&_svg]:block" data-diagram="pipeline">flowchart TD
 {%- for s in x.pipeline.stages %}
     {{ s.id }}["{{ s.name | upper }}"]
 {%- endfor %}
