@@ -206,6 +206,19 @@ pub enum ReplyRefused {
 
 impl ReplyRefused {
     /// The refusal an error of [`request_json_within`] carries, when that was its cause.
+    ///
+    /// ```
+    /// use majordomus_cli::mcp::bridge::ReplyRefused;
+    ///
+    /// let late = std::io::Error::new(
+    ///     std::io::ErrorKind::TimedOut,
+    ///     ReplyRefused::Late { millis: 250 },
+    /// );
+    /// assert_eq!(ReplyRefused::of(&late), Some(&ReplyRefused::Late { millis: 250 }));
+    /// // a timeout of another cause carries no refusal
+    /// let other = std::io::Error::from(std::io::ErrorKind::TimedOut);
+    /// assert_eq!(ReplyRefused::of(&other), None);
+    /// ```
     pub fn of(error: &std::io::Error) -> Option<&ReplyRefused> {
         error
             .get_ref()
