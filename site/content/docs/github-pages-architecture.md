@@ -45,7 +45,7 @@ being maintained separately from the repository that backs it.
 | derived content | canonical Markdown with generated front matter; one page per profile, claim, status, responsibility, command, doctrine, use case, application, milestone, issue, case study, skill, module and capability | `site/content/{docs,profiles,guarantees,supervises,commands,doctrines,use-cases,applications,plan,why,registry,skills}/`, `render-test.md`, `architecture.md` | never |
 | derived routes and links for the executable | one route per module and per capability, the executable's pages, the API anchor, the source on GitHub, the claims attached to each surface | `site/data/generated/executable.json` | never |
 | the native command line, as the site renders it | the command tree flattened, each command with its route, usage, arguments, children and executed examples | `site/data/generated/cli.json` (from `docs/generated/cli.json`, via `scripts/lib/cli-site.jq`) | never |
-| build provenance | the commit and its cleanliness, the site's input hash, the registry and index fingerprints, and each composed surface with the commit its producer declared | `site/data/build.json`, served as `/build.json` | never — `scripts/site-build`, not committed |
+| build provenance | the commit, its time and its cleanliness, the site's input hash, the registry and index fingerprints, and each composed surface with the commit its producer declared | `site/data/build.json`, served as `/build.json` | never — `scripts/site-build`, not committed |
 | the crate's reference | the rustdoc pages of `apps/majordomus-cli`, composed at `/rustdoc` ([`RUSTDOC.md`](@/docs/rustdoc.md)) | `target/web/rustdoc/`, with the `surface.json` that declares what it was built from | never — `scripts/rust-check --doc`, not committed |
 | presentation | Zola templates and Tera 2 components | `site/templates/**` | yes |
 | styling entry | Tailwind v4 + Flowbite v4 directives | `site/tailwind.css` | yes |
@@ -760,9 +760,9 @@ proves a missing path or an untested guaranteed claim fails the generator;
 their sources and that none embeds the commit it lands in.
 
 The commit a page was built from is not a derived file's business: `scripts/site-build`
-writes `site/data/build.json` (for the footer and the architecture page) and
-`site/static/build.json`, served at `/build.json`, with the commit, whether the tree was
-dirty, the site's input hash, the registry and index fingerprints, and under `surfaces` each
+writes `site/data/build.json` (for the footer, the architecture page and the roadmap's "observed
+at") and `site/static/build.json`, served at `/build.json`, with the commit, that commit's time
+(`commit_time`, never the build's clock), whether the tree was dirty, the site's input hash, the registry and index fingerprints, and under `surfaces` each
 composed surface with the commit its producer declared; `scripts/site-check` proves the served
 file names HEAD and the data the site was built from, and that every composed surface was built
 from that same commit, so a deployment can be verified from outside against the commit that was

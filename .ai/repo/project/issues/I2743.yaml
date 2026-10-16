@@ -16,6 +16,8 @@ scope:
   - "site/content-src"
   - "site/content/roadmap.md"
   - "scripts/site-check"
+  - "scripts/site-build"
+  - "docs/GITHUB_PAGES_ARCHITECTURE.md"
   - "test/cases/3103_the_roadmap_draws_every_milestone.sh"
 depends_on: [I2740, I2742]
 acceptance_criteria:
@@ -27,4 +29,11 @@ validation:
 evidence_required:
   - "roadmap_complete_case"
 created_at: 2026-10-16
-updated_at: 2026-10-16
+updated_at: 2026-10-16T19:11:27Z
+evidence:
+  - covers: roadmap_complete_case
+    type: test
+    command: "bash test/run.sh 3103_the_roadmap_draws_every_milestone"
+    result: "ok, 1 passed at 4d75789ea99: 13h green over the built page (39 milestones, 403 issues, graph order, observed commit), red over a dropped milestone, a reversed order and a wrong commit; delivery stage drawn only with delivery.json; mutations of the old filter and of the delivery path both turn it red"
+    commit: 4d75789ea99dd3bbdde8ef3324b259d96ada7dc0
+    recorded_at: 2026-10-16T19:11:27Z
