@@ -42,7 +42,13 @@ session() {
   "$RB" mesh state --full --format json 2>/dev/null \
     | jq -c --arg id "$1" '[.. | objects | select((.key? // "") | type == "string" and endswith("/" + $id))][0] // empty'
 }
-start() { printf '{"session_id":"%s","source":"%s"}' "$1" "$2" | "$MJ" capture session --provider claude-code --event start 2>"$T/err"; }
+# The case runs under `bash -eu`: a capture that fails would end it without a word (master
+# c1a430dcfe, 2026-10-16), so a failing one says which event it was and what it printed.
+start() {
+  printf '{"session_id":"%s","source":"%s"}' "$1" "$2" \
+    | "$MJ" capture session --provider claude-code --event start 2>"$T/err" \
+    || { echo "    the start event ($2) of $1 exited $?" >&2; cat "$T/err" >&2; return 1; }
+}
 
 # ---------------------------------------------------------------- 1. the start event joins
 BRIEF="$(start cc-3066 startup)"
@@ -57,7 +63,7 @@ jq -e --arg head "$(git rev-parse HEAD)" --arg branch "$(git symbolic-ref --shor
 jq -e '.info.task == null' <<<"$S" >/dev/null || { echo "    a session with no active task names one: $S"; exit 1; }
 
 # ---------------------------------------------------------------- 2. a resume says it again, with the active task
-"$MJ" start "case 3066 work" --scope lib >/dev/null 2>&1 || { echo "    the task did not start"; exit 1; }
+"$MJ" start "case 3066 work" --scope lib >"$T/out" 2>&1 || { echo "    the task did not start"; cat "$T/out"; exit 1; }
 TASK="$(sed -n 's/^id: *//p' .ai/local/state/current.yaml 2>/dev/null | head -n 1)"
 [ -n "$TASK" ] || TASK="$("$MJ" status --json 2>/dev/null | jq -r '.task.id // empty')"
 start cc-3066 resume >/dev/null
@@ -67,13 +73,16 @@ jq -e --arg t "$TASK" '.info.task == $t and .info.intent == "case 3066 work"' <<
 
 # ---------------------------------------------------------------- 3. the end event leaves
 printf '{"session_id":"cc-3066","reason":"prompt_input_exit"}' \
-  | "$MJ" capture session --provider claude-code --event end >/dev/null 2>&1
+  | "$MJ" capture session --provider claude-code --event end >/dev/null 2>"$T/err" \
+  || { echo "    the end event exited $?"; cat "$T/err"; exit 1; }
 S="$(session claude-code-cc-3066)"
 jq -e '.state == "closed"' <<<"$S" >/dev/null \
   || { echo "    the end event did not close the mesh session: $S"; exit 1; }
 
 # ---------------------------------------------------------------- 4. no server, no mesh session, still an episode
-kill $PIDS 2>/dev/null; wait 2>/dev/null; PIDS=""
+kill $PIDS 2>/dev/null || { echo "    the server had exited before the case stopped it"; cat "$T/serve.log"; exit 1; }
+wait 2>/dev/null || true
+PIDS=""
 rm -f .ai/local/state/mcp/server.json
 BRIEF="$(MAJORDOMUS_BIN=/nonexistent start cc-3067 startup)"
 grep -q '^Mesh session:' <<<"$BRIEF" && { echo "    a start with no server named a mesh session"; exit 1; }
