@@ -30,6 +30,8 @@ use serde_json::Value;
 
 use crate::index::Index;
 
+pub(crate) mod delivery;
+
 /// The kind of a milestone record.
 pub const MILESTONE: &str = "milestone";
 /// The kind of an issue record.

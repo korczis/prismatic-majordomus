@@ -105,6 +105,8 @@ pub enum Command {
     Intent(IntentArgs),
     /// Whether each product feature exists: on master, deployed, publicly verified, tested, its evidence published and linked — every dimension computed, unknown never a pass
     Delivery(DeliveryArgs),
+    /// How far each issue's work has travelled: none, branch, pr_open, merged, released or deployed, each with the object that proved it; the plan's records are read and moved by the shell tool's `plan`
+    Plan(PlanArgs),
     /// Token economics, measured: matched runs with and without Majordomus, every metric with its measurement class and sample size, the statement the evidence allows, and the check that refuses an unsupported savings claim
     Economics(EconomicsArgs),
     /// Every object of the layer as an addressable node: the kinds and their routes, and one entity with its references, its backlinks, the surfaces that answer for it and the state of what it names
@@ -2711,6 +2713,73 @@ pub enum DeliveryCommand {
 }
 
 #[derive(Debug, Args)]
+/// `majordomus plan`, the executable's half: the inferences over the plan that need git and
+/// the forge cache. The records themselves are read and moved by the shell tool's `plan`,
+/// which hands `plan delivery` to this one.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, OutputFormat, PlanArgs, PlanCommand};
+///
+/// let cli = Cli::try_parse_from(["majordomus", "plan", "delivery", "I2740", "--at", "HEAD", "--format", "json"])
+///     .unwrap();
+/// let args: PlanArgs = match cli.command {
+///     Command::Plan(args) => args,
+///     other => panic!("expected `plan`, parsed {other:?}"),
+/// };
+/// assert!(matches!(args.format, OutputFormat::Json));
+/// assert!(matches!(
+///     args.command,
+///     PlanCommand::Delivery { issue: Some(ref i), at: Some(ref at) } if i == "I2740" && at == "HEAD"
+/// ));
+/// // the group runs nothing of its own
+/// assert!(Cli::try_parse_from(["majordomus", "plan"]).is_err());
+/// ```
+pub struct PlanArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `delivery`. Required: the group runs nothing of its own.
+    pub command: PlanCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus plan` this executable answers: the command line of
+/// `plan.delivery`.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, PlanCommand};
+///
+/// fn parse(args: &[&str]) -> PlanCommand {
+///     let Command::Plan(args) = Cli::try_parse_from(args.iter().copied()).unwrap().command
+///     else { panic!("plan") };
+///     args.command
+/// }
+/// assert!(matches!(parse(&["majordomus", "plan", "delivery"]), PlanCommand::Delivery { issue: None, at: None }));
+/// assert!(matches!(
+///     parse(&["majordomus", "plan", "delivery", "I0001"]),
+///     PlanCommand::Delivery { issue: Some(ref i), at: None } if i == "I0001"
+/// ));
+/// ```
+pub enum PlanCommand {
+    /// Every issue's furthest delivery stage, with the object that proved it and its declared status beside it
+    Delivery {
+        /// One issue; default every issue of the plan
+        issue: Option<String>,
+        /// Observe as of this commit: its history and the tree's release records, nothing live (no branch, forge, deployment or clock)
+        #[arg(long, value_name = "REV")]
+        at: Option<String>,
+    },
+}
+
+#[derive(Debug, Args)]
 /// `majordomus served`: what a deployment serves, observed from outside and judged against
 /// a commit. `ServedArgs` carries the repository the question is asked of, the subcommand
 /// and the output shape.
@@ -5144,6 +5213,27 @@ pub const EXAMPLES: &[CommandExamples] = &[
             setup: &[],
             expect: Expect::StdoutContains(&["fixture-feature", "on_master", "NOT DELIVERED"]),
         }],
+    },
+    CommandExamples {
+        command: "plan delivery",
+        examples: &[
+            ExampleDoc {
+                id: "plan-delivery-json",
+                title: "How far every issue's work has travelled",
+                description: "The same answer `GET /api/v1/plan/delivery` and the MCP tool `majordomus_plan_delivery` return: every issue with its declared status and the furthest stage proved — none, branch, pr_open, merged, released, deployed — each stage with the branch, pull request, merge commit, tag or `latest.json` that proved it. A checkout that never observed the forge says the forge is unread, and an issue it could have moved further is not settled.",
+                argv: &["plan", "delivery", "--format", "json"],
+                setup: &[],
+                expect: Expect::Json(&["/observed/commit", "/tallies/none", "/issues/0/stage", "/sources"]),
+            },
+            ExampleDoc {
+                id: "plan-delivery-at",
+                title: "One issue, as of a commit",
+                description: "`--at` reads the merges in that commit's history and the tree's release records, and nothing live — no branch, no forge, no deployment, no clock — so it proves only merged and released and the answer is a function of the commit alone. That is what `scripts/generate-site-data` writes to `site/data/generated/delivery.json` and reproduces under `--check`.",
+                argv: &["plan", "delivery", "I0001", "--at", "HEAD"],
+                setup: &[],
+                expect: Expect::StdoutContains(&["I0001", "none", "unread"]),
+            },
+        ],
     },
     CommandExamples {
         command: "entity kinds",

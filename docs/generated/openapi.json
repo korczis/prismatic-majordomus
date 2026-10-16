@@ -13818,6 +13818,116 @@
         }
       }
     },
+    "/api/v1/plan/delivery": {
+      "get": {
+        "operationId": "plan.delivery",
+        "summary": "How far each issue's work has travelled",
+        "description": "For every issue (or one), the furthest delivery stage proved — none, branch, pr_open, merged, released, deployed — each with the object that proved it and when it was observed: the branch that names the issue (by id, the I1405 rule, or by its slug), the open pull request in the recorded forge observation, the newest commit in the trunk's history that names it (a merge by its pull-request title or branch, any other commit by its subject, never by its body), the first release record (`.ai/repo/releases/v*.yaml`) whose commit contains that merge, and the published `latest.json` that names that release or a later one. Beside it, the issue's declared status, so a contradiction between the stamps and the work is one comparison away. Live by default: the trunk this clone knows, every branch, the forge observation `majordomus prs refresh` recorded, the release records, and the `latest.json` of the commit the last Pages deployment published. With `at`, the merges of that commit's history and the tree's release records and nothing live — every branch, forge and deployment source is reported unread — so only merged and released can be proved and the answer is a function of the commit alone. A source that was not read is reported unread with its reason, never as none: an issue it could have moved further is not settled and names it. Inferred on every call and stored nowhere; it never writes a stamp.",
+        "tags": [
+          "plan"
+        ],
+        "parameters": [
+          {
+            "name": "issue",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "One issue id (`I2740`). Default: every issue of the plan. An id the plan does not\ndeclare is not found, never answered as `none`.",
+            "examples": {
+              "one-issue-at-head": {
+                "value": "I0001"
+              }
+            }
+          },
+          {
+            "name": "at",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Observe as of this commit (`HEAD`, a sha, a ref): its history and the tree's release\nrecords, and nothing live — no branch, forge, deployment or clock. Default: live.",
+            "examples": {
+              "one-issue-at-head": {
+                "value": "HEAD"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "How far each issue's work has travelled: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IssueDeliveryReport"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "plan.delivery",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "experimental",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::plan"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-effect": "read",
+        "x-majordomus-mcp": {
+          "tool": "majordomus_plan_delivery"
+        },
+        "x-majordomus-cli": "plan delivery"
+      }
+    },
     "/api/v1/plan/issues": {
       "get": {
         "operationId": "plan.issues",
@@ -27676,6 +27786,226 @@
         ],
         "description": "Two names, one thing. The compiler keeps one entry and records the collapse here, so\nthat \"why is this ADR listed once when four things point at it\" has an answer that is\nstate rather than a log line.\n\nOne type covers two different collapses, and `dropped` is how a reader tells them apart.\n**Structural** collapse is the same identifier reached several ways: nothing was\ndiscarded, so `dropped` is empty and `paths` is the count that makes the row worth\nprinting — this is the record that four things pointing at one ADR produced one entry.\n**Semantic** collapse is two different identifiers standing for one thing, one file\nindexed under two kinds or one rule at two versions: there `dropped` names what lost,\nbecause something really was discarded and a reader is entitled to know what.\n\n```\nuse majordomus_cli::devcontext::Deduplicated;\nuse serde_json::json;\n\n// structural: one identifier, four ways in, nothing discarded\nlet structural: Deduplicated = serde_json::from_value(json!({\n    \"kept\": \"majordomus://adr/0052\",\n    \"dropped\": [],\n    \"key\": \"uri\",\n    \"detail\": \"one object reached by 4 discovery path(s)\",\n    \"paths\": 4,\n})).unwrap();\nassert!(structural.dropped.is_empty(), \"nothing lost; this is a record, not a decision\");\nassert!(structural.paths > 1, \"which is what makes the row worth printing\");\nassert_eq!(structural.key, \"uri\");\n\n// semantic: two identifiers for one rule, and the older version lost\nlet semantic: Deduplicated = serde_json::from_value(json!({\n    \"kept\": \"majordomus://rule/project.x@2\",\n    \"dropped\": [\"majordomus://rule/project.x@1\"],\n    \"key\": \"identity\",\n    \"detail\": \"one rule at two versions; the newer is in the answer\",\n    \"paths\": 1,\n})).unwrap();\nassert_eq!(semantic.dropped, [\"majordomus://rule/project.x@1\"]);\nassert_ne!(semantic.kept, semantic.dropped[0], \"two names, and one of them lost\");\n```"
       },
+      "DeliveryBranch": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The ref, short: `feature/x`, or `origin/feature/x` for a remote-tracking one."
+          },
+          "head": {
+            "type": "string",
+            "description": "The commit it points at."
+          },
+          "remote": {
+            "type": "boolean",
+            "description": "True for a remote-tracking ref."
+          },
+          "via": {
+            "type": "string",
+            "description": "How the name names the issue: `id` or `slug`."
+          },
+          "observed_at": {
+            "type": "string",
+            "description": "When the refs were read."
+          }
+        },
+        "required": [
+          "name",
+          "head",
+          "remote",
+          "via",
+          "observed_at"
+        ],
+        "description": "A branch that names the issue."
+      },
+      "DeliveryDeployment": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "string",
+            "description": "The version `latest.json` names."
+          },
+          "latest_json": {
+            "type": "string",
+            "description": "Where that `latest.json` was read: `<commit>:site/static/releases/latest.json`, the\ncommit the observed Pages deployment published."
+          },
+          "observed_at": {
+            "type": "string",
+            "description": "When the publication was observed."
+          }
+        },
+        "required": [
+          "version",
+          "latest_json",
+          "observed_at"
+        ],
+        "description": "The published release pointer that covers the issue's release."
+      },
+      "DeliveryMerge": {
+        "type": "object",
+        "properties": {
+          "commit": {
+            "type": "string",
+            "description": "The commit: a merge commit, or a commit whose subject names the issue."
+          },
+          "pull_request": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "uint64",
+            "minimum": 0,
+            "description": "The pull request it merged, when its subject names one."
+          },
+          "branch": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The branch it merged, when its subject names one."
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The pull request's title, when the merge carries one, or the commit's subject."
+          },
+          "via": {
+            "type": "string",
+            "description": "How it names the issue: `title_or_branch` or `slug` for a merge, `subject` for a\ncommit."
+          },
+          "merged_at": {
+            "type": "string",
+            "description": "When it was committed, RFC 3339."
+          },
+          "merges": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many commits in the history name the issue; this one is the newest."
+          },
+          "observed_at": {
+            "type": "string",
+            "description": "When the history was read."
+          }
+        },
+        "required": [
+          "commit",
+          "via",
+          "merged_at",
+          "merges",
+          "observed_at"
+        ],
+        "description": "The newest commit in the trunk's history that names the issue: a merge, by its pull\nrequest's title or its branch, or a commit whose subject names it the way this\nrepository's commits do (`type(scope): description (I2740)`)."
+      },
+      "DeliveryObservation": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "type": "string",
+            "description": "`live`, or `at` a named commit."
+          },
+          "trunk": {
+            "type": "string",
+            "description": "The history read: the trunk ref in live mode, the commit asked for otherwise."
+          },
+          "commit": {
+            "type": "string",
+            "description": "The commit that history ends at."
+          },
+          "observed_at": {
+            "type": "string",
+            "description": "When: the clock in live mode, the commit's committer time at a commit."
+          }
+        },
+        "required": [
+          "mode",
+          "trunk",
+          "commit",
+          "observed_at"
+        ],
+        "description": "Where and when the answer was observed."
+      },
+      "DeliveryPullRequest": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "The number."
+          },
+          "title": {
+            "type": "string",
+            "description": "The title."
+          },
+          "head_ref": {
+            "type": "string",
+            "description": "The branch it asks to merge."
+          },
+          "draft": {
+            "type": "boolean",
+            "description": "True for a draft."
+          },
+          "via": {
+            "type": "string",
+            "description": "How it names the issue: `title_or_branch` or `slug`."
+          },
+          "observed_at": {
+            "type": "string",
+            "description": "When the forge was observed."
+          }
+        },
+        "required": [
+          "number",
+          "title",
+          "head_ref",
+          "draft",
+          "via",
+          "observed_at"
+        ],
+        "description": "An open pull request that names the issue."
+      },
+      "DeliveryReading": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "read",
+            "description": "It was read; what it holds is in the answer."
+          },
+          {
+            "type": "string",
+            "const": "unread",
+            "description": "It was not read, and `reason` says why. Nothing it could have proved is claimed or\ndenied."
+          }
+        ],
+        "description": "Whether one source of the answer was read."
+      },
+      "DeliveryRelease": {
+        "type": "object",
+        "properties": {
+          "tag": {
+            "type": "string",
+            "description": "The tag: `v0.27.0`."
+          },
+          "commit": {
+            "type": "string",
+            "description": "The commit the tag names."
+          },
+          "observed_at": {
+            "type": "string",
+            "description": "When the releases were read."
+          }
+        },
+        "required": [
+          "tag",
+          "commit",
+          "observed_at"
+        ],
+        "description": "The first release that contains the issue's newest merge."
+      },
       "DeliveryReport": {
         "type": "object",
         "properties": {
@@ -27713,6 +28043,71 @@
           "features"
         ],
         "description": "Every feature of the layer against the delivery invariant."
+      },
+      "DeliverySource": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "`branches`, `forge`, `history`, `releases` or `publication`."
+          },
+          "state": {
+            "$ref": "#/components/schemas/DeliveryReading",
+            "description": "Read or unread."
+          },
+          "detail": {
+            "type": "string",
+            "description": "What was read, or why nothing was: the ref, the file, the command that would record\nit."
+          },
+          "observed_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "When what was read was observed, RFC 3339, when it was read."
+          }
+        },
+        "required": [
+          "name",
+          "state",
+          "detail"
+        ],
+        "description": "One source the answer is built from, and whether it was read."
+      },
+      "DeliveryStage": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "none",
+            "description": "Nothing that was read names the issue."
+          },
+          {
+            "type": "string",
+            "const": "branch",
+            "description": "A branch names it."
+          },
+          {
+            "type": "string",
+            "const": "pr_open",
+            "description": "An open pull request names it."
+          },
+          {
+            "type": "string",
+            "const": "merged",
+            "description": "A merge in the trunk's history names it."
+          },
+          {
+            "type": "string",
+            "const": "released",
+            "description": "A `v*` release contains its newest merge."
+          },
+          {
+            "type": "string",
+            "const": "deployed",
+            "description": "The published `latest.json` names that release or a later one."
+          }
+        ],
+        "description": "How far one issue's work has travelled, in order: each stage implies every one before it\nhas been passed through, so the furthest one proved is the issue's stage."
       },
       "DeliveryState": {
         "oneOf": [
@@ -39701,6 +40096,168 @@
           }
         ],
         "description": "Which interface a process listens on."
+      },
+      "IssueDelivery": {
+        "type": "object",
+        "properties": {
+          "issue": {
+            "type": "string",
+            "description": "The issue id."
+          },
+          "title": {
+            "type": "string",
+            "description": "Its title."
+          },
+          "milestone": {
+            "type": "string",
+            "description": "Its milestone."
+          },
+          "status": {
+            "type": "string",
+            "description": "Its declared status, as the plan derives it from the stamps: the other half of the\ncomparison this answer exists for."
+          },
+          "stage": {
+            "$ref": "#/components/schemas/DeliveryStage",
+            "description": "The furthest stage proved."
+          },
+          "settled": {
+            "type": "boolean",
+            "description": "True when no unread source could have proved a further stage."
+          },
+          "unread": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The sources that were not read and could have proved a further stage."
+          },
+          "branch": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DeliveryBranch"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The branch that names it, local first."
+          },
+          "pr_open": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DeliveryPullRequest"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The open pull request that names it, newest first."
+          },
+          "merged": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DeliveryMerge"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The newest merge that names it."
+          },
+          "released": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DeliveryRelease"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The first release containing that merge."
+          },
+          "deployed": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DeliveryDeployment"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The publication that covers that release."
+          }
+        },
+        "required": [
+          "issue",
+          "title",
+          "milestone",
+          "status",
+          "stage",
+          "settled",
+          "unread"
+        ],
+        "description": "One issue's delivery."
+      },
+      "IssueDeliveryReport": {
+        "type": "object",
+        "properties": {
+          "schema": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0,
+            "description": "The version of this shape."
+          },
+          "observed": {
+            "$ref": "#/components/schemas/DeliveryObservation",
+            "description": "Where and when."
+          },
+          "stages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeliveryStage"
+            },
+            "description": "The stage vocabulary, in order."
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeliverySource"
+            },
+            "description": "Every source, read or not."
+          },
+          "tallies": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0
+            },
+            "description": "How many issues are at each stage, keyed by every stage of the vocabulary."
+          },
+          "unsettled": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many issues an unread source could have moved further."
+          },
+          "issues": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IssueDelivery"
+            },
+            "description": "The issues, in id order."
+          }
+        },
+        "required": [
+          "schema",
+          "observed",
+          "stages",
+          "sources",
+          "tallies",
+          "unsettled",
+          "issues"
+        ],
+        "description": "Every issue's delivery, with what it was read from."
       },
       "IssueOrigin": {
         "oneOf": [

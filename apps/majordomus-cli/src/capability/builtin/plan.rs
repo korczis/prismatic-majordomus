@@ -38,10 +38,11 @@ use crate::capability::benchmark::{BenchmarkCases, CaseContext, NamedCase};
 use crate::capability::handler::{CapabilityError, Context};
 use crate::capability::model::CapabilityKind;
 use crate::capability::model::{
-    BenchmarkPolicy, BenchmarkPrecondition, CachePolicy, Exposure, McpExposure, McpResource,
-    Stability,
+    BenchmarkPolicy, BenchmarkPrecondition, CachePolicy, CliExposure, Exposure, McpExposure,
+    McpResource, Stability,
 };
 use crate::capability::module::ModuleDescriptor;
+use crate::plan::delivery::{self, IssueDeliveryReport};
 use crate::plan::{
     Plan, PlanCounts, PlanFinding, PlanIssue, PlanMilestone, PlanProject, PlanVocabulary, PlanWave,
     Transition, TransitionError,
@@ -680,8 +681,99 @@ pub fn module() -> ModuleDescriptor {
             // claimed only this process's memory would be projected wherever a peer
             // announcement is, which is not the same permission.
             .writes_repository(),
+            capability! {
+                id: "plan.delivery",
+                title: "How far each issue's work has travelled",
+                description: "For every issue (or one), the furthest delivery stage proved — none, branch, pr_open, merged, released, deployed — each with the object that proved it and when it was observed: the branch that names the issue (by id, the I1405 rule, or by its slug), the open pull request in the recorded forge observation, the newest commit in the trunk's history that names it (a merge by its pull-request title or branch, any other commit by its subject, never by its body), the first release record (`.ai/repo/releases/v*.yaml`) whose commit contains that merge, and the published `latest.json` that names that release or a later one. Beside it, the issue's declared status, so a contradiction between the stamps and the work is one comparison away. Live by default: the trunk this clone knows, every branch, the forge observation `majordomus prs refresh` recorded, the release records, and the `latest.json` of the commit the last Pages deployment published. With `at`, the merges of that commit's history and the tree's release records and nothing live — every branch, forge and deployment source is reported unread — so only merged and released can be proved and the answer is a function of the commit alone. A source that was not read is reported unread with its reason, never as none: an issue it could have moved further is not settled and names it. Inferred on every call and stored nowhere; it never writes a stamp.",
+                input: PlanDeliveryInput,
+                output: IssueDeliveryReport,
+                stability: Stability::Experimental,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_plan_delivery"),
+                    http: get("/api/v1/plan/delivery"),
+                    cli: Some(CliExposure { path: vec!["plan".into(), "delivery".into()] }),
+                },
+                tags: ["plan", "project", "delivery", "git", "provenance"],
+                cache: CachePolicy::Disabled,
+                handler: plan_delivery,
+            },
         ],
     }
+}
+
+// ---------------------------------------------------------------- plan.delivery
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+/// Which issues, and as of when: the input of `plan.delivery`.
+///
+/// Both fields are optional, and an unknown one is refused rather than ignored, so a caller
+/// who misspells `at` is not silently answered live.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::plan::PlanDeliveryInput;
+///
+/// let every: PlanDeliveryInput = serde_json::from_str("{}").unwrap();
+/// assert!(every.issue.is_none() && every.at.is_none(), "live, every issue");
+/// let one: PlanDeliveryInput =
+///     serde_json::from_value(serde_json::json!({ "issue": "I2740", "at": "HEAD" })).unwrap();
+/// assert_eq!((one.issue.as_deref(), one.at.as_deref()), (Some("I2740"), Some("HEAD")));
+/// assert!(serde_json::from_str::<PlanDeliveryInput>(r#"{"commit":"HEAD"}"#).is_err());
+/// ```
+pub struct PlanDeliveryInput {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// One issue id (`I2740`). Default: every issue of the plan. An id the plan does not
+    /// declare is not found, never answered as `none`.
+    pub issue: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// Observe as of this commit (`HEAD`, a sha, a ref): its history and the tree's release
+    /// records, and nothing live — no branch, forge, deployment or clock. Default: live.
+    pub at: Option<String>,
+}
+
+impl BenchmarkCases for PlanDeliveryInput {
+    fn benchmark_cases(ctx: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        let plan = Plan::build(ctx.index);
+        let issue = plan
+            .issues
+            .first()
+            .map_or_else(|| "I0001".to_string(), |i| i.id.clone());
+        vec![
+            NamedCase::new("every-issue", PlanDeliveryInput::default()),
+            NamedCase::new(
+                "one-issue-at-head",
+                PlanDeliveryInput {
+                    issue: Some(issue),
+                    at: Some("HEAD".into()),
+                },
+            ),
+        ]
+    }
+}
+
+fn plan_delivery(
+    ctx: &Context,
+    input: PlanDeliveryInput,
+) -> Result<IssueDeliveryReport, CapabilityError> {
+    let plan = plan_of(ctx)?;
+    if let Some(id) = input.issue.as_deref() {
+        if plan.issue(id).is_none() {
+            return Err(CapabilityError::NotFound(format!(
+                "no issue '{id}' in this plan; `plan.issues` lists every one"
+            )));
+        }
+    }
+    let root = Path::new(&ctx.index.repository.root);
+    let identity = crate::worktree::RepositoryIdentity::discover(root)
+        .map_err(|e| CapabilityError::Refused(e.to_string()))?;
+    delivery::infer(
+        root,
+        &plan,
+        identity.trunk(),
+        input.at.as_deref(),
+        input.issue.as_deref(),
+    )
+    .map_err(CapabilityError::Refused)
 }
 
 // ---------------------------------------------------------------- plan.transition
@@ -943,6 +1035,11 @@ mod tests {
                 "plan.transition",
                 "majordomus_plan_transition",
                 "/api/v1/plan/transition",
+            ),
+            (
+                "plan.delivery",
+                "majordomus_plan_delivery",
+                "/api/v1/plan/delivery",
             ),
         ];
         let ids: Vec<&str> = m
