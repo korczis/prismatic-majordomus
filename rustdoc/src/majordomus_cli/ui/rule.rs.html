@@ -221,7 +221,7 @@
 <a href=#221 id=221 data-nosnippet>221</a>            source: Source::of(<span class="string">"rules.show"</span>),
 <a href=#222 id=222 data-nosnippet>222</a>            route: <span class="prelude-val">Some</span>(<span class="string">"GET /api/v1/rules/rule"</span>.into()),
 <a href=#223 id=223 data-nosnippet>223</a>            exposure: Exposure::default(),
-<a href=#224 id=224 data-nosnippet>224</a>            value,
+<a href=#224 id=224 data-nosnippet>224</a>            value: value.map(Into::into),
 <a href=#225 id=225 data-nosnippet>225</a>            took: Duration::from_millis(<span class="number">1</span>),
 <a href=#226 id=226 data-nosnippet>226</a>            standing: <span class="kw">crate</span>::ui::source::Standing::NOW,
 <a href=#227 id=227 data-nosnippet>227</a>        }

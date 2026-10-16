@@ -482,7 +482,7 @@
 <a href=#482 id=482 data-nosnippet>482</a>            source: PEERS,
 <a href=#483 id=483 data-nosnippet>483</a>            route: <span class="prelude-val">None</span>,
 <a href=#484 id=484 data-nosnippet>484</a>            exposure: Default::default(),
-<a href=#485 id=485 data-nosnippet>485</a>            value: <span class="prelude-val">Ok</span>(<span class="macro">serde_json::json!</span>({ <span class="string">"machines"</span>: [] })),
+<a href=#485 id=485 data-nosnippet>485</a>            value: <span class="prelude-val">Ok</span>(<span class="macro">serde_json::json!</span>({ <span class="string">"machines"</span>: [] }).into()),
 <a href=#486 id=486 data-nosnippet>486</a>            took: std::time::Duration::ZERO,
 <a href=#487 id=487 data-nosnippet>487</a>            standing: <span class="kw">crate</span>::ui::source::Standing::NOW,
 <a href=#488 id=488 data-nosnippet>488</a>        };
@@ -495,7 +495,7 @@
 <a href=#495 id=495 data-nosnippet>495</a>            source,
 <a href=#496 id=496 data-nosnippet>496</a>            route: <span class="prelude-val">None</span>,
 <a href=#497 id=497 data-nosnippet>497</a>            exposure: Default::default(),
-<a href=#498 id=498 data-nosnippet>498</a>            value,
+<a href=#498 id=498 data-nosnippet>498</a>            value: value.map(Into::into),
 <a href=#499 id=499 data-nosnippet>499</a>            took: std::time::Duration::ZERO,
 <a href=#500 id=500 data-nosnippet>500</a>            standing: <span class="kw">crate</span>::ui::source::Standing::NOW,
 <a href=#501 id=501 data-nosnippet>501</a>        }

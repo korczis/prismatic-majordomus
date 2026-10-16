@@ -526,7 +526,13 @@
 <a href=#526 id=526 data-nosnippet>526</a>    </span><span class="kw">pub </span>pruned: Vec&lt;String&gt;,
 <a href=#527 id=527 data-nosnippet>527</a>    <span class="doccomment">/// What `git worktree repair` reported.
 <a href=#528 id=528 data-nosnippet>528</a>    </span><span class="kw">pub </span>repaired: Vec&lt;String&gt;,
-<a href=#529 id=529 data-nosnippet>529</a>    <span class="doccomment">/// Whether anything was changed.
-<a href=#530 id=530 data-nosnippet>530</a>    </span><span class="kw">pub </span>applied: bool,
-<a href=#531 id=531 data-nosnippet>531</a>}
+<a href=#529 id=529 data-nosnippet>529</a>    <span class="doccomment">/// Which hooks each existing linked worktree runs once repaired, by its path: a
+<a href=#530 id=530 data-nosnippet>530</a>    /// worktree moved by hand keeps a per-worktree `core.hooksPath` naming its old path,
+<a href=#531 id=531 data-nosnippet>531</a>    /// and one made by plain `git worktree add` may run the primary checkout's (I2718).
+<a href=#532 id=532 data-nosnippet>532</a>    /// Empty on a dry run.
+<a href=#533 id=533 data-nosnippet>533</a>    </span><span class="attr">#[serde(default, skip_serializing_if = <span class="string">"std::collections::BTreeMap::is_empty"</span>)]
+<a href=#534 id=534 data-nosnippet>534</a>    </span><span class="kw">pub </span>hooks: std::collections::BTreeMap&lt;String, <span class="kw">super</span>::hooks::HooksPath&gt;,
+<a href=#535 id=535 data-nosnippet>535</a>    <span class="doccomment">/// Whether anything was changed.
+<a href=#536 id=536 data-nosnippet>536</a>    </span><span class="kw">pub </span>applied: bool,
+<a href=#537 id=537 data-nosnippet>537</a>}
 </code></pre></div></section></main></body></html>

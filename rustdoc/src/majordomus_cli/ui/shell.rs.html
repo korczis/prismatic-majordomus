@@ -344,88 +344,89 @@
 <a href=#344 id=344 data-nosnippet>344</a>                <span class="string">"version"</span>: <span class="string">"0.20.0"</span>,
 <a href=#345 id=345 data-nosnippet>345</a>                <span class="string">"published_at"</span>: <span class="string">"2026-10-10T16:38:00Z"</span>,
 <a href=#346 id=346 data-nosnippet>346</a>                <span class="string">"commit"</span>: <span class="string">"c8f0e4c50123456789"</span>,
-<a href=#347 id=347 data-nosnippet>347</a>            }})),
-<a href=#348 id=348 data-nosnippet>348</a>            took: std::time::Duration::ZERO,
-<a href=#349 id=349 data-nosnippet>349</a>            standing: <span class="kw">crate</span>::ui::source::Standing::NOW,
-<a href=#350 id=350 data-nosnippet>350</a>        };
-<a href=#351 id=351 data-nosnippet>351</a>        <span class="kw">let </span>line = release_line(
-<a href=#352 id=352 data-nosnippet>352</a>            <span class="kw-2">&amp;</span>releases.read(<span class="string">"/latest/version"</span>),
-<a href=#353 id=353 data-nosnippet>353</a>            <span class="kw-2">&amp;</span>releases.read(<span class="string">"/latest/published_at"</span>),
-<a href=#354 id=354 data-nosnippet>354</a>            <span class="kw-2">&amp;</span>releases.read(<span class="string">"/latest/commit"</span>),
-<a href=#355 id=355 data-nosnippet>355</a>        );
-<a href=#356 id=356 data-nosnippet>356</a>        <span class="macro">assert_eq!</span>(line, <span class="string">"Latest release 0.20.0 · 2026-10-10 · c8f0e4c501"</span>);
-<a href=#357 id=357 data-nosnippet>357</a>        <span class="kw">let </span>missing = releases.read(<span class="string">"/latest/nothing"</span>);
-<a href=#358 id=358 data-nosnippet>358</a>        <span class="macro">assert_eq!</span>(
-<a href=#359 id=359 data-nosnippet>359</a>            release_line(<span class="kw-2">&amp;</span>missing, <span class="kw-2">&amp;</span>missing, <span class="kw-2">&amp;</span>missing),
-<a href=#360 id=360 data-nosnippet>360</a>            <span class="string">"Latest release none · none · none"
-<a href=#361 id=361 data-nosnippet>361</a>        </span>);
-<a href=#362 id=362 data-nosnippet>362</a>    }
-<a href=#363 id=363 data-nosnippet>363</a>
-<a href=#364 id=364 data-nosnippet>364</a>    <span class="doccomment">/// A distribution without the UI's files still serves every screen, and says why it
-<a href=#365 id=365 data-nosnippet>365</a>    /// is unstyled.
-<a href=#366 id=366 data-nosnippet>366</a>    </span><span class="attr">#[test]
-<a href=#367 id=367 data-nosnippet>367</a>    </span><span class="kw">fn </span>an_unstyled_distribution_says_so_on_every_page() {
-<a href=#368 id=368 data-nosnippet>368</a>        <span class="kw">let </span>repo = SyntheticRepository::new(Shape::default()).expect(<span class="string">"a synthetic repository"</span>);
-<a href=#369 id=369 data-nosnippet>369</a>        <span class="kw">let </span>ctx = repo.context().expect(<span class="string">"a context"</span>);
-<a href=#370 id=370 data-nosnippet>370</a>        <span class="kw">let </span><span class="kw-2">mut </span>bare = frame(<span class="string">"/ui"</span>);
-<a href=#371 id=371 data-nosnippet>371</a>        bare.assets_present = <span class="bool-val">false</span>;
-<a href=#372 id=372 data-nosnippet>372</a>        <span class="kw">let </span>html = page(<span class="kw-2">&amp;</span>ctx, <span class="kw-2">&amp;</span>bare, <span class="kw-2">&amp;</span>View::new(<span class="string">"Dashboard"</span>, el(<span class="string">"p"</span>)));
-<a href=#373 id=373 data-nosnippet>373</a>        <span class="macro">assert!</span>(html.contains(<span class="string">"the UI is unstyled"</span>), <span class="string">"{html}"</span>);
-<a href=#374 id=374 data-nosnippet>374</a>    }
-<a href=#375 id=375 data-nosnippet>375</a>
-<a href=#376 id=376 data-nosnippet>376</a>    <span class="kw">fn </span>render(current: <span class="kw-2">&amp;</span>str) -&gt; String {
-<a href=#377 id=377 data-nosnippet>377</a>        <span class="kw">let </span>repo = SyntheticRepository::new(Shape::default()).expect(<span class="string">"a synthetic repository"</span>);
-<a href=#378 id=378 data-nosnippet>378</a>        <span class="kw">let </span>ctx = repo.context().expect(<span class="string">"a context"</span>);
-<a href=#379 id=379 data-nosnippet>379</a>        page(<span class="kw-2">&amp;</span>ctx, <span class="kw-2">&amp;</span>frame(current), <span class="kw-2">&amp;</span>View::new(<span class="string">"Dashboard"</span>, el(<span class="string">"p"</span>)))
-<a href=#380 id=380 data-nosnippet>380</a>    }
-<a href=#381 id=381 data-nosnippet>381</a>
-<a href=#382 id=382 data-nosnippet>382</a>    <span class="doccomment">/// Every screen is in the sidebar with its icon, the current one is marked, and the
-<a href=#383 id=383 data-nosnippet>383</a>    /// version card says what was last released from the source that knows.
-<a href=#384 id=384 data-nosnippet>384</a>    </span><span class="attr">#[test]
-<a href=#385 id=385 data-nosnippet>385</a>    </span><span class="kw">fn </span>the_sidebar_is_the_screens_and_the_version_card() {
-<a href=#386 id=386 data-nosnippet>386</a>        <span class="kw">let </span>html = render(PREFIX);
-<a href=#387 id=387 data-nosnippet>387</a>        <span class="kw">for </span>s <span class="kw">in </span>SCREENS {
-<a href=#388 id=388 data-nosnippet>388</a>            <span class="macro">assert!</span>(
-<a href=#389 id=389 data-nosnippet>389</a>                html.contains(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"href=\"{}\""</span>, s.route)),
-<a href=#390 id=390 data-nosnippet>390</a>                <span class="string">"{}"</span>,
-<a href=#391 id=391 data-nosnippet>391</a>                s.route
-<a href=#392 id=392 data-nosnippet>392</a>            );
-<a href=#393 id=393 data-nosnippet>393</a>        }
-<a href=#394 id=394 data-nosnippet>394</a>        <span class="macro">assert_eq!</span>(html.matches(<span class="string">"aria-current=\"page\""</span>).count(), <span class="number">1</span>);
-<a href=#395 id=395 data-nosnippet>395</a>        <span class="macro">assert!</span>(html.contains(<span class="string">"Latest release"</span>));
-<a href=#396 id=396 data-nosnippet>396</a>        <span class="macro">assert!</span>(html.contains(<span class="string">"&lt;title&gt;Dashboard · majordomus ui&lt;/title&gt;"</span>));
-<a href=#397 id=397 data-nosnippet>397</a>    }
-<a href=#398 id=398 data-nosnippet>398</a>
-<a href=#399 id=399 data-nosnippet>399</a>    <span class="doccomment">/// The UI is its own product: the Cockpit appears in its frame only as the technical
-<a href=#400 id=400 data-nosnippet>400</a>    /// reference among the other surfaces, never in its navigation.
-<a href=#401 id=401 data-nosnippet>401</a>    </span><span class="attr">#[test]
-<a href=#402 id=402 data-nosnippet>402</a>    </span><span class="kw">fn </span>the_cockpit_is_a_reference_not_a_destination() {
-<a href=#403 id=403 data-nosnippet>403</a>        <span class="kw">let </span>html = render(PREFIX);
-<a href=#404 id=404 data-nosnippet>404</a>        <span class="kw">let </span>nav = html.split(<span class="string">"mj-ui-nav-list"</span>).nth(<span class="number">1</span>).unwrap_or_default();
-<a href=#405 id=405 data-nosnippet>405</a>        <span class="kw">let </span>nav = nav.split(<span class="string">"&lt;/ul&gt;"</span>).next().unwrap_or_default();
-<a href=#406 id=406 data-nosnippet>406</a>        <span class="macro">assert!</span>(
-<a href=#407 id=407 data-nosnippet>407</a>            !nav.contains(<span class="string">"/cockpit"</span>),
-<a href=#408 id=408 data-nosnippet>408</a>            <span class="string">"the navigation leads into the Cockpit: {nav}"
-<a href=#409 id=409 data-nosnippet>409</a>        </span>);
-<a href=#410 id=410 data-nosnippet>410</a>        <span class="macro">assert!</span>(html.contains(<span class="string">"aria-label=\"Other surfaces\""</span>));
-<a href=#411 id=411 data-nosnippet>411</a>    }
-<a href=#412 id=412 data-nosnippet>412</a>
-<a href=#413 id=413 data-nosnippet>413</a>    <span class="doccomment">/// The page carries exactly one inline script, the theme statement the policy allows,
-<a href=#414 id=414 data-nosnippet>414</a>    /// and the menu opens without one.
-<a href=#415 id=415 data-nosnippet>415</a>    </span><span class="attr">#[test]
-<a href=#416 id=416 data-nosnippet>416</a>    </span><span class="kw">fn </span>the_only_inline_script_is_the_one_the_policy_allows() {
-<a href=#417 id=417 data-nosnippet>417</a>        <span class="kw">let </span>html = render(PREFIX);
-<a href=#418 id=418 data-nosnippet>418</a>        <span class="macro">assert_eq!</span>(html.matches(<span class="string">"&lt;script&gt;"</span>).count(), <span class="number">1</span>, <span class="string">"{html}"</span>);
-<a href=#419 id=419 data-nosnippet>419</a>        <span class="macro">assert!</span>(html.contains(<span class="string">"for=\"mj-ui-menu\""</span>));
-<a href=#420 id=420 data-nosnippet>420</a>        <span class="macro">assert!</span>(<span class="kw">crate</span>::cockpit::csp().contains(<span class="string">"script-src 'self' 'sha256-"</span>));
-<a href=#421 id=421 data-nosnippet>421</a>    }
-<a href=#422 id=422 data-nosnippet>422</a>
-<a href=#423 id=423 data-nosnippet>423</a>    <span class="doccomment">/// A route nobody answers is a 404 that leads back.
-<a href=#424 id=424 data-nosnippet>424</a>    </span><span class="attr">#[test]
-<a href=#425 id=425 data-nosnippet>425</a>    </span><span class="kw">fn </span>an_unknown_route_is_a_404_that_leads_back() {
-<a href=#426 id=426 data-nosnippet>426</a>        <span class="kw">let </span>v = not_found(<span class="string">"/ui/nowhere"</span>);
-<a href=#427 id=427 data-nosnippet>427</a>        <span class="macro">assert_eq!</span>(v.status, <span class="number">404</span>);
-<a href=#428 id=428 data-nosnippet>428</a>        <span class="macro">assert!</span>(v.main.render().contains(<span class="string">"/ui/nowhere"</span>));
-<a href=#429 id=429 data-nosnippet>429</a>    }
-<a href=#430 id=430 data-nosnippet>430</a>}
+<a href=#347 id=347 data-nosnippet>347</a>            }})
+<a href=#348 id=348 data-nosnippet>348</a>            .into()),
+<a href=#349 id=349 data-nosnippet>349</a>            took: std::time::Duration::ZERO,
+<a href=#350 id=350 data-nosnippet>350</a>            standing: <span class="kw">crate</span>::ui::source::Standing::NOW,
+<a href=#351 id=351 data-nosnippet>351</a>        };
+<a href=#352 id=352 data-nosnippet>352</a>        <span class="kw">let </span>line = release_line(
+<a href=#353 id=353 data-nosnippet>353</a>            <span class="kw-2">&amp;</span>releases.read(<span class="string">"/latest/version"</span>),
+<a href=#354 id=354 data-nosnippet>354</a>            <span class="kw-2">&amp;</span>releases.read(<span class="string">"/latest/published_at"</span>),
+<a href=#355 id=355 data-nosnippet>355</a>            <span class="kw-2">&amp;</span>releases.read(<span class="string">"/latest/commit"</span>),
+<a href=#356 id=356 data-nosnippet>356</a>        );
+<a href=#357 id=357 data-nosnippet>357</a>        <span class="macro">assert_eq!</span>(line, <span class="string">"Latest release 0.20.0 · 2026-10-10 · c8f0e4c501"</span>);
+<a href=#358 id=358 data-nosnippet>358</a>        <span class="kw">let </span>missing = releases.read(<span class="string">"/latest/nothing"</span>);
+<a href=#359 id=359 data-nosnippet>359</a>        <span class="macro">assert_eq!</span>(
+<a href=#360 id=360 data-nosnippet>360</a>            release_line(<span class="kw-2">&amp;</span>missing, <span class="kw-2">&amp;</span>missing, <span class="kw-2">&amp;</span>missing),
+<a href=#361 id=361 data-nosnippet>361</a>            <span class="string">"Latest release none · none · none"
+<a href=#362 id=362 data-nosnippet>362</a>        </span>);
+<a href=#363 id=363 data-nosnippet>363</a>    }
+<a href=#364 id=364 data-nosnippet>364</a>
+<a href=#365 id=365 data-nosnippet>365</a>    <span class="doccomment">/// A distribution without the UI's files still serves every screen, and says why it
+<a href=#366 id=366 data-nosnippet>366</a>    /// is unstyled.
+<a href=#367 id=367 data-nosnippet>367</a>    </span><span class="attr">#[test]
+<a href=#368 id=368 data-nosnippet>368</a>    </span><span class="kw">fn </span>an_unstyled_distribution_says_so_on_every_page() {
+<a href=#369 id=369 data-nosnippet>369</a>        <span class="kw">let </span>repo = SyntheticRepository::new(Shape::default()).expect(<span class="string">"a synthetic repository"</span>);
+<a href=#370 id=370 data-nosnippet>370</a>        <span class="kw">let </span>ctx = repo.context().expect(<span class="string">"a context"</span>);
+<a href=#371 id=371 data-nosnippet>371</a>        <span class="kw">let </span><span class="kw-2">mut </span>bare = frame(<span class="string">"/ui"</span>);
+<a href=#372 id=372 data-nosnippet>372</a>        bare.assets_present = <span class="bool-val">false</span>;
+<a href=#373 id=373 data-nosnippet>373</a>        <span class="kw">let </span>html = page(<span class="kw-2">&amp;</span>ctx, <span class="kw-2">&amp;</span>bare, <span class="kw-2">&amp;</span>View::new(<span class="string">"Dashboard"</span>, el(<span class="string">"p"</span>)));
+<a href=#374 id=374 data-nosnippet>374</a>        <span class="macro">assert!</span>(html.contains(<span class="string">"the UI is unstyled"</span>), <span class="string">"{html}"</span>);
+<a href=#375 id=375 data-nosnippet>375</a>    }
+<a href=#376 id=376 data-nosnippet>376</a>
+<a href=#377 id=377 data-nosnippet>377</a>    <span class="kw">fn </span>render(current: <span class="kw-2">&amp;</span>str) -&gt; String {
+<a href=#378 id=378 data-nosnippet>378</a>        <span class="kw">let </span>repo = SyntheticRepository::new(Shape::default()).expect(<span class="string">"a synthetic repository"</span>);
+<a href=#379 id=379 data-nosnippet>379</a>        <span class="kw">let </span>ctx = repo.context().expect(<span class="string">"a context"</span>);
+<a href=#380 id=380 data-nosnippet>380</a>        page(<span class="kw-2">&amp;</span>ctx, <span class="kw-2">&amp;</span>frame(current), <span class="kw-2">&amp;</span>View::new(<span class="string">"Dashboard"</span>, el(<span class="string">"p"</span>)))
+<a href=#381 id=381 data-nosnippet>381</a>    }
+<a href=#382 id=382 data-nosnippet>382</a>
+<a href=#383 id=383 data-nosnippet>383</a>    <span class="doccomment">/// Every screen is in the sidebar with its icon, the current one is marked, and the
+<a href=#384 id=384 data-nosnippet>384</a>    /// version card says what was last released from the source that knows.
+<a href=#385 id=385 data-nosnippet>385</a>    </span><span class="attr">#[test]
+<a href=#386 id=386 data-nosnippet>386</a>    </span><span class="kw">fn </span>the_sidebar_is_the_screens_and_the_version_card() {
+<a href=#387 id=387 data-nosnippet>387</a>        <span class="kw">let </span>html = render(PREFIX);
+<a href=#388 id=388 data-nosnippet>388</a>        <span class="kw">for </span>s <span class="kw">in </span>SCREENS {
+<a href=#389 id=389 data-nosnippet>389</a>            <span class="macro">assert!</span>(
+<a href=#390 id=390 data-nosnippet>390</a>                html.contains(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"href=\"{}\""</span>, s.route)),
+<a href=#391 id=391 data-nosnippet>391</a>                <span class="string">"{}"</span>,
+<a href=#392 id=392 data-nosnippet>392</a>                s.route
+<a href=#393 id=393 data-nosnippet>393</a>            );
+<a href=#394 id=394 data-nosnippet>394</a>        }
+<a href=#395 id=395 data-nosnippet>395</a>        <span class="macro">assert_eq!</span>(html.matches(<span class="string">"aria-current=\"page\""</span>).count(), <span class="number">1</span>);
+<a href=#396 id=396 data-nosnippet>396</a>        <span class="macro">assert!</span>(html.contains(<span class="string">"Latest release"</span>));
+<a href=#397 id=397 data-nosnippet>397</a>        <span class="macro">assert!</span>(html.contains(<span class="string">"&lt;title&gt;Dashboard · majordomus ui&lt;/title&gt;"</span>));
+<a href=#398 id=398 data-nosnippet>398</a>    }
+<a href=#399 id=399 data-nosnippet>399</a>
+<a href=#400 id=400 data-nosnippet>400</a>    <span class="doccomment">/// The UI is its own product: the Cockpit appears in its frame only as the technical
+<a href=#401 id=401 data-nosnippet>401</a>    /// reference among the other surfaces, never in its navigation.
+<a href=#402 id=402 data-nosnippet>402</a>    </span><span class="attr">#[test]
+<a href=#403 id=403 data-nosnippet>403</a>    </span><span class="kw">fn </span>the_cockpit_is_a_reference_not_a_destination() {
+<a href=#404 id=404 data-nosnippet>404</a>        <span class="kw">let </span>html = render(PREFIX);
+<a href=#405 id=405 data-nosnippet>405</a>        <span class="kw">let </span>nav = html.split(<span class="string">"mj-ui-nav-list"</span>).nth(<span class="number">1</span>).unwrap_or_default();
+<a href=#406 id=406 data-nosnippet>406</a>        <span class="kw">let </span>nav = nav.split(<span class="string">"&lt;/ul&gt;"</span>).next().unwrap_or_default();
+<a href=#407 id=407 data-nosnippet>407</a>        <span class="macro">assert!</span>(
+<a href=#408 id=408 data-nosnippet>408</a>            !nav.contains(<span class="string">"/cockpit"</span>),
+<a href=#409 id=409 data-nosnippet>409</a>            <span class="string">"the navigation leads into the Cockpit: {nav}"
+<a href=#410 id=410 data-nosnippet>410</a>        </span>);
+<a href=#411 id=411 data-nosnippet>411</a>        <span class="macro">assert!</span>(html.contains(<span class="string">"aria-label=\"Other surfaces\""</span>));
+<a href=#412 id=412 data-nosnippet>412</a>    }
+<a href=#413 id=413 data-nosnippet>413</a>
+<a href=#414 id=414 data-nosnippet>414</a>    <span class="doccomment">/// The page carries exactly one inline script, the theme statement the policy allows,
+<a href=#415 id=415 data-nosnippet>415</a>    /// and the menu opens without one.
+<a href=#416 id=416 data-nosnippet>416</a>    </span><span class="attr">#[test]
+<a href=#417 id=417 data-nosnippet>417</a>    </span><span class="kw">fn </span>the_only_inline_script_is_the_one_the_policy_allows() {
+<a href=#418 id=418 data-nosnippet>418</a>        <span class="kw">let </span>html = render(PREFIX);
+<a href=#419 id=419 data-nosnippet>419</a>        <span class="macro">assert_eq!</span>(html.matches(<span class="string">"&lt;script&gt;"</span>).count(), <span class="number">1</span>, <span class="string">"{html}"</span>);
+<a href=#420 id=420 data-nosnippet>420</a>        <span class="macro">assert!</span>(html.contains(<span class="string">"for=\"mj-ui-menu\""</span>));
+<a href=#421 id=421 data-nosnippet>421</a>        <span class="macro">assert!</span>(<span class="kw">crate</span>::cockpit::csp().contains(<span class="string">"script-src 'self' 'sha256-"</span>));
+<a href=#422 id=422 data-nosnippet>422</a>    }
+<a href=#423 id=423 data-nosnippet>423</a>
+<a href=#424 id=424 data-nosnippet>424</a>    <span class="doccomment">/// A route nobody answers is a 404 that leads back.
+<a href=#425 id=425 data-nosnippet>425</a>    </span><span class="attr">#[test]
+<a href=#426 id=426 data-nosnippet>426</a>    </span><span class="kw">fn </span>an_unknown_route_is_a_404_that_leads_back() {
+<a href=#427 id=427 data-nosnippet>427</a>        <span class="kw">let </span>v = not_found(<span class="string">"/ui/nowhere"</span>);
+<a href=#428 id=428 data-nosnippet>428</a>        <span class="macro">assert_eq!</span>(v.status, <span class="number">404</span>);
+<a href=#429 id=429 data-nosnippet>429</a>        <span class="macro">assert!</span>(v.main.render().contains(<span class="string">"/ui/nowhere"</span>));
+<a href=#430 id=430 data-nosnippet>430</a>    }
+<a href=#431 id=431 data-nosnippet>431</a>}
 </code></pre></div></section></main></body></html>

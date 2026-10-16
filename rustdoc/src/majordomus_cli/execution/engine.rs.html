@@ -479,7 +479,7 @@
 <a href=#479 id=479 data-nosnippet>479</a>
 <a href=#480 id=480 data-nosnippet>480</a><span class="doccomment">/// Which repository this process runs executions against. Never the request's idea of it:
 <a href=#481 id=481 data-nosnippet>481</a>/// a process serves the one repository it read at start-up.
-<a href=#482 id=482 data-nosnippet>482</a></span><span class="kw">fn </span>repository_of(ctx: <span class="kw-2">&amp;</span>Context) -&gt; RepositoryRef {
+<a href=#482 id=482 data-nosnippet>482</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>repository_of(ctx: <span class="kw-2">&amp;</span>Context) -&gt; RepositoryRef {
 <a href=#483 id=483 data-nosnippet>483</a>    <span class="kw">let </span>root = std::path::Path::new(<span class="kw-2">&amp;</span>ctx.index.repository.root);
 <a href=#484 id=484 data-nosnippet>484</a>    RepositoryRef {
 <a href=#485 id=485 data-nosnippet>485</a>        name: root

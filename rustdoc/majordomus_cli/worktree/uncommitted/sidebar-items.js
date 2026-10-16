@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["THRESHOLD_KEY","UNCOMMITTED_SCHEMA"],"enum":["WorkStanding"],"fn":["judge","rescue_command","shell_quote"],"struct":["OpenEpisode","Threshold","UncommittedReport","UncommittedTallies","UncommittedWorktree"]};

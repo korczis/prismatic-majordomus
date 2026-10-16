@@ -1,0 +1,96 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Uncommitted work in the linked work trees, and whether anything still holds it (I1995)."><title>majordomus_cli::worktree::uncommitted - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-1ed95124.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="majordomus_cli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.98.1 (48a229cea 2026-09-01)" data-channel="1.98.1" data-search-js="search-9944d736.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../../static.files/storage-41dd4d93.js"></script><script defer src="../sidebar-items.js"></script><script defer src="../../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc mod"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">Module uncommitted</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../../majordomus_cli/index.html">majordomus_<wbr>cli</a><span class="version">0.27.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Module uncommitted</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#the-lifecycle-end-to-end" title="The lifecycle, end to end">The lifecycle, end to end</a></li></ul><h3><a href="#structs">Module Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#enums" title="Enums">Enums</a></li><li><a href="#constants" title="Constants">Constants</a></li><li><a href="#functions" title="Functions">Functions</a></li></ul></section><div id="rustdoc-modnav"><h2><a href="../index.html">In majordomus_<wbr>cli::<wbr>worktree</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../../index.html">majordomus_cli</a>::<wbr><a href="../index.html">worktree</a></div><h1>Module <span>uncommitted</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../../src/majordomus_cli/worktree/uncommitted.rs.html#1-1079">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Uncommitted work in the linked work trees, and whether anything still holds it (I1995).</p>
+<p>Twice in two days finished work existed on one disk only: 45 uncommitted files in the
+work tree of a session that had ended on 2026-10-07, 21 staged files in another on
+2026-10-08. Neither had a commit or a remote ref, and both were found because somebody
+happened to read that directory. <code>doctor</code> named branches whose commits reach no remote and
+said nothing about an index that holds work no commit carries.</p>
+<p>This is the reading that names them. For every linked work tree with staged, unstaged,
+untracked or conflicted paths it says how many, how old the oldest change is, and what
+holds the work — and from those, whether it is abandoned:</p>
+<ul>
+<li><strong>held</strong> — an active task record (<code>.ai/local/state/current.yaml</code> with outcome
+<code>active</code>, the record <code>start</code> writes and <code>finish</code> closes), an open episode
+(<code>.ai/local/state/sessions-open/</code>) that is not stranded, or a process whose working
+directory is inside it. The first two are the lifecycle’s own records, read with the
+readers that already exist for them (<a href="../../session/fn.open_episodes.html" title="fn majordomus_cli::session::open_episodes"><code>crate::session::open_episodes</code></a>,
+<a href="../../session/episode/struct.Episode.html#method.stranded_after" title="method majordomus_cli::session::episode::Episode::stranded_after"><code>Episode::stranded_after</code></a>); the third is the
+<code>lsof</code> reading <code>worktree cleanup</code> refuses a removal on. Nothing new is stored.</li>
+<li><strong>abandoned</strong> — nothing holds it and its oldest change is older than the threshold.</li>
+<li><strong>recent</strong> — nothing holds it and it is younger than that.</li>
+</ul>
+<p>The threshold is <code>session.stranded_after</code> from the policy: the silence after which an
+episode’s client is taken to be gone. One number answers both questions it is asked
+here — whether an open episode still holds the work, and whether work nobody holds has
+waited long enough to be called abandoned — so there is no second number to drift from
+it. A caller with better evidence than a clock names its own (<code>older_than</code>).</p>
+<p>The reading writes nothing. Every <code>git status</code> runs under <code>GIT_OPTIONAL_LOCKS=0</code>, so no
+index refresh and no lock reaches any work tree, and another work tree’s <code>.ai/local/</code> is
+read, never written. What it suggests for an abandoned work tree — the command that puts
+the work on a remote ref — is a suggestion; nothing here runs it.</p>
+<h2 id="the-lifecycle-end-to-end"><a class="doc-anchor" href="#the-lifecycle-end-to-end">§</a>The lifecycle, end to end</h2>
+<p>A linked work tree gets a staged file; the same work is <code>recent</code> against a day and
+<code>abandoned</code> against an hour once its file is years old; and an active task record then
+holds it. That the readings leave every index byte-identical is the module’s own test.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>majordomus_cli::worktree::{Threshold, WorkStanding, WorktreeService};
+<span class="kw">use </span>std::path::Path;
+<span class="kw">use </span>std::process::Command;
+
+<span class="kw">let </span>dir = tempfile::tempdir().unwrap();
+<span class="kw">let </span>git = |cwd: <span class="kw-2">&amp;</span>Path, args: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>str]| {
+    <span class="kw">let </span>ok = Command::new(<span class="string">"git"</span>)
+        .args([<span class="string">"-c"</span>, <span class="string">"user.name=t"</span>, <span class="string">"-c"</span>, <span class="string">"user.email=t@t"</span>, <span class="string">"-c"</span>, <span class="string">"commit.gpgsign=false"</span>])
+        .args(args)
+        .current_dir(cwd)
+        .status()
+        .unwrap();
+    <span class="macro">assert!</span>(ok.success(), <span class="string">"git {args:?}"</span>);
+};
+<span class="kw">let </span>repo = dir.path().join(<span class="string">"repo"</span>);
+std::fs::create_dir_all(<span class="kw-2">&amp;</span>repo).unwrap();
+git(<span class="kw-2">&amp;</span>repo, <span class="kw-2">&amp;</span>[<span class="string">"init"</span>, <span class="string">"-q"</span>]);
+git(<span class="kw-2">&amp;</span>repo, <span class="kw-2">&amp;</span>[<span class="string">"commit"</span>, <span class="string">"-q"</span>, <span class="string">"--allow-empty"</span>, <span class="string">"-m"</span>, <span class="string">"init"</span>]);
+<span class="kw">let </span>left = dir.path().join(<span class="string">"left"</span>);
+git(<span class="kw-2">&amp;</span>repo, <span class="kw-2">&amp;</span>[<span class="string">"worktree"</span>, <span class="string">"add"</span>, <span class="string">"-q"</span>, <span class="string">"-b"</span>, <span class="string">"work/left"</span>, left.to_str().unwrap()]);
+std::fs::write(left.join(<span class="string">"a.txt"</span>), <span class="string">"a\n"</span>).unwrap();
+git(<span class="kw-2">&amp;</span>left, <span class="kw-2">&amp;</span>[<span class="string">"add"</span>, <span class="string">"a.txt"</span>]);
+
+<span class="kw">let </span>service = WorktreeService::open(<span class="kw-2">&amp;</span>repo).unwrap();
+<span class="kw">let </span>day = Threshold::resolve(<span class="prelude-val">None</span>, <span class="prelude-val">Some</span>(<span class="string">"1d"</span>)).unwrap();
+<span class="kw">let </span>fresh = service.uncommitted(<span class="kw-2">&amp;</span>day).unwrap();
+<span class="macro">assert_eq!</span>(fresh.tallies.uncommitted, <span class="number">1</span>, <span class="string">"the primary checkout is never listed"</span>);
+<span class="macro">assert_eq!</span>(fresh.worktrees[<span class="number">0</span>].work.staged, <span class="number">1</span>);
+<span class="macro">assert_eq!</span>(fresh.worktrees[<span class="number">0</span>].standing, WorkStanding::Recent);
+
+<span class="comment">// the file is made years old: against an hour, nothing holding it, it is abandoned
+</span><span class="kw">let </span>touched = Command::new(<span class="string">"touch"</span>)
+    .args([<span class="string">"-t"</span>, <span class="string">"202001010000"</span>])
+    .arg(left.join(<span class="string">"a.txt"</span>))
+    .status()
+    .unwrap();
+<span class="macro">assert!</span>(touched.success());
+<span class="kw">let </span>hour = Threshold::resolve(<span class="prelude-val">None</span>, <span class="prelude-val">Some</span>(<span class="string">"1h"</span>)).unwrap();
+<span class="kw">let </span>old = service.uncommitted(<span class="kw-2">&amp;</span>hour).unwrap();
+<span class="macro">assert_eq!</span>(old.worktrees[<span class="number">0</span>].standing, WorkStanding::Abandoned);
+<span class="macro">assert!</span>(old.worktrees[<span class="number">0</span>].remedy.contains(<span class="string">"HEAD:refs/heads/rescue/work-left-"</span>));
+
+<span class="comment">// an active task record holds it, however old it is
+</span><span class="kw">let </span>state = left.join(<span class="string">".ai/local/state"</span>);
+std::fs::create_dir_all(<span class="kw-2">&amp;</span>state).unwrap();
+std::fs::write(state.join(<span class="string">"current.yaml"</span>), <span class="string">"id: t-1\noutcome: active\n"</span>).unwrap();
+<span class="kw">let </span>held = service.uncommitted(<span class="kw-2">&amp;</span>hour).unwrap();
+<span class="kw">let </span>entry = held.worktrees.iter().find(|w| w.label == <span class="string">"work/left"</span>).unwrap();
+<span class="macro">assert_eq!</span>(entry.standing, WorkStanding::Held);
+<span class="macro">assert_eq!</span>(entry.task.as_deref(), <span class="prelude-val">Some</span>(<span class="string">"t-1"</span>));</code></pre></div></div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.OpenEpisode.html" title="struct majordomus_cli::worktree::uncommitted::OpenEpisode">Open<wbr>Episode</a></dt><dd>An open episode in a work tree, as far as holding its work goes: it holds the work only
+while <code>stranded</code> is <code>Some(false)</code>; a stranded or unjudgeable one holds nothing.</dd><dt><a class="struct" href="struct.Threshold.html" title="struct majordomus_cli::worktree::uncommitted::Threshold">Threshold</a></dt><dd>The age past which uncommitted work nothing holds is abandoned, and where it came from.</dd><dt><a class="struct" href="struct.UncommittedReport.html" title="struct majordomus_cli::worktree::uncommitted::UncommittedReport">Uncommitted<wbr>Report</a></dt><dd>Every linked work tree holding uncommitted work, with what holds it: the answer of
+<code>worktree.uncommitted</code> on every surface, and what <code>doctor</code> renders.</dd><dt><a class="struct" href="struct.UncommittedTallies.html" title="struct majordomus_cli::worktree::uncommitted::UncommittedTallies">Uncommitted<wbr>Tallies</a></dt><dd>The counts of an <a href="struct.UncommittedReport.html" title="struct majordomus_cli::worktree::uncommitted::UncommittedReport"><code>UncommittedReport</code></a>: how many linked work trees were read, how many
+hold uncommitted work, and how those split into held, recent and abandoned. The three
+standings always add up to <code>uncommitted</code>; <code>doctor</code> reads <code>abandoned</code> to decide whether it
+has anything to warn about.</dd><dt><a class="struct" href="struct.UncommittedWorktree.html" title="struct majordomus_cli::worktree::uncommitted::UncommittedWorktree">Uncommitted<wbr>Worktree</a></dt><dd>One linked work tree holding uncommitted work: how much, how old, what holds it, the
+verdict, and the command that would preserve it. A listing is in canonical order —
+abandoned first, then recent, then held, the oldest first inside each.</dd></dl><h2 id="enums" class="section-header">Enums<a href="#enums" class="anchor">§</a></h2><dl class="item-table"><dt><a class="enum" href="enum.WorkStanding.html" title="enum majordomus_cli::worktree::uncommitted::WorkStanding">Work<wbr>Standing</a></dt><dd>What a work tree’s uncommitted work is, judged: held by something, recent, or abandoned.
+<a href="fn.judge.html" title="fn majordomus_cli::worktree::uncommitted::judge"><code>judge</code></a> is the one place it is decided, and <code>doctor</code> warns only on <code>abandoned</code>.</dd></dl><h2 id="constants" class="section-header">Constants<a href="#constants" class="anchor">§</a></h2><dl class="item-table"><dt><a class="constant" href="constant.THRESHOLD_KEY.html" title="constant majordomus_cli::worktree::uncommitted::THRESHOLD_KEY">THRESHOLD_<wbr>KEY</a></dt><dd>The policy key the threshold is read from.</dd><dt><a class="constant" href="constant.UNCOMMITTED_SCHEMA.html" title="constant majordomus_cli::worktree::uncommitted::UNCOMMITTED_SCHEMA">UNCOMMITTED_<wbr>SCHEMA</a></dt><dd>The schema of <a href="struct.UncommittedReport.html" title="struct majordomus_cli::worktree::uncommitted::UncommittedReport"><code>UncommittedReport</code></a>.</dd></dl><h2 id="functions" class="section-header">Functions<a href="#functions" class="anchor">§</a></h2><dl class="item-table"><dt><a class="fn" href="fn.judge.html" title="fn majordomus_cli::worktree::uncommitted::judge">judge</a></dt><dd>Judge one work tree’s work from what holds it, its age and the threshold. The one place
+the verdict is decided.</dd><dt><a class="fn" href="fn.rescue_command.html" title="fn majordomus_cli::worktree::uncommitted::rescue_command">rescue_<wbr>command</a></dt><dd>The command that puts a work tree’s uncommitted work on a remote ref named
+<code>rescue/&lt;label&gt;-&lt;YYYYMMDD&gt;</code>: stage everything, commit it there, and push that commit to a
+branch of its own, so that the branch the work tree holds is not pushed over. The shape
+the two rescues of October 2026 took (<code>origin/rescue/completion-doctrine-20261008</code>).</dd><dt><a class="fn" href="fn.shell_quote.html" title="fn majordomus_cli::worktree::uncommitted::shell_quote">shell_<wbr>quote</a></dt><dd>A path quoted for a POSIX shell.</dd></dl></section></div></main></body></html>

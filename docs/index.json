@@ -2,17 +2,17 @@
  "schema": 1,
  "generated_by": "scripts/lib/docs-index.mjs",
  "build": {
-  "commit": "c0e3585dc836201089d6b5dd49f5a79fe8bff798",
-  "source_version": "0.26.0",
-  "registry_fingerprint": "dcd73504305fb981edaa3320c23c9994f922898e6750a89a9804ff556fc13e5b"
+  "commit": "751a86c2e91c74580105b26dc136fb7b905705e0",
+  "source_version": "0.27.0",
+  "registry_fingerprint": "3e977170089cf87a2175a609842ad27be4bf1770fa2c6edb2928a71bbe39ecd6"
  },
  "counts": {
-  "pages": 2198,
-  "capabilities": 2379,
-  "cli_commands": 107,
-  "http_routes": 194,
-  "mcp_tools": 190,
-  "mcp_resources": 2235,
+  "pages": 2238,
+  "capabilities": 2434,
+  "cli_commands": 108,
+  "http_routes": 196,
+  "mcp_tools": 191,
+  "mcp_resources": 2288,
   "modules": 91
  },
  "kinds": [
@@ -22,7 +22,7 @@
    "route": "/adrs/",
    "title": "Decisions",
    "reason": null,
-   "count": 105
+   "count": 109
   },
   {
    "kind": "application",
@@ -54,7 +54,7 @@
    "route": "/guarantees/",
    "title": null,
    "reason": null,
-   "count": 246
+   "count": 247
   },
   {
    "kind": "command",
@@ -110,7 +110,7 @@
    "route": null,
    "title": null,
    "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-   "count": 344
+   "count": 347
   },
   {
    "kind": "domain",
@@ -158,7 +158,7 @@
    "route": "/plan/",
    "title": null,
    "reason": null,
-   "count": 362
+   "count": 390
   },
   {
    "kind": "knowledge",
@@ -182,7 +182,7 @@
    "route": "/plan/",
    "title": null,
    "reason": null,
-   "count": 35
+   "count": 37
   },
   {
    "kind": "moment",
@@ -270,7 +270,7 @@
    "route": null,
    "title": null,
    "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-   "count": 481
+   "count": 496
   },
   {
    "kind": "use-case",
@@ -852,6 +852,15 @@
    "section": "Decisions"
   },
   {
+   "route": "/adrs/adr-0069/",
+   "title": "A capability may be scripted, and repository automation is scripted capabilities rather than shell",
+   "description": "A capability may be scripted, and repository automation is scripted capabilities rather than shell",
+   "kind": "adr",
+   "id": "majordomus://adr/adr-0069",
+   "source": ".ai/repo/adrs/0069-a-capability-may-be-scripted.md",
+   "section": "Decisions"
+  },
+  {
    "route": "/adrs/adr-0070/",
    "title": "An intent is a typed record, and its stage and satisfaction are derived from the plan and the evidence",
    "description": "An intent is a typed record, and its stage and satisfaction are derived from the plan and the evidence",
@@ -1230,6 +1239,15 @@
    "section": "Decisions"
   },
   {
+   "route": "/adrs/adr-0152/",
+   "title": "A diagram and a chart on the site are one viewer each, over what the build derived: interactive, linkable, and linked by inference",
+   "description": "A diagram and a chart on the site are one viewer each, over what the build derived: interactive, linkable, and linked by inference",
+   "kind": "adr",
+   "id": "majordomus://adr/adr-0152",
+   "source": ".ai/repo/adrs/0152-a-diagram-and-a-chart-on-the-site-are-one-viewer-each-over-w.md",
+   "section": "Decisions"
+  },
+  {
    "route": "/adrs/adr-0155/",
    "title": "An expedited landing is the owner's word, judged on the merged tree, and never reaches a tag",
    "description": "An expedited landing is the owner's word, judged on the merged tree, and never reaches a tag",
@@ -1245,6 +1263,24 @@
    "kind": "adr",
    "id": "majordomus://adr/adr-0158",
    "source": ".ai/repo/adrs/0158-the-observatory-draws-only-what-was-observed.md",
+   "section": "Decisions"
+  },
+  {
+   "route": "/adrs/adr-0160/",
+   "title": "The kiosk draws what the repository proves, from the sources that already answer it, and draws it with p5 only where the build has it",
+   "description": "The kiosk draws what the repository proves, from the sources that already answer it, and draws it with p5 only where the build has it",
+   "kind": "adr",
+   "id": "majordomus://adr/adr-0160",
+   "source": ".ai/repo/adrs/0160-the-kiosk-draws-what-the-repository-proves.md",
+   "section": "Decisions"
+  },
+  {
+   "route": "/adrs/adr-0161/",
+   "title": "A mesh node follows the published release, through the one installer, forward only",
+   "description": "A mesh node follows the published release, through the one installer, forward only",
+   "kind": "adr",
+   "id": "majordomus://adr/adr-0161",
+   "source": ".ai/repo/adrs/0161-a-mesh-node-follows-the-published-release.md",
    "section": "Decisions"
   },
   {
@@ -1652,7 +1688,7 @@
   {
    "route": "/docs/api/executions/",
    "title": "HTTP API: executions",
-   "description": "Running a capability of this registry as work that can be watched: started, followed event by event over the live channel, read back afterwards, and asked to stop. In memory; an execution does not outlive the process that accepted it.",
+   "description": "Running a capability of this registry as work that can be watched: started, followed event by event over the live channel, read back afterwards, and asked to stop. One plane per checkout: `majordomus run` executes in its own process and reports the execution to the server already serving the checkout, so that server lists it beside its own; with no server it says that nothing else can see the run. In memory; an execution does not outlive the server that holds it.",
    "section": "Documentation"
   },
   {
@@ -3294,6 +3330,12 @@
    "section": "Documentation"
   },
   {
+   "route": "/docs/cli/worktree/uncommitted/",
+   "title": "majordomus worktree uncommitted",
+   "description": "Every linked worktree holding uncommitted work: how many paths, how old the oldest change, what holds it (an active task, an open episode, a process inside) and whether it is abandoned, with the command that would put it on a remote ref. Reads every worktree and writes none",
+   "section": "Documentation"
+  },
+  {
    "route": "/docs/cli/worktree/validate/",
    "title": "majordomus worktree validate",
    "description": "Every error of the topology, and nothing else; exit 10 when there is one",
@@ -3375,6 +3417,12 @@
    "route": "/docs/development-runtime/",
    "title": "The development runtime",
    "description": "the development runtime: which program owns the semantics of the plan, tasks, sessions, context, executions, peers, evidence and completion, the measured inventory of every one of them, the storage each is decided to keep, the two event tiers, the derivation chain anything exposed must follow, what each surface may and may not decide, and the ranked gaps between that boundary and the code",
+   "section": "Documentation"
+  },
+  {
+   "route": "/docs/diagrams/",
+   "title": "Diagrams and charts",
+   "description": "diagrams and charts on the site: one viewer for every Mermaid diagram (zoom, pan, full screen, download, tracing), the addresses `#diagram-<name>` and `#diagram-<name>:<node>`, node links inferred at build from the identities the generated data carries, and charts drawn from the tables a page already renders",
    "section": "Documentation"
   },
   {
@@ -4239,6 +4287,12 @@
    "route": "/guarantees/a-candidate-is-routed-by-what-it-is-about/",
    "title": "Every candidate derived from an observation carries a route — platform, enforcement, generator, documentation or project — derived from its subject's structure and never from its wording, and in a repository that adopted the tool its own share/ routes project",
    "description": "A candidate derived from an observation says which owner should look first — platform, enforcement, generator, documentation or project — read from its subject's structure and never from its words. In a repository that adopted the tool, the project's own share/ is the project's, and a project's defect is never routed into the tool's governance.",
+   "section": "Guaranteed, advisory, planned"
+  },
+  {
+   "route": "/guarantees/a-diagram-is-named-linked-and-addressable/",
+   "title": "Every Mermaid diagram of the built site gets an id (diagram-<name>), the list of its nodes, the viewer's controls and a link for each node that is the identity of an object the site has a page for, all derived at build; a link to",
+   "description": "A diagram on the site is a  mermaid  fence in a document, or Mermaid source a template",
    "section": "Guaranteed, advisory, planned"
   },
   {
@@ -5826,6 +5880,12 @@
    "section": "The plan"
   },
   {
+   "route": "/plan/a-second-adopter-is-served/",
+   "title": "a-second-adopter-is-served — A second adopter is served: what a foreign repository met on its first day is fixed in the tool",
+   "description": "Each finding is fixed generically, with no test of whether the repository is this one: by a declaration, a derivation or a default that an adopter can state. Each fix carries a case that fails without it, its derived files regenerated and its page of the documentation corrected.",
+   "section": "The plan"
+  },
+  {
    "route": "/plan/a-session-leaves-what-it-observed/",
    "title": "a-session-leaves-what-it-observed — A session leaves what it observed, and the repository routes it",
    "description": "Any worker records an observation in one command; the episode boundary derives a candidate that says what it is about and who should look; reading groups recurrence by subject; an episode with nothing to say records that it found nothing.",
@@ -5841,6 +5901,12 @@
    "route": "/plan/architecture-is-enforced/",
    "title": "architecture-is-enforced — A violated invariant fails a gate, and green means every required check ran",
    "description": "A deliberate architectural violation fails a named gate; a red or cancelled full run is raised the day it happens; a rule is reported proven only when its proof ran; a credential shape never leaves through a response, log or frame; an installed release is proven to serve a repository that is not this one.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/automation/",
+   "title": "automation — Repository automation is scripted capabilities over typed Rust, not shell",
+   "description": "A capability may be scripted (ADR 0069): a Rhai script inside the Rust executable orchestrates typed capabilities through the one registry, reaches every surface by the projections that already exist, runs in a sandbox with a declared and enforced effect ceiling, and shell shrinks by migration under a gate that refuses new shell without a declared exemption.",
    "section": "The plan"
   },
   {
@@ -7218,6 +7284,36 @@
    "section": "The plan"
   },
   {
+   "route": "/plan/i1800/",
+   "title": "I1800 — The sandboxed engine a scripted capability runs in",
+   "description": "Embed Rhai in the Rust executable as one engine constructor that every scripted capability runs under: eval disabled, no clock, limits on operations, call depth, expression depth and the sizes of strings, arrays and maps, and cancellation checked on every operation.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i1801/",
+   "title": "I1801 — A scripted capability is a kind, discovered and registered, runnable and projected like any capability",
+   "description": "Make a capability declared in a file of the layer, with a Rhai script as its handler, a capability of the one registry: discovered by the index as a kind, validated with errors naming file and field, runnable through majordomus run, and projected onto the command line, MCP, OpenAPI and the generated reference by the projections that already exist.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i1802/",
+   "title": "I1802 — Nothing runs Perl",
+   "description": "Remove every invocation of Perl from tracked files, including indirect ones such as shasum on macOS, and hold the absence with a gate.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i1803/",
+   "title": "I1803 — New shell is refused without a declared exemption, and the migration inventory is tracked",
+   "description": "Refuse a new shell file under a governed path unless a machine-readable exemption list names it, and track the inventory of existing shell with each unit's disposition.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i1804/",
+   "title": "I1804 — The first shell scripts become scripted capabilities over typed Rust",
+   "description": "Migrate the baseline-ratchet logic copied into ten scripts/ci gates to one typed Rust capability, and the gates that use it to scripted capabilities that orchestrate it.",
+   "section": "The plan"
+  },
+  {
    "route": "/plan/i1900/",
    "title": "I1900 — An intent is a typed record whose stage and satisfaction are derived",
    "description": "Deliver slice 1 of the intent-lifecycle milestone: the intent kind and schema, the read-only capabilities intent.list, intent.record, intent.validate and intent.preflight on every surface, and the intent-check gate.",
@@ -7962,9 +8058,39 @@
    "section": "The plan"
   },
   {
+   "route": "/plan/i2601/",
+   "title": "I2601 — majordomus evidence reaches record, stamp and show",
+   "description": "Make the documented `majordomus evidence record|stamp|show` work from the launcher.",
+   "section": "The plan"
+  },
+  {
    "route": "/plan/i2652/",
    "title": "I2652 — The UI shows what the knowledge base holds: the candidates awaiting review and whether the deriver still writes, read and never acted on",
    "description": "Give the queue the work leaves behind a screen: what awaits a reviewer, what it is about, and whether a derivation still follows every closed episode, so that the result of a review is seen where every other state of the delivery is.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i2653/",
+   "title": "I2653 — Every diagram on the site is one interactive, linkable viewer whose node links are inferred, and a derived table can be drawn as a chart",
+   "description": "Make every Mermaid diagram the site publishes zoomable, pannable, full-screen, downloadable and addressable by a fragment (#diagram-<name>, and #diagram-<name>:<node> for one node), with a node that names a rule, a decision, a command, a capability, an issue, a milestone or a document linked to that object's page by the build rather than by the diagram's author; and let a table the site already renders from derived data be drawn as an interactive Apache ECharts chart by declaring it, with no second copy of the numbers.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i2654/",
+   "title": "I2654 — A chart is held to its table by a gate, and the tables that are measured series are drawn",
+   "description": "Give the chart component (site/charts.js, ADR 0152) the two checks it lacks, and declare the remaining tables whose content is a measured series as charts: the benchmark baselines, the economics pairs and segments, the claims by status.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i2655/",
+   "title": "I2655 — The homepage decides whether it carries a derived figure, within its declared story and budget",
+   "description": "Decide, as a reviewed change to site/data/homepage.toml, whether one section of the homepage shows a derived diagram or chart through the shared viewer, and what that costs in the declared byte budget; if the answer is no, link the diagrams page from the section that argues for derivation.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i2656/",
+   "title": "I2656 — The diagram viewer serves the Cockpit and majordomus ui, and a node that is a repository file links to its source",
+   "description": "Extend what I2653 built in two directions it left out: let the Cockpit and majordomus ui render a Mermaid diagram through the same viewer instead of a second implementation, and link a node whose label is a tracked file path to that file at the commit the site was built from.",
    "section": "The plan"
   },
   {
@@ -8019,6 +8145,30 @@
    "route": "/plan/i2694/",
    "title": "I2694 — A promoted note resolves in every checkout, not only where it was promoted",
    "description": "Make `majordomus knowledge promote` produce a record that `knowledge check` accepts in a fresh clone and in CI, so that the evolve skill's procedure can be followed to its end.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i2695/",
+   "title": "I2695 — The Observatory draws the proof, claim, surface, wave and release scenes from the capabilities that already answer them",
+   "description": "The kiosk shows thirteen scenes, five more of which read what the repository proves, and says why for any that has nothing to draw.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i2696/",
+   "title": "I2696 — p5 is a built, optional asset of the UI and the page says where it is",
+   "description": "A p5 scene is drawn when the library is served and is an honest statement when it is not.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i2697/",
+   "title": "I2697 — The public snapshot carries the p5 library, or says which scenes it cannot draw",
+   "description": "The kiosk on the public site draws the proof scenes with p5, from the one reading taken at the published commit.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i2698/",
+   "title": "I2698 — The new scenes have screenshot evidence at 1080p and 4K on a named revision",
+   "description": "A manifest names the revision and holds a screenshot of each new scene at 1920x1080 and 3840x2160.",
    "section": "The plan"
   },
   {
@@ -8079,6 +8229,90 @@
    "route": "/plan/i2709/",
    "title": "I2709 — A red on the trunk has one named carrier, and nobody else may land until it is paid",
    "description": "Make the trunk's red the first thing every lander knows about and the one thing that may land: a carrier is named on the board within the minute the red is read, and the landing claim is refused to anyone else until the fix is on master.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i2710/",
+   "title": "I2710 — A release run never waits behind pull-request validates for a job slot",
+   "description": "Give the release path (the release workflow, the record pull request's verdict and the Pages deploy that publishes the release) priority over branch validates on the shared runner pool, so that a published release reaches majordomus.dev within its own run time.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i2711/",
+   "title": "I2711 — The pages job judges production only after the deployment of its own commit has arrived",
+   "description": "Stop validate's `pages` job on master from reporting red because it read majordomus.dev before the deployment of the commit it judges had been served.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i2712/",
+   "title": "I2712 — release-check treats a tag whose release run is still going as pending, not as a missing record",
+   "description": "Make scripts/ci/release-check tell a tag whose release workflow is still running (or whose record branch is about to be opened by it) from a published release that nobody recorded.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i2713/",
+   "title": "I2713 — A build never lets idle incremental sessions fill the disk",
+   "description": "Make the repository's own build entry points keep a build directory's incremental cache bounded, so that concurrent sessions building on one machine cannot run the disk out.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i2714/",
+   "title": "I2714 — One build directory never serves two worktrees' jobs at once",
+   "description": "Prevent a build directory set through CARGO_BUILD_BUILD_DIR from being used by jobs of two different worktrees at the same time, so that one job's build cannot replace the artifacts another job is testing.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i2715/",
+   "title": "I2715 — New public Rust code meets rust-quality before the structure job does",
+   "description": "Put the rust-quality verdict (examples, behavioural tests and prose for every exported item) where an author meets it while writing — the fast local checks and the change's own proofs — instead of first in the 15-30 minute structure job.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i2716/",
+   "title": "I2716 — A case derives its budgets and lists from what it tests, never pins them",
+   "description": "Keep a case from failing because its subject grew: a budget, a count or a list of names that a case states by hand is derived from the model or carries the margin and the reason it holds.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i2717/",
+   "title": "I2717 — A release record pull request gets a verdict that can pass",
+   "description": "Give the record pull request the release workflow opens a ci verdict it can earn, so that it lands on that verdict and not on a lander's local judgement.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i2718/",
+   "title": "I2718 — A linked worktree runs its own hooks, never the primary checkout's",
+   "description": "Make every linked worktree run, and doctor judge, the hooks of its own tree, so that a stale primary checkout cannot refuse or weaken the commits of every other worktree.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i2720/",
+   "title": "I2720 — majordomus self update re-runs the published installer, and never reimplements it",
+   "description": "Give every installation one typed command that reports and applies an upgrade to the stable release by running the published install.sh with --version and the installation's own prefix, so the download, verification and swap exist once.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i2721/",
+   "title": "I2721 — An enrolled mesh node follows the stable pointer by itself",
+   "description": "Make every node the mesh declaration enrolls keep its installation at the version releases/latest.json names, checking at server start, every 15 minutes with jitter and when the mesh announces a release, and applying through self update.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i2722/",
+   "title": "I2722 — A hub activates a new version under its service manager, checks its health and rolls back by itself",
+   "description": "Make a hub that has installed a newer release restart onto it through its systemd user unit or launchd agent when no session is attached or after a bounded grace, pass a readiness and mesh verify check, and otherwise rename the launcher back, keep serving the previous version and put a rollout failed entry on the board.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i2723/",
+   "title": "I2723 — The mesh shows each node's version and how far a release has rolled out",
+   "description": "Make every runtime publish its version and follow setting to the mesh, mesh peers print them, and mesh doctor name a node more than one release behind the stable pointer; a release is rolled out when every enrolled following node reports it.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i2724/",
+   "title": "I2724 — A node without a route to the site takes the archive from a peer and still verifies it itself",
+   "description": "Let a following node that cannot reach github.com or majordomus.dev fetch the release archive from a linked peer over the authenticated mesh link, and install it only after checking its digest and size against release metadata it read itself or that was relayed and signed by the publishing node.",
    "section": "The plan"
   },
   {
@@ -8173,8 +8407,8 @@
   },
   {
    "route": "/plan/safe-self-update/",
-   "title": "safe-self-update — Clients and servers of different versions meet safely, and a release's provenance can be checked",
-   "description": "A newer client replaces an older server in an ordered hand-off and an older client is told it is older; a change to any wire or on-disk schema needs a version bump; a released archive carries a provenance attestation the installer checks.",
+   "title": "safe-self-update — Every mesh node follows the published release by itself, versions meet safely, and a release's provenance can be checked",
+   "description": "An enrolled mesh node follows the stable release by itself through the one installer, forward only, activating in order and rolling back a failed activation (ADR 0161); a newer client replaces an older server in an ordered hand-off and an older client is told it is older; a change to any wire or on-disk schema needs a version bump; a released archive carries a provenance attestation the installer checks.",
    "section": "The plan"
   },
   {
@@ -8672,7 +8906,7 @@
   {
    "route": "/registry/capabilities/executions-list/",
    "title": "executions.list",
-   "description": "Every execution this process remembers, newest first, narrowed by state or by capability. The counts beside them — remembered, active, queued, live channels — are what a control plane shows without asking a second question.",
+   "description": "Every execution this process remembers, newest first, narrowed by state or by capability: the ones it ran and the ones `majordomus run` in another process of the checkout reported to it, each with who started it. The counts beside them — remembered, active, queued, live channels — are what a control plane shows without asking a second question.",
    "section": "Registry"
   },
   {
@@ -8682,9 +8916,15 @@
    "section": "Registry"
   },
   {
+   "route": "/registry/capabilities/executions-report/",
+   "title": "executions.report",
+   "description": "What `majordomus run` posts while it runs a capability in its own process and a server already serves the checkout: the execution's description and its events after the last sequence this server took. The server holds it as an execution started by the command line, with the pid, in the same store, listing, Cockpit pages and live channel as its own; applies each event once and in order, answering where the next report starts; tells the reporter when somebody asked it to stop; and fails it with `unavailable` once the reporter has been silent for 30 s. Nothing runs here. Changes this process's memory only.",
+   "section": "Registry"
+  },
+  {
    "route": "/registry/capabilities/executions-start/",
    "title": "executions.start",
-   "description": "Run any executable capability of this registry as an execution: the input is checked against that capability's own input schema, the work is queued, and this answers at once with the execution's id and the links to follow it. Nothing waits for the handler. The capability runs through the same executor every other interface calls, so there is no second implementation of anything.",
+   "description": "Run any executable capability of this registry as an execution: the input is checked against that capability's own input schema, the work is queued, and this answers at once with the execution's id and the links to follow it. Nothing waits for the handler. The capability runs through the same executor every other interface calls, so there is no second implementation of anything. On the command line (`majordomus run`) it runs in that process and is reported to the server serving the checkout, when one is, through executions.report; a run never starts a server.",
    "section": "Registry"
   },
   {
@@ -9474,6 +9714,12 @@
    "section": "Registry"
   },
   {
+   "route": "/registry/capabilities/worktree-uncommitted/",
+   "title": "worktree.uncommitted",
+   "description": "Every linked worktree whose index or working tree holds changes no commit carries: how many paths (staged, unstaged, untracked, conflicted), when the oldest change was made (the earliest modification time among the changed paths, the index file's standing in for a deleted one), and what holds the work — an active task record, an open episode that is not stranded, or a process whose working directory is inside. Work nothing holds and older than the threshold is `abandoned`, with the command that would put it on a remote `rescue/` ref; it is suggested, never run. The threshold is the policy's `session.stranded_after` unless `older_than` names another. Reads every worktree and writes none: every status runs without optional locks, so no index is refreshed.",
+   "section": "Registry"
+  },
+  {
    "route": "/registry/cli/",
    "title": "Command line",
    "description": "The native command line of the Rust executable, every command and argument, as clap declares it.",
@@ -9626,7 +9872,7 @@
   {
    "route": "/registry/modules/executions/",
    "title": "Executions",
-   "description": "Running a capability of this registry as work that can be watched: started, followed event by event over the live channel, read back afterwards, and asked to stop. In memory; an execution does not outlive the process that accepted it.",
+   "description": "Running a capability of this registry as work that can be watched: started, followed event by event over the live channel, read back afterwards, and asked to stop. One plane per checkout: `majordomus run` executes in its own process and reports the execution to the server already serving the checkout, so that server lists it beside its own; with no server it says that nothing else can see the run. In memory; an execution does not outlive the server that holds it.",
    "section": "Registry"
   },
   {
@@ -11470,1479 +11716,1485 @@
   },
   {
    "route": "/rustdoc/",
-   "title": "majordomus-cli 0.26.0 — Rust API reference",
-   "description": "The rustdoc reference of majordomus-cli 0.26.0, built from commit c0e3585dc836201089d6b5dd49f5a79fe8bff798: the public items of the library and of the executable, and the source they were built from.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "title": "majordomus-cli 0.27.0 — Rust API reference",
+   "description": "The rustdoc reference of majordomus-cli 0.27.0, built from commit 751a86c2e91c74580105b26dc136fb7b905705e0: the public items of the library and of the executable, and the source they were built from.",
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus/",
    "title": "majordomus - Rust",
    "description": "The executable: parse, log to stderr, run, exit with the contract’s code.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/",
    "title": "majordomus_cli - Rust",
    "description": "Majordomus control-plane CLI.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/about/",
    "title": "majordomus_cli::about - Rust",
    "description": "What the executable says about itself, written once. The OpenAPI document’s `info`, the MCP `initialize` instructions, the HTTP index and the generated reference all read these sentences from here, so that no projection describes the surface in words of its own and none can drift from the others. Prose only: counts, URLs of a running server and anything else that is measured are added by the projection that measures it.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/app/",
    "title": "majordomus_cli::app - Rust",
    "description": "The application context every command starts from: the repository, its index, and the capability registry composed once from the builtin executables and the index. Commands differ in what they do with it; none of them builds it differently.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/bench/",
    "title": "majordomus_cli::bench - Rust",
    "description": "The benchmark projection: every externally callable operation of the registry, as a target, derived and never listed by hand. A capability with a required benchmark policy is a target directly and through every transport its exposure declares; the inputs come from its input type’s `BenchmarkCases`; the transports’ own operations (`initialize`, `tools/list`, `/openapi.json`, …) are system targets declared once in `system`. Coverage is `covered / required` with a generated denominator; the runners time targets through the executor, a real loopback socket and a real child process; the results are a versioned document; the accepted baseline is compared against a policy that is data.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/bench/baseline/",
    "title": "majordomus_cli::bench::baseline - Rust",
    "description": "Accepted baselines and the regression policy. A baseline is a tracked result document of one platform (`os-arch-buildprofile`), promoted explicitly from a local run by `bench baseline update`; the policy is data in `.ai/repo/benchmarks/rust/policy.yaml` (the shell tool keeps its own evidence beside it, under `.ai/repo/benchmarks/`). A check compares each measurement of a run with the baseline’s under the policy and reports every line; a target the baseline knows and the run does not is reported as stale, never silently attached to something else, and a baseline of another platform is not compared at all.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/bench/results/",
    "title": "majordomus_cli::bench::results - Rust",
    "description": "The result document: a versioned record of one benchmark run, with the provenance that makes it comparable (commit, dirty state, build profile, platform, registry fingerprint, profile) and, per target, the statistics of each cache mode measured. Local runs are written under the checkout’s local half; the accepted baseline is a tracked file of the same shape, minus the machine-local fields, promoted explicitly.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/build_identity/",
    "title": "majordomus_cli::build_identity - Rust",
    "description": "Which commit an executable was built from, and whether that tree was dirty: the decision `build.rs` makes once, at build time, and compiles in as `MAJORDOMUS_COMMIT` and `MAJORDOMUS_DIRTY` (read back as `crate::COMMIT` and `crate::DIRTY`).",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/capability/",
    "title": "majordomus_cli::capability - Rust",
    "description": "The canonical capability model and its registry: the one place a capability is defined. MCP, HTTP, OpenAPI, the CLI’s introspection and the generated documentation are projections of what lives here and define nothing of their own.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/capability/builtin/",
    "title": "majordomus_cli::capability::builtin - Rust",
    "description": "The executable capabilities this executable ships: one Rust module per capability module, each owning its typed inputs and outputs, its handlers, its benchmark cases and its `module()` composition; `modules` composes the application from them with `compose_modules!`, and that list is the only root composition there is. Adding a capability to an existing module touches that module’s file alone; every projection, benchmark target and generated document follows from the descriptor.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/capability/builtin/artifacts/",
    "title": "majordomus_cli::capability::builtin::artifacts - Rust",
    "description": "The `artifacts` module: what `majordomus generate` writes, read back.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/capability/builtin/commands/",
    "title": "majordomus_cli::capability::builtin::commands - Rust",
    "description": "The `commands` module: the command graph, projected.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/capability/builtin/commit/",
    "title": "majordomus_cli::capability::builtin::commit - Rust",
    "description": "The `commit` module: what this repository holds a commit to, what the working tree would commit, and which scope the history gives a set of paths.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/capability/builtin/continuity/",
    "title": "majordomus_cli::capability::builtin::continuity - Rust",
    "description": "The `continuity` module: what this checkout’s lifecycle is holding right now — the open episode, the record the next worker would resume from, the newest progress note, what is blocking acceptance, and whether the provider’s events actually reach the tool.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/capability/builtin/dashboard/",
    "title": "majordomus_cli::capability::builtin::dashboard - Rust",
    "description": "The `dashboard` module: the Overview of the Dashboard Suite, as a projection of the capabilities that already answer each of its facts (ADR 0088).",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/capability/builtin/devtask/",
    "title": "majordomus_cli::capability::builtin::devtask - Rust",
    "description": "The `devtask` module: an issue and a milestone read as executable development scopes.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/capability/builtin/economics/",
    "title": "majordomus_cli::capability::builtin::economics - Rust",
    "description": "The `economics` module: token economics, measured, projected. Every capability here is a read of `crate::economics` — the one calculator — so the command line, HTTP, the OpenAPI document, MCP and the Cockpit show the same metric, value, class and sample count, because none of them computes one.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/capability/builtin/entity/",
    "title": "majordomus_cli::capability::builtin::entity - Rust",
    "description": "The `entity` module: every object of the layer as an addressable, cross-linked node.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/capability/builtin/environment/",
    "title": "majordomus_cli::capability::builtin::environment - Rust",
    "description": "The `environment` module: what this checkout is, as a capability.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/capability/builtin/episodes/",
    "title": "majordomus_cli::capability::builtin::episodes - Rust",
    "description": "The `episodes` module: the execution episode of a client that has no provider hooks, opened and closed by the MCP connection itself (ADR 0103).",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/capability/builtin/evidence/",
    "title": "majordomus_cli::capability::builtin::evidence - Rust",
    "description": "The `evidence` module: from a claim to the run that proves it, and back.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/capability/builtin/gates/",
    "title": "majordomus_cli::capability::builtin::gates - Rust",
    "description": "The `gates` module: completion as a state the repository decides.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/capability/builtin/health/",
    "title": "majordomus_cli::capability::builtin::health - Rust",
    "description": "The `health` module: whether what this process serves is healthy, answered by the engines that already decide it rather than by checks written a second time here.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/capability/builtin/intent_realization/",
    "title": "majordomus_cli::capability::builtin::intent_realization - Rust",
    "description": "The `intent_realization` module: which work realises which intent, and why an intent stands where it stands.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/capability/builtin/intents/",
    "title": "majordomus_cli::capability::builtin::intents - Rust",
    "description": "The `intents` module:",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/capability/builtin/knowledge_base/",
    "title": "majordomus_cli::capability::builtin::knowledge_base - Rust",
    "description": "The `knowledge_base` module: what the knowledge deriver left for review and whether it is still writing — the candidate records awaiting promotion, one record by id with every reference it names resolved, and the derivation status of this checkout judged against `session.freshness`.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/capability/builtin/lifecycle/",
    "title": "majordomus_cli::capability::builtin::lifecycle - Rust",
    "description": "The `lifecycle` module: the episode lifecycle as something a person can watch.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/capability/builtin/mcp/",
    "title": "majordomus_cli::capability::builtin::mcp - Rust",
    "description": "The `mcp` module: the MCP projection of this registry, described as one typed value.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/capability/builtin/objects/",
    "title": "majordomus_cli::capability::builtin::objects - Rust",
    "description": "The `objects` module: the declarative objects of the repository’s layer, listed, read and searched, and the one resolution of a `majordomus://` URI that `objects.get` and the MCP resource read share.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/capability/builtin/obligations/",
    "title": "majordomus_cli::capability::builtin::obligations - Rust",
    "description": "The `obligations` module: what a task owes before it may be called completed, and whether the evidence that discharged each one still describes this tree.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/capability/builtin/observatory/",
    "title": "majordomus_cli::capability::builtin::observatory - Rust",
    "description": "The `observatory` module: what the Observatory (`/ui/observatory`) may carry to a place where no mesh runs, and the recording the repository carries there (ADR 0158, I2678).",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/capability/builtin/pack/",
    "title": "majordomus_cli::capability::builtin::pack - Rust",
    "description": "The `pack` module: the tracked tree as token-bounded text shards for a reader whose file search indexes text, with nothing in it that is not source.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/capability/builtin/plan/",
    "title": "majordomus_cli::capability::builtin::plan - Rust",
    "description": "The `plan` module: the milestone and issue model’s derivations, projected.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/capability/builtin/quality/",
    "title": "majordomus_cli::capability::builtin::quality - Rust",
    "description": "The `quality` module: what this executable’s own public surface is held to, answered through every transport the surface is measured against.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/capability/builtin/reasoning/",
    "title": "majordomus_cli::capability::builtin::reasoning - Rust",
    "description": "The `reasoning` module: provider-independent reasoning, projected (ADR 0098).",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/capability/builtin/recover/",
    "title": "majordomus_cli::capability::builtin::recover - Rust",
    "description": "The `recover` module: the stray files of the record stores, classified by evidence and swept exactly once.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/capability/builtin/release/",
    "title": "majordomus_cli::capability::builtin::release - Rust",
    "description": "The `release` module: the changelog, the version, and the compatibility analysis behind it — all three derived.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/capability/builtin/repository/",
    "title": "majordomus_cli::capability::builtin::repository - Rust",
    "description": "The `repository` module: what the repository and this process’s index are.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/capability/builtin/rules/",
    "title": "majordomus_cli::capability::builtin::rules - Rust",
    "description": "The `rules` module: from a rule to what proves it, and back.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/capability/builtin/served/",
    "title": "majordomus_cli::capability::builtin::served - Rust",
    "description": "The `served` module: whether a deployment serves the commit it was meant to, observed from outside and recorded as evidence a later reader can re-judge.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/capability/builtin/server/",
    "title": "majordomus_cli::capability::builtin::server - Rust",
    "description": "The `server` module: the shared server of this checkout, and of every other checkout of the same git repository — what each lease says, whether the server it names answers, and whether what answers is the code on disk.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/capability/builtin/session_domain/",
    "title": "majordomus_cli::capability::builtin::session_domain - Rust",
    "description": "The `session_domain` module: the typed session domain, projected.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/capability/builtin/skills/",
    "title": "majordomus_cli::capability::builtin::skills - Rust",
    "description": "The `skills` module: every skill as a proven capability, derived.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/capability/builtin/trace/",
    "title": "majordomus_cli::capability::builtin::trace - Rust",
    "description": "The `trace` module: the work graph above the branch, both ways.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/capability/builtin/web/",
    "title": "majordomus_cli::capability::builtin::web - Rust",
    "description": "The `web` module: the surfaces this repository exposes over HTTP, answered from the resolution the process is already serving from.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/capability/closure/",
    "title": "majordomus_cli::capability::closure - Rust",
    "description": "Projection closure: a declared exposure is answered by the surface that would carry it.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/capability/executor/",
    "title": "majordomus_cli::capability::executor - Rust",
    "description": "The one execution path.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/capability/handler/",
    "title": "majordomus_cli::capability::handler - Rust",
    "description": "What a capability’s behaviour is, and what it is allowed to know.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/capability/model/",
    "title": "majordomus_cli::capability::model - Rust",
    "description": "The descriptor: everything a projection may say about a capability, and nothing else.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/capability/readings/",
    "title": "majordomus_cli::capability::readings - Rust",
    "description": "The latest reading of a source, handed over at once.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/capability/registry/",
    "title": "majordomus_cli::capability::registry - Rust",
    "description": "The registry: every capability, once, validated, in a deterministic order, with the lookups projections need. Built at one place per process from the builtin executables and the repository’s declarative objects; nothing else adds to it.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/capability/rustdoc/",
    "title": "majordomus_cli::capability::rustdoc - Rust",
    "description": "Rust doc comments, translated into the CommonMark every projection promises.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/capability/schema/",
    "title": "majordomus_cli::capability::schema - Rust",
    "description": "One schema per type, and every projection reads it.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/cli/",
    "title": "majordomus_cli::cli - Rust",
    "description": "The command line, declared with clap’s derive API. Every command starts from the same `RepoArgs`; `capabilities` reaches the registry through the registry’s own introspection capabilities, so no list of capabilities lives here.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/cli/docs/",
    "title": "majordomus_cli::cli::docs - Rust",
    "description": "The command line as documentation data.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/cli/local/",
    "title": "majordomus_cli::cli::local - Rust",
    "description": "Why a command of the command line is not itself a capability.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/cockpit/",
    "title": "majordomus_cli::cockpit - Rust",
    "description": "The Cockpit: the human-facing projection of the registry, server-rendered.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/cockpit/assets/",
    "title": "majordomus_cli::cockpit::assets - Rust",
    "description": "The Cockpit’s static files, served from the distribution’s `share/cockpit/`.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/cockpit/html/",
    "title": "majordomus_cli::cockpit::html - Rust",
    "description": "Markup that cannot be unescaped by accident. There is no template engine here and no template string: a page is a tree of `El` values, and the only way text reaches the output is through a method that escapes it.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/command_graph/",
    "title": "majordomus_cli::command_graph - Rust",
    "description": "The canonical command graph: every command this repository offers, from whichever program offers it, with where each one is projected.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/command_graph/bridge/",
    "title": "majordomus_cli::command_graph::bridge - Rust",
    "description": "The workflow bridge: the command graph projected into recipes.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/command_graph/complete/",
    "title": "majordomus_cli::command_graph::complete - Rust",
    "description": "One completion engine, for every surface.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/command_graph/load/",
    "title": "majordomus_cli::command_graph::load - Rust",
    "description": "Loading the graph, at two speeds.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/command_graph/model/",
    "title": "majordomus_cli::command_graph::model - Rust",
    "description": "The typed model of the command graph: what a command is, and what every projection of it may say.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/command_graph/native/",
    "title": "majordomus_cli::command_graph::native - Rust",
    "description": "The native command line as command-graph nodes.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/command_graph/policy/",
    "title": "majordomus_cli::command_graph::policy - Rust",
    "description": "The exposure policy: which surfaces carry a command, derived from what the command is.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/command_graph/semantics/",
    "title": "majordomus_cli::command_graph::semantics - Rust",
    "description": "The semantics of the native command line that its declaration cannot carry.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/command_graph/shell/",
    "title": "majordomus_cli::command_graph::shell - Rust",
    "description": "The shell adapters: the only shell code in the completion, and it knows nothing.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/command_graph/tool/",
    "title": "majordomus_cli::command_graph::tool - Rust",
    "description": "The shell tool’s commands as command-graph nodes.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/command_graph/workflow/",
    "title": "majordomus_cli::command_graph::workflow - Rust",
    "description": "The repository’s own workflows as command-graph nodes.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/commands/",
    "title": "majordomus_cli::commands - Rust",
    "description": "Command dispatch: the one place a parsed command line becomes a call.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/commit/",
    "title": "majordomus_cli::commit - Rust",
    "description": "The commit as a value: one grammar, one policy, one verdict, one plan.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/commit/header/",
    "title": "majordomus_cli::commit::header - Rust",
    "description": "The conventional-commit grammar: one parser, one renderer, one place.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/commit/message/",
    "title": "majordomus_cli::commit::message - Rust",
    "description": "A whole commit message: the header, the body, and the trailers under it.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/commit/plan/",
    "title": "majordomus_cli::commit::plan - Rust",
    "description": "The plan: what is in the working tree, how it divides into commits, and the fingerprint that says the plan is still about this tree.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/commit/policy/",
    "title": "majordomus_cli::commit::policy - Rust",
    "description": "What this repository holds a commit to, as data.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/commit/scopes/",
    "title": "majordomus_cli::commit::scopes - Rust",
    "description": "The scope vocabulary, derived from the repository rather than declared beside it.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/commit/verdict/",
    "title": "majordomus_cli::commit::verdict - Rust",
    "description": "The judge: one commit message, against the policy, with every finding it earns.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/convergence/",
    "title": "majordomus_cli::convergence - Rust",
    "description": "Where the work of this repository is being held, and whether any of it is held somewhere it can be lost.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/deploy/",
    "title": "majordomus_cli::deploy - Rust",
    "description": "The deployment objects of the layer, typed: `.ai/repo/deployments/*.yaml` parsed into values that cannot hold nonsense, and validated against what this repository actually contains before anything is built from them.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/deploy/render/",
    "title": "majordomus_cli::deploy::render - Rust",
    "description": "The deployment artifacts, rendered from the canonical deployment object: the container image definition and the ignore file that bounds its build context. No provider configuration is rendered: no hosting provider is a target (see `super`).",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/devcontext/",
    "title": "majordomus_cli::devcontext - Rust",
    "description": "The context compiler: what a development session should be given, derived from the repository rather than composed by hand.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/devcontext/budget/",
    "title": "majordomus_cli::devcontext::budget - Rust",
    "description": "Deduplication, conflict, deterministic order, and what the budget could afford.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/devcontext/model/",
    "title": "majordomus_cli::devcontext::model - Rust",
    "description": "What a compiled development context is made of.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/devcontext/select/",
    "title": "majordomus_cli::devcontext::select - Rust",
    "description": "Which of the repository’s objects a request reaches, and by which declared path.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/devtask/",
    "title": "majordomus_cli::devtask - Rust",
    "description": "The executable development task: one issue or one milestone read as work to be done, with the origin of every value on the value.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/devtask/graph/",
    "title": "majordomus_cli::devtask::graph - Rust",
    "description": "The milestone as a typed dependency graph, with the partitions a work surface would otherwise compute for itself.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/devtask/readiness/",
    "title": "majordomus_cli::devtask::readiness - Rust",
    "description": "Task readiness: a derived projection of the canonical status, and not a second vocabulary for it.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/devtask/task/",
    "title": "majordomus_cli::devtask::task - Rust",
    "description": "One issue read as an executable development task.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/diagram/",
    "title": "majordomus_cli::diagram - Rust",
    "description": "Diagrams, canonically: nodes, edges and groups in Rust, derived from whatever already states the topology, and rendered to Mermaid by a function that is one reader among several.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/discovery/",
    "title": "majordomus_cli::discovery - Rust",
    "description": "Discovery: which files of the repository are declarative sources, and of which kind.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/discovery/glob/",
    "title": "majordomus_cli::discovery::glob - Rust",
    "description": "The `:(glob)` pathspec subset the repository’s `sources.yaml` is written in.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/economics/",
    "title": "majordomus_cli::economics - Rust",
    "description": "Token economics, measured rather than claimed.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/economics/claims/",
    "title": "majordomus_cli::economics::claims - Rust",
    "description": "Claim governance for token economics: no number about tokens, context or cost reaches a reader unless the evidence produced it.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/economics/context/",
    "title": "majordomus_cli::economics::context - Rust",
    "description": "The deterministic suite: what the context compiler considers and what it selects, counted.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/economics/model/",
    "title": "majordomus_cli::economics::model - Rust",
    "description": "The typed records of the economics subsystem: the declarations it reads (methodology, suites, tasks), the raw facts it records (runs), and the answer it derives (summary).",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/economics/report/",
    "title": "majordomus_cli::economics::report - Rust",
    "description": "The human-readable benchmark report, `docs/generated/economics.md`: a rendering of one `EconomicsSummary` and nothing else. Every number in it is a field of the summary, spelled for a reader; the report computes none, so it cannot disagree with the CLI, the API, MCP, the Cockpit or the site, which render the same summary.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/economics/runner/",
    "title": "majordomus_cli::economics::runner - Rust",
    "description": "The live runner: a task, run by a real coding harness, once without Majordomus and once with it, from the same fixture, with the same model, judged by the same hidden tests.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/economics/stats/",
    "title": "majordomus_cli::economics::stats - Rust",
    "description": "The arithmetic of the economics subsystem, and nothing else: the reduction formula, order statistics, a seeded bootstrap (over independent values, or over clusters when the values are repetitions of the same task), and the two ways a number is printed. Every surface that shows a number gets it from here through `super::summarize`; nothing downstream recomputes one, and nothing downstream formats a percentage its own way.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/economics/usage/",
    "title": "majordomus_cli::economics::usage - Rust",
    "description": "Provider usage, read as the provider reported it, and the one normalisation every comparison uses.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/entity/",
    "title": "majordomus_cli::entity - Rust",
    "description": "Entities: the one projection that makes every object of the layer addressable.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/environment/",
    "title": "majordomus_cli::environment - Rust",
    "description": "The repository environment: one typed snapshot of what this checkout is right now — the project, the repository, version control, the toolchains it declares, what the layer holds, the workflows a person can run, the provider projections and the local services — with a provenance entry for every fact in it.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/environment/cache/",
    "title": "majordomus_cli::environment::cache - Rust",
    "description": "The snapshot cache: the two or three answers a fast resolution cannot afford to compute, kept beside the shared server’s lease under the checkout-local half of the layer.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/environment/preflight/",
    "title": "majordomus_cli::environment::preflight - Rust",
    "description": "The preflight: whether Majordomus is actually in force in this checkout, and what proves each part of that claim.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/environment/probe/",
    "title": "majordomus_cli::environment::probe - Rust",
    "description": "Bounded outside contact: the only two things the environment resolver does that it cannot finish on its own — run a program, and open a socket — each with a hard budget.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/environment/render/",
    "title": "majordomus_cli::environment::render - Rust",
    "description": "The banner: a snapshot rendered for a person at a terminal.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/environment/resolve/",
    "title": "majordomus_cli::environment::resolve - Rust",
    "description": "The resolver: one function that builds a `RepositoryEnvironment`, and the only place any surface gets one.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/environment/services/",
    "title": "majordomus_cli::environment::services - Rust",
    "description": "The local services of a repository: what this executable serves, where, and whether anything is answering there now.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/environment/shell/",
    "title": "majordomus_cli::environment::shell - Rust",
    "description": "Shell export: the few variables a shell working in this repository benefits from, emitted so that `eval \"$(majordomus env export)\"` is safe whatever the repository is called and wherever it lives.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/environment/text/",
    "title": "majordomus_cli::environment::text - Rust",
    "description": "Terminal text: making repository metadata safe to print, and measuring it in columns rather than in bytes.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/environment/toolchain/",
    "title": "majordomus_cli::environment::toolchain - Rust",
    "description": "Toolchains: the ones this repository declares, and what is installed for them.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/environment/vcs/",
    "title": "majordomus_cli::environment::vcs - Rust",
    "description": "Version control for the environment snapshot: branch, head, upstream, how far ahead and behind, and what is dirty — from one `git status --porcelain=v2 --branch`.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/environment/workflows/",
    "title": "majordomus_cli::environment::workflows - Rust",
    "description": "Workflows: the recipes a person can run here, read from the workflow runner’s own structured description of them.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/episodes/",
    "title": "majordomus_cli::episodes - Rust",
    "description": "Episodes: the execution episode of a client that has no provider hooks, drawn by the MCP connection itself (ADR 0103).",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/evidence/",
    "title": "majordomus_cli::evidence - Rust",
    "description": "Evidence: what actually ran, against which commit, and whether it still proves anything.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/evidence/coverage/",
    "title": "majordomus_cli::evidence::coverage - Rust",
    "description": "A coverage summary bound to the commit and tree it was measured on.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/evidence/freshness/",
    "title": "majordomus_cli::evidence::freshness - Rust",
    "description": "Freshness: whether a recorded run still proves anything at the revision a reader is shown.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/evidence/ledger/",
    "title": "majordomus_cli::evidence::ledger - Rust",
    "description": "The ledger: the latest execution of every test, as a tracked file.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/evidence/provenance/",
    "title": "majordomus_cli::evidence::provenance - Rust",
    "description": "What a run measured about its own checkout when it ended.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/evidence/record/",
    "title": "majordomus_cli::evidence::record - Rust",
    "description": "The recorder: turning a run that happened into evidence that lasts.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/evidence/run/",
    "title": "majordomus_cli::evidence::run - Rust",
    "description": "What a run is made of, beyond the executions it recorded.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/evidence/subject/",
    "title": "majordomus_cli::evidence::subject - Rust",
    "description": "Evidence subjects: every declaration a verdict can be asked about, what it is made of, and the tests it reaches.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/execution/",
    "title": "majordomus_cli::execution - Rust",
    "description": "Executions: watching a capability call that takes longer than a request should be held open for.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/execution/engine/",
    "title": "majordomus_cli::execution::engine - Rust",
    "description": "The engine: what turns a capability call into an execution anybody can watch.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/execution/event/",
    "title": "majordomus_cli::execution::event - Rust",
    "description": "The typed execution event: one envelope, a closed set of payloads, and a version.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/execution/model/",
    "title": "majordomus_cli::execution::model - Rust",
    "description": "What an execution is: its identity, the states it may be in, and the snapshot every transport answers with. Plain data with no transport type in it and no handle to a running thread: a snapshot is taken under the store’s lock and read afterwards.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/execution/redact/",
    "title": "majordomus_cli::execution::redact - Rust",
    "description": "One redaction, driven by the schema.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/execution/sink/",
    "title": "majordomus_cli::execution::sink - Rust",
    "description": "What a handler reports with, and how it learns it should stop.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/execution/store/",
    "title": "majordomus_cli::execution::store - Rust",
    "description": "Where executions live while this process does: the snapshots, the retained event history, and the subscribers.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/gates/",
    "title": "majordomus_cli::gates - Rust",
    "description": "Completion as a provable state: which gates a task’s own change set must pass, what each one said, whether that verdict still describes the tree, and therefore whether the task may be called finished.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/generate/",
    "title": "majordomus_cli::generate - Rust",
    "description": "Generated projections that are committed for review: the OpenAPI document, the capability reference, the benchmark matrix, the registry manifest, and the shell tool’s key allow-lists derived from the JSON Schemas. All come through this one pipeline; the committed files are caches of it, never sources, and `--check` says when they are stale.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/generation/",
    "title": "majordomus_cli::generation - Rust",
    "description": "The generation of an executable: which revision of the crate it was built from.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/git/",
    "title": "majordomus_cli::git - Rust",
    "description": "A minimal, optional, read-only view of git.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/graph/",
    "title": "majordomus_cli::graph - Rust",
    "description": "Graphs, canonically: a node and edge model in Rust, derived from the registry and the index, and projected to whatever a reader wants. Nothing here knows about Cytoscape, Mermaid or Graphviz; a rendering library is a consumer of `Graph`, never its shape.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/http/",
    "title": "majordomus_cli::http - Rust",
    "description": "The HTTP projection: the surfaces this repository exposes, resolved once and served.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/http/deadline/",
    "title": "majordomus_cli::http::deadline - Rust",
    "description": "The read deadline: how long a connection may hold this server without a request read in full on it (I2156).",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/http/events/",
    "title": "majordomus_cli::http::events - Rust",
    "description": "The live channel: one WebSocket over which this process reports what its executions are doing.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/http/mcp/",
    "title": "majordomus_cli::http::mcp - Rust",
    "description": "MCP over HTTP at `/mcp`: the Streamable HTTP transport’s request half. A client `POST`s one JSON-RPC message (or a batch) and gets the response in the body; the server answers `initialize` with an `Mcp-Session-Id` header, requires it on every later request, and forgets the session on `DELETE` or after a silence longer than `SESSION_IDLE_TIMEOUT`. There is no server-initiated stream (`GET` is 405): this server sends no notifications, so a stream would carry nothing.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/http/openapi/",
    "title": "majordomus_cli::http::openapi - Rust",
    "description": "The OpenAPI projection: an OpenAPI 3.1 document built from the registry and nothing else. `operationId` is the canonical id; every operation carries the canonical id, kind, stability, policies and the other projections as `x-majordomus-*` extensions so that a reader can reconcile it against MCP and the CLI. The tags are the modules; the examples are the capabilities’ own benchmark cases, so an operation without an example is an operation without a case, and the executable will not compile in that state; the error responses are the statuses the router maps `crate::capability::CapabilityError` to, by kind. Deterministic: every map is sorted, nothing carries a timestamp.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/http/router/",
    "title": "majordomus_cli::http::router - Rust",
    "description": "Routing and binding, transport-neutral: a request in, a response out.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/http/server/",
    "title": "majordomus_cli::http::server - Rust",
    "description": "The socket: bind, read requests, hand them to the router, write responses. Loopback by default; the bound address is reported so that a caller who asked for port 0, or whose port was taken, learns the one in use. A bound socket is accepted by a few worker threads, and each request is answered on a thread of its own up to a bound, so a slow request queues nothing behind it — not even the probe a client sends before it would take the lease over — and the owner’s stdio session never waits on HTTP. Stopping is cooperative: every worker is unblocked and joined, and an in-flight response is finished first. A stopped server refuses the next connection: `stop` returns after the listening socket is closed. A connection that reads no request within the declared deadline is closed (`super::deadline`), and a request that finds every handler busy is refused rather than answered on a worker.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/http/swagger/",
    "title": "majordomus_cli::http::swagger - Rust",
    "description": "The Swagger UI shell: one HTML page that loads the pinned Swagger UI distribution and points it at `/openapi.json`. It embeds no specification of its own; what it shows is whatever the server generated from the registry at the moment of the request. The page is rendered once per process and served from memory.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/http/ws/",
    "title": "majordomus_cli::http::ws - Rust",
    "description": "WebSocket, by hand: the handshake and the frames of RFC 6455, and nothing else.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/index/",
    "title": "majordomus_cli::index - Rust",
    "description": "The index: every declarative object the repository declares, read, validated and identified, plus every diagnostic about what could not be read. Built once per invocation from a discovery pass; the MCP surface is a projection of it.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/intent/",
    "title": "majordomus_cli::intent - Rust",
    "description": "Intents: what must become true above the milestones that realise it, and whether the recorded evidence says it has.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/intent_binding/",
    "title": "majordomus_cli::intent_binding - Rust",
    "description": "The binding: what a piece of work serves, resolved once, before it starts (ADR 0111).",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/intent_plan/",
    "title": "majordomus_cli::intent_plan - Rust",
    "description": "Intent coverage: which work makes which intent criterion true, derived from the plan.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/intent_realization/",
    "title": "majordomus_cli::intent_realization - Rust",
    "description": "Intent realization: which work realises which intent, through which sessions and providers, how each link is known, and what the intent still lacks.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/intent_review/",
    "title": "majordomus_cli::intent_review - Rust",
    "description": "The two planning records an intent is held to before execution: the gap and the critique.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/lease/",
    "title": "majordomus_cli::lease - Rust",
    "description": "One shared server per checkout: the lease that decides who it is. The first `majordomus mcp` (or `serve`) to create `state/mcp/server.json` under the checkout’s local half owns the server and publishes its URL there; every later process reads the file, checks that the server answers for this root, and attaches to it. A lease whose server does not answer is stale, and the next process takes it over; so is a file that is not a lease document, an empty one, or one whose owner never published a URL. A server that is slow to answer while its process is alive is busy, not stale: the election waits for it for `BUSY_GRACE` before it takes anything over. The file lives under `.ai/local/` (never tracked, by the layer’s contract), and it is removed when the server stops — including when `SIGTERM`, `SIGINT` or `SIGHUP` asks it to — but only by the process that still holds it: every removal and every rewrite re-reads the file under the lock beside it (`server.lock`) and acts only on a lease that carries the actor’s own token (`take_over_with` says why it is a lock).",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/ledger/",
    "title": "majordomus_cli::ledger - Rust",
    "description": "The ledger: the append-only record of what happened to this checkout, and the one writer of it in this executable.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/live/",
    "title": "majordomus_cli::live - Rust",
    "description": "The repository as a long-lived process must see it: current, not as it was when the process started.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/logging/",
    "title": "majordomus_cli::logging - Rust",
    "description": "Where diagnostics go, and where they must never go.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/mcp/",
    "title": "majordomus_cli::mcp - Rust",
    "description": "The MCP capability: a projection of the index into resources and tools (`surface`), the JSON-RPC and MCP method handling over it (`protocol`), the one local transport (`stdio`), and the bridge that forwards a stdio session to the shared server of another process (`bridge`). Only `protocol` knows the wire shapes; only `stdio` knows about file descriptors; `surface` knows neither.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/mcp/bridge/",
    "title": "majordomus_cli::mcp::bridge - Rust",
    "description": "The bridge: a `majordomus mcp` process that found the repository’s shared server already running forwards its client’s stdio frames to that server’s `/mcp` endpoint and writes the answers back, one HTTP request per message, and pings on the side so that the server keeps the session. It carries no index and no registry of its own, which is why it starts in milliseconds. The HTTP client below is the few lines a loopback request needs (the server always answers with `Content-Length`, never chunked); no HTTP library is pulled in for it.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/mcp/stdio/",
    "title": "majordomus_cli::mcp::stdio - Rust",
    "description": "The stdio transport: one JSON message per line in, one per line out. Nothing but protocol messages is ever written to the output; diagnostics go through `tracing`, which the executable points at stderr. EOF on input ends the session cleanly, and so does a closed output, because both mean the client has gone.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/mcp/surface/",
    "title": "majordomus_cli::mcp::surface - Rust",
    "description": "The surface: the registry as resources and tools, independent of any protocol encoding. Every resource is a capability with an MCP resource exposure; every tool is a capability with an MCP tool exposure; every call goes through the registry to the one handler the capability has. Nothing is declared here.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/mesh/",
    "title": "majordomus_cli::mesh - Rust",
    "description": "The mesh: how one running Majordomus learns that others exist, and proves which one it is. ADR 0050 is the decision; this module is the whole implementation, and its boundaries are the point:",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/mesh/address/",
    "title": "majordomus_cli::mesh::address - Rust",
    "description": "Where this runtime can be reached: the `host:port` authorities it advertises and dials back. A server bound to a specific address advertises that address. A server bound to every interface (`0.0.0.0`) is reachable at each interface’s address and at none called `0.0.0.0`, so it advertises its up, non-loopback IPv4 interface addresses — physical ones before container bridges, at most `super::protocol::MAX_ENDPOINTS`. A server bound to loopback advertises loopback, which only this machine can dial; the mesh doctor says so.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/mesh/broadcast/",
    "title": "majordomus_cli::mesh::broadcast - Rust",
    "description": "The UDP broadcast provider: the controlled fallback for segments where multicast is filtered. Same protocol, same port, no second serialization — only the destination differs: the limited broadcast address in `auto` mode, or the directed broadcast addresses the declaration lists in `explicit` mode. Never `auto` by default, and it does not spray interfaces: one socket, the destinations named above, nothing more.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/mesh/config/",
    "title": "majordomus_cli::mesh::config - Rust",
    "description": "The mesh declaration: whether this repository’s servers participate in discovery, and how. One typed object of the `.ai/` layer (kind `mesh`, schema `mesh/v1`), parsed here and nowhere else. No declaration, or `enabled: false`, means the mesh is off and not one socket opens — the repository’s default posture (“nothing leaves the machine”) holds until a person commits the object that says otherwise.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/mesh/cooperation/",
    "title": "majordomus_cli::mesh::cooperation - Rust",
    "description": "Cooperation: the runtime that turns discovered, trusted runtimes of one repository into linked peers and keeps their journal converged. It owns the one peer-link table, the one journal of this runtime, the link handlers the HTTP surface answers, the dialers, the heartbeat and the expiry — and the operations (sessions, claims, handovers, reviews) every surface performs through it.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/mesh/doctor/",
    "title": "majordomus_cli::mesh::doctor - Rust",
    "description": "The mesh self-check: every prerequisite proved on this machine alone, no second node required. Deterministic checks in a fixed order, each with its own verdict, so “why is the mesh not working” has an answer that names the broken link instead of a shrug — and, when a check fails or limits cooperation, what that means and what to do. Read-only toward the repository; the sockets it probes are ephemeral and closed before it answers.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/mesh/firewall/",
    "title": "majordomus_cli::mesh::firewall - Rust",
    "description": "The host firewall, as the mesh needs it: what inbound traffic the declaration implies this machine must admit, which firewall this host runs, the commands that admit it, what the firewall says now, and what the kernel logged it dropping.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/mesh/handover/",
    "title": "majordomus_cli::mesh::handover - Rust",
    "description": "Handovers across the mesh. A handover is written on one machine by `majordomus handover` into that checkout’s `.ai/local/state/handovers/`; this module is the bridge between that record and the journal, in both directions:",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/mesh/identity/",
    "title": "majordomus_cli::mesh::identity - Rust",
    "description": "Node identity: who this machine’s Majordomus is, independently of any repository, process, address or port. The identity is an Ed25519 keypair created once per user and machine and kept under the user’s state directory; the node id is a digest of the public key, so claiming an id means holding the key, and a hostname, an IP address or a PID is never identity — those are runtime attributes that change.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/mesh/journal/",
    "title": "majordomus_cli::mesh::journal - Rust",
    "description": "The cooperation journal: the one replicated record of what the runtimes of a repository said to each other. Discovery (`super::registry`) answers “which runtimes exist”; the journal answers “what are they doing” — sessions, claims, handovers, reviews — as signed events that every linked runtime stores, relays and folds into the same state (`super::state`).",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/mesh/link/",
    "title": "majordomus_cli::mesh::link - Rust",
    "description": "The link protocol: what two runtimes say to become linked, and what they exchange once they are. Discovery (`super::protocol`) proves that a key exists somewhere; a link proves that the key is answering now, serves the same repository, speaks a compatible protocol, and is trusted — and only then does anything cooperative travel.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/mesh/manager/",
    "title": "majordomus_cli::mesh::manager - Rust",
    "description": "The discovery manager: provider lifecycle, the one verification path, and the one registry. Providers hand raw bytes here; this thread parses, checks bounds and staleness, verifies the signature, evaluates trust, and only then touches the registry — in that order, for every transport alike. A provider cannot skip a step because no provider ever parses.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/mesh/multicast/",
    "title": "majordomus_cli::mesh::multicast - Rust",
    "description": "The UDP multicast provider: the preferred LAN mechanism. One socket, bound to the configured port and joined to the group; a listener thread hands every datagram to the manager, an announcer thread transmits the beacon on the interval with jitter. IPv4 only, TTL from the declaration (1 by default: the local segment and no further).",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/mesh/page/",
    "title": "majordomus_cli::mesh::page - Rust",
    "description": "What one answer about the mesh carries: a summary a worker can read whole, or the folded state narrowed to what was asked.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/mesh/protocol/",
    "title": "majordomus_cli::mesh::protocol - Rust",
    "description": "The discovery wire protocol: one envelope, every transport. A multicast datagram, a broadcast datagram and a rendezvous candidate all carry the same signed advertisement, so there is one serializer, one parser and one verification path — a second protocol per transport is exactly the five-truths defect ADR 0050 refuses.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/mesh/provider/",
    "title": "majordomus_cli::mesh::provider - Rust",
    "description": "The provider contract: a discovery mechanism is a source of observations and nothing more. A provider watches one transport (a multicast group, a broadcast port, a rendezvous endpoint set), hands every datagram it hears to the manager as raw bytes, and answers for its own health. It parses nothing, verifies nothing, trusts nothing and holds no peers — the manager owns the one verification path and the one registry, which is what makes adding a provider a registration rather than a rewrite.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/mesh/registry/",
    "title": "majordomus_cli::mesh::registry - Rust",
    "description": "The one registry of discovered nodes. Every provider’s observation converges here, deduplicated by node id (a digest of the key — never by address), so a node seen over multicast and handed back by a rendezvous is one record with two sources, not two rows with one truth each. Every surface — CLI, HTTP, OpenAPI, MCP, Cockpit — is a projection of this map; nothing else may hold peers.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/mesh/rendezvous/",
    "title": "majordomus_cli::mesh::rendezvous - Rust",
    "description": "The rendezvous provider: discovery across segments multicast cannot cross. Every Majordomus server is a rendezvous — the `mesh.register` capability accepts a signed envelope and answers with the envelopes it holds — so a “mothership” is any node the declaration points at, not a different program and not a canonical database. The local registry stays the only truth; a rendezvous is one more source of observations, its failure stretches the retry and stops nothing else, and its answers are signed end-to-end: a poisoned rendezvous can withhold nodes, it cannot invent one.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/mesh/repository/",
    "title": "majordomus_cli::mesh::repository - Rust",
    "description": "Which repository and which runtime a mesh participant is — independently of any path.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/mesh/root/",
    "title": "majordomus_cli::mesh::root - Rust",
    "description": "The trust root: which copy of the mesh declaration a runtime obeys (ADR 0050 rule 6, I2135).",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/mesh/state/",
    "title": "majordomus_cli::mesh::state - Rust",
    "description": "The cooperation state: what the journal’s events mean, folded. Pure: the same set of events and the same liveness verdicts yield the same state on every runtime, whatever order the events arrived in and however often — events are applied in `(lamport, stream, seq)` order, and a set has no duplicates. That is the whole convergence argument, and a property test holds it.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/mesh/trust/",
    "title": "majordomus_cli::mesh::trust - Rust",
    "description": "Trust: what a verified advertisement is allowed to mean. Verification (the signature proves the key) happens in the protocol; trust (this key is one of ours) is decided here, by policy — and by default the policy is that an unknown key is observed, recorded, visible in every listing, and trusted for nothing.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/metadata/",
    "title": "majordomus_cli::metadata - Rust",
    "description": "Metadata: the kind schema (`kinds.yaml`) and one JSON Schema per kind, both read at run time from the tool distribution’s share directory and, when a repository adds its own, from `.ai/repo/knowledge/`; and the YAML helpers shared by every reader. The contract is documented in `docs/CAPABILITIES.md` and in `share/kinds.yaml` itself.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/metadata/frontmatter/",
    "title": "majordomus_cli::metadata::frontmatter - Rust",
    "description": "Front matter: the metadata block at the top of a document of the layer.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/metadata/yaml/",
    "title": "majordomus_cli::metadata::yaml - Rust",
    "description": "The layer’s YAML subset, as `docs/SCHEMAS.md` and the shell tool’s `mj_yaml_flatten` define it: `key: value`, nested maps by two-space indent, block lists (`- item`), lists of maps (`- key: value` plus indented keys), inline lists `[a, b]`, single or double quotes, comments. Tabs, odd indentation, anchors, multi-line scalars and flow maps are refused with the line named (the shell parser reads an anchor or alias as text; this one refuses it, which is the stricter reading of the same contract). A scalar is a string unless it is an unquoted integer or `true`/`false`; nothing else is interpreted.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/model/",
    "title": "majordomus_cli::model - Rust",
    "description": "The domain model: what an object is, where it came from, and what was wrong with what could not become one.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/models/",
    "title": "majordomus_cli::models - Rust",
    "description": "The model catalogue: which AI models exist for this tool’s world, what each can do, and which one a stated need selects — as declared data, never as a live client. ADR 0044 is the decision; ADR 0032’s boundary stands untouched: this crate calls no model, holds no SDK, and reads no credential’s value. The catalogue is `share/models.yaml` — one declaration, exactly like `share/providers.yaml` — and `models.list` / `models.route` project it to the CLI, HTTP, OpenAPI, MCP and the Cockpit, so no consumer keeps a model name of its own.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/order/",
    "title": "majordomus_cli::order - Rust",
    "description": "Canonical presentation order.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/pack/",
    "title": "majordomus_cli::pack - Rust",
    "description": "The source pack: the tracked tree as a few text files a language model’s file search can index, with nothing in it that is not source.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/peers/",
    "title": "majordomus_cli::peers - Rust",
    "description": "Peers: the clients attached to one shared server. Every MCP session, the owner’s stdio one and every one that arrived over HTTP, is a peer from the moment it attaches; `initialize` gives it a name (the client’s own `clientInfo`), and `peers.announce` lets it say what it is working on. The board lives in the server’s memory and nowhere else: it ends with the process, and nothing here touches the repository.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/perf/",
    "title": "majordomus_cli::perf - Rust",
    "description": "Performance truth: process-wide counters of the work that must happen once (a repository scan, an index build, a registry build, a schema generation, a projection build) and of the work that happens per call (executions, handler invocations, cache hits and misses), plus phase timings on a monotonic clock. They are what the structural tests read after hundreds of requests to prove that no request rebuilt canonical state, what `perf.counters` answers over every transport, and what the benchmark evidence carries beside its latencies. Atomics only: reading them costs nothing worth measuring, and nothing here allocates on a hot path.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/plan/",
    "title": "majordomus_cli::plan - Rust",
    "description": "The plan: milestones, issues, the two graphs between them, and everything derived from them — execution waves, issue status, milestone status, the roadmap order, the active milestone, the next executable issue and every validation finding.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/policy/",
    "title": "majordomus_cli::policy - Rust",
    "description": "The canonical policy, typed: `.ai/repo/policy.yaml` and the profiles beside it. The policy is the one canonical input of the provider projections; the shell tool reads the same file with the same subset reader, so the two agree byte for byte on what a projection is and which hash it carries.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/product/",
    "title": "majordomus_cli::product - Rust",
    "description": "The product model: what this repository’s product does for a person, as the features under the layer’s features section declare it, with every fact a surface may say about a feature derived from the registries that own those facts.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/proto/",
    "title": "majordomus_cli::proto - Rust",
    "description": "The reader for the layer’s Markdown document schemas.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/proto/project/",
    "title": "majordomus_cli::proto::project - Rust",
    "description": "The projections of a `.proto` document schema.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/providers/",
    "title": "majordomus_cli::providers - Rust",
    "description": "The provider projections: `AGENTS.md`, `CLAUDE.md`, `GEMINI.md` and whatever else the policy’s `projections[]` declares, rendered from the provider templates and the canonical policy. They are one-way: the policy and the templates are the sources, the targets are caches that `generate --check` compares and `generate` rewrites.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/quality/",
    "title": "majordomus_cli::quality - Rust",
    "description": "What this executable’s own public surface is held to, measured by the executable.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/quality/parity/",
    "title": "majordomus_cli::quality::parity - Rust",
    "description": "Transport parity: the canonical registry against every projection of it.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/quality/policy/",
    "title": "majordomus_cli::quality::policy - Rust",
    "description": "What the repository demands of an exported item, and what counts as having met it.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/quality/report/",
    "title": "majordomus_cli::quality::report - Rust",
    "description": "Assembling one measurement: the inventory and the registry in, a `QualityReport` out.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/quality/source/",
    "title": "majordomus_cli::quality::source - Rust",
    "description": "The crate read as a syntax tree: which items this crate actually exports, where each one is declared, what its documentation says, and which of its doc examples run.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/reasoning/",
    "title": "majordomus_cli::reasoning - Rust",
    "description": "Reasoning: how a session turns material engineering uncertainty into a recorded, evidence-backed conclusion — with independent advisors when some are present, and without them when none are. ADR 0098 is the decision; `docs/REASONING.md` the manual.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/reasoning/availability/",
    "title": "majordomus_cli::reasoning::availability - Rust",
    "description": "Which advisors can be asked right now, and why each one that cannot, cannot.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/reasoning/catalogue/",
    "title": "majordomus_cli::reasoning::catalogue - Rust",
    "description": "The advisor catalogue: `share/advisors.yaml`, one declaration of every advisory role a session may consult, in the grain of `share/providers.yaml` and `share/models.yaml`.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/reasoning/check/",
    "title": "majordomus_cli::reasoning::check - Rust",
    "description": "`reasoning.check`: the executable half of the rules `project.advisors-are-optional` and `project.review-is-recorded-not-claimed`. Each check reads files and says what it found; none of them asks an advisor anything.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/reasoning/policy/",
    "title": "majordomus_cli::reasoning::policy - Rust",
    "description": "The consultation policy: given what is uncertain and how much it matters, whether independent review is worth having, how much, and from which available advisors.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/reasoning/record/",
    "title": "majordomus_cli::reasoning::record - Rust",
    "description": "The records a session writes while it reasons: typed engineering artefacts, never a transcript and never hidden reasoning. What is kept is what a later session needs to avoid rediscovering a decision — facts, evidence references, assumptions, questions, positions, conclusions, validation — and nothing an advisor said verbatim beyond the summary its adapter normalised.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/reasoning/state/",
    "title": "majordomus_cli::reasoning::state - Rust",
    "description": "The reasoning state of a session, derived from its records and nothing else: what is uncertain, what was asked and what came back, where advice disagreed and what settled it, what was concluded and whether it was proven — plus the timeline, the degradation that happened along the way, and the report a handover or a final summary carries.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/reasoning/store/",
    "title": "majordomus_cli::reasoning::store - Rust",
    "description": "The one writer of reasoning records, and the rules a record must satisfy before it becomes durable.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/redaction/",
    "title": "majordomus_cli::redaction - Rust",
    "description": "The one rule set that makes text a run printed fit to publish.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/release/",
    "title": "majordomus_cli::release - Rust",
    "description": "The release: what this project has shipped, what it would ship next, and the changelog that is a projection of both rather than a file somebody remembered to update.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/release/changelog/",
    "title": "majordomus_cli::release::changelog - Rust",
    "description": "Composing the changelog out of what the repository already states.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/release/commits/",
    "title": "majordomus_cli::release::commits - Rust",
    "description": "Conventional commits, read from git and parsed.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/release/compat/",
    "title": "majordomus_cli::release::compat - Rust",
    "description": "The compatibility engine: how much the public contract moved, and therefore what the smallest honest version is.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/release/landing/",
    "title": "majordomus_cli::release::landing - Rust",
    "description": "The version a landing allocates (ADR 0134): what the integration executor raises the trunk’s version to when it lands a pull request, decided from three things and nothing else — the version the trunk declares, how far the pull request moves the public contract (ADR 0051’s measurement), and the repository’s typed `release:` policy.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/release/model/",
    "title": "majordomus_cli::release::model - Rust",
    "description": "The typed value every release surface answers with.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/release/surface/",
    "title": "majordomus_cli::release::surface - Rust",
    "description": "The public surface: everything a caller can hold, read from the one declaration that states it.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/release/version/",
    "title": "majordomus_cli::release::version - Rust",
    "description": "The version: the one place it is authored, what is derived from that place, what the contract requires next and what the commits imply as evidence, and the one writer that raises it.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/repository/",
    "title": "majordomus_cli::repository - Rust",
    "description": "Repository discovery: the nearest ancestor of the start directory that carries `.ai/manifest.yaml` is the root, and the manifest is the only thing read to find it.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/rules/",
    "title": "majordomus_cli::rules - Rust",
    "description": "The rules module: a rule, and everything the repository can show that proves it.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/scope/",
    "title": "majordomus_cli::scope - Rust",
    "description": "The repository scope: what a worker reads of the repository, and what it never reads.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/served/",
    "title": "majordomus_cli::served - Rust",
    "description": "What a deployment actually serves, observed from outside and judged against the commit that was meant to be there.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/session/",
    "title": "majordomus_cli::session - Rust",
    "description": "The session domain: one typed account of what an episode is, what identifies it, how it moves, and how it is closed exactly once.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/session/episode/",
    "title": "majordomus_cli::session::episode - Rust",
    "description": "The aggregate: what an episode is, and what it is not.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/session/identity/",
    "title": "majordomus_cli::session::identity - Rust",
    "description": "The identities of the session domain: six things that the stores spell as three words.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/session/ledger/",
    "title": "majordomus_cli::session::ledger - Rust",
    "description": "The typed event substrate: the existing append-only ledger, read and written with types.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/session/state/",
    "title": "majordomus_cli::session::state - Rust",
    "description": "Where an episode is in its life, and the transitions that move it there.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/session/store/",
    "title": "majordomus_cli::session::store - Rust",
    "description": "Persistence: the open-episode store, the closed-record store, and closing exactly once.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/share/",
    "title": "majordomus_cli::share - Rust",
    "description": "The tool distribution’s data directory: `share/kinds.yaml` and `share/schemas/<kind>.schema.json`, read at run time. Nothing about kinds or keys is compiled into the executable; the directory is located per invocation, explicitly or by convention, and named in every error when it is not.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/site/",
    "title": "majordomus_cli::site - Rust",
    "description": "The site’s registry dataset: what GitHub Pages renders about the executable, derived from the registry, the index, the command line, the benchmark projection and the accepted baselines, and nothing else. The site has no content model of its own for any of it; its templates read `site/data/registry/registry.json` and lay it out, and the shell site generator reads `docs/generated/registry.json` for the ids it turns into routes.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/skill/",
    "title": "majordomus_cli::skill - Rust",
    "description": "Skills as proven capabilities: what the repository can show about each skill, derived.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/synthetic/",
    "title": "majordomus_cli::synthetic - Rust",
    "description": "A synthetic repository: the layer `majordomus init` writes, with as many rules and documents as a test or a benchmark asks for, in a fresh temporary directory that is removed on drop. One generator for the property tests, the scaling benchmarks and the registry benchmarks, so that they measure and test the same shape of repository. Not a git repository: discovery goes through the filesystem, which is what a benchmark wants to measure and a property test wants to control.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/ui/",
    "title": "majordomus_cli::ui - Rust",
    "description": "`majordomus ui`: the primary surface, a product of its own, server-rendered (ADR 0135).",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/web/",
    "title": "majordomus_cli::web - Rust",
    "description": "The repository’s web surfaces: one model, discovered once, read by everything that serves, publishes, validates or describes them.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/web/discover/",
    "title": "majordomus_cli::web::discover - Rust",
    "description": "Discovery: how the repository’s web surfaces are found without anybody listing them.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/web/files/",
    "title": "majordomus_cli::web::files - Rust",
    "description": "Serving a static surface: a generated directory answered under its mount.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/web/html/",
    "title": "majordomus_cli::web::html - Rust",
    "description": "The one page style every generated report uses.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/web/model/",
    "title": "majordomus_cli::web::model - Rust",
    "description": "The typed model of a web surface: what it is, where it is mounted, what produced it, and where every value came from.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/web/report/",
    "title": "majordomus_cli::web::report - Rust",
    "description": "The reports this repository generates as web surfaces: the test run, the benchmark run, the UI conformance audit that is a section of the first, and the UI itself read once at a pinned commit, which a publication carries at the UI’s mount (`snapshot`, ADR 0141).",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/web/report/tests/",
    "title": "majordomus_cli::web::report::tests - Rust",
    "description": "The test report: the suite’s own results, rendered.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/web/report/ui/",
    "title": "majordomus_cli::web::report::ui - Rust",
    "description": "The UI conformance report: what a browser found on every page of the built site.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/web/serve/",
    "title": "majordomus_cli::web::serve - Rust",
    "description": "Serving the static surfaces of a resolved topology.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/web/validate/",
    "title": "majordomus_cli::web::validate - Rust",
    "description": "Validation: the invariants a topology must satisfy before anything serves or publishes it.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/why/",
    "title": "majordomus_cli::why - Rust",
    "description": "The Why catalogue: the operational moments this tool is a response to, the audiences that recognise them and the areas they fall under, read from the index and answered as one immutable typed model.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/worktree/",
    "title": "majordomus_cli::worktree - Rust",
    "description": "The branch-to-worktree topology: where every linked worktree of a repository belongs, derived from git and from nothing else, and everything that follows from it.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/worktree/fingerprint/",
    "title": "majordomus_cli::worktree::fingerprint - Rust",
    "description": "The proof that a move lost nothing.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/rustdoc/majordomus_cli/worktree/state/",
    "title": "majordomus_cli::worktree::state - Rust",
    "description": "What git says about the state of a work tree and of every branch: uncommitted work from `status --porcelain`, and every local branch with its upstream, its distance from it and the work tree holding it from one `for-each-ref`. Nothing here fetches.",
-   "section": "majordomus-cli 0.26.0 — Rust API reference"
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
+  },
+  {
+   "route": "/rustdoc/majordomus_cli/worktree/uncommitted/",
+   "title": "majordomus_cli::worktree::uncommitted - Rust",
+   "description": "Uncommitted work in the linked work trees, and whether anything still holds it (I1995).",
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
    "route": "/sessions/",
