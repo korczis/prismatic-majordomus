@@ -6,27 +6,27 @@
     "version": "0.27.0"
   },
   "registry": {
-    "fingerprint": "039c3c240f2a65253fe430b394e20fc2d0230868bc9dc775a9fdc93d3bfd479f",
+    "fingerprint": "92ffa5787184bba6a8182979a7ef0815736ba3e4bc8e7affe87a42c1812f8ec6",
     "summary": {
-      "total": 2446,
-      "builtin": 202,
-      "declarative": 2244,
+      "total": 2461,
+      "builtin": 204,
+      "declarative": 2257,
       "by_kind": {
         "command": 31,
-        "query": 171,
-        "resource": 2244
+        "query": 173,
+        "resource": 2257
       },
       "by_stability": {
         "behaviorally_verified": 141,
-        "experimental": 52,
-        "implemented": 2253
+        "experimental": 54,
+        "implemented": 2266
       },
-      "mcp_tools": 192,
-      "mcp_resources": 2299,
-      "http_routes": 197,
-      "cli_commands": 108,
+      "mcp_tools": 194,
+      "mcp_resources": 2312,
+      "http_routes": 199,
+      "cli_commands": 110,
       "modules": 92,
-      "benchmark_required": 171,
+      "benchmark_required": 173,
       "benchmark_waived": 31,
       "cached": 54
     },
@@ -57045,6 +57045,1098 @@
         "source_path": "apps/majordomus-cli/src/capability/builtin/perf.rs"
       },
       {
+        "id": "plan.delivery",
+        "module": "plan",
+        "kind": "query",
+        "title": "How far each issue's work has travelled",
+        "description": "For every issue (or one), the furthest delivery stage proved — none, branch, pr_open, merged, released, deployed — each with the object that proved it and when it was observed: the branch that names the issue (by id, the I1405 rule, or by its slug), the open pull request in the recorded forge observation, the newest commit in the trunk's history that names it (a merge by its pull-request title or branch, any other commit by its subject, never by its body), the first release record (`.ai/repo/releases/v*.yaml`) whose commit contains that merge, and the published `latest.json` that names that release or a later one. Beside it, the issue's declared status, so a contradiction between the stamps and the work is one comparison away. Live by default: the trunk this clone knows, every branch, the forge observation `majordomus prs refresh` recorded, the release records, and the `latest.json` of the commit the last Pages deployment published. With `at`, the merges of that commit's history and the tree's release records and nothing live — every branch, forge and deployment source is reported unread — so only merged and released can be proved and the answer is a function of the commit alone. A source that was not read is reported unread with its reason, never as none: an issue it could have moved further is not settled and names it. Inferred on every call and stored nowhere; it never writes a stamp.",
+        "input": {
+          "name": "PlanDeliveryInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "issue": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "One issue id (`I2740`). Default: every issue of the plan. An id the plan does not\ndeclare is not found, never answered as `none`."
+              },
+              "at": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Observe as of this commit (`HEAD`, a sha, a ref): its history and the tree's release\nrecords, and nothing live — no branch, forge, deployment or clock. Default: live."
+              }
+            },
+            "description": "Which issues, and as of when: the input of `plan.delivery`.\n\nBoth fields are optional, and an unknown one is refused rather than ignored, so a caller\nwho misspells `at` is not silently answered live.\n\n```\nuse majordomus_cli::capability::builtin::plan::PlanDeliveryInput;\n\nlet every: PlanDeliveryInput = serde_json::from_str(\"{}\").unwrap();\nassert!(every.issue.is_none() && every.at.is_none(), \"live, every issue\");\nlet one: PlanDeliveryInput =\n    serde_json::from_value(serde_json::json!({ \"issue\": \"I2740\", \"at\": \"HEAD\" })).unwrap();\nassert_eq!((one.issue.as_deref(), one.at.as_deref()), (Some(\"I2740\"), Some(\"HEAD\")));\nassert!(serde_json::from_str::<PlanDeliveryInput>(r#\"{\"commit\":\"HEAD\"}\"#).is_err());\n```",
+            "title": "PlanDeliveryInput"
+          }
+        },
+        "output": {
+          "name": "IssueDeliveryReport",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "schema": {
+                "type": "integer",
+                "format": "uint32",
+                "minimum": 0,
+                "description": "The version of this shape."
+              },
+              "observed": {
+                "$ref": "#/$defs/DeliveryObservation",
+                "description": "Where and when."
+              },
+              "stages": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/DeliveryStage"
+                },
+                "description": "The stage vocabulary, in order."
+              },
+              "sources": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/DeliverySource"
+                },
+                "description": "Every source, read or not."
+              },
+              "tallies": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0
+                },
+                "description": "How many issues are at each stage, keyed by every stage of the vocabulary."
+              },
+              "unsettled": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many issues an unread source could have moved further."
+              },
+              "issues": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/IssueDelivery"
+                },
+                "description": "The issues, in id order."
+              }
+            },
+            "required": [
+              "schema",
+              "observed",
+              "stages",
+              "sources",
+              "tallies",
+              "unsettled",
+              "issues"
+            ],
+            "description": "Every issue's delivery, with what it was read from.",
+            "title": "IssueDeliveryReport",
+            "$defs": {
+              "DeliveryObservation": {
+                "type": "object",
+                "properties": {
+                  "mode": {
+                    "type": "string",
+                    "description": "`live`, or `at` a named commit."
+                  },
+                  "trunk": {
+                    "type": "string",
+                    "description": "The history read: the trunk ref in live mode, the commit asked for otherwise."
+                  },
+                  "commit": {
+                    "type": "string",
+                    "description": "The commit that history ends at."
+                  },
+                  "observed_at": {
+                    "type": "string",
+                    "description": "When: the clock in live mode, the commit's committer time at a commit."
+                  }
+                },
+                "required": [
+                  "mode",
+                  "trunk",
+                  "commit",
+                  "observed_at"
+                ],
+                "description": "Where and when the answer was observed."
+              },
+              "DeliveryStage": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "none",
+                    "description": "Nothing that was read names the issue."
+                  },
+                  {
+                    "type": "string",
+                    "const": "branch",
+                    "description": "A branch names it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "pr_open",
+                    "description": "An open pull request names it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "merged",
+                    "description": "A merge in the trunk's history names it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "released",
+                    "description": "A `v*` release contains its newest merge."
+                  },
+                  {
+                    "type": "string",
+                    "const": "deployed",
+                    "description": "The published `latest.json` names that release or a later one."
+                  }
+                ],
+                "description": "How far one issue's work has travelled, in order: each stage implies every one before it\nhas been passed through, so the furthest one proved is the issue's stage."
+              },
+              "DeliverySource": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "`branches`, `forge`, `history`, `releases` or `publication`."
+                  },
+                  "state": {
+                    "$ref": "#/$defs/DeliveryReading",
+                    "description": "Read or unread."
+                  },
+                  "detail": {
+                    "type": "string",
+                    "description": "What was read, or why nothing was: the ref, the file, the command that would record\nit."
+                  },
+                  "observed_at": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "When what was read was observed, RFC 3339, when it was read."
+                  }
+                },
+                "required": [
+                  "name",
+                  "state",
+                  "detail"
+                ],
+                "description": "One source the answer is built from, and whether it was read."
+              },
+              "DeliveryReading": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "read",
+                    "description": "It was read; what it holds is in the answer."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unread",
+                    "description": "It was not read, and `reason` says why. Nothing it could have proved is claimed or\ndenied."
+                  }
+                ],
+                "description": "Whether one source of the answer was read."
+              },
+              "IssueDelivery": {
+                "type": "object",
+                "properties": {
+                  "issue": {
+                    "type": "string",
+                    "description": "The issue id."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "Its title."
+                  },
+                  "milestone": {
+                    "type": "string",
+                    "description": "Its milestone."
+                  },
+                  "status": {
+                    "type": "string",
+                    "description": "Its declared status, as the plan derives it from the stamps: the other half of the\ncomparison this answer exists for."
+                  },
+                  "stage": {
+                    "$ref": "#/$defs/DeliveryStage",
+                    "description": "The furthest stage proved."
+                  },
+                  "settled": {
+                    "type": "boolean",
+                    "description": "True when no unread source could have proved a further stage."
+                  },
+                  "unread": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The sources that were not read and could have proved a further stage."
+                  },
+                  "branch": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/DeliveryBranch"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "The branch that names it, local first."
+                  },
+                  "pr_open": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/DeliveryPullRequest"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "The open pull request that names it, newest first."
+                  },
+                  "merged": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/DeliveryMerge"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "The newest merge that names it."
+                  },
+                  "released": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/DeliveryRelease"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "The first release containing that merge."
+                  },
+                  "deployed": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/DeliveryDeployment"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "The publication that covers that release."
+                  }
+                },
+                "required": [
+                  "issue",
+                  "title",
+                  "milestone",
+                  "status",
+                  "stage",
+                  "settled",
+                  "unread"
+                ],
+                "description": "One issue's delivery."
+              },
+              "DeliveryBranch": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "The ref, short: `feature/x`, or `origin/feature/x` for a remote-tracking one."
+                  },
+                  "head": {
+                    "type": "string",
+                    "description": "The commit it points at."
+                  },
+                  "remote": {
+                    "type": "boolean",
+                    "description": "True for a remote-tracking ref."
+                  },
+                  "via": {
+                    "type": "string",
+                    "description": "How the name names the issue: `id` or `slug`."
+                  },
+                  "observed_at": {
+                    "type": "string",
+                    "description": "When the refs were read."
+                  }
+                },
+                "required": [
+                  "name",
+                  "head",
+                  "remote",
+                  "via",
+                  "observed_at"
+                ],
+                "description": "A branch that names the issue."
+              },
+              "DeliveryPullRequest": {
+                "type": "object",
+                "properties": {
+                  "number": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "The number."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "The title."
+                  },
+                  "head_ref": {
+                    "type": "string",
+                    "description": "The branch it asks to merge."
+                  },
+                  "draft": {
+                    "type": "boolean",
+                    "description": "True for a draft."
+                  },
+                  "via": {
+                    "type": "string",
+                    "description": "How it names the issue: `title_or_branch` or `slug`."
+                  },
+                  "observed_at": {
+                    "type": "string",
+                    "description": "When the forge was observed."
+                  }
+                },
+                "required": [
+                  "number",
+                  "title",
+                  "head_ref",
+                  "draft",
+                  "via",
+                  "observed_at"
+                ],
+                "description": "An open pull request that names the issue."
+              },
+              "DeliveryMerge": {
+                "type": "object",
+                "properties": {
+                  "commit": {
+                    "type": "string",
+                    "description": "The commit: a merge commit, or a commit whose subject names the issue."
+                  },
+                  "pull_request": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "The pull request it merged, when its subject names one."
+                  },
+                  "branch": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The branch it merged, when its subject names one."
+                  },
+                  "title": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The pull request's title, when the merge carries one, or the commit's subject."
+                  },
+                  "via": {
+                    "type": "string",
+                    "description": "How it names the issue: `title_or_branch` or `slug` for a merge, `subject` for a\ncommit, `forge_title` for a merged pull request's title as the forge recorded it."
+                  },
+                  "merged_at": {
+                    "type": "string",
+                    "description": "When it was committed, RFC 3339."
+                  },
+                  "merges": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "How many commits in the history name the issue; this one is the newest."
+                  },
+                  "observed_at": {
+                    "type": "string",
+                    "description": "When the history was read."
+                  }
+                },
+                "required": [
+                  "commit",
+                  "via",
+                  "merged_at",
+                  "merges",
+                  "observed_at"
+                ],
+                "description": "The newest commit in the trunk's history that names the issue: a merge, by its pull\nrequest's title or its branch, or a commit whose subject names it the way this\nrepository's commits do (`type(scope): description (I2740)`)."
+              },
+              "DeliveryRelease": {
+                "type": "object",
+                "properties": {
+                  "tag": {
+                    "type": "string",
+                    "description": "The tag: `v0.27.0`."
+                  },
+                  "commit": {
+                    "type": "string",
+                    "description": "The commit the tag names."
+                  },
+                  "observed_at": {
+                    "type": "string",
+                    "description": "When the releases were read."
+                  }
+                },
+                "required": [
+                  "tag",
+                  "commit",
+                  "observed_at"
+                ],
+                "description": "The first release that contains the issue's newest merge."
+              },
+              "DeliveryDeployment": {
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "type": "string",
+                    "description": "The version `latest.json` names."
+                  },
+                  "latest_json": {
+                    "type": "string",
+                    "description": "Where that `latest.json` was read: `<commit>:site/static/releases/latest.json`, the\ncommit the observed Pages deployment published."
+                  },
+                  "observed_at": {
+                    "type": "string",
+                    "description": "When the publication was observed."
+                  }
+                },
+                "required": [
+                  "version",
+                  "latest_json",
+                  "observed_at"
+                ],
+                "description": "The published release pointer that covers the issue's release."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::plan"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_plan_delivery"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/plan/delivery"
+          },
+          "cli": {
+            "path": [
+              "plan",
+              "delivery"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "experimental",
+        "tags": [
+          "plan",
+          "project",
+          "delivery",
+          "git",
+          "provenance"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/plan.rs"
+      },
+      {
+        "id": "plan.drift",
+        "module": "plan",
+        "kind": "query",
+        "title": "Where the plan's stamps contradict the delivered work",
+        "description": "Every contradiction between an issue's declared status and its delivery (plan.delivery), each with the objects that prove it: `merged_not_recorded` — READY, BLOCKED or ACTIVE, with a merge on the trunk naming it (pull request, merge commit, release) and no open pull request naming it; `active_without_work` — ACTIVE since before the window, with no branch, pull request, merge or live mesh claim naming it; `done_without_trace` — DONE with no merge naming it, advisory because record-only issues exist. Each finding carries its age, whether it is past the window `.ai/repo/ci/plan.yaml` declares (`drift.window`, seconds), the sources that were not read and could have dissolved it, and the command that settles it (`majordomus plan verify|done <id>`). With `gate`, judged as a gate: on a `head` every merged_not_recorded is pending; on the `trunk` one merged longer than the window ago is refused and a younger one pending; the other classes never refuse; a missing or unreadable window refuses (exit 12); refusals fail the gate (exit 10) only under `drift.enforcement: blocking`, and are reported with exit 0 under `advisory`. Observed live, or `at` a commit as plan.delivery is. Inferred on every call; it never writes a stamp.",
+        "input": {
+          "name": "PlanDriftInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "issue": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "One issue id. Default: every issue of the plan."
+              },
+              "at": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Observe as of this commit, as `plan.delivery` does. Default: live."
+              },
+              "gate": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/DriftGate"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Judge as a gate on a `head` or on the `trunk`. Default: report only, exit 0."
+              }
+            },
+            "description": "Which issues, as of when, and judged as which gate: the input of `plan.drift`.\n\n```\nuse majordomus_cli::capability::builtin::plan::{DriftGate, PlanDriftInput};\n\nlet every: PlanDriftInput = serde_json::from_str(\"{}\").unwrap();\nassert!(every.issue.is_none() && every.at.is_none() && every.gate.is_none());\nlet gate: PlanDriftInput = serde_json::from_value(serde_json::json!({ \"gate\": \"trunk\" })).unwrap();\nassert_eq!(gate.gate, Some(DriftGate::Trunk));\nassert!(serde_json::from_str::<PlanDriftInput>(r#\"{\"gate\":\"main\"}\"#).is_err());\nassert!(serde_json::from_str::<PlanDriftInput>(r#\"{\"window\":60}\"#).is_err());\n```",
+            "title": "PlanDriftInput",
+            "$defs": {
+              "DriftGate": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "head",
+                    "description": "A head: not the shared plan, so every merged_not_recorded is pending."
+                  },
+                  {
+                    "type": "string",
+                    "const": "trunk",
+                    "description": "The trunk: merged work unrecorded past the window is refused."
+                  }
+                ],
+                "description": "Which tree a `plan.drift` gate judges.\n\n```\nuse majordomus_cli::capability::builtin::plan::DriftGate;\nassert_eq!(serde_json::to_value(DriftGate::Trunk).unwrap(), \"trunk\");\nassert_eq!(serde_json::from_str::<DriftGate>(r#\"\"head\"\"#).unwrap(), DriftGate::Head);\n```"
+              }
+            }
+          }
+        },
+        "output": {
+          "name": "DriftReport",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "schema": {
+                "type": "integer",
+                "format": "uint32",
+                "minimum": 0,
+                "description": "The version of this shape."
+              },
+              "observed": {
+                "$ref": "#/$defs/DeliveryObservation",
+                "description": "Where and when the delivery was observed."
+              },
+              "window": {
+                "$ref": "#/$defs/DriftWindow",
+                "description": "The declared window."
+              },
+              "gate": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/DriftGate"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "The tree a gate judged, when one was asked."
+              },
+              "sources": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/DeliverySource"
+                },
+                "description": "Every source, read or not: the delivery's, and the mesh claims."
+              },
+              "classes": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/DriftClass"
+                },
+                "description": "The class vocabulary, in order."
+              },
+              "tallies": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0
+                },
+                "description": "How many findings of each class, keyed by every class."
+              },
+              "findings": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/DriftFinding"
+                },
+                "description": "The findings, in issue order, then class order."
+              },
+              "refused": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many findings the gate refused."
+              },
+              "pending": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many it reported as pending."
+              },
+              "enforced": {
+                "type": "boolean",
+                "description": "Whether a refusal fails the gate (`drift.enforcement: blocking`)."
+              },
+              "verdict": {
+                "type": "string",
+                "description": "`report` (no gate), `clean`, `pending`, `advisory` (refusals not enforced),\n`refused`, or `unjudged` (no window)."
+              },
+              "exit_code": {
+                "type": "integer",
+                "format": "uint8",
+                "minimum": 0,
+                "maximum": 255,
+                "description": "The exit code the gate ends with: 0, `EXIT_REFUSED` or `EXIT_UNJUDGED`."
+              }
+            },
+            "required": [
+              "schema",
+              "observed",
+              "window",
+              "sources",
+              "classes",
+              "tallies",
+              "findings",
+              "refused",
+              "pending",
+              "enforced",
+              "verdict",
+              "exit_code"
+            ],
+            "description": "Every contradiction between the plan's stamps and its delivery, and, when a gate was\nasked, its verdict.",
+            "title": "DriftReport",
+            "$defs": {
+              "DeliveryObservation": {
+                "type": "object",
+                "properties": {
+                  "mode": {
+                    "type": "string",
+                    "description": "`live`, or `at` a named commit."
+                  },
+                  "trunk": {
+                    "type": "string",
+                    "description": "The history read: the trunk ref in live mode, the commit asked for otherwise."
+                  },
+                  "commit": {
+                    "type": "string",
+                    "description": "The commit that history ends at."
+                  },
+                  "observed_at": {
+                    "type": "string",
+                    "description": "When: the clock in live mode, the commit's committer time at a commit."
+                  }
+                },
+                "required": [
+                  "mode",
+                  "trunk",
+                  "commit",
+                  "observed_at"
+                ],
+                "description": "Where and when the answer was observed."
+              },
+              "DriftWindow": {
+                "type": "object",
+                "properties": {
+                  "model": {
+                    "type": "string",
+                    "description": "The file it is declared in."
+                  },
+                  "state": {
+                    "$ref": "#/$defs/DeliveryReading",
+                    "description": "Read, or unread with `detail` saying why."
+                  },
+                  "seconds": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "The seconds the trunk may carry merged work the plan has not recorded."
+                  },
+                  "enforcement": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "`advisory` (refusals are reported, the gate passes) or `blocking`."
+                  },
+                  "detail": {
+                    "type": "string",
+                    "description": "What was read, or why nothing was."
+                  }
+                },
+                "required": [
+                  "model",
+                  "state",
+                  "detail"
+                ],
+                "description": "The declared window, or why there is none."
+              },
+              "DeliveryReading": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "read",
+                    "description": "It was read; what it holds is in the answer."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unread",
+                    "description": "It was not read, and `reason` says why. Nothing it could have proved is claimed or\ndenied."
+                  }
+                ],
+                "description": "Whether one source of the answer was read."
+              },
+              "DriftGate": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "head",
+                    "description": "A head: not the shared plan, so every merged_not_recorded is pending."
+                  },
+                  {
+                    "type": "string",
+                    "const": "trunk",
+                    "description": "The trunk: merged work unrecorded past the window is refused."
+                  }
+                ],
+                "description": "Which tree a `plan.drift` gate judges.\n\n```\nuse majordomus_cli::capability::builtin::plan::DriftGate;\nassert_eq!(serde_json::to_value(DriftGate::Trunk).unwrap(), \"trunk\");\nassert_eq!(serde_json::from_str::<DriftGate>(r#\"\"head\"\"#).unwrap(), DriftGate::Head);\n```"
+              },
+              "DeliverySource": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "`branches`, `forge`, `history`, `releases` or `publication`."
+                  },
+                  "state": {
+                    "$ref": "#/$defs/DeliveryReading",
+                    "description": "Read or unread."
+                  },
+                  "detail": {
+                    "type": "string",
+                    "description": "What was read, or why nothing was: the ref, the file, the command that would record\nit."
+                  },
+                  "observed_at": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "When what was read was observed, RFC 3339, when it was read."
+                  }
+                },
+                "required": [
+                  "name",
+                  "state",
+                  "detail"
+                ],
+                "description": "One source the answer is built from, and whether it was read."
+              },
+              "DriftClass": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "merged_not_recorded",
+                    "description": "READY, BLOCKED or ACTIVE, with merged work and no open pull request naming it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "active_without_work",
+                    "description": "ACTIVE since before the window, with no branch, pull request, merge or mesh claim."
+                  },
+                  {
+                    "type": "string",
+                    "const": "done_without_trace",
+                    "description": "DONE with no merge naming it. Advisory: record-only issues exist."
+                  }
+                ],
+                "description": "One kind of contradiction between the stamps and the work."
+              },
+              "DriftFinding": {
+                "type": "object",
+                "properties": {
+                  "issue": {
+                    "type": "string",
+                    "description": "The issue id."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "Its title."
+                  },
+                  "milestone": {
+                    "type": "string",
+                    "description": "Its milestone."
+                  },
+                  "status": {
+                    "type": "string",
+                    "description": "Its declared status."
+                  },
+                  "stage": {
+                    "$ref": "#/$defs/DeliveryStage",
+                    "description": "Its inferred delivery stage."
+                  },
+                  "class": {
+                    "$ref": "#/$defs/DriftClass",
+                    "description": "The contradiction."
+                  },
+                  "advisory": {
+                    "type": "boolean",
+                    "description": "True for a class that never refuses."
+                  },
+                  "proof": {
+                    "$ref": "#/$defs/DriftProof",
+                    "description": "What proves it."
+                  },
+                  "since": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Since when the contradiction holds: the merge for `merged_not_recorded`, the start\nstamp for `active_without_work`."
+                  },
+                  "age_seconds": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Seconds from `since` to the observation."
+                  },
+                  "past_window": {
+                    "type": [
+                      "boolean",
+                      "null"
+                    ],
+                    "description": "Whether that is longer than the window; absent when either is unknown."
+                  },
+                  "settled": {
+                    "type": "boolean",
+                    "description": "True when no unread source could have dissolved it."
+                  },
+                  "unread": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The sources that were not read and could have dissolved it."
+                  },
+                  "remedy": {
+                    "type": "string",
+                    "description": "The command that settles it."
+                  },
+                  "verdict": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/DriftVerdict"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "What the gate made of it, when a gate was asked."
+                  }
+                },
+                "required": [
+                  "issue",
+                  "title",
+                  "milestone",
+                  "status",
+                  "stage",
+                  "class",
+                  "advisory",
+                  "proof",
+                  "settled",
+                  "unread",
+                  "remedy"
+                ],
+                "description": "One contradiction between an issue's stamps and its delivery."
+              },
+              "DeliveryStage": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "none",
+                    "description": "Nothing that was read names the issue."
+                  },
+                  {
+                    "type": "string",
+                    "const": "branch",
+                    "description": "A branch names it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "pr_open",
+                    "description": "An open pull request names it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "merged",
+                    "description": "A merge in the trunk's history names it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "released",
+                    "description": "A `v*` release contains its newest merge."
+                  },
+                  {
+                    "type": "string",
+                    "const": "deployed",
+                    "description": "The published `latest.json` names that release or a later one."
+                  }
+                ],
+                "description": "How far one issue's work has travelled, in order: each stage implies every one before it\nhas been passed through, so the furthest one proved is the issue's stage."
+              },
+              "DriftProof": {
+                "type": "object",
+                "properties": {
+                  "pull_request": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "The pull request the newest merge naming the issue merged."
+                  },
+                  "merge_commit": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The newest commit in the trunk's history that names the issue."
+                  },
+                  "merged_at": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "When that commit was made."
+                  },
+                  "via": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "How it names the issue (`title_or_branch`, `slug`, `subject`, `forge_title`)."
+                  },
+                  "release": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The first release that contains it."
+                  },
+                  "started_at": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "When execution was recorded to have begun, for `active_without_work`."
+                  }
+                },
+                "description": "The objects that prove a finding."
+              },
+              "DriftVerdict": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "refused",
+                    "description": "Refused: merged work the trunk has carried unrecorded past the window."
+                  },
+                  {
+                    "type": "string",
+                    "const": "pending",
+                    "description": "Reported and not refused: on a head, or inside the window."
+                  },
+                  {
+                    "type": "string",
+                    "const": "reported",
+                    "description": "Reported; this class never refuses."
+                  },
+                  {
+                    "type": "string",
+                    "const": "advisory",
+                    "description": "Advisory; this class never refuses (`done_without_trace`)."
+                  }
+                ],
+                "description": "What a gate made of one finding."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::plan"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_plan_drift"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/plan/drift"
+          },
+          "cli": {
+            "path": [
+              "plan",
+              "drift"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "experimental",
+        "tags": [
+          "plan",
+          "project",
+          "delivery",
+          "drift",
+          "gate"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/plan.rs"
+      },
+      {
         "id": "plan.issues",
         "module": "plan",
         "kind": "query",
@@ -82315,7 +83407,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 109,
+        "capabilities": 110,
         "capability_ids": []
       },
       {
@@ -82938,7 +84030,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 394,
+        "capabilities": 403,
         "capability_ids": []
       },
       {
@@ -83054,7 +84146,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 38,
+        "capabilities": 39,
         "capability_ids": []
       },
       {
@@ -83196,8 +84288,10 @@
         "description": "The milestone and issue model of this repository, and everything derived from it that nobody authored: the status of each record, the dependency graphs above and below the milestone boundary, the topological execution waves, the roadmap order, the milestone being executed and the one issue to take next. Status is never stored — a record says what happened to it and the status follows from that and from the state of its dependencies — so no file can contradict the graph. This capability reads; writing a lifecycle marker into a record is `plan.transition`, which declares that it writes the repository.",
         "stability": "behaviorally_verified",
         "source": "builtin",
-        "capabilities": 9,
+        "capabilities": 11,
         "capability_ids": [
+          "plan.delivery",
+          "plan.drift",
           "plan.issues",
           "plan.model",
           "plan.next",
@@ -83509,7 +84603,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 500,
+        "capabilities": 502,
         "capability_ids": []
       },
       {
@@ -83600,7 +84694,7 @@
     ]
   },
   "index": {
-    "fingerprint": "d145fb9a0df194ae88563f0ac078bcdc65ec3e4202c2c15329351b61177ace6a",
+    "fingerprint": "ffe57835b7b73dc5df698249ac9712871944d30e3c183658f4b7934d21b7c763",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -83623,7 +84717,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 109,
+      "adr": 110,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -83640,10 +84734,10 @@
       "gap": 3,
       "implementation": 52,
       "intent": 4,
-      "issue": 394,
+      "issue": 403,
       "knowledge": 4,
       "mesh-declaration": 1,
-      "milestone": 38,
+      "milestone": 39,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -83654,7 +84748,7 @@
       "session": 89,
       "skill": 8,
       "taxonomy": 10,
-      "test": 500,
+      "test": 502,
       "use-case": 49,
       "workspace": 1
     },
@@ -85465,6 +86559,24 @@
           "release",
           "mesh",
           "runtime"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0166",
+        "kind": "adr",
+        "identity": "adr-0166",
+        "title": "The plan's surfaces are inferred from delivery, and nothing the plan shows is typed beside it",
+        "description": "The plan's surfaces are inferred from delivery, and nothing the plan shows is typed beside it",
+        "path": ".ai/repo/adrs/0166-the-plan-surfaces-are-inferred-from-delivery.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 8828,
+        "tags": [
+          "plan",
+          "site",
+          "ui",
+          "derivation",
+          "diagrams"
         ]
       },
       {
@@ -88665,7 +89777,7 @@
         "description": "The gates this repository runs, which changed paths select them, and what publication may spend.",
         "path": ".ai/repo/ci/README.md",
         "source_class": "context",
-        "bytes": 2238
+        "bytes": 2449
       },
       {
         "uri": "majordomus://context/ai.repo.deployments",
@@ -89758,7 +90870,7 @@
         "title": "Planning — milestones, issues, and the graph between them",
         "path": "docs/PLANNING.md",
         "source_class": "document",
-        "bytes": 31938
+        "bytes": 37193
       },
       {
         "uri": "majordomus://document/docs/PLAN_STATUS.md",
@@ -89767,7 +90879,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 158951
+        "bytes": 173435
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -93035,7 +94147,7 @@
         "identity": "lib/plan.sh",
         "path": "lib/plan.sh",
         "source_class": "library",
-        "bytes": 27358
+        "bytes": 28497
       },
       {
         "uri": "majordomus://implementation/lib/plan_json.awk",
@@ -97552,6 +98664,105 @@
         "bytes": 2836
       },
       {
+        "uri": "majordomus://issue/I2740",
+        "kind": "issue",
+        "identity": "I2740",
+        "title": "An issue's delivery is inferred from branches, pull requests, merges, tags and the published site",
+        "description": "Add the capability plan.delivery (CLI majordomus plan delivery [--json] [<id>], HTTP and MCP from the one capability declaration) that answers, for every issue, the furthest stage of none, branch, pr_open, merged, released, deployed, each with the object that proved it and when it was observed, and expose it in the site data the plan pages read.",
+        "path": ".ai/repo/project/issues/I2740.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3870
+      },
+      {
+        "uri": "majordomus://issue/I2741",
+        "kind": "issue",
+        "identity": "I2741",
+        "title": "Merged work the plan has not recorded is drift, and on the trunk past a window it is red",
+        "description": "Add plan.drift over plan.delivery with the classes merged_not_recorded, active_without_work and done_without_trace (advisory), and a gate scripts/ci/plan-drift-check that refuses merged_not_recorded older than a window declared in .ai/repo/ci/plan.yaml on the trunk, naming majordomus plan verify|done <id>.",
+        "path": ".ai/repo/project/issues/I2741.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2851
+      },
+      {
+        "uri": "majordomus://issue/I2742",
+        "kind": "issue",
+        "identity": "I2742",
+        "title": "A milestone's version is inferred from the release that carried it, never typed",
+        "description": "Remove version from the milestone schema and the eight records that carry it, refuse a record that carries one, and derive released_in for a milestone as the first v* tag containing the merge of its last accepted issue (unreleased while open), in both the awk and the Rust engines' output; rewrite the vendored roadmap-integrity rule and its validator to match.",
+        "path": ".ai/repo/project/issues/I2742.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2188
+      },
+      {
+        "uri": "majordomus://issue/I2743",
+        "kind": "issue",
+        "identity": "I2743",
+        "title": "The public roadmap draws every milestone in the graph's order, each issue with its inferred delivery",
+        "description": "Rewrite site/templates/roadmap.html and site/content-src roadmap so /roadmap/ lists every milestone of the plan in the milestone graph's order (no filter on any hand field), shows released_in, each issue's declared status beside its inferred stage linked to the pull request, commit and tag that prove it, states the commit and time observed, and draws the milestone graph through the ADR 0152 viewer with nodes linked to milestone pages.",
+        "path": ".ai/repo/project/issues/I2743.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1884
+      },
+      {
+        "uri": "majordomus://issue/I2744",
+        "kind": "issue",
+        "identity": "I2744",
+        "title": "The UI roadmap reads delivery and the releases themselves, and its now is where work is",
+        "description": "Make /ui/roadmap (apps/majordomus-cli/src/ui/roadmap.rs) show each issue's inferred stage from plan.delivery beside its declared status, derive Now as the milestones with work in flight (open pull requests, mesh claims, ACTIVE) and Next from the graph, and read the latest release from the releases (tags and the published latest.json) at the moment it renders, so a snapshot never shows an older release than the executable that drew it.",
+        "path": ".ai/repo/project/issues/I2744.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1947
+      },
+      {
+        "uri": "majordomus://issue/I2745",
+        "kind": "issue",
+        "identity": "I2745",
+        "title": "The landing page states no present it does not read",
+        "description": "Replace every sentence in site/data/marketing.toml, manifesto.toml and homepage.toml that describes the current state of the product with a rendered datum from site/data/generated (release, plan figures, delivery, recent landings) or remove it, fix the link text that promises waves the roadmap does not show, and extend scripts/ci/homepage-check to refuse present-state vocabulary (today, not yet, nothing ... yet, no command ... today, is shipped) in those files.",
+        "path": ".ai/repo/project/issues/I2745.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1868
+      },
+      {
+        "uri": "majordomus://issue/I2746",
+        "kind": "issue",
+        "identity": "I2746",
+        "title": "Every published tree draws its diagrams, and every diagram is the interactive viewer",
+        "description": "Raise project.a-diagram-is-drawn-not-typed to version 2 covering .ai/repo/adrs, .ai/repo/rules, handbook and every markdown string majordomus ui renders, convert every box-art diagram those trees hold to Mermaid (Cytoscape where the graph is data) through the ADR 0152 viewer with inferred node links, and extend scripts/ci/diagram-check and case 272 to the new scope.",
+        "path": ".ai/repo/project/issues/I2746.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1846
+      },
+      {
+        "uri": "majordomus://issue/I2747",
+        "kind": "issue",
+        "identity": "I2747",
+        "title": "Every code block on every surface is highlighted by one engine with one palette",
+        "description": "Highlight every code block majordomus ui and the executable's reports render with syntect, the engine Zola already uses for the site, emitting the same class vocabulary; generate one stylesheet for both themes from the design tokens and use it on the site, the UI and the handbook; remove highlight.js and any CDN highlighter; add a gate that refuses a second highlighter.",
+        "path": ".ai/repo/project/issues/I2747.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1963
+      },
+      {
+        "uri": "majordomus://issue/I2748",
+        "kind": "issue",
+        "identity": "I2748",
+        "title": "The drift already on the trunk is settled before the gate is made blocking",
+        "description": "Run plan.drift on the trunk and, for every merged_not_recorded issue, either record it through plan verify|evidence|done with evidence actually run, or record why it is not done (a slice) by narrowing the issue or opening its remainder as a new issue; then make the drift gate blocking.",
+        "path": ".ai/repo/project/issues/I2748.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1460
+      },
+      {
         "uri": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "identity": "a-commit-stood-behind-a-build-lock",
@@ -98008,6 +99219,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 9891
+      },
+      {
+        "uri": "majordomus://milestone/truthful-plan-surfaces",
+        "kind": "milestone",
+        "identity": "truthful-plan-surfaces",
+        "title": "The plan's surfaces are inferred from delivery, and nothing they show is typed beside the repository",
+        "description": "Every plan surface draws every milestone in the graph's order, each issue with its declared status beside the delivery stage inferred from branches, pull requests, merges, tags and the published site; a merged but unrecorded issue turns the trunk red past a window; no milestone carries a typed version; every relationship is a drawn, clickable diagram; every code block is highlighted by one engine with one token-derived palette.",
+        "path": ".ai/repo/project/milestones/truthful-plan-surfaces.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 3936
       },
       {
         "uri": "majordomus://milestone/two-folder-integration",
@@ -104843,6 +106065,22 @@
         "bytes": 7114
       },
       {
+        "uri": "majordomus://test/test/cases/3100_an_issue_delivery_is_inferred.sh",
+        "kind": "test",
+        "identity": "test/cases/3100_an_issue_delivery_is_inferred.sh",
+        "path": "test/cases/3100_an_issue_delivery_is_inferred.sh",
+        "source_class": "case",
+        "bytes": 11166
+      },
+      {
+        "uri": "majordomus://test/test/cases/3101_merged_work_unrecorded_is_drift.sh",
+        "kind": "test",
+        "identity": "test/cases/3101_merged_work_unrecorded_is_drift.sh",
+        "path": "test/cases/3101_merged_work_unrecorded_is_drift.sh",
+        "source_class": "case",
+        "bytes": 11175
+      },
+      {
         "uri": "majordomus://test/test/cases/310_rustdoc_projection.sh",
         "kind": "test",
         "identity": "test/cases/310_rustdoc_projection.sh",
@@ -107706,7 +108944,7 @@
       "identity": [
         "id"
       ],
-      "objects": 109
+      "objects": 110
     },
     {
       "name": "application",
@@ -107869,7 +109107,7 @@
       "identity": [
         "id"
       ],
-      "objects": 394
+      "objects": 403
     },
     {
       "name": "knowledge",
@@ -107899,7 +109137,7 @@
       "identity": [
         "id"
       ],
-      "objects": 38
+      "objects": 39
     },
     {
       "name": "moment",
@@ -108021,7 +109259,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 500
+      "objects": 502
     },
     {
       "name": "use-case",
@@ -135721,6 +136959,429 @@
       {
         "path": [
           "majordomus",
+          "plan"
+        ],
+        "route": "/docs/cli/plan/",
+        "executable": false,
+        "usage": "majordomus plan [OPTIONS] <COMMAND>",
+        "about": "How far each issue's work has travelled: none, branch, pr_open, merged, released or deployed, each with the object that proved it; the plan's records are read and moved by the shell tool's `plan`",
+        "args": [
+          {
+            "name": "repo",
+            "long": "repo",
+            "positional": false,
+            "help": "Start the search for the repository root here (default: the current directory)",
+            "value_name": "PATH",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "discovery",
+            "long": "discovery",
+            "positional": false,
+            "help": "How declarative files are enumerated",
+            "value_name": "DISCOVERY",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "vcs",
+                "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+              },
+              {
+                "name": "filesystem",
+                "help": "A walk of the work tree with the same glob semantics; untracked files included"
+              }
+            ],
+            "defaults": [
+              "vcs"
+            ]
+          },
+          {
+            "name": "strict",
+            "long": "strict",
+            "positional": false,
+            "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+            "value_name": "STRICT",
+            "takes_value": false,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": [
+              "false"
+            ]
+          },
+          {
+            "name": "share",
+            "long": "share",
+            "positional": false,
+            "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+            "value_name": "DIR",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "format",
+            "long": "format",
+            "positional": false,
+            "help": "Output shape",
+            "value_name": "FORMAT",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "text",
+                "help": "Lines for a person"
+              },
+              {
+                "name": "json",
+                "help": "One JSON document, deterministic"
+              }
+            ],
+            "defaults": [
+              "text"
+            ]
+          }
+        ],
+        "examples": [],
+        "subcommands": [
+          {
+            "path": [
+              "majordomus",
+              "plan",
+              "delivery"
+            ],
+            "route": "/docs/cli/plan/delivery/",
+            "executable": true,
+            "usage": "majordomus plan delivery [OPTIONS] [ISSUE]",
+            "about": "Every issue's furthest delivery stage, with the object that proved it and its declared status beside it",
+            "args": [
+              {
+                "name": "issue",
+                "positional": true,
+                "help": "One issue; default every issue of the plan",
+                "value_name": "ISSUE",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "at",
+                "long": "at",
+                "positional": false,
+                "help": "Observe as of this commit: its history and the tree's release records, nothing live (no branch, forge, deployment or clock)",
+                "value_name": "REV",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "plan-delivery-json",
+                "title": "How far every issue's work has travelled",
+                "description": "The same answer `GET /api/v1/plan/delivery` and the MCP tool `majordomus_plan_delivery` return: every issue with its declared status and the furthest stage proved — none, branch, pr_open, merged, released, deployed — each stage with the branch, pull request, merge commit, tag or `latest.json` that proved it. A checkout that never observed the forge says the forge is unread, and an issue it could have moved further is not settled.",
+                "argv": [
+                  "plan",
+                  "delivery",
+                  "--format",
+                  "json"
+                ],
+                "command": "majordomus plan delivery --format json",
+                "setup": [],
+                "expectation": "exits 0; prints one JSON document carrying /observed/commit, /tallies/none, /issues/0/stage, /sources"
+              },
+              {
+                "id": "plan-delivery-at",
+                "title": "One issue, as of a commit",
+                "description": "`--at` reads the merges in that commit's history and the tree's release records, and nothing live — no branch, no forge, no deployment, no clock — so it proves only merged and released and the answer is a function of the commit alone. That is what `scripts/generate-site-data` writes to `site/data/generated/delivery.json` and reproduces under `--check`.",
+                "argv": [
+                  "plan",
+                  "delivery",
+                  "I0001",
+                  "--at",
+                  "HEAD"
+                ],
+                "command": "majordomus plan delivery I0001 --at HEAD",
+                "setup": [],
+                "expectation": "exits 0; prints I0001, none, unread"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "plan",
+              "drift"
+            ],
+            "route": "/docs/cli/plan/drift/",
+            "executable": true,
+            "usage": "majordomus plan drift [OPTIONS] [ISSUE]",
+            "about": "Every contradiction between an issue's declared status and its delivery — merged_not_recorded, active_without_work, done_without_trace — each with its proof; with --gate, judged against the window .ai/repo/ci/plan.yaml declares",
+            "args": [
+              {
+                "name": "issue",
+                "positional": true,
+                "help": "One issue; default every issue of the plan",
+                "value_name": "ISSUE",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "at",
+                "long": "at",
+                "positional": false,
+                "help": "Observe as of this commit, as `plan delivery --at` does",
+                "value_name": "REV",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "gate",
+                "long": "gate",
+                "positional": false,
+                "help": "Judge as a gate: on a `head` merged work is pending, on the `trunk` past the window it is refused (exit 10 under blocking enforcement); a missing window exits 12",
+                "value_name": "TREE",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [
+                  {
+                    "name": "head",
+                    "help": "A head: merged work the plan has not recorded is pending"
+                  },
+                  {
+                    "name": "trunk",
+                    "help": "The trunk: merged work unrecorded past the window is refused"
+                  }
+                ],
+                "defaults": []
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "plan-drift-json",
+                "title": "Where the plan's stamps contradict the delivered work",
+                "description": "The same answer `GET /api/v1/plan/drift` and the MCP tool `majordomus_plan_drift` return: every merged_not_recorded, active_without_work and done_without_trace finding with the pull request, merge commit and release that prove it, its age against the window `.ai/repo/ci/plan.yaml` declares, and the command that settles it.",
+                "argv": [
+                  "plan",
+                  "drift",
+                  "--format",
+                  "json"
+                ],
+                "command": "majordomus plan drift --format json",
+                "setup": [],
+                "expectation": "exits 0; prints one JSON document carrying /observed/commit, /window/model, /tallies/merged_not_recorded, /verdict"
+              },
+              {
+                "id": "plan-drift-at",
+                "title": "As of a commit",
+                "description": "`--at` reads that commit's history and the tree's records only, as `plan delivery --at` does, so the open pull requests are unread and a finding says it is not settled. `--gate head|trunk` judges the answer as `scripts/ci/plan-drift-check` does: on a head merged work the plan has not recorded is pending; on the trunk one merged longer than the window ago is refused, naming `majordomus plan verify|done <id>`, and a missing window refuses with exit 12.",
+                "argv": [
+                  "plan",
+                  "drift",
+                  "--at",
+                  "HEAD"
+                ],
+                "command": "majordomus plan drift --at HEAD",
+                "setup": [],
+                "expectation": "exits 0; prints plan drift, window"
+              }
+            ],
+            "subcommands": []
+          }
+        ]
+      },
+      {
+        "path": [
+          "majordomus",
           "economics"
         ],
         "route": "/docs/cli/economics/",
@@ -142375,6 +144036,40 @@
         "output": "CounterSnapshot"
       },
       {
+        "name": "majordomus_plan_delivery",
+        "id": "plan.delivery",
+        "title": "How far each issue's work has travelled",
+        "description": "For every issue (or one), the furthest delivery stage proved — none, branch, pr_open, merged, released, deployed — each with the object that proved it and when it was observed: the branch that names the issue (by id, the I1405 rule, or by its slug), the open pull request in the recorded forge observation, the newest commit in the trunk's history that names it (a merge by its pull-request title or branch, any other commit by its subject, never by its body), the first release record (`.ai/repo/releases/v*.yaml`) whose commit contains that merge, and the published `latest.json` that names that release or a later one. Beside it, the issue's declared status, so a contradiction between the stamps and the work is one comparison away. Live by default: the trunk this clone knows, every branch, the forge observation `majordomus prs refresh` recorded, the release records, and the `latest.json` of the commit the last Pages deployment published. With `at`, the merges of that commit's history and the tree's release records and nothing live — every branch, forge and deployment source is reported unread — so only merged and released can be proved and the answer is a function of the commit alone. A source that was not read is reported unread with its reason, never as none: an issue it could have moved further is not settled and names it. Inferred on every call and stored nowhere; it never writes a stamp.",
+        "kind": "query",
+        "read_only": true,
+        "effect": "read",
+        "hints": {
+          "read_only": true,
+          "destructive": false,
+          "idempotent": true,
+          "open_world": false
+        },
+        "input": "PlanDeliveryInput",
+        "output": "IssueDeliveryReport"
+      },
+      {
+        "name": "majordomus_plan_drift",
+        "id": "plan.drift",
+        "title": "Where the plan's stamps contradict the delivered work",
+        "description": "Every contradiction between an issue's declared status and its delivery (plan.delivery), each with the objects that prove it: `merged_not_recorded` — READY, BLOCKED or ACTIVE, with a merge on the trunk naming it (pull request, merge commit, release) and no open pull request naming it; `active_without_work` — ACTIVE since before the window, with no branch, pull request, merge or live mesh claim naming it; `done_without_trace` — DONE with no merge naming it, advisory because record-only issues exist. Each finding carries its age, whether it is past the window `.ai/repo/ci/plan.yaml` declares (`drift.window`, seconds), the sources that were not read and could have dissolved it, and the command that settles it (`majordomus plan verify|done <id>`). With `gate`, judged as a gate: on a `head` every merged_not_recorded is pending; on the `trunk` one merged longer than the window ago is refused and a younger one pending; the other classes never refuse; a missing or unreadable window refuses (exit 12); refusals fail the gate (exit 10) only under `drift.enforcement: blocking`, and are reported with exit 0 under `advisory`. Observed live, or `at` a commit as plan.delivery is. Inferred on every call; it never writes a stamp.",
+        "kind": "query",
+        "read_only": true,
+        "effect": "read",
+        "hints": {
+          "read_only": true,
+          "destructive": false,
+          "idempotent": true,
+          "open_world": false
+        },
+        "input": "PlanDriftInput",
+        "output": "DriftReport"
+      },
+      {
         "name": "majordomus_plan_issues",
         "id": "plan.issues",
         "title": "The issues, filtered by what the graph derived",
@@ -144573,6 +146268,18 @@
         "method": "GET",
         "path": "/api/v1/perf",
         "id": "perf.counters",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/plan/delivery",
+        "id": "plan.delivery",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/plan/drift",
+        "id": "plan.drift",
         "kind": "query"
       },
       {
@@ -149600,6 +151307,122 @@
         "case": "default",
         "cached": false,
         "route": "GET /api/v1/perf"
+      },
+      {
+        "key": "plan.delivery|direct|every-issue",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "plan.delivery",
+        "module": "plan",
+        "case": "every-issue",
+        "cached": false
+      },
+      {
+        "key": "plan.delivery|direct|one-issue-at-head",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "plan.delivery",
+        "module": "plan",
+        "case": "one-issue-at-head",
+        "cached": false
+      },
+      {
+        "key": "plan.delivery|mcp|every-issue",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "plan.delivery",
+        "module": "plan",
+        "case": "every-issue",
+        "cached": false,
+        "tool": "majordomus_plan_delivery"
+      },
+      {
+        "key": "plan.delivery|mcp|one-issue-at-head",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "plan.delivery",
+        "module": "plan",
+        "case": "one-issue-at-head",
+        "cached": false,
+        "tool": "majordomus_plan_delivery"
+      },
+      {
+        "key": "plan.delivery|http|every-issue",
+        "kind": "capability",
+        "transport": "http",
+        "id": "plan.delivery",
+        "module": "plan",
+        "case": "every-issue",
+        "cached": false,
+        "route": "GET /api/v1/plan/delivery"
+      },
+      {
+        "key": "plan.delivery|http|one-issue-at-head",
+        "kind": "capability",
+        "transport": "http",
+        "id": "plan.delivery",
+        "module": "plan",
+        "case": "one-issue-at-head",
+        "cached": false,
+        "route": "GET /api/v1/plan/delivery"
+      },
+      {
+        "key": "plan.drift|direct|every-issue",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "plan.drift",
+        "module": "plan",
+        "case": "every-issue",
+        "cached": false
+      },
+      {
+        "key": "plan.drift|direct|one-issue-at-head-as-trunk-gate",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "plan.drift",
+        "module": "plan",
+        "case": "one-issue-at-head-as-trunk-gate",
+        "cached": false
+      },
+      {
+        "key": "plan.drift|mcp|every-issue",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "plan.drift",
+        "module": "plan",
+        "case": "every-issue",
+        "cached": false,
+        "tool": "majordomus_plan_drift"
+      },
+      {
+        "key": "plan.drift|mcp|one-issue-at-head-as-trunk-gate",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "plan.drift",
+        "module": "plan",
+        "case": "one-issue-at-head-as-trunk-gate",
+        "cached": false,
+        "tool": "majordomus_plan_drift"
+      },
+      {
+        "key": "plan.drift|http|every-issue",
+        "kind": "capability",
+        "transport": "http",
+        "id": "plan.drift",
+        "module": "plan",
+        "case": "every-issue",
+        "cached": false,
+        "route": "GET /api/v1/plan/drift"
+      },
+      {
+        "key": "plan.drift|http|one-issue-at-head-as-trunk-gate",
+        "kind": "capability",
+        "transport": "http",
+        "id": "plan.drift",
+        "module": "plan",
+        "case": "one-issue-at-head-as-trunk-gate",
+        "cached": false,
+        "route": "GET /api/v1/plan/drift"
       },
       {
         "key": "plan.issues|direct|all",
@@ -155314,6 +157137,48 @@
           "cases": 1
         },
         {
+          "subject": "plan.delivery",
+          "module": "plan",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "plan.delivery",
+          "module": "plan",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "plan.delivery",
+          "module": "plan",
+          "transport": "http",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "plan.drift",
+          "module": "plan",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "plan.drift",
+          "module": "plan",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "plan.drift",
+          "module": "plan",
+          "transport": "http",
+          "state": "covered",
+          "cases": 2
+        },
+        {
           "subject": "plan.issues",
           "module": "plan",
           "transport": "direct",
@@ -156636,22 +158501,22 @@
       ],
       "tallies": {
         "direct": {
-          "required": 202,
-          "covered": 171,
+          "required": 204,
+          "covered": 173,
           "missing": 0,
           "waived": 31,
           "inapplicable": 0
         },
         "http": {
-          "required": 197,
-          "covered": 171,
+          "required": 199,
+          "covered": 173,
           "missing": 0,
           "waived": 26,
           "inapplicable": 0
         },
         "mcp": {
-          "required": 192,
-          "covered": 167,
+          "required": 194,
+          "covered": 169,
           "missing": 0,
           "waived": 25,
           "inapplicable": 0
@@ -156664,8 +158529,8 @@
           "inapplicable": 0
         },
         "total": {
-          "required": 605,
-          "covered": 523,
+          "required": 611,
+          "covered": 529,
           "missing": 0,
           "waived": 82,
           "inapplicable": 0
