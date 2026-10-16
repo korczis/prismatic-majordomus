@@ -557,14 +557,25 @@ mj_knowledge_refused() {
 # The node set, sorted. Sorting happens here rather than in the awk because awk has no
 # portable sort, and it is done under the C collation so that two machines with different
 # locales produce the same bytes.
+#
+# $2, when given, is a file naming the part of the graph a caller needs, one `kind:<kind>`
+# or `path:<repository-relative path>` line each: every discovered source neither line
+# names is dropped before anything is read. It narrows what is compiled, never what a
+# kept source means — a kept file is extracted exactly as in the whole graph. `context`
+# asks for its knowledge pointers this way (I0814), because compiling every source for a
+# handful of pointers costs seconds on each briefing.
 mj_knowledge_nodes() {
-  local scope="${1:-all}" disc rows refused rc
+  local scope="${1:-all}" keep="${2:-}" disc rows refused rc
   disc="$(mktemp "${TMPDIR:-/tmp}/mj.kd.XXXXXX")"
   rows="$(mktemp "${TMPDIR:-/tmp}/mj.kr.XXXXXX")"
   refused="$(mktemp "${TMPDIR:-/tmp}/mj.kf.XXXXXX")"
   local t0
   t0="$(mj_phase_begin knowledge:discover)"
   mj_knowledge_discover "$scope" > "$disc" || { rm -f "$disc" "$rows" "$refused"; return "$MJ_EX_INTERNAL"; }
+  if [ -n "$keep" ]; then
+    awk -F'\t' 'NR == FNR { k[$0] = 1; next } (("kind:" $3) in k) || (("path:" $5) in k)' "$keep" "$disc" > "$disc.kept"
+    mv "$disc.kept" "$disc"
+  fi
   mj_phase_end knowledge:discover "$t0"; t0="$(mj_phase_begin knowledge:refused)"
   # A file the index refused is not a node here either: its discovery row is dropped and the
   # index's own verdict is reported against it, code and message as the index wrote them.

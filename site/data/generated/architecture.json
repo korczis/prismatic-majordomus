@@ -450,6 +450,16 @@
       "external": false
     },
     {
+      "id": ".ai/repo/project/issues",
+      "kind": "artifact",
+      "label": "repo/project/issues",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
       "id": "lib/deployment.sh",
       "kind": "module",
       "label": "deployment",
@@ -800,16 +810,6 @@
       "external": false
     },
     {
-      "id": ".ai/repo/project/issues",
-      "kind": "artifact",
-      "label": "repo/project/issues",
-      "command": null,
-      "summary": null,
-      "read_only": null,
-      "route": null,
-      "external": false
-    },
-    {
       "id": ".ai/repo/project/project.yaml",
       "kind": "artifact",
       "label": "repo/project/project.yaml",
@@ -959,6 +959,11 @@
     {
       "source": "lib/context.sh",
       "target": ".ai/local/state/open-questions.md",
+      "kind": "reads"
+    },
+    {
+      "source": "lib/context.sh",
+      "target": ".ai/repo/project/issues",
       "kind": "reads"
     },
     {
