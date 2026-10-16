@@ -2602,6 +2602,23 @@
       "tool": "majordomus_perf"
     },
     {
+      "api_anchor": "/docs/api/plan/#op-plan-delivery",
+      "claims": [],
+      "cli": "majordomus plan delivery",
+      "id": "plan.delivery",
+      "kind": "query",
+      "module": "plan",
+      "module_route": "/registry/modules/plan/",
+      "resource": null,
+      "route": "/registry/capabilities/plan-delivery/",
+      "slug": "plan-delivery",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/plan.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/plan.rs",
+      "tests": [],
+      "title": "How far each issue's work has travelled",
+      "tool": "majordomus_plan_delivery"
+    },
+    {
       "api_anchor": "/docs/api/plan/#op-plan-issues",
       "claims": [],
       "cli": null,
@@ -4241,7 +4258,7 @@
     ]
   },
   "counts": {
-    "capabilities": 202,
+    "capabilities": 203,
     "claims": 93,
     "modules": 58
   },
@@ -5447,6 +5464,11 @@
     },
     {
       "capabilities": [
+        {
+          "id": "plan.delivery",
+          "route": "/registry/capabilities/plan-delivery/",
+          "slug": "plan-delivery"
+        },
         {
           "id": "plan.issues",
           "route": "/registry/capabilities/plan-issues/",

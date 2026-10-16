@@ -1357,6 +1357,15 @@
         "status": "query"
       },
       {
+        "id": "capability:plan.delivery",
+        "kind": "capability",
+        "label": "plan.delivery",
+        "summary": "How far each issue's work has travelled",
+        "route": "/cockpit/capabilities/plan.delivery",
+        "source": "apps/majordomus-cli/src/capability/builtin/plan.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:plan.issues",
         "kind": "capability",
         "label": "plan.issues",
@@ -38000,11 +38009,15 @@
             "test/cases/3100_an_issue_delivery_is_inferred.sh"
           ],
           "slug": "an-issue-delivery-is-inferred",
-          "updated_at": "2026-10-16",
+          "started_at": "2026-10-16T09:56:45Z",
+          "started_event": "sha256:ccff17b4f443c1326ed94192c2b84e32c3bf57cfb052b2b1650d417b1731a5c2",
+          "updated_at": "2026-10-16T13:32:49Z",
           "validation": [
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test plan_delivery",
             "bash test/run.sh 3100_an_issue_delivery_is_inferred"
-          ]
+          ],
+          "verified_at": "2026-10-16T13:32:49Z",
+          "verified_event": "sha256:38d3cda74594483b46d7cfc344f41bce5935a6c47ac60f45983027b7ec5e3be4"
         }
       },
       {
@@ -55598,6 +55611,13 @@
         "source": "test/cases/30_command_registry.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3100_an_issue_delivery_is_inferred.sh",
+        "kind": "test",
+        "label": "test/cases/3100_an_issue_delivery_is_inferred.sh",
+        "route": "/cockpit/objects/test/test-cases-3100-an-issue-delivery-is-inferred-sh",
+        "source": "test/cases/3100_an_issue_delivery_is_inferred.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/310_rustdoc_projection.sh",
         "kind": "test",
         "label": "test/cases/310_rustdoc_projection.sh",
@@ -62502,6 +62522,26 @@
       },
       {
         "source": "capability:perf.counters",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:plan.delivery",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:plan.delivery",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:plan.delivery",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:plan.delivery",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -86391,6 +86431,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3100_an_issue_delivery_is_inferred.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/310_rustdoc_projection.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -91392,6 +91437,11 @@
       },
       {
         "source": "module:plan",
+        "target": "capability:plan.delivery",
+        "kind": "composes"
+      },
+      {
+        "source": "module:plan",
         "target": "capability:plan.issues",
         "kind": "composes"
       },
@@ -91687,8 +91737,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2883,
-      "edges": 6325,
+      "nodes": 2885,
+      "edges": 6331,
       "acyclic": false,
       "truncated": false
     }

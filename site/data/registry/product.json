@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "0.27.0"
   },
-  "fingerprint": "ef86b382e74513eabf579846811b0c3f28ae2394ef9a59c43d3bb971814051dc",
+  "fingerprint": "5ced9b41aa03447096fa2d942dcdeba1a5c220506d36b559976ff1af05f80927",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -1162,7 +1162,7 @@
         "use_cases": 6,
         "rules": 13,
         "enforced_rules": 11,
-        "capabilities": 70,
+        "capabilities": 71,
         "moments": 17
       },
       "evidence": {
@@ -3229,7 +3229,7 @@
         "use_cases": 10,
         "rules": 15,
         "enforced_rules": 14,
-        "capabilities": 126,
+        "capabilities": 127,
         "moments": 38
       },
       "evidence": {
@@ -9515,6 +9515,15 @@
           "source_path": "apps/majordomus-cli/src/capability/builtin/plan.rs",
           "capabilities": [
             {
+              "id": "plan.delivery",
+              "title": "How far each issue's work has travelled",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_plan_delivery",
+              "route": "GET /api/v1/plan/delivery",
+              "cli": "majordomus plan delivery"
+            },
+            {
               "id": "plan.issues",
               "title": "The issues, filtered by what the graph derived",
               "kind": "query",
@@ -9976,11 +9985,11 @@
       ],
       "backlinks": [],
       "counts": {
-        "capabilities": 55,
-        "mcp_tools": 50,
+        "capabilities": 56,
+        "mcp_tools": 51,
         "mcp_resources": 7,
-        "http_routes": 54,
-        "cli_paths": 14,
+        "http_routes": 55,
+        "cli_paths": 15,
         "commands": 0,
         "objects": 0,
         "rules": 2,
@@ -10251,6 +10260,15 @@
           "stability": "behaviorally_verified",
           "source_path": "apps/majordomus-cli/src/capability/builtin/plan.rs",
           "capabilities": [
+            {
+              "id": "plan.delivery",
+              "title": "How far each issue's work has travelled",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_plan_delivery",
+              "route": "GET /api/v1/plan/delivery",
+              "cli": "majordomus plan delivery"
+            },
             {
               "id": "plan.issues",
               "title": "The issues, filtered by what the graph derived",
@@ -11341,11 +11359,11 @@
         "observatory"
       ],
       "counts": {
-        "capabilities": 97,
-        "mcp_tools": 89,
+        "capabilities": 98,
+        "mcp_tools": 90,
         "mcp_resources": 16,
-        "http_routes": 94,
-        "cli_paths": 41,
+        "http_routes": 95,
+        "cli_paths": 42,
         "commands": 0,
         "objects": 0,
         "rules": 3,
@@ -12626,6 +12644,15 @@
           "source_path": "apps/majordomus-cli/src/capability/builtin/plan.rs",
           "capabilities": [
             {
+              "id": "plan.delivery",
+              "title": "How far each issue's work has travelled",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_plan_delivery",
+              "route": "GET /api/v1/plan/delivery",
+              "cli": "majordomus plan delivery"
+            },
+            {
               "id": "plan.issues",
               "title": "The issues, filtered by what the graph derived",
               "kind": "query",
@@ -13043,11 +13070,11 @@
       ],
       "backlinks": [],
       "counts": {
-        "capabilities": 23,
-        "mcp_tools": 23,
+        "capabilities": 24,
+        "mcp_tools": 24,
         "mcp_resources": 449,
-        "http_routes": 23,
-        "cli_paths": 11,
+        "http_routes": 24,
+        "cli_paths": 12,
         "commands": 1,
         "objects": 446,
         "rules": 3,
@@ -17853,17 +17880,17 @@
     }
   ],
   "telemetry": {
-    "capabilities": 2457,
-    "builtin": 202,
-    "declarative": 2255,
+    "capabilities": 2459,
+    "builtin": 203,
+    "declarative": 2256,
     "modules": 58,
-    "mcp_tools": 192,
-    "mcp_resources": 2310,
-    "http_routes": 197,
-    "cli_commands": 206,
+    "mcp_tools": 193,
+    "mcp_resources": 2311,
+    "http_routes": 198,
+    "cli_commands": 207,
     "shell_commands": 30,
     "kinds": 34,
-    "objects": 2255,
+    "objects": 2256,
     "by_kind": {
       "adr": 110,
       "application": 5,
@@ -17896,7 +17923,7 @@
       "session": 89,
       "skill": 8,
       "taxonomy": 10,
-      "test": 500,
+      "test": 501,
       "use-case": 49,
       "workspace": 1
     },

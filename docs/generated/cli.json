@@ -27656,6 +27656,257 @@
       {
         "path": [
           "majordomus",
+          "plan"
+        ],
+        "route": "/docs/cli/plan/",
+        "executable": false,
+        "usage": "majordomus plan [OPTIONS] <COMMAND>",
+        "about": "How far each issue's work has travelled: none, branch, pr_open, merged, released or deployed, each with the object that proved it; the plan's records are read and moved by the shell tool's `plan`",
+        "args": [
+          {
+            "name": "repo",
+            "long": "repo",
+            "positional": false,
+            "help": "Start the search for the repository root here (default: the current directory)",
+            "value_name": "PATH",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "discovery",
+            "long": "discovery",
+            "positional": false,
+            "help": "How declarative files are enumerated",
+            "value_name": "DISCOVERY",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "vcs",
+                "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+              },
+              {
+                "name": "filesystem",
+                "help": "A walk of the work tree with the same glob semantics; untracked files included"
+              }
+            ],
+            "defaults": [
+              "vcs"
+            ]
+          },
+          {
+            "name": "strict",
+            "long": "strict",
+            "positional": false,
+            "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+            "value_name": "STRICT",
+            "takes_value": false,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": [
+              "false"
+            ]
+          },
+          {
+            "name": "share",
+            "long": "share",
+            "positional": false,
+            "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+            "value_name": "DIR",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "format",
+            "long": "format",
+            "positional": false,
+            "help": "Output shape",
+            "value_name": "FORMAT",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "text",
+                "help": "Lines for a person"
+              },
+              {
+                "name": "json",
+                "help": "One JSON document, deterministic"
+              }
+            ],
+            "defaults": [
+              "text"
+            ]
+          }
+        ],
+        "examples": [],
+        "subcommands": [
+          {
+            "path": [
+              "majordomus",
+              "plan",
+              "delivery"
+            ],
+            "route": "/docs/cli/plan/delivery/",
+            "executable": true,
+            "usage": "majordomus plan delivery [OPTIONS] [ISSUE]",
+            "about": "Every issue's furthest delivery stage, with the object that proved it and its declared status beside it",
+            "args": [
+              {
+                "name": "issue",
+                "positional": true,
+                "help": "One issue; default every issue of the plan",
+                "value_name": "ISSUE",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "at",
+                "long": "at",
+                "positional": false,
+                "help": "Observe as of this commit: its history and the tree's release records, nothing live (no branch, forge, deployment or clock)",
+                "value_name": "REV",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "plan-delivery-json",
+                "title": "How far every issue's work has travelled",
+                "description": "The same answer `GET /api/v1/plan/delivery` and the MCP tool `majordomus_plan_delivery` return: every issue with its declared status and the furthest stage proved — none, branch, pr_open, merged, released, deployed — each stage with the branch, pull request, merge commit, tag or `latest.json` that proved it. A checkout that never observed the forge says the forge is unread, and an issue it could have moved further is not settled.",
+                "argv": [
+                  "plan",
+                  "delivery",
+                  "--format",
+                  "json"
+                ],
+                "command": "majordomus plan delivery --format json",
+                "setup": [],
+                "expectation": "exits 0; prints one JSON document carrying /observed/commit, /tallies/none, /issues/0/stage, /sources"
+              },
+              {
+                "id": "plan-delivery-at",
+                "title": "One issue, as of a commit",
+                "description": "`--at` reads the merges in that commit's history and the tree's release records, and nothing live — no branch, no forge, no deployment, no clock — so it proves only merged and released and the answer is a function of the commit alone. That is what `scripts/generate-site-data` writes to `site/data/generated/delivery.json` and reproduces under `--check`.",
+                "argv": [
+                  "plan",
+                  "delivery",
+                  "I0001",
+                  "--at",
+                  "HEAD"
+                ],
+                "command": "majordomus plan delivery I0001 --at HEAD",
+                "setup": [],
+                "expectation": "exits 0; prints I0001, none, unread"
+              }
+            ],
+            "subcommands": []
+          }
+        ]
+      },
+      {
+        "path": [
+          "majordomus",
           "economics"
         ],
         "route": "/docs/cli/economics/",

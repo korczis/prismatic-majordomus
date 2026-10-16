@@ -486,6 +486,48 @@ implementation. `MJ_GH_FIXTURE_PULLS` reads the pull requests from a file in the
 live read produces, so the join is provable with no network and no token — the same seam
 `scripts/github-sync` uses, and what `test/cases/98_traceability.sh` exercises.
 
+## Delivery: how far the work travelled
+
+An issue's status is a stamp; its delivery is a fact about the objects that realised it.
+`majordomus plan delivery [<id>] [--at <rev>] [--json]` answers, for every issue, the
+furthest stage proved, each with the object that proved it and when it was observed
+(ADR 0166). Nothing is stored, and nothing writes a stamp from it: a merge is not acceptance.
+
+<div class="overflow-x-auto" tabindex="0">
+
+| stage | proved by |
+|---|---|
+| `none` | nothing that was read names the issue |
+| `branch` | a branch whose path component is the issue id (the I1405 rule) or the issue's `slug` |
+| `pr_open` | an open pull request in the recorded forge observation whose title or head branch names it |
+| `merged` | the newest commit in the trunk's history that names it: a merge by its pull-request title or branch, or a commit by its subject (`type(scope): description (I2740)`); never a body, which mentions neighbouring issues as readily |
+| `released` | the first release record (`.ai/repo/releases/v*.yaml`) whose `commit` contains that merge |
+| `deployed` | the published `latest.json` names that release or a later one |
+
+</div>
+
+
+The live answer reads the trunk this clone knows (the remote-tracking trunk unless the local
+one is ahead), every branch, the forge observation `majordomus prs refresh` recorded, the
+release records, and the `latest.json` of the commit the last successful Pages deployment
+published (`majordomus served forge` records it). Releases come from the records, never from
+tags: a record names the commit it released and is a file of the tree, while a tag is a ref
+that can appear on any day.
+
+Committed derived data is a function of the commit alone, or every tag, push, pull request
+and deployment would turn `scripts/generate-site-data --check` red on every open branch. So
+`--at <rev>` reads only that commit's merges and the tree's release records: it proves
+`merged` and `released`, and reports branches, the forge and the publication unread.
+`scripts/generate-site-data` writes that answer to `site/data/generated/delivery.json` at
+`HEAD` and reproduces it under `--check` at the commit the file names. The live stages
+(`branch`, `pr_open`, `deployed`) reach the CLI, HTTP, MCP and the UI; bringing them to the
+published site at Pages build time, as the UI snapshot is, is left to the plan surfaces
+(I2743, I2744).
+
+A source that was not read is reported unread with its reason, never as none. An issue an
+unread source could have moved further is not `settled` and names that source in `unread`.
+The same answer is `GET /api/v1/plan/delivery` and the MCP tool `majordomus_plan_delivery`.
+
 ## Projections
 
 The canonical files are the only source. Everything else is generated from them by one

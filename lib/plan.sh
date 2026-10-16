@@ -27,6 +27,9 @@ READ
   graph                the dependency DAG as Mermaid                          (read-only)
   next                 the one issue a worker should take now                 (read-only)
   body <id>            the provider-neutral projection body for one record    (read-only)
+  delivery [<id>]      how far each issue's work has travelled: none, branch, pr_open,
+                       merged, released, deployed, each with what proved it; answered
+                       by the executable (plan.delivery), --at <rev> for a commit (read-only)
 
 WRITE (one lifecycle marker each, into the issue's own file)
   start <id>           record that execution began
@@ -53,6 +56,15 @@ mj_cmd_plan() {
   [ $# -ge 1 ] || { mj_plan_usage; exit "$MJ_EX_USAGE"; }
   case "$1" in
     --help|-h|help) mj_plan_usage; return 0 ;;
+    # Inferred from git, the forge cache and the published release pointer, which is the
+    # executable's work (ADR 0166): no awk derivation of it exists to disagree with. Handed
+    # over with its arguments unchanged, and with the global options this launcher took.
+    delivery)
+      shift
+      local -a fwd=()
+      [ -z "${MJ_REPO:-}" ] || fwd+=(--repo "$MJ_REPO")
+      [ "${MJ_JSON:-0}" != 1 ] || fwd+=(--format json)
+      exec "$MJ_BIN_DIR/majordomus-cli" plan delivery "${fwd[@]+"${fwd[@]}"}" "$@" ;;
     validate|status|list|show|ready|blocked|waves|graph|next|body|start|verify|evidence|roadmap|rgraph|done) sub="$1"; shift ;;
     *) mj_die "$MJ_EX_USAGE" "plan: unknown subcommand '$1' (see: majordomus plan --help)" ;;
   esac
