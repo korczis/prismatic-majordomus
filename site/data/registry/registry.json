@@ -6,7 +6,7 @@
     "version": "0.27.0"
   },
   "registry": {
-    "fingerprint": "1ba46cad3ab4a70f1a48350fcb7039d444e2f6e381bfb560c245b31b139c2500",
+    "fingerprint": "e9dd2c9b82a0e0abc7a78bd139e503dd737eb2a16d02100fd00eb6fd1eee9b01",
     "summary": {
       "total": 2458,
       "builtin": 202,
@@ -57472,14 +57472,14 @@
                   },
                   "last_accepted": {
                     "type": "string",
-                    "description": "The last accepted issue of a DONE milestone: its DONE issue with the latest\n`completed_at`, the greater id on a tie. Empty for a milestone that is not DONE, or\nthat is DONE with no issue. Which release carried it is `released_in`'s to answer."
+                    "description": "The last accepted issue of a DONE milestone: its DONE issue with the latest\n`completed_at`, the greater id on a tie. Empty for a milestone that is not DONE, or\nthat is DONE with no issue (its evidence finished it). Which release carried it is\n`released_in`'s to answer."
                   },
                   "released_in": {
                     "type": [
                       "string",
                       "null"
                     ],
-                    "description": "The release that carried the milestone — the first release record whose commit\ncontains the merge of its last accepted issue, else `unreleased` — when the reader\nasked for it\n(`released_in`); the roadmap always does. Never a typed field (ADR 0166)."
+                    "description": "The release that carried the milestone — the first release record whose commit\ncontains the merge of its last accepted issue (or, with no issue, the commit that\nrecorded its latest evidence), else `unreleased` — when the reader\nasked for it\n(`released_in`); the roadmap always does. Never a typed field (ADR 0166)."
                   },
                   "rank": {
                     "type": "integer",
@@ -58150,14 +58150,14 @@
                   },
                   "last_accepted": {
                     "type": "string",
-                    "description": "The last accepted issue of a DONE milestone: its DONE issue with the latest\n`completed_at`, the greater id on a tie. Empty for a milestone that is not DONE, or\nthat is DONE with no issue. Which release carried it is `released_in`'s to answer."
+                    "description": "The last accepted issue of a DONE milestone: its DONE issue with the latest\n`completed_at`, the greater id on a tie. Empty for a milestone that is not DONE, or\nthat is DONE with no issue (its evidence finished it). Which release carried it is\n`released_in`'s to answer."
                   },
                   "released_in": {
                     "type": [
                       "string",
                       "null"
                     ],
-                    "description": "The release that carried the milestone — the first release record whose commit\ncontains the merge of its last accepted issue, else `unreleased` — when the reader\nasked for it\n(`released_in`); the roadmap always does. Never a typed field (ADR 0166)."
+                    "description": "The release that carried the milestone — the first release record whose commit\ncontains the merge of its last accepted issue (or, with no issue, the commit that\nrecorded its latest evidence), else `unreleased` — when the reader\nasked for it\n(`released_in`); the roadmap always does. Never a typed field (ADR 0166)."
                   },
                   "rank": {
                     "type": "integer",
@@ -58504,14 +58504,14 @@
                   },
                   "last_accepted": {
                     "type": "string",
-                    "description": "The last accepted issue of a DONE milestone: its DONE issue with the latest\n`completed_at`, the greater id on a tie. Empty for a milestone that is not DONE, or\nthat is DONE with no issue. Which release carried it is `released_in`'s to answer."
+                    "description": "The last accepted issue of a DONE milestone: its DONE issue with the latest\n`completed_at`, the greater id on a tie. Empty for a milestone that is not DONE, or\nthat is DONE with no issue (its evidence finished it). Which release carried it is\n`released_in`'s to answer."
                   },
                   "released_in": {
                     "type": [
                       "string",
                       "null"
                     ],
-                    "description": "The release that carried the milestone — the first release record whose commit\ncontains the merge of its last accepted issue, else `unreleased` — when the reader\nasked for it\n(`released_in`); the roadmap always does. Never a typed field (ADR 0166)."
+                    "description": "The release that carried the milestone — the first release record whose commit\ncontains the merge of its last accepted issue (or, with no issue, the commit that\nrecorded its latest evidence), else `unreleased` — when the reader\nasked for it\n(`released_in`); the roadmap always does. Never a typed field (ADR 0166)."
                   },
                   "rank": {
                     "type": "integer",
@@ -83618,7 +83618,7 @@
     ]
   },
   "index": {
-    "fingerprint": "31fe1e8fb685db553be6ca7f32c6fc981820e53978c21568a037436fba8fc02f",
+    "fingerprint": "3553e5c12207686857a5739c960da66a66f1b35144d2d2af0f7e1c16e3d14435",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -85494,7 +85494,7 @@
         "path": ".ai/repo/adrs/0166-the-plan-surfaces-are-inferred-from-delivery.md",
         "section": "adrs",
         "source_class": "adr",
-        "bytes": 9101,
+        "bytes": 9226,
         "tags": [
           "plan",
           "site",
@@ -89866,7 +89866,7 @@
         "title": "The roadmap — milestones as a graph",
         "path": "docs/ROADMAP.md",
         "source_class": "document",
-        "bytes": 6492
+        "bytes": 6753
       },
       {
         "uri": "majordomus://document/docs/RUSTDOC.md",
@@ -92943,7 +92943,7 @@
         "identity": "lib/doctor.sh",
         "path": "lib/doctor.sh",
         "source_class": "library",
-        "bytes": 94366
+        "bytes": 94329
       },
       {
         "uri": "majordomus://implementation/lib/doctrine.sh",
@@ -93071,7 +93071,7 @@
         "identity": "lib/plan.sh",
         "path": "lib/plan.sh",
         "source_class": "library",
-        "bytes": 28182
+        "bytes": 28183
       },
       {
         "uri": "majordomus://implementation/lib/plan_json.awk",
@@ -93095,7 +93095,7 @@
         "identity": "lib/project.sh",
         "path": "lib/project.sh",
         "source_class": "library",
-        "bytes": 19083
+        "bytes": 19750
       },
       {
         "uri": "majordomus://implementation/lib/prompt.sh",
@@ -104994,7 +104994,7 @@
         "identity": "test/cases/3102_a_milestone_version_is_inferred.sh",
         "path": "test/cases/3102_a_milestone_version_is_inferred.sh",
         "source_class": "case",
-        "bytes": 5730
+        "bytes": 6668
       },
       {
         "uri": "majordomus://test/test/cases/310_rustdoc_projection.sh",

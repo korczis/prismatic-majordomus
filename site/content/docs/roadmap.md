@@ -141,7 +141,10 @@ is recorded as reached.
 
 That is how work delivered before the model existed is represented without inventing
 issues for it. It is the one route to `DONE` that does not pass through an issue, and it
-still passes through evidence.
+still passes through evidence. Its `released_in` is read through that evidence: the commit
+that wrote the latest `recorded_at` of it stands where an issue's merge would, so the
+milestone ships in the first release record that contains it (`foundation`, recorded before
+v0.3.1, reads v0.3.1).
 
 ## Superseded, not deleted
 

@@ -164,7 +164,9 @@ mj_pj_m_claims()  { mj_pj_col M "$1" 14; }
 # The release that carried a milestone, inferred and never typed (ADR 0166): the first
 # release record (.ai/repo/releases/v*.yaml, the tracked statement of a tag), in version
 # order, whose `commit:` contains the merge of the milestone's last accepted issue, and
-# `unreleased` for a milestone that is not DONE or that no record's commit contains yet.
+# `unreleased` for a milestone that is not DONE or that no record's commit contains yet. A
+# milestone DONE with no issue was finished by its own evidence: the commit that wrote the
+# latest recorded_at of that evidence stands in for the merge.
 # Records, not tags: derived data must not depend on refs outside the tree, so the answer is
 # a function of the commit and changes only when a record lands. Releases before the first
 # record (v0.3.1 here) have none, so work finished before it reads as that release, the
@@ -175,12 +177,20 @@ mj_pj_m_claims()  { mj_pj_col M "$1" 14; }
 # answers the same question the same way: `released_in` in apps/majordomus-cli/src/plan.rs.
 mj_pj_m_released_in() {
   local last stamp sha="" tag commit
+  [ "$(mj_pj_m_status "$1")" = DONE ] || { printf 'unreleased'; return 0; }
   last="$(mj_pj_m_last "$1")"
-  [ -n "$last" ] || { printf 'unreleased'; return 0; }
-  stamp="$(sed -n 's/^completed_at=//p' "$MJ_PJ/flat/$last" 2>/dev/null | head -n 1)"
-  [ -n "$stamp" ] && sha="$(mj_git log --format=%H -S"$stamp" -- "$MJ_PROJECT_DIR/issues/$last.yaml" 2>/dev/null | tail -n 1)"
-  [ -n "$sha" ] || sha="$(mj_git log --merges -1 --format=%H -E \
-    --grep="(^|[^A-Za-z0-9])$last([^A-Za-z0-9]|\$)" 2>/dev/null || :)"
+  if [ -z "$last" ]; then
+    # DONE with no issue: its own evidence finished it, so the commit that wrote the latest
+    # recorded_at of that evidence is the one a release has to contain
+    stamp="$(sed -n 's/^evidence\.[0-9]*\.recorded_at=//p' "$MJ_PJ/flat/$1" 2>/dev/null \
+      | { grep -v '^$' || :; } | LC_ALL=C sort | tail -n 1)"
+    [ -n "$stamp" ] && sha="$(mj_git log --format=%H -S"$stamp" -- "$MJ_PROJECT_DIR/milestones/$1.yaml" 2>/dev/null | tail -n 1)"
+  else
+    stamp="$(sed -n 's/^completed_at=//p' "$MJ_PJ/flat/$last" 2>/dev/null | head -n 1)"
+    [ -n "$stamp" ] && sha="$(mj_git log --format=%H -S"$stamp" -- "$MJ_PROJECT_DIR/issues/$last.yaml" 2>/dev/null | tail -n 1)"
+    [ -n "$sha" ] || sha="$(mj_git log --merges -1 --format=%H -E \
+      --grep="(^|[^A-Za-z0-9])$last([^A-Za-z0-9]|\$)" 2>/dev/null || :)"
+  fi
   [ -n "$sha" ] || { printf 'unreleased'; return 0; }
   [ -f "$MJ_PJ/releases.tsv" ] || mj_pj_release_records > "$MJ_PJ/releases.tsv"
   while IFS="$MJ_TAB" read -r tag commit; do

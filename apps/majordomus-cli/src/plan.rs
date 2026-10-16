@@ -114,6 +114,20 @@ fn evidence_covers(meta: &Value) -> Vec<String> {
     }
 }
 
+/// The latest non-empty `recorded_at` among a record's `evidence` entries, compared as text
+/// (ISO 8601 stamps sort by time), or `None` when no entry carries one.
+fn last_evidence_stamp(meta: &Value) -> Option<String> {
+    match meta.get("evidence") {
+        Some(Value::Array(items)) => items
+            .iter()
+            .filter_map(|e| e.get("recorded_at"))
+            .map(|v| scalar(Some(v)))
+            .filter(|s| !s.is_empty())
+            .max(),
+        _ => None,
+    }
+}
+
 /// Tabs out of a value that becomes a column: `clean()` in `lib/project.awk`.
 fn clean(s: &str) -> String {
     s.replace('\t', " ")
@@ -414,11 +428,13 @@ pub struct PlanMilestone {
     pub slug: String,
     /// The last accepted issue of a DONE milestone: its DONE issue with the latest
     /// `completed_at`, the greater id on a tie. Empty for a milestone that is not DONE, or
-    /// that is DONE with no issue. Which release carried it is [`released_in`]'s to answer.
+    /// that is DONE with no issue (its evidence finished it). Which release carried it is
+    /// [`released_in`]'s to answer.
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub last_accepted: String,
     /// The release that carried the milestone — the first release record whose commit
-    /// contains the merge of its last accepted issue, else `unreleased` — when the reader
+    /// contains the merge of its last accepted issue (or, with no issue, the commit that
+    /// recorded its latest evidence), else `unreleased` — when the reader
     /// asked for it
     /// ([`released_in`]); the roadmap always does. Never a typed field (ADR 0166).
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -1311,7 +1327,9 @@ pub const UNRELEASED: &str = "unreleased";
 /// The release that carried a milestone: the first release record
 /// (`.ai/repo/releases/v*.yaml`, the tracked statement of a tag), in version order, whose
 /// `commit:` contains the merge of its last accepted issue, and [`UNRELEASED`] for a
-/// milestone that is not DONE, has no issue, or that no record's commit contains yet.
+/// milestone that is not DONE or that no record's commit contains yet. A milestone DONE with
+/// no issue was finished by its own evidence: the commit that wrote the latest `recorded_at`
+/// of that evidence stands in for the merge.
 ///
 /// Records and not tags, because derived data must not depend on refs outside the tree: the
 /// answer is a function of the commit, and it changes only when a record lands. Releases
@@ -1338,13 +1356,10 @@ pub const UNRELEASED: &str = "unreleased";
 /// ```
 pub fn released_in(index: &Index, plan: &Plan, milestone: &str) -> String {
     let root = std::path::Path::new(&index.repository.root);
-    let Some(last) = plan
-        .milestone(milestone)
-        .map(|m| m.last_accepted.as_str())
-        .filter(|l| !l.is_empty())
-    else {
+    let Some(m) = plan.milestone(milestone).filter(|m| m.status == "DONE") else {
         return UNRELEASED.to_string();
     };
+    let last = m.last_accepted.as_str();
     let git = |args: &[&str]| -> Option<std::process::Output> {
         crate::git::read_only(root)
             .args(args)
@@ -1360,20 +1375,44 @@ pub fn released_in(index: &Index, plan: &Plan, milestone: &str) -> String {
                 .map(str::to_string)
         })
     };
-    let stamp = plan
-        .issue(last)
-        .map(|i| i.completed_at.as_str())
-        .unwrap_or_default();
-    let path = index
-        .objects
-        .iter()
-        .find(|o| o.kind == ISSUE && o.identity == last)
-        .map(|o| o.provenance.path.as_str());
-    let grep = format!("--grep=(^|[^A-Za-z0-9]){last}([^A-Za-z0-9]|$)");
-    let Some(sha) = path
-        .and_then(|path| last_line(&["log", "--format=%H", &format!("-S{stamp}"), "--", path]))
-        .or_else(|| last_line(&["log", "--merges", "-1", "--format=%H", "-E", &grep]))
-    else {
+    let record = |kind: &str, id: &str| {
+        index
+            .objects
+            .iter()
+            .find(|o| o.kind == kind && o.identity == id)
+    };
+    let sha = if last.is_empty() {
+        // DONE with no issue: its own evidence finished it, so the commit that wrote the
+        // latest `recorded_at` of that evidence is the one a release has to contain
+        record(MILESTONE, &m.id).and_then(|o| {
+            let stamp = last_evidence_stamp(&o.metadata)?;
+            last_line(&[
+                "log",
+                "--format=%H",
+                &format!("-S{stamp}"),
+                "--",
+                &o.provenance.path,
+            ])
+        })
+    } else {
+        let stamp = plan
+            .issue(last)
+            .map(|i| i.completed_at.as_str())
+            .unwrap_or_default();
+        let grep = format!("--grep=(^|[^A-Za-z0-9]){last}([^A-Za-z0-9]|$)");
+        record(ISSUE, last)
+            .and_then(|o| {
+                last_line(&[
+                    "log",
+                    "--format=%H",
+                    &format!("-S{stamp}"),
+                    "--",
+                    &o.provenance.path,
+                ])
+            })
+            .or_else(|| last_line(&["log", "--merges", "-1", "--format=%H", "-E", &grep]))
+    };
+    let Some(sha) = sha else {
         return UNRELEASED.to_string();
     };
     release_records(root)
@@ -2537,6 +2576,21 @@ mod seal_tests {
                 done("open"),
             ),
             object(
+                MILESTONE,
+                "evidenced",
+                ".ai/repo/project/milestones/evidenced.yaml",
+                json!({"id": "evidenced", "title": "evidenced", "order": 0,
+                "evidence_required": ["proof"], "evidence": [
+                    {"covers": "proof", "recorded_at": "2026-09-01T00:00:00Z"},
+                    {"covers": "proof", "recorded_at": "2026-09-04T00:00:00Z"}]}),
+            ),
+            object(
+                MILESTONE,
+                "unstamped",
+                ".ai/repo/project/milestones/unstamped.yaml",
+                done("unstamped"),
+            ),
+            object(
                 ISSUE,
                 "I0001",
                 ".ai/repo/project/issues/I0001.yaml",
@@ -2583,6 +2637,15 @@ mod seal_tests {
             .unwrap();
         };
         write("I0001", "2026-10-01T00:00:00Z");
+        // a milestone with no issue is finished by its evidence: the commit that wrote its
+        // latest recorded_at is the one a release must contain
+        let milestones = root.join(".ai/repo/project/milestones");
+        std::fs::create_dir_all(&milestones).unwrap();
+        std::fs::write(
+            milestones.join("evidenced.yaml"),
+            "id: evidenced\nevidence:\n  - covers: proof\n    recorded_at: 2026-09-04T00:00:00Z\n",
+        )
+        .unwrap();
         git_in(root, &["add", "-A"]);
         git_in(root, &["commit", "-qm", "I0001"]);
         record(root, "v0.1.0", &head(root));
@@ -2615,6 +2678,31 @@ mod seal_tests {
         assert_eq!(released_in(&ix, &plan, "local"), UNRELEASED);
         assert_eq!(released_in(&ix, &plan, "open"), UNRELEASED);
         assert_eq!(released_in(&ix, &plan, "nosuch"), UNRELEASED);
+        // DONE with no issue: the evidence's commit is in v0.1.0; evidence with no stamp
+        // names no commit
+        assert_eq!(plan.milestone("evidenced").unwrap().status, "DONE");
+        assert_eq!(plan.milestone("evidenced").unwrap().last_accepted, "");
+        assert_eq!(released_in(&ix, &plan, "evidenced"), "v0.1.0");
+        assert_eq!(plan.milestone("unstamped").unwrap().status, "DONE");
+        assert_eq!(released_in(&ix, &plan, "unstamped"), UNRELEASED);
+    }
+
+    /// The stamp a milestone's evidence carries is its latest non-empty `recorded_at`.
+    #[test]
+    fn the_last_evidence_stamp_is_the_latest_recorded_at() {
+        assert_eq!(last_evidence_stamp(&json!({})), None);
+        assert_eq!(last_evidence_stamp(&json!({"evidence": "none"})), None);
+        assert_eq!(
+            last_evidence_stamp(&json!({"evidence": [{"covers": "a"}]})),
+            None
+        );
+        assert_eq!(
+            last_evidence_stamp(&json!({"evidence": [
+                {"covers": "a", "recorded_at": "2026-09-04"},
+                {"covers": "b", "recorded_at": ""},
+                {"covers": "c", "recorded_at": "2026-10-01T00:00:00Z"}]})),
+            Some("2026-10-01T00:00:00Z".to_string())
+        );
     }
 
     #[test]
