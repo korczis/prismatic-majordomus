@@ -3920,6 +3920,17 @@ pub fn checkout_port(root: &std::path::Path) -> u16 {
 
 /// The port a linked worktree with this identity asks for: the identity's leading 32 bits,
 /// reduced into the block above [`DEFAULT_PORT`].
+///
+/// ```
+/// use majordomus_cli::cli::{linked_port, DEFAULT_PORT};
+/// // the leading 32 bits choose the port: the rest of the identity does not move it
+/// assert_eq!(linked_port("00000001"), DEFAULT_PORT + 2);
+/// assert_eq!(linked_port("00000001ffffffff"), DEFAULT_PORT + 2);
+/// // the block wraps rather than leaving it
+/// assert!(linked_port("ffffffff") < DEFAULT_PORT + 1000);
+/// // an identity with no leading hexadecimal word asks for the block's first port
+/// assert_eq!(linked_port("not-hex"), DEFAULT_PORT + 1);
+/// ```
 pub fn linked_port(identity: &str) -> u16 {
     let lead = identity
         .get(..8)
