@@ -6,23 +6,23 @@
     "version": "0.27.0"
   },
   "registry": {
-    "fingerprint": "039c3c240f2a65253fe430b394e20fc2d0230868bc9dc775a9fdc93d3bfd479f",
+    "fingerprint": "ef78718544b2caea856b33eb88e2588c3d49e66e7d1f95d3890644364abdd86e",
     "summary": {
-      "total": 2446,
+      "total": 2447,
       "builtin": 202,
-      "declarative": 2244,
+      "declarative": 2245,
       "by_kind": {
         "command": 31,
         "query": 171,
-        "resource": 2244
+        "resource": 2245
       },
       "by_stability": {
         "behaviorally_verified": 141,
         "experimental": 52,
-        "implemented": 2253
+        "implemented": 2254
       },
       "mcp_tools": 192,
-      "mcp_resources": 2299,
+      "mcp_resources": 2300,
       "http_routes": 197,
       "cli_commands": 108,
       "modules": 92,
@@ -83509,7 +83509,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 500,
+        "capabilities": 501,
         "capability_ids": []
       },
       {
@@ -83600,7 +83600,7 @@
     ]
   },
   "index": {
-    "fingerprint": "d145fb9a0df194ae88563f0ac078bcdc65ec3e4202c2c15329351b61177ace6a",
+    "fingerprint": "d96506833e3f7204deb51f2259917166418b77d6906e8a639c683ff5aaed1da3",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -83654,7 +83654,7 @@
       "session": 89,
       "skill": 8,
       "taxonomy": 10,
-      "test": 500,
+      "test": 501,
       "use-case": 49,
       "workspace": 1
     },
@@ -89208,7 +89208,7 @@
         "path": ".ai/repo/workflows/task-lifecycle.md",
         "section": "workflows",
         "source_class": "workflow",
-        "bytes": 6763
+        "bytes": 7318
       },
       {
         "uri": "majordomus://document/.ai/repo/workflows/use-cases.md",
@@ -89695,7 +89695,7 @@
         "title": "Majordomus Mesh",
         "path": "docs/MESH.md",
         "source_class": "document",
-        "bytes": 64404
+        "bytes": 65177
       },
       {
         "uri": "majordomus://document/docs/MODELS.md",
@@ -89947,7 +89947,7 @@
         "title": "Worktrees",
         "path": "docs/WORKTREES.md",
         "source_class": "document",
-        "bytes": 35279
+        "bytes": 35773
       },
       {
         "uri": "majordomus://document/docs/claims/a-candidate-is-routed-by-what-it-is-about.md",
@@ -92835,7 +92835,7 @@
         "identity": "lib/check.sh",
         "path": "lib/check.sh",
         "source_class": "library",
-        "bytes": 17339
+        "bytes": 18504
       },
       {
         "uri": "majordomus://implementation/lib/checkpoint.sh",
@@ -92859,7 +92859,7 @@
         "identity": "lib/common.sh",
         "path": "lib/common.sh",
         "source_class": "library",
-        "bytes": 103671
+        "bytes": 107370
       },
       {
         "uri": "majordomus://implementation/lib/context.sh",
@@ -93147,7 +93147,7 @@
         "identity": "lib/start.sh",
         "path": "lib/start.sh",
         "source_class": "library",
-        "bytes": 12604
+        "bytes": 12610
       },
       {
         "uri": "majordomus://implementation/lib/update.sh",
@@ -99901,11 +99901,11 @@
         "kind": "rule",
         "identity": "majordomus.task-on-the-mesh@1",
         "title": "A task on a repository whose mesh is enabled works on the mesh",
-        "description": "When the repository declares its mesh enabled, an active task's scope is claimed on the mesh — `start` claims it when the checkout's shared server answers and `finish` claims it again before judging — and a task completed without that claim is refused.",
+        "description": "When the repository declares its mesh enabled, an active task's scope is claimed on the mesh — `start` brings the checkout's shared server up and claims it, `check` and `finish` claim it again when a server answers — and a task completed without that claim is refused.",
         "path": ".ai/repo/rules/vendor/majordomus/rules/task-on-the-mesh.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 2406,
+        "bytes": 2930,
         "tags": [
           "mesh",
           "coordination",
@@ -104824,7 +104824,7 @@
         "identity": "test/cases/3068_a_task_off_the_mesh_is_refused.sh",
         "path": "test/cases/3068_a_task_off_the_mesh_is_refused.sh",
         "source_class": "case",
-        "bytes": 4351
+        "bytes": 4564
       },
       {
         "uri": "majordomus://test/test/cases/3069_an_edit_no_claim_covers_is_refused.sh",
@@ -104849,6 +104849,14 @@
         "path": "test/cases/310_rustdoc_projection.sh",
         "source_class": "case",
         "bytes": 6660
+      },
+      {
+        "uri": "majordomus://test/test/cases/3151_a_task_is_claimed_when_it_starts.sh",
+        "kind": "test",
+        "identity": "test/cases/3151_a_task_is_claimed_when_it_starts.sh",
+        "path": "test/cases/3151_a_task_is_claimed_when_it_starts.sh",
+        "source_class": "case",
+        "bytes": 5905
       },
       {
         "uri": "majordomus://test/test/cases/318_a_partial_sweep_says_so.sh",
@@ -108021,7 +108029,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 500
+      "objects": 501
     },
     {
       "name": "use-case",

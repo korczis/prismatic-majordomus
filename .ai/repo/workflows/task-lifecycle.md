@@ -37,6 +37,13 @@ line. A token the vocabulary does not declare is refused at `start`, not at the 
 try to discharge it. Declare what the work owes when you begin it: a task that promises
 nothing is told, truthfully and uselessly, that it promises nothing.
 
+On a repository whose mesh is enabled, `start` claims the scope on the mesh as the session
+`task-<id>`, and first ensures this checkout's shared server (`serve ensure`, bounded, said on
+stderr), because a fresh worktree has none. A start that could not claim reports `WARN mesh`
+with the reason; repair it without finishing: `majordomus serve ensure`, then `majordomus
+check`, which claims the running task's scope. Until then `finish --outcome completed` and the
+pre-push `finish --check` refuse it (rule `majordomus.task-on-the-mesh`, `docs/MESH.md`).
+
 `start` refuses while a task is active here: hand it over or finish it first. `check` and
 `finish --outcome completed` fail on a touched file outside the claimed scope; the other
 outcomes name the files as warnings and close the record, because `start` will not begin a

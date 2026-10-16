@@ -12334,6 +12334,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:3151_a_task_is_claimed_when_it_starts",
+          "path": "test/cases/3151_a_task_is_claimed_when_it_starts.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:32_refusal_lifecycle",
           "path": "test/cases/32_refusal_lifecycle.sh",
           "category": "e2e"
@@ -14373,6 +14379,12 @@
           "via": "behaviour",
           "test": "suite:3068_a_task_off_the_mesh_is_refused",
           "path": "test/cases/3068_a_task_off_the_mesh_is_refused.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:3151_a_task_is_claimed_when_it_starts",
+          "path": "test/cases/3151_a_task_is_claimed_when_it_starts.sh",
           "category": "e2e"
         },
         {
@@ -17348,6 +17360,12 @@
           "via": "behaviour",
           "test": "suite:3067_a_task_is_claimed_on_the_mesh",
           "path": "test/cases/3067_a_task_is_claimed_on_the_mesh.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:3151_a_task_is_claimed_when_it_starts",
+          "path": "test/cases/3151_a_task_is_claimed_when_it_starts.sh",
           "category": "e2e"
         },
         {
@@ -22554,6 +22572,16 @@
           "category": "e2e",
           "inputs": [
             "test/cases/3068_a_task_off_the_mesh_is_refused.sh",
+            ".ai/repo/rules/vendor/majordomus/rules/task-on-the-mesh.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:3151_a_task_is_claimed_when_it_starts",
+          "path": "test/cases/3151_a_task_is_claimed_when_it_starts.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/3151_a_task_is_claimed_when_it_starts.sh",
             ".ai/repo/rules/vendor/majordomus/rules/task-on-the-mesh.v1.md"
           ]
         }
