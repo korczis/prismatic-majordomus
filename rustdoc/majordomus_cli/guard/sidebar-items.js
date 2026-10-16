@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["ClaimSource"],"fn":["active_task","covers","edits_require_claim","from_payload","judge","judge_facts","mesh_declared_enabled","relative_to","server_claims"],"struct":["EditFacts","EditVerdict"]};

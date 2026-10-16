@@ -239,7 +239,7 @@ gets every node and every edge as a table, and loses nothing.</p>
     </div>
 
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">What the tool did</h2>
-    <p class="mt-2 text-sm text-body">Evidence of the run this page was generated from: <span class="font-mono">pass</span>, 2 step(s). Output is normalised: the repository's path, timestamps, ids and durations are placeholders; nothing else is edited.</p><p class="mt-1 text-xs text-body-subtle">Tested by <a href="https://github.com/korczis/prismatic-majordomus/blob/751a86c2e91c74580105b26dc136fb7b905705e0/test/cases/94_use_cases.sh" class="break-all font-mono text-fg-brand underline inline-block py-1">test/cases/94_use_cases.sh</a>, which runs every scenario and refuses a step whose recorded output is not what it produced.</p>
+    <p class="mt-2 text-sm text-body">Evidence of the run this page was generated from: <span class="font-mono">pass</span>, 2 step(s). Output is normalised: the repository's path, timestamps, ids and durations are placeholders; nothing else is edited.</p><p class="mt-1 text-xs text-body-subtle">Tested by <a href="https://github.com/korczis/prismatic-majordomus/blob/c1a430dcfeb84c2ae24a10154eafa9ed745fe3f8/test/cases/94_use_cases.sh" class="break-all font-mono text-fg-brand underline inline-block py-1">test/cases/94_use_cases.sh</a>, which runs every scenario and refuses a step whose recorded output is not what it produced.</p>
     <ol class="mt-4 space-y-4"><li id="step-what-the-server-will-serve" class="min-w-0 scroll-mt-20 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <span class="font-mono text-xs text-body-subtle">1</span><a href="https://majordomus.dev/commands/knowledge/" class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand hover:underline">$ majordomus knowledge sources</a>
@@ -262,7 +262,7 @@ context     shared      context    c08c8f28ce3d  .ai/repo/skills/README.md
 context     shared      context    99905d2cd5a9  .ai/repo/use-cases/README.md
 context     shared      context    95d10752d6ae  .ai/repo/why/README.md
 context     shared      context    124141e223e4  .ai/repo/workflows/README.md
-policy      shared      policy     b6d942ef6f7d  .ai/repo/policy.yaml
+policy      shared      policy     e35e451d733d  .ai/repo/policy.yaml
 scope       shared      scope      264ce22ddc67  .ai/repo/scope.yaml
 profile     shared      profile    cc8acf3ed9f9  .ai/repo/profiles/debugging.yaml
 profile     shared      profile    6bfce3aed3da  .ai/repo/profiles/deep-work.yaml
@@ -327,6 +327,7 @@ rule        shared      rule       8f779c44c5c2  .ai/repo/rules/vendor/majordomu
 rule        shared      rule       5beb962c3c18  .ai/repo/rules/vendor/majordomus/rules/skill-integrity.v1.md
 rule        shared      rule       70a6e878886b  .ai/repo/rules/vendor/majordomus/rules/state-consistency.v1.md
 rule        shared      rule       7e381d15f9f3  .ai/repo/rules/vendor/majordomus/rules/task-continuity.v1.md
+rule        shared      rule       49f701edf6e2  .ai/repo/rules/vendor/majordomus/rules/task-on-the-mesh.v1.md
 rule        shared      rule       1955176df430  .ai/repo/rules/vendor/majordomus/rules/use-case-coverage.v1.md
 rule        shared      rule       1a2e830a8912  .ai/repo/rules/vendor/majordomus/rules/verification-integrity.v1.md
 prompt      shared      prompt     aaade142a03c  .ai/repo/prompts/README.md
@@ -346,12 +347,12 @@ use_case    shared      use-case   99905d2cd5a9  .ai/repo/use-cases/README.md
 taxonomy    shared      taxonomy   207a79579af9  .ai/repo/use-cases/taxonomy.yaml
 feature     shared      feature    18111b83801f  .ai/repo/features/README.md
 application shared      application 6dc507447b9f  .ai/repo/applications/README.md
-readme      shared      document   9504d358ad34  AGENTS.md
-readme      shared      document   6f6c649986b6  CLAUDE.md
-readme      shared      document   2a0da80f4437  GEMINI.md
+readme      shared      document   54e2f9b025e8  AGENTS.md
+readme      shared      document   f6439d5f69de  CLAUDE.md
+readme      shared      document   dccb2b3529ad  GEMINI.md
 decisions   operational decision   0885fc07773e  .ai/local/state/decisions.md
 questions   operational question   ebeb154be99d  .ai/local/state/open-questions.md
-knowledge sources: 108 file(s) in scope all</code></pre>
+knowledge sources: 109 file(s) in scope all</code></pre>
         <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 0</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /^policy +shared +policy/</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /^knowledge sources: [0-9]+ file/</li></ul>
       </li><li id="step-sound-before-it-is-served" class="min-w-0 scroll-mt-20 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
@@ -376,7 +377,7 @@ INFO adr         .ai/repo/adrs/ — no decisions; nothing to validate
 OK   records     decisions.md — every entry is attributable
 INFO project     .ai/repo/project — no canonical project model here; nothing to validate
 OK   command     surface — 30 public command(s), reconciled against the dispatch table  [reproduce: majordomus doctor]
-OK   doctrine    48 of 59 rule(s) carry a validator — validator, dispatch, propagation, test and CI resolve for every one of the 48; the remaining 11 declare no validator and this check does not examine them
+OK   doctrine    49 of 60 rule(s) carry a validator — validator, dispatch, propagation, test and CI resolve for every one of the 49; the remaining 11 declare no validator and this check does not examine them
 OK   wiring      doctor-on-commit — wired via .githooks/pre-commit
 OK   wiring      finish-on-push — wired via .githooks/pre-push
 OK   command     coverage — every public command is exercised and refuted  [reproduce: bash test/run.sh 31_command_coverage]
@@ -406,9 +407,9 @@ OK   retention   checkpoints — 0 files, cap 500
 OK   retention   sessions — 0 records, cap 500
 INFO project     .ai/repo/project — no canonical project model here; nothing to validate
 OK   rules       .ai/repo/rules/vendor/majordomus — every file matches the manifest (1 (0.27.0))
-OK   rules       59 rule(s) — resolve in one deterministic order; vendored baseline plus project rules, no override — 49 carry a validator, 10 are normative text this tool does not check
-OK   rules       blocking — all 43 blocking rule(s) carry a validator
-OK   schema      rules — 59 rule(s) resolve in one order: the vendored baseline in manifest order, then the project&#39;s, as a dependency graph
+OK   rules       60 rule(s) — resolve in one deterministic order; vendored baseline plus project rules, no override — 50 carry a validator, 10 are normative text this tool does not check
+OK   rules       blocking — all 44 blocking rule(s) carry a validator
+OK   schema      rules — 60 rule(s) resolve in one order: the vendored baseline in manifest order, then the project&#39;s, as a dependency graph
 OK   schema      share/kinds.yaml — 36 kind(s); every one that carries metadata declares a schema
 OK   schema      share/schemas — 53 schema(s), each valid JSON and each applied — by a kind, through an allow-list the tool reads, by a validator that names it, or as a generated document&#39;s contract (15)
 OK   records     0 record(s) — every changed_files names work, not generated or local state
@@ -518,9 +519,9 @@ doctor: 0 failure(s)</code></pre>
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/751a86c2e91c74580105b26dc136fb7b905705e0/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/751a86c2e91c74580105b26dc136fb7b905705e0/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/751a86c2e91c74580105b26dc136fb7b905705e0/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/c1a430dcfeb84c2ae24a10154eafa9ed745fe3f8/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/c1a430dcfeb84c2ae24a10154eafa9ed745fe3f8/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/c1a430dcfeb84c2ae24a10154eafa9ed745fe3f8/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -528,7 +529,7 @@ doctor: 0 failure(s)</code></pre>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.27.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/751a86c2e91c74580105b26dc136fb7b905705e0" class="font-mono underline">751a86c</a> · inputs <span class="font-mono">bc0cc9f03f82</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.27.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/c1a430dcfeb84c2ae24a10154eafa9ed745fe3f8" class="font-mono underline">c1a430d</a> · inputs <span class="font-mono">c44a0187181c</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

@@ -2,18 +2,18 @@
  "schema": 1,
  "generated_by": "scripts/lib/docs-index.mjs",
  "build": {
-  "commit": "751a86c2e91c74580105b26dc136fb7b905705e0",
+  "commit": "c1a430dcfeb84c2ae24a10154eafa9ed745fe3f8",
   "source_version": "0.27.0",
-  "registry_fingerprint": "3e977170089cf87a2175a609842ad27be4bf1770fa2c6edb2928a71bbe39ecd6"
+  "registry_fingerprint": "a61ff881f51ced6cd278968030b8b9c5d57944d41db101d9f972950fa9895381"
  },
  "counts": {
-  "pages": 2238,
-  "capabilities": 2434,
+  "pages": 2251,
+  "capabilities": 2445,
   "cli_commands": 108,
-  "http_routes": 196,
-  "mcp_tools": 191,
-  "mcp_resources": 2288,
-  "modules": 91
+  "http_routes": 197,
+  "mcp_tools": 192,
+  "mcp_resources": 2298,
+  "modules": 92
  },
  "kinds": [
   {
@@ -158,7 +158,7 @@
    "route": "/plan/",
    "title": null,
    "reason": null,
-   "count": 390
+   "count": 394
   },
   {
    "kind": "knowledge",
@@ -182,7 +182,7 @@
    "route": "/plan/",
    "title": null,
    "reason": null,
-   "count": 37
+   "count": 38
   },
   {
    "kind": "moment",
@@ -230,7 +230,7 @@
    "route": "/rules/",
    "title": "Rules",
    "reason": null,
-   "count": 179
+   "count": 180
   },
   {
    "kind": "scope",
@@ -270,7 +270,7 @@
    "route": null,
    "title": null,
    "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-   "count": 496
+   "count": 500
   },
   {
    "kind": "use-case",
@@ -1704,6 +1704,12 @@
    "section": "Documentation"
   },
   {
+   "route": "/docs/api/guard/",
+   "title": "HTTP API: guard",
+   "description": "Whether a write to a file of this checkout is covered by a claim: the active task's scope, or a live mesh claim of the writing session. The judgement a provider's pre-tool hook asks before every edit (majordomus guard hook), switched by session.edits_require_claim.",
+   "section": "Documentation"
+  },
+  {
    "route": "/docs/api/health/",
    "title": "HTTP API: health",
    "description": "Whether what this process serves is healthy, decided by the engines that already decide it: the index's diagnostics, the registry builder, the benchmark projection's coverage, the comparison `generate --check` makes and the lease reading `server.status` answers from. No check here has an opinion of its own.",
@@ -2481,6 +2487,18 @@
    "route": "/docs/cli/generate/",
    "title": "majordomus generate",
    "description": "Write the committed projections of the registry (docs/generated), or check that they are current",
+   "section": "Documentation"
+  },
+  {
+   "route": "/docs/cli/guard/",
+   "title": "majordomus guard",
+   "description": "The edit guard: whether a provider's tool may write a file of this checkout now, judged from the active task's scope and the writing session's live mesh claims",
+   "section": "Documentation"
+  },
+  {
+   "route": "/docs/cli/guard/hook/",
+   "title": "majordomus guard hook",
+   "description": "Judge the edit a provider's pre-tool payload (on stdin) is about to make; exit 2 with the reason and the remedy when no claim covers it, 0 otherwise",
    "section": "Documentation"
   },
   {
@@ -4011,6 +4029,12 @@
    "route": "/doctrines/task-continuity/",
    "title": "Task continuity",
    "description": "A task finished as partial or blocked should leave a handover record, not only a note section.",
+   "section": "Doctrine"
+  },
+  {
+   "route": "/doctrines/task-on-the-mesh/",
+   "title": "A task on a repository whose mesh is enabled works on the mesh",
+   "description": "When the repository declares its mesh enabled, an active task's scope is claimed on the mesh — `start` claims it when the checkout's shared server answers and `finish` claims it again before judging — and a task completed without that claim is refused.",
    "section": "Doctrine"
   },
   {
@@ -5940,6 +5964,12 @@
    "section": "The plan"
   },
   {
+   "route": "/plan/every-session-joins-the-mesh/",
+   "title": "every-session-joins-the-mesh — Every LLM session joins the Majordomus mesh at start, told the mesh as work",
+   "description": "Any LLM session that starts in a repository with an enabled mesh is on the mesh from its first turn, told who works where on every machine and what waits for it, and a task built outside the mesh is refused by the repository's gates.",
+   "section": "The plan"
+  },
+  {
    "route": "/plan/everything-is-followed-in-one-stream/",
    "title": "everything-is-followed-in-one-stream — Everything that happens in the repository is followed in one stream",
    "description": "majordomus monitor is the one stream: a typed, cursor-paged feed of signals from every source, with the heartbeat noise folded away and what is addressed to the reader marked and listed first, served by the running server over HTTP, MCP and the command line (with --follow), shown live in the Cockpit, printed at every session start, named by the provider bootstrap, documented and released.",
@@ -7800,6 +7830,18 @@
    "section": "The plan"
   },
   {
+   "route": "/plan/i2288/",
+   "title": "I2288 — A task is on the mesh while it works",
+   "description": "majordomus start claims the task's scope on the checkout's running server as an advisory claim of the mesh session task-<id>, with the task's title as intent and its issue, and keeps the key on the task record; finish closes that session.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i2289/",
+   "title": "I2289 — A task built off the mesh is refused",
+   "description": "Rule majordomus.task-on-the-mesh, dispatched by check and finish: on a repository whose tracked mesh declaration is enabled, a completed finish of a task whose scope was never claimed on the mesh is refused and recorded; finish claims the scope again before it judges; partial and the other outcomes are not refused.",
+   "section": "The plan"
+  },
+  {
    "route": "/plan/i2296/",
    "title": "I2296 — The executor reopens a record pull request no run was started for",
    "description": "Let `majordomus prs drain` close and reopen a release's record pull request itself when the workflow's token opened it and it therefore has no check of its own, so the record lands one validate cycle after publication without a person noticing.",
@@ -8313,6 +8355,18 @@
    "route": "/plan/i2724/",
    "title": "I2724 — A node without a route to the site takes the archive from a peer and still verifies it itself",
    "description": "Let a following node that cannot reach github.com or majordomus.dev fetch the release archive from a linked peer over the authenticated mesh link, and install it only after checking its digest and size against release metadata it read itself or that was relayed and signed by the publishing node.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i2734/",
+   "title": "I2734 — A session joins the mesh at its start and leaves it at its end",
+   "description": "The provider's start event opens the session on the mesh of the checkout's shared server as <provider>-<provider session>, with client, branch, head and the active task; the briefing names that id; a resume says it again; the end event closes it.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i2735/",
+   "title": "I2735 — An edit no claim covers is refused",
+   "description": "With session.edits_require_claim on and the mesh enabled, a provider's pre-tool hook refuses a write (Edit, Write, MultiEdit, NotebookEdit) no claim covers: the active task's scope or a live mesh claim of the writing session; judged by majordomus guard hook in the checkout the file belongs to, and by the capability guard.edit over MCP and HTTP.",
    "section": "The plan"
   },
   {
@@ -8949,6 +9003,12 @@
    "route": "/registry/capabilities/graph-list/",
    "title": "graph.list",
    "description": "Every graph this executable derives: its id, what it shows, and what it is derived from.",
+   "section": "Registry"
+  },
+  {
+   "route": "/registry/capabilities/guard-edit/",
+   "title": "guard.edit",
+   "description": "Whether the given session may write the given path now: allowed when the policy's session.edits_require_claim is off, the path is outside the checkout or its local state, the repository declares no enabled mesh, the active task's scope covers it, or a live mesh claim of the session covers it; refused as unclaimed otherwise, with the remedy. What cannot be read — the policy, the mesh — is let through and named, never refused.",
    "section": "Registry"
   },
   {
@@ -9888,6 +9948,12 @@
    "section": "Registry"
   },
   {
+   "route": "/registry/modules/guard/",
+   "title": "Edit guard",
+   "description": "Whether a write to a file of this checkout is covered by a claim: the active task's scope, or a live mesh claim of the writing session. The judgement a provider's pre-tool hook asks before every edit (majordomus guard hook), switched by session.edits_require_claim.",
+   "section": "Registry"
+  },
+  {
    "route": "/registry/modules/health/",
    "title": "Health",
    "description": "Whether what this process serves is healthy, decided by the engines that already decide it: the index's diagnostics, the registry builder, the benchmark projection's coverage, the comparison `generate --check` makes and the lease reading `server.status` answers from. No check here has an opinion of its own.",
@@ -10605,6 +10671,15 @@
    "kind": "rule",
    "id": "majordomus://rule/majordomus.task-continuity@1",
    "source": ".ai/repo/rules/vendor/majordomus/rules/task-continuity.v1.md",
+   "section": "Rules"
+  },
+  {
+   "route": "/rules/majordomus-task-on-the-mesh-1/",
+   "title": "A task on a repository whose mesh is enabled works on the mesh",
+   "description": "A task on a repository whose mesh is enabled works on the mesh",
+   "kind": "rule",
+   "id": "majordomus://rule/majordomus.task-on-the-mesh@1",
+   "source": ".ai/repo/rules/vendor/majordomus/rules/task-on-the-mesh.v1.md",
    "section": "Rules"
   },
   {
@@ -11717,7 +11792,7 @@
   {
    "route": "/rustdoc/",
    "title": "majordomus-cli 0.27.0 — Rust API reference",
-   "description": "The rustdoc reference of majordomus-cli 0.27.0, built from commit 751a86c2e91c74580105b26dc136fb7b905705e0: the public items of the library and of the executable, and the source they were built from.",
+   "description": "The rustdoc reference of majordomus-cli 0.27.0, built from commit c1a430dcfeb84c2ae24a10154eafa9ed745fe3f8: the public items of the library and of the executable, and the source they were built from.",
    "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
@@ -12522,6 +12597,12 @@
    "route": "/rustdoc/majordomus_cli/graph/",
    "title": "majordomus_cli::graph - Rust",
    "description": "Graphs, canonically: a node and edge model in Rust, derived from the registry and the index, and projected to whatever a reader wants. Nothing here knows about Cytoscape, Mermaid or Graphviz; a rendering library is a consumer of `Graph`, never its shape.",
+   "section": "majordomus-cli 0.27.0 — Rust API reference"
+  },
+  {
+   "route": "/rustdoc/majordomus_cli/guard/",
+   "title": "majordomus_cli::guard - Rust",
+   "description": "The edit guard (I2735): before a provider’s tool writes a file of this checkout, is the path claimed?",
    "section": "majordomus-cli 0.27.0 — Rust API reference"
   },
   {
