@@ -144,22 +144,43 @@ mj_pj_active()         { mj_pj_rows P | cut -f5; }
 
 mj_pj_milestone_ids()  { mj_pj_rows M | cut -f2; }
 # Is this id a milestone? Answered from the record the loader wrote, never from the shape
-# of the id. A milestone id is a stable slug; the version lives in a field, so nothing may
+# of the id. A milestone id is a stable slug and never a version, so nothing may
 # infer a record's kind from how its id is spelled.
 mj_pj_is_milestone()   { case " $MJ_PJ_MILESTONES " in *" $1 "*) return 0 ;; *) return 1 ;; esac; }
 mj_pj_issue_ids()      { mj_pj_rows I | cut -f2; }
 
 # milestone columns: 2 id · 3 status · 4 order · 5 priority · 6 title · 7 slug
 #                    8 counts (name=value, comma separated, keyed by the status vocabulary)
-#                    9 version · 10 rank · 11 depends · 12 blocked_by · 13 dependents · 14 claims
+#                    9 last accepted issue (DONE milestones only) · 10 rank · 11 depends
+#                    12 blocked_by · 13 dependents · 14 claims
 mj_pj_m_status()  { mj_pj_col M "$1" 3; }
 mj_pj_m_title()   { mj_pj_col M "$1" 6; }
 mj_pj_m_counts()  { mj_pj_col M "$1" 8; }
-mj_pj_m_version() { mj_pj_col M "$1" 9; }
+mj_pj_m_last()    { mj_pj_col M "$1" 9; }
 mj_pj_m_rank()    { mj_pj_col M "$1" 10; }
 mj_pj_m_deps()    { mj_pj_col M "$1" 11; }
 mj_pj_m_blocked() { mj_pj_col M "$1" 12; }
 mj_pj_m_claims()  { mj_pj_col M "$1" 14; }
+# The release that carried a milestone, inferred and never typed (ADR 0166): the first
+# release tag, vMAJOR.MINOR.PATCH in version order, that contains the merge of its last
+# accepted issue, and `unreleased` for a milestone that is not DONE or whose last issue no
+# tag contains yet. The merge is found through the commit that wrote the issue's completed_at
+# stamp (the oldest commit whose diff of the record adds or removes that stamp), and failing
+# that through the latest merge whose message names the issue. Any tag containing either
+# contains the merge that brought it to the trunk. The executable answers the same question
+# the same way: `released_in` in apps/majordomus-cli/src/plan.rs.
+mj_pj_m_released_in() {
+  local last stamp sha="" tag=""
+  last="$(mj_pj_m_last "$1")"
+  [ -n "$last" ] || { printf 'unreleased'; return 0; }
+  stamp="$(sed -n 's/^completed_at=//p' "$MJ_PJ/flat/$last" 2>/dev/null | head -n 1)"
+  [ -n "$stamp" ] && sha="$(mj_git log --format=%H -S"$stamp" -- "$MJ_PROJECT_DIR/issues/$last.yaml" 2>/dev/null | tail -n 1)"
+  [ -n "$sha" ] || sha="$(mj_git log --merges -1 --format=%H -E \
+    --grep="(^|[^A-Za-z0-9])$last([^A-Za-z0-9]|\$)" 2>/dev/null || :)"
+  [ -n "$sha" ] && tag="$(mj_git tag --list 'v*' --contains "$sha" --sort=v:refname 2>/dev/null \
+    | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1)"
+  printf '%s' "${tag:-unreleased}"
+}
 # One count out of a milestone's counts field, by name: total, required, or any status the
 # vocabulary declares. Nothing outside project.awk decides which counts exist.
 mj_pj_m_count()   { mj_pj_m_counts "$1" | tr ',' '\n' | sed -n "s/^$2=//p"; }
@@ -254,7 +275,7 @@ mj_project_roadmap_mermaid() {
   printf 'flowchart LR\n'
   mj_pj_roadmap | while read -r id; do
     st="$(mj_pj_m_status "$id")"
-    ver="$(mj_pj_m_version "$id")"
+    ver="$(mj_pj_m_released_in "$id")"; [ "$ver" = unreleased ] && ver=""
     printf '    %s["%s%s<br/>%s"]:::%s\n' \
       "$(printf '%s' "$id" | tr -c 'A-Za-z0-9' '_')" \
       "$([ -n "$ver" ] && printf '%s — ' "$ver")" "$id" \

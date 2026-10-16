@@ -77,6 +77,11 @@ A milestone's status follows from its issues and its own evidence:
 A milestone is never `DONE` because a count of closed issues reached its total. The last step
 is the milestone's own acceptance, and it is evidence-gated like every other step.
 
+A milestone has no version either. Which release carried it is inferred, never typed: its
+`released_in` is the first release tag containing the merge of its last accepted issue, and
+`unreleased` while it is open ([`ROADMAP.md`](ROADMAP.md), ADR 0166). A record that carries
+`version` is refused.
+
 The **active milestone** is derived the same way: the lowest-ordered milestone that is
 `ACTIVE`, or failing that the lowest-ordered one that is not finished. Nothing declares it.
 

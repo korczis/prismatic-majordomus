@@ -21,6 +21,10 @@
 //! values already in memory. That is what lets it be built on demand, inside the handler of
 //! a plan capability, rather than eagerly when a [`crate::capability::Context`] is composed:
 //! `App::load` has a stated budget and 200 project records have no business inside it.
+//!
+//! One question is not the records' to answer: which release carried a milestone. That is
+//! [`released_in`], the only function here that asks git anything, and only a reader that
+//! wants the answer (the roadmap) pays for it.
 
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -195,7 +199,6 @@ struct PlanMilestoneRaw {
     slug: String,
     order: String,
     priority: String,
-    version: String,
     cancelled: bool,
     superseded_by: String,
     outcome: String,
@@ -286,7 +289,6 @@ impl PlanMilestoneRaw {
             slug: field(meta, "slug"),
             order: field(meta, "order"),
             priority: field(meta, "priority"),
-            version: field(meta, "version"),
             cancelled: field(meta, "cancelled") == "true",
             superseded_by: field(meta, "superseded_by"),
             outcome: field(meta, "outcome"),
@@ -410,8 +412,16 @@ pub struct PlanMilestone {
     pub title: String,
     /// The slug, when the record carries one.
     pub slug: String,
-    /// The release the milestone belongs to, when it declares one.
-    pub version: String,
+    /// The last accepted issue of a DONE milestone: its DONE issue with the latest
+    /// `completed_at`, the greater id on a tie. Empty for a milestone that is not DONE, or
+    /// that is DONE with no issue. Which release carried it is [`released_in`]'s to answer.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub last_accepted: String,
+    /// The release that carried the milestone — the first release tag containing the merge
+    /// of its last accepted issue, else `unreleased` — when the reader asked git for it
+    /// ([`released_in`]); the roadmap always does. Never a typed field (ADR 0166).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub released_in: Option<String>,
     /// Its layer in the milestone graph: what orders the roadmap.
     pub rank: u32,
     /// The milestones it requires.
@@ -1224,6 +1234,23 @@ fn derive(mut header: PlanProject, mraw: Vec<PlanMilestoneRaw>, iraw: Vec<PlanIs
         })
         .collect();
 
+    // the last accepted issue of every DONE milestone (the emit block of lib/project.awk)
+    let mut last: BTreeMap<&str, (&str, &str)> = BTreeMap::new();
+    for (n, i) in iraw.iter().enumerate() {
+        let done = mraw
+            .iter()
+            .position(|m| m.id == i.milestone)
+            .is_some_and(|k| mstatus[k] == "DONE");
+        if status[n] != "DONE" || !done {
+            continue;
+        }
+        let cand = (i.completed_at.as_str(), i.id.as_str());
+        let slot = last.entry(i.milestone.as_str()).or_insert(cand);
+        if cand > *slot {
+            *slot = cand;
+        }
+    }
+
     let milestones: Vec<PlanMilestone> = mraw
         .iter()
         .enumerate()
@@ -1234,7 +1261,11 @@ fn derive(mut header: PlanProject, mraw: Vec<PlanMilestoneRaw>, iraw: Vec<PlanIs
             priority: r.priority.clone(),
             title: r.title.clone(),
             slug: r.slug.clone(),
-            version: r.version.clone(),
+            last_accepted: last
+                .get(r.id.as_str())
+                .map(|(_, id)| (*id).to_string())
+                .unwrap_or_default(),
+            released_in: None,
             rank: rank[n],
             depends_on: r
                 .depends_on
@@ -1275,6 +1306,99 @@ fn derive(mut header: PlanProject, mraw: Vec<PlanMilestoneRaw>, iraw: Vec<PlanIs
 
 /// `order` as a number: the awk compares it with `+ 0`, which makes anything unparseable
 /// zero. A milestone with no `order` is not an error, it is order zero.
+/// What [`released_in`] answers for a milestone no release carried, or not yet.
+pub const UNRELEASED: &str = "unreleased";
+
+/// The release that carried a milestone: the first release tag, `vMAJOR.MINOR.PATCH` in
+/// version order, containing the merge of its last accepted issue, and [`UNRELEASED`] for
+/// a milestone that is not DONE, has no issue, or whose last issue no tag contains yet.
+///
+/// The merge is found through the commit that wrote the issue's `completed_at` stamp — the
+/// oldest commit whose diff of the record adds or removes that text — and failing that
+/// through the latest merge whose message names the issue. A tag containing either contains
+/// the merge that brought it to the trunk. This is `mj_pj_m_released_in` in `lib/project.sh`,
+/// command for command, so the two engines agree (`test/cases/99_plan_capabilities.sh`).
+///
+/// ```no_run
+/// # use majordomus_cli::index::Index;
+/// use majordomus_cli::plan::{released_in, Plan, UNRELEASED};
+/// # fn demo(index: &Index) {
+/// let plan = Plan::build(index);
+/// for m in &plan.milestones {
+///     let release = released_in(index, &plan, &m.id);
+///     assert!(release == UNRELEASED || release.starts_with('v'));
+/// }
+/// # }
+/// ```
+pub fn released_in(index: &Index, plan: &Plan, milestone: &str) -> String {
+    let root = std::path::Path::new(&index.repository.root);
+    let Some(last) = plan
+        .milestone(milestone)
+        .map(|m| m.last_accepted.as_str())
+        .filter(|l| !l.is_empty())
+    else {
+        return UNRELEASED.to_string();
+    };
+    let git = |args: &[&str]| -> Vec<String> {
+        crate::git::read_only(root)
+            .args(args)
+            .output()
+            .ok()
+            .filter(|o| o.status.success())
+            .map(|o| {
+                String::from_utf8_lossy(&o.stdout)
+                    .lines()
+                    .map(str::to_string)
+                    .collect()
+            })
+            .unwrap_or_default()
+    };
+    let stamp = plan
+        .issue(last)
+        .map(|i| i.completed_at.as_str())
+        .unwrap_or_default();
+    let path = index
+        .objects
+        .iter()
+        .find(|o| o.kind == ISSUE && o.identity == last)
+        .map(|o| o.provenance.path.as_str());
+    let mut sha = path
+        .and_then(|path| git(&["log", "--format=%H", &format!("-S{stamp}"), "--", path]).pop())
+        .unwrap_or_default();
+    if sha.is_empty() {
+        let grep = format!("--grep=(^|[^A-Za-z0-9]){last}([^A-Za-z0-9]|$)");
+        sha = git(&["log", "--merges", "-1", "--format=%H", "-E", &grep])
+            .pop()
+            .unwrap_or_default();
+    }
+    if sha.is_empty() {
+        return UNRELEASED.to_string();
+    }
+    git(&[
+        "tag",
+        "--list",
+        "v*",
+        "--contains",
+        &sha,
+        "--sort=v:refname",
+    ])
+    .into_iter()
+    .find(|t| is_release_tag(t))
+    .unwrap_or_else(|| UNRELEASED.to_string())
+}
+
+/// `vMAJOR.MINOR.PATCH` and nothing else: a pre-release or a named tag is not a release.
+fn is_release_tag(tag: &str) -> bool {
+    let Some(rest) = tag.strip_prefix('v') else {
+        return false;
+    };
+    let parts: Vec<&str> = rest.split('.').collect();
+    parts.len() == 3
+        && parts
+            .iter()
+            .all(|p| !p.is_empty() && p.bytes().all(|b| b.is_ascii_digit()))
+}
+
 fn order_of(raw: &str) -> i64 {
     raw.trim().parse::<i64>().unwrap_or(0)
 }
@@ -2294,5 +2418,159 @@ mod seal_tests {
         );
         let (entries, _) = crate::ledger::read(root);
         assert_eq!(entries.len(), 1);
+    }
+
+    // ------------------------------------------------------------ the release that carried it
+
+    fn git_in(root: &std::path::Path, args: &[&str]) {
+        let out = std::process::Command::new("git")
+            .args(["-c", "user.name=t", "-c", "user.email=t@example.com", "-C"])
+            .arg(root)
+            .args(args)
+            .output()
+            .unwrap();
+        assert!(
+            out.status.success(),
+            "git {args:?}: {}",
+            String::from_utf8_lossy(&out.stderr)
+        );
+    }
+
+    fn sealed(id: &str, milestone: &str, at: &str) -> Value {
+        json!({
+            "id": id, "milestone": milestone, "title": "t", "priority": "p1",
+            "acceptance_criteria": ["it works"], "validation": ["true"],
+            "evidence_required": ["proof"], "evidence": [{"covers": "proof"}],
+            "started_at": at, "started_event": seal(Transition::Start, id, at),
+            "verified_at": at, "verified_event": seal(Transition::Verify, id, at),
+            "completed_at": at, "completed_event": seal(Transition::Done, id, at),
+        })
+    }
+
+    /// A milestone's release is the first release tag containing its last accepted issue's
+    /// stamp commit, or failing that the merge naming the issue; a pre-release tag is not a
+    /// release, an open milestone and one no tag contains are `unreleased`. The same history
+    /// `test/cases/3102_a_milestone_version_is_inferred.sh` builds for both engines.
+    #[test]
+    fn a_milestone_is_released_in_the_first_tag_carrying_its_last_issue() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+        git_in(root, &["init", "-q", "-b", "master"]);
+        let done = |m: &str| {
+            json!({"id": m, "title": m, "order": 0,
+            "evidence_required": ["proof"], "evidence": [{"covers": "proof"}]})
+        };
+        let objects = vec![
+            object(
+                MILESTONE,
+                "shipped",
+                ".ai/repo/project/milestones/shipped.yaml",
+                done("shipped"),
+            ),
+            object(
+                MILESTONE,
+                "merged",
+                ".ai/repo/project/milestones/merged.yaml",
+                done("merged"),
+            ),
+            object(
+                MILESTONE,
+                "local",
+                ".ai/repo/project/milestones/local.yaml",
+                done("local"),
+            ),
+            object(
+                MILESTONE,
+                "open",
+                ".ai/repo/project/milestones/open.yaml",
+                done("open"),
+            ),
+            object(
+                ISSUE,
+                "I0001",
+                ".ai/repo/project/issues/I0001.yaml",
+                sealed("I0001", "shipped", "2026-10-01T00:00:00Z"),
+            ),
+            object(
+                ISSUE,
+                "I0002",
+                ".ai/repo/project/issues/I0002.yaml",
+                sealed("I0002", "shipped", "2026-10-02T00:00:00Z"),
+            ),
+            object(
+                ISSUE,
+                "I0003",
+                ".ai/repo/project/issues/I0003.yaml",
+                sealed("I0003", "merged", "2026-10-03T00:00:00Z"),
+            ),
+            object(
+                ISSUE,
+                "I0004",
+                ".ai/repo/project/issues/I0004.yaml",
+                sealed("I0004", "local", "2026-10-04T00:00:00Z"),
+            ),
+            object(
+                ISSUE,
+                "I0005",
+                ".ai/repo/project/issues/I0005.yaml",
+                issue_meta("I0005", json!({"milestone": "open"})),
+            ),
+        ];
+        let ix = index(root, objects);
+        let plan = Plan::build(&ix);
+        assert_eq!(plan.milestone("shipped").unwrap().last_accepted, "I0002");
+        assert_eq!(plan.milestone("open").unwrap().last_accepted, "");
+
+        // I0001 is committed and tagged v0.1.0; I0002, the last accepted, only later
+        let issues = root.join(".ai/repo/project/issues");
+        std::fs::create_dir_all(&issues).unwrap();
+        let write = |id: &str, at: &str| {
+            std::fs::write(
+                issues.join(format!("{id}.yaml")),
+                format!("id: {id}\ncompleted_at: {at}\n"),
+            )
+            .unwrap();
+        };
+        write("I0001", "2026-10-01T00:00:00Z");
+        git_in(root, &["add", "-A"]);
+        git_in(root, &["commit", "-qm", "I0001"]);
+        git_in(root, &["tag", "v0.1.0"]);
+        write("I0002", "2026-10-02T00:00:00Z");
+        git_in(root, &["add", "-A"]);
+        git_in(root, &["commit", "-qm", "I0002"]);
+        assert_eq!(released_in(&ix, &plan, "shipped"), UNRELEASED);
+        git_in(root, &["tag", "v0.2.0-rc.1"]);
+        assert_eq!(
+            released_in(&ix, &plan, "shipped"),
+            UNRELEASED,
+            "a pre-release is not a release"
+        );
+        // I0003's stamp is never committed, but a merge names it
+        git_in(root, &["checkout", "-q", "-b", "work"]);
+        git_in(root, &["commit", "-q", "--allow-empty", "-m", "work"]);
+        git_in(root, &["checkout", "-q", "master"]);
+        git_in(
+            root,
+            &["merge", "-q", "--no-ff", "-m", "Merge work (I0003)", "work"],
+        );
+        git_in(root, &["tag", "v0.2.0"]);
+        git_in(root, &["tag", "v0.3.0"]);
+        assert_eq!(released_in(&ix, &plan, "shipped"), "v0.2.0");
+        assert_eq!(released_in(&ix, &plan, "merged"), "v0.2.0");
+        // neither a stamp commit nor a merge names I0004; I0005 is open; nothing is unknown
+        assert_eq!(released_in(&ix, &plan, "local"), UNRELEASED);
+        assert_eq!(released_in(&ix, &plan, "open"), UNRELEASED);
+        assert_eq!(released_in(&ix, &plan, "nosuch"), UNRELEASED);
+    }
+
+    #[test]
+    fn only_a_plain_version_tag_is_a_release() {
+        assert!(is_release_tag("v0.27.0"));
+        assert!(is_release_tag("v10.0.1"));
+        assert!(!is_release_tag("0.27.0"));
+        assert!(!is_release_tag("v0.27"));
+        assert!(!is_release_tag("v0.27.0-rc.1"));
+        assert!(!is_release_tag("v0.2.0-ai-documents"));
+        assert!(!is_release_tag("v0..1"));
     }
 }

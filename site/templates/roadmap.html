@@ -10,15 +10,16 @@
 {%- set graph_rings = "" -%}
 {%- set graph_label = "The milestone graph. An arrow means the target cannot begin until the source is accepted — not a preference, a gate the engine enforces." -%}
 {%- set base = config.base_url | trim_end(pat="/") -%}
-{%- set versioned = [m for m in roadmap.milestones if m.version != ""] -%}
 
 <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_.zola-anchor]:text-inherit [&_.zola-anchor]:no-underline [&_.zola-anchor:hover]:underline">{{ page.content | safe }}</article>
 
 <ol class="mt-8 space-y-4">
-  {%- for m in versioned %}
+  {#- every milestone of the plan in the graph's order; a typed version no longer filters any
+      out, and the release that carried one is inferred from the tags (released_in) -#}
+  {%- for m in roadmap.milestones %}
   <li class="min-w-0 rounded-base border p-5 {% if m.status == 'DONE' %}border-success-subtle bg-success-soft{% elif m.status == 'ACTIVE' or m.status == 'VERIFY' %}border-brand-subtle bg-brand-softer{% else %}border-default bg-neutral-primary-soft{% endif %}">
     <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-      <span class="font-mono text-lg font-semibold text-heading">{{ m.version }}</span>
+      {%- if m.released_in != "unreleased" %}<span class="font-mono text-lg font-semibold text-heading">{{ m.released_in }}</span>{% endif %}
       <span class="text-base font-medium text-heading">{{ m.title }}</span>
       <span class="ms-auto rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading">{{ m.status }}</span>
     </div>
@@ -58,7 +59,7 @@
 </ol>
 
 <h2 class="mt-12 text-2xl font-bold tracking-tight text-heading">The order, and why it is not a preference</h2>
-<p class="mt-2 max-w-3xl text-body">Each version depends on the one before it, and the dependency is enforced rather than intended: a milestone whose dependencies are not accepted is <span class="font-mono">BLOCKED</span> whatever its own issues say. That is why there is no percentage anywhere on this page — a bar at 100% inside a blocked milestone would be a lie the graph can already tell you is one.</p>
+<p class="mt-2 max-w-3xl text-body">Each milestone depends on the ones before it, and the dependency is enforced rather than intended: a milestone whose dependencies are not accepted is <span class="font-mono">BLOCKED</span> whatever its own issues say. That is why there is no percentage anywhere on this page — a bar at 100% inside a blocked milestone would be a lie the graph can already tell you is one.</p>
 {% include "partials/graph.html" %}
 
 <p class="mt-8 text-sm text-body-subtle">

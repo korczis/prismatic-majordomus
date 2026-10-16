@@ -6,23 +6,23 @@
     "version": "0.27.0"
   },
   "registry": {
-    "fingerprint": "d60f48dbcfcf2ed1fd81e88267d2089f748060093d9a57501dd4bf6d98d0eb36",
+    "fingerprint": "a5974d4f5c9c8a6bddbc360c031903fe664dd9f882f312c77d28ef397da90562",
     "summary": {
-      "total": 2457,
+      "total": 2458,
       "builtin": 202,
-      "declarative": 2255,
+      "declarative": 2256,
       "by_kind": {
         "command": 31,
         "query": 171,
-        "resource": 2255
+        "resource": 2256
       },
       "by_stability": {
         "behaviorally_verified": 141,
         "experimental": 52,
-        "implemented": 2264
+        "implemented": 2265
       },
       "mcp_tools": 192,
-      "mcp_resources": 2310,
+      "mcp_resources": 2311,
       "http_routes": 197,
       "cli_commands": 108,
       "modules": 92,
@@ -57470,9 +57470,16 @@
                     "type": "string",
                     "description": "The slug, when the record carries one."
                   },
-                  "version": {
+                  "last_accepted": {
                     "type": "string",
-                    "description": "The release the milestone belongs to, when it declares one."
+                    "description": "The last accepted issue of a DONE milestone: its DONE issue with the latest\n`completed_at`, the greater id on a tie. Empty for a milestone that is not DONE, or\nthat is DONE with no issue. Which release carried it is `released_in`'s to answer."
+                  },
+                  "released_in": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The release that carried the milestone — the first release tag containing the merge\nof its last accepted issue, else `unreleased` — when the reader asked git for it\n(`released_in`); the roadmap always does. Never a typed field (ADR 0166)."
                   },
                   "rank": {
                     "type": "integer",
@@ -57531,7 +57538,6 @@
                   "priority",
                   "title",
                   "slug",
-                  "version",
                   "rank",
                   "depends_on",
                   "blocked_by",
@@ -58142,9 +58148,16 @@
                     "type": "string",
                     "description": "The slug, when the record carries one."
                   },
-                  "version": {
+                  "last_accepted": {
                     "type": "string",
-                    "description": "The release the milestone belongs to, when it declares one."
+                    "description": "The last accepted issue of a DONE milestone: its DONE issue with the latest\n`completed_at`, the greater id on a tie. Empty for a milestone that is not DONE, or\nthat is DONE with no issue. Which release carried it is `released_in`'s to answer."
+                  },
+                  "released_in": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The release that carried the milestone — the first release tag containing the merge\nof its last accepted issue, else `unreleased` — when the reader asked git for it\n(`released_in`); the roadmap always does. Never a typed field (ADR 0166)."
                   },
                   "rank": {
                     "type": "integer",
@@ -58203,7 +58216,6 @@
                   "priority",
                   "title",
                   "slug",
-                  "version",
                   "rank",
                   "depends_on",
                   "blocked_by",
@@ -58439,7 +58451,7 @@
                 "items": {
                   "$ref": "#/$defs/PlanMilestone"
                 },
-                "description": "The milestones ordered by rank, then order, then id. The sequence is derived from\nthe milestone graph; no list of versions is maintained anywhere."
+                "description": "The milestones ordered by rank, then order, then id, each with the release that\ncarried it (`released_in`). The sequence is derived from the milestone graph and the\nrelease from the tags; no list of versions is maintained anywhere."
               },
               "now": {
                 "type": [
@@ -58490,9 +58502,16 @@
                     "type": "string",
                     "description": "The slug, when the record carries one."
                   },
-                  "version": {
+                  "last_accepted": {
                     "type": "string",
-                    "description": "The release the milestone belongs to, when it declares one."
+                    "description": "The last accepted issue of a DONE milestone: its DONE issue with the latest\n`completed_at`, the greater id on a tie. Empty for a milestone that is not DONE, or\nthat is DONE with no issue. Which release carried it is `released_in`'s to answer."
+                  },
+                  "released_in": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The release that carried the milestone — the first release tag containing the merge\nof its last accepted issue, else `unreleased` — when the reader asked git for it\n(`released_in`); the roadmap always does. Never a typed field (ADR 0166)."
                   },
                   "rank": {
                     "type": "integer",
@@ -58551,7 +58570,6 @@
                   "priority",
                   "title",
                   "slug",
-                  "version",
                   "rank",
                   "depends_on",
                   "blocked_by",
@@ -83509,7 +83527,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 500,
+        "capabilities": 501,
         "capability_ids": []
       },
       {
@@ -83600,7 +83618,7 @@
     ]
   },
   "index": {
-    "fingerprint": "c391d4c1e9e77e85ed6164c1070e310356c32854f1aee3d53bd8891463381e10",
+    "fingerprint": "217247627947b9141d8e5e70fcd29487a34fdb93f10949f4f48219531ee0e167",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -83654,7 +83672,7 @@
       "session": 89,
       "skill": 8,
       "taxonomy": 10,
-      "test": 500,
+      "test": 501,
       "use-case": 49,
       "workspace": 1
     },
@@ -89776,7 +89794,7 @@
         "title": "Planning — milestones, issues, and the graph between them",
         "path": "docs/PLANNING.md",
         "source_class": "document",
-        "bytes": 31938
+        "bytes": 32235
       },
       {
         "uri": "majordomus://document/docs/PLAN_STATUS.md",
@@ -89785,7 +89803,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 176245
+        "bytes": 176118
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -89848,7 +89866,7 @@
         "title": "The roadmap — milestones as a graph",
         "path": "docs/ROADMAP.md",
         "source_class": "document",
-        "bytes": 5025
+        "bytes": 5942
       },
       {
         "uri": "majordomus://document/docs/RUSTDOC.md",
@@ -92925,7 +92943,7 @@
         "identity": "lib/doctor.sh",
         "path": "lib/doctor.sh",
         "source_class": "library",
-        "bytes": 94056
+        "bytes": 94352
       },
       {
         "uri": "majordomus://implementation/lib/doctrine.sh",
@@ -93053,7 +93071,7 @@
         "identity": "lib/plan.sh",
         "path": "lib/plan.sh",
         "source_class": "library",
-        "bytes": 27358
+        "bytes": 28173
       },
       {
         "uri": "majordomus://implementation/lib/plan_json.awk",
@@ -93069,7 +93087,7 @@
         "identity": "lib/project.awk",
         "path": "lib/project.awk",
         "source_class": "engine",
-        "bytes": 20717
+        "bytes": 21512
       },
       {
         "uri": "majordomus://implementation/lib/project.sh",
@@ -93077,7 +93095,7 @@
         "identity": "lib/project.sh",
         "path": "lib/project.sh",
         "source_class": "library",
-        "bytes": 16319
+        "bytes": 17784
       },
       {
         "uri": "majordomus://implementation/lib/prompt.sh",
@@ -97600,7 +97618,7 @@
         "path": ".ai/repo/project/issues/I2742.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2188
+        "bytes": 2318
       },
       {
         "uri": "majordomus://issue/I2743",
@@ -97871,7 +97889,7 @@
         "path": ".ai/repo/project/milestones/cost-per-accepted-outcome.yaml",
         "section": "project",
         "source_class": "milestone",
-        "bytes": 1394
+        "bytes": 1379
       },
       {
         "uri": "majordomus://milestone/derived-data-integrity",
@@ -97882,7 +97900,7 @@
         "path": ".ai/repo/project/milestones/derived-data-integrity.yaml",
         "section": "project",
         "source_class": "milestone",
-        "bytes": 4742
+        "bytes": 4727
       },
       {
         "uri": "majordomus://milestone/development-runtime",
@@ -97893,7 +97911,7 @@
         "path": ".ai/repo/project/milestones/development-runtime.yaml",
         "section": "project",
         "source_class": "milestone",
-        "bytes": 5428
+        "bytes": 5413
       },
       {
         "uri": "majordomus://milestone/every-session-joins-the-mesh",
@@ -97926,7 +97944,7 @@
         "path": ".ai/repo/project/milestones/execution-telemetry.yaml",
         "section": "project",
         "source_class": "milestone",
-        "bytes": 1392
+        "bytes": 1377
       },
       {
         "uri": "majordomus://milestone/external-workspaces",
@@ -97970,7 +97988,7 @@
         "path": ".ai/repo/project/milestones/foundation.yaml",
         "section": "project",
         "source_class": "milestone",
-        "bytes": 2026
+        "bytes": 2011
       },
       {
         "uri": "majordomus://milestone/intent-bound-work",
@@ -98047,7 +98065,7 @@
         "path": ".ai/repo/project/milestones/routing-recommendations.yaml",
         "section": "project",
         "source_class": "milestone",
-        "bytes": 1344
+        "bytes": 1329
       },
       {
         "uri": "majordomus://milestone/runtime-adapters",
@@ -98058,7 +98076,7 @@
         "path": ".ai/repo/project/milestones/runtime-adapters.yaml",
         "section": "project",
         "source_class": "milestone",
-        "bytes": 1571
+        "bytes": 1556
       },
       {
         "uri": "majordomus://milestone/runtime-lifecycle",
@@ -98102,7 +98120,7 @@
         "path": ".ai/repo/project/milestones/shared-policy.yaml",
         "section": "project",
         "source_class": "milestone",
-        "bytes": 1441
+        "bytes": 1426
       },
       {
         "uri": "majordomus://milestone/surfaces-never-disagree",
@@ -99877,11 +99895,11 @@
         "kind": "rule",
         "identity": "majordomus.roadmap-integrity@1",
         "title": "The roadmap is a projection, never a document",
-        "description": "No document is a second authority for the roadmap. While a hand-written roadmap table exists, it can neither list a version no milestone declares nor hide one the model does.",
+        "description": "No document is a second authority for the roadmap, and no milestone types its own version. While a hand-written roadmap table exists, it can neither list a release no milestone was released in nor hide one that carried a milestone; a milestone's release (released_in) is inferred from the tags, never typed.",
         "path": ".ai/repo/rules/vendor/majordomus/rules/roadmap-integrity.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 1480,
+        "bytes": 2575,
         "tags": [
           "plan",
           "roadmap"
@@ -104971,6 +104989,14 @@
         "bytes": 7114
       },
       {
+        "uri": "majordomus://test/test/cases/3102_a_milestone_version_is_inferred.sh",
+        "kind": "test",
+        "identity": "test/cases/3102_a_milestone_version_is_inferred.sh",
+        "path": "test/cases/3102_a_milestone_version_is_inferred.sh",
+        "source_class": "case",
+        "bytes": 4988
+      },
+      {
         "uri": "majordomus://test/test/cases/310_rustdoc_projection.sh",
         "kind": "test",
         "identity": "test/cases/310_rustdoc_projection.sh",
@@ -105504,7 +105530,7 @@
         "identity": "test/cases/47_mutation.sh",
         "path": "test/cases/47_mutation.sh",
         "source_class": "case",
-        "bytes": 12234
+        "bytes": 12197
       },
       {
         "uri": "majordomus://test/test/cases/484_the_version_is_authored_once.sh",
@@ -105552,7 +105578,7 @@
         "identity": "test/cases/48_roadmap_graph.sh",
         "path": "test/cases/48_roadmap_graph.sh",
         "source_class": "case",
-        "bytes": 5378
+        "bytes": 5511
       },
       {
         "uri": "majordomus://test/test/cases/490_rustdoc_new_module.sh",
@@ -105608,7 +105634,7 @@
         "identity": "test/cases/49_roadmap_doctrine.sh",
         "path": "test/cases/49_roadmap_doctrine.sh",
         "source_class": "case",
-        "bytes": 3944
+        "bytes": 5458
       },
       {
         "uri": "majordomus://test/test/cases/500_docs_index.sh",
@@ -107264,7 +107290,7 @@
         "identity": "test/cases/99_plan_capabilities.sh",
         "path": "test/cases/99_plan_capabilities.sh",
         "source_class": "case",
-        "bytes": 13917
+        "bytes": 13925
       },
       {
         "uri": "majordomus://test/test/cases/99_work_graph_chain.sh",
@@ -108149,7 +108175,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 500
+      "objects": 501
     },
     {
       "name": "use-case",

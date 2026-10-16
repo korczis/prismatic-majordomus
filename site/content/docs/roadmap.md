@@ -35,16 +35,29 @@ They stay separate because they answer different questions for different readers
 Collapsing them would make "what should I do this morning" and "what are we building this
 year" the same query.
 
-## Identity is a slug; the version is a field
+## Identity is a slug, and the release is inferred
 
 ```yaml
 id: runtime-adapters
-version: "0.2"
 ```
 
-Versions get renumbered, split and reordered; identity must not. A milestone's page URL, a
-claim's link to it and its GitHub binding all key on the slug, so `0.2` becoming `0.3`
-changes one field and breaks no reference.
+A milestone carries no version. A milestone's page URL, a claim's link to it and its
+GitHub binding all key on the slug, so nothing breaks when the plan is reordered or split.
+A typed `version:` is refused by `plan validate` as an unknown key (ADR 0166): it was typed
+by hand before the project had releases, and it disagreed with the releases it shipped in.
+
+The release that carried a milestone is a fact about the tags, read as `released_in` in
+`plan roadmap` (the `RELEASED` column, the `released_in` field of `--json`):
+
+- a milestone's **last accepted issue** is its DONE issue with the latest `completed_at`;
+- its merge is found through the commit that wrote that stamp, or failing that the latest
+  merge whose message names the issue;
+- `released_in` is the first release tag, `vMAJOR.MINOR.PATCH` in version order, that
+  contains it. A pre-release or a named tag is not a release.
+
+A milestone that is not DONE, or that no release tag contains yet, reads `unreleased`. The
+shell engine (`mj_pj_m_released_in` in `lib/project.sh`) and the executable
+(`plan::released_in`) answer it command for command, and case 99 holds them equal.
 
 Nothing may infer a record's kind from the shape of its id. `mj_pj_is_milestone` asks the
 loaded model, because a milestone id is a slug and an issue id is not distinguishable from
@@ -72,7 +85,7 @@ The roadmap sequence is each milestone's topological rank in the dependency grap
 `order:` field only breaks ties *within* a rank; it cannot move a milestone past something
 it requires.
 
-There is no list of versions anywhere — not in the generator, not in the site, not here.
+There is no list of versions anywhere — not in the records, the generator, the site or here.
 Adding a milestone file puts it in the roadmap.
 
 ## What the roadmap graph refuses

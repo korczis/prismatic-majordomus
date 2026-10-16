@@ -13,8 +13,12 @@
 #
 # output (tab separated, first field is the record type):
 #   P  name  repository  default_branch  active_milestone
-#   M  id  status  order  priority  title  slug  counts  version  rank  depends  blocked_by \
+#   M  id  status  order  priority  title  slug  counts  last  rank  depends  blocked_by \
 #      dependents  claims
+#      `last` is the last accepted issue of a DONE milestone — its DONE issue with the latest
+#      completed_at, the greater id on a tie — and empty otherwise. The release that carried
+#      the milestone (released_in) is that issue's merge looked up in the tags, which is git's
+#      to answer and not this file's: lib/project.sh mj_pj_m_released_in resolves it.
 #   S  kind  status...                  the status vocabulary, one record per record kind
 #   R  from  to                          one record per milestone dependency edge, sorted
 #   I  id  milestone  status  wave  priority  profile  parallel_safe  title  slug \
@@ -350,13 +354,21 @@ END {
   print "P", clean(pkey["name"]), clean(pkey["repository"]), clean(pkey["default_branch"]), best
   print "S", "issue", ISTATUS
   print "S", "milestone", MSTATUS
+  # the last accepted issue of every DONE milestone, which is what a release carried last
+  delete mlast
+  for (j = 1; j <= inum; j++) {
+    iid = iids[j]; mid = it[iid, "milestone"]
+    if (status[iid] != "DONE" || !(mid in mstatus) || mstatus[mid] != "DONE") continue
+    c = it[iid, "completed_at"]
+    if (!(mid in mlast) || c > mlastat[mid] || (c == mlastat[mid] && iid > mlast[mid])) { mlast[mid] = iid; mlastat[mid] = c }
+  }
   for (i = 1; i <= mn; i++) {
     id = mids[i]
     mdl = ""; for (k = 1; k <= mdepn[id]; k++) if ((id SUBSEP mdep[id, k]) in medge) mdl = mdl (mdl == "" ? "" : ",") mdep[id, k]
     mcl = ""; for (k = 1; k <= mclaimn[id]; k++) mcl = mcl (mcl == "" ? "" : ",") mclaim[id, k]
     mrd = ""; for (k = 1; k <= moutn[id]; k++) mrd = mrd (mrd == "" ? "" : ",") mout[id, k]
     print "M", id, mstatus[id], m[id, "order"], m[id, "priority"], clean(m[id, "title"]), m[id, "slug"], mrow[id], \
-          m[id, "version"], mrank[id] + 0, mdl, mblockedby[id], mrd, mcl
+          mlast[id], mrank[id] + 0, mdl, mblockedby[id], mrd, mcl
   }
   for (i = 1; i <= inum; i++) {
     id = iids[i]

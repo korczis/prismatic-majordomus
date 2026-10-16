@@ -1,6 +1,6 @@
 +++
 title = "Roadmap"
-description = "What comes next, in the order the milestone graph derives, each version gated by the previous one being accepted rather than by anyone's intention."
+description = "What comes next, in the order the milestone graph derives, each milestone gated by the ones it depends on being accepted rather than by anyone's intention."
 template = "roadmap.html"
 [extra]
 source = ".majordomus/project/milestones/"
@@ -11,6 +11,8 @@ A milestone here is an outcome, not a bucket of tickets. Its status comes from i
 inside a blocked milestone does not release it. That is why the sequence below is derived
 rather than written down, and why there is no progress bar on this page.
 
-Each version names the claim it would move out of *planned*. Naming it is not promoting it:
+A milestone that has shipped shows the release that carried it: the first release tag
+containing its last accepted issue, inferred from the tags and never typed. Each milestone
+names the claim it would move out of *planned*. Naming it is not promoting it:
 a claim becomes **guaranteed** when an implementation, a behavioural test and a blocking CI
 job exist for it, and the guarantees matrix will keep saying *planned* until they do.

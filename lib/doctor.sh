@@ -1209,12 +1209,13 @@ mj_validate_project() {
 # as drift. A warning from the model is a warning here: work in progress is reported, not
 # blocked, and only a graph that cannot be executed is a failure.
 # The roadmap is a projection of milestone state, so no document may be a second authority
-# for it. While a hand-written roadmap table survives anywhere, every version it lists has to
-# be a canonical milestone's version and every canonical version has to appear in it — a table
-# that can neither invent a release nor hide one. When the table is gone the check holds
-# trivially, which is the point: this refuses the regression, it does not require the table.
+# for it. While a hand-written roadmap table survives anywhere, every release it lists has to
+# be one a milestone was released in — inferred from the tags (released_in), never typed —
+# and every such release has to appear in it: a table that can neither invent a release nor
+# hide one. When the table is gone the check holds trivially, which is the point: this
+# refuses the regression, it does not require the table.
 mj_validate_roadmap() {
-  local readme canon doc missing extra
+  local readme canon doc missing extra id
   mj_project_doctrine_load || return 0
   readme="$MJ_ROOT/README.md"
   [ -f "$readme" ] || { mj_doctrine_ok roadmap "README.md" "absent; nothing can duplicate the roadmap"; return 0; }
@@ -1222,28 +1223,30 @@ mj_validate_roadmap() {
     mj_doctrine_ok roadmap "README.md" "no authored roadmap section; the roadmap is only a projection"
     return 0
   fi
-  canon="$(awk -F'\t' '$1=="M" && $9!="" { print $9 }' "$MJ_PJ/model.tsv" | LC_ALL=C sort -u)"
+  # only a DONE milestone has a last accepted issue, so only those can have been released
+  canon="$(for id in $(awk -F'\t' '$1=="M" && $9!="" { print $2 }' "$MJ_PJ/model.tsv"); do
+             mj_pj_m_released_in "$id"; printf '\n'; done | { grep -v '^unreleased$' || :; } | LC_ALL=C sort -u)"
   doc="$(awk '/^## Roadmap/{f=1;next} /^## /{f=0} f' "$readme" \
-         | sed -n 's/^| *\**\([0-9][0-9.]*\)\** *|.*/\1/p' | LC_ALL=C sort -u)"
-  # A section that lists no versions is prose pointing at the projection, not a second
-  # authority. The rule is about an authored version list, not about the heading: a partial
+         | sed -n 's/^| *\**v\{0,1\}\([0-9][0-9.]*\)\** *|.*/v\1/p' | LC_ALL=C sort -u)"
+  # A section that lists no releases is prose pointing at the projection, not a second
+  # authority. The rule is about an authored release list, not about the heading: a partial
   # list is the dangerous case, and no list at all is the intended end state.
   if [ -z "$doc" ]; then
-    mj_doctrine_ok roadmap "README.md" "the roadmap section lists no versions; it points at the projection rather than restating it"
+    mj_doctrine_ok roadmap "README.md" "the roadmap section lists no releases; it points at the projection rather than restating it"
     return 0
   fi
   missing="$(LC_ALL=C comm -23 <(printf '%s\n' "$canon") <(printf '%s\n' "$doc") | tr '\n' ' ')"
   extra="$(LC_ALL=C comm -13 <(printf '%s\n' "$canon") <(printf '%s\n' "$doc") | tr '\n' ' ')"
   missing="${missing% }"; extra="${extra% }"
   if [ -n "$extra" ]; then
-    mj_doctrine_fail roadmap "README.md" "lists version(s) no milestone declares: $extra" "majordomus plan roadmap"
+    mj_doctrine_fail roadmap "README.md" "lists release(s) no milestone was released in: $extra" "majordomus plan roadmap"
     return 0
   fi
   if [ -n "$missing" ]; then
-    mj_doctrine_fail roadmap "README.md" "omits milestone version(s) the model declares: $missing" "majordomus plan roadmap"
+    mj_doctrine_fail roadmap "README.md" "omits release(s) the tags show a milestone was released in: $missing" "majordomus plan roadmap"
     return 0
   fi
-  mj_doctrine_ok roadmap "README.md" "every version it lists is a milestone, and no milestone is hidden from it"
+  mj_doctrine_ok roadmap "README.md" "every release it lists carried a milestone, and no release that did is hidden from it"
   return 0
 }
 
