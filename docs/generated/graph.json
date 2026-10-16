@@ -2698,6 +2698,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/editors/mod.rs",
+        "kind": "file",
+        "label": "mod.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/editors/mod.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/episodes.rs",
         "kind": "file",
         "label": "episodes.rs",
@@ -7499,6 +7507,38 @@
             "release",
             "mesh",
             "runtime"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0168",
+        "kind": "adr",
+        "label": "adr-0168",
+        "summary": "What an adoption leaves behind is measured, not remembered",
+        "route": "/cockpit/objects/adr/adr-0168",
+        "source": ".ai/repo/adrs/0168-what-an-adoption-leaves-behind-is-measured-not-remembered.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-16",
+          "related": [
+            "file:.ai/repo/project/milestones/two-folder-integration.yaml",
+            "file:.ai/repo/project/issues/I1101.yaml",
+            "file:docs/TWO_FOLDER_CONSOLIDATION.md",
+            "file:docs/ADOPTION.md",
+            "file:lib/init.sh",
+            "file:lib/update.sh",
+            "file:lib/capture.sh",
+            "file:lib/common.sh",
+            "file:apps/majordomus-cli/src/editors/mod.rs",
+            "file:apps/majordomus-cli/src/generate.rs",
+            "file:.ai/repo/adrs/0021-the-branch-to-worktree-topology-is-derived-from-git-identity-and-enfor.md",
+            "test:test/cases/3113_the_adoption_footprint_is_inventoried.sh"
+          ],
+          "tags": [
+            "adoption",
+            "two-folder",
+            "ownership",
+            "footprint"
           ]
         }
       },
@@ -14888,7 +14928,7 @@
         "id": "majordomus://document/docs/TWO_FOLDER_CONSOLIDATION.md",
         "kind": "document",
         "label": "docs/TWO_FOLDER_CONSOLIDATION.md",
-        "summary": "Two-folder consolidation — forensic findings and migration plan",
+        "summary": "Two-folder consolidation — the adoption footprint, and the plan it justifies",
         "route": "/cockpit/objects/document/docs-two-folder-consolidation-md",
         "source": "docs/TWO_FOLDER_CONSOLIDATION.md"
       },
@@ -26657,11 +26697,13 @@
           "profile": "deep-work",
           "risk": "A forensic phase can become a rewrite the moment it finds something ugly. It records; the phases that follow change.",
           "scope": [
-            "docs/INTEGRATION.md",
+            "docs/TWO_FOLDER_CONSOLIDATION.md",
             ".ai/repo/adrs"
           ],
           "slug": "adoption-footprint-forensics",
-          "updated_at": "2026-09-06",
+          "started_at": "2026-10-16T11:25:07Z",
+          "started_event": "sha256:31ae9ab3d028d055e36f98af540f82d1b50d13822270862f9e092fc74c8d034b",
+          "updated_at": "2026-10-16T11:25:07Z",
           "validation": [
             "bin/majordomus doctor",
             "bash test/run.sh"
@@ -55097,6 +55139,13 @@
         "source": "test/cases/310_rustdoc_projection.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3113_the_adoption_footprint_is_inventoried.sh",
+        "kind": "test",
+        "label": "test/cases/3113_the_adoption_footprint_is_inventoried.sh",
+        "route": "/cockpit/objects/test/test-cases-3113-the-adoption-footprint-is-inventoried-sh",
+        "source": "test/cases/3113_the_adoption_footprint_is_inventoried.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/318_a_partial_sweep_says_so.sh",
         "kind": "test",
         "label": "test/cases/318_a_partial_sweep_says_so.sh",
@@ -67525,6 +67574,71 @@
       {
         "source": "majordomus://adr/adr-0161",
         "target": "majordomus://test/test/cases/85_installer.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0168",
+        "target": "file:apps/majordomus-cli/src/editors/mod.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0168",
+        "target": "file:apps/majordomus-cli/src/generate.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0168",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0168",
+        "target": "majordomus://adr/adr-0021",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0168",
+        "target": "majordomus://document/docs/ADOPTION.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0168",
+        "target": "majordomus://document/docs/TWO_FOLDER_CONSOLIDATION.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0168",
+        "target": "majordomus://implementation/lib/capture.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0168",
+        "target": "majordomus://implementation/lib/common.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0168",
+        "target": "majordomus://implementation/lib/init.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0168",
+        "target": "majordomus://implementation/lib/update.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0168",
+        "target": "majordomus://issue/I1101",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0168",
+        "target": "majordomus://milestone/two-folder-integration",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0168",
+        "target": "majordomus://test/test/cases/3113_the_adoption_footprint_is_inventoried.sh",
         "kind": "put_in_force"
       },
       {
@@ -85718,6 +85832,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3113_the_adoption_footprint_is_inventoried.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/318_a_partial_sweep_says_so.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -91009,8 +91128,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2870,
-      "edges": 6291,
+      "nodes": 2873,
+      "edges": 6305,
       "acyclic": false,
       "truncated": false
     }
