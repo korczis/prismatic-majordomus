@@ -30,13 +30,21 @@
 @import "../../design/base.css";
 @import "../../design/primitives.css";
 @plugin "flowbite/plugin";
+@source "../../../apps/majordomus-cli/src/ui/navbar.html";
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* `source(none)` turns off automatic source detection. Nothing in the repository is
    scanned for class names: every class this stylesheet emits is written here or in the
    shared primitives, as an @apply composition. That is what makes the output deterministic
    — a function of these files and the pinned versions alone — which is what lets
-   `scripts/cockpit-assets --check` be exact. */
+   `scripts/cockpit-assets --check` be exact.
+
+   One file is named as a source, and it is not the Cockpit's markup: the bar at the top of
+   every page is majordomus.dev's (project.the-ui-wears-the-sites-navbar), the site's partial
+   rendered by the site's build and compiled into the executable
+   (apps/majordomus-cli/src/ui/navbar.html). It is written in the site's utilities, so this
+   sheet compiles exactly those, from the same Tailwind, Flowbite theme and tokens the
+   site's app.css compiles them from, and scripts/ui navbar holds the result to the site's. */
 
 @layer base {
   html {
@@ -69,11 +77,12 @@
     border: 1px solid var(--mj-line);
   }
 
-  /* Wraps rather than overflows: at the narrowest audited width the brand, the palette
+  /* The Cockpit's tool bar, beneath the site's bar, which is the one that stays at the top.
+     Wraps rather than overflows: at the narrowest audited width the name, the palette
      button and the external links do not fit on one line, and a control plane that
      scrolls sideways in a split pane is worse than one that is two lines tall. */
   .mj-topbar {
-    @apply sticky top-0 z-30 flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2;
+    @apply flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2;
     min-height: var(--mj-topbar);
     background: var(--mj-raised);
     border-bottom: 1px solid var(--mj-line);
@@ -83,19 +92,9 @@
     @apply flex items-center gap-2 font-semibold no-underline;
     color: var(--mj-fg);
   }
-  /* The mark is the canonical one, inlined by the shell from its compiled copy; it draws in
-     currentColor, so it is the text colour of the brand in either theme. */
-  .mj-brand-mark {
-    @apply inline-flex h-6 w-6 shrink-0 items-center justify-center;
-  }
-  .mj-brand-mark > svg {
-    @apply h-full w-full;
-  }
+  /* the Cockpit's name; the brand and its mark are the site's, in the bar above */
   .mj-brand-name {
-    @apply tracking-tight;
-  }
-  .mj-brand-suffix {
-    @apply hidden text-label uppercase tracking-caps sm:inline;
+    @apply text-label uppercase tracking-caps;
     color: var(--mj-muted);
   }
 
@@ -113,14 +112,6 @@
   .mj-topbar-links {
     @apply ml-auto flex shrink-0 items-center gap-3 text-small sm:ml-0;
   }
-  .mj-theme-toggle {
-    @apply rounded-md px-2 py-1 text-small;
-    border: 1px solid var(--mj-line);
-    color: var(--mj-muted);
-  }
-  .mj-theme-toggle:hover {
-    color: var(--mj-fg);
-  }
   .mj-version {
     @apply hidden font-mono text-label sm:block;
     color: var(--mj-muted);
@@ -130,10 +121,12 @@
     @apply mx-auto flex w-full min-w-0 max-w-[var(--mj-cockpit)] items-start gap-6 px-4;
   }
 
+  /* in view beneath the site's bar: cockpit.js writes the bar's height into --ui-bar (a
+     measurement of this page, not a token) as it changes */
   .mj-sidebar {
     @apply sticky hidden w-60 shrink-0 overflow-y-auto py-6 lg:block;
-    top: calc(var(--mj-topbar) + 0.25rem);
-    max-height: calc(100vh - var(--mj-topbar) - 0.75rem);
+    top: calc(var(--ui-bar, 0rem) + 0.25rem);
+    max-height: calc(100vh - var(--ui-bar, 0rem) - 0.75rem);
   }
   .mj-nav-section {
     @apply mb-5;

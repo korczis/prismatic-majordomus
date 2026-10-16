@@ -37918,6 +37918,74 @@
         }
       },
       {
+        "id": "majordomus://issue/I2770",
+        "kind": "issue",
+        "label": "I2770",
+        "summary": "majordomus ui and the Cockpit wear the site's navbar: one renderer, the same styles and scripts, and a browser comparison that refuses a difference",
+        "route": "/cockpit/objects/issue/i2770",
+        "source": ".ai/repo/project/issues/I2770.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every UI screen and Cockpit page carries exactly one nav[aria-label=Main], the site's, with the executable's version and the product entry leading to /ui",
+            "scripts/ui navbar reports no difference between the bar on the site's front page and on /ui and /cockpit at every declared width, light and dark, closed and with a menu open",
+            "A copy that is not the built bar, and a share/ui script that is not the site's bytes, each fail their check"
+          ],
+          "created_at": "2026-10-16",
+          "depends_on": [],
+          "evidence_required": [
+            "navbar_parity_run",
+            "navbar_unit_tests"
+          ],
+          "milestone": "surfaces-never-disagree",
+          "non_scope": [
+            "The published Cockpit snapshot keeps no script, so its copy of the bar has no working menus there; giving the snapshot the bar's two scripts is a change to the exporter's subject",
+            "A second navigation declaration or a second renderer of the bar for any surface"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "site/templates/partials/navbar.html",
+            "apps/majordomus-cli/src/ui/navbar.rs",
+            "apps/majordomus-cli/src/ui/navbar.html",
+            "apps/majordomus-cli/src/ui/shell.rs",
+            "apps/majordomus-cli/src/ui/mod.rs",
+            "apps/majordomus-cli/src/cockpit/html.rs",
+            "apps/majordomus-cli/src/cockpit/view.rs",
+            "apps/majordomus-cli/src/cockpit/mod.rs",
+            "share/cockpit/src/cockpit.css",
+            "share/cockpit/cockpit.css",
+            "share/cockpit/cockpit.js",
+            "share/cockpit/nav.js",
+            "share/cockpit/theme.js",
+            "scripts/lib/cockpit-probe.mjs",
+            "docs/COCKPIT.md",
+            "apps/majordomus-cli/src/design/render.rs",
+            "share/ui/src/ui.css",
+            "share/ui/ui.css",
+            "share/ui/ui.js",
+            "share/ui/nav.js",
+            "share/ui/theme.js",
+            "scripts/ui",
+            "scripts/lib/ui-navbar.mjs",
+            "scripts/lib/ui.test.mjs",
+            "scripts/cockpit-assets",
+            ".ai/repo/rules/project/the-ui-wears-the-sites-navbar.v1.md",
+            "docs/DESIGN_SYSTEM.md",
+            "docs/MAJORDOMUS_UI.md",
+            ".ai/repo/project/issues/I2770.yaml"
+          ],
+          "slug": "the-ui-wears-the-sites-navbar",
+          "updated_at": "2026-10-16",
+          "validation": [
+            "scripts/site-build && scripts/ui navbar",
+            "scripts/ui test",
+            "scripts/cockpit-assets --check",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- ui::navbar ui::shell cockpit::html"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "label": "a-commit-stood-behind-a-build-lock",
@@ -47014,6 +47082,31 @@
             "publication",
             "web",
             "distribution"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://rule/project.the-ui-wears-the-sites-navbar@1",
+        "kind": "rule",
+        "label": "project.the-ui-wears-the-sites-navbar@1",
+        "summary": "majordomus.dev is the reference for how the product looks, and every page of the UI and the Cockpit wears the site's own navbar",
+        "route": "/cockpit/objects/rule/project-the-ui-wears-the-sites-navbar-1",
+        "source": ".ai/repo/rules/project/the-ui-wears-the-sites-navbar.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.navigation-is-declared-once@1",
+            "project.design-tokens-declared-once@2",
+            "project.ui-conformance@1"
+          ],
+          "tags": [
+            "design",
+            "ui",
+            "navigation",
+            "derived",
+            "projections",
+            "site"
           ]
         }
       },
@@ -81258,6 +81351,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2770",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2770",
+        "target": "majordomus://milestone/surfaces-never-disagree",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -83845,6 +83948,26 @@
       {
         "source": "majordomus://rule/project.the-site-offers-the-release-it-published@1",
         "target": "majordomus://rule/project.release-is-a-projection@2",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.the-ui-wears-the-sites-navbar@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.the-ui-wears-the-sites-navbar@1",
+        "target": "majordomus://rule/project.design-tokens-declared-once@2",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.the-ui-wears-the-sites-navbar@1",
+        "target": "majordomus://rule/project.navigation-is-declared-once@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.the-ui-wears-the-sites-navbar@1",
+        "target": "majordomus://rule/project.ui-conformance@1",
         "kind": "depends_on"
       },
       {
@@ -91009,8 +91132,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2870,
-      "edges": 6291,
+      "nodes": 2872,
+      "edges": 6297,
       "acyclic": false,
       "truncated": false
     }

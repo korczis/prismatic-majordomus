@@ -6,23 +6,23 @@
     "version": "0.27.0"
   },
   "registry": {
-    "fingerprint": "039c3c240f2a65253fe430b394e20fc2d0230868bc9dc775a9fdc93d3bfd479f",
+    "fingerprint": "c94ed8dec15c4a36c4f4b54edcbf3246ae3cc84c42a82293b808df6c5af07dbc",
     "summary": {
-      "total": 2446,
+      "total": 2448,
       "builtin": 202,
-      "declarative": 2244,
+      "declarative": 2246,
       "by_kind": {
         "command": 31,
         "query": 171,
-        "resource": 2244
+        "resource": 2246
       },
       "by_stability": {
         "behaviorally_verified": 141,
         "experimental": 52,
-        "implemented": 2253
+        "implemented": 2255
       },
       "mcp_tools": 192,
-      "mcp_resources": 2299,
+      "mcp_resources": 2301,
       "http_routes": 197,
       "cli_commands": 108,
       "modules": 92,
@@ -82938,7 +82938,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 394,
+        "capabilities": 395,
         "capability_ids": []
       },
       {
@@ -83365,7 +83365,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 180,
+        "capabilities": 181,
         "capability_ids": []
       },
       {
@@ -83600,7 +83600,7 @@
     ]
   },
   "index": {
-    "fingerprint": "d145fb9a0df194ae88563f0ac078bcdc65ec3e4202c2c15329351b61177ace6a",
+    "fingerprint": "be3a53a32a0b85e872b4600e6afc7a33ac6085c3cb5fc3e7707711621d3d1263",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -83640,7 +83640,7 @@
       "gap": 3,
       "implementation": 52,
       "intent": 4,
-      "issue": 394,
+      "issue": 395,
       "knowledge": 4,
       "mesh-declaration": 1,
       "milestone": 38,
@@ -83649,7 +83649,7 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 27,
-      "rule": 180,
+      "rule": 181,
       "scope": 1,
       "session": 89,
       "skill": 8,
@@ -89362,7 +89362,7 @@
         "title": "The Cockpit — the registry, rendered for a person",
         "path": "docs/COCKPIT.md",
         "source_class": "document",
-        "bytes": 51026
+        "bytes": 51561
       },
       {
         "uri": "majordomus://document/docs/COCKPIT_IDE_AUDIT.md",
@@ -89452,7 +89452,7 @@
         "title": "The design system — one declaration, every surface",
         "path": "docs/DESIGN_SYSTEM.md",
         "source_class": "document",
-        "bytes": 20397
+        "bytes": 22619
       },
       {
         "uri": "majordomus://document/docs/DEVELOPMENT_RUNTIME.md",
@@ -89677,7 +89677,7 @@
         "title": "`majordomus ui` — the product",
         "path": "docs/MAJORDOMUS_UI.md",
         "source_class": "document",
-        "bytes": 34125
+        "bytes": 37153
       },
       {
         "uri": "majordomus://document/docs/MCP.md",
@@ -89767,7 +89767,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 158951
+        "bytes": 160505
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -97552,6 +97552,17 @@
         "bytes": 2836
       },
       {
+        "uri": "majordomus://issue/I2770",
+        "kind": "issue",
+        "identity": "I2770",
+        "title": "majordomus ui and the Cockpit wear the site's navbar: one renderer, the same styles and scripts, and a browser comparison that refuses a difference",
+        "description": "Make majordomus.dev the reference for the product's look by giving every screen of majordomus ui and every page of the Cockpit the site's own navbar: the bar the site's partial renders over site/data/nav.toml, cut out of the built site and compiled into the executable, styled by the same Tailwind build over the same tokens, driven by the site's own scripts, and held to the site's bar by a browser comparison in both themes and at every declared width.",
+        "path": ".ai/repo/project/issues/I2770.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4572
+      },
+      {
         "uri": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "identity": "a-commit-stood-behind-a-build-lock",
@@ -101713,6 +101724,25 @@
           "publication",
           "web",
           "distribution"
+        ]
+      },
+      {
+        "uri": "majordomus://rule/project.the-ui-wears-the-sites-navbar@1",
+        "kind": "rule",
+        "identity": "project.the-ui-wears-the-sites-navbar@1",
+        "title": "majordomus.dev is the reference for how the product looks, and every page of the UI and the Cockpit wears the site's own navbar",
+        "description": "The published site is the reference for the product's styling and its interface rules. The bar at the top of every screen of `majordomus ui` and every page of the Cockpit is not a second bar written after the site's; it is the site's own rendering of site/templates/partials/navbar.html over site/data/nav.toml, cut out of the built site, compiled into the executable, styled by the same Tailwind build over the same generated tokens and driven by the site's own scripts, and a browser comparison of the two bars refuses any difference in an element, a box or a computed style, in both themes and at every declared width.",
+        "path": ".ai/repo/rules/project/the-ui-wears-the-sites-navbar.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 6996,
+        "tags": [
+          "design",
+          "ui",
+          "navigation",
+          "derived",
+          "projections",
+          "site"
         ]
       },
       {
@@ -107869,7 +107899,7 @@
       "identity": [
         "id"
       ],
-      "objects": 394
+      "objects": 395
     },
     {
       "name": "knowledge",
@@ -107966,7 +107996,7 @@
         "id",
         "version"
       ],
-      "objects": 180
+      "objects": 181
     },
     {
       "name": "scope",

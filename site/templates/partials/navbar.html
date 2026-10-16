@@ -15,7 +15,14 @@
     `Get started` is rendered as a button beside GitHub rather than as another group, because
     it is an action and not a question a visitor arrives with. It sits outside the collapsing
     menu on desktop so a decided reader never has to open anything, and inside it at the end
-    on mobile, where the bar has no room for a second button. -#}
+    on mobile, where the bar has no room for a second button.
+
+    This bar is the product's too: `majordomus ui` wears this rendering of it, cut out of the
+    built site by `scripts/ui navbar --write` into apps/majordomus-cli/src/ui/navbar.html and
+    compiled into the executable, and `scripts/ui navbar` refuses a UI whose bar differs from
+    this one in an element or a computed style (project.the-ui-wears-the-sites-navbar). So the
+    bar sets its own text size, because a page that wears it may set another on its body, and
+    the snapshot note is marked, for the UI to drop where it leads to the live surface. -#}
 {% set nav = load_data(path="data/nav.toml") %}
 {% set cp = current_path or "" %}
 {#- A group is active on a page one of its links names exactly; on a page none of the bar's links
@@ -25,7 +32,7 @@
     nav.toml's; none is written in this template. -#}
 {% set nav_exact %}{% for g in nav.groups %}|{{ g.href }}|{% for i in (g.items or []) %}|{{ i.href }}|{% endfor %}{% endfor %}{% endset %}
 {% set exact_somewhere = ("|" ~ cp ~ "|") in nav_exact %}
-<nav class="sticky top-0 z-20 w-full border-b border-default bg-neutral-primary" aria-label="Main">
+<nav class="sticky top-0 z-20 w-full border-b border-default bg-neutral-primary text-base" aria-label="Main">
   <div class="mx-auto flex max-w-screen-xl flex-wrap items-center justify-between gap-x-2 gap-y-2 px-3 py-3 sm:p-4">
     <a href="{{ get_url(path="/", trailing_slash=true) }}" class="flex min-w-0 items-center gap-1.5 sm:gap-2.5 rtl:space-x-reverse">
       <span class="inline-flex h-6 w-6 shrink-0 text-heading sm:h-7 sm:w-7 [&>svg]:h-full [&>svg]:w-full" aria-hidden="true">{{ load_data(path="static/images/logo-mark.svg", format="plain") | safe }}</span>
@@ -95,7 +102,7 @@
           <button id="nav-{{ loop.index }}" data-dropdown-toggle="nav-menu-{{ loop.index }}" type="button" aria-controls="nav-menu-{{ loop.index }}" class="flex w-full items-center justify-between rounded px-3 py-2 {% if active %}text-fg-brand{% else %}text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand{% endif %} focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">{{ g.label }}<svg class="ms-1.5 h-3 w-3 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
           <div id="nav-menu-{{ loop.index }}" class="hidden md:absolute md:left-0 md:top-full md:z-10 md:mt-2 md:w-64 md:rounded-base md:border md:border-default-medium md:bg-neutral-primary-medium md:shadow-lg">
             <ul class="pb-2 ps-3 text-sm font-medium text-body md:p-2" aria-labelledby="nav-{{ loop.index }}">
-              {% for i in shown %}{% set held = [s for s in build.snapshots if s.id == i.surface] if build and build.snapshots and i.surface else [] %}<li>{% if held | length %}<a href="{{ config.base_url | trim_end(pat="/") }}{{ held[0].mount }}/" data-nav-snapshot="{{ held[0].id }}" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">{{ i.label }} <span class="text-xs text-body-subtle">&middot; snapshot</span></a>{% else %}<a href="{{ get_url(path=i.href, trailing_slash=true) }}" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2{% if cp == i.href %} text-fg-brand{% endif %}"{% if cp == i.href %} aria-current="page"{% endif %}>{{ i.label }}</a>{% endif %}</li>{% endfor %}
+              {% for i in shown %}{% set held = [s for s in build.snapshots if s.id == i.surface] if build and build.snapshots and i.surface else [] %}<li>{% if held | length %}<a href="{{ config.base_url | trim_end(pat="/") }}{{ held[0].mount }}/" data-nav-snapshot="{{ held[0].id }}" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">{{ i.label }} <span data-nav-snapshot-note class="text-xs text-body-subtle">&middot; snapshot</span></a>{% else %}<a href="{{ get_url(path=i.href, trailing_slash=true) }}" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2{% if cp == i.href %} text-fg-brand{% endif %}"{% if cp == i.href %} aria-current="page"{% endif %}>{{ i.label }}</a>{% endif %}</li>{% endfor %}
               <li class="mt-1 border-t border-default pt-1"><a href="#site-map-{{ loop.index }}" class="block rounded px-3 py-2 text-body-subtle hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">All {{ items | length }} pages in the site map &darr;</a></li>
             </ul>
           </div>
