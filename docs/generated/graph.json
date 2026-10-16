@@ -3570,6 +3570,22 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-core/fixtures/canonical-digest.v1.json",
+        "kind": "file",
+        "label": "canonical-digest.v1.json",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-core/fixtures/canonical-digest.v1.json",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-core/src/lib.rs",
+        "kind": "file",
+        "label": "lib.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-core/src/lib.rs",
+        "external": true
+      },
+      {
         "id": "file:handbook/build.py",
         "kind": "file",
         "label": "build.py",
@@ -7499,6 +7515,32 @@
             "release",
             "mesh",
             "runtime"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0170",
+        "kind": "adr",
+        "label": "adr-0170",
+        "summary": "A browser computes with the portable core, and the server verifies by recomputing",
+        "route": "/cockpit/objects/adr/adr-0170",
+        "source": ".ai/repo/adrs/0170-a-browser-computes-and-the-server-verifies-by-recomputing.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-16",
+          "related": [
+            "file:.ai/repo/adrs/0032-an-external-workspace-is-not-a-provider-the-term-the-depende.md",
+            "file:.ai/repo/adrs/0067-mesh-cooperation-is-authenticated-links-and-one-replicated-journal.md",
+            "file:.ai/repo/adrs/0126-a-caller-beyond-loopback-reads-and-changes-nothing-it-cannot-authenticate.md",
+            "file:apps/majordomus-core/src/lib.rs",
+            "file:apps/majordomus-core/fixtures/canonical-digest.v1.json",
+            "test:apps/majordomus-core/tests/parity.rs"
+          ],
+          "tags": [
+            "mesh",
+            "security",
+            "wasm",
+            "architecture"
           ]
         }
       },
@@ -14063,6 +14105,18 @@
         }
       },
       {
+        "id": "majordomus://critique/a-browser-computes-what-the-server-verifies",
+        "kind": "critique",
+        "label": "a-browser-computes-what-the-server-verifies",
+        "summary": "a-browser-computes-what-the-server-verifies",
+        "route": "/cockpit/objects/critique/a-browser-computes-what-the-server-verifies",
+        "source": ".ai/repo/project/critiques/a-browser-computes-what-the-server-verifies.yaml",
+        "facts": {
+          "intent": "a-browser-computes-what-the-server-verifies",
+          "reviewed_at": "d116266803"
+        }
+      },
+      {
         "id": "majordomus://critique/a-session-leaves-what-it-observed",
         "kind": "critique",
         "label": "a-session-leaves-what-it-observed",
@@ -18865,6 +18919,20 @@
         }
       },
       {
+        "id": "majordomus://gap/a-browser-computes-what-the-server-verifies",
+        "kind": "gap",
+        "label": "a-browser-computes-what-the-server-verifies",
+        "summary": "a-browser-computes-what-the-server-verifies",
+        "route": "/cockpit/objects/gap/a-browser-computes-what-the-server-verifies",
+        "source": ".ai/repo/project/gaps/a-browser-computes-what-the-server-verifies.yaml",
+        "facts": {
+          "intent": "a-browser-computes-what-the-server-verifies",
+          "observed_at": "d116266803",
+          "recorded_at": "2026-10-17",
+          "recorded_by": "claude-code (session 21616f1e, worktree feature/a-browser-computes-for-the-mesh; read-only audit of the mesh, the execution plane, the capability registry and wasm32 portability at master)"
+        }
+      },
+      {
         "id": "majordomus://gap/a-session-leaves-what-it-observed",
         "kind": "gap",
         "label": "a-session-leaves-what-it-observed",
@@ -19277,6 +19345,34 @@
         "label": "lib/watch.sh",
         "route": "/cockpit/objects/implementation/lib-watch-sh",
         "source": "lib/watch.sh"
+      },
+      {
+        "id": "majordomus://intent/a-browser-computes-what-the-server-verifies",
+        "kind": "intent",
+        "label": "a-browser-computes-what-the-server-verifies",
+        "summary": "A browser computes for a project with the same code the server runs, and nothing it returns is trusted until the server has recomputed it",
+        "route": "/cockpit/objects/intent/a-browser-computes-what-the-server-verifies",
+        "source": ".ai/repo/project/intents/a-browser-computes-what-the-server-verifies.yaml",
+        "facts": {
+          "governance": [
+            "adr:adr-0170",
+            "adr:adr-0126",
+            "rule:project.derived-once"
+          ],
+          "invariants": [
+            "One implementation per computation, in the portable core; the browser runs it as wasm32 and the executable links it, and an executed fixture decides whether they agree",
+            "A browser's result is a claim; only the server's recomputation verifies it, and agreement among browsers is never proof",
+            "A browser holds no mesh key, takes no claim, appends nothing to the journal and writes nothing until an authentication the owner accepts exists (ADR 0126, ADR 0170)",
+            "Participation is opt-in, revocable and visible; nothing computes in a page a person did not ask to compute"
+          ],
+          "milestones": [
+            "browser-compute"
+          ],
+          "non_goals": [
+            "A second mesh, a browser-specific scheduler or a second capability registry",
+            "Arbitrary code from a peer; only the core's own functions run"
+          ]
+        }
       },
       {
         "id": "majordomus://intent/a-session-leaves-what-it-observed",
@@ -37918,6 +38014,57 @@
         }
       },
       {
+        "id": "majordomus://issue/I2784",
+        "kind": "issue",
+        "label": "I2784",
+        "summary": "One portable core runs on the host and as wasm32, and one executed fixture holds both",
+        "route": "/cockpit/objects/issue/i2784",
+        "source": ".ai/repo/project/issues/I2784.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every fixture row is reproduced by the core on the host, by the executable's two writers, and by the wasm32 module executed under node",
+            "Text that is not JSON is refused, not digested, on every runtime",
+            "Neither lock gains a package",
+            "A core source edit changes the executable's generation; a core test edit does not"
+          ],
+          "created_at": "2026-10-17",
+          "current_state": "No portable core; canonical JSON is written twice in the executable; no wasm32 target.",
+          "depends_on": [],
+          "evidence_required": [
+            "portable_core_tests"
+          ],
+          "milestone": "browser-compute",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-core",
+            "apps/majordomus-cli/Cargo.toml",
+            "apps/majordomus-cli/Cargo.lock",
+            "apps/majordomus-cli/build.rs",
+            "apps/majordomus-cli/src/generation.rs",
+            "apps/majordomus-cli/src/mesh/journal.rs",
+            "apps/majordomus-cli/src/capability/executor.rs",
+            "apps/majordomus-cli/tests/portable_core.rs",
+            ".ai/repo/ci/gates.yaml",
+            ".ai/repo/adrs",
+            "scripts/ci/crate-boundary",
+            "rust-toolchain.toml"
+          ],
+          "serves": [
+            "a-browser-computes-what-the-server-verifies#core-agrees-everywhere"
+          ],
+          "slug": "a-portable-core-runs-in-the-browser",
+          "updated_at": "2026-10-17",
+          "validation": [
+            "majordomus plan validate",
+            "cargo test --manifest-path apps/majordomus-core/Cargo.toml",
+            "cargo test --test portable_core",
+            "cargo test --lib generation"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "label": "a-commit-stood-behind-a-build-lock",
@@ -38537,6 +38684,58 @@
             "bin/majordomus-cli capabilities validate",
             "bin/majordomus-cli generate --check",
             "bash test/run.sh 383_a_scripted_capability_runs"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/browser-compute",
+        "kind": "milestone",
+        "label": "browser-compute",
+        "summary": "A browser computes for the project with the server's own code, and the server verifies every result",
+        "route": "/cockpit/objects/milestone/browser-compute",
+        "source": ".ai/repo/project/milestones/browser-compute.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The portable core reproduces the shared fixture on the host, in the executable and as an executed wasm32 module",
+            "An edit to the core is a new generation of the executable",
+            "Nothing a browser returns enters a record before the owner accepts how it is authenticated"
+          ],
+          "created_at": "2026-10-17",
+          "current_state": "No portable core, no wasm32 target, no fixture shared by the runtimes; two canonical-JSON writers in the executable.",
+          "depends_on": [],
+          "evidence_required": [],
+          "non_scope": [
+            "Writing anything on a browser's behalf before ADR 0170's open question is decided",
+            "WebRTC, peer-to-peer transfer, reputation"
+          ],
+          "order": 147,
+          "priority": "p1",
+          "risks": [
+            "The structure job installs the wasm32 target for the portable-core gate; a runner without network for rustup fails that gate loudly rather than skipping it."
+          ],
+          "scope": [
+            "apps/majordomus-core",
+            "apps/majordomus-cli/Cargo.toml",
+            "apps/majordomus-cli/Cargo.lock",
+            "apps/majordomus-cli/build.rs",
+            "apps/majordomus-cli/src/generation.rs",
+            "apps/majordomus-cli/src/mesh/journal.rs",
+            "apps/majordomus-cli/src/capability/executor.rs",
+            "apps/majordomus-cli/tests/portable_core.rs",
+            ".ai/repo/ci/gates.yaml",
+            ".ai/repo/adrs",
+            ".ai/repo/project",
+            "scripts/ci/crate-boundary",
+            "rust-toolchain.toml",
+            "docs"
+          ],
+          "slug": "browser-compute",
+          "updated_at": "2026-10-17",
+          "validation": [
+            "majordomus plan validate",
+            "majordomus intent validate",
+            "cargo test --manifest-path apps/majordomus-core/Cargo.toml",
+            "cargo test --test portable_core"
           ]
         }
       },
@@ -59549,6 +59748,14 @@
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/tests/remote_callers.rs",
         "external": true
+      },
+      {
+        "id": "test:apps/majordomus-core/tests/parity.rs",
+        "kind": "test",
+        "label": "parity.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-core/tests/parity.rs",
+        "external": true
       }
     ],
     "edges": [
@@ -67528,6 +67735,41 @@
         "kind": "put_in_force"
       },
       {
+        "source": "majordomus://adr/adr-0170",
+        "target": "file:apps/majordomus-core/fixtures/canonical-digest.v1.json",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0170",
+        "target": "file:apps/majordomus-core/src/lib.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0170",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0170",
+        "target": "majordomus://adr/adr-0032",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0170",
+        "target": "majordomus://adr/adr-0067",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0170",
+        "target": "majordomus://adr/adr-0126",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0170",
+        "target": "test:apps/majordomus-core/tests/parity.rs",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://application/ci-gated-project",
         "target": "kind:application",
         "kind": "is_a"
@@ -73168,6 +73410,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://critique/a-browser-computes-what-the-server-verifies",
+        "target": "kind:critique",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://critique/a-session-leaves-what-it-observed",
         "target": "kind:critique",
         "kind": "is_a"
@@ -75108,6 +75355,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://gap/a-browser-computes-what-the-server-verifies",
+        "target": "kind:gap",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://gap/a-session-leaves-what-it-observed",
         "target": "kind:gap",
         "kind": "is_a"
@@ -75380,6 +75632,11 @@
       {
         "source": "majordomus://implementation/lib/watch.sh",
         "target": "kind:implementation",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://intent/a-browser-computes-what-the-server-verifies",
+        "target": "kind:intent",
         "kind": "is_a"
       },
       {
@@ -81258,6 +81515,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2784",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2784",
+        "target": "majordomus://milestone/browser-compute",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -81329,6 +81596,11 @@
       },
       {
         "source": "majordomus://milestone/automation",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/browser-compute",
         "target": "kind:milestone",
         "kind": "is_a"
       },
@@ -91009,8 +91281,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2870,
-      "edges": 6291,
+      "nodes": 2879,
+      "edges": 6304,
       "acyclic": false,
       "truncated": false
     }
