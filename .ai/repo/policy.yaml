@@ -138,6 +138,8 @@ session:
   brief_on_interval: true                # keep the session briefed on what surrounds it, as
                                          # its status line and on an interval (ADR 0136)
   brief_interval_minutes: 20             # how often a session reports on itself unasked
+  edits_require_claim: true              # refuse an edit no claim covers: the active task's
+                                         # scope or a live mesh claim of the session (I2735)
   knowledge_on_end: true                 # the evidence the episode produced is about to stop
                                          # being reachable; derive what it says as the
                                          # episode closes, on every close path
@@ -382,5 +384,7 @@ projections:
     always_loaded: true
   - provider: claude-code
     target: CLAUDE.md
+  - provider: gemini
+    target: GEMINI.md
   - provider: bb
     target: .bb/AGENTS.md

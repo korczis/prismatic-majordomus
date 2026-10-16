@@ -526,6 +526,12 @@ pub struct RepairReport {
     pub pruned: Vec<String>,
     /// What `git worktree repair` reported.
     pub repaired: Vec<String>,
+    /// Which hooks each existing linked worktree runs once repaired, by its path: a
+    /// worktree moved by hand keeps a per-worktree `core.hooksPath` naming its old path,
+    /// and one made by plain `git worktree add` may run the primary checkout's (I2718).
+    /// Empty on a dry run.
+    #[serde(default, skip_serializing_if = "std::collections::BTreeMap::is_empty")]
+    pub hooks: std::collections::BTreeMap<String, super::hooks::HooksPath>,
     /// Whether anything was changed.
     pub applied: bool,
 }

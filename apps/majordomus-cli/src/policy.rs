@@ -322,6 +322,46 @@ pub struct SessionPolicy {
     /// mod reads the interval from that answer rather than from this file.
     #[serde(default)]
     pub brief_interval_minutes: Option<u64>,
+    /// `session.edits_require_claim:` — whether a provider's tool may write a file of the
+    /// checkout only while a claim covers it: the active task's scope, or a live mesh claim
+    /// of the writing session (I2735, [`crate::guard`]). Off unless a repository turns it
+    /// on, because it refuses edits, and a repository that never asked for that must not
+    /// find its workers stopped by an upgrade.
+    #[serde(default)]
+    pub edits_require_claim: bool,
+    /// `session.stranded_after:` — how long an open episode may be silent before its client
+    /// is taken to be gone (`90s`, `30m`, `12h`). `majordomus recover` reads it to judge an
+    /// episode stranded, and `worktree.uncommitted` reads the same value twice over: an
+    /// episode silent this long holds no work, and uncommitted work untouched this long
+    /// that nothing holds is abandoned. Absent is absent: no reader carries a default of
+    /// its own, because a second copy of the number is the drift the policy exists to stop.
+    ///
+    /// ```
+    /// use majordomus_cli::policy::SessionPolicy;
+    /// let declared: SessionPolicy =
+    ///     serde_json::from_str(r#"{"stranded_after": "12h"}"#).expect("a session block");
+    /// assert_eq!(declared.stranded_after.as_deref(), Some("12h"));
+    /// assert_eq!(SessionPolicy::default().stranded_after, None, "absent is not a default");
+    /// // a bare number is seconds, as the shell reader takes it, and never a parse failure
+    /// // that would take the rest of the policy down with it
+    /// let bare: SessionPolicy =
+    ///     serde_json::from_str(r#"{"stranded_after": 3600}"#).expect("a session block");
+    /// assert_eq!(bare.stranded_after.as_deref(), Some("3600"));
+    /// ```
+    #[serde(default, deserialize_with = "scalar_text")]
+    pub stranded_after: Option<String>,
+}
+
+/// A scalar read as the text it was written as: the subset reader hands `12h` over as a
+/// string and `3600` as a number, and both are the same kind of value to a duration.
+fn scalar_text<'de, D: serde::Deserializer<'de>>(
+    d: D,
+) -> std::result::Result<Option<String>, D::Error> {
+    Ok(match serde_json::Value::deserialize(d)? {
+        serde_json::Value::String(s) => Some(s),
+        serde_json::Value::Number(n) => Some(n.to_string()),
+        _ => None,
+    })
 }
 
 impl Default for SessionPolicy {
@@ -332,6 +372,8 @@ impl Default for SessionPolicy {
             knowledge_on_end: true,
             knowledge_on_compact: true,
             brief_interval_minutes: None,
+            edits_require_claim: false,
+            stranded_after: None,
         }
     }
 }
@@ -495,6 +537,21 @@ pub fn is_safe_relative(path: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// `session.stranded_after` is read as the text it was written as: a duration as a
+    /// string, a bare number as its digits, anything else as absent, and a value that is
+    /// not even well-formed as the parse failure it is.
+    #[test]
+    fn a_stranded_after_is_text_a_number_or_absent() {
+        let read = |json: &str| serde_json::from_str::<SessionPolicy>(json);
+        let text = read(r#"{"stranded_after": "12h"}"#).unwrap();
+        assert_eq!(text.stranded_after.as_deref(), Some("12h"));
+        let number = read(r#"{"stranded_after": 3600}"#).unwrap();
+        assert_eq!(number.stranded_after.as_deref(), Some("3600"));
+        let other = read(r#"{"stranded_after": true}"#).unwrap();
+        assert_eq!(other.stranded_after, None);
+        assert!(read(r#"{"stranded_after": tru}"#).is_err());
+    }
 
     #[test]
     fn a_comment_or_a_blank_line_is_not_part_of_the_normal_form() {

@@ -561,6 +561,7 @@ fn server_status(ctx: &Context, input: ServerStatusInput) -> Result<ServerStatus
     let root = root.canonicalize().unwrap_or(root);
     let local_half = local_half(&root);
     let git = repository::git_identity(&root);
+    let linked = git.as_ref().is_some_and(|g| g.linked);
     let checkouts = checkouts_of(&root, git.as_ref(), input.checkouts);
     let mut servers = Vec::with_capacity(checkouts.len());
     for (path, branch, primary) in checkouts {
@@ -601,7 +602,7 @@ fn server_status(ctx: &Context, input: ServerStatusInput) -> Result<ServerStatus
         checkout_id: repository::identity(&root),
         git,
         desired: Desired {
-            host: desired_host(),
+            host: desired_host(linked),
             // the port this checkout asks for on every start (I2702)
             port: crate::cli::checkout_port(&root),
             version: crate::VERSION.into(),
@@ -615,10 +616,11 @@ fn server_status(ctx: &Context, input: ServerStatusInput) -> Result<ServerStatus
 }
 
 /// The interface a server started from this environment would bind — the same resolution
-/// `serve` and `mcp` make, without a flag, so that `desired` and a bind cannot disagree.
-fn desired_host() -> String {
+/// `serve` and `mcp` make for this checkout, without a flag, so that `desired` and a bind
+/// cannot disagree.
+fn desired_host(linked: bool) -> String {
     let environment = std::env::var(crate::cli::HTTP_HOST_ENV).ok();
-    crate::cli::resolve_http_host(None, environment.as_deref()).0
+    crate::cli::resolve_checkout_http_host(None, environment.as_deref(), linked).0
 }
 
 /// The module: one capability, `server.status`, composed into the application by

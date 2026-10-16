@@ -343,7 +343,12 @@ impl Ui {
             knowledge::ROUTE => knowledge::screen(&ctx),
             governance::ROUTE => governance::screen(&ctx, &req.query),
             observatory::ROUTE => {
-                observatory::screen(&ctx, &req.query, &self.assets.url(observatory::LIB), kiosk)
+                let libs = observatory::Libs {
+                    director: self.assets.url(observatory::LIB),
+                    scenes: self.assets.url(observatory::SCENES_LIB),
+                    p5: self.assets.url(observatory::P5_LIB),
+                };
+                observatory::screen(&ctx, &req.query, &libs, kiosk)
             }
             dashboard::PULL_REQUESTS_PANEL => dashboard::pull_requests_panel(&ctx, &req.query),
             deployments::DELIVERY_PANEL => deployments::delivery_panel(&ctx),

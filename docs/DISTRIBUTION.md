@@ -221,6 +221,18 @@ refused at once on every head. Proposing the record before the tag was the other
 it was not taken: the record would describe artifacts nobody had built yet.
 `test/cases/3021_a_tag_does_not_freeze_the_queue.sh` holds every state.
 
+The window before the record branch exists is pending too (I2712). Between the tag push and the
+publish job's push of `release/record-<tag>` there is no record and no branch, and nothing is
+published yet either: on 2026-10-14 the structure job of #1146 went red on v0.26.0 while its
+release run was still waiting for a macOS build. Only the forge can see that state, so for a
+tag with neither record nor proposal the gate asks `gh` for the tag's runs of `release.yml`: a
+run queued or running makes the tag `pending`, naming the run; no run listed and no GitHub
+release yet, inside the same grace, is pending too. A concluded run, a GitHub release that
+exists, a forge that cannot be read and a repository it cannot name (`MJ_RELEASE_CHECK_REPO`,
+else the `origin` remote on github.com) leave the refusal standing, with a note saying which —
+offline, the gate is as strict as before. `test/cases/3029_a_tag_in_flight_is_pending.sh`
+holds those states.
+
 The pipeline is [`.github/workflows/release.yml`](../.github/workflows/release.yml), an
 adapter over [`.ai/repo/ci/release.yaml`](../.ai/repo/ci/release.yaml) and the generated
 matrix:
@@ -508,8 +520,16 @@ commit and target it came from.
 
 ## Self-update
 
-There is no `majordomus self update`, and when there is one it will not be a second update
-protocol. Everything it needs already exists and is typed:
+The owner decided on 2026-10-14 that a node of this repository's mesh follows the published
+release by itself (ADR 0161). Until I2720-I2722 land, the session that holds the release seat
+upgrades every enrolled node by hand once `releases/latest.json` names the new version, and
+reads each node's version back. What follows is the design those issues build.
+
+**One implementation of the risky part.** `majordomus self update` re-runs the published
+installer with `--version <tag>` and the installation's own prefix; it does not reimplement
+download, verification or swap. `--check` reports the running version, the version the stable
+pointer names and whether an upgrade applies; `--apply` installs it and reads the version back
+from the new launcher. Everything it resolves comes from what is already typed:
 
 ```rust
 Model::load(share)          // this installation's own model, shipped in share/
@@ -519,17 +539,36 @@ Release::artifact(target)   // the artifact, its digest and its size
 crate::TARGET               // the triple this build was made for, compiled in
 ```
 
-An installed copy carries `share/distribution.yaml`, so `majordomus distribution show` and
-`majordomus distribution build` answer from an installation exactly as they answer from a
-checkout — which is the property a self-update would be built on. The remaining work is the
-download, the verification and the swap, and the installer already does all three; the
-open design question is whether to reimplement them in Rust or to have the command re-run
-the published installer with `--version`, which would keep one implementation of the risky
-part rather than two.
+**Who follows.** Every machine the mesh declaration enrolls, hubs included, with `follow:
+stable` (the default for an enrolled node of the owner's mesh), `follow: pinned <version>` or
+`follow: off`. A repository that adopts Majordomus without enrolling machines in this mesh is
+not affected, and nothing fetches anything on entering a repository.
 
-`test/cases/85_installer.sh` covers that risky part today, and whichever way the command is
-built it will resolve releases through the same records and the same stable pointer as the
-installer does.
+**What a node trusts.** Only `releases/latest.json` and `releases/<tag>.json` on the site, and
+only an archive whose digest and size match them. A mesh announcement of a release means
+"check now" and nothing more. A node with no route to the site (jetson) may take the archive
+from a peer, and verifies it against metadata it can check before unpacking (I2724).
+
+**Forward only, stable only.** No downgrade, no pre-release, no version the metadata does not
+list. A pinned node stays pinned. Going back is an operator's `install.sh --version`.
+
+**Install beside, activate in order, roll back by itself.** The new release goes into its own
+versioned tree while the old server serves. A hub restarts onto it under its service manager
+when no session is attached or after a bounded grace (I2722). A checkout's shared server
+hands its sessions on and ends (I2127, I2163), and until then is replaced at its next idle end.
+The health check is the readiness route plus a live `mesh verify` round. If it fails, the
+launcher is renamed back, the previous version keeps serving, and the board names the node,
+the version and the failed check.
+
+**When it checks.** At server start, every 15 minutes with jitter, and on a mesh release
+announcement: one HTTPS request for `releases/latest.json`, never in the path of a request.
+
+**Where it shows.** Each runtime reports its version and follow setting on the mesh;
+`majordomus mesh peers` prints them and `mesh doctor` names a node more than one release
+behind (I2723). A release is rolled out when every enrolled, following node reports it.
+
+`test/cases/85_installer.sh` covers the risky part today, and `self update` resolves releases
+through the same records and the same stable pointer as the installer does.
 
 ## Package managers
 

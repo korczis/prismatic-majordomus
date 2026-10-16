@@ -131,7 +131,12 @@ lease no longer carries its token:
 | its index says so | `GET /` answers `leaseholder: false`; every other field — `repository`, `repository_id`, `git_repository_id` — is as true of it as of the current server, which is exactly why one field has to separate them |
 | the probe refuses it | `lease::probe` asks three questions, not two: a Majordomus server, this checkout, still the leaseholder. A client holding an address from before the takeover is told there is no server there rather than served a board nobody else can see |
 | it takes on nobody new | an `initialize` with no session gets `409 lease_lost`, naming the launcher as the way to the current server |
+| it leaves the mesh | discovery and cooperation stop; the successor alone represents this checkout, so the retired process cannot keep replacing its authenticated links |
 | its open sessions are handed on | they are answered for the declared busy grace (`server.busy_grace_seconds`), so a request in flight and the ones behind it finish where they started; after it, each session is closed and answered 404, the client's bridge opens a new one, is refused 409 `lease_lost` and elects the current server; with no session left the superseded process ends (I2127) |
+
+`tests/mesh_lease_retirement.rs` proves the takeover with real servers: the retired
+process still answers its attached MCP client, stops participating in the mesh, and the successor
+synchronizes with a remote runtime without repeated reconnects.
 
 A server too old to answer the third question is accepted by the probe. It cannot be told
 from a current one on that endpoint, and refusing it would be the worse failure: a live
@@ -275,6 +280,7 @@ export MAJORDOMUS_HTTP_HOST=0.0.0.0     # every interface; or one address of thi
 | `majordomus mcp` (a client electing itself) | `--http-host` when given; else `MAJORDOMUS_HTTP_HOST`; else `127.0.0.1` |
 | `majordomus serve ensure` (session start, shell entry) | it passes no host; the server it starts inherits the variable |
 | `majordomus serve --deployment <id>` | the deployment object's `listen` block, and nothing else: a declared address is not overridden by a machine's environment |
+| any of the first three, in a linked worktree | `127.0.0.1` when only `MAJORDOMUS_HTTP_HOST` names an interface; a flag still binds where it says. The variable is the machine's face on its network, which is the primary checkout's server; a worktree's server serves its own sessions, and its mesh commands go through the primary's ([`MESH.md`](MESH.md#configuration)) |
 
 Four things follow from it being a variable and not a setting:
 
