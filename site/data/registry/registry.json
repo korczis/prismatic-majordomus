@@ -6,23 +6,23 @@
     "version": "0.27.0"
   },
   "registry": {
-    "fingerprint": "039c3c240f2a65253fe430b394e20fc2d0230868bc9dc775a9fdc93d3bfd479f",
+    "fingerprint": "5a75b6c2aec4b8d633044bcca289539bc567306acbac10add2d88280eacacedc",
     "summary": {
-      "total": 2446,
+      "total": 2447,
       "builtin": 202,
-      "declarative": 2244,
+      "declarative": 2245,
       "by_kind": {
         "command": 31,
         "query": 171,
-        "resource": 2244
+        "resource": 2245
       },
       "by_stability": {
         "behaviorally_verified": 141,
         "experimental": 52,
-        "implemented": 2253
+        "implemented": 2254
       },
       "mcp_tools": 192,
-      "mcp_resources": 2299,
+      "mcp_resources": 2300,
       "http_routes": 197,
       "cli_commands": 108,
       "modules": 92,
@@ -83509,7 +83509,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 500,
+        "capabilities": 501,
         "capability_ids": []
       },
       {
@@ -83600,7 +83600,7 @@
     ]
   },
   "index": {
-    "fingerprint": "d145fb9a0df194ae88563f0ac078bcdc65ec3e4202c2c15329351b61177ace6a",
+    "fingerprint": "47d69c72bfdda5f0b371d4ec94b38edac1044dfc72906bea9f16539e70c66fdc",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -83654,7 +83654,7 @@
       "session": 89,
       "skill": 8,
       "taxonomy": 10,
-      "test": 500,
+      "test": 501,
       "use-case": 49,
       "workspace": 1
     },
@@ -89947,7 +89947,7 @@
         "title": "Worktrees",
         "path": "docs/WORKTREES.md",
         "source_class": "document",
-        "bytes": 35279
+        "bytes": 37686
       },
       {
         "uri": "majordomus://document/docs/claims/a-candidate-is-routed-by-what-it-is-about.md",
@@ -104851,6 +104851,14 @@
         "bytes": 6660
       },
       {
+        "uri": "majordomus://test/test/cases/3131_a_new_worktree_starts_from_the_remote_trunk.sh",
+        "kind": "test",
+        "identity": "test/cases/3131_a_new_worktree_starts_from_the_remote_trunk.sh",
+        "path": "test/cases/3131_a_new_worktree_starts_from_the_remote_trunk.sh",
+        "source_class": "case",
+        "bytes": 5596
+      },
+      {
         "uri": "majordomus://test/test/cases/318_a_partial_sweep_says_so.sh",
         "kind": "test",
         "identity": "test/cases/318_a_partial_sweep_says_so.sh",
@@ -108021,7 +108029,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 500
+      "objects": 501
     },
     {
       "name": "use-case",
@@ -118847,7 +118855,7 @@
             "route": "/docs/cli/worktree/create/",
             "executable": true,
             "usage": "majordomus worktree create [OPTIONS] [BRANCH]",
-            "about": "Create the canonical worktree of a branch, creating the branch from --base (default: the trunk) when it does not exist. The path is derived; none may be given",
+            "about": "Create the canonical worktree of a branch. A branch that does not exist here is fetched from the trunk's remote and taken up when the remote has it; otherwise it is created from --base, else from the remote's trunk fetched now (the local trunk only when the remote cannot be read, and then said, with how far behind). The path is derived; none may be given",
             "args": [
               {
                 "name": "branch",
