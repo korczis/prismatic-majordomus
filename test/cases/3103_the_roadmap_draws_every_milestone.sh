@@ -65,6 +65,17 @@ expect_grep "data-issue-group=\"$first_st\"" "$P"
 expect_no_grep 'data-delivery=' "$P"
 expect_grep 'not shown: the inferred delivery projection' "$P"
 
+# --- /plan/ draws the same plan: it names the commit it observed and, on every milestone's
+#     card, the release that carried it (or unreleased), read from roadmap.json
+PL="out/plan/index.html"
+expect_grep "data-observed-commit=\"$COMMIT\"" "$PL"
+[ "$(grep -o 'data-released-in="' "$PL" | wc -l | tr -d ' ')" = "$(jq '.milestones | length' "$DATA/plan.json")" ] \
+  || { echo "    /plan/ does not show a release on every milestone card"; exit 1; }
+for row in $(jq -r '.milestones[] | "\(.released_in)"' "$DATA/roadmap.json" | sort | uniq -c | awk '{print $2"="$1}'); do
+  [ "$(grep -o "data-released-in=\"${row%=*}\"" "$PL" | wc -l | tr -d ' ')" = "${row#*=}" ] \
+    || { echo "    /plan/ shows ${row%=*} on a different number of milestones than roadmap.json"; exit 1; }
+done
+
 # --- 13h refuses a page that drops a milestone
 drop="$(jq -r '.milestones[-1].id' "$DATA/roadmap.json")"
 jq --arg d "$drop" '.milestones |= map(select(.id != $d))' "$DATA/roadmap.json" > S/data/generated/roadmap.json
