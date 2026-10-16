@@ -87,21 +87,27 @@ pub fn compose_published(root: &Path, objects: &[Object]) -> Changelog {
     compose_with(root, objects, false)
 }
 
-fn compose_with(root: &Path, objects: &[Object], unreleased: bool) -> Changelog {
-    let mut diagnostics = Vec::new();
-
+/// The release records among `objects`, newest first by the date each carries: the order a
+/// changelog is read in, and so the order in which "the previous release" is the next one.
+fn release_records(objects: &[Object], diagnostics: &mut Vec<String>) -> Vec<Record> {
     let mut records: Vec<Record> = objects
         .iter()
         .filter(|o| o.kind == RELEASE_KIND)
-        .filter_map(|o| record_of(&o.metadata, &mut diagnostics))
+        .filter_map(|o| record_of(&o.metadata, diagnostics))
         .collect();
-    // Newest first, by the date the record carries: the order a changelog is read in.
     records.sort_by(|a, b| b.date.cmp(&a.date));
+    records
+}
+
+fn compose_with(root: &Path, objects: &[Object], unreleased: bool) -> Changelog {
+    let mut diagnostics = Vec::new();
+
+    let records = release_records(objects, &mut diagnostics);
 
     let decisions = decisions_of(root, objects);
-    // Which commits each release's tree holds, read once per release for every decision
-    // asked about it (see `Ancestry`).
-    let mut ancestry = Ancestry::new(root);
+    // Which commits each release's tree holds, read once for every release and every
+    // decision asked about it (see `Ancestry`).
+    let mut ancestry = Ancestry::new(root, records.iter().map(|r| r.commit.as_str()));
 
     let mut sections = Vec::new();
 
@@ -281,6 +287,125 @@ fn record_of(metadata: &Value, diagnostics: &mut Vec<String>) -> Option<Record> 
     })
 }
 
+/// The releases whose window this repository's object database cannot read, by version.
+///
+/// A section of the published changelog is the history between two release commits, and a
+/// repository made from a tree rather than from that history — a fixture exported with
+/// `git archive`, a shallow clone — holds the tree and not the commits. Composed there, every
+/// such section came out with no changes: a different document rather than a newer one, which
+/// `generate --check` reported as stale and `generate` wrote over the committed changelog
+/// (I1409). A release is unreadable when its commit or the previous release's is not an object
+/// here, or when the repository is shallow, whose history ends at a graft whatever it holds.
+/// Asked of git twice, whatever the number of releases.
+pub(crate) fn unreadable_releases(root: &Path, objects: &[Object]) -> Vec<String> {
+    let mut ignored = Vec::new();
+    // the order `compose_with` reads them in, so "the previous release" is the same one
+    let records = release_records(objects, &mut ignored);
+    if records.is_empty() {
+        return Vec::new();
+    }
+    let shallow = std::process::Command::new("git")
+        .arg("-C")
+        .arg(root)
+        .args(["rev-parse", "--is-shallow-repository"])
+        .output()
+        .is_ok_and(|o| o.status.success() && String::from_utf8_lossy(&o.stdout).trim() == "true");
+    let commits: Vec<&str> = records.iter().map(|r| r.commit.as_str()).collect();
+    let held = held_commits(root, &commits);
+    records
+        .iter()
+        .enumerate()
+        .filter(|(i, r)| {
+            shallow
+                || !held.contains(r.commit.as_str())
+                || records
+                    .get(i + 1)
+                    .is_some_and(|p| !held.contains(p.commit.as_str()))
+        })
+        .map(|(_, r)| r.version.clone())
+        .collect()
+}
+
+/// Which of `commits` this repository holds as commits, asked in one `git cat-file`. Nothing
+/// when git cannot answer, which is the same as holding none of them.
+fn held_commits<'c>(root: &Path, commits: &[&'c str]) -> HashSet<&'c str> {
+    use std::io::Write;
+    use std::process::{Command, Stdio};
+    let Ok(mut child) = Command::new("git")
+        .arg("-C")
+        .arg(root)
+        .args(["cat-file", "--batch-check=%(objecttype)"])
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::null())
+        .spawn()
+    else {
+        return HashSet::new();
+    };
+    let names: String = commits
+        .iter()
+        .map(|c| format!("{c}^{{commit}}\n"))
+        .collect();
+    if let Some(mut stdin) = child.stdin.take() {
+        // a write that fails leaves fewer answers than questions, which the zip reads as absent
+        let _ = stdin.write_all(names.as_bytes());
+    }
+    let Ok(out) = child.wait_with_output() else {
+        return HashSet::new();
+    };
+    if !out.status.success() {
+        return HashSet::new();
+    }
+    // one answer per question, in order: `commit`, or `<name> missing`
+    commits
+        .iter()
+        .zip(String::from_utf8_lossy(&out.stdout).lines())
+        .filter(|(_, answer)| *answer == "commit")
+        .map(|(c, _)| *c)
+        .collect()
+}
+
+/// Keep, for each release in `unreadable`, what the committed changelog already says it
+/// changed, and return the versions kept.
+///
+/// What a release changed is read from history (its commits and the decisions its tree first
+/// holds), and where the history is absent the committed document is the projection that was
+/// made where it was present: keeping its groups and decisions is the one answer that is not
+/// invented. Everything a record carries — version, tag, date, notes, artifacts — is still
+/// composed from the record, so a changed record is still stale; and a section is kept only
+/// when the committed one names the same commit, so a new release, or a record whose commit
+/// changed, is composed and judged rather than passed on an older document.
+pub(crate) fn keep_committed(
+    log: &mut Changelog,
+    committed: &Changelog,
+    unreadable: &[String],
+) -> Vec<String> {
+    let mut kept = Vec::new();
+    for section in log
+        .sections
+        .iter_mut()
+        .filter(|s| !s.unreleased && unreadable.contains(&s.version))
+    {
+        let Some(was) = committed
+            .sections
+            .iter()
+            .find(|c| !c.unreleased && c.version == section.version && c.commit == section.commit)
+        else {
+            continue;
+        };
+        section.groups = was.groups.clone();
+        section.decisions = was.decisions.clone();
+        kept.push(section.version.clone());
+    }
+    // the composition said it read nothing for these; what it now carries was read elsewhere
+    log.diagnostics.retain(|d| {
+        !kept
+            .iter()
+            .any(|v| d.starts_with(&format!("no commit was readable for {v} (")))
+    });
+    kept
+}
+
 /// When the file that states a decision was added, as git knows it.
 ///
 /// The date in an ADR's front matter is when the decision was *made*, which is not the same
@@ -361,27 +486,46 @@ fn added_at_each(root: &Path, paths: &[&str]) -> Vec<Option<String>> {
     out
 }
 
-/// Which commits a tree already holds, asked of git once per tree.
+/// Which commits a tree already holds, asked of git once for every tree.
 ///
 /// The question the two window functions ask is "was the commit that added this decision
 /// already in that release's tree?", for every decision against every release, twice for
 /// most. Asked as `git merge-base --is-ancestor` it was one process per pair: some six hundred
 /// at 62 decisions and six releases, about 6.5 of the 13.7 seconds an unoptimised
 /// `generate --check` spent, and so of the pre-commit gate that runs it on every commit, and
-/// it grows with the product of the two. Here each tree's history is listed once
-/// (`git rev-list <tree>`) and every question about it is a lookup: the same answer, since a
-/// commit is an ancestor of a tree exactly when that list names it (the tree's own commit
-/// included, as `--is-ancestor` includes it), and a name git cannot resolve holds nothing,
-/// as `--is-ancestor` refuses it.
+/// it grows with the product of the two. Listing each tree's history once (`git rev-list
+/// <tree>`) made every question a lookup, but still cost one process and one full walk per
+/// release: at 21 releases that was 9 of the 37 seconds `generate --check` spent on
+/// 2026-10-15 under load, and `scripts/derive` pays it twice.
+///
+/// So the trees the caller names are listed together, once, with their parents
+/// (`git rev-list --parents <trees>`), and a tree's history is what it reaches over those
+/// edges: the same answer, since the listing holds every commit any named tree reaches and
+/// every parent of each, so the walk from a tree visits exactly what `git rev-list <tree>`
+/// lists (the tree's own commit included, as `--is-ancestor` includes it). A tree the
+/// listing does not name — not a full commit name, or one git cannot resolve, which fails
+/// the whole listing — is listed alone as before, and a name git cannot resolve holds
+/// nothing, as `--is-ancestor` refuses it.
 struct Ancestry<'a> {
     root: &'a Path,
-    held: HashMap<String, HashSet<String>>,
+    /// The trees asked about, listed together on the first question.
+    trees: Vec<String>,
+    graph: Option<Graph>,
+    held: HashMap<String, Held>,
+}
+
+/// What one tree holds: its reach over the shared listing, or its own listing.
+enum Held {
+    Reached(Vec<bool>),
+    Listed(HashSet<String>),
 }
 
 impl<'a> Ancestry<'a> {
-    fn new(root: &'a Path) -> Self {
+    fn new<'t>(root: &'a Path, trees: impl IntoIterator<Item = &'t str>) -> Self {
         Ancestry {
             root,
+            trees: trees.into_iter().map(str::to_string).collect(),
+            graph: None,
             held: HashMap::new(),
         }
     }
@@ -389,12 +533,107 @@ impl<'a> Ancestry<'a> {
     /// Whether `commit` — a full commit name, as [`added_at`] gives it — was already in the
     /// tree `of`: whether it is `of` or one of its ancestors.
     fn holds(&mut self, of: &str, commit: &str) -> bool {
-        let root = self.root;
-        self.held
+        let Ancestry {
+            root,
+            trees,
+            graph,
+            held,
+        } = self;
+        let graph = graph.get_or_insert_with(|| Graph::list(root, trees));
+        let held = held
             .entry(of.to_string())
-            .or_insert_with(|| history(root, of))
-            .contains(commit)
+            .or_insert_with(|| match graph.index.get(of) {
+                Some(&tree) => Held::Reached(graph.reach(tree)),
+                None => Held::Listed(history(root, of)),
+            });
+        match held {
+            Held::Reached(reached) => graph.index.get(commit).is_some_and(|&c| reached[c]),
+            Held::Listed(listed) => listed.contains(commit),
+        }
     }
+}
+
+/// Every commit some trees reach, each with its parents, from one `git rev-list --parents`.
+#[derive(Default)]
+struct Graph {
+    index: HashMap<String, usize>,
+    parents: Vec<Vec<usize>>,
+}
+
+impl Graph {
+    /// The trees named by a full commit name, listed together; empty when there are none or
+    /// git cannot list them all, and then every tree is listed alone.
+    fn list(root: &Path, trees: &[String]) -> Graph {
+        // each distinct name once, in byte order: a set, not a sort
+        let named: Vec<&str> = trees
+            .iter()
+            .map(String::as_str)
+            .filter(|t| is_full_name(t))
+            .collect::<std::collections::BTreeSet<&str>>()
+            .into_iter()
+            .collect();
+        if named.is_empty() {
+            return Graph::default();
+        }
+        let Ok(out) = std::process::Command::new("git")
+            .arg("-C")
+            .arg(root)
+            .args(["rev-list", "--parents"])
+            .args(&named)
+            .arg("--")
+            .output()
+        else {
+            return Graph::default();
+        };
+        if !out.status.success() {
+            return Graph::default();
+        }
+        let text = String::from_utf8_lossy(&out.stdout);
+        let rows: Vec<Vec<&str>> = text
+            .lines()
+            .map(|l| l.split_whitespace().collect::<Vec<_>>())
+            .filter(|r| !r.is_empty())
+            .collect();
+        let index: HashMap<String, usize> = rows
+            .iter()
+            .enumerate()
+            .map(|(i, r)| (r[0].to_string(), i))
+            .collect();
+        let mut parents = Vec::with_capacity(rows.len());
+        for row in &rows {
+            let mut of = Vec::with_capacity(row.len() - 1);
+            for p in &row[1..] {
+                // Every parent of a listed commit is itself listed; one that is not means the
+                // listing is not the whole history, and a partial graph would answer "no" where
+                // git answers "yes". Each tree is then listed alone.
+                let Some(&i) = index.get(*p) else {
+                    return Graph::default();
+                };
+                of.push(i);
+            }
+            parents.push(of);
+        }
+        Graph { index, parents }
+    }
+
+    /// Which listed commits `tree` reaches, itself included.
+    fn reach(&self, tree: usize) -> Vec<bool> {
+        let mut reached = vec![false; self.parents.len()];
+        let mut stack = vec![tree];
+        while let Some(c) = stack.pop() {
+            if std::mem::replace(&mut reached[c], true) {
+                continue;
+            }
+            stack.extend(self.parents[c].iter().copied().filter(|&p| !reached[p]));
+        }
+        reached
+    }
+}
+
+/// Whether `name` is a full commit name as git prints one: what the listing is keyed by, so
+/// any other spelling of a tree (a tag, a branch, an abbreviation) is listed alone.
+fn is_full_name(name: &str) -> bool {
+    matches!(name.len(), 40 | 64) && name.bytes().all(|b| matches!(b, b'0'..=b'9' | b'a'..=b'f'))
 }
 
 /// Every commit `of` reaches, by full name; nothing when git cannot resolve it.
@@ -690,7 +929,7 @@ mod tests {
             all.iter().all(|d| d.added.is_some()),
             "git says when each file was added"
         );
-        let mut ancestry = Ancestry::new(dir.path());
+        let mut ancestry = Ancestry::new(dir.path(), at.iter().map(String::as_str));
         // (first tree, second tree] — the second only, whatever its front matter is dated.
         let between = decisions_between(&mut ancestry, &all, Some(&at[0]), &at[1]);
         assert_eq!(between.len(), 1);
@@ -708,7 +947,7 @@ mod tests {
             dir.path(),
             &[adr_object("adr-0001"), adr_object("adr-0003")],
         );
-        let mut ancestry = Ancestry::new(dir.path());
+        let mut ancestry = Ancestry::new(dir.path(), [at[0].as_str()]);
         let after = decisions_after(&mut ancestry, &all, Some(&at[0]));
         assert_eq!(after.len(), 1);
         assert_eq!(after[0].id, "adr-0003");
@@ -716,12 +955,14 @@ mod tests {
         assert_eq!(decisions_after(&mut ancestry, &all, None).len(), 2);
     }
 
-    /// Listing a tree's history once answers what `git merge-base --is-ancestor` answered one
+    /// Listing the trees' history once answers what `git merge-base --is-ancestor` answered one
     /// process per question: for every pair of commits of a history with a branch and a merge
     /// in it — a commit holds itself, a side branch's commit is held from the merge on and not
     /// before — and a tree git cannot resolve, which is what a clone without that history
-    /// has, holds nothing. And each tree is listed once however often it is asked about, which
-    /// is the whole of the change.
+    /// has, holds nothing. The answers are the same however the trees are named: listed
+    /// together when each is a full commit name, which is the whole of the change; listed
+    /// alone when one is a branch or an abbreviation, or when one git cannot resolve fails
+    /// the shared listing.
     #[test]
     fn a_tree_holds_exactly_the_commits_merge_base_calls_its_ancestors() {
         let dir = tempfile::tempdir().expect("a temp dir");
@@ -740,27 +981,70 @@ mod tests {
         let m = git(root, &["rev-parse", "HEAD"]);
         let c = step("c");
         let all = [a, s, b, m, c];
-
-        let mut ancestry = Ancestry::new(root);
-        let mut held = 0;
-        for of in &all {
-            for commit in &all {
-                let asked = std::process::Command::new("git")
-                    .arg("-C")
-                    .arg(root)
-                    .args(["merge-base", "--is-ancestor", commit, of])
-                    .status()
-                    .expect("git runs")
-                    .success();
-                assert_eq!(ancestry.holds(of, commit), asked, "is {commit} in {of}?");
-                held += usize::from(asked);
-            }
-        }
-        // both answers occur, so the agreement is not vacuous
-        assert!(held > 0 && held < all.len() * all.len(), "{held} held");
         let unknown = "0".repeat(40);
-        assert!(!ancestry.holds(&unknown, &all[0]));
-        assert_eq!(ancestry.held.len(), all.len() + 1, "one listing per tree");
+        let short: Vec<String> = all.iter().map(|c| c[..12].to_string()).collect();
+
+        // every tree as each spelling names it, against every commit, as merge-base answers
+        let agrees = |ancestry: &mut Ancestry<'_>, trees: &[&str]| {
+            let mut held = 0;
+            for of in trees {
+                for commit in &all {
+                    let asked = std::process::Command::new("git")
+                        .arg("-C")
+                        .arg(root)
+                        .args(["merge-base", "--is-ancestor", commit, of])
+                        .status()
+                        .expect("git runs")
+                        .success();
+                    assert_eq!(ancestry.holds(of, commit), asked, "is {commit} in {of}?");
+                    held += usize::from(asked);
+                }
+            }
+            // both answers occur, so the agreement is not vacuous
+            assert!(held > 0 && held < trees.len() * all.len(), "{held} held");
+            assert!(
+                !ancestry.holds(&unknown, &all[0]),
+                "an unknown tree holds nothing"
+            );
+        };
+        let full: Vec<&str> = all.iter().map(String::as_str).collect();
+
+        // full names: one listing answers every tree
+        let mut together = Ancestry::new(root, full.iter().copied());
+        agrees(&mut together, &full);
+        let listed = together
+            .graph
+            .as_ref()
+            .expect("listed on the first question");
+        assert_eq!(
+            listed.index.len(),
+            all.len(),
+            "the listing holds every commit"
+        );
+        assert!(full
+            .iter()
+            .all(|t| matches!(together.held[*t], Held::Reached(_))));
+        assert!(matches!(together.held[&unknown], Held::Listed(_)));
+
+        // branches and abbreviations: each listed alone, the same answers
+        let mut spelled = Ancestry::new(
+            root,
+            ["main", "side"]
+                .into_iter()
+                .chain(short.iter().map(String::as_str)),
+        );
+        let mut names = vec!["main", "side"];
+        names.extend(short.iter().map(String::as_str));
+        agrees(&mut spelled, &names);
+        assert!(spelled.graph.as_ref().is_some_and(|g| g.index.is_empty()));
+
+        // a tree git cannot resolve fails the shared listing: every tree alone, the same answers
+        let mut broken = Ancestry::new(root, full.iter().copied().chain([unknown.as_str()]));
+        agrees(&mut broken, &full);
+        assert!(broken.graph.as_ref().is_some_and(|g| g.index.is_empty()));
+        assert!(full
+            .iter()
+            .all(|t| matches!(broken.held[*t], Held::Listed(_))));
     }
 
     /// Asked side by side, every decision gets the answer it got asked alone, in its own
@@ -1040,5 +1324,77 @@ mod tests {
         let fixed = md.find("### Fixed").expect("no Fixed heading");
         assert!(added < fixed, "the headings are out of order:\n{md}");
         assert!(md.contains("**BREAKING** **commands**: one graph"));
+    }
+
+    /// I1409: a repository that holds the tree and not the history — the release commit is
+    /// not an object in it — names the release as unreadable, and keeping the committed
+    /// changelog's changes for it gives back the document composed where the history was.
+    #[test]
+    fn a_release_without_its_history_keeps_what_the_committed_changelog_says() {
+        let (dir, release) = repo_with_commits(2);
+        let objects = vec![release_record(&release)];
+        assert!(
+            unreadable_releases(dir.path(), &objects).is_empty(),
+            "a repository holding the release commit can read it"
+        );
+        let whole = compose_published(dir.path(), &objects);
+        assert!(!whole.sections[0].groups.is_empty(), "{whole:?}");
+
+        // the same record, in a repository that never had that commit
+        let export = tempfile::tempdir().expect("a temp dir");
+        let init = std::process::Command::new("git")
+            .arg("-C")
+            .arg(export.path())
+            .args(["init", "-q"])
+            .output()
+            .expect("git runs");
+        assert!(init.status.success());
+        assert_eq!(
+            unreadable_releases(export.path(), &objects),
+            vec!["0.1.0".to_string()]
+        );
+        let mut husk = compose_published(export.path(), &objects);
+        assert!(
+            husk.sections[0].groups.is_empty(),
+            "nothing to read: {husk:?}"
+        );
+        assert!(!husk.diagnostics.is_empty(), "the empty read is said");
+
+        let kept = keep_committed(&mut husk, &whole, &["0.1.0".to_string()]);
+        assert_eq!(kept, vec!["0.1.0".to_string()]);
+        assert_eq!(
+            husk, whole,
+            "the kept document is the one composed with history"
+        );
+
+        // a committed section for another commit is not this release's: composed, not kept
+        let mut other = whole.clone();
+        other.sections[0].commit = Some("0".repeat(40));
+        let mut husk = compose_published(export.path(), &objects);
+        assert!(keep_committed(&mut husk, &other, &["0.1.0".to_string()]).is_empty());
+        assert!(husk.sections[0].groups.is_empty());
+    }
+
+    /// A shallow clone holds the release commit and still not the history behind it.
+    #[test]
+    fn a_shallow_clone_cannot_read_a_release() {
+        let (dir, release) = repo_with_commits(3);
+        let objects = vec![release_record(&release)];
+        let shallow = tempfile::tempdir().expect("a temp dir");
+        let url = format!("file://{}", dir.path().display());
+        let clone = std::process::Command::new("git")
+            .args(["clone", "-q", "--depth", "1", &url])
+            .arg(shallow.path().join("c"))
+            .output()
+            .expect("git runs");
+        assert!(
+            clone.status.success(),
+            "{}",
+            String::from_utf8_lossy(&clone.stderr)
+        );
+        assert_eq!(
+            unreadable_releases(&shallow.path().join("c"), &objects),
+            vec!["0.1.0".to_string()]
+        );
     }
 }

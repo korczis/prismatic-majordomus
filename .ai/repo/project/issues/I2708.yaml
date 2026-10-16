@@ -7,7 +7,7 @@ profile: implementation
 parallel_safe: false
 objective: "Make scripts/ci/mesh-check refuse an EventBody field absent from an allow-list, add a redaction layer for every tracing field, and pass review bodies through the redactor."
 why: "Split from I2161 on 2026-10-14. I2161 passed every HTTP error body, JSON-RPC error, MCP tool refusal, logged request field and handover body through redaction::redact_secrets, and its desired_state said 'Not done here' of an allow-list in scripts/ci/mesh-check that refuses an EventBody field nobody listed, a redaction layer for every tracing field, and review bodies, while its acceptance criteria still required the allow-list, so it could never close. The mesh replicates event bodies in clear over plain HTTP; a field added to EventBody reaches every linked runtime without anyone deciding it may. Pack invariant 9."
-current_state: "EventBody (apps/majordomus-cli/src/mesh/journal.rs) is replicated as it is declared; scripts/ci/mesh-check holds the mesh to one subsystem and lists no EventBody field. Logging (apps/majordomus-cli/src/logging.rs) has no redaction layer: only the request fields the router logs are redacted at the call site (apps/majordomus-cli/src/http/router.rs). A handover body is redacted before it is signed (apps/majordomus-cli/src/mesh/handover.rs); a review's subject and verdict are not."
+current_state: "scripts/ci/mesh-check reads every EventBody variant's fields against .ai/repo/ci/mesh-event-fields.yaml and fails on one it does not list (case 3051). A handover body is redacted before it is signed (apps/majordomus-cli/src/mesh/handover.rs), and so are a review's subject, body, verdict and notes (apps/majordomus-cli/src/mesh/cooperation.rs, request_review, answer_review and withdraw_review), and a verdict outside approved, changes_requested and commented, a credential included, is refused before it is signed; the list names those six fields `redacted`. The tracing layer is the one half not in this tree: it is PR #1195 (apps/majordomus-cli/src/logging.rs)."
 desired_state: "scripts/ci/mesh-check reads the fields of every EventBody variant and fails on one that its allow-list does not name, and the allow-list says for each listed field whether it is redacted before signing; every tracing field passes redaction::redact_secrets in one layer; a review's subject and verdict are redacted before they are signed into the journal."
 scope:
   - "scripts/ci/mesh-check"
@@ -32,5 +32,19 @@ validation:
   - "cargo test --test redaction"
 evidence_required:
   - "eventbody_allowlist_case"
+  - "review_redaction_test"
 created_at: 2026-10-14
-updated_at: 2026-10-14
+updated_at: 2026-10-15T08:44:24Z
+evidence:
+  - covers: eventbody_allowlist_case
+    type: test
+    command: "bash test/run.sh 3051_an_unlisted_event_field_fails_the_mesh_check 301_the_mesh_stays_one_subsystem; scripts/ci/mesh-check"
+    result: "tests: 2 passed, 0 failed. Case 3051: the real tree passes (47 fields carried, 1 redacted before signing: HandoverBody.body); a copy fails with exit 10 on an unlisted variant field (EventBody.ReviewAnswered.token), an unlisted carried-struct field (SessionInfo.home), a new variant (EventBody.NoteShared.text), an entry neither redacted nor clear, a stale entry, a journal without EventBody and a missing list, and passes again once the field is listed (run 2026-10-15 on #1179 head 98ef9ac6e3 plus this change)"
+    commit: 98ef9ac6e3baa93e851ba0294b6aa0bc0460294d
+    recorded_at: 2026-10-15T01:29:02Z
+  - covers: review_redaction_test
+    type: test
+    command: "cargo test --test redaction; scripts/ci/mesh-check; bash test/run.sh 3051_an_unlisted_event_field_fails_the_mesh_check 301_the_mesh_stays_one_subsystem"
+    result: "redaction: 11 passed, 0 failed (lundra, 2026-10-15). a_review_is_journaled_with_the_marker_never_the_secret writes every credential line of test/fixtures/redaction/shapes.tsv into a review's subject, body, answer note and withdrawal note: the journal on disk and the folded state carry each shape's marker and no body; the same line as a verdict is refused before signing and the refusal names the marker. The test over the old review path fails (the refusal repeated the anthropic-key body). mesh-check OK: 47 fields carried, 6 redacted before signing. Cases 3051 and 301 pass. Run on e2d7042a44 (#1188) plus this change."
+    commit: e2d7042a44174fa622b10ef4b3feee3966b35e4e
+    recorded_at: 2026-10-15T08:44:24Z

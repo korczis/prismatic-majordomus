@@ -1,7 +1,7 @@
 +++
 title = "A prompt record carries its own identity, is bounded, and is private"
 description = "A prompt record carries its own identity, is bounded, and is private"
-weight = 41
+weight = 42
 [extra]
 kind = "rule"
 slug = "majordomus-prompt-continuity-1"

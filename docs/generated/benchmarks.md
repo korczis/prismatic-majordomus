@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.27.0 -->
+     Generator: majordomus-cli 0.28.0 -->
 # Benchmark targets and coverage
 
 Every externally callable operation is a benchmark target, derived from the registry: each executable capability directly and on every transport its exposure declares, with the cases its input type provides, plus the transports' own operations. Nothing below is listed by hand; `majordomus bench coverage` computes the same table live, `majordomus bench` times it, and `capabilities validate` fails when a requirement is missing.
@@ -254,6 +254,7 @@ Every screen and panel of the UI's own route list, read with `GET` and `Accept: 
 | `system.http.ui.issues` | `/ui/issues` | pinned | — |
 | `system.http.ui.prs` | `/ui/prs` | pinned | — |
 | `system.http.ui.capabilities` | `/ui/capabilities` | pinned | — |
+| `system.http.ui.skills` | `/ui/skills` | pinned | — |
 | `system.http.ui.mesh` | `/ui/mesh` | pinned | — |
 | `system.http.ui.delivery` | `/ui/delivery` | pinned | — |
 | `system.http.ui.deployments` | `/ui/deployments` | pinned | — |
@@ -269,6 +270,7 @@ Every screen and panel of the UI's own route list, read with `GET` and `Accept: 
 | `system.http.live.ui.issues` | `/ui/issues` | live | — |
 | `system.http.live.ui.prs` | `/ui/prs` | live | — |
 | `system.http.live.ui.capabilities` | `/ui/capabilities` | live | — |
+| `system.http.live.ui.skills` | `/ui/skills` | live | — |
 | `system.http.live.ui.mesh` | `/ui/mesh` | live | — |
 | `system.http.live.ui.delivery` | `/ui/delivery` | live | — |
 | `system.http.live.ui.deployments` | `/ui/deployments` | live | — |
