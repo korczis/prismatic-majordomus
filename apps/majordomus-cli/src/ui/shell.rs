@@ -54,6 +54,9 @@ pub struct Frame<'a> {
     /// The graph library's URL, with its digest: loaded by the script only on a screen that
     /// draws a graph.
     pub graph_lib: String,
+    /// The module that wires an issue's moves (the Cockpit's `moves.js`), with its digest:
+    /// loaded by the script only on a screen that renders a move form (I2781).
+    pub moves_lib: String,
     /// Whether the distribution has the UI's asset directory at all.
     pub assets_present: bool,
     /// The executable's version.
@@ -87,6 +90,7 @@ pub fn page(ctx: &Context, frame: &Frame<'_>, view: &View) -> String {
         .attr_if("data-theme-class", design.map(|d| d.theme.class.clone()))
         .attr_if("data-design", design.map(|d| d.short_fingerprint()))
         .attr("data-graph-lib", frame.graph_lib.clone())
+        .attr("data-moves-lib", frame.moves_lib.clone())
         .child(
             el("a")
                 .class("mj-skip")
@@ -327,6 +331,7 @@ mod tests {
             favicon: "/ui/assets/favicon.svg?v=1".into(),
             script: "/ui/assets/ui.js?v=1".into(),
             graph_lib: "/ui/assets/vendor/cytoscape.min.js?v=1".into(),
+            moves_lib: "/cockpit/assets/moves.js?v=1".into(),
             assets_present: true,
             version: "0.0.0",
         }
