@@ -1,0 +1,37 @@
+id: I2747
+milestone: truthful-plan-surfaces
+title: "Every code block on every surface is highlighted by one engine with one palette"
+slug: one-highlighter
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Highlight every code block majordomus ui and the executable's reports render with syntect, the engine Zola already uses for the site, emitting the same class vocabulary; generate one stylesheet for both themes from the design tokens and use it on the site, the UI and the handbook; remove highlight.js and any CDN highlighter; add a gate that refuses a second highlighter."
+why: "ADR 0166 decision 7. Code is highlighted by syntect (site), highlight.js 11.9 fetched from a CDN (share/ui/ui.js) and the handbook's own scripts, with three palettes."
+current_state: "site/config.toml highlights with ayu-light and ayu-dark classes; share/ui/ui.js loads highlight.js from cdnjs; the handbook has its own."
+desired_state: "One engine, one class vocabulary, one generated palette; scripts/ci/highlighter-check refuses hljs, highlight.js, prism or shiki on any surface."
+scope:
+  - "apps/majordomus-cli/Cargo.toml"
+  - "Cargo.lock"
+  - "apps/majordomus-cli/src/ui"
+  - "apps/majordomus-cli/src/web"
+  - "share/ui/ui.js"
+  - "share/ui/ui.css"
+  - "share/design"
+  - "site/config.toml"
+  - "scripts/site-build"
+  - "handbook"
+  - "scripts/ci/highlighter-check"
+  - ".ai/repo/automation/inventory.jsonl"
+  - "test/cases/3107_one_highlighter.sh"
+depends_on: []
+acceptance_criteria:
+  - "A code block rendered by majordomus ui carries the same classes as the same block on the site"
+  - "No surface loads highlight.js or a CDN highlighter, and the gate refuses one planted"
+  - "The executable's build time and size change are measured and stated in the pull request"
+validation:
+  - "scripts/ci/highlighter-check"
+  - "bash test/run.sh 3107_one_highlighter"
+evidence_required:
+  - "one_highlighter_case"
+created_at: 2026-10-16
+updated_at: 2026-10-16

@@ -10,6 +10,7 @@
 #   share/standard/majordomus/         ->  principles (the rules tagged principle, in package order)
 #   share/skeleton/ai/repo/workflows/  ->  lifecycle steps and the worker sequence
 #   docs/*.md                          ->  docs index
+#   git history + release records      ->  delivery.json (majordomus plan delivery --at HEAD)
 #   share/schemas/**                   ->  schemas.json (every schema file, linked to its source)
 #   git                                ->  source.json (commit, input hash, generator version)
 #
@@ -1873,6 +1874,41 @@ else
 fi
 
 mj_phase_end "gen:plan.json_the_execution_mode" "$GEN_T0"
+# ---------------------------------------------------------------- delivery.json (how far each issue's work travelled)
+GEN_T0="$(mj_phase_begin "gen:delivery.json")"
+# Inferred by the executable (`plan.delivery`, ADR 0166) and never here: this asks it and
+# pretty-prints the answer. It is asked `--at` a commit, which reads that commit's merges and
+# the tree's release records and nothing live — no branch, no forge, no deployment, no clock —
+# so the file carries only `merged` and `released` and is a function of the commit alone:
+# a tag, a push, a pull request or a deployment elsewhere cannot make --check red. The live
+# stages (branch, pr_open, deployed) are the capability's live answer, for the CLI, HTTP, MCP
+# and the UI; bringing them to the published site at Pages build time is the plan surfaces'
+# work (I2743, I2744).
+#
+# Which commit. A derived file cannot name the commit it lands in (case 51), so a generation
+# observes HEAD as it stands, the commit before. --check reproduces the commit the committed
+# file names rather than HEAD: a merge that lands later does not make a committed answer
+# wrong, it makes the next generation newer. And a generation whose issues read exactly as the
+# committed file's keeps the committed file, observation and all, so regenerating a clean tree
+# moves nothing unless an issue moved.
+DELIVERY_COMMITTED="$DEST_DATA/delivery.json"
+DELIVERY_AT=""
+if [ "$CHECK" = 1 ] && [ -f "$DELIVERY_COMMITTED" ]; then
+  DELIVERY_AT="$(jq -r '.observed.commit // empty' "$DELIVERY_COMMITTED" 2>/dev/null || true)"
+  if [ -n "$DELIVERY_AT" ] && ! git -C "$ROOT" cat-file -e "$DELIVERY_AT^{commit}" 2>/dev/null; then
+    DELIVERY_AT=""
+  fi
+fi
+[ -n "$DELIVERY_AT" ] || DELIVERY_AT="$(git -C "$ROOT" rev-parse HEAD)"
+mj_tool_read "$STAGE/delivery.raw.json" "the issues' delivery" --json plan delivery --at "$DELIVERY_AT"
+jq . "$STAGE/delivery.raw.json" > "$OUT/delivery.json"
+if [ "$CHECK" = 0 ] && [ -f "$DELIVERY_COMMITTED" ]; then
+  delivery_facts() { jq -S '.issues | walk(if type == "object" then del(.observed_at) else . end)' "$1" 2>/dev/null; }
+  if [ "$(delivery_facts "$OUT/delivery.json")" = "$(delivery_facts "$DELIVERY_COMMITTED")" ]; then
+    cp "$DELIVERY_COMMITTED" "$OUT/delivery.json"
+  fi
+fi
+mj_phase_end "gen:delivery.json" "$GEN_T0"
 # ---------------------------------------------------------------- source.json
 GEN_T0="$(mj_phase_begin "gen:source.json")"
 HASH="$(mj_site_inputs_hash)"

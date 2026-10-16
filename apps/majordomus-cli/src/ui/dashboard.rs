@@ -131,12 +131,23 @@ pub fn plan_panel(roadmap: &Answer, plan: &Answer) -> El {
             .take(ROWS)
             .map(milestone_row)
             .collect::<Vec<_>>();
+        // `plan.roadmap` names the first open milestones in the plan's order, which is not
+        // where the work is: that is `plan.flight`, read live on the Roadmap screen, too slow
+        // for this first paint (ADR 0166, decision 4)
         el("div")
-            .child(el("p").class("mj-ui-line").text(format!(
-                "Now {} · next {}",
-                shown(&roadmap.read("/now")),
-                shown(&roadmap.read("/next"))
-            )))
+            .child(
+                el("p")
+                    .class("mj-ui-line")
+                    .text(format!(
+                        "First open in the plan's order {} · then {} · ",
+                        shown(&roadmap.read("/now")),
+                        shown(&roadmap.read("/next"))
+                    ))
+                    .child(super::view::link(
+                        super::roadmap::ROUTE,
+                        "where the work is in flight",
+                    )),
+            )
             .child(table(
                 &["Milestone", "State", "Issues done"],
                 rows,
