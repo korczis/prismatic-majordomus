@@ -15765,6 +15765,12 @@
       "routes": [
         {
           "via": "behaviour",
+          "test": "suite:3102_a_milestone_version_is_inferred",
+          "path": "test/cases/3102_a_milestone_version_is_inferred.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:40_project_model",
           "path": "test/cases/40_project_model.sh",
           "category": "e2e"
@@ -22338,6 +22344,16 @@
       "programs": [],
       "members": [],
       "routes": [
+        {
+          "via": "rule",
+          "test": "suite:3102_a_milestone_version_is_inferred",
+          "path": "test/cases/3102_a_milestone_version_is_inferred.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/3102_a_milestone_version_is_inferred.sh",
+            ".ai/repo/rules/vendor/majordomus/rules/roadmap-integrity.v1.md"
+          ]
+        },
         {
           "via": "rule",
           "test": "suite:49_roadmap_doctrine",

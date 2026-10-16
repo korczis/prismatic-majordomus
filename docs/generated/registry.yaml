@@ -41062,9 +41062,14 @@ capabilities:
               slug:
                 type: string
                 description: "The slug, when the record carries one."
-              version:
+              last_accepted:
                 type: string
-                description: "The release the milestone belongs to, when it declares one."
+                description: "The last accepted issue of a DONE milestone: its DONE issue with the latest\n`completed_at`, the greater id on a tie. Empty for a milestone that is not DONE, or\nthat is DONE with no issue. Which release carried it is `released_in`'s to answer."
+              released_in:
+                type:
+                  - string
+                  - "null"
+                description: "The release that carried the milestone — the first release record whose commit\ncontains the merge of its last accepted issue, else `unreleased` — when the reader\nasked for it\n(`released_in`); the roadmap always does. Never a typed field (ADR 0166)."
               rank:
                 type: integer
                 format: uint32
@@ -41108,7 +41113,6 @@ capabilities:
               - priority
               - title
               - slug
-              - version
               - rank
               - depends_on
               - blocked_by
@@ -41567,9 +41571,14 @@ capabilities:
               slug:
                 type: string
                 description: "The slug, when the record carries one."
-              version:
+              last_accepted:
                 type: string
-                description: "The release the milestone belongs to, when it declares one."
+                description: "The last accepted issue of a DONE milestone: its DONE issue with the latest\n`completed_at`, the greater id on a tie. Empty for a milestone that is not DONE, or\nthat is DONE with no issue. Which release carried it is `released_in`'s to answer."
+              released_in:
+                type:
+                  - string
+                  - "null"
+                description: "The release that carried the milestone — the first release record whose commit\ncontains the merge of its last accepted issue, else `unreleased` — when the reader\nasked for it\n(`released_in`); the roadmap always does. Never a typed field (ADR 0166)."
               rank:
                 type: integer
                 format: uint32
@@ -41613,7 +41622,6 @@ capabilities:
               - priority
               - title
               - slug
-              - version
               - rank
               - depends_on
               - blocked_by
@@ -41796,7 +41804,7 @@ capabilities:
             type: array
             items:
               "$ref": "#/$defs/PlanMilestone"
-            description: "The milestones ordered by rank, then order, then id. The sequence is derived from\nthe milestone graph; no list of versions is maintained anywhere."
+            description: "The milestones ordered by rank, then order, then id, each with the release that\ncarried it (`released_in`). The sequence is derived from the milestone graph and the\nrelease from the release records; no list of versions is maintained anywhere."
           now:
             type:
               - string
@@ -41834,9 +41842,14 @@ capabilities:
               slug:
                 type: string
                 description: "The slug, when the record carries one."
-              version:
+              last_accepted:
                 type: string
-                description: "The release the milestone belongs to, when it declares one."
+                description: "The last accepted issue of a DONE milestone: its DONE issue with the latest\n`completed_at`, the greater id on a tie. Empty for a milestone that is not DONE, or\nthat is DONE with no issue. Which release carried it is `released_in`'s to answer."
+              released_in:
+                type:
+                  - string
+                  - "null"
+                description: "The release that carried the milestone — the first release record whose commit\ncontains the merge of its last accepted issue, else `unreleased` — when the reader\nasked for it\n(`released_in`); the roadmap always does. Never a typed field (ADR 0166)."
               rank:
                 type: integer
                 format: uint32
@@ -41880,7 +41893,6 @@ capabilities:
               - priority
               - title
               - slug
-              - version
               - rank
               - depends_on
               - blocked_by

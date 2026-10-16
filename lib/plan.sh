@@ -100,10 +100,15 @@ mj_cmd_plan() {
 # ---------------------------------------------------------------- roadmap
 # The roadmap is a projection over the milestone graph, in derived order. Nothing here is
 # authored: the sequence comes from the dependency ranks, the status from the issues and the
-# gate, and "now" and "next" from the first unblocked milestones in that sequence.
+# gate, and "now" and "next" from the first unblocked milestones in that sequence, and the
+# release each one shipped in from the release records (mj_pj_m_released_in), never typed.
 mj_plan_roadmap() {
   local id st ver ttl now="" nxt="" blk
   if [ "$MJ_JSON" = 1 ]; then
+    # only a DONE milestone has a last accepted issue, so only those ask git anything
+    for id in $(awk -F'\t' '$1 == "M" && $9 != "" { print $2 }' "$MJ_PJ/model.tsv"); do
+      printf '%s\t%s\n' "$id" "$(mj_pj_m_released_in "$id")"
+    done > "$MJ_PJ/released.tsv"
     awk -F'\t' '
       function esc(x) { gsub(/\\/, "\\\\", x); gsub(/"/, "\\\"", x); return x }
       function lst(x,   n, a, i, o) {
@@ -125,6 +130,7 @@ mj_plan_roadmap() {
         }
         return "{\"total\":" t ",\"required\":" r ",\"by_status\":{" o "}}"
       }
+      FILENAME ~ /released\.tsv$/ { rel[$1] = $2; next }
       $1 == "M" { r[++n] = $10 + 0 "\t" $4 + 0 "\t" $0 }
       END {
         for (i = 1; i < n; i++) for (j = i + 1; j <= n; j++) {
@@ -134,18 +140,19 @@ mj_plan_roadmap() {
         printf "{\"schema\":1,\"milestones\":["
         for (i = 1; i <= n; i++) {
           sub(/^[^\t]*\t[^\t]*\t/, "", r[i]); split(r[i], f, "\t")
-          printf "%s{\"id\":\"%s\",\"version\":\"%s\",\"title\":\"%s\",\"status\":\"%s\",\"rank\":%d,\"order\":%d,\"issues\":%s,\"depends_on\":%s,\"blocked_by\":%s,\"dependents\":%s,\"claims\":%s}", \
-            (i > 1 ? "," : ""), esc(f[2]), esc(f[9]), esc(f[6]), esc(f[3]), f[10], f[4], \
+          printf "%s{\"id\":\"%s\",\"released_in\":\"%s\",\"title\":\"%s\",\"status\":\"%s\",\"rank\":%d,\"order\":%d,\"issues\":%s,\"depends_on\":%s,\"blocked_by\":%s,\"dependents\":%s,\"claims\":%s}", \
+            (i > 1 ? "," : ""), esc(f[2]), esc((f[2] in rel) ? rel[f[2]] : "unreleased"), esc(f[6]), esc(f[3]), f[10], f[4], \
             counts(f[8]), lst(f[11]), lst(f[12]), lst(f[13]), lst(f[14])
         }
         printf "]}\n"
-      }' "$MJ_PJ/model.tsv"
+      }' "$MJ_PJ/released.tsv" "$MJ_PJ/model.tsv"
     return 0
   fi
-  printf 'VERSION  STATUS      MILESTONE                     TITLE\n'
+  printf 'RELEASED    STATUS      MILESTONE                     TITLE\n'
   for id in $(mj_pj_roadmap); do
-    st="$(mj_pj_m_status "$id")"; ver="$(mj_pj_m_version "$id")"; ttl="$(mj_pj_m_title "$id")"
-    printf '%-8s %-11s %-29s %s\n' "${ver:--}" "$st" "$id" "$ttl"
+    st="$(mj_pj_m_status "$id")"; ver="$(mj_pj_m_released_in "$id")"; ttl="$(mj_pj_m_title "$id")"
+    [ "$ver" = unreleased ] && ver="-"
+    printf '%-11s %-11s %-29s %s\n' "$ver" "$st" "$id" "$ttl"
   done
   for id in $(mj_pj_roadmap); do
     st="$(mj_pj_m_status "$id")"
@@ -169,6 +176,11 @@ mj_plan_validate() {
   unk="$(mj_project_unknown_keys || true)"
   if [ -n "$unk" ]; then
     printf '%s\n' "$unk" | while read -r rec keys; do
+      # a typed milestone version is the one unknown key with a known replacement
+      case " $keys " in
+        *" version "*) mj_pj_is_milestone "$rec" \
+          && keys="$keys (a milestone's release is inferred as released_in from the release records, never typed; ADR 0166)" ;;
+      esac
       mj_fail schema "$rec" "unknown keys: $keys" "majordomus plan validate"
     done
     fails=1

@@ -260,8 +260,9 @@ pub struct PlanNextIssue {
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 /// The milestones in derived order, with the one being executed and the one after it.
 pub struct PlanRoadmap {
-    /// The milestones ordered by rank, then order, then id. The sequence is derived from
-    /// the milestone graph; no list of versions is maintained anywhere.
+    /// The milestones ordered by rank, then order, then id, each with the release that
+    /// carried it (`released_in`). The sequence is derived from the milestone graph and the
+    /// release from the release records; no list of versions is maintained anywhere.
     pub milestones: Vec<PlanMilestone>,
     #[serde(skip_serializing_if = "Option::is_none")]
     /// The first unfinished, unblocked milestone in that sequence.
@@ -441,7 +442,15 @@ fn plan_next(ctx: &Context, input: PlanMilestoneFilter) -> Result<PlanNextIssue,
 
 fn plan_roadmap(ctx: &Context, _: Empty) -> Result<PlanRoadmap, CapabilityError> {
     let plan = plan_of(ctx)?;
-    let ordered: Vec<PlanMilestone> = plan.roadmap().into_iter().cloned().collect();
+    // the release each milestone shipped in, from the release records: only a DONE one asks git
+    let ordered: Vec<PlanMilestone> = plan
+        .roadmap()
+        .into_iter()
+        .map(|m| PlanMilestone {
+            released_in: Some(crate::plan::released_in(&ctx.index, &plan, &m.id)),
+            ..m.clone()
+        })
+        .collect();
     let mut open = ordered
         .iter()
         .filter(|m| !matches!(m.status.as_str(), "DONE" | "CANCELLED" | "SUPERSEDED"));
