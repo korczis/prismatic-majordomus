@@ -9,6 +9,13 @@ Current version: **0.27.0**
 
 ## v0.27.0 — 2026-10-16
 
+### Decisions
+
+- **ADR-0161** A mesh node follows the published release, through the one installer, forward only _(proposed)_
+- **ADR-0160** The kiosk draws what the repository proves, from the sources that already answer it, and draws it with p5 only where the build has it _(proposed)_
+- **ADR-0152** A diagram and a chart on the site are one viewer each, over what the build derived: interactive, linkable, and linked by inference _(proposed)_
+- **ADR-0069** A capability may be scripted, and repository automation is scripted capabilities rather than shell _(proposed)_
+
 ### Added
 
 - **mesh**: an edit no claim covers is refused (I2735) (`ed994d5d0`)
@@ -195,6 +202,12 @@ Current version: **0.27.0**
 
 ## v0.24.1 — 2026-10-14
 
+### Decisions
+
+- **ADR-0158** The Observatory is one screen of the UI, and it draws only what was observed _(proposed)_
+- **ADR-0155** An expedited landing is the owner's word, judged on the merged tree, and never reaches a tag _(proposed)_
+- **ADR-0147** The Cockpit is published as a snapshot by the exporter that reads the UI, and two snapshots link only the pages each holds _(proposed)_
+
 ### Added
 
 - **product**: the Observatory is a feature with a claim a reader can check (`3d8da99be`)
@@ -253,6 +266,10 @@ Current version: **0.27.0**
 
 
 ## v0.23.0 — 2026-10-13
+
+### Decisions
+
+- **ADR-0146** A capability is invoked by name through a generated skill _(proposed)_
 
 ### Added
 
@@ -319,6 +336,15 @@ Current version: **0.27.0**
 
 
 ## v0.22.0 — 2026-10-13
+
+### Decisions
+
+- **ADR-0149** A handbook edition is a declared locale tree, built from the tree it describes _(proposed)_
+- **ADR-0145** A personal layer changes nothing shared: it is covered by git's own exclude file, checked where it is claimed, and handed to the team by one command _(proposed)_
+- **ADR-0144** An intent is proposed by a capability, and its stage stays derived _(proposed)_
+- **ADR-0142** No screen waits for a source: a page shows the latest reading with its age, and the reading catches up behind it _(proposed)_
+- **ADR-0141** The UI is published as a snapshot read at one commit, and a publication never pretends to be a process _(proposed)_
+- **ADR-0140** Editors and agents read projections of the layer, and cargo embeds none of it _(proposed)_
 
 ### Added
 
@@ -406,6 +432,19 @@ Current version: **0.27.0**
 
 
 ## v0.21.0 — 2026-10-12
+
+### Decisions
+
+- **ADR-0139** Worktrees share what cargo compiles on the way, and keep their own finished artifacts _(proposed)_
+- **ADR-0138** A train of pull requests is a typed object that can be seen _(proposed)_
+- **ADR-0136** Every session briefs itself on an interval, from one capability a provider mod the policy switches keeps in front of it _(proposed)_
+- **ADR-0135** `majordomus ui` is the primary surface, and the Cockpit is the technical layer beneath it _(accepted)_
+- **ADR-0134** The next version is allocated at landing, by the integration executor, from the trunk's version and the change's measured impact under a typed policy floor _(proposed)_
+- **ADR-0133** Everything that happens in the repository is followed in one stream, folded and addressed _(proposed)_
+- **ADR-0131** A release publishes its metadata to the site before its record lands, and the site never goes back a release _(proposed)_
+- **ADR-0129** A train of stacked pull requests lands in one run of the required check, each link on the verdict its head already has _(proposed)_
+- **ADR-0126** A caller beyond loopback reads, and changes nothing it cannot authenticate _(proposed)_
+- **ADR-0118** A session leaves what it observed, and the boundary keeps one routed candidate per defect _(proposed)_
 
 ### Added
 
