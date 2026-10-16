@@ -370,6 +370,16 @@ impl Server {
                 " This session belongs to the shared server of this checkout at {url}: its home page at {url}/ lists every surface, Swagger UI is {url}/swagger, OpenAPI {url}/openapi.json, MCP over HTTP {url}/mcp."
             ));
         }
+        // The tree every answer above comes from, said where every client reads it: on
+        // 2026-10-16 this repository's primary checkout was 779 commits behind its remote
+        // trunk and its server answered every session's plan questions from that tree, in
+        // silence (project.a-checkout-serves-the-current-trunk). Only a distance worth acting
+        // on is named; a current checkout costs the client no sentence.
+        let trunk =
+            crate::worktree::trunk::measure_checkout(std::path::Path::new(&index.repository.root));
+        if let Some(sentence) = trunk_sentence(&trunk) {
+            text.push_str(&sentence);
+        }
         if let Some(peer) = self.surface.peer() {
             let board = &self.surface.context().peers;
             text.push_str(&format!(
@@ -413,6 +423,28 @@ impl Server {
         }
         text
     }
+}
+
+/// What the `initialize` instructions say about the tree a server answers from, when it is
+/// behind the remote trunk by a distance the policy calls lagging or stale, or by one it
+/// declares nothing about. Nothing when the checkout is current or the distance could not be
+/// measured. (`the_trunk_sentence_names_only_a_distance_worth_acting_on` holds each case.)
+pub(crate) fn trunk_sentence(d: &crate::worktree::TrunkDistance) -> Option<String> {
+    use crate::worktree::TrunkStanding;
+    if !matches!(
+        d.standing,
+        TrunkStanding::Lagging | TrunkStanding::Stale | TrunkStanding::Unjudged
+    ) {
+        return None;
+    }
+    let behind = d.checkout.map(|c| c.behind)?;
+    Some(format!(
+        " This server serves a tree {behind} commit(s) behind {} ({}): its answers about the plan, the rules and the code are that old. {} Remedy: {}.",
+        d.remote_trunk.as_deref().unwrap_or("the remote trunk"),
+        d.standing.as_str(),
+        d.message,
+        d.remedy.as_deref().unwrap_or("bring the checkout current")
+    ))
 }
 
 /// What the `initialize` instructions say about writing, read off the registry instead of
@@ -476,6 +508,46 @@ fn error(id: Value, code: i64, message: &str) -> Value {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// A stale or lagging tree is named with its distance, its remote and its remedy; a
+    /// current one, and one that could not be measured, cost the client no sentence.
+    #[test]
+    fn the_trunk_sentence_names_only_a_distance_worth_acting_on() {
+        use crate::worktree::{Distance, TrunkDistance, TrunkStanding, TrunkThresholds};
+        let mut d = TrunkDistance {
+            standing: TrunkStanding::Stale,
+            local_trunk_standing: TrunkStanding::Stale,
+            worktree: "/r".into(),
+            on_trunk: true,
+            trunk: Some("master".into()),
+            remote_trunk: Some("origin/master".into()),
+            remote_head: None,
+            checkout: Some(Distance {
+                behind: 779,
+                ahead: 0,
+            }),
+            local_trunk: None,
+            fetched_at: None,
+            thresholds: TrunkThresholds::default(),
+            message: "m".into(),
+            remedy: Some("git merge --ff-only origin/master".into()),
+        };
+        let s = trunk_sentence(&d).expect("a stale tree is named");
+        assert!(
+            s.contains("779 commit(s) behind origin/master (stale)"),
+            "{s}"
+        );
+        assert!(
+            s.contains("Remedy: git merge --ff-only origin/master."),
+            "{s}"
+        );
+        d.standing = TrunkStanding::Lagging;
+        assert!(trunk_sentence(&d).is_some());
+        d.standing = TrunkStanding::Current;
+        assert_eq!(trunk_sentence(&d), None);
+        d.standing = TrunkStanding::Unmeasured;
+        assert_eq!(trunk_sentence(&d), None);
+    }
 
     /// The `initialize` instructions are the one thing every client reads before it does
     /// anything, and for most of this server's life they ended with the constant "Nothing

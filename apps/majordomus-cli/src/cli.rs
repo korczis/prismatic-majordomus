@@ -3837,6 +3837,8 @@ pub enum WorktreeCommand {
         #[arg(long, value_name = "DURATION")]
         older_than: Option<String>,
     },
+    /// How far this checkout and the local trunk are from the remote trunk, as of the last fetch, judged against the policy's checkout.trunk_distance: current, lagging, stale, unjudged or unmeasured, with the commands that bring it current. Fetches nothing; exit 10 when stale
+    Trunk,
     /// Every local branch, one per line, for a shell completion that wants the live set
     Branches {
         /// Only branches with no worktree
@@ -5830,6 +5832,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["worktree", "uncommitted"],
             setup: &[],
             expect: Expect::StdoutContains(&["0 with uncommitted work", "nothing was changed"]),
+        }],
+    },
+    CommandExamples {
+        command: "worktree trunk",
+        examples: &[ExampleDoc {
+            id: "worktree-trunk-unmeasured",
+            title: "How far this checkout is from the remote trunk",
+            description: "The checkout's HEAD and the local trunk counted against the remote-tracking trunk, as of the last fetch, and judged against the policy's checkout.trunk_distance. A repository with no remote has nothing to be measured against and says so — `unmeasured`, never `current`; nothing is fetched either way.",
+            argv: &["worktree", "trunk"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["unmeasured", "no remote-tracking branch"]),
         }],
     },
     CommandExamples {

@@ -557,6 +557,59 @@ EOF
     mj_ok clone "unpushed" "every local commit is on a remote"
   fi
   mj_report_uncommitted
+  mj_report_trunk_distance
+}
+
+# How far this checkout is from the remote trunk (project.a-checkout-serves-the-current-trunk).
+# On 2026-10-16 the primary checkout was 779 commits behind origin/master and its shared
+# server answered every session from that tree; nothing said so. The measurement and the
+# judgement are the executable's (`worktree trunk`, also in `worktree status`): the checkout's
+# HEAD and the local trunk branch counted against the remote-tracking trunk, as of the last
+# fetch, judged against the policy's checkout.trunk_distance with no threshold invented here.
+# Rendered once: stale FAILs — and with it the commit hook — lagging WARNs, unjudged and
+# unmeasured are INFO. A merge in progress counts what it brings in, so the commit that
+# makes a branch current is never refused for the tree it replaces. The local trunk of a
+# linked worktree is somebody else's checkout to move, so it is at most a WARN here.
+mj_report_trunk_distance() {
+  # A clone with no remote-tracking branch has nothing to be measured against, and says so
+  # the same way whether or not the executable is at hand (the catalogue records this line).
+  if [ -z "$(git -C "$MJ_ROOT" for-each-ref --count=1 --format='%(refname)' refs/remotes 2>/dev/null)" ]; then
+    mj_info clone "trunk" "no remote-tracking branch, so this checkout's distance from the remote trunk cannot be measured"
+    return 0
+  fi
+  # shellcheck source=rust_bin.sh
+  . "$MJ_LIB_DIR/rust_bin.sh"
+  local bin share out standing message remedy local_standing
+  bin="$(mj_rust_bin "$MJ_HOME")"
+  if [ ! -x "$bin" ] || ! mj_has jq; then
+    mj_info clone "trunk" "the executable or jq is absent, so this checkout's distance from the remote trunk is not judged here (majordomus worktree trunk)"
+    return 0
+  fi
+  share="$(mj_rust_share "$MJ_ROOT")"
+  # exit 10 is the reading's verdict on a stale checkout, not a failure to answer
+  out="$( ( [ -z "$share" ] || export MAJORDOMUS_SHARE="$share"
+            "$bin" worktree trunk --repo "$MJ_ROOT" --format json ) 2>/dev/null )" || true
+  standing="$(printf '%s' "$out" | jq -r '.standing // empty' 2>/dev/null)"
+  if [ -z "$standing" ]; then
+    mj_info clone "trunk" "this checkout's distance from the remote trunk could not be read (majordomus worktree trunk)"
+    return 0
+  fi
+  message="$(printf '%s' "$out" | jq -r '.message')"
+  remedy="$(printf '%s' "$out" | jq -r '.remedy // "majordomus worktree trunk"')"
+  case "$standing" in
+    current) mj_ok clone "trunk" "$message" ;;
+    lagging) mj_warn clone "trunk" "$message" "$remedy" ;;
+    stale) mj_fail clone "trunk" "$message" "$remedy" ;;
+    *) mj_info clone "trunk" "$standing: $message" "majordomus worktree trunk" ;;
+  esac
+  local_standing="$(printf '%s' "$out" | jq -r 'if .on_trunk then "" else .local_trunk_standing end')"
+  case "$local_standing" in
+    lagging|stale)
+      mj_warn clone "local-trunk" \
+        "$(printf '%s' "$out" | jq -r '"the local \(.trunk) is \(.local_trunk.behind) commit(s) behind \(.remote_trunk) (\(.local_trunk_standing)): a branch made from it starts from a tree that is not the trunk"')" \
+        "$remedy" ;;
+  esac
+  return 0
 }
 
 # Work that exists in one worktree's files and in no commit (I1995). On 2026-10-07 and

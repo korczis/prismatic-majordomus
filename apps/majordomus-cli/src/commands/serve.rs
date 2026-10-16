@@ -323,6 +323,16 @@ fn render_status(out: &mut impl Write, s: &Value, checkouts: Checkouts) -> Resul
             "repository not a git repository: this checkout alone".into(),
         )?,
     }
+    if let Some(t) = s.get("trunk") {
+        w(
+            out,
+            format!(
+                "trunk      {}: {}",
+                t["standing"].as_str().unwrap_or("?"),
+                t["message"].as_str().unwrap_or("-")
+            ),
+        )?;
+    }
     w(
         out,
         match checkouts {

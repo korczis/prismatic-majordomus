@@ -1049,6 +1049,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:worktree.trunk",
+      "path": "/evidence/capabilities/worktree-trunk/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:worktree.uncommitted",
       "path": "/evidence/capabilities/worktree-uncommitted/"
     },
@@ -3446,6 +3451,11 @@
       "kind": "command",
       "subject": "command:worktree topology",
       "path": "/evidence/commands/worktree-topology/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:worktree trunk",
+      "path": "/evidence/commands/worktree-trunk/"
     },
     {
       "kind": "command",
@@ -6125,6 +6135,18 @@
       "programs": [],
       "members": [
         "command:worktree topology"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:worktree.trunk": {
+      "kind": "capability",
+      "id": "worktree.trunk",
+      "page": "/evidence/capabilities/worktree-trunk/",
+      "programs": [],
+      "members": [
+        "command:worktree trunk"
       ],
       "routes": [],
       "mechanisms": [],
@@ -18298,6 +18320,25 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:worktree trunk": {
+      "kind": "command",
+      "id": "worktree trunk",
+      "page": "/evidence/commands/worktree-trunk/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:worktree uncommitted": {
       "kind": "command",
       "id": "worktree uncommitted",
@@ -21349,6 +21390,18 @@
       "mechanisms": [],
       "findings": []
     },
+    "mcp:majordomus_worktree_trunk": {
+      "kind": "mcp",
+      "id": "majordomus_worktree_trunk",
+      "alias_of": "capability:worktree.trunk",
+      "programs": [],
+      "members": [
+        "capability:worktree.trunk"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
     "mcp:majordomus_worktree_uncommitted": {
       "kind": "mcp",
       "id": "majordomus_worktree_uncommitted",
@@ -22671,6 +22724,27 @@
           "inputs": [
             "test/cases/3002_a_build_never_waits_in_silence.sh",
             ".ai/repo/rules/project/a-build-never-waits-in-silence-on-anothers-lock.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "rule:project.a-checkout-serves-the-current-trunk": {
+      "kind": "rule",
+      "id": "project.a-checkout-serves-the-current-trunk",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:3176_a_checkout_serves_the_current_trunk",
+          "path": "test/cases/3176_a_checkout_serves_the_current_trunk.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/3176_a_checkout_serves_the_current_trunk.sh",
+            ".ai/repo/rules/project/a-checkout-serves-the-current-trunk.v1.md"
           ]
         }
       ],

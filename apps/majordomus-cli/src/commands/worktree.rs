@@ -21,8 +21,8 @@ use crate::error::{Error, Result};
 use crate::worktree::{
     migrate, BranchState, CreateRequest, Detail, DirtyState, HooksPath, MigrationAction,
     MigrationOptions, MigrationPlan, RepositoryTopology, Severity, Standing, StatusReport,
-    StepOutcome, Threshold, TopologyDiagnostic, UncommittedReport, WorkStanding, WorktreeService,
-    WorktreeState, EXIT_REFUSED,
+    StepOutcome, Threshold, TopologyDiagnostic, TrunkStanding, UncommittedReport, WorkStanding,
+    WorktreeService, WorktreeState, EXIT_REFUSED,
 };
 
 /// Run `majordomus worktree`.
@@ -96,6 +96,7 @@ pub fn run(args: WorktreeArgs) -> Result<u8> {
             })?;
             uncommitted(svc()?.uncommitted(&threshold), &threshold, format, &mut out)
         }
+        Some(WorktreeCommand::Trunk) => trunk(&svc()?, format, &mut out),
         Some(WorktreeCommand::Branches { without_worktree }) => {
             branches(&svc()?, without_worktree, &mut out)
         }
@@ -384,6 +385,22 @@ fn status(svc: &WorktreeService, format: OutputFormat, out: &mut Out<'_>) -> Res
                     trunk_source_word(s.trunk.source)
                 ),
             )?;
+            let td = &s.trunk_distance;
+            w(
+                out,
+                format!(
+                    "currency    {} {}: {}",
+                    match td.standing {
+                        TrunkStanding::Lagging | TrunkStanding::Stale => "!! ",
+                        _ => "ok ",
+                    },
+                    td.standing.as_str(),
+                    td.message
+                ),
+            )?;
+            if let Some(r) = &td.remedy {
+                w(out, format!("            {r}"))?;
+            }
             for d in wt
                 .diagnostics
                 .iter()
@@ -403,6 +420,24 @@ fn status(svc: &WorktreeService, format: OutputFormat, out: &mut Out<'_>) -> Res
         }
     }
     Ok(if s.canonical { 0 } else { EXIT_REFUSED })
+}
+
+fn trunk(svc: &WorktreeService, format: OutputFormat, out: &mut Out<'_>) -> Result<u8> {
+    let d = svc.trunk_distance();
+    match format {
+        OutputFormat::Json => json(out, &d)?,
+        OutputFormat::Text => {
+            w(out, format!("{}: {}", d.standing.as_str(), d.message))?;
+            if let Some(r) = &d.remedy {
+                w(out, format!("remedy: {r}"))?;
+            }
+        }
+    }
+    Ok(if d.standing == TrunkStanding::Stale {
+        EXIT_REFUSED
+    } else {
+        0
+    })
 }
 
 fn inspect(

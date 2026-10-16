@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "0.27.0"
   },
-  "fingerprint": "1c7d783dd2c4638ac9e3bd1b4dba9c470162eb108c8c9722c5c2cb0464f6b08d",
+  "fingerprint": "0dee80110df6419013c5b92dd7cba6629acec6aab93e286cf0479a1967dea633",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -1162,7 +1162,7 @@
         "use_cases": 6,
         "rules": 13,
         "enforced_rules": 11,
-        "capabilities": 70,
+        "capabilities": 71,
         "moments": 17
       },
       "evidence": {
@@ -4742,6 +4742,15 @@
               "cli": "majordomus worktree topology"
             },
             {
+              "id": "worktree.trunk",
+              "title": "How far a checkout is from the remote trunk",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_worktree_trunk",
+              "route": "GET /api/v1/worktrees/trunk",
+              "cli": "majordomus worktree trunk"
+            },
+            {
               "id": "worktree.uncommitted",
               "title": "Uncommitted work in the linked worktrees, and what holds it",
               "kind": "query",
@@ -5081,11 +5090,11 @@
         "worktrees"
       ],
       "counts": {
-        "capabilities": 15,
-        "mcp_tools": 15,
+        "capabilities": 16,
+        "mcp_tools": 16,
         "mcp_resources": 2,
-        "http_routes": 15,
-        "cli_paths": 11,
+        "http_routes": 16,
+        "cli_paths": 12,
         "commands": 3,
         "objects": 0,
         "rules": 5,
@@ -5217,6 +5226,15 @@
               "cli": "majordomus worktree topology"
             },
             {
+              "id": "worktree.trunk",
+              "title": "How far a checkout is from the remote trunk",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_worktree_trunk",
+              "route": "GET /api/v1/worktrees/trunk",
+              "cli": "majordomus worktree trunk"
+            },
+            {
               "id": "worktree.uncommitted",
               "title": "Uncommitted work in the linked worktrees, and what holds it",
               "kind": "query",
@@ -5327,11 +5345,11 @@
         "planning"
       ],
       "counts": {
-        "capabilities": 5,
-        "mcp_tools": 5,
+        "capabilities": 6,
+        "mcp_tools": 6,
         "mcp_resources": 1,
-        "http_routes": 5,
-        "cli_paths": 5,
+        "http_routes": 6,
+        "cli_paths": 6,
         "commands": 0,
         "objects": 0,
         "rules": 2,
@@ -7767,7 +7785,7 @@
       "kind_refs": [
         {
           "name": "rule",
-          "objects": 180
+          "objects": 181
         }
       ],
       "rule_refs": [
@@ -8143,11 +8161,11 @@
       "counts": {
         "capabilities": 6,
         "mcp_tools": 4,
-        "mcp_resources": 182,
+        "mcp_resources": 183,
         "http_routes": 6,
         "cli_paths": 3,
         "commands": 5,
-        "objects": 180,
+        "objects": 181,
         "rules": 7,
         "enforced_rules": 7,
         "docs": 2,
@@ -16897,7 +16915,7 @@
       },
       {
         "id": "rule",
-        "title": "rule (180)",
+        "title": "rule (181)",
         "features": [
           "doctrine"
         ]
@@ -17853,17 +17871,17 @@
     }
   ],
   "telemetry": {
-    "capabilities": 2446,
-    "builtin": 202,
-    "declarative": 2244,
+    "capabilities": 2449,
+    "builtin": 203,
+    "declarative": 2246,
     "modules": 58,
-    "mcp_tools": 192,
-    "mcp_resources": 2299,
-    "http_routes": 197,
-    "cli_commands": 206,
+    "mcp_tools": 193,
+    "mcp_resources": 2301,
+    "http_routes": 198,
+    "cli_commands": 207,
     "shell_commands": 30,
     "kinds": 34,
-    "objects": 2244,
+    "objects": 2246,
     "by_kind": {
       "adr": 109,
       "application": 5,
@@ -17891,12 +17909,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 27,
-      "rule": 180,
+      "rule": 181,
       "scope": 1,
       "session": 89,
       "skill": 8,
       "taxonomy": 10,
-      "test": 500,
+      "test": 501,
       "use-case": 49,
       "workspace": 1
     },

@@ -6,27 +6,27 @@
     "version": "0.27.0"
   },
   "registry": {
-    "fingerprint": "039c3c240f2a65253fe430b394e20fc2d0230868bc9dc775a9fdc93d3bfd479f",
+    "fingerprint": "054d833179752eac797659bc97713b7c7acbfdb7b91ac6a65a83aa3c1452574c",
     "summary": {
-      "total": 2446,
-      "builtin": 202,
-      "declarative": 2244,
+      "total": 2449,
+      "builtin": 203,
+      "declarative": 2246,
       "by_kind": {
         "command": 31,
-        "query": 171,
-        "resource": 2244
+        "query": 172,
+        "resource": 2246
       },
       "by_stability": {
-        "behaviorally_verified": 141,
+        "behaviorally_verified": 142,
         "experimental": 52,
-        "implemented": 2253
+        "implemented": 2255
       },
-      "mcp_tools": 192,
-      "mcp_resources": 2299,
-      "http_routes": 197,
-      "cli_commands": 108,
+      "mcp_tools": 193,
+      "mcp_resources": 2301,
+      "http_routes": 198,
+      "cli_commands": 109,
       "modules": 92,
-      "benchmark_required": 171,
+      "benchmark_required": 172,
       "benchmark_waived": 31,
       "cached": 54
     },
@@ -73947,7 +73947,7 @@
         "module": "server",
         "kind": "query",
         "title": "The shared server, and every server of the repository",
-        "description": "Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; the lease this process holds when it is the server; and, unless `checkouts` narrows it to this one, every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. `checkouts: this` reads one lease and probes one server and enumerates no other checkout, which is what a caller asking only about the checkout it is in should pay. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes.",
+        "description": "Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; how far the tree it serves is from the remote trunk (`trunk`: current, lagging, stale, unjudged or unmeasured against the policy's `checkout.trunk_distance`, as of the last fetch); the lease this process holds when it is the server; and, unless `checkouts` narrows it to this one, every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. `checkouts: this` reads one lease and probes one server and enumerates no other checkout, which is what a caller asking only about the checkout it is in should pay. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes.",
         "input": {
           "name": "ServerStatusInput",
           "schema": {
@@ -74037,6 +74037,17 @@
                   }
                 ],
                 "description": "What this process's HTTP server did to connections that held it without a request:\nthe read deadline it applies, the connections that deadline closed, and the requests\nrefused because every handler was busy. Absent when this process serves no HTTP."
+              },
+              "trunk": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/TrunkDistance"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "How far the tree this checkout serves is from the remote trunk, judged against the\npolicy's `checkout.trunk_distance`: a server of a checkout 779 commits behind answers\nevery session from a tree that no longer exists, and this is where that is said.\nAbsent only from an answer that predates the field."
               }
             },
             "required": [
@@ -74045,7 +74056,7 @@
               "standing",
               "servers"
             ],
-            "description": "The shared server of this checkout and of every other checkout of the repository.\n\n```\nuse majordomus_cli::capability::builtin::server::{Desired, ServerStanding, ServerStatus};\nlet status = ServerStatus { checkout_id: \"c\".into(), git: None,\n    desired: Desired { host: \"127.0.0.1\".into(), port: 8741, version: \"1.0.0\".into(), executable: None },\n    this_process: None, standing: ServerStanding::Absent, servers: Vec::new(),\n    connections: None };\nlet text = serde_json::to_string(&status).unwrap();\nassert_eq!(serde_json::from_str::<ServerStatus>(&text).unwrap(), status);\n```",
+            "description": "The shared server of this checkout and of every other checkout of the repository.\n\n```\nuse majordomus_cli::capability::builtin::server::{Desired, ServerStanding, ServerStatus};\nlet status = ServerStatus { checkout_id: \"c\".into(), git: None,\n    desired: Desired { host: \"127.0.0.1\".into(), port: 8741, version: \"1.0.0\".into(), executable: None },\n    this_process: None, standing: ServerStanding::Absent, servers: Vec::new(),\n    connections: None, trunk: None };\nlet text = serde_json::to_string(&status).unwrap();\nassert_eq!(serde_json::from_str::<ServerStatus>(&text).unwrap(), status);\n```",
             "title": "ServerStatus",
             "$defs": {
               "GitIdentity": {
@@ -74305,6 +74316,177 @@
                   "refused_busy"
                 ],
                 "description": "What this process's HTTP server has done to clients that held a connection without using\nit: the deadline it applies and what that deadline cost, since the process started.\nAbsent while this process serves no HTTP.\n\n```\nuse majordomus_cli::http::deadline::{counts, ConnectionCounts};\n// a process that has started no server reports nothing, rather than zeroes that would\n// read as \"no slow client was seen\"\nassert_eq!(counts(), None);\nlet c = ConnectionCounts { read_deadline_seconds: 30, closed_by_deadline: 4, refused_busy: 0 };\nlet text = serde_json::to_string(&c).unwrap();\nassert_eq!(serde_json::from_str::<ConnectionCounts>(&text).unwrap(), c);\n```"
+              },
+              "TrunkDistance": {
+                "type": "object",
+                "properties": {
+                  "standing": {
+                    "$ref": "#/$defs/TrunkStanding",
+                    "description": "Where the checkout stands: its `HEAD` — with the commit a merge in progress brings\nin — judged against the thresholds. This is what its server serves."
+                  },
+                  "local_trunk_standing": {
+                    "$ref": "#/$defs/TrunkStanding",
+                    "description": "Where the local trunk branch stands, judged the same way: what a branch made from it\nstarts from. The same as `standing` when the checkout holds the trunk."
+                  },
+                  "worktree": {
+                    "type": "string",
+                    "description": "The work tree measured."
+                  },
+                  "on_trunk": {
+                    "type": "boolean",
+                    "description": "The work tree holds the trunk branch itself."
+                  },
+                  "trunk": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The trunk branch, short."
+                  },
+                  "remote_trunk": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The remote-tracking trunk counted against (`origin/master`)."
+                  },
+                  "remote_head": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The commit the remote-tracking trunk names."
+                  },
+                  "checkout": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/Distance"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "The checkout's `HEAD` against the remote trunk. While a merge is in progress, the\ncommits it brings in count as present: the commit being made will hold them, so the\nmerge that brings a checkout current is never judged by the tree it is replacing."
+                  },
+                  "local_trunk": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/Distance"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "The local trunk branch against the remote trunk: what a branch made from the local\ntrunk starts from."
+                  },
+                  "fetched_at": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "When the repository last fetched (the time of `FETCH_HEAD`), RFC 3339: the moment\nthis answer is true as of. Absent when it never fetched."
+                  },
+                  "thresholds": {
+                    "$ref": "#/$defs/TrunkThresholds",
+                    "description": "The thresholds judged against, as `checkout.trunk_distance` declares them."
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "What the standing means here, in one line."
+                  },
+                  "remedy": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The commands that bring the checkout and the local trunk current, when either is\nbehind. Suggested, never run."
+                  }
+                },
+                "required": [
+                  "standing",
+                  "local_trunk_standing",
+                  "worktree",
+                  "on_trunk",
+                  "thresholds",
+                  "message"
+                ],
+                "description": "A checkout's distance from the remote trunk, judged."
+              },
+              "TrunkStanding": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "current",
+                    "description": "Behind by less than the warn threshold, or not behind at all."
+                  },
+                  {
+                    "type": "string",
+                    "const": "lagging",
+                    "description": "At or past the warn threshold: what it serves is old enough to mislead."
+                  },
+                  {
+                    "type": "string",
+                    "const": "stale",
+                    "description": "At or past the fail threshold: what it serves is the wrong tree."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unjudged",
+                    "description": "Behind, and the policy declares no threshold to judge the distance by."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unmeasured",
+                    "description": "The distance could not be measured: no trunk, no remote-tracking trunk, no `HEAD`."
+                  }
+                ],
+                "description": "Where a checkout stands against the remote trunk."
+              },
+              "Distance": {
+                "type": "object",
+                "properties": {
+                  "behind": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Commits of the remote trunk this ref lacks."
+                  },
+                  "ahead": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Commits of this ref the remote trunk lacks."
+                  }
+                },
+                "required": [
+                  "behind",
+                  "ahead"
+                ],
+                "description": "How many commits two refs have that the other lacks.\n\n```\nuse majordomus_cli::worktree::trunk::Distance;\nlet d = Distance { behind: 779, ahead: 0 };\nassert_eq!(serde_json::to_value(d).unwrap(), serde_json::json!({\"behind\": 779, \"ahead\": 0}));\n```"
+              },
+              "TrunkThresholds": {
+                "type": "object",
+                "properties": {
+                  "warn_behind": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "At or past this many commits behind, the checkout is `lagging`: a warning."
+                  },
+                  "fail_behind": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "At or past this many commits behind, the checkout is `stale`: a failure."
+                  }
+                },
+                "description": "The thresholds `checkout.trunk_distance` declares, in commits behind the remote trunk.\nAbsent is absent: the reader supplies no default, and a distance with nothing to judge\nit against is reported as `unjudged`.\n\n```\nuse majordomus_cli::worktree::trunk::TrunkThresholds;\nlet t: TrunkThresholds = serde_json::from_str(r#\"{\"warn_behind\": 50, \"fail_behind\": 300}\"#).unwrap();\nassert_eq!((t.warn_behind, t.fail_behind), (Some(50), Some(300)));\nassert_eq!(TrunkThresholds::default().warn_behind, None, \"absent is not a default\");\n```"
               }
             }
           }
@@ -80538,6 +80720,10 @@
                 "format": "uint",
                 "minimum": 0,
                 "description": "How many error-level diagnostics the whole topology carries."
+              },
+              "trunk_distance": {
+                "$ref": "#/$defs/TrunkDistance",
+                "description": "How far this work tree and the local trunk are from the remote trunk, judged against\nthe policy's `checkout.trunk_distance`: what it would serve, and how old that is."
               }
             },
             "required": [
@@ -80547,7 +80733,8 @@
               "trunk",
               "worktree",
               "canonical",
-              "repository_errors"
+              "repository_errors",
+              "trunk_distance"
             ],
             "description": "The answer to \"where am I, and is that where I belong\".",
             "title": "StatusReport",
@@ -81067,6 +81254,177 @@
                   }
                 ],
                 "description": "How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts\nthe index into the degraded state; `Warning` and `Info` do neither."
+              },
+              "TrunkDistance": {
+                "type": "object",
+                "properties": {
+                  "standing": {
+                    "$ref": "#/$defs/TrunkStanding",
+                    "description": "Where the checkout stands: its `HEAD` — with the commit a merge in progress brings\nin — judged against the thresholds. This is what its server serves."
+                  },
+                  "local_trunk_standing": {
+                    "$ref": "#/$defs/TrunkStanding",
+                    "description": "Where the local trunk branch stands, judged the same way: what a branch made from it\nstarts from. The same as `standing` when the checkout holds the trunk."
+                  },
+                  "worktree": {
+                    "type": "string",
+                    "description": "The work tree measured."
+                  },
+                  "on_trunk": {
+                    "type": "boolean",
+                    "description": "The work tree holds the trunk branch itself."
+                  },
+                  "trunk": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The trunk branch, short."
+                  },
+                  "remote_trunk": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The remote-tracking trunk counted against (`origin/master`)."
+                  },
+                  "remote_head": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The commit the remote-tracking trunk names."
+                  },
+                  "checkout": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/Distance"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "The checkout's `HEAD` against the remote trunk. While a merge is in progress, the\ncommits it brings in count as present: the commit being made will hold them, so the\nmerge that brings a checkout current is never judged by the tree it is replacing."
+                  },
+                  "local_trunk": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/Distance"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "The local trunk branch against the remote trunk: what a branch made from the local\ntrunk starts from."
+                  },
+                  "fetched_at": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "When the repository last fetched (the time of `FETCH_HEAD`), RFC 3339: the moment\nthis answer is true as of. Absent when it never fetched."
+                  },
+                  "thresholds": {
+                    "$ref": "#/$defs/TrunkThresholds",
+                    "description": "The thresholds judged against, as `checkout.trunk_distance` declares them."
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "What the standing means here, in one line."
+                  },
+                  "remedy": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The commands that bring the checkout and the local trunk current, when either is\nbehind. Suggested, never run."
+                  }
+                },
+                "required": [
+                  "standing",
+                  "local_trunk_standing",
+                  "worktree",
+                  "on_trunk",
+                  "thresholds",
+                  "message"
+                ],
+                "description": "A checkout's distance from the remote trunk, judged."
+              },
+              "TrunkStanding": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "current",
+                    "description": "Behind by less than the warn threshold, or not behind at all."
+                  },
+                  {
+                    "type": "string",
+                    "const": "lagging",
+                    "description": "At or past the warn threshold: what it serves is old enough to mislead."
+                  },
+                  {
+                    "type": "string",
+                    "const": "stale",
+                    "description": "At or past the fail threshold: what it serves is the wrong tree."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unjudged",
+                    "description": "Behind, and the policy declares no threshold to judge the distance by."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unmeasured",
+                    "description": "The distance could not be measured: no trunk, no remote-tracking trunk, no `HEAD`."
+                  }
+                ],
+                "description": "Where a checkout stands against the remote trunk."
+              },
+              "Distance": {
+                "type": "object",
+                "properties": {
+                  "behind": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Commits of the remote trunk this ref lacks."
+                  },
+                  "ahead": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Commits of this ref the remote trunk lacks."
+                  }
+                },
+                "required": [
+                  "behind",
+                  "ahead"
+                ],
+                "description": "How many commits two refs have that the other lacks.\n\n```\nuse majordomus_cli::worktree::trunk::Distance;\nlet d = Distance { behind: 779, ahead: 0 };\nassert_eq!(serde_json::to_value(d).unwrap(), serde_json::json!({\"behind\": 779, \"ahead\": 0}));\n```"
+              },
+              "TrunkThresholds": {
+                "type": "object",
+                "properties": {
+                  "warn_behind": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "At or past this many commits behind, the checkout is `lagging`: a warning."
+                  },
+                  "fail_behind": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "At or past this many commits behind, the checkout is `stale`: a failure."
+                  }
+                },
+                "description": "The thresholds `checkout.trunk_distance` declares, in commits behind the remote trunk.\nAbsent is absent: the reader supplies no default, and a distance with nothing to judge\nit against is reported as `unjudged`.\n\n```\nuse majordomus_cli::worktree::trunk::TrunkThresholds;\nlet t: TrunkThresholds = serde_json::from_str(r#\"{\"warn_behind\": 50, \"fail_behind\": 300}\"#).unwrap();\nassert_eq!((t.warn_behind, t.fail_behind), (Some(50), Some(300)));\nassert_eq!(TrunkThresholds::default().warn_behind, None, \"absent is not a default\");\n```"
               }
             }
           }
@@ -81911,6 +82269,248 @@
           "worktree",
           "git",
           "topology",
+          "introspection"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/worktree.rs"
+      },
+      {
+        "id": "worktree.trunk",
+        "module": "worktree",
+        "kind": "query",
+        "title": "How far a checkout is from the remote trunk",
+        "description": "The checkout's `HEAD` and the local trunk branch, each counted against the remote-tracking trunk — commits behind and ahead, a merge in progress counting what it brings in — as of the last fetch, whose time is part of the answer; judged against the policy's `checkout.trunk_distance` as `current`, `lagging`, `stale`, `unjudged` (no threshold declared) or `unmeasured` (no remote trunk), with the commands that bring it current. What doctor renders and what `server.status` and the MCP instructions say about the tree a server serves (`project.a-checkout-serves-the-current-trunk`). Fetches nothing and writes nothing.",
+        "input": {
+          "name": "StatusInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "path": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "A directory inside one of this repository's worktrees; the answer is about that\nworktree. Relative to the primary checkout when relative (`.` is the primary\ncheckout itself). Default: the repository the server was started for. A path in\nanother repository is refused: the topology answers only about its own."
+              }
+            },
+            "description": "Where to answer from.",
+            "title": "StatusInput"
+          }
+        },
+        "output": {
+          "name": "TrunkDistance",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "standing": {
+                "$ref": "#/$defs/TrunkStanding",
+                "description": "Where the checkout stands: its `HEAD` — with the commit a merge in progress brings\nin — judged against the thresholds. This is what its server serves."
+              },
+              "local_trunk_standing": {
+                "$ref": "#/$defs/TrunkStanding",
+                "description": "Where the local trunk branch stands, judged the same way: what a branch made from it\nstarts from. The same as `standing` when the checkout holds the trunk."
+              },
+              "worktree": {
+                "type": "string",
+                "description": "The work tree measured."
+              },
+              "on_trunk": {
+                "type": "boolean",
+                "description": "The work tree holds the trunk branch itself."
+              },
+              "trunk": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The trunk branch, short."
+              },
+              "remote_trunk": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The remote-tracking trunk counted against (`origin/master`)."
+              },
+              "remote_head": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The commit the remote-tracking trunk names."
+              },
+              "checkout": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/Distance"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "The checkout's `HEAD` against the remote trunk. While a merge is in progress, the\ncommits it brings in count as present: the commit being made will hold them, so the\nmerge that brings a checkout current is never judged by the tree it is replacing."
+              },
+              "local_trunk": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/Distance"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "The local trunk branch against the remote trunk: what a branch made from the local\ntrunk starts from."
+              },
+              "fetched_at": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "When the repository last fetched (the time of `FETCH_HEAD`), RFC 3339: the moment\nthis answer is true as of. Absent when it never fetched."
+              },
+              "thresholds": {
+                "$ref": "#/$defs/TrunkThresholds",
+                "description": "The thresholds judged against, as `checkout.trunk_distance` declares them."
+              },
+              "message": {
+                "type": "string",
+                "description": "What the standing means here, in one line."
+              },
+              "remedy": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The commands that bring the checkout and the local trunk current, when either is\nbehind. Suggested, never run."
+              }
+            },
+            "required": [
+              "standing",
+              "local_trunk_standing",
+              "worktree",
+              "on_trunk",
+              "thresholds",
+              "message"
+            ],
+            "description": "A checkout's distance from the remote trunk, judged.",
+            "title": "TrunkDistance",
+            "$defs": {
+              "TrunkStanding": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "current",
+                    "description": "Behind by less than the warn threshold, or not behind at all."
+                  },
+                  {
+                    "type": "string",
+                    "const": "lagging",
+                    "description": "At or past the warn threshold: what it serves is old enough to mislead."
+                  },
+                  {
+                    "type": "string",
+                    "const": "stale",
+                    "description": "At or past the fail threshold: what it serves is the wrong tree."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unjudged",
+                    "description": "Behind, and the policy declares no threshold to judge the distance by."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unmeasured",
+                    "description": "The distance could not be measured: no trunk, no remote-tracking trunk, no `HEAD`."
+                  }
+                ],
+                "description": "Where a checkout stands against the remote trunk."
+              },
+              "Distance": {
+                "type": "object",
+                "properties": {
+                  "behind": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Commits of the remote trunk this ref lacks."
+                  },
+                  "ahead": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Commits of this ref the remote trunk lacks."
+                  }
+                },
+                "required": [
+                  "behind",
+                  "ahead"
+                ],
+                "description": "How many commits two refs have that the other lacks.\n\n```\nuse majordomus_cli::worktree::trunk::Distance;\nlet d = Distance { behind: 779, ahead: 0 };\nassert_eq!(serde_json::to_value(d).unwrap(), serde_json::json!({\"behind\": 779, \"ahead\": 0}));\n```"
+              },
+              "TrunkThresholds": {
+                "type": "object",
+                "properties": {
+                  "warn_behind": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "At or past this many commits behind, the checkout is `lagging`: a warning."
+                  },
+                  "fail_behind": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "At or past this many commits behind, the checkout is `stale`: a failure."
+                  }
+                },
+                "description": "The thresholds `checkout.trunk_distance` declares, in commits behind the remote trunk.\nAbsent is absent: the reader supplies no default, and a distance with nothing to judge\nit against is reported as `unjudged`.\n\n```\nuse majordomus_cli::worktree::trunk::TrunkThresholds;\nlet t: TrunkThresholds = serde_json::from_str(r#\"{\"warn_behind\": 50, \"fail_behind\": 300}\"#).unwrap();\nassert_eq!((t.warn_behind, t.fail_behind), (Some(50), Some(300)));\nassert_eq!(TrunkThresholds::default().warn_behind, None, \"absent is not a default\");\n```"
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::worktree"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_worktree_trunk"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/worktrees/trunk"
+          },
+          "cli": {
+            "path": [
+              "worktree",
+              "trunk"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "worktree",
+          "git",
+          "freshness",
           "introspection"
         ],
         "benchmark": {
@@ -83365,7 +83965,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 180,
+        "capabilities": 181,
         "capability_ids": []
       },
       {
@@ -83509,7 +84109,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 500,
+        "capabilities": 501,
         "capability_ids": []
       },
       {
@@ -83587,12 +84187,13 @@
         "description": "Where every linked git worktree of this repository belongs and where each one is. The container is the primary checkout's sibling named with `-wt`, the path under it is the branch name with its hierarchy kept, and both are derived from git's own identity — the common directory, the registered worktrees, the branches — never from a registry, a configuration or the current directory. A worktree somewhere else is a typed diagnostic with a remedy; the migration that repairs it is a command-line operation of the same service.",
         "stability": "behaviorally_verified",
         "source": "builtin",
-        "capabilities": 5,
+        "capabilities": 6,
         "capability_ids": [
           "worktree.inspect",
           "worktree.migration_plan",
           "worktree.status",
           "worktree.topology",
+          "worktree.trunk",
           "worktree.uncommitted"
         ],
         "source_path": "apps/majordomus-cli/src/capability/builtin/worktree.rs"
@@ -83600,7 +84201,7 @@
     ]
   },
   "index": {
-    "fingerprint": "d145fb9a0df194ae88563f0ac078bcdc65ec3e4202c2c15329351b61177ace6a",
+    "fingerprint": "330280c65b62fff7cba869bac780db47db5e9d906ba9eca88747439c4e073be0",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -83649,12 +84250,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 27,
-      "rule": 180,
+      "rule": 181,
       "scope": 1,
       "session": 89,
       "skill": 8,
       "taxonomy": 10,
-      "test": 500,
+      "test": 501,
       "use-case": 49,
       "workspace": 1
     },
@@ -89947,7 +90548,7 @@
         "title": "Worktrees",
         "path": "docs/WORKTREES.md",
         "source_class": "document",
-        "bytes": 35279
+        "bytes": 38965
       },
       {
         "uri": "majordomus://document/docs/claims/a-candidate-is-routed-by-what-it-is-about.md",
@@ -92907,7 +93508,7 @@
         "identity": "lib/doctor.sh",
         "path": "lib/doctor.sh",
         "source_class": "library",
-        "bytes": 94056
+        "bytes": 97209
       },
       {
         "uri": "majordomus://implementation/lib/doctrine.sh",
@@ -98694,7 +99295,7 @@
         "path": ".ai/repo/policy.yaml",
         "section": "policy",
         "source_class": "policy",
-        "bytes": 22977
+        "bytes": 23986
       },
       {
         "uri": "majordomus://profile/debugging",
@@ -99989,6 +100590,25 @@
           "shell",
           "build",
           "worktrees"
+        ]
+      },
+      {
+        "uri": "majordomus://rule/project.a-checkout-serves-the-current-trunk@1",
+        "kind": "rule",
+        "identity": "project.a-checkout-serves-the-current-trunk@1",
+        "title": "A checkout serves the current trunk, and says how far it is from it",
+        "description": "Every checkout's distance from the remote trunk — its HEAD and its local trunk branch, each counted against the remote-tracking trunk as of the last fetch — is derived from git on every reading and reported by `worktree status`, by the shared server's `server.status`, by the MCP initialize instructions and by doctor, judged against the thresholds the policy declares under `checkout.trunk_distance`; a stale checkout fails doctor and with it the commit hook, so no checkout serves a tree that is no longer the trunk in silence.",
+        "path": ".ai/repo/rules/project/a-checkout-serves-the-current-trunk.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 5933,
+        "tags": [
+          "git",
+          "worktree",
+          "coordination",
+          "server",
+          "freshness",
+          "agents"
         ]
       },
       {
@@ -104851,6 +105471,14 @@
         "bytes": 6660
       },
       {
+        "uri": "majordomus://test/test/cases/3176_a_checkout_serves_the_current_trunk.sh",
+        "kind": "test",
+        "identity": "test/cases/3176_a_checkout_serves_the_current_trunk.sh",
+        "path": "test/cases/3176_a_checkout_serves_the_current_trunk.sh",
+        "source_class": "case",
+        "bytes": 9777
+      },
+      {
         "uri": "majordomus://test/test/cases/318_a_partial_sweep_says_so.sh",
         "kind": "test",
         "identity": "test/cases/318_a_partial_sweep_says_so.sh",
@@ -107966,7 +108594,7 @@
         "id",
         "version"
       ],
-      "objects": 180
+      "objects": 181
     },
     {
       "name": "scope",
@@ -108021,7 +108649,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 500
+      "objects": 501
     },
     {
       "name": "use-case",
@@ -120183,6 +120811,118 @@
                 "command": "majordomus worktree uncommitted",
                 "setup": [],
                 "expectation": "exits 0; prints 0 with uncommitted work, nothing was changed"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "worktree",
+              "trunk"
+            ],
+            "route": "/docs/cli/worktree/trunk/",
+            "executable": true,
+            "usage": "majordomus worktree trunk [OPTIONS]",
+            "about": "How far this checkout and the local trunk are from the remote trunk, as of the last fetch, judged against the policy's checkout.trunk_distance: current, lagging, stale, unjudged or unmeasured, with the commands that bring it current. Fetches nothing; exit 10 when stale",
+            "args": [
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "worktree-trunk-unmeasured",
+                "title": "How far this checkout is from the remote trunk",
+                "description": "The checkout's HEAD and the local trunk counted against the remote-tracking trunk, as of the last fetch, and judged against the policy's checkout.trunk_distance. A repository with no remote has nothing to be measured against and says so — `unmeasured`, never `current`; nothing is fetched either way.",
+                "argv": [
+                  "worktree",
+                  "trunk"
+                ],
+                "command": "majordomus worktree trunk",
+                "setup": [],
+                "expectation": "exits 0; prints unmeasured, no remote-tracking branch"
               }
             ],
             "subcommands": []
@@ -142973,7 +143713,7 @@
         "name": "majordomus_server",
         "id": "server.status",
         "title": "The shared server, and every server of the repository",
-        "description": "Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; the lease this process holds when it is the server; and, unless `checkouts` narrows it to this one, every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. `checkouts: this` reads one lease and probes one server and enumerates no other checkout, which is what a caller asking only about the checkout it is in should pay. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes.",
+        "description": "Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; how far the tree it serves is from the remote trunk (`trunk`: current, lagging, stale, unjudged or unmeasured against the policy's `checkout.trunk_distance`, as of the last fetch); the lease this process holds when it is the server; and, unless `checkouts` narrows it to this one, every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. `checkouts: this` reads one lease and probes one server and enumerates no other checkout, which is what a caller asking only about the checkout it is in should pay. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes.",
         "kind": "query",
         "read_only": true,
         "effect": "read",
@@ -143325,6 +144065,23 @@
         },
         "input": "Empty",
         "output": "RepositoryTopology"
+      },
+      {
+        "name": "majordomus_worktree_trunk",
+        "id": "worktree.trunk",
+        "title": "How far a checkout is from the remote trunk",
+        "description": "The checkout's `HEAD` and the local trunk branch, each counted against the remote-tracking trunk — commits behind and ahead, a merge in progress counting what it brings in — as of the last fetch, whose time is part of the answer; judged against the policy's `checkout.trunk_distance` as `current`, `lagging`, `stale`, `unjudged` (no threshold declared) or `unmeasured` (no remote trunk), with the commands that bring it current. What doctor renders and what `server.status` and the MCP instructions say about the tree a server serves (`project.a-checkout-serves-the-current-trunk`). Fetches nothing and writes nothing.",
+        "kind": "query",
+        "read_only": true,
+        "effect": "read",
+        "hints": {
+          "read_only": true,
+          "destructive": false,
+          "idempotent": true,
+          "open_world": false
+        },
+        "input": "StatusInput",
+        "output": "TrunkDistance"
       },
       {
         "name": "majordomus_worktree_uncommitted",
@@ -144909,6 +145666,12 @@
         "method": "GET",
         "path": "/api/v1/worktrees",
         "id": "worktree.topology",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/worktrees/trunk",
+        "id": "worktree.trunk",
         "kind": "query"
       },
       {
@@ -151893,6 +152656,64 @@
         "route": "GET /api/v1/worktrees"
       },
       {
+        "key": "worktree.trunk|direct|default",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "worktree.trunk",
+        "module": "worktree",
+        "case": "default",
+        "cached": false
+      },
+      {
+        "key": "worktree.trunk|direct|primary-checkout",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "worktree.trunk",
+        "module": "worktree",
+        "case": "primary-checkout",
+        "cached": false
+      },
+      {
+        "key": "worktree.trunk|mcp|default",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "worktree.trunk",
+        "module": "worktree",
+        "case": "default",
+        "cached": false,
+        "tool": "majordomus_worktree_trunk"
+      },
+      {
+        "key": "worktree.trunk|mcp|primary-checkout",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "worktree.trunk",
+        "module": "worktree",
+        "case": "primary-checkout",
+        "cached": false,
+        "tool": "majordomus_worktree_trunk"
+      },
+      {
+        "key": "worktree.trunk|http|default",
+        "kind": "capability",
+        "transport": "http",
+        "id": "worktree.trunk",
+        "module": "worktree",
+        "case": "default",
+        "cached": false,
+        "route": "GET /api/v1/worktrees/trunk"
+      },
+      {
+        "key": "worktree.trunk|http|primary-checkout",
+        "kind": "capability",
+        "transport": "http",
+        "id": "worktree.trunk",
+        "module": "worktree",
+        "case": "primary-checkout",
+        "cached": false,
+        "route": "GET /api/v1/worktrees/trunk"
+      },
+      {
         "key": "worktree.uncommitted|direct|policy-threshold",
         "kind": "capability",
         "transport": "direct",
@@ -156515,6 +157336,27 @@
           "cases": 1
         },
         {
+          "subject": "worktree.trunk",
+          "module": "worktree",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "worktree.trunk",
+          "module": "worktree",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "worktree.trunk",
+          "module": "worktree",
+          "transport": "http",
+          "state": "covered",
+          "cases": 2
+        },
+        {
           "subject": "worktree.uncommitted",
           "module": "worktree",
           "transport": "direct",
@@ -156636,22 +157478,22 @@
       ],
       "tallies": {
         "direct": {
-          "required": 202,
-          "covered": 171,
+          "required": 203,
+          "covered": 172,
           "missing": 0,
           "waived": 31,
           "inapplicable": 0
         },
         "http": {
-          "required": 197,
-          "covered": 171,
+          "required": 198,
+          "covered": 172,
           "missing": 0,
           "waived": 26,
           "inapplicable": 0
         },
         "mcp": {
-          "required": 192,
-          "covered": 167,
+          "required": 193,
+          "covered": 168,
           "missing": 0,
           "waived": 25,
           "inapplicable": 0
@@ -156664,8 +157506,8 @@
           "inapplicable": 0
         },
         "total": {
-          "required": 605,
-          "covered": 523,
+          "required": 608,
+          "covered": 526,
           "missing": 0,
           "waived": 82,
           "inapplicable": 0

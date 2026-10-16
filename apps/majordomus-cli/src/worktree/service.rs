@@ -753,7 +753,19 @@ impl WorktreeService {
             worktree,
             canonical,
             repository_errors: topology.tallies.errors,
+            trunk_distance: self.trunk_distance(),
         })
+    }
+
+    /// How far the work tree this call came from, and the local trunk, are from the remote
+    /// trunk, judged against the thresholds its policy declares. Reads git, fetches nothing.
+    pub fn trunk_distance(&self) -> super::trunk::TrunkDistance {
+        let here = &self.identity.current_worktree().path;
+        super::trunk::measure(
+            &self.identity,
+            here,
+            super::trunk::TrunkThresholds::declared_at(here),
+        )
     }
 
     /// The guard: may a mutation proceed from the work tree this call came from?

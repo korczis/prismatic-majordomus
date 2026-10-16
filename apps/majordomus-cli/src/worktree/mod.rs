@@ -57,6 +57,7 @@ pub(crate) mod service;
 pub mod state;
 pub(crate) mod topology;
 pub(crate) mod trace;
+pub mod trunk;
 pub mod uncommitted;
 
 pub use direnv::EnvrcApproval;
@@ -79,6 +80,7 @@ pub use trace::{
     first_merge, parse_commit, parse_issue_refs, Attribution, BranchTrace, CommitAttribution,
     CommitRef, Integration, IssueTrace, TraceReport, TraceTallies, Tracer,
 };
+pub use trunk::{Distance, TrunkDistance, TrunkStanding, TrunkThresholds};
 pub use uncommitted::{
     OpenEpisode, Threshold, UncommittedReport, UncommittedTallies, UncommittedWorktree,
     WorkStanding,
