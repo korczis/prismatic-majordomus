@@ -582,7 +582,11 @@ record a crate test reads (a skill, a rule, a claim, the quality baseline, a pla
 the crate tests that open this repository itself (`tests/skills.rs`, `tests/quality.rs` and
 their siblings) and the `intent-check` gate, although no Rust moved. An active skill missing
 from the header of `tests/skills.rs` or from case 391 is refused in the structure job by the
-`skill-naming` gate.
+`skill-naming` gate, and a case that names the release record without being run by the
+`release-record-cases` gate by the `release-record-listing` gate. A change that adds or
+widens an exported Rust item owes `scripts/rust-check --quality` before it is pushed: the
+`rust-quality` gate's report, on the author's machine, with the finding the structure job
+would print; two implementations of 2026-10-14 met that gate only in the structure job.
 
 A red on the trunk has one carrier, named by the integrator. A second session that builds the
 same fix costs a disk and lands nothing sooner.

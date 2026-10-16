@@ -341,6 +341,11 @@ pub const LOCAL: &[LocalCommand] = &[
         note: "prints the derive-offload declaration, the object objects.get serves as majordomus://derive-offload/<id>, with its defaults filled in.",
     },
     LocalCommand {
+        command: "guard hook",
+        reason: LocalReason::RendersCapability("guard.edit"),
+        note: "answers guard.edit for the path a provider's pre-tool payload on stdin names, without building the index because it runs before every edit, and says the answer as the exit code the provider reads: 2 refuses the tool.",
+    },
+    LocalCommand {
         command: "mesh status",
         reason: LocalReason::RendersCapability("mesh.status"),
         note: "asks this checkout's running server for mesh.status and renders it: the mesh lives in the server's memory, so an in-process answer would truthfully say only that this process runs no mesh.",

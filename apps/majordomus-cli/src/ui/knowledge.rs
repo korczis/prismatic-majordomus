@@ -282,7 +282,7 @@ mod tests {
             source,
             route: None,
             exposure: Default::default(),
-            value: Ok(value),
+            value: Ok(value.into()),
             took: std::time::Duration::ZERO,
             standing: Standing::NOW,
         }

@@ -426,11 +426,18 @@ pub fn text(entry: &Value, key: &str) -> String {
 
 /// The list at `pointer` in an answer, or none.
 pub fn list(answer: &Answer, pointer: &str) -> Vec<Value> {
+    items(answer, pointer).to_vec()
+}
+
+/// The list at `pointer` in an answer, borrowed, or none: what a screen that only reads the
+/// rows asks, so that a large answer (`capabilities.list` holds thousands) is not copied on
+/// every request.
+pub fn items<'a>(answer: &'a Answer, pointer: &str) -> &'a [Value] {
     answer
         .ok()
         .and_then(|v| v.pointer(pointer))
         .and_then(Value::as_array)
-        .cloned()
+        .map(Vec::as_slice)
         .unwrap_or_default()
 }
 
@@ -729,7 +736,7 @@ mod tests {
             source: Source::of("plan.status"),
             route: Some("GET /api/v1/plan/status".into()),
             exposure: Exposure::default(),
-            value,
+            value: value.map(Into::into),
             took: Duration::from_millis(5),
             standing: crate::ui::source::Standing::NOW,
         }

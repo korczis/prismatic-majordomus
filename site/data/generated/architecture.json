@@ -933,11 +933,6 @@
     },
     {
       "source": "lib/common.sh",
-      "target": ".ai/local/state/current.yaml",
-      "kind": "reads"
-    },
-    {
-      "source": "lib/common.sh",
       "target": ".ai/manifest.yaml",
       "kind": "reads"
     },
@@ -1024,6 +1019,11 @@
     {
       "source": "lib/init.sh",
       "target": ".ai/local/state/open-questions.md",
+      "kind": "reads"
+    },
+    {
+      "source": "lib/init.sh",
+      "target": ".ai/repo/policy.yaml",
       "kind": "reads"
     },
     {
@@ -1364,6 +1364,11 @@
     {
       "source": "lib/common.sh",
       "target": "lib/changed.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/common.sh",
+      "target": "lib/rust_bin.sh",
       "kind": "sources"
     },
     {
@@ -1898,11 +1903,6 @@
     },
     {
       "source": "lib/init.sh",
-      "target": ".ai/repo/policy.yaml",
-      "kind": "uses"
-    },
-    {
-      "source": "lib/init.sh",
       "target": ".ai/repo/profiles/README.md",
       "kind": "uses"
     },
@@ -2203,6 +2203,11 @@
     },
     {
       "source": "lib/checkpoint.sh",
+      "target": ".ai/local/state/current.yaml",
+      "kind": "writes"
+    },
+    {
+      "source": "lib/common.sh",
       "target": ".ai/local/state/current.yaml",
       "kind": "writes"
     },

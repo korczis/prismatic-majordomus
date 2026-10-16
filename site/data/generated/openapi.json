@@ -65,11 +65,13 @@
     "op-executions-get": "docs/api/executions/",
     "op-executions-list": "docs/api/executions/",
     "op-executions-protocol": "docs/api/executions/",
+    "op-executions-report": "docs/api/executions/",
     "op-executions-start": "docs/api/executions/",
     "op-gates-completion": "docs/api/gates/",
     "op-gates-model": "docs/api/gates/",
     "op-graph-get": "docs/api/graph/",
     "op-graph-list": "docs/api/graph/",
+    "op-guard-edit": "docs/api/guard/",
     "op-health-live": "docs/api/health/",
     "op-health-ready": "docs/api/health/",
     "op-health-report": "docs/api/health/",
@@ -194,6 +196,7 @@
     "op-worktree-migration_plan": "docs/api/worktree/",
     "op-worktree-status": "docs/api/worktree/",
     "op-worktree-topology": "docs/api/worktree/",
+    "op-worktree-uncommitted": "docs/api/worktree/",
     "schema-ActiveTask": "docs/api/shared/",
     "schema-Actor": "docs/api/executions/",
     "schema-ActorKind": "docs/api/executions/",
@@ -458,6 +461,7 @@
     "schema-EconomicsVerdict": "docs/api/economics/",
     "schema-Edge": "docs/api/graph/",
     "schema-EdgeRule": "docs/api/devcontext/",
+    "schema-EditVerdict": "docs/api/guard/",
     "schema-EditorAdapter": "docs/api/editors/",
     "schema-EditorCapability": "docs/api/editors/",
     "schema-EditorDerivation": "docs/api/editors/",
@@ -583,6 +587,7 @@
     "schema-HistoryReport": "docs/api/commit/",
     "schema-Holding": "docs/api/convergence/",
     "schema-HoldingKind": "docs/api/convergence/",
+    "schema-HooksPath": "docs/api/worktree/",
     "schema-HttpExposure": "docs/api/capabilities/",
     "schema-HttpMethod": "docs/api/capabilities/",
     "schema-Identity": "docs/api/design/",
@@ -771,6 +776,7 @@
     "schema-ObservedDeployment": "docs/api/deploy/",
     "schema-ObservedDeployments": "docs/api/deploy/",
     "schema-ObservedRelease": "docs/api/deploy/",
+    "schema-OpenEpisode": "docs/api/worktree/",
     "schema-OpenSession": "docs/api/continuity/",
     "schema-OperationParity": "docs/api/quality/",
     "schema-Origin": "docs/api/repository/",
@@ -943,6 +949,8 @@
     "schema-ReleaseVersionReport": "docs/api/release/",
     "schema-ReleaseView": "docs/api/distribution/",
     "schema-ReleasesReport": "docs/api/distribution/",
+    "schema-ReportAnswer": "docs/api/executions/",
+    "schema-ReportInput": "docs/api/executions/",
     "schema-RepositoryEnvironment": "docs/api/environment/",
     "schema-RepositoryIdentity": "docs/api/environment/",
     "schema-RepositoryInfo": "docs/api/repository/",
@@ -1110,6 +1118,7 @@
     "schema-TestEvidence": "docs/api/evidence/",
     "schema-TestSubjects": "docs/api/rules/",
     "schema-ThemeView": "docs/api/design/",
+    "schema-Threshold": "docs/api/worktree/",
     "schema-Tier": "docs/api/devcontext/",
     "schema-TierRule": "docs/api/devcontext/",
     "schema-TierSpend": "docs/api/devcontext/",
@@ -1138,6 +1147,9 @@
     "schema-Trust": "docs/api/continuity/",
     "schema-TrustState": "docs/api/mesh/",
     "schema-UnattachedPrep": "docs/api/integration/",
+    "schema-UncommittedReport": "docs/api/worktree/",
+    "schema-UncommittedTallies": "docs/api/worktree/",
+    "schema-UncommittedWorktree": "docs/api/worktree/",
     "schema-UpstreamState": "docs/api/worktree/",
     "schema-UseCaseRef": "docs/api/product/",
     "schema-ValidationOutcome": "docs/api/reasoning/",
@@ -1151,6 +1163,7 @@
     "schema-ViolationCode": "docs/api/quality/",
     "schema-Vocabulary": "docs/api/obligations/",
     "schema-WaiverReason": "docs/api/capabilities/",
+    "schema-WorkStanding": "docs/api/worktree/",
     "schema-WorkflowCatalogue": "docs/api/environment/",
     "schema-WorkflowDescriptor": "docs/api/environment/",
     "schema-WorkflowEntrypoint": "docs/api/environment/",
@@ -1185,6 +1198,7 @@
     "tag-executions": "docs/api/executions/",
     "tag-gates": "docs/api/gates/",
     "tag-graph": "docs/api/graph/",
+    "tag-guard": "docs/api/guard/",
     "tag-health": "docs/api/health/",
     "tag-integration": "docs/api/integration/",
     "tag-intent_realization": "docs/api/intent-realization/",
@@ -1221,9 +1235,9 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 194,
-    "schemas": 967,
-    "tags": 57
+    "operations": 197,
+    "schemas": 977,
+    "tags": 58
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
   "errors": [
@@ -1252,7 +1266,7 @@
     "description": "The API reference, rendered from this document.",
     "url": "https://majordomus.dev/docs/api/"
   },
-  "generated_by": "majordomus-cli 0.26.0",
+  "generated_by": "majordomus-cli 0.27.0",
   "generator": "scripts/generate-site-data (scripts/lib/openapi-site.jq)",
   "info": {
     "contact_name": "Majordomus",
@@ -1261,7 +1275,7 @@
     "license": "MIT",
     "summary": "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.",
     "title": "Majordomus",
-    "version": "0.26.0"
+    "version": "0.27.0"
   },
   "infrastructure": [
     {
@@ -1379,11 +1393,13 @@
     "executions.get": "executions",
     "executions.list": "executions",
     "executions.protocol": "executions",
+    "executions.report": "executions",
     "executions.start": "executions",
     "gates.completion": "gates",
     "gates.model": "gates",
     "graph.get": "graph",
     "graph.list": "graph",
+    "guard.edit": "guard",
     "health.live": "health",
     "health.ready": "health",
     "health.report": "health",
@@ -1507,7 +1523,8 @@
     "worktree.inspect": "worktree",
     "worktree.migration_plan": "worktree",
     "worktree.status": "worktree",
-    "worktree.topology": "worktree"
+    "worktree.topology": "worktree",
+    "worktree.uncommitted": "worktree"
   },
   "openapi": "3.1.0",
   "schema": 1,
@@ -1776,6 +1793,7 @@
     "EconomicsVerdict": "economics",
     "Edge": "graph",
     "EdgeRule": "devcontext",
+    "EditVerdict": "guard",
     "EditorAdapter": "editors",
     "EditorCapability": "editors",
     "EditorDerivation": "editors",
@@ -1901,6 +1919,7 @@
     "HistoryReport": "commit",
     "Holding": "convergence",
     "HoldingKind": "convergence",
+    "HooksPath": "worktree",
     "HttpExposure": "capabilities",
     "HttpMethod": "capabilities",
     "Identity": "design",
@@ -2089,6 +2108,7 @@
     "ObservedDeployment": "deploy",
     "ObservedDeployments": "deploy",
     "ObservedRelease": "deploy",
+    "OpenEpisode": "worktree",
     "OpenSession": "continuity",
     "OperationParity": "quality",
     "Origin": "repository",
@@ -2261,6 +2281,8 @@
     "ReleaseVersionReport": "release",
     "ReleaseView": "distribution",
     "ReleasesReport": "distribution",
+    "ReportAnswer": "executions",
+    "ReportInput": "executions",
     "RepositoryEnvironment": "environment",
     "RepositoryIdentity": "environment",
     "RepositoryInfo": "repository",
@@ -2428,6 +2450,7 @@
     "TestEvidence": "evidence",
     "TestSubjects": "rules",
     "ThemeView": "design",
+    "Threshold": "worktree",
     "Tier": "devcontext",
     "TierRule": "devcontext",
     "TierSpend": "devcontext",
@@ -2456,6 +2479,9 @@
     "Trust": "continuity",
     "TrustState": "mesh",
     "UnattachedPrep": "integration",
+    "UncommittedReport": "worktree",
+    "UncommittedTallies": "worktree",
+    "UncommittedWorktree": "worktree",
     "UpstreamState": "worktree",
     "UseCaseRef": "product",
     "ValidationOutcome": "reasoning",
@@ -2469,6 +2495,7 @@
     "ViolationCode": "quality",
     "Vocabulary": "obligations",
     "WaiverReason": "capabilities",
+    "WorkStanding": "worktree",
     "WorkflowCatalogue": "environment",
     "WorkflowDescriptor": "environment",
     "WorkflowEntrypoint": "environment",
@@ -2624,6 +2651,13 @@
           "refs": [],
           "required": false,
           "type": "string | null"
+        },
+        {
+          "description": "The process that ran it, for an execution another process ran and reported to this\none: the work happened there, and this process holds what it was told about it.",
+          "name": "pid",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
         }
       ],
       "type": "object",
@@ -2655,7 +2689,7 @@
           "value": "mcp"
         },
         {
-          "description": "The command line of this process.",
+          "description": "A command line: this process's own, or `majordomus run` in another process of the\nsame checkout that reported its execution to this server, with its pid.",
           "value": "cli"
         },
         {
@@ -14450,6 +14484,7 @@
       "used_by": [],
       "used_by_schemas": [
         "MigrationStep",
+        "UncommittedWorktree",
         "WorktreeState"
       ],
       "values": [],
@@ -17244,6 +17279,56 @@
       "variants": []
     },
     {
+      "description": "The answer to one edit: whether it may proceed, the one word it was decided on, the\nsentence a person reads and, for a refusal, what would allow it. `guard.edit` returns it\nas it is; `guard hook` turns it into an exit code.\n\n```\nuse majordomus_cli::guard::{judge_facts, ClaimSource, EditFacts, EditVerdict};\n\nlet facts = EditFacts {\n    required: Ok(false),\n    mesh_enabled: true,\n    task: None,\n    session: None,\n    claims: ClaimSource::Claims(vec![]),\n};\nlet v: EditVerdict = judge_facts(\"a.md\", Some(\"a.md\"), facts);\nassert!(v.allowed);\nassert_eq!(v.ground, \"off\");\nlet json = serde_json::to_value(&v).unwrap();\nassert!(json.get(\"remedy\").is_none(), \"an allowed edit carries no remedy\");\n```",
+      "home": "guard",
+      "is_enum": false,
+      "name": "EditVerdict",
+      "properties": [
+        {
+          "description": "Whether the edit may proceed.",
+          "name": "allowed",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The path asked about, repository-relative when it is inside the checkout.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Why, as one word: `off`, `outside`, `local`, `no_mesh`, `task`, `claim`,\n`undecided` or `unclaimed`. Only `unclaimed` refuses.",
+          "name": "ground",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The sentence a person reads.",
+          "name": "detail",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What makes the edit allowed, when it is refused.",
+          "name": "remedy",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "guard.edit"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One adapter: the product, the version its claims were verified against, its capabilities.",
       "home": "editors",
       "is_enum": false,
@@ -18917,11 +19002,13 @@
         "executions.events",
         "executions.get",
         "executions.protocol",
+        "executions.report",
         "executions.start",
         "gates.model",
         "gates.completion",
         "graph.get",
         "graph.list",
+        "guard.edit",
         "health.report",
         "intents.list",
         "intents.binding",
@@ -19044,7 +19131,8 @@
         "worktree.topology",
         "worktree.inspect",
         "worktree.migration_plan",
-        "worktree.status"
+        "worktree.status",
+        "worktree.uncommitted"
       ],
       "used_by_schemas": [],
       "values": [],
@@ -20549,7 +20637,8 @@
       "type": "one of 12 variants",
       "used_by": [],
       "used_by_schemas": [
-        "EventHistory"
+        "EventHistory",
+        "ReportInput"
       ],
       "values": [],
       "variants": [
@@ -21231,7 +21320,8 @@
       ],
       "used_by_schemas": [
         "CancelReport",
-        "ExecutionList"
+        "ExecutionList",
+        "ReportAnswer"
       ],
       "values": [],
       "variants": []
@@ -24301,6 +24391,148 @@
         }
       ],
       "variants": []
+    },
+    {
+      "description": "What became of the hooks directory of a worktree that was just created, found or moved.\n\nIt travels in the JSON of `worktree create`, `ensure`, `migrate` and `repair`, tagged by\n`outcome`, so a reader branches on one word rather than parsing the line:\n\n```\nuse majordomus_cli::worktree::HooksPath;\n\nlet set = HooksPath::Set {\n    path: \"/r-wt/fix/x/.githooks\".into(),\n    enabled: vec![],\n};\nlet json = serde_json::to_value(&set).unwrap();\nassert_eq!(json[\"outcome\"], \"set\");\nassert_eq!(json[\"path\"], \"/r-wt/fix/x/.githooks\");\nlet back: HooksPath = serde_json::from_value(json).unwrap();\nassert_eq!(back, set);\n```",
+      "home": "worktree",
+      "is_enum": false,
+      "name": "HooksPath",
+      "properties": [],
+      "type": "one of 6 variants",
+      "used_by": [],
+      "used_by_schemas": [
+        "MigrationStep"
+      ],
+      "values": [],
+      "variants": [
+        {
+          "description": "The repository's configuration sets no `core.hooksPath`: git's own hooks directory\nin the common directory (or a value of the user's) serves every worktree, and there\nis no tracked directory to follow.",
+          "properties": [
+            {
+              "description": "",
+              "name": "outcome",
+              "refs": [],
+              "required": true,
+              "type": "\"not_configured\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "Git already resolves this worktree's hooks to its own directory; nothing was set.",
+          "properties": [
+            {
+              "description": "The directory git runs the hooks from.",
+              "name": "path",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "",
+              "name": "outcome",
+              "refs": [],
+              "required": true,
+              "type": "\"own\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "This worktree's `core.hooksPath` was set, per worktree, to its own directory.",
+          "properties": [
+            {
+              "description": "The directory it now runs the hooks from.",
+              "name": "path",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "Repository settings switched on so that a per-worktree value is honoured, as\n`key=value`; empty when they were on already.",
+              "name": "enabled",
+              "refs": [],
+              "required": true,
+              "type": "array of string"
+            },
+            {
+              "description": "",
+              "name": "outcome",
+              "refs": [],
+              "required": true,
+              "type": "\"set\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "The hooks directory is outside the primary checkout — one directory shared on\npurpose — and every worktree runs it; nothing was set.",
+          "properties": [
+            {
+              "description": "The directory every worktree runs the hooks from.",
+              "name": "path",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "",
+              "name": "outcome",
+              "refs": [],
+              "required": true,
+              "type": "\"shared\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "The primary checkout's hooks directory has no counterpart in this worktree's tree,\nso the worktree keeps running the primary's: pointing it at a directory that does\nnot exist would switch its hooks off.",
+          "properties": [
+            {
+              "description": "The directory that would be the worktree's own, and is not there.",
+              "name": "missing",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "The directory the worktree runs the hooks from instead.",
+              "name": "runs",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "",
+              "name": "outcome",
+              "refs": [],
+              "required": true,
+              "type": "\"untracked\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "Git was asked and refused, or could not be run; the message is its own.",
+          "properties": [
+            {
+              "description": "What went wrong.",
+              "name": "message",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "",
+              "name": "outcome",
+              "refs": [],
+              "required": true,
+              "type": "\"failed\""
+            }
+          ],
+          "type": "object"
+        }
+      ]
     },
     {
       "description": "How a capability appears over HTTP. `GET` binds every top-level input property as a\nquery parameter; `POST` binds the input as the JSON request body. Paths are absolute\nand live under `HttpExposure::PREFIX`.",
@@ -31986,6 +32218,15 @@
           ],
           "required": false,
           "type": "EnvrcApproval | null"
+        },
+        {
+          "description": "Which hooks it runs at its new path: a per-worktree `core.hooksPath` names the old\none, so a moved worktree is bound again to its own tree's (I2718). Only on a moved\nstep.",
+          "name": "hooks",
+          "refs": [
+            "HooksPath"
+          ],
+          "required": false,
+          "type": "HooksPath | null"
         }
       ],
       "type": "object",
@@ -34666,6 +34907,42 @@
       "used_by": [],
       "used_by_schemas": [
         "ObservedDeployments"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "An open episode in a work tree, as far as holding its work goes: it holds the work only\nwhile `stranded` is `Some(false)`; a stranded or unjudgeable one holds nothing.\n\n```\nuse majordomus_cli::worktree::OpenEpisode;\nlet unjudged = OpenEpisode {\n    id: \"s-20260101000000-0a0a\".into(),\n    last_sign_of_life: None,\n    stranded: None,\n};\nlet wire = serde_json::to_value(&unjudged).unwrap();\nassert!(wire.get(\"stranded\").is_none(), \"what could not be judged is absent, not false\");\nlet back: OpenEpisode = serde_json::from_value(wire).unwrap();\nassert_eq!(back, unjudged);\n```",
+      "home": "worktree",
+      "is_enum": false,
+      "name": "OpenEpisode",
+      "properties": [
+        {
+          "description": "The episode.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its newest sign of life, RFC 3339 in UTC.",
+          "name": "last_sign_of_life",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Silent longer than the threshold. Absent when that cannot be judged — no threshold,\nor no readable sign of life — and then it holds nothing.",
+          "name": "stranded",
+          "refs": [],
+          "required": false,
+          "type": "boolean | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "UncommittedWorktree"
       ],
       "values": [],
       "variants": []
@@ -44671,6 +44948,117 @@
       "variants": []
     },
     {
+      "description": "The answer of `executions.report`.",
+      "home": "executions",
+      "is_enum": false,
+      "name": "ReportAnswer",
+      "properties": [
+        {
+          "description": "How many of the reported events were applied.",
+          "name": "applied",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The reporter's sequence this server holds everything up to: the next report sends\nthe events after it, so a lost or repeated report costs nothing.",
+          "name": "through",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Whether somebody asked this server to stop the execution. The reporter runs it, so\nthe reporter cancels it.",
+          "name": "cancel_requested",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The execution as this server now holds it.",
+          "name": "execution",
+          "refs": [
+            "ExecutionView"
+          ],
+          "required": true,
+          "type": "ExecutionView"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "executions.report"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The input of `executions.report`: what a process that runs an execution says about it to\nthe server serving the same checkout.",
+      "home": "executions",
+      "is_enum": false,
+      "name": "ReportInput",
+      "properties": [
+        {
+          "description": "The execution's id, as the reporting process minted it.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The capability it runs, by its canonical id.",
+          "name": "capability",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "That capability's title.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The input it was given, as the reporting process stored it: already redacted there,\nand redacted again here by this registry's schema when this registry knows it.",
+          "name": "input",
+          "refs": [],
+          "required": false,
+          "type": "any"
+        },
+        {
+          "description": "Whether the capability stops when asked. When it does, a cancel asked of this server\nreaches the reporter in the answer to its next report.",
+          "name": "cancellable",
+          "refs": [],
+          "required": false,
+          "type": "boolean"
+        },
+        {
+          "description": "The process that runs it.",
+          "name": "pid",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "Its events after the last sequence this server answered `through`, in its own\nsequence, oldest first; at most 500. Empty is a heartbeat.",
+          "name": "events",
+          "refs": [
+            "ExecutionEvent"
+          ],
+          "required": false,
+          "type": "array of ExecutionEvent"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "executions.report"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "The snapshot: what this checkout is, right now.\n\nEvery surface that reports any of this renders this value. Collections are in a\ndocumented, stable order — kinds and workflows by name, services and providers in the\norder their canonical source declares them, diagnostics in the order they were found —\nso that two snapshots of the same repository serialise identically apart from\n`RepositoryEnvironment::generated_at`.",
       "home": "environment",
       "is_enum": false,
@@ -53645,6 +54033,42 @@
       "variants": []
     },
     {
+      "description": "The age past which uncommitted work nothing holds is abandoned, and where it came from.\n\nIt is reported with every reading, so a reader can see what the verdicts were judged\nagainst; a threshold nothing declares is carried as absent, not filled in.\n\n```\nuse majordomus_cli::worktree::Threshold;\nlet declared = Threshold::resolve(Some(\"12h\"), None).unwrap();\nlet wire = serde_json::to_value(&declared).unwrap();\nassert_eq!(wire[\"declared\"], \"12h\");\nassert_eq!(wire[\"seconds\"], 43_200);\nlet absent: Threshold =\n    serde_json::from_value(serde_json::json!({\"source\": \"absent\"})).unwrap();\nassert_eq!((absent.declared, absent.seconds), (None, None), \"absent is not a default\");\n```",
+      "home": "worktree",
+      "is_enum": false,
+      "name": "Threshold",
+      "properties": [
+        {
+          "description": "The value as written (`12h`). Absent when nothing declares one.",
+          "name": "declared",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The same value, in seconds.",
+          "name": "seconds",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "`THRESHOLD_KEY`, `older_than` when the caller named one, or `absent`.",
+          "name": "source",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "UncommittedReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "Where an entry sits in the order the budget spends in.\n\nThe order is this repository's own: `lib/context.sh` assembles its sections \"in\nauthority order, highest first, because a worker that runs out of budget must lose the\nleast reliable evidence rather than the most: git, then the task and its policy, then\nblockers, then authored records, then event history.\" These six tiers are that\nsentence, applied to objects instead of to sections.\n\nThe derived `Ord` is load-bearing: the variants are declared in authority order, so\n`<` means \"spent before\" and \"harder to drop\", and the budget's ordering is a plain\n`sort` rather than a table mapping tiers to ranks. A variant added in the wrong place\nwould silently re-rank the whole answer, which is why the declaration order is the one\nthing about this enum to be careful with.\n\n```\nuse majordomus_cli::devcontext::Tier;\n\n// the declaration order *is* the order the budget spends in\nlet mut sorted = Tier::ORDER.to_vec();\nsorted.sort();\nassert_eq!(sorted, Tier::ORDER.to_vec());\n\n// so the strongest authority is the smallest, and it is the one never dropped\nassert_eq!(Tier::ORDER.iter().copied().min(), Some(Tier::Task));\nassert!(Tier::Task < Tier::Governance && Tier::Governance < Tier::History);\n\n// and the serialised word is the lowercase one the report is read under\nassert_eq!(\n    serde_json::to_value(Tier::Governance).unwrap(),\n    serde_json::json!(Tier::Governance.as_str()),\n);\n```",
       "home": "devcontext",
       "is_enum": true,
@@ -55275,6 +55699,238 @@
       "variants": []
     },
     {
+      "description": "Every linked work tree holding uncommitted work, with what holds it: the answer of\n`worktree.uncommitted` on every surface, and what `doctor` renders.\n\n```\nuse majordomus_cli::worktree::uncommitted::UNCOMMITTED_SCHEMA;\nuse majordomus_cli::worktree::{Threshold, UncommittedReport, WorktreeService};\nlet dir = tempfile::tempdir().unwrap();\nlet init = std::process::Command::new(\"git\")\n    .args([\"init\", \"-q\"])\n    .current_dir(dir.path())\n    .status()\n    .unwrap();\nassert!(init.success());\n// a repository with no linked work tree, and a policy that declares no threshold\nlet threshold = Threshold::resolve(None, None).unwrap();\nlet report: UncommittedReport =\n    WorktreeService::open(dir.path()).unwrap().uncommitted(&threshold).unwrap();\nassert_eq!(report.schema, UNCOMMITTED_SCHEMA);\nassert!(report.worktrees.is_empty());\nassert_eq!(report.tallies.measured, 0);\nassert_eq!(report.findings.len(), 1, \"a missing threshold is said, not assumed\");\n```",
+      "home": "worktree",
+      "is_enum": false,
+      "name": "UncommittedReport",
+      "properties": [
+        {
+          "description": "`UNCOMMITTED_SCHEMA`.",
+          "name": "schema",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "When the reading was taken, RFC 3339 in UTC.",
+          "name": "observed_at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The threshold it was judged against.",
+          "name": "threshold",
+          "refs": [
+            "Threshold"
+          ],
+          "required": true,
+          "type": "Threshold"
+        },
+        {
+          "description": "Every linked work tree with uncommitted work, abandoned first, then oldest first.",
+          "name": "worktrees",
+          "refs": [
+            "UncommittedWorktree"
+          ],
+          "required": true,
+          "type": "array of UncommittedWorktree"
+        },
+        {
+          "description": "The counts.",
+          "name": "tallies",
+          "refs": [
+            "UncommittedTallies"
+          ],
+          "required": true,
+          "type": "UncommittedTallies"
+        },
+        {
+          "description": "What could not be read or judged, in words.",
+          "name": "findings",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "worktree.uncommitted"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The counts of an `UncommittedReport`: how many linked work trees were read, how many\nhold uncommitted work, and how those split into held, recent and abandoned. The three\nstandings always add up to `uncommitted`; `doctor` reads `abandoned` to decide whether it\nhas anything to warn about.\n\n```\nuse majordomus_cli::worktree::UncommittedTallies;\nlet wire = serde_json::json!(\n    {\"measured\": 4, \"uncommitted\": 3, \"held\": 1, \"recent\": 1, \"abandoned\": 1}\n);\nlet t: UncommittedTallies = serde_json::from_value(wire.clone()).unwrap();\nassert_eq!(t.held + t.recent + t.abandoned, t.uncommitted);\nassert_eq!(serde_json::to_value(&t).unwrap(), wire, \"the shape doctor's jq reads\");\nassert_eq!(UncommittedTallies::default().abandoned, 0, \"nothing read, nothing abandoned\");\n```",
+      "home": "worktree",
+      "is_enum": false,
+      "name": "UncommittedTallies",
+      "properties": [
+        {
+          "description": "Linked work trees whose status was read.",
+          "name": "measured",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Of those, the ones holding uncommitted work: every entry of the listing.",
+          "name": "uncommitted",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Held by a task, an episode or a process.",
+          "name": "held",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Held by nothing, younger than the threshold.",
+          "name": "recent",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Held by nothing, older than the threshold.",
+          "name": "abandoned",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "UncommittedReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One linked work tree holding uncommitted work: how much, how old, what holds it, the\nverdict, and the command that would preserve it. A listing is in canonical order —\nabandoned first, then recent, then held, the oldest first inside each.\n\n```\nuse majordomus_cli::worktree::{DirtyState, UncommittedWorktree, WorkStanding};\nlet entry = |path: &str, standing: WorkStanding, age: u64| UncommittedWorktree {\n    path: path.into(),\n    branch: None,\n    label: path.into(),\n    work: DirtyState { staged: 1, ..DirtyState::default() },\n    paths: 1,\n    oldest_change: None,\n    age_seconds: Some(age),\n    age: None,\n    task: None,\n    episodes: Vec::new(),\n    process_inside: None,\n    held_by: Vec::new(),\n    standing,\n    remedy: String::new(),\n};\nlet mut listing = vec![\n    entry(\"/wt/held-old\", WorkStanding::Held, 900_000),\n    entry(\"/wt/young\", WorkStanding::Abandoned, 50_000),\n    entry(\"/wt/older\", WorkStanding::Abandoned, 90_000),\n];\nmajordomus_cli::order::canonical(&mut listing);\nlet paths: Vec<&str> = listing.iter().map(|w| w.path.as_str()).collect();\nassert_eq!(paths, [\"/wt/older\", \"/wt/young\", \"/wt/held-old\"]);\n```",
+      "home": "worktree",
+      "is_enum": false,
+      "name": "UncommittedWorktree",
+      "properties": [
+        {
+          "description": "Absolute, as git holds it.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The branch checked out there. Absent when detached.",
+          "name": "branch",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The branch, or `detached/<short commit>`.",
+          "name": "label",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The counts, as `worktree status` gives them.",
+          "name": "work",
+          "refs": [
+            "DirtyState"
+          ],
+          "required": true,
+          "type": "DirtyState"
+        },
+        {
+          "description": "Every changed path: staged, unstaged, untracked and conflicted together.",
+          "name": "paths",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "When the oldest change was made: the earliest modification time among the changed\npaths, the index file's standing in for a path that no longer exists. RFC 3339.",
+          "name": "oldest_change",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Seconds since then.",
+          "name": "age_seconds",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "The same, for a person (`3d`, `5h`, `40m`).",
+          "name": "age",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The active task recorded there.",
+          "name": "task",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The episodes open there.",
+          "name": "episodes",
+          "refs": [
+            "OpenEpisode"
+          ],
+          "required": true,
+          "type": "array of OpenEpisode"
+        },
+        {
+          "description": "A process has its working directory inside it. Absent when that could not be read.",
+          "name": "process_inside",
+          "refs": [],
+          "required": false,
+          "type": "boolean | null"
+        },
+        {
+          "description": "What holds it, in words; empty when nothing does.",
+          "name": "held_by",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The verdict.",
+          "name": "standing",
+          "refs": [
+            "WorkStanding"
+          ],
+          "required": true,
+          "type": "WorkStanding"
+        },
+        {
+          "description": "The command that would put this work on a remote ref. Suggested, never run.",
+          "name": "remedy",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "UncommittedReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "A branch's upstream and how far the two have moved apart, from `for-each-ref` in one\nsubprocess for every branch, never a fetch.",
       "home": "worktree",
       "is_enum": false,
@@ -55885,6 +56541,33 @@
         {
           "description": "The capability answers about what this repository has *published*, so its input is a\nrelease: a version tag, the commit it points at, and the projection committed there.\nA benchmark fixture is a repository that has published nothing, and the honest answer\nin one is a refusal — so the case would time an error path and call it coverage.\nDistinct from `WaiverReason::ExternalDependency`: nothing outside this process is\nconsulted, and distinct from `WaiverReason::TransientState`: the history is durable,\nit simply does not exist yet where the benchmark runs.",
           "value": "published_history"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "What a work tree's uncommitted work is, judged: held by something, recent, or abandoned.\n`judge` is the one place it is decided, and `doctor` warns only on `abandoned`.\n\n```\nuse majordomus_cli::worktree::uncommitted::{judge, WorkStanding};\nlet standing = judge(false, Some(90_000), Some(43_200));\nassert_eq!(standing, WorkStanding::Abandoned);\nassert_eq!(serde_json::to_value(standing).unwrap(), \"abandoned\");\n```",
+      "home": "worktree",
+      "is_enum": true,
+      "name": "WorkStanding",
+      "properties": [],
+      "type": "\"held\" | \"recent\" | \"abandoned\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "UncommittedWorktree"
+      ],
+      "values": [
+        {
+          "description": "A task, an episode or a process holds it.",
+          "value": "held"
+        },
+        {
+          "description": "Nothing holds it, and it is younger than the threshold.",
+          "value": "recent"
+        },
+        {
+          "description": "Nothing holds it, and it is older than the threshold — or its age cannot be read.",
+          "value": "abandoned"
         }
       ],
       "variants": []
@@ -60686,7 +61369,7 @@
       "slug": "evidence"
     },
     {
-      "description": "Running a capability of this registry as work that can be watched: started, followed event by event over the live channel, read back afterwards, and asked to stop. In memory; an execution does not outlive the process that accepted it.",
+      "description": "Running a capability of this registry as work that can be watched: started, followed event by event over the live channel, read back afterwards, and asked to stop. One plane per checkout: `majordomus run` executes in its own process and reports the execution to the server already serving the checkout, so that server lists it beside its own; with no server it says that nothing else can see the run. In memory; an execution does not outlive the server that holds it.",
       "name": "executions",
       "operations": [
         {
@@ -60698,7 +61381,7 @@
           "cache_detail": "",
           "cli": "executions list",
           "curl": "curl -s \"http://127.0.0.1:8741/api/v1/executions?limit=50\"",
-          "description": "Every execution this process remembers, newest first, narrowed by state or by capability. The counts beside them — remembered, active, queued, live channels — are what a control plane shows without asking a second question.",
+          "description": "Every execution this process remembers, newest first, narrowed by state or by capability: the ones it ran and the ones `majordomus run` in another process of the checkout reported to it, each with who started it. The counts beside them — remembered, active, queued, live channels — are what a control plane shows without asking a second question.",
           "home": "executions",
           "id": "executions.list",
           "kind": "query",
@@ -61114,6 +61797,65 @@
           "summary": "The live channel's contract"
         },
         {
+          "benchmark": "waived",
+          "benchmark_reason": "transient_state",
+          "body_examples": [],
+          "body_schema": "ReportInput",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s -X POST \"http://127.0.0.1:8741/api/v1/executions/report\" -H \"content-type: application/json\" -d '{}'",
+          "description": "What `majordomus run` posts while it runs a capability in its own process and a server already serves the checkout: the execution's description and its events after the last sequence this server took. The server holds it as an execution started by the command line, with the pid, in the same store, listing, Cockpit pages and live channel as its own; applies each event once and in order, answering where the next report starts; tells the reporter when somebody asked it to stop; and fails it with `unavailable` once the reporter has been silent for 30 s. Nothing runs here. Changes this process's memory only.",
+          "home": "executions",
+          "id": "executions.report",
+          "kind": "command",
+          "mcp_resource": "",
+          "mcp_tool": "",
+          "method": "POST",
+          "parameters": [],
+          "path": "/api/v1/executions/report",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::executions",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Report an execution another process runs: the result.",
+              "schema": "ReportAnswer",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`refused`: The command was understood and turned down for the reason the message gives.",
+              "schema": "ErrorBody",
+              "status": "422"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "ReportAnswer",
+          "stability": "behaviorally_verified",
+          "summary": "Report an execution another process runs"
+        },
+        {
           "benchmark": "required",
           "benchmark_reason": "",
           "body_examples": [
@@ -61127,7 +61869,7 @@
           "cache_detail": "",
           "cli": "run",
           "curl": "curl -s -X POST \"http://127.0.0.1:8741/api/v1/executions/start\" -H \"content-type: application/json\" -d '{\"capability\":\"executions.demonstrate\",\"input\":{\"steps\":1,\"delay_ms\":0}}'",
-          "description": "Run any executable capability of this registry as an execution: the input is checked against that capability's own input schema, the work is queued, and this answers at once with the execution's id and the links to follow it. Nothing waits for the handler. The capability runs through the same executor every other interface calls, so there is no second implementation of anything.",
+          "description": "Run any executable capability of this registry as an execution: the input is checked against that capability's own input schema, the work is queued, and this answers at once with the execution's id and the links to follow it. Nothing waits for the handler. The capability runs through the same executor every other interface calls, so there is no second implementation of anything. On the command line (`majordomus run`) it runs in that process and is reported to the server serving the checkout, when one is, through executions.report; a run never starts a server.",
           "home": "executions",
           "id": "executions.start",
           "kind": "command",
@@ -61499,6 +62241,96 @@
         }
       ],
       "slug": "graph"
+    },
+    {
+      "description": "Whether a write to a file of this checkout is covered by a claim: the active task's scope, or a live mesh claim of the writing session. The judgement a provider's pre-tool hook asks before every edit (majordomus guard hook), switched by session.edits_require_claim.",
+      "name": "guard",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/guard/edit?path=docs%2FMESH.md&session=claude-code-bench\"",
+          "description": "Whether the given session may write the given path now: allowed when the policy's session.edits_require_claim is off, the path is outside the checkout or its local state, the repository declares no enabled mesh, the active task's scope covers it, or a live mesh claim of the session covers it; refused as unclaimed otherwise, with the remedy. What cannot be read — the policy, the mesh — is let through and named, never refused.",
+          "home": "guard",
+          "id": "guard.edit",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_guard_edit",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "The path about to be written: absolute, or relative to the repository root.",
+              "examples": [
+                {
+                  "case": "in-repository",
+                  "value": "\"docs/MESH.md\""
+                },
+                {
+                  "case": "outside",
+                  "value": "\"/nonexistent/outside.txt\""
+                }
+              ],
+              "name": "path",
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "The writing session's id on the mesh (`claude-code-<session id>` for Claude Code);\nwithout it only the active task's scope can cover the write.",
+              "examples": [
+                {
+                  "case": "in-repository",
+                  "value": "\"claude-code-bench\""
+                }
+              ],
+              "name": "session",
+              "required": false,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/guard/edit",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::guard",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Judge one edit: the result.",
+              "schema": "EditVerdict",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "EditVerdict",
+          "stability": "experimental",
+          "summary": "Judge one edit"
+        }
+      ],
+      "slug": "guard"
     },
     {
       "description": "Whether what this process serves is healthy, decided by the engines that already decide it: the index's diagnostics, the registry builder, the benchmark projection's coverage, the comparison `generate --check` makes and the lease reading `server.status` answers from. No check here has an opinion of its own.",
@@ -70040,6 +70872,73 @@
           "result_schema": "StatusReport",
           "stability": "behaviorally_verified",
           "summary": "Where this is, and whether that is where it belongs"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "worktree uncommitted",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/worktrees/uncommitted?older_than=1h\"",
+          "description": "Every linked worktree whose index or working tree holds changes no commit carries: how many paths (staged, unstaged, untracked, conflicted), when the oldest change was made (the earliest modification time among the changed paths, the index file's standing in for a deleted one), and what holds the work — an active task record, an open episode that is not stranded, or a process whose working directory is inside. Work nothing holds and older than the threshold is `abandoned`, with the command that would put it on a remote `rescue/` ref; it is suggested, never run. The threshold is the policy's `session.stranded_after` unless `older_than` names another. Reads every worktree and writes none: every status runs without optional locks, so no index is refreshed.",
+          "home": "worktree",
+          "id": "worktree.uncommitted",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_worktree_uncommitted",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "The age past which work nothing holds is abandoned, as a person writes it (`90s`,\n`30m`, `12h`, `1d`). Default: the policy's `session.stranded_after`, which is also\nhow long an open episode may be silent and still hold the work.",
+              "examples": [
+                {
+                  "case": "one-hour",
+                  "value": "\"1h\""
+                }
+              ],
+              "name": "older_than",
+              "required": false,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/worktrees/uncommitted",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::worktree",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Uncommitted work in the linked worktrees, and what holds it: the result.",
+              "schema": "UncommittedReport",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "UncommittedReport",
+          "stability": "behaviorally_verified",
+          "summary": "Uncommitted work in the linked worktrees, and what holds it"
         }
       ],
       "slug": "worktree"

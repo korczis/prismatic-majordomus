@@ -708,11 +708,11 @@ mod tests {
             .collect();
         let ours: Vec<(String, String)> = SHAPES
             .iter()
-            .map(|s| (s.name.to_string(), ere(s.kept) + &ere(s.secret)))
+            .map(|s| (s.name.to_string(), ere(s.kept) + ere(s.secret).as_str()))
             .collect();
         assert_eq!(ours, table, "the port and lib/capture.sh's table disagree");
         assert_eq!(
-            ere(ASSIGNMENT.kept) + &ere(ASSIGNMENT.secret),
+            ere(ASSIGNMENT.kept) + ere(ASSIGNMENT.secret).as_str(),
             shell_value(&source, "MJ_CAPTURE_SECRET_ASSIGN")
         );
     }
