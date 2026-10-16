@@ -444,6 +444,12 @@ recorded forge observation and no running execution, so those panels read `none`
 or `not answered`, never zero. A snapshot is not evidence of the live state of anything: for
 that, run `majordomus serve` in a checkout and open `/ui`.
 
+**Evidence is the exception.** A Pages runner does have a record of the tests: the `evidence`
+artifact the validation of the same commit, or of its nearest ancestor, recorded. The snapshot
+job puts that run's ledger in place before the UI is read. A publication whose evidence screen
+would still show more claims as not run than the declared baseline is refused
+(`scripts/pages published-evidence`, rule `project.published-evidence-is-what-ci-recorded`).
+
 The directory declares itself (`surface.json`) as the surface `ui-snapshot`, mounted at `/ui`,
 `published-only`, built from the commit it was read at. A process serves the UI at `/ui` and a
 publication holds the snapshot there, and `majordomus web validate` holds both without a
