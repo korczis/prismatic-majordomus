@@ -37,6 +37,15 @@ validation:
 evidence_required:
   - "version_inferred_case"
 created_at: 2026-10-16
-updated_at: 2026-10-16T09:09:12Z
+updated_at: 2026-10-16T10:37:25Z
 started_at: 2026-10-16T09:09:12Z
 started_event: sha256:e2a06c398647712f5ec9c8207dae8d799371ed7874c63db4257be999abffe74b
+verified_at: 2026-10-16T10:37:25Z
+verified_event: sha256:8abfb0cd5776d9d966b0e77867485b03f6cdc794883c6a09a168ea549b5be633
+evidence:
+  - covers: version_inferred_case
+    type: test
+    command: "bash test/run.sh 3102_a_milestone_version_is_inferred 99_plan_capabilities 49_roadmap_doctrine 48_roadmap_graph 47_mutation"
+    result: "ok 3102, 99, 49, 48, 47 at f8fe9133238: a typed version is refused; released_in v0.26.0 -> unreleased on reopen -> v0.27.0 (rc tag ignored, later tag does not move it); open milestone unreleased; shell and executable agree (this repo M000/M001 v0.2.0)"
+    commit: f8fe913323851de2997b6f7159c9051fe7da337e
+    recorded_at: 2026-10-16T10:37:15Z
