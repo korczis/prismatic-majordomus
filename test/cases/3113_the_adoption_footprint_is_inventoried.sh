@@ -1,6 +1,6 @@
 # majordomus-covers: init update capture
 # What a default adoption leaves outside .ai/ and .majordomus/ is measured here rather than
-# remembered (I1101, ADR 0168). A fresh repository is adopted with the three commands the
+# remembered (I1101, ADR 0169). A fresh repository is adopted with the three commands the
 # adoption guide names -- init, update, capture install -- and every path that then exists
 # outside the two namespaces is compared with the list below, which is the measured footprint
 # docs/TWO_FOLDER_CONSOLIDATION.md records. A writer that starts leaving a new path behind

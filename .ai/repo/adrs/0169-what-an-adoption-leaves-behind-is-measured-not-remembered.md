@@ -1,19 +1,35 @@
-+++
-title = "What an adoption leaves behind is measured, not remembered"
-description = "What an adoption leaves behind is measured, not remembered"
-weight = 110
-[extra]
-kind = "adr"
-slug = "adr-0168"
-identity = "adr-0168"
-status = "proposed"
-source = ".ai/repo/adrs/0168-what-an-adoption-leaves-behind-is-measured-not-remembered.md"
-+++
-{% raw %}
+---
+schema: adr/v1
+id: adr-0169
+kind: adr
+title: What an adoption leaves behind is measured, not remembered
+status: proposed
+date: 2026-10-16
+tags:
+  - adoption
+  - two-folder
+  - ownership
+  - footprint
+related:
+  - file:.ai/repo/project/milestones/two-folder-integration.yaml
+  - file:.ai/repo/project/issues/I1101.yaml
+  - file:docs/TWO_FOLDER_CONSOLIDATION.md
+  - file:docs/ADOPTION.md
+  - file:lib/init.sh
+  - file:lib/update.sh
+  - file:lib/capture.sh
+  - file:lib/common.sh
+  - file:apps/majordomus-cli/src/editors/mod.rs
+  - file:apps/majordomus-cli/src/generate.rs
+  - file:.ai/repo/adrs/0021-the-branch-to-worktree-topology-is-derived-from-git-identity-and-enfor.md
+  - test:test/cases/3113_the_adoption_footprint_is_inventoried.sh
+provenance:
+  origin: authored
+---
 
-## 168. What an adoption leaves behind is measured, not remembered
+# 169. What an adoption leaves behind is measured, not remembered
 
-### Context
+## Context
 
 The milestone `two-folder-integration` promises that a repository adopting Majordomus gains
 `.ai/`, `.majordomus/` and a few small recorded bridges, and can give them back. Every phase
@@ -30,7 +46,7 @@ Majordomus's own installer page. Worktree creation started turning on
 startup file. None of these writes was decided as part of a footprint; each was the sum of
 what one subsystem needed.
 
-### Decision
+## Decision
 
 1. **The footprint is an inventory with its writer on every row.** Section by section,
    `docs/TWO_FOLDER_CONSOLIDATION.md` lists every path written or mutated outside `.ai/` and
@@ -78,7 +94,7 @@ what one subsystem needed.
    a stale `.zed/tasks.json` is never removed; and the SessionEnd commit bypasses the
    repository's hooks.
 
-### Alternatives rejected
+## Alternatives rejected
 
 - **Keep the first reading and patch it when someone notices.** That is how it drifted. A
   footprint is a claim about every writer at once, and only a measurement can keep up with
@@ -96,7 +112,7 @@ what one subsystem needed.
   become a rewrite the moment it finds something ugly". The defects are listed and each is
   assigned to a phase.
 
-### Consequences
+## Consequences
 
 - The phases of the milestone start from a footprint that a test measured on 2026-10-16,
   not from memory. A change to the default adoption's footprint now fails case 3113 until
@@ -109,4 +125,3 @@ what one subsystem needed.
   not only files and config.
 - The sections that cover optional commands carry no automated guard until I1109. They are
   dated to `d1162668036`, and they are to be read as that day's measurement.
-{% endraw %}

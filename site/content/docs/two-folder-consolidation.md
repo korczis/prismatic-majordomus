@@ -9,7 +9,7 @@ source = "docs/TWO_FOLDER_CONSOLIDATION.md"
 {% raw %}
 
 The phase 1 deliverable of the `two-folder-integration` milestone (issue I1101, decision ADR
-0168). It lists every path Majordomus writes, generates or mutates when a project adopts it,
+0169). It lists every path Majordomus writes, generates or mutates when a project adopts it,
 outside `.ai/` and `.majordomus/`. For each path it gives the code that writes it, whether
 anything records the write, the class it belongs to, and what the two-folder contract does
 with it.
