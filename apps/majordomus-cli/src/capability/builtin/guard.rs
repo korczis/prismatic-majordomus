@@ -139,7 +139,6 @@ mod tests {
         use crate::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};
         use crate::mesh::identity::NodeIdentity;
         use crate::mesh::link::HttpTransport;
-        use crate::mesh::registry::MeshRegistry;
         use crate::mesh::repository::of_root_commits;
         use std::sync::Arc;
 
@@ -153,7 +152,8 @@ mod tests {
             config: CooperationConfig::default(),
             trust: TrustConfig::default(),
             journal_path: None,
-            registry: Arc::new(MeshRegistry::new()),
+            // the one peer store, reached through the runtime that holds it
+            registry: Arc::clone(ctx.mesh.registry()),
             transport: Arc::new(HttpTransport),
             board: None,
             checkout: CheckoutFacts::default(),

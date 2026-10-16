@@ -75,3 +75,61 @@ fn beside_a_server_that_does_not_run_the_mesh_the_guard_asks_it_and_enforces_not
         "the running server was asked: {detail}"
     );
 }
+
+/// The guard over MCP, as a client asks it: `majordomus_guard_edit` sent as a JSON-RPC
+/// tools/call to the checkout's server. The server decided its own mesh, so it answers from
+/// that decision rather than asking anyone.
+#[test]
+fn over_mcp_the_guard_answers_from_the_servers_own_mesh() {
+    use serde_json::{json, Value};
+
+    let f = common::Fixture::new();
+    let policy = format!(
+        "{}\nsession:\n  edits_require_claim: true\n",
+        common::POLICY
+    );
+    f.write(".ai/repo/policy.yaml", &policy);
+    f.write(".ai/repo/mesh/mesh.yaml", "enabled: true\n");
+    let served = common::Served::start(&f.root(), &[]);
+
+    let initialize = json!({
+        "jsonrpc": "2.0", "id": 1, "method": "initialize",
+        "params": {
+            "protocolVersion": "2025-06-18",
+            "capabilities": {},
+            "clientInfo": { "name": "guard-test", "version": "0.0.0" },
+        },
+    });
+    let (status, headers, _) = served.request("POST", "/mcp", Some(&initialize.to_string()));
+    assert_eq!(status, 200, "initialize was not accepted");
+    let session = headers
+        .iter()
+        .find(|(k, _)| k == "mcp-session-id")
+        .map(|(_, v)| v.clone())
+        .expect("the server mints a session id");
+    let header = [("Mcp-Session-Id", session.as_str())];
+    let initialized = json!({ "jsonrpc": "2.0", "method": "notifications/initialized" });
+    served.request_with("POST", "/mcp", Some(&initialized.to_string()), &header);
+
+    let call = json!({
+        "jsonrpc": "2.0", "id": 2, "method": "tools/call",
+        "params": {
+            "name": "majordomus_guard_edit",
+            "arguments": { "path": "docs/new.md", "session": "claude-code-s1" },
+        },
+    });
+    let (_, _, body) = served.request_with("POST", "/mcp", Some(&call.to_string()), &header);
+    let answer: Value = serde_json::from_str(&body).unwrap_or_else(|e| panic!("{e}: {body}"));
+    assert_eq!(answer["result"]["isError"], false, "{body}");
+    let verdict = &answer["result"]["structuredContent"];
+    assert_eq!(verdict["allowed"], true, "{verdict}");
+    assert_eq!(verdict["ground"], "undecided", "{verdict}");
+    assert!(
+        verdict["detail"]
+            .as_str()
+            .is_some_and(|d| d.contains("does not run the mesh")),
+        "{verdict}"
+    );
+    // the client ends its session, so the server can stop at once
+    served.request_with("DELETE", "/mcp", None, &header);
+}
