@@ -2352,31 +2352,31 @@ impl Journal {
         if events.is_empty() {
             return Durability::Synced;
         }
+        // An event that does not serialise is left out of the append and counted as lost with
+        // the ones a failed write loses.
+        let lines: Vec<String> = events
+            .iter()
+            .filter_map(|event| serde_json::to_string(event).ok())
+            .collect();
+        let unserialised = events.len() - lines.len();
         let mut text = String::new();
-        let mut unserialised = 0usize;
-        for event in events {
-            match serde_json::to_string(event) {
-                Ok(line) => {
-                    text.push_str(&line);
-                    text.push('\n');
-                }
-                Err(_) => unserialised += 1,
-            }
+        for line in &lines {
+            text.push_str(line);
+            text.push('\n');
         }
         let written = append_synced(path, &text);
         if written.is_ok() && unserialised == 0 {
             return Durability::Synced;
         }
-        let lost = match &written {
-            Ok(()) => unserialised,
-            Err(_) => events.len(),
-        };
+        let lost = written
+            .as_ref()
+            .err()
+            .map_or(unserialised, |_| events.len());
         self.write_failures
             .fetch_add(lost as u64, std::sync::atomic::Ordering::SeqCst);
-        let error = written.err().map_or_else(
-            || "an event did not serialise".to_string(),
-            |e| e.to_string(),
-        );
+        let error = written
+            .err()
+            .map_or("an event did not serialise".to_string(), |e| e.to_string());
         tracing::warn!(
             path = %path.display(),
             error = %error,
@@ -2745,8 +2745,9 @@ impl Journal {
 /// what is kept is held in memory; the rest is measured by the file's length, not read.
 fn read_bounded(path: &Path, limit: u64) -> Option<(Vec<u8>, Option<std::ops::Range<u64>>)> {
     use std::io::Read;
-    let file = std::fs::File::open(path).ok()?;
-    let len = file.metadata().ok()?.len();
+    let (file, len) = std::fs::File::open(path)
+        .and_then(|file| file.metadata().map(|meta| (file, meta.len())))
+        .ok()?;
     let mut bytes = Vec::new();
     file.take(limit).read_to_end(&mut bytes).ok()?;
     if len <= limit {
@@ -3540,6 +3541,80 @@ mod tests {
             lines[2..].iter().map(|l| l.len() as u64).sum::<u64>(),
             "and is still counted as unread"
         );
+    }
+
+    /// A journal that cannot be read is nothing read, never an empty journal read whole: a
+    /// missing file, and a directory in the file's place, which opens and does not read.
+    #[test]
+    fn a_journal_that_cannot_be_read_is_not_read_as_empty() {
+        let dir = tempfile::tempdir().unwrap();
+        assert!(read_bounded(&dir.path().join("absent.jsonl"), 1024).is_none());
+        assert!(read_bounded(dir.path(), 1024).is_none(), "a directory");
+
+        let path = dir.path().join("journal.jsonl");
+        std::fs::write(&path, b"one\ntwo\nthr").unwrap();
+        assert_eq!(
+            read_bounded(&path, 6),
+            Some((b"one\n".to_vec(), Some(4..11))),
+            "cut after the last whole line, the rest measured"
+        );
+        assert_eq!(
+            read_bounded(&path, 64),
+            Some((b"one\ntwo\nthr".to_vec(), None))
+        );
+    }
+
+    /// The rewrite that keeps a bounded reload's unread tail copies the tail whole or fails:
+    /// a target that cannot be opened, a source that is gone, a start no seek can reach, a
+    /// source that does not read and a range longer than the source are each an error.
+    #[test]
+    fn a_tail_that_cannot_be_copied_whole_fails_the_rewrite() {
+        let dir = tempfile::tempdir().unwrap();
+        let source = dir.path().join("journal.jsonl");
+        std::fs::write(&source, b"0123456789").unwrap();
+        let out = dir.path().join("journal.jsonl.tmp");
+
+        write_synced_with_tail(&out, "head\n", &source, 3..7).unwrap();
+        assert_eq!(std::fs::read(&out).unwrap(), b"head\n3456");
+
+        let blocked = dir.path().join("blocked");
+        std::fs::create_dir(&blocked).unwrap();
+        assert!(
+            write_synced_with_tail(&blocked, "x", &source, 0..1).is_err(),
+            "a directory stands where the new file goes"
+        );
+        assert!(
+            write_synced_with_tail(&out, "x", &dir.path().join("gone"), 0..1).is_err(),
+            "the source is gone"
+        );
+        assert!(
+            write_synced_with_tail(&out, "x", &source, u64::MAX..u64::MAX).is_err(),
+            "a start past any offset a seek can name"
+        );
+        assert!(
+            write_synced_with_tail(&out, "x", dir.path(), 0..1).is_err(),
+            "a directory opens and seeks, and no byte of it reads"
+        );
+        let short = write_synced_with_tail(&out, "x", &source, 8..20).unwrap_err();
+        assert!(
+            short
+                .to_string()
+                .contains("copied 2 of the 12 unread byte(s)"),
+            "{short}"
+        );
+    }
+
+    /// The text before the tail that does not reach the disk fails the rewrite: `/dev/full`
+    /// opens for writing and refuses every byte.
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn a_text_that_cannot_be_written_fails_the_rewrite() {
+        let dir = tempfile::tempdir().unwrap();
+        let source = dir.path().join("journal.jsonl");
+        std::fs::write(&source, b"0123456789").unwrap();
+        let full =
+            write_synced_with_tail(Path::new("/dev/full"), "head\n", &source, 0..1).unwrap_err();
+        assert_eq!(full.raw_os_error(), Some(libc::ENOSPC), "{full}");
     }
 
     #[test]

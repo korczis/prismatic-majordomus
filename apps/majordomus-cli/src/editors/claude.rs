@@ -140,8 +140,8 @@ fn domain_description(domain: &DomainRef) -> String {
 /// own, because loading it changes nothing; calling a capability is what the rule governs.
 pub fn domain_artifact(domain: &DomainRef, version: &str) -> Artifact {
     let path = skill_path(&domain.alias);
-    let quoted =
-        serde_json::to_string(&domain_description(domain)).unwrap_or_else(|_| "\"\"".into());
+    // a JSON string's rendering cannot fail, so there is no fallback to take
+    let quoted = serde_json::Value::String(domain_description(domain)).to_string();
     let source = format!("module:{}", domain.module);
     let [a, b, c] = banner_lines(&source, version);
     let cell = |s: &str| s.replace('|', "\\|").replace('\n', " ");

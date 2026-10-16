@@ -3423,4 +3423,152 @@ mod tests {
             .unwrap();
         assert_eq!(before, after);
     }
+
+    /// A repository holding one release record and none of its history, as an exported
+    /// fixture does: its index, and the app that plans over it.
+    fn released_without_history() -> (crate::synthetic::SyntheticRepository, crate::cli::RepoArgs) {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let sources = repo.root().join(".ai/repo/knowledge/sources.yaml");
+        let mut text = std::fs::read_to_string(&sources).unwrap();
+        text.push_str(
+            "  - id: release\n    kind: release-record\n    discovery: vcs\n    \
+             pathspec: ':(glob).ai/repo/releases/*.yaml'\n    required: false\n",
+        );
+        std::fs::write(&sources, text).unwrap();
+        let manifest = repo.root().join(".ai/manifest.yaml");
+        let mut text = std::fs::read_to_string(&manifest).unwrap();
+        text.push_str("  releases: repo/releases\n");
+        std::fs::write(&manifest, text).unwrap();
+        let releases = repo.root().join(".ai/repo/releases");
+        std::fs::create_dir_all(&releases).unwrap();
+        std::fs::write(
+            releases.join("v1.0.0.yaml"),
+            "schema: release/v1\nversion: \"1.0.0\"\ntag: v1.0.0\nchannel: stable\n\
+             commit: 1111111111111111111111111111111111111111\n\
+             published_at: \"2026-10-01T00:00:00Z\"\nartifacts:\n  - target: linux-x86_64-gnu\n    \
+             name: majordomus-v1.0.0-x86_64-unknown-linux-gnu.tar.gz\n    \
+             url: https://github.com/example/synthetic/releases/download/v1.0.0/\
+             majordomus-v1.0.0-x86_64-unknown-linux-gnu.tar.gz\n    \
+             sha256: 3333333333333333333333333333333333333333333333333333333333333333\n    \
+             size: 1\n",
+        )
+        .unwrap();
+        let args = crate::cli::RepoArgs {
+            repo: Some(repo.root().to_path_buf()),
+            share: Some(crate::synthetic::crate_share()),
+            discovery: crate::cli::DiscoveryMode::Filesystem,
+            ..Default::default()
+        };
+        (repo, args)
+    }
+
+    fn planned_changelog(args: &crate::cli::RepoArgs) -> crate::release::model::Changelog {
+        let app = crate::app::App::load(args).unwrap();
+        let plan = plan(&app, &[Target::Changelog]).unwrap();
+        let json = plan
+            .iter()
+            .find(|a| a.path == format!("{OUT_DIR}/changelog.json"))
+            .expect("the changelog is planned");
+        serde_json::from_str(&json.content).unwrap()
+    }
+
+    /// A release whose history is not in the repository keeps what the committed changelog
+    /// says it changed; with nothing committed, or with a committed changelog that cannot
+    /// be read, there is nothing to keep and the composed section stands as composed.
+    #[test]
+    fn a_release_without_its_history_keeps_what_the_committed_changelog_says() {
+        use crate::release::model::{Change, ChangeGroup, ChangeKind};
+        let (repo, args) = released_without_history();
+        let app = crate::app::App::load(&args).unwrap();
+        assert!(
+            app.context
+                .index
+                .objects
+                .iter()
+                .any(|o| o.kind == crate::release::changelog::RELEASE_KIND),
+            "the fixture's release record is indexed: {:?}",
+            app.context.index.diagnostics
+        );
+        assert_eq!(
+            crate::release::changelog::unreadable_releases(
+                app.repository.root(),
+                &app.context.index.objects
+            ),
+            ["1.0.0"],
+            "the fixture's release must be one whose history is absent"
+        );
+
+        // nothing committed: the section is composed from the history it does not have
+        let composed = planned_changelog(&args);
+        let section = composed
+            .sections
+            .iter()
+            .find(|s| s.version == "1.0.0")
+            .expect("the release has a section");
+        assert!(section.groups.is_empty(), "{section:?}");
+
+        // a committed changelog that does not parse is not a source of anything
+        let out = repo.root().join(OUT_DIR);
+        std::fs::create_dir_all(&out).unwrap();
+        std::fs::write(out.join("changelog.json"), "{ not json").unwrap();
+        let unparsed = planned_changelog(&args);
+        assert_eq!(unparsed.sections, composed.sections);
+
+        // a committed changelog naming the same release at the same commit is kept
+        let mut committed = composed.clone();
+        let kept = Change {
+            kind: ChangeKind::Fix,
+            scope: None,
+            subject: "what the committed changelog said".into(),
+            breaking: false,
+            commit: "2222222222222222222222222222222222222222".into(),
+            url: None,
+            references: Vec::new(),
+        };
+        for s in committed
+            .sections
+            .iter_mut()
+            .filter(|s| s.version == "1.0.0")
+        {
+            s.groups = vec![ChangeGroup {
+                kind: ChangeKind::Fix,
+                heading: "Fixed".into(),
+                rank: 1,
+                changes: vec![kept.clone()],
+            }];
+        }
+        std::fs::write(
+            out.join("changelog.json"),
+            serde_json::to_string(&committed).unwrap(),
+        )
+        .unwrap();
+        let planned = planned_changelog(&args);
+        let section = planned
+            .sections
+            .iter()
+            .find(|s| s.version == "1.0.0")
+            .unwrap();
+        assert_eq!(section.groups.len(), 1, "{section:?}");
+        assert_eq!(section.groups[0].changes, [kept]);
+    }
+
+    /// The composed graph of a repository whose every reference resolves is the committed
+    /// document: its schema, its generator, and the graph composed whole.
+    #[test]
+    fn the_graph_document_of_a_whole_repository_is_committed() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let ctx = repo.context().unwrap();
+        let rendered = graph_document(&ctx, "9.9.9").unwrap();
+        let doc: serde_json::Value = serde_json::from_str(&rendered).unwrap();
+        assert_eq!(doc["schema"], GRAPH_SCHEMA);
+        assert_eq!(doc["generator"], "majordomus-cli 9.9.9");
+        assert_eq!(doc["graph"]["metadata"]["truncated"], false);
+        let nodes = doc["graph"]["nodes"].as_array().expect("graph nodes");
+        assert!(
+            nodes
+                .iter()
+                .any(|n| n["id"].as_str() == Some("capability:worktree.status")),
+            "the registry is composed into the graph"
+        );
+    }
 }
