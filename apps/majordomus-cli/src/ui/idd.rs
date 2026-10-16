@@ -165,10 +165,11 @@ pub fn screen(ctx: &Context, query: &[(String, String)]) -> View {
             }
         }
         (Some(id), Some(intent)) => {
-            let mine = unanswered(issues)
-                .is_none()
-                .then(|| serving(intent, &list(issues, "/issues")))
-                .unwrap_or_default();
+            let mine = if unanswered(issues).is_none() {
+                serving(intent, &list(issues, "/issues"))
+            } else {
+                Vec::new()
+            };
             grid = grid
                 .child(wide(super::intent::inspector_closing_to(
                     intents, issues, id, ROUTE,

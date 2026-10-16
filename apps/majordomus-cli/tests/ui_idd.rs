@@ -92,7 +92,10 @@ fn an_issue_added_to_the_plan_appears_in_order_and_in_the_graph_with_no_registra
     assert_eq!(status, 200, "{page}");
     let first = page.find("id=\"issue-I0001\"").expect("I0001 is drawn");
     let second = page.find("id=\"issue-I0002\"").expect("I0002 is drawn");
-    assert!(first < second, "a dependency is listed before what waits for it");
+    assert!(
+        first < second,
+        "a dependency is listed before what waits for it"
+    );
     // the edge the record declares is the graph's, as the plan's dependency
     assert!(
         page.contains("&quot;source&quot;:&quot;I0001&quot;,&quot;target&quot;:&quot;I0002&quot;"),
@@ -117,7 +120,10 @@ fn an_intent_that_is_not_recorded_is_refused_by_name() {
         page.contains("no-such-intent is not an intent of this repository"),
         "{page}"
     );
-    assert!(!page.contains("aria-current=\"page\" "), "nothing is opened in its place");
+    assert!(
+        !page.contains("aria-current=\"page\" "),
+        "nothing is opened in its place"
+    );
 }
 
 #[test]
@@ -126,8 +132,15 @@ fn the_workspace_is_read_and_changes_nothing() {
     let s = Served::start(&f.root(), &[]);
     let before = f.snapshot();
     let (status, _, _) = s.request("POST", "/ui/idd", Some("{}"));
-    assert_eq!(status, 405, "a move is a capability's route, not the screen's");
+    assert_eq!(
+        status, 405,
+        "a move is a capability's route, not the screen's"
+    );
     let (status, _, _) = s.request("GET", "/ui/idd", None);
     assert_eq!(status, 200);
-    assert_eq!(f.snapshot(), before, "reading the workspace wrote the repository");
+    assert_eq!(
+        f.snapshot(),
+        before,
+        "reading the workspace wrote the repository"
+    );
 }
