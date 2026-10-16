@@ -482,7 +482,7 @@ mod tests {
             source: PEERS,
             route: None,
             exposure: Default::default(),
-            value: Ok(serde_json::json!({ "machines": [] })),
+            value: Ok(serde_json::json!({ "machines": [] }).into()),
             took: std::time::Duration::ZERO,
             standing: crate::ui::source::Standing::NOW,
         };
@@ -495,7 +495,7 @@ mod tests {
             source,
             route: None,
             exposure: Default::default(),
-            value,
+            value: value.map(Into::into),
             took: std::time::Duration::ZERO,
             standing: crate::ui::source::Standing::NOW,
         }

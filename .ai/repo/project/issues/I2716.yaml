@@ -1,0 +1,27 @@
+id: I2716
+milestone: M004
+title: "A case derives its budgets and lists from what it tests, never pins them"
+slug: a-case-derives-what-it-would-pin
+priority: p2
+profile: implementation
+parallel_safe: true
+depends_on: []
+objective: "Keep a case from failing because its subject grew: a budget, a count or a list of names that a case states by hand is derived from the model or carries the margin and the reason it holds."
+why: "2026-10-14: master 2d226f0836 went red in suite-shard (2) because case 130 compared three surfaces at a hand-pinned 4000-token budget and a fresh init's governance tier grew to 4023 when #1143 added 235 bytes to the seeded scope; the same day case 94 failed a branch because the release-record-cases gate lists its cases by hand and a new case named the release record. Both were fixed by hand in #1145 (budget 16000 with a comment; case 3021 added to the list)."
+current_state: "Cases pin numbers and lists freely; a gate's hand list (release-record-cases) and a case's literal budget are found only when they break."
+desired_state: "A lint over test/cases reports a literal budget, count or size compared against a product's output without a comment giving its margin, and the release-record-cases list is generated from the cases that name a release-record path (or checked against them by a structure gate, not only by case 94)."
+scope:
+  - scripts/liveness-check
+  - .ai/repo/ci/gates.yaml
+  - test/cases
+acceptance_criteria:
+  - "Adding a case that names the release record without listing it fails a structure gate, not only case 94"
+  - "A hand-pinned budget in a case without a stated margin is reported"
+validation:
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "pinned_values_are_reported_case"
+created_at: 2026-10-14
+updated_at: 2026-10-14T22:50:08Z
+started_at: 2026-10-14T22:50:08Z
+started_event: sha256:b7c1824e422782365720dc1ff59631bfa4da5ad046f243aeefe503b7e5e8a094

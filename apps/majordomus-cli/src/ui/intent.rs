@@ -227,7 +227,7 @@ mod tests {
             source: Source::of(capability),
             route: None,
             exposure: Exposure::default(),
-            value: Ok(value),
+            value: Ok(value.into()),
             took: Duration::from_millis(1),
             standing: crate::ui::source::Standing::NOW,
         }

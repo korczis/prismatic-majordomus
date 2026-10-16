@@ -270,6 +270,25 @@ gates:
     runs: scripts/ci/skill-naming-check
     summary: every active skill is named where a test demands the whole list — the majordomus-skill header of apps/majordomus-cli/tests/skills.rs and the first marker line of test/cases/391_skills_are_proven_capabilities.sh — and neither names a skill that does not exist
 
+  # docs/COCKPIT_IDE_AUDIT.md's gap matrix says "Planned" requires a plan object, and nothing
+  # read it: a row could claim to be scheduled with nothing scheduling it (I1510). This reads
+  # the matrix and the plan's issue records together, keys on the status vocabulary and the
+  # issue ids only, and builds nothing.
+  - id: audit-plan
+    job: structure
+    runs: scripts/ci/audit-plan-check
+    summary: every row of docs/COCKPIT_IDE_AUDIT.md's gap matrix whose status is planned names an issue id, and every id it names is an issue of the plan; rows in the other statuses are evidence claims and are not read
+
+  # The release-record-cases gate below runs its cases by name, and a case that reads the
+  # release record and is not on that list is one the release record's pull request never
+  # runs. Which cases those are is defined once, in the script; case 94 asks the same script.
+  # On 2026-10-14 a branch that added such a case went red only in case 94, in a suite shard
+  # (I2716). This reads the cases and the model in seconds and builds nothing.
+  - id: release-record-listing
+    job: structure
+    runs: scripts/ci/release-record-cases-check
+    summary: every case that names the release record or reads what is offered from it is run by the release-record-cases gate, and every case that gate names exists
+
   # The ChatGPT source pack of this repository can be built (rule
   # project.packs-carry-only-sources): the plan of the `chatgpt` profile has no finding — no
   # file over a shard's token budget, no more files than a ChatGPT project indexes, no file
@@ -338,9 +357,14 @@ gates:
     runs: scripts/ci/mcp-tool-run-check
     summary: every MCP tool the registry projects is sent a tools/call by a case or an integration test of this repository; the verdict states its denominator and the populations it is not about, and the uninvoked set may not grow
 
+  # Without --summary: the verdict and the exit status are the same, and a failure lists each
+  # finding with its file, symbol and remedy instead of "findings were not listed". Two
+  # implementations failed here on 2026-10-14 and had to rerun the report to learn why
+  # (I2715). scripts/rust-check asks the same subcommand first, so an author meets the same
+  # finding text before the structure job does.
   - id: rust-quality
     job: structure
-    runs: cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- quality report --summary
+    runs: cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- quality report
     summary: the crate's own exported surface — documentation beyond the signature, an executable example on everything that carries behaviour, a module boundary something exercises — and every command of the command line accounted for against the capability registry
 
   - id: generation-converges
@@ -750,12 +774,13 @@ gates:
   # executable. The suite runs them too; this gate exists for the plan that does not run the
   # suite, the release-record shape below. The list is every case that names a record path
   # (.ai/repo/releases, release-record, site/static/releases, scripts/ci/release-check) or reads
-  # the checkout's own installation guide, distribution projection or changelog, and
-  # test/cases/94_ci_plan.sh holds it to that grep, so a new such case cannot be left out.
+  # the checkout's own installation guide, distribution projection or changelog, as
+  # scripts/ci/release-record-cases-check defines it; that script is the release-record-listing
+  # gate of the structure job, and case 94 asks it too, so a new such case cannot be left out.
   - id: release-record-cases
     job: rust
     requires: [rust-integration]
-    runs: MJ_TEST_JOBS=4 bash test/run.sh --no-skips 84_distribution_model 87_release_pipeline 97_install_gate 103_release_projection 112_version_matches_surface 139_release_record_schema 352_the_version_the_site_shows_is_one_you_can_get 620_mcp_tools_are_invoked_and_answer 743_release_version_answers_with_the_contract 763_a_tag_older_than_the_record_practice_is_a_note 1041_a_release_publishes_its_metadata 1060_the_version_is_allocated_at_landing 1087_the_site_offers_the_release_it_published 3021_a_tag_does_not_freeze_the_queue
+    runs: MJ_TEST_JOBS=4 bash test/run.sh --no-skips 84_distribution_model 87_release_pipeline 97_install_gate 103_release_projection 112_version_matches_surface 139_release_record_schema 352_the_version_the_site_shows_is_one_you_can_get 620_mcp_tools_are_invoked_and_answer 743_release_version_answers_with_the_contract 763_a_tag_older_than_the_record_practice_is_a_note 1041_a_release_publishes_its_metadata 1060_the_version_is_allocated_at_landing 1087_the_site_offers_the_release_it_published 3021_a_tag_does_not_freeze_the_queue 3029_a_tag_in_flight_is_pending
     summary: the cases about the committed release record and what is offered from it — the distribution model, the release pipeline and projection, the record's schema, the version the site shows, the install gate, the stable channel the MCP tools resolve — pass against this tree
 
 # Shapes: changes whose plan is narrower than the union of their classes (the header's last
@@ -881,6 +906,13 @@ classes:
     paths: [.ai/repo/skills/**, .ai/repo/prompts/**, .ai/repo/workflows/**, .ai/repo/profiles/**, .ai/repo/providers/**, .just/**, justfile, apps/majordomus-cli/src/skill/**, apps/majordomus-cli/src/capability/builtin/skills.rs, apps/majordomus-cli/src/commands/skills.rs, apps/majordomus-cli/tests/skills.rs, lib/skills.sh, test/cases/95_skills.sh, test/cases/391_skills_are_proven_capabilities.sh, test/cases/3020_an_active_skill_is_named_where_the_crate_test_demands.sh, .ai/repo/rules/project/skills-are-proven-capabilities.v1.md]
     gates: [skills-proof, skill-naming, shell-suite, rust-integration]
 
+  # the audit's gap matrix and the plan it names: a planned row is a claim on an issue, so an
+  # edit to the matrix, to an issue record (one renamed or deleted), to the gate or to its case
+  # runs the gate. `docs` and `layer` already select the suites; this class adds the gate.
+  - id: audit-plan
+    paths: [docs/COCKPIT_IDE_AUDIT.md, .ai/repo/project/issues/**, scripts/ci/audit-plan-check, test/cases/194_audit_rows_are_planned.sh]
+    gates: [audit-plan, shell-suite]
+
   # the source pack and the archive: one profile declaration, the selection both read, the
   # skill on top of them and the rule they hold. A change to any of them can move what a
   # ChatGPT project is handed, so the pack is planned again and both suites run.
@@ -979,7 +1011,7 @@ classes:
   # identities, and names the allocator, whose edits would otherwise escalate the whole plan.
   - id: cases
     paths: [test/cases/**, scripts/case-numbers, .ai/repo/ci/case-numbers-baseline.txt, .ai/repo/rules/project/a-number-names-one-case.v1.md]
-    gates: [case-numbers, shell-lint, shell-suite]
+    gates: [case-numbers, shell-lint, shell-suite, release-record-listing]
 
   # documents and the files the site generator reads at the root; documents are index objects
   - id: docs
