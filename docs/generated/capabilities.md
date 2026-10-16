@@ -41,7 +41,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `knowledge_base` | Knowledge base | behaviorally_verified | 3 | [`modules/knowledge_base.md`](modules/knowledge_base.md) |
 | `lifecycle` | Session lifecycle | behaviorally_verified | 5 | [`modules/lifecycle.md`](modules/lifecycle.md) |
 | `mcp` | MCP projection | experimental | 1 | [`modules/mcp.md`](modules/mcp.md) |
-| `mesh` | Mesh | experimental | 24 | [`modules/mesh.md`](modules/mesh.md) |
+| `mesh` | Mesh | experimental | 25 | [`modules/mesh.md`](modules/mesh.md) |
 | `models` | Models | experimental | 2 | [`modules/models.md`](modules/models.md) |
 | `monitor` | The monitor | experimental | 1 | [`modules/monitor.md`](modules/monitor.md) |
 | `objects` | Objects | behaviorally_verified | 4 | [`modules/objects.md`](modules/objects.md) |
@@ -177,6 +177,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `mesh.claim` | `mesh` | command | experimental | `majordomus_mesh_claim` | — | `POST /api/v1/mesh/claims` | — | — | waived (transient_state) |
 | `mesh.cooperation` | `mesh` | query | experimental | `majordomus_mesh_cooperation` | — | `GET /api/v1/mesh/cooperation` | — | — | required |
 | `mesh.doctor` | `mesh` | query | experimental | `majordomus_mesh_doctor` | — | `GET /api/v1/mesh/doctor` | `majordomus mesh doctor` | — | required |
+| `mesh.enrol` | `mesh` | command | experimental | `majordomus_mesh_enrol` | — | `POST /api/v1/mesh/enrol` | `majordomus mesh enrol` | — | waived (destructive) |
 | `mesh.events` | `mesh` | query | experimental | `majordomus_mesh_events` | — | `GET /api/v1/mesh/events` | — | — | required |
 | `mesh.firewall` | `mesh` | query | experimental | `majordomus_mesh_firewall` | — | `GET /api/v1/mesh/firewall` | `majordomus mesh firewall` | — | waived (external_dependency) |
 | `mesh.firewall.apply` | `mesh` | command | experimental | — | — | — | `majordomus mesh firewall apply` | — | waived (destructive) |

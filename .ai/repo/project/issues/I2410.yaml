@@ -1,0 +1,29 @@
+id: I2410
+milestone: the-mesh-works-out-of-the-box
+title: "A trusted machine on the tailnet is found through Tailscale, with no address written by hand"
+slug: the-tailnet-is-a-discovery-provider
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Add a Tailscale discovery provider beside multicast, broadcast and rendezvous: it reads the local tailnet's peers and offers each one's tailnet address on the declared port as a candidate, which the link then admits or refuses under the trust list."
+why: "No provider reads the tailnet (apps/majordomus-cli/src/mesh/manager.rs:436-450 wires multicast, broadcast and rendezvous only; the only mention of Tailscale is a ranking test in mesh/address.rs:186). Machines on the owner's tailnet are linked today only because .ai/repo/mesh/majordomus.yaml:41-50 lists their 100.x addresses by hand, so a machine added to the tailnet is invisible until somebody edits that file."
+current_state: "Tailnet peers are dialed only through hand-written rendezvous endpoints."
+desired_state: "A `tailscale:` section of the mesh declaration (enabled by default when the tailscale CLI is present) whose provider lists online peers from `tailscale status --json` and hands their addresses to the cooperation dialer; absent or failing tailscale is reported in mesh doctor, never fatal."
+scope:
+  - "apps/majordomus-cli/src/mesh/tailscale.rs"
+  - "apps/majordomus-cli/src/mesh/manager.rs"
+  - "apps/majordomus-cli/src/mesh/config.rs"
+  - "share/schemas/majordomus/mesh-declaration"
+  - "docs/MESH.md"
+  - "test/cases"
+acceptance_criteria:
+  - "With a stubbed `tailscale status --json` naming two online peers, the provider offers exactly their tailnet addresses on the declared port"
+  - "An offline peer, a peer without a tailnet IP and a missing tailscale CLI each produce no candidate and a doctor line"
+  - "A candidate the trust list does not name is refused by the link, as any other candidate is"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --lib mesh::tailscale"
+evidence_required:
+  - "tailscale_provider_stubbed_test"
+created_at: 2026-10-10
+updated_at: 2026-10-10

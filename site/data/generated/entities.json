@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 109,
+      "count": 110,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 109
+      "count": 110
     },
     {
       "kind": "application",
@@ -173,7 +173,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 394
+      "count": 401
     },
     {
       "kind": "knowledge",
@@ -197,7 +197,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 38
+      "count": 39
     },
     {
       "kind": "moment",
@@ -3291,6 +3291,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0067/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0168",
+          "kind": "adr",
+          "route": "/adrs/adr-0168/",
+          "external": false
         }
       ]
     },
@@ -3856,7 +3863,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0168",
+          "kind": "adr",
+          "route": "/adrs/adr-0168/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -8585,6 +8600,66 @@
         {
           "edge": "put_in_force",
           "label": "test/cases/85_installer.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0168",
+      "identity": "adr-0168",
+      "slug": "adr-0168",
+      "cockpit": "/cockpit/objects/adr/adr-0168",
+      "title": "Init declares the mesh, closed until a machine is enrolled",
+      "status": "proposed",
+      "tags": [
+        "mesh",
+        "init",
+        "trust"
+      ],
+      "source": ".ai/repo/adrs/0168-init-declares-the-mesh-closed-until-a-machine-is-enrolled.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/mesh/enrol.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/mesh/manager.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "share/skeleton/ai/repo/mesh/mesh.yaml",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0050",
+          "kind": "adr",
+          "route": "/adrs/adr-0050/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0059",
+          "kind": "adr",
+          "route": "/adrs/adr-0059/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/01_init.sh",
           "kind": "test",
           "route": null,
           "external": false

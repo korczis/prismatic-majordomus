@@ -158,7 +158,10 @@ impl MeshProvider for RendezvousProvider {
 
 /// One registration round-trip. Plain HTTP through the same minimal client the MCP
 /// bridge uses; any non-200, timeout or unparsable body is one failure.
-fn register_once(endpoint: &str, envelope: &Envelope) -> Result<RegisterAnswer, MeshError> {
+pub(crate) fn register_once(
+    endpoint: &str,
+    envelope: &Envelope,
+) -> Result<RegisterAnswer, MeshError> {
     let body = serde_json::json!({ "envelope": envelope }).to_string();
     let reply = crate::mcp::bridge::request(
         endpoint,

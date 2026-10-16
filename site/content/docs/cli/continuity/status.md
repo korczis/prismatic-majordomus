@@ -1,7 +1,7 @@
 +++
 title = "majordomus continuity status"
 description = "This device, the record this checkout continues, the store against its remote (no network), every line of work, and what other devices published that could be resumed here"
-weight = 228
+weight = 229
 [extra]
 route = "/docs/cli/continuity/status/"
 command = "majordomus continuity status"

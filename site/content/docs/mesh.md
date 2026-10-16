@@ -108,6 +108,25 @@ skip → trust policy) into one registry keyed by node and runtime. Envelopes ar
 bytes, signed, and carry the key, runtime, instance, endpoints, transports, repository
 identities and version; never a secret, a path or repository content.
 
+A tailnet is a discovery source too. When the declaration's `tailscale.enabled` is on (the
+default), the Tailscale provider reads `tailscale status --json` every `interval_seconds`
+(60) and asks every peer listed online as a rendezvous at
+`http://<tailnet address>:<port>` (port 8791 unless declared). What comes back is the same
+signed `mesh.register` answer a declared rendezvous gives, through the same verification
+path, so the provider proposes addresses and decides nothing: a machine that joins the
+tailnet is found with no address written by hand, and the trust list still decides what
+links. Without the Tailscale CLI the provider is listed `stopped` with the reason, which is
+no fault, so `mesh doctor` never fails a repository whose machines do not run Tailscale. A
+CLI that is there and answers an error is listed `failed`; the others run on either way.
+
+```yaml
+tailscale:
+  enabled: true        # the default
+  port: 8791           # where a peer's server answers mesh.register
+  interval_seconds: 60
+  command: tailscale   # the CLI to ask
+```
+
 Discovery protocol **2** added the runtime slot. A version-2 reader reads version 1 (as the
 node's unnamed runtime); a version-1 reader refuses version 2 and counts it as `version`, so
 a mixed fleet shows the mismatch instead of going quiet.
@@ -578,9 +597,10 @@ would be written into the other checkout.
 
 This repository runs its own mesh: `.ai/repo/mesh/majordomus.yaml` is committed with
 `enabled: true`, so every server of every worktree of it announces, listens and links. That is
-this repository's reviewed decision, not the tool's default: the skeleton a new repository
-starts from ships no declaration, and nothing opens there until its own operator commits one
-(the guarantee `mesh-off-by-default`).
+this repository's reviewed decision about who is listed. The tool's default is the same shape
+with an empty trust list: `majordomus init` seeds `.ai/repo/mesh/mesh.yaml` enabled and
+`deny_unknown`, so nothing opens until a machine runs `majordomus mesh enrol` and the change
+is committed (ADR 0168; the guarantee `mesh-off-by-default`).
 
 <div class="overflow-x-auto" tabindex="0">
 
@@ -785,6 +805,7 @@ majordomus mesh doctor            # prerequisites, the host firewall, and the se
 majordomus mesh firewall          # what the host firewall must admit, whether it does, and the commands; exits 10 when it does not
 sudo majordomus mesh firewall apply   # admit it; needs root, refuses without
 majordomus mesh identity          # this machine's key, for trust.allow
+majordomus mesh enrol             # list this machine's key in trust.allow, once; then commit
 majordomus mesh status            # discovery: providers, tallies, refusals
 majordomus mesh nodes             # discovery: one row per node × runtime
 majordomus mesh peers             # machines → runtimes → active sessions, each link's state; --full for all

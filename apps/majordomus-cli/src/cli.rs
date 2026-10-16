@@ -722,6 +722,8 @@ pub enum MeshCommand {
     Nodes(MeshQueryArgs),
     /// This machine's node identity, public half only; absent is an answer, not an error
     Identity(MeshQueryArgs),
+    /// Add this machine's public key to the mesh declaration's trust list, once; commit it to join
+    Enrol(MeshQueryArgs),
     /// Prove the mesh prerequisites on this machine alone: declaration, identity, sockets, multicast, broadcast, the protocol end to end, and the host firewall
     Doctor(MeshQueryArgs),
     /// What the host firewall must admit for the declared mesh and whether it does; `apply` admits it, as root
@@ -7022,6 +7024,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["mesh", "nodes"],
             setup: &[],
             expect: Expect::StdoutContains(&["mesh"]),
+        }],
+    },
+    CommandExamples {
+        command: "mesh enrol",
+        examples: &[ExampleDoc {
+            id: "mesh-enrol",
+            title: "Enrol this machine in the repository's mesh",
+            description: "Adds this machine's public key to trust.allow under a comment naming the machine, once; a listed key changes nothing. A repository that declares no mesh is refused (exit 13) before an identity is created or a file is touched: `majordomus init --extend` seeds the declaration.",
+            argv: &["mesh", "enrol"],
+            setup: &[],
+            expect: Expect::ExitCode(13),
         }],
     },
     CommandExamples {

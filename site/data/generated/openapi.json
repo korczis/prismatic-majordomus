@@ -103,6 +103,7 @@
     "op-mesh-claim": "docs/api/mesh/",
     "op-mesh-cooperation": "docs/api/mesh/",
     "op-mesh-doctor": "docs/api/mesh/",
+    "op-mesh-enrol": "docs/api/mesh/",
     "op-mesh-events": "docs/api/mesh/",
     "op-mesh-firewall": "docs/api/mesh/",
     "op-mesh-handover-consume": "docs/api/mesh/",
@@ -714,6 +715,7 @@
     "schema-MeshClaimCounts": "docs/api/mesh/",
     "schema-MeshClaimFilter": "docs/api/mesh/",
     "schema-MeshDoctorReport": "docs/api/mesh/",
+    "schema-MeshEnrolment": "docs/api/mesh/",
     "schema-MeshEvent": "docs/api/mesh/",
     "schema-MeshHandoverBrief": "docs/api/mesh/",
     "schema-MeshIdentityReport": "docs/api/mesh/",
@@ -1233,8 +1235,8 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 197,
-    "schemas": 975,
+    "operations": 198,
+    "schemas": 976,
     "tags": 58
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1429,6 +1431,7 @@
     "mesh.claim": "mesh",
     "mesh.cooperation": "mesh",
     "mesh.doctor": "mesh",
+    "mesh.enrol": "mesh",
     "mesh.events": "mesh",
     "mesh.firewall": "mesh",
     "mesh.handover.consume": "mesh",
@@ -2044,6 +2047,7 @@
     "MeshClaimCounts": "mesh",
     "MeshClaimFilter": "mesh",
     "MeshDoctorReport": "mesh",
+    "MeshEnrolment": "mesh",
     "MeshEvent": "mesh",
     "MeshHandoverBrief": "mesh",
     "MeshIdentityReport": "mesh",
@@ -17813,6 +17817,7 @@
       "properties": [],
       "type": "object",
       "used_by": [
+        "mesh.enrol",
         "mesh.verify"
       ],
       "used_by_schemas": [],
@@ -19030,6 +19035,7 @@
         "mesh.release",
         "mesh.cooperation",
         "mesh.doctor",
+        "mesh.enrol",
         "mesh.events",
         "mesh.firewall",
         "mesh.handover.publish",
@@ -31131,6 +31137,49 @@
       "variants": []
     },
     {
+      "description": "The answer of `mesh.enrol`: which declaration, which key, and whether it changed.",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "MeshEnrolment",
+      "properties": [
+        {
+          "description": "The declaration file, repository-relative.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "This machine's public key: what is listed, never a secret.",
+          "name": "key",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether the key was added now; `false` when it was listed already.",
+          "name": "added",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "What to do next: commit the file, or nothing.",
+          "name": "next",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "mesh.enrol"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One event as the wire and the store carry it. The body is kept as JSON so that an\nevent of an unknown kind survives storage and relay byte-for-byte; `MeshEvent::body`\ninterprets it.\n\nEvery field above the signature is covered by it, which is what makes a relay harmless:\na runtime that forwards an event cannot alter its stream, its sequence, its repository\nor its body without the next reader noticing, and so vouches for nothing. The wall\nclock is the one field nothing is decided by — freshness is measured with beats and\nmonotonic clocks, never by comparing two machines' idea of the time.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, MeshEvent};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::SessionClosed { session: \"s1\".into() }).unwrap();\n\nlet event: &MeshEvent = &j.events()[0];\nassert_eq!(event.seq, 1, \"dense from 1 within its stream\");\nassert_eq!(event.kind(), \"session_closed\");\nassert_eq!(event.id(), format!(\"{}/1\", event.stream));\n\n// a relayed byte changed anywhere under the signature is a different event\nlet mut tampered = event.clone();\ntampered.repo = \"another-repository\".into();\nassert_ne!(tampered.signing_bytes(), event.signing_bytes());\n```",
       "home": "mesh",
       "is_enum": false,
@@ -31580,7 +31629,7 @@
       "is_enum": true,
       "name": "MeshSource",
       "properties": [],
-      "type": "\"udp_multicast\" | \"udp_broadcast\" | \"rendezvous\" | \"synthetic\"",
+      "type": "\"udp_multicast\" | \"udp_broadcast\" | \"rendezvous\" | \"tailscale\" | \"synthetic\"",
       "used_by": [],
       "used_by_schemas": [
         "Sighting"
@@ -31597,6 +31646,10 @@
         {
           "description": "A rendezvous answer or registration.",
           "value": "rendezvous"
+        },
+        {
+          "description": "A tailnet peer asked as a rendezvous.",
+          "value": "tailscale"
         },
         {
           "description": "A synthetic provider (tests, self-check).",
@@ -64263,6 +64316,70 @@
           "result_schema": "MeshDoctorReport",
           "stability": "experimental",
           "summary": "The mesh self-check"
+        },
+        {
+          "benchmark": "waived",
+          "benchmark_reason": "destructive",
+          "body_examples": [
+            {
+              "case": "default",
+              "json": "{}"
+            }
+          ],
+          "body_schema": "Empty",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "mesh enrol",
+          "curl": "curl -s -X POST \"http://127.0.0.1:8741/api/v1/mesh/enrol\" -H \"content-type: application/json\" -d '{}'",
+          "description": "Add this machine's public key to trust.allow of the repository's mesh declaration, under a comment naming the machine, creating the node identity first when there is none. Idempotent: a listed key changes nothing. The comments and every other line of the declaration stay as they were, and an edit that would not parse back as a declaration is refused before anything is written. Under deny_unknown a machine opens its mesh only once its key is listed, so this is the one step that joins a machine; commit the file and restart the server.",
+          "home": "mesh",
+          "id": "mesh.enrol",
+          "kind": "command",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_mesh_enrol",
+          "method": "POST",
+          "parameters": [],
+          "path": "/api/v1/mesh/enrol",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::mesh",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Enrol this machine in the mesh: the result.",
+              "schema": "MeshEnrolment",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`refused`: The command was understood and turned down for the reason the message gives.",
+              "schema": "ErrorBody",
+              "status": "422"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "MeshEnrolment",
+          "stability": "experimental",
+          "summary": "Enrol this machine in the mesh"
         },
         {
           "benchmark": "required",

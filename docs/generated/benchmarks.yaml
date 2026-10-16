@@ -6,22 +6,22 @@ generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark proje
 generator: majordomus-cli 0.27.0
 coverage:
   - scope: direct
-    required: 202
+    required: 203
     covered: 171
     missing: 0
-    waived: 31
+    waived: 32
     inapplicable: 0
   - scope: http
-    required: 197
+    required: 198
     covered: 171
     missing: 0
-    waived: 26
+    waived: 27
     inapplicable: 0
   - scope: mcp
-    required: 192
+    required: 193
     covered: 167
     missing: 0
-    waived: 25
+    waived: 26
     inapplicable: 0
   - scope: system
     required: 14
@@ -30,10 +30,10 @@ coverage:
     waived: 0
     inapplicable: 0
   - scope: total
-    required: 605
+    required: 608
     covered: 523
     missing: 0
-    waived: 82
+    waived: 85
     inapplicable: 0
 capabilities:
   - id: artifacts.list
@@ -1001,6 +1001,14 @@ capabilities:
     http: covered
     cases:
       - default
+  - id: mesh.enrol
+    module: mesh
+    kind: command
+    cache: "—"
+    direct: waived
+    mcp: waived
+    http: waived
+    cases: []
   - id: mesh.events
     module: mesh
     kind: query

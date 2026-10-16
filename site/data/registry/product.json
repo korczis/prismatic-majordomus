@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "0.27.0"
   },
-  "fingerprint": "1c7d783dd2c4638ac9e3bd1b4dba9c470162eb108c8c9722c5c2cb0464f6b08d",
+  "fingerprint": "0f9ba131e19be18595f56b3170c92633af0032de42cd8c57d6d04b70d4d71646",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -1005,7 +1005,7 @@
         },
         {
           "id": "mesh-off-by-default",
-          "claim": "No mesh discovery socket opens until the repository commits an enabled mesh declaration, and a disabled or absent declaration is reported as the reason, not an error",
+          "claim": "No mesh discovery socket opens until the repository commits an enabled mesh declaration that lists this machine's key, and a disabled, absent or unlisting declaration is reported as the reason, not an error",
           "status": "guaranteed",
           "test": "apps/majordomus-cli/tests/mesh.rs"
         },
@@ -1162,7 +1162,7 @@
         "use_cases": 6,
         "rules": 13,
         "enforced_rules": 11,
-        "capabilities": 70,
+        "capabilities": 71,
         "moments": 17
       },
       "evidence": {
@@ -3229,7 +3229,7 @@
         "use_cases": 10,
         "rules": 15,
         "enforced_rules": 14,
-        "capabilities": 126,
+        "capabilities": 127,
         "moments": 38
       },
       "evidence": {
@@ -5458,6 +5458,15 @@
               "cli": "majordomus mesh doctor"
             },
             {
+              "id": "mesh.enrol",
+              "title": "Enrol this machine in the mesh",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_enrol",
+              "route": "POST /api/v1/mesh/enrol",
+              "cli": "majordomus mesh enrol"
+            },
+            {
               "id": "mesh.events",
               "title": "The cooperation journal",
               "kind": "query",
@@ -5724,7 +5733,7 @@
         },
         {
           "id": "mesh-off-by-default",
-          "claim": "No mesh discovery socket opens until the repository commits an enabled mesh declaration, and a disabled or absent declaration is reported as the reason, not an error",
+          "claim": "No mesh discovery socket opens until the repository commits an enabled mesh declaration that lists this machine's key, and a disabled, absent or unlisting declaration is reported as the reason, not an error",
           "status": "guaranteed",
           "test": "apps/majordomus-cli/tests/mesh.rs"
         }
@@ -5744,11 +5753,11 @@
         "reasoning"
       ],
       "counts": {
-        "capabilities": 24,
-        "mcp_tools": 21,
+        "capabilities": 25,
+        "mcp_tools": 22,
         "mcp_resources": 2,
-        "http_routes": 23,
-        "cli_paths": 4,
+        "http_routes": 24,
+        "cli_paths": 5,
         "commands": 0,
         "objects": 1,
         "rules": 2,
@@ -7266,7 +7275,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 109
+          "objects": 110
         },
         {
           "name": "knowledge",
@@ -7547,11 +7556,11 @@
       "counts": {
         "capabilities": 5,
         "mcp_tools": 5,
-        "mcp_resources": 463,
+        "mcp_resources": 464,
         "http_routes": 5,
         "cli_paths": 3,
         "commands": 6,
-        "objects": 460,
+        "objects": 461,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -9338,6 +9347,15 @@
               "cli": "majordomus mesh doctor"
             },
             {
+              "id": "mesh.enrol",
+              "title": "Enrol this machine in the mesh",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_enrol",
+              "route": "POST /api/v1/mesh/enrol",
+              "cli": "majordomus mesh enrol"
+            },
+            {
               "id": "mesh.events",
               "title": "The cooperation journal",
               "kind": "query",
@@ -9976,11 +9994,11 @@
       ],
       "backlinks": [],
       "counts": {
-        "capabilities": 55,
-        "mcp_tools": 50,
+        "capabilities": 56,
+        "mcp_tools": 51,
         "mcp_resources": 7,
-        "http_routes": 54,
-        "cli_paths": 14,
+        "http_routes": 55,
+        "cli_paths": 15,
         "commands": 0,
         "objects": 0,
         "rules": 2,
@@ -10430,6 +10448,15 @@
               "tool": "majordomus_mesh_doctor",
               "route": "GET /api/v1/mesh/doctor",
               "cli": "majordomus mesh doctor"
+            },
+            {
+              "id": "mesh.enrol",
+              "title": "Enrol this machine in the mesh",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_enrol",
+              "route": "POST /api/v1/mesh/enrol",
+              "cli": "majordomus mesh enrol"
             },
             {
               "id": "mesh.events",
@@ -11341,11 +11368,11 @@
         "observatory"
       ],
       "counts": {
-        "capabilities": 97,
-        "mcp_tools": 89,
+        "capabilities": 98,
+        "mcp_tools": 90,
         "mcp_resources": 16,
-        "http_routes": 94,
-        "cli_paths": 41,
+        "http_routes": 95,
+        "cli_paths": 42,
         "commands": 0,
         "objects": 0,
         "rules": 3,
@@ -12839,11 +12866,11 @@
       "kind_refs": [
         {
           "name": "milestone",
-          "objects": 38
+          "objects": 39
         },
         {
           "name": "issue",
-          "objects": 394
+          "objects": 401
         },
         {
           "name": "intent",
@@ -13045,11 +13072,11 @@
       "counts": {
         "capabilities": 23,
         "mcp_tools": 23,
-        "mcp_resources": 439,
+        "mcp_resources": 447,
         "http_routes": 23,
         "cli_paths": 11,
         "commands": 1,
-        "objects": 436,
+        "objects": 444,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -16737,7 +16764,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (109)",
+        "title": "adr (110)",
         "features": [
           "knowledge"
         ]
@@ -16834,7 +16861,7 @@
       },
       {
         "id": "issue",
-        "title": "issue (394)",
+        "title": "issue (401)",
         "features": [
           "planning"
         ]
@@ -16855,7 +16882,7 @@
       },
       {
         "id": "milestone",
-        "title": "milestone (38)",
+        "title": "milestone (39)",
         "features": [
           "planning"
         ]
@@ -17853,19 +17880,19 @@
     }
   ],
   "telemetry": {
-    "capabilities": 2446,
-    "builtin": 202,
-    "declarative": 2244,
+    "capabilities": 2456,
+    "builtin": 203,
+    "declarative": 2253,
     "modules": 58,
-    "mcp_tools": 192,
-    "mcp_resources": 2299,
-    "http_routes": 197,
-    "cli_commands": 206,
+    "mcp_tools": 193,
+    "mcp_resources": 2308,
+    "http_routes": 198,
+    "cli_commands": 207,
     "shell_commands": 30,
     "kinds": 34,
-    "objects": 2244,
+    "objects": 2253,
     "by_kind": {
-      "adr": 109,
+      "adr": 110,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -17882,10 +17909,10 @@
       "gap": 3,
       "implementation": 52,
       "intent": 4,
-      "issue": 394,
+      "issue": 401,
       "knowledge": 4,
       "mesh-declaration": 1,
-      "milestone": 38,
+      "milestone": 39,
       "moment": 38,
       "policy": 1,
       "profile": 4,
