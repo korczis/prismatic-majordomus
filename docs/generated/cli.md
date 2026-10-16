@@ -133,6 +133,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus release version`](#majordomus-release-version) | `/docs/cli/release/version/` | The version the crate manifest declares, whether the projection the shell tool reads states it, any version written by hand where the tool's files live, and the bump the commits since the last release imply |
 | [`majordomus release analyze`](#majordomus-release-analyze) | `/docs/cli/release/analyze/` | What the public contract did since the last release, and the smallest version this tree may therefore declare |
 | [`majordomus release next`](#majordomus-release-next) | `/docs/cli/release/next/` | The version a landing of HEAD onto the trunk allocates, and why: the trunk's version, the measured movement, the policy floor and any exemption (ADR 0134) |
+| [`majordomus release site`](#majordomus-release-site) | `/docs/cli/release/site/` | Whether a release leaves the site better than the previous one found it: no measure of the site regressed, and at least one change in the window improves it through a source it is generated from |
 | [`majordomus release bump`](#majordomus-release-bump) | `/docs/cli/release/bump/` | Raise the version in the one place it is authored, to at least what the public contract requires; scripts/derive derives the rest |
 | [`majordomus quality`](#majordomus-quality) | `/docs/cli/quality/` | What this executable's own public surface is held to: documentation, executable examples, module coverage, and every command accounted for against the capability registry |
 | [`majordomus quality report`](#majordomus-quality-report) | `/docs/cli/quality/report/` | Measure the crate and report every finding, with the rule it breaks and what to do about it |
@@ -3717,7 +3718,7 @@ Examples:
 
 What this project has shipped and what it would ship next: the changelog derived from the layer's own records, the version authored in one place and projected for the shell tool, and the one command that raises it
 
-Subcommands: [`majordomus release changelog`](#majordomus-release-changelog), [`majordomus release version`](#majordomus-release-version), [`majordomus release analyze`](#majordomus-release-analyze), [`majordomus release next`](#majordomus-release-next), [`majordomus release bump`](#majordomus-release-bump).
+Subcommands: [`majordomus release changelog`](#majordomus-release-changelog), [`majordomus release version`](#majordomus-release-version), [`majordomus release analyze`](#majordomus-release-analyze), [`majordomus release next`](#majordomus-release-next), [`majordomus release site`](#majordomus-release-site), [`majordomus release bump`](#majordomus-release-bump).
 
 ```text
 majordomus release [OPTIONS] [COMMAND]
@@ -3849,6 +3850,35 @@ Examples:
 
   ```console
   $ majordomus release next --format json
+  ```
+
+  Verified: exits 12.
+
+<a id="majordomus-release-site"></a>
+## `majordomus release site`
+
+Whether a release leaves the site better than the previous one found it: no measure of the site regressed, and at least one change in the window improves it through a source it is generated from
+
+```text
+majordomus release site [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--since` | `<REF>` | — | The previous release: a recorded tag or version, or any commit; the newest recorded stable release that is an ancestor of the head when absent |
+| `--head` | `<REF>` | `HEAD` | The commit being released |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | How to render the answer (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Whether a release leaves the site better than it found it** — The verdict of project.a-release-leaves-the-site-better: every measure of the site the executable computes — the text pairs below WCAG AA and the weakest text contrast in each theme, and the page files written by hand — at the previous release's recorded commit and at the commit being released, each with its delta; then every commit of the window that touched the site or named it, and whether it counts as an improvement. Exit 0 passes, 10 is a regression or a window with no improvement, each finding naming the measure and its delta or the commits and why none counts. The release workflow asks it before it builds anything. This fixture has recorded no release, so there is nothing to compare with, and it says so with exit 12 rather than passing.
+
+  ```console
+  $ majordomus release site --format json
   ```
 
   Verified: exits 12.
