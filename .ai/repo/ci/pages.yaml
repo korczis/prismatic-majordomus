@@ -223,3 +223,36 @@ caches:
     path: .mj-cache/zola
     inputs: [.ai/repo/ci/pages.yaml]
     saves: the Zola release download
+
+# ---------------------------------------------------------------- what a release owes the site
+# Every release leaves the site better than the release before it found it
+# (project.a-release-leaves-the-site-better). `majordomus release site` reads this section and
+# nothing else to decide which change in a release's window is one whose subject is the site;
+# the measures it holds a release to are computed by the executable from the two released
+# trees, so none of them is listed here.
+#
+# A change counts as an improvement of the site when its conventional type is one of `kinds`
+# and it changes, outside every file `.gitattributes` marks `merge=derived`, either a path of
+# one of the gates.yaml `classes` below — the site's own sources: templates, styles, the
+# design declaration, the site's scripts — or anything at all while its scope is one of
+# `scopes`, which is how a canonical record whose page the site generates is counted. A change
+# that touches only derived files counts for nothing, whatever it says: a hand edit of a
+# generated page is a defect `derive-check` refuses, never an improvement. The classes are
+# named, not copied, so the paths stay the ones the CI model already plans the site's gates by.
+release:
+  classes:
+    - site
+    - design
+  scopes:
+    - site
+    - pages
+    - design
+    - homepage
+    - web
+  kinds:
+    - feat
+    - fix
+    - perf
+    - refactor
+    - style
+    - docs

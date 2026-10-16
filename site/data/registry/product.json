@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "0.27.0"
   },
-  "fingerprint": "1c7d783dd2c4638ac9e3bd1b4dba9c470162eb108c8c9722c5c2cb0464f6b08d",
+  "fingerprint": "2a2bac80f9e9be62dc61c5af79227cde32c25889241cb9bc6af4358bd910d472",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -3229,7 +3229,7 @@
         "use_cases": 10,
         "rules": 15,
         "enforced_rules": 14,
-        "capabilities": 126,
+        "capabilities": 127,
         "moments": 38
       },
       "evidence": {
@@ -7767,7 +7767,7 @@
       "kind_refs": [
         {
           "name": "rule",
-          "objects": 180
+          "objects": 181
         }
       ],
       "rule_refs": [
@@ -8143,11 +8143,11 @@
       "counts": {
         "capabilities": 6,
         "mcp_tools": 4,
-        "mcp_resources": 182,
+        "mcp_resources": 183,
         "http_routes": 6,
         "cli_paths": 3,
         "commands": 5,
-        "objects": 180,
+        "objects": 181,
         "rules": 7,
         "enforced_rules": 7,
         "docs": 2,
@@ -9676,6 +9676,14 @@
               "route": "GET /api/v1/release/next"
             },
             {
+              "id": "release.site",
+              "title": "Whether a release leaves the site better than it found it",
+              "kind": "query",
+              "stability": "implemented",
+              "tool": "majordomus_release_site",
+              "route": "GET /api/v1/release/site"
+            },
+            {
               "id": "release.version",
               "title": "The version, and the one the contract requires next",
               "kind": "query",
@@ -9976,10 +9984,10 @@
       ],
       "backlinks": [],
       "counts": {
-        "capabilities": 55,
-        "mcp_tools": 50,
+        "capabilities": 56,
+        "mcp_tools": 51,
         "mcp_resources": 7,
-        "http_routes": 54,
+        "http_routes": 55,
         "cli_paths": 14,
         "commands": 0,
         "objects": 0,
@@ -10179,6 +10187,14 @@
               "stability": "implemented",
               "tool": "majordomus_release_next",
               "route": "GET /api/v1/release/next"
+            },
+            {
+              "id": "release.site",
+              "title": "Whether a release leaves the site better than it found it",
+              "kind": "query",
+              "stability": "implemented",
+              "tool": "majordomus_release_site",
+              "route": "GET /api/v1/release/site"
             },
             {
               "id": "release.version",
@@ -11341,10 +11357,10 @@
         "observatory"
       ],
       "counts": {
-        "capabilities": 97,
-        "mcp_tools": 89,
+        "capabilities": 98,
+        "mcp_tools": 90,
         "mcp_resources": 16,
-        "http_routes": 94,
+        "http_routes": 95,
         "cli_paths": 41,
         "commands": 0,
         "objects": 0,
@@ -12261,6 +12277,14 @@
               "route": "GET /api/v1/release/next"
             },
             {
+              "id": "release.site",
+              "title": "Whether a release leaves the site better than it found it",
+              "kind": "query",
+              "stability": "implemented",
+              "tool": "majordomus_release_site",
+              "route": "GET /api/v1/release/site"
+            },
+            {
               "id": "release.version",
               "title": "The version, and the one the contract requires next",
               "kind": "query",
@@ -12470,10 +12494,10 @@
       ],
       "backlinks": [],
       "counts": {
-        "capabilities": 9,
-        "mcp_tools": 9,
+        "capabilities": 10,
+        "mcp_tools": 10,
         "mcp_resources": 29,
-        "http_routes": 9,
+        "http_routes": 10,
         "cli_paths": 5,
         "commands": 4,
         "objects": 28,
@@ -16897,7 +16921,7 @@
       },
       {
         "id": "rule",
-        "title": "rule (180)",
+        "title": "rule (181)",
         "features": [
           "doctrine"
         ]
@@ -17853,17 +17877,17 @@
     }
   ],
   "telemetry": {
-    "capabilities": 2446,
-    "builtin": 202,
-    "declarative": 2244,
+    "capabilities": 2449,
+    "builtin": 203,
+    "declarative": 2246,
     "modules": 58,
-    "mcp_tools": 192,
-    "mcp_resources": 2299,
-    "http_routes": 197,
-    "cli_commands": 206,
+    "mcp_tools": 193,
+    "mcp_resources": 2301,
+    "http_routes": 198,
+    "cli_commands": 207,
     "shell_commands": 30,
     "kinds": 34,
-    "objects": 2244,
+    "objects": 2246,
     "by_kind": {
       "adr": 109,
       "application": 5,
@@ -17891,12 +17915,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 27,
-      "rule": 180,
+      "rule": 181,
       "scope": 1,
       "session": 89,
       "skill": 8,
       "taxonomy": 10,
-      "test": 500,
+      "test": 501,
       "use-case": 49,
       "workspace": 1
     },

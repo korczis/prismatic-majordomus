@@ -204,6 +204,14 @@ scripts/ci/release-verdict --commit HEAD
 ```
 
 ```bash
+# 3b. the commit to be tagged leaves the site better than the last release found it: no
+#     measure of the site worse, and at least one improvement of a source it is generated
+#     from (project.a-release-leaves-the-site-better); the pipeline asks the same in its
+#     plan job and publishes nothing when the answer is no
+majordomus release site --format json
+```
+
+```bash
 # 4. tag the merge on the default branch, and push the tag
 git tag v0.3.0 && git push origin v0.3.0
 

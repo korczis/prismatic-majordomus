@@ -45,6 +45,13 @@ pub fn run(args: ReleaseArgs) -> Result<u8> {
             let (base, head) = (base.clone(), head.clone());
             next(&args, &base, &head)
         }
+        Some(ReleaseCommand::Site {
+            ref since,
+            ref head,
+        }) => {
+            let (since, head) = (since.clone(), head.clone());
+            site(&args, since.as_deref(), &head)
+        }
         Some(ReleaseCommand::Bump {
             ref level,
             ref exact,
@@ -279,6 +286,93 @@ fn analyze(args: &ReleaseArgs, since: Option<&str>, explain: bool) -> Result<u8>
     } else {
         0
     })
+}
+
+/// Exit code when a release would leave the site worse, or no better, than the previous
+/// release found it (`project.a-release-leaves-the-site-better`).
+pub const EXIT_SITE_NOT_BETTER: u8 = 10;
+
+/// `majordomus release site`: the verdict on the site, through the capability so every
+/// surface renders one value. Exit 0 when the release leaves the site better,
+/// [`EXIT_SITE_NOT_BETTER`] when it does not, [`EXIT_UNREADABLE`] when the verdict could not
+/// be taken.
+fn site(args: &ReleaseArgs, since: Option<&str>, head: &str) -> Result<u8> {
+    let app = App::load(&args.repo)?;
+    let mut input = serde_json::json!({ "head": head });
+    if let Some(since) = since {
+        input["since"] = serde_json::Value::String(since.to_string());
+    }
+    let value = app
+        .context
+        .execute(crate::capability::builtin::release::SITE_ID, input)
+        .map_err(unreadable)?;
+    let verdict: release::site::SiteVerdict = serde_json::from_value(value).map_err(protocol)?;
+    let stdout = std::io::stdout();
+    render_site(&mut stdout.lock(), &verdict, args.format)?;
+    Ok(if verdict.passes {
+        0
+    } else {
+        EXIT_SITE_NOT_BETTER
+    })
+}
+
+/// A site verdict as JSON, or as one line per measure, per counted change and per finding.
+fn render_site(
+    out: &mut impl Write,
+    v: &release::site::SiteVerdict,
+    format: OutputFormat,
+) -> Result<()> {
+    if let OutputFormat::Json = format {
+        return writeln!(
+            out,
+            "{}",
+            serde_json::to_string_pretty(v).unwrap_or_default()
+        )
+        .map_err(Error::Transport);
+    }
+    let since = v.previous.tag.as_deref().unwrap_or(&v.previous.commit);
+    let w = |out: &mut dyn Write, line: String| writeln!(out, "{line}").map_err(Error::Transport);
+    w(
+        out,
+        format!(
+            "the site at {} against {since} ({})",
+            &v.head[..9.min(v.head.len())],
+            v.rule
+        ),
+    )?;
+    for m in &v.measures {
+        let value = |x: Option<f64>| x.map_or_else(|| "-".to_string(), |x| format!("{x}"));
+        w(
+            out,
+            format!(
+                "  {:<11} {:<26} {} -> {}{}",
+                format!("{:?}", m.verdict).to_lowercase(),
+                m.id,
+                value(m.previous),
+                value(m.current),
+                m.note
+                    .as_deref()
+                    .map(|n| format!("  ({n})"))
+                    .unwrap_or_default()
+            ),
+        )?;
+    }
+    for c in v.changes.iter().filter(|c| c.counts) {
+        w(out, format!("  improves    {} {}", c.commit, c.subject))?;
+    }
+    for f in &v.findings {
+        w(out, format!("FAIL {}: {}", f.code, f.message))?;
+    }
+    if v.passes {
+        w(
+            out,
+            format!(
+                "OK   the release leaves the site better: {} improvement(s), no measure worse",
+                v.improvements
+            ),
+        )?;
+    }
+    Ok(())
 }
 
 /// `majordomus release next`: what a landing would allocate, through the capability so
@@ -758,6 +852,69 @@ mod tests {
     use super::*;
     use crate::release::compat::Diagnostic;
     use crate::release::model::{DecidedBy, VersionReport};
+
+    /// A site verdict renders every measure, every counted change and every finding, or the
+    /// whole verdict as JSON.
+    #[test]
+    fn a_site_verdict_renders_its_measures_changes_and_findings() {
+        use crate::release::site::*;
+        let mut v = SiteVerdict {
+            rule: RULE.into(),
+            previous: SiteBaseline {
+                tag: Some("v0.27.0".into()),
+                commit: "c1a430dcf".into(),
+            },
+            head: "0123456789abcdef".into(),
+            measures: vec![MeasureDelta {
+                id: "contrast.dark.weakest".into(),
+                title: "t".into(),
+                better: Better::Higher,
+                previous: Some(4.8),
+                current: Some(4.6),
+                delta: Some(-0.2),
+                verdict: MeasureVerdict::Regressed,
+                note: Some("why".into()),
+            }],
+            subject: SiteSubject::default(),
+            changes: vec![SiteChange {
+                commit: "abc".into(),
+                subject: "fix(site): x".into(),
+                authored: vec![],
+                generated: vec![],
+                counts: true,
+                why: "w".into(),
+            }],
+            improvements: 1,
+            findings: vec![SiteFinding {
+                code: "site-measure-regressed".into(),
+                message: "m".into(),
+            }],
+            passes: false,
+        };
+        let mut text = Vec::new();
+        render_site(&mut text, &v, OutputFormat::Text).unwrap();
+        let text = String::from_utf8(text).unwrap();
+        assert!(text.contains("against v0.27.0"), "{text}");
+        assert!(text.contains("regressed   contrast.dark.weakest"), "{text}");
+        assert!(text.contains("4.8 -> 4.6  (why)"), "{text}");
+        assert!(text.contains("improves    abc fix(site): x"), "{text}");
+        assert!(text.contains("FAIL site-measure-regressed: m"), "{text}");
+        v.findings.clear();
+        v.passes = true;
+        v.measures[0].previous = None;
+        let mut text = Vec::new();
+        render_site(&mut text, &v, OutputFormat::Text).unwrap();
+        let text = String::from_utf8(text).unwrap();
+        assert!(text.contains("- -> 4.6"), "{text}");
+        assert!(
+            text.contains("OK   the release leaves the site better"),
+            "{text}"
+        );
+        let mut json = Vec::new();
+        render_site(&mut json, &v, OutputFormat::Json).unwrap();
+        let back: SiteVerdict = serde_json::from_slice(&json).unwrap();
+        assert_eq!(back, v);
+    }
 
     /// A decision renders as its explanation and the number, or as the whole decision in
     /// JSON; a refusal and a malformed answer are each their own error.

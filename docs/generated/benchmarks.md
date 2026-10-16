@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 202 | 171 | 0 | 31 |
-| http | 197 | 171 | 0 | 26 |
-| mcp | 192 | 167 | 0 | 25 |
+| direct | 203 | 171 | 0 | 32 |
+| http | 198 | 171 | 0 | 27 |
+| mcp | 193 | 167 | 0 | 26 |
 | system | 14 | 14 | 0 | 0 |
-| total | 605 | 523 | 0 | 82 |
+| total | 608 | 523 | 0 | 85 |
 
 ## Capabilities
 
@@ -189,6 +189,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `release.analysis` | release | query | — | waived | waived | waived | — |
 | `release.changelog` | release | query | — | covered | covered | covered | `all`, `one-version` |
 | `release.next` | release | query | — | waived | waived | waived | — |
+| `release.site` | release | query | — | waived | waived | waived | — |
 | `release.version` | release | query | process, 2 entries, per checkout state | covered | covered | covered | `default` |
 | `repository.info` | repository | query | process, 1 entries, per generation | covered | covered | covered | `default` |
 | `repository.scope` | repository | query | — | covered | covered | covered | `default` |

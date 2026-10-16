@@ -19346,6 +19346,12 @@
           "route": "/docs/cli/release/next/"
         },
         {
+          "about": "Whether a release leaves the site better than the previous one found it: no measure of the site regressed, and at least one change in the window improves it through a source it is generated from",
+          "command": "majordomus release site",
+          "name": "site",
+          "route": "/docs/cli/release/site/"
+        },
+        {
           "about": "Raise the version in the one place it is authored, to at least what the public contract requires; scripts/derive derives the rest",
           "command": "majordomus release bump",
           "name": "bump",
@@ -19955,6 +19961,163 @@
       ],
       "route": "/docs/cli/release/next/",
       "usage": "majordomus release next [OPTIONS]"
+    },
+    {
+      "about": "Whether a release leaves the site better than the previous one found it: no measure of the site regressed, and at least one change in the window improves it through a source it is generated from",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus release",
+          "name": "release",
+          "route": "/docs/cli/release/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The previous release: a recorded tag or version, or any commit; the newest recorded stable release that is an ancestor of the head when absent",
+          "long": "since",
+          "name": "since",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "REF"
+        },
+        {
+          "defaults": [
+            "HEAD"
+          ],
+          "global": false,
+          "help": "The commit being released",
+          "long": "head",
+          "name": "head",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "REF"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "How to render the answer",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus release site",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "release",
+            "site",
+            "--format",
+            "json"
+          ],
+          "command": "majordomus release site --format json",
+          "description": "The verdict of project.a-release-leaves-the-site-better: every measure of the site the executable computes — the text pairs below WCAG AA and the weakest text contrast in each theme, and the page files written by hand — at the previous release's recorded commit and at the commit being released, each with its delta; then every commit of the window that touched the site or named it, and whether it counts as an improvement. Exit 0 passes, 10 is a regression or a window with no improvement, each finding naming the measure and its delta or the commits and why none counts. The release workflow asks it before it builds anything. This fixture has recorded no release, so there is nothing to compare with, and it says so with exit 12 rather than passing.",
+          "expectation": "exits 12",
+          "id": "release-site",
+          "setup": [],
+          "title": "Whether a release leaves the site better than it found it"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "site",
+      "parent_route": "/docs/cli/release/",
+      "path": [
+        "majordomus",
+        "release",
+        "site"
+      ],
+      "route": "/docs/cli/release/site/",
+      "usage": "majordomus release site [OPTIONS]"
     },
     {
       "about": "Raise the version in the one place it is authored, to at least what the public contract requires; scripts/derive derives the rest",
@@ -37216,10 +37379,10 @@
     }
   ],
   "counts": {
-    "arguments": 1613,
-    "commands": 234,
-    "examples": 237,
-    "runnable": 206
+    "arguments": 1620,
+    "commands": 235,
+    "examples": 238,
+    "runnable": 207
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
   "generator_version": "0.27.0",

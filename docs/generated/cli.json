@@ -17174,6 +17174,146 @@
             "path": [
               "majordomus",
               "release",
+              "site"
+            ],
+            "route": "/docs/cli/release/site/",
+            "executable": true,
+            "usage": "majordomus release site [OPTIONS]",
+            "about": "Whether a release leaves the site better than the previous one found it: no measure of the site regressed, and at least one change in the window improves it through a source it is generated from",
+            "args": [
+              {
+                "name": "since",
+                "long": "since",
+                "positional": false,
+                "help": "The previous release: a recorded tag or version, or any commit; the newest recorded stable release that is an ancestor of the head when absent",
+                "value_name": "REF",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "head",
+                "long": "head",
+                "positional": false,
+                "help": "The commit being released",
+                "value_name": "REF",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "HEAD"
+                ]
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "How to render the answer",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "release-site",
+                "title": "Whether a release leaves the site better than it found it",
+                "description": "The verdict of project.a-release-leaves-the-site-better: every measure of the site the executable computes — the text pairs below WCAG AA and the weakest text contrast in each theme, and the page files written by hand — at the previous release's recorded commit and at the commit being released, each with its delta; then every commit of the window that touched the site or named it, and whether it counts as an improvement. Exit 0 passes, 10 is a regression or a window with no improvement, each finding naming the measure and its delta or the commits and why none counts. The release workflow asks it before it builds anything. This fixture has recorded no release, so there is nothing to compare with, and it says so with exit 12 rather than passing.",
+                "argv": [
+                  "release",
+                  "site",
+                  "--format",
+                  "json"
+                ],
+                "command": "majordomus release site --format json",
+                "setup": [],
+                "expectation": "exits 12"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "release",
               "bump"
             ],
             "route": "/docs/cli/release/bump/",
