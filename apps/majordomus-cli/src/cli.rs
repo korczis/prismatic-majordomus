@@ -648,12 +648,12 @@ pub struct ModelsRouteArgs {
 /// `majordomus guard`: the edit guard (I2735).
 ///
 /// ```
-/// use majordomus_cli::cli::{Cli, Command, GuardCommand};
+/// use majordomus_cli::cli::{Cli, Command, GuardArgs, GuardCommand};
 /// use clap::Parser;
 ///
 /// let cli = Cli::try_parse_from(["majordomus", "guard", "hook", "--provider", "claude-code"]).unwrap();
 /// let Command::Guard(guard) = cli.command else { panic!("expected `guard`") };
-/// let GuardCommand::Hook(hook) = guard.command;
+/// let GuardArgs { command: GuardCommand::Hook(hook) } = guard;
 /// assert_eq!(hook.provider, "claude-code");
 ///
 /// // the group has no behaviour of its own
@@ -666,7 +666,18 @@ pub struct GuardArgs {
 }
 
 #[derive(Debug, Subcommand)]
-/// The `guard` subcommands.
+/// The `guard` subcommands: one today, `hook`, which a provider's pre-tool hook runs before
+/// every write; an unknown subcommand is refused rather than read as a path.
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, GuardCommand};
+/// use clap::Parser;
+///
+/// let cli = Cli::try_parse_from(["majordomus", "guard", "hook"]).unwrap();
+/// let Command::Guard(guard) = cli.command else { panic!("expected `guard`") };
+/// assert!(matches!(guard.command, GuardCommand::Hook(_)));
+/// assert!(Cli::try_parse_from(["majordomus", "guard", "docs/a.md"]).is_err());
+/// ```
 pub enum GuardCommand {
     /// Judge the edit a provider's pre-tool payload (on stdin) is about to make; exit 2 with the reason and the remedy when no claim covers it, 0 otherwise
     Hook(GuardHookArgs),
@@ -676,14 +687,14 @@ pub enum GuardCommand {
 /// `guard hook`: the provider whose payload stdin carries, and the repository.
 ///
 /// ```
-/// use majordomus_cli::cli::{Cli, Command, GuardCommand};
+/// use majordomus_cli::cli::{Cli, Command, GuardCommand, GuardHookArgs};
 /// use clap::Parser;
 ///
 /// let cli = Cli::try_parse_from(["majordomus", "guard", "hook"]).unwrap();
 /// let Command::Guard(guard) = cli.command else { panic!("expected `guard`") };
-/// let GuardCommand::Hook(hook) = guard.command;
-/// assert_eq!(hook.provider, "claude-code", "the provider whose payload shape is known");
-/// assert_eq!(hook.repo, None);
+/// let GuardCommand::Hook(GuardHookArgs { provider, repo }) = guard.command;
+/// assert_eq!(provider, "claude-code", "the provider whose payload shape is known");
+/// assert_eq!(repo, None);
 /// ```
 pub struct GuardHookArgs {
     /// The provider whose payload stdin carries; its session id on the mesh is `<provider>-<session_id>`

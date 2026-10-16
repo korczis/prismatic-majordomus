@@ -6,7 +6,7 @@
     "version": "0.26.0"
   },
   "registry": {
-    "fingerprint": "761187da62d625f5e19fd97648d0f9ec70d5c0a62fd74ec73249c426dbc4210e",
+    "fingerprint": "ac85b91ca595bfe917e70f1cd6bfc451c706d7bc53d9bcff669fd2ae883687be",
     "summary": {
       "total": 2390,
       "builtin": 200,
@@ -30789,7 +30789,7 @@
               "ground",
               "detail"
             ],
-            "description": "The answer to one edit.",
+            "description": "The answer to one edit: whether it may proceed, the one word it was decided on, the\nsentence a person reads and, for a refusal, what would allow it. `guard.edit` returns it\nas it is; `guard hook` turns it into an exit code.\n\n```\nuse majordomus_cli::guard::{judge_facts, ClaimSource, EditFacts, EditVerdict};\n\nlet facts = EditFacts {\n    required: Ok(false),\n    mesh_enabled: true,\n    task: None,\n    session: None,\n    claims: ClaimSource::Claims(vec![]),\n};\nlet v: EditVerdict = judge_facts(\"a.md\", Some(\"a.md\"), facts);\nassert!(v.allowed);\nassert_eq!(v.ground, \"off\");\nlet json = serde_json::to_value(&v).unwrap();\nassert!(json.get(\"remedy\").is_none(), \"an allowed edit carries no remedy\");\n```",
             "title": "EditVerdict"
           }
         },
@@ -81966,7 +81966,7 @@
     ]
   },
   "index": {
-    "fingerprint": "267502819e3157ff7ff7d71c30be9b95d5c69823872ac43eb9fa27b103e3b078",
+    "fingerprint": "74df464201eeffb3e4b6f61ac412eb9eb8fc8d820475e478b3184f48fe35b17b",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {

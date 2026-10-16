@@ -53,12 +53,10 @@ fn guard_edit(ctx: &Context, input: GuardEditInput) -> Result<EditVerdict, Capab
     let root = std::path::PathBuf::from(&ctx.index.repository.root);
     let claims = || match ctx.mesh.cooperation() {
         Some(c) => ClaimSource::Claims(c.state().claims),
-        None if ctx.mesh.decided() => ClaimSource::Unavailable(
-            ctx.mesh
-                .cooperation_status()
-                .reason
-                .unwrap_or_else(|| "the mesh does not run in this server".into()),
-        ),
+        None if ctx.mesh.decided() => {
+            let why = ctx.mesh.cooperation_status().reason.unwrap_or_default();
+            ClaimSource::Unavailable(format!("this server does not run the mesh: {why}"))
+        }
         None => server_claims(&root),
     };
     Ok(judge(&root, &input.path, input.session.as_deref(), claims))
@@ -105,5 +103,99 @@ mod tests {
             exposure.http.as_ref().map(|h| h.path.as_str()),
             Some("/api/v1/guard/edit")
         );
+    }
+
+    /// A context over a synthetic repository whose policy asks every edit for a claim and
+    /// whose mesh is declared enabled, so that only the claims can decide.
+    fn on_the_mesh() -> (crate::synthetic::SyntheticRepository, Context) {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let index = repo.index().unwrap();
+        let registry = crate::capability::CapabilityRegistry::builder()
+            .with_modules(vec![module()])
+            .with_index(&index)
+            .build()
+            .expect("the registry builds");
+        let ctx = Context::new(std::sync::Arc::new(index), std::sync::Arc::new(registry));
+        let policy = "version: 1\nsession:\n  edits_require_claim: true\n";
+        std::fs::write(repo.root().join(".ai/repo/policy.yaml"), policy).unwrap();
+        std::fs::create_dir_all(repo.root().join(".ai/repo/mesh")).unwrap();
+        std::fs::write(
+            repo.root().join(".ai/repo/mesh/mesh.yaml"),
+            "enabled: true\n",
+        )
+        .unwrap();
+        (repo, ctx)
+    }
+
+    fn edit(ctx: &Context, path: &str) -> EditVerdict {
+        let input = serde_json::json!({ "path": path, "session": "claude-code-s1" });
+        serde_json::from_value(ctx.execute("guard.edit", input).expect("an answer"))
+            .expect("a verdict")
+    }
+
+    #[test]
+    fn a_server_running_the_mesh_answers_from_its_own_claims() {
+        use crate::mesh::config::{CooperationConfig, TrustConfig};
+        use crate::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};
+        use crate::mesh::identity::NodeIdentity;
+        use crate::mesh::link::HttpTransport;
+        use crate::mesh::registry::MeshRegistry;
+        use crate::mesh::repository::of_root_commits;
+        use std::sync::Arc;
+
+        let (_repo, ctx) = on_the_mesh();
+        let cooperation = Cooperation::new(CooperationSetup {
+            identity: Arc::new(NodeIdentity::ephemeral().unwrap()),
+            runtime: "0000000000000001".into(),
+            repository: of_root_commits(&["root".into()]),
+            endpoints: vec!["127.0.0.1:9".into()],
+            version: "test".into(),
+            config: CooperationConfig::default(),
+            trust: TrustConfig::default(),
+            journal_path: None,
+            registry: Arc::new(MeshRegistry::new()),
+            transport: Arc::new(HttpTransport),
+            board: None,
+            checkout: CheckoutFacts::default(),
+        })
+        .unwrap();
+        ctx.mesh.attach_cooperation(Arc::clone(&cooperation));
+        let v = edit(&ctx, "docs/a.md");
+        assert!(!v.allowed, "the running mesh holds no claim of the session");
+        assert_eq!(v.ground, "unclaimed");
+        cooperation.stop();
+    }
+
+    #[test]
+    fn a_server_that_declined_the_mesh_enforces_nothing_and_says_why() {
+        let (_repo, ctx) = on_the_mesh();
+        ctx.mesh.decline("the node identity did not load");
+        let v = edit(&ctx, "docs/a.md");
+        assert!(v.allowed);
+        assert_eq!(v.ground, "undecided");
+        assert!(
+            v.detail.contains("this server does not run the mesh"),
+            "{}",
+            v.detail
+        );
+    }
+
+    #[test]
+    fn outside_a_server_the_checkouts_server_is_asked() {
+        let (_repo, ctx) = on_the_mesh();
+        let v = edit(&ctx, "docs/a.md");
+        assert!(v.allowed, "no server serves the synthetic checkout");
+        assert!(v.detail.contains("no shared server"), "{}", v.detail);
+    }
+
+    #[test]
+    fn every_benchmark_case_is_an_input_the_capability_answers() {
+        let (_repo, ctx) = on_the_mesh();
+        let cases = GuardEditInput::benchmark_cases(&CaseContext { index: &ctx.index });
+        assert_eq!(cases.len(), 2);
+        for case in cases {
+            let input = serde_json::to_value(&case.input).unwrap();
+            assert!(ctx.execute("guard.edit", input).is_ok(), "{}", case.name);
+        }
     }
 }
