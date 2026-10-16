@@ -790,9 +790,9 @@ fn create(
             } else {
                 w(out, format!("created {}", report.path))?;
             }
-            match (&report.base, report.branch_created) {
-                (Some(b), true) => w(out, format!("branch  {} (new, from {b})", report.branch))?,
-                _ => w(out, format!("branch  {}", report.branch))?,
+            w(out, branch_line(&report))?;
+            if let Some(warning) = report.start.as_ref().and_then(|s| s.fallback()) {
+                w(out, format!("warning {warning}"))?;
             }
             w(out, report.envrc.describe())?;
             w(out, report.envrc_local.describe())?;
@@ -804,6 +804,23 @@ fn create(
         }
     }
     Ok(0)
+}
+
+/// The line naming the branch, and for a branch this command created, the ref it started
+/// from and the exact commit that ref named.
+fn branch_line(report: &crate::worktree::CreateReport) -> String {
+    let at = report
+        .start_commit
+        .as_deref()
+        .map(|c| format!(" at {c}"))
+        .unwrap_or_default();
+    match (&report.start, &report.base, report.branch_created) {
+        (Some(crate::worktree::StartPoint::RemoteBranch { .. }), Some(b), true) => {
+            format!("branch  {} (from {b}{at}, tracking it)", report.branch)
+        }
+        (_, Some(b), true) => format!("branch  {} (new, from {b}{at})", report.branch),
+        _ => format!("branch  {}", report.branch),
+    }
 }
 
 /// The branch an issue's work happens on: `feature/<id>-<slug>`, from the issue record
