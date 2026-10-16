@@ -122,10 +122,16 @@ jobs:
       - name: the target this artifact is for
         run: rustup target add "${{ matrix.target }}"
 
+      # The names come from the matrix the plan job has just held to the model, at the same
+      # tagged commit, and not from a debug executable built here only to be asked for them:
+      # that build was nine of the twenty-four minutes of v0.26.0's macOS Intel package, and
+      # two to five on every other runner, ahead of the release build that is the job.
       - name: package
         env:
           MAJORDOMUS_BUILD_COMMIT: ${{ github.sha }}
-        run: scripts/release-package --target "${{ matrix.target }}" --tag "${{ needs.plan.outputs.tag }}" --out dist
+        run: |
+          scripts/release-package --target "${{ matrix.target }}" --tag "${{ needs.plan.outputs.tag }}" --out dist \
+            --names-from docs/generated/distribution-matrix.json
 
       - name: verify the artifact is what the model says it is
         run: |
@@ -134,7 +140,8 @@ jobs:
           [ "${{ matrix.native }}" = "true" ] && native="--native"
           # shellcheck disable=SC2086
           scripts/release-verify --archive "dist/$artifact" \
-            --target "${{ matrix.target }}" --tag "${{ needs.plan.outputs.tag }}" $native
+            --target "${{ matrix.target }}" --tag "${{ needs.plan.outputs.tag }}" $native \
+            --names-from docs/generated/distribution-matrix.json
 
       - uses: actions/upload-artifact@v4
         with:

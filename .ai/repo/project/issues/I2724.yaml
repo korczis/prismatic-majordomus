@@ -1,0 +1,32 @@
+id: I2724
+milestone: safe-self-update
+title: "A node without a route to the site takes the archive from a peer and still verifies it itself"
+slug: a-relayed-archive-is-still-verified
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Let a following node that cannot reach github.com or majordomus.dev fetch the release archive from a linked peer over the authenticated mesh link, and install it only after checking its digest and size against release metadata it read itself or that was relayed and signed by the publishing node."
+why: "ADR 0161. jetson has no route to github.com; on 2026-10-14 its v0.25.0 archive was copied over the LAN by hand."
+current_state: "A node without a route to the site is upgraded by copying an archive to it by hand."
+desired_state: "self update --apply on such a node asks a linked peer for the archive and the metadata, verifies before unpacking, and installs through the same installer path; a mismatch is refused and reported on the board."
+scope:
+  - "apps/majordomus-cli/src/mesh"
+  - "apps/majordomus-cli/src/release"
+  - "site/static/install.sh"
+  - "docs/MESH.md"
+  - "test/cases"
+non_scope:
+  - "Trusting a digest a peer sends without metadata the node can verify"
+depends_on:
+  - "I2720"
+  - "I2165"
+acceptance_criteria:
+  - "A node with no route to the site upgrades from a peer's archive and verifies it before unpacking"
+  - "A peer archive whose digest differs from the metadata is refused and reported"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "relayed_archive_verified_test"
+created_at: 2026-10-14
+updated_at: 2026-10-14

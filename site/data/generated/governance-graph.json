@@ -484,6 +484,11 @@
     },
     {
       "kind": "decided_by",
+      "source": "rule:majordomus.task-on-the-mesh",
+      "target": "validator:task_on_the_mesh"
+    },
+    {
+      "kind": "decided_by",
       "source": "rule:majordomus.use-case-coverage",
       "target": "validator:use_case_coverage"
     },
@@ -939,6 +944,16 @@
     },
     {
       "kind": "run_by",
+      "source": "validator:task_on_the_mesh",
+      "target": "command:check"
+    },
+    {
+      "kind": "run_by",
+      "source": "validator:task_on_the_mesh",
+      "target": "command:finish"
+    },
+    {
+      "kind": "run_by",
       "source": "validator:use_case_coverage",
       "target": "command:check"
     },
@@ -1176,6 +1191,11 @@
       "kind": "proved_by",
       "source": "rule:majordomus.task-continuity",
       "target": "test:test/cases/25_continuity_lifecycle.sh"
+    },
+    {
+      "kind": "proved_by",
+      "source": "rule:majordomus.task-on-the-mesh",
+      "target": "test:test/cases/3068_a_task_off_the_mesh_is_refused.sh"
     },
     {
       "kind": "proved_by",
@@ -1744,6 +1764,17 @@
     },
     {
       "external": false,
+      "id": "rule:majordomus.task-on-the-mesh",
+      "kind": "rule",
+      "label": "task-on-the-mesh",
+      "note": "exit 10 · mesh",
+      "role": "text",
+      "route": "/doctrines/task-on-the-mesh/",
+      "status": "blocking",
+      "summary": "When the repository declares its mesh enabled, an active task's scope is claimed on the mesh — `start` claims it when the checkout's shared server answers and `finish` claims it again before judging — and a task completed without that claim is refused."
+    },
+    {
+      "external": false,
       "id": "rule:majordomus.use-case-coverage",
       "kind": "rule",
       "label": "use-case-coverage",
@@ -2159,6 +2190,14 @@
     },
     {
       "external": false,
+      "id": "validator:task_on_the_mesh",
+      "kind": "validator",
+      "label": "mj_validate_task_on_the_mesh",
+      "role": "muted",
+      "summary": "Decides the rule. Declared in lib/common.sh."
+    },
+    {
+      "external": false,
       "id": "validator:use_case_coverage",
       "kind": "validator",
       "label": "mj_validate_use_case_coverage",
@@ -2402,6 +2441,14 @@
       "id": "test:test/cases/29_prompt_capture.sh",
       "kind": "test",
       "label": "test/cases/29_prompt_capture.sh",
+      "role": "good",
+      "summary": "A behavioural case. It proves the validator answers, not that the rule is written down."
+    },
+    {
+      "external": false,
+      "id": "test:test/cases/3068_a_task_off_the_mesh_is_refused.sh",
+      "kind": "test",
+      "label": "test/cases/3068_a_task_off_the_mesh_is_refused.sh",
       "role": "good",
       "summary": "A behavioural case. It proves the validator answers, not that the rule is written down."
     },

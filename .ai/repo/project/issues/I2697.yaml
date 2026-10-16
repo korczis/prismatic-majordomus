@@ -1,0 +1,26 @@
+id: I2697
+milestone: development-runtime
+title: "The public snapshot carries the p5 library, or says which scenes it cannot draw"
+slug: ui-snapshot-carries-p5
+priority: p3
+profile: implementation
+parallel_safe: true
+objective: "The kiosk on the public site draws the proof scenes with p5, from the one reading taken at the published commit."
+why: "A published UI snapshot (ADR 0141) must serve vendor/p5.min.js beside the scenes script, or the kiosk there draws the new scenes as unavailable."
+current_state: "ADR 0160 proposes the scenes; the Observatory of ADR 0158 has eight."
+desired_state: "The kiosk on the public site draws the proof scenes with p5, from the one reading taken at the published commit."
+scope:
+  - "scripts/site-build"
+  - "apps/majordomus-cli/src/ui/mod.rs"
+non_scope:
+  - "Stating a frame rate or a figure that was not measured"
+depends_on: []
+acceptance_criteria:
+  - "The snapshot lists vendor/p5.min.js among its assets"
+  - "The snapshot status word is SNAPSHOT on every new scene"
+validation:
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "observatory_proof_scenes"
+created_at: 2026-10-14
+updated_at: 2026-10-14

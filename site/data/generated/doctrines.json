@@ -1190,6 +1190,29 @@
       "source": "share/standard/majordomus/rules/task-continuity.v1.md"
     },
     {
+      "id": "majordomus.task-on-the-mesh",
+      "slug": "task-on-the-mesh",
+      "title": "A task on a repository whose mesh is enabled works on the mesh",
+      "class": "blocking",
+      "principle": "",
+      "statement": "On a repository whose tracked mesh declaration is enabled, a task is not completed until its scope has been claimed on the mesh as the session task-<id>; partial, blocked, no_match and failed are never refused for it.",
+      "summary": "When the repository declares its mesh enabled, an active task's scope is claimed on the mesh — `start` claims it when the checkout's shared server answers and `finish` claims it again before judging — and a task completed without that claim is refused.",
+      "validator": "task_on_the_mesh",
+      "validator_function": "mj_validate_task_on_the_mesh",
+      "defined_in": "lib/common.sh",
+      "category": "mesh",
+      "enforced_by": [
+        "check",
+        "finish"
+      ],
+      "exit_code": 10,
+      "policy_key": "",
+      "claims": [],
+      "test": "test/cases/3068_a_task_off_the_mesh_is_refused.sh",
+      "depends_on": [],
+      "source": "share/standard/majordomus/rules/task-on-the-mesh.v1.md"
+    },
+    {
       "id": "majordomus.use-case-coverage",
       "slug": "use-case-coverage",
       "title": "Use-case coverage",
@@ -1322,8 +1345,8 @@
     }
   ],
   "counts": {
-    "declared": 48,
-    "blocking": 42,
+    "declared": 49,
+    "blocking": 43,
     "advisory": 6
   },
   "index": {
@@ -1370,10 +1393,11 @@
     "majordomus.skill-integrity": 40,
     "majordomus.state-consistency": 41,
     "majordomus.task-continuity": 42,
-    "majordomus.use-case-coverage": 43,
-    "majordomus.verification-integrity": 44,
-    "majordomus.obligation-closure": 45,
-    "majordomus.completion-gates": 46,
-    "majordomus.publication-currency": 47
+    "majordomus.task-on-the-mesh": 43,
+    "majordomus.use-case-coverage": 44,
+    "majordomus.verification-integrity": 45,
+    "majordomus.obligation-closure": 46,
+    "majordomus.completion-gates": 47,
+    "majordomus.publication-currency": 48
   }
 }

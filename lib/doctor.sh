@@ -53,9 +53,17 @@ MJ_DOCTOR_MISSING=0
 mj_cmd_doctor() {
   local a
   for a in "$@"; do case "$a" in
-    --help|-h) echo "usage: majordomus doctor [--json]   (read-only; exit 0 healthy, 10 failures, 12 missing)"; return 0 ;;
+    --help|-h) echo "usage: majordomus doctor [--json]   (read-only; exit 0 healthy, 10 failures, 12 missing)"
+               echo "  MAJORDOMUS_DOCTOR_CONTEXT=commit   the pre-commit hook's run: leaves out the per-worktree uncommitted-work reading and says so"
+               return 0 ;;
     *) mj_die "$MJ_EX_USAGE" "doctor: unknown option $a" ;;
   esac; done
+  # The one context doctor knows. Anything else is refused rather than read as unset, so a
+  # misspelt switch in a hook cannot quietly run, or quietly skip, what it meant to.
+  case "${MAJORDOMUS_DOCTOR_CONTEXT:-}" in
+    ''|commit) ;;
+    *) mj_die "$MJ_EX_USAGE" "doctor: MAJORDOMUS_DOCTOR_CONTEXT='$MAJORDOMUS_DOCTOR_CONTEXT' is not a context (commit, or unset)" ;;
+  esac
   mj_require_installed
   MJ_DOCTOR_MISSING=0
   local t_start; t_start="$(mj_ms)"
@@ -112,8 +120,52 @@ mj_validate_policy() {
   return 0
 }
 
+# A linked worktree runs the hooks of its own tree (I2718). The repository's policy is the
+# primary checkout's core.hooksPath; when it names a directory of the primary checkout — an
+# absolute <primary>/.githooks in the configuration every worktree shares — git sends every
+# linked worktree to the primary's hooks, and a stale primary then judges every commit with
+# stale gates. That is a finding, with git's own per-worktree remedy, and the wiring below
+# judges the worktree's own directory (MJ_WIRING_HOOKDIR) rather than the one git would run.
+# The primary checkout, a bare repository, a repository with no core.hooksPath, one whose
+# hooks live outside every checkout, and a tree without the directory are left as they are.
+mj_wiring_own_hooks() {
+  MJ_WIRING_HOOKDIR=""
+  local gd common primary line policy rel own runs fix=""
+  gd="$(mj_git rev-parse --path-format=absolute --git-dir 2>/dev/null)" || return 0
+  common="$(mj_git rev-parse --path-format=absolute --git-common-dir 2>/dev/null)" || return 0
+  [ -n "$gd" ] && [ "$gd" != "$common" ] || return 0
+  primary="$(mj_git worktree list --porcelain 2>/dev/null | sed -n '1s/^worktree //p')"
+  [ -n "$primary" ] && [ -d "$primary" ] || return 0
+  mj_count git; line="$(git -C "$primary" config --show-scope --get core.hooksPath 2>/dev/null)" || return 0
+  case "$line" in local"$MJ_TAB"*|worktree"$MJ_TAB"*) policy="${line#*"$MJ_TAB"}" ;; *) return 0 ;; esac
+  primary="$(cd "$primary" && pwd -P)"
+  case "$policy" in
+    "") return 0 ;;
+    /*) [ -d "$policy" ] && policy="$(cd "$policy" && pwd -P)"
+        case "$policy" in "$primary"/*) rel="${policy#"$primary"/}" ;; *) return 0 ;; esac ;;
+    *) rel="$policy" ;;
+  esac
+  own="$MJ_ROOT/$rel"
+  [ -d "$own" ] || return 0
+  own="$(cd "$own" && pwd -P)"
+  runs="$(mj_git rev-parse --path-format=absolute --git-path hooks 2>/dev/null)" || return 0
+  [ -d "$runs" ] && runs="$(cd "$runs" && pwd -P)"
+  [ "$runs" = "$own" ] && return 0
+  MJ_WIRING_HOOKDIR="$own"
+  if [ "$(mj_git config --local --type=bool --get extensions.worktreeConfig 2>/dev/null)" != true ]; then
+    case "$(mj_git config --local --get core.repositoryformatversion 2>/dev/null)" in
+      ""|0) fix="git -C $MJ_ROOT config core.repositoryformatversion 1 && " ;;
+    esac
+    fix="${fix}git -C $MJ_ROOT config extensions.worktreeConfig true && "
+  fi
+  fix="${fix}git -C $MJ_ROOT config --worktree core.hooksPath $own"
+  mj_doctrine_fail wiring "hooks-path" "this linked worktree runs $runs, not its own $own, so every commit here is judged by another checkout's hooks; fix: $fix (or majordomus worktree repair, which binds every linked worktree)" \
+    "git -C $MJ_ROOT rev-parse --path-format=absolute --git-path hooks"
+}
+
 mj_validate_wiring() {
   local i=0 name path wired kind target hookdir hookfile arg0 prog
+  mj_wiring_own_hooks
   while [ -n "$(mj_pol "enforcement.$i.name")" ]; do
     name="$(mj_pol "enforcement.$i.name")"; path="$(mj_pol "enforcement.$i.path")"; wired="$(mj_pol "enforcement.$i.wired_by")"
     arg0="$(mj_pol "enforcement.$i.args.0")"; [ -z "$arg0" ] && arg0="$(mj_pol "enforcement.$i.args" | sed 's/\[\]//')"
@@ -138,7 +190,11 @@ mj_validate_wiring() {
           # Git says where its hooks are: core.hooksPath when set, else the common
           # directory's hooks/. A linked worktree's .git is a file naming that directory,
           # so "$MJ_ROOT/.git/hooks" does not exist there and every hook read as missing.
-          hookdir="$(mj_git rev-parse --git-path hooks 2>/dev/null || true)"; [ -z "$hookdir" ] && hookdir=".git/hooks"
+          # A linked worktree sent to another checkout's hooks is judged by its own, which
+          # is what it will run once the finding above is fixed.
+          hookdir="$MJ_WIRING_HOOKDIR"
+          [ -z "$hookdir" ] && hookdir="$(mj_git rev-parse --git-path hooks 2>/dev/null || true)"
+          [ -z "$hookdir" ] && hookdir=".git/hooks"
           case "$hookdir" in /*) hookfile="$hookdir/$target" ;; *) hookfile="$MJ_ROOT/$hookdir/$target" ;; esac
           # A hook is commonly a dispatcher that runs every executable in <hook>.d/; the
           # invocation then lives in one of those files, not in the hook git calls.
@@ -511,6 +567,70 @@ EOF
       "$os session record(s) and $oc knowledge candidate(s) wait in $(mj_rel "$(mj_outbox_dir)")/ for a branch episode to carry them" \
       "ls $(mj_rel "$(mj_outbox_dir)")/*/"
   fi
+  mj_report_uncommitted
+}
+
+# Work that exists in one worktree's files and in no commit (I1995). On 2026-10-07 and
+# 2026-10-08 finished work sat as uncommitted and staged files in the worktrees of sessions
+# that had ended, and was found only because somebody read those directories. The reading
+# is the executable's (`worktree uncommitted`): it decides what holds the work — an active
+# task, an open episode that is not stranded, a process inside — and how old is abandoned
+# (the policy's session.stranded_after). Here it is only rendered: one WARN per abandoned
+# worktree with its path, its count and its age, and the command that would put the work on
+# a remote ref. Doctor runs none of it; the reading itself writes nothing.
+#
+# The reading takes one `git status` per linked worktree — about 15 s over the 300 of this
+# repository — and the pre-commit hook runs doctor on every commit. So the hook says where it
+# runs (MAJORDOMUS_DOCTOR_CONTEXT=commit, the one switch mj_cmd_doctor accepts) and the
+# reading is left out there, by name: a line says it was not run and which command runs it,
+# because a check that is silently absent reads exactly like one that passed.
+mj_report_uncommitted() {
+  if [ "${MAJORDOMUS_DOCTOR_CONTEXT:-}" = commit ]; then
+    mj_info clone "uncommitted" "not read in the commit hook (MAJORDOMUS_DOCTOR_CONTEXT=commit): it takes one git status per linked worktree; run it on its own" "majordomus worktree uncommitted"
+    return 0
+  fi
+  # A repository with no linked worktree has nowhere for such work to sit, and says so the
+  # same way whether or not the executable is at hand: the use-case catalogue records this
+  # line, and a line that depended on the environment made derived data differ between a
+  # workstation and CI (validate 38673947429, catalogue.json).
+  if [ "$(git -C "$MJ_ROOT" worktree list --porcelain 2>/dev/null | grep -c '^worktree ')" -le 1 ]; then
+    mj_ok clone "uncommitted" "no linked worktree, so no uncommitted work can sit in one"
+    return 0
+  fi
+  # shellcheck source=rust_bin.sh
+  . "$MJ_LIB_DIR/rust_bin.sh"
+  local bin share out path paths age remedy
+  bin="$(mj_rust_bin "$MJ_HOME")"
+  if [ ! -x "$bin" ] || ! mj_has jq; then
+    mj_info clone "uncommitted" "the executable or jq is absent, so uncommitted work in linked worktrees is not reported here (majordomus worktree uncommitted)"
+    return 0
+  fi
+  share="$(mj_rust_share "$MJ_ROOT")"
+  out="$( ( [ -z "$share" ] || export MAJORDOMUS_SHARE="$share"
+            "$bin" worktree uncommitted --repo "$MJ_ROOT" --format json ) 2>/dev/null )" || out=""
+  if [ -z "$out" ]; then
+    mj_info clone "uncommitted" "uncommitted work in linked worktrees could not be read (majordomus worktree uncommitted)"
+    return 0
+  fi
+  while IFS="$(printf '\t')" read -r path paths age remedy; do
+    [ -n "$path" ] || continue
+    mj_warn clone "$path" \
+      "$paths uncommitted path(s), the oldest changed $age ago, held by no active task, open episode or process — finished work on one disk" \
+      "$remedy"
+  done <<EOF
+$(printf '%s' "$out" | jq -r '.worktrees[] | select(.standing == "abandoned") | [.path, .paths, (.age // "an unknown time"), .remedy] | @tsv')
+EOF
+  if [ "$(printf '%s' "$out" | jq -r '.tallies.abandoned')" = 0 ]; then
+    mj_ok clone "uncommitted" "$(printf '%s' "$out" | jq -r '"\(.tallies.uncommitted) linked worktree(s) hold uncommitted work, none abandoned against \(.threshold.declared // "no threshold") (\(.tallies.held) held, \(.tallies.recent) recent)"')"
+  fi
+  # a here-document, not a pipe: a finding counted inside a pipeline's subshell is lost
+  local f
+  while IFS= read -r f; do
+    [ -n "$f" ] && mj_info clone "uncommitted" "$f"
+  done <<EOF
+$(printf '%s' "$out" | jq -r '.findings[]')
+EOF
+  return 0
 }
 
 # a hook file plus every file in its <hook>.d/ dispatch directory, in dispatch order
