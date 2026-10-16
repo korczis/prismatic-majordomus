@@ -37918,6 +37918,43 @@
         }
       },
       {
+        "id": "majordomus://issue/I2761",
+        "kind": "issue",
+        "label": "I2761",
+        "summary": "A branch that renumbered its decision away claims nothing at the old number",
+        "route": "/cockpit/objects/issue/i2761",
+        "source": ".ai/repo/project/issues/I2761.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "adr check passes on a branch taking an identity whose other claimant renumbered its document away and pushed",
+            "the renumbered document still collides at its new number, naming the branch",
+            "case 271 fails against master without the change"
+          ],
+          "created_at": "2026-10-16",
+          "current_state": "mj_adr_collisions reports a collision for every path that any ref's history ever added, for as long as any ref contains that add-commit, whether or not the document still exists at the ref's tip.",
+          "depends_on": [],
+          "evidence_required": [
+            "renumbered_claim_case"
+          ],
+          "milestone": "development-runtime",
+          "objective": "Count a ref as claiming an ADR identity only while its tip carries the document, so that renumbering one of two colliding decisions clears the collision for the other branch.",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/adr.sh",
+            "test/cases/271_adr_allocation.sh",
+            ".ai/repo/project/issues/I2761.yaml"
+          ],
+          "slug": "a-renumbered-adr-claims-nothing",
+          "updated_at": "2026-10-16",
+          "validation": [
+            "bash test/run.sh 271_adr_allocation",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "label": "a-commit-stood-behind-a-build-lock",
@@ -81258,6 +81295,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2761",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2761",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -91009,8 +91056,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2870,
-      "edges": 6291,
+      "nodes": 2871,
+      "edges": 6293,
       "acyclic": false,
       "truncated": false
     }
