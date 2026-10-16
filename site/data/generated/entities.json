@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 109,
+      "count": 110,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 109
+      "count": 110
     },
     {
       "kind": "application",
@@ -285,7 +285,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 500
+      "count": 501
     },
     {
       "kind": "use-case",
@@ -1218,7 +1218,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0169",
+          "kind": "adr",
+          "route": "/adrs/adr-0169/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -8585,6 +8593,109 @@
         {
           "edge": "put_in_force",
           "label": "test/cases/85_installer.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0169",
+      "identity": "adr-0169",
+      "slug": "adr-0169",
+      "cockpit": "/cockpit/objects/adr/adr-0169",
+      "title": "What an adoption leaves behind is measured, not remembered",
+      "status": "proposed",
+      "tags": [
+        "adoption",
+        "two-folder",
+        "ownership",
+        "footprint"
+      ],
+      "source": ".ai/repo/adrs/0169-what-an-adoption-leaves-behind-is-measured-not-remembered.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/editors/mod.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/generate.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0021",
+          "kind": "adr",
+          "route": "/adrs/adr-0021/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/ADOPTION.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/TWO_FOLDER_CONSOLIDATION.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "lib/capture.sh",
+          "kind": "implementation",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "lib/common.sh",
+          "kind": "implementation",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "lib/init.sh",
+          "kind": "implementation",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "lib/update.sh",
+          "kind": "implementation",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "I1101",
+          "kind": "issue",
+          "route": "/plan/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "two-folder-integration",
+          "kind": "milestone",
+          "route": "/plan/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/3113_the_adoption_footprint_is_inventoried.sh",
           "kind": "test",
           "route": null,
           "external": false
