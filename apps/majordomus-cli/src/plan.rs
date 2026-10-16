@@ -2627,5 +2627,35 @@ mod seal_tests {
         assert_eq!(release_key("v0.27.0-rc.1"), None);
         assert_eq!(release_key("v0.2.0-ai-documents"), None);
         assert_eq!(release_key("v0..1"), None);
+        assert_eq!(release_key("v"), None);
+        assert_eq!(release_key("vx.1.2"), None);
+    }
+
+    /// Only a readable YAML file whose top-level `tag:` is a release tag and that names a
+    /// commit is a release record, and the records come back in version order whatever the
+    /// directory walk yields.
+    #[test]
+    fn release_records_are_the_readable_tagged_committed_ones_in_version_order() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+        assert!(
+            release_records(root).is_empty(),
+            "no directory is no record"
+        );
+        record(root, "v0.10.0", "c10");
+        record(root, "v0.2.0", "c2");
+        record(root, "v0.2.0-rc.1", "rc");
+        let releases = root.join(crate::distribution::release::DIR);
+        std::fs::create_dir_all(releases.join("unreadable.yaml")).unwrap();
+        std::fs::write(releases.join("untagged.yaml"), "schema: release/v1\n").unwrap();
+        std::fs::write(releases.join("uncommitted.yaml"), "tag: v0.3.0\ncommit:\n").unwrap();
+        std::fs::write(releases.join("v0.4.0.txt"), "tag: v0.4.0\ncommit: c4\n").unwrap();
+        assert_eq!(
+            release_records(root),
+            [
+                ("v0.2.0".to_string(), "c2".to_string()),
+                ("v0.10.0".to_string(), "c10".to_string()),
+            ]
+        );
     }
 }
