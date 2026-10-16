@@ -1384,10 +1384,11 @@ pub fn released_in(index: &Index, plan: &Plan, milestone: &str) -> String {
 
 /// The release records under `<root>/.ai/repo/releases/`, `(tag, commit)` in ascending
 /// version order: every record whose top-level `tag:` is a release tag and that names a
-/// `commit:`. Read line by line, the way `mj_pj_release_records` reads them.
+/// `commit:`. Read line by line, the way `mj_pj_release_records` reads them. Collected into
+/// a set keyed by the version first, so the set is the order and the directory walk is not.
 fn release_records(root: &std::path::Path) -> Vec<(String, String)> {
     let dir = root.join(crate::distribution::release::DIR);
-    let mut out: Vec<((u64, u64, u64), String, String)> = std::fs::read_dir(dir)
+    let records: BTreeSet<((u64, u64, u64), String, String)> = std::fs::read_dir(dir)
         .into_iter()
         .flatten()
         .flatten()
@@ -1405,8 +1406,8 @@ fn release_records(root: &std::path::Path) -> Vec<(String, String)> {
             Some((release_key(&tag)?, tag, commit))
         })
         .collect();
-    out.sort();
-    out.into_iter()
+    records
+        .into_iter()
         .map(|(_, tag, commit)| (tag, commit))
         .collect()
 }
