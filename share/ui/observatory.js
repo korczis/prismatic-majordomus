@@ -749,9 +749,14 @@
     let failures = 0;
     let timer = null;
     let controller = null;
+    // A reading that fell due while the page was hidden is not asked, so as not to spend the
+    // server on a display nobody sees; it is owed, and asked the moment the page is seen
+    // again. Until then the reading's age is the display's silence, not the server's.
+    let pollOwed = false;
     async function poll() {
       timer = null;
-      if (document.visibilityState === 'visible') {
+      pollOwed = document.visibilityState !== 'visible';
+      if (!pollOwed) {
         controller = new AbortController();
         const give = setTimeout(() => controller.abort(), POLL_MS);
         try {
@@ -793,6 +798,7 @@
     let streamTimer = null;
     let streamController = null;
     let streamFailures = 0;
+    let streamOwed = false;
     const river = () => data.scenes.find((s) => s.id === 'activity');
     function syncCursor() {
       const r = river();
@@ -802,7 +808,9 @@
     async function follow() {
       streamTimer = null;
       const r = river();
-      if (cursor !== null && r && r.available && !r.replay && document.visibilityState === 'visible') {
+      const due = cursor !== null && r && r.available && !r.replay;
+      streamOwed = due && document.visibilityState !== 'visible';
+      if (due && !streamOwed) {
         streamController = new AbortController();
         const give = setTimeout(() => streamController.abort(), STREAM_MS * 3);
         try {
@@ -977,12 +985,16 @@
       // a replayed scene is a replay whatever the page is: it shows when it was recorded
       const resynced = Date.now() - resyncedAt < 10000;
       const word = scene.replay ? 'REPLAY' : snapshot ? 'SNAPSHOT' : resynced ? 'RESYNCED' : age < LIVE_WITHIN_MS ? 'LIVE' : 'STALE';
+      // why a reading is old: only an asking that failed blames the server
+      const silence = failures || streamFailures ? 'the server is not answering'
+        : pollOwed || streamOwed ? 'not asked while the page was hidden'
+          : 'asking again';
       const when = String(data.observed_at).replace('T', ' ');
       const recordedAt = scene.replay ? String(scene.replay.recorded_at).replace('T', ' ') : '';
       const text = [
         word,
         scene.replay ? `recorded ${recordedAt}${scene.replay.revision ? ` at ${scene.replay.revision}` : ''} · not live`
-          : snapshot ? `read once at ${data.revision || 'an unknown commit'} · ${when}` : `read ${when}${word === 'STALE' ? ` · ${Math.round(age / 1000)} s ago, the server is not answering` : ''}`,
+          : snapshot ? `read once at ${data.revision || 'an unknown commit'} · ${when}` : `read ${when}${word === 'STALE' ? ` · ${Math.round(age / 1000)} s ago, ${silence}` : ''}`,
         `${String(current + 1).padStart(2, '0')} / ${String(data.scenes.length).padStart(2, '0')}  ${scene.label.toUpperCase()}`,
         line,
         auto && !held ? 'auto' : 'held',
@@ -1007,7 +1019,22 @@
       if (still) frame = setTimeout(() => paint(performance.now()), 1000);
       else frame = requestAnimationFrame(paint);
     }
-    const onVisible = () => { last = performance.now(); schedule(); };
+    // Seen again: what fell due while hidden is asked now, each reader at most once at a time —
+    // one already asking is left to finish, and its own timer is replaced, not doubled.
+    const onVisible = () => {
+      last = performance.now();
+      if (document.visibilityState === 'visible') {
+        if (pollOwed && controller === null) {
+          if (timer) clearTimeout(timer);
+          poll();
+        }
+        if (streamOwed && streamController === null) {
+          if (streamTimer) clearTimeout(streamTimer);
+          follow();
+        }
+      }
+      schedule();
+    };
     document.addEventListener('visibilitychange', onVisible);
     schedule();
 

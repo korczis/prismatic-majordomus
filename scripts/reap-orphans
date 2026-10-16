@@ -113,7 +113,8 @@ GRACE=5
 # Where a build directory of this repository is. Not a guess: a build redirected elsewhere by
 # CARGO_TARGET_DIR is not this worktree's to remove anyway, and the ownership test below is
 # what says so.
-TARGET_REL="apps/majordomus-cli/target"
+CRATE_REL="apps/majordomus-cli"
+TARGET_REL="$CRATE_REL/target"
 # The signature cargo writes into a build directory's CACHEDIR.TAG, and refuses to clean a
 # directory that lacks. It is the first of three positive proofs that what is about to be
 # removed is build output and not somebody's data sitting at a path called target — three
@@ -387,6 +388,56 @@ is_cargo_target() {
   return 1
 }
 
+# shared_build_dir — sets SHARED_DIR to the build directory every worktree shares, as cargo
+# itself resolves it for this checkout's crate, or leaves it empty; SHARED_WHY then says why
+# when that is a refusal rather than an absence.
+#
+# Cargo is asked because nothing else knows. The declaration is
+# `build-dir = "{cargo-cache-home}/build-shared/majordomus"`, and the cache home is cargo's
+# CARGO_HOME, which is not the shell's: asdf's rust shim exports CARGO_HOME for cargo alone.
+# Expanding the template here from the shell's environment named ~/.cargo/build-shared/
+# majordomus, which does not exist on the machine this was written on, while the directory
+# cargo builds into was ~/.asdf/installs/rust/<version>/build-shared/majordomus at 214-261GB
+# and the volume reached 100% on 2026-10-16 — the bound below had never applied to it.
+#
+# Asked from inside the crate, because rustup picks the toolchain by the working directory
+# and not by --manifest-path: from anywhere else the machine's default toolchain answers,
+# and a cargo older than build-dir reports no `build_directory` at all. Asked without the
+# caller's CARGO_BUILD_BUILD_DIR and CARGO_TARGET_DIR, because the subject is the directory
+# the checkout declares, not a private one a session redirected its own builds to; and with
+# RUSTUP_AUTO_INSTALL=0, because a report must not download a toolchain to answer.
+#
+# Three outcomes, and only the first is acted on (project.destructive-sweeps-fail-closed):
+#   - cargo names a build directory other than the target directory: that is the one
+#   - no crate here, or cargo's build directory is its target directory: nothing is shared,
+#     and the per-worktree half above already covers a worktree's own target/ (silent)
+#   - cargo was not there, failed, or named nothing absolute: SHARED_WHY says which
+# Run through env(1), so a caller's shell function named cargo is never what answers.
+shared_build_dir() {
+  local crate json bdir tdir
+  SHARED_DIR=""; SHARED_WHY=""
+  crate="$ROOT/$CRATE_REL"
+  [ -f "$crate/Cargo.toml" ] || return 0
+  if ! command -v cargo >/dev/null 2>&1; then
+    SHARED_WHY="cargo is not on PATH, so nothing says where it is"; return 0
+  fi
+  if ! json="$(cd "$crate" && env -u CARGO_BUILD_BUILD_DIR -u CARGO_TARGET_DIR \
+      -u CARGO_BUILD_TARGET_DIR RUSTUP_AUTO_INSTALL=0 \
+      cargo metadata --format-version 1 --no-deps --manifest-path "$crate/Cargo.toml" \
+      2>/dev/null)"; then
+    SHARED_WHY="cargo metadata failed in $(short "$crate"), so nothing says where it is"; return 0
+  fi
+  bdir="$(printf '%s' "$json" | sed -n 's/.*"build_directory":"\([^"\\]*\)".*/\1/p')"
+  tdir="$(printf '%s' "$json" | sed -n 's/.*"target_directory":"\([^"\\]*\)".*/\1/p')"
+  case "$bdir" in
+    /*) ;;
+    *) SHARED_WHY="cargo metadata named no absolute build_directory (a cargo older than build-dir?)"
+       return 0 ;;
+  esac
+  [ "$bdir" != "$tdir" ] || return 0
+  SHARED_DIR="$bdir"
+}
+
 row() { printf '%-58s %8s  %s\n' "$(short "$1")" "$2" "$3"; }
 
 # path<TAB>tip for every worktree, from git and never from a glob.
@@ -526,27 +577,27 @@ EOF
   # nobody is building. It is regenerable: removing it costs each worktree one dependency
   # rebuild and cannot cost a byte of authored source.
   #
-  # Which directory is read from the checkout's own declaration, and nowhere else: a
-  # sweep that guessed a default under $HOME would act on a machine it was only asked to
-  # measure, and a fixture with no declaration must find nothing to reclaim. Only an
-  # absolute path is acted on, after the one template cargo documents is expanded; a
-  # template this sweep does not know is not guessed at.
-  local shared cfg cap_kb
-  shared=""; cfg="$ROOT/.cargo/config.toml"
-  if [ -f "$cfg" ]; then
-    shared="$(sed -n 's/^[[:space:]]*build-dir[[:space:]]*=[[:space:]]*"\(.*\)"[[:space:]]*$/\1/p' "$cfg" | head -n 1)"
-    shared="${shared//\{cargo-cache-home\}/${CARGO_HOME:-$HOME/.cargo}}"
-    case "$shared" in /*) ;; *) shared="" ;; esac
+  # Which directory is the checkout's own declaration as cargo resolves it, and nothing
+  # else (shared_build_dir above): a sweep that guessed a default under $HOME would act on a
+  # machine it was only asked to measure, and a fixture with no declaration must find
+  # nothing to reclaim. Cargo's answer or nothing — and one without cargo's CACHEDIR.TAG is
+  # not provably the build directory cargo named, so it is left alone and counted.
+  local shared cap_kb
+  shared_build_dir
+  shared="$SHARED_DIR"
+  [ -z "${MAJORDOMUS_SHARED_BUILD_DIR:-}" ] || { shared="$MAJORDOMUS_SHARED_BUILD_DIR"; SHARED_WHY=""; }
+  if [ -n "$SHARED_WHY" ]; then
+    row "$ROOT/$CRATE_REL" "?" "skip — the shared build directory: $SHARED_WHY; nothing reclaimed from it"
+    unreadable=$((unreadable + 1))
   fi
-  [ -z "${MAJORDOMUS_SHARED_BUILD_DIR:-}" ] || shared="$MAJORDOMUS_SHARED_BUILD_DIR"
   cap_kb=$(( ${MAJORDOMUS_SHARED_BUILD_CAP_MB:-6144} * 1024 ))
   if [ -n "$shared" ] && [ -d "$shared" ]; then
     size="$(size_kb "$shared")"
     if [ -z "$size" ]; then
       row "$shared" "?" "skip — its size could not be read"
       unreadable=$((unreadable + 1))
-    elif ! is_cargo_target "$shared"; then
-      row "$shared" "$(human "$size")" "skip — carries no mark of cargo's: not provably a build directory"
+    elif [ "$(head -n 1 "$shared/CACHEDIR.TAG" 2>/dev/null || true)" != "$CACHEDIR_SIG" ]; then
+      row "$shared" "$(human "$size")" "skip — carries no CACHEDIR.TAG of cargo's: not provably the build directory cargo named"
       unreadable=$((unreadable + 1))
     elif [ "$size" -le "$cap_kb" ]; then
       row "$shared" "$(human "$size")" "keep — shared by every worktree, within its $(human "$cap_kb") bound"

@@ -477,7 +477,7 @@ fn unanswered(scene: &Scene, answers: &Answers) -> Option<String> {
 fn answer(answers: &Answers, source: Source) -> &Value {
     answers
         .get(&source)
-        .and_then(|a| a.value.as_ref().ok())
+        .and_then(Answer::ok)
         .unwrap_or(&Value::Null)
 }
 
@@ -1034,7 +1034,7 @@ mod tests {
             source,
             route: None,
             exposure: Exposure::default(),
-            value,
+            value: value.map(Into::into),
             took: Duration::from_millis(3),
             standing: Standing::NOW,
         }

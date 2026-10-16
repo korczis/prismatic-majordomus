@@ -1,7 +1,7 @@
 +++
 title = "Continuous integration"
 description = "how a change is validated: the validation workflow over repository-owned gates, the planner and its model of what can affect what, the gates and how to run each locally, the caches and artifacts, the executable as a build output, the parallel suite and probe, the platform policy, and where the measurements live"
-weight = 75
+weight = 76
 [extra]
 source = "docs/CI.md"
 +++
@@ -336,10 +336,51 @@ and the jobs still going hold runners the trunk's run and the deployments wait f
 2026-10-13 a run with two failed jobs kept nine more running for twenty minutes. So the last
 step of every gate job of `validate.yml`, on `failure()` of a `pull_request` event alone,
 cancels the run by its own id with the job's token (`actions: write`); `ci` and `evidence`
-still run, because they run `always()`, and report the run red. A push to master, the schedule
+still run, because they run `always()`, and report the run red. A combined top, a pull request
+whose head is an `integration/*` branch, is never cancelled this way: it carries many heads and
+is judged once for all of them, so one run of it shows every red (on 2026-10-15 the grand top
+took three full cycles to show three reds). A push to master, the schedule
 and a dispatch are never cancelled this way: the trunk's remaining jobs are the only reading of
 its other lanes. Read a failed job's log through the jobs API (`gh run view --job <id> --log`)
 rather than waiting for the run. Case 3019 holds every job to it (I2664).
+
+The release path goes first (I2710). Every workflow of this repository draws on one pool of
+job slots, first come, first served, and on 2026-10-14 v0.26.0 was published while its record's
+verdict and the Pages deploy that publishes it sat queued behind two pull requests' validates
+holding all twenty slots; the site offered the previous release until a person cancelled one
+of them by hand. The release path is three kinds of run, read from what GitHub lists rather
+than from the release workflow: a run of `release.yml`, the validate run on a
+`release/record-<tag>` branch (the early reading the release dispatches, and the record pull
+request's own run once a person starts it), and a `pages.yml` run of master that the
+release's token dispatched. While any of them is queued or running:
+
+- a pull request's validate yields at the first step of its plan job, before any job of its
+  own asks for a runner: it labels its pull request `ci:yielded`, comments which run it yielded
+  to, and cancels itself;
+- a tag push preempts: `.github/workflows/release-path.yml` starts on the same push as the
+  release and cancels every pull-request validate already queued or running, labelling and
+  telling each the same way;
+- once the path is clear, `scripts/ci/release-path resume` re-runs the newest validate run of
+  each labelled pull request's head when that run is the cancelled one, and removes the label.
+  It is asked at the end of every validate run that is not a pull request's (the record's
+  verdict is one) and every fifteen minutes by `release-path.yml`'s schedule.
+
+Never cancelled by this: anything of the release path, master's validate, the schedule and a
+dispatch, a run on a record branch, and a run whose pull request GitHub does not name. A
+reading that cannot be made lets a run proceed and touches nothing. The model is
+`.ai/repo/ci/release-path.yaml`; case 3027 holds the decisions and the wiring.
+
+The `pages` job judges the site only after the deployment of its own commit (I2711). It starts
+minutes after the push that also starts that commit's deploy, and on 2026-10-14 run
+38600347235 read the site while the deploy was in flight and went red; a rerun passed.
+`scripts/ci/pages-check --for "$GITHUB_SHA"` first waits, bounded by `PAGES_CHECK_DEPLOY_WAIT`
+(twenty minutes) and asking every `PAGES_CHECK_POLL` seconds (thirty) with a line each time,
+until production serves that commit or one that carries it — a newer trunk commit, or an older
+one when nothing since changed what the site is built from. It refuses early only when
+production serves an older commit and no deployment is in flight (no pages run queued or
+running, GitHub's own build not building), and otherwise at the bound, naming both commits. A
+pull request's merge commit is not on master and is not waited for. The job's bound is 35
+minutes to hold the wait and the checks after it; case 3028 holds the wait.
 
 ### The three ways a deploy fails, and who reports each
 
@@ -393,12 +434,20 @@ generator, not from a conflict marker. The design leans on `scripts/pages curren
 `.githooks/pre-commit` to refuse the stale result one command later — and **a `pre-commit`
 hook cannot run for a merge the server creates.** Merging a pull request on GitHub produces a
 commit with `committer=GitHub`, and no client-side hook exists on that path. It is not a
-bypass; it is the action this repository tells people to take. With no branch protection
-(`gh api repos/<owner>/<repo>/branches/master/protection` answers *404 Branch not protected*)
-nothing server-side compensates, and the `site` gate that does check currency is advisory and
-reports after the merge. So the first thing in the pipeline that can actually refuse is the
-Pages build, and it refuses by failing publication rather than by failing a pull request. The
-symptom is always "the site is stale" and never "the branch is red".
+bypass; it is the action this repository tells people to take. On 2026-09-10 there was no
+branch protection (`gh api repos/<owner>/<repo>/branches/master/protection` answered *404
+Branch not protected*), so nothing server-side compensated, and the `site` gate that checks
+currency was advisory and reported after the merge. The first thing in the pipeline that could
+refuse was the Pages build, and it refused by failing publication rather than by failing a
+pull request. The symptom was always "the site is stale" and never "the branch is red".
+
+What guards that path now (I1409, ADR 0101 amendment of 2026-10-15) is the ci-time freshness
+gate, and the hook plays no part in it. The `ci` check is required (`strict: false`). It runs
+`derived site data in sync` and `generate --check` on the pull request's merge ref. The forge
+runs no merge driver, so two branches that both changed a canonical input conflict on
+`source_hash` and cannot be merged by the forge at all. The merged commit is checked again on
+push, and `scripts/pages build` refuses stale site data before the `publish` step. The
+pre-commit hook guards only a merge a person commits.
 
 The vivid form: a stale recording rides through a merge untouched, so two consecutive master
 merges can carry the *same* `source_hash` — nothing regenerated between them. A guard whose

@@ -1,0 +1,30 @@
+id: I2288
+milestone: every-session-joins-the-mesh
+title: "A task is on the mesh while it works"
+slug: session-on-the-mesh
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "majordomus start claims the task's scope on the checkout's running server as an advisory claim of the mesh session task-<id>, with the task's title as intent and its issue, and keeps the key on the task record; finish closes that session."
+why: "The owner asked on 2026-10-10, and again on 2026-10-15, that every LLM session use the mesh automatically. A task's scope lived in the checkout's task record and on this machine's board; another machine saw it only if the worker remembered to claim it. The 2026-10-10 implementation (branch feature/a-task-is-on-the-mesh) never reached a pull request; this is its port onto master, after I2734 put the provider session itself on the mesh."
+current_state: "majordomus start reports overlaps with the local board and claims nothing on the mesh."
+desired_state: "After majordomus start the task's scope is an advisory claim of task-<id> on every linked runtime; after finish the session is closed and its claims end with it; with no server or no running mesh nothing is claimed and nothing fails."
+scope:
+  - "lib/common.sh"
+  - "lib/start.sh"
+  - "lib/finish.sh"
+  - "test/cases/3067_a_task_is_claimed_on_the_mesh.sh"
+  - "docs/MESH.md"
+depends_on:
+  - "I2734"
+acceptance_criteria:
+  - "After majordomus start the task's scope is a live claim on every linked runtime"
+  - "After finish the claim is released"
+  - "Without a server start records no claim and does not fail"
+validation:
+  - "bin/majordomus plan validate"
+  - "bash test/run.sh 3067_a_task_is_claimed_on_the_mesh 04_start_check 06_finish"
+evidence_required:
+  - "case_3067"
+created_at: 2026-10-10
+updated_at: 2026-10-15
