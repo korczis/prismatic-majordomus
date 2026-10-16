@@ -70,7 +70,8 @@ use serde_json::{json, Value};
 
 use crate::deploy::observed::ObservedMergedPullRequest;
 use crate::distribution::release::{Release, Releases, LATEST, PUBLIC_DIR};
-use crate::integration::ForgeObservation;
+use crate::integration::{ForgeObservation, PullRequestObservation};
+use crate::order::{canonical, is_version, version_cmp, versions, OrderKey, Ordered};
 use crate::plan::{Plan, PlanIssue};
 use crate::ui::prs::issues_named;
 use crate::worktree::state::issue_of;
@@ -326,57 +327,69 @@ pub(crate) struct MergeCommit {
     pub title: Option<String>,
 }
 
-/// Every commit of the output of `git log --no-merges --format=%H%x00%ct%x00%s%x1e`, its
-/// subject carried as its title: the commits whose subjects name an issue.
-pub(crate) fn parse_subjects(text: &str) -> Vec<MergeCommit> {
-    text.split(RECORD)
-        .filter_map(|record| {
-            let mut f = record.trim_start_matches(['\n', '\r']).splitn(3, FIELD);
-            let commit = f.next()?.trim().to_string();
-            let time = f.next()?.trim().parse::<u64>().ok()?;
-            let subject = f.next()?.trim().to_string();
-            (!commit.is_empty()).then_some(MergeCommit {
-                commit,
-                time,
-                pull_request: None,
-                branch: None,
-                title: Some(subject),
-            })
-        })
-        .collect()
+/// A history as one `git log --format=%H%x00%ct%x00%P%x00%s%x00%b%x1e` states it: the commit
+/// it starts at and that commit's time, its merges, and every other commit with its subject
+/// carried as its title — the commits whose subjects name an issue.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct History {
+    /// The commit the history ends at: the first one the log writes.
+    pub commit: String,
+    /// Its committer time, Unix seconds.
+    pub time: u64,
+    /// Every merge, newest first.
+    pub merges: Vec<MergeCommit>,
+    /// Every commit that is not a merge, newest first.
+    pub subjects: Vec<MergeCommit>,
 }
 
-/// Parse the output of `git log --merges --format=%H%x00%ct%x00%s%x00%b%x1e`.
-pub(crate) fn parse_merges(text: &str) -> Vec<MergeCommit> {
-    text.split(RECORD)
-        .filter_map(|record| {
-            let record = record.trim_start_matches(['\n', '\r']);
-            let mut f = record.splitn(4, FIELD);
-            let commit = f.next()?.trim().to_string();
-            let time = f.next()?.trim().parse::<u64>().ok()?;
-            let subject = f.next()?.to_string();
-            let body = f.next().unwrap_or_default();
-            if commit.is_empty() {
-                return None;
-            }
-            let (pull_request, branch, is_pull) = merge_subject(&subject);
-            let title = if is_pull {
-                body.lines()
-                    .map(str::trim)
-                    .find(|l| !l.is_empty())
-                    .map(str::to_string)
-            } else {
-                None
-            };
-            Some(MergeCommit {
+/// Parse the output of `git log --format=%H%x00%ct%x00%P%x00%s%x00%b%x1e`: a commit with more
+/// than one parent is a merge, read by its subject and its body's first line; any other is
+/// read by its subject. `None` when no record names a commit.
+pub(crate) fn parse_history(text: &str) -> Option<History> {
+    let mut head: Option<(String, u64)> = None;
+    let (mut merges, mut subjects) = (Vec::new(), Vec::new());
+    for record in text.split(RECORD) {
+        let mut f = record.trim_start_matches(['\n', '\r']).splitn(5, FIELD);
+        // a split always yields a first field; an empty one is no commit
+        let commit = f.next().unwrap_or_default().trim().to_string();
+        let time = f.next().and_then(|t| t.trim().parse::<u64>().ok());
+        let (Some(time), false) = (time, commit.is_empty()) else {
+            continue;
+        };
+        let parents = f.next().unwrap_or_default().split_whitespace().count();
+        let subject = f.next().unwrap_or_default();
+        let body = f.next().unwrap_or_default();
+        head.get_or_insert((commit.clone(), time));
+        if parents > 1 {
+            let (pull_request, branch, is_pull) = merge_subject(subject);
+            let title = is_pull
+                .then(|| body.lines().map(str::trim).find(|l| !l.is_empty()))
+                .flatten()
+                .map(str::to_string);
+            merges.push(MergeCommit {
                 commit,
                 time,
                 pull_request,
                 branch,
                 title,
-            })
-        })
-        .collect()
+            });
+        } else {
+            subjects.push(MergeCommit {
+                commit,
+                time,
+                pull_request: None,
+                branch: None,
+                title: Some(subject.trim().to_string()),
+            });
+        }
+    }
+    let (commit, time) = head?;
+    Some(History {
+        commit,
+        time,
+        merges,
+        subjects,
+    })
 }
 
 /// What a merge subject says: the pull request, the branch, and whether it is the forge's
@@ -450,19 +463,6 @@ fn branch_names(
         .map(|id| (id.clone(), "slug"))
 }
 
-/// A `v*` tag's version as a sortable key: the numbers, then a release above any of its
-/// pre-releases. `None` for a tag that is not a version.
-fn version_key(tag: &str) -> Option<(Vec<u64>, bool, String)> {
-    let v = tag.strip_prefix('v').unwrap_or(tag);
-    let (core, pre) = match v.split_once('-') {
-        Some((c, p)) => (c, Some(p)),
-        None => (v, None),
-    };
-    let numbers: Option<Vec<u64>> = core.split('.').map(|n| n.parse().ok()).collect();
-    let numbers = numbers.filter(|n| !n.is_empty())?;
-    Some((numbers, pre.is_none(), pre.unwrap_or_default().to_string()))
-}
-
 /// The issues' stages from what was read. Pure: every input is already in memory.
 pub(crate) struct Evidence {
     /// When the git half was observed.
@@ -509,7 +509,7 @@ pub(crate) fn assess(issue: &PlanIssue, e: &Evidence) -> IssueDelivery {
     });
     let deployed = match (&released, &e.published) {
         (Some(r), Some((version, latest_json, observed_at)))
-            if version_key(&r.tag) <= version_key(version) =>
+            if version_cmp(&r.tag, version).is_le() =>
         {
             Some(DeliveryDeployment {
                 version: version.clone(),
@@ -566,8 +566,7 @@ fn git(root: &Path, args: &[&str]) -> Result<String, String> {
 }
 
 fn git_ok(root: &Path, args: &[&str]) -> Option<String> {
-    let out = crate::worktree::git::try_run(root, args).ok()?;
-    (out.status == Some(0)).then(|| String::from_utf8_lossy(&out.stdout).into_owned())
+    git(root, args).ok()
 }
 
 /// The ref the live answer reads the trunk from: the remote-tracking trunk unless the local
@@ -607,34 +606,19 @@ fn trunk_ref(root: &Path, trunk: &str) -> Option<String> {
     }
 }
 
-/// Every commit in `rev`'s history that is not a merge, with its subject.
-fn subjects_of(root: &Path, rev: &str) -> Result<Vec<MergeCommit>, String> {
-    let text = git(
+/// Every commit in `rev`'s history, `rev` first; `None` when `rev` names no commit here.
+fn history_of(root: &Path, rev: &str) -> Option<History> {
+    git_ok(
         root,
         &[
             "log",
-            "--no-merges",
-            "--format=%H%x00%ct%x00%s%x1e",
-            rev,
+            "--format=%H%x00%ct%x00%P%x00%s%x00%b%x1e",
+            "--end-of-options",
+            &format!("{rev}^{{commit}}"),
             "--",
         ],
-    )?;
-    Ok(parse_subjects(&text))
-}
-
-/// Every merge in `rev`'s history.
-fn merges_of(root: &Path, rev: &str) -> Result<Vec<MergeCommit>, String> {
-    let text = git(
-        root,
-        &[
-            "log",
-            "--merges",
-            "--format=%H%x00%ct%x00%s%x00%b%x1e",
-            rev,
-            "--",
-        ],
-    )?;
-    Ok(parse_merges(&text))
+    )
+    .and_then(|text| parse_history(&text))
 }
 
 /// For each commit reachable from the releases, the first release (in version order) that
@@ -644,7 +628,7 @@ fn merges_of(root: &Path, rev: &str) -> Result<Vec<MergeCommit>, String> {
 fn first_releases(
     root: &Path,
     releases: &[(String, String)],
-) -> Result<BTreeMap<String, (String, String)>, String> {
+) -> BTreeMap<String, (String, String)> {
     let mut first: BTreeMap<String, (String, String)> = BTreeMap::new();
     let mut earlier: Vec<String> = Vec::new();
     for (tag, commit) in releases {
@@ -664,13 +648,13 @@ fn first_releases(
             earlier.push(commit.clone());
         }
     }
-    Ok(first)
+    first
 }
 
 /// Releases in version order, lowest first, keeping only `v*` versions.
 fn in_version_order(mut releases: Vec<(String, String)>) -> Vec<(String, String)> {
-    releases.retain(|(tag, _)| tag.starts_with('v') && version_key(tag).is_some());
-    releases.sort_by_key(|r| version_key(&r.0));
+    releases.retain(|(tag, _)| tag.starts_with('v') && is_version(tag));
+    versions(&mut releases, |r| &r.0);
     releases
 }
 
@@ -732,6 +716,28 @@ fn merged_titles(root: &Path) -> Result<(Vec<ObservedMergedPullRequest>, String)
     Ok((merged, observation.observed_at))
 }
 
+/// One line of `git for-each-ref --format=%(refname:short)%00%(objectname)%00%(refname)` as a
+/// ref that may name an issue; `None` for a line that is not one, a symbolic `HEAD`, or the
+/// trunk itself, local or remote-tracking.
+fn naming_ref(line: &str, trunk: &str) -> Option<NamingRef> {
+    let mut f = line.split(FIELD);
+    let name = f.next().unwrap_or_default();
+    let (head, full) = (f.next()?, f.next()?);
+    let remote = full.starts_with("refs/remotes/");
+    let bare = if remote {
+        name.split_once('/').map_or(name, |(_, b)| b)
+    } else {
+        name
+    };
+    (!name.is_empty() && !name.ends_with("/HEAD") && bare != trunk && name != "HEAD").then(|| {
+        NamingRef {
+            remote,
+            name: name.to_string(),
+            head: head.to_string(),
+        }
+    })
+}
+
 /// Every branch that names an issue, local first: issue → its first naming ref.
 fn branches(
     root: &Path,
@@ -748,36 +754,24 @@ fn branches(
             "refs/remotes",
             "--format=%(refname:short)%00%(objectname)%00%(refname)",
         ],
-    )?;
-    let mut found: BTreeMap<String, DeliveryBranch> = BTreeMap::new();
-    let mut refs: Vec<(bool, String, String)> = text
-        .lines()
-        .filter_map(|l| {
-            let f: Vec<&str> = l.split(FIELD).collect();
-            let (name, head, full) = (*f.first()?, *f.get(1)?, *f.get(2)?);
-            let remote = full.starts_with("refs/remotes/");
-            let bare = if remote {
-                name.split_once('/').map_or(name, |(_, b)| b)
-            } else {
-                name
-            };
-            (!name.is_empty() && !name.ends_with("/HEAD") && bare != trunk && name != "HEAD")
-                .then(|| (remote, name.to_string(), head.to_string()))
-        })
-        .collect();
-    refs.sort();
-    for (remote, name, head) in refs {
-        if let Some((id, via)) = branch_names(&name, ids, slugs) {
-            found.entry(id).or_insert_with(|| DeliveryBranch {
-                name,
-                head,
-                remote,
-                via: via.to_string(),
-                observed_at: observed_at.to_string(),
-            });
+    );
+    text.map(|text| {
+        let mut refs: Vec<NamingRef> = text.lines().filter_map(|l| naming_ref(l, trunk)).collect();
+        canonical(&mut refs);
+        let mut found: BTreeMap<String, DeliveryBranch> = BTreeMap::new();
+        for NamingRef { remote, name, head } in refs {
+            if let Some((id, via)) = branch_names(&name, ids, slugs) {
+                found.entry(id).or_insert_with(|| DeliveryBranch {
+                    name,
+                    head,
+                    remote,
+                    via: via.to_string(),
+                    observed_at: observed_at.to_string(),
+                });
+            }
         }
-    }
-    Ok(found)
+        found
+    })
 }
 
 /// The open pull requests naming each issue, newest first.
@@ -786,10 +780,10 @@ fn open_pulls(
     declared: &BTreeSet<String>,
     slugs: &BTreeMap<String, String>,
 ) -> BTreeMap<String, DeliveryPullRequest> {
-    let mut pulls: Vec<_> = observation.pull_requests.iter().collect();
-    pulls.sort_by_key(|p| std::cmp::Reverse(p.number));
+    let mut pulls: Vec<NewestPull<'_>> = observation.pull_requests.iter().map(NewestPull).collect();
+    canonical(&mut pulls);
     let mut found: BTreeMap<String, DeliveryPullRequest> = BTreeMap::new();
-    for pr in pulls {
+    for NewestPull(pr) in pulls {
         for (id, via) in named_by(Some(&pr.title), Some(&pr.head_ref), declared, slugs) {
             found.entry(id).or_insert_with(|| DeliveryPullRequest {
                 number: pr.number,
@@ -802,6 +796,46 @@ fn open_pulls(
         }
     }
     found
+}
+
+/// A ref that may name an issue: local refs before remote-tracking ones, then by name, so the
+/// branch an issue is credited with is the same on every machine.
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct NamingRef {
+    remote: bool,
+    name: String,
+    head: String,
+}
+
+impl Ordered for NamingRef {
+    fn order_key(&self) -> OrderKey<'_> {
+        OrderKey::plain(&self.name, &self.head).ranked(i64::from(self.remote))
+    }
+}
+
+/// An open pull request in the order an issue's is chosen: newest first.
+struct NewestPull<'a>(&'a PullRequestObservation);
+
+impl Ordered for NewestPull<'_> {
+    fn order_key(&self) -> OrderKey<'_> {
+        OrderKey::plain(&self.0.title, &self.0.head_ref).descending(self.0.number)
+    }
+}
+
+/// The commits naming one issue, newest first — the first is its proof. At the same second a
+/// merge comes before the commits it brought in, and those before a merged pull request's
+/// forge title, which is the order the history was read in.
+impl Ordered for (MergeCommit, &'static str) {
+    fn order_key(&self) -> OrderKey<'_> {
+        let kind = match self.1 {
+            "subject" => 1,
+            "forge_title" => 2,
+            _ => 0,
+        };
+        // four places per second, the kind inside them: descending by `4·time − kind`
+        OrderKey::plain(self.0.title.as_deref().unwrap_or_default(), &self.0.commit)
+            .descending(self.0.time.saturating_mul(4).saturating_sub(kind))
+    }
 }
 
 fn source(name: &str, read: Result<String, String>, observed_at: Option<&str>) -> DeliverySource {
@@ -838,46 +872,32 @@ pub(crate) fn infer(
         .filter(|i| !i.slug.is_empty())
         .map(|i| (i.slug.clone(), i.id.clone()))
         .collect();
-    let trunk_name = trunk.branch.clone().unwrap_or_else(|| "master".into());
+    let trunk_name = trunk.branch.as_deref().unwrap_or("master").to_string();
 
-    // where the history ends, and when that was
-    let (mode, history, observed_at) = match at {
-        Some(rev) => {
-            let commit = git_ok(
-                root,
-                &[
-                    "rev-parse",
-                    "--verify",
-                    "--quiet",
-                    "--end-of-options",
-                    &format!("{rev}^{{commit}}"),
-                ],
-            )
-            .map(|s| s.trim().to_string())
-            .ok_or_else(|| format!("`{rev}` does not resolve to a commit in this repository"))?;
-            let time = git(root, &["log", "-1", "--format=%ct", &commit])?
-                .trim()
-                .parse::<u64>()
-                .map_err(|e| format!("the committer time of {commit}: {e}"))?;
-            (
-                "at",
-                commit,
-                crate::peers::rfc3339(UNIX_EPOCH + Duration::from_secs(time)),
-            )
-        }
-        None => {
-            let r = trunk_ref(root, &trunk_name).ok_or_else(|| {
+    // where the history ends, and when that was: one read of it, whose first commit is the
+    // one it ends at
+    let (mode, rev) = match at {
+        Some(rev) => ("at", rev.to_string()),
+        None => (
+            "live",
+            trunk_ref(root, &trunk_name).ok_or_else(|| {
                 format!("the trunk `{trunk_name}` does not resolve in this clone, so there is no history to read merges from")
-            })?;
-            ("live", r, crate::peers::rfc3339(SystemTime::now()))
-        }
+            })?,
+        ),
     };
-    let commit = git(root, &["rev-parse", &format!("{history}^{{commit}}")])?
-        .trim()
-        .to_string();
+    let read = history_of(root, &rev)
+        .ok_or_else(|| format!("`{rev}` does not resolve to a commit in this repository"))?;
+    let commit = read.commit;
+    let (history, observed_at) = match mode {
+        "at" => (
+            commit.clone(),
+            crate::peers::rfc3339(UNIX_EPOCH + Duration::from_secs(read.time)),
+        ),
+        _ => (rev, crate::peers::rfc3339(SystemTime::now())),
+    };
+    let (all_merges, all_subjects) = (read.merges, read.subjects);
 
     // the merges, newest first, attributed
-    let all_merges = merges_of(root, &commit)?;
     let mut merges: BTreeMap<String, Vec<(MergeCommit, &'static str)>> = BTreeMap::new();
     for m in &all_merges {
         for (id, via) in named_by(m.title.as_deref(), m.branch.as_deref(), &declared, &slugs) {
@@ -888,7 +908,6 @@ pub(crate) fn infer(
     // that names it only in prose, and its title is the forge's, not git's; its own commits
     // carry the issue in their subjects. A subject is read, never a body: a body mentions
     // the issues around the work as readily as the one it realises.
-    let all_subjects = subjects_of(root, &commit)?;
     for c in &all_subjects {
         for (id, _) in named_by(c.title.as_deref(), None, &declared, &BTreeMap::new()) {
             merges.entry(id).or_default().push((c.clone(), "subject"));
@@ -941,8 +960,7 @@ pub(crate) fn infer(
         }
     }
     for named in merges.values_mut() {
-        // newest first; a merge before the commits it brought in at the same second
-        named.sort_by_key(|n| std::cmp::Reverse(n.0.time));
+        canonical(named);
     }
 
     let mut sources = vec![
@@ -976,7 +994,7 @@ pub(crate) fn infer(
             .map(|r: Release| (r.tag, r.commit))
             .collect(),
     );
-    let first_release = first_releases(root, &releases)?;
+    let first_release = first_releases(root, &releases);
     sources.push(source(
         "releases",
         Ok(format!(
@@ -1009,15 +1027,22 @@ pub(crate) fn infer(
 
     // the branches and the forge: live only
     let (branch_map, branches_read, open) = if mode == "live" {
-        let b = branches(root, &ids, &slugs, &trunk_name, &observed_at)?;
+        // refs that cannot be listed leave the branches unread, never empty
+        let b = branches(root, &ids, &slugs, &trunk_name, &observed_at);
         sources.push(source(
             "branches",
-            Ok(format!(
-                "{} issue(s) named by a local or remote-tracking branch",
-                b.len()
-            )),
+            b.as_ref()
+                .map(|b| {
+                    format!(
+                        "{} issue(s) named by a local or remote-tracking branch",
+                        b.len()
+                    )
+                })
+                .map_err(Clone::clone),
             Some(&observed_at),
         ));
+        let branches_read = b.is_ok();
+        let b = b.unwrap_or_default();
         let open = match crate::integration::load_observation(root) {
             Ok(Some(o)) => {
                 sources.push(source(
@@ -1044,7 +1069,7 @@ pub(crate) fn infer(
                 None
             }
         };
-        (b, true, open)
+        (b, branches_read, open)
     } else {
         let why = "an answer at a commit reads that commit's history and this tree only; \
                    the live answer (no `at`) reads it"
@@ -1122,14 +1147,19 @@ mod tests {
     }
 
     #[test]
-    fn a_merge_subject_names_its_pull_request_and_branch() {
-        let text = "aaa\x001700000000\x00Merge pull request #12 from me/feature/I0001-x\x00Do it (I0001)\n\nbody\x1e\n\
-                    bbb\x001700000001\x00Merge remote-tracking branch 'origin/fix/a-slug' into HEAD\x00\x1e\n\
-                    ccc\x001700000002\x00Merge branch 'feature/b' of github.com:x/y into z\x00\x1e\n\
-                    ddd\x001700000003\x00merge: #9 into the top\x00I0002 mentioned\x1e\n\
-                    eee\x001700000004\x00Merge branch 'broken\x00\x1e\n\
-                    \x001\x00x\x00\x1e";
-        let m = parse_merges(text);
+    fn a_history_splits_merges_from_commits_and_names_its_first_commit() {
+        let text = "aaa\x001700000000\x00p1 p2\x00Merge pull request #12 from me/feature/I0001-x\x00Do it (I0001)\n\nbody\x1e\n\
+                    bbb\x001700000001\x00p1 p2\x00Merge remote-tracking branch 'origin/fix/a-slug' into HEAD\x00\x1e\n\
+                    ccc\x001700000002\x00p1 p2\x00Merge branch 'feature/b' of github.com:x/y into z\x00\x1e\n\
+                    ddd\x001700000003\x00p1 p2 p3\x00merge: #9 into the top\x00I0002 mentioned\x1e\n\
+                    eee\x001700000004\x00p1 p2\x00Merge branch 'broken\x00\x1e\n\
+                    fff\x001700000005\x00p1\x00feat(x): a thing (I0001)\x00a body naming I0002\x1e\n\
+                    ggg\x00nope\x00p1\x00x\x00\x1e\n\
+                    \x001\x00p1\x00y\x00\x1e\n\
+                    hhh\x001700000006";
+        let h = parse_history(text).expect("a history");
+        assert_eq!((h.commit.as_str(), h.time), ("aaa", 1_700_000_000));
+        let m = &h.merges;
         assert_eq!(m.len(), 5);
         assert_eq!(m[0].pull_request, Some(12));
         assert_eq!(m[0].branch.as_deref(), Some("feature/I0001-x"));
@@ -1142,14 +1172,198 @@ mod tests {
             (None, &None, &None)
         );
         assert_eq!(m[4].branch, None);
+        let c = &h.subjects;
+        assert_eq!(
+            c.iter().map(|c| c.commit.as_str()).collect::<Vec<_>>(),
+            ["fff", "hhh"],
+            "a time that is not a number, or no commit, is no record"
+        );
+        assert_eq!(
+            c[0].title.as_deref(),
+            Some("feat(x): a thing (I0001)"),
+            "the subject, never the body"
+        );
+        assert_eq!((c[0].pull_request, &c[0].branch), (None, &None));
+        assert_eq!(parse_history(""), None);
+        assert_eq!(parse_history("\x001\x00\x00x\x00\x1e"), None);
     }
 
     #[test]
-    fn a_commit_subject_is_carried_as_its_title() {
-        let c = parse_subjects("aaa\x001700000000\x00feat(x): a thing (I0001)\x1e\nbbb\x00nope\x00x\x1e\n\x001\x00y\x1e");
-        assert_eq!(c.len(), 1);
-        assert_eq!(c[0].title.as_deref(), Some("feat(x): a thing (I0001)"));
-        assert_eq!((c[0].pull_request, &c[0].branch), (None, &None));
+    fn the_commits_naming_an_issue_are_newest_first_a_merge_before_its_commits() {
+        let at = |commit: &str, time: u64, via: &'static str| {
+            (
+                MergeCommit {
+                    commit: commit.into(),
+                    time,
+                    pull_request: None,
+                    branch: None,
+                    title: None,
+                },
+                via,
+            )
+        };
+        let mut named = vec![
+            at("old", 1, "title_or_branch"),
+            at("forge", 5, "forge_title"),
+            at("commit", 5, "subject"),
+            at("merge", 5, "slug"),
+            at("newest", 6, "subject"),
+        ];
+        canonical(&mut named);
+        assert_eq!(
+            named
+                .iter()
+                .map(|n| n.0.commit.as_str())
+                .collect::<Vec<_>>(),
+            ["newest", "merge", "commit", "forge", "old"]
+        );
+
+        let mut refs = vec![
+            naming_ref("origin/fix/b\x00h2\x00refs/remotes/origin/fix/b", "master").unwrap(),
+            naming_ref("fix/b\x00h1\x00refs/heads/fix/b", "master").unwrap(),
+            naming_ref("fix/a\x00h0\x00refs/heads/fix/a", "master").unwrap(),
+        ];
+        canonical(&mut refs);
+        assert_eq!(
+            refs.iter()
+                .map(|r| (r.name.as_str(), r.remote))
+                .collect::<Vec<_>>(),
+            [("fix/a", false), ("fix/b", false), ("origin/fix/b", true)],
+            "local first, then by name"
+        );
+
+        let pr = |number: u64| -> PullRequestObservation {
+            serde_json::from_value(json!({
+                "number": number, "title": format!("pr {number}"), "author": "a",
+                "head_ref": format!("fix/{number}"), "head_sha": "h", "base_ref": "master",
+                "draft": false, "created_at": "t", "updated_at": "t"
+            }))
+            .unwrap()
+        };
+        let observed = [pr(3), pr(12), pr(7)];
+        let mut pulls: Vec<NewestPull<'_>> = observed.iter().map(NewestPull).collect();
+        canonical(&mut pulls);
+        assert_eq!(
+            pulls.iter().map(|p| p.0.number).collect::<Vec<_>>(),
+            [12, 7, 3]
+        );
+    }
+
+    #[test]
+    fn a_ref_line_names_a_branch_unless_it_is_the_trunk_a_head_or_not_a_ref() {
+        let r = naming_ref(
+            "origin/feature/I0001-x\x00h\x00refs/remotes/origin/feature/I0001-x",
+            "master",
+        )
+        .unwrap();
+        assert_eq!(
+            (r.name.as_str(), r.head.as_str(), r.remote),
+            ("origin/feature/I0001-x", "h", true)
+        );
+        assert_eq!(naming_ref("fix/x", "master"), None, "no object");
+        assert_eq!(naming_ref("fix/x\x00h", "master"), None, "no full name");
+        assert_eq!(
+            naming_ref("origin/master\x00h\x00refs/remotes/origin/master", "master"),
+            None
+        );
+        assert_eq!(
+            naming_ref("master\x00h\x00refs/heads/master", "master"),
+            None
+        );
+        assert_eq!(
+            naming_ref("origin/HEAD\x00h\x00refs/remotes/origin/HEAD", "master"),
+            None
+        );
+        assert_eq!(naming_ref("\x00h\x00refs/heads/", "master"), None);
+    }
+
+    #[test]
+    fn a_directory_that_is_no_repository_is_unread_never_empty() {
+        let dir = tempfile::tempdir().unwrap();
+        assert!(git(dir.path(), &["log"]).is_err());
+        assert_eq!(history_of(dir.path(), "HEAD"), None);
+        assert!(branches(dir.path(), &[], &BTreeMap::new(), "master", "t").is_err());
+        assert!(
+            first_releases(dir.path(), &[("v0.1.0".into(), "abc".into())]).is_empty(),
+            "a release whose commit is not here contains nothing it can show"
+        );
+        assert_eq!(trunk_ref(dir.path(), "master"), None);
+    }
+
+    fn sh_git(dir: &Path, args: &[&str]) -> String {
+        let out = std::process::Command::new("git")
+            .arg("-C")
+            .arg(dir)
+            .args(["-c", "user.name=t", "-c", "user.email=t@example.invalid"])
+            .args(["-c", "commit.gpgsign=false"])
+            .args(args)
+            .env_remove("GIT_DIR")
+            .env_remove("GIT_WORK_TREE")
+            .output()
+            .unwrap();
+        assert!(
+            out.status.success(),
+            "git {args:?}: {}",
+            String::from_utf8_lossy(&out.stderr)
+        );
+        String::from_utf8(out.stdout).unwrap().trim().to_string()
+    }
+
+    #[test]
+    fn the_live_trunk_is_the_remote_one_unless_the_local_one_is_ahead() {
+        let dir = tempfile::tempdir().unwrap();
+        let d = dir.path();
+        sh_git(d, &["init", "-q", "-b", "trunk"]);
+        sh_git(d, &["commit", "-q", "--allow-empty", "-m", "one"]);
+        let one = sh_git(d, &["rev-parse", "HEAD"]);
+        sh_git(d, &["commit", "-q", "--allow-empty", "-m", "two"]);
+        let two = sh_git(d, &["rev-parse", "HEAD"]);
+        assert_eq!(trunk_ref(d, "trunk").as_deref(), Some("trunk"), "no remote");
+
+        sh_git(d, &["update-ref", "refs/remotes/origin/trunk", &one]);
+        assert_eq!(
+            trunk_ref(d, "trunk").as_deref(),
+            Some("trunk"),
+            "the local one is ahead"
+        );
+
+        sh_git(d, &["update-ref", "refs/remotes/origin/trunk", &two]);
+        assert_eq!(
+            trunk_ref(d, "trunk").as_deref(),
+            Some("origin/trunk"),
+            "the same commit"
+        );
+
+        sh_git(d, &["checkout", "-q", "-b", "elsewhere", &one]);
+        sh_git(d, &["commit", "-q", "--allow-empty", "-m", "three"]);
+        let three = sh_git(d, &["rev-parse", "HEAD"]);
+        sh_git(d, &["update-ref", "refs/remotes/origin/trunk", &three]);
+        assert_eq!(
+            trunk_ref(d, "trunk").as_deref(),
+            Some("origin/trunk"),
+            "diverged: the forge's trunk is the shared one"
+        );
+
+        sh_git(d, &["branch", "-q", "-D", "trunk"]);
+        assert_eq!(
+            trunk_ref(d, "trunk").as_deref(),
+            Some("origin/trunk"),
+            "remote only"
+        );
+        let h = history_of(d, "origin/trunk").unwrap();
+        assert_eq!(h.commit, three);
+        assert_eq!(
+            h.subjects
+                .iter()
+                .map(|c| c.title.as_deref().unwrap())
+                .collect::<Vec<_>>(),
+            ["three", "one"]
+        );
+        assert_eq!(
+            history_of(d, "--output=x"),
+            None,
+            "an option is never read as one"
+        );
     }
 
     #[test]
@@ -1170,6 +1384,11 @@ mod tests {
             ]
         );
         assert!(named_by(None, None, &declared, &slugs).is_empty());
+        assert_eq!(
+            named_by(Some("fix (I0002)"), Some("fix/a-slug"), &declared, &slugs),
+            vec![("I0002".into(), "title_or_branch")],
+            "a slug naming an issue the title already named adds nothing"
+        );
         let ids: Vec<String> = declared.iter().cloned().collect();
         assert_eq!(
             branch_names("feature/I0001-x", &ids, &slugs),
@@ -1184,18 +1403,16 @@ mod tests {
 
     #[test]
     fn versions_order_numerically_and_a_release_above_its_prerelease() {
-        assert!(version_key("v0.10.0") > version_key("v0.9.1"));
-        assert!(version_key("v1.0.0") > version_key("v1.0.0-rc.1"));
-        assert_eq!(version_key("vnext"), None);
-        assert_eq!(version_key("0.27.0"), version_key("v0.27.0"));
         let ordered = in_version_order(vec![
             ("v0.10.0".into(), "c".into()),
             ("v0.9.0".into(), "b".into()),
             ("other".into(), "x".into()),
+            ("0.8.0".into(), "not a v tag".into()),
+            ("v0.10.0-rc.1".into(), "rc".into()),
         ]);
         assert_eq!(
             ordered.iter().map(|r| r.0.as_str()).collect::<Vec<_>>(),
-            ["v0.9.0", "v0.10.0"]
+            ["v0.9.0", "v0.10.0-rc.1", "v0.10.0"]
         );
         assert_eq!(
             latest_version("{\"version\":\"0.27.0\"}").unwrap(),

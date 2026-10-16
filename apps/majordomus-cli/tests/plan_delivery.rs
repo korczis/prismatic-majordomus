@@ -385,3 +385,158 @@ fn plan_delivery_is_one_answer_on_the_command_line_http_and_mcp() {
     assert_eq!(norm(&from_cli), norm(&from_mcp));
     assert_eq!(norm(&from_cli), norm(&from_http));
 }
+
+/// A deployment observation of Pages deployments `(created_at, sha)`, every one a success,
+/// with the forge's merged pull requests beside it.
+fn observe_deployments(f: &Fixture, pages: &[(&str, &str)], merged: Value) {
+    let deployments: Vec<Value> = pages
+        .iter()
+        .enumerate()
+        .map(|(n, (at, sha))| {
+            json!({"id": n.to_string(), "environment": "github-pages", "sha": sha,
+                   "created_at": at, "state": "success"})
+        })
+        .collect();
+    let observation = json!({
+        "schema": 1,
+        "repository": "someone/fixture",
+        "repository_url": "https://example.invalid/someone/fixture",
+        "observed_at": "2026-10-16T09:00:00Z",
+        "deployments": deployments,
+        "releases": [],
+        "merged_pull_requests": merged
+    });
+    f.write(
+        ".ai/local/state/integration/deployments.json",
+        &serde_json::to_string_pretty(&observation).unwrap(),
+    );
+}
+
+#[test]
+fn plan_delivery_names_each_live_source_it_could_not_read_and_why() {
+    let (f, merge) = fixture();
+
+    // observations that do not parse are unread by name, never read as empty
+    f.write(".ai/local/state/integration/observation.json", "not json");
+    f.write(".ai/local/state/integration/deployments.json", "not json");
+    let (code, v, err) = cli(&f, &[]);
+    assert_eq!(code, 0, "{err}");
+    for name in ["forge", "publication", "merged_titles"] {
+        let s = source(&v, name);
+        assert_eq!(s["state"], "unread", "{name}: {s}");
+        assert!(!s["detail"].as_str().unwrap().is_empty(), "{name} says why");
+    }
+    assert_eq!(by_id(&v, "I0003")["unread"], json!(["forge"]));
+
+    // the newest of two Pages deployments is the publication; what its pointer says decides
+    f.write(".ai/repo/releases/v0.1.0.yaml", &record("0.1.0", &merge));
+    f.write(
+        "site/static/releases/latest.json",
+        "{\"version\":\"0.1.0\"}\n",
+    );
+    f.commit("release: record and publish v0.1.0");
+    let published = f.git(&["rev-parse", "HEAD"]).trim().to_string();
+    f.write(
+        "site/static/releases/latest.json",
+        "{\"schema\":\"release/v1\"}\n",
+    );
+    f.commit("a pointer that names no version");
+    let nameless = f.git(&["rev-parse", "HEAD"]).trim().to_string();
+    let feature_head = f.git(&["rev-parse", "feature/the-work"]).trim().to_string();
+    // the forge's title of #5 names the merge the history already credits: counted once
+    let merged = json!([{
+        "number": 5, "title": "feat: the work (I0001)", "head_ref": "feature/the-work",
+        "head_sha": feature_head, "merge_commit": merge, "merged_at": "2026-10-16T07:00:00Z"
+    }]);
+    let older = "2026-10-16T08:00:00Z";
+    let newer = "2026-10-16T08:30:00Z";
+
+    observe_deployments(
+        &f,
+        &[(newer, &nameless), (older, &published)],
+        merged.clone(),
+    );
+    let (_, v, _) = cli(&f, &["I0001"]);
+    let i1 = by_id(&v, "I0001");
+    assert_eq!(i1["stage"], "released", "{i1}");
+    assert_eq!(i1["merged"]["via"], "title_or_branch");
+    assert_eq!(
+        i1["merged"]["merges"], 2,
+        "the merge and its commit, the forge adds none"
+    );
+    let publication = source(&v, "publication")["detail"]
+        .as_str()
+        .unwrap()
+        .to_string();
+    assert!(
+        publication.contains(&nameless) && publication.contains("names no version"),
+        "{publication}"
+    );
+
+    let missing = "0123456789012345678901234567890123456789";
+    observe_deployments(&f, &[(older, &published), (newer, missing)], merged.clone());
+    let (_, v, _) = cli(&f, &["I0001"]);
+    let publication = source(&v, "publication")["detail"]
+        .as_str()
+        .unwrap()
+        .to_string();
+    assert!(
+        publication.contains("cannot be read in this clone"),
+        "{publication}"
+    );
+
+    observe_deployments(&f, &[(older, &nameless), (newer, &published)], merged);
+    let (_, v, _) = cli(&f, &["I0001"]);
+    assert_eq!(by_id(&v, "I0001")["stage"], "deployed", "{v}");
+
+    // a release record that cannot be read refuses the answer rather than release nothing
+    f.write(
+        ".ai/repo/releases/v0.2.0.yaml",
+        "schema: release/v1\nversion: [\n",
+    );
+    let (code, _, err) = cli(&f, &["I0001"]);
+    assert_ne!(code, 0, "{err}");
+}
+
+#[test]
+fn plan_delivery_without_a_trunk_or_a_repository_or_a_reader_says_so() {
+    let (f, _) = fixture();
+    let trunk = f
+        .git(&["rev-parse", "--abbrev-ref", "HEAD"])
+        .trim()
+        .to_string();
+    f.git(&["checkout", "-q", "--detach"]);
+    f.git(&["branch", "-q", "-m", &trunk, "not-the-trunk"]);
+    let (code, _, err) = cli(&f, &[]);
+    assert_ne!(code, 0);
+    assert!(err.contains("does not resolve in this clone"), "{err}");
+
+    let (code, _, err) = cli(&f, &["--repo", "/no/such/repository"]);
+    assert_ne!(code, 0, "{err}");
+
+    let (code, err) = with_stdout_gone(&f, &["plan", "delivery", "--at", "HEAD"]);
+    assert_ne!(code, 0, "an answer nobody can read is not a success: {err}");
+}
+
+/// Run the executable with its stdout a socket whose reader is already gone, so that writing
+/// the answer fails; the exit code and stderr.
+#[cfg(unix)]
+fn with_stdout_gone(f: &Fixture, args: &[&str]) -> (i32, String) {
+    use std::os::fd::OwnedFd;
+    use std::os::unix::net::UnixStream;
+    let (stdout, reader) = UnixStream::pair().expect("a socket pair");
+    drop(reader);
+    let out = common::majordomus()
+        .args(args)
+        .current_dir(f.root())
+        .env("MAJORDOMUS_SHARE", common::dist_share())
+        .stdin(Stdio::null())
+        .stdout(Stdio::from(OwnedFd::from(stdout)))
+        .stderr(Stdio::piped())
+        .output()
+        .expect("spawn majordomus");
+    (
+        out.status.code().unwrap_or(-1),
+        String::from_utf8(out.stderr).expect("stderr is UTF-8"),
+    )
+}

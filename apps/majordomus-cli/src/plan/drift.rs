@@ -437,7 +437,7 @@ pub(crate) fn judge(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::plan::delivery::{DeliveryMerge, DeliveryPullRequest};
+    use crate::plan::delivery::{DeliveryMerge, DeliveryPullRequest, DeliveryRelease};
 
     fn source(name: &str, read: bool) -> DeliverySource {
         DeliverySource {
@@ -712,5 +712,92 @@ mod tests {
             ("report", 0)
         );
         assert_eq!(report_only.findings[0].verdict, None);
+    }
+    #[test]
+    fn a_model_that_does_not_parse_or_declares_no_drift_is_unread_and_says_why() {
+        assert_eq!(
+            window_of("drift:\n\twindow: 60\n").unwrap_err(),
+            "tab character on line 2"
+        );
+        let dir = tempfile::tempdir().unwrap();
+        std::fs::create_dir_all(dir.path().join(".ai/repo/ci")).unwrap();
+        std::fs::write(dir.path().join(MODEL), "version: 1\n").unwrap();
+        let w = read_window(dir.path());
+        assert_eq!(w.state, DeliveryReading::Unread);
+        assert_eq!(w.detail, format!("{MODEL}: it declares no `drift` block"));
+        assert_eq!((w.seconds, w.enforcement), (None, None));
+    }
+
+    #[test]
+    fn a_release_an_unread_claim_list_and_an_unread_title_list_are_each_said() {
+        let mut released = merged(issue("I1", "READY"), "2026-10-01T00:00:00Z");
+        released.stage = DeliveryStage::Released;
+        released.released = Some(DeliveryRelease {
+            tag: "v0.2.0".into(),
+            commit: "t".into(),
+            observed_at: "t".into(),
+        });
+        let mut delivery = report(
+            vec![released, issue("I2", "ACTIVE"), issue("I3", "DONE")],
+            true,
+        );
+        delivery.sources = vec![source("forge", true), source("merged_titles", false)];
+        let mut started = BTreeMap::new();
+        started.insert("I2".to_string(), "not a time".to_string());
+        let r = judge(
+            delivery,
+            &started,
+            None,
+            source("claims", false),
+            window(60, "blocking"),
+            None,
+        );
+        let got: Vec<(&str, DriftClass, Vec<String>)> = r
+            .findings
+            .iter()
+            .map(|f| (f.issue.as_str(), f.class, f.unread.clone()))
+            .collect();
+        assert_eq!(
+            got,
+            [
+                ("I1", DriftClass::MergedNotRecorded, vec![]),
+                (
+                    "I2",
+                    DriftClass::ActiveWithoutWork,
+                    vec!["claims".to_string()]
+                ),
+                (
+                    "I3",
+                    DriftClass::DoneWithoutTrace,
+                    vec!["merged_titles".to_string()]
+                ),
+            ]
+        );
+        assert_eq!(r.findings[0].proof.release.as_deref(), Some("v0.2.0"));
+        assert_eq!(
+            (r.findings[1].age_seconds, r.findings[1].past_window),
+            (None, None),
+            "a start stamp that is not a time has no age, and is never called young"
+        );
+        assert_eq!(r.sources.last().unwrap().name, "claims");
+
+        // an observation whose own time cannot be read ages nothing
+        let mut unclocked = report(
+            vec![merged(issue("I1", "READY"), "2026-10-01T00:00:00Z")],
+            true,
+        );
+        unclocked.observed.observed_at = "unknown".into();
+        let r = judge(
+            unclocked,
+            &BTreeMap::new(),
+            Some(&BTreeMap::new()),
+            source("claims", true),
+            window(60, "blocking"),
+            Some(DriftGate::Trunk),
+        );
+        assert_eq!(
+            (r.findings[0].age_seconds, r.findings[0].verdict),
+            (None, Some(DriftVerdict::Pending))
+        );
     }
 }

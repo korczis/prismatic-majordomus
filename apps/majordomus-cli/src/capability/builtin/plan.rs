@@ -773,7 +773,7 @@ fn plan_delivery(
     ctx: &Context,
     input: PlanDeliveryInput,
 ) -> Result<IssueDeliveryReport, CapabilityError> {
-    let plan = plan_of(ctx)?;
+    let plan = Plan::build(&ctx.index);
     if let Some(id) = input.issue.as_deref() {
         if plan.issue(id).is_none() {
             return Err(CapabilityError::NotFound(format!(
@@ -862,9 +862,8 @@ impl BenchmarkCases for PlanDriftInput {
 /// The live mesh claims that name an issue, by issue, and the source that says so.
 fn issue_claims(ctx: &Context) -> (Option<BTreeMap<String, String>>, DeliverySource) {
     let Some(c) = ctx.mesh.cooperation() else {
-        let reason = ctx.mesh.cooperation_status().reason.unwrap_or_else(|| {
-            "mesh cooperation does not run in this process; the served answer reads it".into()
-        });
+        // an inactive cooperation always says why
+        let reason = ctx.mesh.cooperation_status().reason.unwrap_or_default();
         return (
             None,
             DeliverySource {
@@ -897,7 +896,7 @@ fn issue_claims(ctx: &Context) -> (Option<BTreeMap<String, String>>, DeliverySou
 }
 
 fn plan_drift(ctx: &Context, input: PlanDriftInput) -> Result<DriftReport, CapabilityError> {
-    let plan = plan_of(ctx)?;
+    let plan = Plan::build(&ctx.index);
     if let Some(id) = input.issue.as_deref() {
         if plan.issue(id).is_none() {
             return Err(CapabilityError::NotFound(format!(
