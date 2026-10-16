@@ -22588,7 +22588,7 @@
         "source": ".ai/repo/project/issues/I0821.yaml",
         "facts": {
           "acceptance_criteria": [
-            "Byte-identical output of every read-only command with a cold and a warm cache, proved by case 77",
+            "Byte-identical output of every read-only command with a cold and a warm cache, proved by case 3090",
             "A changed file is re-parsed, proved by mutation",
             "The cache never grows past the cap",
             "yaml_flatten count is unchanged; a new counter flatten_cache_hit reports hits"
@@ -22598,7 +22598,6 @@
           "depends_on": [
             "I0817"
           ],
-          "desired_state": "A miss parses and writes atomically; a hit copies; a changed file cannot hit because its hash changed; the cache is bounded by an entry cap in the policy and trimmed oldest first.",
           "evidence_required": [
             "flatten_cache"
           ],
@@ -22606,7 +22605,6 @@
           "non_scope": [
             "A cross-process cache of command results"
           ],
-          "objective": "Cache the output of mj_yaml_flatten under .ai/local/cache/flat/<sha256>, keyed by the file's content hash and the flattener's own version, so a second command on unchanged files does no parsing.",
           "parallel_safe": false,
           "priority": "p0",
           "profile": "implementation",
@@ -22620,11 +22618,15 @@
             "test/cases"
           ],
           "slug": "flatten-cache",
-          "updated_at": "2026-09-05",
+          "started_at": "2026-10-16T09:50:41Z",
+          "started_event": "sha256:48973b22009f2da9d36792957a4ae77fa3397e684a2b19f2b5b6ff925e48511d",
+          "updated_at": "2026-10-16T09:51:08Z",
           "validation": [
-            "bash test/run.sh 77_flatten_cache",
+            "bash test/run.sh 3090_a_flatten_is_cached_by_its_content",
             "MJ_TIMING=1 bin/majordomus doctor"
           ],
+          "verified_at": "2026-10-16T09:50:55Z",
+          "verified_event": "sha256:b20fac4bacd40572e3acc70fc7b5a0d59787dd40e9f9eb37f2e1af0c3b504b01",
           "why": "doctor flattens 181 files and knowledge nodes 146; across the hook, watch and context the same files are parsed again and again."
         }
       },
@@ -55083,6 +55085,13 @@
         "source": "test/cases/3069_an_edit_no_claim_covers_is_refused.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3090_a_flatten_is_cached_by_its_content.sh",
+        "kind": "test",
+        "label": "test/cases/3090_a_flatten_is_cached_by_its_content.sh",
+        "route": "/cockpit/objects/test/test-cases-3090-a-flatten-is-cached-by-its-content-sh",
+        "source": "test/cases/3090_a_flatten_is_cached_by_its_content.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/30_command_registry.sh",
         "kind": "test",
         "label": "test/cases/30_command_registry.sh",
@@ -85708,6 +85717,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3090_a_flatten_is_cached_by_its_content.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/30_command_registry.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -91009,8 +91023,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2870,
-      "edges": 6291,
+      "nodes": 2871,
+      "edges": 6292,
       "acyclic": false,
       "truncated": false
     }

@@ -6,23 +6,23 @@
     "version": "0.27.0"
   },
   "registry": {
-    "fingerprint": "039c3c240f2a65253fe430b394e20fc2d0230868bc9dc775a9fdc93d3bfd479f",
+    "fingerprint": "ce0da5805bb3a861b8534d53756961398e365d364ae9d8b0763be2ac7c661bf0",
     "summary": {
-      "total": 2446,
+      "total": 2447,
       "builtin": 202,
-      "declarative": 2244,
+      "declarative": 2245,
       "by_kind": {
         "command": 31,
         "query": 171,
-        "resource": 2244
+        "resource": 2245
       },
       "by_stability": {
         "behaviorally_verified": 141,
         "experimental": 52,
-        "implemented": 2253
+        "implemented": 2254
       },
       "mcp_tools": 192,
-      "mcp_resources": 2299,
+      "mcp_resources": 2300,
       "http_routes": 197,
       "cli_commands": 108,
       "modules": 92,
@@ -83509,7 +83509,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 500,
+        "capabilities": 501,
         "capability_ids": []
       },
       {
@@ -83600,7 +83600,7 @@
     ]
   },
   "index": {
-    "fingerprint": "d145fb9a0df194ae88563f0ac078bcdc65ec3e4202c2c15329351b61177ace6a",
+    "fingerprint": "99373e64ef8676c4c6b075e0feaf172485a3b573a2ac3b800873e71f7a38929c",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -83654,7 +83654,7 @@
       "session": 89,
       "skill": 8,
       "taxonomy": 10,
-      "test": 500,
+      "test": 501,
       "use-case": 49,
       "workspace": 1
     },
@@ -89767,7 +89767,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 158951
+        "bytes": 157405
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -89848,7 +89848,7 @@
         "title": "File schemas — every file Majordomus reads or writes",
         "path": "docs/SCHEMAS.md",
         "source_class": "document",
-        "bytes": 80565
+        "bytes": 82270
       },
       {
         "uri": "majordomus://document/docs/SCOPE.md",
@@ -92859,7 +92859,7 @@
         "identity": "lib/common.sh",
         "path": "lib/common.sh",
         "source_class": "library",
-        "bytes": 103671
+        "bytes": 110249
       },
       {
         "uri": "majordomus://implementation/lib/context.sh",
@@ -93959,11 +93959,11 @@
         "kind": "issue",
         "identity": "I0821",
         "title": "Flattened YAML is cached under .ai/local/cache by content hash",
-        "description": "Cache the output of mj_yaml_flatten under .ai/local/cache/flat/<sha256>, keyed by the file's content hash and the flattener's own version, so a second command on unchanged files does no parsing.",
+        "description": "Cache the output of mj_yaml_flatten under .ai/local/cache/flat/<parser sha256>/, keyed by the file's content (held in the entry and compared in full, because hashing the file costs the process a hit is there to save) and the flattener's own version, so a second command on unchanged files does no parsing.",
         "path": ".ai/repo/project/issues/I0821.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1668
+        "bytes": 3467
       },
       {
         "uri": "majordomus://issue/I0822",
@@ -98694,7 +98694,7 @@
         "path": ".ai/repo/policy.yaml",
         "section": "policy",
         "source_class": "policy",
-        "bytes": 22977
+        "bytes": 23337
       },
       {
         "uri": "majordomus://profile/debugging",
@@ -104835,6 +104835,14 @@
         "bytes": 5688
       },
       {
+        "uri": "majordomus://test/test/cases/3090_a_flatten_is_cached_by_its_content.sh",
+        "kind": "test",
+        "identity": "test/cases/3090_a_flatten_is_cached_by_its_content.sh",
+        "path": "test/cases/3090_a_flatten_is_cached_by_its_content.sh",
+        "source_class": "case",
+        "bytes": 9709
+      },
+      {
         "uri": "majordomus://test/test/cases/30_command_registry.sh",
         "kind": "test",
         "identity": "test/cases/30_command_registry.sh",
@@ -106576,7 +106584,7 @@
         "identity": "test/cases/886_the_timing_report_is_json.sh",
         "path": "test/cases/886_the_timing_report_is_json.sh",
         "source_class": "case",
-        "bytes": 4485
+        "bytes": 4751
       },
       {
         "uri": "majordomus://test/test/cases/88_rust_command_tested.sh",
@@ -108021,7 +108029,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 500
+      "objects": 501
     },
     {
       "name": "use-case",

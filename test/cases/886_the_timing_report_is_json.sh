@@ -20,6 +20,10 @@
 command -v jq >/dev/null 2>&1 || skip "jq is not installed"
 git config user.email a@b.c; git config user.name a
 "$MJ" init >/dev/null
+# one run first, so that both runs compared below read a warm flatten cache: the first
+# command after init parses what the second reads back, and flatten_cache_hit would differ
+# between the two forms for that reason alone (I0821)
+"$MJ" doctor >/dev/null 2>&1 || :
 
 # 1. the same command, both forms
 # doctor may report findings in a fresh repository; its exit is not what this case is about

@@ -400,6 +400,16 @@
       "external": false
     },
     {
+      "id": ".ai/local/cache/flat",
+      "kind": "artifact",
+      "label": "local/cache/flat",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
       "id": ".ai/local/state/session-current.yaml",
       "kind": "artifact",
       "label": "local/state/session-current.yaml",
@@ -713,16 +723,6 @@
       "id": ".ai/local/prompts",
       "kind": "artifact",
       "label": "local/prompts",
-      "command": null,
-      "summary": null,
-      "read_only": null,
-      "route": null,
-      "external": false
-    },
-    {
-      "id": ".ai/local/cache",
-      "kind": "artifact",
-      "label": "local/cache",
       "command": null,
       "summary": null,
       "read_only": null,
@@ -1858,11 +1858,6 @@
     },
     {
       "source": "lib/init.sh",
-      "target": ".ai/local/cache",
-      "kind": "uses"
-    },
-    {
-      "source": "lib/init.sh",
       "target": ".ai/local/session-contexts",
       "kind": "uses"
     },
@@ -1964,11 +1959,6 @@
     {
       "source": "lib/knowledge.sh",
       "target": ".ai/repo/policy.yaml",
-      "kind": "uses"
-    },
-    {
-      "source": "lib/migrate.sh",
-      "target": ".ai/local/cache",
       "kind": "uses"
     },
     {
@@ -2204,6 +2194,11 @@
     {
       "source": "lib/checkpoint.sh",
       "target": ".ai/local/state/current.yaml",
+      "kind": "writes"
+    },
+    {
+      "source": "lib/common.sh",
+      "target": ".ai/local/cache/flat",
       "kind": "writes"
     },
     {

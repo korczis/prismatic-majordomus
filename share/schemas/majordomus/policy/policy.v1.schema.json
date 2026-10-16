@@ -248,6 +248,18 @@
         }
       }
     },
+    "cache": {
+      "type": "object",
+      "description": "Rebuildable caches under the local section's cache/ directory, which no commit carries. Deleting one costs only the work it saved.",
+      "additionalProperties": false,
+      "properties": {
+        "flatten_max_entries": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "How many parsed YAML files the shell tool keeps under cache/flat/, each served only to a file with exactly the bytes it was parsed from. Past this the oldest written are removed first; 0, or no key, is no cache."
+        }
+      }
+    },
     "enforcement": {
       "type": "array",
       "items": {
