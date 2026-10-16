@@ -732,6 +732,34 @@ fn indexed_plan(app: &App, targets: &[Target]) -> Result<Vec<Artifact>> {
         // three are compared by `generate --check`.
         let mut log =
             crate::release::compose_published(app.repository.root(), &app.context.index.objects);
+        // A repository without the history of a release — an exported fixture, a shallow
+        // clone — cannot compose what that release changed, and composing it anyway wrote a
+        // changelog of empty sections and called the committed one stale (I1409). What such
+        // a release changed is kept as committed, and said, rather than judged on history
+        // this repository does not have.
+        let unreadable = crate::release::changelog::unreadable_releases(
+            app.repository.root(),
+            &app.context.index.objects,
+        );
+        if !unreadable.is_empty() {
+            let committed =
+                std::fs::read_to_string(app.repository.root().join(OUT_DIR).join("changelog.json"))
+                    .ok()
+                    .and_then(|text| {
+                        serde_json::from_str::<crate::release::model::Changelog>(&text).ok()
+                    });
+            let kept = committed
+                .map(|c| crate::release::changelog::keep_committed(&mut log, &c, &unreadable))
+                .unwrap_or_default();
+            if let (Some(newest), Some(oldest)) = (kept.first(), kept.last()) {
+                tracing::warn!(
+                    "{OUT_DIR}/changelog.*: what {} release(s) changed ({newest} back to \
+                     {oldest}) is kept as committed and not judged: their history is not in \
+                     this repository's object database",
+                    kept.len()
+                );
+            }
+        }
         // The committed document names its producer the way the served one does, so a page
         // rendering either can find the same value on every other surface without a route
         // or an id of its own.
