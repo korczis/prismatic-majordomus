@@ -169,8 +169,8 @@
     <dl class="grid gap-x-6 gap-y-2 text-sm sm:grid-cols-[max-content_1fr]">
       <dt class="text-body-subtle">current version</dt><dd class="min-w-0 break-all font-mono text-heading">0.27.0</dd>
       <dt class="text-body-subtle">document</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus/changelog/v1</dd>
-      <dt class="text-body-subtle">projected from</dt><dd class="min-w-0 break-all font-mono text-heading"><a href="https://github.com/korczis/prismatic-majordomus/blob/44ad51ed4f07bc261c934f17955d73f842df420a/docs/generated/changelog.json" class="inline-block py-1 text-fg-brand hover:underline">docs/generated/changelog.json</a></dd>
-      <dt class="text-body-subtle">for a reader</dt><dd class="min-w-0 break-all font-mono text-heading"><a href="https://github.com/korczis/prismatic-majordomus/blob/44ad51ed4f07bc261c934f17955d73f842df420a/docs/generated/changelog.md" class="inline-block py-1 text-fg-brand hover:underline">docs/generated/changelog.md</a></dd>
+      <dt class="text-body-subtle">projected from</dt><dd class="min-w-0 break-all font-mono text-heading"><a href="https://github.com/korczis/prismatic-majordomus/blob/d1162668036170d42b6c9038d82dfa67064ba561/docs/generated/changelog.json" class="inline-block py-1 text-fg-brand hover:underline">docs/generated/changelog.json</a></dd>
+      <dt class="text-body-subtle">for a reader</dt><dd class="min-w-0 break-all font-mono text-heading"><a href="https://github.com/korczis/prismatic-majordomus/blob/d1162668036170d42b6c9038d82dfa67064ba561/docs/generated/changelog.md" class="inline-block py-1 text-fg-brand hover:underline">docs/generated/changelog.md</a></dd>
     </dl>
   </div><div class="mt-4 rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs">
     <span class="mb-2 block font-mono text-xs uppercase tracking-wide text-body-subtle">the same value, elsewhere</span>
@@ -183,6 +183,7 @@
     <p class="mt-3 text-sm text-body-subtle">The Cockpit runs it from the capability page above; Swagger UI runs the route, on the server this repository starts. None of the four is written down twice — they are projections of one declaration.</p>
   </div>
   <nav class="mt-10 flex flex-wrap gap-2" aria-label="Versions">
+    <a href="#0-27-0" class="rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5 font-mono text-sm text-fg-brand hover:underline">v0.27.0</a>
     <a href="#0-26-0" class="rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5 font-mono text-sm text-fg-brand hover:underline">v0.26.0</a>
     <a href="#0-25-0" class="rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5 font-mono text-sm text-fg-brand hover:underline">v0.25.0</a>
     <a href="#0-24-1" class="rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5 font-mono text-sm text-fg-brand hover:underline">v0.24.1</a>
@@ -210,6 +211,948 @@
     <a href="#0-5-0" class="rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5 font-mono text-sm text-fg-brand hover:underline">v0.5.0</a>
     <a href="#0-3-1" class="rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5 font-mono text-sm text-fg-brand hover:underline">v0.3.1</a>
   </nav>
+  <section class="mt-12 border-t border-default pt-8">
+    <h2 id="0-27-0" class="scroll-mt-24 break-words text-2xl font-bold tracking-tight text-heading">v0.27.0</h2>
+    <div class="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-xs text-body-subtle">
+      <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">0.27.0</span><span class="font-mono">2026-10-16</span><span class="break-all font-mono">c1a430dcf</span><span>82 change(s)</span>
+      <span>4 decision(s)</span>
+      <span>6 artifact(s)</span>
+    </div>
+    <h3 class="mt-8 text-lg font-semibold tracking-tight text-heading">Decisions</h3>
+    <p class="mt-1 max-w-3xl text-sm text-body-subtle">The architecture decisions the layer dates inside this version's window, each with the route the document records for it.</p>
+    <ul class="mt-4 space-y-3" role="list">
+      <li class="rounded-base border border-default bg-neutral-primary-soft p-4">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span class="font-mono text-sm font-medium text-heading">adr-0161</span>
+          <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">proposed</span>
+          <span class="font-mono text-xs text-body-subtle">2026-10-14</span>
+        </div>
+        <p class="mt-2 break-words text-sm leading-relaxed text-body"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0161-a-mesh-node-follows-the-published-release.md" class="text-fg-brand hover:underline">A mesh node follows the published release, through the one installer, forward only</a>
+        </p>
+      </li>
+      <li class="rounded-base border border-default bg-neutral-primary-soft p-4">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span class="font-mono text-sm font-medium text-heading">adr-0160</span>
+          <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">proposed</span>
+          <span class="font-mono text-xs text-body-subtle">2026-10-14</span>
+        </div>
+        <p class="mt-2 break-words text-sm leading-relaxed text-body"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0160-the-kiosk-draws-what-the-repository-proves.md" class="text-fg-brand hover:underline">The kiosk draws what the repository proves, from the sources that already answer it, and draws it with p5 only where the build has it</a>
+        </p>
+      </li>
+      <li class="rounded-base border border-default bg-neutral-primary-soft p-4">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span class="font-mono text-sm font-medium text-heading">adr-0152</span>
+          <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">proposed</span>
+          <span class="font-mono text-xs text-body-subtle">2026-10-13</span>
+        </div>
+        <p class="mt-2 break-words text-sm leading-relaxed text-body"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0152-a-diagram-and-a-chart-on-the-site-are-one-viewer-each-over-w.md" class="text-fg-brand hover:underline">A diagram and a chart on the site are one viewer each, over what the build derived: interactive, linkable, and linked by inference</a>
+        </p>
+      </li>
+      <li class="rounded-base border border-default bg-neutral-primary-soft p-4">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span class="font-mono text-sm font-medium text-heading">adr-0069</span>
+          <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">proposed</span>
+          <span class="font-mono text-xs text-body-subtle">2026-09-15</span>
+        </div>
+        <p class="mt-2 break-words text-sm leading-relaxed text-body"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0069-a-capability-may-be-scripted.md" class="text-fg-brand hover:underline">A capability may be scripted, and repository automation is scripted capabilities rather than shell</a>
+        </p>
+      </li>
+    </ul>
+    <div class="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm"><a href="https://github.com/korczis/prismatic-majordomus/releases/tag/v0.27.0" class="font-medium text-fg-brand hover:underline">Release on GitHub &rarr;</a><a href="https://github.com/korczis/prismatic-majordomus/compare/v0.26.0...v0.27.0" class="font-medium text-fg-brand hover:underline">Compare &rarr;</a><a href="https://github.com/korczis/prismatic-majordomus/tree/v0.27.0" class="font-medium text-fg-brand hover:underline">Tree at this version &rarr;</a>
+    </div>
+    <div x-data="{ hidden: [], open: false,
+                   toggle(k) { this.hidden.includes(k) ? this.hidden.splice(this.hidden.indexOf(k), 1) : this.hidden.push(k) } }">
+    <h3 class="mt-8 text-lg font-semibold tracking-tight text-heading">Changes</h3>
+    <p class="mt-1 max-w-3xl text-sm text-body-subtle">Every commit in this version's range that parses as a conventional commit, under the heading its type carries; a subject that parses as nothing is grouped as <code class="font-mono">other</code>.</p><div class="mt-3 flex flex-wrap items-center gap-2">
+      <button type="button" @click="toggle('feat')"
+              :class="hidden.includes('feat') ? 'border-default text-body-subtle' : 'border-fg-brand text-fg-brand'"
+              :aria-pressed="!hidden.includes('feat')"
+              class="inline-flex items-baseline gap-1.5 rounded-full border px-3 py-1 text-xs font-medium hover:bg-neutral-secondary-soft">
+        <span>Added</span>
+        <span class="font-mono text-body-subtle">15</span>
+      </button>
+      <button type="button" @click="toggle('fix')"
+              :class="hidden.includes('fix') ? 'border-default text-body-subtle' : 'border-fg-brand text-fg-brand'"
+              :aria-pressed="!hidden.includes('fix')"
+              class="inline-flex items-baseline gap-1.5 rounded-full border px-3 py-1 text-xs font-medium hover:bg-neutral-secondary-soft">
+        <span>Fixed</span>
+        <span class="font-mono text-body-subtle">29</span>
+      </button>
+      <button type="button" @click="toggle('perf')"
+              :class="hidden.includes('perf') ? 'border-default text-body-subtle' : 'border-fg-brand text-fg-brand'"
+              :aria-pressed="!hidden.includes('perf')"
+              class="inline-flex items-baseline gap-1.5 rounded-full border px-3 py-1 text-xs font-medium hover:bg-neutral-secondary-soft">
+        <span>Performance</span>
+        <span class="font-mono text-body-subtle">1</span>
+      </button>
+      <button type="button" @click="toggle('docs')"
+              :class="hidden.includes('docs') ? 'border-default text-body-subtle' : 'border-fg-brand text-fg-brand'"
+              :aria-pressed="!hidden.includes('docs')"
+              class="inline-flex items-baseline gap-1.5 rounded-full border px-3 py-1 text-xs font-medium hover:bg-neutral-secondary-soft">
+        <span>Documentation</span>
+        <span class="font-mono text-body-subtle">5</span>
+      </button>
+      <button type="button" @click="toggle('test')"
+              :class="hidden.includes('test') ? 'border-default text-body-subtle' : 'border-fg-brand text-fg-brand'"
+              :aria-pressed="!hidden.includes('test')"
+              class="inline-flex items-baseline gap-1.5 rounded-full border px-3 py-1 text-xs font-medium hover:bg-neutral-secondary-soft">
+        <span>Tests</span>
+        <span class="font-mono text-body-subtle">2</span>
+      </button>
+      <button type="button" @click="toggle('ci')"
+              :class="hidden.includes('ci') ? 'border-default text-body-subtle' : 'border-fg-brand text-fg-brand'"
+              :aria-pressed="!hidden.includes('ci')"
+              class="inline-flex items-baseline gap-1.5 rounded-full border px-3 py-1 text-xs font-medium hover:bg-neutral-secondary-soft">
+        <span>Pipeline</span>
+        <span class="font-mono text-body-subtle">1</span>
+      </button>
+      <button type="button" @click="toggle('chore')"
+              :class="hidden.includes('chore') ? 'border-default text-body-subtle' : 'border-fg-brand text-fg-brand'"
+              :aria-pressed="!hidden.includes('chore')"
+              class="inline-flex items-baseline gap-1.5 rounded-full border px-3 py-1 text-xs font-medium hover:bg-neutral-secondary-soft">
+        <span>Housekeeping</span>
+        <span class="font-mono text-body-subtle">28</span>
+      </button>
+      <button type="button" @click="toggle('style')"
+              :class="hidden.includes('style') ? 'border-default text-body-subtle' : 'border-fg-brand text-fg-brand'"
+              :aria-pressed="!hidden.includes('style')"
+              class="inline-flex items-baseline gap-1.5 rounded-full border px-3 py-1 text-xs font-medium hover:bg-neutral-secondary-soft">
+        <span>Formatting</span>
+        <span class="font-mono text-body-subtle">1</span>
+      </button>
+      <button type="button" @click="open = !open" class="ml-1 rounded-base px-2 py-1 text-xs font-medium text-fg-brand hover:underline"
+              x-text="open ? 'Collapse all' : 'Expand all'">Expand all</button>
+    </div><div id="0-27-0-feat" x-show="!hidden.includes('feat')"
+         class="relative mt-4 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft"><a href="#0-27-0-feat" class="absolute left-2 top-2.5 inline-flex h-6 w-6 items-center justify-center font-mono text-xs text-body-subtle hover:text-fg-brand" title="a link to this group">#</a>
+      <details :open="open">
+        <summary class="cursor-pointer py-3 pl-9 pr-4 text-sm font-medium text-heading">
+          <span class="font-medium">Added</span>
+          <span class="ml-2 font-mono text-xs text-body-subtle">feat</span>
+          <span class="ml-2 rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-body">15</span>
+        </summary>
+        <ul class="border-t border-default px-4 py-3 text-sm" role="list">
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">mesh</span>
+              <span class="min-w-0 break-words text-body">an edit no claim covers is refused (I2735)</span><a href="https://github.com/korczis/prismatic-majordomus/commit/ed994d5d0" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">ed994d5d0</a>
+            </div><div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 pl-1 text-xs">
+              <a href="https://majordomus.dev/plan/i2735/" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">I2735</span>
+                <span class="max-w-md truncate">An edit no claim covers is refused</span>
+              </a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">mesh</span>
+              <span class="min-w-0 break-words text-body">a task built off the mesh is refused</span><a href="https://github.com/korczis/prismatic-majordomus/commit/23b7f645e" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">23b7f645e</a>
+            </div><div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 pl-1 text-xs">
+              <a href="https://majordomus.dev/plan/i2734/" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">I2734</span>
+                <span class="max-w-md truncate">A session joins the mesh at its start and leaves it at its end</span>
+              </a>
+              <a href="https://majordomus.dev/plan/i2288/" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">I2288</span>
+                <span class="max-w-md truncate">A task is on the mesh while it works</span>
+              </a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">mesh</span>
+              <span class="min-w-0 break-words text-body">a task&#39;s scope is claimed on the mesh while it works</span><a href="https://github.com/korczis/prismatic-majordomus/commit/8bb8a2238" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">8bb8a2238</a>
+            </div><div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 pl-1 text-xs">
+              <a href="https://majordomus.dev/plan/i2288/" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">I2288</span>
+                <span class="max-w-md truncate">A task is on the mesh while it works</span>
+              </a>
+              <a href="https://majordomus.dev/plan/i2734/" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">I2734</span>
+                <span class="max-w-md truncate">A session joins the mesh at its start and leaves it at its end</span>
+              </a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">capture</span>
+              <span class="min-w-0 break-words text-body">a session joins the mesh at its start and leaves it at its end</span><a href="https://github.com/korczis/prismatic-majordomus/commit/e81e054a5" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">e81e054a5</a>
+            </div><div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 pl-1 text-xs">
+              <a href="https://majordomus.dev/plan/i2734/" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">I2734</span>
+                <span class="max-w-md truncate">A session joins the mesh at its start and leaves it at its end</span>
+              </a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">capability</span>
+              <span class="min-w-0 break-words text-body">the sandboxed engine a scripted capability runs in (I1800, ADR 0069)</span><a href="https://github.com/korczis/prismatic-majordomus/commit/7ac2fde4a" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">7ac2fde4a</a>
+            </div><div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 pl-1 text-xs">
+              <a href="https://majordomus.dev/plan/i1800/" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">I1800</span>
+                <span class="max-w-md truncate">The sandboxed engine a scripted capability runs in</span>
+              </a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">knowledge</span>
+              <span class="min-w-0 break-words text-body">a lookup answers in an order it can explain, and asking writes nothing</span><a href="https://github.com/korczis/prismatic-majordomus/commit/f36a4c554" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">f36a4c554</a>
+            </div><div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 pl-1 text-xs">
+              <a href="https://majordomus.dev/plan/i0811/" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">I0811</span>
+                <span class="max-w-md truncate">Read-only knowledge lookup with an ordering that can be explained</span>
+              </a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">worktree</span>
+              <span class="min-w-0 break-words text-body">work a session left uncommitted in a worktree is named</span><a href="https://github.com/korczis/prismatic-majordomus/commit/dfbbc29db" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">dfbbc29db</a>
+            </div><div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 pl-1 text-xs">
+              <a href="https://majordomus.dev/plan/i1995/" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">I1995</span>
+                <span class="max-w-md truncate">Work a session left uncommitted in a worktree is named, not found by luck</span>
+              </a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">ci</span>
+              <span class="min-w-0 break-words text-body">a gap the audit calls planned names an issue that exists</span><a href="https://github.com/korczis/prismatic-majordomus/commit/9f8c41b68" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">9f8c41b68</a>
+            </div><div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 pl-1 text-xs">
+              <a href="https://majordomus.dev/plan/i1510/" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">I1510</span>
+                <span class="max-w-md truncate">A gap the audit calls planned names a plan object that exists</span>
+              </a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">executions</span>
+              <span class="min-w-0 break-words text-body">a run started from the command line is seen by the server</span><a href="https://github.com/korczis/prismatic-majordomus/commit/2be92697c" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">2be92697c</a>
+            </div><div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 pl-1 text-xs">
+              <a href="https://majordomus.dev/plan/i1501/" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">I1501</span>
+                <span class="max-w-md truncate">An execution a person starts is an execution the server can see</span>
+              </a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">ui</span>
+              <span class="min-w-0 break-words text-body">two more kiosk scenes, and the snapshot carries the scenes and p5 (ADR 0160, I2697)</span><a href="https://github.com/korczis/prismatic-majordomus/commit/75db37541" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">75db37541</a>
+            </div><div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 pl-1 text-xs">
+              <a href="https://majordomus.dev/plan/i2697/" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">I2697</span>
+                <span class="max-w-md truncate">The public snapshot carries the p5 library, or says which scenes it cannot draw</span>
+              </a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">ui</span>
+              <span class="min-w-0 break-words text-body">the kiosk draws what the repository proves, with p5 where it is built (ADR 0160)</span><a href="https://github.com/korczis/prismatic-majordomus/commit/1ed8a4c87" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">1ed8a4c87</a>
+            </div><div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 pl-1 text-xs">
+              <a href="https://majordomus.dev/plan/i2695/" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">I2695</span>
+                <span class="max-w-md truncate">The Observatory draws the proof, claim, surface, wave and release scenes from the capabilities that already answer them</span>
+              </a>
+              <a href="https://majordomus.dev/plan/i2698/" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">I2698</span>
+                <span class="max-w-md truncate">The new scenes have screenshot evidence at 1080p and 4K on a named revision</span>
+              </a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">site</span>
+              <span class="min-w-0 break-words text-body">a diagram is interactive and linkable, a table draws as a chart</span><a href="https://github.com/korczis/prismatic-majordomus/commit/bbb94fc2d" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">bbb94fc2d</a>
+            </div><div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 pl-1 text-xs">
+              <a href="https://majordomus.dev/plan/i2653/" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">I2653</span>
+                <span class="max-w-md truncate">Every diagram on the site is one interactive, linkable viewer whose node links are inferred, and a derived table can be drawn as a chart</span>
+              </a>
+              <a href="https://majordomus.dev/plan/i2654/" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">I2654</span>
+                <span class="max-w-md truncate">A chart is held to its table by a gate, and the tables that are measured series are drawn</span>
+              </a>
+              <a href="https://majordomus.dev/plan/i2656/" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">I2656</span>
+                <span class="max-w-md truncate">The diagram viewer serves the Cockpit and majordomus ui, and a node that is a repository file links to its source</span>
+              </a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">site</span>
+              <span class="min-w-0 break-words text-body">the landing page speaks to a buyer, and holds on every device</span><a href="https://github.com/korczis/prismatic-majordomus/commit/239df858c" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">239df858c</a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">providers</span>
+              <span class="min-w-0 break-words text-body">Gemini and Antigravity read the repository through the projection</span><a href="https://github.com/korczis/prismatic-majordomus/commit/60e97fb0c" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">60e97fb0c</a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">site</span>
+              <span class="min-w-0 break-words text-body">hand-written copy promises only what a claim permits</span><a href="https://github.com/korczis/prismatic-majordomus/commit/2e26a3d36" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">2e26a3d36</a>
+            </div>
+          </li>
+        </ul>
+      </details>
+    </div><div id="0-27-0-fix" x-show="!hidden.includes('fix')"
+         class="relative mt-4 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft"><a href="#0-27-0-fix" class="absolute left-2 top-2.5 inline-flex h-6 w-6 items-center justify-center font-mono text-xs text-body-subtle hover:text-fg-brand" title="a link to this group">#</a>
+      <details :open="open">
+        <summary class="cursor-pointer py-3 pl-9 pr-4 text-sm font-medium text-heading">
+          <span class="font-medium">Fixed</span>
+          <span class="ml-2 font-mono text-xs text-body-subtle">fix</span>
+          <span class="ml-2 rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-body">29</span>
+        </summary>
+        <ul class="border-t border-default px-4 py-3 text-sm" role="list">
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">mesh</span>
+              <span class="min-w-0 break-words text-body">the edit guard passes the structure gates</span><a href="https://github.com/korczis/prismatic-majordomus/commit/93063e327" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">93063e327</a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">test</span>
+              <span class="min-w-0 break-words text-body">case 3067 names its commands on one covers header</span><a href="https://github.com/korczis/prismatic-majordomus/commit/c6b42cf6d" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">c6b42cf6d</a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">top</span>
+              <span class="min-w-0 break-words text-body">case 1096 counts a shared reading as a reading</span><a href="https://github.com/korczis/prismatic-majordomus/commit/3c12372e3" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">3c12372e3</a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">mesh</span>
+              <span class="min-w-0 break-words text-body">the task record declares the claim it carries</span><a href="https://github.com/korczis/prismatic-majordomus/commit/70e60d531" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">70e60d531</a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">plan</span>
+              <span class="min-w-0 break-words text-body">the milestone is the bytes its first branches carry</span><a href="https://github.com/korczis/prismatic-majordomus/commit/3acf2cf68" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">3acf2cf68</a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">top</span>
+              <span class="min-w-0 break-words text-body">the grand top&#39;s new code is covered and the command screen is within its budget</span><a href="https://github.com/korczis/prismatic-majordomus/commit/ee944b18b" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">ee944b18b</a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">ci</span>
+              <span class="min-w-0 break-words text-body">an integration top runs to the end and shows every red</span><a href="https://github.com/korczis/prismatic-majordomus/commit/2c56a6fb8" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">2c56a6fb8</a>
+            </div><div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 pl-1 text-xs">
+              <a href="https://majordomus.dev/plan/i2664/" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">I2664</span>
+                <span class="max-w-md truncate">A run that has already failed is cancelled by itself, and a red on the trunk is fixed before anything else is prepared</span>
+              </a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">test</span>
+              <span class="min-w-0 break-words text-body">case 532 reads a table row up to its own &lt;/tr&gt;</span><a href="https://github.com/korczis/prismatic-majordomus/commit/8080ea219" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">8080ea219</a>
+            </div><div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 pl-1 text-xs">
+              <a href="https://majordomus.dev/plan/i1995/" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">I1995</span>
+                <span class="max-w-md truncate">Work a session left uncommitted in a worktree is named, not found by luck</span>
+              </a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">top</span>
+              <span class="min-w-0 break-words text-body">the crate boundary is told about rhai</span><a href="https://github.com/korczis/prismatic-majordomus/commit/a0dcdeaaa" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">a0dcdeaaa</a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">top</span>
+              <span class="min-w-0 break-words text-body">the launcher&#39;s help reader takes no pipe, and I2718 names no home directory</span><a href="https://github.com/korczis/prismatic-majordomus/commit/51faa7a5c" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">51faa7a5c</a>
+            </div><div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 pl-1 text-xs">
+              <a href="https://majordomus.dev/plan/i2718/" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">I2718</span>
+                <span class="max-w-md truncate">A linked worktree runs its own hooks, never the primary checkout&#39;s</span>
+              </a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">doctor</span>
+              <span class="min-w-0 break-words text-body">no linked worktree reads the same whether or not the executable is at hand</span><a href="https://github.com/korczis/prismatic-majordomus/commit/4bf88bed4" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">4bf88bed4</a>
+            </div><div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 pl-1 text-xs">
+              <a href="https://majordomus.dev/plan/i1995/" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">I1995</span>
+                <span class="max-w-md truncate">Work a session left uncommitted in a worktree is named, not found by luck</span>
+              </a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">site</span>
+              <span class="min-w-0 break-words text-body">the grand top carries its members&#39; authored site data</span><a href="https://github.com/korczis/prismatic-majordomus/commit/692d067f0" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">692d067f0</a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">ci</span>
+              <span class="min-w-0 break-words text-body">the release path never waits behind pull-request validates</span><a href="https://github.com/korczis/prismatic-majordomus/commit/ba11bd6bf" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">ba11bd6bf</a>
+            </div><div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 pl-1 text-xs">
+              <a href="https://majordomus.dev/plan/i2710/" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">I2710</span>
+                <span class="max-w-md truncate">A release run never waits behind pull-request validates for a job slot</span>
+              </a>
+              <a href="https://majordomus.dev/plan/i2711/" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">I2711</span>
+                <span class="max-w-md truncate">The pages job judges production only after the deployment of its own commit has arrived</span>
+              </a>
+              <a href="https://majordomus.dev/plan/i2712/" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">I2712</span>
+                <span class="max-w-md truncate">release-check treats a tag whose release run is still going as pending, not as a missing record</span>
+              </a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">site</span>
+              <span class="min-w-0 break-words text-body">a surface card&#39;s title fits a 320px screen</span><a href="https://github.com/korczis/prismatic-majordomus/commit/5f4964a3b" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">5f4964a3b</a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">ui</span>
+              <span class="min-w-0 break-words text-body">the Observatory asks again when it is seen</span><a href="https://github.com/korczis/prismatic-majordomus/commit/11567a0b0" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">11567a0b0</a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">serve</span>
+              <span class="min-w-0 break-words text-body">ensure starts its server with the share it was given</span><a href="https://github.com/korczis/prismatic-majordomus/commit/4dada2c87" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">4dada2c87</a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">release</span>
+              <span class="min-w-0 break-words text-body">a release names its archive from the matrix, without a debug build</span><a href="https://github.com/korczis/prismatic-majordomus/commit/c2fa59702" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">c2fa59702</a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">handbook</span>
+              <span class="min-w-0 break-words text-body">a copied link names the artifact the handbook is published at</span><a href="https://github.com/korczis/prismatic-majordomus/commit/f56d54cbf" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">f56d54cbf</a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">executions</span>
+              <span class="min-w-0 break-words text-body">the reported store shows itself in examples, and the case waits bounded</span><a href="https://github.com/korczis/prismatic-majordomus/commit/2dec71329" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">2dec71329</a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">evidence</span>
+              <span class="min-w-0 break-words text-body">the launcher hands evidence subcommands to the executable (I2601)</span><a href="https://github.com/korczis/prismatic-majordomus/commit/c4a8f9c56" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">c4a8f9c56</a>
+            </div><div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 pl-1 text-xs">
+              <a href="https://majordomus.dev/plan/i2601/" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">I2601</span>
+                <span class="max-w-md truncate">majordomus evidence reaches record, stamp and show</span>
+              </a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">init</span>
+              <span class="min-w-0 break-words text-body">a personal layer is seeded with a policy update can write</span><a href="https://github.com/korczis/prismatic-majordomus/commit/f83ff2c7a" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">f83ff2c7a</a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">docs</span>
+              <span class="min-w-0 break-words text-body">no heading of the handbook skips a level</span><a href="https://github.com/korczis/prismatic-majordomus/commit/962472c96" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">962472c96</a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">events</span>
+              <span class="min-w-0 break-words text-body">each execution&#39;s cursor is set as its replay is collected</span><a href="https://github.com/korczis/prismatic-majordomus/commit/e9ee93dd5" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">e9ee93dd5</a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">site</span>
+              <span class="min-w-0 break-words text-body">a missing copy file is a finding of promises, not the end of homepage-check</span><a href="https://github.com/korczis/prismatic-majordomus/commit/367e4f86b" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">367e4f86b</a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">mesh</span>
+              <span class="min-w-0 break-words text-body">a borrowed server publishes no handover of another checkout</span><a href="https://github.com/korczis/prismatic-majordomus/commit/ad249172c" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">ad249172c</a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">http</span>
+              <span class="min-w-0 break-words text-body">keep a live-event cursor per execution</span><a href="https://github.com/korczis/prismatic-majordomus/commit/b7b675cf7" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">b7b675cf7</a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">mesh</span>
+              <span class="min-w-0 break-words text-body">a linked worktree cooperates through its repository&#39;s running server</span><a href="https://github.com/korczis/prismatic-majordomus/commit/e8235eece" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">e8235eece</a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">mesh</span>
+              <span class="min-w-0 break-words text-body">a board intent past the journal bound is projected once</span><a href="https://github.com/korczis/prismatic-majordomus/commit/d4ce8f995" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">d4ce8f995</a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">mesh</span>
+              <span class="min-w-0 break-words text-body">a retired server leaves the mesh</span><a href="https://github.com/korczis/prismatic-majordomus/commit/f0a739905" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">f0a739905</a>
+            </div>
+          </li>
+        </ul>
+      </details>
+    </div><div id="0-27-0-perf" x-show="!hidden.includes('perf')"
+         class="relative mt-4 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft"><a href="#0-27-0-perf" class="absolute left-2 top-2.5 inline-flex h-6 w-6 items-center justify-center font-mono text-xs text-body-subtle hover:text-fg-brand" title="a link to this group">#</a>
+      <details :open="open">
+        <summary class="cursor-pointer py-3 pl-9 pr-4 text-sm font-medium text-heading">
+          <span class="font-medium">Performance</span>
+          <span class="ml-2 font-mono text-xs text-body-subtle">perf</span>
+          <span class="ml-2 rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-body">1</span>
+        </summary>
+        <ul class="border-t border-default px-4 py-3 text-sm" role="list">
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">ui</span>
+              <span class="min-w-0 break-words text-body">a screen reads the answer its source shares instead of copying it</span><a href="https://github.com/korczis/prismatic-majordomus/commit/43204ad13" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">43204ad13</a>
+            </div>
+          </li>
+        </ul>
+      </details>
+    </div><div id="0-27-0-docs" x-show="!hidden.includes('docs')"
+         class="relative mt-4 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft"><a href="#0-27-0-docs" class="absolute left-2 top-2.5 inline-flex h-6 w-6 items-center justify-center font-mono text-xs text-body-subtle hover:text-fg-brand" title="a link to this group">#</a>
+      <details :open="open">
+        <summary class="cursor-pointer py-3 pl-9 pr-4 text-sm font-medium text-heading">
+          <span class="font-medium">Documentation</span>
+          <span class="ml-2 font-mono text-xs text-body-subtle">docs</span>
+          <span class="ml-2 rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-body">5</span>
+        </summary>
+        <ul class="border-t border-default px-4 py-3 text-sm" role="list">
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">adr</span>
+              <span class="min-w-0 break-words text-body">a capability may be scripted, and the automation milestone is on master (ADR 0069)</span><a href="https://github.com/korczis/prismatic-majordomus/commit/fbb9aaf47" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">fbb9aaf47</a>
+            </div><div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 pl-1 text-xs">
+              <a href="https://majordomus.dev/plan/i1800/" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">I1800</span>
+                <span class="max-w-md truncate">The sandboxed engine a scripted capability runs in</span>
+              </a>
+              <a href="https://majordomus.dev/plan/i1804/" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">I1804</span>
+                <span class="max-w-md truncate">The first shell scripts become scripted capabilities over typed Rust</span>
+              </a>
+              <a href="https://majordomus.dev/plan/i1802/" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">I1802</span>
+                <span class="max-w-md truncate">Nothing runs Perl</span>
+              </a>
+              <a href="https://majordomus.dev/plan/i1803/" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">I1803</span>
+                <span class="max-w-md truncate">New shell is refused without a declared exemption, and the migration inventory is tracked</span>
+              </a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">plan</span>
+              <span class="min-w-0 break-words text-body">four of the day&#39;s defects are planned so their carriers can close them</span><a href="https://github.com/korczis/prismatic-majordomus/commit/b1e0d8d12" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">b1e0d8d12</a>
+            </div><div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 pl-1 text-xs">
+              <a href="https://majordomus.dev/plan/i2713/" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">I2713</span>
+                <span class="max-w-md truncate">A build never lets idle incremental sessions fill the disk</span>
+              </a>
+              <a href="https://majordomus.dev/plan/i2714/" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">I2714</span>
+                <span class="max-w-md truncate">One build directory never serves two worktrees&#39; jobs at once</span>
+              </a>
+              <a href="https://majordomus.dev/plan/i2717/" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">I2717</span>
+                <span class="max-w-md truncate">A release record pull request gets a verdict that can pass</span>
+              </a>
+              <a href="https://majordomus.dev/plan/i2718/" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">I2718</span>
+                <span class="max-w-md truncate">A linked worktree runs its own hooks, never the primary checkout&#39;s</span>
+              </a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">adr</span>
+              <span class="min-w-0 break-words text-body">what the Observatory is told arrives on /events, the one live channel (ADR 0158)</span><a href="https://github.com/korczis/prismatic-majordomus/commit/2f759351d" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">2f759351d</a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">convergence</span>
+              <span class="min-w-0 break-words text-body">the baseline of the 10-14 pack is measured against master e8505a431d</span><a href="https://github.com/korczis/prismatic-majordomus/commit/5b0e28630" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">5b0e28630</a>
+            </div><div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 pl-1 text-xs">
+              <a href="https://majordomus.dev/plan/i2706/" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">I2706</span>
+                <span class="max-w-md truncate">An own event whose append failed is never acknowledged as durable, and a journal reload is bounded in size</span>
+              </a>
+              <a href="https://majordomus.dev/plan/i2151/" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">I2151</span>
+                <span class="max-w-md truncate">A page served beside the write routes runs only script it shipped, and a rebinding host reads nothing</span>
+              </a>
+              <a href="https://majordomus.dev/plan/i2705/" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">I2705</span>
+                <span class="max-w-md truncate">A node key can be rotated, peers follow the new key, and the old key is refused</span>
+              </a>
+              <a href="https://majordomus.dev/plan/i2134/" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">I2134</span>
+                <span class="max-w-md truncate">A key removed from the trust list loses its links without a restart, and a node key can be rotated</span>
+              </a>
+              <a href="https://majordomus.dev/plan/i2708/" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">I2708</span>
+                <span class="max-w-md truncate">A mesh event field nobody listed fails the mesh check, and no log field or review body carries a credential the redactor knows</span>
+              </a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">adr</span>
+              <span class="min-w-0 break-words text-body">a mesh node follows the published release (ADR 0161, safe-self-update)</span><a href="https://github.com/korczis/prismatic-majordomus/commit/5addc860b" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">5addc860b</a>
+            </div><div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 pl-1 text-xs">
+              <a href="https://majordomus.dev/plan/i2720/" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">I2720</span>
+                <span class="max-w-md truncate">majordomus self update re-runs the published installer, and never reimplements it</span>
+              </a>
+              <a href="https://majordomus.dev/plan/i2724/" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">I2724</span>
+                <span class="max-w-md truncate">A node without a route to the site takes the archive from a peer and still verifies it itself</span>
+              </a>
+              <a href="https://majordomus.dev/plan/i2165/" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">I2165</span>
+                <span class="max-w-md truncate">A released archive carries a provenance attestation the installer can check</span>
+              </a>
+            </div>
+          </li>
+        </ul>
+      </details>
+    </div><div id="0-27-0-test" x-show="!hidden.includes('test')"
+         class="relative mt-4 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft"><a href="#0-27-0-test" class="absolute left-2 top-2.5 inline-flex h-6 w-6 items-center justify-center font-mono text-xs text-body-subtle hover:text-fg-brand" title="a link to this group">#</a>
+      <details :open="open">
+        <summary class="cursor-pointer py-3 pl-9 pr-4 text-sm font-medium text-heading">
+          <span class="font-medium">Tests</span>
+          <span class="ml-2 font-mono text-xs text-body-subtle">test</span>
+          <span class="ml-2 rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-body">2</span>
+        </summary>
+        <ul class="border-t border-default px-4 py-3 text-sm" role="list">
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">mesh</span>
+              <span class="min-w-0 break-words text-body">the edit guard owes its examples and its coverage</span><a href="https://github.com/korczis/prismatic-majordomus/commit/2a90f49ab" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">2a90f49ab</a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">coverage</span>
+              <span class="min-w-0 break-words text-body">the grand top&#39;s new Rust code is covered by a test</span><a href="https://github.com/korczis/prismatic-majordomus/commit/2396be3f4" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">2396be3f4</a>
+            </div><div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 pl-1 text-xs">
+              <a href="https://majordomus.dev/plan/i1501/" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">I1501</span>
+                <span class="max-w-md truncate">An execution a person starts is an execution the server can see</span>
+              </a>
+              <a href="https://majordomus.dev/plan/i2718/" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">I2718</span>
+                <span class="max-w-md truncate">A linked worktree runs its own hooks, never the primary checkout&#39;s</span>
+              </a>
+              <a href="https://majordomus.dev/plan/i1995/" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">I1995</span>
+                <span class="max-w-md truncate">Work a session left uncommitted in a worktree is named, not found by luck</span>
+              </a>
+            </div>
+          </li>
+        </ul>
+      </details>
+    </div><div id="0-27-0-ci" x-show="!hidden.includes('ci')"
+         class="relative mt-4 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft"><a href="#0-27-0-ci" class="absolute left-2 top-2.5 inline-flex h-6 w-6 items-center justify-center font-mono text-xs text-body-subtle hover:text-fg-brand" title="a link to this group">#</a>
+      <details :open="open">
+        <summary class="cursor-pointer py-3 pl-9 pr-4 text-sm font-medium text-heading">
+          <span class="font-medium">Pipeline</span>
+          <span class="ml-2 font-mono text-xs text-body-subtle">ci</span>
+          <span class="ml-2 rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-body">1</span>
+        </summary>
+        <ul class="border-t border-default px-4 py-3 text-sm" role="list">
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">pages</span>
+              <span class="min-w-0 break-words text-body">the UI snapshot job builds p5, so the published kiosk draws its scenes (I2697)</span><a href="https://github.com/korczis/prismatic-majordomus/commit/f4cda1016" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">f4cda1016</a>
+            </div><div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 pl-1 text-xs">
+              <a href="https://majordomus.dev/plan/i2697/" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">I2697</span>
+                <span class="max-w-md truncate">The public snapshot carries the p5 library, or says which scenes it cannot draw</span>
+              </a>
+            </div>
+          </li>
+        </ul>
+      </details>
+    </div><div id="0-27-0-chore" x-show="!hidden.includes('chore')"
+         class="relative mt-4 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft"><a href="#0-27-0-chore" class="absolute left-2 top-2.5 inline-flex h-6 w-6 items-center justify-center font-mono text-xs text-body-subtle hover:text-fg-brand" title="a link to this group">#</a>
+      <details :open="open">
+        <summary class="cursor-pointer py-3 pl-9 pr-4 text-sm font-medium text-heading">
+          <span class="font-medium">Housekeeping</span>
+          <span class="ml-2 font-mono text-xs text-body-subtle">chore</span>
+          <span class="ml-2 rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-body">28</span>
+        </summary>
+        <ul class="border-t border-default px-4 py-3 text-sm" role="list">
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">derive</span>
+              <span class="min-w-0 break-words text-body">the derived data follows the merged case header fix</span><a href="https://github.com/korczis/prismatic-majordomus/commit/0a6e6c127" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">0a6e6c127</a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">derive</span>
+              <span class="min-w-0 break-words text-body">the derived data follows the merged task record schema</span><a href="https://github.com/korczis/prismatic-majordomus/commit/92d335db2" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">92d335db2</a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">derive</span>
+              <span class="min-w-0 break-words text-body">the derived data follows the merged milestone</span><a href="https://github.com/korczis/prismatic-majordomus/commit/417eab2ce" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">417eab2ce</a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">derive</span>
+              <span class="min-w-0 break-words text-body">the grand top&#39;s derived documents follow its canonical inputs</span><a href="https://github.com/korczis/prismatic-majordomus/commit/a3ba14a7e" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">a3ba14a7e</a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">plan</span>
+              <span class="min-w-0 break-words text-body">I2127 and I2163 are recorded done with the tests that prove them</span><a href="https://github.com/korczis/prismatic-majordomus/commit/540b3ca5c" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">540b3ca5c</a>
+            </div><div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 pl-1 text-xs">
+              <a href="https://majordomus.dev/plan/i2127/" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">I2127</span>
+                <span class="max-w-md truncate">A server that lost its lease hands its sessions on and ends</span>
+              </a>
+              <a href="https://majordomus.dev/plan/i2163/" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">I2163</span>
+                <span class="max-w-md truncate">A client never attaches to a server of another version without saying so, and a newer client replaces an older server</span>
+              </a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">derive</span>
+              <span class="min-w-0 break-words text-body">the derived data follows the merged tree</span><a href="https://github.com/korczis/prismatic-majordomus/commit/1b82abaf6" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">1b82abaf6</a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">plan</span>
+              <span class="min-w-0 break-words text-body">the MCP transport bounds are recorded done with master&#39;s own evidence</span><a href="https://github.com/korczis/prismatic-majordomus/commit/0c0a7211f" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">0c0a7211f</a>
+            </div><div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 pl-1 text-xs">
+              <a href="https://majordomus.dev/plan/i2147/" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">I2147</span>
+                <span class="max-w-md truncate">The MCP transports bound what they read and follow the Streamable HTTP rules they claim</span>
+              </a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">derive</span>
+              <span class="min-w-0 break-words text-body">the projections of the landing page on master c0e3585dc83</span><a href="https://github.com/korczis/prismatic-majordomus/commit/8340a04bf" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">8340a04bf</a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">derive</span>
+              <span class="min-w-0 break-words text-body">the derived data follows master c0e3585dc8 into I1403&#39;s record</span><a href="https://github.com/korczis/prismatic-majordomus/commit/fa049026e" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">fa049026e</a>
+            </div><div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 pl-1 text-xs">
+              <a href="https://majordomus.dev/plan/i1403/" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">I1403</span>
+                <span class="max-w-md truncate">Backfill the projection once, deliberately, and record what it created</span>
+              </a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">derive</span>
+              <span class="min-w-0 break-words text-body">the projections follow master e8505a431d</span><a href="https://github.com/korczis/prismatic-majordomus/commit/8e180b845" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">8e180b845</a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">derive</span>
+              <span class="min-w-0 break-words text-body">the derived data follows master e8505a431d</span><a href="https://github.com/korczis/prismatic-majordomus/commit/7e1f2ac80" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">7e1f2ac80</a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">derive</span>
+              <span class="min-w-0 break-words text-body">the derived data follows master e8505a431d into I0806&#39;s record</span><a href="https://github.com/korczis/prismatic-majordomus/commit/289cbbe4d" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">289cbbe4d</a>
+            </div><div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 pl-1 text-xs">
+              <a href="https://majordomus.dev/plan/i0806/" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">I0806</span>
+                <span class="max-w-md truncate">Make the session rules doctrines, with retention and archiving</span>
+              </a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">plan</span>
+              <span class="min-w-0 break-words text-body">I1403 is done — the GitHub projection has no backlog, and the ratchet says so</span><a href="https://github.com/korczis/prismatic-majordomus/commit/4f3c9bddd" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">4f3c9bddd</a>
+            </div><div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 pl-1 text-xs">
+              <a href="https://majordomus.dev/plan/i1403/" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">I1403</span>
+                <span class="max-w-md truncate">Backfill the projection once, deliberately, and record what it created</span>
+              </a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">plan</span>
+              <span class="min-w-0 break-words text-body">I0806 is done — master already holds the session rules</span><a href="https://github.com/korczis/prismatic-majordomus/commit/266d5af14" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">266d5af14</a>
+            </div><div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 pl-1 text-xs">
+              <a href="https://majordomus.dev/plan/i0806/" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">I0806</span>
+                <span class="max-w-md truncate">Make the session rules doctrines, with retention and archiving</span>
+              </a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">campaigns</span>
+              <span class="min-w-0 break-words text-body">the convergence, trust and product proof pack of 10-14 is tracked</span><a href="https://github.com/korczis/prismatic-majordomus/commit/af070b47f" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">af070b47f</a>
+            </div><div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 pl-1 text-xs">
+              <a href="https://majordomus.dev/plan/i2700/" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">I2700</span>
+                <span class="max-w-md truncate">A lease probe asks a cheap liveness route, and a server holding another lease token is not taken for the leaseholder</span>
+              </a>
+              <a href="https://majordomus.dev/plan/i2709/" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">I2709</span>
+                <span class="max-w-md truncate">A red on the trunk has one named carrier, and nobody else may land until it is paid</span>
+              </a>
+              <a href="https://majordomus.dev/plan/i2151/" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">I2151</span>
+                <span class="max-w-md truncate">A page served beside the write routes runs only script it shipped, and a rebinding host reads nothing</span>
+              </a>
+              <a href="https://majordomus.dev/plan/i2163/" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">I2163</span>
+                <span class="max-w-md truncate">A client never attaches to a server of another version without saying so, and a newer client replaces an older server</span>
+              </a>
+              <a href="https://majordomus.dev/plan/i2282/" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">I2282</span>
+                <span class="max-w-md truncate">The record pull request&#39;s dispatched verdict does not satisfy branch protection</span>
+              </a>
+              <a href="https://majordomus.dev/plan/i2487/" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">I2487</span>
+                <span class="max-w-md truncate">A screen is streamed, and one stream tells an open page which readings changed</span>
+              </a>
+              <a href="https://majordomus.dev/plan/i2660/" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">I2660</span>
+                <span class="max-w-md truncate">The site is published as an artifact by the job that built it, so a ready site waits for no second workflow</span>
+              </a>
+              <a href="https://majordomus.dev/plan/i2663/" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">I2663</span>
+                <span class="max-w-md truncate">The published UI is not read from nothing on every deployment</span>
+              </a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">release</span>
+              <span class="min-w-0 break-words text-body">record v0.26.0 and the metadata it publishes</span><a href="https://github.com/korczis/prismatic-majordomus/commit/f937ac387" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">f937ac387</a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">derive</span>
+              <span class="min-w-0 break-words text-body">the derived data follows the merge of master 97c4521f91</span><a href="https://github.com/korczis/prismatic-majordomus/commit/a20d963d9" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">a20d963d9</a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">derive</span>
+              <span class="min-w-0 break-words text-body">the derived data follows the merge of master</span><a href="https://github.com/korczis/prismatic-majordomus/commit/a71bccb80" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">a71bccb80</a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">derive</span>
+              <span class="min-w-0 break-words text-body">the derived data follows the merge of master ff38297096</span><a href="https://github.com/korczis/prismatic-majordomus/commit/927f2f7e4" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">927f2f7e4</a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">derive</span>
+              <span class="min-w-0 break-words text-body">the derived data follows master ff38297096 and the I1600 record</span><a href="https://github.com/korczis/prismatic-majordomus/commit/ca4401900" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">ca4401900</a>
+            </div><div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 pl-1 text-xs">
+              <a href="https://majordomus.dev/plan/i1600/" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">I1600</span>
+                <span class="max-w-md truncate">The challenge is one recorded run, and every public surface replays it</span>
+              </a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">derive</span>
+              <span class="min-w-0 break-words text-body">the projections follow master ff38297096</span><a href="https://github.com/korczis/prismatic-majordomus/commit/bf8179aa8" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">bf8179aa8</a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">derive</span>
+              <span class="min-w-0 break-words text-body">the projections of the landing page on the master of its landing</span><a href="https://github.com/korczis/prismatic-majordomus/commit/bce111701" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">bce111701</a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">plan</span>
+              <span class="min-w-0 break-words text-body">I2601 is in VERIFY, and the derived plan pages follow (I2601)</span><a href="https://github.com/korczis/prismatic-majordomus/commit/6f4a83658" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">6f4a83658</a>
+            </div><div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 pl-1 text-xs">
+              <a href="https://majordomus.dev/plan/i2601/" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">I2601</span>
+                <span class="max-w-md truncate">majordomus evidence reaches record, stamp and show</span>
+              </a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">derive</span>
+              <span class="min-w-0 break-words text-body">the projections of the landing page on the master of its landing</span><a href="https://github.com/korczis/prismatic-majordomus/commit/5a679909e" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">5a679909e</a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">derive</span>
+              <span class="min-w-0 break-words text-body">the derived data follows master e506c041a4</span><a href="https://github.com/korczis/prismatic-majordomus/commit/783e7cf70" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">783e7cf70</a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">derive</span>
+              <span class="min-w-0 break-words text-body">the derived data follows master e506c041a4</span><a href="https://github.com/korczis/prismatic-majordomus/commit/aa0395953" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">aa0395953</a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">plan</span>
+              <span class="min-w-0 break-words text-body">the public-proof milestone is done, on the evidence of I1600</span><a href="https://github.com/korczis/prismatic-majordomus/commit/9ee0a66a7" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">9ee0a66a7</a>
+            </div><div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 pl-1 text-xs">
+              <a href="https://majordomus.dev/plan/i1600/" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">I1600</span>
+                <span class="max-w-md truncate">The challenge is one recorded run, and every public surface replays it</span>
+              </a>
+            </div>
+          </li>
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">plan</span>
+              <span class="min-w-0 break-words text-body">I1600 is done, the challenge master already replays</span><a href="https://github.com/korczis/prismatic-majordomus/commit/de14385dd" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">de14385dd</a>
+            </div><div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 pl-1 text-xs">
+              <a href="https://majordomus.dev/plan/i1600/" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">I1600</span>
+                <span class="max-w-md truncate">The challenge is one recorded run, and every public surface replays it</span>
+              </a>
+            </div>
+          </li>
+        </ul>
+      </details>
+    </div><div id="0-27-0-style" x-show="!hidden.includes('style')"
+         class="relative mt-4 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft"><a href="#0-27-0-style" class="absolute left-2 top-2.5 inline-flex h-6 w-6 items-center justify-center font-mono text-xs text-body-subtle hover:text-fg-brand" title="a link to this group">#</a>
+      <details :open="open">
+        <summary class="cursor-pointer py-3 pl-9 pr-4 text-sm font-medium text-heading">
+          <span class="font-medium">Formatting</span>
+          <span class="ml-2 font-mono text-xs text-body-subtle">style</span>
+          <span class="ml-2 rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-body">1</span>
+        </summary>
+        <ul class="border-t border-default px-4 py-3 text-sm" role="list">
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">mesh</span>
+              <span class="min-w-0 break-words text-body">rustfmt the edit guard; the derived data follows the merged stack</span><a href="https://github.com/korczis/prismatic-majordomus/commit/04986858e" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">04986858e</a>
+            </div>
+          </li>
+        </ul>
+      </details>
+    </div>
+    </div>
+    <h3 class="mt-8 text-lg font-semibold tracking-tight text-heading">Published</h3>
+    <p class="mt-1 max-w-3xl text-sm text-body-subtle">What this version put on the release, with the digest the record read off each file. The installer resolves the same names.</p>
+    <div class="mt-4 overflow-x-auto rounded-base border border-default" tabindex="0">
+      <table class="w-full min-w-[36rem] text-left text-sm" tabindex="0">
+        <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">target</th><th class="px-3 py-2">file</th><th class="px-3 py-2">sha256</th></tr></thead>
+        <tbody>
+        <tr class="border-t border-default align-top">
+          <td class="px-3 py-2"><code class="break-all font-mono text-heading">macos-aarch64</code></td>
+          <td class="px-3 py-2 break-all font-mono text-xs text-body">majordomus-v0.27.0-aarch64-apple-darwin.tar.gz</td>
+          <td class="px-3 py-2 break-all font-mono text-xs text-body-subtle">283ce45eb5687a1f824373e37dbdeca9c14cac36978dbd404128001d4147b8c8</td>
+        </tr>
+        <tr class="border-t border-default align-top">
+          <td class="px-3 py-2"><code class="break-all font-mono text-heading">macos-x86_64</code></td>
+          <td class="px-3 py-2 break-all font-mono text-xs text-body">majordomus-v0.27.0-x86_64-apple-darwin.tar.gz</td>
+          <td class="px-3 py-2 break-all font-mono text-xs text-body-subtle">178bb10c8fab3d9869f0727f73f0b80cd3815d8da8b2fa801533b3307ade5afa</td>
+        </tr>
+        <tr class="border-t border-default align-top">
+          <td class="px-3 py-2"><code class="break-all font-mono text-heading">linux-x86_64-gnu</code></td>
+          <td class="px-3 py-2 break-all font-mono text-xs text-body">majordomus-v0.27.0-x86_64-unknown-linux-gnu.tar.gz</td>
+          <td class="px-3 py-2 break-all font-mono text-xs text-body-subtle">dd5cd97cfc513d41158096c20c9ac23a75e34e1235a5d7d72f4fe668cb4599ca</td>
+        </tr>
+        <tr class="border-t border-default align-top">
+          <td class="px-3 py-2"><code class="break-all font-mono text-heading">linux-x86_64-musl</code></td>
+          <td class="px-3 py-2 break-all font-mono text-xs text-body">majordomus-v0.27.0-x86_64-unknown-linux-musl.tar.gz</td>
+          <td class="px-3 py-2 break-all font-mono text-xs text-body-subtle">1679e7eaa6b02629c970d118f19410816d702c0e6d373fa00f5093d3eaef49ac</td>
+        </tr>
+        <tr class="border-t border-default align-top">
+          <td class="px-3 py-2"><code class="break-all font-mono text-heading">linux-aarch64-gnu</code></td>
+          <td class="px-3 py-2 break-all font-mono text-xs text-body">majordomus-v0.27.0-aarch64-unknown-linux-gnu.tar.gz</td>
+          <td class="px-3 py-2 break-all font-mono text-xs text-body-subtle">64a0114471e03eb80284520210f04d1b216f9cafb124c5d0444e80ef20c8fba6</td>
+        </tr>
+        <tr class="border-t border-default align-top">
+          <td class="px-3 py-2"><code class="break-all font-mono text-heading">linux-aarch64-musl</code></td>
+          <td class="px-3 py-2 break-all font-mono text-xs text-body">majordomus-v0.27.0-aarch64-unknown-linux-musl.tar.gz</td>
+          <td class="px-3 py-2 break-all font-mono text-xs text-body-subtle">c3d8d14d28c61ce8a7e11afedf7679c1c29fba17e39592af0f0d3241800ce74c</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
   <section class="mt-12 border-t border-default pt-8">
     <h2 id="0-26-0" class="scroll-mt-24 break-words text-2xl font-bold tracking-tight text-heading">v0.26.0</h2>
     <div class="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-xs text-body-subtle">
@@ -19783,9 +20726,9 @@
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/44ad51ed4f07bc261c934f17955d73f842df420a/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/44ad51ed4f07bc261c934f17955d73f842df420a/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/44ad51ed4f07bc261c934f17955d73f842df420a/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/d1162668036170d42b6c9038d82dfa67064ba561/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/d1162668036170d42b6c9038d82dfa67064ba561/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/d1162668036170d42b6c9038d82dfa67064ba561/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -19793,7 +20736,7 @@
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.27.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/44ad51ed4f07bc261c934f17955d73f842df420a" class="font-mono underline">44ad51e</a> · inputs <span class="font-mono">3f4bc0443f3b</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.27.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/d1162668036170d42b6c9038d82dfa67064ba561" class="font-mono underline">d116266</a> · inputs <span class="font-mono">3d9c0f727050</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>
