@@ -732,19 +732,32 @@
     // time the page is visible. Where the API is absent or refuses (an insecure context, a
     // battery saver), nothing is drawn differently and the status says the display may sleep.
     let wake = null;
+    let wakePending = false; // a request is in flight: one at a time, or a second lock leaks
+    let gone = false; // disposed: a request that resolves after this must let go at once
     let wantWake = kiosk || Boolean(document.fullscreenElement);
     const wakeState = (word) => { holder.dataset.awake = word; };
     wakeState(navigator.wakeLock ? 'idle' : 'unsupported');
     async function holdAwake() {
-      if (!wantWake || wake || !navigator.wakeLock || document.visibilityState !== 'visible') return;
+      if (gone || !wantWake || wake || wakePending || !navigator.wakeLock
+        || document.visibilityState !== 'visible') return;
+      wakePending = true;
+      let lock;
       try {
-        wake = await navigator.wakeLock.request('screen');
-        wakeState('held');
-        wake.addEventListener('release', () => { wake = null; wakeState('idle'); });
+        lock = await navigator.wakeLock.request('screen');
       } catch (e) {
-        wake = null;
-        wakeState('refused');
+        wakePending = false;
+        if (!gone) wakeState('refused');
+        return;
       }
+      wakePending = false;
+      // what was wanted when it was asked may not be wanted when it is granted (full screen
+      // ended, the display was disposed): a lock nobody holds a reason for is given back
+      if (gone || !wantWake) { lock.release().catch(() => {}); return; }
+      wake = lock;
+      wakeState('held');
+      lock.addEventListener('release', () => {
+        if (wake === lock) { wake = null; wakeState('idle'); }
+      });
     }
     function releaseAwake() {
       if (wake) { wake.release().catch(() => {}); wake = null; }
@@ -784,6 +797,7 @@
         document.removeEventListener('fullscreenchange', onFullscreen);
         document.removeEventListener('pointerdown', onGesture);
         document.removeEventListener('keydown', onGesture);
+        gone = true;
         releaseAwake();
         for (const node of [head, foot, legend, controls]) node.remove();
       },

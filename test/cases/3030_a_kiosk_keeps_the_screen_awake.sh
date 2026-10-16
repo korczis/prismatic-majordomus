@@ -22,6 +22,13 @@ awk '/dispose\(\) \{/,/^      \},/' "$JS" | grep -q "releaseAwake()" \
 grep -q "addEventListener('fullscreenchange', onFullscreen)" "$JS" \
   || { echo "    leaving full screen does not release the lock"; exit 1; }
 
+# one request at a time, and a grant that arrives unwanted or after dispose is given back
+grep -q "wakePending" "$JS" || { echo "    a second request can leak a second lock"; exit 1; }
+awk '/async function holdAwake\(\)/,/^    }$/' "$JS" | grep -qF "if (gone || !wantWake) { lock.release()" \
+  || { echo "    a lock granted after dispose or after full screen ended is kept"; exit 1; }
+awk '/dispose\(\) \{/,/^      \},/' "$JS" | grep -q "gone = true" \
+  || { echo "    dispose does not mark the display gone"; exit 1; }
+
 # an absent or refusing API is said, never silent
 grep -q "dataset.awake" "$JS" || { echo "    the display does not say whether it holds the lock"; exit 1; }
 grep -q "'unsupported'" "$JS" && grep -q "'refused'" "$JS" \
