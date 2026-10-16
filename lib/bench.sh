@@ -182,7 +182,7 @@ mj_bench_run_target() { # target, samples, warmup, mode, cold samples of a read-
       ms="$(mj_bench_once "$w")"; cold="$cold
 $ms"
       [ "$MJ_BENCH_LAST_RC" = 0 ] || [ "$MJ_BENCH_LAST_RC" = 10 ] || [ "$MJ_BENCH_LAST_RC" = 11 ] || status="exit-$MJ_BENCH_LAST_RC"
-      rm -rf "$w"; i=$((i + 1))
+      rm -rf "$tmp/cold$i"; i=$((i + 1))
     done
   else
     # a mutation changes what the next run would measure: every sample is its own repository,
