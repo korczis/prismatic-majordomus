@@ -42,8 +42,8 @@ That remedy is a commit, and a trunk that changes only through pull requests can
 one. So on the trunk the deriver does not write into `candidates/` at all: it stages the
 candidate, with the episode's session record, in the checkout-local outbox
 `.ai/local/state/outbox/`, and the next episode boundary on another branch of the clone moves
-it into `candidates/`, where that branch's pull request carries it to the trunk (ADR 0091,
-amendment of 2026-10-15). This rule never asks the trunk for a commit it cannot make.
+it into `candidates/`, where that branch's pull request carries it to the trunk (ADR 0091 and
+its amendment). This rule never asks the trunk for a commit it cannot make.
 
 # Required behaviour
 
