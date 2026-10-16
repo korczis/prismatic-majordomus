@@ -12,7 +12,9 @@
 //! it accepts and what it answers are its declaration's to say, and this file repeats none of
 //! it beyond the title and description the declaration itself carries (ADR 0144, ADR 0140).
 
-use super::{CommandRef, DomainRef, EditorAdapter, EditorCapability, EditorDiagnostic, EditorSupport};
+use super::{
+    CommandRef, DomainRef, EditorAdapter, EditorCapability, EditorDiagnostic, EditorSupport,
+};
 use crate::generate::{banner_lines, Artifact, ArtifactFormat};
 use crate::model::Severity;
 
@@ -138,7 +140,8 @@ fn domain_description(domain: &DomainRef) -> String {
 /// own, because loading it changes nothing; calling a capability is what the rule governs.
 pub fn domain_artifact(domain: &DomainRef, version: &str) -> Artifact {
     let path = skill_path(&domain.alias);
-    let quoted = serde_json::to_string(&domain_description(domain)).unwrap_or_else(|_| "\"\"".into());
+    let quoted =
+        serde_json::to_string(&domain_description(domain)).unwrap_or_else(|_| "\"\"".into());
     let source = format!("module:{}", domain.module);
     let [a, b, c] = banner_lines(&source, version);
     let cell = |s: &str| s.replace('|', "\\|").replace('\n', " ");
@@ -153,7 +156,11 @@ pub fn domain_artifact(domain: &DomainRef, version: &str) -> Artifact {
                 .as_ref()
                 .map(|c| format!("`majordomus {c}`"))
                 .unwrap_or_else(|| "—".into()),
-            if e.changes_something { "changes" } else { "reads" },
+            if e.changes_something {
+                "changes"
+            } else {
+                "reads"
+            },
         ));
     }
     let content = format!(
@@ -411,7 +418,10 @@ mod tests {
     /// naming its tool, its command line where it has one, and whether it changes anything.
     #[test]
     fn a_domain_is_one_skill_listing_every_capability_of_its_module() {
-        let d = domain("knowledge_base", &[("Read the base", false), ("Record a | lesson", true)]);
+        let d = domain(
+            "knowledge_base",
+            &[("Read the base", false), ("Record a | lesson", true)],
+        );
         let a = domain_artifact(&d, "1.2.3");
         assert_eq!(a.path, ".claude/skills/mj-knowledge-base/SKILL.md");
         assert_eq!(a.document, "editors/domain");
@@ -419,7 +429,10 @@ mod tests {
         assert!(c.starts_with(
             "---\nname: mj-knowledge-base\ndescription: \"Majordomus knowledge base: Read the base; Record a | lesson.\"\nargument-hint: \"[request]\"\n---\n<!-- "
         ), "{c}");
-        assert!(!c.contains("disable-model-invocation"), "loading a domain changes nothing");
+        assert!(
+            !c.contains("disable-model-invocation"),
+            "loading a domain changes nothing"
+        );
         assert!(crate::editors::banner_is_present(c));
         assert_eq!(c.matches("$ARGUMENTS").count(), 1);
         for said in [
@@ -445,11 +458,18 @@ mod tests {
         let mut taken = command(true);
         taken.alias = "mj-plan".into();
         let given = reachable_domains(
-            vec![domain("plan", &[("p", false)]), domain("mesh", &[("m", false)]), domain("brief", &[("b", false)])],
+            vec![
+                domain("plan", &[("p", false)]),
+                domain("mesh", &[("m", false)]),
+                domain("brief", &[("b", false)]),
+            ],
             &[taken],
             &[workflow("mj-brief")],
         );
-        assert_eq!(given.iter().map(|d| d.alias.as_str()).collect::<Vec<_>>(), ["mj-mesh"]);
+        assert_eq!(
+            given.iter().map(|d| d.alias.as_str()).collect::<Vec<_>>(),
+            ["mj-mesh"]
+        );
         let a = adapter(&[], &given, &[]);
         let listed = a.capabilities.iter().find(|c| c.id == "domains").unwrap();
         assert_eq!(listed.artifacts, [".claude/skills/mj-mesh/SKILL.md"]);

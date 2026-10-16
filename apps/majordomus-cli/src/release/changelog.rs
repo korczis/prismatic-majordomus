@@ -87,16 +87,22 @@ pub fn compose_published(root: &Path, objects: &[Object]) -> Changelog {
     compose_with(root, objects, false)
 }
 
-fn compose_with(root: &Path, objects: &[Object], unreleased: bool) -> Changelog {
-    let mut diagnostics = Vec::new();
-
+/// The release records among `objects`, newest first by the date each carries: the order a
+/// changelog is read in, and so the order in which "the previous release" is the next one.
+fn release_records(objects: &[Object], diagnostics: &mut Vec<String>) -> Vec<Record> {
     let mut records: Vec<Record> = objects
         .iter()
         .filter(|o| o.kind == RELEASE_KIND)
-        .filter_map(|o| record_of(&o.metadata, &mut diagnostics))
+        .filter_map(|o| record_of(&o.metadata, diagnostics))
         .collect();
-    // Newest first, by the date the record carries: the order a changelog is read in.
     records.sort_by(|a, b| b.date.cmp(&a.date));
+    records
+}
+
+fn compose_with(root: &Path, objects: &[Object], unreleased: bool) -> Changelog {
+    let mut diagnostics = Vec::new();
+
+    let records = release_records(objects, &mut diagnostics);
 
     let decisions = decisions_of(root, objects);
     // Which commits each release's tree holds, read once for every release and every
@@ -291,18 +297,13 @@ fn record_of(metadata: &Value, diagnostics: &mut Vec<String>) -> Option<Record> 
 /// (I1409). A release is unreadable when its commit or the previous release's is not an object
 /// here, or when the repository is shallow, whose history ends at a graft whatever it holds.
 /// Asked of git twice, whatever the number of releases.
-pub fn unreadable_releases(root: &Path, objects: &[Object]) -> Vec<String> {
+pub(crate) fn unreadable_releases(root: &Path, objects: &[Object]) -> Vec<String> {
     let mut ignored = Vec::new();
-    let mut records: Vec<Record> = objects
-        .iter()
-        .filter(|o| o.kind == RELEASE_KIND)
-        .filter_map(|o| record_of(&o.metadata, &mut ignored))
-        .collect();
+    // the order `compose_with` reads them in, so "the previous release" is the same one
+    let records = release_records(objects, &mut ignored);
     if records.is_empty() {
         return Vec::new();
     }
-    // the order `compose_with` reads them in, so "the previous release" is the same one
-    records.sort_by(|a, b| b.date.cmp(&a.date));
     let shallow = std::process::Command::new("git")
         .arg("-C")
         .arg(root)
@@ -374,7 +375,7 @@ fn held_commits<'c>(root: &Path, commits: &[&'c str]) -> HashSet<&'c str> {
 /// composed from the record, so a changed record is still stale; and a section is kept only
 /// when the committed one names the same commit, so a new release, or a record whose commit
 /// changed, is composed and judged rather than passed on an older document.
-pub fn keep_committed(
+pub(crate) fn keep_committed(
     log: &mut Changelog,
     committed: &Changelog,
     unreadable: &[String],
@@ -563,13 +564,14 @@ impl Graph {
     /// The trees named by a full commit name, listed together; empty when there are none or
     /// git cannot list them all, and then every tree is listed alone.
     fn list(root: &Path, trees: &[String]) -> Graph {
-        let mut named: Vec<&str> = trees
+        // each distinct name once, in byte order: a set, not a sort
+        let named: Vec<&str> = trees
             .iter()
             .map(String::as_str)
             .filter(|t| is_full_name(t))
+            .collect::<std::collections::BTreeSet<&str>>()
+            .into_iter()
             .collect();
-        named.sort_unstable();
-        named.dedup();
         if named.is_empty() {
             return Graph::default();
         }

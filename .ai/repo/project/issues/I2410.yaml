@@ -10,7 +10,7 @@ why: "No provider reads the tailnet (apps/majordomus-cli/src/mesh/manager.rs:436
 current_state: "Tailnet peers are dialed only through hand-written rendezvous endpoints."
 desired_state: "A `tailscale:` section of the mesh declaration (enabled by default when the tailscale CLI is present) whose provider lists online peers from `tailscale status --json` and hands their addresses to the cooperation dialer; absent or failing tailscale is reported in mesh doctor, never fatal."
 scope:
-  - "apps/majordomus-cli/src/mesh/tailscale.rs"
+  - "apps/majordomus-cli/src/mesh"
   - "apps/majordomus-cli/src/mesh/manager.rs"
   - "apps/majordomus-cli/src/mesh/config.rs"
   - "share/schemas/majordomus/mesh-declaration"

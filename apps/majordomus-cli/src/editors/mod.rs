@@ -437,7 +437,10 @@ pub fn commands(registry: &crate::capability::CapabilityRegistry) -> Vec<Command
 /// as one skill (ADR 0165). Nothing here is listed: a capability joins its module's skill by
 /// having a tool, and the module is the one its declaration already names.
 pub fn domains(registry: &crate::capability::CapabilityRegistry) -> Vec<DomainRef> {
-    let mut by_module: std::collections::BTreeMap<String, Vec<(DomainEntry, String)>> =
+    // module -> capability id -> (entry, digest): a capability id is unique in the registry,
+    // so the inner map holds each module's entries in id order without a sort of its own
+    type ByCapability = std::collections::BTreeMap<String, (DomainEntry, String)>;
+    let mut by_module: std::collections::BTreeMap<String, ByCapability> =
         std::collections::BTreeMap::new();
     for c in registry.iter() {
         if c.visibility != crate::capability::Visibility::Public {
@@ -457,12 +460,12 @@ pub fn domains(registry: &crate::capability::CapabilityRegistry) -> Vec<DomainRe
         by_module
             .entry(c.module.as_str().to_string())
             .or_default()
-            .push((entry, digest));
+            .insert(entry.capability.clone(), (entry, digest));
     }
     by_module
         .into_iter()
-        .map(|(module, mut entries)| {
-            entries.sort_by(|a, b| a.0.capability.cmp(&b.0.capability));
+        .map(|(module, by_capability)| {
+            let entries: Vec<(DomainEntry, String)> = by_capability.into_values().collect();
             let digests: String = entries.iter().map(|(_, d)| d.as_str()).collect();
             DomainRef {
                 alias: format!("{DOMAIN_PREFIX}{}", module.replace('_', "-")),

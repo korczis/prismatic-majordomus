@@ -104,7 +104,10 @@ mod tests {
         assert_eq!(ids, ["antigravity", "claude-code", "zed"]);
         // no skill of the layer and no justfile: what is projected is what the registry
         // itself declares, the commands and the domains every repository has
-        assert!(answer.artifacts.iter().all(|a| a.adapters == ["claude-code"]));
+        assert!(answer
+            .artifacts
+            .iter()
+            .all(|a| a.adapters == ["claude-code"]));
         let intent = answer
             .artifacts
             .iter()
@@ -119,7 +122,10 @@ mod tests {
         assert_eq!(mesh.sources, ["module:mesh"]);
         assert_eq!(mesh.document, "editors/domain");
         assert!(
-            answer.artifacts.iter().all(|a| a.path.starts_with(".claude/skills/")),
+            answer
+                .artifacts
+                .iter()
+                .all(|a| a.path.starts_with(".claude/skills/")),
             "every derived file is a skill Claude Code reads"
         );
     }

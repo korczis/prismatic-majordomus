@@ -223,7 +223,14 @@ fn a_review_is_journaled_with_the_marker_never_the_secret() {
 
     // text with nothing credential-shaped in it is signed as written
     let plain = cooperation
-        .request_review("s1", "feature/mesh-cooperation".into(), vec![], None, None, None)
+        .request_review(
+            "s1",
+            "feature/mesh-cooperation".into(),
+            vec![],
+            None,
+            None,
+            None,
+        )
         .unwrap();
     cooperation
         .answer_review(&plain.key, "s2", "approved".into(), None)
