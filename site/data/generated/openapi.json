@@ -37021,14 +37021,14 @@
           "type": "string"
         },
         {
-          "description": "The last accepted issue of a DONE milestone: its DONE issue with the latest\n`completed_at`, the greater id on a tie. Empty for a milestone that is not DONE, or\nthat is DONE with no issue. Which release carried it is `released_in`'s to answer.",
+          "description": "The last accepted issue of a DONE milestone: its DONE issue with the latest\n`completed_at`, the greater id on a tie. Empty for a milestone that is not DONE, or\nthat is DONE with no issue (its evidence finished it). Which release carried it is\n`released_in`'s to answer.",
           "name": "last_accepted",
           "refs": [],
           "required": false,
           "type": "string"
         },
         {
-          "description": "The release that carried the milestone — the first release record whose commit\ncontains the merge of its last accepted issue, else `unreleased` — when the reader\nasked for it\n(`released_in`); the roadmap always does. Never a typed field (ADR 0166).",
+          "description": "The release that carried the milestone — the first release record whose commit\ncontains the merge of its last accepted issue (or, with no issue, the commit that\nrecorded its latest evidence), else `unreleased` — when the reader\nasked for it\n(`released_in`); the roadmap always does. Never a typed field (ADR 0166).",
           "name": "released_in",
           "refs": [],
           "required": false,

@@ -105,8 +105,8 @@ mj_cmd_plan() {
 mj_plan_roadmap() {
   local id st ver ttl now="" nxt="" blk
   if [ "$MJ_JSON" = 1 ]; then
-    # only a DONE milestone has a last accepted issue, so only those ask git anything
-    for id in $(awk -F'\t' '$1 == "M" && $9 != "" { print $2 }' "$MJ_PJ/model.tsv"); do
+    # only a DONE milestone can have been released, so only those ask git anything
+    for id in $(awk -F'\t' '$1 == "M" && $3 == "DONE" { print $2 }' "$MJ_PJ/model.tsv"); do
       printf '%s\t%s\n' "$id" "$(mj_pj_m_released_in "$id")"
     done > "$MJ_PJ/released.tsv"
     awk -F'\t' '

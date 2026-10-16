@@ -7,8 +7,8 @@
 # the tree, changes nothing. The shell engine (lib/project.sh) and the executable (plan.rs,
 # `majordomus_plan_roadmap`) answer it identically over a history built here: work merged
 # with --no-ff from a branch, two records, a pre-release record that is not a release, a tag
-# with no record, and a milestone whose earlier issue shipped in an earlier release than
-# its last one.
+# with no record, a milestone whose earlier issue shipped in an earlier release than its
+# last one, and a milestone DONE by its own evidence with no issue at all.
 . "$ROOT/test/lib.sh"
 command -v jq >/dev/null 2>&1 || skip "jq absent"
 RB="$(rust_bin)" || rust_bin_exit $?
@@ -57,6 +57,16 @@ pj_milestone second 20
 git add -A >/dev/null && git commit -qm "second" >/dev/null
 [ "$(released first)" = unreleased ] || { echo "    an open milestone reads $(released first), expected unreleased"; exit 1; }
 
+# --- a milestone DONE with no issue was finished by its own evidence: it ships in the first
+#     release containing the commit that recorded the latest of that evidence
+pj_milestone base 5
+printf 'evidence:\n  - covers: proof\n    type: test\n    command: "true"\n    result: "ok"\n    recorded_at: 2026-09-04T00:00:00Z\n' \
+  >> .ai/repo/project/milestones/base.yaml
+git add -A >/dev/null && git commit -qm "base" >/dev/null
+"$MJ" plan roadmap --json | jq -e '.milestones[] | select(.id == "base" and .status == "DONE")' >/dev/null \
+  || { echo "    base is not DONE by its evidence"; "$MJ" plan roadmap | sed 's/^/    | /'; exit 1; }
+[ "$(released base)" = unreleased ] || { echo "    base reads $(released base) before any record"; exit 1; }
+
 # --- a milestone ships in the first release containing its last accepted issue's merge.
 #     F1 alone makes first DONE, and v0.26.0 carries it; F2 reopens it, and once F2 is
 #     accepted the milestone is DONE again and carried by the release that carries F2.
@@ -64,6 +74,7 @@ accept F1 first
 [ "$(released first)" = unreleased ] || { echo "    a DONE milestone no record contains reads $(released first), expected unreleased"; exit 1; }
 release v0.26.0
 [ "$(released first)" = v0.26.0 ] || { echo "    first reads $(released first), expected v0.26.0"; exit 1; }
+[ "$(released base)" = v0.26.0 ] || { echo "    base reads $(released base), expected v0.26.0 (its evidence's commit)"; exit 1; }
 accept F2 first
 [ "$(released first)" = unreleased ] || { echo "    first's last issue is in no record, yet it reads $(released first)"; exit 1; }
 release v0.27.0-rc.1

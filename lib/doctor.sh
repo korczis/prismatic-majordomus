@@ -1223,8 +1223,8 @@ mj_validate_roadmap() {
     mj_doctrine_ok roadmap "README.md" "no authored roadmap section; the roadmap is only a projection"
     return 0
   fi
-  # only a DONE milestone has a last accepted issue, so only those can have been released
-  canon="$(for id in $(awk -F'\t' '$1=="M" && $9!="" { print $2 }' "$MJ_PJ/model.tsv"); do
+  # only a DONE milestone can have been released
+  canon="$(for id in $(awk -F'\t' '$1=="M" && $3=="DONE" { print $2 }' "$MJ_PJ/model.tsv"); do
              mj_pj_m_released_in "$id"; printf '\n'; done | { grep -v '^unreleased$' || :; } | LC_ALL=C sort -u)"
   doc="$(awk '/^## Roadmap/{f=1;next} /^## /{f=0} f' "$readme" \
          | sed -n 's/^| *\**v\{0,1\}\([0-9][0-9.]*\)\** *|.*/v\1/p' | LC_ALL=C sort -u)"

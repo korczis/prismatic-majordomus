@@ -106,7 +106,9 @@ parallel universe.
    release record (the tracked statement of a tag, `.ai/repo/releases/v*.yaml`) whose commit
    contains the milestone's last accepted issue, because derived data must not depend on refs
    outside the tree. Work finished before the first record (v0.3.1) reads as that release, the
-   earliest one this layer records. An open milestone is "unreleased". The vendored
+   earliest one this layer records. A milestone DONE by its own evidence with no issue is
+   carried by the commit that recorded the latest of that evidence. An open milestone is
+   "unreleased". The vendored
    `roadmap-integrity` rule is rewritten to match.
 4. **Every plan surface draws every milestone from the one derivation.** That covers
    `/roadmap/`, `/plan/`, the landing page's plan figures, `/ui/roadmap` and `PLAN_STATUS.md`:
