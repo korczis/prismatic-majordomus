@@ -1,0 +1,30 @@
+id: I2754
+milestone: every-session-joins-the-mesh
+title: "Case 3069 is judged on its own, apart from case 3066"
+slug: case-3069-is-judged-on-its-own
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Find out whether case 3069_an_edit_no_claim_covers_is_refused has a failure of its own or fails only because case 3066 left shared state behind it, and fix whichever it is so that 3069 passes in any shard order."
+why: "Case 3069 fails only when case 3066 runs in the same shard: 'an edit outside the task's scope: exit 0, wanted 2' (test/cases/3069_an_edit_no_claim_covers_is_refused.sh line 67), on master 44ad51e in run 38861705301 on 2026-10-16. Run alone it passes. #1296 (fix/case-3066-reads-the-state-until-it-answers) makes 3066 re-read mesh state under load instead of judging an empty read; whether that also clears 3069 is not known. Exit 0 where 2 is wanted means the guard admitted an edit no claim covers, which is the one outcome case 3069 exists to refuse, so it cannot be waved through as noise."
+current_state: "3069 is red beside 3066 and green alone; nobody has shown whether the cause is 3066's leftover mesh session or claim, a shared server, or a defect of the guard itself."
+desired_state: "With #1296 landed, 3069 is run beside 3066 in one shard until it either passes repeatedly or fails with a named cause; a cause in the case is fixed in the case, a cause in the guard (lib/capture.sh, the claim check) is fixed there with a case that reproduces it, and the two cases share no state they do not declare."
+scope:
+  - "test/cases/3069_an_edit_no_claim_covers_is_refused.sh"
+  - "test/cases/3066_a_session_joins_the_mesh_at_start.sh"
+  - "lib/capture.sh"
+non_scope:
+  - "Splitting 3066 and 3069 into separate shards to hide the interaction."
+depends_on: [I2734]
+acceptance_criteria:
+  - "The cause of 'exit 0, wanted 2' beside 3066 is named with the evidence that shows it (a log line, a state dump, a reproduction)"
+  - "bash test/run.sh 3066_a_session_joins_the_mesh_at_start 3069_an_edit_no_claim_covers_is_refused passes twenty consecutive times with MJ_TEST_JOBS=1 and with MJ_TEST_JOBS=8, zero skips"
+  - "If the guard was at fault, a case reproduces the admitted edit and fails without the fix"
+validation:
+  - "bin/majordomus plan validate"
+  - "for i in $(seq 20); do MJ_TEST_JOBS=1 bash test/run.sh 3066_a_session_joins_the_mesh_at_start 3069_an_edit_no_claim_covers_is_refused || exit 1; done"
+evidence_required:
+  - "case_3069_cause_named"
+  - "case_3069_beside_3066_twenty_runs"
+created_at: 2026-10-16
+updated_at: 2026-10-16

@@ -6,23 +6,23 @@
     "version": "0.27.0"
   },
   "registry": {
-    "fingerprint": "039c3c240f2a65253fe430b394e20fc2d0230868bc9dc775a9fdc93d3bfd479f",
+    "fingerprint": "edf6010c8d71779163d8bc2cf4153e79862bbaffbdee20af30eb94016b164b5d",
     "summary": {
-      "total": 2446,
+      "total": 2454,
       "builtin": 202,
-      "declarative": 2244,
+      "declarative": 2252,
       "by_kind": {
         "command": 31,
         "query": 171,
-        "resource": 2244
+        "resource": 2252
       },
       "by_stability": {
         "behaviorally_verified": 141,
         "experimental": 52,
-        "implemented": 2253
+        "implemented": 2261
       },
       "mcp_tools": 192,
-      "mcp_resources": 2299,
+      "mcp_resources": 2307,
       "http_routes": 197,
       "cli_commands": 108,
       "modules": 92,
@@ -82938,7 +82938,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 394,
+        "capabilities": 402,
         "capability_ids": []
       },
       {
@@ -83600,7 +83600,7 @@
     ]
   },
   "index": {
-    "fingerprint": "d145fb9a0df194ae88563f0ac078bcdc65ec3e4202c2c15329351b61177ace6a",
+    "fingerprint": "a6a630610eaf45dfa4408fbb55a8c5f410dbef52277da063d70f087b6dee4244",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -83640,7 +83640,7 @@
       "gap": 3,
       "implementation": 52,
       "intent": 4,
-      "issue": 394,
+      "issue": 402,
       "knowledge": 4,
       "mesh-declaration": 1,
       "milestone": 38,
@@ -89767,7 +89767,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 158951
+        "bytes": 181053
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -96295,7 +96295,7 @@
         "path": ".ai/repo/project/issues/I2114.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2884
+        "bytes": 3327
       },
       {
         "uri": "majordomus://issue/I2123",
@@ -97550,6 +97550,94 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 2836
+      },
+      {
+        "uri": "majordomus://issue/I2751",
+        "kind": "issue",
+        "identity": "I2751",
+        "title": "Case 3024 waits for the run it demonstrates, not for a clock",
+        "description": "Make case 3024_a_run_is_seen_by_the_server deterministic: the server's execution list must be asked while the demonstrated run is provably still in flight, however long the server's first list takes to build its index and registry.",
+        "path": ".ai/repo/project/issues/I2751.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2703
+      },
+      {
+        "uri": "majordomus://issue/I2752",
+        "kind": "issue",
+        "identity": "I2752",
+        "title": "A reader of the integration lease never sees a holder half-written",
+        "description": "Close the window in which a reader of the integration lease finds the lock file present but its holder record empty or torn, so that neither the test where_no_mesh_runs_the_lease_guards_the_clone_and_says_so nor a real reader (prs brief, the Cockpit) reports 'lease held (holder unreadable)' for a lease that has a holder.",
+        "path": ".ai/repo/project/issues/I2752.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3139
+      },
+      {
+        "uri": "majordomus://issue/I2753",
+        "kind": "issue",
+        "identity": "I2753",
+        "title": "Two diagrams on one page never share an element id",
+        "description": "Give every element id inside a drawn Mermaid diagram a prefix unique to that drawing, and rewrite every reference to it, so that a page with several diagrams that share node names has no duplicate id.",
+        "path": ".ai/repo/project/issues/I2753.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2288
+      },
+      {
+        "uri": "majordomus://issue/I2754",
+        "kind": "issue",
+        "identity": "I2754",
+        "title": "Case 3069 is judged on its own, apart from case 3066",
+        "description": "Find out whether case 3069_an_edit_no_claim_covers_is_refused has a failure of its own or fails only because case 3066 left shared state behind it, and fix whichever it is so that 3069 passes in any shard order.",
+        "path": ".ai/repo/project/issues/I2754.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2580
+      },
+      {
+        "uri": "majordomus://issue/I2755",
+        "kind": "issue",
+        "identity": "I2755",
+        "title": "The plan's header reads project.yaml",
+        "description": "Index .ai/repo/project/project.yaml as the project kind so that the derived plan's header carries the project's name, repository and default branch on every surface that reads it.",
+        "path": ".ai/repo/project/issues/I2755.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3025
+      },
+      {
+        "uri": "majordomus://issue/I2757",
+        "kind": "issue",
+        "identity": "I2757",
+        "title": "An identifier is allocated by one typed command that claims it on the mesh",
+        "description": "Give the repository one typed allocator, majordomus allocate <adr|case|issue> [--count N], that surveys master, every origin branch and the board and mesh claims, and claims the numbers it hands out on the mesh atomically, so that two sessions can never take the same identifier.",
+        "path": ".ai/repo/project/issues/I2757.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2901
+      },
+      {
+        "uri": "majordomus://issue/I2758",
+        "kind": "issue",
+        "identity": "I2758",
+        "title": "A worker's brief for an issue is derived, not written by hand",
+        "description": "Extend majordomus brief with an issue argument that prints everything a worker needs to take that issue: the canonical worktree path for its branch, the task scope including the derive's projections, a free server port, the master binary cache path, the gates to prove locally and the hand-off format.",
+        "path": ".ai/repo/project/issues/I2758.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2791
+      },
+      {
+        "uri": "majordomus://issue/I2759",
+        "kind": "issue",
+        "identity": "I2759",
+        "title": "READY FOR LANDING names a head whose ci is green",
+        "description": "Make a READY FOR LANDING announcement or mesh review request carry the named head's ci conclusion, and refuse or flag READY unless that head's ci is SUCCESS, so that the landing seat never takes a red head on a worker's word.",
+        "path": ".ai/repo/project/issues/I2759.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2412
       },
       {
         "uri": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
@@ -107869,7 +107957,7 @@
       "identity": [
         "id"
       ],
-      "objects": 394
+      "objects": 402
     },
     {
       "name": "knowledge",

@@ -1,0 +1,31 @@
+id: I2759
+milestone: architecture-is-enforced
+title: "READY FOR LANDING names a head whose ci is green"
+slug: ready-for-landing-names-a-green-head
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Make a READY FOR LANDING announcement or mesh review request carry the named head's ci conclusion, and refuse or flag READY unless that head's ci is SUCCESS, so that the landing seat never takes a red head on a worker's word."
+why: "On 2026-10-16 eleven pull requests were announced READY FOR LANDING on the board and the mesh while their head's ci was red, pending or cancelled; the landing seat built tops from them and found the red only when the top's own run failed (for example #1304, whose self-cancelled run hid a version-surface failure). The hand-off rule exists only as prose in a coordinator's brief; majordomus_announce and majordomus_mesh_review_request accept any text, and nothing reads the head's check before the word READY is published."
+current_state: "An announcement or review request saying READY FOR LANDING is free text; the ci state of the head it names is not read, recorded or shown."
+desired_state: "When an announcement or review request says READY FOR LANDING and names a pull request and head, the capability reads that head's ci check: SUCCESS is recorded beside the claim with its run id; anything else is refused, or recorded as 'pushed, ci pending' or 'ci <conclusion>' so the board never shows READY over a head that is not green. The landing seat's views read that recorded conclusion."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/peers.rs"
+  - "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+  - "docs/MESH.md"
+  - "test/cases"
+non_scope:
+  - "Merging or landing anything; this only governs what a READY claim may say."
+depends_on: []
+acceptance_criteria:
+  - "An announcement READY FOR LANDING naming a head whose ci is not SUCCESS is refused or rewritten to say the ci state it found"
+  - "An announcement READY FOR LANDING naming a head whose ci is SUCCESS records the run id beside the claim"
+  - "A mesh review request whose subject says READY is held to the same rule"
+  - "Without forge access the claim says 'ci unread' rather than READY"
+validation:
+  - "bin/majordomus plan validate"
+  - "bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "ready_requires_green_case"
+created_at: 2026-10-16
+updated_at: 2026-10-16

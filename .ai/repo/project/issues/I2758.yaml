@@ -1,0 +1,28 @@
+id: I2758
+milestone: every-session-joins-the-mesh
+title: "A worker's brief for an issue is derived, not written by hand"
+slug: a-workers-brief-is-derived
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Extend majordomus brief with an issue argument that prints everything a worker needs to take that issue: the canonical worktree path for its branch, the task scope including the derive's projections, a free server port, the master binary cache path, the gates to prove locally and the hand-off format."
+why: "On 2026-10-16 the coordinating session kept a hand-maintained scratch brief for its workers (worktree command, environment, ports per issue, gates, commit and hand-off format) and it drifted: workers collided in a shared scratch directory, ports were assigned by hand per issue, the master binary path was pasted, and the list of local gates (coverage-differential, order-check, cases 94 and 26, ui-check when the site is touched) lived only in prose. Every fact in it already has an owner in the repository: majordomus worktree derives the path, the derive declares its projections, the server lease names ports in use, the gates are in .ai/repo/ci/gates.yaml. majordomus brief (brief.session, ADR 0136) already composes what surrounds a session; it says nothing about what an issue needs."
+current_state: "majordomus brief describes the current session only; a worker's brief for an issue is prose a coordinator writes and keeps current by hand."
+desired_state: "majordomus brief --issue <id> (one capability, every surface) adds a worker section: worktree path from majordomus worktree, the scope from the issue record plus the derive's declared projections, a port no live lease holds, the master binary cache path for origin/master's head, the gates the issue's scope selects (ui-check when site/ is in scope), and the hand-off format including the head's ci conclusion. Each line names the source it was read from."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/brief.rs"
+  - "docs/CLI.md"
+  - "test/cases"
+depends_on: []
+acceptance_criteria:
+  - "majordomus brief --issue <id> prints the canonical worktree path, the scope with projections, a free port, the master binary cache path, the selected gates and the hand-off format"
+  - "The gates listed for an issue whose scope includes site/ include ui-check, and for one that does not they do not"
+  - "The port offered is not held by any live server lease of the repository"
+  - "Every line names the capability or file it was derived from; nothing in the output is a constant written in the brief's source"
+validation:
+  - "bin/majordomus plan validate"
+  - "bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "issue_brief_case"
+created_at: 2026-10-16
+updated_at: 2026-10-16

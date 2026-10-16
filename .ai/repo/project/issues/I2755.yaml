@@ -1,0 +1,32 @@
+id: I2755
+milestone: surfaces-never-disagree
+title: "The plan's header reads project.yaml"
+slug: the-plans-header-reads-project-yaml
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Index .ai/repo/project/project.yaml as the project kind so that the derived plan's header carries the project's name, repository and default branch on every surface that reads it."
+why: "Verified on master d1162668036 on 2026-10-16: GET /api/v1/plan answers project {name: '', repository: '', default_branch: '', active_milestone: 'M003'}, although .ai/repo/project/project.yaml declares name Prismatic Majordomus and repository korczis/prismatic-majordomus. Plan::raws (apps/majordomus-cli/src/plan.rs:600) reads the header from an object of kind project whose path ends in project/project.yaml, and .ai/repo/knowledge/sources.yaml declares source classes for milestones, issues, intents, gaps and critiques but none for project.yaml, so no such object exists. apps/majordomus-cli/src/devtask/task.rs:593 already documents the blank header and works around it by saying the repository is unknown; the test at apps/majordomus-cli/src/capability/builtin/plan.rs:1040 adds the class to its fixture, which is why no test saw it. The same read shows a second disagreement: the header's active_milestone is M003 while plan.roadmap answers now M002."
+current_state: "The plan header's name, repository and default_branch are empty strings for every reader; the devtask projection reports the repository as unknown; plan.model's active_milestone and plan.roadmap's now name different milestones."
+desired_state: "sources.yaml declares the project class for .ai/repo/project/project.yaml, the header is filled from it, devtask's projection reports the repository as explicit, and plan.model's active_milestone and plan.roadmap's now are derived by one function and agree, or the difference between them is named in both schemas."
+scope:
+  - ".ai/repo/knowledge/sources.yaml"
+  - "apps/majordomus-cli/src/plan.rs"
+  - "apps/majordomus-cli/src/capability/builtin/plan.rs"
+  - "apps/majordomus-cli/src/devtask/task.rs"
+  - "test/cases"
+depends_on: []
+acceptance_criteria:
+  - "GET /api/v1/plan on this repository answers project.name 'Prismatic Majordomus', project.repository 'korczis/prismatic-majordomus' and the default branch project.yaml declares"
+  - "devtask's synchronisation reports the repository as explicit from .ai/repo/project/project.yaml#repository"
+  - "plan.model's active_milestone and plan.roadmap's now agree on this repository, or each schema says what the other means"
+  - "A test reads the header from the repository's own sources.yaml, not from a fixture that adds the class itself"
+validation:
+  - "bin/majordomus plan validate"
+  - "curl -s http://127.0.0.1:<port>/api/v1/plan | jq .project"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib plan::"
+evidence_required:
+  - "plan_header_filled"
+  - "active_milestone_agrees_with_roadmap_now"
+created_at: 2026-10-16
+updated_at: 2026-10-16

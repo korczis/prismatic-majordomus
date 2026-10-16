@@ -1,0 +1,31 @@
+id: I2752
+milestone: failure-is-visible
+title: "A reader of the integration lease never sees a holder half-written"
+slug: a-lease-reader-never-sees-a-half-written-holder
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Close the window in which a reader of the integration lease finds the lock file present but its holder record empty or torn, so that neither the test where_no_mesh_runs_the_lease_guards_the_clone_and_says_so nor a real reader (prs brief, the Cockpit) reports 'lease held (holder unreadable)' for a lease that has a holder."
+why: "The Rust test where_no_mesh_runs_the_lease_guards_the_clone_and_says_so (apps/majordomus-cli/tests/integration_across_machines.rs:374) races: Node::hold (line ~194) waits only for lock.exists(), and the lease's acquire (apps/majordomus-cli/src/integration/drain.rs ~342) creates the file before write_record fills it, so brief can read it in between and print 'lease held (holder unreadable)'. Seen in run 38884560937 (coverage job) on 2026-10-16. Real readers can hit the same window: write_record (drain.rs:279) truncates with set_len(0) and then writes, on acquire and on every keep-alive renewal, and IntegrationLease::read (drain.rs:454) parses whatever it finds. The obvious fix, temp file and rename, is not available: the lease is an flock on the file's inode, and drain.rs:277 says the record is replaced through the locked file, never the path."
+current_state: "The holder record is written in place after the file is created, and rewritten by truncation then write; a concurrent reader can see an empty or partial record and reports the holder unreadable."
+desired_state: "A reader of a held lease always obtains its holder: the writer never exposes an empty record (it writes the new record over the old and then sets the length, or an equivalent that keeps the inode lock), and IntegrationLease::read retries a record it cannot parse for a bounded moment before calling it unreadable. The test waits until IntegrationLease::read returns Some(holder) rather than for the file to exist."
+scope:
+  - "apps/majordomus-cli/src/integration/drain.rs"
+  - "apps/majordomus-cli/tests/integration_across_machines.rs"
+non_scope:
+  - "Replacing the inode lock with a rename-based record; it would let a second executor take a fresh, unlocked file."
+depends_on: []
+acceptance_criteria:
+  - "A unit test that reads the record concurrently with repeated renewals never observes an empty or unparseable holder"
+  - "Node::hold waits for IntegrationLease::read to return a holder, not for the lock file to exist"
+  - "where_no_mesh_runs_the_lease_guards_the_clone_and_says_so passes fifty consecutive runs"
+  - "A genuinely unreadable record (garbage written by hand) is still reported as 'holder unreadable'"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test integration_across_machines"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib integration::drain"
+evidence_required:
+  - "lease_record_never_torn"
+  - "lease_guard_test_fifty_runs"
+created_at: 2026-10-16
+updated_at: 2026-10-16

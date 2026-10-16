@@ -1,0 +1,35 @@
+id: I2757
+milestone: every-session-joins-the-mesh
+title: "An identifier is allocated by one typed command that claims it on the mesh"
+slug: an-identifier-is-allocated-and-claimed
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Give the repository one typed allocator, majordomus allocate <adr|case|issue> [--count N], that surveys master, every origin branch and the board and mesh claims, and claims the numbers it hands out on the mesh atomically, so that two sessions can never take the same identifier."
+why: "On 2026-10-16 ADR 0168 was taken by two sessions and one had to renumber to 0169 (PR #1293), and case 3110 collided between a mesh-offer range and a pull request. The surveys exist but only survey: majordomus adr next (lib/adr.sh) and scripts/case-numbers next read refs, tags, sibling worktrees and the peer board, then leave the claim to the worker; issue ids have no allocator at all and are taken by announcing a range on the board by hand. Nothing reads mesh claims, so a session on another machine is invisible, and the time between surveying and announcing is exactly where today's collisions happened (project.work-is-claimed-before-it-is-built)."
+current_state: "adr next and scripts/case-numbers next answer the next free number from refs and the board; issue ids are chosen by hand; nobody claims a number on the mesh, and two sessions surveying in the same minute get the same answer."
+desired_state: "majordomus allocate <adr|case|issue> [--count N] is a capability (CLI, MCP, HTTP) that reuses the existing surveys for adr and case, adds one for issue ids, reads every live mesh claim, and takes an exclusive mesh claim on numbers/<kind>-<n> for each number before it answers; a second allocation meeting that claim is refused or moves past it. adr next and scripts/case-numbers next report the same sources and defer to it."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/allocate.rs"
+  - "apps/majordomus-cli/src/capability/builtin/mod.rs"
+  - "lib/adr.sh"
+  - "scripts/case-numbers"
+  - "docs/CLI.md"
+  - "test/cases"
+non_scope:
+  - "Renumbering identifiers already landed with a collision."
+depends_on: []
+acceptance_criteria:
+  - "Two concurrent majordomus allocate case calls never return the same number"
+  - "A number named in a live mesh claim of another runtime, in an unmerged origin branch, or on the board is never returned"
+  - "Each returned number holds an exclusive mesh claim numbers/<kind>-<n> naming the caller's session"
+  - "allocate issue returns ids above every id on master and every origin branch"
+  - "The capability is declared once and appears on the CLI, MCP and HTTP from that declaration"
+validation:
+  - "bin/majordomus plan validate"
+  - "bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "concurrent_allocation_case"
+  - "mesh_claim_per_number"
+created_at: 2026-10-16
+updated_at: 2026-10-16

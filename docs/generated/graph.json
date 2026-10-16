@@ -32653,7 +32653,7 @@
             "test/cases"
           ],
           "slug": "a-tasks-scope-admits-what-its-derive-writes",
-          "updated_at": "2026-10-09",
+          "updated_at": "2026-10-16",
           "validation": [
             "bin/majordomus plan validate",
             "MJ_TEST_JOBS=4 bash test/run.sh <the cases this issue adds>"
@@ -37914,6 +37914,333 @@
             "bin/majordomus plan validate",
             "cargo test --lib guard",
             "bash test/run.sh 3069_an_edit_no_claim_covers_is_refused"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2751",
+        "kind": "issue",
+        "label": "I2751",
+        "summary": "Case 3024 waits for the run it demonstrates, not for a clock",
+        "route": "/cockpit/objects/issue/i2751",
+        "source": ".ai/repo/project/issues/I2751.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The case no longer depends on the run outliving the server's first list: the in-flight window is held by a signal or the list is warmed before the run starts",
+            "Twenty consecutive runs of the case under MJ_TEST_JOBS=8 pass, with zero skips",
+            "Every assertion the case made before still holds, and a deliberately broken listing (the run never reported) still fails it"
+          ],
+          "created_at": "2026-10-16",
+          "current_state": "The case starts a six-step, half-second run and polls the server's list; whether the list ever sees it running depends on how long the server's first answer takes on the runner.",
+          "depends_on": [],
+          "evidence_required": [
+            "case_3024_twenty_runs",
+            "case_3024_still_fails_when_the_run_is_unlisted"
+          ],
+          "milestone": "architecture-is-enforced",
+          "non_scope": [
+            "Making the server's cold list faster; that is a performance question with its own evidence, and the case must not depend on it.",
+            "Weakening any assertion of the case: it still requires the run listed as running, cancelled from the server, and the no-server line."
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "test/cases/3024_a_run_is_seen_by_the_server.sh"
+          ],
+          "slug": "case-3024-waits-for-the-run-it-demonstrates",
+          "updated_at": "2026-10-16",
+          "validation": [
+            "bin/majordomus plan validate",
+            "for i in $(seq 20); do MJ_TEST_JOBS=8 bash test/run.sh 3024_a_run_is_seen_by_the_server 100_execution_plane || exit 1; done"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2752",
+        "kind": "issue",
+        "label": "I2752",
+        "summary": "A reader of the integration lease never sees a holder half-written",
+        "route": "/cockpit/objects/issue/i2752",
+        "source": ".ai/repo/project/issues/I2752.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A unit test that reads the record concurrently with repeated renewals never observes an empty or unparseable holder",
+            "Node::hold waits for IntegrationLease::read to return a holder, not for the lock file to exist",
+            "where_no_mesh_runs_the_lease_guards_the_clone_and_says_so passes fifty consecutive runs",
+            "A genuinely unreadable record (garbage written by hand) is still reported as 'holder unreadable'"
+          ],
+          "created_at": "2026-10-16",
+          "current_state": "The holder record is written in place after the file is created, and rewritten by truncation then write; a concurrent reader can see an empty or partial record and reports the holder unreadable.",
+          "depends_on": [],
+          "evidence_required": [
+            "lease_record_never_torn",
+            "lease_guard_test_fifty_runs"
+          ],
+          "milestone": "failure-is-visible",
+          "non_scope": [
+            "Replacing the inode lock with a rename-based record; it would let a second executor take a fresh, unlocked file."
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/integration/drain.rs",
+            "apps/majordomus-cli/tests/integration_across_machines.rs"
+          ],
+          "slug": "a-lease-reader-never-sees-a-half-written-holder",
+          "updated_at": "2026-10-16",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test integration_across_machines",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib integration::drain"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2753",
+        "kind": "issue",
+        "label": "I2753",
+        "summary": "Two diagrams on one page never share an element id",
+        "route": "/cockpit/objects/issue/i2753",
+        "source": ".ai/repo/project/issues/I2753.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A page with two flowcharts that share node and edge names has no duplicate id after both are drawn",
+            "Every url(#), href, xlink:href, aria-labelledby and aria-describedby reference inside a drawn svg resolves to an element of that same svg",
+            "scripts/ui audit reports no semantics.duplicate-id on /docs/docs/development-runtime/",
+            "The viewer's hover, focus and node links still work on the rewritten ids"
+          ],
+          "created_at": "2026-10-16",
+          "current_state": "Each drawing's svg carries a unique id, but the nodes, edges and clusters inside it carry ids Mermaid derives from their names alone.",
+          "depends_on": [],
+          "evidence_required": [
+            "diagram_ids_unique_case",
+            "ui_audit_no_duplicate_id"
+          ],
+          "milestone": "surfaces-never-disagree",
+          "non_scope": [
+            "Changing the Mermaid version or its configuration."
+          ],
+          "objective": "Give every element id inside a drawn Mermaid diagram a prefix unique to that drawing, and rewrite every reference to it, so that a page with several diagrams that share node names has no duplicate id.",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "site/diagrams.js",
+            "test/cases"
+          ],
+          "slug": "two-diagrams-never-share-an-element-id",
+          "updated_at": "2026-10-16",
+          "validation": [
+            "bin/majordomus plan validate",
+            "bash test/run.sh <the case this issue adds>",
+            "scripts/ui audit --only /docs/docs/development-runtime/"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2754",
+        "kind": "issue",
+        "label": "I2754",
+        "summary": "Case 3069 is judged on its own, apart from case 3066",
+        "route": "/cockpit/objects/issue/i2754",
+        "source": ".ai/repo/project/issues/I2754.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The cause of 'exit 0, wanted 2' beside 3066 is named with the evidence that shows it (a log line, a state dump, a reproduction)",
+            "bash test/run.sh 3066_a_session_joins_the_mesh_at_start 3069_an_edit_no_claim_covers_is_refused passes twenty consecutive times with MJ_TEST_JOBS=1 and with MJ_TEST_JOBS=8, zero skips",
+            "If the guard was at fault, a case reproduces the admitted edit and fails without the fix"
+          ],
+          "created_at": "2026-10-16",
+          "current_state": "3069 is red beside 3066 and green alone; nobody has shown whether the cause is 3066's leftover mesh session or claim, a shared server, or a defect of the guard itself.",
+          "depends_on": [
+            "I2734"
+          ],
+          "evidence_required": [
+            "case_3069_cause_named",
+            "case_3069_beside_3066_twenty_runs"
+          ],
+          "milestone": "every-session-joins-the-mesh",
+          "non_scope": [
+            "Splitting 3066 and 3069 into separate shards to hide the interaction."
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "test/cases/3069_an_edit_no_claim_covers_is_refused.sh",
+            "test/cases/3066_a_session_joins_the_mesh_at_start.sh",
+            "lib/capture.sh"
+          ],
+          "slug": "case-3069-is-judged-on-its-own",
+          "updated_at": "2026-10-16",
+          "validation": [
+            "bin/majordomus plan validate",
+            "for i in $(seq 20); do MJ_TEST_JOBS=1 bash test/run.sh 3066_a_session_joins_the_mesh_at_start 3069_an_edit_no_claim_covers_is_refused || exit 1; done"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2755",
+        "kind": "issue",
+        "label": "I2755",
+        "summary": "The plan's header reads project.yaml",
+        "route": "/cockpit/objects/issue/i2755",
+        "source": ".ai/repo/project/issues/I2755.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "GET /api/v1/plan on this repository answers project.name 'Prismatic Majordomus', project.repository 'korczis/prismatic-majordomus' and the default branch project.yaml declares",
+            "devtask's synchronisation reports the repository as explicit from .ai/repo/project/project.yaml#repository",
+            "plan.model's active_milestone and plan.roadmap's now agree on this repository, or each schema says what the other means",
+            "A test reads the header from the repository's own sources.yaml, not from a fixture that adds the class itself"
+          ],
+          "created_at": "2026-10-16",
+          "depends_on": [],
+          "evidence_required": [
+            "plan_header_filled",
+            "active_milestone_agrees_with_roadmap_now"
+          ],
+          "milestone": "surfaces-never-disagree",
+          "objective": "Index .ai/repo/project/project.yaml as the project kind so that the derived plan's header carries the project's name, repository and default branch on every surface that reads it.",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/knowledge/sources.yaml",
+            "apps/majordomus-cli/src/plan.rs",
+            "apps/majordomus-cli/src/capability/builtin/plan.rs",
+            "apps/majordomus-cli/src/devtask/task.rs",
+            "test/cases"
+          ],
+          "slug": "the-plans-header-reads-project-yaml",
+          "updated_at": "2026-10-16",
+          "validation": [
+            "bin/majordomus plan validate",
+            "curl -s http://127.0.0.1:<port>/api/v1/plan | jq .project",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib plan::"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2757",
+        "kind": "issue",
+        "label": "I2757",
+        "summary": "An identifier is allocated by one typed command that claims it on the mesh",
+        "route": "/cockpit/objects/issue/i2757",
+        "source": ".ai/repo/project/issues/I2757.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Two concurrent majordomus allocate case calls never return the same number",
+            "A number named in a live mesh claim of another runtime, in an unmerged origin branch, or on the board is never returned",
+            "Each returned number holds an exclusive mesh claim numbers/<kind>-<n> naming the caller's session",
+            "allocate issue returns ids above every id on master and every origin branch",
+            "The capability is declared once and appears on the CLI, MCP and HTTP from that declaration"
+          ],
+          "created_at": "2026-10-16",
+          "depends_on": [],
+          "evidence_required": [
+            "concurrent_allocation_case",
+            "mesh_claim_per_number"
+          ],
+          "milestone": "every-session-joins-the-mesh",
+          "non_scope": [
+            "Renumbering identifiers already landed with a collision."
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin/allocate.rs",
+            "apps/majordomus-cli/src/capability/builtin/mod.rs",
+            "lib/adr.sh",
+            "scripts/case-numbers",
+            "docs/CLI.md",
+            "test/cases"
+          ],
+          "slug": "an-identifier-is-allocated-and-claimed",
+          "updated_at": "2026-10-16",
+          "validation": [
+            "bin/majordomus plan validate",
+            "bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2758",
+        "kind": "issue",
+        "label": "I2758",
+        "summary": "A worker's brief for an issue is derived, not written by hand",
+        "route": "/cockpit/objects/issue/i2758",
+        "source": ".ai/repo/project/issues/I2758.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "majordomus brief --issue <id> prints the canonical worktree path, the scope with projections, a free port, the master binary cache path, the selected gates and the hand-off format",
+            "The gates listed for an issue whose scope includes site/ include ui-check, and for one that does not they do not",
+            "The port offered is not held by any live server lease of the repository",
+            "Every line names the capability or file it was derived from; nothing in the output is a constant written in the brief's source"
+          ],
+          "created_at": "2026-10-16",
+          "current_state": "majordomus brief describes the current session only; a worker's brief for an issue is prose a coordinator writes and keeps current by hand.",
+          "depends_on": [],
+          "evidence_required": [
+            "issue_brief_case"
+          ],
+          "milestone": "every-session-joins-the-mesh",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin/brief.rs",
+            "docs/CLI.md",
+            "test/cases"
+          ],
+          "slug": "a-workers-brief-is-derived",
+          "updated_at": "2026-10-16",
+          "validation": [
+            "bin/majordomus plan validate",
+            "bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2759",
+        "kind": "issue",
+        "label": "I2759",
+        "summary": "READY FOR LANDING names a head whose ci is green",
+        "route": "/cockpit/objects/issue/i2759",
+        "source": ".ai/repo/project/issues/I2759.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "An announcement READY FOR LANDING naming a head whose ci is not SUCCESS is refused or rewritten to say the ci state it found",
+            "An announcement READY FOR LANDING naming a head whose ci is SUCCESS records the run id beside the claim",
+            "A mesh review request whose subject says READY is held to the same rule",
+            "Without forge access the claim says 'ci unread' rather than READY"
+          ],
+          "created_at": "2026-10-16",
+          "current_state": "An announcement or review request saying READY FOR LANDING is free text; the ci state of the head it names is not read, recorded or shown.",
+          "depends_on": [],
+          "evidence_required": [
+            "ready_requires_green_case"
+          ],
+          "milestone": "architecture-is-enforced",
+          "non_scope": [
+            "Merging or landing anything; this only governs what a READY claim may say."
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin/peers.rs",
+            "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+            "docs/MESH.md",
+            "test/cases"
+          ],
+          "slug": "ready-for-landing-names-a-green-head",
+          "updated_at": "2026-10-16",
+          "validation": [
+            "bin/majordomus plan validate",
+            "bash test/run.sh <the case this issue adds>"
           ]
         }
       },
@@ -81258,6 +81585,91 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2751",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2751",
+        "target": "majordomus://milestone/architecture-is-enforced",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2752",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2752",
+        "target": "majordomus://milestone/failure-is-visible",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2753",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2753",
+        "target": "majordomus://milestone/surfaces-never-disagree",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2754",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2754",
+        "target": "majordomus://issue/I2734",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2754",
+        "target": "majordomus://milestone/every-session-joins-the-mesh",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2755",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2755",
+        "target": "majordomus://milestone/surfaces-never-disagree",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2757",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2757",
+        "target": "majordomus://milestone/every-session-joins-the-mesh",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2758",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2758",
+        "target": "majordomus://milestone/every-session-joins-the-mesh",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2759",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2759",
+        "target": "majordomus://milestone/architecture-is-enforced",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -91009,8 +91421,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2870,
-      "edges": 6291,
+      "nodes": 2878,
+      "edges": 6308,
       "acyclic": false,
       "truncated": false
     }

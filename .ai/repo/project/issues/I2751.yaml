@@ -1,0 +1,29 @@
+id: I2751
+milestone: architecture-is-enforced
+title: "Case 3024 waits for the run it demonstrates, not for a clock"
+slug: case-3024-waits-for-the-run-it-demonstrates
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make case 3024_a_run_is_seen_by_the_server deterministic: the server's execution list must be asked while the demonstrated run is provably still in flight, however long the server's first list takes to build its index and registry."
+why: "Case 3024 is intermittent on CI. Measured on 2026-10-16: a cold execution list (GET /api/v1/executions on a freshly started server) takes about 2.6 s to build its index and registry, while the run the case demonstrates stays in flight only about 3 s (steps 6, delay_ms 500, test/cases/3024_a_run_is_seen_by_the_server.sh line 49). When the first answer arrives after the run has ended, the case fails with 'the run ended before the server listed it running'. Seen on master d116266 in run 38877577563, and in runs 38873908138 and 38909518755. A red that a re-run turns green teaches every reader to re-run rather than to read, which is what this milestone exists to stop."
+current_state: "The case starts a six-step, half-second run and polls the server's list; whether the list ever sees it running depends on how long the server's first answer takes on the runner."
+desired_state: "The case holds the run in flight on a signal it controls (the run's own in-flight state or a step it releases), or warms the server's list before the run starts, so that the in-flight window no longer races the cold index; the assertions it makes are unchanged."
+scope:
+  - "test/cases/3024_a_run_is_seen_by_the_server.sh"
+non_scope:
+  - "Making the server's cold list faster; that is a performance question with its own evidence, and the case must not depend on it."
+  - "Weakening any assertion of the case: it still requires the run listed as running, cancelled from the server, and the no-server line."
+depends_on: []
+acceptance_criteria:
+  - "The case no longer depends on the run outliving the server's first list: the in-flight window is held by a signal or the list is warmed before the run starts"
+  - "Twenty consecutive runs of the case under MJ_TEST_JOBS=8 pass, with zero skips"
+  - "Every assertion the case made before still holds, and a deliberately broken listing (the run never reported) still fails it"
+validation:
+  - "bin/majordomus plan validate"
+  - "for i in $(seq 20); do MJ_TEST_JOBS=8 bash test/run.sh 3024_a_run_is_seen_by_the_server 100_execution_plane || exit 1; done"
+evidence_required:
+  - "case_3024_twenty_runs"
+  - "case_3024_still_fails_when_the_run_is_unlisted"
+created_at: 2026-10-16
+updated_at: 2026-10-16
