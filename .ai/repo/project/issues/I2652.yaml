@@ -39,4 +39,29 @@ evidence_required:
   - "knowledge_screen_case_3003"
   - "knowledge_screen_within_budget"
 created_at: 2026-10-13
-updated_at: 2026-10-13
+updated_at: 2026-10-16T16:43:58Z
+started_at: 2026-10-16T16:43:42Z
+started_event: sha256:04b27df54b7560bd3e6623faeba48272c0308fcd22a7a59ad42af1db88b2a11c
+verified_at: 2026-10-16T16:43:47Z
+verified_event: sha256:7cf7c58b17543d3116b918084fad0e9d6f9c627a872ccb7de1d79edbbabae324
+completed_at: 2026-10-16T16:43:58Z
+completed_event: sha256:716b3a5ac795e138d43e2454e43c96aa373bfa50343c86cdbee055e873679bf2
+evidence:
+  - covers: knowledge_screen_unit_tests
+    type: test
+    command: "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::knowledge"
+    result: "test result: ok. 4 passed; 0 failed at 09c334079f5"
+    commit: 09c334079f57de3429ce4e707d4bb4297d589245
+    recorded_at: 2026-10-16T16:43:51Z
+  - covers: knowledge_screen_case_3003
+    type: test
+    command: "MJ_TEST_JOBS=4 bash test/run.sh 3003_the_knowledge_screen_answers 1096_no_screen_waits_for_a_source"
+    result: "ok 3003_the_knowledge_screen_answers 2s; ok 1096_no_screen_waits_for_a_source 2s (0 skipped) at 09c334079f5 with the executable of #1304; delivered by #1090 (f0696ec535a)"
+    commit: 09c334079f57de3429ce4e707d4bb4297d589245
+    recorded_at: 2026-10-16T16:43:54Z
+  - covers: knowledge_screen_within_budget
+    type: test
+    command: "majordomus-cli bench system.http. --transport system --profile ci --no-write --check"
+    result: "budget: system.http.ui.knowledge warm p95 399.6us of 100000us PASS, system.http.live.ui.knowledge warm p95 717.1us PASS, 'bench --check: within budget'; the run exits 10 for a baseline regression of system.http.openapi (p50 +582%), not this route, which is NEW to the baseline; at 09c334079f5"
+    commit: 09c334079f57de3429ce4e707d4bb4297d589245
+    recorded_at: 2026-10-16T16:43:56Z

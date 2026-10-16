@@ -30,4 +30,23 @@ evidence_required:
   - "ui_screen_cases_1088_1091"
   - "ui_links_integration_test"
 created_at: 2026-10-12
-updated_at: 2026-10-12
+updated_at: 2026-10-16T16:43:38Z
+started_at: 2026-10-16T16:43:24Z
+started_event: sha256:2781941fc97529d010620168e49c5f32561161dafb040ea6a43b5a6eb10de42f
+verified_at: 2026-10-16T16:43:29Z
+verified_event: sha256:fe4030ca6ff44d6a05209e413cda27f547fe98fe648bfe8915dac5c62ede4bdb
+completed_at: 2026-10-16T16:43:38Z
+completed_event: sha256:1862b4930ced384605a9d85d4f0bbf39e04ecb13518c9467b58117a31c265940
+evidence:
+  - covers: ui_screen_cases_1088_1091
+    type: test
+    command: "MJ_TEST_JOBS=4 bash test/run.sh 1088_the_command_and_capability_screens_answer 1089_the_work_and_mesh_screens_answer 1090_the_deployments_and_docs_screens_answer 1091_no_link_on_the_ui_is_dead"
+    result: "ok 1088 2s, ok 1089 2s, ok 1090 2s, ok 1091 8s (run of 11: 11 passed, 0 failed, 0 skipped) at 09c334079f5 with the executable of #1304; and cargo test --lib ui::governance: test result: ok. 2 passed; 0 failed"
+    commit: 09c334079f57de3429ce4e707d4bb4297d589245
+    recorded_at: 2026-10-16T16:43:33Z
+  - covers: ui_links_integration_test
+    type: test
+    command: "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test ui_links"
+    result: "test result: ok. 2 passed; 0 failed (every_link_the_ui_draws_inside_the_server_answers, the_crawl_reads_hrefs_and_follows_only_the_servers_own_pages) at 09c334079f5; delivered by 995496f6ffa"
+    commit: 09c334079f57de3429ce4e707d4bb4297d589245
+    recorded_at: 2026-10-16T16:43:36Z
