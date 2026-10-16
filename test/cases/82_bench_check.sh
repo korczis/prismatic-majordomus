@@ -34,6 +34,9 @@ git add "$B" && git commit -qm baseline
 expect_exit 0 "$MJ" bench version --samples 3 --warmup 1 --check --no-save
 expect_grep 'OK +bench +version cold .* within thresholds'
 expect_grep 'OK +bench +version warm .* within thresholds'
+# every finding names what it rests on: the sample count, the runner and its load average
+expect_grep 'OK +bench +version cold .* within thresholds \(.*, 1 sample\(s\); runner .+ \(.+\), load [^ ]+ -> [^ ]+\)'
+expect_grep 'OK +bench +version warm .* within thresholds \(.*, 3 sample\(s\); runner .+, load '
 
 # --- a regression: the baseline claims the command took one millisecond
 jq -c '.results |= map(.p50_ms = 1 | .p95_ms = 1 | .p99_ms = 1)' "$B" > "$B.tmp" && mv "$B.tmp" "$B"
@@ -41,7 +44,20 @@ expect_exit 10 "$MJ" bench version --samples 3 --warmup 1 --check --no-save
 expect_grep 'FAIL bench +version warm .* regression: p50 1 -> [0-9]+ ms \(\+[0-9]+%, threshold 50%\)'
 expect_grep 'FAIL bench +version warm .* regression: p95 1 -> [0-9]+ ms \(\+[0-9]+%, threshold 50%\)'
 expect_grep 'FAIL bench +version warm .* regression: p99 1 -> [0-9]+ ms \(\+[0-9]+%, threshold 60%\)'
-expect_grep 'FAIL bench +version cold .* regression: p50'
+# --- one cold sample is a warning, two agreeing samples are a verdict (I2068): on #823 one
+# cold sample of `version` read 9 -> 23 ms on a saturated runner and failed a change that ran
+# none of the measured code. A read-only command has one cold sample unless asked for more.
+expect_grep 'FAIL bench +version warm .* regression: p50 1 -> [0-9]+ ms .* on 3 of 3 sample\(s\); runner .+, load [^ ]+ -> [^ ]+'
+expect_grep 'WARN bench +version cold .* one sample over: p50 1 -> [0-9]+ ms \(\+[0-9]+%, threshold 50%\) on 1 of 1 sample\(s\); runner .+, load [^ ]+ -> [^ ]+; not a regression until a second sample agrees'
+expect_no_grep 'FAIL bench +version cold'
+# the cold distribution alone, one sample over: reported, and the run passes
+expect_exit 0 "$MJ" bench version --samples 1 --warmup 0 --mode cold --check --no-save
+expect_grep 'WARN bench +version cold .* on 1 of 1 sample\(s\)'
+expect_no_grep '^FAIL'
+# two cold samples, each the first run in a repository of its own, both over: a regression
+expect_exit 10 "$MJ" bench version --samples 1 --warmup 0 --cold-samples 2 --mode cold --check --no-save
+expect_grep 'FAIL bench +version cold .* regression: p50 1 -> [0-9]+ ms \(\+[0-9]+%, threshold 50%\) on 2 of 2 sample\(s\); runner '
+expect_exit 2 "$MJ" bench version --cold-samples 0 --check --no-save
 # --- the threshold is the policy's, not the code's
 git checkout -q "$B"
 jq -c '.results |= map(.p50_ms = 1)' "$B" > "$B.tmp" && mv "$B.tmp" "$B"
@@ -55,4 +71,4 @@ reset_policy; "$MJ" update >/dev/null; git checkout -q "$B"
 expect_exit 0 "$MJ" bench version doctor --samples 1 --warmup 0 --mode cold --check --no-save
 expect_grep 'INFO +bench +doctor cold .* not in the baseline; no comparison'
 expect_grep 'OK +bench +version cold .* within thresholds'
-echo "    no baseline 12, not comparable 15, regression 10 naming metric, values and threshold, threshold from the policy"
+echo "    no baseline 12, not comparable 15, regression 10 naming metric, values, threshold, samples, runner and load; one cold sample warns, two agreeing fail; threshold from the policy"

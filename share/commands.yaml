@@ -598,12 +598,12 @@ commands:
     requires_installed: true
     requires_task: none
     json: true
-    syntax: majordomus bench [<command>...] [--samples <n>] [--warmup <n>] [--mode cold|warm|both] [--format text|json] [--no-save] [--list] [--check] [--write-baseline [--force]]
+    syntax: majordomus bench [<command>...] [--samples <n>] [--warmup <n>] [--cold-samples <n>] [--mode cold|warm|both] [--format text|json] [--no-save] [--list] [--check] [--write-baseline [--force]]
     reads: [share/commands.yaml, test/fixtures/commands/, .ai/repo/policy.yaml, .ai/repo/benchmarks/baseline.json]
     writes: [.ai/local/benchmarks/, .ai/repo/benchmarks/baseline.json]
     exit_codes: [0, 2, 10, 12, 13, 15]
     demo: benchmark-run
-    note: The targets are the registry's public commands; the scenarios are the command fixtures when the suite is present. A run is local evidence; only --write-baseline writes the tracked baseline, and --check refuses a regression over the policy's thresholds.
+    note: The targets are the registry's public commands; the scenarios are the command fixtures when the suite is present. A run is local evidence; only --write-baseline writes the tracked baseline, and --check refuses a regression over the policy's thresholds when two samples agree; one sample over is a warning to re-measure, and every finding names its sample count, the runner and its load average.
 
   - id: archive
     title: archive
