@@ -1,0 +1,35 @@
+id: I2656
+milestone: surfaces-never-disagree
+title: "The diagram viewer serves the Cockpit and majordomus ui, and a node that is a repository file links to its source"
+slug: one-viewer-across-the-surfaces
+priority: p3
+profile: implementation
+parallel_safe: true
+objective: "Extend what I2653 built in two directions it left out: let the Cockpit and majordomus ui render a Mermaid diagram through the same viewer instead of a second implementation, and link a node whose label is a tracked file path to that file at the commit the site was built from."
+why: "ADR 0152 scoped the viewer to the published site. Rule project.a-diagram-is-drawn-not-typed names four renderings of one relationship (site, Cockpit, terminal, API); the site now has one viewer and the other browser surfaces have none. Diagrams on the site name files (.ai/repo/policy.yaml, scripts/generate-site-data) that the inference leaves as text, although scripts/ci/link-check already decides blob links against git."
+current_state: "share/design/figure.css is imported by the site only; share/cockpit and share/ui load no diagram viewer; the link index holds site routes only."
+desired_state: "The viewer and its stylesheet are served to the Cockpit and the UI from one source under the content policy those surfaces set, with the design contrast derivation reading figure.css; a node whose whole label is a tracked path links to its blob at the built commit, and scripts/ci/link-check resolves it."
+scope:
+  - "site/diagrams.js"
+  - "share/design/figure.css"
+  - "share/cockpit/src/cockpit.css"
+  - "share/ui/src/ui.css"
+  - "apps/majordomus-cli/src/design/contrast.rs"
+  - "scripts/lib/diagrams.mjs"
+  - "scripts/lib/diagrams.test.mjs"
+  - ".ai/repo/project/issues/I2656.yaml"
+non_scope:
+  - "A second viewer for any surface"
+depends_on: ["I2653"]
+acceptance_criteria:
+  - "A diagram in the Cockpit is drawn by site/diagrams.js under the Cockpit content policy"
+  - "A node labelled with a tracked path is listed as a link to that file and link-check passes it; an untracked path is not linked"
+  - "majordomus design contrast measures the pairs figure.css uses"
+validation:
+  - "node --test scripts/lib/diagrams.test.mjs"
+  - "scripts/rust-check"
+evidence_required:
+  - "cockpit_viewer_case"
+  - "file_link_unit_tests"
+created_at: 2026-10-13
+updated_at: 2026-10-13

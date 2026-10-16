@@ -168,6 +168,11 @@ pub struct Policy {
     /// policy predates the block starts work exactly as it did (ADR 0111).
     #[serde(default)]
     pub intent: IntentPolicy,
+    /// `release:` — who raises the version and by at least how much (ADR 0134). Absent is
+    /// `allocation: off` with no floor: a repository whose policy predates the block raises
+    /// its version exactly as it did.
+    #[serde(default)]
+    pub release: crate::release::landing::ReleasePolicy,
 }
 
 /// How strictly a start is held to its binding.
@@ -312,6 +317,51 @@ pub struct SessionPolicy {
     /// `checkpoint_on_compact`: the two record different things.
     #[serde(default = "yes")]
     pub knowledge_on_compact: bool,
+    /// `session.brief_interval_minutes:` — how often a session reports on itself without
+    /// being asked (ADR 0136). Absent is the default `brief.session` carries; the provider
+    /// mod reads the interval from that answer rather than from this file.
+    #[serde(default)]
+    pub brief_interval_minutes: Option<u64>,
+    /// `session.edits_require_claim:` — whether a provider's tool may write a file of the
+    /// checkout only while a claim covers it: the active task's scope, or a live mesh claim
+    /// of the writing session (I2735, [`crate::guard`]). Off unless a repository turns it
+    /// on, because it refuses edits, and a repository that never asked for that must not
+    /// find its workers stopped by an upgrade.
+    #[serde(default)]
+    pub edits_require_claim: bool,
+    /// `session.stranded_after:` — how long an open episode may be silent before its client
+    /// is taken to be gone (`90s`, `30m`, `12h`). `majordomus recover` reads it to judge an
+    /// episode stranded, and `worktree.uncommitted` reads the same value twice over: an
+    /// episode silent this long holds no work, and uncommitted work untouched this long
+    /// that nothing holds is abandoned. Absent is absent: no reader carries a default of
+    /// its own, because a second copy of the number is the drift the policy exists to stop.
+    ///
+    /// ```
+    /// use majordomus_cli::policy::SessionPolicy;
+    /// let declared: SessionPolicy =
+    ///     serde_json::from_str(r#"{"stranded_after": "12h"}"#).expect("a session block");
+    /// assert_eq!(declared.stranded_after.as_deref(), Some("12h"));
+    /// assert_eq!(SessionPolicy::default().stranded_after, None, "absent is not a default");
+    /// // a bare number is seconds, as the shell reader takes it, and never a parse failure
+    /// // that would take the rest of the policy down with it
+    /// let bare: SessionPolicy =
+    ///     serde_json::from_str(r#"{"stranded_after": 3600}"#).expect("a session block");
+    /// assert_eq!(bare.stranded_after.as_deref(), Some("3600"));
+    /// ```
+    #[serde(default, deserialize_with = "scalar_text")]
+    pub stranded_after: Option<String>,
+}
+
+/// A scalar read as the text it was written as: the subset reader hands `12h` over as a
+/// string and `3600` as a number, and both are the same kind of value to a duration.
+fn scalar_text<'de, D: serde::Deserializer<'de>>(
+    d: D,
+) -> std::result::Result<Option<String>, D::Error> {
+    Ok(match serde_json::Value::deserialize(d)? {
+        serde_json::Value::String(s) => Some(s),
+        serde_json::Value::Number(n) => Some(n.to_string()),
+        _ => None,
+    })
 }
 
 impl Default for SessionPolicy {
@@ -321,6 +371,9 @@ impl Default for SessionPolicy {
             ensure_server_on_start: true,
             knowledge_on_end: true,
             knowledge_on_compact: true,
+            brief_interval_minutes: None,
+            edits_require_claim: false,
+            stranded_after: None,
         }
     }
 }
@@ -337,8 +390,9 @@ pub struct LoadedPolicy {
     pub policy: Policy,
     /// Repository-relative path of the policy file.
     pub path: String,
-    /// SHA-256 (hex) of the policy file followed by every profile file, in name order,
-    /// concatenated: exactly what the shell tool's `mj_policy_cat` hashes.
+    /// SHA-256 (hex) of the [`normal_form`] of the policy file followed by that of every
+    /// profile file, in name order, concatenated: exactly what the shell tool's
+    /// `mj_policy_cat` hashes. A comment or a blank line does not move it (I1991).
     pub sha256: String,
 }
 
@@ -363,10 +417,10 @@ impl LoadedPolicy {
         // reading the policy twice does not move a judgement already in flight.
         crate::lease::declare_timings(&policy.server);
         let mut hasher = Sha256::new();
-        hasher.update(text.as_bytes());
+        hasher.update(normal_form(&text).as_bytes());
         for profile in profile_files(repository)? {
             let bytes = std::fs::read(&profile).map_err(|e| Error::io(&profile, e))?;
-            hasher.update(&bytes);
+            hasher.update(normal_form(&String::from_utf8_lossy(&bytes)).as_bytes());
         }
         Ok(LoadedPolicy {
             policy,
@@ -374,6 +428,46 @@ impl LoadedPolicy {
             sha256: format!("{:x}", hasher.finalize()),
         })
     }
+}
+
+/// The normal form of a file in the layer's YAML subset, which the policy hash covers in
+/// place of its bytes: trailing spaces, tabs and carriage returns dropped; blank lines and
+/// whole-line comments dropped; a trailing comment (a `#` after a space or tab) dropped
+/// from a line that holds no quote, since inside a quoted scalar ` #` may be text.
+/// Indentation, order and every value are kept, and every line ends in a newline.
+///
+/// It is the shell tool's `mj_yaml_normal` (lib/common.sh), line for line: the two must
+/// agree, or each renderer would call the other's bootstraps stale. The subset refuses
+/// block scalars, so no `#` line is ever content.
+///
+/// ```
+/// use majordomus_cli::policy::normal_form;
+///
+/// let edited = "# a new comment\nversion: 1   # the schema\n\ncontext:\n  name: \"a #b\"\n";
+/// assert_eq!(normal_form(edited), "version: 1\ncontext:\n  name: \"a #b\"\n");
+/// assert_eq!(normal_form(edited), normal_form("version: 1\ncontext:\n  name: \"a #b\"\n"));
+/// assert_ne!(normal_form("a: 1\n"), normal_form("a: 2\n"));
+/// ```
+pub fn normal_form(text: &str) -> String {
+    let mut out = String::with_capacity(text.len());
+    for raw in text.split('\n') {
+        let mut line = raw.trim_end_matches([' ', '\t', '\r']);
+        let body = line.trim_start_matches([' ', '\t']);
+        if body.is_empty() || body.starts_with('#') {
+            continue;
+        }
+        if !line.contains(['\'', '"']) {
+            let b = line.as_bytes();
+            if let Some(i) =
+                (1..b.len()).find(|&i| b[i] == b'#' && (b[i - 1] == b' ' || b[i - 1] == b'\t'))
+            {
+                line = line[..i].trim_end_matches([' ', '\t']);
+            }
+        }
+        out.push_str(line);
+        out.push('\n');
+    }
+    out
 }
 
 /// The profile files, `<profiles>/*.yaml`, sorted by name. An absent directory is no
@@ -443,6 +537,34 @@ pub fn is_safe_relative(path: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// `session.stranded_after` is read as the text it was written as: a duration as a
+    /// string, a bare number as its digits, anything else as absent, and a value that is
+    /// not even well-formed as the parse failure it is.
+    #[test]
+    fn a_stranded_after_is_text_a_number_or_absent() {
+        let read = |json: &str| serde_json::from_str::<SessionPolicy>(json);
+        let text = read(r#"{"stranded_after": "12h"}"#).unwrap();
+        assert_eq!(text.stranded_after.as_deref(), Some("12h"));
+        let number = read(r#"{"stranded_after": 3600}"#).unwrap();
+        assert_eq!(number.stranded_after.as_deref(), Some("3600"));
+        let other = read(r#"{"stranded_after": true}"#).unwrap();
+        assert_eq!(other.stranded_after, None);
+        assert!(read(r#"{"stranded_after": tru}"#).is_err());
+    }
+
+    #[test]
+    fn a_comment_or_a_blank_line_is_not_part_of_the_normal_form() {
+        let plain = "version: 1\ncontext:\n  budget: 150\n  list: [a, b]\n";
+        let commented = "# head\nversion: 1 # v\r\n\ncontext:   \n  # inside\n  budget: 150\t# cap\n  list: [a, b] #l\n";
+        assert_eq!(normal_form(commented), plain);
+        // a quoted line keeps what follows its quote, and a `#` with no space before it is text
+        assert_eq!(normal_form("a: 'x' # c\n"), "a: 'x' # c\n");
+        assert_eq!(normal_form("a: b#c\n"), "a: b#c\n");
+        // the last line needs no newline, and indentation is significant
+        assert_eq!(normal_form("a:\n  b: 1"), "a:\n  b: 1\n");
+        assert_ne!(normal_form("a:\n  b: 1\n"), normal_form("a:\nb: 1\n"));
+    }
 
     #[test]
     fn the_intent_block_is_read_from_the_policy_file_and_absent_means_off() {
@@ -534,4 +656,8 @@ pub struct ServerPolicy {
     /// on, and asked again, before its lease is taken over.
     #[serde(default)]
     pub busy_grace_seconds: Option<u64>,
+    /// `server.read_deadline_seconds:` — how long the shared server lets a connection go
+    /// without a request read in full on it before it closes the connection.
+    #[serde(default)]
+    pub read_deadline_seconds: Option<u64>,
 }

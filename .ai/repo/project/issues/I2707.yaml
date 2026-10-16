@@ -1,0 +1,28 @@
+id: I2707
+milestone: failure-is-visible
+title: "majordomus doctor reports a stale server, or says plainly that it checks governance only"
+slug: doctor-says-what-it-checks
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Make the top-level majordomus doctor either report the runtime of the checkout (server, lease, mesh) or say in its help, usage and reference that it checks governance alone."
+why: "Split from I2157 on 2026-10-14. I2157 made /api/v1/ready refuse a lost lease and name a degraded layer, and gave health.report a mesh check, and its desired_state said 'Not done here' of majordomus doctor, which still checks governance alone while its help does not say so; the shell usage, share/commands.yaml and docs/CLI.md that would change together were left to their own change. Its acceptance criteria still required it, so it could never close. Baseline audit of 2026-10-09 at master 1fb8d6be44, failure gap 10 and premise 4."
+current_state: "majordomus doctor is the governance doctor of lib/doctor.sh; it checks nothing about the server, the lease or the mesh, which its name suggests it does. Runtime health is read through health.report, GET /api/v1/ready, serve status and mesh doctor."
+desired_state: "majordomus doctor in a checkout whose server is stale reports it, or its help, the shell usage, share/commands.yaml and docs/CLI.md say together that it checks governance only and name where runtime health is read."
+scope:
+  - "lib/doctor.sh"
+  - "share/commands.yaml"
+  - "docs/CLI.md"
+  - "test/cases"
+non_scope:
+  - "Readiness and the health.report mesh check, which I2157 delivered"
+depends_on:
+  - I2157
+acceptance_criteria:
+  - "majordomus doctor in a checkout whose server is stale reports it, or its help states that it checks governance only"
+validation:
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "doctor_states_its_reach_case"
+created_at: 2026-10-14
+updated_at: 2026-10-14

@@ -1,7 +1,7 @@
 +++
 title = "Evidence"
 description = "a claim's proof as a recorded execution rather than a test path that resolves: the test identity derived from the matrix, the seven proof states and how each is derived, why `proven` and `inputs unchanged` are never one state, the ledger's shape and its retention decision, recording a run, the four capabilities with their projections, both directions of the join, the gate and its ratchet, and the limits"
-weight = 66
+weight = 74
 [extra]
 source = "docs/EVIDENCE.md"
 +++
@@ -396,7 +396,7 @@ A run measures the checkout it left with `evidence stamp`, and `evidence record`
 the run wrote, carries that measurement into each result with the digest, the time and the
 origin, and merges it into the ledger.
 
-<!-- majordomus:unrun each pair follows a whole suite run and a whole crate run, which no documentation check repeats; case 505 runs `evidence stamp` and `evidence record --provenance` for both producers over a fixture report -->
+<!-- majordomus:unrun each pair follows a whole suite run and a whole crate run, which no documentation check repeats; case 505 runs `evidence stamp` and `evidence record --provenance` for both producers over a fixture report, and case 2998 runs these lines through the launcher of an installed layout -->
 ```sh
 MJ_TEST_REPORT=suite.tsv bash test/run.sh
 majordomus evidence stamp --producer suite --report suite.tsv --out suite.provenance.json
@@ -513,6 +513,19 @@ every surface is derived from it ([`CAPABILITIES.md`](@/docs/capabilities.md)).
 
 </div>
 
+
+These five are subcommands of the Rust executable, and `majordomus` is the one program an
+installed tool puts on `PATH`. The shell tool has a command of the same name, which records
+what a task owes (`majordomus evidence --covers <token>`, `--gate <id>`;
+[`CLI.md`](@/docs/cli-specification.md#majordomus-evidence)) and takes options only. So a word in the first
+position is never the shell tool's: the launcher hands `show`, `claim`, `proves`, `record`
+and `stamp` to the executable with every argument unchanged, the global `--repo` included
+on either side of the command, and the exit code is then the executable's. Which words
+those are is read from the executable's own declaration, never listed in the launcher, and
+`majordomus evidence --help` prints both halves. Through 0.22.0 the word reached the
+option parser instead, which answered `evidence: unknown option record`; case
+`2998_evidence_reaches_the_subcommands_the_executable_owns` holds every line this page
+prints against the launcher, from a checkout and from an installed layout.
 
 `evidence show` takes `--state`, `--status` and `--findings` as filters and `--check`,
 which exits `10` when any claim declares a guarantee the evidence does not support. The
@@ -861,6 +874,7 @@ dispatches `pages.yml`, and that publication says current when the run confirms 
 When master has moved on, the newer publication already carries the evidence as stale and the
 newer run will refresh it.
 
+<!-- majordomus:unrun it fetches the workflow's retained artifacts with gh, which needs the network and a token; case 357 runs scripts/pages evidence --from over gathered fixture directories -->
 ```sh
 scripts/pages evidence                          # this commit, fetched with gh
 scripts/pages evidence --from <dir> --out FILE  # a gathered directory, offline

@@ -1,0 +1,130 @@
+#!/usr/bin/env bash
+# audit-plan-check — a gap the audit calls planned names a plan object that exists.
+#
+# docs/COCKPIT_IDE_AUDIT.md's gap matrix (§4) gives every capability one status from a fixed
+# vocabulary, and says in terms that "Planned" requires a plan object. Nothing read the
+# matrix: when it was written no row was planned and the work was in no plan at all, and the
+# negative stayed true, unnoticed, because a status nobody reads drifts with the first edit
+# (issue I1510). This gate reads the matrix and the plan together: a row whose status is
+# `planned` must name an issue id, and every id it names must be an issue of the plan
+# (.ai/repo/project/issues/<id>.yaml).
+#
+# It keys on two things only — the leading term of the row's `status` cell and the issue ids
+# in the row — so an editorial change to a sentence cannot fail it. Rows in the other
+# statuses are evidence claims, not plan claims, and are not read; nor is any table outside
+# the gap matrix's section. It does not judge whether the named issue is still open.
+#
+#   scripts/ci/audit-plan-check     report and refuse
+#
+# MJ_ROOT points it at another tree, which is how case 194 drives it over a fixture.
+# Exit: 0 every planned row names an issue that exists, 10 a finding, 12 the audit, its gap
+# matrix or the plan's issues directory is missing, 2 usage.
+set -eu
+set -o pipefail
+
+ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
+cd "$ROOT"
+[ $# -eq 0 ] || { echo "audit-plan-check: unknown option $1" >&2; exit 2; }
+
+AUDIT="docs/COCKPIT_IDE_AUDIT.md"
+ISSUES=".ai/repo/project/issues"
+[ -f "$AUDIT" ] || { echo "audit-plan-check: $AUDIT is missing; it is where the gap matrix is" >&2; exit 12; }
+[ -d "$ISSUES" ] || { echo "audit-plan-check: $ISSUES is missing; it is the plan a planned row names" >&2; exit 12; }
+
+# One line per row of a matrix table: "<line>\t<section>\t<capability>\t<planned 0|1>\t<ids>".
+# The matrix is the `## ... Gap matrix` section up to the next `## ` heading, fences excluded;
+# a table counts when its header has a `status` column. Exit 3 when the section is not there.
+rows_of_the_matrix() {
+  awk '
+    function cells(line, arr,   t, n, i) {
+      t = line; gsub(/\\\|/, "\001", t)
+      sub(/^[[:space:]]*\|/, "", t); sub(/\|[[:space:]]*$/, "", t)
+      n = split(t, arr, "|")
+      for (i = 1; i <= n; i++) {
+        gsub(/\001/, "|", arr[i]); sub(/^[[:space:]]+/, "", arr[i]); sub(/[[:space:]]+$/, "", arr[i])
+      }
+      return n
+    }
+    function separator(line,   a, n, i) {
+      n = cells(line, a)
+      for (i = 1; i <= n; i++) if (a[i] !~ /^:?-+:?$/) return 0
+      return n > 0
+    }
+    # every issue id in the row once: I and four or more digits, not inside a longer word
+    function ids(line,   t, out, seen, id, before, after) {
+      t = line; out = ""
+      while (match(t, /I[0-9][0-9][0-9][0-9]+/)) {
+        id = substr(t, RSTART, RLENGTH)
+        before = RSTART > 1 ? substr(t, RSTART - 1, 1) : ""
+        after = substr(t, RSTART + RLENGTH, 1)
+        if (before !~ /[A-Za-z0-9_]/ && after !~ /[A-Za-z0-9_]/ && !(id in seen)) {
+          seen[id] = 1; out = out (out == "" ? "" : " ") id
+        }
+        t = substr(t, RSTART + RLENGTH)
+      }
+      return out
+    }
+    /^[[:space:]]*(```|~~~)/ { fence = !fence; next }
+    fence { next }
+    /^## / { insec = (tolower($0) ~ /gap matrix/); if (insec) found = 1; section = "-"; scol = 0; prev = ""; next }
+    !insec { next }
+    /^### / { section = $0; sub(/^###[[:space:]]+/, "", section); scol = 0; prev = ""; next }
+    /^[[:space:]]*\|/ {
+      if (scol == 0 && prev != "" && separator($0)) {
+        n = cells(prev, h)
+        for (i = 1; i <= n; i++) if (tolower(h[i]) == "status") scol = i
+        prev = ""; next
+      }
+      if (scol == 0) { prev = $0; next }
+      cells($0, c)
+      s = tolower(c[scol]); gsub(/[*_`]/, "", s); sub(/^[[:space:]]+/, "", s)
+      cap = c[1]; if (cap == "") cap = "-"
+      printf "%d\t%s\t%s\t%d\t%s\n", NR, section, cap, (s ~ /^planned([^a-z]|$)/), ids($0)
+      next
+    }
+    { scol = 0; prev = "" }
+    END { if (!found) exit 3 }
+  ' "$AUDIT"
+}
+
+rc=0
+rows="$(rows_of_the_matrix)" || rc=$?
+if [ "$rc" -eq 3 ]; then
+  echo "audit-plan-check: $AUDIT has no '## ... Gap matrix' section; there is no matrix to read" >&2
+  exit 12
+fi
+[ "$rc" -eq 0 ] || { echo "audit-plan-check: reading $AUDIT failed (awk exit $rc)" >&2; exit 12; }
+if [ -z "$rows" ]; then
+  echo "audit-plan-check: the gap matrix of $AUDIT has no table with a status column; a matrix this cannot read is not a pass" >&2
+  exit 12
+fi
+
+findings=""; n_rows=0; n_planned=0
+tab="$(printf '\t')"
+while IFS="$tab" read -r line section cap planned ids; do
+  n_rows=$((n_rows + 1))
+  [ "$planned" = 1 ] || continue
+  n_planned=$((n_planned + 1))
+  where="$AUDIT:$line row '$cap' ($section)"
+  if [ -z "$ids" ]; then
+    findings="$findings  UNPLANNED  $where is planned and names no issue
+"
+    continue
+  fi
+  for id in $ids; do
+    [ -f "$ISSUES/$id.yaml" ] \
+      || findings="$findings  MISSING    $where is planned as $id, which no $ISSUES/$id.yaml declares
+"
+  done
+done <<EOF
+$rows
+EOF
+
+if [ -n "$findings" ]; then
+  echo "audit-plan-check: a gap the audit calls planned does not name an issue of the plan:"
+  printf '%s' "$findings"
+  echo "  name the issue that schedules the row (an id of $ISSUES), or give the row the status"
+  echo "  the repository supports today; 'planned' requires a plan object"
+  exit 10
+fi
+echo "audit-plan-check: $n_planned planned row(s) of $n_rows in the gap matrix of $AUDIT, each naming an issue that exists"

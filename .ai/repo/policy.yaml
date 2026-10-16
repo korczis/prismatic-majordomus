@@ -52,6 +52,23 @@ intent:
     - id: exploration
       description: Reading, measuring or prototyping whose result is a finding and not a change to the product
 
+# Who raises the version and by at least how much (ADR 0134). Every eligible integration
+# advances at least a minor; a change one exemption class covers entirely is held to no
+# floor, and to whatever its movement of the public contract still requires. Allocation
+# stays `off` until a pull request stops raising its own version (ADR 0134, slice C):
+# until then `majordomus release next` reports what a landing would raise to, and a pull
+# request still raises its own version.
+release:
+  allocation: off
+  floor: minor
+  exempt:
+    - id: release-record
+      description: The record a release writes of itself, and the projections derived from it
+      paths: [".ai/repo/releases/**", "site/static/releases/**", "docs/generated/**", "site/data/generated/**", "site/data/registry/**", "site/content/**", "share/version.txt", "docs/PAGES_STATUS.md", "docs/PLAN_STATUS.md"]
+    - id: plan-records
+      description: Plan, intent, session, evidence and knowledge records, which change no product behaviour
+      paths: [".ai/repo/project/**", ".ai/repo/sessions/**", ".ai/repo/evidence/**", ".ai/repo/knowledge/**"]
+
 handover:
   required_sections: [Objective, Current State, Next Action]
   retention_max_files: 200
@@ -104,6 +121,13 @@ session:
   # leaving it in the working tree is the same as not writing it.
   commit_record_on_end: true
   push_record_on_end: true
+  # The cap on the closed records the sessions section holds, and whether the oldest beyond
+  # it may be moved aside. A record is history and is never deleted: `majordomus session
+  # archive` moves the oldest over the cap into the section's archive/ directory, only when
+  # it is run, and refuses to overwrite a record already there. Over the cap, `doctor` fails
+  # and `watch` drifts, the way they do for checkpoints and handovers.
+  retention_max_files: 500
+  archive: true
   briefing_budget_lines: 60              # cap on what the start event injects, per episode
   checkpoint_on_compact: true            # also the checkpoint the close records, for the
                                          # same reason: both are moments at which what the
@@ -111,6 +135,11 @@ session:
   handover_on_end: true
   handover_on_fill: true                 # ask the worker for a handover while the context
                                          # window still has room to write one (ADR 0123)
+  brief_on_interval: true                # keep the session briefed on what surrounds it, as
+                                         # its status line and on an interval (ADR 0136)
+  brief_interval_minutes: 20             # how often a session reports on itself unasked
+  edits_require_claim: true              # refuse an edit no claim covers: the active task's
+                                         # scope or a live mesh claim of the session (I2735)
   knowledge_on_end: true                 # the evidence the episode produced is about to stop
                                          # being reachable; derive what it says as the
                                          # episode closes, on every close path
@@ -251,6 +280,10 @@ use_cases:
 # repo-relative, or absolute in the hook line), be executable, and be invoked by the
 # artifact named in wired_by without its exit code being swallowed.
 enforcement:
+  - name: ssh-permissions-on-commit
+    path: scripts/ci/providers-check
+    args: [--permissions-only]
+    wired_by: git-hook:pre-commit
   - name: doctor-on-commit
     path: bin/majordomus
     args: [doctor]
@@ -339,6 +372,7 @@ server:
   bind_grace_seconds: 15
   join_timeout_seconds: 20
   busy_grace_seconds: 10
+  read_deadline_seconds: 30
 
 projections:
   - provider: agents
@@ -346,5 +380,7 @@ projections:
     always_loaded: true
   - provider: claude-code
     target: CLAUDE.md
+  - provider: gemini
+    target: GEMINI.md
   - provider: bb
     target: .bb/AGENTS.md

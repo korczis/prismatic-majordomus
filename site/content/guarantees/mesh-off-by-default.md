@@ -1,7 +1,7 @@
 +++
 title = "No mesh discovery socket opens until the repository commits an enabled mesh declaration that lists this machine's key, and a disabled, absent or unlisting declaration is reported as the reason, not an error"
 description = "The repository's standing posture — nothing leaves the machine — survives the existence"
-weight = 214
+weight = 217
 [extra]
 claim_id = "mesh-off-by-default"
 status = "guaranteed"

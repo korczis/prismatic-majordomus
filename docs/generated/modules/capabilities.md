@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the `capabilities` module of the canonical Majordomus capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.21.0 -->
+     Generator: majordomus-cli 0.27.0 -->
 # Module `capabilities` — Capabilities
 
 The registry seen through itself: every capability with its kind, stability, provenance, exposures, benchmark and cache policy, and one capability in full.
@@ -18,7 +18,7 @@ One capability by canonical id: its kind, schemas, provenance, stability, exposu
 | MCP tool | `majordomus_capability` |
 | HTTP | `GET /api/v1/capability` |
 | CLI | `majordomus capabilities describe` |
-| cache | — |
+| cache | process, 512 entries |
 | benchmark | required |
 | provenance | builtin majordomus_cli::capability::builtin::capabilities |
 | tags | introspection |

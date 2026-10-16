@@ -8,13 +8,23 @@
 #   internal     a same-origin URL, absolute (https://majordomus.dev/x/, which is what Zola emits)
 #                or root-relative (/x/): a file must exist under site/public for it
 #   fragment     #id, or a same-origin URL carrying one: the id must exist on the page it lands on.
-#                A bare "#" goes nowhere and is refused
+#                A bare "#" goes nowhere and is refused. One fragment names more than an id:
+#                #diagram-<name>:<node> addresses one node of a diagram (ADR 0152), and resolves
+#                when the page carries the diagram and the diagram declares the node, as
+#                scripts/lib/diagrams.mjs wrote both into the markup (id, data-nodes)
 #   repository   a URL into this repository on its forge, resolved against git rather than fetched:
 #                blob/<ref>/<path> is a tracked file, tree/<ref>/<path> a tracked directory (or a
 #                file, which the forge redirects), commit/<sha> a commit in the history being
 #                published, releases/tag/<tag> and tree/<tag> a tag, compare/<a>...<b> two refs.
 #                The ref @source-ref@ is refused by name: it is the placeholder committed content
 #                carries (scripts/lib/project-links.awk) until scripts/site-build pins it
+#   snapshot     the root of a mount the publication holds a snapshot at and this build does not
+#                compose (ADR 0141; /build.json `snapshots`, which scripts/site-build writes
+#                from the publication model's deploy.snapshots). The deploy places the snapshot
+#                after this check and refuses a site without it, and the public probe asks for
+#                it (project.the-published-ui-is-the-trunks), so the root is decided by that
+#                declaration. A link deeper into the mount is refused unless the snapshot is in
+#                the tree: which pages a snapshot holds is its producer's bound, not this site's
 #   refused      javascript:, an empty href, and a host none of the above resolves. A link that
 #                cannot be decided without the network is not published: the finding says so,
 #                and the way to add one is to teach this check how to decide it
@@ -80,6 +90,17 @@ if os.path.isfile(ev):
 def git(*args):
     return subprocess.run(['git', '-C', ROOT, *args], capture_output=True, text=True)
 
+# The mounts the publication holds a snapshot at, as this build's own identity file states them.
+SNAPSHOT_MOUNTS = set()
+bj = os.path.join(PUB, 'build.json')
+if os.path.isfile(bj):
+    import json
+    try:
+        for s in (json.load(open(bj, encoding='utf-8')) or {}).get('snapshots') or []:
+            if (s.get('mount') or '').strip('/'): SNAPSHOT_MOUNTS.add('/' + s['mount'].strip('/'))
+    except ValueError:
+        pass
+
 # ------------------------------------------------------------------ the built site
 # the composed mounts, relative to the build: "/rustdoc" -> "rustdoc"
 COMPOSED = [m.strip('/') for m in os.environ.get('MJ_LINK_COMPOSED', '').split() if m.strip('/')]
@@ -104,6 +125,15 @@ def ids_of(route):
     if route not in ids and route in composed_pages:
         ids[route] = set(ID_RX.findall(open(composed_pages[route], encoding='utf-8', errors='replace').read()))
     return ids.get(route, set())
+# the nodes each diagram of a page declares: route -> {diagram id -> node ids}, read from what
+# scripts/lib/diagrams.mjs wrote on the <pre> (id, then data-nodes). A node fragment is decided
+# against this and nothing else: the drawing does not exist until a browser makes it.
+DIAGRAM_RX = re.compile(r'<pre\b[^>]*\sid="(diagram-[^"]+)"[^>]*\sdata-nodes="([^"]*)"')
+diagram_nodes = {}
+def nodes_of(route, diagram):
+    if route not in diagram_nodes:
+        diagram_nodes[route] = {d: set(html.unescape(n).split()) for d, n in DIAGRAM_RX.findall(pages.get(route, ''))}
+    return diagram_nodes[route].get(diagram)
 # every attribute that makes the browser go somewhere; srcset is split into its URLs
 # quote-aware: an attribute value may hold ">" (an Alpine handler's `() => {...}`), which [^>]* would end the tag on
 ATTR_RX = re.compile(r'<(a|link|script|img|source|iframe|area)\b((?:\s+[^\s"\'>/=]+(?:\s*=\s*(?:"[^"]*"|\'[^\']*\'|[^\s"\'>]+))?)*)\s*/?>', re.I)
@@ -242,12 +272,23 @@ def decide(page, raw):
     if page == '/sitemap.xml' and not path: path = '/'
     target = resolve_file(path) if path else None
     if target is None:
+        rel = urllib.parse.unquote(path)
+        if PREFIX and rel.startswith(PREFIX): rel = rel[len(PREFIX):] or '/'
+        for mnt in SNAPSHOT_MOUNTS:
+            if rel.rstrip('/') == mnt and not u.fragment: return ('snapshot', None)
+            if rel.startswith(mnt + '/'):
+                return ('snapshot', f'{raw} leads into the snapshot the publication holds at {mnt}/, past its root; only the root is decided before the snapshot is placed')
         return ('internal', f'{raw} resolves to no file under site/public')
     if u.fragment:
         r = route_of(target)
         if r is None: return ('fragment', None)
         frag = urllib.parse.unquote(u.fragment)
         if frag not in ids_of(r):
+            diagram, colon, node = frag.partition(':')
+            if colon and diagram.startswith('diagram-') and diagram in ids_of(r):
+                declared = nodes_of(r, diagram)
+                if declared is not None and node in declared: return ('fragment', None)
+                return ('fragment', f'{raw} names node {node} of #{diagram}, which that diagram on {r} does not declare')
             return ('fragment', f'{raw} names #{frag}, which {r} does not carry')
         return ('fragment', None)
     return ('internal', None)
@@ -264,7 +305,7 @@ for (cls, problem), where in sorted(by_page.items()):
     fail(cls, f'{where[0]}: {problem}{extra}')
 
 total = sum(counts.values())
-summary = ', '.join(f'{counts[c]} {c}' for c in ('internal', 'fragment', 'repository', 'refused') if counts[c])
+summary = ', '.join(f'{counts[c]} {c}' for c in ('internal', 'fragment', 'repository', 'snapshot', 'refused') if counts[c])
 if undecided:
     missing = ' and '.join(x for x, ok in (('history', knows_history), ('tags', knows_tags)) if not ok) or 'refs'
     print(f'link-check: {len(undecided)} link(s) to a commit, compare, tag or ref cannot be decided '

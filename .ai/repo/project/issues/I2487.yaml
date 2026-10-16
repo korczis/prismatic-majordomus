@@ -1,0 +1,39 @@
+id: I2487
+milestone: development-runtime
+title: "A screen is streamed, and one stream tells an open page which readings changed"
+slug: a-screen-is-streamed-and-follows-its-readings
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Send a screen as it becomes known and keep it current without polling: the shell and every panel whose reading is at hand are written at once, a panel whose first reading is pending follows on the same response, and after that one WebSocket subscription tells the page which readings changed."
+why: "ADR 0142, part 2. After I2486 a screen no longer waits for a source it has read before, but a first reading is still waited for whole, and an open page learns of a change by reading itself again on a timer (60 s, or the catch-up re-read). The owner asked for a streamed UI. ADR 0033 made /events a WebSocket with a cursor and refused a second event channel, and the UI-performance batch's live-stream slice gave it paged replay, a heartbeat and a gap check, so the stream to build on exists."
+current_state: "A response is written whole with its Content-Length (http/server.rs respond; chunking is switched off). The UI's script polls ?fragment every 60 s and, after I2486, re-reads a screen that is catching up. /events carries execution events only, and the UI opens no socket."
+desired_state: "The router can answer with a body written in parts. A UI screen writes its head, shell and every panel whose reading is at hand first; a panel whose reading is pending is written when it arrives, in document order, so the page is complete without a script and no reader waits for the slowest source to see the rest. capability::readings publishes a typed event when a reading changes (source, input digest, state of the repository), on the event model of ADR 0033; the UI's script holds one subscription per page, with the cursor and gap check the live-stream slice defined, and replaces the panels that name a changed source with the server's rendering of them. The 60 s poll and the catch-up re-read are removed. A page without the script, or without the socket, is still complete and says when it was read."
+scope:
+  - "apps/majordomus-cli/src/http"
+  - "apps/majordomus-cli/src/ui"
+  - "apps/majordomus-cli/src/capability/readings.rs"
+  - "share/ui/ui.js"
+  - "docs/MAJORDOMUS_UI.md"
+  - test/cases
+  - ".ai/repo/project/issues/I2487.yaml"
+depends_on:
+  - I2486
+acceptance_criteria:
+  - "The first bytes of a screen whose slowest source is pending arrive before that source answers, and the response ends with that panel in its place"
+  - "With scripts off, every screen is complete HTML once the response ends"
+  - "A change of a reading reaches a subscribed page as one typed event naming the source, and the page replaces the panels that cite it without reading the whole screen again"
+  - "A subscriber that fell behind is told so and reads the screen again; it is never left showing a value it was not told had changed"
+  - "The UI's script holds no timer that reads a screen again"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --lib http::"
+  - "cargo test --lib ui::"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 1097_a_screen_is_streamed"
+evidence_required:
+  - "streamed_response_tests"
+  - "reading_changed_event_tests"
+  - "a_screen_is_streamed_case_1097"
+  - "browser_probe_no_poll"
+created_at: 2026-10-12
+updated_at: 2026-10-12

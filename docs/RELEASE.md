@@ -325,11 +325,24 @@ Nothing caught it, and the reason is worth keeping: `scripts/ci/version-matches-
 whether the **declared** version covers what the surface **owes** — declared-versus-owed. Nobody
 asked **shown-versus-shipped**. Both questions are about the version; only one was ever posed.
 
-So `generate-site-data` writes `release` beside `version`, read from the newest record under
-`.ai/repo/releases/` — the same records the changelog, the baselines and `/releases/latest.json`
-read. The badge renders `project.release`, guarded: a repository with nothing released shows no
-badge rather than falling back to the tree's version, because that fallback *is* the defect. The
-tree's own version stays visible to anyone auditing a build, in `/build.json`.
+So the site carries the release it offers apart from the tree's `version`, and the badge
+renders that, guarded: a repository with nothing released shows no badge rather than falling
+back to the tree's version, because that fallback *is* the defect. The tree's own version stays
+visible to anyone auditing a build, in `/build.json`.
+
+Which release it offers was at first read from the newest record under `.ai/repo/releases/`.
+That answered *shown-versus-shipped* for the tree and not for the hours after a release: the
+record reaches master through a pull request the release opens after publishing, and on
+2026-10-12 the homepage offered v0.20.0 from 10:23Z, when `/releases/latest.json` already named
+v0.21.0, until that pull request passed its own validation. The offer is now derived once, by
+`scripts/site-build`, as the newer of the newest record and the `releases/latest.json` that
+`gh-pages` already serves, into `build.json` as `release` — every page reads it from there
+(`offered` in `base.html`), and `site/data/generated/project.json` carries no release at all.
+`scripts/site-check` refuses a build whose homepage, `/build.json` and served `latest.json`
+disagree, and a tree whose two committed projections of the latest release do; `scripts/pages release-live`
+holds the live homepage, `latest.json` and GitHub's newest release to one version once
+`deploy.release_window` has passed. The rule is
+`project.the-site-offers-the-release-it-published`; `test/cases/1087` breaks each surface.
 
 `scripts/site-check` refuses a published tree whose offered version has no release document, so
 this stops a publication rather than being found by a reader. It is scoped to what the site
@@ -558,7 +571,9 @@ appended is refused, naming the tag.
 | `test/cases/103_release_projection.sh` | the whole surface against the real executable, in a disposable repository with a real history: which commits fall in which range, which decision belongs to which window, a record added with nothing else edited, a subject that follows no convention carried rather than dropped, a fixture whose repository is not a forge the tool knows producing no link rather than a guessed one, a commit naming one id the layer holds and one it does not, and every exit code above |
 | `test/cases/743_release_version_answers_with_the_contract.sh` | on a fixture whose commits say BREAKING and whose surface only grew, `release version`'s `next` is `release analyze`'s required version, decided by the contract, with the commits' major shown as evidence, and `release bump --dry-run` raises to that same 0.11.0; with no published baseline `next` is absent, `decided_by: undecided` with its reason, a bump with no target refuses with exit 12 and a named one is still written, the manifest raised to 0.11.0; a version stated by hand in `lib/` leaves the plan unsound, so `next` is absent, `decided_by: undecided` with the `version-stated-by-hand` message, and `release bump --dry-run` refuses with exit 12 and that same message; a version already raised to the requirement is not raised again; a manifest with no version line is not passed off as the contract's answer and a bump with no target refuses it; after a published release with only a `fix:` since and an unchanged surface, `next` is a patch above it and not the release itself, and `release bump --dry-run` raises to that same 0.11.1; and with a version declared above the minimum the commit inference still raises the last release |
 | `test/cases/484_the_version_is_authored_once.sh` | the shell tool states no version; it prints the authority because it reads its own projection, generated from the manifest and never from `MAJORDOMUS_SHARE`; a hand-edited projection is refused by `generate --check`; the writer writes the manifest's line and the lock's own entry and nothing else; a version written by hand in `lib/` is refused — each section first shown to fail against the tree before ADR 0085 |
-| `scripts/ci/release-check` | the manifest the writer names is the one the release script reads, the shell tool prints what it declares on every plan rather than only at publication, the lock records it, no hand-kept changelog has appeared, and the tree is not behind the newest release the layer records |
+| `scripts/ci/release-check` | the manifest the writer names is the one the release script reads, the shell tool prints what it declares on every plan rather than only at publication, the lock records it, no hand-kept changelog has appeared, the tree is not behind the newest release the layer records, and every published tag has a record — or, for at most a day, a `release/record-<tag>` branch proposing one ([`DISTRIBUTION.md`](DISTRIBUTION.md#releasing) says why the tag comes first); before that branch exists, a tag whose release run is queued or running, or that has neither run nor GitHub release yet within the same day, is pending with its run named — asked of the forge with `gh`, and where the forge cannot be asked (no `gh`, no token, no GitHub repository known) the tag is not excused |
+| `test/cases/3021_a_tag_does_not_freeze_the_queue.sh` | a head that changes no release file passes while a tag's record is proposed, naming the tag pending; the record's own branch passes as recorded; a record branch without the record, a proposal past its grace and no proposal at all are refused |
+| `test/cases/3029_a_tag_in_flight_is_pending.sh` | before the record branch exists, a tag whose release run is queued or running — or that has no run listed and no GitHub release yet, inside the grace — is pending with its run named; a concluded run, a published GitHub release, a forge that cannot be read and an unknown repository leave the finding standing, each with a note |
 | gate `version-authored-once` | `bin/majordomus-cli release version`: the projection is current and no version is written by hand where the tool's files live |
 | `scripts/rust-check` (gate `rust-check`) | `generate --check`: the committed changelog and `share/version.txt` still describe the tree |
 | `scripts/release-version --check` | the shell tool prints the version the manifest declares — the question `generate --check` leaves open |

@@ -28,9 +28,13 @@ CLAIMS="$ROOT/docs/CLAIMS.yaml"
 expect_grep '^#!\[warn\(missing_docs\)\]' "$CRATE/src/lib.rs"
 expect_grep '^#!\[warn\(missing_docs\)\]' "$CRATE/src/main.rs"
 
-# --- one script, every gate, in CI's order; each label is followed by the real command
+# --- one script, every gate, in CI's order; each label is followed by the real command.
+#     The quality report is declared once, before the others: a person's run (the default
+#     mode, --quality) asks it first and CI's modes after web validate (I2715); case 3032
+#     proves both orders at run time.
 [ -x "$RC" ] || { echo "    scripts/rust-check is missing or not executable"; exit 1; }
-want='cargo fmt --check
+want='quality report
+cargo fmt --check
 cargo clippy -D warnings
 cargo test
 cargo doc -D warnings
@@ -41,7 +45,6 @@ capabilities validate
 generate --check
 bench coverage --check
 web validate
-quality report
 scripts/rust-coverage (crate $threshold%, session domain $domain%)
 artifact $ARTIFACT'
 got="$(grep -oE '^[[:space:]]*step "[^"]+"' "$RC" | sed -E 's/^[[:space:]]*step "//; s/"$//' | grep -v '^rust-check:')"

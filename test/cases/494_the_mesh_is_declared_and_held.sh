@@ -53,7 +53,7 @@ jq -e '[.output.checks[] | select(.check == "runtime" and .ok and (.detail | sta
 
 # ---------------------------------------------------------------- 2. a disposable repository, through the start event
 "$MJ" init >/dev/null; "$MJ" update >/dev/null
-# init seeds an enabled, closed declaration (ADR 0139); this case declares its own, one per
+# init seeds an enabled, closed declaration (ADR 0168); this case declares its own, one per
 # step, starting from none
 rm -f .ai/repo/mesh/mesh.yaml
 mkdir -p lib && echo a > lib/a && git add . && git commit -qm base

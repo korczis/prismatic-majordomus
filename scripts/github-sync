@@ -11,7 +11,7 @@
 #
 #   scripts/github-sync            what would change, computed offline; no token needed
 #   scripts/github-sync --plan     the same, explicitly
-#   scripts/github-sync --render <id>   the exact body that would be posted for one record
+#   scripts/github-sync --render <id>...  the exact body that would be posted, per record in turn
 #   scripts/github-sync --check    compare against the live repository; exit 11 on drift
 #   scripts/github-sync --apply    create what is missing, update what canonically changed
 #
@@ -85,7 +85,10 @@ while [ $# -gt 0 ]; do
     --plan) MODE=plan; shift ;;
     --check) MODE=check; shift ;;
     --apply) MODE=apply; shift ;;
-    --render) [ $# -ge 2 ] || { echo "github-sync: --render needs an id" >&2; exit 2; }; MODE=render; RENDER="$2"; shift 2 ;;
+    # one id or several: the model is loaded once for all of them, which is what lets a gate
+    # render every record without paying the load once per record
+    --render) [ $# -ge 2 ] || { echo "github-sync: --render needs an id" >&2; exit 2; }; MODE=render; RENDER="$2"; shift 2
+              while [ $# -gt 0 ]; do case "$1" in -*) break ;; esac; RENDER="$RENDER $1"; shift; done ;;
     --milestone) [ $# -ge 2 ] || { echo "github-sync: --milestone needs an id" >&2; exit 2; }; ONLY="$2"; shift 2 ;;
     --force) FORCE=1; shift ;;
     -h|--help) sed -n '2,71p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
@@ -112,6 +115,9 @@ REPO="$(mj_pj_repository)"
 region_content() {
   local id="$1"
   printf -- '%s\n' "$(record_marker "$id")"
+  # the body canonical_hash already rendered for this record in this run, byte for byte, when
+  # it rendered cleanly; otherwise rendered here, so that a failing render still fails here
+  if [ -f "$MJ_PJ/body.$id" ]; then cat "$MJ_PJ/body.$id"; return 0; fi
   if mj_pj_is_milestone "$id"; then mj_plan_body_milestone "$id"; else mj_plan_body_issue "$id"; fi
 }
 render_body() {
@@ -127,11 +133,23 @@ render_body() {
 # behind pointing at the wrong record. It is what lets a person rename an issue on GitHub
 # without the adapter losing it — or, worse, creating a second one.
 record_marker() { printf -- '<!-- majordomus:record %s -->' "$1"; }
+# The canonical record cannot move while this process runs, so it is rendered and hashed once
+# and both are kept in the model's own workspace — files, because most callers ask from inside
+# a command substitution, where a variable would die with the subshell. Every body was rendered
+# twice and --check hashed it a third time; region_content reuses the body kept here. Only a
+# render that succeeded is kept: a failing one is rendered again by its next caller, and fails
+# there as it did before.
 canonical_hash() {
-  local id="$1" tmp sha
+  local id="$1" tmp sha rc memo="$MJ_PJ/hash.$1"
+  if [ -s "$memo" ]; then cat "$memo"; return 0; fi
   tmp="$(mktemp "${TMPDIR:-/tmp}/mj.gh.XXXXXX")"
   if mj_pj_is_milestone "$id"; then mj_plan_body_milestone "$id" > "$tmp"; else mj_plan_body_issue "$id" > "$tmp"; fi
-  sha="$(mj_sha256 "$tmp" | cut -c1-16)"; rm -f "$tmp"; printf '%s' "$sha"
+  rc=$?
+  sha="$(mj_sha256 "$tmp" | cut -c1-16)"
+  if [ "$rc" = 0 ] && [ -n "$sha" ]; then
+    mv "$tmp" "$MJ_PJ/body.$id"; printf '%s' "$sha" > "$memo"
+  else rm -f "$tmp"; fi
+  printf '%s' "$sha"
 }
 title_of()  { if mj_pj_is_milestone "$1"; then printf '%s — %s' "$1" "$(mj_pj_m_title "$1")"; else printf '%s — %s' "$1" "$(mj_pj_i_title "$1")"; fi; }
 state_of()  { case "$(mj_pj_i_status "$1")" in DONE|CANCELLED) printf 'closed' ;; *) printf 'open' ;; esac; }
@@ -152,8 +170,12 @@ selected_milestones() { if [ -n "$ONLY" ]; then printf '%s\n' "$ONLY"; else mj_p
 . "$ROOT/lib/plan.sh"
 
 if [ "$MODE" = render ]; then
-  [ -f "$(mj_pj_flat "$RENDER")" ] || { echo "github-sync: no record '$RENDER'" >&2; exit 12; }
-  render_body "$RENDER"
+  # every id is resolved before anything is printed, so a missing record never leaves a
+  # partial rendering behind it; the bodies follow in the order they were asked for
+  for id in $RENDER; do
+    [ -f "$(mj_pj_flat "$id")" ] || { echo "github-sync: no record '$id'" >&2; exit 12; }
+  done
+  for id in $RENDER; do render_body "$id"; done
   exit 0
 fi
 
@@ -329,11 +351,19 @@ if [ "$FIXTURE" = 1 ]; then
   [ -n "${MJ_GH_FIXTURE_ISSUES:-}" ] && cat "$MJ_GH_FIXTURE_ISSUES" > "$REMOTE_IS"
   true
 else
+  # A listing that failed is not an empty remote. Read as empty, every record would be
+  # reported missing, the gate would count a ratchet breach where it should say it cannot
+  # read, and an apply would create every issue a second time.
+  unreadable() {
+    echo "github-sync: could not list the $1 of $REPO; nothing was read and nothing was changed (reproduce: gh api repos/$REPO/$1)" >&2
+    exit 12
+  }
   gh api --paginate "repos/$REPO/milestones?state=all" \
-    --jq '.[] | [(.number|tostring), .title, .state] | @tsv' > "$REMOTE_MS" 2>/dev/null || true
+    --jq '.[] | [(.number|tostring), .title, .state] | @tsv' > "$REMOTE_MS" 2>/dev/null \
+    || unreadable milestones
   gh api --paginate "repos/$REPO/issues?state=all&per_page=100" \
     --jq '.[] | select(has("pull_request")|not) | [(.number|tostring), .title, .state, (.body // "" | @base64), (.milestone.title // ""), ((.body // "") | [scan("majordomus:record ([A-Za-z0-9_.-]+)")] | if length > 0 then .[0][0] else "" end)] | @tsv' \
-    > "$REMOTE_IS" 2>/dev/null || true
+    > "$REMOTE_IS" 2>/dev/null || unreadable issues
 fi
 
 # One resolution for every question about a remote issue. A record is found by the identity
@@ -470,7 +500,8 @@ done
 # cannot be assigned to a milestone the adapter does not know the title of. Re-read.
 if [ "$MODE" = apply ] && [ "$FIXTURE" = 0 ]; then
   gh api --paginate "repos/$REPO/milestones?state=all" \
-    --jq '.[] | [(.number|tostring), .title, .state] | @tsv' > "$REMOTE_MS" 2>/dev/null || true
+    --jq '.[] | [(.number|tostring), .title, .state] | @tsv' > "$REMOTE_MS" 2>/dev/null \
+    || { echo "github-sync: could not list the milestones of $REPO again after writing them; no issue was touched (reproduce: gh api repos/$REPO/milestones)" >&2; exit 12; }
 fi
 
 # ---------------------------------------------------------------- issues

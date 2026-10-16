@@ -48,6 +48,18 @@ a check passed, it failed.
 - `--json` on any read-only command emits one JSON object per finding on stdout.
 - Nothing is written to stderr except usage errors and internal errors.
 - A finding without a reproduce command is a bug in Majordomus.
+- `MAJORDOMUS_CAPABILITY_CACHE=off` runs every capability without the executor's cache:
+  every call runs its handler and nothing is kept. The answers are the same with or without
+  it (`project.cache-is-invisible`); it exists to settle a doubt by asking without the cache.
+  A capability's own policy says what its answer is kept under: the registry fingerprint,
+  the context's reading of the repository (`generation`), or the checkout's state as well
+  (`checkout`: HEAD, the staging index, the refs, and every changed or untracked path).
+  The switch also makes a page's reading of a source run its handler and wait for it.
+- `MAJORDOMUS_READING_PATIENCE_MS` sets how long a page waits for a source after the
+  repository changed before it shows the reading it has, marked stale (50 by default; see
+  [`MAJORDOMUS_UI.md`](@/docs/majordomus-ui.md#fast-and-current)). `wait` makes every read wait for
+  a current reading, which is what a test that changes a repository and then reads a page
+  needs to be exact.
 
 ---
 
@@ -737,7 +749,19 @@ validation gate of the CI model that has reported.
 ```
 majordomus evidence --covers <token> [--type <kind>] (--command <cmd> | --artifact <ref>) [--result <r>] [--json]
 majordomus evidence --gate <id> --exit <status> [--command <cmd>] [--result <r>] [--json]
+majordomus evidence <show|claim|proves|record|stamp> [options]
 ```
+
+The third form is the other program's. Every argument this command takes is an option, so a
+word in the first position is never its own: `show`, `claim`, `proves`, `record` and `stamp`
+are subcommands of the Rust executable, which holds the ledger of what ran
+([`EVIDENCE.md`](@/docs/evidence.md#the-capabilities)), and the launcher hands them to it with
+every argument unchanged — `--repo` on either side of the command included. Their exit
+codes are the executable's, and they need no active task. Which words those are is read
+from the executable's own declaration (`docs/generated/cli.yaml` in a checkout, the shipped
+executable's `help evidence <word>` in an installed tree), so `majordomus evidence --help`
+lists exactly the subcommands this installation reaches. A word neither program has is
+refused here, exit `2`. The rest of this section is about the first two forms.
 
 The two forms record different kinds of fact and are never one invocation. An obligation is
 a promise the task made; a gate is what the validation pipeline said about the tree. A line
@@ -829,13 +853,38 @@ branch-breaking defects overnight because they looked identical
 (`majordomus.never-reported-is-not-green`).
 
 The whole judgement — every gate, the plan that selected it, which obligations the change
-implies, and the nineteen questions of the done invariant with the source that answered each
-— is one document, `gates.completion`, read the same way by the command line, the HTTP API,
-MCP and the Cockpit:
+implies, and the twenty-two questions of the done invariant with the source that answered
+each — is one document, `gates.completion`, read the same way by the command line, the HTTP
+API, MCP and the Cockpit:
 
 ```
 majordomus-cli run gates.completion --input '{}' --format json | jq '.output.questions'
 ```
+
+### The closing questions
+
+Three of those questions are the ones a person asks when a session ends, and a worker is
+not their source (`project.a-closing-question-is-answered-by-measurement`). Each is read
+from the record that holds the fact, measured from where the task started:
+
+<div class="overflow-x-auto" tabindex="0">
+
+| question | asks | read from | when it is not `pass` |
+|---|---|---|---|
+| `no-new-debt` | is the recorded debt no larger than when the task started? | the entries of every `.ai/repo/*-baseline.txt` at the commit the task started at and in the working tree | `fail`, naming each baseline that grew and by how much |
+| `nothing-accumulated` | has every branch and worktree created since gone again? | git's reflogs: when each local branch and each linked worktree began | `queued`, naming what remains, with the totals now |
+| `backlog-not-grown` | has every pull request opened since been closed? | the recorded forge observation (`majordomus prs refresh`) | `queued`, numbering them; `unknown` when the forge was not observed since the task started |
+
+</div>
+
+
+They are the repository's readings, not one worker's: git does not say who created a
+branch, so a branch another session created since the task started is counted. A reading
+that could not be taken is `unknown` and says why; it is never a `pass`. `majordomus check`
+names each question still owed as `id=status` on its `done` line, so the answer to "is
+everything done, and did this leave the repository bigger than it found it?" is one command
+and not a recollection; the evidence behind each word is in the `questions` of the document
+above.
 
 ## `majordomus checkpoint`
 
@@ -1422,8 +1471,9 @@ search: 2 match(es)
 ## `majordomus knowledge`
 
 A compiler over what this repository already states, and the writer of what an episode
-learned. `sources`, `nodes`, `edges`, `candidates` and `check` are read-only; `derive`,
-`promote` and `reject` write knowledge records and ledger lines, and nothing else.
+learned. `sources`, `nodes`, `edges`, `search`, `show`, `related`, `candidates` and `check`
+are read-only; `derive`, `promote` and `reject` write knowledge records and ledger lines, and
+nothing else.
 
 It is not a wiki, not a database, not a memory service, and not a second place to write
 things down. Every source it reads is a file somebody already maintains, everything it
@@ -1445,6 +1495,22 @@ changes the other.
   claim one identity.
 - `edges [--scope ...] [--type <t>]` derives one edge per stated relationship, with the file
   and the field or line it was observed in.
+- `search <query> [--scope ...]` returns the nodes the query matches, in an order that is a
+  rule rather than a score. A node is placed on the first rung it reaches: `id` (the query is
+  its canonical id), `title` (the query is its title), `title-prefix` (its title begins with
+  the query), `path` (its source path contains the query), `body` (its source file contains
+  the query literally); every comparison ignores case. Within a rung the order is byte order
+  of the id. Each result names the rung it was placed on (`matched`, and `rung` in `--json`),
+  so the reason for the order is in the answer. Nodes carry no tags, so there is no tag rung.
+- `show <id> [--scope ...]` prints one node with its kind, scope, title, source path and
+  content hash. Exits `12` when no node has that id.
+- `related <id> [--scope ...]` prints the edges out of and into one node, each with its type
+  and the file and field or line it was observed in. Exits `12` when no node has that id.
+
+  None of the three writes, and none rebuilds anything: there is no stored index to go
+  stale, so each call compiles what the checkout holds at that moment, exactly as `nodes`
+  does. Case 3037 asserts the ladder, the fields of every result, and that the working tree
+  reads the same after all three.
 - `derive [--episode <id>] [--dry-run] [--json]` derives the knowledge the episode produced
   into candidate records under `.ai/repo/knowledge/candidates/`, from the ledger and git and
   never from a conversation: a recorded decision becomes a `convention`, a resolved question a
@@ -2057,6 +2123,20 @@ tree to the commands, rules, use cases, scenarios and behavioural cases they rea
 names the run to do next. `scaffold` writes a draft use case for a gap from what the
 registry, the command's fixture and the claims already know; a draft validates and runs
 and never counts.
+
+A live step is judged on its whole argument vector, not on its first word. A command's
+`class` in `share/commands.yaml` is the worst thing any of its argument vectors does, so
+`knowledge` is `state-mutating` as a whole although `knowledge edges`, `nodes`, `sources`,
+`candidates` and `check` write nothing, and `check` is `read-only` although `check
+--checkpoint` records a checkpoint. Where a command's subcommands or flags differ, the
+registry carries an `effects` list: a `subcommand` entry replaces the command's class for
+that subcommand, and a `flag` entry raises it for any vector the flag appears in; a flag
+never lowers a class. `usecase validate` refuses a live step whose vector is not
+`read-only` and names what decided it (`by command`, `by subcommand 'derive'` or `by flag
+'--checkpoint'`), and `usecase run --live` asks the same question again before it runs a
+step, so a step that would write is reported unmet and is not run. `doctor` reconciles each
+effect with the command it is declared on: a subcommand must be a word of the command's
+syntax, a flag must be written in it, and a flag may not be declared `read-only`.
 
 Exit codes: 0; 2 for a usage error; 10 when validation, a scenario or a required coverage
 gap fails; 12 when the section, a use case or the registry is absent; 13 when a scenario

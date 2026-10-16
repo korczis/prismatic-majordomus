@@ -108,6 +108,45 @@ pub const MAX_EVENTS_PER_NODE: usize = 20_000;
 /// The most out-of-order events the whole journal holds at once.
 pub const MAX_PENDING_TOTAL: usize = 4096;
 
+/// How far ahead of this runtime's Lamport clock a received event's stamp may be: 2^32.
+///
+/// A Lamport stamp is what its writer says about itself, and every receiver raises its own
+/// clock to the highest stamp it stores. Unbounded, one event from a trusted key stamped
+/// near `u64::MAX` would drag every clock in the mesh to the end of its range in a single
+/// round, after which every event written anywhere carries the same saturated stamp and the
+/// fold no longer orders them causally. A legitimate stamp is never further ahead than the
+/// number of events written in the repository's whole history — each event rises one above
+/// what its writer had seen — so the bound is far above anything a real mesh reaches, a
+/// fresh runtime joining at clock zero included. What it changes is the cost of the attack:
+/// the clock rises at most this much per event stored, so exhausting it takes 2^32 signed,
+/// stored events rather than one. An event past the bound is refused
+/// [`Rejection::ClockAhead`], on arrival and from a reloaded file alike.
+///
+/// ```
+/// use std::sync::Arc;
+/// use majordomus_cli::mesh::identity::NodeIdentity;
+/// use majordomus_cli::mesh::journal::{EventBody, Journal, Rejection, MAX_LAMPORT_LEAD};
+///
+/// let writer = Arc::new(NodeIdentity::ephemeral().unwrap());
+/// let a = Journal::open(Arc::clone(&writer), "0000000000000001", "repo".into(), None).unwrap();
+/// let b = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000002",
+///     "repo".into(), None).unwrap();
+/// let mut event = a.append_own(EventBody::SessionClosed { session: "s1".into() }).unwrap();
+///
+/// // signed by a key B trusts, and stamped further ahead of B's clock than the bound allows
+/// event.lamport = MAX_LAMPORT_LEAD + 1;
+/// event.sig = writer.sign(&event.signing_bytes());
+/// let report = b.ingest(&[event.clone()], &|_| Ok(()));
+/// assert_eq!(report.rejected[&Rejection::ClockAhead], 1);
+/// assert_eq!(b.tallies().lamport, 0, "and B's clock did not move");
+///
+/// // exactly at the bound it is an ordinary event
+/// event.lamport = MAX_LAMPORT_LEAD;
+/// event.sig = writer.sign(&event.signing_bytes());
+/// assert_eq!(b.ingest(&[event], &|_| Ok(())).accepted, 1);
+/// ```
+pub const MAX_LAMPORT_LEAD: u64 = 1 << 32;
+
 /// The domain separator of an event signature: a signature over an event can never be
 /// replayed as a signature over an advertisement or a link message.
 const SIGNING_DOMAIN: &[u8] = b"majordomus-mesh-event/v1\n";
@@ -1090,6 +1129,8 @@ pub enum Rejection {
     Bounds,
     /// The journal's stream or pending bound is full.
     Capacity,
+    /// The Lamport stamp is more than [`MAX_LAMPORT_LEAD`] ahead of this runtime's clock.
+    ClockAhead,
 }
 
 /// What one ingest did: how many events were stored, how many were deliveries of something
@@ -1280,6 +1321,14 @@ pub struct JournalTallies {
     pub opaque: usize,
     /// The highest Lamport stamp seen.
     pub lamport: u64,
+    /// Appends to the journal file that failed since start: the events were held in memory
+    /// and replicated, and are not on this machine's disk. Nonzero fails `mesh doctor`.
+    #[serde(default)]
+    pub write_failures: u64,
+    /// Lines of the journal file the last reload could not read: torn, corrupt, or written
+    /// by something that is not this journal. Counted, never silently dropped.
+    #[serde(default)]
+    pub unreadable: u64,
 }
 
 struct StreamLog {
@@ -1367,6 +1416,11 @@ pub struct Journal {
     path: Option<PathBuf>,
     inner: Mutex<Inner>,
     rotation: std::sync::atomic::AtomicUsize,
+    reloaded: IngestReport,
+    /// Failed appends; outside `inner`, because an append runs with `inner` held.
+    write_failures: std::sync::atomic::AtomicU64,
+    /// Unreadable lines of the last reload.
+    unreadable: std::sync::atomic::AtomicU64,
 }
 
 impl Journal {
@@ -1408,11 +1462,65 @@ impl Journal {
     /// let ephemeral = Arc::new(NodeIdentity::ephemeral().unwrap());
     /// assert!(Journal::open(ephemeral, "nope", "repo".into(), None).is_err());
     /// ```
+    ///
+    /// This opening believes every origin the file holds, which is what a journal without a
+    /// trust policy of its own can do. A runtime that has one opens with
+    /// [`Journal::open_trusting`], so that a key withdrawn from its allowlist is not
+    /// believed again from its own disk.
     pub fn open(
         identity: Arc<NodeIdentity>,
         runtime: &str,
         repo: String,
         path: Option<PathBuf>,
+    ) -> Result<Self, MeshError> {
+        Self::open_trusting(identity, runtime, repo, path, &|_| Ok(()))
+    }
+
+    /// [`Journal::open`], with the trust decision the live path makes applied to every
+    /// event reloaded from `path`.
+    ///
+    /// A journal file is input, the same as a sync round: it holds whatever was trusted
+    /// when it was written, and the policy may have changed since. A key removed from the
+    /// allowlist and a runtime restarted would otherwise bring that key's sessions, claims
+    /// and handovers back from disk — events the live path would refuse the moment they
+    /// arrived over a link. So every reloaded event passes the same checks as a received
+    /// one and then `accept`, the same predicate the caller hands to [`Journal::ingest`];
+    /// an event signed by this node's own key is accepted without asking, because the key
+    /// is the machine's own and a restarted runtime of it is the same machine. What is
+    /// refused is not dropped silently: it is in [`Journal::reload_report`], by reason.
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use majordomus_cli::mesh::identity::NodeIdentity;
+    /// use majordomus_cli::mesh::journal::{EventBody, Journal, Rejection};
+    ///
+    /// let dir = tempfile::tempdir().unwrap();
+    /// let path = dir.path().join("journal.jsonl");
+    /// let machine = Arc::new(NodeIdentity::ephemeral().unwrap());
+    /// let peer = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()),
+    ///     "0000000000000001", "repo".into(), None).unwrap();
+    /// let peers_event = peer.append_own(EventBody::SessionClosed { session: "p".into() })
+    ///     .unwrap();
+    ///
+    /// // this machine stores a peer's event and one of its own
+    /// let before = Journal::open(Arc::clone(&machine), "0000000000000002", "repo".into(),
+    ///     Some(path.clone())).unwrap();
+    /// before.ingest(&[peers_event], &|_| Ok(()));
+    /// before.append_own(EventBody::SessionClosed { session: "own".into() }).unwrap();
+    ///
+    /// // the peer is no longer trusted when another server of this machine — the same key,
+    /// // another stream, as a restart is — opens the file
+    /// let after = Journal::open_trusting(Arc::clone(&machine), "0000000000000003",
+    ///     "repo".into(), Some(path), &|_| Err(Rejection::Untrusted)).unwrap();
+    /// assert_eq!(after.events().len(), 1, "the machine's own event, and only it");
+    /// assert_eq!(after.reload_report().rejected[&Rejection::Untrusted], 1);
+    /// ```
+    pub fn open_trusting(
+        identity: Arc<NodeIdentity>,
+        runtime: &str,
+        repo: String,
+        path: Option<PathBuf>,
+        accept: &dyn Fn(&MeshEvent) -> Result<(), Rejection>,
     ) -> Result<Self, MeshError> {
         let own = StreamId::new(
             identity.public.node_id.as_str(),
@@ -1424,7 +1532,7 @@ impl Journal {
         })?;
         let mut streams = BTreeMap::new();
         streams.insert(own.clone(), StreamLog::new());
-        let journal = Journal {
+        let mut journal = Journal {
             identity,
             own,
             repo,
@@ -1436,29 +1544,83 @@ impl Journal {
                 tallies: JournalTallies::default(),
             }),
             rotation: std::sync::atomic::AtomicUsize::new(0),
+            reloaded: IngestReport::default(),
+            write_failures: std::sync::atomic::AtomicU64::new(0),
+            unreadable: std::sync::atomic::AtomicU64::new(0),
         };
         if let Some(path) = journal.path.clone() {
-            journal.reload(&path);
+            journal.reloaded = journal.reload(&path, accept);
         }
         Ok(journal)
     }
 
-    fn reload(&self, path: &Path) {
-        let Ok(text) = std::fs::read_to_string(path) else {
-            return;
-        };
-        let events: Vec<MeshEvent> = text
-            .lines()
-            .filter_map(|line| serde_json::from_str(line).ok())
-            .collect();
-        // Reloaded events pass the same checks as received ones: a file is input too.
-        let mut inner = self.inner.lock().expect("journal lock");
+    fn reload(
+        &self,
+        path: &Path,
+        accept: &dyn Fn(&MeshEvent) -> Result<(), Rejection>,
+    ) -> IngestReport {
         let mut report = IngestReport::default();
+        let Ok(bytes) = std::fs::read(path) else {
+            return report;
+        };
+        // Line by line, and a line that does not read is counted rather than dropped in
+        // silence: a torn tail after a crash, or bytes that are not this journal's.
+        let mut events: Vec<MeshEvent> = Vec::new();
+        let mut unreadable = 0u64;
+        for line in bytes.split(|b| *b == b'\n') {
+            if line.iter().all(u8::is_ascii_whitespace) {
+                continue;
+            }
+            match serde_json::from_slice::<MeshEvent>(line) {
+                Ok(event) => events.push(event),
+                Err(_) => unreadable += 1,
+            }
+        }
+        if unreadable > 0 {
+            tracing::warn!(
+                path = %path.display(),
+                unreadable,
+                "mesh journal: lines that do not read were skipped on reload"
+            );
+        }
+        self.unreadable
+            .store(unreadable, std::sync::atomic::Ordering::SeqCst);
+        // Reloaded events pass the same checks and the same trust decision as received
+        // ones: a file is input too, written under a policy that may have changed since.
+        // This node's own key is its own, whatever the policy says of other keys.
+        let own_key = self.identity.public.public_key.as_str();
+        let trusted = |event: &MeshEvent| {
+            if event.pk == own_key {
+                Ok(())
+            } else {
+                accept(event)
+            }
+        };
+        let mut inner = self.inner.lock().expect("journal lock");
         for event in events {
-            self.ingest_locked(&mut inner, event, &|_| Ok(()), &mut report, false);
+            self.ingest_locked(&mut inner, event, &trusted, &mut report, false);
         }
         inner.tallies.received = 0;
         inner.tallies.duplicates = 0;
+        report
+    }
+
+    /// What reloading the journal file did when this journal was opened: how many events
+    /// came back, and how many were refused and why — a key no longer trusted is refused
+    /// [`Rejection::Untrusted`] here rather than believed again from disk. Empty for a
+    /// journal without a file, or one whose file did not exist yet.
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use majordomus_cli::mesh::identity::NodeIdentity;
+    /// use majordomus_cli::mesh::journal::Journal;
+    ///
+    /// let j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
+    ///     "repo".into(), None).unwrap();
+    /// assert_eq!(j.reload_report().accepted + j.reload_report().rejected_total(), 0);
+    /// ```
+    pub fn reload_report(&self) -> &IngestReport {
+        &self.reloaded
     }
 
     /// This runtime's own stream: the one stream this journal may write to, and the prefix
@@ -1630,6 +1792,45 @@ impl Journal {
                 )
             }))
             .collect()
+    }
+
+    /// The marks to tell one peer, whose own marks are `peer`: every stream this runtime
+    /// holds, and a compacted stream's tombstone only when the peer holds that stream.
+    ///
+    /// A tombstone is in the marks to stop a peer re-sending a stream this runtime dropped,
+    /// so it says something only to a peer that has the stream to send. Told to everyone,
+    /// the up to four tombstones per stream slot weighed as much as the live marks, and
+    /// together with a full event budget they took a sync message past the link bound
+    /// (I2139). A peer whose marks are not known yet is told no tombstone; what it then
+    /// sends of a dropped stream is absorbed by the tombstone, once, and its marks are known
+    /// from that round on.
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use std::time::Duration;
+    /// use majordomus_cli::mesh::identity::NodeIdentity;
+    /// use majordomus_cli::mesh::journal::{EventBody, Journal, Marks, HANDOVER_RETENTION};
+    ///
+    /// let open = |n: &str| Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), n,
+    ///     "repo".into(), None).unwrap();
+    /// let (a, b) = (open("0000000000000001"), open("0000000000000002"));
+    /// a.append_own(EventBody::SessionClosed { session: "s1".into() }).unwrap();
+    /// b.ingest(&a.missing_for(&b.marks(), 1 << 20), &|_| Ok(()));
+    /// let zero = Duration::ZERO;
+    /// assert_eq!(b.compact(zero, zero, HANDOVER_RETENTION, true), 1);
+    ///
+    /// // a peer that holds the dropped stream is told how far it got, so it sends nothing
+    /// assert_eq!(b.marks_for(&a.marks())[a.own_stream()].seq, 1);
+    /// // a peer that does not is told nothing about it
+    /// assert!(!b.marks_for(&Marks::new()).contains_key(a.own_stream()));
+    /// // and the streams b holds are told to every peer
+    /// assert!(b.marks_for(&Marks::new()).contains_key(b.own_stream()));
+    /// ```
+    pub fn marks_for(&self, peer: &Marks) -> Marks {
+        let mut marks = self.marks();
+        let inner = self.inner.lock().expect("journal lock");
+        marks.retain(|id, _| !inner.tombstones.contains_key(id) || peer.contains_key(id));
+        marks
     }
 
     /// Merge a peer's marks. Only a higher beat carrying its origin's valid signature, from
@@ -1917,6 +2118,11 @@ impl Journal {
         if let Err(why) = accept(&event) {
             return refuse(inner, report, why);
         }
+        if event.lamport > inner.lamport.saturating_add(MAX_LAMPORT_LEAD) {
+            // A trusted key's stamp, but further ahead of this clock than any history
+            // reaches: storing it would carry every clock that hears it towards u64::MAX.
+            return refuse(inner, report, Rejection::ClockAhead);
+        }
         if event.stream == self.own {
             // Our own events coming back through a relay: we hold them already, or they
             // are from a future we did not write — either way, nothing to store.
@@ -2002,17 +2208,6 @@ impl Journal {
         if events.is_empty() {
             return;
         }
-        if let Some(dir) = path.parent() {
-            let _ = std::fs::create_dir_all(dir);
-        }
-        let Ok(mut file) = std::fs::OpenOptions::new()
-            .create(true)
-            .append(true)
-            .open(path)
-        else {
-            tracing::warn!(path = %path.display(), "mesh journal: cannot open for append");
-            return;
-        };
         let mut text = String::new();
         for event in events {
             if let Ok(line) = serde_json::to_string(event) {
@@ -2020,7 +2215,16 @@ impl Journal {
                 text.push('\n');
             }
         }
-        let _ = file.write_all(text.as_bytes());
+        if let Err(e) = append_synced(path, &text) {
+            self.write_failures
+                .fetch_add(events.len() as u64, std::sync::atomic::Ordering::SeqCst);
+            tracing::warn!(
+                path = %path.display(),
+                error = %e,
+                events = events.len(),
+                "mesh journal: an append did not reach the disk; the events are held in memory and replicated only"
+            );
+        }
     }
 
     /// A stream's liveness on this runtime's clock, against `expiry`. The measurement is
@@ -2161,14 +2365,24 @@ impl Journal {
     /// assert_eq!(j.events_after(0, 1).len(), 1, "one page");
     /// ```
     pub fn events_after(&self, after: u64, limit: usize) -> Vec<MeshEvent> {
-        self.events()
+        let ordered: Vec<MeshEvent> = self
+            .events()
             .into_iter()
             .filter(|e| e.lamport > after)
             .map(|e| (causal_key(&e), e))
             .collect::<BTreeMap<_, _>>()
             .into_values()
-            .take(limit)
-            .collect()
+            .collect();
+        // A page never ends inside a run of equal stamps: the next page resumes after the
+        // last stamp this one carries, so an event that shares it and was cut off would never
+        // be read. Such a run is as long as the streams that wrote concurrently, not unbounded.
+        let mut page = limit.min(ordered.len());
+        if let Some(last) = page.checked_sub(1).map(|i| ordered[i].lamport) {
+            while page < ordered.len() && ordered[page].lamport == last {
+                page += 1;
+            }
+        }
+        ordered.into_iter().take(page).collect()
     }
 
     /// Drop every stream that has been expired for longer than `retention` and that nothing
@@ -2296,9 +2510,16 @@ impl Journal {
                         text.push('\n');
                     }
                 }
+                // A new file, synced, renamed over the old one: a crash leaves the old journal
+                // or the new one, never a mix of both.
                 let tmp = path.with_extension("jsonl.tmp");
-                if std::fs::write(&tmp, text).is_ok() {
-                    let _ = std::fs::rename(&tmp, path);
+                let replaced = write_synced(&tmp, &text).and_then(|()| std::fs::rename(&tmp, path));
+                match replaced {
+                    Ok(()) => sync_parent(path),
+                    Err(e) => {
+                        let _ = std::fs::remove_file(&tmp);
+                        tracing::warn!(path = %path.display(), error = %e, "mesh journal: compaction could not replace the file; the old one stands");
+                    }
                 }
             }
         }
@@ -2336,7 +2557,79 @@ impl Journal {
             .filter(|e| e.body().is_none())
             .count();
         tallies.lamport = inner.lamport;
+        tallies.write_failures = self
+            .write_failures
+            .load(std::sync::atomic::Ordering::SeqCst);
+        tallies.unreadable = self.unreadable.load(std::sync::atomic::Ordering::SeqCst);
         tallies
+    }
+}
+
+/// Open a journal file for writing as its owner alone: it holds other runtimes' events and
+/// handover bodies, which are nobody else's to read on this machine.
+fn owner_only(options: &mut std::fs::OpenOptions) -> &mut std::fs::OpenOptions {
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt;
+        options.mode(0o600);
+    }
+    options
+}
+
+/// Append `text` to the journal at `path` and sync it. A file whose last byte is not a
+/// newline — the tail a crash tore — gets one first, so the torn line stays one unreadable
+/// line and the events appended after it read.
+fn append_synced(path: &Path, text: &str) -> std::io::Result<()> {
+    if let Some(dir) = path.parent() {
+        std::fs::create_dir_all(dir)?;
+    }
+    let mut file = owner_only(
+        std::fs::OpenOptions::new()
+            .create(true)
+            .read(true)
+            .append(true),
+    )
+    .open(path)?;
+    append_mended(&mut file, text).and_then(|()| file.sync_data())
+}
+
+/// Append `text` to `file`, open for reading and appending, after a newline first when its
+/// last byte is not one: the torn tail [`append_synced`] mends.
+fn append_mended<F>(file: &mut F, text: &str) -> std::io::Result<()>
+where
+    F: std::io::Read + std::io::Write + std::io::Seek,
+{
+    use std::io::SeekFrom;
+    if file.seek(SeekFrom::End(0))? > 0 {
+        let mut last = [0u8; 1];
+        file.seek(SeekFrom::End(-1))?;
+        file.read_exact(&mut last)?;
+        if last[0] != b'\n' {
+            file.write_all(b"\n")?;
+        }
+    }
+    file.write_all(text.as_bytes())
+}
+
+/// Write `text` to a new file at `path`, owner-only, and sync it before it is renamed anywhere.
+fn write_synced(path: &Path, text: &str) -> std::io::Result<()> {
+    let mut file = owner_only(
+        std::fs::OpenOptions::new()
+            .create(true)
+            .write(true)
+            .truncate(true),
+    )
+    .open(path)?;
+    file.write_all(text.as_bytes())
+        .and_then(|()| file.sync_all())
+}
+
+/// Sync the directory holding `path`, so a rename into it survives a crash too.
+fn sync_parent(path: &Path) {
+    if let Some(dir) = path.parent() {
+        if let Ok(handle) = std::fs::File::open(dir) {
+            let _ = handle.sync_all();
+        }
     }
 }
 
@@ -2414,6 +2707,113 @@ fn unneeded(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// A file in memory whose `fail_at`-th seek, read or write fails, counted from one.
+    struct Faulty {
+        inner: std::io::Cursor<Vec<u8>>,
+        ops: usize,
+        fail_at: usize,
+    }
+
+    impl Faulty {
+        fn new(content: &[u8], fail_at: usize) -> Self {
+            Self {
+                inner: std::io::Cursor::new(content.to_vec()),
+                ops: 0,
+                fail_at,
+            }
+        }
+
+        fn step(&mut self) -> std::io::Result<()> {
+            self.ops += 1;
+            if self.ops == self.fail_at {
+                return Err(std::io::Error::other(format!(
+                    "operation {} fails",
+                    self.ops
+                )));
+            }
+            Ok(())
+        }
+    }
+
+    impl std::io::Read for Faulty {
+        fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+            self.step()?;
+            self.inner.read(buf)
+        }
+    }
+
+    impl std::io::Write for Faulty {
+        fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+            self.step()?;
+            self.inner.write(buf)
+        }
+
+        fn flush(&mut self) -> std::io::Result<()> {
+            Ok(())
+        }
+    }
+
+    impl std::io::Seek for Faulty {
+        fn seek(&mut self, to: std::io::SeekFrom) -> std::io::Result<u64> {
+            self.step()?;
+            self.inner.seek(to)
+        }
+    }
+
+    #[test]
+    fn a_torn_tail_is_mended_before_the_append_and_every_failing_step_is_an_error() {
+        let mut empty = Faulty::new(b"", 0);
+        append_mended(&mut empty, "a\n").unwrap();
+        std::io::Write::flush(&mut empty).unwrap();
+        assert_eq!(
+            empty.inner.get_ref(),
+            b"a\n",
+            "an empty file takes the text as it is"
+        );
+        let mut whole = Faulty::new(b"a\n", 0);
+        append_mended(&mut whole, "b\n").unwrap();
+        assert_eq!(
+            whole.inner.get_ref(),
+            b"a\nb\n",
+            "a whole last line needs no newline"
+        );
+        let mut torn = Faulty::new(b"a\n{\"to", 0);
+        append_mended(&mut torn, "b\n").unwrap();
+        assert_eq!(
+            torn.inner.get_ref(),
+            b"a\n{\"to\nb\n",
+            "the torn line stays one line"
+        );
+        // the length, the last byte's seek, its read, the mending newline, the text
+        for step in 1..=5 {
+            let mut file = Faulty::new(b"torn", step);
+            let failed = append_mended(&mut file, "b\n").expect_err("the step fails");
+            assert_eq!(failed.to_string(), format!("operation {step} fails"));
+        }
+    }
+
+    #[test]
+    fn a_journal_path_that_cannot_be_written_is_an_error_not_a_panic() {
+        let dir = tempfile::tempdir().unwrap();
+        let file = dir.path().join("file");
+        std::fs::write(&file, "x").unwrap();
+        // a parent that is a file cannot be created
+        assert!(append_synced(&file.join("sub").join("journal"), "a\n").is_err());
+        // a path without a parent is opened as it is, and the empty path does not open
+        assert!(append_synced(Path::new(""), "a\n").is_err());
+        assert!(write_synced(&dir.path().join("missing").join("snapshot"), "a").is_err());
+        // a path without a parent has no directory to sync, and that is not an error
+        sync_parent(Path::new(""));
+        let written = dir.path().join("snapshot");
+        write_synced(&written, "a").unwrap();
+        sync_parent(&written);
+        assert_eq!(std::fs::read_to_string(&written).unwrap(), "a");
+        let appended = dir.path().join("journal");
+        append_synced(&appended, "a").unwrap();
+        append_synced(&appended, "b\n").unwrap();
+        assert_eq!(std::fs::read_to_string(&appended).unwrap(), "a\nb\n");
+    }
 
     fn journal(runtime: &str) -> Journal {
         Journal::open(
@@ -2688,6 +3088,194 @@ mod tests {
         assert!(a.missing_for(&b.marks(), usize::MAX).is_empty());
         let again = b.ingest(&a.events(), &accept_all);
         assert_eq!((again.accepted, again.duplicate), (0, 1));
+    }
+
+    fn on_disk(path: &Path, key: &Path) -> Journal {
+        Journal::open(
+            Arc::new(NodeIdentity::load_or_create(key).unwrap()),
+            "0000000000000002",
+            "repo".into(),
+            Some(path.to_path_buf()),
+        )
+        .unwrap()
+    }
+
+    #[test]
+    fn a_torn_tail_is_one_unreadable_line_and_the_next_append_reads() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("journal.jsonl");
+        let key = dir.path().join("node.json");
+        let first = on_disk(&path, &key);
+        for name in ["s1", "s2"] {
+            first
+                .append_own(EventBody::SessionOpened {
+                    info: SessionInfo::named(name, "test"),
+                })
+                .unwrap();
+        }
+        drop(first);
+        // a crash in the middle of an append: half a line, no newline
+        let mut file = std::fs::OpenOptions::new()
+            .append(true)
+            .open(&path)
+            .unwrap();
+        file.write_all(br#"{"stream":"torn","seq":"#).unwrap();
+        drop(file);
+
+        let second = on_disk(&path, &key);
+        let after_crash = second.tallies();
+        assert_eq!(
+            after_crash.unreadable, 1,
+            "the torn line is counted, not dropped in silence"
+        );
+        assert_eq!(after_crash.events, 2, "every complete event reloads");
+        second
+            .append_own(EventBody::SessionOpened {
+                info: SessionInfo::named("s3", "test"),
+            })
+            .unwrap();
+        drop(second);
+
+        let third = on_disk(&path, &key);
+        let tallies = third.tallies();
+        assert_eq!(
+            tallies.unreadable, 1,
+            "the append after the tear did not fuse into it"
+        );
+        assert_eq!(tallies.events, 3);
+        assert_eq!(tallies.write_failures, 0);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_failed_append_is_counted_and_the_file_is_the_owners_alone() {
+        use std::os::unix::fs::PermissionsExt;
+        let dir = tempfile::tempdir().unwrap();
+        let key = dir.path().join("node.json");
+        let path = dir.path().join("state").join("journal.jsonl");
+        let journal = on_disk(&path, &key);
+        journal
+            .append_own(EventBody::SessionClosed {
+                session: "a".into(),
+            })
+            .unwrap();
+        let mode = std::fs::metadata(&path).unwrap().permissions().mode() & 0o777;
+        assert_eq!(
+            mode, 0o600,
+            "the journal holds other runtimes' events: {mode:o}"
+        );
+        assert_eq!(journal.tallies().write_failures, 0);
+
+        // the file can no longer be written: the event is held, and the loss is counted
+        std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o400)).unwrap();
+        let held = journal.append_own(EventBody::SessionClosed {
+            session: "b".into(),
+        });
+        std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o600)).unwrap();
+        assert!(held.is_ok(), "the event is held in memory and replicated");
+        assert_eq!(journal.tallies().write_failures, 1);
+        assert!(!crate::mesh::doctor::journal_check(&journal.tallies()).ok);
+    }
+
+    #[test]
+    fn paging_by_stamp_returns_every_event_exactly_once() {
+        // three runtimes that wrote concurrently: their events share stamps
+        let reader = journal("0000000000000001");
+        for runtime in ["0000000000000002", "0000000000000003", "0000000000000004"] {
+            let writer = journal(runtime);
+            opened(&writer, "s1");
+            opened(&writer, "s2");
+            reader.merge_marks(&writer.marks(), &|_| true, Duration::from_secs(30));
+            reader.ingest(
+                &writer.missing_for(&reader.marks(), usize::MAX),
+                &accept_all,
+            );
+        }
+        let all = reader.events_after(0, usize::MAX);
+        assert_eq!(all.len(), 6);
+        assert!(
+            all.windows(2).any(|w| w[0].lamport == w[1].lamport),
+            "the fixture holds a tie, or it proves nothing"
+        );
+        // page by one, resuming after the last stamp each page carries
+        let mut read = Vec::new();
+        let mut after = 0;
+        loop {
+            let page = reader.events_after(after, 1);
+            let Some(last) = page.last() else { break };
+            after = last.lamport;
+            read.extend(page);
+        }
+        assert_eq!(
+            read, all,
+            "every event once, in order, however small the page"
+        );
+    }
+
+    #[test]
+    fn an_append_after_a_torn_tail_starts_a_line_of_its_own() {
+        let dir = tempfile::tempdir().unwrap();
+        // the parent is created on the first append
+        let path = dir.path().join("deeper").join("journal.jsonl");
+        append_synced(&path, "{\"a\":1}\n").unwrap();
+        assert_eq!(std::fs::read_to_string(&path).unwrap(), "{\"a\":1}\n");
+        // a crash tore the last line: the next append begins on a new line
+        std::fs::write(&path, "{\"a\":1}\n{\"torn\"").unwrap();
+        append_synced(&path, "{\"b\":2}\n").unwrap();
+        assert_eq!(
+            std::fs::read_to_string(&path).unwrap(),
+            "{\"a\":1}\n{\"torn\"\n{\"b\":2}\n"
+        );
+        // an intact tail gets nothing in between
+        append_synced(&path, "{\"c\":3}\n").unwrap();
+        assert!(std::fs::read_to_string(&path)
+            .unwrap()
+            .ends_with("{\"b\":2}\n{\"c\":3}\n"));
+    }
+
+    #[test]
+    fn a_synced_write_replaces_the_whole_file_and_its_directory_is_synced() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("journal.jsonl.tmp");
+        write_synced(&path, "first, and longer\n").unwrap();
+        write_synced(&path, "second\n").unwrap();
+        assert_eq!(std::fs::read_to_string(&path).unwrap(), "second\n");
+        sync_parent(&path);
+        // a path with no directory to open is not an error
+        sync_parent(Path::new("journal.jsonl"));
+    }
+
+    #[test]
+    fn a_compaction_that_cannot_replace_the_file_leaves_the_old_one_and_no_temporary() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("journal.jsonl");
+        let a = journal("0000000000000001");
+        opened(&a, "s1");
+        let b = Journal::open(
+            Arc::new(NodeIdentity::ephemeral().unwrap()),
+            "0000000000000002",
+            "repo".into(),
+            Some(path.clone()),
+        )
+        .unwrap();
+        b.ingest(&a.missing_for(&b.marks(), usize::MAX), &accept_all);
+        // the journal's place is taken by a directory that is not empty: the rename must fail
+        std::fs::remove_file(&path).unwrap();
+        std::fs::create_dir(&path).unwrap();
+        std::fs::write(path.join("occupied"), "x").unwrap();
+        let dropped = b.compact(Duration::ZERO, Duration::ZERO, Duration::ZERO, true);
+        assert!(
+            dropped > 0,
+            "a's silent stream was due and dropped in memory"
+        );
+        assert!(
+            path.join("occupied").exists(),
+            "what stood there still stands"
+        );
+        assert!(
+            !path.with_extension("jsonl.tmp").exists(),
+            "the temporary file is removed"
+        );
     }
 
     #[test]

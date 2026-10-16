@@ -390,6 +390,16 @@
       "external": false
     },
     {
+      "id": ".ai/manifest.yaml",
+      "kind": "artifact",
+      "label": "manifest.yaml",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
       "id": ".ai/local/state/session-current.yaml",
       "kind": "artifact",
       "label": "local/state/session-current.yaml",
@@ -933,7 +943,7 @@
     },
     {
       "source": "lib/common.sh",
-      "target": ".ai/local/state/current.yaml",
+      "target": ".ai/manifest.yaml",
       "kind": "reads"
     },
     {
@@ -1019,6 +1029,11 @@
     {
       "source": "lib/init.sh",
       "target": ".ai/local/state/open-questions.md",
+      "kind": "reads"
+    },
+    {
+      "source": "lib/init.sh",
+      "target": ".ai/repo/policy.yaml",
       "kind": "reads"
     },
     {
@@ -1362,6 +1377,11 @@
       "kind": "sources"
     },
     {
+      "source": "lib/common.sh",
+      "target": "lib/rust_bin.sh",
+      "kind": "sources"
+    },
+    {
       "source": "lib/context.sh",
       "target": "lib/context_docs.sh",
       "kind": "sources"
@@ -1554,6 +1574,11 @@
     {
       "source": "lib/intent_binding.sh",
       "target": "lib/rust_bin.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/knowledge.sh",
+      "target": "lib/changed.sh",
       "kind": "sources"
     },
     {
@@ -1893,11 +1918,6 @@
     },
     {
       "source": "lib/init.sh",
-      "target": ".ai/repo/policy.yaml",
-      "kind": "uses"
-    },
-    {
-      "source": "lib/init.sh",
       "target": ".ai/repo/profiles/README.md",
       "kind": "uses"
     },
@@ -2198,6 +2218,11 @@
     },
     {
       "source": "lib/checkpoint.sh",
+      "target": ".ai/local/state/current.yaml",
+      "kind": "writes"
+    },
+    {
+      "source": "lib/common.sh",
       "target": ".ai/local/state/current.yaml",
       "kind": "writes"
     },

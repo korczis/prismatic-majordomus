@@ -291,7 +291,11 @@ MJ_CAPTURE_LIFECYCLE='claude-code .claude/settings.json SessionStart SessionEnd 
 # fires; a mod is asked by the provider while the conversation runs, which is the only
 # place a measurement of the context window is made, so the request for a handover before
 # the window fills cannot be a shim.
-MJ_CAPTURE_MODS='claude-code majordomus-handover .claude/skills/majordomus-handover session.handover_on_fill'
+# The second keeps a session briefed on what surrounds it, as its status line and on an
+# interval (ADR 0136): the status line and the clock are the provider's, inside the
+# conversation, and no event fires for either.
+MJ_CAPTURE_MODS='claude-code majordomus-handover .claude/skills/majordomus-handover session.handover_on_fill
+claude-code majordomus-brief .claude/skills/majordomus-brief session.brief_on_interval'
 
 # ---------------------------------------------------------------- the connection episode
 # A provider whose declared episode source is `connection` has no adapter line above and
@@ -1587,14 +1591,47 @@ mj_capture_session_start() {
   # an argument rather than as a variable the briefing reaches for: two files sharing a name
   # is a data flow no reader — and no shellcheck — can follow.
   local server; server="$(mj_capture_ensure_server "$provider")"
+  # The session joins the mesh before anything is said to it (I2734): until it does, every
+  # other machine sees at most a nameless board connection, and a worker that never
+  # announces stays that way for its whole life. Whether or not a briefing follows.
+  local joined; joined="$(mj_capture_mesh_join "$provider" "$psession" "$server")"
   [ "$(mj_pol session.briefing_on_start)" = false ] && return 0
   # The mesh, in the block that names the server it lives in: a declaration that says
   # `enabled: true` and a server whose mesh is not active is the drift this repository paid
   # for on 2026-09-12 (ADR 0059), and the briefing is where a worker hears of it before its
   # first tool call. It travels as an argument, like the server line.
   local mesh; mesh="$(mj_capture_mesh_line "$server")"
-  mj_derive_briefing "$server" "$mesh" 2>/dev/null || mj_session_context_log "$provider start event: the briefing could not be assembled"
+  [ -n "$mesh" ] && [ -n "$joined" ] && mesh="$mesh
+Mesh session: $joined — this session is on the mesh under that id; claim the paths you work on under it (majordomus_mesh_claim, session \"$joined\") before you edit them"
+  # What happened around the repository since the last hour, under the mesh (ADR 0133): a
+  # review asked of this worker or a handover for it is told before its first tool call.
+  local monitor=""
+  case "$server" in
+    ready\ http://*)
+      # shellcheck source=rust_bin.sh
+      . "$MJ_LIB_DIR/rust_bin.sh"
+      monitor="$(mj_rust_monitor_brief "$MJ_ROOT" "$MJ_HOME")" ;;
+  esac
+  mj_derive_briefing "$server" "$mesh" "$monitor" 2>/dev/null || mj_session_context_log "$provider start event: the briefing could not be assembled"
+  # How to keep itself awake and reporting (ADR 0136), told to every provider's session the
+  # policy switches it for, whether or not a mod of that provider shows the brief as well.
+  [ "$(mj_pol session.brief_on_interval)" = true ] && mj_capture_keep_awake "$psession"
   return 0
+}
+
+# What the session is told about keeping itself awake, and the brief as it stands: the
+# executable's own `brief --keep-awake`, asked of the server just ensured. Best-effort, like
+# the server and mesh lines: an executable that is missing or stale says nothing here.
+mj_capture_keep_awake() {
+  local psession="${1:-}" bin
+  # shellcheck source=rust_bin.sh
+  . "$MJ_LIB_DIR/rust_bin.sh"
+  bin="$(mj_rust_bin "$MJ_HOME")"
+  { [ -x "$bin" ] && ! mj_rust_stale "$MJ_HOME" "$bin"; } || return 0
+  set -- brief --repo "$MJ_ROOT" --keep-awake --this-checkout
+  [ -n "$psession" ] && set -- "$@" --session "$psession"
+  printf '\n## Keeping awake\n\n'
+  "$bin" "$@" 2>/dev/null || true
 }
 
 # Make sure the repository's shared server serves this checkout, on the start event, and
@@ -1624,6 +1661,51 @@ mj_capture_ensure_server() {
   line="$("$bin" serve ensure --repo "$MJ_ROOT" 2>>"$MJ_STATE_DIR/mcp/ensure.log")" \
     || mj_session_context_log "$provider start event: the server did not converge: $line"
   printf '%s\n' "${line:-not ensured: serve ensure said nothing}"
+}
+
+# The id a provider session has on the mesh: the provider's own durable name for the
+# sitting, so that a start, a resume, a compaction and the end of one sitting all speak of
+# the same session, and anything holding the provider's payload can name it again.
+mj_capture_mesh_session() { printf '%s-%s' "$1" "$2"; }
+
+# Open, or say again, this provider session on the mesh of the checkout's shared server,
+# and answer its id; nothing when there is no provider session, no ready server, no
+# executable, or the server's mesh refuses. The executable's `mesh session open` asks the
+# server: the mesh lives in its memory, and no request leaves this file. A task is named
+# only while it is active — a handed-over task from last week is not what this session does.
+mj_capture_mesh_join() {
+  local provider="$1" psession="$2" server="$3" bin share id
+  [ -n "$psession" ] || return 0
+  case "$server" in ready\ http://*) ;; *) return 0 ;; esac
+  # shellcheck source=rust_bin.sh
+  . "$MJ_LIB_DIR/rust_bin.sh"
+  bin="$(mj_rust_bin "$MJ_HOME")"; [ -x "$bin" ] || return 0
+  share="$(mj_rust_share "$MJ_ROOT")"
+  [ -n "$share" ] && export MAJORDOMUS_SHARE="$share"
+  id="$(mj_capture_mesh_session "$provider" "$psession")"
+  set -- mesh session open --repo "$MJ_ROOT" --session "$id" --client "$provider" \
+    --branch "$(mj_git_branch)" --head "$(mj_git_head)" --format json
+  if mj_load_current && [ "$(mj_cur outcome)" = active ]; then
+    set -- "$@" --task "$(mj_cur id)" --intent "$(mj_cur task)"
+  fi
+  if "$bin" "$@" >/dev/null 2>&1; then printf '%s\n' "$id"
+  else mj_session_context_log "$provider start event: the session did not join the mesh as $id"; fi
+  return 0
+}
+
+# Close this provider session on the mesh at its end, so that its claims end everywhere at
+# once rather than when its runtime stops beating. Best-effort, like the join.
+mj_capture_mesh_leave() {
+  local provider="$1" psession="$2" bin share
+  [ -n "$psession" ] || return 0
+  # shellcheck source=rust_bin.sh
+  . "$MJ_LIB_DIR/rust_bin.sh"
+  bin="$(mj_rust_bin "$MJ_HOME")"; [ -x "$bin" ] || return 0
+  share="$(mj_rust_share "$MJ_ROOT")"
+  [ -n "$share" ] && export MAJORDOMUS_SHARE="$share"
+  "$bin" mesh session close --repo "$MJ_ROOT" --format json \
+    --session "$(mj_capture_mesh_session "$provider" "$psession")" >/dev/null 2>&1 || true
+  return 0
 }
 
 # One line about the mesh for the briefing, whenever the repository tracks a declaration
@@ -1774,6 +1856,9 @@ mj_capture_session_end() {
   # checkout, so the second window to be shut ended the first window's episode — and the
   # first window went on writing ledger lines into an episode that had already been closed
   # and published.
+  # Off the mesh before the episode closes: the session's claims end on every machine now,
+  # not when its runtime next misses a beat (I2734).
+  mj_capture_mesh_leave "$provider" "$psession"
   set -- --if-none ignore --outcome "$outcome"
   [ -n "$psession" ] && set -- "$@" --provider-session "$psession"
   out="$( (mj_session_close "$@" < /dev/null) 2>&1 )" || {
@@ -1824,6 +1909,9 @@ mj_capture_publish_record() {
   local abs="$1" rel idx tree parent new msg
   [ -n "$abs" ] && [ -f "$abs" ] || return 0
   [ "$(mj_pol session.commit_record_on_end)" != false ] || return 0
+  # A personal layer's record is one person's: committing it would put a file of the layer
+  # on a branch other people share (ADR 0145). It stays where it was written.
+  mj_personal_active && return 0
   rel="$(mj_rel "$abs")"
   case "$rel" in /*) return 0 ;; esac          # outside the repository: not ours to commit
 
@@ -1869,6 +1957,7 @@ the working tree reaches no surface that reads session records.
 mj_capture_push_record() {
   local new="$1" branch remote upstream
   [ "$(mj_pol session.push_record_on_end)" != false ] || return 0
+  mj_personal_active && return 0               # nothing of a personal layer is pushed
   branch="$(mj_git branch --show-current 2>/dev/null)" || return 0
   [ -n "$branch" ] || return 0                 # detached: nothing to publish onto
   remote="$(mj_git config "branch.$branch.remote" 2>/dev/null)" || remote=""
@@ -2107,6 +2196,7 @@ mj_capture_install_one() {
   mj_capture_install_mods "$p"
 
   if [ ! -f "$cfg" ]; then
+    mj_personal_guard "$(mj_capture_field "$p" 2)"
     mj_capture_config "$p" > "$cfg"
     mj_info capture "$(mj_capture_field "$p" 2)" "written with the $(mj_capture_events "$p" | sed 's/=.*//' | paste -sd, - | sed 's/,/, /g') hook(s)"
     return 0
@@ -2175,11 +2265,14 @@ mj_capture_install_shim() {
     if [ "$(cat "$shim")" = "$body" ]; then
       mj_info capture "$rel" "already present; left as it is"; return 0
     fi
+    mj_personal_guard "$rel"
     printf '%s\n' "$body" > "$shim"
     chmod +x "$shim"
     mj_info capture "$rel" "rewritten ($latency)"
     return 0
   fi
+  # under a personal layer the shim is covered before it exists (ADR 0145); a no-op otherwise
+  mj_personal_guard "$rel"
   mkdir -p "$(dirname "$shim")"
   printf '%s\n' "$body" > "$shim"
   chmod +x "$shim"
@@ -2252,6 +2345,7 @@ mj_capture_install_mods() {
       mj_info capture "$rel" "already present; left as it is"; continue
     fi
     verb=written; [ -d "$dst" ] && verb=rewritten
+    mj_personal_guard "$rel"
     for f in $(mj_capture_mod_files "$src"); do
       mkdir -p "$dst/$(dirname "$f")" && cp "$src/$f" "$dst/$f"
     done

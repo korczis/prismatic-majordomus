@@ -108,7 +108,33 @@ pub fn run(args: IntentArgs) -> Result<u8> {
             emit(format, &v, explain_text)?;
             Ok(0)
         }
+        IntentCommand::Propose {
+            statement,
+            title,
+            id,
+        } => {
+            let mut input = json!({ "statement": statement });
+            for (key, value) in [("title", title), ("id", id)] {
+                if let Some(value) = value {
+                    input[key] = json!(value);
+                }
+            }
+            call(&app.context, &["intent", "propose"], input)
+                .and_then(|v| emit(format, &v, propose_text))
+                .map(|()| 0)
+        }
     }
+}
+
+/// The record written, and what follows from it.
+fn propose_text(v: &Value) -> String {
+    format!(
+        "proposed {}  {}\n  {}\n  unplanned: it names no milestone and no criterion yet; `majordomus intent show {}` derives its stage\n",
+        s(v, "id"),
+        s(v, "title"),
+        s(v, "path"),
+        s(v, "id"),
+    )
 }
 
 /// Each intent with how far reality is from it and who realises it, then every unit of work
@@ -650,6 +676,67 @@ mod tests {
         assert!(binding_text(&refused)
             .lines()
             .any(|l| l == "refusal     nothing_named  nothing was named"));
+    }
+
+    /// `intent propose` writes the record through `intents.propose`, a second proposal of
+    /// the same identity is the capability's refusal, and the text names what was written.
+    #[test]
+    fn propose_writes_one_record_and_refuses_the_second() {
+        let repo = SyntheticRepository::small().unwrap();
+        let root = repo.root().to_string_lossy().into_owned();
+        let share = crate::synthetic::crate_share()
+            .to_string_lossy()
+            .into_owned();
+        let run = |extra: &[&str]| {
+            let mut argv = vec![
+                "majordomus",
+                "intent",
+                "propose",
+                "--repo",
+                &root,
+                "--discovery",
+                "filesystem",
+                "--share",
+                &share,
+                "--format",
+                "json",
+            ];
+            argv.extend_from_slice(extra);
+            crate::commands::run(<crate::cli::Cli as clap::Parser>::parse_from(argv))
+        };
+        let extra = [
+            "--statement",
+            "The UI answers at once",
+            "--title",
+            "Fast UI",
+            "--id",
+            "fast-ui",
+        ];
+        assert_eq!(run(&extra).unwrap(), 0);
+        let record = repo.root().join(".ai/repo/project/intents/fast-ui.yaml");
+        let text = std::fs::read_to_string(&record).unwrap();
+        assert!(
+            text.starts_with("id: fast-ui\ntitle: \"Fast UI\"\n"),
+            "{text}"
+        );
+        match run(&extra) {
+            Err(Error::Protocol { reason }) => {
+                assert!(reason.contains("never overwrites"), "{reason}")
+            }
+            other => panic!("a second proposal answered: {other:?}"),
+        }
+        assert_eq!(std::fs::read_to_string(&record).unwrap(), text);
+        match run(&["--statement", " "]) {
+            Err(Error::Protocol { reason }) => {
+                assert!(reason.contains("needs a statement"), "{reason}")
+            }
+            other => panic!("an empty statement answered: {other:?}"),
+        }
+        let said = propose_text(&json!({"id": "fast-ui", "title": "Fast UI",
+            "path": ".ai/repo/project/intents/fast-ui.yaml"}));
+        assert!(said
+            .starts_with("proposed fast-ui  Fast UI\n  .ai/repo/project/intents/fast-ui.yaml\n"));
+        assert!(said.contains("`majordomus intent show fast-ui`"));
     }
 
     #[test]

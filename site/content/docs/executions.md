@@ -1,7 +1,7 @@
 +++
 title = "Executions"
 description = "the execution plane: running a capability as work that can be watched — the model, the lifecycle, the typed event protocol, the live channel and its guarantees, what each interface offers, the limits and what happens at each, and what it deliberately does not do"
-weight = 47
+weight = 49
 [extra]
 source = "docs/EXECUTIONS.md"
 +++
@@ -32,7 +32,10 @@ DERIVED PROJECTIONS         the live channel (WebSocket) · executions.get · ex
 ```
 
 There is no action registry, no action definition and no second implementation of anything.
-An execution is a capability call this process gave an identity to.
+An execution is a capability call a process gave an identity to — and, since
+[I1501](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/project/issues/I1501.yaml), one execution plane per checkout rather than
+one per process: [`majordomus run` reports to the server](#one-plane-per-checkout-majordomus-run-and-the-server)
+serving the checkout, so the history a surface shows is the history a person made.
 
 ## The model
 
@@ -70,7 +73,7 @@ state nothing can reach is a state every client would have to handle and never s
 
 ### What is not here
 
-An execution does not outlive the process that accepted it. There is no durable queue, no
+An execution does not outlive the server that holds it. There is no durable queue, no
 retry, no schedule and no execution that survives a restart. Every limit is typed on
 `execution::store::Limits` — how many executions are remembered, how many events each, how
 long a log line may be, how many run at once, how far a subscriber may fall behind — and
@@ -84,9 +87,11 @@ second list of what may be run: `capabilities.list` already answers it, and the 
 own `execution` policy says what running it means.
 
 ```bash
-majordomus run health.report                       # start it here and follow it to the end
+majordomus run health.report                       # run it here, follow it to the end, and
+                                                    # report it to the server serving this checkout
 majordomus run objects.verify --input '{"limit":50}' --format json
 majordomus executions list                          # what the server serving this repository ran
+                                                    # or was told about by a run
 majordomus executions show   <id>
 majordomus executions events <id> --after 42
 majordomus executions cancel <id>
@@ -102,6 +107,7 @@ POST /api/v1/executions/cancel       { "id": "x-…" }
 GET  /api/v1/executions/protocol
 GET  /api/v1/executions/demonstrate  ?steps=3&delay_ms=200
 GET  /api/v1/objects/verify          ?kind=rule&limit=50
+POST /api/v1/executions/report       { "id": "x-…", "pid": 4242, "events": [ … ], … }  what `run` sends
 ```
 
 Over MCP the same capabilities are the tools `majordomus_execution_start`,
@@ -109,11 +115,42 @@ Over MCP the same capabilities are the tools `majordomus_execution_start`,
 `majordomus_execution_cancel` and `majordomus_execution_protocol`, with
 `majordomus://executions` and `majordomus://executions/protocol` as resources. An agent
 therefore discovers, starts, follows and reads an execution without parsing anything a
-person was meant to look at.
+person was meant to look at. `executions.report` has no MCP tool and no command of its own:
+it is what a run sends to a server, not something an agent or a person asks for.
 
 `start` answers at once with the execution and the links to follow it; nothing waits for the
 handler. The state in that first answer is `queued`, which is what it is: this server
 answers `200` with the truth rather than `202` with a promise.
+
+## One plane per checkout: `majordomus run` and the server
+
+`majordomus run` executes in its own process — the cost and the failure modes of a run are
+the same with and without a server — and asks one question first: does a server already
+serve this checkout (its lease names a URL, and the server there answers for this root)?
+
+- **A server answers.** The run reports itself to it with `executions.report`: its
+  description, the pid of the process, and its events after the last sequence the server
+  took, at the latest every two seconds and soon after anything happens. The server holds
+  it in the same store as its own, so `executions list`, `/cockpit/executions`, the
+  execution's own page, `executions.events` and the live channel show it as they show
+  anything the server ran, with `actor: {"kind": "cli", "pid": …}`. Each event is applied
+  once and in order, and the answer says how far the server got (`through`), so a report
+  that was lost, cut short or sent twice is put right by the next. A stop asked of the
+  server (`executions.cancel`, the Cockpit's button) comes back in the next answer and the
+  run cancels its own execution; cancellation stays cooperative. An output or input over
+  the live channel's frame bound travels as `{"withheld": "too_large", …}` and stays in
+  the run's process, which prints it.
+- **No server answers.** The run runs as before and says so, once, on stderr: *no server
+  is serving this repository, so this execution is visible to this process only*. Nothing
+  is started for it: a run never starts a server.
+- **The server stops answering mid-run.** The first failed report, or three in a row after
+  one succeeded, make the run say on stderr that it is visible to this process only from
+  then on, and it carries on. The server, hearing nothing for 30 seconds, fails the
+  execution with `unavailable` and a message naming the process, rather than showing it
+  running for ever; a run that was killed is therefore never a phantom in the list.
+
+What this does not change: the work runs where the run is, never in the server, and the
+history is still the server's memory — it ends with that server.
 
 ## The event protocol
 
@@ -169,6 +206,7 @@ not ignore safely.
 GET /events                                  every execution of this process, live
 GET /events?execution=<id>                   one execution: its retained history, then live
 GET /events?execution=<id>&after=<sequence>   the same, from a cursor — what a reconnect sends
+GET /events?execution=<a>&execution=<b>       several executions: each one's history, then live
 ```
 
 A native WebSocket (RFC 6455), upgraded on the same socket the rest of the surface is served
@@ -176,21 +214,47 @@ on: one process, one port, one startup path, no second daemon and no Socket.IO. 
 subscription is the request target, so there is nothing to send and nothing to acknowledge.
 
 The server writes one JSON document per text frame: either an execution event, or one of
-three control messages — `stream.ready` (the first frame: what was subscribed to, how much
+four control messages — `stream.ready` (the first frame: what was subscribed to, how much
 was replayed, whether the history before it had already been dropped, the heartbeat
-interval), `stream.lagged` (this client fell behind and events were dropped rather than
-buffered; read the snapshot and the history again from the last sequence seen) and
-`stream.closing`.
+interval), `stream.heartbeat` (the channel is quiet and alive), `stream.lagged` (this client
+fell behind and events were dropped rather than buffered; read the snapshot and the history
+again from the last sequence seen) and `stream.closing`.
 
 **Order and gaps.** A connection subscribes first and replays second, and skips in the live
-stream anything the replay already wrote. There is therefore no gap between the history and
-the stream, and nothing is written twice.
+stream anything the replay already wrote. The replay is read in pages of 1000 until it is
+caught up, so a cursor further behind than one page still receives every retained event
+after it. There is therefore no gap between the history and the stream, and nothing is
+written twice. The Cockpit's client (`share/cockpit/socket.js`) checks both on its side:
+an event at or below the last sequence it saw is dropped, and on a channel that follows one
+execution an event beyond the next one makes it reconnect with `after=<last seen>`, so the
+server replays what was missed; the same gap twice is read from the history over HTTP
+instead.
+
+**Several executions, one cursor each.** `sequence` is dense per execution, so a connection
+that names several executions keeps a cursor for each, and deduplicates each execution's
+events against its own. The one `after` starts every cursor: each execution named is
+replayed, page by page until it is caught up, from the events after it, and an execution
+named twice is followed once. `stream.ready` counts the whole replay in `replayed`, and
+`truncated` is true when the history of any execution followed had already been dropped. A
+client reconnecting to several executions sends no cursor and drops, per execution, what it
+already holds; the Cockpit's `share/cockpit/socket.js` does exactly that. A
+single-execution connection sends the sequence it last saw, as it always has.
 
 **Heartbeat and disconnection.** The server pings a quiet connection every twenty seconds
 and never reads: `tiny_http` hands over one `Read + Write` value on upgrade that cannot be
 split, so a reader thread would hold the lock the writer needs. A client that goes away is
 noticed when the next write fails, which the heartbeat guarantees happens; what a client
 sends is ignored. A close is therefore observed within one heartbeat rather than instantly.
+A ping is a control frame a browser never shows to a page, so the same interval also writes
+a `stream.heartbeat` text frame; the Cockpit's client retires a channel that has said
+nothing for two and a half heartbeats and reconnects from its cursor, rather than showing a
+half-open connection as live.
+
+**A value too large for a frame.** One frame is at most 256 KiB. An event whose frame would
+be larger — a completed execution's `output`, a created one's `input` — is written with that
+value replaced by a reference, `{"withheld": "too_large", "bytes": n, "limit": 262144,
+"self": "/api/v1/executions/get?id=…"}`, and the channel stays open; the snapshot it names
+carries the whole value.
 
 **Backpressure.** A subscriber that falls behind its queue is never waited for: events are
 dropped for that client alone, it is told `stream.lagged`, and the execution is not slowed
@@ -199,12 +263,16 @@ by anyone watching it. A subscriber whose reader has gone is forgotten at the ne
 **Refusals.** A plain `GET /events` answers `426` and says where the same events are
 readable over HTTP. A request from another origin is refused `403` before the handshake — a
 page elsewhere can open a WebSocket to a loopback server, and the same-origin policy does
-not stop it. An `execution` parameter that is not an execution id is `400`, refused by
-shape before anything is looked up.
+not stop it. So is an upgrade from this machine addressed to a host name that is neither an
+address nor `localhost`: that is a page whose domain was made to resolve here (DNS
+rebinding), refused before the upgrade as every other route refuses it. An `execution`
+parameter that is not an execution id is `400`, refused by shape before anything is looked
+up.
 
 ## In the Cockpit
 
-`/cockpit/executions` lists what this process has run, with the counts beside it;
+`/cockpit/executions` lists what this server has run and what `majordomus run` reported to
+it, with the counts beside it;
 `/cockpit/executions/<id>` is one execution, at a stable URL a person can reload, share
 locally or open several of in tabs.
 
@@ -297,7 +365,10 @@ origin. The Cockpit's content-security policy allows connections to this origin 
 | executions running at once | 4 | further ones wait `queued`, and `execution.queued` says how many are ahead |
 | a subscriber's queue | 512 | events are dropped for that client, which is told `stream.lagged` |
 | live channels | 64 | a further connection is refused `503` with the reason |
+| one frame of the live channel | 256 KiB | an output or input over it is written as a reference to the snapshot |
 | a serial capability (a command) | one at a time | a second execution of it waits for the first |
+| events in one report from a run | 500, and three quarters of the 1 MiB body bound | refused above 500; the run sends the rest in the next report |
+| silence of a reported execution | 30 s (the run's heartbeat is 2 s) | the server fails it `unavailable`; the run itself is not touched |
 
 </div>
 
@@ -314,7 +385,10 @@ answers the ones this process is running with.
 | `no capability 'x'; the executable ones are listed by capabilities.list` | the id is not in the registry | check `majordomus capabilities list` |
 | `not executable: 'x' is a resource: it is read, never executed` | a declarative object was named | read it with `objects.get` |
 | `invalid input: /steps: "many" is not of type "integer"` | the input does not satisfy the capability's own schema | the schema is in the OpenAPI document and on the capability's Cockpit page |
-| `no execution x-… in this process` | it never ran here, or it has been forgotten | an execution lives in the process that accepted it; `executions.list` says what is remembered |
+| `no execution x-… in this process` | it never ran here, or it has been forgotten | an execution lives in the server that holds it; `executions.list` says what is remembered |
+| `majordomus run: no server is serving this repository, so this execution is visible to this process only…` | `run` found no server answering for this checkout | start `majordomus serve` before the run to see it there; a run never starts one |
+| `majordomus run: the server at … did not take this run's report (…)` | the server refused or did not answer; an older server has no `executions.report` | the run carries on; the reason in parentheses is the server's |
+| `unavailable: process N, which ran this execution and reported it here, has not reported for … s` | the run was killed, or lost its way to the server, for 30 s | the terminal that ran it has the outcome |
 | `426 … /events is a WebSocket` | it was opened with a plain `GET` | open it with a WebSocket client, or read `executions.events` |
 | `403 … a WebSocket from origin '…' is refused` | a page on another origin tried to follow this server | open the Cockpit from this server's own address |
 | `stream.lagged` | this client could not keep up | read the snapshot and the history again from the last sequence seen |
@@ -337,6 +411,8 @@ answers the ones this process is running with.
 | an existing capability observable with no second implementation | behaviourally verified (`tests/executions.rs`) |
 | an execution never answered from the cache | behaviourally verified (`tests/executions.rs`) |
 | the whole path from outside the executable | behaviourally verified (`test/cases/100_execution_plane.sh`) |
+| a run reported to the server: applied once and in order, resumed after a gap, a stop handed back, a silent reporter failed | behaviourally verified (`execution::store`) |
+| a run listed by the server while in flight, the same outcome after it, a stop asked of the server reaching the run, the plain line with no server | behaviourally verified, by polling the server (`test/cases/3024_a_run_is_seen_by_the_server.sh`) |
 | durability, retry, scheduling, an execution outliving its process | not implemented, and `Limits` is where a durable store would be substituted |
 | a capability backed by a process, with its output as `stdout`/`stderr` log events | not implemented; the event model carries the streams for it |
 | reading the client's frames, and therefore an immediate close | not implemented; the reason is in `http::ws` |

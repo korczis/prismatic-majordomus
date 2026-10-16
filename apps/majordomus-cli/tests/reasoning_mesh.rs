@@ -131,7 +131,7 @@ fn post(s: &Served, path: &str, body: Value) -> (u16, Value) {
 }
 
 fn reviews(s: &Served) -> Vec<Value> {
-    s.get("/api/v1/mesh/state").1["state"]["reviews"]
+    s.get("/api/v1/mesh/state?view=full").1["state"]["reviews"]
         .as_array()
         .cloned()
         .unwrap_or_default()
