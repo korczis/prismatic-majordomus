@@ -240,6 +240,9 @@ mj_context_sections() {
       { printf '## CONTEXT DOCUMENTS (for the scope, root first; majordomus context explain <path>)\n'
         for sp in $(mj_ylist "$MJ_CUR_FLAT" scope); do
           case " $seen " in *" $sp "*) continue ;; esac; seen="$seen $sp"
+          # a recorded entry this cannot resolve costs its own line, not the briefing: a
+          # record written by hand or by an older `start` reaches here unjudged (I2760)
+          if ! mj_ctxd_judge "$sp"; then printf '%s  refused: %s\n' "$sp" "$MJ_CTXD_REFUSAL"; continue; fi
           mj_ctxd_target "$sp"; mj_ctxd_resolve "" ""
           chain="$(while IFS="$MJ_CTXD_TAB" read -r i _; do mj_ctxd "$i" id; done < "$MJ_CTXD_CHAIN" | paste -sd, - | sed 's/,/, /g')"
           rm -f "$MJ_CTXD_CHAIN" "$MJ_CTXD_EXCLUDED"

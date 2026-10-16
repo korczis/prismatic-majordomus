@@ -8,6 +8,9 @@
 . "$MJ_LIB_DIR/check.sh"
 # shellcheck source=intent_binding.sh
 . "$MJ_LIB_DIR/intent_binding.sh"
+# the judgement `context` makes of a path, asked of every scope entry before it is recorded
+# shellcheck source=context_docs.sh
+. "$MJ_LIB_DIR/context_docs.sh"
 mj_cmd_start() {
   local task="" scope="" requires="" profile="" owner="${USER:-unknown}"
   local issue="" intent="" exempt="" because=""
@@ -80,7 +83,14 @@ H
     IFS="$IFS_save"
     raw="$(printf '%s' "$raw" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')"
     [ -n "$raw" ] || { IFS=','; continue; }
+    # The record holds the scope as words, so an entry holding whitespace would be recorded
+    # as each of its words: on 2026-10-15 a pasted prompt became some 270 "paths", a lone
+    # `/` among them, and `context` refused the worktree from then on (I2760).
+    case "$raw" in *[[:space:]]*)
+      mj_die "$MJ_EX_USAGE" "start: scope entry '$raw' holds whitespace; a scope is repository paths separated by commas, and a path holding a space is scoped by its directory" ;;
+    esac
     p="$(mj_norm_path "$raw")" || mj_die "$MJ_EX_USAGE" "start: scope path '$raw' is empty, absolute, or escapes the repository"
+    mj_ctxd_judge "$p" || mj_die "$MJ_EX_USAGE" "start: scope entry '$raw' is refused by context: $MJ_CTXD_REFUSAL"
     norm="$norm $p"; IFS=','
   done; IFS="$IFS_save"
 
