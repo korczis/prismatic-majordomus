@@ -551,4 +551,34 @@ the tree's own directory and is never replaced. The rule is
 `project.a-build-never-waits-in-silence-on-anothers-lock`; `scripts/liveness-check` refuses
 a tracked script that calls cargo any other way, and
 `test/cases/3002_a_build_never_waits_in_silence.sh` proves each row above.
+
+## Idle incremental sessions in the shared build directory
+
+rustc keeps a crate's incremental state as session directories under
+`<build-dir>/<profile>/incremental/<crate>-<hash>/`, and only a later compile of the same crate
+removes a finished one. A crate that stops being compiled leaves its last session behind, and in
+the build directory every worktree shares that means every worktree's leftovers. On 2026-10-16
+the shared directory held 79 GB of them in 454 sessions, five of them live, with 6.9 GiB of the
+disk left free.
+
+So before a build starts, `mj_cargo_bounded` and the disk floor's check (`lib/rust_bin.sh`)
+remove the idle sessions of the build directory that build uses:
+
+<div class="overflow-x-auto" tabindex="0">
+
+| what | what happens |
+|---|---|
+| a finished session (`s-*`, not `-working`) unwritten for over `MAJORDOMUS_INCREMENTAL_IDLE_MIN` minutes (default 30) | removed, after its age and size are printed; then one line says how many were removed, what du counted in them, and the volume's free space before and after |
+| a `-working` session, a younger one, the lock files beside them | never touched |
+| another build directory, a target directory, a profile directory that is a symlink out of the build directory | never touched |
+| cargo does not say where the build directory is, it carries no mark of cargo's, or a listing cannot be read whole | nothing is removed, and one line says why |
+| free space is still under the floor after that | the build refuses, and the refusal names the five largest build directories with their sizes |
+
+</div>
+
+
+The build directory is the one `cargo metadata` reports, asked from inside the crate so that
+the pinned toolchain answers. `MAJORDOMUS_INCREMENTAL_IDLE_MIN=0` removes nothing.
+`test/cases/3080_idle_incremental_sessions_are_pruned.sh` proves each row against a fixture
+build directory.
 {% endraw %}
