@@ -3,8 +3,8 @@
 //
 // Alpine is optional. If share/cockpit/vendor/alpine.csp.min.js is not there, the import
 // fails, this module's registration never happens, and every page is exactly what the
-// server rendered: complete HTML with working links and working forms. The palette and
-// the theme toggle are the only things lost, and the theme still follows the system.
+// server rendered: complete HTML with working links and working forms. The palette is the
+// only thing lost; the theme toggle is the site's bar's, run by the site's theme.js.
 //
 // Alpine's CSP build is what is loaded, so no expression in any attribute is ever
 // evaluated as a string. Every `x-` attribute in the Rust names a property or a method
@@ -166,9 +166,8 @@ export function whileVisible(element, frame) {
 // --------------------------------------------------------------------- the theme
 
 // The theme contract is the design declaration's, not this file's: the shell writes the
-// storage key and the class onto <body> from the compiled declaration, and this reads them
-// there. A page without them (a distribution whose compiled declaration is invalid) gets a
-// toggle that works for the page and stores nothing.
+// storage key and the class onto <body> (and <html>, for the site's theme.js) from the
+// compiled declaration, and this reads them there.
 const THEME_KEY = (document.body && document.body.dataset.themeKey) || null;
 const THEME_CLASS = (document.body && document.body.dataset.themeClass) || 'dark';
 
@@ -181,14 +180,26 @@ function storedTheme() {
   }
 }
 
-function storeTheme(value) {
-  if (!THEME_KEY) return;
-  try {
-    localStorage.setItem(THEME_KEY, value);
-  } catch (e) {
-    /* a browser that refuses storage still gets the toggle, for this page */
+// The bar at the top is the site's (project.the-ui-wears-the-sites-navbar), and so are its
+// menus and its theme toggle, which the site's own nav.js and theme.js run. Two things are the
+// Cockpit's: the bar's search button, which the site's search script reveals on the site, is
+// revealed here and opens the palette; and the bar's height is written into --ui-bar, so the
+// sidebar stays in view beneath the bar.
+function wireBar() {
+  for (const button of document.querySelectorAll('[data-site-search-open]')) {
+    button.hidden = false;
+    button.addEventListener('click', () => {
+      const open = document.querySelector('.mj-palette-open');
+      if (open) open.click();
+    });
   }
+  const bar = document.querySelector('nav[aria-label="Main"]');
+  if (!bar) return;
+  const write = () => document.documentElement.style.setProperty('--ui-bar', `${bar.offsetHeight}px`);
+  write();
+  if (window.ResizeObserver) new ResizeObserver(write).observe(bar);
 }
+wireBar();
 
 /**
  * The one Alpine component. Everything the markup names is a property or a method here,
@@ -210,11 +221,6 @@ export function component() {
           this.openPalette();
         }
       });
-    },
-
-    toggleTheme() {
-      const dark = document.documentElement.classList.toggle(THEME_CLASS);
-      storeTheme(dark ? 'dark' : 'light');
     },
 
     openPalette() {

@@ -51,6 +51,7 @@ pub(crate) mod issues;
 pub(crate) mod knowledge;
 pub(crate) mod mesh;
 pub(crate) mod milestone;
+pub(crate) mod navbar;
 pub(crate) mod observatory;
 pub(crate) mod prose;
 pub(crate) mod prs;
@@ -89,6 +90,10 @@ pub const STYLESHEET: &str = "ui.css";
 
 /// The script every screen loads.
 pub const SCRIPT: &str = "ui.js";
+/// The site's own scripts the bar every screen wears behaves by — its menus, then its theme
+/// toggle — served as byte copies of `site/nav.js` and `site/theme.js` that
+/// `scripts/cockpit-assets` writes and checks ([`navbar`]).
+pub(crate) const BAR_SCRIPTS: &[&str] = &["nav.js", "theme.js"];
 
 /// The vendored graph library, loaded only by a screen that draws a graph.
 pub const GRAPH_LIB: &str = "vendor/cytoscape.min.js";
@@ -388,6 +393,7 @@ impl Ui {
                     stylesheet: self.assets.url(STYLESHEET),
                     favicon: self.assets.url("favicon.svg"),
                     script: self.assets.url(SCRIPT),
+                    bar_scripts: BAR_SCRIPTS.iter().map(|s| self.assets.url(s)).collect(),
                     graph_lib: self.assets.url(GRAPH_LIB),
                     assets_present: self.assets.present(),
                     version: self.version,

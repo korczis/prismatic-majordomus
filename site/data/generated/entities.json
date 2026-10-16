@@ -23,7 +23,7 @@
       "title": "Rules",
       "description": "Every rule in force here — the vendored doctrine package and this repository's own — with the class it declares, the artefacts it names as its enforcement, whether the tree holds them, and the rules either side of it in the dependency graph.",
       "weight": 46,
-      "count": 180,
+      "count": 181,
       "dir": "rules",
       "statuses": [
         "active"
@@ -173,7 +173,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 394
+      "count": 395
     },
     {
       "kind": "knowledge",
@@ -245,7 +245,7 @@
       "route": "/rules/",
       "title": "Rules",
       "reason": null,
-      "count": 180
+      "count": 181
     },
     {
       "kind": "scope",
@@ -12902,6 +12902,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0036/",
           "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.the-ui-wears-the-sites-navbar@1",
+          "kind": "rule",
+          "route": "/rules/project-the-ui-wears-the-sites-navbar-1/",
+          "external": false
         }
       ]
     },
@@ -14792,6 +14799,13 @@
           "label": "project.homepage-tells-a-declared-story@1",
           "kind": "rule",
           "route": "/rules/project-homepage-tells-a-declared-story-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.the-ui-wears-the-sites-navbar@1",
+          "kind": "rule",
+          "route": "/rules/project-the-ui-wears-the-sites-navbar-1/",
           "external": false
         }
       ]
@@ -16891,6 +16905,48 @@
     },
     {
       "kind": "rule",
+      "id": "majordomus://rule/project.the-ui-wears-the-sites-navbar@1",
+      "identity": "project.the-ui-wears-the-sites-navbar@1",
+      "slug": "project-the-ui-wears-the-sites-navbar-1",
+      "cockpit": "/cockpit/objects/rule/project-the-ui-wears-the-sites-navbar-1",
+      "title": "majordomus.dev is the reference for how the product looks, and every page of the UI and the Cockpit wears the site's own navbar",
+      "status": "active",
+      "tags": [
+        "design",
+        "ui",
+        "navigation",
+        "derived",
+        "projections",
+        "site"
+      ],
+      "source": ".ai/repo/rules/project/the-ui-wears-the-sites-navbar.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.design-tokens-declared-once@2",
+          "kind": "rule",
+          "route": "/rules/project-design-tokens-declared-once-2/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.navigation-is-declared-once@1",
+          "kind": "rule",
+          "route": "/rules/project-navigation-is-declared-once-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.ui-conformance@1",
+          "kind": "rule",
+          "route": "/rules/project-ui-conformance-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "rule",
       "id": "majordomus://rule/project.the-version-is-measured@2",
       "identity": "project.the-version-is-measured@2",
       "slug": "project-the-version-is-measured-2",
@@ -17037,6 +17093,13 @@
           "label": "project.every-link-and-control-is-tested@1",
           "kind": "rule",
           "route": "/rules/project-every-link-and-control-is-tested-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.the-ui-wears-the-sites-navbar@1",
+          "kind": "rule",
+          "route": "/rules/project-the-ui-wears-the-sites-navbar-1/",
           "external": false
         }
       ]
