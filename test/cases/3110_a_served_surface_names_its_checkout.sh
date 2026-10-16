@@ -56,7 +56,7 @@ SRV=""; SRV_R=""; SRV_A=""
 trap 'kill $SRV $SRV_R $SRV_A 2>/dev/null || true; wait $SRV $SRV_R $SRV_A 2>/dev/null || true' EXIT
 cd "$R" && { serve_up "$T/r.out" "$T/r.err" || exit 1; }; SRV_R="$SRV"; U_R="$U"; SRV=""
 cd "$A" && { serve_up "$T/a.out" "$T/a.err" || exit 1; }; SRV_A="$SRV"; U_A="$U"; SRV=""
-cd "$T"
+cd "$T" || exit 1
 [ "$U_R" != "$U_A" ] || { echo "    the two roots share one address: $U_R"; exit 1; }
 
 get() { curl -sS -m 30 "$@"; }
