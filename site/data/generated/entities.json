@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 109,
+      "count": 110,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 109
+      "count": 110
     },
     {
       "kind": "application",
@@ -93,7 +93,7 @@
       "route": null,
       "title": null,
       "reason": "A critique is the adversarial pass over one intent's plan, written by a worker, and work started under the intent without it or with a blocking finding open fails intent validation (ADR 0073). It is planning state of this repository; what the plan became is published on /plan/.",
-      "count": 3
+      "count": 4
     },
     {
       "kind": "deployment",
@@ -149,7 +149,7 @@
       "route": null,
       "title": null,
       "reason": "A gap is what one worker observed of the repository against an intent's criteria at one commit (ADR 0073). It is a dated input to planning, superseded by the next observation, and the work it suggested is published on /plan/.",
-      "count": 3
+      "count": 4
     },
     {
       "kind": "implementation",
@@ -165,7 +165,7 @@
       "route": null,
       "title": null,
       "reason": "An intent's stage and criteria are derived on every read from the plan and the evidence ledger (ADR 0070); a static page would freeze a derivation at the commit the site was built from. The milestones that realise an intent are published on /plan/, and `majordomus intent show` and the Cockpit's /cockpit/intents answer for the intent itself.",
-      "count": 4
+      "count": 5
     },
     {
       "kind": "issue",
@@ -173,7 +173,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 394
+      "count": 395
     },
     {
       "kind": "knowledge",
@@ -197,7 +197,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 38
+      "count": 39
     },
     {
       "kind": "moment",
@@ -1986,6 +1986,13 @@
           "label": "adr-0098",
           "kind": "adr",
           "route": "/adrs/adr-0098/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0170",
+          "kind": "adr",
+          "route": "/adrs/adr-0170/",
           "external": false
         }
       ]
@@ -4067,6 +4074,13 @@
           "label": "adr-0133",
           "kind": "adr",
           "route": "/adrs/adr-0133/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0170",
+          "kind": "adr",
+          "route": "/adrs/adr-0170/",
           "external": false
         }
       ]
@@ -6919,6 +6933,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0158/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0170",
+          "kind": "adr",
+          "route": "/adrs/adr-0170/",
+          "external": false
         }
       ]
     },
@@ -8588,6 +8609,67 @@
           "kind": "test",
           "route": null,
           "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0170",
+      "identity": "adr-0170",
+      "slug": "adr-0170",
+      "cockpit": "/cockpit/objects/adr/adr-0170",
+      "title": "A browser computes with the portable core, and the server verifies by recomputing",
+      "status": "proposed",
+      "tags": [
+        "mesh",
+        "security",
+        "wasm",
+        "architecture"
+      ],
+      "source": ".ai/repo/adrs/0170-a-browser-computes-and-the-server-verifies-by-recomputing.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-core/fixtures/canonical-digest.v1.json",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-core/src/lib.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0032",
+          "kind": "adr",
+          "route": "/adrs/adr-0032/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0067",
+          "kind": "adr",
+          "route": "/adrs/adr-0067/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0126",
+          "kind": "adr",
+          "route": "/adrs/adr-0126/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-core/tests/parity.rs",
+          "kind": "test",
+          "route": null,
+          "external": true
         }
       ],
       "referenced_by": []
