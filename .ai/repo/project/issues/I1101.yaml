@@ -30,6 +30,21 @@ evidence_required:
   - decision_recorded
 risk: "A forensic phase can become a rewrite the moment it finds something ugly. It records; the phases that follow change."
 created_at: 2026-09-06
-updated_at: 2026-10-16T11:25:07Z
+updated_at: 2026-10-16T12:15:38Z
 started_at: 2026-10-16T11:25:07Z
 started_event: sha256:31ae9ab3d028d055e36f98af540f82d1b50d13822270862f9e092fc74c8d034b
+verified_at: 2026-10-16T12:15:38Z
+verified_event: sha256:f31eddc643482230f2ae58b767aba250a1c2f92dc035fe10519028cab7d56f92
+evidence:
+  - covers: footprint_inventory
+    type: test
+    command: "bash test/run.sh 3113_the_adoption_footprint_is_inventoried"
+    result: "ok: the default adoption (init, update, capture install) writes exactly the 11 paths outside .ai/ and .majordomus/ that docs/TWO_FOLDER_CONSOLIDATION.md names; .git/config, info/exclude and hooks unchanged; personal adoption invisible to git and its exclude block names every path"
+    commit: e1997844a18a50e38dcf23c7ba06910c9e189d7a
+    recorded_at: 2026-10-16T12:15:31Z
+  - covers: decision_recorded
+    type: test
+    command: "bin/majordomus adr check"
+    result: "ADR 0168 (proposed) examined among 110 decisions: every identity unique, every reference resolves"
+    commit: e1997844a18a50e38dcf23c7ba06910c9e189d7a
+    recorded_at: 2026-10-16T12:15:34Z
