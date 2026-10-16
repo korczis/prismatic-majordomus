@@ -1366,6 +1366,15 @@
         "status": "query"
       },
       {
+        "id": "capability:plan.flight",
+        "kind": "capability",
+        "label": "plan.flight",
+        "summary": "Where the work is now",
+        "route": "/cockpit/capabilities/plan.flight",
+        "source": "apps/majordomus-cli/src/capability/builtin/plan.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:plan.issues",
         "kind": "capability",
         "label": "plan.issues",
@@ -55618,6 +55627,13 @@
         "source": "test/cases/3100_an_issue_delivery_is_inferred.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3104_the_ui_roadmap_reads_delivery.sh",
+        "kind": "test",
+        "label": "test/cases/3104_the_ui_roadmap_reads_delivery.sh",
+        "route": "/cockpit/objects/test/test-cases-3104-the-ui-roadmap-reads-delivery-sh",
+        "source": "test/cases/3104_the_ui_roadmap_reads_delivery.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/310_rustdoc_projection.sh",
         "kind": "test",
         "label": "test/cases/310_rustdoc_projection.sh",
@@ -62542,6 +62558,21 @@
       },
       {
         "source": "capability:plan.delivery",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:plan.flight",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:plan.flight",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:plan.flight",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -86436,6 +86467,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3104_the_ui_roadmap_reads_delivery.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/310_rustdoc_projection.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -91442,6 +91478,11 @@
       },
       {
         "source": "module:plan",
+        "target": "capability:plan.flight",
+        "kind": "composes"
+      },
+      {
+        "source": "module:plan",
         "target": "capability:plan.issues",
         "kind": "composes"
       },
@@ -91737,8 +91778,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2885,
-      "edges": 6331,
+      "nodes": 2887,
+      "edges": 6336,
       "acyclic": false,
       "truncated": false
     }

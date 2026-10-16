@@ -141,6 +141,7 @@
     "op-peers-list": "docs/api/peers/",
     "op-perf-counters": "docs/api/perf/",
     "op-plan-delivery": "docs/api/plan/",
+    "op-plan-flight": "docs/api/plan/",
     "op-plan-issues": "docs/api/plan/",
     "op-plan-model": "docs/api/plan/",
     "op-plan-next": "docs/api/plan/",
@@ -562,6 +563,9 @@
     "schema-FirewallReport": "docs/api/mesh/",
     "schema-FirewallRule": "docs/api/mesh/",
     "schema-Fixtures": "docs/api/repository/",
+    "schema-FlightIssue": "docs/api/plan/",
+    "schema-FlightMilestone": "docs/api/plan/",
+    "schema-FlightRelease": "docs/api/plan/",
     "schema-Fonts": "docs/api/design/",
     "schema-Freshness": "docs/api/shared/",
     "schema-GapCondition": "docs/api/intents/",
@@ -606,6 +610,7 @@
     "schema-IdentityReport": "docs/api/session-domain/",
     "schema-Implementation": "docs/api/delivery/",
     "schema-ImpliedObligation": "docs/api/gates/",
+    "schema-InFlight": "docs/api/plan/",
     "schema-Inference": "docs/api/models/",
     "schema-InspectReport": "docs/api/worktree/",
     "schema-InstallCheck": "docs/api/distribution/",
@@ -821,6 +826,7 @@
     "schema-PlanEdge": "docs/api/plan/",
     "schema-PlanFinding": "docs/api/plan/",
     "schema-PlanFingerprint": "docs/api/commit/",
+    "schema-PlanFlight": "docs/api/plan/",
     "schema-PlanIssue": "docs/api/plan/",
     "schema-PlanIssueList": "docs/api/plan/",
     "schema-PlanItem": "docs/api/continuity/",
@@ -864,6 +870,7 @@
     "schema-ProjectionState": "docs/api/environment/",
     "schema-ProjectionView": "docs/api/design/",
     "schema-PromptSource": "docs/api/product/",
+    "schema-Proof": "docs/api/plan/",
     "schema-ProofState": "docs/api/shared/",
     "schema-ProofStep": "docs/api/integration/",
     "schema-Proposed": "docs/api/intents/",
@@ -950,6 +957,7 @@
     "schema-ReleasePolicy": "docs/api/release/",
     "schema-ReleasePolicyMode": "docs/api/release/",
     "schema-ReleaseProducedBy": "docs/api/release/",
+    "schema-ReleaseReading": "docs/api/plan/",
     "schema-ReleaseReference": "docs/api/release/",
     "schema-ReleaseSection": "docs/api/release/",
     "schema-ReleaseSeverity": "docs/api/release/",
@@ -1245,8 +1253,8 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 198,
-    "schemas": 986,
+    "operations": 199,
+    "schemas": 993,
     "tags": 58
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1479,6 +1487,7 @@
     "peers.list": "peers",
     "perf.counters": "perf",
     "plan.delivery": "plan",
+    "plan.flight": "plan",
     "plan.issues": "plan",
     "plan.model": "plan",
     "plan.next": "plan",
@@ -1904,6 +1913,9 @@
     "FirewallReport": "mesh",
     "FirewallRule": "mesh",
     "Fixtures": "repository",
+    "FlightIssue": "plan",
+    "FlightMilestone": "plan",
+    "FlightRelease": "plan",
     "Fonts": "design",
     "Freshness": "shared",
     "GapCondition": "intents",
@@ -1948,6 +1960,7 @@
     "IdentityReport": "session-domain",
     "Implementation": "delivery",
     "ImpliedObligation": "gates",
+    "InFlight": "plan",
     "Inference": "models",
     "InspectReport": "worktree",
     "InstallCheck": "distribution",
@@ -2163,6 +2176,7 @@
     "PlanEdge": "plan",
     "PlanFinding": "plan",
     "PlanFingerprint": "commit",
+    "PlanFlight": "plan",
     "PlanIssue": "plan",
     "PlanIssueList": "plan",
     "PlanItem": "continuity",
@@ -2206,6 +2220,7 @@
     "ProjectionState": "environment",
     "ProjectionView": "design",
     "PromptSource": "product",
+    "Proof": "plan",
     "ProofState": "shared",
     "ProofStep": "integration",
     "Proposed": "intents",
@@ -2292,6 +2307,7 @@
     "ReleasePolicy": "release",
     "ReleasePolicyMode": "release",
     "ReleaseProducedBy": "release",
+    "ReleaseReading": "plan",
     "ReleaseReference": "release",
     "ReleaseSection": "release",
     "ReleaseSeverity": "release",
@@ -12533,7 +12549,8 @@
       "type": "object",
       "used_by": [],
       "used_by_schemas": [
-        "IssueDeliveryReport"
+        "IssueDeliveryReport",
+        "PlanFlight"
       ],
       "values": [],
       "variants": []
@@ -12604,7 +12621,8 @@
       "type": "\"read\" | \"unread\"",
       "used_by": [],
       "used_by_schemas": [
-        "DeliverySource"
+        "DeliverySource",
+        "ReleaseReading"
       ],
       "values": [
         {
@@ -12750,7 +12768,8 @@
       "type": "object",
       "used_by": [],
       "used_by_schemas": [
-        "IssueDeliveryReport"
+        "IssueDeliveryReport",
+        "PlanFlight"
       ],
       "values": [],
       "variants": []
@@ -12764,6 +12783,7 @@
       "type": "\"none\" | \"branch\" | \"pr_open\" | \"merged\" | \"released\" | \"deployed\"",
       "used_by": [],
       "used_by_schemas": [
+        "FlightIssue",
         "IssueDelivery",
         "IssueDeliveryReport"
       ],
@@ -19491,6 +19511,7 @@
         "perf.counters",
         "plan.model",
         "plan.delivery",
+        "plan.flight",
         "plan.issues",
         "plan.next",
         "plan.record",
@@ -23010,6 +23031,187 @@
       "variants": []
     },
     {
+      "description": "One issue: its declared status beside its inferred stage, and what proves the stage.",
+      "home": "plan",
+      "is_enum": false,
+      "name": "FlightIssue",
+      "properties": [
+        {
+          "description": "The issue id.",
+          "name": "issue",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its title.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its declared status, from the stamps.",
+          "name": "status",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its inferred delivery stage, from `plan.delivery`.",
+          "name": "stage",
+          "refs": [
+            "DeliveryStage"
+          ],
+          "required": true,
+          "type": "DeliveryStage"
+        },
+        {
+          "description": "True when no unread source could have proved a further stage.",
+          "name": "settled",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The sources that were not read and could have moved it further.",
+          "name": "unread",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "Why it is in flight; empty for an issue that is not.",
+          "name": "in_flight",
+          "refs": [
+            "InFlight"
+          ],
+          "required": true,
+          "type": "array of InFlight"
+        },
+        {
+          "description": "The objects that prove the stage (and the claims that put it in flight), in stage\norder.",
+          "name": "proofs",
+          "refs": [
+            "Proof"
+          ],
+          "required": true,
+          "type": "array of Proof"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "FlightMilestone"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One milestone with the issues an answer shows of it.",
+      "home": "plan",
+      "is_enum": false,
+      "name": "FlightMilestone",
+      "properties": [
+        {
+          "description": "The milestone id.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its title.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its declared status.",
+          "name": "status",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its issues: the ones in flight for a milestone of `now`, every one for the inspected\nmilestone.",
+          "name": "issues",
+          "refs": [
+            "FlightIssue"
+          ],
+          "required": true,
+          "type": "array of FlightIssue"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "PlanFlight"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The latest release, and every source that was asked for it.",
+      "home": "plan",
+      "is_enum": false,
+      "name": "FlightRelease",
+      "properties": [
+        {
+          "description": "The highest stable version any read source names; absent when none names one.",
+          "name": "latest",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The source that named it (the first in `records`, `tags`, `publication` order when\nseveral agree).",
+          "name": "source",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Where it can be seen on the forge.",
+          "name": "href",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The version of the executable that answered.",
+          "name": "executable",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "True when the executable's own version is tagged `v<version>`; the latest release is\nthen never older than it.",
+          "name": "executable_tagged",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Every source, read or not.",
+          "name": "readings",
+          "refs": [
+            "ReleaseReading"
+          ],
+          "required": true,
+          "type": "array of ReleaseReading"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "PlanFlight"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "The two type stacks.",
       "home": "design",
       "is_enum": false,
@@ -25316,6 +25518,33 @@
         "Completion"
       ],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "Why an issue is in flight.",
+      "home": "plan",
+      "is_enum": true,
+      "name": "InFlight",
+      "properties": [],
+      "type": "\"pr_open\" | \"claim\" | \"active\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "FlightIssue"
+      ],
+      "values": [
+        {
+          "description": "An open pull request names it.",
+          "value": "pr_open"
+        },
+        {
+          "description": "A live mesh claim was made for it.",
+          "value": "claim"
+        },
+        {
+          "description": "Its declared status is ACTIVE.",
+          "value": "active"
+        }
+      ],
       "variants": []
     },
     {
@@ -37353,6 +37582,87 @@
       "variants": []
     },
     {
+      "description": "Where the work is: the answer of `plan.flight`.",
+      "home": "plan",
+      "is_enum": false,
+      "name": "PlanFlight",
+      "properties": [
+        {
+          "description": "The version of this shape.",
+          "name": "schema",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "Where and when the delivery half was observed.",
+          "name": "observed",
+          "refs": [
+            "DeliveryObservation"
+          ],
+          "required": true,
+          "type": "DeliveryObservation"
+        },
+        {
+          "description": "The milestones with work in flight, in the plan's order.",
+          "name": "now",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The first open milestone the graph allows once the work in flight lands.",
+          "name": "next",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The milestones of `now`, each with its issues in flight.",
+          "name": "milestones",
+          "refs": [
+            "FlightMilestone"
+          ],
+          "required": true,
+          "type": "array of FlightMilestone"
+        },
+        {
+          "description": "The milestone asked for with `milestone`, with every one of its issues.",
+          "name": "inspected",
+          "refs": [
+            "FlightMilestone"
+          ],
+          "required": false,
+          "type": "FlightMilestone | null"
+        },
+        {
+          "description": "The latest release.",
+          "name": "release",
+          "refs": [
+            "FlightRelease"
+          ],
+          "required": true,
+          "type": "FlightRelease"
+        },
+        {
+          "description": "Every source, read or not: `plan.delivery`'s, then `mesh`.",
+          "name": "sources",
+          "refs": [
+            "DeliverySource"
+          ],
+          "required": true,
+          "type": "array of DeliverySource"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "plan.flight"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One issue, as its record declares it and as the graph derives it.",
       "home": "plan",
       "is_enum": false,
@@ -39322,6 +39632,42 @@
           "value": "none"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "One object that proves where an issue's work stands.",
+      "home": "plan",
+      "is_enum": false,
+      "name": "Proof",
+      "properties": [
+        {
+          "description": "`branch`, `pull_request`, `merge`, `release`, `publication` or `claim`.",
+          "name": "kind",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What a reader is shown: `#1298`, a short commit, a tag, a branch.",
+          "name": "label",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Where the object is, on the forge; absent for an object only this clone holds (a\nlocal branch, a mesh claim), so a link is never drawn to nothing.",
+          "name": "href",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "FlightIssue"
+      ],
+      "values": [],
       "variants": []
     },
     {
@@ -44857,6 +45203,58 @@
       "used_by": [],
       "used_by_schemas": [
         "ReleaseChangelog"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One source's answer to \"what is the latest release\".",
+      "home": "plan",
+      "is_enum": false,
+      "name": "ReleaseReading",
+      "properties": [
+        {
+          "description": "`records`, `tags` or `publication`.",
+          "name": "source",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Read or unread.",
+          "name": "state",
+          "refs": [
+            "DeliveryReading"
+          ],
+          "required": true,
+          "type": "DeliveryReading"
+        },
+        {
+          "description": "The version it names, when it was read and names one.",
+          "name": "version",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "What was read (`.ai/repo/releases/v0.27.0.yaml`, `refs/tags/v0.27.0`,\n`<commit>:site/static/releases/latest.json`), or why nothing was.",
+          "name": "detail",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Where it can be seen on the forge, when it can.",
+          "name": "href",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "FlightRelease"
       ],
       "values": [],
       "variants": []
@@ -67588,6 +67986,73 @@
           "result_schema": "IssueDeliveryReport",
           "stability": "experimental",
           "summary": "How far each issue's work has travelled"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/plan/flight?milestone=M000\"",
+          "description": "The milestones with work in flight, the one the graph allows next, and the latest release as the releases themselves say it, read live on every call (ADR 0166, decision 4). Now is every open milestone holding an open issue with an open pull request that names it (`plan.delivery`'s `pr_open`), a live mesh claim made for it, or a declared ACTIVE status, each with those issues, why they are in flight, their declared status beside their inferred stage, and the objects that prove it (branch, pull request, merge commit, release tag, published `latest.json`, claim), linked on the forge where the forge has them. Next is the first open milestone in the plan's order that is not now and whose unfinished prerequisites are all now. The latest release is the highest stable version among the release records, the `v*` tags of this clone and the `latest.json` the last successful Pages deployment published, so a release whose record merged after its tag is not shown older than it is; `executable_tagged` says whether the answering executable's own version is tagged. `milestone` adds that milestone with every one of its issues. A source that was not read (the forge, the publication, the mesh outside a server) is named with its reason, never treated as empty.",
+          "home": "plan",
+          "id": "plan.flight",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_plan_flight",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "A milestone id: the answer then carries it, with every one of its issues, as\n`inspected`. An id the plan does not declare is not found.",
+              "examples": [
+                {
+                  "case": "one-milestone-inspected",
+                  "value": "\"M000\""
+                }
+              ],
+              "name": "milestone",
+              "required": false,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/plan/flight",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::plan",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Where the work is now: the result.",
+              "schema": "PlanFlight",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "PlanFlight",
+          "stability": "experimental",
+          "summary": "Where the work is now"
         },
         {
           "benchmark": "required",

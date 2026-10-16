@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 203 | 172 | 0 | 31 |
-| http | 198 | 172 | 0 | 26 |
-| mcp | 193 | 168 | 0 | 25 |
+| direct | 204 | 173 | 0 | 31 |
+| http | 199 | 173 | 0 | 26 |
+| mcp | 194 | 169 | 0 | 25 |
 | system | 14 | 14 | 0 | 0 |
-| total | 608 | 526 | 0 | 82 |
+| total | 611 | 529 | 0 | 82 |
 
 ## Capabilities
 
@@ -163,6 +163,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `peers.list` | peers | query | — | covered | covered | covered | `default` |
 | `perf.counters` | perf | query | — | covered | covered | covered | `default` |
 | `plan.delivery` | plan | query | — | covered | covered | covered | `every-issue`, `one-issue-at-head` |
+| `plan.flight` | plan | query | — | covered | covered | covered | `where-the-work-is`, `one-milestone-inspected` |
 | `plan.issues` | plan | query | process, 16 entries, per generation | covered | covered | covered | `all`, `ready`, `one-milestone` |
 | `plan.model` | plan | query | — | covered | covered | covered | `default` |
 | `plan.next` | plan | query | process, 16 entries, per generation | covered | covered | covered | `whole-plan`, `one-milestone` |

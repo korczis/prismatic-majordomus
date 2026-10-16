@@ -450,7 +450,7 @@ fn branch_names(
 
 /// A `v*` tag's version as a sortable key: the numbers, then a release above any of its
 /// pre-releases. `None` for a tag that is not a version.
-fn version_key(tag: &str) -> Option<(Vec<u64>, bool, String)> {
+pub(crate) fn version_key(tag: &str) -> Option<(Vec<u64>, bool, String)> {
     let v = tag.strip_prefix('v').unwrap_or(tag);
     let (core, pre) = match v.split_once('-') {
         Some((c, p)) => (c, Some(p)),
@@ -687,7 +687,7 @@ fn latest_path() -> String {
 
 /// The published version in live mode: the `latest.json` of the commit the newest
 /// successful Pages deployment published.
-fn published_live(root: &Path) -> Result<(String, String, String), String> {
+pub(crate) fn published_live(root: &Path) -> Result<(String, String, String), String> {
     let observation = crate::deploy::observed::load(root)?.ok_or_else(|| {
         "no deployment of this repository has been observed from this checkout; \
          `majordomus served forge` records one"

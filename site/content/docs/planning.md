@@ -528,6 +528,27 @@ A source that was not read is reported unread with its reason, never as none. An
 unread source could have moved further is not `settled` and names that source in `unread`.
 The same answer is `GET /api/v1/plan/delivery` and the MCP tool `majordomus_plan_delivery`.
 
+### Where the work is now
+
+`plan.roadmap`'s `now` is the first open milestone in the plan's order, whether or not anybody
+is working on it. `plan.flight` (`GET /api/v1/plan/flight`, MCP `majordomus_plan_flight`)
+answers where the work is instead, live on every call (ADR 0166, decision 4):
+
+- **now** is every open milestone holding an open issue with work in flight: an open pull
+  request that names it (`pr_open`), a live mesh claim made for it, or a declared `ACTIVE`
+  status. Each comes with those issues, why they are in flight, their declared status beside
+  their inferred stage, and the objects that prove it, linked on the forge where it has them;
+- **next** is the first open milestone in the plan's order that is not now and whose
+  unfinished prerequisites are all now;
+- **the latest release** is the highest stable version among the release records, the `v*`
+  tags of the clone and the published `latest.json`. Each is reported read or unread, and
+  `executable_tagged` says whether the answering executable's own version is tagged. A record
+  that merges after its tag no longer makes a screen show an older release than the
+  executable that drew it.
+
+`/ui/roadmap` reads it, and `?milestone=<id>` asks it for every issue of that milestone. The
+mesh runs in a server; anywhere else its claims are reported unread.
+
 ## Projections
 
 The canonical files are the only source. Everything else is generated from them by one

@@ -13928,6 +13928,101 @@
         "x-majordomus-cli": "plan delivery"
       }
     },
+    "/api/v1/plan/flight": {
+      "get": {
+        "operationId": "plan.flight",
+        "summary": "Where the work is now",
+        "description": "The milestones with work in flight, the one the graph allows next, and the latest release as the releases themselves say it, read live on every call (ADR 0166, decision 4). Now is every open milestone holding an open issue with an open pull request that names it (`plan.delivery`'s `pr_open`), a live mesh claim made for it, or a declared ACTIVE status, each with those issues, why they are in flight, their declared status beside their inferred stage, and the objects that prove it (branch, pull request, merge commit, release tag, published `latest.json`, claim), linked on the forge where the forge has them. Next is the first open milestone in the plan's order that is not now and whose unfinished prerequisites are all now. The latest release is the highest stable version among the release records, the `v*` tags of this clone and the `latest.json` the last successful Pages deployment published, so a release whose record merged after its tag is not shown older than it is; `executable_tagged` says whether the answering executable's own version is tagged. `milestone` adds that milestone with every one of its issues. A source that was not read (the forge, the publication, the mesh outside a server) is named with its reason, never treated as empty.",
+        "tags": [
+          "plan"
+        ],
+        "parameters": [
+          {
+            "name": "milestone",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "A milestone id: the answer then carries it, with every one of its issues, as\n`inspected`. An id the plan does not declare is not found.",
+            "examples": {
+              "one-milestone-inspected": {
+                "value": "M000"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Where the work is now: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanFlight"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "plan.flight",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "experimental",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::plan"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-effect": "read",
+        "x-majordomus-mcp": {
+          "tool": "majordomus_plan_flight"
+        }
+      }
+    },
     "/api/v1/plan/issues": {
       "get": {
         "operationId": "plan.issues",
@@ -35797,6 +35892,141 @@
         ],
         "description": "The `fixtures` category: where fixtures live and how large one may be."
       },
+      "FlightIssue": {
+        "type": "object",
+        "properties": {
+          "issue": {
+            "type": "string",
+            "description": "The issue id."
+          },
+          "title": {
+            "type": "string",
+            "description": "Its title."
+          },
+          "status": {
+            "type": "string",
+            "description": "Its declared status, from the stamps."
+          },
+          "stage": {
+            "$ref": "#/components/schemas/DeliveryStage",
+            "description": "Its inferred delivery stage, from `plan.delivery`."
+          },
+          "settled": {
+            "type": "boolean",
+            "description": "True when no unread source could have proved a further stage."
+          },
+          "unread": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The sources that were not read and could have moved it further."
+          },
+          "in_flight": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InFlight"
+            },
+            "description": "Why it is in flight; empty for an issue that is not."
+          },
+          "proofs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Proof"
+            },
+            "description": "The objects that prove the stage (and the claims that put it in flight), in stage\norder."
+          }
+        },
+        "required": [
+          "issue",
+          "title",
+          "status",
+          "stage",
+          "settled",
+          "unread",
+          "in_flight",
+          "proofs"
+        ],
+        "description": "One issue: its declared status beside its inferred stage, and what proves the stage."
+      },
+      "FlightMilestone": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The milestone id."
+          },
+          "title": {
+            "type": "string",
+            "description": "Its title."
+          },
+          "status": {
+            "type": "string",
+            "description": "Its declared status."
+          },
+          "issues": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FlightIssue"
+            },
+            "description": "Its issues: the ones in flight for a milestone of `now`, every one for the inspected\nmilestone."
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "status",
+          "issues"
+        ],
+        "description": "One milestone with the issues an answer shows of it."
+      },
+      "FlightRelease": {
+        "type": "object",
+        "properties": {
+          "latest": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The highest stable version any read source names; absent when none names one."
+          },
+          "source": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The source that named it (the first in `records`, `tags`, `publication` order when\nseveral agree)."
+          },
+          "href": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Where it can be seen on the forge."
+          },
+          "executable": {
+            "type": "string",
+            "description": "The version of the executable that answered."
+          },
+          "executable_tagged": {
+            "type": "boolean",
+            "description": "True when the executable's own version is tagged `v<version>`; the latest release is\nthen never older than it."
+          },
+          "readings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReleaseReading"
+            },
+            "description": "Every source, read or not."
+          }
+        },
+        "required": [
+          "executable",
+          "executable_tagged",
+          "readings"
+        ],
+        "description": "The latest release, and every source that was asked for it."
+      },
       "Fonts": {
         "type": "object",
         "additionalProperties": false,
@@ -37572,6 +37802,26 @@
           "remediation"
         ],
         "description": "```\nuse majordomus_cli::gates::ImpliedObligation;\n\nlet owed = ImpliedObligation {\n    id: \"tests\".into(),\n    title: \"The cases the change obliges were run\".into(),\n    applicable: true,\n    declared: false,\n    reason: \"lib/check.sh is an input of this obligation\".into(),\n    because: vec![\"lib/check.sh\".into()],\n    remediation: \"majordomus start --requires tests\".into(),\n};\n// applicable and undeclared is the gap nothing else reports: the change owes it and\n// the task promised nothing, so no validator holds anybody to it\nassert!(owed.applicable && !owed.declared);\n```\nOne obligation the change set implies, and whether the task promised it.\n\nApplicability is derived and nothing else: a token's own `inputs` in\n`share/obligations.yaml` name the files it is about, so a change to one of them is what\nmakes the token owed. A token with no `inputs` names a fact outside the tree — a push, a\npublication, a deployment — which no change to a tree can imply, so those are owed when\nthe task declares them and reported as not applicable when it does not."
+      },
+      "InFlight": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "pr_open",
+            "description": "An open pull request names it."
+          },
+          {
+            "type": "string",
+            "const": "claim",
+            "description": "A live mesh claim was made for it."
+          },
+          {
+            "type": "string",
+            "const": "active",
+            "description": "Its declared status is ACTIVE."
+          }
+        ],
+        "description": "Why an issue is in flight."
       },
       "Inference": {
         "oneOf": [
@@ -46918,6 +47168,73 @@
         ],
         "description": "What a plan was derived from.\n\nCompared, never trusted: a plan whose fingerprint differs from the tree in front of it\ndescribes a tree that no longer exists.\n```\nuse majordomus_cli::commit::{PlanFingerprint, WorkingTreeState};\nlet f = PlanFingerprint::of(\"/repo/.git\", \"/repo\", &WorkingTreeState::default());\nassert_eq!(f.head, \"unborn\", \"a repository with no commits says so\");\n```"
       },
+      "PlanFlight": {
+        "type": "object",
+        "properties": {
+          "schema": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0,
+            "description": "The version of this shape."
+          },
+          "observed": {
+            "$ref": "#/components/schemas/DeliveryObservation",
+            "description": "Where and when the delivery half was observed."
+          },
+          "now": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The milestones with work in flight, in the plan's order."
+          },
+          "next": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The first open milestone the graph allows once the work in flight lands."
+          },
+          "milestones": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FlightMilestone"
+            },
+            "description": "The milestones of `now`, each with its issues in flight."
+          },
+          "inspected": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FlightMilestone"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The milestone asked for with `milestone`, with every one of its issues."
+          },
+          "release": {
+            "$ref": "#/components/schemas/FlightRelease",
+            "description": "The latest release."
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeliverySource"
+            },
+            "description": "Every source, read or not: `plan.delivery`'s, then `mesh`."
+          }
+        },
+        "required": [
+          "schema",
+          "observed",
+          "now",
+          "milestones",
+          "release",
+          "sources"
+        ],
+        "description": "Where the work is: the answer of `plan.flight`."
+      },
       "PlanIssue": {
         "type": "object",
         "properties": {
@@ -48419,6 +48736,31 @@
           }
         ],
         "description": "Whether the person's raw prompt can be captured below the model for one provider.\n\nThere is no `connection` here and there must not be: an MCP server is handed tool calls,\nnever the prompt that produced them. Prompt capture is provider-specific and the\ndeclaration says so rather than pretending the connection can stand in for it.\n\n```\nuse majordomus_cli::share::PromptSource;\nassert_eq!(serde_json::from_str::<PromptSource>(\"\\\"hook\\\"\").unwrap(), PromptSource::Hook);\nassert!(serde_json::from_str::<PromptSource>(\"\\\"connection\\\"\").is_err(),\n        \"no connection can observe a prompt\");\nassert_eq!(PromptSource::default(), PromptSource::None);\n```"
+      },
+      "Proof": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "description": "`branch`, `pull_request`, `merge`, `release`, `publication` or `claim`."
+          },
+          "label": {
+            "type": "string",
+            "description": "What a reader is shown: `#1298`, a short commit, a tag, a branch."
+          },
+          "href": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Where the object is, on the forge; absent for an object only this clone holds (a\nlocal branch, a mesh claim), so a link is never drawn to nothing."
+          }
+        },
+        "required": [
+          "kind",
+          "label"
+        ],
+        "description": "One object that proves where an issue's work stands."
       },
       "ProofState": {
         "oneOf": [
@@ -52826,6 +53168,43 @@
           "capability"
         ],
         "description": "Which capability answered with this document, and where that capability is projected.\n\nThe document carries its own provenance so that a reader — a person on the site, a client\nover MCP — can find the same value elsewhere without anything having to enumerate the\nroutes. A page that listed them would be declaring them a second time, which is the\nfailure `site-check`'s `registry` and `cli` assertions exist to catch; it caught this one.\n\n```\nuse majordomus_cli::release::model::ProducedBy;\nlet by = ProducedBy {\n    capability: \"release.changelog\".into(),\n    cli: Some(\"majordomus release changelog\".into()),\n    http: Some(\"/api/v1/changelog\".into()),\n    mcp_tool: None,\n    mcp_resource: Some(\"majordomus://changelog\".into()),\n};\nlet json = serde_json::to_value(&by).unwrap();\nassert_eq!(json[\"capability\"], \"release.changelog\");\n// a surface the capability is not projected on is absent, not null\nassert!(json.get(\"mcp_tool\").is_none());\nassert_eq!(ProducedBy::default().capability, \"\");\n```"
+      },
+      "ReleaseReading": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string",
+            "description": "`records`, `tags` or `publication`."
+          },
+          "state": {
+            "$ref": "#/components/schemas/DeliveryReading",
+            "description": "Read or unread."
+          },
+          "version": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The version it names, when it was read and names one."
+          },
+          "detail": {
+            "type": "string",
+            "description": "What was read (`.ai/repo/releases/v0.27.0.yaml`, `refs/tags/v0.27.0`,\n`<commit>:site/static/releases/latest.json`), or why nothing was."
+          },
+          "href": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Where it can be seen on the forge, when it can."
+          }
+        },
+        "required": [
+          "source",
+          "state",
+          "detail"
+        ],
+        "description": "One source's answer to \"what is the latest release\"."
       },
       "ReleaseReference": {
         "type": "object",

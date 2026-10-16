@@ -256,7 +256,7 @@ modules:
     description: "The milestone and issue model of this repository, and everything derived from it that nobody authored: the status of each record, the dependency graphs above and below the milestone boundary, the topological execution waves, the roadmap order, the milestone being executed and the one issue to take next. Status is never stored — a record says what happened to it and the status follows from that and from the state of its dependencies — so no file can contradict the graph. This capability reads; writing a lifecycle marker into a record is `plan.transition`, which declares that it writes the repository."
     stability: behaviorally_verified
     source: builtin
-    capabilities: 10
+    capabilities: 11
   - id: product
     title: Product
     description: "What this repository's product does for a person, as the features under the layer's features section declare it: each feature made of modules, commands, kinds, rules, documents, decisions, claims, use cases, Cockpit areas and web surfaces it names, with the interfaces it is exposed through, every count, the moments it answers and what is guaranteed derived from those references. The matrix of features against interfaces, the providers the tool has an adapter for, and the model's own validation. The homepage is a reader of this module and holds no inventory of its own."
@@ -41101,6 +41101,332 @@ capabilities:
       - delivery
       - git
       - provenance
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/plan.rs
+  - id: plan.flight
+    module: plan
+    kind: query
+    title: Where the work is now
+    description: "The milestones with work in flight, the one the graph allows next, and the latest release as the releases themselves say it, read live on every call (ADR 0166, decision 4). Now is every open milestone holding an open issue with an open pull request that names it (`plan.delivery`'s `pr_open`), a live mesh claim made for it, or a declared ACTIVE status, each with those issues, why they are in flight, their declared status beside their inferred stage, and the objects that prove it (branch, pull request, merge commit, release tag, published `latest.json`, claim), linked on the forge where the forge has them. Next is the first open milestone in the plan's order that is not now and whose unfinished prerequisites are all now. The latest release is the highest stable version among the release records, the `v*` tags of this clone and the `latest.json` the last successful Pages deployment published, so a release whose record merged after its tag is not shown older than it is; `executable_tagged` says whether the answering executable's own version is tagged. `milestone` adds that milestone with every one of its issues. A source that was not read (the forge, the publication, the mesh outside a server) is named with its reason, never treated as empty."
+    input:
+      name: PlanFlightInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          milestone:
+            type:
+              - string
+              - "null"
+            description: "A milestone id: the answer then carries it, with every one of its issues, as\n`inspected`. An id the plan does not declare is not found."
+        description: "Which milestone to inspect besides where the work is: the input of `plan.flight`.\n\n```\nuse majordomus_cli::capability::builtin::plan::PlanFlightInput;\n\nlet plain: PlanFlightInput = serde_json::from_str(\"{}\").unwrap();\nassert!(plain.milestone.is_none());\nassert!(serde_json::from_str::<PlanFlightInput>(r#\"{\"issue\":\"I1\"}\"#).is_err());\n```"
+        title: PlanFlightInput
+    output:
+      name: PlanFlight
+      schema:
+        type: object
+        properties:
+          schema:
+            type: integer
+            format: uint32
+            minimum: 0
+            description: The version of this shape.
+          observed:
+            "$ref": "#/$defs/DeliveryObservation"
+            description: Where and when the delivery half was observed.
+          now:
+            type: array
+            items:
+              type: string
+            description: "The milestones with work in flight, in the plan's order."
+          next:
+            type:
+              - string
+              - "null"
+            description: The first open milestone the graph allows once the work in flight lands.
+          milestones:
+            type: array
+            items:
+              "$ref": "#/$defs/FlightMilestone"
+            description: "The milestones of `now`, each with its issues in flight."
+          inspected:
+            anyOf:
+              - "$ref": "#/$defs/FlightMilestone"
+              - type: "null"
+            description: "The milestone asked for with `milestone`, with every one of its issues."
+          release:
+            "$ref": "#/$defs/FlightRelease"
+            description: The latest release.
+          sources:
+            type: array
+            items:
+              "$ref": "#/$defs/DeliverySource"
+            description: "Every source, read or not: `plan.delivery`'s, then `mesh`."
+        required:
+          - schema
+          - observed
+          - now
+          - milestones
+          - release
+          - sources
+        description: "Where the work is: the answer of `plan.flight`."
+        title: PlanFlight
+        "$defs":
+          DeliveryObservation:
+            type: object
+            properties:
+              mode:
+                type: string
+                description: "`live`, or `at` a named commit."
+              trunk:
+                type: string
+                description: "The history read: the trunk ref in live mode, the commit asked for otherwise."
+              commit:
+                type: string
+                description: The commit that history ends at.
+              observed_at:
+                type: string
+                description: "When: the clock in live mode, the commit's committer time at a commit."
+            required:
+              - mode
+              - trunk
+              - commit
+              - observed_at
+            description: Where and when the answer was observed.
+          FlightMilestone:
+            type: object
+            properties:
+              id:
+                type: string
+                description: The milestone id.
+              title:
+                type: string
+                description: Its title.
+              status:
+                type: string
+                description: Its declared status.
+              issues:
+                type: array
+                items:
+                  "$ref": "#/$defs/FlightIssue"
+                description: "Its issues: the ones in flight for a milestone of `now`, every one for the inspected\nmilestone."
+            required:
+              - id
+              - title
+              - status
+              - issues
+            description: One milestone with the issues an answer shows of it.
+          FlightIssue:
+            type: object
+            properties:
+              issue:
+                type: string
+                description: The issue id.
+              title:
+                type: string
+                description: Its title.
+              status:
+                type: string
+                description: "Its declared status, from the stamps."
+              stage:
+                "$ref": "#/$defs/DeliveryStage"
+                description: "Its inferred delivery stage, from `plan.delivery`."
+              settled:
+                type: boolean
+                description: True when no unread source could have proved a further stage.
+              unread:
+                type: array
+                items:
+                  type: string
+                description: The sources that were not read and could have moved it further.
+              in_flight:
+                type: array
+                items:
+                  "$ref": "#/$defs/InFlight"
+                description: Why it is in flight; empty for an issue that is not.
+              proofs:
+                type: array
+                items:
+                  "$ref": "#/$defs/Proof"
+                description: "The objects that prove the stage (and the claims that put it in flight), in stage\norder."
+            required:
+              - issue
+              - title
+              - status
+              - stage
+              - settled
+              - unread
+              - in_flight
+              - proofs
+            description: "One issue: its declared status beside its inferred stage, and what proves the stage."
+          DeliveryStage:
+            oneOf:
+              - type: string
+                const: none
+                description: Nothing that was read names the issue.
+              - type: string
+                const: branch
+                description: A branch names it.
+              - type: string
+                const: pr_open
+                description: An open pull request names it.
+              - type: string
+                const: merged
+                description: "A merge in the trunk's history names it."
+              - type: string
+                const: released
+                description: "A `v*` release contains its newest merge."
+              - type: string
+                const: deployed
+                description: "The published `latest.json` names that release or a later one."
+            description: "How far one issue's work has travelled, in order: each stage implies every one before it\nhas been passed through, so the furthest one proved is the issue's stage."
+          InFlight:
+            oneOf:
+              - type: string
+                const: pr_open
+                description: An open pull request names it.
+              - type: string
+                const: claim
+                description: A live mesh claim was made for it.
+              - type: string
+                const: active
+                description: Its declared status is ACTIVE.
+            description: Why an issue is in flight.
+          Proof:
+            type: object
+            properties:
+              kind:
+                type: string
+                description: "`branch`, `pull_request`, `merge`, `release`, `publication` or `claim`."
+              label:
+                type: string
+                description: "What a reader is shown: `#1298`, a short commit, a tag, a branch."
+              href:
+                type:
+                  - string
+                  - "null"
+                description: "Where the object is, on the forge; absent for an object only this clone holds (a\nlocal branch, a mesh claim), so a link is never drawn to nothing."
+            required:
+              - kind
+              - label
+            description: "One object that proves where an issue's work stands."
+          FlightRelease:
+            type: object
+            properties:
+              latest:
+                type:
+                  - string
+                  - "null"
+                description: The highest stable version any read source names; absent when none names one.
+              source:
+                type:
+                  - string
+                  - "null"
+                description: "The source that named it (the first in `records`, `tags`, `publication` order when\nseveral agree)."
+              href:
+                type:
+                  - string
+                  - "null"
+                description: Where it can be seen on the forge.
+              executable:
+                type: string
+                description: The version of the executable that answered.
+              executable_tagged:
+                type: boolean
+                description: "True when the executable's own version is tagged `v<version>`; the latest release is\nthen never older than it."
+              readings:
+                type: array
+                items:
+                  "$ref": "#/$defs/ReleaseReading"
+                description: "Every source, read or not."
+            required:
+              - executable
+              - executable_tagged
+              - readings
+            description: "The latest release, and every source that was asked for it."
+          ReleaseReading:
+            type: object
+            properties:
+              source:
+                type: string
+                description: "`records`, `tags` or `publication`."
+              state:
+                "$ref": "#/$defs/DeliveryReading"
+                description: Read or unread.
+              version:
+                type:
+                  - string
+                  - "null"
+                description: "The version it names, when it was read and names one."
+              detail:
+                type: string
+                description: "What was read (`.ai/repo/releases/v0.27.0.yaml`, `refs/tags/v0.27.0`,\n`<commit>:site/static/releases/latest.json`), or why nothing was."
+              href:
+                type:
+                  - string
+                  - "null"
+                description: "Where it can be seen on the forge, when it can."
+            required:
+              - source
+              - state
+              - detail
+            description: "One source's answer to \"what is the latest release\"."
+          DeliveryReading:
+            oneOf:
+              - type: string
+                const: read
+                description: It was read; what it holds is in the answer.
+              - type: string
+                const: unread
+                description: "It was not read, and `reason` says why. Nothing it could have proved is claimed or\ndenied."
+            description: Whether one source of the answer was read.
+          DeliverySource:
+            type: object
+            properties:
+              name:
+                type: string
+                description: "`branches`, `forge`, `history`, `releases` or `publication`."
+              state:
+                "$ref": "#/$defs/DeliveryReading"
+                description: Read or unread.
+              detail:
+                type: string
+                description: "What was read, or why nothing was: the ref, the file, the command that would record\nit."
+              observed_at:
+                type:
+                  - string
+                  - "null"
+                description: "When what was read was observed, RFC 3339, when it was read."
+            required:
+              - name
+              - state
+              - detail
+            description: "One source the answer is built from, and whether it was read."
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::plan
+    exposure:
+      mcp:
+        tool: majordomus_plan_flight
+      http:
+        method: GET
+        path: /api/v1/plan/flight
+    availability: runtime
+    visibility: public
+    stability: experimental
+    tags:
+      - plan
+      - project
+      - delivery
+      - release
+      - mesh
     benchmark:
       policy: required
     cache:

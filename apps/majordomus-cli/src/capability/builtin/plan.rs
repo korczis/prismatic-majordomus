@@ -43,6 +43,7 @@ use crate::capability::model::{
 };
 use crate::capability::module::ModuleDescriptor;
 use crate::plan::delivery::{self, IssueDeliveryReport};
+use crate::plan::flight::{self, IssueClaim, PlanFlight};
 use crate::plan::{
     Plan, PlanCounts, PlanFinding, PlanIssue, PlanMilestone, PlanProject, PlanVocabulary, PlanWave,
     Transition, TransitionError,
@@ -697,6 +698,22 @@ pub fn module() -> ModuleDescriptor {
                 cache: CachePolicy::Disabled,
                 handler: plan_delivery,
             },
+            capability! {
+                id: "plan.flight",
+                title: "Where the work is now",
+                description: "The milestones with work in flight, the one the graph allows next, and the latest release as the releases themselves say it, read live on every call (ADR 0166, decision 4). Now is every open milestone holding an open issue with an open pull request that names it (`plan.delivery`'s `pr_open`), a live mesh claim made for it, or a declared ACTIVE status, each with those issues, why they are in flight, their declared status beside their inferred stage, and the objects that prove it (branch, pull request, merge commit, release tag, published `latest.json`, claim), linked on the forge where the forge has them. Next is the first open milestone in the plan's order that is not now and whose unfinished prerequisites are all now. The latest release is the highest stable version among the release records, the `v*` tags of this clone and the `latest.json` the last successful Pages deployment published, so a release whose record merged after its tag is not shown older than it is; `executable_tagged` says whether the answering executable's own version is tagged. `milestone` adds that milestone with every one of its issues. A source that was not read (the forge, the publication, the mesh outside a server) is named with its reason, never treated as empty.",
+                input: PlanFlightInput,
+                output: PlanFlight,
+                stability: Stability::Experimental,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_plan_flight"),
+                    http: get("/api/v1/plan/flight"),
+                    cli: None,
+                },
+                tags: ["plan", "project", "delivery", "release", "mesh"],
+                cache: CachePolicy::Disabled,
+                handler: plan_flight,
+            },
         ],
     }
 }
@@ -772,6 +789,80 @@ fn plan_delivery(
         identity.trunk(),
         input.at.as_deref(),
         input.issue.as_deref(),
+    )
+    .map_err(CapabilityError::Refused)
+}
+
+// ---------------------------------------------------------------- plan.flight
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+/// Which milestone to inspect besides where the work is: the input of `plan.flight`.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::plan::PlanFlightInput;
+///
+/// let plain: PlanFlightInput = serde_json::from_str("{}").unwrap();
+/// assert!(plain.milestone.is_none());
+/// assert!(serde_json::from_str::<PlanFlightInput>(r#"{"issue":"I1"}"#).is_err());
+/// ```
+pub struct PlanFlightInput {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// A milestone id: the answer then carries it, with every one of its issues, as
+    /// `inspected`. An id the plan does not declare is not found.
+    pub milestone: Option<String>,
+}
+
+impl BenchmarkCases for PlanFlightInput {
+    fn benchmark_cases(ctx: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        let plan = Plan::build(ctx.index);
+        let mut cases = vec![NamedCase::new(
+            "where-the-work-is",
+            PlanFlightInput::default(),
+        )];
+        if let Some(m) = plan.milestones.first() {
+            cases.push(NamedCase::new(
+                "one-milestone-inspected",
+                PlanFlightInput {
+                    milestone: Some(m.id.clone()),
+                },
+            ));
+        }
+        cases
+    }
+}
+
+fn plan_flight(ctx: &Context, input: PlanFlightInput) -> Result<PlanFlight, CapabilityError> {
+    let plan = plan_of(ctx)?;
+    if let Some(id) = input.milestone.as_deref() {
+        if plan.milestone(id).is_none() {
+            return Err(CapabilityError::NotFound(format!(
+                "no milestone '{id}' in this plan; `plan.roadmap` lists every one"
+            )));
+        }
+    }
+    let root = Path::new(&ctx.index.repository.root);
+    let identity = crate::worktree::RepositoryIdentity::discover(root)
+        .map_err(|e| CapabilityError::Refused(e.to_string()))?;
+    // the claims are the mesh's, and the mesh runs in a server; elsewhere it is unread
+    let claims = match ctx.mesh.cooperation() {
+        Some(c) => Ok(c
+            .state()
+            .claims
+            .into_iter()
+            .filter(|c| c.state.is_live())
+            .filter_map(|c| c.issue.map(|issue| IssueClaim { issue, key: c.key }))
+            .collect()),
+        None => Err(ctx.mesh.cooperation_status().reason.unwrap_or_else(|| {
+            "the mesh is not running in this process; a server reads its claims".into()
+        })),
+    };
+    flight::observe(
+        root,
+        &plan,
+        identity.trunk(),
+        claims,
+        input.milestone.as_deref(),
     )
     .map_err(CapabilityError::Refused)
 }
@@ -1040,6 +1131,11 @@ mod tests {
                 "plan.delivery",
                 "majordomus_plan_delivery",
                 "/api/v1/plan/delivery",
+            ),
+            (
+                "plan.flight",
+                "majordomus_plan_flight",
+                "/api/v1/plan/flight",
             ),
         ];
         let ids: Vec<&str> = m
