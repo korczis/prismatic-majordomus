@@ -88,12 +88,12 @@ Every screen has the same shape:
 - a hero band, with the screen's glyph, title, tagline and lead, the brand mark lit behind
   them, and a row of KPI tiles;
 - a grid of panels;
-- the frame around both: at the top the site's navbar ([below](#the-navbar-is-the-sites)),
+- the frame around both: at the top the site's navbar ([below](#the-navbar-comes-from-the-site)),
   beneath it the sidebar of screens with the version card at its foot, and the tool bar with
   the search, the time the screen was read, and the other surfaces (documentation, API,
   Cockpit).
 
-## The navbar is the site's
+## The navbar comes from the site
 
 majordomus.dev is the reference for how the product looks, and the bar at the top of every
 screen — and of every page of the Cockpit — is the site's own navbar (`project.the-ui-wears-the-sites-navbar`), not a bar drawn
