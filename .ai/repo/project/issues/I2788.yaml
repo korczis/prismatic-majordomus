@@ -1,0 +1,42 @@
+id: I2788
+milestone: browser-compute
+title: "A page computes the canonical digest in a Worker and shows the server's verdict"
+slug: a-browser-computes-on-the-page
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Add the UI screen /ui/compute: when the person asks, a same-origin Worker loads the committed wasm32 portable core, computes the canonical digest of the JSON the page holds, and the page asks compute.verify and shows match, mismatch or invalid. The module is committed under share/ui/compute with the digest of the core sources it was built from; a test refuses a module whose sources moved or that carries a host path, and the portable-core gate executes the committed module against the fixture. Only the Worker's response allows WebAssembly compilation; every page keeps the Cockpit's policy."
+why: "ADR 0170 promises a browser that computes and a server that agrees; compute.verify exists, but no page runs the module, the asset server serves text only and the policy allows no WebAssembly compilation."
+serves:
+  - a-browser-computes-what-the-server-verifies#a-page-computes-and-the-server-agrees
+current_state: "The wasm32 module is built and executed only by node in a CI gate; nothing serves it to a browser."
+desired_state: "/ui/compute computes in the browser on request and shows the server's recomputation; the served module is the committed one, tied to its sources and judged by the fixture."
+scope:
+  - "apps/majordomus-cli/src/ui"
+  - "apps/majordomus-cli/src/cockpit/assets.rs"
+  - "apps/majordomus-cli/src/web"
+  - "apps/majordomus-cli/src/bench"
+  - "apps/majordomus-cli/tests/ui_compute.rs"
+  - "apps/majordomus-core"
+  - "share/ui"
+  - ".ai/repo"
+  - "docs"
+  - "site"
+  - "test/cases"
+  - ".gitattributes"
+depends_on:
+  - "I2785"
+acceptance_criteria:
+  - "/ui/compute is served under the Cockpit's policy, and only the Worker script's response adds 'wasm-unsafe-eval'"
+  - "The committed module is served as application/wasm, byte for byte"
+  - "The committed module names the digest of the core sources it was built from, that digest is the sources' current one, and the module carries no host path"
+  - "The committed module, executed, answers every fixture row"
+  - "In a real browser the page computes on request and shows the server's match"
+validation:
+  - "majordomus plan validate"
+  - "cargo test --test ui_compute"
+  - "cargo test --lib cockpit::assets"
+evidence_required:
+  - "ui_compute_tests"
+created_at: 2026-10-17
+updated_at: 2026-10-17
