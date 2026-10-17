@@ -35,6 +35,7 @@ pub(crate) mod brief;
 pub(crate) mod capabilities;
 pub mod commands;
 pub mod commit;
+pub mod compute;
 pub mod continuity;
 pub(crate) mod continuity_transfer;
 pub(crate) mod convergence;
@@ -179,6 +180,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
     compose_modules![
         release,
         commit,
+        compute,
         repository,
         objects,
         entity,

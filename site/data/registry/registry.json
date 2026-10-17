@@ -6,27 +6,27 @@
     "version": "0.28.0"
   },
   "registry": {
-    "fingerprint": "a9246538e7bc07fad86898eb1cc633f047140ff5c94bfc97c6c45f3bdaa35b61",
+    "fingerprint": "74b5aa3e464796aab7d08de8c77241e140bb3e40a79cf35cfa2a39695f2b0cd6",
     "summary": {
-      "total": 2526,
-      "builtin": 202,
-      "declarative": 2324,
+      "total": 2537,
+      "builtin": 203,
+      "declarative": 2334,
       "by_kind": {
         "command": 31,
-        "query": 171,
-        "resource": 2324
+        "query": 172,
+        "resource": 2334
       },
       "by_stability": {
         "behaviorally_verified": 141,
-        "experimental": 52,
-        "implemented": 2333
+        "experimental": 53,
+        "implemented": 2343
       },
-      "mcp_tools": 192,
-      "mcp_resources": 2379,
-      "http_routes": 197,
+      "mcp_tools": 193,
+      "mcp_resources": 2389,
+      "http_routes": 198,
       "cli_commands": 108,
-      "modules": 92,
-      "benchmark_required": 171,
+      "modules": 93,
+      "benchmark_required": 172,
       "benchmark_waived": 31,
       "cached": 54
     },
@@ -5687,6 +5687,165 @@
           "concurrency": "unrestricted"
         },
         "source_path": "apps/majordomus-cli/src/capability/builtin/commit.rs"
+      },
+      {
+        "id": "compute.verify",
+        "module": "compute",
+        "kind": "query",
+        "title": "Whether a browser's result is what the server computes",
+        "description": "Recompute a claimed result of a portable-core function (today `canonical_digest`: SHA-256 of a JSON document's canonical bytes) on the input the claim carries, with the same core the browser ran as wasm32, and answer `match`, `mismatch`, or `invalid` with the reason when the input is not JSON, exceeds 1 MiB or the result is not the function's shape. It records nothing: no execution, ledger entry or journal event, and the claim never enters a record.",
+        "input": {
+          "name": "ComputeVerifyInput",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "function": {
+                "$ref": "#/$defs/ComputeFunction",
+                "description": "The function the claim was computed with.",
+                "default": "canonical_digest"
+              },
+              "input": {
+                "type": "string",
+                "description": "The input the browser computed on, as JSON text, at most `MAX_INPUT_BYTES`."
+              },
+              "claimed": {
+                "type": "string",
+                "description": "The result the browser claims: for `canonical_digest`, 64 lowercase hex characters."
+              }
+            },
+            "required": [
+              "input",
+              "claimed"
+            ],
+            "description": "A browser's claim: what it computed, on what, and what it got.\n\n```\nuse majordomus_cli::capability::builtin::compute::{ComputeFunction, ComputeVerifyInput};\nlet claim: ComputeVerifyInput =\n    serde_json::from_str(r#\"{\"input\":\"[1]\",\"claimed\":\"00\"}\"#).unwrap();\nassert_eq!(claim.function, ComputeFunction::CanonicalDigest, \"the function defaults\");\n```",
+            "title": "ComputeVerifyInput",
+            "$defs": {
+              "ComputeFunction": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "canonical_digest",
+                    "description": "SHA-256, as lowercase hex, of a JSON document's canonical bytes: the digest the mesh\nsigns and the executor keys its cache by."
+                  }
+                ],
+                "description": "A function of the portable core whose result a browser may claim.\n\n```\nuse majordomus_cli::capability::builtin::compute::ComputeFunction;\nlet f: ComputeFunction = serde_json::from_str(r#\"\"canonical_digest\"\"#).unwrap();\nassert_eq!(f, ComputeFunction::CanonicalDigest);\n```"
+              }
+            }
+          }
+        },
+        "output": {
+          "name": "ComputeVerification",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "function": {
+                "$ref": "#/$defs/ComputeFunction",
+                "description": "The function the claim named."
+              },
+              "verdict": {
+                "$ref": "#/$defs/ComputeVerdict",
+                "description": "Whether the server's recomputation agrees."
+              },
+              "claimed": {
+                "type": "string",
+                "description": "The result the claim carried, as given."
+              },
+              "recomputed": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "What the server computed, when the input could be read."
+              },
+              "reason": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Why the claim could not be judged, when the verdict is `invalid`."
+              },
+              "input_bytes": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many bytes of input the claim carried."
+              }
+            },
+            "required": [
+              "function",
+              "verdict",
+              "claimed",
+              "input_bytes"
+            ],
+            "description": "The server's answer to a claim.\n\n```\nuse majordomus_cli::capability::builtin::compute::{\n    verify_claim, ComputeFunction, ComputeVerification,\n};\nlet answer: ComputeVerification = verify_claim(ComputeFunction::CanonicalDigest, \"[1]\", \"00\");\nassert_eq!(answer.reason.as_deref(), Some(\"the claimed result is not 64 lowercase hex characters\"));\nassert_eq!(answer.input_bytes, 3);\nassert!(answer.recomputed.is_some(), \"the input was read, so the server says what it computed\");\n```",
+            "title": "ComputeVerification",
+            "$defs": {
+              "ComputeFunction": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "canonical_digest",
+                    "description": "SHA-256, as lowercase hex, of a JSON document's canonical bytes: the digest the mesh\nsigns and the executor keys its cache by."
+                  }
+                ],
+                "description": "A function of the portable core whose result a browser may claim.\n\n```\nuse majordomus_cli::capability::builtin::compute::ComputeFunction;\nlet f: ComputeFunction = serde_json::from_str(r#\"\"canonical_digest\"\"#).unwrap();\nassert_eq!(f, ComputeFunction::CanonicalDigest);\n```"
+              },
+              "ComputeVerdict": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "match",
+                    "description": "The server computed the same result from the same input."
+                  },
+                  {
+                    "type": "string",
+                    "const": "mismatch",
+                    "description": "The server computed a different result: the claim is wrong, whoever made it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "invalid",
+                    "description": "The claim could not be judged: its input is not what the function takes, or its\nresult is not the shape the function returns. `reason` says which."
+                  }
+                ],
+                "description": "What the server's recomputation says of a claim.\n\n```\nuse majordomus_cli::capability::builtin::compute::ComputeVerdict;\nassert_eq!(serde_json::to_string(&ComputeVerdict::Mismatch).unwrap(), r#\"\"mismatch\"\"#);\n```"
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::compute"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_compute_verify"
+          },
+          "http": {
+            "method": "POST",
+            "path": "/api/v1/compute/verify"
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "experimental",
+        "tags": [
+          "compute",
+          "browser",
+          "verification"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/compute.rs"
       },
       {
         "id": "continuity.device",
@@ -82608,7 +82767,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 117,
+        "capabilities": 118,
         "capability_ids": []
       },
       {
@@ -82734,6 +82893,23 @@
         }
       },
       {
+        "id": "compute",
+        "title": "Browser compute",
+        "description": "The server's half of browser compute (ADR 0170): a browser computes with the portable core, the same code this executable links, and returns a claim; the server recomputes it on the same input and says whether they agree. A verification records nothing, so any caller may ask, and agreement among browsers is never proof.",
+        "stability": "experimental",
+        "source": "builtin",
+        "capabilities": 1,
+        "capability_ids": [
+          "compute.verify"
+        ],
+        "source_path": "apps/majordomus-cli/src/capability/builtin/compute.rs",
+        "rustdoc": {
+          "surface": "rustdoc",
+          "module": "majordomus_cli::capability::builtin::compute",
+          "path": "majordomus_cli/capability/builtin/compute/index.html"
+        }
+      },
+      {
         "id": "context",
         "title": "context",
         "description": "Declarative objects of kind 'context' from the repository's AI layer.",
@@ -82782,7 +82958,7 @@
         "title": "critique",
         "description": "Declarative objects of kind 'critique' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 4,
+        "capabilities": 5,
         "capability_ids": []
       },
       {
@@ -83086,7 +83262,7 @@
         "title": "gap",
         "description": "Declarative objects of kind 'gap' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 4,
+        "capabilities": 5,
         "capability_ids": []
       },
       {
@@ -83182,7 +83358,7 @@
         "title": "intent",
         "description": "Declarative objects of kind 'intent' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 5,
+        "capabilities": 6,
         "capability_ids": []
       },
       {
@@ -83231,7 +83407,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 424,
+        "capabilities": 428,
         "capability_ids": []
       },
       {
@@ -83347,7 +83523,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 41,
+        "capabilities": 42,
         "capability_ids": []
       },
       {
@@ -83802,7 +83978,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 527,
+        "capabilities": 528,
         "capability_ids": []
       },
       {
@@ -83893,7 +84069,7 @@
     ]
   },
   "index": {
-    "fingerprint": "40178dfc04d63ccd311e84cec1f119a3335a5970b2493bdab05ece003157d7e5",
+    "fingerprint": "6a3d7e84e5143d0e67a9adda2f8cfcae410d7df49b98d2fa96686ca2df3ba4a1",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -83916,27 +84092,27 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 117,
+      "adr": 118,
       "application": 5,
       "area": 9,
       "audience": 8,
       "claim": 247,
       "command": 31,
       "context": 39,
-      "critique": 4,
+      "critique": 5,
       "deployment": 1,
       "derive-offload": 1,
       "distribution-model": 1,
       "document": 347,
       "domain": 6,
       "feature": 29,
-      "gap": 4,
+      "gap": 5,
       "implementation": 52,
-      "intent": 5,
-      "issue": 424,
+      "intent": 6,
+      "issue": 428,
       "knowledge": 4,
       "mesh-declaration": 1,
-      "milestone": 41,
+      "milestone": 42,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -83947,7 +84123,7 @@
       "session": 90,
       "skill": 8,
       "taxonomy": 10,
-      "test": 527,
+      "test": 528,
       "use-case": 49,
       "workspace": 1
     },
@@ -85893,6 +86069,23 @@
           "two-folder",
           "ownership",
           "footprint"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0170",
+        "kind": "adr",
+        "identity": "adr-0170",
+        "title": "A browser computes with the portable core, and the server verifies by recomputing",
+        "description": "A browser computes with the portable core, and the server verifies by recomputing",
+        "path": ".ai/repo/adrs/0170-a-browser-computes-and-the-server-verifies-by-recomputing.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 5918,
+        "tags": [
+          "mesh",
+          "security",
+          "wasm",
+          "architecture"
         ]
       },
       {
@@ -89398,6 +89591,17 @@
         "bytes": 3244
       },
       {
+        "uri": "majordomus://critique/a-browser-computes-what-the-server-verifies",
+        "kind": "critique",
+        "identity": "a-browser-computes-what-the-server-verifies",
+        "title": "a-browser-computes-what-the-server-verifies",
+        "description": "d116266803",
+        "path": ".ai/repo/project/critiques/a-browser-computes-what-the-server-verifies.yaml",
+        "section": "project",
+        "source_class": "critique",
+        "bytes": 1856
+      },
+      {
         "uri": "majordomus://critique/a-session-leaves-what-it-observed",
         "kind": "critique",
         "identity": "a-session-leaves-what-it-observed",
@@ -89801,7 +90005,7 @@
         "title": "The Cockpit — the registry, rendered for a person",
         "path": "docs/COCKPIT.md",
         "source_class": "document",
-        "bytes": 51561
+        "bytes": 51568
       },
       {
         "uri": "majordomus://document/docs/COCKPIT_IDE_AUDIT.md",
@@ -89891,7 +90095,7 @@
         "title": "The design system — one declaration, every surface",
         "path": "docs/DESIGN_SYSTEM.md",
         "source_class": "document",
-        "bytes": 22619
+        "bytes": 22626
       },
       {
         "uri": "majordomus://document/docs/DEVELOPMENT_RUNTIME.md",
@@ -90116,7 +90320,7 @@
         "title": "`majordomus ui` — the product",
         "path": "docs/MAJORDOMUS_UI.md",
         "source_class": "document",
-        "bytes": 38540
+        "bytes": 39792
       },
       {
         "uri": "majordomus://document/docs/MCP.md",
@@ -90206,7 +90410,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 170002
+        "bytes": 172896
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -93164,6 +93368,17 @@
         ]
       },
       {
+        "uri": "majordomus://gap/a-browser-computes-what-the-server-verifies",
+        "kind": "gap",
+        "identity": "a-browser-computes-what-the-server-verifies",
+        "title": "a-browser-computes-what-the-server-verifies",
+        "description": "d116266803",
+        "path": ".ai/repo/project/gaps/a-browser-computes-what-the-server-verifies.yaml",
+        "section": "project",
+        "source_class": "gap",
+        "bytes": 1857
+      },
+      {
         "uri": "majordomus://gap/a-session-leaves-what-it-observed",
         "kind": "gap",
         "identity": "a-session-leaves-what-it-observed",
@@ -93205,7 +93420,7 @@
         "path": ".ai/repo/project/gaps/the-owner-directs-work-from-the-ui.yaml",
         "section": "project",
         "source_class": "gap",
-        "bytes": 1147
+        "bytes": 2202
       },
       {
         "uri": "majordomus://implementation/bin/majordomus",
@@ -93624,6 +93839,17 @@
         "bytes": 5756
       },
       {
+        "uri": "majordomus://intent/a-browser-computes-what-the-server-verifies",
+        "kind": "intent",
+        "identity": "a-browser-computes-what-the-server-verifies",
+        "title": "A browser computes for a project with the same code the server runs, and nothing it returns is trusted until the server has recomputed it",
+        "description": "A person who opens a Majordomus-powered page can lend their browser's computing to the project: the browser runs, as WebAssembly, the very functions the server runs natively, and every result it returns is checked by the server computing the same function on the same input — so that a browser can help without ever being trusted, holding a secret, or joining the mesh as a peer.",
+        "path": ".ai/repo/project/intents/a-browser-computes-what-the-server-verifies.yaml",
+        "section": "project",
+        "source_class": "intent",
+        "bytes": 2192
+      },
+      {
         "uri": "majordomus://intent/a-session-leaves-what-it-observed",
         "kind": "intent",
         "identity": "a-session-leaves-what-it-observed",
@@ -93676,7 +93902,7 @@
         "path": ".ai/repo/project/intents/the-owner-directs-work-from-the-ui.yaml",
         "section": "project",
         "source_class": "intent",
-        "bytes": 1727
+        "bytes": 2611
       },
       {
         "uri": "majordomus://issue/I0001",
@@ -98321,6 +98547,50 @@
         "bytes": 2496
       },
       {
+        "uri": "majordomus://issue/I2781",
+        "kind": "issue",
+        "identity": "I2781",
+        "title": "An issue is started, verified and finished from the intent workspace",
+        "description": "Render, for the issue picked in /ui/idd, the same plan.transition form the Cockpit's issue page offers — start, verify, done — started through executions.start and followed through executions.get, with the effect the capability declares confirmed before the move, the buttons disabled while it runs, and the refusal's own reason shown when the plan does not allow the move.",
+        "path": ".ai/repo/project/issues/I2781.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1879
+      },
+      {
+        "uri": "majordomus://issue/I2783",
+        "kind": "issue",
+        "identity": "I2783",
+        "title": "The intent workspace reads itself again when a move ends on its server",
+        "description": "Have /ui/idd hold one channel to /events through the Cockpit's socket.js, named by the page with the channel's path, and read the screen again when an execution ends there, at most once per burst; the line beside the read time says whether that channel is live, reconnecting or offline, from the socket's own state.",
+        "path": ".ai/repo/project/issues/I2783.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1838
+      },
+      {
+        "uri": "majordomus://issue/I2784",
+        "kind": "issue",
+        "identity": "I2784",
+        "title": "One portable core runs on the host and as wasm32, and one executed fixture holds both",
+        "description": "Create apps/majordomus-core holding canonical JSON, SHA-256 and the canonical digest, depending only on serde_json and sha2 with the executable's features, exporting a three-function C ABI on wasm32; make the executable's two canonical-JSON writers call it; record a fixture of inputs, canonical bytes and independently computed digests; prove the host crate, the executable and the executed wasm32 module against it in a structure gate; and make the core part of the executable's generation.",
+        "path": ".ai/repo/project/issues/I2784.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2502
+      },
+      {
+        "uri": "majordomus://issue/I2785",
+        "kind": "issue",
+        "identity": "I2785",
+        "title": "The server recomputes a browser's claimed result with the portable core",
+        "description": "Add capability compute.verify (module compute): given a portable-core function, the input it was computed on and the claimed result, recompute it with majordomus-core and answer match, mismatch or invalid with the reason (not JSON, over 1 MiB, not the result's shape). It is a read: it records nothing, starts no execution and is admitted from any host (ADR 0126), over MCP and HTTP POST.",
+        "path": ".ai/repo/project/issues/I2785.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2023
+      },
+      {
         "uri": "majordomus://issue/I2786",
         "kind": "issue",
         "identity": "I2786",
@@ -98524,6 +98794,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 3262
+      },
+      {
+        "uri": "majordomus://milestone/browser-compute",
+        "kind": "milestone",
+        "identity": "browser-compute",
+        "title": "A browser computes for the project with the server's own code, and the server verifies every result",
+        "description": "One portable core runs on the host and as wasm32 in a browser, held by one executed fixture; the server verifies a browser's result by recomputing it; recording browser results, enrollment and community compute follow only once the owner decides how a remote browser is authenticated and narrowly granted a task (ADR 0170).",
+        "path": ".ai/repo/project/milestones/browser-compute.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 2664
       },
       {
         "uri": "majordomus://milestone/capability-graph",
@@ -105974,6 +106255,14 @@
         "bytes": 7076
       },
       {
+        "uri": "majordomus://test/test/cases/3112_a_publication_that_did_not_arrive_is_a_finding.sh",
+        "kind": "test",
+        "identity": "test/cases/3112_a_publication_that_did_not_arrive_is_a_finding.sh",
+        "path": "test/cases/3112_a_publication_that_did_not_arrive_is_a_finding.sh",
+        "source_class": "case",
+        "bytes": 5115
+      },
+      {
         "uri": "majordomus://test/test/cases/3113_the_adoption_footprint_is_inventoried.sh",
         "kind": "test",
         "identity": "test/cases/3113_the_adoption_footprint_is_inventoried.sh",
@@ -105995,7 +106284,7 @@
         "identity": "test/cases/3131_a_new_worktree_starts_from_the_remote_trunk.sh",
         "path": "test/cases/3131_a_new_worktree_starts_from_the_remote_trunk.sh",
         "source_class": "case",
-        "bytes": 5596
+        "bytes": 5604
       },
       {
         "uri": "majordomus://test/test/cases/3150_the_cooperation_model_is_one_record.sh",
@@ -106011,7 +106300,7 @@
         "identity": "test/cases/3151_a_task_is_claimed_when_it_starts.sh",
         "path": "test/cases/3151_a_task_is_claimed_when_it_starts.sh",
         "source_class": "case",
-        "bytes": 5820
+        "bytes": 5862
       },
       {
         "uri": "majordomus://test/test/cases/3160_a_scope_entry_is_one_path.sh",
@@ -108885,7 +109174,7 @@
       "identity": [
         "id"
       ],
-      "objects": 117
+      "objects": 118
     },
     {
       "name": "application",
@@ -108955,7 +109244,7 @@
       "identity": [
         "intent"
       ],
-      "objects": 4
+      "objects": 5
     },
     {
       "name": "deployment",
@@ -109021,7 +109310,7 @@
       "identity": [
         "intent"
       ],
-      "objects": 4
+      "objects": 5
     },
     {
       "name": "implementation",
@@ -109038,7 +109327,7 @@
       "identity": [
         "id"
       ],
-      "objects": 5
+      "objects": 6
     },
     {
       "name": "issue",
@@ -109048,7 +109337,7 @@
       "identity": [
         "id"
       ],
-      "objects": 424
+      "objects": 428
     },
     {
       "name": "knowledge",
@@ -109078,7 +109367,7 @@
       "identity": [
         "id"
       ],
-      "objects": 41
+      "objects": 42
     },
     {
       "name": "moment",
@@ -109200,7 +109489,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 527
+      "objects": 528
     },
     {
       "name": "use-case",
@@ -141455,6 +141744,23 @@
         "output": "CommitVerdict"
       },
       {
+        "name": "majordomus_compute_verify",
+        "id": "compute.verify",
+        "title": "Whether a browser's result is what the server computes",
+        "description": "Recompute a claimed result of a portable-core function (today `canonical_digest`: SHA-256 of a JSON document's canonical bytes) on the input the claim carries, with the same core the browser ran as wasm32, and answer `match`, `mismatch`, or `invalid` with the reason when the input is not JSON, exceeds 1 MiB or the result is not the function's shape. It records nothing: no execution, ledger entry or journal event, and the claim never enters a record.",
+        "kind": "query",
+        "read_only": true,
+        "effect": "read",
+        "hints": {
+          "read_only": true,
+          "destructive": false,
+          "idempotent": true,
+          "open_world": false
+        },
+        "input": "ComputeVerifyInput",
+        "output": "ComputeVerification"
+      },
+      {
         "name": "majordomus_continuity_device",
         "id": "continuity.device",
         "title": "This device's identity, and its label",
@@ -144980,6 +145286,12 @@
       },
       {
         "method": "POST",
+        "path": "/api/v1/compute/verify",
+        "id": "compute.verify",
+        "kind": "query"
+      },
+      {
+        "method": "POST",
         "path": "/api/v1/continuity/device",
         "id": "continuity.device",
         "kind": "command"
@@ -146693,6 +147005,64 @@
         "case": "merge",
         "cached": false,
         "route": "GET /api/v1/commit/validate"
+      },
+      {
+        "key": "compute.verify|direct|match",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "compute.verify",
+        "module": "compute",
+        "case": "match",
+        "cached": false
+      },
+      {
+        "key": "compute.verify|direct|mismatch",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "compute.verify",
+        "module": "compute",
+        "case": "mismatch",
+        "cached": false
+      },
+      {
+        "key": "compute.verify|mcp|match",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "compute.verify",
+        "module": "compute",
+        "case": "match",
+        "cached": false,
+        "tool": "majordomus_compute_verify"
+      },
+      {
+        "key": "compute.verify|mcp|mismatch",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "compute.verify",
+        "module": "compute",
+        "case": "mismatch",
+        "cached": false,
+        "tool": "majordomus_compute_verify"
+      },
+      {
+        "key": "compute.verify|http|match",
+        "kind": "capability",
+        "transport": "http",
+        "id": "compute.verify",
+        "module": "compute",
+        "case": "match",
+        "cached": false,
+        "route": "POST /api/v1/compute/verify"
+      },
+      {
+        "key": "compute.verify|http|mismatch",
+        "kind": "capability",
+        "transport": "http",
+        "id": "compute.verify",
+        "module": "compute",
+        "case": "mismatch",
+        "cached": false,
+        "route": "POST /api/v1/compute/verify"
       },
       {
         "key": "continuity.plan|direct|default",
@@ -153772,6 +154142,27 @@
           "cases": 3
         },
         {
+          "subject": "compute.verify",
+          "module": "compute",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "compute.verify",
+          "module": "compute",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "compute.verify",
+          "module": "compute",
+          "transport": "http",
+          "state": "covered",
+          "cases": 2
+        },
+        {
           "subject": "continuity.device",
           "module": "continuity",
           "transport": "direct",
@@ -157839,22 +158230,22 @@
       ],
       "tallies": {
         "direct": {
-          "required": 202,
-          "covered": 171,
+          "required": 203,
+          "covered": 172,
           "missing": 0,
           "waived": 31,
           "inapplicable": 0
         },
         "http": {
-          "required": 197,
-          "covered": 171,
+          "required": 198,
+          "covered": 172,
           "missing": 0,
           "waived": 26,
           "inapplicable": 0
         },
         "mcp": {
-          "required": 192,
-          "covered": 167,
+          "required": 193,
+          "covered": 168,
           "missing": 0,
           "waived": 25,
           "inapplicable": 0
@@ -157867,8 +158258,8 @@
           "inapplicable": 0
         },
         "total": {
-          "required": 605,
-          "covered": 523,
+          "required": 608,
+          "covered": 526,
           "missing": 0,
           "waived": 82,
           "inapplicable": 0

@@ -231,7 +231,7 @@ browser, and the bar on `/cockpit` likewise — every element's tag, classes, te
 every width `viewports` declares, closed and with a menu open. The executable decides only
 what it alone knows: the version, and that the product entry leads to the UI itself rather
 than to its published snapshot. The UI's manual says the rest
-([`MAJORDOMUS_UI.md`](MAJORDOMUS_UI.md#the-navbar-is-the-sites)).
+([`MAJORDOMUS_UI.md`](MAJORDOMUS_UI.md#the-navbar-comes-from-the-site)).
 
 ## Validation
 

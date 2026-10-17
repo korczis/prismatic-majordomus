@@ -104,6 +104,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:compute.verify",
+      "path": "/evidence/capabilities/compute-verify/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:continuity.device",
       "path": "/evidence/capabilities/continuity-device/"
     },
@@ -3986,6 +3991,16 @@
       "members": [
         "command:commit validate"
       ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:compute.verify": {
+      "kind": "capability",
+      "id": "compute.verify",
+      "page": "/evidence/capabilities/compute-verify/",
+      "programs": [],
+      "members": [],
       "routes": [],
       "mechanisms": [],
       "findings": []
@@ -19405,6 +19420,18 @@
       "mechanisms": [],
       "findings": []
     },
+    "mcp:majordomus_compute_verify": {
+      "kind": "mcp",
+      "id": "majordomus_compute_verify",
+      "alias_of": "capability:compute.verify",
+      "programs": [],
+      "members": [
+        "capability:compute.verify"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
     "mcp:majordomus_continuity": {
       "kind": "mcp",
       "id": "majordomus_continuity",
@@ -27912,6 +27939,7 @@
     "crate:cli_docs",
     "crate:cli_validate_violations",
     "crate:cockpit_plan",
+    "crate:compute_verify",
     "crate:continuity",
     "crate:continuity_transfer",
     "crate:cov_runtime_a_server",
@@ -27968,6 +27996,7 @@
     "crate:observatory",
     "crate:pack",
     "crate:peer_claims",
+    "crate:portable_core",
     "crate:properties",
     "crate:providers_projection",
     "crate:reasoning_mesh",
@@ -27984,6 +28013,8 @@
     "crate:shared_units",
     "crate:tool_input_schemas",
     "crate:ui_idd",
+    "crate:ui_idd_live",
+    "crate:ui_idd_moves",
     "crate:ui_links",
     "crate:worktree",
     "suite:09_site_mobile_first",
@@ -28083,6 +28114,7 @@
     "suite:3105_the_homepage_states_no_present_it_does_not_read",
     "suite:310_rustdoc_projection",
     "suite:3110_a_served_surface_names_its_checkout",
+    "suite:3112_a_publication_that_did_not_arrive_is_a_finding",
     "suite:3125_the_reaper_asks_cargo_for_the_build_dir",
     "suite:3131_a_new_worktree_starts_from_the_remote_trunk",
     "suite:318_a_partial_sweep_says_so",

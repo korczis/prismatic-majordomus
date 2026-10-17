@@ -13,22 +13,9 @@
 /** Where the Cockpit's own assets live. */
 export const ASSETS = '/cockpit/assets/';
 
-/** Ask this server for JSON. Same origin, no credentials, typed failure. */
-export async function api(path, options) {
-  const response = await fetch(path, {
-    credentials: 'omit',
-    ...options,
-    headers: { Accept: 'application/json', ...(options && options.headers) },
-  });
-  const text = await response.text();
-  let body = null;
-  try {
-    body = text ? JSON.parse(text) : null;
-  } catch (e) {
-    body = { error: { code: 'unreadable', message: text.slice(0, 400) } };
-  }
-  return { ok: response.ok, status: response.status, body };
-}
+/** Ask this server for JSON: one implementation, in api.js, which a page outside the Cockpit
+ * (the UI's intent workspace) loads without this module's theme and component setup. */
+export { api } from './api.js';
 
 /**
  * The URL of a vendored file: the digested one the page publishes on its body

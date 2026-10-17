@@ -61,7 +61,7 @@ lists it), declared beside the Cockpit in `apps/majordomus-cli/src/web/discover.
 |---|---|---|
 | Dashboard | `/ui` | `repository.info`, `health.report`, `release.version`, `distribution.releases`, `plan.status`, `plan.roadmap`, `mesh.peers`; the queue on its own route |
 | Command | `/ui/command` | `commands.list` (its `origin` filter is the screen's tabs), `executions.list`; `capabilities.list` for the capability a command is |
-| Intent workspace | `/ui/idd` | `intents.list`, `plan.roadmap`, `plan.issues`, `plan.waves`, `plan.next`: one intent (`?intent=`, else the first `intents.list` reports executing, then verifying, planned, declared — the rule is printed) with its inspector, the milestones it names in the roadmap's order with what each waits for, every issue of those milestones or naming the intent by wave with its status, priority, blockers and the move its status allows (on the issue's Cockpit page, where `plan.transition` makes it), the waves those issues occupy with the scope conflicts that serialise them, and their dependency graph over a table of the same edges. The screen decides no status, wave or membership of its own |
+| Intent workspace | `/ui/idd` | `intents.list`, `plan.roadmap`, `plan.issues`, `plan.waves`, `plan.next`: one intent (`?intent=`, else the first `intents.list` reports executing, then verifying, planned, declared — the rule is printed) with its inspector, the milestones it names in the roadmap's order with what each waits for, every issue of those milestones or naming the intent by wave with its status, priority, blockers and the move its status allows; `?issue=` opens that issue's move panel on the screen itself, the form the Cockpit's issue page renders, wired by the one module both surfaces load (`share/cockpit/moves.js`, named by the page as `data-moves-lib`) and made by `plan.transition` as an execution, which refuses a move the plan does not allow and names why, the waves those issues occupy with the scope conflicts that serialise them, and their dependency graph over a table of the same edges. The screen reads itself again when an execution of its server ends on `/events`, and says what that channel is doing (below). It decides no status, wave or membership of its own |
 | Roadmap | `/ui/roadmap` | `plan.roadmap`, `plan.status`, `intents.list`; one milestone (`?milestone=`) in the inspector, with `plan.issues`: its issues, what can start, its critical path and its neighbours; one intent (`?intent=`) in its inspector: its statement, invariants and criteria with their evidence, and the milestones and issues that serve it |
 | Issues & PRs | `/ui/work` | `plan.status`, `plan.issues`; the queue on its own route, one pull request (`?pr=`) in its detail |
 | Issues | `/ui/issues` | `plan.issues`, `plan.status`, `plan.roadmap`: every issue, narrowed by `?status=` (the plan's own statuses as tabs), `?milestone=`, `?priority=` and `?q=`, each leading to its inspector |
@@ -88,12 +88,12 @@ Every screen has the same shape:
 - a hero band, with the screen's glyph, title, tagline and lead, the brand mark lit behind
   them, and a row of KPI tiles;
 - a grid of panels;
-- the frame around both: at the top the site's navbar ([below](#the-navbar-is-the-sites)),
+- the frame around both: at the top the site's navbar ([below](#the-navbar-comes-from-the-site)),
   beneath it the sidebar of screens with the version card at its foot, and the tool bar with
   the search, the time the screen was read, and the other surfaces (documentation, API,
   Cockpit).
 
-## The navbar is the site's
+## The navbar comes from the site
 
 majordomus.dev is the reference for how the product looks, and the bar at the top of every
 screen — and of every page of the Cockpit — is the site's own navbar (`project.the-ui-wears-the-sites-navbar`), not a bar drawn
@@ -282,8 +282,18 @@ queue (`integration.queue`) is `/ui/panels/pull-requests`:
 While a screen is visible, `ui.js` asks the server for it again every minute, puts the new
 rendering in place, and updates the time in the tool bar. That time is when the page was
 rendered; each source line says when its own reading is older. This is a refresh and is said
-as one; nothing claims a live stream. A streamed page and one stream of changed readings
-replace it in I2487.
+as one. A streamed page and one stream of changed readings replace it in I2487.
+
+The intent workspace also follows the executions its server runs (I2783). Its screen carries
+`data-follows-executions`, and the page names the channel (`data-events`, `/events`) and the
+Cockpit's one WebSocket client (`share/cockpit/socket.js`, `data-socket-lib`). When an execution
+ends there (completed, failed or cancelled), `ui.js` reads the screen again within seconds, once
+for a burst and at most every two seconds. It does the same after a reconnect or a gap, which
+may have missed an end. After the read time, the top bar says what that channel is doing:
+`executions live`, `reconnecting` or `offline`, taken from the socket's own state. The channel
+only signals when to read again; the screen still says only what its sources answer. It
+carries only this server's executions, so a move another process makes still shows at the
+next minute.
 
 How fast is measured, not written here. `majordomus bench` derives a target from every
 screen in `SCREENS` and every panel in `PANELS`, cold and warm:
@@ -536,7 +546,7 @@ they cost. It renders nothing itself. What it changes is only what a file cannot
 | a link to a page of the Cockpit: the "technical view" of a source or of an object | that page of the Cockpit's own snapshot at `/cockpit/` when it holds it (ADR 0147), and the page about the live UI when it does not |
 | a link to a surface a publication holds (`/rustdoc`, `/openapi.json`) | unchanged |
 | a link into the served documentation (`/docs/…`) | the same page of the published site |
-| the script reads the screen again every minute and pulls in slow panels | it does neither: the body carries `data-snapshot` |
+| the script reads the screen again every minute, pulls in slow panels and follows the executions of its server | it does none of that: the body carries `data-snapshot` |
 | "Read at" in the tool bar | also a notice on every page: the commit, the time, the executable, and a link to the live UI |
 
 </div>

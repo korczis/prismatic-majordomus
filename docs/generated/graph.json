@@ -178,6 +178,15 @@
         "status": "query"
       },
       {
+        "id": "capability:compute.verify",
+        "kind": "capability",
+        "label": "compute.verify",
+        "summary": "Whether a browser's result is what the server computes",
+        "route": "/cockpit/capabilities/compute.verify",
+        "source": "apps/majordomus-cli/src/capability/builtin/compute.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:continuity.device",
         "kind": "capability",
         "label": "continuity.device",
@@ -3623,6 +3632,22 @@
         "label": "why.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/tests/why.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-core/fixtures/canonical-digest.v1.json",
+        "kind": "file",
+        "label": "canonical-digest.v1.json",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-core/fixtures/canonical-digest.v1.json",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-core/src/lib.rs",
+        "kind": "file",
+        "label": "lib.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-core/src/lib.rs",
         "external": true
       },
       {
@@ -7791,6 +7816,32 @@
             "two-folder",
             "ownership",
             "footprint"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0170",
+        "kind": "adr",
+        "label": "adr-0170",
+        "summary": "A browser computes with the portable core, and the server verifies by recomputing",
+        "route": "/cockpit/objects/adr/adr-0170",
+        "source": ".ai/repo/adrs/0170-a-browser-computes-and-the-server-verifies-by-recomputing.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-16",
+          "related": [
+            "file:.ai/repo/adrs/0032-an-external-workspace-is-not-a-provider-the-term-the-depende.md",
+            "file:.ai/repo/adrs/0067-mesh-cooperation-is-authenticated-links-and-one-replicated-journal.md",
+            "file:.ai/repo/adrs/0126-a-caller-beyond-loopback-reads-and-changes-nothing-it-cannot-authenticate.md",
+            "file:apps/majordomus-core/src/lib.rs",
+            "file:apps/majordomus-core/fixtures/canonical-digest.v1.json",
+            "test:apps/majordomus-core/tests/parity.rs"
+          ],
+          "tags": [
+            "mesh",
+            "security",
+            "wasm",
+            "architecture"
           ]
         }
       },
@@ -14354,6 +14405,18 @@
         }
       },
       {
+        "id": "majordomus://critique/a-browser-computes-what-the-server-verifies",
+        "kind": "critique",
+        "label": "a-browser-computes-what-the-server-verifies",
+        "summary": "a-browser-computes-what-the-server-verifies",
+        "route": "/cockpit/objects/critique/a-browser-computes-what-the-server-verifies",
+        "source": ".ai/repo/project/critiques/a-browser-computes-what-the-server-verifies.yaml",
+        "facts": {
+          "intent": "a-browser-computes-what-the-server-verifies",
+          "reviewed_at": "d116266803"
+        }
+      },
+      {
         "id": "majordomus://critique/a-session-leaves-what-it-observed",
         "kind": "critique",
         "label": "a-session-leaves-what-it-observed",
@@ -19168,6 +19231,20 @@
         }
       },
       {
+        "id": "majordomus://gap/a-browser-computes-what-the-server-verifies",
+        "kind": "gap",
+        "label": "a-browser-computes-what-the-server-verifies",
+        "summary": "a-browser-computes-what-the-server-verifies",
+        "route": "/cockpit/objects/gap/a-browser-computes-what-the-server-verifies",
+        "source": ".ai/repo/project/gaps/a-browser-computes-what-the-server-verifies.yaml",
+        "facts": {
+          "intent": "a-browser-computes-what-the-server-verifies",
+          "observed_at": "d116266803",
+          "recorded_at": "2026-10-17",
+          "recorded_by": "claude-code (session 21616f1e, worktree feature/a-browser-computes-for-the-mesh; read-only audit of the mesh, the execution plane, the capability registry and wasm32 portability at master)"
+        }
+      },
+      {
         "id": "majordomus://gap/a-session-leaves-what-it-observed",
         "kind": "gap",
         "label": "a-session-leaves-what-it-observed",
@@ -19594,6 +19671,34 @@
         "label": "lib/watch.sh",
         "route": "/cockpit/objects/implementation/lib-watch-sh",
         "source": "lib/watch.sh"
+      },
+      {
+        "id": "majordomus://intent/a-browser-computes-what-the-server-verifies",
+        "kind": "intent",
+        "label": "a-browser-computes-what-the-server-verifies",
+        "summary": "A browser computes for a project with the same code the server runs, and nothing it returns is trusted until the server has recomputed it",
+        "route": "/cockpit/objects/intent/a-browser-computes-what-the-server-verifies",
+        "source": ".ai/repo/project/intents/a-browser-computes-what-the-server-verifies.yaml",
+        "facts": {
+          "governance": [
+            "adr:adr-0170",
+            "adr:adr-0126",
+            "rule:project.derived-once"
+          ],
+          "invariants": [
+            "One implementation per computation, in the portable core; the browser runs it as wasm32 and the executable links it, and an executed fixture decides whether they agree",
+            "A browser's result is a claim; only the server's recomputation verifies it, and agreement among browsers is never proof",
+            "A browser holds no mesh key, takes no claim, appends nothing to the journal and writes nothing until an authentication the owner accepts exists (ADR 0126, ADR 0170)",
+            "Participation is opt-in, revocable and visible; nothing computes in a page a person did not ask to compute"
+          ],
+          "milestones": [
+            "browser-compute"
+          ],
+          "non_goals": [
+            "A second mesh, a browser-specific scheduler or a second capability registry",
+            "Arbitrary code from a peer; only the core's own functions run"
+          ]
+        }
       },
       {
         "id": "majordomus://intent/a-session-leaves-what-it-observed",
@@ -39583,6 +39688,203 @@
         }
       },
       {
+        "id": "majordomus://issue/I2781",
+        "kind": "issue",
+        "label": "I2781",
+        "summary": "An issue is started, verified and finished from the intent workspace",
+        "route": "/cockpit/objects/issue/i2781",
+        "source": ".ai/repo/project/issues/I2781.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A ready issue is started from /ui/idd and its status reads ACTIVE on the next paint",
+            "A move the plan refuses shows the refusal's reason and changes nothing",
+            "A double click starts one execution",
+            "A request from another origin is refused by the server, not by the page"
+          ],
+          "created_at": "2026-10-16",
+          "current_state": "Moves are offered on /cockpit/plan/issues/<id> only.",
+          "depends_on": [
+            "I2780"
+          ],
+          "desired_state": "/ui/idd?issue=<id> offers the moves with the result in place; the screen reads again after a move succeeds.",
+          "evidence_required": [
+            "ui_idd_moves_tests"
+          ],
+          "milestone": "idd-workspace",
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui",
+            "apps/majordomus-cli/src/cockpit/plan.rs",
+            "apps/majordomus-cli/tests/ui_idd_moves.rs",
+            "share/ui/ui.js",
+            "share/cockpit/api.js",
+            "share/cockpit/moves.js",
+            "share/cockpit/plan.js",
+            "share/cockpit/cockpit.js",
+            "docs/MAJORDOMUS_UI.md"
+          ],
+          "serves": [
+            "the-owner-directs-work-from-the-ui#next-move-is-reachable"
+          ],
+          "slug": "an-issue-moves-from-the-workspace",
+          "updated_at": "2026-10-16",
+          "validation": [
+            "majordomus plan validate",
+            "cargo test --lib ui::idd",
+            "cargo test --test ui_idd_moves"
+          ],
+          "why": "The first slice links a ready issue to the Cockpit's move; the criterion asks for the move where the work is read, and the form, its script and the capability already exist."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2783",
+        "kind": "issue",
+        "label": "I2783",
+        "summary": "The intent workspace reads itself again when a move ends on its server",
+        "route": "/cockpit/objects/issue/i2783",
+        "source": ".ai/repo/project/issues/I2783.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The workspace page names /events and the socket module, and the module is served",
+            "A move started through executions.start ends on /events and the screen read again reads its new status",
+            "No other screen declares that it follows executions",
+            "A snapshot opens no channel"
+          ],
+          "created_at": "2026-10-17",
+          "current_state": "/ui screens read again every minute; only the Cockpit follows /events.",
+          "depends_on": [
+            "I2781"
+          ],
+          "desired_state": "/ui/idd reads again within seconds of an execution ending on its server, says what its channel is doing, and still refreshes by the minute for what the channel does not carry.",
+          "evidence_required": [
+            "ui_idd_live_tests"
+          ],
+          "milestone": "idd-workspace",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui",
+            "apps/majordomus-cli/tests/ui_idd_live.rs",
+            "share/ui/ui.js",
+            "docs",
+            "site",
+            ".ai/repo/project"
+          ],
+          "serves": [
+            "the-owner-directs-work-from-the-ui#the-workspace-follows-moves"
+          ],
+          "slug": "the-workspace-follows-the-plan-live",
+          "updated_at": "2026-10-17",
+          "validation": [
+            "majordomus plan validate",
+            "cargo test --test ui_idd_live",
+            "cargo test --lib ui::"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2784",
+        "kind": "issue",
+        "label": "I2784",
+        "summary": "One portable core runs on the host and as wasm32, and one executed fixture holds both",
+        "route": "/cockpit/objects/issue/i2784",
+        "source": ".ai/repo/project/issues/I2784.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every fixture row is reproduced by the core on the host, by the executable's two writers, and by the wasm32 module executed under node",
+            "Text that is not JSON is refused, not digested, on every runtime",
+            "Neither lock gains a package",
+            "A core source edit changes the executable's generation; a core test edit does not"
+          ],
+          "created_at": "2026-10-17",
+          "current_state": "No portable core; canonical JSON is written twice in the executable; no wasm32 target.",
+          "depends_on": [],
+          "evidence_required": [
+            "portable_core_tests"
+          ],
+          "milestone": "browser-compute",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-core",
+            "apps/majordomus-cli/Cargo.toml",
+            "apps/majordomus-cli/Cargo.lock",
+            "apps/majordomus-cli/build.rs",
+            "apps/majordomus-cli/src/generation.rs",
+            "apps/majordomus-cli/src/mesh/journal.rs",
+            "apps/majordomus-cli/src/capability/executor.rs",
+            "apps/majordomus-cli/tests/portable_core.rs",
+            ".ai/repo/ci/gates.yaml",
+            ".ai/repo/adrs",
+            "scripts/ci/crate-boundary",
+            "rust-toolchain.toml"
+          ],
+          "serves": [
+            "a-browser-computes-what-the-server-verifies#core-agrees-everywhere"
+          ],
+          "slug": "a-portable-core-runs-in-the-browser",
+          "updated_at": "2026-10-17",
+          "validation": [
+            "majordomus plan validate",
+            "cargo test --manifest-path apps/majordomus-core/Cargo.toml",
+            "cargo test --test portable_core",
+            "cargo test --lib generation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2785",
+        "kind": "issue",
+        "label": "I2785",
+        "summary": "The server recomputes a browser's claimed result with the portable core",
+        "route": "/cockpit/objects/issue/i2785",
+        "source": ".ai/repo/project/issues/I2785.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every fixture case is answered match with the claimed digest and mismatch with one digit changed",
+            "Every invalid fixture row is answered invalid with its reason",
+            "A caller on another host is answered, and the repository and the execution store are unchanged",
+            "An input over 1 MiB is answered invalid without being read"
+          ],
+          "created_at": "2026-10-17",
+          "current_state": "executions.report stores what a reporter says; nothing recomputes a claim.",
+          "depends_on": [
+            "I2784"
+          ],
+          "desired_state": "POST /api/v1/compute/verify and majordomus_compute_verify judge any claimed canonical digest by recomputing it, for every fixture row, writing nothing.",
+          "evidence_required": [
+            "compute_verify_tests"
+          ],
+          "milestone": "browser-compute",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin/compute.rs",
+            "apps/majordomus-cli/src/capability/builtin/mod.rs",
+            "apps/majordomus-cli/tests/compute_verify.rs",
+            ".ai/repo/project",
+            "docs",
+            "site",
+            "share"
+          ],
+          "serves": [
+            "a-browser-computes-what-the-server-verifies#the-server-recomputes-a-claim"
+          ],
+          "slug": "the-server-verifies-a-browsers-result",
+          "updated_at": "2026-10-17",
+          "validation": [
+            "majordomus plan validate",
+            "cargo test --lib capability::builtin::compute",
+            "cargo test --test compute_verify"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I2786",
         "kind": "issue",
         "label": "I2786",
@@ -40286,6 +40588,58 @@
         }
       },
       {
+        "id": "majordomus://milestone/browser-compute",
+        "kind": "milestone",
+        "label": "browser-compute",
+        "summary": "A browser computes for the project with the server's own code, and the server verifies every result",
+        "route": "/cockpit/objects/milestone/browser-compute",
+        "source": ".ai/repo/project/milestones/browser-compute.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The portable core reproduces the shared fixture on the host, in the executable and as an executed wasm32 module",
+            "An edit to the core is a new generation of the executable",
+            "Nothing a browser returns enters a record before the owner accepts how it is authenticated"
+          ],
+          "created_at": "2026-10-17",
+          "current_state": "No portable core, no wasm32 target, no fixture shared by the runtimes; two canonical-JSON writers in the executable.",
+          "depends_on": [],
+          "evidence_required": [],
+          "non_scope": [
+            "Writing anything on a browser's behalf before ADR 0170's open question is decided",
+            "WebRTC, peer-to-peer transfer, reputation"
+          ],
+          "order": 147,
+          "priority": "p1",
+          "risks": [
+            "The structure job installs the wasm32 target for the portable-core gate; a runner without network for rustup fails that gate loudly rather than skipping it."
+          ],
+          "scope": [
+            "apps/majordomus-core",
+            "apps/majordomus-cli/Cargo.toml",
+            "apps/majordomus-cli/Cargo.lock",
+            "apps/majordomus-cli/build.rs",
+            "apps/majordomus-cli/src/generation.rs",
+            "apps/majordomus-cli/src/mesh/journal.rs",
+            "apps/majordomus-cli/src/capability/executor.rs",
+            "apps/majordomus-cli/tests/portable_core.rs",
+            ".ai/repo/ci/gates.yaml",
+            ".ai/repo/adrs",
+            ".ai/repo/project",
+            "scripts/ci/crate-boundary",
+            "rust-toolchain.toml",
+            "docs"
+          ],
+          "slug": "browser-compute",
+          "updated_at": "2026-10-17",
+          "validation": [
+            "majordomus plan validate",
+            "majordomus intent validate",
+            "cargo test --manifest-path apps/majordomus-core/Cargo.toml",
+            "cargo test --test portable_core"
+          ]
+        }
+      },
+      {
         "id": "majordomus://milestone/capability-graph",
         "kind": "milestone",
         "label": "capability-graph",
@@ -40903,7 +41257,7 @@
             "Mutation from the published site",
             "Provider-assisted plan authoring"
           ],
-          "order": 146,
+          "order": 147,
           "priority": "p0",
           "risks": [
             "#1184 (/ui/waves) and #1302 (roadmap reads delivery) touch ui/mod.rs's screen list; each lands as a textual neighbour and needs one merge."
@@ -57350,6 +57704,13 @@
         "source": "test/cases/3110_a_served_surface_names_its_checkout.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3112_a_publication_that_did_not_arrive_is_a_finding.sh",
+        "kind": "test",
+        "label": "test/cases/3112_a_publication_that_did_not_arrive_is_a_finding.sh",
+        "route": "/cockpit/objects/test/test-cases-3112-a-publication-that-did-not-arrive-is-a-finding-sh",
+        "source": "test/cases/3112_a_publication_that_did_not_arrive_is_a_finding.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/3113_the_adoption_footprint_is_inventoried.sh",
         "kind": "test",
         "label": "test/cases/3113_the_adoption_footprint_is_inventoried.sh",
@@ -61508,6 +61869,11 @@
         "label": "commit"
       },
       {
+        "id": "module:compute",
+        "kind": "module",
+        "label": "compute"
+      },
+      {
         "id": "module:continuity",
         "kind": "module",
         "label": "continuity"
@@ -61851,6 +62217,14 @@
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/tests/remote_callers.rs",
         "external": true
+      },
+      {
+        "id": "test:apps/majordomus-core/tests/parity.rs",
+        "kind": "test",
+        "label": "parity.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-core/tests/parity.rs",
+        "external": true
       }
     ],
     "edges": [
@@ -62071,6 +62445,21 @@
       },
       {
         "source": "capability:commit.validate",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:compute.verify",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:compute.verify",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:compute.verify",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -70225,6 +70614,41 @@
         "kind": "put_in_force"
       },
       {
+        "source": "majordomus://adr/adr-0170",
+        "target": "file:apps/majordomus-core/fixtures/canonical-digest.v1.json",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0170",
+        "target": "file:apps/majordomus-core/src/lib.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0170",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0170",
+        "target": "majordomus://adr/adr-0032",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0170",
+        "target": "majordomus://adr/adr-0067",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0170",
+        "target": "majordomus://adr/adr-0126",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0170",
+        "target": "test:apps/majordomus-core/tests/parity.rs",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://application/ci-gated-project",
         "target": "kind:application",
         "kind": "is_a"
@@ -75865,6 +76289,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://critique/a-browser-computes-what-the-server-verifies",
+        "target": "kind:critique",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://critique/a-session-leaves-what-it-observed",
         "target": "kind:critique",
         "kind": "is_a"
@@ -77810,6 +78239,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://gap/a-browser-computes-what-the-server-verifies",
+        "target": "kind:gap",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://gap/a-session-leaves-what-it-observed",
         "target": "kind:gap",
         "kind": "is_a"
@@ -78087,6 +78521,11 @@
       {
         "source": "majordomus://implementation/lib/watch.sh",
         "target": "kind:implementation",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://intent/a-browser-computes-what-the-server-verifies",
+        "target": "kind:intent",
         "kind": "is_a"
       },
       {
@@ -84325,6 +84764,61 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2781",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2781",
+        "target": "majordomus://issue/I2780",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2781",
+        "target": "majordomus://milestone/idd-workspace",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2783",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2783",
+        "target": "majordomus://issue/I2781",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2783",
+        "target": "majordomus://milestone/idd-workspace",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2784",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2784",
+        "target": "majordomus://milestone/browser-compute",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2785",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2785",
+        "target": "majordomus://issue/I2784",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2785",
+        "target": "majordomus://milestone/browser-compute",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I2786",
         "target": "kind:issue",
         "kind": "is_a"
@@ -84421,6 +84915,11 @@
       },
       {
         "source": "majordomus://milestone/automation",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/browser-compute",
         "target": "kind:milestone",
         "kind": "is_a"
       },
@@ -89025,6 +89524,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3112_a_publication_that_did_not_arrive_is_a_finding.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/3113_the_adoption_footprint_is_inventoried.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -93400,6 +93904,11 @@
         "kind": "composes"
       },
       {
+        "source": "module:compute",
+        "target": "capability:compute.verify",
+        "kind": "composes"
+      },
+      {
         "source": "module:continuity",
         "target": "capability:continuity.device",
         "kind": "composes"
@@ -94351,8 +94860,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2958,
-      "edges": 6499,
+      "nodes": 2973,
+      "edges": 6526,
       "acyclic": false,
       "truncated": false
     }

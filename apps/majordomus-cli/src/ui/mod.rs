@@ -102,6 +102,14 @@ pub(crate) const BAR_SCRIPTS: &[&str] = &["nav.js", "theme.js"];
 /// The vendored graph library, loaded only by a screen that draws a graph.
 pub const GRAPH_LIB: &str = "vendor/cytoscape.min.js";
 
+/// The Cockpit's module that wires an issue's moves, loaded only by a screen that renders a
+/// move form: one implementation for both surfaces (I2781).
+pub const MOVES_LIB: &str = "moves.js";
+
+/// The Cockpit's one WebSocket client, loaded only by a screen that follows the executions
+/// this server runs, so that it reads itself again when one ends (I2783).
+pub const SOCKET_LIB: &str = "socket.js";
+
 /// The query parameter that asks a panel route for the panel alone, without the frame:
 /// what the script fetches to fill a slow panel in place.
 pub const FRAGMENT: &str = "fragment";
@@ -241,6 +249,9 @@ pub(crate) struct Ui {
     live: Arc<Live>,
     version: &'static str,
     assets: Assets,
+    /// The Cockpit's files, for the modules the UI borrows from it ([`MOVES_LIB`],
+    /// [`SOCKET_LIB`]).
+    cockpit_assets: Assets,
     /// Whether this UI's screens have been read once behind its first reader.
     warmed: std::sync::atomic::AtomicBool,
 }
@@ -256,6 +267,10 @@ impl Ui {
             Some(dir) => Assets::under(dir, ASSETS_DIR, ASSETS_PREFIX),
             None => Assets::none_under(ASSETS_DIR, ASSETS_PREFIX),
         };
+        let cockpit_assets = match share_dir {
+            Some(dir) => Assets::new(dir),
+            None => Assets::none_under(crate::cockpit::assets::DIR, crate::cockpit::assets::PREFIX),
+        };
         if !assets.present() {
             tracing::warn!(
                 "the distribution has no share/ui/ directory: the UI will serve unstyled markup; run scripts/cockpit-assets to build it"
@@ -265,6 +280,7 @@ impl Ui {
             live: live.into_live(),
             version,
             assets,
+            cockpit_assets,
             warmed: std::sync::atomic::AtomicBool::new(false),
         }
     }
@@ -413,6 +429,8 @@ impl Ui {
                     script: self.assets.url(SCRIPT),
                     bar_scripts: BAR_SCRIPTS.iter().map(|s| self.assets.url(s)).collect(),
                     graph_lib: self.assets.url(GRAPH_LIB),
+                    moves_lib: self.cockpit_assets.url(MOVES_LIB),
+                    socket_lib: self.cockpit_assets.url(SOCKET_LIB),
                     assets_present: self.assets.present(),
                     version: self.version,
                 },

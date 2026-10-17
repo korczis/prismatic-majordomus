@@ -527,7 +527,7 @@ scripts/cockpit-assets --check    # fail if the committed stylesheet differs fro
 | `cockpit.css` | yes | a generated artifact, compiled from `src/cockpit.css` with Tailwind and Flowbite's theme over the shared design sheets; drift-checked |
 | `src/cockpit.css` | yes | the source: what only the Cockpit has (shell, palette, runner, log, canvases), one semantic class per component, over the tokens and primitives it imports from `share/design/` |
 | `favicon.svg` | yes | a generated copy of the canonical mark `share/design/brand/logo-mark.svg`, written by `majordomus generate design` |
-| `*.js` | yes | written by hand, no build step — but `nav.js` and `theme.js`, byte copies of the site's, written and checked by `scripts/cockpit-assets`: the bar at the top of every page is the site's, and so are its scripts ([`MAJORDOMUS_UI.md`](MAJORDOMUS_UI.md#the-navbar-is-the-sites)) |
+| `*.js` | yes | written by hand, no build step — but `nav.js` and `theme.js`, byte copies of the site's, written and checked by `scripts/cockpit-assets`: the bar at the top of every page is the site's, and so are its scripts ([`MAJORDOMUS_UI.md`](MAJORDOMUS_UI.md#the-navbar-comes-from-the-site)) |
 | `vendor/alpine.csp.min.js` | yes | the interaction depends on it and it is 70 kB |
 | `vendor/{cytoscape,three.module,three.core,p5}.min.js` | no | ~2 MB, lazy, optional, every page complete without them |
 

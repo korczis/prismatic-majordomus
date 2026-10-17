@@ -14,6 +14,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `capabilities` | Capabilities | behaviorally_verified | 3 | [`modules/capabilities.md`](modules/capabilities.md) |
 | `commands` | Command graph | implemented | 3 | [`modules/commands.md`](modules/commands.md) |
 | `commit` | Commit | behaviorally_verified | 4 | [`modules/commit.md`](modules/commit.md) |
+| `compute` | Browser compute | experimental | 1 | [`modules/compute.md`](modules/compute.md) |
 | `continuity` | Continuity | behaviorally_verified | 8 | [`modules/continuity.md`](modules/continuity.md) |
 | `convergence` | Convergence | behaviorally_verified | 1 | [`modules/convergence.md`](modules/convergence.md) |
 | `dashboard` | Dashboards | behaviorally_verified | 1 | [`modules/dashboard.md`](modules/dashboard.md) |
@@ -84,6 +85,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `commit.plan` | `commit` | query | behaviorally_verified | `majordomus_commit_plan` | `majordomus://commit/plan` | `GET /api/v1/commit/plan` | `majordomus commit plan` | — | required |
 | `commit.scopes` | `commit` | query | behaviorally_verified | `majordomus_commit_scopes` | `majordomus://commit/scopes` | `GET /api/v1/commit/scopes` | `majordomus commit scopes` | — | required |
 | `commit.validate` | `commit` | query | behaviorally_verified | `majordomus_commit_validate` | — | `GET /api/v1/commit/validate` | `majordomus commit validate` | — | required |
+| `compute.verify` | `compute` | query | experimental | `majordomus_compute_verify` | — | `POST /api/v1/compute/verify` | — | — | required |
 | `continuity.device` | `continuity` | command | experimental | `majordomus_continuity_device` | — | `POST /api/v1/continuity/device` | `majordomus continuity device` | — | waived (destructive) |
 | `continuity.plan` | `continuity` | query | experimental | `majordomus_continuity_plan` | — | `GET /api/v1/continuity/plan` | `majordomus continuity plan` | — | required |
 | `continuity.publish` | `continuity` | command | experimental | `majordomus_continuity_publish` | — | `POST /api/v1/continuity/publish` | `majordomus continuity publish` | — | waived (destructive) |

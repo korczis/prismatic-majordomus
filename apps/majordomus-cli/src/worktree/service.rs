@@ -1051,6 +1051,22 @@ impl WorktreeService {
         } else {
             None
         };
+        self.create_locked(request, ensure, planned)
+    }
+
+    /// The create under the lock, given what was planned before it: `planned` is `None` when
+    /// the branch existed (or could not be asked about) before the lock, and the start is
+    /// then planned here if the branch is gone by the time the lock is held.
+    fn create_locked(
+        &self,
+        request: &CreateRequest,
+        ensure: bool,
+        planned: Option<StartPoint>,
+    ) -> Result<CreateReport> {
+        let name = BranchName::parse(&request.branch)?;
+        let target = path::expected_path(&self.container.path, &name)?;
+        let resolved_target = ResolvedPath::of(&target);
+        let primary = self.identity.primary_worktree().path.clone();
 
         // One lock around the whole check-then-act, and the topology re-read under it.
         let _lock = WorktreeLock::acquire(&self.identity.git_common_dir().path)?;
@@ -2093,19 +2109,13 @@ mod tests {
     /// planned under the lock, rather than created from nowhere.
     #[test]
     fn a_branch_deleted_while_the_create_waits_for_the_lock_is_planned_under_it() {
+        // The branch existed when the create looked before the lock, so nothing was planned;
+        // by the time the lock is held it is gone, and the start is planned under the lock.
         let repo = Repo::new();
-        repo.git(&["branch", "feature/raced"]);
         let svc = repo.service();
-        let lock = WorktreeLock::acquire(&svc.identity.git_common_dir().path).expect("the lock");
-        let made = std::thread::scope(|s| {
-            let create = s.spawn(|| svc.create(&request("feature/raced", None)));
-            // long enough for the create to have looked and to be waiting on the lock
-            std::thread::sleep(std::time::Duration::from_millis(1500));
-            repo.git(&["branch", "-D", "feature/raced"]);
-            drop(lock);
-            create.join().expect("the create ran")
-        })
-        .expect("created");
+        let made = svc
+            .create_locked(&request("feature/raced", None), false, None)
+            .expect("created");
         assert!(made.branch_created);
         assert_eq!(
             made.start,

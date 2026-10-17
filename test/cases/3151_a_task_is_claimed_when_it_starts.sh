@@ -17,7 +17,11 @@ unset MAJORDOMUS_RUNTIME
 R="$T/repo"
 W1="$T/wt-fresh"
 W2="$T/wt-repaired"
-trap 'for w in "$W1" "$W2" "$R"; do "$RB" serve stop --repo "$w" >/dev/null 2>&1 || true; done' EXIT
+stop_servers() {
+  local w
+  for w in "$W1" "$W2" "$R"; do "$RB" serve stop --repo "$w" >/dev/null 2>&1 || true; done
+}
+trap stop_servers EXIT
 
 mkdir -p "$R"
 cd "$R" || exit 1

@@ -16,6 +16,14 @@ satisfaction:
     criterion: /ui/idd shows a chosen intent's milestones, issues, waves and dependency graph read only from the plan's capabilities, an issue added to the plan appears there with no other edit, and an intent it does not know is refused by name
     evidence: test
     ref: apps/majordomus-cli/tests/ui_idd.rs
+  - id: next-move-is-reachable
+    criterion: Every issue the workspace lists leads to its move panel on the same screen, where plan.transition is started as an execution through the form the Cockpit's issue page renders, the screen read again shows the status the record now derives, and a move the plan does not allow, or a request from another origin, is refused by the server with its reason
+    evidence: test
+    ref: apps/majordomus-cli/tests/ui_idd_moves.rs
+  - id: the-workspace-follows-moves
+    criterion: The workspace follows the executions its server runs over the one live channel the page names, a move that ends there is followed by the screen read again with the status the record now derives, the line beside the read time says what that channel is doing, and no other screen claims to follow it
+    evidence: test
+    ref: apps/majordomus-cli/tests/ui_idd_live.rs
 governance:
   - rule:project.work-serves-a-declared-intent
   - rule:project.derived-once
