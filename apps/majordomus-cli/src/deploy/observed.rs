@@ -222,11 +222,10 @@ pub fn parse(repository: &str, observed_at: &str, answer: &Value) -> DeploymentO
 }
 
 fn run(program: &str, root: &Path, args: &[&str]) -> Result<Value, String> {
-    let out = Command::new(program)
-        .current_dir(root)
-        .args(args)
-        .output()
-        .map_err(|e| format!("the GitHub CLI ({program}) could not run: {e}"))?;
+    let out = crate::process::retrying_busy(|| {
+        Command::new(program).current_dir(root).args(args).output()
+    })
+    .map_err(|e| format!("the GitHub CLI ({program}) could not run: {e}"))?;
     let text = String::from_utf8_lossy(&out.stdout);
     match out.status.success() {
         true => serde_json::from_str(&text).map_err(|e| format!("{program} {}: {e}", args[0])),
