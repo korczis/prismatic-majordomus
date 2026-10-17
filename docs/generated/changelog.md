@@ -9,6 +9,15 @@ Current version: **0.28.0**
 
 ## v0.28.0 — 2026-10-17
 
+### Decisions
+
+- **ADR-0166** The plan's surfaces are inferred from delivery, and nothing the plan shows is typed beside it _(proposed)_
+- **ADR-0165** A skill is derived for every domain of the registry and shown wherever skills are _(accepted)_
+- **ADR-0164** A durable record names the session that wrote it, and relates a task only when the task is that session's _(proposed)_
+- **ADR-0163** A server serves only a share of its own version, with the surfaces it offers _(proposed)_
+- **ADR-0157** A mesh node may offer a shared build cache, peers discover and select it, and compilation never depends on it _(proposed)_
+- **ADR-0124** An uploaded prompt pack is a provenance-tracked input artifact, not a second intent model _(proposed)_
+
 ### Added
 
 - **context**: a worker is given a bounded slice of knowledge, not the knowledge base (`c598adf8b`)
@@ -131,6 +140,13 @@ Current version: **0.28.0**
 
 
 ## v0.27.0 — 2026-10-16
+
+### Decisions
+
+- **ADR-0161** A mesh node follows the published release, through the one installer, forward only _(proposed)_
+- **ADR-0160** The kiosk draws what the repository proves, from the sources that already answer it, and draws it with p5 only where the build has it _(proposed)_
+- **ADR-0152** A diagram and a chart on the site are one viewer each, over what the build derived: interactive, linkable, and linked by inference _(proposed)_
+- **ADR-0069** A capability may be scripted, and repository automation is scripted capabilities rather than shell _(proposed)_
 
 ### Added
 
@@ -320,6 +336,7 @@ Current version: **0.28.0**
 
 ### Decisions
 
+- **ADR-0158** The Observatory is one screen of the UI, and it draws only what was observed _(proposed)_
 - **ADR-0155** An expedited landing is the owner's word, judged on the merged tree, and never reaches a tag _(proposed)_
 - **ADR-0147** The Cockpit is published as a snapshot by the exporter that reads the UI, and two snapshots link only the pages each holds _(proposed)_
 
