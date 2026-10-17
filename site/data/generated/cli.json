@@ -150,6 +150,12 @@
           "route": "/docs/cli/devcontext/"
         },
         {
+          "about": "The edit guard: whether a provider's tool may write a file of this checkout now, judged from the active task's scope and the writing session's live mesh claims",
+          "command": "majordomus guard",
+          "name": "guard",
+          "route": "/docs/cli/guard/"
+        },
+        {
           "about": "The mesh: the nodes this repository's running server has discovered on the network, this machine's node identity, and the self-check that proves the prerequisites on this machine alone",
           "command": "majordomus mesh",
           "name": "mesh",
@@ -425,11 +431,9 @@
           "value_name": "HOST"
         },
         {
-          "defaults": [
-            "8741"
-          ],
+          "defaults": [],
           "global": false,
-          "help": "Port the shared server binds when this process starts it; when it is taken, a free port is used instead and the URL is logged on stderr either way",
+          "help": "Port the shared server binds when this process starts it; without it, the port this checkout derives (8741 for the primary checkout). When it is taken, a free port is used instead and the URL is logged on stderr either way",
           "long": "http-port",
           "name": "http_port",
           "positional": false,
@@ -577,11 +581,9 @@
           "value_name": "HOST"
         },
         {
-          "defaults": [
-            "8741"
-          ],
+          "defaults": [],
           "global": false,
-          "help": "Port to bind; 0 picks a free one and the address is logged on stderr",
+          "help": "Port to bind; without it, the port this checkout derives (8741 for the primary checkout); 0 picks a free one and the address is logged on stderr",
           "long": "port",
           "name": "port",
           "positional": false,
@@ -847,11 +849,9 @@
       ],
       "args": [
         {
-          "defaults": [
-            "8741"
-          ],
+          "defaults": [],
           "global": false,
-          "help": "The port the started server asks for first; a taken one is replaced by a free one",
+          "help": "The port the started server asks for first, without it the one this checkout derives (8741 for the primary checkout); a taken one is replaced by a free one",
           "long": "port",
           "name": "port",
           "positional": false,
@@ -861,11 +861,9 @@
           "value_name": "PORT"
         },
         {
-          "defaults": [
-            "900"
-          ],
+          "defaults": [],
           "global": false,
-          "help": "The started server stops when no peer has been attached for this many seconds",
+          "help": "The started server stops when no peer has been attached for this many seconds; without it, the policy's declared `server.idle_seconds`, 900 when none is declared",
           "long": "idle",
           "name": "idle",
           "positional": false,
@@ -11798,6 +11796,12 @@
           "route": "/docs/cli/worktree/cleanup/"
         },
         {
+          "about": "Every linked worktree holding uncommitted work: how many paths, how old the oldest change, what holds it (an active task, an open episode, a process inside) and whether it is abandoned, with the command that would put it on a remote ref. Reads every worktree and writes none",
+          "command": "majordomus worktree uncommitted",
+          "name": "uncommitted",
+          "route": "/docs/cli/worktree/uncommitted/"
+        },
+        {
           "about": "Every local branch, one per line, for a shell completion that wants the live set",
           "command": "majordomus worktree branches",
           "name": "branches",
@@ -14018,6 +14022,147 @@
       ],
       "route": "/docs/cli/worktree/cleanup/",
       "usage": "majordomus worktree cleanup [OPTIONS]"
+    },
+    {
+      "about": "Every linked worktree holding uncommitted work: how many paths, how old the oldest change, what holds it (an active task, an open episode, a process inside) and whether it is abandoned, with the command that would put it on a remote ref. Reads every worktree and writes none",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus worktree",
+          "name": "worktree",
+          "route": "/docs/cli/worktree/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Judge against this age instead of the policy's session.stranded_after (90s, 30m, 12h, 1d)",
+          "long": "older-than",
+          "name": "older_than",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DURATION"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus worktree uncommitted",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "worktree",
+            "uncommitted"
+          ],
+          "command": "majordomus worktree uncommitted",
+          "description": "Every linked worktree holding staged, unstaged, untracked or conflicted paths, with the count, the age of the oldest change, the task, episode or process that holds it, and `abandoned` when nothing does and it is older than the policy's session.stranded_after. A repository with no linked worktree has nothing to list; the reading writes nothing either way.",
+          "expectation": "exits 0; prints 0 with uncommitted work, nothing was changed",
+          "id": "worktree-uncommitted-none",
+          "setup": [],
+          "title": "Work no commit carries, and whether anything holds it"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "uncommitted",
+      "parent_route": "/docs/cli/worktree/",
+      "path": [
+        "majordomus",
+        "worktree",
+        "uncommitted"
+      ],
+      "route": "/docs/cli/worktree/uncommitted/",
+      "usage": "majordomus worktree uncommitted [OPTIONS]"
     },
     {
       "about": "Every local branch, one per line, for a shell completion that wants the live set",
@@ -22223,6 +22368,111 @@
       ],
       "route": "/docs/cli/devcontext/policy/",
       "usage": "majordomus devcontext policy [OPTIONS]"
+    },
+    {
+      "about": "The edit guard: whether a provider's tool may write a file of this checkout now, judged from the active task's scope and the writing session's live mesh claims",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        }
+      ],
+      "args": [],
+      "children": [
+        {
+          "about": "Judge the edit a provider's pre-tool payload (on stdin) is about to make; exit 2 with the reason and the remedy when no claim covers it, 0 otherwise",
+          "command": "majordomus guard hook",
+          "name": "hook",
+          "route": "/docs/cli/guard/hook/"
+        }
+      ],
+      "command": "majordomus guard",
+      "depth": 1,
+      "examples": [],
+      "executable": false,
+      "long_about": null,
+      "name": "guard",
+      "parent_route": "/docs/cli/",
+      "path": [
+        "majordomus",
+        "guard"
+      ],
+      "route": "/docs/cli/guard/",
+      "usage": "majordomus guard <COMMAND>"
+    },
+    {
+      "about": "Judge the edit a provider's pre-tool payload (on stdin) is about to make; exit 2 with the reason and the remedy when no claim covers it, 0 otherwise",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus guard",
+          "name": "guard",
+          "route": "/docs/cli/guard/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [
+            "claude-code"
+          ],
+          "global": false,
+          "help": "The provider whose payload stdin carries; its session id on the mesh is `<provider>-<session_id>`",
+          "long": "provider",
+          "name": "provider",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PROVIDER"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Where a relative path in the payload is resolved from (default: the current directory); the checkout judged is the one the written file belongs to",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        }
+      ],
+      "children": [],
+      "command": "majordomus guard hook",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "guard",
+            "hook",
+            "--provider",
+            "claude-code"
+          ],
+          "command": "majordomus guard hook --provider claude-code",
+          "description": "What a provider's pre-tool hook runs before an edit: the payload arrives on stdin, and the command exits 2 with the reason and the remedy when no claim covers the path it names, 0 otherwise. Here stdin is empty, so it names no path, and the command lets the tool run.",
+          "expectation": "exits 0",
+          "id": "guard-hook",
+          "setup": [],
+          "title": "Judge the edit a provider's pre-tool payload names"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "hook",
+      "parent_route": "/docs/cli/guard/",
+      "path": [
+        "majordomus",
+        "guard",
+        "hook"
+      ],
+      "route": "/docs/cli/guard/hook/",
+      "usage": "majordomus guard hook [OPTIONS]"
     },
     {
       "about": "The mesh: the nodes this repository's running server has discovered on the network, this machine's node identity, and the self-check that proves the prerequisites on this machine alone",
@@ -36958,13 +37208,13 @@
     }
   ],
   "counts": {
-    "arguments": 1605,
-    "commands": 231,
-    "examples": 235,
-    "runnable": 204
+    "arguments": 1613,
+    "commands": 234,
+    "examples": 237,
+    "runnable": 206
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
-  "generator_version": "0.26.0",
+  "generator_version": "0.28.0",
   "route_prefix": "/docs/cli",
   "schema": 1,
   "source": "docs/generated/cli.json"

@@ -104,7 +104,11 @@ flowchart TD
 
 Two hand-written files sit beside the generated ones and are imported by both Tailwind entry
 points: `base.css` (the accessible defaults) and `primitives.css` (the `.mj-*` components
-both surfaces render). They name tokens and choose nothing.
+both surfaces render). They name tokens and choose nothing. A third, `figure.css`, is the
+site's alone: the frame of the diagram viewer and of a chart
+([`DIAGRAMS.md`](@/docs/diagrams.md)), over the same tokens and the pairs the primitives already
+use. It is unlayered on purpose, because the frame is the diagram's own `<pre>` and must
+win over whatever utilities its page gave it.
 
 Both Tailwind builds import the generated sheets in the same order, after Flowbite's theme.
 The site keeps Flowbite's vocabulary in its templates — `text-heading`, `border-default`,

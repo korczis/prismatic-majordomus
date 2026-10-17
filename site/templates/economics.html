@@ -154,6 +154,30 @@
   {%- for m in s.metrics %}{% if m.id == "context_reduction_ratio" and m.status == "not_measured" %}
   <p class="mt-2 text-sm text-body-subtle">No figure on this page is taken from this record: {{ m.warnings | join(sep="; ") }}.</p>
   {%- endif %}{% endfor %}
+  {#- The recorded history of that ratio, as `summary.history` carries it: one row per recorded
+      run, oldest first. The chart is site/charts.js drawing this table (ADR 0152): the series is
+      the column marked data-series, and each row is addressable by the time it was recorded. -#}
+  {%- set recorded = [h for h in s.history if h.metric == "context_reduction_ratio"] -%}
+  {%- if recorded | length > 1 %}
+  <figure id="chart-context-history" class="not-format m-0 mt-6 min-w-0" data-chart="line" data-chart-unit="%" data-chart-label="The context reduction ratio at each recorded run, oldest first">
+    <figcaption class="mb-3 text-sm text-body-subtle">The same ratio at each of the {{ recorded | length }} recorded runs, oldest first. A point is a recorded run and nothing between two points was measured.</figcaption>
+    <div class="overflow-x-auto" tabindex="0" role="region" aria-label="Recorded history of the context reduction ratio">
+      <table class="w-full text-left text-sm">
+        <thead><tr><th scope="col" class="p-2">Recorded at</th><th scope="col" class="p-2" data-series="context reduction">Reduction</th><th scope="col" class="p-2">n</th><th scope="col" class="p-2">Revision</th></tr></thead>
+        <tbody>
+        {%- for h in recorded %}
+          <tr id="chart-context-history:{{ h.at | slugify }}" class="border-t border-default">
+            <td class="p-2 font-mono text-xs">{{ h.at }}</td>
+            <td class="p-2 font-mono" data-value="{{ h.value * 100 }}">{{ <economics_amount value={h.value} /> }}</td>
+            <td class="p-2 font-mono">{{ h.n }}</td>
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="{{ project.repository_url }}/tree/{{ h.revision }}">{{ h.revision | truncate(length=12, end="") }}</a></td>
+          </tr>
+        {%- endfor %}
+        </tbody>
+      </table>
+    </div>
+  </figure>
+  {%- endif %}
 </section>
 {%- endif %}
 
@@ -172,3 +196,4 @@
   and the raw runs are under <a class="underline" href="{{ <source_tree path=".ai/repo/benchmarks/economics/runs" /> }}">.ai/repo/benchmarks/economics/runs</a>.
 </p>
 {% endblock body %}
+{% block scripts %}{% if page is defined and 'class="mermaid"' in page.content %}{% include "partials/mermaid.html" %}{% endif %}{% include "partials/charts.html" %}{% endblock scripts %}

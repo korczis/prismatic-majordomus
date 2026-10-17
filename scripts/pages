@@ -175,6 +175,10 @@ cmd_derived() {
   out="$(MAJORDOMUS_NO_BUILD=1 "$cli" generate --check 2>&1)" || rc=$?
   case "$rc" in
     0) [ -n "${MJ_PAGES_QUIET:-}" ] || printf 'pages: the registry projections are in sync with this tree\n'
+       # What the check kept rather than judged is said even when it passes — a changelog
+       # whose release history this object database lacks (I1409): silence would read as a
+       # verdict the check never reached.
+       printf '%s\n' "$out" | grep -F 'not judged' | sed -E 's/^.*(WARN|INFO) +/pages: /' >&2
        return 0 ;;
     12) printf 'pages: the executable is not built, so the registry half of the derived data was not checked\n' >&2
         DERIVED_SKIPPED=1
