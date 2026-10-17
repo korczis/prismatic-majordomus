@@ -212,9 +212,12 @@ expect_file "$WTS/idle/apps/majordomus-cli/target/MARKER"
 expect_grep 'MJ_MIN_FREE_MB_DEFAULT=[0-9]+' "$ROOT/lib/rust_bin.sh"
 expect_grep 'measured' "$ROOT/lib/rust_bin.sh"
 
+# Every call here has MAJORDOMUS_INCREMENTAL_IDLE_MIN=0: the floor's check first sweeps the
+# idle incremental sessions of the real build directory (I2713), which a case must not touch;
+# that sweep is proved against a fixture in test/cases/3080_idle_incremental_sessions_are_pruned.sh.
 # below the floor a build does not start, and the refusal says what to do instead
 rc=0
-out="$(MAJORDOMUS_MIN_FREE_MB=99999999 mj_rust_space_check "$ROOT" "this build" 2>&1)" || rc=$?
+out="$(MAJORDOMUS_INCREMENTAL_IDLE_MIN=0 MAJORDOMUS_MIN_FREE_MB=99999999 mj_rust_space_check "$ROOT" "this build" 2>&1)" || rc=$?
 LAST_OUT="$out"
 [ "$rc" = 1 ] || { echo "    a build below the floor was allowed to start (exit $rc): $out"; exit 1; }
 expect_grep 'refusing to start this build'
@@ -224,13 +227,13 @@ expect_grep 'MAJORDOMUS_MIN_FREE_MB=0'
 
 # above it, nothing is said and nothing is stopped
 rc=0
-out="$(MAJORDOMUS_MIN_FREE_MB=1 mj_rust_space_check "$ROOT" "this build" 2>&1)" || rc=$?
+out="$(MAJORDOMUS_INCREMENTAL_IDLE_MIN=0 MAJORDOMUS_MIN_FREE_MB=1 mj_rust_space_check "$ROOT" "this build" 2>&1)" || rc=$?
 [ "$rc" = 0 ] || { echo "    a build with room refused to start: $out"; exit 1; }
 [ -z "$out" ] || { echo "    the bound is noisy when it has nothing to say: $out"; exit 1; }
 
 # and the override lifts it entirely
 rc=0
-out="$(MAJORDOMUS_MIN_FREE_MB=0 mj_rust_space_check "$ROOT" "this build" 2>&1)" || rc=$?
+out="$(MAJORDOMUS_INCREMENTAL_IDLE_MIN=0 MAJORDOMUS_MIN_FREE_MB=0 mj_rust_space_check "$ROOT" "this build" 2>&1)" || rc=$?
 [ "$rc" = 0 ] || { echo "    MAJORDOMUS_MIN_FREE_MB=0 did not lift the bound"; exit 1; }
 
 # a bound that cannot measure its own input says so and lets the build run. This is the
@@ -239,7 +242,7 @@ out="$(MAJORDOMUS_MIN_FREE_MB=0 mj_rust_space_check "$ROOT" "this build" 2>&1)" 
 printf '#!/bin/sh\nexit 0\n' > "$T/stub/df"
 chmod +x "$T/stub/df"
 rc=0
-out="$(PATH="$T/stub:$PATH" MAJORDOMUS_MIN_FREE_MB=99999999 mj_rust_space_check "$ROOT" "this build" 2>&1)" || rc=$?
+out="$(PATH="$T/stub:$PATH" MAJORDOMUS_INCREMENTAL_IDLE_MIN=0 MAJORDOMUS_MIN_FREE_MB=99999999 mj_rust_space_check "$ROOT" "this build" 2>&1)" || rc=$?
 LAST_OUT="$out"
 [ "$rc" = 0 ] || { echo "    an unmeasurable df stopped a build (exit $rc): $out"; exit 1; }
 expect_grep 'could not be measured'
@@ -252,7 +255,7 @@ rm "$T/stub/df"
 # used because a suite that has built the debug one would otherwise have nothing to build.
 if [ ! -x "$ROOT/apps/majordomus-cli/target/release/majordomus" ] && [ -z "${CARGO_TARGET_DIR:-}" ]; then
   rc=0
-  out="$(env -u MAJORDOMUS_BIN MAJORDOMUS_BUILD_PROFILE=release MAJORDOMUS_MIN_FREE_MB=99999999 \
+  out="$(env -u MAJORDOMUS_BIN MAJORDOMUS_BUILD_PROFILE=release MAJORDOMUS_INCREMENTAL_IDLE_MIN=0 MAJORDOMUS_MIN_FREE_MB=99999999 \
     "$ROOT/bin/majordomus-cli" --version 2>&1)" || rc=$?
   LAST_OUT="$out"
   [ "$rc" = 12 ] || { echo "    the launcher started a build below the floor (exit $rc): $out"; exit 1; }

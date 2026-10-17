@@ -39,8 +39,34 @@ chk 'rm[[:space:]]+-[a-zA-Z]*r[a-zA-Z]*f?[[:space:]]+"?\$MJ_ROOT'  'recursive de
 chk 'rm[[:space:]]+-[a-zA-Z]*r[a-zA-Z]*f?[[:space:]]+"?\$MJ_(AI_DIR|AI_REPO_DIR|AI_LOCAL_DIR|STATE_DIR|HOME|SHARE_DIR)'   'recursive delete of the AI layer or the distribution'
 chk 'rm[[:space:]]+-rf[[:space:]]+/[^t]'                    'recursive delete of an absolute path outside tmp'
 [ "$bad" = 0 ]
-# every rm -rf that does exist targets a mktemp path
-grep -nE 'rm -rf' $files | grep -vE 'mktemp|\$tmp\b|\$TMP\b|"\$tmp"|"\$T"|\$MJ_CTX_TMP\b|\$MJ_PJ\b|\$MJ_ARCHIVE_TMPD\b|\$MJ_TMP_ROOT\b|"\$stale"' | grep -vE '^[^:]+:[0-9]+:\s*#' && exit 1
+# every rm -rf that does exist targets a mktemp path, with one exception that is declared
+# rather than tolerated: the idle incremental-session sweep of lib/rust_bin.sh
+# (mj_rust_prune_incremental) removes cache directories of cargo's build directory on
+# purpose, and no mktemp is involved. It is held to the shape that makes it fail closed
+# (project.destructive-sweeps-fail-closed; case 3080 proves the guard): one removal, inside
+# that function, of a session only the find listing named, asked again of that path alone
+# the moment before, and believed only when the path is gone.
+rmrf="$(grep -nE 'rm -rf' $files | grep -vE 'mktemp|\$tmp\b|\$TMP\b|"\$tmp"|"\$T"|\$MJ_CTX_TMP\b|\$MJ_PJ\b|\$MJ_ARCHIVE_TMPD\b|\$MJ_TMP_ROOT\b|"\$stale"' | grep -vE '^[^:]+:[0-9]+:\s*#' || true)"
+while IFS= read -r line; do
+  [ -n "$line" ] || continue
+  case "$line" in
+    "$ROOT/lib/rust_bin.sh:"*'      if rm -rf "$mj_pi_s" 2>/dev/null && [ ! -e "$mj_pi_s" ]; then') ;;  # the declared sweep
+    *) printf '%s\n    rm -rf of a path the scan cannot see came from mktemp\n' "$line"; exit 1 ;;
+  esac
+done <<EOF
+$rmrf
+EOF
+sweep="$ROOT/lib/rust_bin.sh"
+[ "$(grep -cF 'rm -rf "$mj_pi_s"' "$sweep")" = 1 ] \
+  || { printf '    the declared sweep is not one removal in lib/rust_bin.sh\n'; exit 1; }
+awk '/^mj_rust_prune_incremental\(\) \{/ { f = 1 } f && /^}/ { f = 0 }
+     f && index($0, "rm -rf \"$mj_pi_s\"") { found = 1 } END { exit !found }' "$sweep" \
+  || { printf '    the declared removal is not inside mj_rust_prune_incremental\n'; exit 1; }
+grep -qF "\"\$mj_pi_find\" \"\$mj_pi_s\" -maxdepth 0 -type d -name 's-*' ! -name '*-working'" "$sweep" \
+  || { printf '    the declared sweep no longer asks the predicate again before it removes\n'; exit 1; }
+if grep -nE '(^|[;{[:space:]])(local )?mj_pi_s=' "$sweep"; then
+  printf '    mj_pi_s is assigned from something other than the find listing\n'; exit 1
+fi
 # ... and every variable the scan trusts by name is only ever assigned from mktemp
 for v in MJ_CTX_TMP MJ_PJ MJ_BENCH_ARGV MJ_ARCHIVE_TMPD MJ_REC_TMP MJ_TMP_ROOT; do
   if grep -nE "(^|[;{][[:space:]]*)(local )?$v=" $files | grep -vE 'mktemp|'"$v"'=""'; then

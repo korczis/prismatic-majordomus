@@ -335,6 +335,9 @@ mj_free_mb() {
 mj_rust_space_check() {
   mj_sc_root="$1"
   mj_sc_what="${2:-a build}"
+  # what this build's own build directory holds idle goes first, so that the floor below
+  # judges the room that is really left (I2713)
+  mj_rust_prune_incremental "$mj_sc_root"
   mj_sc_floor="${MAJORDOMUS_MIN_FREE_MB:-$MJ_MIN_FREE_MB_DEFAULT}"
   case "$mj_sc_floor" in ''|*[!0-9]*) mj_sc_floor="$MJ_MIN_FREE_MB_DEFAULT" ;; esac
   [ "$mj_sc_floor" -gt 0 ] || return 0
@@ -357,11 +360,250 @@ mj_rust_space_check() {
     printf '  A build started below this floor does not fail by itself. It fills the volume, and every\n'
     printf '  other session on this machine dies at a point where nothing can write a file any more,\n'
     printf '  which reads to each of them as broken tooling rather than as a full disk.\n'
+    printf '  Largest build directories (after this build'"'"'s idle incremental sessions were pruned):\n'
+    mj_rust_largest_build_dirs "$mj_sc_root" | sed 's/^/    /'
     printf '  Reclaim first:         scripts/reap-orphans --targets    (what is reclaimable; changes nothing)\n'
     printf '                         scripts/reap-orphans --reclaim    (build output of landed, unattended worktrees)\n'
     printf '  To override:           MAJORDOMUS_MIN_FREE_MB=0\n'
   } >&2
   return 1
+}
+
+# ------------------------------------------------------------------------------ idle incremental sessions
+#
+# What a build directory's incremental cache keeps, and for how long (I2713).
+#
+# rustc keeps a crate's incremental state as session directories,
+# <build-dir>/<profile>/incremental/<crate>-<hash>/s-*: the one being written ends in
+# `-working`, a finished one is what the next compile of that crate copies from. Only a later
+# compile of the same crate removes a finished one, so every crate that stops being compiled
+# — a test target renamed, a dependency bumped, a worktree landed — leaves its last session
+# behind for good. In a build directory every worktree shares (ADR 0139) that is every
+# worktree's leftovers. On 2026-10-14 one build directory held 24 GiB of incremental state in
+# 574 sessions, one of them live, while free disk fell from 71 GiB to 4 GiB and every
+# session's derive refused; on 2026-10-16 the shared one held 79 GB in 454 sessions, five of
+# them live, with 6.9 GiB free at a load of 55. Removing the idle ones by hand gave back
+# 16 GiB and 57 GiB, with compiles running both times.
+#
+#   MAJORDOMUS_INCREMENTAL_IDLE_MIN  minutes a finished session must have gone unwritten
+#                                    before a build removes it (default below); 0 removes none.
+#
+# The default is a judgement, said as one: an edit-compile loop rebuilds well inside half an
+# hour, so a session younger than that is likely the one its worktree's next compile copies
+# from, and one older costs at most one recompile of its crate if it is ever wanted again.
+# Both hand sweeps above took everything idle for five minutes and broke no build.
+MJ_INCREMENTAL_IDLE_MIN_DEFAULT=30
+
+# mj_cargo_metadata_dir <crate-directory> <build_directory|target_directory>
+#
+# That directory as cargo itself reports it. `build_directory` folds in CARGO_BUILD_BUILD_DIR,
+# a build.build-dir of any .cargo/config.toml and the {cargo-cache-home} it expands to, which
+# is not the shell's CARGO_HOME when an asdf shim sets that variable for cargo alone (it is
+# how the shared directory of this machine came to live under ~/.asdf/installs/rust/). Prints
+# nothing and fails when cargo cannot be asked. `command cargo`, because scripts/rust-check
+# defines a `cargo` function that builds through mj_cargo_bounded.
+#
+# Asked from inside the crate, because rustup picks the toolchain by the working directory
+# and not by --manifest-path: from anywhere else the machine's default toolchain answers,
+# and a cargo older than build-dir reports no `build_directory` at all (on 2026-10-16 the
+# default here was 1.90.0, the pin 1.98.1).
+mj_cargo_metadata_dir() {
+  command -v cargo >/dev/null 2>&1 || return 1
+  mj_cmd_json="$(cd "$1" 2>/dev/null && command cargo metadata --format-version 1 --no-deps \
+    --manifest-path "$1/Cargo.toml" 2>/dev/null)" || return 1
+  mj_cmd_dir="$(printf '%s' "$mj_cmd_json" | sed -n "s/.*\"$2\":\"\\([^\"]*\\)\".*/\\1/p")"
+  case "$mj_cmd_dir" in /*) printf '%s\n' "$mj_cmd_dir" ;; *) return 1 ;; esac
+}
+
+# mj_cargo_build_dir <crate-directory>
+#
+# Where cargo keeps that crate's intermediates, the incremental state among them. A cargo
+# older than build-dir reports no `build_directory` and keeps them in the target directory,
+# which is then the answer. Never a guessed path: what this answers is where a sweep deletes.
+mj_cargo_build_dir() {
+  mj_cargo_metadata_dir "$1" build_directory || mj_cargo_metadata_dir "$1" target_directory
+}
+
+# mj_rust_is_build_dir <path> — does it carry a mark only cargo leaves? The marks
+# scripts/reap-orphans asks for before it removes a build directory.
+mj_rust_is_build_dir() {
+  [ "$(head -n 1 "$1/CACHEDIR.TAG" 2>/dev/null || true)" = 'Signature: 8a477f597d28d172789f06886806bc55' ] \
+    && return 0
+  [ -f "$1/.rustc_info.json" ] && return 0
+  [ -d "$1/debug/.fingerprint" ] && return 0
+  [ -d "$1/release/.fingerprint" ] && return 0
+  return 1
+}
+
+# mj_rust_mtime <path> — its modification time in seconds since the epoch, or nothing and a
+# failure. GNU's spelling first: BSD stat refuses -c, while GNU stat reads BSD's -f as "the
+# file system" and prints something that is not a time.
+mj_rust_mtime() {
+  mj_mt="$(stat -c %Y "$1" 2>/dev/null || stat -f %m "$1" 2>/dev/null || true)"
+  case "$mj_mt" in ''|*[!0-9]*) return 1 ;; esac
+  printf '%s\n' "$mj_mt"
+}
+
+# mj_rust_kb <path> — its size in KiB as du counts it, or nothing and a failure.
+mj_rust_kb() {
+  mj_kb="$(du -sk "$1" 2>/dev/null | awk 'NR == 1 && $1 ~ /^[0-9]+$/ { print $1 }')"
+  [ -n "$mj_kb" ] || return 1
+  printf '%s\n' "$mj_kb"
+}
+
+# mj_rust_human_kb <KiB> — 1.2GB or 340MB.
+mj_rust_human_kb() {
+  awk -v k="$1" 'BEGIN { if (k >= 1048576) printf "%.1fGB", k / 1048576; else printf "%dMB", k / 1024 }'
+}
+
+# mj_rust_prune_incremental <tree-root>
+#
+# Remove the idle incremental sessions of the build directory this tree's build is about to
+# use, and say what was reclaimed. A session is idle when its name says it is finished (no
+# `-working`) and nothing in it was written for MAJORDOMUS_INCREMENTAL_IDLE_MIN minutes.
+# Nothing else is ever removed: not a live session, not the lock files beside the sessions
+# (rustc collects those), not another build directory, not a target directory.
+#
+# A deleting sweep, so it fails closed (project.destructive-sweeps-fail-closed):
+#   - the build directory is cargo's answer or nothing, and unanswered removes nothing;
+#   - it must carry cargo's mark, and an incremental directory must physically be inside it;
+#   - a listing that could not be read whole removes nothing at all. The one error that is
+#     not a hole is an entry that vanished while it was read: rustc removes a session it
+#     has superseded, and what is gone is no longer a candidate;
+#   - each candidate's idle minutes and size are measured and printed before anything is
+#     removed, and one whose age or size could not be read is skipped and counted;
+#   - the moment before each removal the predicate is asked again, of that path alone.
+#
+# Always returns 0: a sweep that could not run says so, and the build goes on to the floor.
+# Once per tree and build directory in a shell, so that a caller that asks the floor and then
+# builds through mj_cargo_bounded sweeps once.
+mj_rust_prune_incremental() {
+  mj_pi_root="$1"
+  mj_pi_age="${MAJORDOMUS_INCREMENTAL_IDLE_MIN:-$MJ_INCREMENTAL_IDLE_MIN_DEFAULT}"
+  case "$mj_pi_age" in ''|*[!0-9]*) mj_pi_age="$MJ_INCREMENTAL_IDLE_MIN_DEFAULT" ;; esac
+  [ "$mj_pi_age" -gt 0 ] || return 0
+  mj_pi_key="$mj_pi_root|${CARGO_BUILD_BUILD_DIR:-}|${CARGO_TARGET_DIR:-}"
+  [ "${MJ_INCREMENTAL_PRUNED_FOR:-}" = "$mj_pi_key" ] && return 0
+  MJ_INCREMENTAL_PRUNED_FOR="$mj_pi_key"
+
+  mj_pi_say='majordomus: idle incremental sessions'
+  mj_pi_dir="$(mj_cargo_build_dir "$mj_pi_root/apps/majordomus-cli" || true)"
+  if [ -z "$mj_pi_dir" ]; then
+    printf '%s: none removed: cargo did not say where this build keeps them (cargo metadata failed)\n' \
+      "$mj_pi_say" >&2
+    return 0
+  fi
+  [ -d "$mj_pi_dir" ] || return 0   # nothing was ever built there, so there is nothing to reclaim
+  if ! mj_rust_is_build_dir "$mj_pi_dir"; then
+    printf '%s: none removed: %s carries no mark of cargo'"'"'s, so it is not provably a build directory\n' \
+      "$mj_pi_say" "$mj_pi_dir" >&2
+    return 0
+  fi
+  mj_pi_find='find'
+  [ -x /usr/bin/find ] && mj_pi_find=/usr/bin/find
+  mj_pi_list="$(mktemp "${TMPDIR:-/tmp}/mj-incremental.XXXXXX")" || return 0
+  mj_pi_err="$mj_pi_list.err"
+  mj_pi_plan="$mj_pi_list.plan"
+  : > "$mj_pi_plan"
+
+  # 1. the listing: every profile's incremental directory, whole or not at all
+  for mj_pi_inc in "$mj_pi_dir"/*/incremental "$mj_pi_dir"/*/*/incremental; do
+    [ -d "$mj_pi_inc" ] && [ -d "$(dirname "$mj_pi_inc")/.fingerprint" ] || continue
+    mj_rust_owns "$mj_pi_dir" "$mj_pi_inc" || continue
+    if ! "$mj_pi_find" "$mj_pi_inc" -mindepth 2 -maxdepth 2 -type d -name 's-*' ! -name '*-working' \
+        -mmin +"$mj_pi_age" >> "$mj_pi_list" 2>"$mj_pi_err"; then
+      if [ ! -s "$mj_pi_err" ] || grep -v 'No such file or directory' "$mj_pi_err" | grep -q .; then
+        printf '%s: none removed: %s could not be read whole: %s\n' "$mj_pi_say" "$mj_pi_inc" \
+          "$(head -n 1 "$mj_pi_err" 2>/dev/null || true)" >&2
+        rm -f "$mj_pi_list" "$mj_pi_err" "$mj_pi_plan"
+        return 0
+      fi
+    fi
+  done
+
+  # 2. the measurement of each candidate, kept beside it
+  mj_pi_now="$(date +%s)"
+  mj_pi_n=0; mj_pi_skipped=0
+  while IFS= read -r mj_pi_s; do
+    [ -n "$mj_pi_s" ] || continue
+    mj_pi_mt="$(mj_rust_mtime "$mj_pi_s" || true)"
+    mj_pi_kb="$(mj_rust_kb "$mj_pi_s" || true)"
+    if [ -z "$mj_pi_mt" ] || [ -z "$mj_pi_kb" ]; then
+      mj_pi_skipped=$((mj_pi_skipped + 1)); continue
+    fi
+    mj_pi_idle=$(( (mj_pi_now - mj_pi_mt) / 60 ))
+    [ "$mj_pi_idle" -ge "$mj_pi_age" ] || continue   # written again since it was listed
+    printf '%s %s %s\n' "$mj_pi_kb" "$mj_pi_idle" "$mj_pi_s" >> "$mj_pi_plan"
+    mj_pi_n=$((mj_pi_n + 1))
+  done < "$mj_pi_list"
+
+  # 3. said, then asked again, then removed
+  if [ "$mj_pi_n" -gt 0 ]; then
+    mj_pi_before="$(mj_free_mb "$mj_pi_dir" || true)"
+    {
+      printf '%s of %s, unwritten for over %s min: removing %s\n' \
+        "$mj_pi_say" "$mj_pi_dir" "$mj_pi_age" "$mj_pi_n"
+      while read -r mj_pi_kb mj_pi_idle mj_pi_s; do
+        printf '  %8s  idle %5s min  %s\n' "$(mj_rust_human_kb "$mj_pi_kb")" "$mj_pi_idle" \
+          "${mj_pi_s#"$mj_pi_dir"/}"
+      done < "$mj_pi_plan"
+    } >&2
+    mj_pi_removed=0; mj_pi_sum=0; mj_pi_changed=0; mj_pi_failed=0
+    while read -r mj_pi_kb mj_pi_idle mj_pi_s; do
+      if [ "$("$mj_pi_find" "$mj_pi_s" -maxdepth 0 -type d -name 's-*' ! -name '*-working' \
+            -mmin +"$mj_pi_age" 2>/dev/null)" != "$mj_pi_s" ]; then
+        mj_pi_changed=$((mj_pi_changed + 1)); continue
+      fi
+      if rm -rf "$mj_pi_s" 2>/dev/null && [ ! -e "$mj_pi_s" ]; then
+        mj_pi_removed=$((mj_pi_removed + 1)); mj_pi_sum=$((mj_pi_sum + mj_pi_kb))
+      else
+        mj_pi_failed=$((mj_pi_failed + 1))
+      fi
+    done < "$mj_pi_plan"
+    mj_pi_after="$(mj_free_mb "$mj_pi_dir" || true)"
+    # du's sizes, said as such: a file rustc hard-linked into a live session stays on disk,
+    # so the volume's own before and after is the number that was really given back
+    printf '%s: removed %s holding %s; free on its volume %sMB before, %sMB after\n' \
+      "$mj_pi_say" "$mj_pi_removed" "$(mj_rust_human_kb "$mj_pi_sum")" \
+      "${mj_pi_before:-?}" "${mj_pi_after:-?}" >&2
+    [ "$mj_pi_changed" = 0 ] || printf '%s: kept %s written to or renamed since it was measured\n' \
+      "$mj_pi_say" "$mj_pi_changed" >&2
+    [ "$mj_pi_failed" = 0 ] || printf '%s: %s could not be removed\n' "$mj_pi_say" "$mj_pi_failed" >&2
+  fi
+  [ "$mj_pi_skipped" = 0 ] || printf '%s: skipped %s whose age or size could not be read\n' \
+    "$mj_pi_say" "$mj_pi_skipped" >&2
+  rm -f "$mj_pi_list" "$mj_pi_err" "$mj_pi_plan"
+  return 0
+}
+
+# mj_rust_largest_build_dirs <tree-root>
+#
+# Where this machine's build output is, largest first, as `<size>  <path>` lines, at most
+# five: this build's own build directory and every cargo-marked directory beside it, each
+# tree's private one (mj_cargo_private_dir), and this tree's target directory. A size that
+# could not be measured is `?`, never a guess. The refusal path's alone: it costs a du each.
+mj_rust_largest_build_dirs() {
+  mj_lb_crate="$1/apps/majordomus-cli"
+  mj_lb_build="$(mj_cargo_build_dir "$mj_lb_crate" || true)"
+  mj_lb_target="$(mj_cargo_metadata_dir "$mj_lb_crate" target_directory || mj_cargo_target_dir "$mj_lb_crate")"
+  {
+    if [ -n "$mj_lb_build" ]; then
+      printf '%s\n' "$mj_lb_build"
+      for mj_lb_d in "$(dirname "$mj_lb_build")"/*; do
+        mj_rust_is_build_dir "$mj_lb_d" && printf '%s\n' "$mj_lb_d"
+      done
+    fi
+    for mj_lb_d in "${CARGO_HOME:-$HOME/.cargo}"/build-private/*; do printf '%s\n' "$mj_lb_d"; done
+    printf '%s\n' "$mj_lb_target"
+  } | while IFS= read -r mj_lb_d; do
+    mj_rust_physical "$mj_lb_d" || true
+  done | sort -u | while IFS= read -r mj_lb_d; do
+    printf '%s\t%s\n' "$(mj_rust_kb "$mj_lb_d" || printf '%s' -1)" "$mj_lb_d"
+  done | sort -rn | head -n 5 | while IFS="$(printf '\t')" read -r mj_lb_kb mj_lb_d; do
+    if [ "$mj_lb_kb" = -1 ]; then mj_lb_h='?'; else mj_lb_h="$(mj_rust_human_kb "$mj_lb_kb")"; fi
+    printf '%8s  %s\n' "$mj_lb_h" "$mj_lb_d"
+  done
+  return 0
 }
 
 # How long a build may wait for another build's lock before it stops waiting, in seconds.
@@ -421,6 +663,9 @@ mj_cargo_bounded() {
     shift
     case "$mj_cb_arg" in --quiet|-q) mj_cb_quiet=1 ;; *) set -- "$@" "$mj_cb_arg" ;; esac
   done
+  # a build never starts on top of its build directory's idle incremental sessions (I2713);
+  # a caller that asked the floor first has swept already, and this is then a no-op
+  mj_rust_prune_incremental "$mj_cb_root"
   mj_cb_log="$(mktemp "${TMPDIR:-/tmp}/mj-cargo.XXXXXX")" || return 12
   mj_cb_private=0
   [ -n "${CARGO_BUILD_BUILD_DIR:-}" ] && mj_cb_private=1
