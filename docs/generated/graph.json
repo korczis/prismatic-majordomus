@@ -39376,6 +39376,49 @@
         }
       },
       {
+        "id": "majordomus://issue/I2842",
+        "kind": "issue",
+        "label": "I2842",
+        "summary": "The live site is verified on a schedule, and its last verification is evidence",
+        "route": "/cockpit/objects/issue/i2842",
+        "source": ".ai/repo/project/issues/I2842.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A scheduled run with nothing owed records a live verification naming the trunk commit, the pages asked and the pages that did not answer",
+            "Over 48 runs the rotation asks every page the UI snapshot lists, proved against a fixture snapshot",
+            "latest.json naming a version other than the newest v* tag after the deploy window is a red run that says which",
+            "The site shows when the live site was last verified and at which commit, read from the record, never written by hand"
+          ],
+          "created_at": "2026-10-17",
+          "depends_on": [],
+          "evidence_required": [
+            "scheduled_live_verification_case"
+          ],
+          "milestone": "surfaces-never-disagree",
+          "non_scope": [
+            "Probing every page on every run: the rotation covers the whole snapshot within a day at a bounded cost per run.",
+            "Changing what deploys or when: the owed/redeploy logic stays as it is.",
+            "Anything before v1.0.0-alpha.1 (Operation Convergence, 2026-10-17); until then the repair lane verifies by hand on each master move."
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".github/workflows/pages.yml",
+            "scripts/pages",
+            "scripts/ci/pages-check",
+            "apps/majordomus-cli/src/capability/builtin/served.rs",
+            "docs/GITHUB_PAGES_ARCHITECTURE.md"
+          ],
+          "slug": "the-live-site-is-verified-on-a-schedule",
+          "updated_at": "2026-10-17",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "label": "a-commit-stood-behind-a-build-lock",
@@ -83707,6 +83750,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2842",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2842",
+        "target": "majordomus://milestone/surfaces-never-disagree",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -93603,8 +93656,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2937,
-      "edges": 6441,
+      "nodes": 2938,
+      "edges": 6443,
       "acyclic": false,
       "truncated": false
     }
