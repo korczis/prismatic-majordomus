@@ -444,6 +444,20 @@ mod tests {
         }
     }
 
+    /// Draws that never pass `hi` — which the bootstrap cannot produce, since its draws sum
+    /// to the sample size — still answer: the high statistic is the last value, the low one
+    /// whatever was passed, or the last value too, and an empty sample is not a number.
+    #[test]
+    fn draws_that_never_pass_the_high_rank_answer_with_the_last_value() {
+        let v = [1.0, 2.0, 3.0];
+        // one draw of the middle value passes rank 0 but never rank 1
+        assert_eq!(order_statistics(&v, &[0, 1, 0], 0, 1), (2.0, 3.0));
+        // no draw at all passes neither rank
+        assert_eq!(order_statistics(&v, &[0, 0, 0], 0, 1), (3.0, 3.0));
+        let (low, high) = order_statistics(&[], &[], 0, 0);
+        assert!(low.is_nan() && high.is_nan(), "{low} {high}");
+    }
+
     #[test]
     fn the_bootstrap_of_identical_values_is_a_point() {
         let i = bootstrap_median(&[0.25; 8], 9500, 500, 3, 5).unwrap();

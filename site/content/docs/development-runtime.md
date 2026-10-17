@@ -122,17 +122,17 @@ command graph, not a third scheduler.
 
 <pre class="mermaid">
 flowchart TD
-  layer["THE LAYER · storage&lt;br/&gt;&lt;small&gt;.ai/repo (shared) + .ai/local&lt;br/&gt;typed by share/kinds.yaml&lt;br/&gt;discovered by .ai/repo/knowledge/sources.yaml&lt;/small&gt;"]
+  store["THE LAYER · storage&lt;br/&gt;&lt;small&gt;.ai/repo (shared) + .ai/local&lt;br/&gt;typed by share/kinds.yaml&lt;br/&gt;discovered by .ai/repo/knowledge/sources.yaml&lt;/small&gt;"]
   runtime["THE CANONICAL RUNTIME · semantics&lt;br/&gt;&lt;small&gt;apps/majordomus-cli/src/capability/&lt;br/&gt;one capability! per operation, typed in/out&lt;br/&gt;exposure derived by command_graph/policy.rs&lt;/small&gt;&lt;br/&gt;docs/CAPABILITIES.md"]
-  layer &lt;--&gt;|"reads and writes"| runtime
+  store &lt;--&gt;|"reads and writes"| runtime
   subgraph surfaces["projections · surfaces"]
-    cockpit["Cockpit&lt;br/&gt;docs/COCKPIT.md"]
+    cockpitui["Cockpit&lt;br/&gt;docs/COCKPIT.md"]
     http["HTTP + WS"]
     openapi["OpenAPI"]
     mcp["MCP&lt;br/&gt;docs/MCP.md"]
     cli["CLI&lt;br/&gt;docs/CLI.md"]
   end
-  runtime --&gt; cockpit
+  runtime --&gt; cockpitui
   runtime --&gt; http
   runtime --&gt; openapi
   runtime --&gt; mcp
