@@ -1,0 +1,38 @@
+id: I2828
+milestone: development-runtime
+title: "The Cockpit overview answers in under a second, because its capability reads are cached or concurrent"
+slug: the-cockpit-overview-answers-in-under-a-second
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Make /cockpit/ answer fast: the overview page reads its six capabilities from a cache keyed by the repository's state, or concurrently, instead of recomputing each one in turn on every request, and a benchmark budget holds the page to the bound."
+why: "Measured on 2026-10-17 against a local server on port 8803 serving 0a19b7fe3ec (the 0.29.0 release candidate), on a machine at load average 27-36. /cockpit/ answered 200 in 13.43 s, 8.98 s, 8.48 s, 6.64 s (time to first byte 6.64 s for 68 077 bytes: all of it before the first byte), 4.45 s and 12.88 s. /cockpit/monitor answered in 3.26 s once and then 0.089 s and 0.080 s. The server log carries no line per request, so it said nothing about these. The handler is cockpit::pages::overview (apps/majordomus-cli/src/cockpit/pages.rs:164), which calls six capabilities one after another: repository.info, health.report, brief.session, dashboard.overview, environment.preflight and distribution.status. Timed one by one through their HTTP routes on the same server: repository.info (/api/v1/repository) 0.0006 s; health.report (/api/v1/health) 1.0-3.9 s on the first read, then 0.0007 s; brief.session (/api/v1/brief) 0.68-0.84 s on every read; dashboard.overview (/api/v1/dashboard/overview) 2.3-3.2 s on every read, never cached; environment.preflight (/api/v1/environment/preflight) 3.9 s on the first read, then about 0.95 s; distribution.status (/api/v1/distribution/status) 0.0008 s. Their warm sum is about 4 s, the floor of the page; cold first reads and machine load make up the 9-13 s loads. The page is slow, not hung: an earlier 5 s probe gave up before it answered."
+current_state: "cockpit::pages::overview asks repository.info and health.report, then brief.session (brief_card), dashboard.overview (four_questions), environment.preflight (preflight_card) and distribution.status, each in turn, and dashboard.overview, brief.session and environment.preflight recompute on every request. No benchmark target or budget covers /cockpit/."
+desired_state: "The overview's reads are answered from a cache invalidated by the repository state the capabilities already observe (the index and git stamps), or issued concurrently, so a warm /cockpit/ answers in under one second and a cold one is bounded. A benchmark target measures the page, warm and on the first request after the repository moved, and the benchmark policy declares a budget for each, measured before it is declared, which bench --check holds."
+scope:
+  - "apps/majordomus-cli/src/cockpit/pages.rs"
+  - "apps/majordomus-cli/src/capability/builtin/dashboard.rs"
+  - "apps/majordomus-cli/src/capability/builtin/brief.rs"
+  - "apps/majordomus-cli/src/environment"
+  - "apps/majordomus-cli/src/bench"
+  - ".ai/repo/benchmarks/rust/policy.yaml"
+  - "test/cases"
+  - ".ai/repo/project/issues/I2828.yaml"
+non_scope:
+  - "Changing what the overview shows"
+  - "The other Cockpit pages, which /cockpit/monitor already shows answer in under 0.1 s warm"
+depends_on: []
+acceptance_criteria:
+  - "A warm GET /cockpit/ answers in under 1 s, the median of 10 requests on the bench's fixture, on a release build"
+  - "A cold GET /cockpit/, the first after the server started or after the repository moved, answers in under 3 s on the same fixture"
+  - "The benchmark policy declares both budgets with the measurement each was set from, and a fixture overview made to recompute dashboard.overview sequentially on every request fails bench --check"
+  - "The overview shows the same statistics and cards as before, proved by the existing Cockpit cases"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test cockpit"
+  - "bin/majordomus bench --check"
+evidence_required:
+  - "cockpit_overview_budget"
+  - "cockpit_overview_same_content"
+created_at: 2026-10-17
+updated_at: 2026-10-17
