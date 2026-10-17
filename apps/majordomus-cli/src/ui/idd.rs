@@ -681,11 +681,26 @@ pub fn standing_panel(ctx: &Context, query: &[(String, String)]) -> View {
         "intent_realization.explain",
         serde_json::json!({ "id": id }),
     );
-    let body = unanswered(&explain).unwrap_or_else(|| {
-        let because = list(&explain, "/because");
-        let unmet = list(&explain, "/realization/unmet");
-        let work = list(&explain, "/work");
-        let findings = list(&explain, "/realization/findings");
+    let body = standing_body(&id, &explain);
+    View::new(
+        "Why it stands where it stands",
+        panel(
+            "Why it stands where it stands",
+            &format!("{id}: its stage, its verdict, what is not yet met and who is on it, as intent_realization.explain derives them."),
+            body,
+            &[&explain],
+        ),
+    )
+}
+
+/// The standing of intent `id` as `intent_realization.explain` answered it: the sentences, the
+/// unmet criteria, the work realising it and its drift; or why there is no answer.
+fn standing_body(id: &str, explain: &Answer) -> El {
+    unanswered(explain).unwrap_or_else(|| {
+        let because = list(explain, "/because");
+        let unmet = list(explain, "/realization/unmet");
+        let work = list(explain, "/work");
+        let findings = list(explain, "/realization/findings");
         let sentences = el("ul").class("mj-ui-list").children(
             because
                 .iter()
@@ -777,16 +792,7 @@ pub fn standing_panel(ctx: &Context, query: &[(String, String)]) -> View {
                 .child(drift);
         }
         stack
-    });
-    View::new(
-        "Why it stands where it stands",
-        panel(
-            "Why it stands where it stands",
-            &format!("{id}: its stage, its verdict, what is not yet met and who is on it, as intent_realization.explain derives them."),
-            body,
-            &[&explain],
-        ),
-    )
+    })
 }
 
 /// Every move this server made on the intent's issues, newest first, each leading to its
@@ -1094,6 +1100,88 @@ mod tests {
             took: std::time::Duration::ZERO,
             standing: crate::ui::source::Standing::NOW,
         }
+    }
+
+    /// The work realising an intent is a row each: the unit's kind, id and title, its outcome,
+    /// and the issue and provenance of the link that names this intent; a unit linked only to
+    /// another intent leaves those two cells empty. Drift is a list of each finding's message,
+    /// or the finding itself where it has none, and is not drawn when there is no drift.
+    #[test]
+    fn the_standing_names_the_work_realising_the_intent_and_its_drift() {
+        const EXPLAIN: Source = Source::of("intent_realization.explain");
+        let explain = answer(
+            EXPLAIN,
+            Ok(serde_json::json!({
+                "because": ["executing: an issue is ACTIVE"],
+                "work": [
+                    {
+                        "work": { "kind": "task", "id": "t-1", "title": "Walk the loop", "outcome": "completed" },
+                        "links": [
+                            { "intent": "other", "issue": "I9", "provenance": "inferred" },
+                            { "intent": "i", "issue": "I7", "provenance": "declared" },
+                        ],
+                    },
+                    {
+                        "work": { "kind": "episode", "id": "e-2", "title": "Elsewhere", "outcome": "partial" },
+                        "links": [{ "intent": "other", "issue": "I8", "provenance": "inferred" }],
+                    },
+                ],
+                "realization": {
+                    "unmet": [],
+                    "findings": [
+                        { "message": "the scope drifted past src/a.rs" },
+                        { "kind": "orphan", "subject": "t-3" },
+                    ],
+                },
+            })),
+        );
+        let html = standing_body("i", &explain).render();
+        assert!(html.contains("The work realising it"), "{html}");
+        assert!(
+            html.contains(">task t-1</span>"),
+            "the unit is named: {html}"
+        );
+        assert!(html.contains(">Walk the loop</span>"), "its title: {html}");
+        assert!(html.contains("completed"), "its outcome: {html}");
+        assert!(
+            html.contains("<td>I7</td><td>declared</td>"),
+            "the link naming i: {html}"
+        );
+        assert!(
+            !html.contains(">I9<") && !html.contains(">inferred<"),
+            "not another intent's link: {html}"
+        );
+        assert!(html.contains(">episode e-2</span>"), "{html}");
+        assert!(
+            html.contains("<td></td><td></td>"),
+            "a unit not linked to i has no issue: {html}"
+        );
+        assert!(html.contains(">Drift</h3>"), "{html}");
+        assert!(
+            html.contains("<li>the scope drifted past src/a.rs</li>"),
+            "{html}"
+        );
+        assert!(
+            html.contains("&quot;kind&quot;:&quot;orphan&quot;"),
+            "a finding without a message is shown as it is: {html}"
+        );
+
+        let calm = answer(
+            EXPLAIN,
+            Ok(
+                serde_json::json!({ "because": [], "work": [], "realization": { "unmet": [], "findings": [] } }),
+            ),
+        );
+        let html = standing_body("i", &calm).render();
+        assert!(
+            !html.contains(">Drift</h3>"),
+            "no drift, no heading: {html}"
+        );
+        assert!(
+            html.contains("No work this checkout can see realises this intent."),
+            "{html}"
+        );
+        assert!(html.contains("Every criterion is met."), "{html}");
     }
 
     fn intent_i() -> Value {
