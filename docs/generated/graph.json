@@ -38293,10 +38293,14 @@
             "test/cases"
           ],
           "slug": "idle-incremental-sessions-are-pruned",
-          "updated_at": "2026-10-14",
+          "started_at": "2026-10-17T09:23:02Z",
+          "started_event": "sha256:1a4e365de0c9130feaed2da04eff06eca8d9a04224d08f7c1d56e080dd07bec3",
+          "updated_at": "2026-10-17T09:23:35Z",
           "validation": [
             "bin/majordomus plan validate"
-          ]
+          ],
+          "verified_at": "2026-10-17T09:23:19Z",
+          "verified_event": "sha256:2fd71e9839232a02785977863f0178c5d5248850b34b5c415a512e51178d6c23"
         }
       },
       {
@@ -56817,6 +56821,13 @@
         "source": "test/cases/3075_knowledge_validate_judges_the_graph.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3080_idle_incremental_sessions_are_pruned.sh",
+        "kind": "test",
+        "label": "test/cases/3080_idle_incremental_sessions_are_pruned.sh",
+        "route": "/cockpit/objects/test/test-cases-3080-idle-incremental-sessions-are-pruned-sh",
+        "source": "test/cases/3080_idle_incremental_sessions_are_pruned.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/30_command_registry.sh",
         "kind": "test",
         "label": "test/cases/30_command_registry.sh",
@@ -56857,6 +56868,20 @@
         "label": "test/cases/318_a_partial_sweep_says_so.sh",
         "route": "/cockpit/objects/test/test-cases-318-a-partial-sweep-says-so-sh",
         "source": "test/cases/318_a_partial_sweep_says_so.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3196_stale_crate_artifacts_are_pruned_under_cargos_lock.sh",
+        "kind": "test",
+        "label": "test/cases/3196_stale_crate_artifacts_are_pruned_under_cargos_lock.sh",
+        "route": "/cockpit/objects/test/test-cases-3196-stale-crate-artifacts-are-pruned-under-cargos-lock-sh",
+        "source": "test/cases/3196_stale_crate_artifacts_are_pruned_under_cargos_lock.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3197_idle_private_build_dirs_are_reclaimed.sh",
+        "kind": "test",
+        "label": "test/cases/3197_idle_private_build_dirs_are_reclaimed.sh",
+        "route": "/cockpit/objects/test/test-cases-3197-idle-private-build-dirs-are-reclaimed-sh",
+        "source": "test/cases/3197_idle_private_build_dirs_are_reclaimed.sh"
       },
       {
         "id": "majordomus://test/test/cases/31_command_coverage.sh",
@@ -88178,6 +88203,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3080_idle_incremental_sessions_are_pruned.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/30_command_registry.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -88204,6 +88234,16 @@
       },
       {
         "source": "majordomus://test/test/cases/318_a_partial_sweep_says_so.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3196_stale_crate_artifacts_are_pruned_under_cargos_lock.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3197_idle_private_build_dirs_are_reclaimed.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -93494,8 +93534,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2935,
-      "edges": 6437,
+      "nodes": 2938,
+      "edges": 6440,
       "acyclic": false,
       "truncated": false
     }
