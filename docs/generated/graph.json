@@ -38127,6 +38127,8 @@
             "A failed write on a read-only or full file system in a test leaves its event not acknowledged as durable to the caller that appended it",
             "A journal larger than the reload bound is reloaded up to the bound, and the part left unread is counted and reported by mesh doctor"
           ],
+          "completed_at": "2026-10-17T18:25:22Z",
+          "completed_event": "sha256:5790d4de7ecd976fc41a989d8bc0cef659ab9d1031f926c93b21b8f6906b0388",
           "created_at": "2026-10-14",
           "depends_on": [
             "I2137"
@@ -38151,11 +38153,15 @@
             "docs/MESH.md"
           ],
           "slug": "a-lost-append-is-not-acknowledged",
-          "updated_at": "2026-10-14",
+          "started_at": "2026-10-17T18:25:04Z",
+          "started_event": "sha256:726354d35339869d351b7b7d4bd2e758fcfa4cd8155a8824cfa116cb79acb7a7",
+          "updated_at": "2026-10-17T18:25:22Z",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --lib mesh::journal"
-          ]
+          ],
+          "verified_at": "2026-10-17T18:25:16Z",
+          "verified_event": "sha256:1906c886ac5d183b2cbca5e95fbebee40247ce3d29bc09ad2fcbf41273e4e317"
         }
       },
       {
@@ -39468,6 +39474,8 @@
             "majordomus context resolve <outside path> still refuses with the same message and exit code",
             "case 3160 fails against master without the change"
           ],
+          "completed_at": "2026-10-17T18:25:46Z",
+          "completed_event": "sha256:336b74d955850ffdfa6e627e7117f7062ed30869878503ab7da9d2fc51135e80",
           "created_at": "2026-10-16",
           "depends_on": [],
           "evidence_required": [
@@ -39485,11 +39493,15 @@
             ".ai/repo/project/issues/I2760.yaml"
           ],
           "slug": "a-scope-entry-is-one-path",
-          "updated_at": "2026-10-16",
+          "started_at": "2026-10-17T18:25:28Z",
+          "started_event": "sha256:ca9d0e43859faddedae36d1aa643b2a22379b151338e8f9b4540840c753cebef",
+          "updated_at": "2026-10-17T18:25:46Z",
           "validation": [
             "bash test/run.sh 3160_a_scope_entry_is_one_path 04_start_check",
             "bin/majordomus plan validate"
-          ]
+          ],
+          "verified_at": "2026-10-17T18:25:39Z",
+          "verified_event": "sha256:0566b8b2dc5b23cd90c8d26e5f8c289b91303aa3841c069897a8d536c0109ec0"
         }
       },
       {
@@ -39505,6 +39517,8 @@
             "scripts/ui navbar reports no difference between the bar on the site's front page and on /ui and /cockpit at every declared width, light and dark, closed and with a menu open",
             "A copy that is not the built bar, and a share/ui script that is not the site's bytes, each fail their check"
           ],
+          "completed_at": "2026-10-17T18:26:36Z",
+          "completed_event": "sha256:5fced18d6567d7217f7572c5d979f47a1c416f1292f6e6be9f3ecb80f0b8649e",
           "created_at": "2026-10-16",
           "depends_on": [],
           "evidence_required": [
@@ -39551,13 +39565,17 @@
             ".ai/repo/project/issues/I2770.yaml"
           ],
           "slug": "the-ui-wears-the-sites-navbar",
-          "updated_at": "2026-10-16",
+          "started_at": "2026-10-17T18:26:19Z",
+          "started_event": "sha256:127bf4b17adb386eb5ab28e82308b25f1a40b20466b8f7414d37023b3ccfcf8d",
+          "updated_at": "2026-10-17T18:26:36Z",
           "validation": [
             "scripts/site-build && scripts/ui navbar",
             "scripts/ui test",
             "scripts/cockpit-assets --check",
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- ui::navbar ui::shell cockpit::html"
-          ]
+          ],
+          "verified_at": "2026-10-17T18:26:31Z",
+          "verified_event": "sha256:53e5ae8c0d3582690db95bb361423b80ad2226d82ed5f7fd9c4f5c4e46bc1d31"
         }
       },
       {
@@ -39621,6 +39639,8 @@
             "scripts/pages published-evidence exits 10 over the baseline, 0 within it, 12 when the report or the baseline cannot be read",
             "The published kiosk shows no claim as not run that CI ran"
           ],
+          "completed_at": "2026-10-17T18:26:11Z",
+          "completed_event": "sha256:7fd0a13c938bc9a71e7be1e7f96a3cc2eed8533102404c2e6281e8c8045a86ea",
           "created_at": "2026-10-17",
           "current_state": "The ui-snapshot job reads the tracked ledger alone, and nothing counts what a publication shows as not run.",
           "depends_on": [],
@@ -39643,12 +39663,16 @@
             "docs/MAJORDOMUS_UI.md"
           ],
           "slug": "the-published-ui-reads-the-evidence-ci-recorded",
-          "updated_at": "2026-10-17",
+          "started_at": "2026-10-17T18:25:54Z",
+          "started_event": "sha256:cdc19fe2ae379fc6600d1b98ebb5f3845fb4f63ad7a2246745d3774a4d5378bb",
+          "updated_at": "2026-10-17T18:26:11Z",
           "validation": [
             "majordomus plan validate",
             "bash test/run.sh 3178_the_published_ui_reads_the_evidence_ci_recorded",
             "bash test/run.sh 357_ci_records_evidence"
-          ]
+          ],
+          "verified_at": "2026-10-17T18:26:03Z",
+          "verified_event": "sha256:98dfdf11106ce1f356b93d081314334499acae3aa93d86dcbec5b68a90436421"
         }
       },
       {
