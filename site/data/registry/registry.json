@@ -6,23 +6,23 @@
     "version": "0.29.0"
   },
   "registry": {
-    "fingerprint": "3e32219937c1d568b08b54d3fa56f1942a027658f202fa4f598c12c485c3535d",
+    "fingerprint": "e91cc904df113cbd2e35a4fe3f4e0d4fb4919f13a49958ad3a651b22cd389221",
     "summary": {
-      "total": 2526,
+      "total": 2529,
       "builtin": 202,
-      "declarative": 2324,
+      "declarative": 2327,
       "by_kind": {
         "command": 31,
         "query": 171,
-        "resource": 2324
+        "resource": 2327
       },
       "by_stability": {
         "behaviorally_verified": 141,
         "experimental": 52,
-        "implemented": 2333
+        "implemented": 2336
       },
       "mcp_tools": 192,
-      "mcp_resources": 2379,
+      "mcp_resources": 2382,
       "http_routes": 197,
       "cli_commands": 108,
       "modules": 92,
@@ -83231,7 +83231,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 424,
+        "capabilities": 427,
         "capability_ids": []
       },
       {
@@ -83893,7 +83893,7 @@
     ]
   },
   "index": {
-    "fingerprint": "ca9784f68f976e9f1e605a9893d4f93e1bc87c3f8c00cf32e58450f5384a4f30",
+    "fingerprint": "3db88a76102408f4dbdc937c085465533bacbab3d2b96f820629e85779556768",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -83933,7 +83933,7 @@
       "gap": 4,
       "implementation": 52,
       "intent": 5,
-      "issue": 424,
+      "issue": 427,
       "knowledge": 4,
       "mesh-declaration": 1,
       "milestone": 41,
@@ -90206,7 +90206,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 170002
+        "bytes": 184577
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -98341,6 +98341,39 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 2258
+      },
+      {
+        "uri": "majordomus://issue/I2860",
+        "kind": "issue",
+        "identity": "I2860",
+        "title": "Doctor leaves no state outside the prefix: its optional python3 writes a macOS cache that uninstall leaves behind",
+        "description": "Make a doctor run leave nothing outside the installation prefix and the repository. lib/doctor.sh:1410 runs the system python3 when one is on the PATH; on macOS that is the Xcode interpreter, which writes ~/Library/Caches/com.apple.python on first use. Either run python3 so that it writes no cache (for example PYTHONDONTWRITEBYTECODE=1 with PYTHONPYCACHEPREFIX inside a temporary directory), or answer without python3, and add a case that runs doctor under an empty HOME and lists HOME afterwards.",
+        "path": ".ai/repo/project/issues/I2860.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2356
+      },
+      {
+        "uri": "majordomus://issue/I2861",
+        "kind": "issue",
+        "identity": "I2861",
+        "title": "What `majordomus update` writes, the index reads: CLAUDE.md and GEMINI.md are not out of scope in a fresh adopter",
+        "description": "Make the projections `majordomus update` writes in a freshly initialised repository part of the scope the skeleton declares, or stop the index from discovering them as readmes, so that a fresh adopter's own tool does not warn about the files it has just generated.",
+        "path": ".ai/repo/project/issues/I2861.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1704
+      },
+      {
+        "uri": "majordomus://issue/I2862",
+        "kind": "issue",
+        "identity": "I2862",
+        "title": "One evidence view: an issue's recorded evidence is visible where the evidence report is read",
+        "description": "Give an adopter one place to read evidence: either evidence.report (`majordomus evidence show`, majordomus_evidence, GET /api/v1/evidence) includes or links the evidence recorded on issues through `plan evidence`, or both surfaces state explicitly where the other store is and what it holds.",
+        "path": ".ai/repo/project/issues/I2862.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2068
       },
       {
         "uri": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
@@ -109048,7 +109081,7 @@
       "identity": [
         "id"
       ],
-      "objects": 424
+      "objects": 427
     },
     {
       "name": "knowledge",

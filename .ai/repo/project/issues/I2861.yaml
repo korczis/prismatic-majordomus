@@ -1,0 +1,23 @@
+id: I2861
+milestone: a-second-adopter-is-served
+title: "What `majordomus update` writes, the index reads: CLAUDE.md and GEMINI.md are not out of scope in a fresh adopter"
+slug: what-update-writes-the-index-reads
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Make the projections `majordomus update` writes in a freshly initialised repository part of the scope the skeleton declares, or stop the index from discovering them as readmes, so that a fresh adopter's own tool does not warn about the files it has just generated."
+why: "Evidence of the defect, from the alpha contract dry run against the released v0.29.0 on 2026-10-17, isolated HOME, scratch repository. `majordomus init` exited 0. `majordomus update` exited 0 with 'create CLAUDE.md', 'create GEMINI.md' and 'generated 3 target(s) from policy c70f672d1b5f'. Afterwards every command that builds the index (for example `majordomus evidence show`) logged: 'WARN discovered by class 'readme' but out of the repository scope (undeclared); not read code=out_of_scope source_path=CLAUDE.md', and the same for GEMINI.md."
+current_state: "In a repository made by init and update alone, the index warns that CLAUDE.md and GEMINI.md are out of scope."
+desired_state: "init followed by update yields an index with no out_of_scope diagnostic, proven by a case."
+scope:
+  - "share/skeleton"
+  - "apps/majordomus-cli/src"
+  - "test/cases"
+acceptance_criteria:
+  - "In a fresh `majordomus init` + `majordomus update` repository, building the index reports no out_of_scope diagnostic"
+validation:
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "fresh_index_has_no_out_of_scope"
+created_at: 2026-10-17
+updated_at: 2026-10-17

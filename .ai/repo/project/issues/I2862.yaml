@@ -1,0 +1,25 @@
+id: I2862
+milestone: test-evidence
+title: "One evidence view: an issue's recorded evidence is visible where the evidence report is read"
+slug: one-evidence-view
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Give an adopter one place to read evidence: either evidence.report (`majordomus evidence show`, majordomus_evidence, GET /api/v1/evidence) includes or links the evidence recorded on issues through `plan evidence`, or both surfaces state explicitly where the other store is and what it holds."
+why: "Evidence of the defect, from the alpha contract dry run against the released v0.29.0 on 2026-10-17, isolated HOME, scratch repository with project.yaml, milestone m1 and issue I0001 (evidence_required: file_present). `plan done I0001` was refused (exit 10, 'I0001 has no evidence for: file_present'). Then `plan evidence I0001 --covers file_present --type test --command 'test -s src/a.txt' --result pass` (exit 0), `plan done I0001` (exit 0), `plan list` (I0001 DONE) and `plan show I0001` (Evidence: file_present | test | test -s src/a.txt | pass). In the same repository, `majordomus evidence show` exited 0 with 'ledger .ai/repo/evidence/ledger.json — 0 execution(s); nothing has been recorded; every claim reads `not run`, which is true'. The two stores agree only by both being silent on each other."
+current_state: "Evidence recorded on an issue is invisible to the evidence report, which reads 'nothing has been recorded' beside a DONE issue."
+desired_state: "An adopter who records evidence on an issue finds it, or a pointer to it, in the evidence report on every surface, proven by a case."
+scope:
+  - "apps/majordomus-cli/src"
+  - "lib/plan.sh"
+  - "docs/EVIDENCE.md"
+  - "test/cases"
+acceptance_criteria:
+  - "After `plan evidence` on an issue, `evidence show` names that evidence or the issue that holds it"
+  - "The CLI, MCP and HTTP projections of evidence.report say the same"
+validation:
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "issue_evidence_in_report"
+created_at: 2026-10-17
+updated_at: 2026-10-17

@@ -1,0 +1,24 @@
+id: I2860
+milestone: two-folder-integration
+title: "Doctor leaves no state outside the prefix: its optional python3 writes a macOS cache that uninstall leaves behind"
+slug: doctor-leaves-no-state-outside-the-prefix
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Make a doctor run leave nothing outside the installation prefix and the repository. lib/doctor.sh:1410 runs the system python3 when one is on the PATH; on macOS that is the Xcode interpreter, which writes ~/Library/Caches/com.apple.python on first use. Either run python3 so that it writes no cache (for example PYTHONDONTWRITEBYTECODE=1 with PYTHONPYCACHEPREFIX inside a temporary directory), or answer without python3, and add a case that runs doctor under an empty HOME and lists HOME afterwards."
+why: "Evidence of the defect, from the alpha contract dry run against the released v0.29.0 on 2026-10-17. Commands were run under env -i with HOME set to an empty scratch directory: `sh install.sh --install-dir $HOME/.local/bin --prefix $HOME/.local/share/majordomus` (exit 0), `majordomus doctor` in a fresh `majordomus init` repository, then the uninstall from docs/INSTALL.md (`rm -f $HOME/.local/bin/majordomus $HOME/.local/bin/majordomus-mcp; rm -rf $HOME/.local/share/majordomus`, exit 0). `find $HOME -mindepth 1` afterwards still listed Library/Caches/com.apple.python/... (472K of .pyc files). stat dated its creation 21:56:44, inside the doctor run (doctor.log 21:56:39), after the install had finished (launcher 21:56:31). install.sh promises that nothing outside the prefix and the launchers is touched, and INSTALL.md that uninstalling removes the tool."
+current_state: "A doctor run on macOS with the system python3 leaves ~/Library/Caches/com.apple.python, which the documented uninstall does not remove."
+desired_state: "After install, doctor and the documented uninstall, HOME holds only the empty directories the installer created, and a case proves it."
+scope:
+  - "lib/doctor.sh"
+  - "test/cases"
+  - "docs/INSTALL.md"
+acceptance_criteria:
+  - "Under an empty HOME, install + doctor + the documented uninstall leave no file in HOME"
+  - "Doctor still answers the same with and without python3 on the PATH"
+validation:
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "home_clean_after_uninstall"
+created_at: 2026-10-17
+updated_at: 2026-10-17

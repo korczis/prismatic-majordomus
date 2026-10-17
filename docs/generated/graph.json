@@ -39689,6 +39689,108 @@
         }
       },
       {
+        "id": "majordomus://issue/I2860",
+        "kind": "issue",
+        "label": "I2860",
+        "summary": "Doctor leaves no state outside the prefix: its optional python3 writes a macOS cache that uninstall leaves behind",
+        "route": "/cockpit/objects/issue/i2860",
+        "source": ".ai/repo/project/issues/I2860.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Under an empty HOME, install + doctor + the documented uninstall leave no file in HOME",
+            "Doctor still answers the same with and without python3 on the PATH"
+          ],
+          "created_at": "2026-10-17",
+          "current_state": "A doctor run on macOS with the system python3 leaves ~/Library/Caches/com.apple.python, which the documented uninstall does not remove.",
+          "desired_state": "After install, doctor and the documented uninstall, HOME holds only the empty directories the installer created, and a case proves it.",
+          "evidence_required": [
+            "home_clean_after_uninstall"
+          ],
+          "milestone": "two-folder-integration",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "lib/doctor.sh",
+            "test/cases",
+            "docs/INSTALL.md"
+          ],
+          "slug": "doctor-leaves-no-state-outside-the-prefix",
+          "updated_at": "2026-10-17",
+          "validation": [
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2861",
+        "kind": "issue",
+        "label": "I2861",
+        "summary": "What `majordomus update` writes, the index reads: CLAUDE.md and GEMINI.md are not out of scope in a fresh adopter",
+        "route": "/cockpit/objects/issue/i2861",
+        "source": ".ai/repo/project/issues/I2861.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "In a fresh `majordomus init` + `majordomus update` repository, building the index reports no out_of_scope diagnostic"
+          ],
+          "created_at": "2026-10-17",
+          "current_state": "In a repository made by init and update alone, the index warns that CLAUDE.md and GEMINI.md are out of scope.",
+          "desired_state": "init followed by update yields an index with no out_of_scope diagnostic, proven by a case.",
+          "evidence_required": [
+            "fresh_index_has_no_out_of_scope"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "share/skeleton",
+            "apps/majordomus-cli/src",
+            "test/cases"
+          ],
+          "slug": "what-update-writes-the-index-reads",
+          "updated_at": "2026-10-17",
+          "validation": [
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2862",
+        "kind": "issue",
+        "label": "I2862",
+        "summary": "One evidence view: an issue's recorded evidence is visible where the evidence report is read",
+        "route": "/cockpit/objects/issue/i2862",
+        "source": ".ai/repo/project/issues/I2862.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "After `plan evidence` on an issue, `evidence show` names that evidence or the issue that holds it",
+            "The CLI, MCP and HTTP projections of evidence.report say the same"
+          ],
+          "created_at": "2026-10-17",
+          "current_state": "Evidence recorded on an issue is invisible to the evidence report, which reads 'nothing has been recorded' beside a DONE issue.",
+          "desired_state": "An adopter who records evidence on an issue finds it, or a pointer to it, in the evidence report on every surface, proven by a case.",
+          "evidence_required": [
+            "issue_evidence_in_report"
+          ],
+          "milestone": "test-evidence",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src",
+            "lib/plan.sh",
+            "docs/EVIDENCE.md",
+            "test/cases"
+          ],
+          "slug": "one-evidence-view",
+          "updated_at": "2026-10-17",
+          "validation": [
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "label": "a-commit-stood-behind-a-build-lock",
@@ -84376,6 +84478,36 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2860",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2860",
+        "target": "majordomus://milestone/two-folder-integration",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2861",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2861",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2862",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2862",
+        "target": "majordomus://milestone/test-evidence",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -94377,8 +94509,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2958,
-      "edges": 6499,
+      "nodes": 2961,
+      "edges": 6505,
       "acyclic": false,
       "truncated": false
     }
