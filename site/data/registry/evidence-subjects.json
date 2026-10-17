@@ -519,6 +519,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:knowledge_base.records",
+      "path": "/evidence/capabilities/knowledge-base-records/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:knowledge_base.status",
       "path": "/evidence/capabilities/knowledge-base-status/"
     },
@@ -2809,6 +2814,11 @@
     },
     {
       "kind": "command",
+      "subject": "command:knowledge records",
+      "path": "/evidence/commands/knowledge-records/"
+    },
+    {
+      "kind": "command",
       "subject": "command:knowledge status",
       "path": "/evidence/commands/knowledge-status/"
     },
@@ -4930,6 +4940,19 @@
       "members": [
         "claim:knowledge-served-on-every-surface",
         "command:knowledge record"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:knowledge_base.records": {
+      "kind": "capability",
+      "id": "knowledge_base.records",
+      "page": "/evidence/capabilities/knowledge-base-records/",
+      "programs": [],
+      "members": [
+        "claim:knowledge-served-on-every-surface",
+        "command:knowledge records"
       ],
       "routes": [],
       "mechanisms": [],
@@ -15194,6 +15217,25 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:knowledge records": {
+      "kind": "command",
+      "id": "knowledge records",
+      "page": "/evidence/commands/knowledge-records/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:knowledge status": {
       "kind": "command",
       "id": "knowledge status",
@@ -20162,6 +20204,18 @@
       "programs": [],
       "members": [
         "capability:knowledge_base.record"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_knowledge_records": {
+      "kind": "mcp",
+      "id": "majordomus_knowledge_records",
+      "alias_of": "capability:knowledge_base.records",
+      "programs": [],
+      "members": [
+        "capability:knowledge_base.records"
       ],
       "routes": [],
       "mechanisms": [],
@@ -27941,6 +27995,7 @@
     "suite:310_rustdoc_projection",
     "suite:3125_the_reaper_asks_cargo_for_the_build_dir",
     "suite:318_a_partial_sweep_says_so",
+    "suite:3191_the_knowledge_base_is_listed",
     "suite:330_a_contract_is_the_kind_it_declares",
     "suite:331_knowledge_nodes_is_gated",
     "suite:343_the_cockpit_shows_who_else_is_here",

@@ -438,6 +438,7 @@ fn the_command_line_http_and_mcp_answer_with_the_same_content() {
     let (_, http_status) = s.get("/api/v1/knowledge/status");
     let (_, http_candidates) = s.get("/api/v1/knowledge/candidates");
     let (_, http_record) = s.get(&format!("/api/v1/knowledge/record?id={ID}"));
+    let (_, http_records) = s.get("/api/v1/knowledge/records?status=candidate");
 
     // MCP: the tools and the resources, over the served /mcp
     let mut mcp = Mcp::open(&s);
@@ -451,6 +452,7 @@ fn the_command_line_http_and_mcp_answer_with_the_same_content() {
     for tool in [
         "majordomus_knowledge_candidates",
         "majordomus_knowledge_record",
+        "majordomus_knowledge_records",
         "majordomus_knowledge_status",
     ] {
         assert!(names.contains(&tool), "{tool} is not announced: {names:?}");
@@ -468,6 +470,16 @@ fn the_command_line_http_and_mcp_answer_with_the_same_content() {
         stable(mcp.call("majordomus_knowledge_record", json!({ "id": ID }))),
         stable(http_record.clone())
     );
+    assert_eq!(
+        mcp.call(
+            "majordomus_knowledge_records",
+            json!({ "status": "candidate" })
+        ),
+        http_records.clone(),
+        "the base is read from the files alone, so the surfaces agree to the byte"
+    );
+    assert_eq!(http_records["total"], 1, "{http_records}");
+    assert_eq!(http_records["records"][0]["id"], ID, "{http_records}");
     assert_eq!(
         stable(mcp.read("majordomus://knowledge-status")),
         stable(http_status.clone()),
@@ -494,6 +506,27 @@ fn the_command_line_http_and_mcp_answer_with_the_same_content() {
     assert_eq!(code, 0, "{err}");
     let cli: Value = serde_json::from_str(&out).unwrap();
     assert_eq!(stable(cli), stable(http_record));
+
+    let (code, out, err) = run_in(
+        &root,
+        &[
+            "knowledge",
+            "records",
+            "--status",
+            "candidate",
+            "--format",
+            "json",
+        ],
+        "",
+    );
+    assert_eq!(code, 0, "{err}");
+    let cli: Value = serde_json::from_str(&out).unwrap();
+    assert_eq!(cli, http_records);
+    let (code, _, err) = run_in(&root, &["knowledge", "records", "--class", "lessons"], "");
+    assert_eq!(
+        code, 2,
+        "a class outside the vocabulary is a usage error: {err}"
+    );
 
     // and the text renderings carry the same facts
     let (code, out, _) = run_in(&root, &["knowledge", "status"], "");

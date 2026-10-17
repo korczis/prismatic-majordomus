@@ -2947,7 +2947,7 @@ pub struct KnowledgeArgs {
     pub repo: RepoArgs,
 
     #[command(subcommand)]
-    /// `candidates`, `record` or `status`. Required: the group runs nothing of its own, so
+    /// `candidates`, `record`, `records` or `status`. Required: the group runs nothing of its own, so
     /// that every runnable path here is one a capability declares rather than one
     /// classified command-line-only in `cli::local`.
     pub command: KnowledgeCommand,
@@ -2977,8 +2977,58 @@ pub enum KnowledgeCommand {
         /// The record id, which is also its file name
         id: String,
     },
+    /// Every record of the knowledge base, curated and candidate, as its file declares it, newest first, filtered by class, status and subject
+    Records {
+        #[arg(long, value_enum)]
+        /// Only records of this class
+        class: Option<KnowledgeClassArg>,
+        #[arg(long, value_enum)]
+        /// Only records with this status
+        status: Option<KnowledgeStatusArg>,
+        #[arg(long)]
+        /// Only records about this subject, or about a path beneath it
+        about: Option<String>,
+    },
     /// Whether the deriver is still writing: the last derivation, the newest closed episode, and the stopped-writer judgement against session.freshness
     Status,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+/// What a knowledge record asserts, as `knowledge records --class` selects it.
+///
+/// ```
+/// use clap::ValueEnum;
+/// use majordomus_cli::cli::KnowledgeClassArg;
+/// assert_eq!(KnowledgeClassArg::Lesson.to_possible_value().unwrap().get_name(), "lesson");
+/// ```
+pub enum KnowledgeClassArg {
+    /// Something observed to be true of the repository.
+    Fact,
+    /// How things are done here, decided.
+    Convention,
+    /// A limit the repository must respect.
+    Constraint,
+    /// Something remembered across episodes.
+    Memory,
+    /// What a failure, a block or an observation taught.
+    Lesson,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+/// Who stands behind a knowledge record, as `knowledge records --status` selects it.
+///
+/// ```
+/// use clap::ValueEnum;
+/// use majordomus_cli::cli::KnowledgeStatusArg;
+/// assert_eq!(KnowledgeStatusArg::Candidate.to_possible_value().unwrap().get_name(), "candidate");
+/// ```
+pub enum KnowledgeStatusArg {
+    /// Derived by the tool and awaiting a person's review.
+    Candidate,
+    /// Promoted by a person, with evidence.
+    Verified,
+    /// Replaced by another record, or rejected with a reason.
+    Superseded,
 }
 
 #[derive(Debug, Args)]
@@ -5443,6 +5493,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["knowledge", "record", "no-such-record"],
             setup: &[],
             expect: Expect::ExitCode(12),
+        }],
+    },
+    CommandExamples {
+        command: "knowledge records",
+        examples: &[ExampleDoc {
+            id: "knowledge-records-lessons",
+            title: "The lessons the base holds",
+            description: "The same answer `GET /api/v1/knowledge/records?class=lesson` and the MCP tool `majordomus_knowledge_records` serve: every record of that class, curated or candidate, as its file declares it, newest first, with the count each status holds. Nothing is resolved against the ledger or git, so every clone prints the same records.",
+            argv: &["knowledge", "records", "--class", "lesson", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/total"]),
         }],
     },
     CommandExamples {

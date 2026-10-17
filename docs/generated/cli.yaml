@@ -22975,6 +22975,137 @@ cli:
         - path:
             - majordomus
             - knowledge
+            - records
+          route: /docs/cli/knowledge/records/
+          executable: true
+          usage: "majordomus knowledge records [OPTIONS]"
+          about: "Every record of the knowledge base, curated and candidate, as its file declares it, newest first, filtered by class, status and subject"
+          args:
+            - name: class
+              long: class
+              positional: false
+              help: Only records of this class
+              value_name: CLASS
+              takes_value: true
+              required: false
+              global: false
+              possible_values:
+                - name: fact
+                  help: Something observed to be true of the repository
+                - name: convention
+                  help: "How things are done here, decided"
+                - name: constraint
+                  help: A limit the repository must respect
+                - name: memory
+                  help: Something remembered across episodes
+                - name: lesson
+                  help: "What a failure, a block or an observation taught"
+              defaults: []
+            - name: status
+              long: status
+              positional: false
+              help: Only records with this status
+              value_name: STATUS
+              takes_value: true
+              required: false
+              global: false
+              possible_values:
+                - name: candidate
+                  help: "Derived by the tool and awaiting a person's review"
+                - name: verified
+                  help: "Promoted by a person, with evidence"
+                - name: superseded
+                  help: "Replaced by another record, or rejected with a reason"
+              defaults: []
+            - name: about
+              long: about
+              positional: false
+              help: "Only records about this subject, or about a path beneath it"
+              value_name: ABOUT
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: knowledge-records-lessons
+              title: The lessons the base holds
+              description: "The same answer `GET /api/v1/knowledge/records?class=lesson` and the MCP tool `majordomus_knowledge_records` serve: every record of that class, curated or candidate, as its file declares it, newest first, with the count each status holds. Nothing is resolved against the ledger or git, so every clone prints the same records."
+              argv:
+                - knowledge
+                - records
+                - "--class"
+                - lesson
+                - "--format"
+                - json
+              command: majordomus knowledge records --class lesson --format json
+              setup: []
+              expectation: exits 0; prints one JSON document carrying /total
+          subcommands: []
+        - path:
+            - majordomus
+            - knowledge
             - status
           route: /docs/cli/knowledge/status/
           executable: true

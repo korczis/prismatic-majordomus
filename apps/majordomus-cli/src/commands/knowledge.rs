@@ -10,11 +10,14 @@
 
 use std::io::Write;
 
+use clap::ValueEnum;
 use serde_json::{json, Value};
 
 use crate::app::App;
 use crate::capability::CapabilityError;
-use crate::cli::{KnowledgeArgs, KnowledgeCommand, OutputFormat};
+use crate::cli::{
+    KnowledgeArgs, KnowledgeClassArg, KnowledgeCommand, KnowledgeStatusArg, OutputFormat,
+};
 use crate::error::{Error, Result};
 
 /// Run `majordomus knowledge`.
@@ -37,6 +40,15 @@ fn answer<W: Write>(
         KnowledgeCommand::Record { id } => {
             (&["knowledge", "record"], json!({ "id": id }), record_text)
         }
+        KnowledgeCommand::Records {
+            class,
+            status,
+            about,
+        } => (
+            &["knowledge", "records"],
+            records_input(*class, *status, about.as_deref()),
+            records_text,
+        ),
         KnowledgeCommand::Status => (&["knowledge", "status"], json!({}), status_text),
     };
     let v = execute(ctx, path, input)?;
@@ -47,6 +59,28 @@ fn answer<W: Write>(
         OutputFormat::Text => text(out, &v)?,
     }
     Ok(0)
+}
+
+/// The input of `knowledge_base.records`: only the filters a person set, each in the word
+/// the schema uses.
+fn records_input(
+    class: Option<KnowledgeClassArg>,
+    status: Option<KnowledgeStatusArg>,
+    about: Option<&str>,
+) -> Value {
+    let word = |v: Option<clap::builder::PossibleValue>| v.map(|p| p.get_name().to_string());
+    let mut input = serde_json::Map::new();
+    let filters = [
+        ("class", word(class.and_then(|c| c.to_possible_value()))),
+        ("status", word(status.and_then(|s| s.to_possible_value()))),
+        ("about", about.map(str::to_string)),
+    ];
+    for (key, value) in filters {
+        if let Some(value) = value {
+            input.insert(key.into(), Value::String(value));
+        }
+    }
+    Value::Object(input)
 }
 
 // ---------------------------------------------------------------- text
@@ -97,6 +131,47 @@ fn candidates_text<W: Write>(out: &mut W, v: &Value) -> Result<()> {
         )?;
     }
     findings(out, v)
+}
+
+/// `word n, word n` for a count map, in the map's order; `none` when it is empty.
+fn counts(v: &Value) -> String {
+    let parts: Vec<String> = v
+        .as_object()
+        .into_iter()
+        .flatten()
+        .map(|(k, n)| format!("{k} {n}"))
+        .collect();
+    if parts.is_empty() {
+        "none".into()
+    } else {
+        parts.join(", ")
+    }
+}
+
+fn records_text<W: Write>(out: &mut W, v: &Value) -> Result<()> {
+    w(
+        out,
+        format!(
+            "records      {} — {} — {}",
+            v["total"],
+            counts(&v["classes"]),
+            counts(&v["statuses"])
+        ),
+    )?;
+    for r in v["records"].as_array().into_iter().flatten() {
+        w(
+            out,
+            format!(
+                "{}  {}  {}  {}  {}",
+                s(r, "date"),
+                s(r, "status"),
+                s(r, "class"),
+                s(r, "id"),
+                s(r, "title"),
+            ),
+        )?;
+    }
+    Ok(())
 }
 
 fn resolution(r: &Value) -> String {
@@ -385,6 +460,56 @@ mod tests {
         fails_at_every_line(record_text, &record(), 8);
     }
 
+    #[test]
+    fn records_name_their_counts_and_one_line_each_and_an_empty_base_says_none() {
+        let v = json!({
+            "total": 2, "classes": { "fact": 1, "lesson": 1 }, "statuses": { "candidate": 2 },
+            "records": [
+                { "id": "e2-b", "class": "lesson", "status": "candidate", "date": "2026-01-02", "title": "B" },
+                { "id": "e1-a", "class": "fact", "status": "candidate", "date": "2026-01-01", "title": "A" }
+            ]
+        });
+        assert_eq!(
+            rendered(records_text, &v),
+            "records      2 — fact 1, lesson 1 — candidate 2\n\
+             2026-01-02  candidate  lesson  e2-b  B\n\
+             2026-01-01  candidate  fact  e1-a  A\n"
+        );
+        assert_eq!(
+            rendered(records_text, &json!({ "total": 0 })),
+            "records      0 — none — none\n"
+        );
+        fails_at_every_line(records_text, &v, 3);
+    }
+
+    #[test]
+    fn the_records_input_carries_only_the_filters_a_person_set_in_the_schemas_words() {
+        assert_eq!(records_input(None, None, None), json!({}));
+        assert_eq!(
+            records_input(
+                Some(KnowledgeClassArg::Constraint),
+                Some(KnowledgeStatusArg::Superseded),
+                Some("lib/a.sh")
+            ),
+            json!({ "class": "constraint", "status": "superseded", "about": "lib/a.sh" })
+        );
+        for (class, word) in [
+            (KnowledgeClassArg::Fact, "fact"),
+            (KnowledgeClassArg::Convention, "convention"),
+            (KnowledgeClassArg::Memory, "memory"),
+            (KnowledgeClassArg::Lesson, "lesson"),
+        ] {
+            assert_eq!(
+                records_input(Some(class), None, None),
+                json!({ "class": word })
+            );
+        }
+        assert_eq!(
+            records_input(None, Some(KnowledgeStatusArg::Verified), None),
+            json!({ "status": "verified" })
+        );
+    }
+
     fn status(judged: bool, stopped: bool) -> Value {
         json!({
             "present": true, "branch": "master",
@@ -444,7 +569,22 @@ mod tests {
         use crate::synthetic::SyntheticRepository;
         let repo = SyntheticRepository::small().unwrap();
         let ctx = repo.context().unwrap();
-        for command in [KnowledgeCommand::Candidates, KnowledgeCommand::Status] {
+        let lessons = KnowledgeCommand::Records {
+            class: Some(KnowledgeClassArg::Lesson),
+            status: Some(KnowledgeStatusArg::Candidate),
+            about: Some("lib".into()),
+        };
+        let every = KnowledgeCommand::Records {
+            class: None,
+            status: None,
+            about: None,
+        };
+        for command in [
+            KnowledgeCommand::Candidates,
+            KnowledgeCommand::Status,
+            lessons,
+            every,
+        ] {
             let mut out = Vec::new();
             assert_eq!(
                 answer(&ctx, &command, OutputFormat::Json, &mut out).unwrap(),

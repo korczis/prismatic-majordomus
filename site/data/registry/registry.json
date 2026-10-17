@@ -6,27 +6,27 @@
     "version": "0.28.0"
   },
   "registry": {
-    "fingerprint": "99c090802eb021bb70bc7c55a8010127207e83cc31644061ac439b95e55d5339",
+    "fingerprint": "45e2edc0babc93ea3e04d5bb565c138e963004ac1578f98bfde6227ffff48ac9",
     "summary": {
-      "total": 2504,
-      "builtin": 202,
-      "declarative": 2302,
+      "total": 2508,
+      "builtin": 203,
+      "declarative": 2305,
       "by_kind": {
         "command": 31,
-        "query": 171,
-        "resource": 2302
+        "query": 172,
+        "resource": 2305
       },
       "by_stability": {
-        "behaviorally_verified": 141,
+        "behaviorally_verified": 142,
         "experimental": 52,
-        "implemented": 2311
+        "implemented": 2314
       },
-      "mcp_tools": 192,
-      "mcp_resources": 2357,
-      "http_routes": 197,
-      "cli_commands": 108,
+      "mcp_tools": 193,
+      "mcp_resources": 2360,
+      "http_routes": 198,
+      "cli_commands": 109,
       "modules": 92,
-      "benchmark_required": 171,
+      "benchmark_required": 172,
       "benchmark_waived": 31,
       "cached": 54
     },
@@ -43341,6 +43341,246 @@
         "source_path": "apps/majordomus-cli/src/capability/builtin/knowledge_base.rs"
       },
       {
+        "id": "knowledge_base.records",
+        "module": "knowledge_base",
+        "kind": "query",
+        "title": "The knowledge base",
+        "description": "Every knowledge record of the layer — curated and candidate — as its file declares it: its class, status, epistemics and origin, its assertion and description, the subject it is about and the owner it routes to, its tags, the evidence it names and its typed relations, newest first, with how many records each class and each status holds. Filtered by class, by status and by subject, a subject matching itself and every path beneath it; a class or status outside the schema's vocabulary is refused. Nothing is resolved against the ledger or git, so every clone answers alike; `knowledge_base.record` resolves one record.",
+        "input": {
+          "name": "KnowledgeRecordsInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "class": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Only records of this class: `fact`, `convention`, `constraint`, `memory` or `lesson`.",
+                "default": null
+              },
+              "status": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Only records with this status: `candidate`, `verified` or `superseded`.",
+                "default": null
+              },
+              "about": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Only records about this subject, or about a path beneath it.",
+                "default": null
+              }
+            },
+            "description": "Which records: the input of `knowledge_base.records`. Every filter is optional, and a\nvalue outside its vocabulary is refused rather than answered with nothing, so that a\ntypo never reads as a repository that knows nothing.\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::KnowledgeRecordsInput;\nlet all: KnowledgeRecordsInput = serde_json::from_str(\"{}\").unwrap();\nassert!(all.class.is_none() && all.status.is_none() && all.about.is_none());\nlet some: KnowledgeRecordsInput =\n    serde_json::from_str(r#\"{\"class\":\"lesson\",\"about\":\"lib\"}\"#).unwrap();\nassert_eq!(some.about.as_deref(), Some(\"lib\"));\nassert!(serde_json::from_str::<KnowledgeRecordsInput>(r#\"{\"kind\":\"x\"}\"#).is_err());\n```",
+            "title": "KnowledgeRecordsInput"
+          }
+        },
+        "output": {
+          "name": "KnowledgeRecords",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "total": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many records matched."
+              },
+              "classes": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0
+                },
+                "description": "How many of them each class holds, by class."
+              },
+              "statuses": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0
+                },
+                "description": "How many of them each status holds, by status."
+              },
+              "records": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/KnowledgeEntry"
+                },
+                "description": "The records, newest date first and by id within a day."
+              }
+            },
+            "required": [
+              "total"
+            ],
+            "description": "The base: every record that matched, newest first, with how many of them each class\nand each status holds.\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::KnowledgeRecords;\nlet none: KnowledgeRecords = serde_json::from_str(r#\"{\"total\":0}\"#).unwrap();\nassert!(none.records.is_empty() && none.classes.is_empty(), \"an empty base is an answer\");\n```",
+            "title": "KnowledgeRecords",
+            "$defs": {
+              "KnowledgeEntry": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The record id, which is also its file name."
+                  },
+                  "uri": {
+                    "type": "string",
+                    "description": "`majordomus://knowledge/<id>`."
+                  },
+                  "path": {
+                    "type": "string",
+                    "description": "Repository-relative path."
+                  },
+                  "source_class": {
+                    "type": "string",
+                    "description": "The source class that discovered it: `candidates` or `curated`."
+                  },
+                  "class": {
+                    "type": "string",
+                    "description": "`fact`, `convention`, `constraint`, `memory` or `lesson`."
+                  },
+                  "status": {
+                    "type": "string",
+                    "description": "`candidate`, `verified` or `superseded`."
+                  },
+                  "epistemics": {
+                    "type": "string",
+                    "description": "`observed`, `inferred` or `decided`."
+                  },
+                  "origin": {
+                    "type": "string",
+                    "description": "`authored` or `extracted`; empty when the record carries no provenance."
+                  },
+                  "date": {
+                    "type": "string",
+                    "description": "The day the record reached its status, `YYYY-MM-DD`."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "The assertion, in one line."
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "The record's own description, when it carries one."
+                  },
+                  "about": {
+                    "type": "string",
+                    "description": "What it is about (ADR 0118); empty for a record that names no subject."
+                  },
+                  "route": {
+                    "type": "string",
+                    "description": "Which owner should look first, derived from `about` by the deriver."
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The record's tags, as written."
+                  },
+                  "derived_from": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The typed references it names as its evidence, as written."
+                  },
+                  "relations": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/KnowledgeLink"
+                    },
+                    "description": "Its typed relations, as written."
+                  },
+                  "superseded_by": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The record that replaced this one, when the status is `superseded`."
+                  }
+                },
+                "required": [
+                  "id",
+                  "uri",
+                  "path",
+                  "source_class",
+                  "class",
+                  "status",
+                  "epistemics",
+                  "date",
+                  "title"
+                ],
+                "description": "One record of the base, as its file declares it: nothing here is resolved against the\nledger or git, so the same tree gives the same entry on every machine and in every\nclone, however shallow. `knowledge_base.record` resolves one.\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::KnowledgeEntry;\nlet e: KnowledgeEntry = serde_json::from_str(r#\"{\n  \"id\": \"start-here\", \"uri\": \"majordomus://knowledge/start-here\",\n  \"path\": \".ai/repo/knowledge/curated/start-here.md\", \"source_class\": \"curated\",\n  \"class\": \"convention\", \"status\": \"verified\", \"epistemics\": \"decided\",\n  \"date\": \"2026-09-05\", \"title\": \"Read the documents in order\"\n}\"#).unwrap();\nassert!(e.derived_from.is_empty() && e.relations.is_empty());\nassert_eq!(e.superseded_by, None);\n```"
+              },
+              "KnowledgeLink": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "description": "`relates_to`, `documents`, `supports`, `contradicts`, `supersedes` or `depends_on`."
+                  },
+                  "target": {
+                    "type": "string",
+                    "description": "The typed reference it points at."
+                  }
+                },
+                "required": [
+                  "type",
+                  "target"
+                ],
+                "description": "One typed relation of a record, as the record declares it.\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::KnowledgeLink;\nlet l: KnowledgeLink =\n    serde_json::from_str(r#\"{\"type\":\"relates_to\",\"target\":\"file:lib/a.sh\"}\"#).unwrap();\nassert_eq!(l.relation_type, \"relates_to\");\n```"
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::knowledge_base"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_knowledge_records"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/knowledge/records"
+          },
+          "cli": {
+            "path": [
+              "knowledge",
+              "records"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "knowledge"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/knowledge_base.rs"
+      },
+      {
         "id": "knowledge_base.status",
         "module": "knowledge_base",
         "kind": "query",
@@ -83231,7 +83471,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 419,
+        "capabilities": 420,
         "capability_ids": []
       },
       {
@@ -83245,13 +83485,14 @@
       {
         "id": "knowledge_base",
         "title": "Knowledge base",
-        "description": "What the knowledge deriver left for review and whether it is still writing: the candidate records awaiting promotion with the branch of the episode each came from, one record by id with every reference it names resolved against the index, the ledger and git, and the derivation status of this checkout judged against the policy's freshness thresholds. Read from the index and the ledger; written by nothing here — the deriver is the shell tool's, and a person promotes.",
+        "description": "What the knowledge deriver left for review and whether it is still writing: every record of the base as its file declares it, the candidate records awaiting promotion with the branch of the episode each came from, one record by id with every reference it names resolved against the index, the ledger and git, and the derivation status of this checkout judged against the policy's freshness thresholds. Read from the index and the ledger; written by nothing here — the deriver is the shell tool's, and a person promotes.",
         "stability": "behaviorally_verified",
         "source": "builtin",
-        "capabilities": 3,
+        "capabilities": 4,
         "capability_ids": [
           "knowledge_base.candidates",
           "knowledge_base.record",
+          "knowledge_base.records",
           "knowledge_base.status"
         ],
         "source_path": "apps/majordomus-cli/src/capability/builtin/knowledge_base.rs",
@@ -83347,7 +83588,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 40,
+        "capabilities": 41,
         "capability_ids": []
       },
       {
@@ -83802,7 +84043,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 519,
+        "capabilities": 520,
         "capability_ids": []
       },
       {
@@ -83893,7 +84134,7 @@
     ]
   },
   "index": {
-    "fingerprint": "7a9a9463dc32a460f174f22bec190cc2348cee44f816b4da01e0d104feaa6529",
+    "fingerprint": "43f47490822498be83a3dd164341728c2d570be9691f879400f73e3b8cb11fac",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -83933,10 +84174,10 @@
       "gap": 3,
       "implementation": 52,
       "intent": 4,
-      "issue": 419,
+      "issue": 420,
       "knowledge": 4,
       "mesh-declaration": 1,
-      "milestone": 40,
+      "milestone": 41,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -83947,7 +84188,7 @@
       "session": 90,
       "skill": 8,
       "taxonomy": 10,
-      "test": 519,
+      "test": 520,
       "use-case": 49,
       "workspace": 1
     },
@@ -90053,7 +90294,7 @@
         "title": "Knowledge — what an episode learned, derived at its boundary and promoted by a person",
         "path": "docs/KNOWLEDGE.md",
         "source_class": "document",
-        "bytes": 27464
+        "bytes": 27890
       },
       {
         "uri": "majordomus://document/docs/LAUNCH.md",
@@ -90071,7 +90312,7 @@
         "title": "`majordomus ui` — the product",
         "path": "docs/MAJORDOMUS_UI.md",
         "source_class": "document",
-        "bytes": 34125
+        "bytes": 34239
       },
       {
         "uri": "majordomus://document/docs/MCP.md",
@@ -90161,7 +90402,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 165684
+        "bytes": 169663
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -98221,6 +98462,17 @@
         "bytes": 1460
       },
       {
+        "uri": "majordomus://issue/I2792",
+        "kind": "issue",
+        "identity": "I2792",
+        "title": "One capability lists the whole knowledge base, and /ui/knowledge browses it",
+        "description": "Add knowledge_base.records: every curated and candidate record with id, uri, source class, class, status, epistemics, origin, date, title, subject, route, tags and how many of its references resolve, filterable by class, status and subject; project it to the CLI (knowledge records), HTTP and MCP from the one declaration; and give /ui/knowledge a panel that presents the base grouped by class beside the review queue.",
+        "path": ".ai/repo/project/issues/I2792.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2340
+      },
+      {
         "uri": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "identity": "a-commit-stood-behind-a-build-lock",
@@ -98556,6 +98808,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 2652
+      },
+      {
+        "uri": "majordomus://milestone/knowledge-base",
+        "kind": "milestone",
+        "identity": "knowledge-base",
+        "title": "The repository's knowledge base is derived from every source that carries know-how, and every surface presents it",
+        "description": "Every source that carries know-how reaches the knowledge kind the repository's way: as observations a worker records with resolving evidence, derived into candidate records by the deterministic deriver, reviewed and promoted by a person. One capability lists the whole base with each record's resolution; /ui/knowledge browses it; the site carries a generated knowledge section; and the product model leaves no module or kind unnamed.",
+        "path": ".ai/repo/project/milestones/knowledge-base.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 4147
       },
       {
         "uri": "majordomus://milestone/mcp-transports-are-reliable",
@@ -105360,7 +105623,7 @@
         "identity": "test/cases/3003_the_knowledge_screen_answers.sh",
         "path": "test/cases/3003_the_knowledge_screen_answers.sh",
         "source_class": "case",
-        "bytes": 2474
+        "bytes": 2546
       },
       {
         "uri": "majordomus://test/test/cases/3004_evolve_is_a_procedure_of_existing_commands.sh",
@@ -105785,6 +106048,14 @@
         "path": "test/cases/318_a_partial_sweep_says_so.sh",
         "source_class": "case",
         "bytes": 23341
+      },
+      {
+        "uri": "majordomus://test/test/cases/3191_the_knowledge_base_is_listed.sh",
+        "kind": "test",
+        "identity": "test/cases/3191_the_knowledge_base_is_listed.sh",
+        "path": "test/cases/3191_the_knowledge_base_is_listed.sh",
+        "source_class": "case",
+        "bytes": 4688
       },
       {
         "uri": "majordomus://test/test/cases/31_command_coverage.sh",
@@ -108797,7 +109068,7 @@
       "identity": [
         "id"
       ],
-      "objects": 419
+      "objects": 420
     },
     {
       "name": "knowledge",
@@ -108827,7 +109098,7 @@
       "identity": [
         "id"
       ],
-      "objects": 40
+      "objects": 41
     },
     {
       "name": "moment",
@@ -108949,7 +109220,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 519
+      "objects": 520
     },
     {
       "name": "use-case",
@@ -139900,6 +140171,192 @@
             "path": [
               "majordomus",
               "knowledge",
+              "records"
+            ],
+            "route": "/docs/cli/knowledge/records/",
+            "executable": true,
+            "usage": "majordomus knowledge records [OPTIONS]",
+            "about": "Every record of the knowledge base, curated and candidate, as its file declares it, newest first, filtered by class, status and subject",
+            "args": [
+              {
+                "name": "class",
+                "long": "class",
+                "positional": false,
+                "help": "Only records of this class",
+                "value_name": "CLASS",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [
+                  {
+                    "name": "fact",
+                    "help": "Something observed to be true of the repository"
+                  },
+                  {
+                    "name": "convention",
+                    "help": "How things are done here, decided"
+                  },
+                  {
+                    "name": "constraint",
+                    "help": "A limit the repository must respect"
+                  },
+                  {
+                    "name": "memory",
+                    "help": "Something remembered across episodes"
+                  },
+                  {
+                    "name": "lesson",
+                    "help": "What a failure, a block or an observation taught"
+                  }
+                ],
+                "defaults": []
+              },
+              {
+                "name": "status",
+                "long": "status",
+                "positional": false,
+                "help": "Only records with this status",
+                "value_name": "STATUS",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [
+                  {
+                    "name": "candidate",
+                    "help": "Derived by the tool and awaiting a person's review"
+                  },
+                  {
+                    "name": "verified",
+                    "help": "Promoted by a person, with evidence"
+                  },
+                  {
+                    "name": "superseded",
+                    "help": "Replaced by another record, or rejected with a reason"
+                  }
+                ],
+                "defaults": []
+              },
+              {
+                "name": "about",
+                "long": "about",
+                "positional": false,
+                "help": "Only records about this subject, or about a path beneath it",
+                "value_name": "ABOUT",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "knowledge-records-lessons",
+                "title": "The lessons the base holds",
+                "description": "The same answer `GET /api/v1/knowledge/records?class=lesson` and the MCP tool `majordomus_knowledge_records` serve: every record of that class, curated or candidate, as its file declares it, newest first, with the count each status holds. Nothing is resolved against the ledger or git, so every clone prints the same records.",
+                "argv": [
+                  "knowledge",
+                  "records",
+                  "--class",
+                  "lesson",
+                  "--format",
+                  "json"
+                ],
+                "command": "majordomus knowledge records --class lesson --format json",
+                "setup": [],
+                "expectation": "exits 0; prints one JSON document carrying /total"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "knowledge",
               "status"
             ],
             "route": "/docs/cli/knowledge/status/",
@@ -142528,6 +142985,23 @@
         },
         "input": "KnowledgeRecordInput",
         "output": "KnowledgeRecord"
+      },
+      {
+        "name": "majordomus_knowledge_records",
+        "id": "knowledge_base.records",
+        "title": "The knowledge base",
+        "description": "Every knowledge record of the layer — curated and candidate — as its file declares it: its class, status, epistemics and origin, its assertion and description, the subject it is about and the owner it routes to, its tags, the evidence it names and its typed relations, newest first, with how many records each class and each status holds. Filtered by class, by status and by subject, a subject matching itself and every path beneath it; a class or status outside the schema's vocabulary is refused. Nothing is resolved against the ledger or git, so every clone answers alike; `knowledge_base.record` resolves one record.",
+        "kind": "query",
+        "read_only": true,
+        "effect": "read",
+        "hints": {
+          "read_only": true,
+          "destructive": false,
+          "idempotent": true,
+          "open_world": false
+        },
+        "input": "KnowledgeRecordsInput",
+        "output": "KnowledgeRecords"
       },
       {
         "name": "majordomus_knowledge_status",
@@ -145211,6 +145685,12 @@
         "method": "GET",
         "path": "/api/v1/knowledge/record",
         "id": "knowledge_base.record",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/knowledge/records",
+        "id": "knowledge_base.records",
         "kind": "query"
       },
       {
@@ -149206,6 +149686,64 @@
         "case": "first-record",
         "cached": false,
         "route": "GET /api/v1/knowledge/record"
+      },
+      {
+        "key": "knowledge_base.records|direct|all",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "knowledge_base.records",
+        "module": "knowledge_base",
+        "case": "all",
+        "cached": false
+      },
+      {
+        "key": "knowledge_base.records|direct|lessons-awaiting-review",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "knowledge_base.records",
+        "module": "knowledge_base",
+        "case": "lessons-awaiting-review",
+        "cached": false
+      },
+      {
+        "key": "knowledge_base.records|mcp|all",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "knowledge_base.records",
+        "module": "knowledge_base",
+        "case": "all",
+        "cached": false,
+        "tool": "majordomus_knowledge_records"
+      },
+      {
+        "key": "knowledge_base.records|mcp|lessons-awaiting-review",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "knowledge_base.records",
+        "module": "knowledge_base",
+        "case": "lessons-awaiting-review",
+        "cached": false,
+        "tool": "majordomus_knowledge_records"
+      },
+      {
+        "key": "knowledge_base.records|http|all",
+        "kind": "capability",
+        "transport": "http",
+        "id": "knowledge_base.records",
+        "module": "knowledge_base",
+        "case": "all",
+        "cached": false,
+        "route": "GET /api/v1/knowledge/records"
+      },
+      {
+        "key": "knowledge_base.records|http|lessons-awaiting-review",
+        "kind": "capability",
+        "transport": "http",
+        "id": "knowledge_base.records",
+        "module": "knowledge_base",
+        "case": "lessons-awaiting-review",
+        "cached": false,
+        "route": "GET /api/v1/knowledge/records"
       },
       {
         "key": "knowledge_base.status|direct|default",
@@ -155236,6 +155774,27 @@
           "cases": 1
         },
         {
+          "subject": "knowledge_base.records",
+          "module": "knowledge_base",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "knowledge_base.records",
+          "module": "knowledge_base",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "knowledge_base.records",
+          "module": "knowledge_base",
+          "transport": "http",
+          "state": "covered",
+          "cases": 2
+        },
+        {
           "subject": "knowledge_base.status",
           "module": "knowledge_base",
           "transport": "direct",
@@ -157572,22 +158131,22 @@
       ],
       "tallies": {
         "direct": {
-          "required": 202,
-          "covered": 171,
+          "required": 203,
+          "covered": 172,
           "missing": 0,
           "waived": 31,
           "inapplicable": 0
         },
         "http": {
-          "required": 197,
-          "covered": 171,
+          "required": 198,
+          "covered": 172,
           "missing": 0,
           "waived": 26,
           "inapplicable": 0
         },
         "mcp": {
-          "required": 192,
-          "covered": 167,
+          "required": 193,
+          "covered": 168,
           "missing": 0,
           "waived": 25,
           "inapplicable": 0
@@ -157600,8 +158159,8 @@
           "inapplicable": 0
         },
         "total": {
-          "required": 605,
-          "covered": 523,
+          "required": 608,
+          "covered": 526,
           "missing": 0,
           "waived": 82,
           "inapplicable": 0
