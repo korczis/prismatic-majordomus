@@ -665,24 +665,12 @@ jobs:
         env:
           PUBLISH: ${{ steps.publish.outcome }}
           SERVED: ${{ steps.public.outcome }}
-        run: |
-          if [ "$PUBLISH" = success ]; then
-            echo "::notice title=Published::gh-pages was pushed with $GITHUB_SHA before this run ended"
-            printf '\nPublication: **pushed** — gh-pages carries %s.\n' "$GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
-            # The public probe's verdict, stated rather than left as a grey icon inside a
-            # green run. The probe stays continue-on-error (see its step for why), so without
-            # this line a site still serving an older commit after ten minutes looked, from
-            # the run page, exactly like a site that served this one.
-            if [ "$SERVED" = success ]; then
-              printf 'Public site: **serves** %s.\n' "$GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
-            else
-              echo "::warning title=Public site not verified::after the probe's window the public site did not serve $GITHUB_SHA (probe: ${SERVED:-not run}); pages-live will refuse if it still does not"
-              printf 'Public site: **not verified** (probe: %s) — it did not serve %s within the window.\n' "${SERVED:-not run}" "$GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
-            fi
-          else
-            echo "::error title=Not published::this run ended (publish: $PUBLISH) without pushing gh-pages; the site still serves an older commit"
-            printf '\nPublication: **not pushed** (publish step: %s). The site still serves an older\ncommit; if no newer run of this workflow follows, the pages-live gate will refuse.\n' "$PUBLISH" >> "$GITHUB_STEP_SUMMARY"
-          fi
+          GH_TOKEN: ${{ github.token }}
+        # Stated by the tool and not here, so a person and this run say the same thing and a
+        # case can break the wait and read the three signals (I2661): the summary line, the
+        # annotation, and a `not served` row in the timing table naming what production does
+        # serve and, when GitHub's own build is still waiting, since when.
+        run: scripts/pages publication --commit "$GITHUB_SHA" --published "$PUBLISH" --served "$SERVED" --timings "$MJ_PAGES_TIMINGS"
 
       # The measurement of a deployment that has already happened — and therefore a report,
       # for the same reason the publication probe above is `continue-on-error`.

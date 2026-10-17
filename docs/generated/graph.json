@@ -38460,10 +38460,14 @@
             "test/cases"
           ],
           "slug": "idle-incremental-sessions-are-pruned",
-          "updated_at": "2026-10-14",
+          "started_at": "2026-10-17T09:23:02Z",
+          "started_event": "sha256:1a4e365de0c9130feaed2da04eff06eca8d9a04224d08f7c1d56e080dd07bec3",
+          "updated_at": "2026-10-17T09:23:35Z",
           "validation": [
             "bin/majordomus plan validate"
-          ]
+          ],
+          "verified_at": "2026-10-17T09:23:19Z",
+          "verified_event": "sha256:2fd71e9839232a02785977863f0178c5d5248850b34b5c415a512e51178d6c23"
         }
       },
       {
@@ -39609,6 +39613,104 @@
         }
       },
       {
+        "id": "majordomus://issue/I2781",
+        "kind": "issue",
+        "label": "I2781",
+        "summary": "An issue is started, verified and finished from the intent workspace",
+        "route": "/cockpit/objects/issue/i2781",
+        "source": ".ai/repo/project/issues/I2781.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A ready issue is started from /ui/idd and its status reads ACTIVE on the next paint",
+            "A move the plan refuses shows the refusal's reason and changes nothing",
+            "A double click starts one execution",
+            "A request from another origin is refused by the server, not by the page"
+          ],
+          "created_at": "2026-10-16",
+          "current_state": "Moves are offered on /cockpit/plan/issues/<id> only.",
+          "depends_on": [
+            "I2780"
+          ],
+          "desired_state": "/ui/idd?issue=<id> offers the moves with the result in place; the screen reads again after a move succeeds.",
+          "evidence_required": [
+            "ui_idd_moves_tests"
+          ],
+          "milestone": "idd-workspace",
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui",
+            "apps/majordomus-cli/src/cockpit/plan.rs",
+            "apps/majordomus-cli/tests/ui_idd_moves.rs",
+            "share/ui/ui.js",
+            "share/cockpit/api.js",
+            "share/cockpit/moves.js",
+            "share/cockpit/plan.js",
+            "share/cockpit/cockpit.js",
+            "docs/MAJORDOMUS_UI.md"
+          ],
+          "serves": [
+            "the-owner-directs-work-from-the-ui#next-move-is-reachable"
+          ],
+          "slug": "an-issue-moves-from-the-workspace",
+          "updated_at": "2026-10-16",
+          "validation": [
+            "majordomus plan validate",
+            "cargo test --lib ui::idd",
+            "cargo test --test ui_idd_moves"
+          ],
+          "why": "The first slice links a ready issue to the Cockpit's move; the criterion asks for the move where the work is read, and the form, its script and the capability already exist."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2783",
+        "kind": "issue",
+        "label": "I2783",
+        "summary": "The intent workspace reads itself again when a move ends on its server",
+        "route": "/cockpit/objects/issue/i2783",
+        "source": ".ai/repo/project/issues/I2783.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The workspace page names /events and the socket module, and the module is served",
+            "A move started through executions.start ends on /events and the screen read again reads its new status",
+            "No other screen declares that it follows executions",
+            "A snapshot opens no channel"
+          ],
+          "created_at": "2026-10-17",
+          "current_state": "/ui screens read again every minute; only the Cockpit follows /events.",
+          "depends_on": [
+            "I2781"
+          ],
+          "desired_state": "/ui/idd reads again within seconds of an execution ending on its server, says what its channel is doing, and still refreshes by the minute for what the channel does not carry.",
+          "evidence_required": [
+            "ui_idd_live_tests"
+          ],
+          "milestone": "idd-workspace",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui",
+            "apps/majordomus-cli/tests/ui_idd_live.rs",
+            "share/ui/ui.js",
+            "docs",
+            "site",
+            ".ai/repo/project"
+          ],
+          "serves": [
+            "the-owner-directs-work-from-the-ui#the-workspace-follows-moves"
+          ],
+          "slug": "the-workspace-follows-the-plan-live",
+          "updated_at": "2026-10-17",
+          "validation": [
+            "majordomus plan validate",
+            "cargo test --test ui_idd_live",
+            "cargo test --lib ui::"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I2786",
         "kind": "issue",
         "label": "I2786",
@@ -39685,6 +39787,51 @@
           "updated_at": "2026-10-17",
           "validation": [
             "majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2789",
+        "kind": "issue",
+        "label": "I2789",
+        "summary": "The intent workspace shows why an intent stands where it stands and every move made on its issues",
+        "route": "/cockpit/objects/issue/i2789",
+        "source": ".ai/repo/project/issues/I2789.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The workspace's first paint does not ask intent_realization.explain; its placeholder names the panel route, and the route answers the intent's standing",
+            "Each unmet criterion is shown with its evidence state, its reproduce command and the issues serving it, exactly as the capability answers",
+            "A plan.transition started on one of the intent's issues is listed on the workspace, leading to its execution, and one on another intent's issue is not"
+          ],
+          "created_at": "2026-10-17",
+          "current_state": "intent_realization.explain and executions.list answer both questions; no screen reads them for an intent.",
+          "depends_on": [
+            "I2783"
+          ],
+          "desired_state": "/ui/idd shows the intent's standing from its own panel route and the moves made on its issues, both read only from those capabilities.",
+          "evidence_required": [
+            "ui_idd_evidence_tests"
+          ],
+          "milestone": "idd-workspace",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui",
+            "apps/majordomus-cli/tests/ui_idd_evidence.rs",
+            ".ai/repo/project",
+            "docs",
+            "site",
+            ".gitattributes"
+          ],
+          "serves": [
+            "the-owner-directs-work-from-the-ui#the-workspace-shows-why-and-what-moved"
+          ],
+          "slug": "the-workspace-shows-its-evidence",
+          "updated_at": "2026-10-17",
+          "validation": [
+            "majordomus plan validate",
+            "cargo test --test ui_idd_evidence"
           ]
         }
       },
@@ -57334,6 +57481,13 @@
         "source": "test/cases/3075_knowledge_validate_judges_the_graph.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3080_idle_incremental_sessions_are_pruned.sh",
+        "kind": "test",
+        "label": "test/cases/3080_idle_incremental_sessions_are_pruned.sh",
+        "route": "/cockpit/objects/test/test-cases-3080-idle-incremental-sessions-are-pruned-sh",
+        "source": "test/cases/3080_idle_incremental_sessions_are_pruned.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/3084_a_case_near_its_budget_is_named.sh",
         "kind": "test",
         "label": "test/cases/3084_a_case_near_its_budget_is_named.sh",
@@ -57374,6 +57528,13 @@
         "label": "test/cases/3110_a_served_surface_names_its_checkout.sh",
         "route": "/cockpit/objects/test/test-cases-3110-a-served-surface-names-its-checkout-sh",
         "source": "test/cases/3110_a_served_surface_names_its_checkout.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3112_a_publication_that_did_not_arrive_is_a_finding.sh",
+        "kind": "test",
+        "label": "test/cases/3112_a_publication_that_did_not_arrive_is_a_finding.sh",
+        "route": "/cockpit/objects/test/test-cases-3112-a-publication-that-did-not-arrive-is-a-finding-sh",
+        "source": "test/cases/3112_a_publication_that_did_not_arrive_is_a_finding.sh"
       },
       {
         "id": "majordomus://test/test/cases/3113_the_adoption_footprint_is_inventoried.sh",
@@ -57430,6 +57591,20 @@
         "label": "test/cases/318_a_partial_sweep_says_so.sh",
         "route": "/cockpit/objects/test/test-cases-318-a-partial-sweep-says-so-sh",
         "source": "test/cases/318_a_partial_sweep_says_so.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3196_stale_crate_artifacts_are_pruned_under_cargos_lock.sh",
+        "kind": "test",
+        "label": "test/cases/3196_stale_crate_artifacts_are_pruned_under_cargos_lock.sh",
+        "route": "/cockpit/objects/test/test-cases-3196-stale-crate-artifacts-are-pruned-under-cargos-lock-sh",
+        "source": "test/cases/3196_stale_crate_artifacts_are_pruned_under_cargos_lock.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3197_idle_private_build_dirs_are_reclaimed.sh",
+        "kind": "test",
+        "label": "test/cases/3197_idle_private_build_dirs_are_reclaimed.sh",
+        "route": "/cockpit/objects/test/test-cases-3197-idle-private-build-dirs-are-reclaimed-sh",
+        "source": "test/cases/3197_idle_private_build_dirs_are_reclaimed.sh"
       },
       {
         "id": "majordomus://test/test/cases/31_command_coverage.sh",
@@ -84351,6 +84526,36 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2781",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2781",
+        "target": "majordomus://issue/I2780",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2781",
+        "target": "majordomus://milestone/idd-workspace",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2783",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2783",
+        "target": "majordomus://issue/I2781",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2783",
+        "target": "majordomus://milestone/idd-workspace",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I2786",
         "target": "kind:issue",
         "kind": "is_a"
@@ -84373,6 +84578,21 @@
       {
         "source": "majordomus://issue/I2787",
         "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2789",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2789",
+        "target": "majordomus://issue/I2783",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2789",
+        "target": "majordomus://milestone/idd-workspace",
         "kind": "belongs_to"
       },
       {
@@ -89021,6 +89241,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3080_idle_incremental_sessions_are_pruned.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/3084_a_case_near_its_budget_is_named.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -89047,6 +89272,11 @@
       },
       {
         "source": "majordomus://test/test/cases/3110_a_served_surface_names_its_checkout.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3112_a_publication_that_did_not_arrive_is_a_finding.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -89087,6 +89317,16 @@
       },
       {
         "source": "majordomus://test/test/cases/318_a_partial_sweep_says_so.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3196_stale_crate_artifacts_are_pruned_under_cargos_lock.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3197_idle_private_build_dirs_are_reclaimed.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -94377,8 +94617,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2958,
-      "edges": 6499,
+      "nodes": 2965,
+      "edges": 6512,
       "acyclic": false,
       "truncated": false
     }
