@@ -6,7 +6,7 @@
     "version": "0.27.0"
   },
   "registry": {
-    "fingerprint": "d726ce1c958611c98ff6ec1a319ffdb7dc8413dcce2f71d8d30f3f7cc1ee3354",
+    "fingerprint": "2b2a0d13fae450968280d214d68ae6cb145f6e0b01f0e32a4d4240e4b6019820",
     "summary": {
       "total": 2457,
       "builtin": 202,
@@ -83600,7 +83600,7 @@
     ]
   },
   "index": {
-    "fingerprint": "7e71116f3bec60130755d97a2dc31866bcf0fe1f6f2d36a405b8c5e55c4976fd",
+    "fingerprint": "b2cde11109803a771b4f186828939a4c457fccccf0aaa2adfecd33136c22a511",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -89688,7 +89688,7 @@
         "title": "`majordomus ui` — the product",
         "path": "docs/MAJORDOMUS_UI.md",
         "source_class": "document",
-        "bytes": 37088
+        "bytes": 37507
       },
       {
         "uri": "majordomus://document/docs/MCP.md",
@@ -92777,7 +92777,7 @@
         "path": ".ai/repo/project/gaps/the-owner-directs-work-from-the-ui.yaml",
         "section": "project",
         "source_class": "gap",
-        "bytes": 3273
+        "bytes": 3798
       },
       {
         "uri": "majordomus://implementation/bin/majordomus",
@@ -93248,7 +93248,7 @@
         "path": ".ai/repo/project/intents/the-owner-directs-work-from-the-ui.yaml",
         "section": "project",
         "source_class": "intent",
-        "bytes": 3608
+        "bytes": 4117
       },
       {
         "uri": "majordomus://issue/I0001",
@@ -97644,11 +97644,11 @@
         "kind": "issue",
         "identity": "I2808",
         "title": "Every milestone of the open intent says what remains before it is DONE",
-        "description": "For each milestone of the open intent, show on /ui/idd what stands between it and DONE as the plan derives it: each issue not DONE with its status, each evidence token not covered with the command its issue's validation names, and the milestone's own evidence; read from plan.show and plan.issues, deciding nothing.",
+        "description": "For each milestone of the open intent, show on /ui/idd what stands between it and DONE as the plan derives it: each issue not DONE with its status, each evidence token not covered with the command its issue's validation names, and the milestone's own evidence; read from devtask.milestone and devtask.issue on its own panel route (/ui/panels/remaining?intent=<id>), because asking every issue takes seconds, deciding nothing.",
         "path": ".ai/repo/project/issues/I2808.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1583
+        "bytes": 1660
       },
       {
         "uri": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
@@ -152456,6 +152456,14 @@
         "module": "system",
         "cached": true,
         "route": "GET /ui/panels/standing"
+      },
+      {
+        "key": "system.http.ui.panels.remaining",
+        "kind": "page",
+        "transport": "http",
+        "module": "system",
+        "cached": true,
+        "route": "GET /ui/panels/remaining"
       }
     ],
     "coverage": {

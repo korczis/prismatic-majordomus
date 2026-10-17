@@ -50,6 +50,10 @@ const MOVES: Source = Source::with("executions.list", r#"{"capability":"plan.tra
 /// it (I2789).
 pub const STANDING_PANEL: &str = "/ui/panels/standing";
 
+/// The route that answers what remains before each of the open intent's milestones is DONE:
+/// its own route, because `devtask.issue` is asked of every open issue (I2808).
+pub const REMAINING_PANEL: &str = "/ui/panels/remaining";
+
 /// The stages, in the order the screen prefers them when the link names no intent: the
 /// first intent `intents.list` reports at the earliest of these is opened. A presentation
 /// rule, printed on the screen, never a status.
@@ -204,6 +208,7 @@ pub fn screen(ctx: &Context, query: &[(String, String)]) -> View {
             grid = grid
                 .child(wide(standing_placeholder(id)))
                 .child(wide(milestones(roadmap, intent)))
+                .child(wide(remaining_placeholder(id)))
                 .child(wide(issue_table(issues, waves, next, &mine, id)))
                 .child(wide(moves_panel(moves, &mine)))
                 .child(wide(wave_panel(waves, &mine)))
@@ -703,6 +708,184 @@ fn propose_panel(ctx: &Context) -> El {
         "What the next work is for: intents.propose, as an execution on this server.",
         body,
         &[&propose],
+    )
+}
+
+/// Where what remains of intent `id`'s milestones is answered.
+pub fn remaining_href(id: &str) -> String {
+    format!("{REMAINING_PANEL}?intent={id}")
+}
+
+/// The remaining panel as the screen draws it before it is asked (I2808).
+fn remaining_placeholder(id: &str) -> El {
+    el("section")
+        .class("mj-ui-panel")
+        .attr("aria-label", "What remains before each milestone is done")
+        .attr("data-panel-src", remaining_href(id))
+        .attr("aria-busy", "false")
+        .child(
+            el("header").class("mj-ui-panel-head").child(
+                el("div")
+                    .class("mj-ui-panel-heading")
+                    .child(el("h2").class("mj-ui-panel-title").text("What remains before each milestone is done"))
+                    .child(el("p").class("mj-ui-panel-sub").text(
+                        "Asked on its own: devtask reads every open issue's record and its evidence, which would hold this screen back.",
+                    )),
+            ),
+        )
+        .child(
+            el("p").class("mj-ui-panel-body").child(
+                el("a")
+                    .class("mj-ui-link")
+                    .attr("href", remaining_href(id))
+                    .text("Open what remains before each milestone is done"),
+            ),
+        )
+}
+
+/// The values of a devtask field (`{ "values": [...] }`).
+fn values(v: &Value, pointer: &str) -> Vec<String> {
+    v.pointer(pointer)
+        .and_then(Value::as_array)
+        .map(|xs| {
+            xs.iter()
+                .filter_map(Value::as_str)
+                .map(str::to_string)
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
+/// What stands between each milestone of the intent the query names and DONE, from
+/// `devtask.milestone` (which issues are complete) and `devtask.issue` (each open issue's
+/// readiness, the evidence its record requires and does not hold, and its validation). The
+/// screen decides nothing: every word is the capabilities'.
+pub fn remaining_panel(ctx: &Context, query: &[(String, String)]) -> View {
+    const TITLE: &str = "What remains before each milestone is done";
+    let Some(id) = named_intent(query) else {
+        return View::new(
+            TITLE,
+            panel(
+                TITLE,
+                "One intent's milestones, from devtask.",
+                nothing("Name an intent: open it from the intent workspace."),
+                &[],
+            ),
+        );
+    };
+    let answers = ask_all(ctx, &[INTENTS]);
+    let intents = &answers[&INTENTS];
+    let named: Vec<String> = list(intents, "/intents")
+        .iter()
+        .find(|i| text(i, "id") == id)
+        .and_then(|i| i.get("milestones").and_then(Value::as_array).cloned())
+        .map(|ms| ms.iter().map(|m| text(m, "id")).collect())
+        .unwrap_or_default();
+    let mut cited: Vec<Answer> = Vec::new();
+    let body = unanswered(intents).unwrap_or_else(|| {
+        if named.is_empty() {
+            return nothing(&format!("{id} names no milestone, so nothing stands between it and done."));
+        }
+        let mut stack = el("div").class("mj-ui-stack");
+        for milestone in &named {
+            let graph = super::source::ask_input(
+                ctx,
+                "devtask.milestone",
+                serde_json::json!({ "milestone": milestone }),
+            );
+            let section = unanswered(&graph).unwrap_or_else(|| {
+                let g = graph.ok().cloned().unwrap_or(Value::Null);
+                let complete: BTreeSet<String> = values(&g, "/complete").into_iter().collect();
+                let cancelled: BTreeSet<String> = values(&g, "/cancelled").into_iter().collect();
+                let open: Vec<String> = g
+                    .get("nodes")
+                    .and_then(Value::as_array)
+                    .map(|ns| {
+                        ns.iter()
+                            .map(|n| text(n, "issue"))
+                            .filter(|i| !complete.contains(i) && !cancelled.contains(i))
+                            .collect()
+                    })
+                    .unwrap_or_default();
+                let status = g
+                    .pointer("/status/value")
+                    .and_then(Value::as_str)
+                    .unwrap_or("")
+                    .to_string();
+                let head = el("p")
+                    .class("mj-ui-badges")
+                    .child(chip(super::milestone::href(milestone), milestone.clone()))
+                    .child(super::view::state(&serde_json::json!({ "status": status }), "status"))
+                    .child(el("span").class("mj-ui-dim").text(format!(
+                        "{} of {} issue(s) complete",
+                        complete.len(),
+                        g.pointer("/counts/total").and_then(Value::as_u64).unwrap_or(0)
+                    )));
+                if open.is_empty() {
+                    return el("div").class("mj-ui-stack").child(head).child(el("p").text(
+                        "No issue remains: every issue of this milestone is complete or cancelled.",
+                    ));
+                }
+                let rows = open
+                    .iter()
+                    .map(|issue| {
+                        let task = super::source::ask_input(
+                            ctx,
+                            "devtask.issue",
+                            serde_json::json!({ "issue": issue }),
+                        );
+                        let t = task.ok().cloned().unwrap_or(Value::Null);
+                        let present: BTreeSet<String> =
+                            values(&t, "/declaration/evidence_present/values").into_iter().collect();
+                        let missing: Vec<String> =
+                            values(&t, "/declaration/evidence_required/values")
+                                .into_iter()
+                                .filter(|token| !present.contains(token))
+                                .collect();
+                        let validation = values(&t, "/declaration/validation/values");
+                        el("tr")
+                            .attr("id", format!("remaining-{issue}"))
+                            .child(el("td").child(chip(issue_href(issue), issue.clone())))
+                            .child(el("td").child(super::view::state(
+                                &serde_json::json!({ "state": t.pointer("/readiness/state").and_then(Value::as_str).unwrap_or("") }),
+                                "state",
+                            )))
+                            .child(el("td").text(
+                                t.pointer("/readiness/reason").and_then(Value::as_str).unwrap_or(""),
+                            ))
+                            .child(el("td").child(if missing.is_empty() {
+                                el("span").class("mj-ui-dim").text("none")
+                            } else {
+                                el("p").class("mj-ui-badges").children(
+                                    missing.into_iter().map(|m| el("code").class("mj-ui-mono").text(m)),
+                                )
+                            }))
+                            .child(el("td").child(el("ul").class("mj-ui-list").children(
+                                validation.into_iter().map(|c| el("li").child(el("code").class("mj-ui-mono").text(c))),
+                            )))
+                    })
+                    .collect::<Vec<_>>();
+                el("div").class("mj-ui-stack").child(head).child(table(
+                    &["Issue", "Readiness", "Why", "Evidence not held", "Validation"],
+                    rows,
+                    "",
+                ))
+            });
+            stack = stack.child(section);
+            cited.push(graph);
+        }
+        stack
+    });
+    let mut sources: Vec<&Answer> = vec![intents];
+    sources.extend(cited.iter().take(1));
+    View::new(
+        TITLE,
+        panel(
+            TITLE,
+            &format!("{id}: each milestone's open issues, their readiness and the evidence they still owe, as devtask derives them."),
+            body,
+            &sources,
+        ),
     )
 }
 

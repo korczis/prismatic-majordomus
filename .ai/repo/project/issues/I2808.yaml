@@ -5,9 +5,10 @@ slug: a-milestone-says-what-remains
 priority: p1
 profile: implementation
 parallel_safe: false
-objective: "For each milestone of the open intent, show on /ui/idd what stands between it and DONE as the plan derives it: each issue not DONE with its status, each evidence token not covered with the command its issue's validation names, and the milestone's own evidence; read from plan.show and plan.issues, deciding nothing."
-why: "Closing a milestone is the step the owner asks for most, and what remains is read only by opening each issue's record. Its criterion is added to the-owner-directs-work-from-the-ui with its test, when the slice starts."
-serves: []
+objective: "For each milestone of the open intent, show on /ui/idd what stands between it and DONE as the plan derives it: each issue not DONE with its status, each evidence token not covered with the command its issue's validation names, and the milestone's own evidence; read from devtask.milestone and devtask.issue on its own panel route (/ui/panels/remaining?intent=<id>), because asking every issue takes seconds, deciding nothing."
+why: "Closing a milestone is the step the owner asks for most, and what remains is read only by opening each issue's record."
+serves:
+  - the-owner-directs-work-from-the-ui#a-milestone-says-what-remains
 current_state: "A milestone's remaining evidence is read issue by issue, in its records or with plan show."
 desired_state: "The workspace lists, per milestone, everything that keeps it from DONE, each with the command that settles it."
 scope:

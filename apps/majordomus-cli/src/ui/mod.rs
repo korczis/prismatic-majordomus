@@ -229,6 +229,7 @@ pub(crate) const PANELS: &[&str] = &[
     deployments::DELIVERY_PANEL,
     prs::PANEL,
     idd::STANDING_PANEL,
+    idd::REMAINING_PANEL,
 ];
 
 /// The UI over the repository as it is now.
@@ -379,6 +380,7 @@ impl Ui {
             deployments::DELIVERY_PANEL => deployments::delivery_panel(&ctx),
             prs::PANEL => prs::panel_view(&ctx, &req.query),
             idd::STANDING_PANEL => idd::standing_panel(&ctx, &req.query),
+            idd::REMAINING_PANEL => idd::remaining_panel(&ctx, &req.query),
             other => shell::not_found(other),
         };
         if behind {
