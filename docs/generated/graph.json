@@ -39293,6 +39293,48 @@
         }
       },
       {
+        "id": "majordomus://issue/I2798",
+        "kind": "issue",
+        "label": "I2798",
+        "summary": "A cancelled MCP call stops, and the client is told it stopped",
+        "route": "/cockpit/objects/issue/i2798",
+        "source": ".ai/repo/project/issues/I2798.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A long-running tool call named by notifications/cancelled stops within the declared bound on stdio, over the bridge and over Streamable HTTP, each proved by a real-process test",
+            "A cancelled call delivers no late result, and the session answers the next request",
+            "A cancelled writer is reported as completed, not started, or unknown, never silently",
+            "A cancellation naming an unknown or already answered id changes nothing"
+          ],
+          "created_at": "2026-10-17",
+          "current_state": "notifications/cancelled is accepted and ignored on stdio, on the bridge and on the Streamable HTTP endpoint; a cancelled call runs to completion and its result is delivered.",
+          "depends_on": [],
+          "evidence_required": [
+            "cancellation_test"
+          ],
+          "milestone": "mcp-transports-are-reliable",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mcp",
+            "apps/majordomus-cli/src/commands/mcp.rs",
+            "apps/majordomus-cli/src/http/mcp.rs",
+            "apps/majordomus-cli/src/execution/engine.rs",
+            "apps/majordomus-cli/tests/mcp_conformance.rs",
+            "apps/majordomus-cli/tests/mcp_conformance_http.rs",
+            "apps/majordomus-cli/tests/mcp_shared.rs",
+            "docs/MCP.md"
+          ],
+          "slug": "a-cancelled-mcp-call-stops",
+          "updated_at": "2026-10-17",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test mcp_conformance --test mcp_conformance_http --test mcp_shared"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "label": "a-commit-stood-behind-a-build-lock",
@@ -83604,6 +83646,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2798",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2798",
+        "target": "majordomus://milestone/mcp-transports-are-reliable",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -93500,8 +93552,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2935,
-      "edges": 6437,
+      "nodes": 2936,
+      "edges": 6439,
       "acyclic": false,
       "truncated": false
     }
