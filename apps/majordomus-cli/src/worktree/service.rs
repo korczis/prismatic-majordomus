@@ -1038,8 +1038,8 @@ impl WorktreeService {
 
     fn create_inner(&self, request: &CreateRequest, ensure: bool) -> Result<CreateReport> {
         let name = BranchName::parse(&request.branch)?;
+        // a branch with no place in the container is refused before the network is asked
         let target = path::expected_path(&self.container.path, &name)?;
-        let resolved_target = ResolvedPath::of(&target);
         let primary = self.identity.primary_worktree().path.clone();
 
         // The network is asked before the lock is taken, so a slow remote never holds every
@@ -1051,20 +1051,21 @@ impl WorktreeService {
         } else {
             None
         };
-        self.create_locked(request, ensure, planned)
+        self.create_locked(request, ensure, name, target, planned)
     }
 
-    /// The create under the lock, given what was planned before it: `planned` is `None` when
+    /// The create under the lock, given the branch and its place as `create_inner` checked
+    /// them and what was planned before it: `planned` is `None` when
     /// the branch existed (or could not be asked about) before the lock, and the start is
     /// then planned here if the branch is gone by the time the lock is held.
     fn create_locked(
         &self,
         request: &CreateRequest,
         ensure: bool,
+        name: BranchName,
+        target: PathBuf,
         planned: Option<StartPoint>,
     ) -> Result<CreateReport> {
-        let name = BranchName::parse(&request.branch)?;
-        let target = path::expected_path(&self.container.path, &name)?;
         let resolved_target = ResolvedPath::of(&target);
         let primary = self.identity.primary_worktree().path.clone();
 
@@ -1951,6 +1952,11 @@ mod tests {
         git_bytes(&repo, &[b"remote", b"add", b"o\xff", b"/nowhere"]);
         assert!(trunk_remote(&repo.primary, "master").is_err());
         assert!(svc.create(&request("feature/odd", None)).is_err());
+        // and so is one whose start is planned only under the lock
+        let (name, target) = placed(&svc, "feature/odd");
+        assert!(svc
+            .create_locked(&request("feature/odd", None), false, name, target, None)
+            .is_err());
         assert!(!svc
             .expected_path_of("feature/odd")
             .expect("a path")
@@ -2107,14 +2113,22 @@ mod tests {
 
     /// A branch deleted between the look taken before the lock and the one taken under it is
     /// planned under the lock, rather than created from nowhere.
+    /// A branch and the place `create_inner` would have checked for it.
+    fn placed(svc: &WorktreeService, branch: &str) -> (BranchName, PathBuf) {
+        let name = BranchName::parse(branch).expect("a branch name");
+        let target = path::expected_path(&svc.container.path, &name).expect("a place");
+        (name, target)
+    }
+
     #[test]
     fn a_branch_deleted_while_the_create_waits_for_the_lock_is_planned_under_it() {
         // The branch existed when the create looked before the lock, so nothing was planned;
         // by the time the lock is held it is gone, and the start is planned under the lock.
         let repo = Repo::new();
         let svc = repo.service();
+        let (name, target) = placed(&svc, "feature/raced");
         let made = svc
-            .create_locked(&request("feature/raced", None), false, None)
+            .create_locked(&request("feature/raced", None), false, name, target, None)
             .expect("created");
         assert!(made.branch_created);
         assert_eq!(
