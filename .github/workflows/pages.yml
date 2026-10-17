@@ -338,8 +338,14 @@ jobs:
         run: |
           scripts/pages evidence --commit "$GITHUB_SHA" --out "$RUNNER_TEMP/snapshot-evidence.json" --ledger-out .ai/repo/evidence/ledger.json
           scripts/pages published-evidence --bin apps/majordomus-cli/target/debug/majordomus
+      # A page that asks the forge while it is read (the monitor, the integration queue, the
+      # pull requests) asks through gh, and gh in a workflow answers only with a token. Without
+      # one, the monitor was published as "Nothing happened in the last six hours" beside its
+      # own "set the GH_TOKEN environment variable" (I2964): every read step carries it.
       - name: the UI, read once at this commit
         timeout-minutes: 22
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: apps/majordomus-cli/target/debug/majordomus web report ui-snapshot --limit 4000 --budget-seconds 1200
       # The Cockpit by the same exporter (ADR 0147), after the UI: it reads first the pages the
       # UI's snapshot links to, and then leads the UI's links to the pages it wrote, so the
@@ -348,6 +354,8 @@ jobs:
       # publication holds the routes and what the UI cites, not the whole registry.
       - name: the Cockpit, read once at this commit
         timeout-minutes: 9
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: apps/majordomus-cli/target/debug/majordomus web report cockpit-snapshot --limit 1500 --budget-seconds 360
       - uses: actions/upload-artifact@v4
         with:

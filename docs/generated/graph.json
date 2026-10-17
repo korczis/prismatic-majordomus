@@ -39689,6 +39689,40 @@
         }
       },
       {
+        "id": "majordomus://issue/I2964",
+        "kind": "issue",
+        "label": "I2964",
+        "summary": "Every step that reads a surface into the published snapshot can ask the forge",
+        "route": "/cockpit/objects/issue/i2964",
+        "source": ".ai/repo/project/issues/I2964.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every pages.yml step that runs web report carries GH_TOKEN",
+            "Case 3362 fails on a workflow where a snapshot read step lacks it, naming the step"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "The two snapshot read steps run without GH_TOKEN; every page that asks gh while it is read publishes an empty or failed source.",
+          "depends_on": [],
+          "desired_state": "Both read steps carry GH_TOKEN; case 3362 refuses a pages.yml in which any step running `web report` lacks it, and proves its own parse by finding a mutated step.",
+          "evidence_required": [
+            "case_every_snapshot_read_can_ask_the_forge"
+          ],
+          "milestone": "development-runtime",
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            ".github/workflows/pages.yml",
+            "test/cases/3362_every_snapshot_read_can_ask_the_forge.sh"
+          ],
+          "slug": "the-snapshot-reads-the-forge-with-a-token",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "label": "a-commit-stood-behind-a-build-lock",
@@ -57509,6 +57543,13 @@
         "label": "test/cases/335_every_link_resolves.sh",
         "route": "/cockpit/objects/test/test-cases-335-every-link-resolves-sh",
         "source": "test/cases/335_every_link_resolves.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3362_every_snapshot_read_can_ask_the_forge.sh",
+        "kind": "test",
+        "label": "test/cases/3362_every_snapshot_read_can_ask_the_forge.sh",
+        "route": "/cockpit/objects/test/test-cases-3362-every-snapshot-read-can-ask-the-forge-sh",
+        "source": "test/cases/3362_every_snapshot_read_can_ask_the_forge.sh"
       },
       {
         "id": "majordomus://test/test/cases/336_every_control_is_claimed.sh",
@@ -84399,6 +84440,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2964",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2964",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -89155,6 +89206,11 @@
       },
       {
         "source": "majordomus://test/test/cases/335_every_link_resolves.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3362_every_snapshot_read_can_ask_the_forge.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -94405,8 +94461,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2959,
-      "edges": 6500,
+      "nodes": 2961,
+      "edges": 6503,
       "acyclic": false,
       "truncated": false
     }
