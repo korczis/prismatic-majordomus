@@ -225,4 +225,55 @@ mod tests {
         );
         assert_eq!(redact("GET /api/v1/health"), "GET /api/v1/health");
     }
+
+    /// A writer that refuses every write, counting how often it was asked.
+    struct Refusing(usize);
+
+    impl fmt::Write for Refusing {
+        fn write_str(&mut self, _: &str) -> fmt::Result {
+            self.0 += 1;
+            Err(fmt::Error)
+        }
+    }
+
+    /// A subscriber that formats each event's fields into a [`Refusing`] writer and keeps
+    /// the result and how many writes were attempted. A scoped default, so it never meets
+    /// the process-wide subscriber another test installs.
+    struct FormatsIntoARefusal(std::sync::Mutex<Option<(fmt::Result, usize)>>);
+
+    impl Subscriber for FormatsIntoARefusal {
+        fn enabled(&self, _: &tracing::Metadata<'_>) -> bool {
+            true
+        }
+        fn new_span(&self, _: &tracing::span::Attributes<'_>) -> tracing::span::Id {
+            tracing::span::Id::from_u64(1)
+        }
+        fn record(&self, _: &tracing::span::Id, _: &tracing::span::Record<'_>) {}
+        fn record_follows_from(&self, _: &tracing::span::Id, _: &tracing::span::Id) {}
+        fn event(&self, event: &tracing::Event<'_>) {
+            let mut refusing = Refusing(0);
+            let result = RedactedFields.format_fields(Writer::new(&mut refusing), event);
+            *self.0.lock().unwrap() = Some((result, refusing.0));
+        }
+        fn enter(&self, _: &tracing::span::Id) {}
+        fn exit(&self, _: &tracing::span::Id) {}
+    }
+
+    /// Once a write has failed, the fields after it are not written at all: the failure is
+    /// what the formatter returns, and the writer is asked nothing more.
+    #[test]
+    fn a_failed_write_ends_the_fields_that_follow_it() {
+        let seen = std::sync::Arc::new(FormatsIntoARefusal(std::sync::Mutex::new(None)));
+        tracing::subscriber::with_default(std::sync::Arc::clone(&seen), || {
+            tracing::error!(first = "a", second = "b", third = 3, "a message");
+        });
+        let (result, attempts) = seen
+            .0
+            .lock()
+            .unwrap()
+            .take()
+            .expect("the event was formatted");
+        assert!(result.is_err());
+        assert_eq!(attempts, 1, "only the first field was written");
+    }
 }
