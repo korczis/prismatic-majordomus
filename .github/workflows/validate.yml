@@ -1082,6 +1082,12 @@ jobs:
         run: scripts/ci/timed --bound 600 ui-audit ui-budget timings.tsv "$MAJORDOMUS_BIN" bench system.http. --transport system --profile ci --no-write --check
       - name: audit the UI in a browser
         run: scripts/ci/timed --bound 3600 ui-audit ui-audit timings.tsv scripts/ui audit --report
+      # The cases whose subject is the live UI driven in a browser, which the suite runners do
+      # not have: each declares "# majordomus-skip-runs-in: ui" and is excused there only
+      # because it is held here, against the executable this job built, with no skip excused
+      # (3220, the IDD loop walked end to end).
+      - name: the cases that drive the UI in a browser
+        run: scripts/ci/timed --bound 900 ui-audit ui-cases timings.tsv bash test/run.sh --no-skips --runs-in ui
       - if: always()
         uses: actions/upload-artifact@v4
         with:

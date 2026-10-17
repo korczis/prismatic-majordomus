@@ -28,6 +28,10 @@ satisfaction:
     criterion: The workspace shows, for the open intent, why it stands where it stands — each unmet criterion with its evidence state, the command that reproduces it and the issues serving it, the work realising the intent and its drift — asked on its own route so the screen's first paint does not wait for it, and every move this server made on the intent's issues, newest first, each leading to its execution
     evidence: test
     ref: apps/majordomus-cli/tests/ui_idd_evidence.rs
+  - id: the-loop-is-walked-end-to-end
+    criterion: In a real browser on one commit, a test intent is picked in the workspace, its issues and their dependency are read, an issue is started from its move form, its work is tested by a real check recorded as evidence, it is verified from another tab while the first shows it without navigating, it is done, and its standing is explained and its evidence reproduced
+    evidence: test
+    ref: test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh
 governance:
   - rule:project.work-serves-a-declared-intent
   - rule:project.derived-once

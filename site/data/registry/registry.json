@@ -6,23 +6,23 @@
     "version": "0.29.0"
   },
   "registry": {
-    "fingerprint": "40cc53c1ad0d547dda3aa53f0fada06f205f3f550c3177ae6e74ee07aaf9f2ef",
+    "fingerprint": "3cfa15af9da839f619d1ef91ae5658cb46d4b33f2732266e76b9d9bf13c4af57",
     "summary": {
-      "total": 2533,
+      "total": 2535,
       "builtin": 202,
-      "declarative": 2331,
+      "declarative": 2333,
       "by_kind": {
         "command": 31,
         "query": 171,
-        "resource": 2331
+        "resource": 2333
       },
       "by_stability": {
         "behaviorally_verified": 141,
         "experimental": 52,
-        "implemented": 2340
+        "implemented": 2342
       },
       "mcp_tools": 192,
-      "mcp_resources": 2386,
+      "mcp_resources": 2388,
       "http_routes": 197,
       "cli_commands": 108,
       "modules": 92,
@@ -83231,7 +83231,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 427,
+        "capabilities": 428,
         "capability_ids": []
       },
       {
@@ -83802,7 +83802,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 531,
+        "capabilities": 532,
         "capability_ids": []
       },
       {
@@ -83893,7 +83893,7 @@
     ]
   },
   "index": {
-    "fingerprint": "4a0d0516e4f53582f34f68e820e19499a19e9ffcd51b899be49eb4ee4eee95ca",
+    "fingerprint": "56044d95d58fe8324d380a84b22addd44b709543898c09c7957035a199b3f263",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -83933,7 +83933,7 @@
       "gap": 4,
       "implementation": 52,
       "intent": 5,
-      "issue": 427,
+      "issue": 428,
       "knowledge": 4,
       "mesh-declaration": 1,
       "milestone": 41,
@@ -83947,7 +83947,7 @@
       "session": 90,
       "skill": 8,
       "taxonomy": 10,
-      "test": 531,
+      "test": 532,
       "use-case": 49,
       "workspace": 1
     },
@@ -90206,7 +90206,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 167516
+        "bytes": 167679
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -93205,7 +93205,7 @@
         "path": ".ai/repo/project/gaps/the-owner-directs-work-from-the-ui.yaml",
         "section": "project",
         "source_class": "gap",
-        "bytes": 2854
+        "bytes": 3287
       },
       {
         "uri": "majordomus://implementation/bin/majordomus",
@@ -93676,7 +93676,7 @@
         "path": ".ai/repo/project/intents/the-owner-directs-work-from-the-ui.yaml",
         "section": "project",
         "source_class": "intent",
-        "bytes": 3147
+        "bytes": 3644
       },
       {
         "uri": "majordomus://issue/I0001",
@@ -98374,6 +98374,17 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 2259
+      },
+      {
+        "uri": "majordomus://issue/I2812",
+        "kind": "issue",
+        "identity": "I2812",
+        "title": "The IDD loop is accepted end to end in a real browser on one commit",
+        "description": "Add case 3220: on a fixture repository and a real server, a real browser picks a test intent in /ui/idd, reads its issues and the dependency between them, starts an issue from its move form, sees the row change without the test reloading, writes and commits the work, runs the issue's own check as a real test and records its command and result as evidence, verifies the issue from a second tab while the first shows it without navigating, marks it done, and reads the standing panel's explanation and the issue page's evidence; the recorded command, run again, gives the recorded result. No feature is added.",
+        "path": ".ai/repo/project/issues/I2812.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2021
       },
       {
         "uri": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
@@ -106111,6 +106122,14 @@
         "bytes": 6996
       },
       {
+        "uri": "majordomus://test/test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh",
+        "kind": "test",
+        "identity": "test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh",
+        "path": "test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh",
+        "source_class": "case",
+        "bytes": 14041
+      },
+      {
         "uri": "majordomus://test/test/cases/32_refusal_lifecycle.sh",
         "kind": "test",
         "identity": "test/cases/32_refusal_lifecycle.sh",
@@ -109113,7 +109132,7 @@
       "identity": [
         "id"
       ],
-      "objects": 427
+      "objects": 428
     },
     {
       "name": "knowledge",
@@ -109265,7 +109284,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 531
+      "objects": 532
     },
     {
       "name": "use-case",

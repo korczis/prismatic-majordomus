@@ -604,8 +604,8 @@ gates:
   - id: ui-audit
     job: ui
     requires: [site-build]
-    runs: scripts/rust-check --doc && cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- bench system.http. --transport system --profile ci --no-write --check && scripts/ui audit --report
-    summary: every warm screen of the UI within the latency budget the benchmark policy declares, measured over a real socket; then every discovered page of every surface the executable serves — built directories and the routes it renders itself — at every width the theme implies, in a browser, against the responsive, semantic, component and WCAG invariants; the report is rendered at /tests/ui
+    runs: scripts/rust-check --doc && cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- bench system.http. --transport system --profile ci --no-write --check && scripts/ui audit --report && bash test/run.sh --no-skips --runs-in ui
+    summary: every warm screen of the UI within the latency budget the benchmark policy declares, measured over a real socket; then every discovered page of every surface the executable serves — built directories and the routes it renders itself — at every width the theme implies, in a browser, against the responsive, semantic, component and WCAG invariants; the report is rendered at /tests/ui; then the cases that drive the UI in a browser (majordomus-skip-runs-in: ui), with no skip excused
 
   # The one gate that measures the published site rather than this tree: the advertised
   # install command, run as it is written, against what GitHub Pages and GitHub Releases
