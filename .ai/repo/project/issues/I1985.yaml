@@ -24,6 +24,15 @@ validation:
 evidence_required:
   - "candidate_provenance_case"
 created_at: 2026-10-04
-updated_at: 2026-10-17T10:00:20Z
+updated_at: 2026-10-17T10:59:25Z
 started_at: 2026-10-17T10:00:20Z
 started_event: sha256:883b3d3cfd32b9a1df5dfd53a9109f951e6452ac37fe80b0fef12ca1188e69ab
+verified_at: 2026-10-17T10:59:25Z
+verified_event: sha256:ba6b9c6e6b2482c992e29f244d3367ab1a9f2997ea0a23d91c2498f418168e86
+evidence:
+  - covers: candidate_provenance_case
+    type: test
+    command: "bash test/run.sh --no-skips 3210_a_candidate_cites_its_own_commit"
+    result: "ok at 2d3ee66dacf: D1 and D3 each cite only their own commit and file, the superseded D2 yields no candidate, knowledge check passes, a re-derive writes nothing; two mutations (cite every episode commit, drop the supersession skip) turn it red; 18 knowledge and decision cases ok, 0 skipped"
+    commit: 2d3ee66dacfd49167a3f81e3a3545011fbfa15af
+    recorded_at: 2026-10-17T10:59:13Z
