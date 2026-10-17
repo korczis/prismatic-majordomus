@@ -603,89 +603,90 @@
 <a href=#603 id=603 data-nosnippet>603</a>        git,
 <a href=#604 id=604 data-nosnippet>604</a>        desired: Desired {
 <a href=#605 id=605 data-nosnippet>605</a>            host: desired_host(linked),
-<a href=#606 id=606 data-nosnippet>606</a>            port: <span class="kw">crate</span>::cli::DEFAULT_PORT,
-<a href=#607 id=607 data-nosnippet>607</a>            version: <span class="kw">crate</span>::VERSION.into(),
-<a href=#608 id=608 data-nosnippet>608</a>            executable: lease::executable_identity(),
-<a href=#609 id=609 data-nosnippet>609</a>        },
-<a href=#610 id=610 data-nosnippet>610</a>        this_process: lease::held().as_ref().map(LeaseView::of),
-<a href=#611 id=611 data-nosnippet>611</a>        standing,
-<a href=#612 id=612 data-nosnippet>612</a>        servers,
-<a href=#613 id=613 data-nosnippet>613</a>        connections: <span class="kw">crate</span>::http::deadline::counts(),
-<a href=#614 id=614 data-nosnippet>614</a>    })
-<a href=#615 id=615 data-nosnippet>615</a>}
-<a href=#616 id=616 data-nosnippet>616</a>
-<a href=#617 id=617 data-nosnippet>617</a><span class="doccomment">/// The interface a server started from this environment would bind — the same resolution
-<a href=#618 id=618 data-nosnippet>618</a>/// `serve` and `mcp` make for this checkout, without a flag, so that `desired` and a bind
-<a href=#619 id=619 data-nosnippet>619</a>/// cannot disagree.
-<a href=#620 id=620 data-nosnippet>620</a></span><span class="kw">fn </span>desired_host(linked: bool) -&gt; String {
-<a href=#621 id=621 data-nosnippet>621</a>    <span class="kw">let </span>environment = std::env::var(<span class="kw">crate</span>::cli::HTTP_HOST_ENV).ok();
-<a href=#622 id=622 data-nosnippet>622</a>    <span class="kw">crate</span>::cli::resolve_checkout_http_host(<span class="prelude-val">None</span>, environment.as_deref(), linked).<span class="number">0
-<a href=#623 id=623 data-nosnippet>623</a></span>}
-<a href=#624 id=624 data-nosnippet>624</a>
-<a href=#625 id=625 data-nosnippet>625</a><span class="doccomment">/// The module: one capability, `server.status`, composed into the application by
-<a href=#626 id=626 data-nosnippet>626</a>/// `builtin::modules`; adding a second capability to it touches this file alone.
-<a href=#627 id=627 data-nosnippet>627</a>///
-<a href=#628 id=628 data-nosnippet>628</a>/// ```
-<a href=#629 id=629 data-nosnippet>629</a>/// use majordomus_cli::capability::builtin::server::module;
-<a href=#630 id=630 data-nosnippet>630</a>/// assert_eq!(module().capabilities.len(), 1);
-<a href=#631 id=631 data-nosnippet>631</a>/// ```
-<a href=#632 id=632 data-nosnippet>632</a></span><span class="kw">pub fn </span>module() -&gt; ModuleDescriptor {
-<a href=#633 id=633 data-nosnippet>633</a>    <span class="macro">module!</span> {
-<a href=#634 id=634 data-nosnippet>634</a>        id: <span class="string">"server"</span>,
-<a href=#635 id=635 data-nosnippet>635</a>        title: <span class="string">"Server"</span>,
-<a href=#636 id=636 data-nosnippet>636</a>        description: <span class="string">"The shared server of this checkout and of every other checkout of the same git repository: what each lease says, whether the server it names answers, whether what answers is the code on disk at this executable's version, and how many peers each one holds."</span>,
-<a href=#637 id=637 data-nosnippet>637</a>        stability: Stability::BehaviorallyVerified,
-<a href=#638 id=638 data-nosnippet>638</a>        capabilities: [
-<a href=#639 id=639 data-nosnippet>639</a>            <span class="macro">capability!</span> {
-<a href=#640 id=640 data-nosnippet>640</a>                id: <span class="string">"server.status"</span>,
-<a href=#641 id=641 data-nosnippet>641</a>                title: <span class="string">"The shared server, and every server of the repository"</span>,
-<a href=#642 id=642 data-nosnippet>642</a>                description: <span class="string">"Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; the lease this process holds when it is the server; and, unless `checkouts` narrows it to this one, every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. `checkouts: this` reads one lease and probes one server and enumerates no other checkout, which is what a caller asking only about the checkout it is in should pay. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes."</span>,
-<a href=#643 id=643 data-nosnippet>643</a>                input: ServerStatusInput,
-<a href=#644 id=644 data-nosnippet>644</a>                output: ServerStatus,
-<a href=#645 id=645 data-nosnippet>645</a>                stability: Stability::BehaviorallyVerified,
-<a href=#646 id=646 data-nosnippet>646</a>                exposure: Exposure {
-<a href=#647 id=647 data-nosnippet>647</a>                    mcp: <span class="prelude-val">Some</span>(McpExposure {
-<a href=#648 id=648 data-nosnippet>648</a>                        tool: <span class="prelude-val">Some</span>(<span class="string">"majordomus_server"</span>.into()),
-<a href=#649 id=649 data-nosnippet>649</a>                        resource: <span class="prelude-val">Some</span>(McpResource { uri: SERVER_URI.into(), name: <span class="string">"server"</span>.into() }),
-<a href=#650 id=650 data-nosnippet>650</a>                    }),
-<a href=#651 id=651 data-nosnippet>651</a>                    http: get(<span class="string">"/api/v1/server"</span>),
-<a href=#652 id=652 data-nosnippet>652</a>                    cli: <span class="prelude-val">Some</span>(CliExposure { path: <span class="macro">vec!</span>[<span class="string">"serve"</span>.into(), <span class="string">"status"</span>.into()] }),
-<a href=#653 id=653 data-nosnippet>653</a>                },
-<a href=#654 id=654 data-nosnippet>654</a>                tags: [<span class="string">"server"</span>, <span class="string">"lease"</span>, <span class="string">"coordination"</span>, <span class="string">"introspection"</span>],
-<a href=#655 id=655 data-nosnippet>655</a>                cache: CachePolicy::Disabled,
-<a href=#656 id=656 data-nosnippet>656</a>                handler: server_status,
-<a href=#657 id=657 data-nosnippet>657</a>            },
-<a href=#658 id=658 data-nosnippet>658</a>        ]
-<a href=#659 id=659 data-nosnippet>659</a>    }
-<a href=#660 id=660 data-nosnippet>660</a>}
-<a href=#661 id=661 data-nosnippet>661</a>
-<a href=#662 id=662 data-nosnippet>662</a><span class="attr">#[cfg(test)]
-<a href=#663 id=663 data-nosnippet>663</a></span><span class="kw">mod </span>tests {
-<a href=#664 id=664 data-nosnippet>664</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
-<a href=#665 id=665 data-nosnippet>665</a>
-<a href=#666 id=666 data-nosnippet>666</a>    <span class="doccomment">/// A server whose version cannot be ordered against this executable's — a pre-release
-<a href=#667 id=667 data-nosnippet>667</a>    /// beside its release — is outdated, and the reason names both versions without
-<a href=#668 id=668 data-nosnippet>668</a>    /// claiming which is older.
-<a href=#669 id=669 data-nosnippet>669</a>    </span><span class="attr">#[test]
-<a href=#670 id=670 data-nosnippet>670</a>    </span><span class="kw">fn </span>a_version_that_cannot_be_ordered_is_outdated_naming_both() {
-<a href=#671 id=671 data-nosnippet>671</a>        <span class="kw">let </span>doc = LeaseDocument {
-<a href=#672 id=672 data-nosnippet>672</a>            schema: lease::SCHEMA.into(),
-<a href=#673 id=673 data-nosnippet>673</a>            pid: <span class="number">1</span>,
-<a href=#674 id=674 data-nosnippet>674</a>            token: <span class="string">"t"</span>.into(),
-<a href=#675 id=675 data-nosnippet>675</a>            root: <span class="string">"/r"</span>.into(),
-<a href=#676 id=676 data-nosnippet>676</a>            url: <span class="prelude-val">Some</span>(<span class="string">"http://127.0.0.1:1"</span>.into()),
-<a href=#677 id=677 data-nosnippet>677</a>            started_at: <span class="string">"2026-09-10T00:00:00Z"</span>.into(),
-<a href=#678 id=678 data-nosnippet>678</a>            executable: <span class="prelude-val">None</span>,
-<a href=#679 id=679 data-nosnippet>679</a>            version: <span class="prelude-val">Some</span>(<span class="string">"1.0.0-rc.1"</span>.into()),
-<a href=#680 id=680 data-nosnippet>680</a>        };
-<a href=#681 id=681 data-nosnippet>681</a>        <span class="kw">let </span>(standing, reason) =
-<a href=#682 id=682 data-nosnippet>682</a>            standing_of(<span class="kw-2">&amp;</span>LeaseFile::Document(doc), Duration::ZERO, |<span class="kw">_</span>| <span class="bool-val">true</span>, <span class="string">"1.0.0"</span>);
-<a href=#683 id=683 data-nosnippet>683</a>        <span class="macro">assert_eq!</span>(standing, ServerStanding::Outdated);
-<a href=#684 id=684 data-nosnippet>684</a>        <span class="kw">let </span>reason = reason.expect(<span class="string">"a reason"</span>);
-<a href=#685 id=685 data-nosnippet>685</a>        <span class="macro">assert_eq!</span>(
-<a href=#686 id=686 data-nosnippet>686</a>            reason,
-<a href=#687 id=687 data-nosnippet>687</a>            <span class="string">"the server is serving version 1.0.0-rc.1; this executable is 1.0.0"
-<a href=#688 id=688 data-nosnippet>688</a>        </span>);
-<a href=#689 id=689 data-nosnippet>689</a>    }
-<a href=#690 id=690 data-nosnippet>690</a>}
+<a href=#606 id=606 data-nosnippet>606</a>            <span class="comment">// the port this checkout asks for on every start (I2702)
+<a href=#607 id=607 data-nosnippet>607</a>            </span>port: <span class="kw">crate</span>::cli::checkout_port(<span class="kw-2">&amp;</span>root),
+<a href=#608 id=608 data-nosnippet>608</a>            version: <span class="kw">crate</span>::VERSION.into(),
+<a href=#609 id=609 data-nosnippet>609</a>            executable: lease::executable_identity(),
+<a href=#610 id=610 data-nosnippet>610</a>        },
+<a href=#611 id=611 data-nosnippet>611</a>        this_process: lease::held().as_ref().map(LeaseView::of),
+<a href=#612 id=612 data-nosnippet>612</a>        standing,
+<a href=#613 id=613 data-nosnippet>613</a>        servers,
+<a href=#614 id=614 data-nosnippet>614</a>        connections: <span class="kw">crate</span>::http::deadline::counts(),
+<a href=#615 id=615 data-nosnippet>615</a>    })
+<a href=#616 id=616 data-nosnippet>616</a>}
+<a href=#617 id=617 data-nosnippet>617</a>
+<a href=#618 id=618 data-nosnippet>618</a><span class="doccomment">/// The interface a server started from this environment would bind — the same resolution
+<a href=#619 id=619 data-nosnippet>619</a>/// `serve` and `mcp` make for this checkout, without a flag, so that `desired` and a bind
+<a href=#620 id=620 data-nosnippet>620</a>/// cannot disagree.
+<a href=#621 id=621 data-nosnippet>621</a></span><span class="kw">fn </span>desired_host(linked: bool) -&gt; String {
+<a href=#622 id=622 data-nosnippet>622</a>    <span class="kw">let </span>environment = std::env::var(<span class="kw">crate</span>::cli::HTTP_HOST_ENV).ok();
+<a href=#623 id=623 data-nosnippet>623</a>    <span class="kw">crate</span>::cli::resolve_checkout_http_host(<span class="prelude-val">None</span>, environment.as_deref(), linked).<span class="number">0
+<a href=#624 id=624 data-nosnippet>624</a></span>}
+<a href=#625 id=625 data-nosnippet>625</a>
+<a href=#626 id=626 data-nosnippet>626</a><span class="doccomment">/// The module: one capability, `server.status`, composed into the application by
+<a href=#627 id=627 data-nosnippet>627</a>/// `builtin::modules`; adding a second capability to it touches this file alone.
+<a href=#628 id=628 data-nosnippet>628</a>///
+<a href=#629 id=629 data-nosnippet>629</a>/// ```
+<a href=#630 id=630 data-nosnippet>630</a>/// use majordomus_cli::capability::builtin::server::module;
+<a href=#631 id=631 data-nosnippet>631</a>/// assert_eq!(module().capabilities.len(), 1);
+<a href=#632 id=632 data-nosnippet>632</a>/// ```
+<a href=#633 id=633 data-nosnippet>633</a></span><span class="kw">pub fn </span>module() -&gt; ModuleDescriptor {
+<a href=#634 id=634 data-nosnippet>634</a>    <span class="macro">module!</span> {
+<a href=#635 id=635 data-nosnippet>635</a>        id: <span class="string">"server"</span>,
+<a href=#636 id=636 data-nosnippet>636</a>        title: <span class="string">"Server"</span>,
+<a href=#637 id=637 data-nosnippet>637</a>        description: <span class="string">"The shared server of this checkout and of every other checkout of the same git repository: what each lease says, whether the server it names answers, whether what answers is the code on disk at this executable's version, and how many peers each one holds."</span>,
+<a href=#638 id=638 data-nosnippet>638</a>        stability: Stability::BehaviorallyVerified,
+<a href=#639 id=639 data-nosnippet>639</a>        capabilities: [
+<a href=#640 id=640 data-nosnippet>640</a>            <span class="macro">capability!</span> {
+<a href=#641 id=641 data-nosnippet>641</a>                id: <span class="string">"server.status"</span>,
+<a href=#642 id=642 data-nosnippet>642</a>                title: <span class="string">"The shared server, and every server of the repository"</span>,
+<a href=#643 id=643 data-nosnippet>643</a>                description: <span class="string">"Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; the lease this process holds when it is the server; and, unless `checkouts` narrows it to this one, every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. `checkouts: this` reads one lease and probes one server and enumerates no other checkout, which is what a caller asking only about the checkout it is in should pay. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes."</span>,
+<a href=#644 id=644 data-nosnippet>644</a>                input: ServerStatusInput,
+<a href=#645 id=645 data-nosnippet>645</a>                output: ServerStatus,
+<a href=#646 id=646 data-nosnippet>646</a>                stability: Stability::BehaviorallyVerified,
+<a href=#647 id=647 data-nosnippet>647</a>                exposure: Exposure {
+<a href=#648 id=648 data-nosnippet>648</a>                    mcp: <span class="prelude-val">Some</span>(McpExposure {
+<a href=#649 id=649 data-nosnippet>649</a>                        tool: <span class="prelude-val">Some</span>(<span class="string">"majordomus_server"</span>.into()),
+<a href=#650 id=650 data-nosnippet>650</a>                        resource: <span class="prelude-val">Some</span>(McpResource { uri: SERVER_URI.into(), name: <span class="string">"server"</span>.into() }),
+<a href=#651 id=651 data-nosnippet>651</a>                    }),
+<a href=#652 id=652 data-nosnippet>652</a>                    http: get(<span class="string">"/api/v1/server"</span>),
+<a href=#653 id=653 data-nosnippet>653</a>                    cli: <span class="prelude-val">Some</span>(CliExposure { path: <span class="macro">vec!</span>[<span class="string">"serve"</span>.into(), <span class="string">"status"</span>.into()] }),
+<a href=#654 id=654 data-nosnippet>654</a>                },
+<a href=#655 id=655 data-nosnippet>655</a>                tags: [<span class="string">"server"</span>, <span class="string">"lease"</span>, <span class="string">"coordination"</span>, <span class="string">"introspection"</span>],
+<a href=#656 id=656 data-nosnippet>656</a>                cache: CachePolicy::Disabled,
+<a href=#657 id=657 data-nosnippet>657</a>                handler: server_status,
+<a href=#658 id=658 data-nosnippet>658</a>            },
+<a href=#659 id=659 data-nosnippet>659</a>        ]
+<a href=#660 id=660 data-nosnippet>660</a>    }
+<a href=#661 id=661 data-nosnippet>661</a>}
+<a href=#662 id=662 data-nosnippet>662</a>
+<a href=#663 id=663 data-nosnippet>663</a><span class="attr">#[cfg(test)]
+<a href=#664 id=664 data-nosnippet>664</a></span><span class="kw">mod </span>tests {
+<a href=#665 id=665 data-nosnippet>665</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#666 id=666 data-nosnippet>666</a>
+<a href=#667 id=667 data-nosnippet>667</a>    <span class="doccomment">/// A server whose version cannot be ordered against this executable's — a pre-release
+<a href=#668 id=668 data-nosnippet>668</a>    /// beside its release — is outdated, and the reason names both versions without
+<a href=#669 id=669 data-nosnippet>669</a>    /// claiming which is older.
+<a href=#670 id=670 data-nosnippet>670</a>    </span><span class="attr">#[test]
+<a href=#671 id=671 data-nosnippet>671</a>    </span><span class="kw">fn </span>a_version_that_cannot_be_ordered_is_outdated_naming_both() {
+<a href=#672 id=672 data-nosnippet>672</a>        <span class="kw">let </span>doc = LeaseDocument {
+<a href=#673 id=673 data-nosnippet>673</a>            schema: lease::SCHEMA.into(),
+<a href=#674 id=674 data-nosnippet>674</a>            pid: <span class="number">1</span>,
+<a href=#675 id=675 data-nosnippet>675</a>            token: <span class="string">"t"</span>.into(),
+<a href=#676 id=676 data-nosnippet>676</a>            root: <span class="string">"/r"</span>.into(),
+<a href=#677 id=677 data-nosnippet>677</a>            url: <span class="prelude-val">Some</span>(<span class="string">"http://127.0.0.1:1"</span>.into()),
+<a href=#678 id=678 data-nosnippet>678</a>            started_at: <span class="string">"2026-09-10T00:00:00Z"</span>.into(),
+<a href=#679 id=679 data-nosnippet>679</a>            executable: <span class="prelude-val">None</span>,
+<a href=#680 id=680 data-nosnippet>680</a>            version: <span class="prelude-val">Some</span>(<span class="string">"1.0.0-rc.1"</span>.into()),
+<a href=#681 id=681 data-nosnippet>681</a>        };
+<a href=#682 id=682 data-nosnippet>682</a>        <span class="kw">let </span>(standing, reason) =
+<a href=#683 id=683 data-nosnippet>683</a>            standing_of(<span class="kw-2">&amp;</span>LeaseFile::Document(doc), Duration::ZERO, |<span class="kw">_</span>| <span class="bool-val">true</span>, <span class="string">"1.0.0"</span>);
+<a href=#684 id=684 data-nosnippet>684</a>        <span class="macro">assert_eq!</span>(standing, ServerStanding::Outdated);
+<a href=#685 id=685 data-nosnippet>685</a>        <span class="kw">let </span>reason = reason.expect(<span class="string">"a reason"</span>);
+<a href=#686 id=686 data-nosnippet>686</a>        <span class="macro">assert_eq!</span>(
+<a href=#687 id=687 data-nosnippet>687</a>            reason,
+<a href=#688 id=688 data-nosnippet>688</a>            <span class="string">"the server is serving version 1.0.0-rc.1; this executable is 1.0.0"
+<a href=#689 id=689 data-nosnippet>689</a>        </span>);
+<a href=#690 id=690 data-nosnippet>690</a>    }
+<a href=#691 id=691 data-nosnippet>691</a>}
 </code></pre></div></section></main></body></html>

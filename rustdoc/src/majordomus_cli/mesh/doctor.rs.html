@@ -124,862 +124,869 @@
 <a href=#124 id=124 data-nosnippet>124</a>}
 <a href=#125 id=125 data-nosnippet>125</a>
 <a href=#126 id=126 data-nosnippet>126</a><span class="doccomment">/// The `journal` check: whether the cooperation journal's file holds what the journal
-<a href=#127 id=127 data-nosnippet>127</a>/// holds. A failed append keeps the event in memory and in replication and loses it from this
-<a href=#128 id=128 data-nosnippet>128</a>/// machine's disk; an unreadable line is one the last reload could not use.
-<a href=#129 id=129 data-nosnippet>129</a>///
-<a href=#130 id=130 data-nosnippet>130</a>/// ```
-<a href=#131 id=131 data-nosnippet>131</a>/// use majordomus_cli::mesh::doctor::journal_check;
-<a href=#132 id=132 data-nosnippet>132</a>/// use majordomus_cli::mesh::journal::JournalTallies;
-<a href=#133 id=133 data-nosnippet>133</a>/// assert!(journal_check(&amp;JournalTallies::default()).ok);
-<a href=#134 id=134 data-nosnippet>134</a>/// let lost = JournalTallies { write_failures: 2, ..Default::default() };
-<a href=#135 id=135 data-nosnippet>135</a>/// let check = journal_check(&amp;lost);
-<a href=#136 id=136 data-nosnippet>136</a>/// assert!(!check.ok &amp;&amp; check.detail.contains("2 event(s)"));
-<a href=#137 id=137 data-nosnippet>137</a>/// ```
-<a href=#138 id=138 data-nosnippet>138</a></span><span class="kw">pub fn </span>journal_check(tallies: <span class="kw-2">&amp;</span><span class="kw">super</span>::journal::JournalTallies) -&gt; DoctorCheck {
-<a href=#139 id=139 data-nosnippet>139</a>    <span class="kw">if </span>tallies.write_failures == <span class="number">0 </span>&amp;&amp; tallies.unreadable == <span class="number">0 </span>{
-<a href=#140 id=140 data-nosnippet>140</a>        <span class="kw">return </span>DoctorCheck::pass(
-<a href=#141 id=141 data-nosnippet>141</a>            <span class="string">"journal"</span>,
-<a href=#142 id=142 data-nosnippet>142</a>            <span class="macro">format!</span>(
-<a href=#143 id=143 data-nosnippet>143</a>                <span class="string">"{} event(s) held, every append synced to disk, no unreadable line on reload"</span>,
-<a href=#144 id=144 data-nosnippet>144</a>                tallies.events
-<a href=#145 id=145 data-nosnippet>145</a>            ),
-<a href=#146 id=146 data-nosnippet>146</a>        );
-<a href=#147 id=147 data-nosnippet>147</a>    }
-<a href=#148 id=148 data-nosnippet>148</a>    DoctorCheck::fail(
-<a href=#149 id=149 data-nosnippet>149</a>        <span class="string">"journal"</span>,
-<a href=#150 id=150 data-nosnippet>150</a>        <span class="macro">format!</span>(
-<a href=#151 id=151 data-nosnippet>151</a>            <span class="string">"{} event(s) did not reach the journal file; {} line(s) of it did not read on reload"</span>,
-<a href=#152 id=152 data-nosnippet>152</a>            tallies.write_failures, tallies.unreadable
-<a href=#153 id=153 data-nosnippet>153</a>        ),
-<a href=#154 id=154 data-nosnippet>154</a>        <span class="string">"an event that is not on disk is lost to this machine when the runtime restarts, unless a peer still holds it"</span>,
-<a href=#155 id=155 data-nosnippet>155</a>        <span class="string">"free disk space or fix the permissions of the mesh state directory; a torn line is left as one unreadable line, and the events after it read"</span>,
-<a href=#156 id=156 data-nosnippet>156</a>    )
-<a href=#157 id=157 data-nosnippet>157</a>}
-<a href=#158 id=158 data-nosnippet>158</a>
-<a href=#159 id=159 data-nosnippet>159</a><span class="doccomment">/// The whole self-check.
-<a href=#160 id=160 data-nosnippet>160</a></span><span class="attr">#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-<a href=#161 id=161 data-nosnippet>161</a></span><span class="kw">pub struct </span>MeshDoctorReport {
-<a href=#162 id=162 data-nosnippet>162</a>    <span class="doccomment">/// Whether every check holds.
-<a href=#163 id=163 data-nosnippet>163</a>    </span><span class="kw">pub </span>ok: bool,
-<a href=#164 id=164 data-nosnippet>164</a>    <span class="doccomment">/// The checks, in the order they ran.
-<a href=#165 id=165 data-nosnippet>165</a>    </span><span class="kw">pub </span>checks: Vec&lt;DoctorCheck&gt;,
-<a href=#166 id=166 data-nosnippet>166</a>}
-<a href=#167 id=167 data-nosnippet>167</a>
-<a href=#168 id=168 data-nosnippet>168</a><span class="doccomment">/// Run the self-check against the declaration as parsed (or its absence, or its error),
-<a href=#169 id=169 data-nosnippet>169</a>/// in a process no shared server runs in. Deterministic order, no second node required, no
-<a href=#170 id=170 data-nosnippet>170</a>/// repository writes.
-<a href=#171 id=171 data-nosnippet>171</a></span><span class="kw">pub fn </span>doctor(declaration: <span class="prelude-ty">Option</span>&lt;<span class="prelude-ty">Result</span>&lt;MeshConfig, MeshError&gt;&gt;) -&gt; MeshDoctorReport {
-<a href=#172 id=172 data-nosnippet>172</a>    doctor_at(declaration, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>)
+<a href=#127 id=127 data-nosnippet>127</a>/// holds. A failed append keeps the event in memory and in replication, loses it from this
+<a href=#128 id=128 data-nosnippet>128</a>/// machine's disk and is not acknowledged as durable; an unreadable line is one the last
+<a href=#129 id=129 data-nosnippet>129</a>/// reload could not use; unread bytes lie beyond the reload bound.
+<a href=#130 id=130 data-nosnippet>130</a>///
+<a href=#131 id=131 data-nosnippet>131</a>/// ```
+<a href=#132 id=132 data-nosnippet>132</a>/// use majordomus_cli::mesh::doctor::journal_check;
+<a href=#133 id=133 data-nosnippet>133</a>/// use majordomus_cli::mesh::journal::JournalTallies;
+<a href=#134 id=134 data-nosnippet>134</a>/// assert!(journal_check(&amp;JournalTallies::default()).ok);
+<a href=#135 id=135 data-nosnippet>135</a>/// let lost = JournalTallies { write_failures: 2, ..Default::default() };
+<a href=#136 id=136 data-nosnippet>136</a>/// let check = journal_check(&amp;lost);
+<a href=#137 id=137 data-nosnippet>137</a>/// assert!(!check.ok &amp;&amp; check.detail.contains("2 event(s)"));
+<a href=#138 id=138 data-nosnippet>138</a>/// let beyond = JournalTallies { unread_bytes: 4096, ..Default::default() };
+<a href=#139 id=139 data-nosnippet>139</a>/// let check = journal_check(&amp;beyond);
+<a href=#140 id=140 data-nosnippet>140</a>/// assert!(!check.ok &amp;&amp; check.detail.contains("4096 byte(s)"));
+<a href=#141 id=141 data-nosnippet>141</a>/// ```
+<a href=#142 id=142 data-nosnippet>142</a></span><span class="kw">pub fn </span>journal_check(tallies: <span class="kw-2">&amp;</span><span class="kw">super</span>::journal::JournalTallies) -&gt; DoctorCheck {
+<a href=#143 id=143 data-nosnippet>143</a>    <span class="kw">if </span>tallies.write_failures == <span class="number">0 </span>&amp;&amp; tallies.unreadable == <span class="number">0 </span>&amp;&amp; tallies.unread_bytes == <span class="number">0 </span>{
+<a href=#144 id=144 data-nosnippet>144</a>        <span class="kw">return </span>DoctorCheck::pass(
+<a href=#145 id=145 data-nosnippet>145</a>            <span class="string">"journal"</span>,
+<a href=#146 id=146 data-nosnippet>146</a>            <span class="macro">format!</span>(
+<a href=#147 id=147 data-nosnippet>147</a>                <span class="string">"{} event(s) held, every append synced to disk, the file reloaded whole with no unreadable line"</span>,
+<a href=#148 id=148 data-nosnippet>148</a>                tallies.events
+<a href=#149 id=149 data-nosnippet>149</a>            ),
+<a href=#150 id=150 data-nosnippet>150</a>        );
+<a href=#151 id=151 data-nosnippet>151</a>    }
+<a href=#152 id=152 data-nosnippet>152</a>    DoctorCheck::fail(
+<a href=#153 id=153 data-nosnippet>153</a>        <span class="string">"journal"</span>,
+<a href=#154 id=154 data-nosnippet>154</a>        <span class="macro">format!</span>(
+<a href=#155 id=155 data-nosnippet>155</a>            <span class="string">"{} event(s) did not reach the journal file and were not acknowledged as durable; {} line(s) of it did not read on reload; {} byte(s) of it lie beyond the {}-byte reload bound and were left on disk unread"</span>,
+<a href=#156 id=156 data-nosnippet>156</a>            tallies.write_failures,
+<a href=#157 id=157 data-nosnippet>157</a>            tallies.unreadable,
+<a href=#158 id=158 data-nosnippet>158</a>            tallies.unread_bytes,
+<a href=#159 id=159 data-nosnippet>159</a>            <span class="kw">super</span>::journal::MAX_RELOAD_BYTES
+<a href=#160 id=160 data-nosnippet>160</a>        ),
+<a href=#161 id=161 data-nosnippet>161</a>        <span class="string">"an event that is not on disk is lost to this machine when the runtime restarts, unless a peer still holds it; the events beyond the reload bound are not held, so this runtime neither folds nor relays them"</span>,
+<a href=#162 id=162 data-nosnippet>162</a>        <span class="string">"free disk space or fix the permissions of the mesh state directory; a torn line is left as one unreadable line, and the events after it read; a journal beyond the bound was not written by this executable's compaction — move it aside and let the peers refill it"</span>,
+<a href=#163 id=163 data-nosnippet>163</a>    )
+<a href=#164 id=164 data-nosnippet>164</a>}
+<a href=#165 id=165 data-nosnippet>165</a>
+<a href=#166 id=166 data-nosnippet>166</a><span class="doccomment">/// The whole self-check.
+<a href=#167 id=167 data-nosnippet>167</a></span><span class="attr">#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+<a href=#168 id=168 data-nosnippet>168</a></span><span class="kw">pub struct </span>MeshDoctorReport {
+<a href=#169 id=169 data-nosnippet>169</a>    <span class="doccomment">/// Whether every check holds.
+<a href=#170 id=170 data-nosnippet>170</a>    </span><span class="kw">pub </span>ok: bool,
+<a href=#171 id=171 data-nosnippet>171</a>    <span class="doccomment">/// The checks, in the order they ran.
+<a href=#172 id=172 data-nosnippet>172</a>    </span><span class="kw">pub </span>checks: Vec&lt;DoctorCheck&gt;,
 <a href=#173 id=173 data-nosnippet>173</a>}
 <a href=#174 id=174 data-nosnippet>174</a>
-<a href=#175 id=175 data-nosnippet>175</a><span class="doccomment">/// [`doctor`] for the repository at `root`, in the process whose mesh runtime decided
-<a href=#176 id=176 data-nosnippet>176</a>/// `runtime`: adds whether the repository has a mesh identity cooperation can match on, and
-<a href=#177 id=177 data-nosnippet>177</a>/// judges what the runtime decided about the declaration.
-<a href=#178 id=178 data-nosnippet>178</a>///
-<a href=#179 id=179 data-nosnippet>179</a>/// Discovery works without a repository identity — two nodes can hear each other while
-<a href=#180 id=180 data-nosnippet>180</a>/// belonging to different repositories — but a link does not, so a report that omits this
-<a href=#181 id=181 data-nosnippet>181</a>/// check can say every prerequisite holds while cooperation is unreachable. `root` is
-<a href=#182 id=182 data-nosnippet>182</a>/// optional because the caller may have no repository at hand, and then the check is not
-<a href=#183 id=183 data-nosnippet>183</a>/// run rather than failed.
-<a href=#184 id=184 data-nosnippet>184</a>///
-<a href=#185 id=185 data-nosnippet>185</a>/// `runtime` is the status of a runtime a shared server decided on — activated, or declined
-<a href=#186 id=186 data-nosnippet>186</a>/// with a reason — and `None` in any process no server runs in
-<a href=#187 id=187 data-nosnippet>187</a>/// ([`MeshRuntime::decided`](super::manager::MeshRuntime::decided)). The `runtime` check
-<a href=#188 id=188 data-nosnippet>188</a>/// fails exactly when the declaration is enabled and a server's mesh is not active.
-<a href=#189 id=189 data-nosnippet>189</a>///
-<a href=#190 id=190 data-nosnippet>190</a>/// ```
-<a href=#191 id=191 data-nosnippet>191</a>/// use majordomus_cli::mesh::doctor::doctor_at;
-<a href=#192 id=192 data-nosnippet>192</a>/// use majordomus_cli::mesh::manager::MeshRuntime;
-<a href=#193 id=193 data-nosnippet>193</a>/// use majordomus_cli::mesh::MeshConfig;
-<a href=#194 id=194 data-nosnippet>194</a>///
-<a href=#195 id=195 data-nosnippet>195</a>/// // a directory holding no history has no identity to match on, and the check says so
-<a href=#196 id=196 data-nosnippet>196</a>/// let nowhere = tempfile::tempdir().unwrap();
-<a href=#197 id=197 data-nosnippet>197</a>/// let report = doctor_at(None, Some(nowhere.path()), None);
-<a href=#198 id=198 data-nosnippet>198</a>/// let repository = report.checks.iter().find(|c| c.check == "repository").unwrap();
-<a href=#199 id=199 data-nosnippet>199</a>/// assert!(!repository.ok);
-<a href=#200 id=200 data-nosnippet>200</a>/// assert!(repository.remediation.as_deref().unwrap().contains("cooperation.repository"));
+<a href=#175 id=175 data-nosnippet>175</a><span class="doccomment">/// Run the self-check against the declaration as parsed (or its absence, or its error),
+<a href=#176 id=176 data-nosnippet>176</a>/// in a process no shared server runs in. Deterministic order, no second node required, no
+<a href=#177 id=177 data-nosnippet>177</a>/// repository writes.
+<a href=#178 id=178 data-nosnippet>178</a></span><span class="kw">pub fn </span>doctor(declaration: <span class="prelude-ty">Option</span>&lt;<span class="prelude-ty">Result</span>&lt;MeshConfig, MeshError&gt;&gt;) -&gt; MeshDoctorReport {
+<a href=#179 id=179 data-nosnippet>179</a>    doctor_at(declaration, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>)
+<a href=#180 id=180 data-nosnippet>180</a>}
+<a href=#181 id=181 data-nosnippet>181</a>
+<a href=#182 id=182 data-nosnippet>182</a><span class="doccomment">/// [`doctor`] for the repository at `root`, in the process whose mesh runtime decided
+<a href=#183 id=183 data-nosnippet>183</a>/// `runtime`: adds whether the repository has a mesh identity cooperation can match on, and
+<a href=#184 id=184 data-nosnippet>184</a>/// judges what the runtime decided about the declaration.
+<a href=#185 id=185 data-nosnippet>185</a>///
+<a href=#186 id=186 data-nosnippet>186</a>/// Discovery works without a repository identity — two nodes can hear each other while
+<a href=#187 id=187 data-nosnippet>187</a>/// belonging to different repositories — but a link does not, so a report that omits this
+<a href=#188 id=188 data-nosnippet>188</a>/// check can say every prerequisite holds while cooperation is unreachable. `root` is
+<a href=#189 id=189 data-nosnippet>189</a>/// optional because the caller may have no repository at hand, and then the check is not
+<a href=#190 id=190 data-nosnippet>190</a>/// run rather than failed.
+<a href=#191 id=191 data-nosnippet>191</a>///
+<a href=#192 id=192 data-nosnippet>192</a>/// `runtime` is the status of a runtime a shared server decided on — activated, or declined
+<a href=#193 id=193 data-nosnippet>193</a>/// with a reason — and `None` in any process no server runs in
+<a href=#194 id=194 data-nosnippet>194</a>/// ([`MeshRuntime::decided`](super::manager::MeshRuntime::decided)). The `runtime` check
+<a href=#195 id=195 data-nosnippet>195</a>/// fails exactly when the declaration is enabled and a server's mesh is not active.
+<a href=#196 id=196 data-nosnippet>196</a>///
+<a href=#197 id=197 data-nosnippet>197</a>/// ```
+<a href=#198 id=198 data-nosnippet>198</a>/// use majordomus_cli::mesh::doctor::doctor_at;
+<a href=#199 id=199 data-nosnippet>199</a>/// use majordomus_cli::mesh::manager::MeshRuntime;
+<a href=#200 id=200 data-nosnippet>200</a>/// use majordomus_cli::mesh::MeshConfig;
 <a href=#201 id=201 data-nosnippet>201</a>///
-<a href=#202 id=202 data-nosnippet>202</a>/// // with no root to ask about, the question is not asked at all
-<a href=#203 id=203 data-nosnippet>203</a>/// assert!(doctor_at(None, None, None).checks.iter().all(|c| c.check != "repository"));
-<a href=#204 id=204 data-nosnippet>204</a>///
-<a href=#205 id=205 data-nosnippet>205</a>/// // an enabled declaration a server declined is the runtime's failure, with the reason
-<a href=#206 id=206 data-nosnippet>206</a>/// let enabled: MeshConfig = serde_json::from_value(serde_json::json!({
-<a href=#207 id=207 data-nosnippet>207</a>///     "schema": "mesh/v1", "kind": "mesh-declaration", "id": "doc", "enabled": true,
-<a href=#208 id=208 data-nosnippet>208</a>/// })).unwrap();
-<a href=#209 id=209 data-nosnippet>209</a>/// let server = MeshRuntime::new();
-<a href=#210 id=210 data-nosnippet>210</a>/// server.decline("the node identity did not load");
-<a href=#211 id=211 data-nosnippet>211</a>/// let report = doctor_at(Some(Ok(enabled)), None, Some(&amp;server.status()));
-<a href=#212 id=212 data-nosnippet>212</a>/// let runtime = report.checks.iter().find(|c| c.check == "runtime").unwrap();
-<a href=#213 id=213 data-nosnippet>213</a>/// assert!(!runtime.ok &amp;&amp; !report.ok);
-<a href=#214 id=214 data-nosnippet>214</a>/// assert!(runtime.detail.ends_with("the node identity did not load"));
-<a href=#215 id=215 data-nosnippet>215</a>/// ```
-<a href=#216 id=216 data-nosnippet>216</a></span><span class="kw">pub fn </span>doctor_at(
-<a href=#217 id=217 data-nosnippet>217</a>    declaration: <span class="prelude-ty">Option</span>&lt;<span class="prelude-ty">Result</span>&lt;MeshConfig, MeshError&gt;&gt;,
-<a href=#218 id=218 data-nosnippet>218</a>    root: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>Path&gt;,
-<a href=#219 id=219 data-nosnippet>219</a>    runtime: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>MeshStatus&gt;,
-<a href=#220 id=220 data-nosnippet>220</a>) -&gt; MeshDoctorReport {
-<a href=#221 id=221 data-nosnippet>221</a>    <span class="kw">let </span><span class="kw-2">mut </span>checks = Vec::new();
-<a href=#222 id=222 data-nosnippet>222</a>
-<a href=#223 id=223 data-nosnippet>223</a>    <span class="comment">// The declaration: present, parseable, and what it says.
-<a href=#224 id=224 data-nosnippet>224</a>    </span><span class="kw">match </span><span class="kw-2">&amp;</span>declaration {
-<a href=#225 id=225 data-nosnippet>225</a>        <span class="prelude-val">None </span>=&gt; checks.push(DoctorCheck::pass(
-<a href=#226 id=226 data-nosnippet>226</a>            <span class="string">"declaration"</span>,
-<a href=#227 id=227 data-nosnippet>227</a>            <span class="string">"absent: the mesh is off, which is the default posture"</span>,
-<a href=#228 id=228 data-nosnippet>228</a>        )),
-<a href=#229 id=229 data-nosnippet>229</a>        <span class="prelude-val">Some</span>(<span class="prelude-val">Err</span>(e)) =&gt; checks.push(DoctorCheck::fail(
-<a href=#230 id=230 data-nosnippet>230</a>            <span class="string">"declaration"</span>,
-<a href=#231 id=231 data-nosnippet>231</a>            e.to_string(),
-<a href=#232 id=232 data-nosnippet>232</a>            <span class="string">"the mesh stays off: no discovery socket opens and no link is made"</span>,
-<a href=#233 id=233 data-nosnippet>233</a>            <span class="string">"fix the declaration under .ai/repo/mesh/ (majordomus check names the schema violation), then restart the server"</span>,
-<a href=#234 id=234 data-nosnippet>234</a>        )),
-<a href=#235 id=235 data-nosnippet>235</a>        <span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(config)) =&gt; checks.push(DoctorCheck::pass(
-<a href=#236 id=236 data-nosnippet>236</a>            <span class="string">"declaration"</span>,
-<a href=#237 id=237 data-nosnippet>237</a>            <span class="macro">format!</span>(
-<a href=#238 id=238 data-nosnippet>238</a>                <span class="string">"{}: enabled={}, multicast={}, broadcast={}, rendezvous endpoints={}, trust={} ({} allowed key(s)), cooperation={} (heartbeat {}s, expiry {}s, {} seed(s))"</span>,
-<a href=#239 id=239 data-nosnippet>239</a>                config.id,
-<a href=#240 id=240 data-nosnippet>240</a>                config.enabled,
-<a href=#241 id=241 data-nosnippet>241</a>                config.multicast.enabled,
-<a href=#242 id=242 data-nosnippet>242</a>                config.broadcast.mode != <span class="kw">super</span>::config::BroadcastMode::Disabled,
-<a href=#243 id=243 data-nosnippet>243</a>                config.rendezvous.endpoints.len(),
-<a href=#244 id=244 data-nosnippet>244</a>                config.trust.policy.as_str(),
-<a href=#245 id=245 data-nosnippet>245</a>                config.trust.allow.len(),
-<a href=#246 id=246 data-nosnippet>246</a>                config.cooperation.enabled,
-<a href=#247 id=247 data-nosnippet>247</a>                config.cooperation.heartbeat_seconds,
-<a href=#248 id=248 data-nosnippet>248</a>                config.cooperation.expiry_seconds,
-<a href=#249 id=249 data-nosnippet>249</a>                config.cooperation.seeds.len()
-<a href=#250 id=250 data-nosnippet>250</a>            ),
-<a href=#251 id=251 data-nosnippet>251</a>        )),
-<a href=#252 id=252 data-nosnippet>252</a>    }
-<a href=#253 id=253 data-nosnippet>253</a>
-<a href=#254 id=254 data-nosnippet>254</a>    <span class="comment">// The identity: where it lives, and whether what is there loads.
-<a href=#255 id=255 data-nosnippet>255</a>    </span><span class="kw">let </span>identity = <span class="kw">match </span>default_identity_path() {
-<a href=#256 id=256 data-nosnippet>256</a>        <span class="prelude-val">None </span>=&gt; {
-<a href=#257 id=257 data-nosnippet>257</a>            checks.push(DoctorCheck::fail(
-<a href=#258 id=258 data-nosnippet>258</a>                <span class="string">"identity"</span>,
-<a href=#259 id=259 data-nosnippet>259</a>                <span class="string">"no HOME and no XDG_STATE_HOME: this process has nowhere to keep a node identity"</span>,
-<a href=#260 id=260 data-nosnippet>260</a>                <span class="string">"the mesh cannot activate: a node without a key cannot be told apart from an impostor"</span>,
-<a href=#261 id=261 data-nosnippet>261</a>                <span class="string">"run the server with HOME or XDG_STATE_HOME set"</span>,
-<a href=#262 id=262 data-nosnippet>262</a>            ));
-<a href=#263 id=263 data-nosnippet>263</a>            <span class="prelude-val">None
-<a href=#264 id=264 data-nosnippet>264</a>        </span>}
-<a href=#265 id=265 data-nosnippet>265</a>        <span class="prelude-val">Some</span>(path) <span class="kw">if </span>path.is_file() =&gt; <span class="kw">match </span>NodeIdentity::load_or_create(<span class="kw-2">&amp;</span>path) {
-<a href=#266 id=266 data-nosnippet>266</a>            <span class="prelude-val">Ok</span>(identity) =&gt; {
-<a href=#267 id=267 data-nosnippet>267</a>                checks.push(DoctorCheck::pass(
-<a href=#268 id=268 data-nosnippet>268</a>                    <span class="string">"identity"</span>,
-<a href=#269 id=269 data-nosnippet>269</a>                    <span class="macro">format!</span>(<span class="string">"{} at {}"</span>, identity.public.node_id, path.display()),
-<a href=#270 id=270 data-nosnippet>270</a>                ));
-<a href=#271 id=271 data-nosnippet>271</a>                <span class="prelude-val">Some</span>(identity)
-<a href=#272 id=272 data-nosnippet>272</a>            }
-<a href=#273 id=273 data-nosnippet>273</a>            <span class="prelude-val">Err</span>(e) =&gt; {
-<a href=#274 id=274 data-nosnippet>274</a>                checks.push(DoctorCheck::fail(
+<a href=#202 id=202 data-nosnippet>202</a>/// // a directory holding no history has no identity to match on, and the check says so
+<a href=#203 id=203 data-nosnippet>203</a>/// let nowhere = tempfile::tempdir().unwrap();
+<a href=#204 id=204 data-nosnippet>204</a>/// let report = doctor_at(None, Some(nowhere.path()), None);
+<a href=#205 id=205 data-nosnippet>205</a>/// let repository = report.checks.iter().find(|c| c.check == "repository").unwrap();
+<a href=#206 id=206 data-nosnippet>206</a>/// assert!(!repository.ok);
+<a href=#207 id=207 data-nosnippet>207</a>/// assert!(repository.remediation.as_deref().unwrap().contains("cooperation.repository"));
+<a href=#208 id=208 data-nosnippet>208</a>///
+<a href=#209 id=209 data-nosnippet>209</a>/// // with no root to ask about, the question is not asked at all
+<a href=#210 id=210 data-nosnippet>210</a>/// assert!(doctor_at(None, None, None).checks.iter().all(|c| c.check != "repository"));
+<a href=#211 id=211 data-nosnippet>211</a>///
+<a href=#212 id=212 data-nosnippet>212</a>/// // an enabled declaration a server declined is the runtime's failure, with the reason
+<a href=#213 id=213 data-nosnippet>213</a>/// let enabled: MeshConfig = serde_json::from_value(serde_json::json!({
+<a href=#214 id=214 data-nosnippet>214</a>///     "schema": "mesh/v1", "kind": "mesh-declaration", "id": "doc", "enabled": true,
+<a href=#215 id=215 data-nosnippet>215</a>/// })).unwrap();
+<a href=#216 id=216 data-nosnippet>216</a>/// let server = MeshRuntime::new();
+<a href=#217 id=217 data-nosnippet>217</a>/// server.decline("the node identity did not load");
+<a href=#218 id=218 data-nosnippet>218</a>/// let report = doctor_at(Some(Ok(enabled)), None, Some(&amp;server.status()));
+<a href=#219 id=219 data-nosnippet>219</a>/// let runtime = report.checks.iter().find(|c| c.check == "runtime").unwrap();
+<a href=#220 id=220 data-nosnippet>220</a>/// assert!(!runtime.ok &amp;&amp; !report.ok);
+<a href=#221 id=221 data-nosnippet>221</a>/// assert!(runtime.detail.ends_with("the node identity did not load"));
+<a href=#222 id=222 data-nosnippet>222</a>/// ```
+<a href=#223 id=223 data-nosnippet>223</a></span><span class="kw">pub fn </span>doctor_at(
+<a href=#224 id=224 data-nosnippet>224</a>    declaration: <span class="prelude-ty">Option</span>&lt;<span class="prelude-ty">Result</span>&lt;MeshConfig, MeshError&gt;&gt;,
+<a href=#225 id=225 data-nosnippet>225</a>    root: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>Path&gt;,
+<a href=#226 id=226 data-nosnippet>226</a>    runtime: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>MeshStatus&gt;,
+<a href=#227 id=227 data-nosnippet>227</a>) -&gt; MeshDoctorReport {
+<a href=#228 id=228 data-nosnippet>228</a>    <span class="kw">let </span><span class="kw-2">mut </span>checks = Vec::new();
+<a href=#229 id=229 data-nosnippet>229</a>
+<a href=#230 id=230 data-nosnippet>230</a>    <span class="comment">// The declaration: present, parseable, and what it says.
+<a href=#231 id=231 data-nosnippet>231</a>    </span><span class="kw">match </span><span class="kw-2">&amp;</span>declaration {
+<a href=#232 id=232 data-nosnippet>232</a>        <span class="prelude-val">None </span>=&gt; checks.push(DoctorCheck::pass(
+<a href=#233 id=233 data-nosnippet>233</a>            <span class="string">"declaration"</span>,
+<a href=#234 id=234 data-nosnippet>234</a>            <span class="string">"absent: the mesh is off, which is the default posture"</span>,
+<a href=#235 id=235 data-nosnippet>235</a>        )),
+<a href=#236 id=236 data-nosnippet>236</a>        <span class="prelude-val">Some</span>(<span class="prelude-val">Err</span>(e)) =&gt; checks.push(DoctorCheck::fail(
+<a href=#237 id=237 data-nosnippet>237</a>            <span class="string">"declaration"</span>,
+<a href=#238 id=238 data-nosnippet>238</a>            e.to_string(),
+<a href=#239 id=239 data-nosnippet>239</a>            <span class="string">"the mesh stays off: no discovery socket opens and no link is made"</span>,
+<a href=#240 id=240 data-nosnippet>240</a>            <span class="string">"fix the declaration under .ai/repo/mesh/ (majordomus check names the schema violation), then restart the server"</span>,
+<a href=#241 id=241 data-nosnippet>241</a>        )),
+<a href=#242 id=242 data-nosnippet>242</a>        <span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(config)) =&gt; checks.push(DoctorCheck::pass(
+<a href=#243 id=243 data-nosnippet>243</a>            <span class="string">"declaration"</span>,
+<a href=#244 id=244 data-nosnippet>244</a>            <span class="macro">format!</span>(
+<a href=#245 id=245 data-nosnippet>245</a>                <span class="string">"{}: enabled={}, multicast={}, broadcast={}, rendezvous endpoints={}, trust={} ({} allowed key(s)), cooperation={} (heartbeat {}s, expiry {}s, {} seed(s))"</span>,
+<a href=#246 id=246 data-nosnippet>246</a>                config.id,
+<a href=#247 id=247 data-nosnippet>247</a>                config.enabled,
+<a href=#248 id=248 data-nosnippet>248</a>                config.multicast.enabled,
+<a href=#249 id=249 data-nosnippet>249</a>                config.broadcast.mode != <span class="kw">super</span>::config::BroadcastMode::Disabled,
+<a href=#250 id=250 data-nosnippet>250</a>                config.rendezvous.endpoints.len(),
+<a href=#251 id=251 data-nosnippet>251</a>                config.trust.policy.as_str(),
+<a href=#252 id=252 data-nosnippet>252</a>                config.trust.allow.len(),
+<a href=#253 id=253 data-nosnippet>253</a>                config.cooperation.enabled,
+<a href=#254 id=254 data-nosnippet>254</a>                config.cooperation.heartbeat_seconds,
+<a href=#255 id=255 data-nosnippet>255</a>                config.cooperation.expiry_seconds,
+<a href=#256 id=256 data-nosnippet>256</a>                config.cooperation.seeds.len()
+<a href=#257 id=257 data-nosnippet>257</a>            ),
+<a href=#258 id=258 data-nosnippet>258</a>        )),
+<a href=#259 id=259 data-nosnippet>259</a>    }
+<a href=#260 id=260 data-nosnippet>260</a>
+<a href=#261 id=261 data-nosnippet>261</a>    <span class="comment">// The identity: where it lives, and whether what is there loads.
+<a href=#262 id=262 data-nosnippet>262</a>    </span><span class="kw">let </span>identity = <span class="kw">match </span>default_identity_path() {
+<a href=#263 id=263 data-nosnippet>263</a>        <span class="prelude-val">None </span>=&gt; {
+<a href=#264 id=264 data-nosnippet>264</a>            checks.push(DoctorCheck::fail(
+<a href=#265 id=265 data-nosnippet>265</a>                <span class="string">"identity"</span>,
+<a href=#266 id=266 data-nosnippet>266</a>                <span class="string">"no HOME and no XDG_STATE_HOME: this process has nowhere to keep a node identity"</span>,
+<a href=#267 id=267 data-nosnippet>267</a>                <span class="string">"the mesh cannot activate: a node without a key cannot be told apart from an impostor"</span>,
+<a href=#268 id=268 data-nosnippet>268</a>                <span class="string">"run the server with HOME or XDG_STATE_HOME set"</span>,
+<a href=#269 id=269 data-nosnippet>269</a>            ));
+<a href=#270 id=270 data-nosnippet>270</a>            <span class="prelude-val">None
+<a href=#271 id=271 data-nosnippet>271</a>        </span>}
+<a href=#272 id=272 data-nosnippet>272</a>        <span class="prelude-val">Some</span>(path) <span class="kw">if </span>path.is_file() =&gt; <span class="kw">match </span>NodeIdentity::load_or_create(<span class="kw-2">&amp;</span>path) {
+<a href=#273 id=273 data-nosnippet>273</a>            <span class="prelude-val">Ok</span>(identity) =&gt; {
+<a href=#274 id=274 data-nosnippet>274</a>                checks.push(DoctorCheck::pass(
 <a href=#275 id=275 data-nosnippet>275</a>                    <span class="string">"identity"</span>,
-<a href=#276 id=276 data-nosnippet>276</a>                    e.to_string(),
-<a href=#277 id=277 data-nosnippet>277</a>                    <span class="string">"the mesh cannot activate with a broken identity, and replacing it silently would make this machine a new node every peer distrusts"</span>,
-<a href=#278 id=278 data-nosnippet>278</a>                    <span class="string">"restore the file from a backup, or remove it deliberately — a new key is a new node, and every allowlist naming the old key must be updated"</span>,
-<a href=#279 id=279 data-nosnippet>279</a>                ));
-<a href=#280 id=280 data-nosnippet>280</a>                <span class="prelude-val">None
-<a href=#281 id=281 data-nosnippet>281</a>            </span>}
-<a href=#282 id=282 data-nosnippet>282</a>        },
-<a href=#283 id=283 data-nosnippet>283</a>        <span class="prelude-val">Some</span>(path) =&gt; {
-<a href=#284 id=284 data-nosnippet>284</a>            checks.push(DoctorCheck::pass(
-<a href=#285 id=285 data-nosnippet>285</a>                <span class="string">"identity"</span>,
-<a href=#286 id=286 data-nosnippet>286</a>                <span class="macro">format!</span>(<span class="string">"absent; created at first activation at {}"</span>, path.display()),
-<a href=#287 id=287 data-nosnippet>287</a>            ));
-<a href=#288 id=288 data-nosnippet>288</a>            <span class="prelude-val">None
-<a href=#289 id=289 data-nosnippet>289</a>        </span>}
-<a href=#290 id=290 data-nosnippet>290</a>    };
-<a href=#291 id=291 data-nosnippet>291</a>
-<a href=#292 id=292 data-nosnippet>292</a>    <span class="comment">// Trust: under an allowlist-shaped declaration, is this machine's own key listed? An
-<a href=#293 id=293 data-nosnippet>293</a>    // unlisted machine keeps the mesh closed (`manager::closed_to`), so this is the check
-<a href=#294 id=294 data-nosnippet>294</a>    // that names why and what to do.
-<a href=#295 id=295 data-nosnippet>295</a>    </span><span class="kw">if let </span>(<span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(config)), <span class="prelude-val">Some</span>(identity)) = (<span class="kw-2">&amp;</span>declaration, <span class="kw-2">&amp;</span>identity) {
-<a href=#296 id=296 data-nosnippet>296</a>        <span class="kw">if </span>config.enabled &amp;&amp; config.trust.policy != <span class="kw">super</span>::trust::TrustPolicy::Tofu {
-<a href=#297 id=297 data-nosnippet>297</a>            <span class="kw">let </span>listed = config.trust.allow.contains(<span class="kw-2">&amp;</span>identity.public.public_key);
-<a href=#298 id=298 data-nosnippet>298</a>            checks.push(<span class="kw">if </span>listed {
-<a href=#299 id=299 data-nosnippet>299</a>                DoctorCheck::pass(<span class="string">"trust"</span>, <span class="string">"this machine's key is on the allowlist"</span>)
-<a href=#300 id=300 data-nosnippet>300</a>            } <span class="kw">else </span>{
-<a href=#301 id=301 data-nosnippet>301</a>                DoctorCheck::fail(
-<a href=#302 id=302 data-nosnippet>302</a>                    <span class="string">"trust"</span>,
-<a href=#303 id=303 data-nosnippet>303</a>                    <span class="macro">format!</span>(
-<a href=#304 id=304 data-nosnippet>304</a>                        <span class="string">"this machine's key {} is not among the {} allowed"</span>,
-<a href=#305 id=305 data-nosnippet>305</a>                        identity.public.public_key,
-<a href=#306 id=306 data-nosnippet>306</a>                        config.trust.allow.len()
-<a href=#307 id=307 data-nosnippet>307</a>                    ),
-<a href=#308 id=308 data-nosnippet>308</a>                    <span class="string">"the mesh stays closed on this machine: it neither announces nor dials, and no other machine links to it"</span>,
-<a href=#309 id=309 data-nosnippet>309</a>                    <span class="string">"add the key above to trust.allow in the mesh declaration and commit it"</span>,
-<a href=#310 id=310 data-nosnippet>310</a>                )
-<a href=#311 id=311 data-nosnippet>311</a>            });
-<a href=#312 id=312 data-nosnippet>312</a>        }
-<a href=#313 id=313 data-nosnippet>313</a>    }
-<a href=#314 id=314 data-nosnippet>314</a>
-<a href=#315 id=315 data-nosnippet>315</a>    <span class="comment">// The repository's mesh identity: what links are matched on.
-<a href=#316 id=316 data-nosnippet>316</a>    </span><span class="kw">if let </span><span class="prelude-val">Some</span>(root) = root {
-<a href=#317 id=317 data-nosnippet>317</a>        <span class="kw">let </span>declared = declaration
-<a href=#318 id=318 data-nosnippet>318</a>            .as_ref()
-<a href=#319 id=319 data-nosnippet>319</a>            .and_then(|d| d.as_ref().ok())
-<a href=#320 id=320 data-nosnippet>320</a>            .and_then(|c| c.cooperation.repository.clone());
-<a href=#321 id=321 data-nosnippet>321</a>        checks.push(<span class="kw">match </span><span class="kw">super</span>::repository::resolve(root, declared.as_deref()) {
-<a href=#322 id=322 data-nosnippet>322</a>            <span class="prelude-val">Ok</span>(identity) =&gt; DoctorCheck::pass(
-<a href=#323 id=323 data-nosnippet>323</a>                <span class="string">"repository"</span>,
-<a href=#324 id=324 data-nosnippet>324</a>                <span class="macro">format!</span>(
-<a href=#325 id=325 data-nosnippet>325</a>                    <span class="string">"{} from {:?}: {}"</span>,
-<a href=#326 id=326 data-nosnippet>326</a>                    identity.id, identity.basis, identity.detail
-<a href=#327 id=327 data-nosnippet>327</a>                ),
-<a href=#328 id=328 data-nosnippet>328</a>            ),
-<a href=#329 id=329 data-nosnippet>329</a>            <span class="prelude-val">Err</span>(e) =&gt; DoctorCheck::fail(
+<a href=#276 id=276 data-nosnippet>276</a>                    <span class="macro">format!</span>(<span class="string">"{} at {}"</span>, identity.public.node_id, path.display()),
+<a href=#277 id=277 data-nosnippet>277</a>                ));
+<a href=#278 id=278 data-nosnippet>278</a>                <span class="prelude-val">Some</span>(identity)
+<a href=#279 id=279 data-nosnippet>279</a>            }
+<a href=#280 id=280 data-nosnippet>280</a>            <span class="prelude-val">Err</span>(e) =&gt; {
+<a href=#281 id=281 data-nosnippet>281</a>                checks.push(DoctorCheck::fail(
+<a href=#282 id=282 data-nosnippet>282</a>                    <span class="string">"identity"</span>,
+<a href=#283 id=283 data-nosnippet>283</a>                    e.to_string(),
+<a href=#284 id=284 data-nosnippet>284</a>                    <span class="string">"the mesh cannot activate with a broken identity, and replacing it silently would make this machine a new node every peer distrusts"</span>,
+<a href=#285 id=285 data-nosnippet>285</a>                    <span class="string">"restore the file from a backup, or remove it deliberately — a new key is a new node, and every allowlist naming the old key must be updated"</span>,
+<a href=#286 id=286 data-nosnippet>286</a>                ));
+<a href=#287 id=287 data-nosnippet>287</a>                <span class="prelude-val">None
+<a href=#288 id=288 data-nosnippet>288</a>            </span>}
+<a href=#289 id=289 data-nosnippet>289</a>        },
+<a href=#290 id=290 data-nosnippet>290</a>        <span class="prelude-val">Some</span>(path) =&gt; {
+<a href=#291 id=291 data-nosnippet>291</a>            checks.push(DoctorCheck::pass(
+<a href=#292 id=292 data-nosnippet>292</a>                <span class="string">"identity"</span>,
+<a href=#293 id=293 data-nosnippet>293</a>                <span class="macro">format!</span>(<span class="string">"absent; created at first activation at {}"</span>, path.display()),
+<a href=#294 id=294 data-nosnippet>294</a>            ));
+<a href=#295 id=295 data-nosnippet>295</a>            <span class="prelude-val">None
+<a href=#296 id=296 data-nosnippet>296</a>        </span>}
+<a href=#297 id=297 data-nosnippet>297</a>    };
+<a href=#298 id=298 data-nosnippet>298</a>
+<a href=#299 id=299 data-nosnippet>299</a>    <span class="comment">// Trust: under an allowlist-shaped declaration, is this machine's own key listed? An
+<a href=#300 id=300 data-nosnippet>300</a>    // unlisted machine keeps the mesh closed (`manager::closed_to`), so this is the check
+<a href=#301 id=301 data-nosnippet>301</a>    // that names why and what to do.
+<a href=#302 id=302 data-nosnippet>302</a>    </span><span class="kw">if let </span>(<span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(config)), <span class="prelude-val">Some</span>(identity)) = (<span class="kw-2">&amp;</span>declaration, <span class="kw-2">&amp;</span>identity) {
+<a href=#303 id=303 data-nosnippet>303</a>        <span class="kw">if </span>config.enabled &amp;&amp; config.trust.policy != <span class="kw">super</span>::trust::TrustPolicy::Tofu {
+<a href=#304 id=304 data-nosnippet>304</a>            <span class="kw">let </span>listed = config.trust.allow.contains(<span class="kw-2">&amp;</span>identity.public.public_key);
+<a href=#305 id=305 data-nosnippet>305</a>            checks.push(<span class="kw">if </span>listed {
+<a href=#306 id=306 data-nosnippet>306</a>                DoctorCheck::pass(<span class="string">"trust"</span>, <span class="string">"this machine's key is on the allowlist"</span>)
+<a href=#307 id=307 data-nosnippet>307</a>            } <span class="kw">else </span>{
+<a href=#308 id=308 data-nosnippet>308</a>                DoctorCheck::fail(
+<a href=#309 id=309 data-nosnippet>309</a>                    <span class="string">"trust"</span>,
+<a href=#310 id=310 data-nosnippet>310</a>                    <span class="macro">format!</span>(
+<a href=#311 id=311 data-nosnippet>311</a>                        <span class="string">"this machine's key {} is not among the {} allowed"</span>,
+<a href=#312 id=312 data-nosnippet>312</a>                        identity.public.public_key,
+<a href=#313 id=313 data-nosnippet>313</a>                        config.trust.allow.len()
+<a href=#314 id=314 data-nosnippet>314</a>                    ),
+<a href=#315 id=315 data-nosnippet>315</a>                    <span class="string">"the mesh stays closed on this machine: it neither announces nor dials, and no other machine links to it"</span>,
+<a href=#316 id=316 data-nosnippet>316</a>                    <span class="string">"add the key above to trust.allow in the mesh declaration and commit it"</span>,
+<a href=#317 id=317 data-nosnippet>317</a>                )
+<a href=#318 id=318 data-nosnippet>318</a>            });
+<a href=#319 id=319 data-nosnippet>319</a>        }
+<a href=#320 id=320 data-nosnippet>320</a>    }
+<a href=#321 id=321 data-nosnippet>321</a>
+<a href=#322 id=322 data-nosnippet>322</a>    <span class="comment">// The repository's mesh identity: what links are matched on.
+<a href=#323 id=323 data-nosnippet>323</a>    </span><span class="kw">if let </span><span class="prelude-val">Some</span>(root) = root {
+<a href=#324 id=324 data-nosnippet>324</a>        <span class="kw">let </span>declared = declaration
+<a href=#325 id=325 data-nosnippet>325</a>            .as_ref()
+<a href=#326 id=326 data-nosnippet>326</a>            .and_then(|d| d.as_ref().ok())
+<a href=#327 id=327 data-nosnippet>327</a>            .and_then(|c| c.cooperation.repository.clone());
+<a href=#328 id=328 data-nosnippet>328</a>        checks.push(<span class="kw">match </span><span class="kw">super</span>::repository::resolve(root, declared.as_deref()) {
+<a href=#329 id=329 data-nosnippet>329</a>            <span class="prelude-val">Ok</span>(identity) =&gt; DoctorCheck::pass(
 <a href=#330 id=330 data-nosnippet>330</a>                <span class="string">"repository"</span>,
-<a href=#331 id=331 data-nosnippet>331</a>                e.to_string(),
-<a href=#332 id=332 data-nosnippet>332</a>                <span class="string">"cooperation stays off: without a repository identity no peer can be matched to this repository"</span>,
-<a href=#333 id=333 data-nosnippet>333</a>                <span class="string">"declare cooperation.repository in the mesh declaration, or fetch the full history (git fetch --unshallow)"</span>,
-<a href=#334 id=334 data-nosnippet>334</a>            ),
-<a href=#335 id=335 data-nosnippet>335</a>        });
-<a href=#336 id=336 data-nosnippet>336</a>    }
-<a href=#337 id=337 data-nosnippet>337</a>
-<a href=#338 id=338 data-nosnippet>338</a>    <span class="comment">// A UDP socket at all.
-<a href=#339 id=339 data-nosnippet>339</a>    </span>checks.push(<span class="kw">match </span>UdpSocket::bind((Ipv4Addr::UNSPECIFIED, <span class="number">0</span>)) {
-<a href=#340 id=340 data-nosnippet>340</a>        <span class="prelude-val">Ok</span>(socket) =&gt; DoctorCheck::pass(
-<a href=#341 id=341 data-nosnippet>341</a>            <span class="string">"udp"</span>,
-<a href=#342 id=342 data-nosnippet>342</a>            <span class="macro">format!</span>(
-<a href=#343 id=343 data-nosnippet>343</a>                <span class="string">"ephemeral bind ok ({})"</span>,
-<a href=#344 id=344 data-nosnippet>344</a>                socket
-<a href=#345 id=345 data-nosnippet>345</a>                    .local_addr()
-<a href=#346 id=346 data-nosnippet>346</a>                    .map(|a| a.to_string())
-<a href=#347 id=347 data-nosnippet>347</a>                    .unwrap_or_else(|<span class="kw">_</span>| <span class="string">"?"</span>.into())
-<a href=#348 id=348 data-nosnippet>348</a>            ),
-<a href=#349 id=349 data-nosnippet>349</a>        ),
-<a href=#350 id=350 data-nosnippet>350</a>        <span class="prelude-val">Err</span>(e) =&gt; DoctorCheck::fail(
-<a href=#351 id=351 data-nosnippet>351</a>            <span class="string">"udp"</span>,
-<a href=#352 id=352 data-nosnippet>352</a>            <span class="macro">format!</span>(<span class="string">"cannot bind an ephemeral UDP socket: {e}"</span>),
-<a href=#353 id=353 data-nosnippet>353</a>            <span class="string">"multicast and broadcast discovery cannot run; seeds and rendezvous still can"</span>,
-<a href=#354 id=354 data-nosnippet>354</a>            <span class="string">"allow UDP for this process (a sandbox or a firewall is refusing it), or declare cooperation.seeds"</span>,
-<a href=#355 id=355 data-nosnippet>355</a>        ),
-<a href=#356 id=356 data-nosnippet>356</a>    });
-<a href=#357 id=357 data-nosnippet>357</a>
-<a href=#358 id=358 data-nosnippet>358</a>    <span class="comment">// Multicast capability, against the declared (or default) group.
-<a href=#359 id=359 data-nosnippet>359</a>    </span><span class="kw">let </span>group_text = declaration
-<a href=#360 id=360 data-nosnippet>360</a>        .as_ref()
-<a href=#361 id=361 data-nosnippet>361</a>        .and_then(|d| d.as_ref().ok())
-<a href=#362 id=362 data-nosnippet>362</a>        .map(|c| c.multicast.group.clone())
-<a href=#363 id=363 data-nosnippet>363</a>        .unwrap_or_else(|| <span class="kw">super</span>::config::DEFAULT_GROUP.into());
-<a href=#364 id=364 data-nosnippet>364</a>    checks.push(<span class="kw">match </span>multicast_probe(<span class="kw-2">&amp;</span>group_text) {
-<a href=#365 id=365 data-nosnippet>365</a>        <span class="prelude-val">Ok</span>(()) =&gt; DoctorCheck::pass(
-<a href=#366 id=366 data-nosnippet>366</a>            <span class="string">"multicast"</span>,
-<a href=#367 id=367 data-nosnippet>367</a>            <span class="macro">format!</span>(<span class="string">"joined and left {group_text} on an ephemeral socket"</span>),
-<a href=#368 id=368 data-nosnippet>368</a>        ),
-<a href=#369 id=369 data-nosnippet>369</a>        <span class="prelude-val">Err</span>(e) =&gt; DoctorCheck::fail(
-<a href=#370 id=370 data-nosnippet>370</a>            <span class="string">"multicast"</span>,
-<a href=#371 id=371 data-nosnippet>371</a>            e.to_string(),
-<a href=#372 id=372 data-nosnippet>372</a>            <span class="string">"runtimes on this segment will not hear each other by multicast"</span>,
-<a href=#373 id=373 data-nosnippet>373</a>            <span class="string">"check the interface's multicast route, or declare cooperation.seeds or rendezvous endpoints instead"</span>,
-<a href=#374 id=374 data-nosnippet>374</a>        ),
-<a href=#375 id=375 data-nosnippet>375</a>    });
-<a href=#376 id=376 data-nosnippet>376</a>
-<a href=#377 id=377 data-nosnippet>377</a>    <span class="comment">// Broadcast capability.
-<a href=#378 id=378 data-nosnippet>378</a>    </span>checks.push(
-<a href=#379 id=379 data-nosnippet>379</a>        <span class="kw">match </span>UdpSocket::bind((Ipv4Addr::UNSPECIFIED, <span class="number">0</span>)).and_then(|s| s.set_broadcast(<span class="bool-val">true</span>)) {
-<a href=#380 id=380 data-nosnippet>380</a>            <span class="prelude-val">Ok</span>(()) =&gt; DoctorCheck::pass(<span class="string">"broadcast"</span>, <span class="string">"the broadcast flag sets"</span>),
-<a href=#381 id=381 data-nosnippet>381</a>            <span class="prelude-val">Err</span>(e) =&gt; DoctorCheck::fail(
-<a href=#382 id=382 data-nosnippet>382</a>                <span class="string">"broadcast"</span>,
-<a href=#383 id=383 data-nosnippet>383</a>                <span class="macro">format!</span>(<span class="string">"cannot enable broadcast: {e}"</span>),
-<a href=#384 id=384 data-nosnippet>384</a>                <span class="string">"the broadcast fallback cannot run"</span>,
-<a href=#385 id=385 data-nosnippet>385</a>                <span class="string">"leave broadcast disabled and rely on multicast, seeds or rendezvous"</span>,
-<a href=#386 id=386 data-nosnippet>386</a>            ),
-<a href=#387 id=387 data-nosnippet>387</a>        },
-<a href=#388 id=388 data-nosnippet>388</a>    );
-<a href=#389 id=389 data-nosnippet>389</a>
-<a href=#390 id=390 data-nosnippet>390</a>    <span class="comment">// The discovery protocol, end to end in memory: sign, encode, parse, verify.
-<a href=#391 id=391 data-nosnippet>391</a>    </span>checks.push(<span class="kw">match </span>protocol_probe() {
-<a href=#392 id=392 data-nosnippet>392</a>        <span class="prelude-val">Ok</span>(detail) =&gt; DoctorCheck::pass(<span class="string">"protocol"</span>, detail),
-<a href=#393 id=393 data-nosnippet>393</a>        <span class="prelude-val">Err</span>(e) =&gt; DoctorCheck::fail(
-<a href=#394 id=394 data-nosnippet>394</a>            <span class="string">"protocol"</span>,
-<a href=#395 id=395 data-nosnippet>395</a>            e,
-<a href=#396 id=396 data-nosnippet>396</a>            <span class="string">"no advertisement this executable writes would verify anywhere"</span>,
-<a href=#397 id=397 data-nosnippet>397</a>            <span class="string">"this is a defect of the executable: reinstall it and report the detail"</span>,
-<a href=#398 id=398 data-nosnippet>398</a>        ),
-<a href=#399 id=399 data-nosnippet>399</a>    });
-<a href=#400 id=400 data-nosnippet>400</a>
-<a href=#401 id=401 data-nosnippet>401</a>    <span class="comment">// The link protocol, end to end in memory: a hello signed, verified, refused when
-<a href=#402 id=402 data-nosnippet>402</a>    // tampered — the handshake's own cryptography, with no peer.
-<a href=#403 id=403 data-nosnippet>403</a>    </span>checks.push(<span class="kw">match </span>link_probe() {
-<a href=#404 id=404 data-nosnippet>404</a>        <span class="prelude-val">Ok</span>(detail) =&gt; DoctorCheck::pass(<span class="string">"link"</span>, detail),
-<a href=#405 id=405 data-nosnippet>405</a>        <span class="prelude-val">Err</span>(e) =&gt; DoctorCheck::fail(
-<a href=#406 id=406 data-nosnippet>406</a>            <span class="string">"link"</span>,
-<a href=#407 id=407 data-nosnippet>407</a>            e,
-<a href=#408 id=408 data-nosnippet>408</a>            <span class="string">"no link this executable opens would be admitted anywhere"</span>,
-<a href=#409 id=409 data-nosnippet>409</a>            <span class="string">"this is a defect of the executable: reinstall it and report the detail"</span>,
-<a href=#410 id=410 data-nosnippet>410</a>        ),
-<a href=#411 id=411 data-nosnippet>411</a>    });
-<a href=#412 id=412 data-nosnippet>412</a>
-<a href=#413 id=413 data-nosnippet>413</a>    <span class="comment">// The host firewall: what the declaration implies this machine must admit, and whether
-<a href=#414 id=414 data-nosnippet>414</a>    // the host does. Every check above is a fact of the process; this one is a fact of the
-<a href=#415 id=415 data-nosnippet>415</a>    // host, and the one that was missing when a declared hub dropped every registration
-<a href=#416 id=416 data-nosnippet>416</a>    // at the kernel while the doctor said every check held.
-<a href=#417 id=417 data-nosnippet>417</a>    </span>checks.push(firewall_check(<span class="kw-2">&amp;</span>declaration));
-<a href=#418 id=418 data-nosnippet>418</a>
-<a href=#419 id=419 data-nosnippet>419</a>    <span class="comment">// The runtime: what the process's mesh runtime decided about the declaration, when
-<a href=#420 id=420 data-nosnippet>420</a>    // anything decided. Every check above says the machine could run a mesh; this one says
-<a href=#421 id=421 data-nosnippet>421</a>    // whether the server did.
-<a href=#422 id=422 data-nosnippet>422</a>    </span>checks.push(runtime_check(declared(<span class="kw-2">&amp;</span>declaration), runtime));
-<a href=#423 id=423 data-nosnippet>423</a>
-<a href=#424 id=424 data-nosnippet>424</a>    MeshDoctorReport {
-<a href=#425 id=425 data-nosnippet>425</a>        ok: checks.iter().all(|c| c.ok),
-<a href=#426 id=426 data-nosnippet>426</a>        checks,
-<a href=#427 id=427 data-nosnippet>427</a>    }
-<a href=#428 id=428 data-nosnippet>428</a>}
-<a href=#429 id=429 data-nosnippet>429</a>
-<a href=#430 id=430 data-nosnippet>430</a><span class="doccomment">/// The `firewall` verdict: the admissions the declaration implies on this host, derived
-<a href=#431 id=431 data-nosnippet>431</a>/// by [`firewall::plan`] from the declaration and this machine's addresses, against what
-<a href=#432 id=432 data-nosnippet>432</a>/// the host's firewall says and what the kernel logged it dropping. It fails when a rule
-<a href=#433 id=433 data-nosnippet>433</a>/// is observed missing or when the kernel logged drops toward the mesh's ports in the
-<a href=#434 id=434 data-nosnippet>434</a>/// last five minutes; a firewall that cannot be asked without root, with nothing logged, holds —
-<a href=#435 id=435 data-nosnippet>435</a>/// an absence, not a verdict — and says how to ask as root.
-<a href=#436 id=436 data-nosnippet>436</a></span><span class="kw">fn </span>firewall_check(declaration: <span class="kw-2">&amp;</span><span class="prelude-ty">Option</span>&lt;<span class="prelude-ty">Result</span>&lt;MeshConfig, MeshError&gt;&gt;) -&gt; DoctorCheck {
-<a href=#437 id=437 data-nosnippet>437</a>    <span class="kw">let </span>config = declaration.as_ref().and_then(|d| d.as_ref().ok());
-<a href=#438 id=438 data-nosnippet>438</a>    <span class="kw">let </span>local: Vec&lt;std::net::Ipv4Addr&gt; = <span class="kw">super</span>::address::interfaces()
-<a href=#439 id=439 data-nosnippet>439</a>        .into_iter()
-<a href=#440 id=440 data-nosnippet>440</a>        .map(|(<span class="kw">_</span>, ip)| ip)
-<a href=#441 id=441 data-nosnippet>441</a>        .collect();
-<a href=#442 id=442 data-nosnippet>442</a>    firewall_verdict(<span class="kw-2">&amp;</span>firewall::report(config, <span class="kw-2">&amp;</span>local, <span class="prelude-val">None</span>))
-<a href=#443 id=443 data-nosnippet>443</a>}
-<a href=#444 id=444 data-nosnippet>444</a>
-<a href=#445 id=445 data-nosnippet>445</a><span class="doccomment">/// The `firewall` check of a report already built. Apart from [`firewall_check`] so that
-<a href=#446 id=446 data-nosnippet>446</a>/// the verdict is a function of the report alone: which firewall a machine runs, and
-<a href=#447 id=447 data-nosnippet>447</a>/// whether it admits the mesh, is a fact of that machine, and the failing verdict has to
-<a href=#448 id=448 data-nosnippet>448</a>/// be held on every machine, not only on one whose firewall happens to drop the mesh.
-<a href=#449 id=449 data-nosnippet>449</a></span><span class="kw">fn </span>firewall_verdict(report: <span class="kw-2">&amp;</span>firewall::FirewallReport) -&gt; DoctorCheck {
-<a href=#450 id=450 data-nosnippet>450</a>    <span class="kw">let </span>detail = <span class="kw">if </span>report.plan.rules.is_empty() {
-<a href=#451 id=451 data-nosnippet>451</a>        report.verdict.clone()
-<a href=#452 id=452 data-nosnippet>452</a>    } <span class="kw">else </span>{
-<a href=#453 id=453 data-nosnippet>453</a>        <span class="macro">format!</span>(
-<a href=#454 id=454 data-nosnippet>454</a>            <span class="string">"{} ({}): needs {}; {}"</span>,
-<a href=#455 id=455 data-nosnippet>455</a>            report.backend.as_str(),
-<a href=#456 id=456 data-nosnippet>456</a>            report.platform,
-<a href=#457 id=457 data-nosnippet>457</a>            report
-<a href=#458 id=458 data-nosnippet>458</a>                .plan
-<a href=#459 id=459 data-nosnippet>459</a>                .rules
-<a href=#460 id=460 data-nosnippet>460</a>                .iter()
-<a href=#461 id=461 data-nosnippet>461</a>                .map(firewall::FirewallRule::label)
-<a href=#462 id=462 data-nosnippet>462</a>                .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
-<a href=#463 id=463 data-nosnippet>463</a>                .join(<span class="string">", "</span>),
-<a href=#464 id=464 data-nosnippet>464</a>            report.verdict
-<a href=#465 id=465 data-nosnippet>465</a>        )
-<a href=#466 id=466 data-nosnippet>466</a>    };
-<a href=#467 id=467 data-nosnippet>467</a>    <span class="kw">if </span>report.ok {
-<a href=#468 id=468 data-nosnippet>468</a>        DoctorCheck::pass(<span class="string">"firewall"</span>, detail)
-<a href=#469 id=469 data-nosnippet>469</a>    } <span class="kw">else </span>{
-<a href=#470 id=470 data-nosnippet>470</a>        DoctorCheck::fail(
-<a href=#471 id=471 data-nosnippet>471</a>            <span class="string">"firewall"</span>,
-<a href=#472 id=472 data-nosnippet>472</a>            detail,
-<a href=#473 id=473 data-nosnippet>473</a>            <span class="string">"what the firewall drops never reaches the socket: a declared hub that drops registrations is a hub nobody can register with, and a machine that drops the multicast group hears no peer on its segment, while every other check holds"</span>,
-<a href=#474 id=474 data-nosnippet>474</a>            <span class="string">"run `majordomus mesh firewall` for the rules and the commands that admit them, and `sudo majordomus mesh firewall apply` to admit them"</span>,
-<a href=#475 id=475 data-nosnippet>475</a>        )
-<a href=#476 id=476 data-nosnippet>476</a>    }
-<a href=#477 id=477 data-nosnippet>477</a>}
-<a href=#478 id=478 data-nosnippet>478</a>
-<a href=#479 id=479 data-nosnippet>479</a><span class="doccomment">/// What the declaration says about the mesh, as far as the `runtime` verdict needs it.
-<a href=#480 id=480 data-nosnippet>480</a></span><span class="attr">#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-<a href=#481 id=481 data-nosnippet>481</a></span><span class="kw">enum </span>Declared {
-<a href=#482 id=482 data-nosnippet>482</a>    <span class="doccomment">/// No mesh-declaration object in the layer.
-<a href=#483 id=483 data-nosnippet>483</a>    </span>Absent,
-<a href=#484 id=484 data-nosnippet>484</a>    <span class="doccomment">/// An object that does not parse.
-<a href=#485 id=485 data-nosnippet>485</a>    </span>Broken,
-<a href=#486 id=486 data-nosnippet>486</a>    <span class="doccomment">/// `enabled: false`.
-<a href=#487 id=487 data-nosnippet>487</a>    </span>Disabled,
-<a href=#488 id=488 data-nosnippet>488</a>    <span class="doccomment">/// `enabled: true`.
-<a href=#489 id=489 data-nosnippet>489</a>    </span>Enabled,
-<a href=#490 id=490 data-nosnippet>490</a>}
-<a href=#491 id=491 data-nosnippet>491</a>
-<a href=#492 id=492 data-nosnippet>492</a><span class="kw">fn </span>declared(declaration: <span class="kw-2">&amp;</span><span class="prelude-ty">Option</span>&lt;<span class="prelude-ty">Result</span>&lt;MeshConfig, MeshError&gt;&gt;) -&gt; Declared {
-<a href=#493 id=493 data-nosnippet>493</a>    <span class="kw">match </span>declaration {
-<a href=#494 id=494 data-nosnippet>494</a>        <span class="prelude-val">None </span>=&gt; Declared::Absent,
-<a href=#495 id=495 data-nosnippet>495</a>        <span class="prelude-val">Some</span>(<span class="prelude-val">Err</span>(<span class="kw">_</span>)) =&gt; Declared::Broken,
-<a href=#496 id=496 data-nosnippet>496</a>        <span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(config)) <span class="kw">if </span>config.enabled =&gt; Declared::Enabled,
-<a href=#497 id=497 data-nosnippet>497</a>        <span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(<span class="kw">_</span>)) =&gt; Declared::Disabled,
-<a href=#498 id=498 data-nosnippet>498</a>    }
-<a href=#499 id=499 data-nosnippet>499</a>}
-<a href=#500 id=500 data-nosnippet>500</a>
-<a href=#501 id=501 data-nosnippet>501</a><span class="doccomment">/// The `runtime` verdict. `None` is a runtime nobody decided on — the command line's, a
-<a href=#502 id=502 data-nosnippet>502</a>/// test's — whose inactivity is an absence and never a failure. A decided runtime is
-<a href=#503 id=503 data-nosnippet>503</a>/// active (a degraded one names its failed providers, and fails only when no provider
-<a href=#504 id=504 data-nosnippet>504</a>/// runs at all), off as declared, off because there is nothing to activate, or — the one
-<a href=#505 id=505 data-nosnippet>505</a>/// failure — off under an enabled declaration, carrying the server's reason.
-<a href=#506 id=506 data-nosnippet>506</a>/// The `runtime` verdict alone: what a server decided about the declaration, judged as
-<a href=#507 id=507 data-nosnippet>507</a>/// `mesh doctor` judges it. Health reads this one check rather than running the doctor's
-<a href=#508 id=508 data-nosnippet>508</a>/// probes, which open sockets.
-<a href=#509 id=509 data-nosnippet>509</a>///
-<a href=#510 id=510 data-nosnippet>510</a>/// ```
-<a href=#511 id=511 data-nosnippet>511</a>/// use majordomus_cli::mesh::doctor::runtime_verdict;
-<a href=#512 id=512 data-nosnippet>512</a>/// use majordomus_cli::mesh::manager::MeshRuntime;
-<a href=#513 id=513 data-nosnippet>513</a>/// use majordomus_cli::mesh::MeshConfig;
-<a href=#514 id=514 data-nosnippet>514</a>/// let enabled: MeshConfig = serde_json::from_value(serde_json::json!({
-<a href=#515 id=515 data-nosnippet>515</a>///     "schema": "mesh/v1", "kind": "mesh-declaration", "id": "x", "enabled": true })).unwrap();
-<a href=#516 id=516 data-nosnippet>516</a>/// let server = MeshRuntime::new();
-<a href=#517 id=517 data-nosnippet>517</a>/// server.decline("the node identity did not load");
-<a href=#518 id=518 data-nosnippet>518</a>/// assert!(!runtime_verdict(Some(Ok(enabled)), Some(&amp;server.status())).ok);
-<a href=#519 id=519 data-nosnippet>519</a>/// assert!(runtime_verdict(None, Some(&amp;server.status())).ok, "no declaration, nothing owed");
-<a href=#520 id=520 data-nosnippet>520</a>/// ```
-<a href=#521 id=521 data-nosnippet>521</a></span><span class="kw">pub fn </span>runtime_verdict(
-<a href=#522 id=522 data-nosnippet>522</a>    declaration: <span class="prelude-ty">Option</span>&lt;<span class="prelude-ty">Result</span>&lt;MeshConfig, MeshError&gt;&gt;,
-<a href=#523 id=523 data-nosnippet>523</a>    runtime: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>MeshStatus&gt;,
-<a href=#524 id=524 data-nosnippet>524</a>) -&gt; DoctorCheck {
-<a href=#525 id=525 data-nosnippet>525</a>    runtime_check(declared(<span class="kw-2">&amp;</span>declaration), runtime)
-<a href=#526 id=526 data-nosnippet>526</a>}
-<a href=#527 id=527 data-nosnippet>527</a>
-<a href=#528 id=528 data-nosnippet>528</a><span class="kw">fn </span>runtime_check(declared: Declared, runtime: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>MeshStatus&gt;) -&gt; DoctorCheck {
-<a href=#529 id=529 data-nosnippet>529</a>    <span class="kw">let </span><span class="prelude-val">Some</span>(status) = runtime <span class="kw">else </span>{
-<a href=#530 id=530 data-nosnippet>530</a>        <span class="kw">return </span>DoctorCheck::pass(
-<a href=#531 id=531 data-nosnippet>531</a>            <span class="string">"runtime"</span>,
-<a href=#532 id=532 data-nosnippet>532</a>            <span class="kw">match </span>declared {
-<a href=#533 id=533 data-nosnippet>533</a>                Declared::Enabled =&gt; {
-<a href=#534 id=534 data-nosnippet>534</a>                    <span class="string">"not decided in this process: the mesh lives in the shared server, and `majordomus mesh doctor` asks the server when one serves this checkout"
-<a href=#535 id=535 data-nosnippet>535</a>                </span>}
-<a href=#536 id=536 data-nosnippet>536</a>                Declared::Disabled =&gt; {
-<a href=#537 id=537 data-nosnippet>537</a>                    <span class="string">"not decided in this process, and nothing to decide: the declaration is disabled"
-<a href=#538 id=538 data-nosnippet>538</a>                </span>}
-<a href=#539 id=539 data-nosnippet>539</a>                Declared::Broken =&gt; {
-<a href=#540 id=540 data-nosnippet>540</a>                    <span class="string">"not decided in this process, and nothing to decide: the declaration does not parse"
-<a href=#541 id=541 data-nosnippet>541</a>                </span>}
-<a href=#542 id=542 data-nosnippet>542</a>                Declared::Absent =&gt; {
-<a href=#543 id=543 data-nosnippet>543</a>                    <span class="string">"not decided in this process, and nothing to decide: the repository declares no mesh"
-<a href=#544 id=544 data-nosnippet>544</a>                </span>}
-<a href=#545 id=545 data-nosnippet>545</a>            },
-<a href=#546 id=546 data-nosnippet>546</a>        );
-<a href=#547 id=547 data-nosnippet>547</a>    };
-<a href=#548 id=548 data-nosnippet>548</a>    <span class="kw">let </span>reason = status.reason.as_deref().unwrap_or(<span class="string">"no reason recorded"</span>);
-<a href=#549 id=549 data-nosnippet>549</a>    <span class="kw">let </span>why = reason.strip_prefix(<span class="string">"not active: "</span>).unwrap_or(reason);
-<a href=#550 id=550 data-nosnippet>550</a>    <span class="kw">if </span>!status.active {
-<a href=#551 id=551 data-nosnippet>551</a>        <span class="kw">return match </span>declared {
-<a href=#552 id=552 data-nosnippet>552</a>            <span class="comment">// closed by the trust list: the trust check carries the failure and the remedy
-<a href=#553 id=553 data-nosnippet>553</a>            </span>Declared::Enabled <span class="kw">if </span>why.starts_with(<span class="string">"closed: "</span>) =&gt; {
-<a href=#554 id=554 data-nosnippet>554</a>                DoctorCheck::pass(<span class="string">"runtime"</span>, why.to_string())
-<a href=#555 id=555 data-nosnippet>555</a>            }
-<a href=#556 id=556 data-nosnippet>556</a>            Declared::Enabled =&gt; DoctorCheck::fail(
-<a href=#557 id=557 data-nosnippet>557</a>                <span class="string">"runtime"</span>,
-<a href=#558 id=558 data-nosnippet>558</a>                <span class="macro">format!</span>(<span class="string">"the declaration is enabled and this server's mesh is not active — {why}"</span>),
-<a href=#559 id=559 data-nosnippet>559</a>                <span class="string">"this checkout's server announces nothing, hears nobody and links to no peer, while the committed declaration says the fleet sees it"</span>,
-<a href=#560 id=560 data-nosnippet>560</a>                <span class="string">"fix what the reason names, then restart the server (`majordomus serve stop &amp;&amp; majordomus serve ensure`)"</span>,
-<a href=#561 id=561 data-nosnippet>561</a>            ),
-<a href=#562 id=562 data-nosnippet>562</a>            Declared::Disabled =&gt; DoctorCheck::pass(<span class="string">"runtime"</span>, <span class="macro">format!</span>(<span class="string">"off, as declared — {why}"</span>)),
-<a href=#563 id=563 data-nosnippet>563</a>            Declared::Broken =&gt; DoctorCheck::pass(
+<a href=#331 id=331 data-nosnippet>331</a>                <span class="macro">format!</span>(
+<a href=#332 id=332 data-nosnippet>332</a>                    <span class="string">"{} from {:?}: {}"</span>,
+<a href=#333 id=333 data-nosnippet>333</a>                    identity.id, identity.basis, identity.detail
+<a href=#334 id=334 data-nosnippet>334</a>                ),
+<a href=#335 id=335 data-nosnippet>335</a>            ),
+<a href=#336 id=336 data-nosnippet>336</a>            <span class="prelude-val">Err</span>(e) =&gt; DoctorCheck::fail(
+<a href=#337 id=337 data-nosnippet>337</a>                <span class="string">"repository"</span>,
+<a href=#338 id=338 data-nosnippet>338</a>                e.to_string(),
+<a href=#339 id=339 data-nosnippet>339</a>                <span class="string">"cooperation stays off: without a repository identity no peer can be matched to this repository"</span>,
+<a href=#340 id=340 data-nosnippet>340</a>                <span class="string">"declare cooperation.repository in the mesh declaration, or fetch the full history (git fetch --unshallow)"</span>,
+<a href=#341 id=341 data-nosnippet>341</a>            ),
+<a href=#342 id=342 data-nosnippet>342</a>        });
+<a href=#343 id=343 data-nosnippet>343</a>    }
+<a href=#344 id=344 data-nosnippet>344</a>
+<a href=#345 id=345 data-nosnippet>345</a>    <span class="comment">// A UDP socket at all.
+<a href=#346 id=346 data-nosnippet>346</a>    </span>checks.push(<span class="kw">match </span>UdpSocket::bind((Ipv4Addr::UNSPECIFIED, <span class="number">0</span>)) {
+<a href=#347 id=347 data-nosnippet>347</a>        <span class="prelude-val">Ok</span>(socket) =&gt; DoctorCheck::pass(
+<a href=#348 id=348 data-nosnippet>348</a>            <span class="string">"udp"</span>,
+<a href=#349 id=349 data-nosnippet>349</a>            <span class="macro">format!</span>(
+<a href=#350 id=350 data-nosnippet>350</a>                <span class="string">"ephemeral bind ok ({})"</span>,
+<a href=#351 id=351 data-nosnippet>351</a>                socket
+<a href=#352 id=352 data-nosnippet>352</a>                    .local_addr()
+<a href=#353 id=353 data-nosnippet>353</a>                    .map(|a| a.to_string())
+<a href=#354 id=354 data-nosnippet>354</a>                    .unwrap_or_else(|<span class="kw">_</span>| <span class="string">"?"</span>.into())
+<a href=#355 id=355 data-nosnippet>355</a>            ),
+<a href=#356 id=356 data-nosnippet>356</a>        ),
+<a href=#357 id=357 data-nosnippet>357</a>        <span class="prelude-val">Err</span>(e) =&gt; DoctorCheck::fail(
+<a href=#358 id=358 data-nosnippet>358</a>            <span class="string">"udp"</span>,
+<a href=#359 id=359 data-nosnippet>359</a>            <span class="macro">format!</span>(<span class="string">"cannot bind an ephemeral UDP socket: {e}"</span>),
+<a href=#360 id=360 data-nosnippet>360</a>            <span class="string">"multicast and broadcast discovery cannot run; seeds and rendezvous still can"</span>,
+<a href=#361 id=361 data-nosnippet>361</a>            <span class="string">"allow UDP for this process (a sandbox or a firewall is refusing it), or declare cooperation.seeds"</span>,
+<a href=#362 id=362 data-nosnippet>362</a>        ),
+<a href=#363 id=363 data-nosnippet>363</a>    });
+<a href=#364 id=364 data-nosnippet>364</a>
+<a href=#365 id=365 data-nosnippet>365</a>    <span class="comment">// Multicast capability, against the declared (or default) group.
+<a href=#366 id=366 data-nosnippet>366</a>    </span><span class="kw">let </span>group_text = declaration
+<a href=#367 id=367 data-nosnippet>367</a>        .as_ref()
+<a href=#368 id=368 data-nosnippet>368</a>        .and_then(|d| d.as_ref().ok())
+<a href=#369 id=369 data-nosnippet>369</a>        .map(|c| c.multicast.group.clone())
+<a href=#370 id=370 data-nosnippet>370</a>        .unwrap_or_else(|| <span class="kw">super</span>::config::DEFAULT_GROUP.into());
+<a href=#371 id=371 data-nosnippet>371</a>    checks.push(<span class="kw">match </span>multicast_probe(<span class="kw-2">&amp;</span>group_text) {
+<a href=#372 id=372 data-nosnippet>372</a>        <span class="prelude-val">Ok</span>(()) =&gt; DoctorCheck::pass(
+<a href=#373 id=373 data-nosnippet>373</a>            <span class="string">"multicast"</span>,
+<a href=#374 id=374 data-nosnippet>374</a>            <span class="macro">format!</span>(<span class="string">"joined and left {group_text} on an ephemeral socket"</span>),
+<a href=#375 id=375 data-nosnippet>375</a>        ),
+<a href=#376 id=376 data-nosnippet>376</a>        <span class="prelude-val">Err</span>(e) =&gt; DoctorCheck::fail(
+<a href=#377 id=377 data-nosnippet>377</a>            <span class="string">"multicast"</span>,
+<a href=#378 id=378 data-nosnippet>378</a>            e.to_string(),
+<a href=#379 id=379 data-nosnippet>379</a>            <span class="string">"runtimes on this segment will not hear each other by multicast"</span>,
+<a href=#380 id=380 data-nosnippet>380</a>            <span class="string">"check the interface's multicast route, or declare cooperation.seeds or rendezvous endpoints instead"</span>,
+<a href=#381 id=381 data-nosnippet>381</a>        ),
+<a href=#382 id=382 data-nosnippet>382</a>    });
+<a href=#383 id=383 data-nosnippet>383</a>
+<a href=#384 id=384 data-nosnippet>384</a>    <span class="comment">// Broadcast capability.
+<a href=#385 id=385 data-nosnippet>385</a>    </span>checks.push(
+<a href=#386 id=386 data-nosnippet>386</a>        <span class="kw">match </span>UdpSocket::bind((Ipv4Addr::UNSPECIFIED, <span class="number">0</span>)).and_then(|s| s.set_broadcast(<span class="bool-val">true</span>)) {
+<a href=#387 id=387 data-nosnippet>387</a>            <span class="prelude-val">Ok</span>(()) =&gt; DoctorCheck::pass(<span class="string">"broadcast"</span>, <span class="string">"the broadcast flag sets"</span>),
+<a href=#388 id=388 data-nosnippet>388</a>            <span class="prelude-val">Err</span>(e) =&gt; DoctorCheck::fail(
+<a href=#389 id=389 data-nosnippet>389</a>                <span class="string">"broadcast"</span>,
+<a href=#390 id=390 data-nosnippet>390</a>                <span class="macro">format!</span>(<span class="string">"cannot enable broadcast: {e}"</span>),
+<a href=#391 id=391 data-nosnippet>391</a>                <span class="string">"the broadcast fallback cannot run"</span>,
+<a href=#392 id=392 data-nosnippet>392</a>                <span class="string">"leave broadcast disabled and rely on multicast, seeds or rendezvous"</span>,
+<a href=#393 id=393 data-nosnippet>393</a>            ),
+<a href=#394 id=394 data-nosnippet>394</a>        },
+<a href=#395 id=395 data-nosnippet>395</a>    );
+<a href=#396 id=396 data-nosnippet>396</a>
+<a href=#397 id=397 data-nosnippet>397</a>    <span class="comment">// The discovery protocol, end to end in memory: sign, encode, parse, verify.
+<a href=#398 id=398 data-nosnippet>398</a>    </span>checks.push(<span class="kw">match </span>protocol_probe() {
+<a href=#399 id=399 data-nosnippet>399</a>        <span class="prelude-val">Ok</span>(detail) =&gt; DoctorCheck::pass(<span class="string">"protocol"</span>, detail),
+<a href=#400 id=400 data-nosnippet>400</a>        <span class="prelude-val">Err</span>(e) =&gt; DoctorCheck::fail(
+<a href=#401 id=401 data-nosnippet>401</a>            <span class="string">"protocol"</span>,
+<a href=#402 id=402 data-nosnippet>402</a>            e,
+<a href=#403 id=403 data-nosnippet>403</a>            <span class="string">"no advertisement this executable writes would verify anywhere"</span>,
+<a href=#404 id=404 data-nosnippet>404</a>            <span class="string">"this is a defect of the executable: reinstall it and report the detail"</span>,
+<a href=#405 id=405 data-nosnippet>405</a>        ),
+<a href=#406 id=406 data-nosnippet>406</a>    });
+<a href=#407 id=407 data-nosnippet>407</a>
+<a href=#408 id=408 data-nosnippet>408</a>    <span class="comment">// The link protocol, end to end in memory: a hello signed, verified, refused when
+<a href=#409 id=409 data-nosnippet>409</a>    // tampered — the handshake's own cryptography, with no peer.
+<a href=#410 id=410 data-nosnippet>410</a>    </span>checks.push(<span class="kw">match </span>link_probe() {
+<a href=#411 id=411 data-nosnippet>411</a>        <span class="prelude-val">Ok</span>(detail) =&gt; DoctorCheck::pass(<span class="string">"link"</span>, detail),
+<a href=#412 id=412 data-nosnippet>412</a>        <span class="prelude-val">Err</span>(e) =&gt; DoctorCheck::fail(
+<a href=#413 id=413 data-nosnippet>413</a>            <span class="string">"link"</span>,
+<a href=#414 id=414 data-nosnippet>414</a>            e,
+<a href=#415 id=415 data-nosnippet>415</a>            <span class="string">"no link this executable opens would be admitted anywhere"</span>,
+<a href=#416 id=416 data-nosnippet>416</a>            <span class="string">"this is a defect of the executable: reinstall it and report the detail"</span>,
+<a href=#417 id=417 data-nosnippet>417</a>        ),
+<a href=#418 id=418 data-nosnippet>418</a>    });
+<a href=#419 id=419 data-nosnippet>419</a>
+<a href=#420 id=420 data-nosnippet>420</a>    <span class="comment">// The host firewall: what the declaration implies this machine must admit, and whether
+<a href=#421 id=421 data-nosnippet>421</a>    // the host does. Every check above is a fact of the process; this one is a fact of the
+<a href=#422 id=422 data-nosnippet>422</a>    // host, and the one that was missing when a declared hub dropped every registration
+<a href=#423 id=423 data-nosnippet>423</a>    // at the kernel while the doctor said every check held.
+<a href=#424 id=424 data-nosnippet>424</a>    </span>checks.push(firewall_check(<span class="kw-2">&amp;</span>declaration));
+<a href=#425 id=425 data-nosnippet>425</a>
+<a href=#426 id=426 data-nosnippet>426</a>    <span class="comment">// The runtime: what the process's mesh runtime decided about the declaration, when
+<a href=#427 id=427 data-nosnippet>427</a>    // anything decided. Every check above says the machine could run a mesh; this one says
+<a href=#428 id=428 data-nosnippet>428</a>    // whether the server did.
+<a href=#429 id=429 data-nosnippet>429</a>    </span>checks.push(runtime_check(declared(<span class="kw-2">&amp;</span>declaration), runtime));
+<a href=#430 id=430 data-nosnippet>430</a>
+<a href=#431 id=431 data-nosnippet>431</a>    MeshDoctorReport {
+<a href=#432 id=432 data-nosnippet>432</a>        ok: checks.iter().all(|c| c.ok),
+<a href=#433 id=433 data-nosnippet>433</a>        checks,
+<a href=#434 id=434 data-nosnippet>434</a>    }
+<a href=#435 id=435 data-nosnippet>435</a>}
+<a href=#436 id=436 data-nosnippet>436</a>
+<a href=#437 id=437 data-nosnippet>437</a><span class="doccomment">/// The `firewall` verdict: the admissions the declaration implies on this host, derived
+<a href=#438 id=438 data-nosnippet>438</a>/// by [`firewall::plan`] from the declaration and this machine's addresses, against what
+<a href=#439 id=439 data-nosnippet>439</a>/// the host's firewall says and what the kernel logged it dropping. It fails when a rule
+<a href=#440 id=440 data-nosnippet>440</a>/// is observed missing or when the kernel logged drops toward the mesh's ports in the
+<a href=#441 id=441 data-nosnippet>441</a>/// last five minutes; a firewall that cannot be asked without root, with nothing logged, holds —
+<a href=#442 id=442 data-nosnippet>442</a>/// an absence, not a verdict — and says how to ask as root.
+<a href=#443 id=443 data-nosnippet>443</a></span><span class="kw">fn </span>firewall_check(declaration: <span class="kw-2">&amp;</span><span class="prelude-ty">Option</span>&lt;<span class="prelude-ty">Result</span>&lt;MeshConfig, MeshError&gt;&gt;) -&gt; DoctorCheck {
+<a href=#444 id=444 data-nosnippet>444</a>    <span class="kw">let </span>config = declaration.as_ref().and_then(|d| d.as_ref().ok());
+<a href=#445 id=445 data-nosnippet>445</a>    <span class="kw">let </span>local: Vec&lt;std::net::Ipv4Addr&gt; = <span class="kw">super</span>::address::interfaces()
+<a href=#446 id=446 data-nosnippet>446</a>        .into_iter()
+<a href=#447 id=447 data-nosnippet>447</a>        .map(|(<span class="kw">_</span>, ip)| ip)
+<a href=#448 id=448 data-nosnippet>448</a>        .collect();
+<a href=#449 id=449 data-nosnippet>449</a>    firewall_verdict(<span class="kw-2">&amp;</span>firewall::report(config, <span class="kw-2">&amp;</span>local, <span class="prelude-val">None</span>))
+<a href=#450 id=450 data-nosnippet>450</a>}
+<a href=#451 id=451 data-nosnippet>451</a>
+<a href=#452 id=452 data-nosnippet>452</a><span class="doccomment">/// The `firewall` check of a report already built. Apart from [`firewall_check`] so that
+<a href=#453 id=453 data-nosnippet>453</a>/// the verdict is a function of the report alone: which firewall a machine runs, and
+<a href=#454 id=454 data-nosnippet>454</a>/// whether it admits the mesh, is a fact of that machine, and the failing verdict has to
+<a href=#455 id=455 data-nosnippet>455</a>/// be held on every machine, not only on one whose firewall happens to drop the mesh.
+<a href=#456 id=456 data-nosnippet>456</a></span><span class="kw">fn </span>firewall_verdict(report: <span class="kw-2">&amp;</span>firewall::FirewallReport) -&gt; DoctorCheck {
+<a href=#457 id=457 data-nosnippet>457</a>    <span class="kw">let </span>detail = <span class="kw">if </span>report.plan.rules.is_empty() {
+<a href=#458 id=458 data-nosnippet>458</a>        report.verdict.clone()
+<a href=#459 id=459 data-nosnippet>459</a>    } <span class="kw">else </span>{
+<a href=#460 id=460 data-nosnippet>460</a>        <span class="macro">format!</span>(
+<a href=#461 id=461 data-nosnippet>461</a>            <span class="string">"{} ({}): needs {}; {}"</span>,
+<a href=#462 id=462 data-nosnippet>462</a>            report.backend.as_str(),
+<a href=#463 id=463 data-nosnippet>463</a>            report.platform,
+<a href=#464 id=464 data-nosnippet>464</a>            report
+<a href=#465 id=465 data-nosnippet>465</a>                .plan
+<a href=#466 id=466 data-nosnippet>466</a>                .rules
+<a href=#467 id=467 data-nosnippet>467</a>                .iter()
+<a href=#468 id=468 data-nosnippet>468</a>                .map(firewall::FirewallRule::label)
+<a href=#469 id=469 data-nosnippet>469</a>                .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
+<a href=#470 id=470 data-nosnippet>470</a>                .join(<span class="string">", "</span>),
+<a href=#471 id=471 data-nosnippet>471</a>            report.verdict
+<a href=#472 id=472 data-nosnippet>472</a>        )
+<a href=#473 id=473 data-nosnippet>473</a>    };
+<a href=#474 id=474 data-nosnippet>474</a>    <span class="kw">if </span>report.ok {
+<a href=#475 id=475 data-nosnippet>475</a>        DoctorCheck::pass(<span class="string">"firewall"</span>, detail)
+<a href=#476 id=476 data-nosnippet>476</a>    } <span class="kw">else </span>{
+<a href=#477 id=477 data-nosnippet>477</a>        DoctorCheck::fail(
+<a href=#478 id=478 data-nosnippet>478</a>            <span class="string">"firewall"</span>,
+<a href=#479 id=479 data-nosnippet>479</a>            detail,
+<a href=#480 id=480 data-nosnippet>480</a>            <span class="string">"what the firewall drops never reaches the socket: a declared hub that drops registrations is a hub nobody can register with, and a machine that drops the multicast group hears no peer on its segment, while every other check holds"</span>,
+<a href=#481 id=481 data-nosnippet>481</a>            <span class="string">"run `majordomus mesh firewall` for the rules and the commands that admit them, and `sudo majordomus mesh firewall apply` to admit them"</span>,
+<a href=#482 id=482 data-nosnippet>482</a>        )
+<a href=#483 id=483 data-nosnippet>483</a>    }
+<a href=#484 id=484 data-nosnippet>484</a>}
+<a href=#485 id=485 data-nosnippet>485</a>
+<a href=#486 id=486 data-nosnippet>486</a><span class="doccomment">/// What the declaration says about the mesh, as far as the `runtime` verdict needs it.
+<a href=#487 id=487 data-nosnippet>487</a></span><span class="attr">#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+<a href=#488 id=488 data-nosnippet>488</a></span><span class="kw">enum </span>Declared {
+<a href=#489 id=489 data-nosnippet>489</a>    <span class="doccomment">/// No mesh-declaration object in the layer.
+<a href=#490 id=490 data-nosnippet>490</a>    </span>Absent,
+<a href=#491 id=491 data-nosnippet>491</a>    <span class="doccomment">/// An object that does not parse.
+<a href=#492 id=492 data-nosnippet>492</a>    </span>Broken,
+<a href=#493 id=493 data-nosnippet>493</a>    <span class="doccomment">/// `enabled: false`.
+<a href=#494 id=494 data-nosnippet>494</a>    </span>Disabled,
+<a href=#495 id=495 data-nosnippet>495</a>    <span class="doccomment">/// `enabled: true`.
+<a href=#496 id=496 data-nosnippet>496</a>    </span>Enabled,
+<a href=#497 id=497 data-nosnippet>497</a>}
+<a href=#498 id=498 data-nosnippet>498</a>
+<a href=#499 id=499 data-nosnippet>499</a><span class="kw">fn </span>declared(declaration: <span class="kw-2">&amp;</span><span class="prelude-ty">Option</span>&lt;<span class="prelude-ty">Result</span>&lt;MeshConfig, MeshError&gt;&gt;) -&gt; Declared {
+<a href=#500 id=500 data-nosnippet>500</a>    <span class="kw">match </span>declaration {
+<a href=#501 id=501 data-nosnippet>501</a>        <span class="prelude-val">None </span>=&gt; Declared::Absent,
+<a href=#502 id=502 data-nosnippet>502</a>        <span class="prelude-val">Some</span>(<span class="prelude-val">Err</span>(<span class="kw">_</span>)) =&gt; Declared::Broken,
+<a href=#503 id=503 data-nosnippet>503</a>        <span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(config)) <span class="kw">if </span>config.enabled =&gt; Declared::Enabled,
+<a href=#504 id=504 data-nosnippet>504</a>        <span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(<span class="kw">_</span>)) =&gt; Declared::Disabled,
+<a href=#505 id=505 data-nosnippet>505</a>    }
+<a href=#506 id=506 data-nosnippet>506</a>}
+<a href=#507 id=507 data-nosnippet>507</a>
+<a href=#508 id=508 data-nosnippet>508</a><span class="doccomment">/// The `runtime` verdict. `None` is a runtime nobody decided on — the command line's, a
+<a href=#509 id=509 data-nosnippet>509</a>/// test's — whose inactivity is an absence and never a failure. A decided runtime is
+<a href=#510 id=510 data-nosnippet>510</a>/// active (a degraded one names its failed providers, and fails only when no provider
+<a href=#511 id=511 data-nosnippet>511</a>/// runs at all), off as declared, off because there is nothing to activate, or — the one
+<a href=#512 id=512 data-nosnippet>512</a>/// failure — off under an enabled declaration, carrying the server's reason.
+<a href=#513 id=513 data-nosnippet>513</a>/// The `runtime` verdict alone: what a server decided about the declaration, judged as
+<a href=#514 id=514 data-nosnippet>514</a>/// `mesh doctor` judges it. Health reads this one check rather than running the doctor's
+<a href=#515 id=515 data-nosnippet>515</a>/// probes, which open sockets.
+<a href=#516 id=516 data-nosnippet>516</a>///
+<a href=#517 id=517 data-nosnippet>517</a>/// ```
+<a href=#518 id=518 data-nosnippet>518</a>/// use majordomus_cli::mesh::doctor::runtime_verdict;
+<a href=#519 id=519 data-nosnippet>519</a>/// use majordomus_cli::mesh::manager::MeshRuntime;
+<a href=#520 id=520 data-nosnippet>520</a>/// use majordomus_cli::mesh::MeshConfig;
+<a href=#521 id=521 data-nosnippet>521</a>/// let enabled: MeshConfig = serde_json::from_value(serde_json::json!({
+<a href=#522 id=522 data-nosnippet>522</a>///     "schema": "mesh/v1", "kind": "mesh-declaration", "id": "x", "enabled": true })).unwrap();
+<a href=#523 id=523 data-nosnippet>523</a>/// let server = MeshRuntime::new();
+<a href=#524 id=524 data-nosnippet>524</a>/// server.decline("the node identity did not load");
+<a href=#525 id=525 data-nosnippet>525</a>/// assert!(!runtime_verdict(Some(Ok(enabled)), Some(&amp;server.status())).ok);
+<a href=#526 id=526 data-nosnippet>526</a>/// assert!(runtime_verdict(None, Some(&amp;server.status())).ok, "no declaration, nothing owed");
+<a href=#527 id=527 data-nosnippet>527</a>/// ```
+<a href=#528 id=528 data-nosnippet>528</a></span><span class="kw">pub fn </span>runtime_verdict(
+<a href=#529 id=529 data-nosnippet>529</a>    declaration: <span class="prelude-ty">Option</span>&lt;<span class="prelude-ty">Result</span>&lt;MeshConfig, MeshError&gt;&gt;,
+<a href=#530 id=530 data-nosnippet>530</a>    runtime: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>MeshStatus&gt;,
+<a href=#531 id=531 data-nosnippet>531</a>) -&gt; DoctorCheck {
+<a href=#532 id=532 data-nosnippet>532</a>    runtime_check(declared(<span class="kw-2">&amp;</span>declaration), runtime)
+<a href=#533 id=533 data-nosnippet>533</a>}
+<a href=#534 id=534 data-nosnippet>534</a>
+<a href=#535 id=535 data-nosnippet>535</a><span class="kw">fn </span>runtime_check(declared: Declared, runtime: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>MeshStatus&gt;) -&gt; DoctorCheck {
+<a href=#536 id=536 data-nosnippet>536</a>    <span class="kw">let </span><span class="prelude-val">Some</span>(status) = runtime <span class="kw">else </span>{
+<a href=#537 id=537 data-nosnippet>537</a>        <span class="kw">return </span>DoctorCheck::pass(
+<a href=#538 id=538 data-nosnippet>538</a>            <span class="string">"runtime"</span>,
+<a href=#539 id=539 data-nosnippet>539</a>            <span class="kw">match </span>declared {
+<a href=#540 id=540 data-nosnippet>540</a>                Declared::Enabled =&gt; {
+<a href=#541 id=541 data-nosnippet>541</a>                    <span class="string">"not decided in this process: the mesh lives in the shared server, and `majordomus mesh doctor` asks the server when one serves this checkout"
+<a href=#542 id=542 data-nosnippet>542</a>                </span>}
+<a href=#543 id=543 data-nosnippet>543</a>                Declared::Disabled =&gt; {
+<a href=#544 id=544 data-nosnippet>544</a>                    <span class="string">"not decided in this process, and nothing to decide: the declaration is disabled"
+<a href=#545 id=545 data-nosnippet>545</a>                </span>}
+<a href=#546 id=546 data-nosnippet>546</a>                Declared::Broken =&gt; {
+<a href=#547 id=547 data-nosnippet>547</a>                    <span class="string">"not decided in this process, and nothing to decide: the declaration does not parse"
+<a href=#548 id=548 data-nosnippet>548</a>                </span>}
+<a href=#549 id=549 data-nosnippet>549</a>                Declared::Absent =&gt; {
+<a href=#550 id=550 data-nosnippet>550</a>                    <span class="string">"not decided in this process, and nothing to decide: the repository declares no mesh"
+<a href=#551 id=551 data-nosnippet>551</a>                </span>}
+<a href=#552 id=552 data-nosnippet>552</a>            },
+<a href=#553 id=553 data-nosnippet>553</a>        );
+<a href=#554 id=554 data-nosnippet>554</a>    };
+<a href=#555 id=555 data-nosnippet>555</a>    <span class="kw">let </span>reason = status.reason.as_deref().unwrap_or(<span class="string">"no reason recorded"</span>);
+<a href=#556 id=556 data-nosnippet>556</a>    <span class="kw">let </span>why = reason.strip_prefix(<span class="string">"not active: "</span>).unwrap_or(reason);
+<a href=#557 id=557 data-nosnippet>557</a>    <span class="kw">if </span>!status.active {
+<a href=#558 id=558 data-nosnippet>558</a>        <span class="kw">return match </span>declared {
+<a href=#559 id=559 data-nosnippet>559</a>            <span class="comment">// closed by the trust list: the trust check carries the failure and the remedy
+<a href=#560 id=560 data-nosnippet>560</a>            </span>Declared::Enabled <span class="kw">if </span>why.starts_with(<span class="string">"closed: "</span>) =&gt; {
+<a href=#561 id=561 data-nosnippet>561</a>                DoctorCheck::pass(<span class="string">"runtime"</span>, why.to_string())
+<a href=#562 id=562 data-nosnippet>562</a>            }
+<a href=#563 id=563 data-nosnippet>563</a>            Declared::Enabled =&gt; DoctorCheck::fail(
 <a href=#564 id=564 data-nosnippet>564</a>                <span class="string">"runtime"</span>,
-<a href=#565 id=565 data-nosnippet>565</a>                <span class="macro">format!</span>(<span class="string">"off: the declaration does not parse, so nothing was activated — {why}"</span>),
-<a href=#566 id=566 data-nosnippet>566</a>            ),
-<a href=#567 id=567 data-nosnippet>567</a>            Declared::Absent =&gt; DoctorCheck::pass(
-<a href=#568 id=568 data-nosnippet>568</a>                <span class="string">"runtime"</span>,
-<a href=#569 id=569 data-nosnippet>569</a>                <span class="macro">format!</span>(<span class="string">"off: the repository declares no mesh — {why}"</span>),
-<a href=#570 id=570 data-nosnippet>570</a>            ),
-<a href=#571 id=571 data-nosnippet>571</a>        };
-<a href=#572 id=572 data-nosnippet>572</a>    }
-<a href=#573 id=573 data-nosnippet>573</a>    <span class="kw">let </span>running = status
-<a href=#574 id=574 data-nosnippet>574</a>        .providers
-<a href=#575 id=575 data-nosnippet>575</a>        .iter()
-<a href=#576 id=576 data-nosnippet>576</a>        .filter(|p| <span class="macro">matches!</span>(p.state, MeshProviderState::Running))
-<a href=#577 id=577 data-nosnippet>577</a>        .count();
-<a href=#578 id=578 data-nosnippet>578</a>    <span class="kw">let </span>failed: Vec&lt;String&gt; = status
-<a href=#579 id=579 data-nosnippet>579</a>        .providers
-<a href=#580 id=580 data-nosnippet>580</a>        .iter()
-<a href=#581 id=581 data-nosnippet>581</a>        .filter(|p| <span class="macro">matches!</span>(p.state, MeshProviderState::Failed))
-<a href=#582 id=582 data-nosnippet>582</a>        .map(|p| <span class="macro">format!</span>(<span class="string">"{} ({})"</span>, p.id, p.detail.as_deref().unwrap_or(<span class="string">"no detail"</span>)))
-<a href=#583 id=583 data-nosnippet>583</a>        .collect();
-<a href=#584 id=584 data-nosnippet>584</a>    <span class="kw">let </span>node = status
-<a href=#585 id=585 data-nosnippet>585</a>        .identity
-<a href=#586 id=586 data-nosnippet>586</a>        .as_ref()
-<a href=#587 id=587 data-nosnippet>587</a>        .map(|i| i.node_id.to_string())
-<a href=#588 id=588 data-nosnippet>588</a>        .unwrap_or_else(|| <span class="string">"?"</span>.into());
-<a href=#589 id=589 data-nosnippet>589</a>    <span class="kw">let </span><span class="kw-2">mut </span>detail = <span class="macro">format!</span>(
-<a href=#590 id=590 data-nosnippet>590</a>        <span class="string">"active as {node} since {}: {running} of {} provider(s) running; {} node(s) known, {} trusted, {} present"</span>,
-<a href=#591 id=591 data-nosnippet>591</a>        status.started_at.as_deref().unwrap_or(<span class="string">"?"</span>),
-<a href=#592 id=592 data-nosnippet>592</a>        status.providers.len(),
-<a href=#593 id=593 data-nosnippet>593</a>        status.tallies.nodes,
-<a href=#594 id=594 data-nosnippet>594</a>        status.tallies.trusted,
-<a href=#595 id=595 data-nosnippet>595</a>        status.tallies.present
-<a href=#596 id=596 data-nosnippet>596</a>    );
-<a href=#597 id=597 data-nosnippet>597</a>    <span class="kw">if </span>!failed.is_empty() {
-<a href=#598 id=598 data-nosnippet>598</a>        detail.push_str(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"; failed: {}"</span>, failed.join(<span class="string">", "</span>)));
-<a href=#599 id=599 data-nosnippet>599</a>    }
-<a href=#600 id=600 data-nosnippet>600</a>    <span class="comment">// A provider that failed beside one that runs is a degraded mesh, named and holding;
-<a href=#601 id=601 data-nosnippet>601</a>    // every declared transport failed is a mesh that hears nothing and is heard by nobody.
-<a href=#602 id=602 data-nosnippet>602</a>    </span><span class="kw">if </span>failed.is_empty() || running &gt; <span class="number">0 </span>{
-<a href=#603 id=603 data-nosnippet>603</a>        DoctorCheck::pass(<span class="string">"runtime"</span>, detail)
-<a href=#604 id=604 data-nosnippet>604</a>    } <span class="kw">else </span>{
-<a href=#605 id=605 data-nosnippet>605</a>        DoctorCheck::fail(
-<a href=#606 id=606 data-nosnippet>606</a>            <span class="string">"runtime"</span>,
-<a href=#607 id=607 data-nosnippet>607</a>            detail,
-<a href=#608 id=608 data-nosnippet>608</a>            <span class="string">"the mesh is active and every discovery transport it declares has failed: it hears nothing and is heard by nobody"</span>,
-<a href=#609 id=609 data-nosnippet>609</a>            <span class="string">"read each failed provider's detail (`majordomus mesh status`), fix what it names, then restart the server"</span>,
-<a href=#610 id=610 data-nosnippet>610</a>        )
-<a href=#611 id=611 data-nosnippet>611</a>    }
-<a href=#612 id=612 data-nosnippet>612</a>}
-<a href=#613 id=613 data-nosnippet>613</a>
-<a href=#614 id=614 data-nosnippet>614</a><span class="kw">fn </span>multicast_probe(group_text: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;(), MeshError&gt; {
-<a href=#615 id=615 data-nosnippet>615</a>    <span class="kw">let </span>group: Ipv4Addr = group_text
-<a href=#616 id=616 data-nosnippet>616</a>        .parse()
-<a href=#617 id=617 data-nosnippet>617</a>        .map_err(|<span class="kw">_</span>| MeshError::Provider(<span class="macro">format!</span>(<span class="string">"'{group_text}' is not an IPv4 group"</span>)))<span class="question-mark">?</span>;
-<a href=#618 id=618 data-nosnippet>618</a>    <span class="kw">if </span>!group.is_multicast() {
-<a href=#619 id=619 data-nosnippet>619</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(MeshError::Provider(<span class="macro">format!</span>(
-<a href=#620 id=620 data-nosnippet>620</a>            <span class="string">"{group} is not a multicast address"
-<a href=#621 id=621 data-nosnippet>621</a>        </span>)));
-<a href=#622 id=622 data-nosnippet>622</a>    }
-<a href=#623 id=623 data-nosnippet>623</a>    <span class="kw">let </span>socket = UdpSocket::bind((Ipv4Addr::UNSPECIFIED, <span class="number">0</span>))
-<a href=#624 id=624 data-nosnippet>624</a>        .map_err(|e| MeshError::Provider(<span class="macro">format!</span>(<span class="string">"cannot bind: {e}"</span>)))<span class="question-mark">?</span>;
-<a href=#625 id=625 data-nosnippet>625</a>    socket
-<a href=#626 id=626 data-nosnippet>626</a>        .join_multicast_v4(<span class="kw-2">&amp;</span>group, <span class="kw-2">&amp;</span>Ipv4Addr::UNSPECIFIED)
-<a href=#627 id=627 data-nosnippet>627</a>        .map_err(|e| MeshError::Provider(<span class="macro">format!</span>(<span class="string">"cannot join {group}: {e}"</span>)))<span class="question-mark">?</span>;
-<a href=#628 id=628 data-nosnippet>628</a>    <span class="kw">let _ </span>= socket.leave_multicast_v4(<span class="kw-2">&amp;</span>group, <span class="kw-2">&amp;</span>Ipv4Addr::UNSPECIFIED);
-<a href=#629 id=629 data-nosnippet>629</a>    <span class="prelude-val">Ok</span>(())
-<a href=#630 id=630 data-nosnippet>630</a>}
-<a href=#631 id=631 data-nosnippet>631</a>
-<a href=#632 id=632 data-nosnippet>632</a><span class="kw">fn </span>protocol_probe() -&gt; <span class="prelude-ty">Result</span>&lt;String, String&gt; {
-<a href=#633 id=633 data-nosnippet>633</a>    <span class="kw">let </span>identity = NodeIdentity::ephemeral().map_err(|e| e.to_string())<span class="question-mark">?</span>;
-<a href=#634 id=634 data-nosnippet>634</a>    <span class="kw">let </span>envelope = protocol::advertise_as(
-<a href=#635 id=635 data-nosnippet>635</a>        <span class="kw-2">&amp;</span>identity,
-<a href=#636 id=636 data-nosnippet>636</a>        <span class="string">"0000000000000001"</span>,
-<a href=#637 id=637 data-nosnippet>637</a>        <span class="number">1</span>,
-<a href=#638 id=638 data-nosnippet>638</a>        <span class="kw-2">&amp;</span>[<span class="string">"127.0.0.1:1"</span>.into()],
-<a href=#639 id=639 data-nosnippet>639</a>        <span class="kw-2">&amp;</span>[<span class="string">"http"</span>.into()],
-<a href=#640 id=640 data-nosnippet>640</a>        <span class="kw-2">&amp;</span>[],
-<a href=#641 id=641 data-nosnippet>641</a>        <span class="string">"self-check"</span>,
-<a href=#642 id=642 data-nosnippet>642</a>    );
-<a href=#643 id=643 data-nosnippet>643</a>    <span class="kw">let </span>bytes = protocol::encode(<span class="kw-2">&amp;</span>envelope).map_err(|e| e.to_string())<span class="question-mark">?</span>;
-<a href=#644 id=644 data-nosnippet>644</a>    <span class="kw">let </span>parsed = protocol::parse(<span class="kw-2">&amp;</span>bytes).map_err(|r| <span class="macro">format!</span>(<span class="string">"a fresh envelope refused: {r}"</span>))<span class="question-mark">?</span>;
-<a href=#645 id=645 data-nosnippet>645</a>    <span class="kw">if </span>parsed.adv.node_id() != <span class="prelude-val">Some</span>(identity.public.node_id.clone()) {
-<a href=#646 id=646 data-nosnippet>646</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="string">"the parsed envelope proves a different node"</span>.into());
-<a href=#647 id=647 data-nosnippet>647</a>    }
-<a href=#648 id=648 data-nosnippet>648</a>    <span class="prelude-val">Ok</span>(<span class="macro">format!</span>(
-<a href=#649 id=649 data-nosnippet>649</a>        <span class="string">"sign → encode ({} bytes) → parse → verify, protocol {}"</span>,
-<a href=#650 id=650 data-nosnippet>650</a>        bytes.len(),
-<a href=#651 id=651 data-nosnippet>651</a>        protocol::PROTOCOL_VERSION
-<a href=#652 id=652 data-nosnippet>652</a>    ))
-<a href=#653 id=653 data-nosnippet>653</a>}
-<a href=#654 id=654 data-nosnippet>654</a>
-<a href=#655 id=655 data-nosnippet>655</a><span class="kw">fn </span>link_probe() -&gt; <span class="prelude-ty">Result</span>&lt;String, String&gt; {
-<a href=#656 id=656 data-nosnippet>656</a>    <span class="kw">use </span><span class="kw">super</span>::link::{sign, verify_signed, Domain, LINK_PROTOCOL_MAX, LINK_PROTOCOL_MIN};
-<a href=#657 id=657 data-nosnippet>657</a>    <span class="kw">let </span>identity = NodeIdentity::ephemeral().map_err(|e| e.to_string())<span class="question-mark">?</span>;
-<a href=#658 id=658 data-nosnippet>658</a>    <span class="kw">let </span><span class="kw-2">mut </span>signed = sign(
-<a href=#659 id=659 data-nosnippet>659</a>        <span class="kw-2">&amp;</span>identity,
-<a href=#660 id=660 data-nosnippet>660</a>        Domain::Hello,
-<a href=#661 id=661 data-nosnippet>661</a>        <span class="macro">serde_json::json!</span>({<span class="string">"probe"</span>: <span class="kw">super</span>::link::fresh_token()}),
-<a href=#662 id=662 data-nosnippet>662</a>    );
-<a href=#663 id=663 data-nosnippet>663</a>    <span class="kw">if </span>!verify_signed(<span class="kw-2">&amp;</span>identity.public.public_key, Domain::Hello, <span class="kw-2">&amp;</span>signed) {
-<a href=#664 id=664 data-nosnippet>664</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="string">"a fresh hello does not verify"</span>.into());
-<a href=#665 id=665 data-nosnippet>665</a>    }
-<a href=#666 id=666 data-nosnippet>666</a>    signed.body = <span class="macro">serde_json::json!</span>({<span class="string">"probe"</span>: <span class="string">"tampered"</span>});
-<a href=#667 id=667 data-nosnippet>667</a>    <span class="kw">if </span>verify_signed(<span class="kw-2">&amp;</span>identity.public.public_key, Domain::Hello, <span class="kw-2">&amp;</span>signed) {
-<a href=#668 id=668 data-nosnippet>668</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="string">"a tampered hello verifies"</span>.into());
-<a href=#669 id=669 data-nosnippet>669</a>    }
-<a href=#670 id=670 data-nosnippet>670</a>    <span class="prelude-val">Ok</span>(<span class="macro">format!</span>(
-<a href=#671 id=671 data-nosnippet>671</a>        <span class="string">"hello signed → verified → tampered copy refused, link protocol {LINK_PROTOCOL_MIN}..{LINK_PROTOCOL_MAX}"
-<a href=#672 id=672 data-nosnippet>672</a>    </span>))
-<a href=#673 id=673 data-nosnippet>673</a>}
-<a href=#674 id=674 data-nosnippet>674</a>
-<a href=#675 id=675 data-nosnippet>675</a><span class="attr">#[cfg(test)]
-<a href=#676 id=676 data-nosnippet>676</a></span><span class="kw">mod </span>tests {
-<a href=#677 id=677 data-nosnippet>677</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
-<a href=#678 id=678 data-nosnippet>678</a>
-<a href=#679 id=679 data-nosnippet>679</a>    <span class="attr">#[test]
-<a href=#680 id=680 data-nosnippet>680</a>    </span><span class="kw">fn </span>the_runtime_verdict_judges_what_a_server_decided_about_the_declaration() {
-<a href=#681 id=681 data-nosnippet>681</a>        <span class="kw">let </span>enabled: MeshConfig = serde_json::from_value(<span class="macro">serde_json::json!</span>({
-<a href=#682 id=682 data-nosnippet>682</a>            <span class="string">"schema"</span>: <span class="string">"mesh/v1"</span>, <span class="string">"kind"</span>: <span class="string">"mesh-declaration"</span>, <span class="string">"id"</span>: <span class="string">"x"</span>, <span class="string">"enabled"</span>: <span class="bool-val">true</span>,
-<a href=#683 id=683 data-nosnippet>683</a>        }))
-<a href=#684 id=684 data-nosnippet>684</a>        .unwrap();
-<a href=#685 id=685 data-nosnippet>685</a>        <span class="kw">let </span>server = <span class="kw">super</span>::<span class="kw">super</span>::manager::MeshRuntime::new();
-<a href=#686 id=686 data-nosnippet>686</a>        server.decline(<span class="string">"the node identity did not load"</span>);
-<a href=#687 id=687 data-nosnippet>687</a>        <span class="kw">let </span>declined = runtime_verdict(<span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(enabled)), <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>server.status()));
-<a href=#688 id=688 data-nosnippet>688</a>        <span class="macro">assert_eq!</span>(declined.check, <span class="string">"runtime"</span>);
-<a href=#689 id=689 data-nosnippet>689</a>        <span class="macro">assert!</span>(
-<a href=#690 id=690 data-nosnippet>690</a>            !declined.ok,
-<a href=#691 id=691 data-nosnippet>691</a>            <span class="string">"a declared mesh the server declined is owed: {declined:?}"
-<a href=#692 id=692 data-nosnippet>692</a>        </span>);
-<a href=#693 id=693 data-nosnippet>693</a>        <span class="kw">let </span>undeclared = runtime_verdict(<span class="prelude-val">None</span>, <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>server.status()));
-<a href=#694 id=694 data-nosnippet>694</a>        <span class="macro">assert!</span>(
-<a href=#695 id=695 data-nosnippet>695</a>            undeclared.ok,
-<a href=#696 id=696 data-nosnippet>696</a>            <span class="string">"no declaration, nothing owed: {undeclared:?}"
-<a href=#697 id=697 data-nosnippet>697</a>        </span>);
-<a href=#698 id=698 data-nosnippet>698</a>    }
-<a href=#699 id=699 data-nosnippet>699</a>
-<a href=#700 id=700 data-nosnippet>700</a>    <span class="attr">#[test]
-<a href=#701 id=701 data-nosnippet>701</a>    </span><span class="kw">fn </span>the_self_check_runs_without_a_declaration_and_without_a_network() {
-<a href=#702 id=702 data-nosnippet>702</a>        <span class="kw">let </span>report = doctor(<span class="prelude-val">None</span>);
-<a href=#703 id=703 data-nosnippet>703</a>        <span class="kw">let </span>names: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = report.checks.iter().map(|c| c.check.as_str()).collect();
-<a href=#704 id=704 data-nosnippet>704</a>        <span class="macro">assert_eq!</span>(
-<a href=#705 id=705 data-nosnippet>705</a>            names,
-<a href=#706 id=706 data-nosnippet>706</a>            <span class="macro">vec!</span>[
-<a href=#707 id=707 data-nosnippet>707</a>                <span class="string">"declaration"</span>,
-<a href=#708 id=708 data-nosnippet>708</a>                <span class="string">"identity"</span>,
-<a href=#709 id=709 data-nosnippet>709</a>                <span class="string">"udp"</span>,
-<a href=#710 id=710 data-nosnippet>710</a>                <span class="string">"multicast"</span>,
-<a href=#711 id=711 data-nosnippet>711</a>                <span class="string">"broadcast"</span>,
-<a href=#712 id=712 data-nosnippet>712</a>                <span class="string">"protocol"</span>,
-<a href=#713 id=713 data-nosnippet>713</a>                <span class="string">"link"</span>,
-<a href=#714 id=714 data-nosnippet>714</a>                <span class="string">"firewall"</span>,
-<a href=#715 id=715 data-nosnippet>715</a>                <span class="string">"runtime"
-<a href=#716 id=716 data-nosnippet>716</a>            </span>]
-<a href=#717 id=717 data-nosnippet>717</a>        );
-<a href=#718 id=718 data-nosnippet>718</a>        <span class="kw">for </span>check <span class="kw">in </span>[<span class="string">"protocol"</span>, <span class="string">"link"</span>, <span class="string">"firewall"</span>, <span class="string">"runtime"</span>] {
-<a href=#719 id=719 data-nosnippet>719</a>            <span class="kw">let </span>c = report.checks.iter().find(|c| c.check == check).unwrap();
-<a href=#720 id=720 data-nosnippet>720</a>            <span class="macro">assert!</span>(c.ok, <span class="string">"{}"</span>, c.detail);
-<a href=#721 id=721 data-nosnippet>721</a>        }
-<a href=#722 id=722 data-nosnippet>722</a>    }
-<a href=#723 id=723 data-nosnippet>723</a>
-<a href=#724 id=724 data-nosnippet>724</a>    <span class="attr">#[test]
-<a href=#725 id=725 data-nosnippet>725</a>    </span><span class="kw">fn </span>a_parsed_declaration_is_summarised_in_the_verdict() {
-<a href=#726 id=726 data-nosnippet>726</a>        <span class="kw">let </span>config: MeshConfig = serde_json::from_value(<span class="macro">serde_json::json!</span>({
-<a href=#727 id=727 data-nosnippet>727</a>            <span class="string">"schema"</span>: <span class="string">"mesh/v1"</span>, <span class="string">"kind"</span>: <span class="string">"mesh-declaration"</span>, <span class="string">"id"</span>: <span class="string">"docs"</span>, <span class="string">"enabled"</span>: <span class="bool-val">true
-<a href=#728 id=728 data-nosnippet>728</a>        </span>}))
-<a href=#729 id=729 data-nosnippet>729</a>        .unwrap();
-<a href=#730 id=730 data-nosnippet>730</a>        <span class="kw">let </span>report = doctor(<span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(config)));
-<a href=#731 id=731 data-nosnippet>731</a>        <span class="kw">let </span>declaration = report
-<a href=#732 id=732 data-nosnippet>732</a>            .checks
-<a href=#733 id=733 data-nosnippet>733</a>            .iter()
-<a href=#734 id=734 data-nosnippet>734</a>            .find(|c| c.check == <span class="string">"declaration"</span>)
-<a href=#735 id=735 data-nosnippet>735</a>            .unwrap();
-<a href=#736 id=736 data-nosnippet>736</a>        <span class="macro">assert!</span>(declaration.ok);
-<a href=#737 id=737 data-nosnippet>737</a>        <span class="macro">assert!</span>(
-<a href=#738 id=738 data-nosnippet>738</a>            declaration.detail.contains(<span class="string">"enabled=true"</span>),
-<a href=#739 id=739 data-nosnippet>739</a>            <span class="string">"{}"</span>,
-<a href=#740 id=740 data-nosnippet>740</a>            declaration.detail
-<a href=#741 id=741 data-nosnippet>741</a>        );
-<a href=#742 id=742 data-nosnippet>742</a>        <span class="macro">assert!</span>(declaration.detail.contains(<span class="string">"trust=deny_unknown"</span>));
-<a href=#743 id=743 data-nosnippet>743</a>        <span class="macro">assert!</span>(declaration.detail.contains(<span class="string">"cooperation=true"</span>));
-<a href=#744 id=744 data-nosnippet>744</a>    }
-<a href=#745 id=745 data-nosnippet>745</a>
-<a href=#746 id=746 data-nosnippet>746</a>    <span class="attr">#[test]
-<a href=#747 id=747 data-nosnippet>747</a>    </span><span class="kw">fn </span>a_broken_declaration_is_one_failed_check_with_its_impact_and_remedy() {
-<a href=#748 id=748 data-nosnippet>748</a>        <span class="kw">let </span>report = doctor(<span class="prelude-val">Some</span>(<span class="prelude-val">Err</span>(MeshError::Config(<span class="string">"bad"</span>.into()))));
-<a href=#749 id=749 data-nosnippet>749</a>        <span class="kw">let </span>declaration = report
-<a href=#750 id=750 data-nosnippet>750</a>            .checks
-<a href=#751 id=751 data-nosnippet>751</a>            .iter()
-<a href=#752 id=752 data-nosnippet>752</a>            .find(|c| c.check == <span class="string">"declaration"</span>)
-<a href=#753 id=753 data-nosnippet>753</a>            .unwrap();
-<a href=#754 id=754 data-nosnippet>754</a>        <span class="macro">assert!</span>(!declaration.ok);
-<a href=#755 id=755 data-nosnippet>755</a>        <span class="macro">assert!</span>(declaration.impact.is_some() &amp;&amp; declaration.remediation.is_some());
-<a href=#756 id=756 data-nosnippet>756</a>        <span class="macro">assert!</span>(!report.ok);
-<a href=#757 id=757 data-nosnippet>757</a>    }
-<a href=#758 id=758 data-nosnippet>758</a>
-<a href=#759 id=759 data-nosnippet>759</a>    <span class="attr">#[test]
-<a href=#760 id=760 data-nosnippet>760</a>    </span><span class="kw">fn </span>a_repository_without_an_identity_is_named_with_the_remedy() {
-<a href=#761 id=761 data-nosnippet>761</a>        <span class="kw">let </span>dir = tempfile::tempdir().unwrap();
-<a href=#762 id=762 data-nosnippet>762</a>        <span class="macro">assert!</span>(std::process::Command::new(<span class="string">"git"</span>)
-<a href=#763 id=763 data-nosnippet>763</a>            .arg(<span class="string">"-C"</span>)
-<a href=#764 id=764 data-nosnippet>764</a>            .arg(dir.path())
-<a href=#765 id=765 data-nosnippet>765</a>            .args([<span class="string">"init"</span>, <span class="string">"-q"</span>])
-<a href=#766 id=766 data-nosnippet>766</a>            .status()
-<a href=#767 id=767 data-nosnippet>767</a>            .unwrap()
-<a href=#768 id=768 data-nosnippet>768</a>            .success());
-<a href=#769 id=769 data-nosnippet>769</a>        <span class="kw">let </span>report = doctor_at(<span class="prelude-val">None</span>, <span class="prelude-val">Some</span>(dir.path()), <span class="prelude-val">None</span>);
-<a href=#770 id=770 data-nosnippet>770</a>        <span class="kw">let </span>repository = report
-<a href=#771 id=771 data-nosnippet>771</a>            .checks
-<a href=#772 id=772 data-nosnippet>772</a>            .iter()
-<a href=#773 id=773 data-nosnippet>773</a>            .find(|c| c.check == <span class="string">"repository"</span>)
-<a href=#774 id=774 data-nosnippet>774</a>            .unwrap();
-<a href=#775 id=775 data-nosnippet>775</a>        <span class="macro">assert!</span>(!repository.ok, <span class="string">"an empty repository has no root commit"</span>);
-<a href=#776 id=776 data-nosnippet>776</a>        <span class="macro">assert!</span>(repository
-<a href=#777 id=777 data-nosnippet>777</a>            .remediation
-<a href=#778 id=778 data-nosnippet>778</a>            .as_deref()
-<a href=#779 id=779 data-nosnippet>779</a>            .unwrap_or_default()
-<a href=#780 id=780 data-nosnippet>780</a>            .contains(<span class="string">"cooperation.repository"</span>));
-<a href=#781 id=781 data-nosnippet>781</a>    }
-<a href=#782 id=782 data-nosnippet>782</a>
-<a href=#783 id=783 data-nosnippet>783</a>    <span class="kw">fn </span>config(enabled: bool) -&gt; MeshConfig {
-<a href=#784 id=784 data-nosnippet>784</a>        serde_json::from_value(<span class="macro">serde_json::json!</span>({
-<a href=#785 id=785 data-nosnippet>785</a>            <span class="string">"schema"</span>: <span class="string">"mesh/v1"</span>, <span class="string">"kind"</span>: <span class="string">"mesh-declaration"</span>, <span class="string">"id"</span>: <span class="string">"docs"</span>, <span class="string">"enabled"</span>: enabled
-<a href=#786 id=786 data-nosnippet>786</a>        }))
-<a href=#787 id=787 data-nosnippet>787</a>        .unwrap()
+<a href=#565 id=565 data-nosnippet>565</a>                <span class="macro">format!</span>(<span class="string">"the declaration is enabled and this server's mesh is not active — {why}"</span>),
+<a href=#566 id=566 data-nosnippet>566</a>                <span class="string">"this checkout's server announces nothing, hears nobody and links to no peer, while the committed declaration says the fleet sees it"</span>,
+<a href=#567 id=567 data-nosnippet>567</a>                <span class="string">"fix what the reason names, then restart the server (`majordomus serve stop &amp;&amp; majordomus serve ensure`)"</span>,
+<a href=#568 id=568 data-nosnippet>568</a>            ),
+<a href=#569 id=569 data-nosnippet>569</a>            Declared::Disabled =&gt; DoctorCheck::pass(<span class="string">"runtime"</span>, <span class="macro">format!</span>(<span class="string">"off, as declared — {why}"</span>)),
+<a href=#570 id=570 data-nosnippet>570</a>            Declared::Broken =&gt; DoctorCheck::pass(
+<a href=#571 id=571 data-nosnippet>571</a>                <span class="string">"runtime"</span>,
+<a href=#572 id=572 data-nosnippet>572</a>                <span class="macro">format!</span>(<span class="string">"off: the declaration does not parse, so nothing was activated — {why}"</span>),
+<a href=#573 id=573 data-nosnippet>573</a>            ),
+<a href=#574 id=574 data-nosnippet>574</a>            Declared::Absent =&gt; DoctorCheck::pass(
+<a href=#575 id=575 data-nosnippet>575</a>                <span class="string">"runtime"</span>,
+<a href=#576 id=576 data-nosnippet>576</a>                <span class="macro">format!</span>(<span class="string">"off: the repository declares no mesh — {why}"</span>),
+<a href=#577 id=577 data-nosnippet>577</a>            ),
+<a href=#578 id=578 data-nosnippet>578</a>        };
+<a href=#579 id=579 data-nosnippet>579</a>    }
+<a href=#580 id=580 data-nosnippet>580</a>    <span class="kw">let </span>running = status
+<a href=#581 id=581 data-nosnippet>581</a>        .providers
+<a href=#582 id=582 data-nosnippet>582</a>        .iter()
+<a href=#583 id=583 data-nosnippet>583</a>        .filter(|p| <span class="macro">matches!</span>(p.state, MeshProviderState::Running))
+<a href=#584 id=584 data-nosnippet>584</a>        .count();
+<a href=#585 id=585 data-nosnippet>585</a>    <span class="kw">let </span>failed: Vec&lt;String&gt; = status
+<a href=#586 id=586 data-nosnippet>586</a>        .providers
+<a href=#587 id=587 data-nosnippet>587</a>        .iter()
+<a href=#588 id=588 data-nosnippet>588</a>        .filter(|p| <span class="macro">matches!</span>(p.state, MeshProviderState::Failed))
+<a href=#589 id=589 data-nosnippet>589</a>        .map(|p| <span class="macro">format!</span>(<span class="string">"{} ({})"</span>, p.id, p.detail.as_deref().unwrap_or(<span class="string">"no detail"</span>)))
+<a href=#590 id=590 data-nosnippet>590</a>        .collect();
+<a href=#591 id=591 data-nosnippet>591</a>    <span class="kw">let </span>node = status
+<a href=#592 id=592 data-nosnippet>592</a>        .identity
+<a href=#593 id=593 data-nosnippet>593</a>        .as_ref()
+<a href=#594 id=594 data-nosnippet>594</a>        .map(|i| i.node_id.to_string())
+<a href=#595 id=595 data-nosnippet>595</a>        .unwrap_or_else(|| <span class="string">"?"</span>.into());
+<a href=#596 id=596 data-nosnippet>596</a>    <span class="kw">let </span><span class="kw-2">mut </span>detail = <span class="macro">format!</span>(
+<a href=#597 id=597 data-nosnippet>597</a>        <span class="string">"active as {node} since {}: {running} of {} provider(s) running; {} node(s) known, {} trusted, {} present"</span>,
+<a href=#598 id=598 data-nosnippet>598</a>        status.started_at.as_deref().unwrap_or(<span class="string">"?"</span>),
+<a href=#599 id=599 data-nosnippet>599</a>        status.providers.len(),
+<a href=#600 id=600 data-nosnippet>600</a>        status.tallies.nodes,
+<a href=#601 id=601 data-nosnippet>601</a>        status.tallies.trusted,
+<a href=#602 id=602 data-nosnippet>602</a>        status.tallies.present
+<a href=#603 id=603 data-nosnippet>603</a>    );
+<a href=#604 id=604 data-nosnippet>604</a>    <span class="kw">if </span>!failed.is_empty() {
+<a href=#605 id=605 data-nosnippet>605</a>        detail.push_str(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"; failed: {}"</span>, failed.join(<span class="string">", "</span>)));
+<a href=#606 id=606 data-nosnippet>606</a>    }
+<a href=#607 id=607 data-nosnippet>607</a>    <span class="comment">// A provider that failed beside one that runs is a degraded mesh, named and holding;
+<a href=#608 id=608 data-nosnippet>608</a>    // every declared transport failed is a mesh that hears nothing and is heard by nobody.
+<a href=#609 id=609 data-nosnippet>609</a>    </span><span class="kw">if </span>failed.is_empty() || running &gt; <span class="number">0 </span>{
+<a href=#610 id=610 data-nosnippet>610</a>        DoctorCheck::pass(<span class="string">"runtime"</span>, detail)
+<a href=#611 id=611 data-nosnippet>611</a>    } <span class="kw">else </span>{
+<a href=#612 id=612 data-nosnippet>612</a>        DoctorCheck::fail(
+<a href=#613 id=613 data-nosnippet>613</a>            <span class="string">"runtime"</span>,
+<a href=#614 id=614 data-nosnippet>614</a>            detail,
+<a href=#615 id=615 data-nosnippet>615</a>            <span class="string">"the mesh is active and every discovery transport it declares has failed: it hears nothing and is heard by nobody"</span>,
+<a href=#616 id=616 data-nosnippet>616</a>            <span class="string">"read each failed provider's detail (`majordomus mesh status`), fix what it names, then restart the server"</span>,
+<a href=#617 id=617 data-nosnippet>617</a>        )
+<a href=#618 id=618 data-nosnippet>618</a>    }
+<a href=#619 id=619 data-nosnippet>619</a>}
+<a href=#620 id=620 data-nosnippet>620</a>
+<a href=#621 id=621 data-nosnippet>621</a><span class="kw">fn </span>multicast_probe(group_text: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;(), MeshError&gt; {
+<a href=#622 id=622 data-nosnippet>622</a>    <span class="kw">let </span>group: Ipv4Addr = group_text
+<a href=#623 id=623 data-nosnippet>623</a>        .parse()
+<a href=#624 id=624 data-nosnippet>624</a>        .map_err(|<span class="kw">_</span>| MeshError::Provider(<span class="macro">format!</span>(<span class="string">"'{group_text}' is not an IPv4 group"</span>)))<span class="question-mark">?</span>;
+<a href=#625 id=625 data-nosnippet>625</a>    <span class="kw">if </span>!group.is_multicast() {
+<a href=#626 id=626 data-nosnippet>626</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(MeshError::Provider(<span class="macro">format!</span>(
+<a href=#627 id=627 data-nosnippet>627</a>            <span class="string">"{group} is not a multicast address"
+<a href=#628 id=628 data-nosnippet>628</a>        </span>)));
+<a href=#629 id=629 data-nosnippet>629</a>    }
+<a href=#630 id=630 data-nosnippet>630</a>    <span class="kw">let </span>socket = UdpSocket::bind((Ipv4Addr::UNSPECIFIED, <span class="number">0</span>))
+<a href=#631 id=631 data-nosnippet>631</a>        .map_err(|e| MeshError::Provider(<span class="macro">format!</span>(<span class="string">"cannot bind: {e}"</span>)))<span class="question-mark">?</span>;
+<a href=#632 id=632 data-nosnippet>632</a>    socket
+<a href=#633 id=633 data-nosnippet>633</a>        .join_multicast_v4(<span class="kw-2">&amp;</span>group, <span class="kw-2">&amp;</span>Ipv4Addr::UNSPECIFIED)
+<a href=#634 id=634 data-nosnippet>634</a>        .map_err(|e| MeshError::Provider(<span class="macro">format!</span>(<span class="string">"cannot join {group}: {e}"</span>)))<span class="question-mark">?</span>;
+<a href=#635 id=635 data-nosnippet>635</a>    <span class="kw">let _ </span>= socket.leave_multicast_v4(<span class="kw-2">&amp;</span>group, <span class="kw-2">&amp;</span>Ipv4Addr::UNSPECIFIED);
+<a href=#636 id=636 data-nosnippet>636</a>    <span class="prelude-val">Ok</span>(())
+<a href=#637 id=637 data-nosnippet>637</a>}
+<a href=#638 id=638 data-nosnippet>638</a>
+<a href=#639 id=639 data-nosnippet>639</a><span class="kw">fn </span>protocol_probe() -&gt; <span class="prelude-ty">Result</span>&lt;String, String&gt; {
+<a href=#640 id=640 data-nosnippet>640</a>    <span class="kw">let </span>identity = NodeIdentity::ephemeral().map_err(|e| e.to_string())<span class="question-mark">?</span>;
+<a href=#641 id=641 data-nosnippet>641</a>    <span class="kw">let </span>envelope = protocol::advertise_as(
+<a href=#642 id=642 data-nosnippet>642</a>        <span class="kw-2">&amp;</span>identity,
+<a href=#643 id=643 data-nosnippet>643</a>        <span class="string">"0000000000000001"</span>,
+<a href=#644 id=644 data-nosnippet>644</a>        <span class="number">1</span>,
+<a href=#645 id=645 data-nosnippet>645</a>        <span class="kw-2">&amp;</span>[<span class="string">"127.0.0.1:1"</span>.into()],
+<a href=#646 id=646 data-nosnippet>646</a>        <span class="kw-2">&amp;</span>[<span class="string">"http"</span>.into()],
+<a href=#647 id=647 data-nosnippet>647</a>        <span class="kw-2">&amp;</span>[],
+<a href=#648 id=648 data-nosnippet>648</a>        <span class="string">"self-check"</span>,
+<a href=#649 id=649 data-nosnippet>649</a>    );
+<a href=#650 id=650 data-nosnippet>650</a>    <span class="kw">let </span>bytes = protocol::encode(<span class="kw-2">&amp;</span>envelope).map_err(|e| e.to_string())<span class="question-mark">?</span>;
+<a href=#651 id=651 data-nosnippet>651</a>    <span class="kw">let </span>parsed = protocol::parse(<span class="kw-2">&amp;</span>bytes).map_err(|r| <span class="macro">format!</span>(<span class="string">"a fresh envelope refused: {r}"</span>))<span class="question-mark">?</span>;
+<a href=#652 id=652 data-nosnippet>652</a>    <span class="kw">if </span>parsed.adv.node_id() != <span class="prelude-val">Some</span>(identity.public.node_id.clone()) {
+<a href=#653 id=653 data-nosnippet>653</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="string">"the parsed envelope proves a different node"</span>.into());
+<a href=#654 id=654 data-nosnippet>654</a>    }
+<a href=#655 id=655 data-nosnippet>655</a>    <span class="prelude-val">Ok</span>(<span class="macro">format!</span>(
+<a href=#656 id=656 data-nosnippet>656</a>        <span class="string">"sign → encode ({} bytes) → parse → verify, protocol {}"</span>,
+<a href=#657 id=657 data-nosnippet>657</a>        bytes.len(),
+<a href=#658 id=658 data-nosnippet>658</a>        protocol::PROTOCOL_VERSION
+<a href=#659 id=659 data-nosnippet>659</a>    ))
+<a href=#660 id=660 data-nosnippet>660</a>}
+<a href=#661 id=661 data-nosnippet>661</a>
+<a href=#662 id=662 data-nosnippet>662</a><span class="kw">fn </span>link_probe() -&gt; <span class="prelude-ty">Result</span>&lt;String, String&gt; {
+<a href=#663 id=663 data-nosnippet>663</a>    <span class="kw">use </span><span class="kw">super</span>::link::{sign, verify_signed, Domain, LINK_PROTOCOL_MAX, LINK_PROTOCOL_MIN};
+<a href=#664 id=664 data-nosnippet>664</a>    <span class="kw">let </span>identity = NodeIdentity::ephemeral().map_err(|e| e.to_string())<span class="question-mark">?</span>;
+<a href=#665 id=665 data-nosnippet>665</a>    <span class="kw">let </span><span class="kw-2">mut </span>signed = sign(
+<a href=#666 id=666 data-nosnippet>666</a>        <span class="kw-2">&amp;</span>identity,
+<a href=#667 id=667 data-nosnippet>667</a>        Domain::Hello,
+<a href=#668 id=668 data-nosnippet>668</a>        <span class="macro">serde_json::json!</span>({<span class="string">"probe"</span>: <span class="kw">super</span>::link::fresh_token()}),
+<a href=#669 id=669 data-nosnippet>669</a>    );
+<a href=#670 id=670 data-nosnippet>670</a>    <span class="kw">if </span>!verify_signed(<span class="kw-2">&amp;</span>identity.public.public_key, Domain::Hello, <span class="kw-2">&amp;</span>signed) {
+<a href=#671 id=671 data-nosnippet>671</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="string">"a fresh hello does not verify"</span>.into());
+<a href=#672 id=672 data-nosnippet>672</a>    }
+<a href=#673 id=673 data-nosnippet>673</a>    signed.body = <span class="macro">serde_json::json!</span>({<span class="string">"probe"</span>: <span class="string">"tampered"</span>});
+<a href=#674 id=674 data-nosnippet>674</a>    <span class="kw">if </span>verify_signed(<span class="kw-2">&amp;</span>identity.public.public_key, Domain::Hello, <span class="kw-2">&amp;</span>signed) {
+<a href=#675 id=675 data-nosnippet>675</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="string">"a tampered hello verifies"</span>.into());
+<a href=#676 id=676 data-nosnippet>676</a>    }
+<a href=#677 id=677 data-nosnippet>677</a>    <span class="prelude-val">Ok</span>(<span class="macro">format!</span>(
+<a href=#678 id=678 data-nosnippet>678</a>        <span class="string">"hello signed → verified → tampered copy refused, link protocol {LINK_PROTOCOL_MIN}..{LINK_PROTOCOL_MAX}"
+<a href=#679 id=679 data-nosnippet>679</a>    </span>))
+<a href=#680 id=680 data-nosnippet>680</a>}
+<a href=#681 id=681 data-nosnippet>681</a>
+<a href=#682 id=682 data-nosnippet>682</a><span class="attr">#[cfg(test)]
+<a href=#683 id=683 data-nosnippet>683</a></span><span class="kw">mod </span>tests {
+<a href=#684 id=684 data-nosnippet>684</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#685 id=685 data-nosnippet>685</a>
+<a href=#686 id=686 data-nosnippet>686</a>    <span class="attr">#[test]
+<a href=#687 id=687 data-nosnippet>687</a>    </span><span class="kw">fn </span>the_runtime_verdict_judges_what_a_server_decided_about_the_declaration() {
+<a href=#688 id=688 data-nosnippet>688</a>        <span class="kw">let </span>enabled: MeshConfig = serde_json::from_value(<span class="macro">serde_json::json!</span>({
+<a href=#689 id=689 data-nosnippet>689</a>            <span class="string">"schema"</span>: <span class="string">"mesh/v1"</span>, <span class="string">"kind"</span>: <span class="string">"mesh-declaration"</span>, <span class="string">"id"</span>: <span class="string">"x"</span>, <span class="string">"enabled"</span>: <span class="bool-val">true</span>,
+<a href=#690 id=690 data-nosnippet>690</a>        }))
+<a href=#691 id=691 data-nosnippet>691</a>        .unwrap();
+<a href=#692 id=692 data-nosnippet>692</a>        <span class="kw">let </span>server = <span class="kw">super</span>::<span class="kw">super</span>::manager::MeshRuntime::new();
+<a href=#693 id=693 data-nosnippet>693</a>        server.decline(<span class="string">"the node identity did not load"</span>);
+<a href=#694 id=694 data-nosnippet>694</a>        <span class="kw">let </span>declined = runtime_verdict(<span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(enabled)), <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>server.status()));
+<a href=#695 id=695 data-nosnippet>695</a>        <span class="macro">assert_eq!</span>(declined.check, <span class="string">"runtime"</span>);
+<a href=#696 id=696 data-nosnippet>696</a>        <span class="macro">assert!</span>(
+<a href=#697 id=697 data-nosnippet>697</a>            !declined.ok,
+<a href=#698 id=698 data-nosnippet>698</a>            <span class="string">"a declared mesh the server declined is owed: {declined:?}"
+<a href=#699 id=699 data-nosnippet>699</a>        </span>);
+<a href=#700 id=700 data-nosnippet>700</a>        <span class="kw">let </span>undeclared = runtime_verdict(<span class="prelude-val">None</span>, <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>server.status()));
+<a href=#701 id=701 data-nosnippet>701</a>        <span class="macro">assert!</span>(
+<a href=#702 id=702 data-nosnippet>702</a>            undeclared.ok,
+<a href=#703 id=703 data-nosnippet>703</a>            <span class="string">"no declaration, nothing owed: {undeclared:?}"
+<a href=#704 id=704 data-nosnippet>704</a>        </span>);
+<a href=#705 id=705 data-nosnippet>705</a>    }
+<a href=#706 id=706 data-nosnippet>706</a>
+<a href=#707 id=707 data-nosnippet>707</a>    <span class="attr">#[test]
+<a href=#708 id=708 data-nosnippet>708</a>    </span><span class="kw">fn </span>the_self_check_runs_without_a_declaration_and_without_a_network() {
+<a href=#709 id=709 data-nosnippet>709</a>        <span class="kw">let </span>report = doctor(<span class="prelude-val">None</span>);
+<a href=#710 id=710 data-nosnippet>710</a>        <span class="kw">let </span>names: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = report.checks.iter().map(|c| c.check.as_str()).collect();
+<a href=#711 id=711 data-nosnippet>711</a>        <span class="macro">assert_eq!</span>(
+<a href=#712 id=712 data-nosnippet>712</a>            names,
+<a href=#713 id=713 data-nosnippet>713</a>            <span class="macro">vec!</span>[
+<a href=#714 id=714 data-nosnippet>714</a>                <span class="string">"declaration"</span>,
+<a href=#715 id=715 data-nosnippet>715</a>                <span class="string">"identity"</span>,
+<a href=#716 id=716 data-nosnippet>716</a>                <span class="string">"udp"</span>,
+<a href=#717 id=717 data-nosnippet>717</a>                <span class="string">"multicast"</span>,
+<a href=#718 id=718 data-nosnippet>718</a>                <span class="string">"broadcast"</span>,
+<a href=#719 id=719 data-nosnippet>719</a>                <span class="string">"protocol"</span>,
+<a href=#720 id=720 data-nosnippet>720</a>                <span class="string">"link"</span>,
+<a href=#721 id=721 data-nosnippet>721</a>                <span class="string">"firewall"</span>,
+<a href=#722 id=722 data-nosnippet>722</a>                <span class="string">"runtime"
+<a href=#723 id=723 data-nosnippet>723</a>            </span>]
+<a href=#724 id=724 data-nosnippet>724</a>        );
+<a href=#725 id=725 data-nosnippet>725</a>        <span class="kw">for </span>check <span class="kw">in </span>[<span class="string">"protocol"</span>, <span class="string">"link"</span>, <span class="string">"firewall"</span>, <span class="string">"runtime"</span>] {
+<a href=#726 id=726 data-nosnippet>726</a>            <span class="kw">let </span>c = report.checks.iter().find(|c| c.check == check).unwrap();
+<a href=#727 id=727 data-nosnippet>727</a>            <span class="macro">assert!</span>(c.ok, <span class="string">"{}"</span>, c.detail);
+<a href=#728 id=728 data-nosnippet>728</a>        }
+<a href=#729 id=729 data-nosnippet>729</a>    }
+<a href=#730 id=730 data-nosnippet>730</a>
+<a href=#731 id=731 data-nosnippet>731</a>    <span class="attr">#[test]
+<a href=#732 id=732 data-nosnippet>732</a>    </span><span class="kw">fn </span>a_parsed_declaration_is_summarised_in_the_verdict() {
+<a href=#733 id=733 data-nosnippet>733</a>        <span class="kw">let </span>config: MeshConfig = serde_json::from_value(<span class="macro">serde_json::json!</span>({
+<a href=#734 id=734 data-nosnippet>734</a>            <span class="string">"schema"</span>: <span class="string">"mesh/v1"</span>, <span class="string">"kind"</span>: <span class="string">"mesh-declaration"</span>, <span class="string">"id"</span>: <span class="string">"docs"</span>, <span class="string">"enabled"</span>: <span class="bool-val">true
+<a href=#735 id=735 data-nosnippet>735</a>        </span>}))
+<a href=#736 id=736 data-nosnippet>736</a>        .unwrap();
+<a href=#737 id=737 data-nosnippet>737</a>        <span class="kw">let </span>report = doctor(<span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(config)));
+<a href=#738 id=738 data-nosnippet>738</a>        <span class="kw">let </span>declaration = report
+<a href=#739 id=739 data-nosnippet>739</a>            .checks
+<a href=#740 id=740 data-nosnippet>740</a>            .iter()
+<a href=#741 id=741 data-nosnippet>741</a>            .find(|c| c.check == <span class="string">"declaration"</span>)
+<a href=#742 id=742 data-nosnippet>742</a>            .unwrap();
+<a href=#743 id=743 data-nosnippet>743</a>        <span class="macro">assert!</span>(declaration.ok);
+<a href=#744 id=744 data-nosnippet>744</a>        <span class="macro">assert!</span>(
+<a href=#745 id=745 data-nosnippet>745</a>            declaration.detail.contains(<span class="string">"enabled=true"</span>),
+<a href=#746 id=746 data-nosnippet>746</a>            <span class="string">"{}"</span>,
+<a href=#747 id=747 data-nosnippet>747</a>            declaration.detail
+<a href=#748 id=748 data-nosnippet>748</a>        );
+<a href=#749 id=749 data-nosnippet>749</a>        <span class="macro">assert!</span>(declaration.detail.contains(<span class="string">"trust=deny_unknown"</span>));
+<a href=#750 id=750 data-nosnippet>750</a>        <span class="macro">assert!</span>(declaration.detail.contains(<span class="string">"cooperation=true"</span>));
+<a href=#751 id=751 data-nosnippet>751</a>    }
+<a href=#752 id=752 data-nosnippet>752</a>
+<a href=#753 id=753 data-nosnippet>753</a>    <span class="attr">#[test]
+<a href=#754 id=754 data-nosnippet>754</a>    </span><span class="kw">fn </span>a_broken_declaration_is_one_failed_check_with_its_impact_and_remedy() {
+<a href=#755 id=755 data-nosnippet>755</a>        <span class="kw">let </span>report = doctor(<span class="prelude-val">Some</span>(<span class="prelude-val">Err</span>(MeshError::Config(<span class="string">"bad"</span>.into()))));
+<a href=#756 id=756 data-nosnippet>756</a>        <span class="kw">let </span>declaration = report
+<a href=#757 id=757 data-nosnippet>757</a>            .checks
+<a href=#758 id=758 data-nosnippet>758</a>            .iter()
+<a href=#759 id=759 data-nosnippet>759</a>            .find(|c| c.check == <span class="string">"declaration"</span>)
+<a href=#760 id=760 data-nosnippet>760</a>            .unwrap();
+<a href=#761 id=761 data-nosnippet>761</a>        <span class="macro">assert!</span>(!declaration.ok);
+<a href=#762 id=762 data-nosnippet>762</a>        <span class="macro">assert!</span>(declaration.impact.is_some() &amp;&amp; declaration.remediation.is_some());
+<a href=#763 id=763 data-nosnippet>763</a>        <span class="macro">assert!</span>(!report.ok);
+<a href=#764 id=764 data-nosnippet>764</a>    }
+<a href=#765 id=765 data-nosnippet>765</a>
+<a href=#766 id=766 data-nosnippet>766</a>    <span class="attr">#[test]
+<a href=#767 id=767 data-nosnippet>767</a>    </span><span class="kw">fn </span>a_repository_without_an_identity_is_named_with_the_remedy() {
+<a href=#768 id=768 data-nosnippet>768</a>        <span class="kw">let </span>dir = tempfile::tempdir().unwrap();
+<a href=#769 id=769 data-nosnippet>769</a>        <span class="macro">assert!</span>(std::process::Command::new(<span class="string">"git"</span>)
+<a href=#770 id=770 data-nosnippet>770</a>            .arg(<span class="string">"-C"</span>)
+<a href=#771 id=771 data-nosnippet>771</a>            .arg(dir.path())
+<a href=#772 id=772 data-nosnippet>772</a>            .args([<span class="string">"init"</span>, <span class="string">"-q"</span>])
+<a href=#773 id=773 data-nosnippet>773</a>            .status()
+<a href=#774 id=774 data-nosnippet>774</a>            .unwrap()
+<a href=#775 id=775 data-nosnippet>775</a>            .success());
+<a href=#776 id=776 data-nosnippet>776</a>        <span class="kw">let </span>report = doctor_at(<span class="prelude-val">None</span>, <span class="prelude-val">Some</span>(dir.path()), <span class="prelude-val">None</span>);
+<a href=#777 id=777 data-nosnippet>777</a>        <span class="kw">let </span>repository = report
+<a href=#778 id=778 data-nosnippet>778</a>            .checks
+<a href=#779 id=779 data-nosnippet>779</a>            .iter()
+<a href=#780 id=780 data-nosnippet>780</a>            .find(|c| c.check == <span class="string">"repository"</span>)
+<a href=#781 id=781 data-nosnippet>781</a>            .unwrap();
+<a href=#782 id=782 data-nosnippet>782</a>        <span class="macro">assert!</span>(!repository.ok, <span class="string">"an empty repository has no root commit"</span>);
+<a href=#783 id=783 data-nosnippet>783</a>        <span class="macro">assert!</span>(repository
+<a href=#784 id=784 data-nosnippet>784</a>            .remediation
+<a href=#785 id=785 data-nosnippet>785</a>            .as_deref()
+<a href=#786 id=786 data-nosnippet>786</a>            .unwrap_or_default()
+<a href=#787 id=787 data-nosnippet>787</a>            .contains(<span class="string">"cooperation.repository"</span>));
 <a href=#788 id=788 data-nosnippet>788</a>    }
 <a href=#789 id=789 data-nosnippet>789</a>
-<a href=#790 id=790 data-nosnippet>790</a>    <span class="kw">fn </span>check&lt;<span class="lifetime">'a</span>&gt;(report: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>MeshDoctorReport, name: <span class="kw-2">&amp;</span>str) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'a </span>DoctorCheck {
-<a href=#791 id=791 data-nosnippet>791</a>        report.checks.iter().find(|c| c.check == name).unwrap()
-<a href=#792 id=792 data-nosnippet>792</a>    }
-<a href=#793 id=793 data-nosnippet>793</a>
-<a href=#794 id=794 data-nosnippet>794</a>    <span class="attr">#[test]
-<a href=#795 id=795 data-nosnippet>795</a>    </span><span class="kw">fn </span>an_enabled_declaration_nobody_decided_on_is_an_absence_not_a_failure() {
-<a href=#796 id=796 data-nosnippet>796</a>        <span class="kw">let </span>report = doctor_at(<span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(config(<span class="bool-val">true</span>))), <span class="prelude-val">None</span>, <span class="prelude-val">None</span>);
-<a href=#797 id=797 data-nosnippet>797</a>        <span class="kw">let </span>runtime = check(<span class="kw-2">&amp;</span>report, <span class="string">"runtime"</span>);
-<a href=#798 id=798 data-nosnippet>798</a>        <span class="macro">assert!</span>(runtime.ok, <span class="string">"{}"</span>, runtime.detail);
-<a href=#799 id=799 data-nosnippet>799</a>        <span class="macro">assert!</span>(
-<a href=#800 id=800 data-nosnippet>800</a>            runtime.detail.starts_with(<span class="string">"not decided in this process"</span>)
-<a href=#801 id=801 data-nosnippet>801</a>                &amp;&amp; runtime.detail.contains(<span class="string">"asks the server"</span>),
-<a href=#802 id=802 data-nosnippet>802</a>            <span class="string">"{}"</span>,
-<a href=#803 id=803 data-nosnippet>803</a>            runtime.detail
-<a href=#804 id=804 data-nosnippet>804</a>        );
-<a href=#805 id=805 data-nosnippet>805</a>    }
-<a href=#806 id=806 data-nosnippet>806</a>
-<a href=#807 id=807 data-nosnippet>807</a>    <span class="attr">#[test]
-<a href=#808 id=808 data-nosnippet>808</a>    </span><span class="kw">fn </span>an_enabled_declaration_a_server_declined_fails_with_the_servers_reason_and_the_remedy() {
-<a href=#809 id=809 data-nosnippet>809</a>        <span class="kw">let </span>server = <span class="kw">super</span>::<span class="kw">super</span>::MeshRuntime::new();
-<a href=#810 id=810 data-nosnippet>810</a>        server.decline(<span class="string">"the node identity did not load: permission denied"</span>);
-<a href=#811 id=811 data-nosnippet>811</a>        <span class="kw">let </span>report = doctor_at(<span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(config(<span class="bool-val">true</span>))), <span class="prelude-val">None</span>, <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>server.status()));
-<a href=#812 id=812 data-nosnippet>812</a>        <span class="kw">let </span>runtime = check(<span class="kw-2">&amp;</span>report, <span class="string">"runtime"</span>);
-<a href=#813 id=813 data-nosnippet>813</a>        <span class="macro">assert!</span>(!runtime.ok);
-<a href=#814 id=814 data-nosnippet>814</a>        <span class="macro">assert_eq!</span>(
-<a href=#815 id=815 data-nosnippet>815</a>            runtime.detail,
-<a href=#816 id=816 data-nosnippet>816</a>            <span class="string">"the declaration is enabled and this server's mesh is not active — the node identity did not load: permission denied"
-<a href=#817 id=817 data-nosnippet>817</a>        </span>);
-<a href=#818 id=818 data-nosnippet>818</a>        <span class="macro">assert!</span>(runtime.impact.is_some());
-<a href=#819 id=819 data-nosnippet>819</a>        <span class="macro">assert!</span>(runtime
-<a href=#820 id=820 data-nosnippet>820</a>            .remediation
-<a href=#821 id=821 data-nosnippet>821</a>            .as_deref()
-<a href=#822 id=822 data-nosnippet>822</a>            .unwrap_or_default()
-<a href=#823 id=823 data-nosnippet>823</a>            .contains(<span class="string">"majordomus serve ensure"</span>));
-<a href=#824 id=824 data-nosnippet>824</a>        <span class="macro">assert!</span>(!report.ok);
-<a href=#825 id=825 data-nosnippet>825</a>    }
-<a href=#826 id=826 data-nosnippet>826</a>
-<a href=#827 id=827 data-nosnippet>827</a>    <span class="doccomment">/// A firewall report as [`firewall::report`] builds one, for a host this suite does
-<a href=#828 id=828 data-nosnippet>828</a>    /// not run on: ufw on Linux, asked `status`, with the multicast group the one rule an
-<a href=#829 id=829 data-nosnippet>829</a>    /// enabled declaration with no hub implies. The report is assembled from the module's
-<a href=#830 id=830 data-nosnippet>830</a>    /// own pure functions, so no firewall is asked and none is needed.
-<a href=#831 id=831 data-nosnippet>831</a>    </span><span class="kw">fn </span>firewall_report(declared: bool, status: <span class="kw-2">&amp;</span>str) -&gt; firewall::FirewallReport {
-<a href=#832 id=832 data-nosnippet>832</a>        <span class="kw">let </span>config = config(declared);
-<a href=#833 id=833 data-nosnippet>833</a>        <span class="kw">let </span>plan = firewall::plan(<span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>config), <span class="kw-2">&amp;</span>[Ipv4Addr::new(<span class="number">10</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">2</span>)], <span class="prelude-val">None</span>);
-<a href=#834 id=834 data-nosnippet>834</a>        <span class="kw">let </span>observation = firewall::judge_ufw(status, <span class="kw-2">&amp;</span>plan);
-<a href=#835 id=835 data-nosnippet>835</a>        <span class="kw">let </span>ok = observation.state != firewall::FirewallObservationState::Missing;
-<a href=#836 id=836 data-nosnippet>836</a>        firewall::FirewallReport {
-<a href=#837 id=837 data-nosnippet>837</a>            ok,
-<a href=#838 id=838 data-nosnippet>838</a>            platform: <span class="string">"linux"</span>.into(),
-<a href=#839 id=839 data-nosnippet>839</a>            backend: firewall::Backend::Ufw,
-<a href=#840 id=840 data-nosnippet>840</a>            executable: <span class="prelude-val">None</span>,
-<a href=#841 id=841 data-nosnippet>841</a>            commands: firewall::render(firewall::Backend::Ufw, <span class="kw-2">&amp;</span>plan, <span class="prelude-val">None</span>),
-<a href=#842 id=842 data-nosnippet>842</a>            plan,
-<a href=#843 id=843 data-nosnippet>843</a>            verdict: <span class="macro">format!</span>(<span class="string">"what ufw said: {}"</span>, observation.detail),
-<a href=#844 id=844 data-nosnippet>844</a>            observation,
-<a href=#845 id=845 data-nosnippet>845</a>            window_seconds: firewall::BLOCK_WINDOW_SECONDS,
-<a href=#846 id=846 data-nosnippet>846</a>            blocked_recently: <span class="prelude-val">None</span>,
-<a href=#847 id=847 data-nosnippet>847</a>        }
-<a href=#848 id=848 data-nosnippet>848</a>    }
-<a href=#849 id=849 data-nosnippet>849</a>
-<a href=#850 id=850 data-nosnippet>850</a>    <span class="attr">#[test]
-<a href=#851 id=851 data-nosnippet>851</a>    </span><span class="kw">fn </span>a_firewall_that_drops_the_mesh_fails_the_check_with_its_impact_and_the_command_to_run() {
-<a href=#852 id=852 data-nosnippet>852</a>        <span class="kw">let </span>dropping = firewall_report(<span class="bool-val">true</span>, <span class="string">"Status: active\n"</span>);
-<a href=#853 id=853 data-nosnippet>853</a>        <span class="kw">let </span>check = firewall_verdict(<span class="kw-2">&amp;</span>dropping);
-<a href=#854 id=854 data-nosnippet>854</a>        <span class="macro">assert_eq!</span>(check.check, <span class="string">"firewall"</span>);
-<a href=#855 id=855 data-nosnippet>855</a>        <span class="macro">assert!</span>(!check.ok);
-<a href=#856 id=856 data-nosnippet>856</a>        <span class="macro">assert_eq!</span>(
-<a href=#857 id=857 data-nosnippet>857</a>            check.detail,
-<a href=#858 id=858 data-nosnippet>858</a>            <span class="string">"ufw (linux): needs udp/7741 to 239.255.77.77 from any; what ufw said: 1 of 1 rule(s) not admitted: udp/7741 to 239.255.77.77 from any"
-<a href=#859 id=859 data-nosnippet>859</a>        </span>);
-<a href=#860 id=860 data-nosnippet>860</a>        <span class="kw">let </span>impact = check.impact.as_deref().unwrap_or_default();
-<a href=#861 id=861 data-nosnippet>861</a>        <span class="macro">assert!</span>(
-<a href=#862 id=862 data-nosnippet>862</a>            impact.contains(<span class="string">"never reaches the socket"</span>) &amp;&amp; impact.contains(<span class="string">"every other check"</span>),
-<a href=#863 id=863 data-nosnippet>863</a>            <span class="string">"{impact}"
-<a href=#864 id=864 data-nosnippet>864</a>        </span>);
-<a href=#865 id=865 data-nosnippet>865</a>        <span class="kw">let </span>remedy = check.remediation.as_deref().unwrap_or_default();
-<a href=#866 id=866 data-nosnippet>866</a>        <span class="macro">assert!</span>(
-<a href=#867 id=867 data-nosnippet>867</a>            remedy.contains(<span class="string">"`majordomus mesh firewall`"</span>)
-<a href=#868 id=868 data-nosnippet>868</a>                &amp;&amp; remedy.contains(<span class="string">"`sudo majordomus mesh firewall apply`"</span>),
-<a href=#869 id=869 data-nosnippet>869</a>            <span class="string">"{remedy}"
-<a href=#870 id=870 data-nosnippet>870</a>        </span>);
-<a href=#871 id=871 data-nosnippet>871</a>    }
-<a href=#872 id=872 data-nosnippet>872</a>
-<a href=#873 id=873 data-nosnippet>873</a>    <span class="attr">#[test]
-<a href=#874 id=874 data-nosnippet>874</a>    </span><span class="kw">fn </span>a_firewall_that_admits_the_mesh_holds_and_names_the_rules_it_was_asked_about() {
-<a href=#875 id=875 data-nosnippet>875</a>        <span class="kw">let </span>admitting = firewall_report(
-<a href=#876 id=876 data-nosnippet>876</a>            <span class="bool-val">true</span>,
-<a href=#877 id=877 data-nosnippet>877</a>            <span class="string">"Status: active\n239.255.77.77 7741/udp     ALLOW IN    Anywhere\n"</span>,
-<a href=#878 id=878 data-nosnippet>878</a>        );
-<a href=#879 id=879 data-nosnippet>879</a>        <span class="kw">let </span>check = firewall_verdict(<span class="kw-2">&amp;</span>admitting);
-<a href=#880 id=880 data-nosnippet>880</a>        <span class="macro">assert!</span>(check.ok, <span class="string">"{}"</span>, check.detail);
-<a href=#881 id=881 data-nosnippet>881</a>        <span class="macro">assert_eq!</span>(
-<a href=#882 id=882 data-nosnippet>882</a>            check.detail,
-<a href=#883 id=883 data-nosnippet>883</a>            <span class="string">"ufw (linux): needs udp/7741 to 239.255.77.77 from any; what ufw said: every rule of the plan is admitted (1 rule(s))"
-<a href=#884 id=884 data-nosnippet>884</a>        </span>);
-<a href=#885 id=885 data-nosnippet>885</a>        <span class="macro">assert!</span>(check.impact.is_none() &amp;&amp; check.remediation.is_none());
-<a href=#886 id=886 data-nosnippet>886</a>    }
-<a href=#887 id=887 data-nosnippet>887</a>
-<a href=#888 id=888 data-nosnippet>888</a>    <span class="attr">#[test]
-<a href=#889 id=889 data-nosnippet>889</a>    </span><span class="kw">fn </span>a_mesh_that_needs_nothing_admitted_is_reported_by_the_verdict_alone() {
-<a href=#890 id=890 data-nosnippet>890</a>        <span class="comment">// A disabled declaration derives no rule, so there is no backend and no rule to
-<a href=#891 id=891 data-nosnippet>891</a>        // name beside the verdict: the sentence is the whole detail.
-<a href=#892 id=892 data-nosnippet>892</a>        </span><span class="kw">let </span>nothing = firewall_report(<span class="bool-val">false</span>, <span class="string">"Status: active\n"</span>);
-<a href=#893 id=893 data-nosnippet>893</a>        <span class="macro">assert!</span>(nothing.plan.rules.is_empty());
-<a href=#894 id=894 data-nosnippet>894</a>        <span class="kw">let </span>check = firewall_verdict(<span class="kw-2">&amp;</span>nothing);
-<a href=#895 id=895 data-nosnippet>895</a>        <span class="macro">assert!</span>(check.ok);
-<a href=#896 id=896 data-nosnippet>896</a>        <span class="macro">assert_eq!</span>(check.detail, nothing.verdict);
-<a href=#897 id=897 data-nosnippet>897</a>        <span class="comment">// and the check the doctor runs on this host is that verdict over the real report
-<a href=#898 id=898 data-nosnippet>898</a>        </span><span class="kw">let </span>here = firewall_check(<span class="kw-2">&amp;</span><span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(config(<span class="bool-val">false</span>))));
-<a href=#899 id=899 data-nosnippet>899</a>        <span class="macro">assert!</span>(here.ok, <span class="string">"{}"</span>, here.detail);
-<a href=#900 id=900 data-nosnippet>900</a>        <span class="macro">assert!</span>(
-<a href=#901 id=901 data-nosnippet>901</a>            here.detail.contains(<span class="string">"needs no inbound admission"</span>),
-<a href=#902 id=902 data-nosnippet>902</a>            <span class="string">"{}"</span>,
-<a href=#903 id=903 data-nosnippet>903</a>            here.detail
-<a href=#904 id=904 data-nosnippet>904</a>        );
-<a href=#905 id=905 data-nosnippet>905</a>    }
-<a href=#906 id=906 data-nosnippet>906</a>
-<a href=#907 id=907 data-nosnippet>907</a>    <span class="attr">#[test]
-<a href=#908 id=908 data-nosnippet>908</a>    </span><span class="kw">fn </span>a_disabled_declaration_a_server_declined_is_off_as_declared() {
-<a href=#909 id=909 data-nosnippet>909</a>        <span class="kw">let </span>server = <span class="kw">super</span>::<span class="kw">super</span>::MeshRuntime::new();
-<a href=#910 id=910 data-nosnippet>910</a>        server.decline(<span class="string">"the mesh declaration is disabled"</span>);
-<a href=#911 id=911 data-nosnippet>911</a>        <span class="kw">let </span>report = doctor_at(<span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(config(<span class="bool-val">false</span>))), <span class="prelude-val">None</span>, <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>server.status()));
-<a href=#912 id=912 data-nosnippet>912</a>        <span class="kw">let </span>runtime = check(<span class="kw-2">&amp;</span>report, <span class="string">"runtime"</span>);
-<a href=#913 id=913 data-nosnippet>913</a>        <span class="macro">assert!</span>(runtime.ok, <span class="string">"{}"</span>, runtime.detail);
-<a href=#914 id=914 data-nosnippet>914</a>        <span class="macro">assert_eq!</span>(
-<a href=#915 id=915 data-nosnippet>915</a>            runtime.detail,
-<a href=#916 id=916 data-nosnippet>916</a>            <span class="string">"off, as declared — the mesh declaration is disabled"
-<a href=#917 id=917 data-nosnippet>917</a>        </span>);
-<a href=#918 id=918 data-nosnippet>918</a>    }
-<a href=#919 id=919 data-nosnippet>919</a>
-<a href=#920 id=920 data-nosnippet>920</a>    <span class="attr">#[test]
-<a href=#921 id=921 data-nosnippet>921</a>    </span><span class="kw">fn </span>a_broken_or_absent_declaration_is_not_the_runtimes_failure() {
-<a href=#922 id=922 data-nosnippet>922</a>        <span class="kw">let </span>server = <span class="kw">super</span>::<span class="kw">super</span>::MeshRuntime::new();
-<a href=#923 id=923 data-nosnippet>923</a>        server.decline(<span class="string">"the declaration does not parse: bad"</span>);
-<a href=#924 id=924 data-nosnippet>924</a>        <span class="kw">let </span>broken = doctor_at(
-<a href=#925 id=925 data-nosnippet>925</a>            <span class="prelude-val">Some</span>(<span class="prelude-val">Err</span>(MeshError::Config(<span class="string">"bad"</span>.into()))),
-<a href=#926 id=926 data-nosnippet>926</a>            <span class="prelude-val">None</span>,
-<a href=#927 id=927 data-nosnippet>927</a>            <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>server.status()),
-<a href=#928 id=928 data-nosnippet>928</a>        );
-<a href=#929 id=929 data-nosnippet>929</a>        <span class="kw">let </span>runtime = check(<span class="kw-2">&amp;</span>broken, <span class="string">"runtime"</span>);
-<a href=#930 id=930 data-nosnippet>930</a>        <span class="macro">assert!</span>(
-<a href=#931 id=931 data-nosnippet>931</a>            runtime.ok,
-<a href=#932 id=932 data-nosnippet>932</a>            <span class="string">"the declaration check carries that failure, once"
-<a href=#933 id=933 data-nosnippet>933</a>        </span>);
-<a href=#934 id=934 data-nosnippet>934</a>        <span class="macro">assert!</span>(runtime
-<a href=#935 id=935 data-nosnippet>935</a>            .detail
-<a href=#936 id=936 data-nosnippet>936</a>            .starts_with(<span class="string">"off: the declaration does not parse"</span>));
-<a href=#937 id=937 data-nosnippet>937</a>        <span class="macro">assert!</span>(!check(<span class="kw-2">&amp;</span>broken, <span class="string">"declaration"</span>).ok);
-<a href=#938 id=938 data-nosnippet>938</a>        <span class="kw">let </span>absent = doctor_at(<span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>);
-<a href=#939 id=939 data-nosnippet>939</a>        <span class="macro">assert!</span>(check(<span class="kw-2">&amp;</span>absent, <span class="string">"runtime"</span>)
-<a href=#940 id=940 data-nosnippet>940</a>            .detail
-<a href=#941 id=941 data-nosnippet>941</a>            .ends_with(<span class="string">"the repository declares no mesh"</span>));
-<a href=#942 id=942 data-nosnippet>942</a>    }
-<a href=#943 id=943 data-nosnippet>943</a>
-<a href=#944 id=944 data-nosnippet>944</a>    <span class="attr">#[test]
-<a href=#945 id=945 data-nosnippet>945</a>    </span><span class="kw">fn </span>a_server_that_activated_its_mesh_is_active_and_every_provider_failing_is_a_failure() {
-<a href=#946 id=946 data-nosnippet>946</a>        <span class="kw">let </span>server = <span class="kw">super</span>::<span class="kw">super</span>::MeshRuntime::new();
-<a href=#947 id=947 data-nosnippet>947</a>        <span class="kw">let </span>dir = tempfile::tempdir().unwrap();
-<a href=#948 id=948 data-nosnippet>948</a>        <span class="kw">let </span>identity = NodeIdentity::load_or_create(<span class="kw-2">&amp;</span>dir.path().join(<span class="string">"node.json"</span>)).unwrap();
-<a href=#949 id=949 data-nosnippet>949</a>        <span class="kw">let </span><span class="kw-2">mut </span>quiet = config(<span class="bool-val">true</span>);
-<a href=#950 id=950 data-nosnippet>950</a>        quiet.multicast.enabled = <span class="bool-val">false</span>;
-<a href=#951 id=951 data-nosnippet>951</a>        quiet.trust.allow = <span class="macro">vec!</span>[identity.public.public_key.clone()];
-<a href=#952 id=952 data-nosnippet>952</a>        server
-<a href=#953 id=953 data-nosnippet>953</a>            .activate(<span class="kw-2">&amp;</span>quiet, identity, <span class="macro">vec!</span>[], <span class="macro">vec!</span>[], <span class="string">"test"</span>)
-<a href=#954 id=954 data-nosnippet>954</a>            .unwrap();
-<a href=#955 id=955 data-nosnippet>955</a>        <span class="kw">let </span><span class="kw-2">mut </span>status = server.status();
-<a href=#956 id=956 data-nosnippet>956</a>        server.stop();
-<a href=#957 id=957 data-nosnippet>957</a>        <span class="kw">let </span>active = doctor_at(<span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(config(<span class="bool-val">true</span>))), <span class="prelude-val">None</span>, <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>status));
-<a href=#958 id=958 data-nosnippet>958</a>        <span class="kw">let </span>runtime = check(<span class="kw-2">&amp;</span>active, <span class="string">"runtime"</span>);
-<a href=#959 id=959 data-nosnippet>959</a>        <span class="macro">assert!</span>(runtime.ok, <span class="string">"{}"</span>, runtime.detail);
-<a href=#960 id=960 data-nosnippet>960</a>        <span class="macro">assert!</span>(
-<a href=#961 id=961 data-nosnippet>961</a>            runtime.detail.starts_with(<span class="string">"active as "</span>)
-<a href=#962 id=962 data-nosnippet>962</a>                &amp;&amp; runtime.detail.contains(<span class="string">": 0 of 0 provider(s) running;"</span>),
-<a href=#963 id=963 data-nosnippet>963</a>            <span class="string">"{}"</span>,
-<a href=#964 id=964 data-nosnippet>964</a>            runtime.detail
-<a href=#965 id=965 data-nosnippet>965</a>        );
-<a href=#966 id=966 data-nosnippet>966</a>        status.providers.push(<span class="kw">super</span>::<span class="kw">super</span>::ProviderStatus {
-<a href=#967 id=967 data-nosnippet>967</a>            id: <span class="string">"udp_multicast"</span>.into(),
-<a href=#968 id=968 data-nosnippet>968</a>            state: MeshProviderState::Failed,
-<a href=#969 id=969 data-nosnippet>969</a>            detail: <span class="prelude-val">Some</span>(<span class="string">"address in use"</span>.into()),
-<a href=#970 id=970 data-nosnippet>970</a>            sent: <span class="number">0</span>,
-<a href=#971 id=971 data-nosnippet>971</a>            received: <span class="number">0</span>,
-<a href=#972 id=972 data-nosnippet>972</a>        });
-<a href=#973 id=973 data-nosnippet>973</a>        <span class="kw">let </span>deaf = doctor_at(<span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(config(<span class="bool-val">true</span>))), <span class="prelude-val">None</span>, <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>status));
-<a href=#974 id=974 data-nosnippet>974</a>        <span class="kw">let </span>runtime = check(<span class="kw-2">&amp;</span>deaf, <span class="string">"runtime"</span>);
-<a href=#975 id=975 data-nosnippet>975</a>        <span class="macro">assert!</span>(!runtime.ok);
-<a href=#976 id=976 data-nosnippet>976</a>        <span class="macro">assert!</span>(
-<a href=#977 id=977 data-nosnippet>977</a>            runtime
-<a href=#978 id=978 data-nosnippet>978</a>                .detail
-<a href=#979 id=979 data-nosnippet>979</a>                .contains(<span class="string">"failed: udp_multicast (address in use)"</span>),
-<a href=#980 id=980 data-nosnippet>980</a>            <span class="string">"{}"</span>,
-<a href=#981 id=981 data-nosnippet>981</a>            runtime.detail
-<a href=#982 id=982 data-nosnippet>982</a>        );
-<a href=#983 id=983 data-nosnippet>983</a>    }
-<a href=#984 id=984 data-nosnippet>984</a>}
+<a href=#790 id=790 data-nosnippet>790</a>    <span class="kw">fn </span>config(enabled: bool) -&gt; MeshConfig {
+<a href=#791 id=791 data-nosnippet>791</a>        serde_json::from_value(<span class="macro">serde_json::json!</span>({
+<a href=#792 id=792 data-nosnippet>792</a>            <span class="string">"schema"</span>: <span class="string">"mesh/v1"</span>, <span class="string">"kind"</span>: <span class="string">"mesh-declaration"</span>, <span class="string">"id"</span>: <span class="string">"docs"</span>, <span class="string">"enabled"</span>: enabled
+<a href=#793 id=793 data-nosnippet>793</a>        }))
+<a href=#794 id=794 data-nosnippet>794</a>        .unwrap()
+<a href=#795 id=795 data-nosnippet>795</a>    }
+<a href=#796 id=796 data-nosnippet>796</a>
+<a href=#797 id=797 data-nosnippet>797</a>    <span class="kw">fn </span>check&lt;<span class="lifetime">'a</span>&gt;(report: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>MeshDoctorReport, name: <span class="kw-2">&amp;</span>str) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'a </span>DoctorCheck {
+<a href=#798 id=798 data-nosnippet>798</a>        report.checks.iter().find(|c| c.check == name).unwrap()
+<a href=#799 id=799 data-nosnippet>799</a>    }
+<a href=#800 id=800 data-nosnippet>800</a>
+<a href=#801 id=801 data-nosnippet>801</a>    <span class="attr">#[test]
+<a href=#802 id=802 data-nosnippet>802</a>    </span><span class="kw">fn </span>an_enabled_declaration_nobody_decided_on_is_an_absence_not_a_failure() {
+<a href=#803 id=803 data-nosnippet>803</a>        <span class="kw">let </span>report = doctor_at(<span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(config(<span class="bool-val">true</span>))), <span class="prelude-val">None</span>, <span class="prelude-val">None</span>);
+<a href=#804 id=804 data-nosnippet>804</a>        <span class="kw">let </span>runtime = check(<span class="kw-2">&amp;</span>report, <span class="string">"runtime"</span>);
+<a href=#805 id=805 data-nosnippet>805</a>        <span class="macro">assert!</span>(runtime.ok, <span class="string">"{}"</span>, runtime.detail);
+<a href=#806 id=806 data-nosnippet>806</a>        <span class="macro">assert!</span>(
+<a href=#807 id=807 data-nosnippet>807</a>            runtime.detail.starts_with(<span class="string">"not decided in this process"</span>)
+<a href=#808 id=808 data-nosnippet>808</a>                &amp;&amp; runtime.detail.contains(<span class="string">"asks the server"</span>),
+<a href=#809 id=809 data-nosnippet>809</a>            <span class="string">"{}"</span>,
+<a href=#810 id=810 data-nosnippet>810</a>            runtime.detail
+<a href=#811 id=811 data-nosnippet>811</a>        );
+<a href=#812 id=812 data-nosnippet>812</a>    }
+<a href=#813 id=813 data-nosnippet>813</a>
+<a href=#814 id=814 data-nosnippet>814</a>    <span class="attr">#[test]
+<a href=#815 id=815 data-nosnippet>815</a>    </span><span class="kw">fn </span>an_enabled_declaration_a_server_declined_fails_with_the_servers_reason_and_the_remedy() {
+<a href=#816 id=816 data-nosnippet>816</a>        <span class="kw">let </span>server = <span class="kw">super</span>::<span class="kw">super</span>::MeshRuntime::new();
+<a href=#817 id=817 data-nosnippet>817</a>        server.decline(<span class="string">"the node identity did not load: permission denied"</span>);
+<a href=#818 id=818 data-nosnippet>818</a>        <span class="kw">let </span>report = doctor_at(<span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(config(<span class="bool-val">true</span>))), <span class="prelude-val">None</span>, <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>server.status()));
+<a href=#819 id=819 data-nosnippet>819</a>        <span class="kw">let </span>runtime = check(<span class="kw-2">&amp;</span>report, <span class="string">"runtime"</span>);
+<a href=#820 id=820 data-nosnippet>820</a>        <span class="macro">assert!</span>(!runtime.ok);
+<a href=#821 id=821 data-nosnippet>821</a>        <span class="macro">assert_eq!</span>(
+<a href=#822 id=822 data-nosnippet>822</a>            runtime.detail,
+<a href=#823 id=823 data-nosnippet>823</a>            <span class="string">"the declaration is enabled and this server's mesh is not active — the node identity did not load: permission denied"
+<a href=#824 id=824 data-nosnippet>824</a>        </span>);
+<a href=#825 id=825 data-nosnippet>825</a>        <span class="macro">assert!</span>(runtime.impact.is_some());
+<a href=#826 id=826 data-nosnippet>826</a>        <span class="macro">assert!</span>(runtime
+<a href=#827 id=827 data-nosnippet>827</a>            .remediation
+<a href=#828 id=828 data-nosnippet>828</a>            .as_deref()
+<a href=#829 id=829 data-nosnippet>829</a>            .unwrap_or_default()
+<a href=#830 id=830 data-nosnippet>830</a>            .contains(<span class="string">"majordomus serve ensure"</span>));
+<a href=#831 id=831 data-nosnippet>831</a>        <span class="macro">assert!</span>(!report.ok);
+<a href=#832 id=832 data-nosnippet>832</a>    }
+<a href=#833 id=833 data-nosnippet>833</a>
+<a href=#834 id=834 data-nosnippet>834</a>    <span class="doccomment">/// A firewall report as [`firewall::report`] builds one, for a host this suite does
+<a href=#835 id=835 data-nosnippet>835</a>    /// not run on: ufw on Linux, asked `status`, with the multicast group the one rule an
+<a href=#836 id=836 data-nosnippet>836</a>    /// enabled declaration with no hub implies. The report is assembled from the module's
+<a href=#837 id=837 data-nosnippet>837</a>    /// own pure functions, so no firewall is asked and none is needed.
+<a href=#838 id=838 data-nosnippet>838</a>    </span><span class="kw">fn </span>firewall_report(declared: bool, status: <span class="kw-2">&amp;</span>str) -&gt; firewall::FirewallReport {
+<a href=#839 id=839 data-nosnippet>839</a>        <span class="kw">let </span>config = config(declared);
+<a href=#840 id=840 data-nosnippet>840</a>        <span class="kw">let </span>plan = firewall::plan(<span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>config), <span class="kw-2">&amp;</span>[Ipv4Addr::new(<span class="number">10</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">2</span>)], <span class="prelude-val">None</span>);
+<a href=#841 id=841 data-nosnippet>841</a>        <span class="kw">let </span>observation = firewall::judge_ufw(status, <span class="kw-2">&amp;</span>plan);
+<a href=#842 id=842 data-nosnippet>842</a>        <span class="kw">let </span>ok = observation.state != firewall::FirewallObservationState::Missing;
+<a href=#843 id=843 data-nosnippet>843</a>        firewall::FirewallReport {
+<a href=#844 id=844 data-nosnippet>844</a>            ok,
+<a href=#845 id=845 data-nosnippet>845</a>            platform: <span class="string">"linux"</span>.into(),
+<a href=#846 id=846 data-nosnippet>846</a>            backend: firewall::Backend::Ufw,
+<a href=#847 id=847 data-nosnippet>847</a>            executable: <span class="prelude-val">None</span>,
+<a href=#848 id=848 data-nosnippet>848</a>            commands: firewall::render(firewall::Backend::Ufw, <span class="kw-2">&amp;</span>plan, <span class="prelude-val">None</span>),
+<a href=#849 id=849 data-nosnippet>849</a>            plan,
+<a href=#850 id=850 data-nosnippet>850</a>            verdict: <span class="macro">format!</span>(<span class="string">"what ufw said: {}"</span>, observation.detail),
+<a href=#851 id=851 data-nosnippet>851</a>            observation,
+<a href=#852 id=852 data-nosnippet>852</a>            window_seconds: firewall::BLOCK_WINDOW_SECONDS,
+<a href=#853 id=853 data-nosnippet>853</a>            blocked_recently: <span class="prelude-val">None</span>,
+<a href=#854 id=854 data-nosnippet>854</a>        }
+<a href=#855 id=855 data-nosnippet>855</a>    }
+<a href=#856 id=856 data-nosnippet>856</a>
+<a href=#857 id=857 data-nosnippet>857</a>    <span class="attr">#[test]
+<a href=#858 id=858 data-nosnippet>858</a>    </span><span class="kw">fn </span>a_firewall_that_drops_the_mesh_fails_the_check_with_its_impact_and_the_command_to_run() {
+<a href=#859 id=859 data-nosnippet>859</a>        <span class="kw">let </span>dropping = firewall_report(<span class="bool-val">true</span>, <span class="string">"Status: active\n"</span>);
+<a href=#860 id=860 data-nosnippet>860</a>        <span class="kw">let </span>check = firewall_verdict(<span class="kw-2">&amp;</span>dropping);
+<a href=#861 id=861 data-nosnippet>861</a>        <span class="macro">assert_eq!</span>(check.check, <span class="string">"firewall"</span>);
+<a href=#862 id=862 data-nosnippet>862</a>        <span class="macro">assert!</span>(!check.ok);
+<a href=#863 id=863 data-nosnippet>863</a>        <span class="macro">assert_eq!</span>(
+<a href=#864 id=864 data-nosnippet>864</a>            check.detail,
+<a href=#865 id=865 data-nosnippet>865</a>            <span class="string">"ufw (linux): needs udp/7741 to 239.255.77.77 from any; what ufw said: 1 of 1 rule(s) not admitted: udp/7741 to 239.255.77.77 from any"
+<a href=#866 id=866 data-nosnippet>866</a>        </span>);
+<a href=#867 id=867 data-nosnippet>867</a>        <span class="kw">let </span>impact = check.impact.as_deref().unwrap_or_default();
+<a href=#868 id=868 data-nosnippet>868</a>        <span class="macro">assert!</span>(
+<a href=#869 id=869 data-nosnippet>869</a>            impact.contains(<span class="string">"never reaches the socket"</span>) &amp;&amp; impact.contains(<span class="string">"every other check"</span>),
+<a href=#870 id=870 data-nosnippet>870</a>            <span class="string">"{impact}"
+<a href=#871 id=871 data-nosnippet>871</a>        </span>);
+<a href=#872 id=872 data-nosnippet>872</a>        <span class="kw">let </span>remedy = check.remediation.as_deref().unwrap_or_default();
+<a href=#873 id=873 data-nosnippet>873</a>        <span class="macro">assert!</span>(
+<a href=#874 id=874 data-nosnippet>874</a>            remedy.contains(<span class="string">"`majordomus mesh firewall`"</span>)
+<a href=#875 id=875 data-nosnippet>875</a>                &amp;&amp; remedy.contains(<span class="string">"`sudo majordomus mesh firewall apply`"</span>),
+<a href=#876 id=876 data-nosnippet>876</a>            <span class="string">"{remedy}"
+<a href=#877 id=877 data-nosnippet>877</a>        </span>);
+<a href=#878 id=878 data-nosnippet>878</a>    }
+<a href=#879 id=879 data-nosnippet>879</a>
+<a href=#880 id=880 data-nosnippet>880</a>    <span class="attr">#[test]
+<a href=#881 id=881 data-nosnippet>881</a>    </span><span class="kw">fn </span>a_firewall_that_admits_the_mesh_holds_and_names_the_rules_it_was_asked_about() {
+<a href=#882 id=882 data-nosnippet>882</a>        <span class="kw">let </span>admitting = firewall_report(
+<a href=#883 id=883 data-nosnippet>883</a>            <span class="bool-val">true</span>,
+<a href=#884 id=884 data-nosnippet>884</a>            <span class="string">"Status: active\n239.255.77.77 7741/udp     ALLOW IN    Anywhere\n"</span>,
+<a href=#885 id=885 data-nosnippet>885</a>        );
+<a href=#886 id=886 data-nosnippet>886</a>        <span class="kw">let </span>check = firewall_verdict(<span class="kw-2">&amp;</span>admitting);
+<a href=#887 id=887 data-nosnippet>887</a>        <span class="macro">assert!</span>(check.ok, <span class="string">"{}"</span>, check.detail);
+<a href=#888 id=888 data-nosnippet>888</a>        <span class="macro">assert_eq!</span>(
+<a href=#889 id=889 data-nosnippet>889</a>            check.detail,
+<a href=#890 id=890 data-nosnippet>890</a>            <span class="string">"ufw (linux): needs udp/7741 to 239.255.77.77 from any; what ufw said: every rule of the plan is admitted (1 rule(s))"
+<a href=#891 id=891 data-nosnippet>891</a>        </span>);
+<a href=#892 id=892 data-nosnippet>892</a>        <span class="macro">assert!</span>(check.impact.is_none() &amp;&amp; check.remediation.is_none());
+<a href=#893 id=893 data-nosnippet>893</a>    }
+<a href=#894 id=894 data-nosnippet>894</a>
+<a href=#895 id=895 data-nosnippet>895</a>    <span class="attr">#[test]
+<a href=#896 id=896 data-nosnippet>896</a>    </span><span class="kw">fn </span>a_mesh_that_needs_nothing_admitted_is_reported_by_the_verdict_alone() {
+<a href=#897 id=897 data-nosnippet>897</a>        <span class="comment">// A disabled declaration derives no rule, so there is no backend and no rule to
+<a href=#898 id=898 data-nosnippet>898</a>        // name beside the verdict: the sentence is the whole detail.
+<a href=#899 id=899 data-nosnippet>899</a>        </span><span class="kw">let </span>nothing = firewall_report(<span class="bool-val">false</span>, <span class="string">"Status: active\n"</span>);
+<a href=#900 id=900 data-nosnippet>900</a>        <span class="macro">assert!</span>(nothing.plan.rules.is_empty());
+<a href=#901 id=901 data-nosnippet>901</a>        <span class="kw">let </span>check = firewall_verdict(<span class="kw-2">&amp;</span>nothing);
+<a href=#902 id=902 data-nosnippet>902</a>        <span class="macro">assert!</span>(check.ok);
+<a href=#903 id=903 data-nosnippet>903</a>        <span class="macro">assert_eq!</span>(check.detail, nothing.verdict);
+<a href=#904 id=904 data-nosnippet>904</a>        <span class="comment">// and the check the doctor runs on this host is that verdict over the real report
+<a href=#905 id=905 data-nosnippet>905</a>        </span><span class="kw">let </span>here = firewall_check(<span class="kw-2">&amp;</span><span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(config(<span class="bool-val">false</span>))));
+<a href=#906 id=906 data-nosnippet>906</a>        <span class="macro">assert!</span>(here.ok, <span class="string">"{}"</span>, here.detail);
+<a href=#907 id=907 data-nosnippet>907</a>        <span class="macro">assert!</span>(
+<a href=#908 id=908 data-nosnippet>908</a>            here.detail.contains(<span class="string">"needs no inbound admission"</span>),
+<a href=#909 id=909 data-nosnippet>909</a>            <span class="string">"{}"</span>,
+<a href=#910 id=910 data-nosnippet>910</a>            here.detail
+<a href=#911 id=911 data-nosnippet>911</a>        );
+<a href=#912 id=912 data-nosnippet>912</a>    }
+<a href=#913 id=913 data-nosnippet>913</a>
+<a href=#914 id=914 data-nosnippet>914</a>    <span class="attr">#[test]
+<a href=#915 id=915 data-nosnippet>915</a>    </span><span class="kw">fn </span>a_disabled_declaration_a_server_declined_is_off_as_declared() {
+<a href=#916 id=916 data-nosnippet>916</a>        <span class="kw">let </span>server = <span class="kw">super</span>::<span class="kw">super</span>::MeshRuntime::new();
+<a href=#917 id=917 data-nosnippet>917</a>        server.decline(<span class="string">"the mesh declaration is disabled"</span>);
+<a href=#918 id=918 data-nosnippet>918</a>        <span class="kw">let </span>report = doctor_at(<span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(config(<span class="bool-val">false</span>))), <span class="prelude-val">None</span>, <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>server.status()));
+<a href=#919 id=919 data-nosnippet>919</a>        <span class="kw">let </span>runtime = check(<span class="kw-2">&amp;</span>report, <span class="string">"runtime"</span>);
+<a href=#920 id=920 data-nosnippet>920</a>        <span class="macro">assert!</span>(runtime.ok, <span class="string">"{}"</span>, runtime.detail);
+<a href=#921 id=921 data-nosnippet>921</a>        <span class="macro">assert_eq!</span>(
+<a href=#922 id=922 data-nosnippet>922</a>            runtime.detail,
+<a href=#923 id=923 data-nosnippet>923</a>            <span class="string">"off, as declared — the mesh declaration is disabled"
+<a href=#924 id=924 data-nosnippet>924</a>        </span>);
+<a href=#925 id=925 data-nosnippet>925</a>    }
+<a href=#926 id=926 data-nosnippet>926</a>
+<a href=#927 id=927 data-nosnippet>927</a>    <span class="attr">#[test]
+<a href=#928 id=928 data-nosnippet>928</a>    </span><span class="kw">fn </span>a_broken_or_absent_declaration_is_not_the_runtimes_failure() {
+<a href=#929 id=929 data-nosnippet>929</a>        <span class="kw">let </span>server = <span class="kw">super</span>::<span class="kw">super</span>::MeshRuntime::new();
+<a href=#930 id=930 data-nosnippet>930</a>        server.decline(<span class="string">"the declaration does not parse: bad"</span>);
+<a href=#931 id=931 data-nosnippet>931</a>        <span class="kw">let </span>broken = doctor_at(
+<a href=#932 id=932 data-nosnippet>932</a>            <span class="prelude-val">Some</span>(<span class="prelude-val">Err</span>(MeshError::Config(<span class="string">"bad"</span>.into()))),
+<a href=#933 id=933 data-nosnippet>933</a>            <span class="prelude-val">None</span>,
+<a href=#934 id=934 data-nosnippet>934</a>            <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>server.status()),
+<a href=#935 id=935 data-nosnippet>935</a>        );
+<a href=#936 id=936 data-nosnippet>936</a>        <span class="kw">let </span>runtime = check(<span class="kw-2">&amp;</span>broken, <span class="string">"runtime"</span>);
+<a href=#937 id=937 data-nosnippet>937</a>        <span class="macro">assert!</span>(
+<a href=#938 id=938 data-nosnippet>938</a>            runtime.ok,
+<a href=#939 id=939 data-nosnippet>939</a>            <span class="string">"the declaration check carries that failure, once"
+<a href=#940 id=940 data-nosnippet>940</a>        </span>);
+<a href=#941 id=941 data-nosnippet>941</a>        <span class="macro">assert!</span>(runtime
+<a href=#942 id=942 data-nosnippet>942</a>            .detail
+<a href=#943 id=943 data-nosnippet>943</a>            .starts_with(<span class="string">"off: the declaration does not parse"</span>));
+<a href=#944 id=944 data-nosnippet>944</a>        <span class="macro">assert!</span>(!check(<span class="kw-2">&amp;</span>broken, <span class="string">"declaration"</span>).ok);
+<a href=#945 id=945 data-nosnippet>945</a>        <span class="kw">let </span>absent = doctor_at(<span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>);
+<a href=#946 id=946 data-nosnippet>946</a>        <span class="macro">assert!</span>(check(<span class="kw-2">&amp;</span>absent, <span class="string">"runtime"</span>)
+<a href=#947 id=947 data-nosnippet>947</a>            .detail
+<a href=#948 id=948 data-nosnippet>948</a>            .ends_with(<span class="string">"the repository declares no mesh"</span>));
+<a href=#949 id=949 data-nosnippet>949</a>    }
+<a href=#950 id=950 data-nosnippet>950</a>
+<a href=#951 id=951 data-nosnippet>951</a>    <span class="attr">#[test]
+<a href=#952 id=952 data-nosnippet>952</a>    </span><span class="kw">fn </span>a_server_that_activated_its_mesh_is_active_and_every_provider_failing_is_a_failure() {
+<a href=#953 id=953 data-nosnippet>953</a>        <span class="kw">let </span>server = <span class="kw">super</span>::<span class="kw">super</span>::MeshRuntime::new();
+<a href=#954 id=954 data-nosnippet>954</a>        <span class="kw">let </span>dir = tempfile::tempdir().unwrap();
+<a href=#955 id=955 data-nosnippet>955</a>        <span class="kw">let </span>identity = NodeIdentity::load_or_create(<span class="kw-2">&amp;</span>dir.path().join(<span class="string">"node.json"</span>)).unwrap();
+<a href=#956 id=956 data-nosnippet>956</a>        <span class="kw">let </span><span class="kw-2">mut </span>quiet = config(<span class="bool-val">true</span>);
+<a href=#957 id=957 data-nosnippet>957</a>        quiet.multicast.enabled = <span class="bool-val">false</span>;
+<a href=#958 id=958 data-nosnippet>958</a>        quiet.trust.allow = <span class="macro">vec!</span>[identity.public.public_key.clone()];
+<a href=#959 id=959 data-nosnippet>959</a>        server
+<a href=#960 id=960 data-nosnippet>960</a>            .activate(<span class="kw-2">&amp;</span>quiet, identity, <span class="macro">vec!</span>[], <span class="macro">vec!</span>[], <span class="string">"test"</span>)
+<a href=#961 id=961 data-nosnippet>961</a>            .unwrap();
+<a href=#962 id=962 data-nosnippet>962</a>        <span class="kw">let </span><span class="kw-2">mut </span>status = server.status();
+<a href=#963 id=963 data-nosnippet>963</a>        server.stop();
+<a href=#964 id=964 data-nosnippet>964</a>        <span class="kw">let </span>active = doctor_at(<span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(config(<span class="bool-val">true</span>))), <span class="prelude-val">None</span>, <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>status));
+<a href=#965 id=965 data-nosnippet>965</a>        <span class="kw">let </span>runtime = check(<span class="kw-2">&amp;</span>active, <span class="string">"runtime"</span>);
+<a href=#966 id=966 data-nosnippet>966</a>        <span class="macro">assert!</span>(runtime.ok, <span class="string">"{}"</span>, runtime.detail);
+<a href=#967 id=967 data-nosnippet>967</a>        <span class="macro">assert!</span>(
+<a href=#968 id=968 data-nosnippet>968</a>            runtime.detail.starts_with(<span class="string">"active as "</span>)
+<a href=#969 id=969 data-nosnippet>969</a>                &amp;&amp; runtime.detail.contains(<span class="string">": 0 of 0 provider(s) running;"</span>),
+<a href=#970 id=970 data-nosnippet>970</a>            <span class="string">"{}"</span>,
+<a href=#971 id=971 data-nosnippet>971</a>            runtime.detail
+<a href=#972 id=972 data-nosnippet>972</a>        );
+<a href=#973 id=973 data-nosnippet>973</a>        status.providers.push(<span class="kw">super</span>::<span class="kw">super</span>::ProviderStatus {
+<a href=#974 id=974 data-nosnippet>974</a>            id: <span class="string">"udp_multicast"</span>.into(),
+<a href=#975 id=975 data-nosnippet>975</a>            state: MeshProviderState::Failed,
+<a href=#976 id=976 data-nosnippet>976</a>            detail: <span class="prelude-val">Some</span>(<span class="string">"address in use"</span>.into()),
+<a href=#977 id=977 data-nosnippet>977</a>            sent: <span class="number">0</span>,
+<a href=#978 id=978 data-nosnippet>978</a>            received: <span class="number">0</span>,
+<a href=#979 id=979 data-nosnippet>979</a>        });
+<a href=#980 id=980 data-nosnippet>980</a>        <span class="kw">let </span>deaf = doctor_at(<span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(config(<span class="bool-val">true</span>))), <span class="prelude-val">None</span>, <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>status));
+<a href=#981 id=981 data-nosnippet>981</a>        <span class="kw">let </span>runtime = check(<span class="kw-2">&amp;</span>deaf, <span class="string">"runtime"</span>);
+<a href=#982 id=982 data-nosnippet>982</a>        <span class="macro">assert!</span>(!runtime.ok);
+<a href=#983 id=983 data-nosnippet>983</a>        <span class="macro">assert!</span>(
+<a href=#984 id=984 data-nosnippet>984</a>            runtime
+<a href=#985 id=985 data-nosnippet>985</a>                .detail
+<a href=#986 id=986 data-nosnippet>986</a>                .contains(<span class="string">"failed: udp_multicast (address in use)"</span>),
+<a href=#987 id=987 data-nosnippet>987</a>            <span class="string">"{}"</span>,
+<a href=#988 id=988 data-nosnippet>988</a>            runtime.detail
+<a href=#989 id=989 data-nosnippet>989</a>        );
+<a href=#990 id=990 data-nosnippet>990</a>    }
+<a href=#991 id=991 data-nosnippet>991</a>}
 </code></pre></div></section></main></body></html>

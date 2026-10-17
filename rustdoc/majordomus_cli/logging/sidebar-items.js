@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["LOG_ENV"],"fn":["init"]};
+window.SIDEBAR_ITEMS = {"constant":["LOG_ENV"],"fn":["init","subscriber"]};

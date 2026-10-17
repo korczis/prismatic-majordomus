@@ -660,5 +660,10 @@
 <a href=#660 id=660 data-nosnippet>660</a>    /// without a request read in full on it before it closes the connection.
 <a href=#661 id=661 data-nosnippet>661</a>    </span><span class="attr">#[serde(default)]
 <a href=#662 id=662 data-nosnippet>662</a>    </span><span class="kw">pub </span>read_deadline_seconds: <span class="prelude-ty">Option</span>&lt;u64&gt;,
-<a href=#663 id=663 data-nosnippet>663</a>}
+<a href=#663 id=663 data-nosnippet>663</a>    <span class="doccomment">/// `server.idle_seconds:` — how long a server started for a checkout no client owns
+<a href=#664 id=664 data-nosnippet>664</a>    /// (`serve ensure`, a shell entering the checkout) outlives its last peer before it stops
+<a href=#665 id=665 data-nosnippet>665</a>    /// by itself. `--idle` on the command line overrides it.
+<a href=#666 id=666 data-nosnippet>666</a>    </span><span class="attr">#[serde(default)]
+<a href=#667 id=667 data-nosnippet>667</a>    </span><span class="kw">pub </span>idle_seconds: <span class="prelude-ty">Option</span>&lt;u64&gt;,
+<a href=#668 id=668 data-nosnippet>668</a>}
 </code></pre></div></section></main></body></html>

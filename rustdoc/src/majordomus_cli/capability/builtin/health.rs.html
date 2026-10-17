@@ -1156,25 +1156,37 @@
 <a href=#1156 id=1156 data-nosnippet>1156</a>        <span class="kw">let </span>copy = dir.path().join(<span class="string">"health-tests"</span>);
 <a href=#1157 id=1157 data-nosnippet>1157</a>        std::fs::copy(std::env::current_exe().expect(<span class="string">"this test binary"</span>), <span class="kw-2">&amp;</span>copy)
 <a href=#1158 id=1158 data-nosnippet>1158</a>            .expect(<span class="string">"a copy of this test binary"</span>);
-<a href=#1159 id=1159 data-nosnippet>1159</a>        <span class="kw">let </span>out = std::process::Command::new(<span class="kw-2">&amp;</span>copy)
-<a href=#1160 id=1160 data-nosnippet>1160</a>            .args([
-<a href=#1161 id=1161 data-nosnippet>1161</a>                <span class="string">"--exact"</span>,
-<a href=#1162 id=1162 data-nosnippet>1162</a>                <span class="string">"capability::builtin::health::tests::readiness_refuses_a_process_whose_executable_was_removed_under_it"</span>,
-<a href=#1163 id=1163 data-nosnippet>1163</a>                <span class="string">"--nocapture"</span>,
-<a href=#1164 id=1164 data-nosnippet>1164</a>                <span class="string">"--test-threads"</span>,
-<a href=#1165 id=1165 data-nosnippet>1165</a>                <span class="string">"1"</span>,
-<a href=#1166 id=1166 data-nosnippet>1166</a>            ])
-<a href=#1167 id=1167 data-nosnippet>1167</a>            .env(STALE_CHILD, <span class="string">"1"</span>)
-<a href=#1168 id=1168 data-nosnippet>1168</a>            .output()
-<a href=#1169 id=1169 data-nosnippet>1169</a>            .expect(<span class="string">"the copy runs"</span>);
-<a href=#1170 id=1170 data-nosnippet>1170</a>        <span class="kw">let </span>stdout = String::from_utf8_lossy(<span class="kw-2">&amp;</span>out.stdout);
-<a href=#1171 id=1171 data-nosnippet>1171</a>        <span class="macro">assert!</span>(
-<a href=#1172 id=1172 data-nosnippet>1172</a>            out.status.success() &amp;&amp; stdout.contains(<span class="string">"1 passed"</span>),
-<a href=#1173 id=1173 data-nosnippet>1173</a>            <span class="string">"{:?}\n{stdout}\n{}"</span>,
-<a href=#1174 id=1174 data-nosnippet>1174</a>            out.status,
-<a href=#1175 id=1175 data-nosnippet>1175</a>            String::from_utf8_lossy(<span class="kw-2">&amp;</span>out.stderr)
-<a href=#1176 id=1176 data-nosnippet>1176</a>        );
-<a href=#1177 id=1177 data-nosnippet>1177</a>        <span class="macro">assert!</span>(!copy.exists(), <span class="string">"the child removed its own executable"</span>);
-<a href=#1178 id=1178 data-nosnippet>1178</a>    }
-<a href=#1179 id=1179 data-nosnippet>1179</a>}
+<a href=#1159 id=1159 data-nosnippet>1159</a>        <span class="comment">// another test thread forking while the copy was open for writing leaves the copy's
+<a href=#1160 id=1160 data-nosnippet>1160</a>        // write descriptor in that child until it execs, and Linux refuses to execute a file
+<a href=#1161 id=1161 data-nosnippet>1161</a>        // open for writing (ETXTBSY): the race is the harness's, so it is waited out
+<a href=#1162 id=1162 data-nosnippet>1162</a>        </span><span class="kw">let </span><span class="kw-2">mut </span>attempts = <span class="number">0</span>;
+<a href=#1163 id=1163 data-nosnippet>1163</a>        <span class="kw">let </span>out = <span class="kw">loop </span>{
+<a href=#1164 id=1164 data-nosnippet>1164</a>            <span class="kw">let </span>run = std::process::Command::new(<span class="kw-2">&amp;</span>copy)
+<a href=#1165 id=1165 data-nosnippet>1165</a>                .args([
+<a href=#1166 id=1166 data-nosnippet>1166</a>                    <span class="string">"--exact"</span>,
+<a href=#1167 id=1167 data-nosnippet>1167</a>                    <span class="string">"capability::builtin::health::tests::readiness_refuses_a_process_whose_executable_was_removed_under_it"</span>,
+<a href=#1168 id=1168 data-nosnippet>1168</a>                    <span class="string">"--nocapture"</span>,
+<a href=#1169 id=1169 data-nosnippet>1169</a>                    <span class="string">"--test-threads"</span>,
+<a href=#1170 id=1170 data-nosnippet>1170</a>                    <span class="string">"1"</span>,
+<a href=#1171 id=1171 data-nosnippet>1171</a>                ])
+<a href=#1172 id=1172 data-nosnippet>1172</a>                .env(STALE_CHILD, <span class="string">"1"</span>)
+<a href=#1173 id=1173 data-nosnippet>1173</a>                .output();
+<a href=#1174 id=1174 data-nosnippet>1174</a>            <span class="kw">match </span>run {
+<a href=#1175 id=1175 data-nosnippet>1175</a>                <span class="prelude-val">Err</span>(e) <span class="kw">if </span>e.kind() == std::io::ErrorKind::ExecutableFileBusy &amp;&amp; attempts &lt; <span class="number">50 </span>=&gt; {
+<a href=#1176 id=1176 data-nosnippet>1176</a>                    attempts += <span class="number">1</span>;
+<a href=#1177 id=1177 data-nosnippet>1177</a>                    std::thread::sleep(std::time::Duration::from_millis(<span class="number">100</span>));
+<a href=#1178 id=1178 data-nosnippet>1178</a>                }
+<a href=#1179 id=1179 data-nosnippet>1179</a>                other =&gt; <span class="kw">break </span>other.expect(<span class="string">"the copy runs"</span>),
+<a href=#1180 id=1180 data-nosnippet>1180</a>            }
+<a href=#1181 id=1181 data-nosnippet>1181</a>        };
+<a href=#1182 id=1182 data-nosnippet>1182</a>        <span class="kw">let </span>stdout = String::from_utf8_lossy(<span class="kw-2">&amp;</span>out.stdout);
+<a href=#1183 id=1183 data-nosnippet>1183</a>        <span class="macro">assert!</span>(
+<a href=#1184 id=1184 data-nosnippet>1184</a>            out.status.success() &amp;&amp; stdout.contains(<span class="string">"1 passed"</span>),
+<a href=#1185 id=1185 data-nosnippet>1185</a>            <span class="string">"{:?}\n{stdout}\n{}"</span>,
+<a href=#1186 id=1186 data-nosnippet>1186</a>            out.status,
+<a href=#1187 id=1187 data-nosnippet>1187</a>            String::from_utf8_lossy(<span class="kw-2">&amp;</span>out.stderr)
+<a href=#1188 id=1188 data-nosnippet>1188</a>        );
+<a href=#1189 id=1189 data-nosnippet>1189</a>        <span class="macro">assert!</span>(!copy.exists(), <span class="string">"the child removed its own executable"</span>);
+<a href=#1190 id=1190 data-nosnippet>1190</a>    }
+<a href=#1191 id=1191 data-nosnippet>1191</a>}
 </code></pre></div></section></main></body></html>
