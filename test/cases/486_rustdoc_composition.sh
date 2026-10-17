@@ -31,7 +31,7 @@
 # (scripts/rust-check --doc), and the case says what it did not measure and ends (skip_case).
 # The builds are real.
 . "$ROOT/test/lib.sh"
-command -v zola >/dev/null || skip_case "zola is absent, so no site was built and nothing was composed"
+mj_zola_ready "$ROOT" || skip_case "$(mj_zola_why "$ROOT"), so no site was built and nothing was composed"
 [ -d "$ROOT/node_modules/tailwindcss" ] || skip_case "node_modules is absent, so no site was built and nothing was composed"
 command -v jq >/dev/null 2>&1 || skip_case "no jq, so the topology was not read"
 S="$(mktemp -d "${TMPDIR:-/tmp}/mj486.XXXXXX")"; trap 'rm -rf "$S"' EXIT

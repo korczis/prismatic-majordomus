@@ -16,7 +16,7 @@
 # fragment there being findings. The exemption is the topology's alone: undeclared, the same page is
 # scanned and fails; with no topology the check refuses to decide (12).
 . "$ROOT/test/lib.sh"
-command -v python3 >/dev/null 2>&1 || skip "no python3"
+mj_runs python3 || skip "$(mj_runs_why python3)"
 CHECK="$ROOT/scripts/ci/link-check"
 REPO=https://github.com/owner/fixture
 

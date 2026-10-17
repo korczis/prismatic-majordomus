@@ -140,6 +140,8 @@ file_mode() { stat -c %a "$1" 2>/dev/null || stat -f %Lp "$1"; }
 # which on macOS is a Perl script (case 575).
 # shellcheck source=../lib/sha256.sh
 . "$ROOT/lib/sha256.sh"
+# shellcheck source=../lib/runnable.sh
+. "$ROOT/lib/runnable.sh"
 
 # The SHA-256 of a file, for a case that must prove a file did not change rather than that a
 # command said it did not.
@@ -192,7 +194,7 @@ rust_bin_exit() { [ "$1" = 3 ] && skip "no cargo and no MAJORDOMUS_BIN"; exit 1;
 # protects master never reports `ok` for a case that did not run. Anywhere else the case ends
 # with a line that names what was not measured, so a reader who greps a log for `skip:` finds
 # every pass that proved nothing.
-#   command -v zola >/dev/null || skip_case "zola is absent, so the site build was not measured"
+#   mj_zola_ready "$ROOT" || skip_case "$(mj_zola_why "$ROOT"), so the site build was not measured"
 skip_case() {
   if [ "${CI:-}" = true ]; then
     printf '    %s; under CI every tool the suite needs is installed, so this is a failure, not a skip\n' "$1"
@@ -470,8 +472,8 @@ start_http() {
   local dir="$1" tries=0 port
   HTTP_PORT=""; HTTP_BASE=""; HTTP_PID=""
   local runner=""
-  if command -v python3 >/dev/null 2>&1; then runner=python3
-  elif command -v node >/dev/null 2>&1; then runner=node
+  if mj_runs python3; then runner=python3
+  elif mj_runs node; then runner=node
   else return 1; fi
   while [ "$tries" -lt 20 ]; do
     port=$(( 20000 + ((( $$ + tries * 977 ) * 31 ) % 20000) ))
@@ -689,7 +691,7 @@ reasoning_fixture() {
   # A skipped case reports ok, so on a CI runner a missing node is a failure, not a skip.
   local node; node="$(node -p 'process.execPath' 2>/dev/null)" || {
     [ -z "${CI:-}" ] || { echo "    node is required on CI: the reasoning transport cannot run"; exit 1; }
-    skip "no node"; }
+    skip "$(mj_runs_why node)"; }
   ln -sf "$node" "$RZ_BIN/node"
   RZ_ENV=""
 }
