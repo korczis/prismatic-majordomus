@@ -51,6 +51,12 @@ use std::path::{Path, PathBuf};
 /// next session back to `MAJORDOMUS_BIN` and to this defect.
 pub const GENERATION_INPUTS: &[&str] = &["Cargo.toml", "Cargo.lock", "build.rs", "src"];
 
+/// The inputs of the crates this one takes by path, relative to the directory that holds
+/// them all (`apps/`): the portable core (ADR 0170) is compiled into the executable, so an
+/// edit to it is a different executable, and `Cargo.lock` does not move when a path
+/// dependency's source does. Absent beside a crate (a test's scratch crate), they add nothing.
+pub const PATH_DEPENDENCY_INPUTS: &[&str] = &["majordomus-core/Cargo.toml", "majordomus-core/src"];
+
 /// The generation of the crate rooted at `crate_dir`: a hex SHA-256 over every file of
 /// [`GENERATION_INPUTS`], each framed by the length and bytes of its crate-relative path
 /// and by its own length, so that no rename, concatenation or reordering can produce the
@@ -85,6 +91,13 @@ pub fn crate_generation(crate_dir: &Path) -> Option<String> {
     let mut files: Vec<(String, PathBuf)> = Vec::new();
     for input in GENERATION_INPUTS {
         collect(crate_dir, &crate_dir.join(input), &mut files);
+    }
+    // named from the directory above the crate, so `majordomus-core/src/lib.rs` cannot be
+    // mistaken for the crate's own `src/lib.rs`
+    if let Some(apps) = crate_dir.parent() {
+        for input in PATH_DEPENDENCY_INPUTS {
+            collect(apps, &apps.join(input), &mut files);
+        }
     }
     if files.is_empty() {
         return None;
@@ -136,6 +149,30 @@ mod tests {
         fs::create_dir_all(dir.join("src")).unwrap();
         fs::write(dir.join("Cargo.toml"), manifest).unwrap();
         fs::write(dir.join("src/lib.rs"), source).unwrap();
+    }
+
+    /// The portable core beside the crate is part of what it builds: an edit to the core's
+    /// source is another generation, an edit to the core's tests is not, and its files are
+    /// named so that they cannot collide with the crate's own `src/lib.rs`.
+    #[test]
+    fn the_portable_core_beside_the_crate_is_part_of_its_generation() {
+        let apps = tempfile::tempdir().unwrap();
+        let cli = apps.path().join("majordomus-cli");
+        let core = apps.path().join("majordomus-core");
+        crate_at(&cli, "[package]\nname = \"x\"\n", "pub fn f() {}\n");
+        let alone = crate_generation(&cli);
+        crate_at(&core, "[package]\nname = \"core\"\n", "pub fn f() {}\n");
+        let with_core = crate_generation(&cli);
+        assert_ne!(alone, with_core, "the core's files are inputs");
+        fs::write(core.join("src/lib.rs"), "pub fn g() {}\n").unwrap();
+        let edited = crate_generation(&cli);
+        assert_ne!(
+            with_core, edited,
+            "an edit to the core is another executable"
+        );
+        fs::create_dir_all(core.join("tests")).unwrap();
+        fs::write(core.join("tests/parity.rs"), "#[test]\nfn t() {}\n").unwrap();
+        assert_eq!(edited, crate_generation(&cli), "the core's tests are not");
     }
 
     #[test]

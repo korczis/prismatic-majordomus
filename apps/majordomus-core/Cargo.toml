@@ -1,0 +1,25 @@
+[package]
+name = "majordomus-core"
+version = "0.27.0"
+edition = "2021"
+rust-version = "1.85"
+description = "The portable core of Majordomus: canonical JSON and its digest, identical on a native host and in a browser's WebAssembly."
+license = "MIT"
+publish = false
+
+[lib]
+name = "majordomus_core"
+# rlib for the executable that depends on it; cdylib for the wasm32 module a browser loads
+crate-type = ["rlib", "cdylib"]
+
+[dependencies]
+# The same two crates the executable already takes, with the same features, so that a value
+# parsed here is the value the executable parses: nothing new enters either lock.
+serde_json = { version = "1", features = ["preserve_order", "raw_value"] }
+sha2 = "0.10"
+
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+panic = "abort"

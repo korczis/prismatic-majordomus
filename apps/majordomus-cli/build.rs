@@ -41,6 +41,9 @@ fn main() {
     println!("cargo:rerun-if-changed=Cargo.toml");
     println!("cargo:rerun-if-changed=Cargo.lock");
     println!("cargo:rerun-if-changed=build.rs");
+    // the path dependencies of generation::PATH_DEPENDENCY_INPUTS (ADR 0170)
+    println!("cargo:rerun-if-changed=../majordomus-core/Cargo.toml");
+    println!("cargo:rerun-if-changed=../majordomus-core/src");
     println!("cargo:rerun-if-env-changed=MAJORDOMUS_BUILD_COMMIT");
     println!("cargo:rerun-if-env-changed=MAJORDOMUS_BUILD_DIRTY");
     // Every worktree compiles this crate into one slot of the build directory they share
