@@ -1,11 +1,954 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the layer's release records, the decisions dated in each release's window, and the commits in its range; regenerate with `majordomus generate`
-# Generator: majordomus-cli 0.27.0
+# Generator: majordomus-cli 0.29.0
 schema: majordomus/changelog/v1
 generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the layer's release records, the decisions dated in each release's window, and the commits in its range; regenerate with `majordomus generate`"
-generator: majordomus-cli 0.27.0
-current: "0.27.0"
+generator: majordomus-cli 0.29.0
+current: "0.29.0"
 sections:
+  - version: "0.28.0"
+    tag: v0.28.0
+    date: "2026-10-17T04:25:31Z"
+    commit: 441c965549bd018c1b55d34fa66fa5ab16b47411
+    unreleased: false
+    notes_url: https://github.com/korczis/prismatic-majordomus/releases/tag/v0.28.0
+    compare_url: https://github.com/korczis/prismatic-majordomus/compare/v0.27.0...v0.28.0
+    tree_url: https://github.com/korczis/prismatic-majordomus/tree/v0.28.0
+    decisions:
+      - id: adr-0166
+        title: "The plan's surfaces are inferred from delivery, and nothing the plan shows is typed beside it"
+        status: proposed
+        date: "2026-10-16"
+        url: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0166-the-plan-surfaces-are-inferred-from-delivery.md
+        added: b80c183508fdd3a4b6e3455ee22620394deaee38
+      - id: adr-0165
+        title: A skill is derived for every domain of the registry and shown wherever skills are
+        status: accepted
+        date: "2026-10-15"
+        url: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0165-a-skill-is-derived-for-every-domain-of-the-registry.md
+        added: 4e74a42a6221945d783d696b032b416b101adf7f
+      - id: adr-0164
+        title: "A durable record names the session that wrote it, and relates a task only when the task is that session's"
+        status: proposed
+        date: "2026-10-15"
+        url: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0164-a-record-names-the-session-that-wrote-it.md
+        added: e59b86b66c9b96a6408fad219b6d059c64902974
+      - id: adr-0163
+        title: "A server serves only a share of its own version, with the surfaces it offers"
+        status: proposed
+        date: "2026-10-14"
+        url: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0163-a-server-serves-only-a-share-of-its-own-version.md
+        added: cfff4381018124ea471318a76b3d8e9504071fcb
+      - id: adr-0157
+        title: "A mesh node may offer a shared build cache, peers discover and select it, and compilation never depends on it"
+        status: proposed
+        date: "2026-10-13"
+        url: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0157-the-mesh-offers-a-shared-build-cache.md
+        added: cdb52778dbcad7236533a34a5c9317a3f92201f1
+      - id: adr-0124
+        title: "An uploaded prompt pack is a provenance-tracked input artifact, not a second intent model"
+        status: proposed
+        date: "2026-10-10"
+        url: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0124-an-uploaded-prompt-pack-is-a-provenance-tracked-input-artifa.md
+        added: 809c603e3f294aef3ddeb32a2355be20a2833c08
+    groups:
+      - kind: feat
+        heading: Added
+        rank: 0
+        changes:
+          - kind: feat
+            scope: context
+            subject: "a worker is given a bounded slice of knowledge, not the knowledge base"
+            breaking: false
+            commit: c598adf8b
+            url: https://github.com/korczis/prismatic-majordomus/commit/c598adf8b
+            references:
+              - kind: issue
+                id: I0814
+                title: "Give the worker a bounded slice of knowledge, not the knowledge base"
+                route: /plan/i0814/
+          - kind: feat
+            scope: knowledge
+            subject: "the graph is validated, and doctor and watch ask the same validator (I0812)"
+            breaking: false
+            commit: c5aec68c9
+            url: https://github.com/korczis/prismatic-majordomus/commit/c5aec68c9
+            references:
+              - kind: issue
+                id: I0812
+                title: "Validate the graph, and let doctor and watch ask the same validator"
+                route: /plan/i0812/
+              - kind: issue
+                id: I0810
+                title: A content-hash manifest that makes a second sync cheap
+                route: /plan/i0810/
+          - kind: feat
+            scope: editors
+            subject: "every domain of the registry is a skill, shown wherever skills are (ADR 0165)"
+            breaking: false
+            commit: 4e74a42a6
+            url: https://github.com/korczis/prismatic-majordomus/commit/4e74a42a6
+          - kind: feat
+            scope: session
+            subject: "a branch episode carries the trunk's outbox into the tracked sections (I1984)"
+            breaking: false
+            commit: 6edc0e6a6
+            url: https://github.com/korczis/prismatic-majordomus/commit/6edc0e6a6
+            references:
+              - kind: issue
+                id: I1984
+                title: Knowledge candidates never leave untracked files on a trunk that only pull requests change
+                route: /plan/i1984/
+          - kind: feat
+            scope: session
+            subject: a trunk episode writes its records to the outbox (I1984)
+            breaking: false
+            commit: a5c3ee4c4
+            url: https://github.com/korczis/prismatic-majordomus/commit/a5c3ee4c4
+            references:
+              - kind: issue
+                id: I1984
+                title: Knowledge candidates never leave untracked files on a trunk that only pull requests change
+                route: /plan/i1984/
+          - kind: feat
+            scope: rules
+            subject: a standing approval is written where the permission layer reads it
+            breaking: false
+            commit: 3774d1ed0
+            url: https://github.com/korczis/prismatic-majordomus/commit/3774d1ed0
+      - kind: fix
+        heading: Fixed
+        rank: 1
+        changes:
+          - kind: fix
+            scope: ci
+            subject: "the rust job's case gates drive the executable the job built"
+            breaking: false
+            commit: 441c96554
+            url: https://github.com/korczis/prismatic-majordomus/commit/441c96554
+          - kind: fix
+            scope: top
+            subject: the last three changed items of top 70 are covered
+            breaking: false
+            commit: bd7f0af86
+            url: https://github.com/korczis/prismatic-majordomus/commit/bd7f0af86
+          - kind: fix
+            scope: top
+            subject: "top 70 covers its changed code, its rust lane fits, its palette waits"
+            breaking: false
+            commit: a259f94df
+            url: https://github.com/korczis/prismatic-majordomus/commit/a259f94df
+          - kind: fix
+            scope: top
+            subject: the essay links limitations relatively and plan-record-cases runs every plan reader
+            breaking: false
+            commit: 735266fe5
+            url: https://github.com/korczis/prismatic-majordomus/commit/735266fe5
+          - kind: fix
+            scope: site
+            subject: "the plan diagram is drawn past Mermaid's default size bound"
+            breaking: false
+            commit: 611a9a85b
+            url: https://github.com/korczis/prismatic-majordomus/commit/611a9a85b
+          - kind: fix
+            scope: test
+            subject: the stale-executable readiness test waits out a busy copy
+            breaking: false
+            commit: e559ee54e
+            url: https://github.com/korczis/prismatic-majordomus/commit/e559ee54e
+          - kind: fix
+            scope: top
+            subject: "the members of top 70 meet on the CI wiring, the port and the site audit"
+            breaking: false
+            commit: 078ae6911
+            url: https://github.com/korczis/prismatic-majordomus/commit/078ae6911
+          - kind: fix
+            scope: site
+            subject: the skills table on the skills page takes keyboard focus
+            breaking: false
+            commit: d4cbf8924
+            url: https://github.com/korczis/prismatic-majordomus/commit/d4cbf8924
+          - kind: fix
+            scope: top
+            subject: the members of top 70 meet where they first meet
+            breaking: false
+            commit: e97f034bd
+            url: https://github.com/korczis/prismatic-majordomus/commit/e97f034bd
+            references:
+              - kind: issue
+                id: I2410
+                title: "A trusted machine on the tailnet is found through Tailscale, with no address written by hand"
+                route: /plan/i2410/
+          - kind: fix
+            scope: rules
+            subject: the vendored candidates-reviewed rule dates no incident it does not attribute
+            breaking: false
+            commit: 8f8825642
+            url: https://github.com/korczis/prismatic-majordomus/commit/8f8825642
+          - kind: fix
+            scope: site
+            subject: the landing page states no present it does not read (I2745)
+            breaking: false
+            commit: bad02f37e
+            url: https://github.com/korczis/prismatic-majordomus/commit/bad02f37e
+            references:
+              - kind: issue
+                id: I2745
+                title: The landing page states no present it does not read
+                route: /plan/i2745/
+          - kind: fix
+            scope: reap
+            subject: the reaper asks cargo where the shared build directory is
+            breaking: false
+            commit: 7ff6be98e
+            url: https://github.com/korczis/prismatic-majordomus/commit/7ff6be98e
+          - kind: fix
+            scope: docs
+            subject: every published tree draws its diagrams (I2746)
+            breaking: false
+            commit: 337b41ee7
+            url: https://github.com/korczis/prismatic-majordomus/commit/337b41ee7
+            references:
+              - kind: issue
+                id: I2746
+                title: "Every published tree draws its diagrams, and every diagram is the interactive viewer"
+                route: /plan/i2746/
+          - kind: fix
+            scope: release
+            subject: "the record pull request's dispatched run is not its verdict (I2282)"
+            breaking: false
+            commit: 8ed40f6eb
+            url: https://github.com/korczis/prismatic-majordomus/commit/8ed40f6eb
+            references:
+              - kind: issue
+                id: I2282
+                title: "The record pull request's dispatched verdict does not satisfy branch protection"
+                route: /plan/i2282/
+          - kind: fix
+            scope: site
+            subject: "a diagram's node text is readable in both themes"
+            breaking: false
+            commit: 3024cbcc0
+            url: https://github.com/korczis/prismatic-majordomus/commit/3024cbcc0
+          - kind: fix
+            scope: test
+            subject: case 3066 names the step that ended it
+            breaking: false
+            commit: 00fc6a841
+            url: https://github.com/korczis/prismatic-majordomus/commit/00fc6a841
+          - kind: fix
+            scope: mesh
+            subject: a review is redacted before it is signed
+            breaking: false
+            commit: 3c3372d06
+            url: https://github.com/korczis/prismatic-majordomus/commit/3c3372d06
+            references:
+              - kind: issue
+                id: I2708
+                title: "A mesh event field nobody listed fails the mesh check, and no log field or review body carries a credential the redactor knows"
+                route: /plan/i2708/
+          - kind: fix
+            scope: serve
+            subject: the idle timeout is declared beside the other server timings
+            breaking: false
+            commit: 7111f846b
+            url: https://github.com/korczis/prismatic-majordomus/commit/7111f846b
+            references:
+              - kind: issue
+                id: I2701
+                title: "The idle timeout is declared beside the other server timings, and serve --idle overrides the declaration"
+                route: /plan/i2701/
+          - kind: fix
+            scope: derive
+            subject: a fixture without history gets a verdict on its derived data
+            breaking: false
+            commit: 3b5833692
+            url: https://github.com/korczis/prismatic-majordomus/commit/3b5833692
+            references:
+              - kind: issue
+                id: I1409
+                title: Derived data stops hashing inputs it cannot control
+                route: /plan/i1409/
+          - kind: fix
+            scope: logging
+            subject: every tracing field passes the one redactor
+            breaking: false
+            commit: dd4798ce5
+            url: https://github.com/korczis/prismatic-majordomus/commit/dd4798ce5
+            references:
+              - kind: issue
+                id: I2708
+                title: "A mesh event field nobody listed fails the mesh check, and no log field or review body carries a credential the redactor knows"
+                route: /plan/i2708/
+          - kind: fix
+            scope: mesh
+            subject: an EventBody field nobody listed fails the mesh check
+            breaking: false
+            commit: e2d7042a4
+            url: https://github.com/korczis/prismatic-majordomus/commit/e2d7042a4
+            references:
+              - kind: issue
+                id: I2708
+                title: "A mesh event field nobody listed fails the mesh check, and no log field or review body carries a credential the redactor knows"
+                route: /plan/i2708/
+          - kind: fix
+            scope: doctor
+            subject: doctor says it checks governance only and names where the runtime is read
+            breaking: false
+            commit: 1ed658183
+            url: https://github.com/korczis/prismatic-majordomus/commit/1ed658183
+            references:
+              - kind: issue
+                id: I2707
+                title: "majordomus doctor reports a stale server, or says plainly that it checks governance only"
+                route: /plan/i2707/
+              - kind: issue
+                id: I2157
+                title: "Ready means ready: a lost lease, a degraded layer or a failing mesh is not reported ready"
+                route: /plan/i2157/
+              - kind: issue
+                id: I1995
+                title: "Work a session left uncommitted in a worktree is named, not found by luck"
+                route: /plan/i1995/
+          - kind: fix
+            scope: ci
+            subject: a plan-record change plans only the gates that read a plan record
+            breaking: false
+            commit: 4df3ca5e5
+            url: https://github.com/korczis/prismatic-majordomus/commit/4df3ca5e5
+            references:
+              - kind: issue
+                id: I0806
+                title: "Make the session rules doctrines, with retention and archiving"
+                route: /plan/i0806/
+              - kind: issue
+                id: I2662
+                title: "Validation leaves the deployment a runner: a branch's checks never hold the pool a publication or a release record needs"
+                route: /plan/i2662/
+          - kind: fix
+            scope: site
+            subject: "a leak finding names the file it is in, never the text (I1023)"
+            breaking: false
+            commit: bdc75e2cf
+            url: https://github.com/korczis/prismatic-majordomus/commit/bdc75e2cf
+            references:
+              - kind: issue
+                id: I1023
+                title: Nothing private reaches a published page
+                route: /plan/i1023/
+          - kind: fix
+            scope: site
+            subject: "the essay links the limitations page by its address, not a content path"
+            breaking: false
+            commit: ea7f82b50
+            url: https://github.com/korczis/prismatic-majordomus/commit/ea7f82b50
+          - kind: fix
+            scope: graph
+            subject: the committed graph is whole or its generation refuses
+            breaking: false
+            commit: a2e22b484
+            url: https://github.com/korczis/prismatic-majordomus/commit/a2e22b484
+            references:
+              - kind: issue
+                id: I1966
+                title: The composed graph is whole or its generation refuses
+                route: /plan/i1966/
+          - kind: fix
+            scope: serve
+            subject: "a checkout keeps one address, its server asks for a port derived from it"
+            breaking: false
+            commit: b3f35a34a
+            url: https://github.com/korczis/prismatic-majordomus/commit/b3f35a34a
+            references:
+              - kind: issue
+                id: I2702
+                title: "A checkout keeps one address across restarts, because its server binds a port derived from the checkout"
+                route: /plan/i2702/
+          - kind: fix
+            scope: mesh
+            subject: an append the disk did not take is not acknowledged as durable
+            breaking: false
+            commit: 06e28bb4d
+            url: https://github.com/korczis/prismatic-majordomus/commit/06e28bb4d
+            references:
+              - kind: issue
+                id: I2706
+                title: "An own event whose append failed is never acknowledged as durable, and a journal reload is bounded in size"
+                route: /plan/i2706/
+          - kind: fix
+            scope: scope
+            subject: "a task's scope admits what its derive wrote"
+            breaking: false
+            commit: ed8afb075
+            url: https://github.com/korczis/prismatic-majordomus/commit/ed8afb075
+            references:
+              - kind: issue
+                id: I2114
+                title: "A task's scope admits what its derive writes"
+                route: /plan/i2114/
+          - kind: fix
+            scope: doctor
+            subject: a machine that derives has the pinned Rust toolchain
+            breaking: false
+            commit: 52b0659d8
+            url: https://github.com/korczis/prismatic-majordomus/commit/52b0659d8
+          - kind: fix
+            scope: test
+            subject: a case does not inherit the interface the operator binds servers on
+            breaking: false
+            commit: aa6688ddc
+            url: https://github.com/korczis/prismatic-majordomus/commit/aa6688ddc
+          - kind: fix
+            scope: ci
+            subject: "the hook environment is dropped as the fixture fix drops it, keeping git -c settings"
+            breaking: false
+            commit: 4b05ff868
+            url: https://github.com/korczis/prismatic-majordomus/commit/4b05ff868
+          - kind: fix
+            scope: ci
+            subject: nothing a hook runs inherits the repository git hands the hook
+            breaking: false
+            commit: 3c415b146
+            url: https://github.com/korczis/prismatic-majordomus/commit/3c415b146
+          - kind: fix
+            scope: ci
+            subject: "a push runs what CI would find first, and a case never waits on stdin"
+            breaking: false
+            commit: 8f7fb5bc5
+            url: https://github.com/korczis/prismatic-majordomus/commit/8f7fb5bc5
+      - kind: perf
+        heading: Performance
+        rank: 2
+        changes:
+          - kind: perf
+            scope: economics
+            subject: a bootstrap median counts its draws instead of sorting each resample
+            breaking: false
+            commit: 43b8e9bac
+            url: https://github.com/korczis/prismatic-majordomus/commit/43b8e9bac
+          - kind: perf
+            scope: build
+            subject: dependencies are optimised in the debug build every derive and hook runs
+            breaking: false
+            commit: fa8f00f6c
+            url: https://github.com/korczis/prismatic-majordomus/commit/fa8f00f6c
+          - kind: perf
+            scope: changelog
+            subject: "every release's ancestry is listed by one git process"
+            breaking: false
+            commit: "7eee00861"
+            url: https://github.com/korczis/prismatic-majordomus/commit/7eee00861
+      - kind: docs
+        heading: Documentation
+        rank: 4
+        changes:
+          - kind: docs
+            scope: cli
+            subject: linked_port carries an example of the port it derives
+            breaking: false
+            commit: 52a884282
+            url: https://github.com/korczis/prismatic-majordomus/commit/52a884282
+          - kind: docs
+            scope: plan
+            subject: "the plan's surfaces are inferred from delivery (ADR 0166)"
+            breaking: false
+            commit: b80c18350
+            url: https://github.com/korczis/prismatic-majordomus/commit/b80c18350
+            references:
+              - kind: issue
+                id: I2653
+                title: "Every diagram on the site is one interactive, linkable viewer whose node links are inferred, and a derived table can be drawn as a chart"
+                route: /plan/i2653/
+              - kind: issue
+                id: I2740
+                title: "An issue's delivery is inferred from branches, pull requests, merges, tags and the published site"
+                route: /plan/i2740/
+              - kind: issue
+                id: I2748
+                title: The drift already on the trunk is settled before the gate is made blocking
+                route: /plan/i2748/
+          - kind: docs
+            scope: knowledge
+            subject: the words follow the trunk outbox (I1984 slice 3)
+            breaking: false
+            commit: b1a0bff60
+            url: https://github.com/korczis/prismatic-majordomus/commit/b1a0bff60
+            references:
+              - kind: issue
+                id: I1984
+                title: Knowledge candidates never leave untracked files on a trunk that only pull requests change
+                route: /plan/i1984/
+          - kind: docs
+            scope: plan
+            subject: "a resumed mesh.events walk misses a partitioned writer's event (I2733)"
+            breaking: false
+            commit: a64fdc1a4
+            url: https://github.com/korczis/prismatic-majordomus/commit/a64fdc1a4
+            references:
+              - kind: issue
+                id: I2733
+                title: "A resumed mesh.events walk returns every event exactly once, across partitions"
+                route: /plan/i2733/
+              - kind: issue
+                id: I2140
+                title: Paging mesh.events returns every event exactly once
+                route: /plan/i2140/
+          - kind: docs
+            scope: adr
+            subject: a node key is rotated by a succession its predecessor signs
+            breaking: false
+            commit: a9ff7e1c3
+            url: https://github.com/korczis/prismatic-majordomus/commit/a9ff7e1c3
+            references:
+              - kind: issue
+                id: I2705
+                title: "A node key can be rotated, peers follow the new key, and the old key is refused"
+                route: /plan/i2705/
+          - kind: docs
+            scope: adr
+            subject: "a merge GitHub makes is guarded by checks, not by strict (I1409-c)"
+            breaking: false
+            commit: 89a44047b
+            url: https://github.com/korczis/prismatic-majordomus/commit/89a44047b
+            references:
+              - kind: issue
+                id: I1409
+                title: Derived data stops hashing inputs it cannot control
+                route: /plan/i1409/
+          - kind: docs
+            scope: runtime
+            subject: every failure class names its proof
+            breaking: false
+            commit: a53fd3b80
+            url: https://github.com/korczis/prismatic-majordomus/commit/a53fd3b80
+            references:
+              - kind: issue
+                id: I2731
+                title: Every failure class in the published failure table names its test or its stated limitation
+                route: /plan/i2731/
+          - kind: docs
+            scope: adr
+            subject: "a durable record names the session that wrote it (ADR 0164, I0702)"
+            breaking: false
+            commit: e59b86b66
+            url: https://github.com/korczis/prismatic-majordomus/commit/e59b86b66
+            references:
+              - kind: issue
+                id: I0702
+                title: "Decide how a record is attributed, between named alternatives"
+                route: /plan/i0702/
+              - kind: issue
+                id: I0701
+                title: Reproduce the misattribution as an executable case
+                route: /plan/i0701/
+          - kind: docs
+            scope: adr
+            subject: the realization report names what is not orphan work
+            breaking: false
+            commit: 6ee6b77c5
+            url: https://github.com/korczis/prismatic-majordomus/commit/6ee6b77c5
+          - kind: docs
+            scope: adr
+            subject: a server serves only a share of its own version (ADR 0163)
+            breaking: false
+            commit: cfff43810
+            url: https://github.com/korczis/prismatic-majordomus/commit/cfff43810
+          - kind: docs
+            scope: adr
+            subject: a trunk episode stages its records and the pre-push judges the pushed branches
+            breaking: false
+            commit: a53f08f11
+            url: https://github.com/korczis/prismatic-majordomus/commit/a53f08f11
+            references:
+              - kind: issue
+                id: I1984
+                title: Knowledge candidates never leave untracked files on a trunk that only pull requests change
+                route: /plan/i1984/
+              - kind: issue
+                id: I1990
+                title: "The pre-push check judges the refs being pushed, or says why the checkout's task binds them"
+                route: /plan/i1990/
+          - kind: docs
+            scope: site
+            subject: a Czech essay says why the product is a layer and not another agent
+            breaking: false
+            commit: 17fa2c4d0
+            url: https://github.com/korczis/prismatic-majordomus/commit/17fa2c4d0
+          - kind: docs
+            scope: adr
+            subject: state the disk and derive time without a typed percentage (ADR 0157)
+            breaking: false
+            commit: a28c54f27
+            url: https://github.com/korczis/prismatic-majordomus/commit/a28c54f27
+          - kind: docs
+            scope: adr
+            subject: "the build-cache case is 3013, 3011 is another session's (ADR 0157)"
+            breaking: false
+            commit: 057e3d4f0
+            url: https://github.com/korczis/prismatic-majordomus/commit/057e3d4f0
+          - kind: docs
+            scope: adr
+            subject: record what the first provider measured in ADR 0157 and I2673/I2674
+            breaking: false
+            commit: 7a749356c
+            url: https://github.com/korczis/prismatic-majordomus/commit/7a749356c
+            references:
+              - kind: issue
+                id: I2673
+                title: "The sccache client configuration is derived from the selected offer, local disk first"
+                route: /plan/i2673/
+              - kind: issue
+                id: I2674
+                title: "A node is provisioned as an S3 cache provider, idempotently, with no secret in the repository"
+                route: /plan/i2674/
+          - kind: docs
+            scope: adr
+            subject: "a mesh node may offer a shared build cache, never depended on (ADR 0157)"
+            breaking: false
+            commit: cdb52778d
+            url: https://github.com/korczis/prismatic-majordomus/commit/cdb52778d
+            references:
+              - kind: issue
+                id: I2670
+                title: "A build-cache offer is a typed model and its selection is a pure, explained function"
+                route: /plan/i2670/
+              - kind: issue
+                id: I2677
+                title: "The build cache is documented, governed by a rule and described on the site and the Pages"
+                route: /plan/i2677/
+          - kind: docs
+            scope: adr
+            subject: "the prompt-pack ADR is 0124, 0121 is the fleet ADR on master"
+            breaking: false
+            commit: 809c603e3
+            url: https://github.com/korczis/prismatic-majordomus/commit/809c603e3
+          - kind: docs
+            scope: adr
+            subject: an uploaded prompt pack is a provenance-tracked input artifact
+            breaking: false
+            commit: a488c7405
+            url: https://github.com/korczis/prismatic-majordomus/commit/a488c7405
+      - kind: test
+        heading: Tests
+        rank: 5
+        changes:
+          - kind: test
+            scope: perf
+            subject: "a repository of N records costs N parses, not N squared (I0836)"
+            breaking: false
+            commit: c081c0b1a
+            url: https://github.com/korczis/prismatic-majordomus/commit/c081c0b1a
+            references:
+              - kind: issue
+                id: I0836
+                title: A synthetic repository generator for scaling cases
+                route: /plan/i0836/
+          - kind: test
+            scope: sessions
+            subject: "a second worker's record lands on the first worker's task (I0701)"
+            breaking: false
+            commit: 84d174c23
+            url: https://github.com/korczis/prismatic-majordomus/commit/84d174c23
+            references:
+              - kind: issue
+                id: I0701
+                title: Reproduce the misattribution as an executable case
+                route: /plan/i0701/
+              - kind: milestone
+                id: M002
+                title: A durable record names the worker that wrote it
+                route: /plan/m002/
+              - kind: issue
+                id: I0702
+                title: "Decide how a record is attributed, between named alternatives"
+                route: /plan/i0702/
+          - kind: test
+            scope: derive
+            subject: a committed derivation survives a merge that touches none of its inputs
+            breaking: false
+            commit: 91b5fdf8e
+            url: https://github.com/korczis/prismatic-majordomus/commit/91b5fdf8e
+            references:
+              - kind: issue
+                id: I1409
+                title: Derived data stops hashing inputs it cannot control
+                route: /plan/i1409/
+          - kind: test
+            scope: http
+            subject: "a rebinding host, the API page and the site's JSON are proven, and I2151 is done"
+            breaking: false
+            commit: d5f1289e9
+            url: https://github.com/korczis/prismatic-majordomus/commit/d5f1289e9
+            references:
+              - kind: issue
+                id: I2151
+                title: "A page served beside the write routes runs only script it shipped, and a rebinding host reads nothing"
+                route: /plan/i2151/
+      - kind: chore
+        heading: Housekeeping
+        rank: 7
+        changes:
+          - kind: chore
+            scope: plan
+            subject: I2745 carries its evidence and reads verify (I2745)
+            breaking: false
+            commit: 54cf30f57
+            url: https://github.com/korczis/prismatic-majordomus/commit/54cf30f57
+            references:
+              - kind: issue
+                id: I2745
+                title: The landing page states no present it does not read
+                route: /plan/i2745/
+          - kind: chore
+            scope: plan
+            subject: I2746 records its diagram-scope evidence and is verified (I2746)
+            breaking: false
+            commit: 3a8ffe184
+            url: https://github.com/korczis/prismatic-majordomus/commit/3a8ffe184
+            references:
+              - kind: issue
+                id: I2746
+                title: "Every published tree draws its diagrams, and every diagram is the interactive viewer"
+                route: /plan/i2746/
+          - kind: chore
+            scope: release
+            subject: bump the version to 0.28.0
+            breaking: false
+            commit: 4a6abf2a0
+            url: https://github.com/korczis/prismatic-majordomus/commit/4a6abf2a0
+          - kind: chore
+            scope: derive
+            subject: the derived data follows the merge of master d116266
+            breaking: false
+            commit: bad1720c3
+            url: https://github.com/korczis/prismatic-majordomus/commit/bad1720c3
+          - kind: chore
+            scope: derive
+            subject: the derived data follows the merge of master
+            breaking: false
+            commit: 275f35597
+            url: https://github.com/korczis/prismatic-majordomus/commit/275f35597
+          - kind: chore
+            scope: derive
+            subject: the derived data follows the merge of master d116266
+            breaking: false
+            commit: d65fd8cca
+            url: https://github.com/korczis/prismatic-majordomus/commit/d65fd8cca
+          - kind: chore
+            scope: release
+            subject: record v0.27.0 and the metadata it publishes
+            breaking: false
+            commit: a2aa25f36
+            url: https://github.com/korczis/prismatic-majordomus/commit/a2aa25f36
+          - kind: chore
+            scope: plan
+            subject: "I2123 is done, a caller beyond loopback changes nothing it cannot authenticate"
+            breaking: false
+            commit: dc3c36550
+            url: https://github.com/korczis/prismatic-majordomus/commit/dc3c36550
+            references:
+              - kind: issue
+                id: I2123
+                title: "A caller beyond loopback reads, and changes nothing it cannot authenticate"
+                route: /plan/i2123/
+          - kind: chore
+            scope: plan
+            subject: I2124 is recorded done with the tests that prove it
+            breaking: false
+            commit: 43933145b
+            url: https://github.com/korczis/prismatic-majordomus/commit/43933145b
+            references:
+              - kind: issue
+                id: I2124
+                title: "An event reloaded from disk meets the trust policy in force, and no stamp outruns the clock"
+                route: /plan/i2124/
+          - kind: chore
+            scope: plan
+            subject: I1409 records fixture_without_history_evaluates from case 3055
+            breaking: false
+            commit: 9910ad089
+            url: https://github.com/korczis/prismatic-majordomus/commit/9910ad089
+            references:
+              - kind: issue
+                id: I1409
+                title: Derived data stops hashing inputs it cannot control
+                route: /plan/i1409/
+          - kind: chore
+            scope: plan
+            subject: I2128 is recorded done with the tests that prove it
+            breaking: false
+            commit: 2caa75bee
+            url: https://github.com/korczis/prismatic-majordomus/commit/2caa75bee
+            references:
+              - kind: issue
+                id: I2128
+                title: "A lease is removed only by the process that holds it, and serve stop stops the server in order"
+                route: /plan/i2128/
+          - kind: chore
+            scope: plan
+            subject: failure-is-visible records two of its three evidence tokens
+            breaking: false
+            commit: 4056f7302
+            url: https://github.com/korczis/prismatic-majordomus/commit/4056f7302
+            references:
+              - kind: issue
+                id: I2707
+                title: "majordomus doctor reports a stale server, or says plainly that it checks governance only"
+                route: /plan/i2707/
+          - kind: chore
+            scope: plan
+            subject: I2135 is done; a committed tofu declaration fails the mesh check
+            breaking: false
+            commit: 70e203fd2
+            url: https://github.com/korczis/prismatic-majordomus/commit/70e203fd2
+            references:
+              - kind: issue
+                id: I2135
+                title: "The trust root is read from the default branch, not from whatever the checkout holds"
+                route: /plan/i2135/
+          - kind: chore
+            scope: derive
+            subject: "the changelog follows the merge's whole history"
+            breaking: false
+            commit: 311e092db
+            url: https://github.com/korczis/prismatic-majordomus/commit/311e092db
+          - kind: chore
+            scope: plan
+            subject: "an observation becomes a grouped, routed candidate is recorded done"
+            breaking: false
+            commit: 88d1e8075
+            url: https://github.com/korczis/prismatic-majordomus/commit/88d1e8075
+            references:
+              - kind: issue
+                id: I2074
+                title: "An observation becomes a candidate that says what it is about, and reading groups recurrence"
+                route: /plan/i2074/
+              - kind: issue
+                id: I2075
+                title: A candidate is routed by what it is about
+                route: /plan/i2075/
+          - kind: chore
+            scope: plan
+            subject: "I2134 is done, and its evidence names the tests that prove it"
+            breaking: false
+            commit: db2d2d31b
+            url: https://github.com/korczis/prismatic-majordomus/commit/db2d2d31b
+            references:
+              - kind: issue
+                id: I2134
+                title: "A key removed from the trust list loses its links without a restart, and a node key can be rotated"
+                route: /plan/i2134/
+              - kind: issue
+                id: I2705
+                title: "A node key can be rotated, peers follow the new key, and the old key is refused"
+                route: /plan/i2705/
+          - kind: chore
+            scope: derive
+            subject: the projections follow master c0e3585dc8
+            breaking: false
+            commit: 618f825f8
+            url: https://github.com/korczis/prismatic-majordomus/commit/618f825f8
+          - kind: chore
+            scope: derive
+            subject: the projections follow master 97c4521f91
+            breaking: false
+            commit: fa31bd31a
+            url: https://github.com/korczis/prismatic-majordomus/commit/fa31bd31a
+          - kind: chore
+            scope: derive
+            subject: the projections of the Czech essay over master a6b1e1032
+            breaking: false
+            commit: 74cd022cd
+            url: https://github.com/korczis/prismatic-majordomus/commit/74cd022cd
+          - kind: chore
+            scope: sessions
+            subject: "the record of the episode that opened this change, and its projections"
+            breaking: false
+            commit: b406a1e53
+            url: https://github.com/korczis/prismatic-majordomus/commit/b406a1e53
+          - kind: chore
+            scope: derive
+            subject: regenerate after merging master and renumbering the build-cache case
+            breaking: false
+            commit: 9dd87294f
+            url: https://github.com/korczis/prismatic-majordomus/commit/9dd87294f
+          - kind: chore
+            scope: offload
+            subject: the iMac is a third derive host
+            breaking: false
+            commit: a3a86d364
+            url: https://github.com/korczis/prismatic-majordomus/commit/a3a86d364
+          - kind: chore
+            scope: plan
+            subject: I2414 names the files and the measurements its implementation found
+            breaking: false
+            commit: 4a6f9976e
+            url: https://github.com/korczis/prismatic-majordomus/commit/4a6f9976e
+            references:
+              - kind: issue
+                id: I2414
+                title: mesh.state and mesh.peers answer a filtered summary that fits one tool answer
+                route: /plan/i2414/
+          - kind: chore
+            scope: plan
+            subject: "the mesh works out of the box, and its six missing pieces are issues"
+            breaking: false
+            commit: e531f1fe9
+            url: https://github.com/korczis/prismatic-majordomus/commit/e531f1fe9
+            references:
+              - kind: issue
+                id: I2410
+                title: "A trusted machine on the tailnet is found through Tailscale, with no address written by hand"
+                route: /plan/i2410/
+              - kind: issue
+                id: I2411
+                title: "A server whose mesh is enabled is reachable on the tailnet and the LAN, and only by a trusted peer"
+                route: /plan/i2411/
+              - kind: issue
+                id: I2412
+                title: "`majordomus init` declares the mesh and enrols this machine's key, so a fresh repository cooperates"
+                route: /plan/i2412/
+              - kind: issue
+                id: I2413
+                title: "A linked worktree cooperates through its repository's running server, and a start that cannot ensure one says why"
+                route: /plan/i2413/
+              - kind: issue
+                id: I2414
+                title: mesh.state and mesh.peers answer a filtered summary that fits one tool answer
+                route: /plan/i2414/
+              - kind: issue
+                id: I2415
+                title: "A mesh review request carries a body, can be withdrawn, and expires"
+                route: /plan/i2415/
+      - kind: style
+        heading: Formatting
+        rank: 7
+        changes:
+          - kind: style
+            scope: test
+            subject: cargo fmt over the derived-port assertion in cli_docs
+            breaking: false
+            commit: f37efd935
+            url: https://github.com/korczis/prismatic-majordomus/commit/f37efd935
+    artifacts:
+      - target: macos-aarch64
+        name: majordomus-v0.28.0-aarch64-apple-darwin.tar.gz
+        sha256: 48e91654391e59048d17b2ded83d964e5f33c6c6440d5798c547d787553aba84
+      - target: macos-x86_64
+        name: majordomus-v0.28.0-x86_64-apple-darwin.tar.gz
+        sha256: f3e1f0e686a205159cf4823091885e0bef1046959bed4081703083fbd15cd9f9
+      - target: linux-x86_64-gnu
+        name: majordomus-v0.28.0-x86_64-unknown-linux-gnu.tar.gz
+        sha256: 52e8c51339c0c449622793556a3c668127d2930d6b28f2999cddeee9cdac64df
+      - target: linux-x86_64-musl
+        name: majordomus-v0.28.0-x86_64-unknown-linux-musl.tar.gz
+        sha256: 87e69f3184ebbaa65a2565ba957e579cda4ea16e30b4e44c34a35a16cd4438c5
+      - target: linux-aarch64-gnu
+        name: majordomus-v0.28.0-aarch64-unknown-linux-gnu.tar.gz
+        sha256: b9b600487e2d68f664d0d9bb97505f80fe4ed38443833c0f7a9510e48fab771f
+      - target: linux-aarch64-musl
+        name: majordomus-v0.28.0-aarch64-unknown-linux-musl.tar.gz
+        sha256: 103134918ff2cddf3dec8fd443287e803e55a12a1c26189d108de02776d41501
   - version: "0.27.0"
     tag: v0.27.0
     date: "2026-10-16T07:01:16Z"
@@ -1921,7 +2864,7 @@ sections:
     decisions:
       - id: adr-0146
         title: A capability is invoked by name through a generated skill
-        status: proposed
+        status: accepted
         date: "2026-10-12"
         url: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0146-a-capability-is-invoked-by-name-through-a-generated-skill.md
         added: 37067ec232d0b9b68be4c6dbb1378d0085ddff33

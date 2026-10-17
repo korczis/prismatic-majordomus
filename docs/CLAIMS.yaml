@@ -1115,7 +1115,7 @@ claims:
     claim: A bare claude in a supervised repository starts with the repository's session-start prompt as its first message, and a run with an argument, outside such a repository, with the opt-out, or with a prompt that cannot be rendered is left exactly as it was
     source: docs/MCP.md
     implementation: share/shell/session-start.sh
-    test: test/cases/3178_a_bare_session_start_joins_the_cluster.sh
+    test: test/cases/3221_a_bare_session_start_joins_the_cluster.sh
     status: guaranteed
     responsibility: none      # a shell function a person sources, not a supervised responsibility
     note: Proved in bash and zsh against stubs of claude and majordomus; the real claude takes the prompt as its positional argument (claude --help). Only Claude Code is wrapped; Codex and Gemini are not claimed until each is proved against the real tool. The installer does not source the file, because it touches nothing outside its prefix.

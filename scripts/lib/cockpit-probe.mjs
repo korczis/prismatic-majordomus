@@ -238,7 +238,9 @@ async function interactions(context) {
     // the palette says when the registry is in; a fixed wait raced it and blamed the
     // filtering for what was still a fetch
     await page
-      .waitForSelector('.mj-palette-results[data-state="ready"]', { timeout: 15000 })
+      // 45 s: on a loaded runner the registry (2500+ capabilities) arrived after 15 s
+      // (top 70, run 38960010919), and the palette held only its pages
+      .waitForSelector('.mj-palette-results[data-state="ready"]', { timeout: 45000 })
       .catch(() => {});
     // and the filtering is rendered on the query event the component dispatches after the
     // input, not on the input itself: when the registry was in before the fill, the ready
@@ -281,10 +283,11 @@ async function interactions(context) {
     }
   }
 
-  // --- the theme toggle flips the root class and survives a reload
+  // --- the theme toggle — the site's, in the site's bar (project.the-ui-wears-the-sites-navbar),
+  // run by the site's own theme.js — flips the root class and survives a reload
   await page.goto(BASE + '/cockpit', { waitUntil: 'networkidle' });
   const before = await page.evaluate(() => document.documentElement.classList.contains(document.body.dataset.themeClass));
-  await page.click('.mj-theme-toggle');
+  await page.click('#theme-toggle');
   const after = await page.evaluate(() => document.documentElement.classList.contains(document.body.dataset.themeClass));
   if (before === after) {
     fail('theme', 'the toggle did not change the theme');

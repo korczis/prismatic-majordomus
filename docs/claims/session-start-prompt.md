@@ -15,7 +15,7 @@ A hook can only add context to a session; nothing but a first message starts a t
 claude                                # here: starts with the session-start prompt
 MAJORDOMUS_NO_AUTOSTART=1 claude      # here: starts as before
 majordomus prompt render session-start
-bash test/run.sh 3178_a_bare_session_start_joins_the_cluster
+bash test/run.sh 3221_a_bare_session_start_joins_the_cluster
 ```
 
 ## What it does not cover

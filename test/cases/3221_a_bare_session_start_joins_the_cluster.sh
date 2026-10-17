@@ -15,7 +15,7 @@ SH="$ROOT/share/shell/session-start.sh"
 [ -f "$SH" ] || { echo "    share/shell/session-start.sh is missing"; exit 1; }
 [ -f "$ROOT/.ai/repo/prompts/session-start.md" ] || { echo "    the session-start prompt asset is missing"; exit 1; }
 
-S="$(mktemp -d "${TMPDIR:-/tmp}/mj3178.XXXXXX")"; trap 'rm -rf "$S"' EXIT
+S="$(mktemp -d "${TMPDIR:-/tmp}/mj3221.XXXXXX")"; trap 'rm -rf "$S"' EXIT
 mkdir -p "$S/bin" "$S/repo/.ai" "$S/plain"
 printf 'ai-repository/v1\n' > "$S/repo/.ai/manifest.yaml"
 git -C "$S/repo" init -q; git -C "$S/plain" init -q

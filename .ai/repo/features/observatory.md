@@ -11,7 +11,8 @@ weight: 94
 domain: surfaces
 featured: true
 areas: [observability]
-modules: [observatory, mesh, plan, distribution, release, health, economics, repository]
+modules: [observatory, mesh, plan, distribution, release, health, economics, repository, served]
+kinds: [deployment]
 rules: [project.ui-derived-state, project.interfaces-are-projections]
 claims: [observatory-draws-nothing-it-did-not-read]
 docs: [docs/MAJORDOMUS_UI.md]

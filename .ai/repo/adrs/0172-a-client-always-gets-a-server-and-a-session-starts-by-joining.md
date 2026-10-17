@@ -19,7 +19,7 @@ related:
   - file:bin/majordomus-cli
   - file:share/shell/session-start.sh
   - test:test/cases/3177_a_client_always_gets_a_server.sh
-  - test:test/cases/3178_a_bare_session_start_joins_the_cluster.sh
+  - test:test/cases/3221_a_bare_session_start_joins_the_cluster.sh
 provenance:
   origin: authored
 ---
@@ -118,7 +118,7 @@ is served by the installed release when the executable is missing, when the buil
 when there is no room; that another command still exits 12; that a file inside the repository
 and one that does not answer `--version` are refused; that a fresh executable runs as itself;
 and that `MAJORDOMUS_MCP_BUILD=1` keeps the build. It fails on the launcher as it stood on
-2026-10-16 with exit 12. Case 3178 proves, in bash and zsh, that a bare `claude` gets exactly
+2026-10-16 with exit 12. Case 3221 proves, in bash and zsh, that a bare `claude` gets exactly
 one argument, the rendered prompt, and that an argument, a plain repository, the opt-out, a
 failed or an empty render and the session's exit status are left untouched. Claims
 `mcp-client-always-served` and `session-start-prompt`.
