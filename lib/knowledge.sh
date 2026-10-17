@@ -182,6 +182,8 @@ mj_knowledge_observe_cmd() {
   mj_is_multiline "$statement$subject" && mj_die "$MJ_EX_USAGE" "knowledge observe: the statement and the subject must be single-line"
   printf '%s\n' "$statement" | grep -Eq "$MJ_KNOWLEDGE_TRANSCRIPT" \
     && mj_die "$MJ_EX_USAGE" "knowledge observe: the statement opens like a turn of a conversation; an observation is an assertion, never a transcript"
+  printf '%s\n' "$statement$subject" | grep -Eq "$MJ_KNOWLEDGE_UNPUBLISHABLE" \
+    && mj_die "$MJ_EX_USAGE" "knowledge observe: the statement carries a path of this machine or a credential's shape, and a record is published; write <repository>/... or name the shape in words"
   while IFS= read -r ref; do
     [ -n "$ref" ] || continue
     printf '%s' "$ref" | grep -Eq '^(file|test|commit|issue|claim):[^[:space:]]+$' \
@@ -1031,6 +1033,11 @@ MJ_KNOWLEDGE_RELATIONS="relates_to depends_on documents supports contradicts sup
 # (lib/session_context.sh): a record whose title, description or body opens a line this
 # way is a transcript wearing a record's front matter.
 MJ_KNOWLEDGE_TRANSCRIPT='^(transcript|messages|assistant|completion|response)[: ]'
+# What a record must never carry, because a tracked record is published (ADR 0173): the
+# markers apps/majordomus-cli/src/generate.rs refuses in every published artifact — a path of
+# the machine that wrote it, and the shapes credentials are written in. Kept to that list so
+# that what observe refuses, what the deriver skips and what generate refuses are one set.
+MJ_KNOWLEDGE_UNPUBLISHABLE='/Users/|/home/|/root/|-----BEGIN |Authorization:|Bearer |AKIA|ghp_|github_pat_'
 
 # The episode to derive from: the one named, else the one open for this process. Empty
 # means none, and the caller says so rather than guessing at the pointer.
@@ -1316,6 +1323,10 @@ EOF
     # description that opens like a turn of a conversation is not an assertion.
     if printf '%s\n%s\n' "$title" "$desc" | grep -Eq "$MJ_KNOWLEDGE_TRANSCRIPT"; then
       verb="skipped (transcript)"; s=$((s + 1)); S="$S$rel"$'\n'
+    elif printf '%s\n%s\n' "$title" "$desc" | grep -Eq "$MJ_KNOWLEDGE_UNPUBLISHABLE"; then
+      # recorded before observe refused it, or by another writer: never written, because a
+      # tracked record is published and generate would refuse the whole graph over it
+      verb="skipped (unpublishable)"; s=$((s + 1)); S="$S$rel"$'\n'
     elif [ -f "$kdir/$id.md" ]; then
       verb="skipped (promoted)"; s=$((s + 1)); S="$S$rel"$'\n'
     elif [ -f "$cdir/$id.md" ] && [ "$(mj_knowledge_record_status "$cdir/$id.md")" != candidate ]; then
@@ -1828,6 +1839,21 @@ mj_knowledge_resolve_refs() {
              if (index($0, "\"task_id\":\"")) { t = mjfield($0, "task_id"); if (t != "" && !tt[t]++) print "task\t" t } }' "$led" >> "$tmp/have"
     fi
     mj_knowledge_branch_map | cut -f1 | sed 's/^/session\t/' >> "$tmp/have"
+    # a task resolves through the tracked session record that names it, so a record derived
+    # under a task is verifiable in every clone, not only on the machine whose ledger holds
+    # the task (I2791); the Rust resolver reads the same records
+    # shellcheck source=session.sh
+    . "$MJ_LIB_DIR/session.sh"
+    local store; store="$(mj_session_store)"
+    if [ -d "$store" ]; then
+      awk 'FNR == 1 { fm = 0; lst = 0 }
+           FNR == 1 && $0 == "---" { fm = 1; next }
+           fm && $0 == "---" { fm = 0; nextfile }
+           fm && /^task_id: / { t = substr($0, 10); gsub(/"/, "", t); if (t != "" && t != "none") print "task\t" t }
+           fm && /^[a-z_]+:/ { lst = ($0 == "tasks:"); next }
+           fm && lst && /^  - / { t = substr($0, 5); gsub(/"/, "", t); if (t != "") print "task\t" t }' \
+        "$store"/*.md 2>/dev/null >> "$tmp/have"
+    fi
     [ -f "$MJ_STATE_DIR/current.yaml" ] && sed -n 's/^id: /task\t/p' "$MJ_STATE_DIR/current.yaml" | head -n 1 >> "$tmp/have"
     local f; for f in "$MJ_STATE_DIR"/completed/*.md; do [ -f "$f" ] && printf 'task\t%s\n' "$(basename "$f" .md)"; done >> "$tmp/have"
   fi

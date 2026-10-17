@@ -54,7 +54,10 @@ it as `historical` with the blob that answers, `<commit>:<path>`, as its target;
 check (`mj_knowledge_file_in_history`) and the Rust resolver (`file_in_history`) answer alike.
 A path no commit of this history ever held still resolves to nothing, and so does a pin at a
 commit that did not hold it. A shallow clone that lacks the commit cannot vouch for it, as for
-a `commit:` reference. `test/cases/3023` deletes a cited file and commits the deletion.
+a `commit:` reference. A `task:` or `decision:` reference resolves through the ledger or the task
+store where they exist, and in every clone through the tracked session record that names the
+task in `task_id` or `tasks` (I2791): a candidate derived under a task is verifiable on a CI
+runner, which holds neither. `test/cases/3193` removes both and keeps the check green. `test/cases/3023` deletes a cited file and commits the deletion.
 
 A record is never a summary of a conversation and never quotes a prompt or a turn; the check
 that keeps `project.never-store-transcripts` applies to its title, its description and its
@@ -149,8 +152,11 @@ line, never the clock, and no random value enters the file. A ledger line's free
 unescaped once when read and escaped once when the record is composed, so a quotation mark
 inside a decision neither cuts the record short nor changes its identity. A line whose text
 carries a transcript marker yields no record; it is reported as skipped rather than written
-for the integrity check to refuse. No network, no model, no `eval`
-(`project.no-network-no-eval`).
+for the integrity check to refuse. A line whose text carries a path of the machine that
+wrote it or a credential's shape — the markers `majordomus generate` refuses in every
+published artifact — yields no record either and is reported as `unpublishable`, because a
+tracked record is published (ADR 0173); `knowledge observe` refuses such a statement before
+it is written. No network, no model, no `eval` (`project.no-network-no-eval`).
 
 ## What a session observed
 
@@ -294,7 +300,7 @@ target — never staged, and prints the path written on the last line, the way `
 
 
 The output of `derive` is one line per record — `written <path>`, `unchanged <path>`,
-`skipped <path> (promoted|superseded|transcript)`, or `would write <path>` under `--dry-run` —
+`skipped <path> (promoted|superseded|transcript|unpublishable)`, or `would write <path>` under `--dry-run` —
 then a summary line naming the counts and the episode; with no episode to derive from it says
 so and exits 0 without a ledger line. `--json` on every subcommand is one object with the
 same content as the text.

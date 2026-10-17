@@ -8,8 +8,9 @@
 # statement and each evidence reference, inside a task or outside one, while an episode is open
 # (without one it is refused with exit 10, because nothing would ever derive it). A kind outside the
 # five, a subject that is neither a repository path nor a typed identifier, an evidence
-# reference that names nothing typed, a statement that spans lines or opens like a turn of a
-# conversation: each is refused with exit 2 and leaves the ledger as it was.
+# reference that names nothing typed, a statement that spans lines, opens like a turn of a
+# conversation or carries a path of this machine or a credential's shape (a tracked record is
+# published, ADR 0173): each is refused with exit 2 and leaves the ledger as it was.
 . "$ROOT/test/lib.sh"
 
 unset MAJORDOMUS_PROVIDER_SESSION CLAUDE_CODE_SESSION_ID
@@ -72,4 +73,7 @@ refused "no statement"             --kind defect --subject lib
 refused "two statements"           --kind defect --subject lib "x" "y"
 refused "a multi-line statement"   --kind defect --subject lib "$(printf 'one\ntwo')"
 refused "a conversation"           --kind defect --subject lib "assistant: I did it"
+# a tracked record is published (ADR 0173): what generate refuses in a published artifact
+refused "a path of this machine"   --kind defect --subject lib "the fixture lives under /Users/me"
+refused "a credential's shape"     --kind defect --subject lib "the run sent Authorization: x"
 exit 0

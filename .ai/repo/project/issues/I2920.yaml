@@ -1,0 +1,32 @@
+id: I2920
+milestone: test-evidence
+title: "A knowledge record derived under a task resolves in every clone, and no record carries what generate refuses"
+slug: a-task-reference-resolves-in-every-clone
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Resolve a task: or decision: reference through the tracked session record that names the task (task_id or tasks), in the shell integrity check and the Rust resolver alike, so a candidate derived under a task passes knowledge check on a fresh clone; and refuse in knowledge observe, and skip in the deriver as unpublishable, a statement carrying a path of this machine or a credential's shape, the markers generate refuses in every published artifact."
+why: "Found on 2026-10-17 while deriving the knowledge base: in a clone with no ledger every candidate derived under a task failed knowledge check (task references resolved only through the local ledger and task store), and one observation quoting a home-directory path made generate refuse the whole composed graph. Every session's PreCompact hook writes candidates into the tracked candidates directory, so the first candidate anyone commits would turn CI red."
+current_state: "Task and decision references resolve only through the local ledger and task store; observe accepts and the deriver writes a statement carrying a machine path."
+desired_state: "A tracked session record that names the task vouches for it on every clone; observe refuses and the deriver skips an unpublishable statement; cases 3193 and 980 hold both."
+scope:
+  - "lib/knowledge.sh"
+  - "apps/majordomus-cli/src/capability/builtin/knowledge_base.rs"
+  - "test/cases/3193_a_task_reference_resolves_in_every_clone.sh"
+  - "test/cases/980_a_session_records_what_it_observed.sh"
+  - "docs/KNOWLEDGE.md"
+  - ".ai/repo/project/issues/I2920.yaml"
+non_scope:
+  - "Committing any knowledge candidate: the content lands as its own pull request after the alpha"
+depends_on: []
+acceptance_criteria:
+  - "knowledge check passes in a clone with no ledger for a record whose task a tracked session record names, and fails for one no record names"
+  - "knowledge observe exits 2 on a statement carrying a machine path or a credential shape, and derive reports such a line as skipped (unpublishable)"
+validation:
+  - "bash test/run.sh 3193_a_task_reference_resolves_in_every_clone 980_a_session_records_what_it_observed"
+  - "cargo test --lib knowledge_base"
+evidence_required:
+  - "case_3193"
+  - "case_980"
+created_at: 2026-10-17
+updated_at: 2026-10-17

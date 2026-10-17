@@ -964,10 +964,31 @@ fn resolve(
             {
                 return (External, Some("task store".into()), String::new());
             }
+            // the tracked session record of the episode names its tasks, so a record derived
+            // under a task is verifiable in every clone and not only on the machine whose
+            // ledger holds the task (I2791)
+            let named = |o: &&crate::model::Object| {
+                field(o, "task_id") == value
+                    || o.metadata
+                        .get("tasks")
+                        .and_then(Value::as_array)
+                        .is_some_and(|tasks| tasks.iter().any(|t| t.as_str() == Some(value)))
+            };
+            if let Some(o) = ctx
+                .index
+                .objects
+                .iter()
+                .filter(|o| o.kind == "session")
+                .find(named)
+            {
+                return (Object, Some(o.uri.clone()), String::new());
+            }
             (
                 Missing,
                 None,
-                format!("no ledger line and no task record names the task {value}"),
+                format!(
+                    "no ledger line, no task record and no session record names the task {value}"
+                ),
             )
         }
         "commit" => {
@@ -1786,7 +1807,7 @@ mod tests {
                 "task:t-nowhere",
                 Missing,
                 None,
-                "no ledger line and no task record",
+                "no ledger line, no task record and no session record",
             ),
             (
                 "commit:0123abc",
@@ -1898,6 +1919,35 @@ mod tests {
             assert_eq!(at, None, "{reference}");
             assert!(why.contains("no such path"), "{reference}: {why}");
         }
+    }
+
+    /// I2791: a task or decision reference resolves through the tracked session record that
+    /// names the task — as its `task_id` or in its `tasks` — with no ledger and no task store,
+    /// so a record derived under a task is verifiable in every clone; one no record names
+    /// still dangles.
+    #[test]
+    fn a_task_resolves_through_the_session_record_that_names_it() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let root = repo.root().to_path_buf();
+        let record = object(
+            "session",
+            "e7",
+            ".ai/repo/sessions/e7.md",
+            json!({ "session_id": "e7", "task_id": "t-1", "tasks": ["t-1", "t-2"] }),
+        );
+        let uri = record.uri.clone();
+        let ctx = context_with(&repo, vec![record]);
+        for reference in ["task:t-1", "task:t-2", "decision:t-2"] {
+            let (got, at, why) = resolve(&ctx, &root, &[], reference);
+            assert_eq!(got, ReferenceResolution::Object, "{reference}: {why}");
+            assert_eq!(at.as_deref(), Some(uri.as_str()), "{reference}");
+        }
+        let (got, at, why) = resolve(&ctx, &root, &[], "task:t-3");
+        assert_eq!((got, at), (ReferenceResolution::Missing, None));
+        assert!(
+            why.contains("no session record names the task t-3"),
+            "{why}"
+        );
     }
 
     /// A record whose every reference answers is resolved, its relations included; one
