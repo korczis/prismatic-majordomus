@@ -58,7 +58,9 @@ case "$*" in
 esac
 STUB
 chmod +x "$T/bin/gh"
-gate() { ( cd "$P" && env PATH="$T/bin:$PATH" GH_STUB_LOG="$LOG" GH_STUB_FX="$FX" MJ_RELEASE_CHECK_REPO=o/r ./scripts/ci/release-check ); }
+# MJ_ROOT unset: the gate honours it, and a caller that exports it (majordomus finish does) would
+# otherwise have the gate measure that tree instead of this fixture
+gate() { ( cd "$P" && env -u MJ_ROOT PATH="$T/bin:$PATH" GH_STUB_LOG="$LOG" GH_STUB_FX="$FX" MJ_RELEASE_CHECK_REPO=o/r ./scripts/ci/release-check ); }
 
 # ---------------------------------------------------------------- 1. a released alpha with no record
 expect_exit 10 gate || { echo "    a published pre-release with no record was excused"; exit 1; }
