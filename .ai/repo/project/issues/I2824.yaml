@@ -1,0 +1,33 @@
+id: I2824
+milestone: intent-lifecycle
+title: "GitHub agrees with the intent: the rescued work is revived on the trunk"
+slug: github-agrees-with-the-intent-is-revived
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "Port the uncommitted work of feature/github-agrees-with-the-intent onto the trunk: ADR 0116 (GitHub shows what an issue serves, and a milestone there follows the plan), the generated issue body gaining a Serves section with the command that shows where each criterion stands (lib/plan.sh), and case 968. Its records I2064, I2067 and milestone github-agrees-with-the-intent travel with it."
+why: "Everything the intent workspace links must agree on GitHub too; today an issue's GitHub body does not say what it serves although ADR 0111 binds every task to it."
+current_state: "13 uncommitted files, rescued as refs/rescue/a3/feature/github-agrees-with-the-intent (bd04f6572b8)."
+desired_state: "The GitHub projection of an issue names what it serves, and case 968 passes on the trunk."
+scope:
+  - "lib/plan.sh"
+  - ".ai/repo/adrs"
+  - ".ai/repo/project"
+  - "docs/PLANNING.md"
+  - "docs/CLAIMS.yaml"
+  - "docs/claims"
+  - "test/cases"
+  - "docs/generated"
+  - "site/data/generated"
+  - "site/data/registry"
+depends_on: [I2823]
+acceptance_criteria:
+  - "Every file of the rescued working tree is on the trunk or named here as dropped, with the reason"
+  - "Case 968 passes on the trunk"
+validation:
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "rescue_ported"
+  - "serves_case_968"
+created_at: 2026-10-17
+updated_at: 2026-10-17

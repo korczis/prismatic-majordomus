@@ -1,0 +1,34 @@
+id: I2823
+milestone: intent-lifecycle
+title: "What remains of an intent is derived on every read: the rescued work is revived on the trunk"
+slug: what-remains-of-an-intent-is-revived
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Port the uncommitted work of feature/what-remains-of-an-intent-is-derived onto the trunk after I2822: ADR 0117 (what remains of an intent is derived on every read), intent_remains.rs (for each unmet criterion and each intent: what remains, why, and the next justified action), the realization answering the same on every surface with what changed since a reading (review_revision, remains_digest, since), and intent validate naming a gap observation the evidence now contradicts (case 969). Its records I2076, I2077, I2078 and milestone intent-reassessment travel with it."
+why: "The owner asked on 2026-10-17 that /ui/idd say, derived and linked, what stands between each intent and its delivery; I2808 shows that per milestone, and this is the derivation per intent and criterion that the workspace and its published projection read."
+current_state: "42 uncommitted files, rescued as refs/rescue/a3/feature/what-remains-of-an-intent-is-derived (9041b665508)."
+desired_state: "intent_remains is on the trunk, every surface of the realization carries remains and its basis, and case 969 passes."
+scope:
+  - "apps/majordomus-cli/src"
+  - "apps/majordomus-cli/tests"
+  - ".ai/repo/adrs"
+  - ".ai/repo/project"
+  - "docs"
+  - "test/cases"
+  - "docs/generated"
+  - "site/data/generated"
+  - "site/data/registry"
+depends_on: [I2822]
+acceptance_criteria:
+  - "Every file of the rescued working tree is on the trunk or named here as dropped, with the reason"
+  - "intent realize answers remains and basis for every unmet criterion on the CLI, MCP and HTTP alike"
+  - "Case 969 passes on the trunk"
+validation:
+  - "bin/majordomus plan validate"
+  - "bin/majordomus intent validate"
+evidence_required:
+  - "rescue_ported"
+  - "remains_case_969"
+created_at: 2026-10-17
+updated_at: 2026-10-17

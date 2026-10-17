@@ -1,0 +1,32 @@
+id: I2821
+milestone: intent-planning
+title: "The opposition to a plan is executed and bound to the revision it read: #807 is revived on the trunk"
+slug: the-opposition-to-a-plan-is-revived
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "Port commit 2ba2a43a490 (pull request #807, closed in the 2026-10-11 triage for inactivity, not rejected) onto the trunk: the opposition to a plan is one derivation of structural and recorded findings with one disposition, a recorded finding is held to its class, subject and resolver, and recording a review stamps the plan revision it reviewed, through one writing capability. Its records (intent intent-opposition, I2010, I2011, I2012, the ADR it adds) travel with it, plus the case 963 fix of 503146f66b1."
+why: "The revision-bound review is what lets a later reading say what changed since it (I2823) and what the intent workspace shows as an intent's standing. The commits are preserved on origin only in a closed pull request's branch and in the rescue ref."
+current_state: "Commit 2ba2a43a490 on feature/what-remains-of-an-intent-is-derived and feature/the-cockpit-shows-the-intent-loop, about 1,100 commits behind the trunk; rescued as refs/rescue/a3/feature/what-remains-of-an-intent-is-derived (9041b665508)."
+desired_state: "intent_opposition is on the trunk with its records, tests and case 963, and #807 is closed as superseded by the pull request that lands it."
+scope:
+  - "apps/majordomus-cli/src"
+  - "apps/majordomus-cli/tests"
+  - ".ai/repo/adrs"
+  - ".ai/repo/project"
+  - ".ai/repo/policy.yaml"
+  - "docs"
+  - "test/cases"
+  - "site/data/generated"
+  - "site/data/registry"
+acceptance_criteria:
+  - "Every file 2ba2a43a490 and 503146f66b1 change is on the trunk or named here as dropped, with the reason"
+  - "Case 963 passes on the trunk"
+validation:
+  - "bin/majordomus plan validate"
+  - "bin/majordomus intent validate"
+evidence_required:
+  - "rescue_ported"
+  - "opposition_case_963"
+created_at: 2026-10-17
+updated_at: 2026-10-17

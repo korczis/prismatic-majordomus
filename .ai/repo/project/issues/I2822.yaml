@@ -1,0 +1,32 @@
+id: I2822
+milestone: intent-lifecycle
+title: "Satisfaction is explained, a criterion may be optional, and a guard is judged: #813 is revived on the trunk"
+slug: satisfaction-is-explained-is-revived
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "Port commit 8993bbf173a (pull request #813, closed in the 2026-10-11 triage for inactivity) onto the trunk after I2821: a judged criterion carries the evaluation that decided it, a criterion may be optional and an optional one holds nothing back, and a failing guard keeps the intent unsatisfied. Its records (intent intent-satisfaction, milestone intent-satisfaction, I2020, I2021, I2022, its ADR) travel with it."
+why: "Why an intent stands where it does is what the intent workspace (/ui/idd, I2789) shows; without the evaluation a criterion carries, that screen can only say that a criterion is unmet, not why."
+current_state: "Commit 8993bbf173a, rescued as refs/rescue/a3/feature/what-remains-of-an-intent-is-derived (9041b665508)."
+desired_state: "Satisfaction explanations, optional criteria and guards are on the trunk with their records and tests, and #813 is closed as superseded."
+scope:
+  - "apps/majordomus-cli/src"
+  - "apps/majordomus-cli/tests"
+  - ".ai/repo/adrs"
+  - ".ai/repo/project"
+  - "docs"
+  - "test/cases"
+  - "site/data/generated"
+  - "site/data/registry"
+depends_on: [I2821]
+acceptance_criteria:
+  - "Every file 8993bbf173a changes is on the trunk or named here as dropped, with the reason"
+  - "Case 965 passes on the trunk"
+validation:
+  - "bin/majordomus plan validate"
+  - "bin/majordomus intent validate"
+evidence_required:
+  - "rescue_ported"
+  - "satisfaction_case_965"
+created_at: 2026-10-17
+updated_at: 2026-10-17

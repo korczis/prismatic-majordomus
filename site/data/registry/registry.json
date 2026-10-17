@@ -6,23 +6,23 @@
     "version": "0.28.0"
   },
   "registry": {
-    "fingerprint": "8ddd90fd128f2e865d36b5e0124ef2e7aec8351fe609cc14770d309276d5b472",
+    "fingerprint": "a8d8d5be7506b9ddf13048ac30ba011cc9c2afdff2ef26565986bbbecdac6721",
     "summary": {
-      "total": 2504,
+      "total": 2509,
       "builtin": 202,
-      "declarative": 2302,
+      "declarative": 2307,
       "by_kind": {
         "command": 31,
         "query": 171,
-        "resource": 2302
+        "resource": 2307
       },
       "by_stability": {
         "behaviorally_verified": 141,
         "experimental": 52,
-        "implemented": 2311
+        "implemented": 2316
       },
       "mcp_tools": 192,
-      "mcp_resources": 2357,
+      "mcp_resources": 2362,
       "http_routes": 197,
       "cli_commands": 108,
       "modules": 92,
@@ -83231,7 +83231,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 419,
+        "capabilities": 424,
         "capability_ids": []
       },
       {
@@ -83893,7 +83893,7 @@
     ]
   },
   "index": {
-    "fingerprint": "ff75e6c88650a01b668b3fd63fd86d4acf1d61df09ec88ab97be45cb7bc29afe",
+    "fingerprint": "0a7ebff60b188e1f6880c51c14e82b921ac232a0b8ca03e79c18828cba2d059c",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -83933,7 +83933,7 @@
       "gap": 3,
       "implementation": 52,
       "intent": 4,
-      "issue": 419,
+      "issue": 424,
       "knowledge": 4,
       "mesh-declaration": 1,
       "milestone": 40,
@@ -90161,7 +90161,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 165684
+        "bytes": 171521
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -98219,6 +98219,61 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 1460
+      },
+      {
+        "uri": "majordomus://issue/I2820",
+        "kind": "issue",
+        "identity": "I2820",
+        "title": "An adopter runs the intent loop on its own tests: the rescued work is revived on the trunk",
+        "description": "Port the rescued work of feature/an-adopter-runs-the-intent-loop onto the trunk: the repository declares where its tests are (policy evidence.tests, one resolver for TestId, the recorder and intent validation, ADR 0121 as drafted there) and a fresh adopter runs the intent loop end to end (case 983). Its own records I2091 and I2092 travel with it, byte-identical where they still fit, or are replaced by this issue.",
+        "path": ".ai/repo/project/issues/I2820.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2197
+      },
+      {
+        "uri": "majordomus://issue/I2821",
+        "kind": "issue",
+        "identity": "I2821",
+        "title": "The opposition to a plan is executed and bound to the revision it read: #807 is revived on the trunk",
+        "description": "Port commit 2ba2a43a490 (pull request #807, closed in the 2026-10-11 triage for inactivity, not rejected) onto the trunk: the opposition to a plan is one derivation of structural and recorded findings with one disposition, a recorded finding is held to its class, subject and resolver, and recording a review stamps the plan revision it reviewed, through one writing capability. Its records (intent intent-opposition, I2010, I2011, I2012, the ADR it adds) travel with it, plus the case 963 fix of 503146f66b1.",
+        "path": ".ai/repo/project/issues/I2821.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2016
+      },
+      {
+        "uri": "majordomus://issue/I2822",
+        "kind": "issue",
+        "identity": "I2822",
+        "title": "Satisfaction is explained, a criterion may be optional, and a guard is judged: #813 is revived on the trunk",
+        "description": "Port commit 8993bbf173a (pull request #813, closed in the 2026-10-11 triage for inactivity) onto the trunk after I2821: a judged criterion carries the evaluation that decided it, a criterion may be optional and an optional one holds nothing back, and a failing guard keeps the intent unsatisfied. Its records (intent intent-satisfaction, milestone intent-satisfaction, I2020, I2021, I2022, its ADR) travel with it.",
+        "path": ".ai/repo/project/issues/I2822.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1720
+      },
+      {
+        "uri": "majordomus://issue/I2823",
+        "kind": "issue",
+        "identity": "I2823",
+        "title": "What remains of an intent is derived on every read: the rescued work is revived on the trunk",
+        "description": "Port the uncommitted work of feature/what-remains-of-an-intent-is-derived onto the trunk after I2822: ADR 0117 (what remains of an intent is derived on every read), intent_remains.rs (for each unmet criterion and each intent: what remains, why, and the next justified action), the realization answering the same on every surface with what changed since a reading (review_revision, remains_digest, since), and intent validate naming a gap observation the evidence now contradicts (case 969). Its records I2076, I2077, I2078 and milestone intent-reassessment travel with it.",
+        "path": ".ai/repo/project/issues/I2823.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2036
+      },
+      {
+        "uri": "majordomus://issue/I2824",
+        "kind": "issue",
+        "identity": "I2824",
+        "title": "GitHub agrees with the intent: the rescued work is revived on the trunk",
+        "description": "Port the uncommitted work of feature/github-agrees-with-the-intent onto the trunk: ADR 0116 (GitHub shows what an issue serves, and a milestone there follows the plan), the generated issue body gaining a Serves section with the command that shows where each criterion stands (lib/plan.sh), and case 968. Its records I2064, I2067 and milestone github-agrees-with-the-intent travel with it.",
+        "path": ".ai/repo/project/issues/I2824.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1575
       },
       {
         "uri": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
@@ -108797,7 +108852,7 @@
       "identity": [
         "id"
       ],
-      "objects": 419
+      "objects": 424
     },
     {
       "name": "knowledge",

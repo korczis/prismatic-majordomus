@@ -1,0 +1,40 @@
+id: I2820
+milestone: intent-lifecycle
+title: "An adopter runs the intent loop on its own tests: the rescued work is revived on the trunk"
+slug: an-adopter-runs-the-intent-loop-is-revived
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "Port the rescued work of feature/an-adopter-runs-the-intent-loop onto the trunk: the repository declares where its tests are (policy evidence.tests, one resolver for TestId, the recorder and intent validation, ADR 0121 as drafted there) and a fresh adopter runs the intent loop end to end (case 983). Its own records I2091 and I2092 travel with it, byte-identical where they still fit, or are replaced by this issue."
+why: "The work was never committed or pushed: 25 files in a worktree 959 commits behind the trunk, found in the 2026-10-17 audit of the stale intent worktrees. Nothing on the trunk or in an open pull request does it; an adopter's tests outside this repository's layout cannot serve an intent criterion today."
+current_state: "The work exists only as refs/rescue/a3/feature/an-adopter-runs-the-intent-loop (de2eb4cd9b8, HEAD 1fb8d6be44d plus the whole working tree)."
+desired_state: "A repository declares its test layout in policy, a criterion naming a test resolves there, and case 983 proves the loop for a fresh adopter."
+scope:
+  - "apps/majordomus-cli/src/evidence"
+  - "apps/majordomus-cli/src/intent.rs"
+  - "apps/majordomus-cli/src/policy.rs"
+  - "apps/majordomus-cli/src/rules"
+  - "apps/majordomus-cli/src/capability/builtin"
+  - "share/allow/policy.txt"
+  - "share/schemas/majordomus/policy"
+  - "share/skeleton"
+  - ".ai/repo/adrs"
+  - ".ai/repo/project"
+  - "docs/EVIDENCE.md"
+  - "docs/CLAIMS.yaml"
+  - "docs/claims"
+  - "test/cases"
+  - "docs/generated"
+  - "site/data/generated"
+  - "site/data/registry"
+acceptance_criteria:
+  - "Every file of refs/rescue/a3/feature/an-adopter-runs-the-intent-loop is either on the trunk or named in this issue as dropped, with the reason"
+  - "Case 983 passes on the trunk"
+validation:
+  - "bin/majordomus plan validate"
+  - "bin/majordomus intent validate"
+evidence_required:
+  - "rescue_ported"
+  - "adopter_loop_case_983"
+created_at: 2026-10-17
+updated_at: 2026-10-17

@@ -39313,6 +39313,234 @@
         }
       },
       {
+        "id": "majordomus://issue/I2820",
+        "kind": "issue",
+        "label": "I2820",
+        "summary": "An adopter runs the intent loop on its own tests: the rescued work is revived on the trunk",
+        "route": "/cockpit/objects/issue/i2820",
+        "source": ".ai/repo/project/issues/I2820.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every file of refs/rescue/a3/feature/an-adopter-runs-the-intent-loop is either on the trunk or named in this issue as dropped, with the reason",
+            "Case 983 passes on the trunk"
+          ],
+          "created_at": "2026-10-17",
+          "current_state": "The work exists only as refs/rescue/a3/feature/an-adopter-runs-the-intent-loop (de2eb4cd9b8, HEAD 1fb8d6be44d plus the whole working tree).",
+          "desired_state": "A repository declares its test layout in policy, a criterion naming a test resolves there, and case 983 proves the loop for a fresh adopter.",
+          "evidence_required": [
+            "rescue_ported",
+            "adopter_loop_case_983"
+          ],
+          "milestone": "intent-lifecycle",
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/evidence",
+            "apps/majordomus-cli/src/intent.rs",
+            "apps/majordomus-cli/src/policy.rs",
+            "apps/majordomus-cli/src/rules",
+            "apps/majordomus-cli/src/capability/builtin",
+            "share/allow/policy.txt",
+            "share/schemas/majordomus/policy",
+            "share/skeleton",
+            ".ai/repo/adrs",
+            ".ai/repo/project",
+            "docs/EVIDENCE.md",
+            "docs/CLAIMS.yaml",
+            "docs/claims",
+            "test/cases",
+            "docs/generated",
+            "site/data/generated",
+            "site/data/registry"
+          ],
+          "slug": "an-adopter-runs-the-intent-loop-is-revived",
+          "updated_at": "2026-10-17",
+          "validation": [
+            "bin/majordomus plan validate",
+            "bin/majordomus intent validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2821",
+        "kind": "issue",
+        "label": "I2821",
+        "summary": "The opposition to a plan is executed and bound to the revision it read: #807 is revived on the trunk",
+        "route": "/cockpit/objects/issue/i2821",
+        "source": ".ai/repo/project/issues/I2821.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every file 2ba2a43a490 and 503146f66b1 change is on the trunk or named here as dropped, with the reason",
+            "Case 963 passes on the trunk"
+          ],
+          "created_at": "2026-10-17",
+          "desired_state": "intent_opposition is on the trunk with its records, tests and case 963, and #807 is closed as superseded by the pull request that lands it.",
+          "evidence_required": [
+            "rescue_ported",
+            "opposition_case_963"
+          ],
+          "milestone": "intent-planning",
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src",
+            "apps/majordomus-cli/tests",
+            ".ai/repo/adrs",
+            ".ai/repo/project",
+            ".ai/repo/policy.yaml",
+            "docs",
+            "test/cases",
+            "site/data/generated",
+            "site/data/registry"
+          ],
+          "slug": "the-opposition-to-a-plan-is-revived",
+          "updated_at": "2026-10-17",
+          "validation": [
+            "bin/majordomus plan validate",
+            "bin/majordomus intent validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2822",
+        "kind": "issue",
+        "label": "I2822",
+        "summary": "Satisfaction is explained, a criterion may be optional, and a guard is judged: #813 is revived on the trunk",
+        "route": "/cockpit/objects/issue/i2822",
+        "source": ".ai/repo/project/issues/I2822.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every file 8993bbf173a changes is on the trunk or named here as dropped, with the reason",
+            "Case 965 passes on the trunk"
+          ],
+          "created_at": "2026-10-17",
+          "current_state": "Commit 8993bbf173a, rescued as refs/rescue/a3/feature/what-remains-of-an-intent-is-derived (9041b665508).",
+          "depends_on": [
+            "I2821"
+          ],
+          "desired_state": "Satisfaction explanations, optional criteria and guards are on the trunk with their records and tests, and #813 is closed as superseded.",
+          "evidence_required": [
+            "rescue_ported",
+            "satisfaction_case_965"
+          ],
+          "milestone": "intent-lifecycle",
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src",
+            "apps/majordomus-cli/tests",
+            ".ai/repo/adrs",
+            ".ai/repo/project",
+            "docs",
+            "test/cases",
+            "site/data/generated",
+            "site/data/registry"
+          ],
+          "slug": "satisfaction-is-explained-is-revived",
+          "updated_at": "2026-10-17",
+          "validation": [
+            "bin/majordomus plan validate",
+            "bin/majordomus intent validate"
+          ],
+          "why": "Why an intent stands where it does is what the intent workspace (/ui/idd, I2789) shows; without the evaluation a criterion carries, that screen can only say that a criterion is unmet, not why."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2823",
+        "kind": "issue",
+        "label": "I2823",
+        "summary": "What remains of an intent is derived on every read: the rescued work is revived on the trunk",
+        "route": "/cockpit/objects/issue/i2823",
+        "source": ".ai/repo/project/issues/I2823.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every file of the rescued working tree is on the trunk or named here as dropped, with the reason",
+            "intent realize answers remains and basis for every unmet criterion on the CLI, MCP and HTTP alike",
+            "Case 969 passes on the trunk"
+          ],
+          "created_at": "2026-10-17",
+          "current_state": "42 uncommitted files, rescued as refs/rescue/a3/feature/what-remains-of-an-intent-is-derived (9041b665508).",
+          "depends_on": [
+            "I2822"
+          ],
+          "desired_state": "intent_remains is on the trunk, every surface of the realization carries remains and its basis, and case 969 passes.",
+          "evidence_required": [
+            "rescue_ported",
+            "remains_case_969"
+          ],
+          "milestone": "intent-lifecycle",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src",
+            "apps/majordomus-cli/tests",
+            ".ai/repo/adrs",
+            ".ai/repo/project",
+            "docs",
+            "test/cases",
+            "docs/generated",
+            "site/data/generated",
+            "site/data/registry"
+          ],
+          "slug": "what-remains-of-an-intent-is-revived",
+          "updated_at": "2026-10-17",
+          "validation": [
+            "bin/majordomus plan validate",
+            "bin/majordomus intent validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2824",
+        "kind": "issue",
+        "label": "I2824",
+        "summary": "GitHub agrees with the intent: the rescued work is revived on the trunk",
+        "route": "/cockpit/objects/issue/i2824",
+        "source": ".ai/repo/project/issues/I2824.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every file of the rescued working tree is on the trunk or named here as dropped, with the reason",
+            "Case 968 passes on the trunk"
+          ],
+          "created_at": "2026-10-17",
+          "current_state": "13 uncommitted files, rescued as refs/rescue/a3/feature/github-agrees-with-the-intent (bd04f6572b8).",
+          "depends_on": [
+            "I2823"
+          ],
+          "desired_state": "The GitHub projection of an issue names what it serves, and case 968 passes on the trunk.",
+          "evidence_required": [
+            "rescue_ported",
+            "serves_case_968"
+          ],
+          "milestone": "intent-lifecycle",
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "lib/plan.sh",
+            ".ai/repo/adrs",
+            ".ai/repo/project",
+            "docs/PLANNING.md",
+            "docs/CLAIMS.yaml",
+            "docs/claims",
+            "test/cases",
+            "docs/generated",
+            "site/data/generated",
+            "site/data/registry"
+          ],
+          "slug": "github-agrees-with-the-intent-is-revived",
+          "updated_at": "2026-10-17",
+          "validation": [
+            "bin/majordomus plan validate"
+          ],
+          "why": "Everything the intent workspace links must agree on GitHub too; today an issue's GitHub body does not say what it serves although ADR 0111 binds every task to it."
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "label": "a-commit-stood-behind-a-build-lock",
@@ -83624,6 +83852,71 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2820",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2820",
+        "target": "majordomus://milestone/intent-lifecycle",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2821",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2821",
+        "target": "majordomus://milestone/intent-planning",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2822",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2822",
+        "target": "majordomus://issue/I2821",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2822",
+        "target": "majordomus://milestone/intent-lifecycle",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2823",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2823",
+        "target": "majordomus://issue/I2822",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2823",
+        "target": "majordomus://milestone/intent-lifecycle",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2824",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2824",
+        "target": "majordomus://issue/I2823",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2824",
+        "target": "majordomus://milestone/intent-lifecycle",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -93520,8 +93813,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2935,
-      "edges": 6437,
+      "nodes": 2940,
+      "edges": 6450,
       "acyclic": false,
       "truncated": false
     }
