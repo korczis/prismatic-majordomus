@@ -173,7 +173,8 @@ pub fn screen(ctx: &Context, query: &[(String, String)]) -> View {
 
     let mut grid = el("div")
         .class("mj-ui-grid")
-        .child(wide(choice(intents, id.as_deref())));
+        .child(wide(choice(intents, id.as_deref())))
+        .child(wide(propose_panel(ctx)));
     match (id.as_deref(), intent) {
         (None, _) => {}
         (Some(id), None) => {
@@ -596,6 +597,112 @@ fn dependency_graph(issues: &Answer, mine: &[Value]) -> El {
         "What waits for what, as the plan records it; a dependency outside this intent is drawn small.",
         body,
         &[issues],
+    )
+}
+
+/// The form that proposes an intent (I2807): `intents.propose` started as an execution through
+/// `executions.start`, exactly as a move starts `plan.transition`, and wired by the same
+/// module (`moves.js`). The capability, its effect and both routes are asked of
+/// `capabilities.describe`; the screen names no path and judges no proposal — an incomplete
+/// one is refused by the capability, with its reason.
+fn propose_panel(ctx: &Context) -> El {
+    let describe = |id: &str| {
+        super::source::ask_input(
+            ctx,
+            "capabilities.describe",
+            serde_json::json!({ "id": id }),
+        )
+    };
+    let (propose, start, follow) = (
+        describe("intents.propose"),
+        describe("executions.start"),
+        describe("executions.get"),
+    );
+    let path = |a: &Answer| {
+        a.ok()
+            .and_then(|v| v.pointer("/exposure/http/path"))
+            .and_then(Value::as_str)
+            .map(str::to_string)
+    };
+    let body = match (unanswered(&propose), path(&start), path(&follow)) {
+        (Some(missing), _, _) => missing,
+        (None, Some(start), Some(follow)) => {
+            let effect = propose
+                .ok()
+                .and_then(|v| v.pointer("/execution/effect"))
+                .and_then(Value::as_str)
+                .unwrap_or("repository_mutation")
+                .to_string();
+            let field = |name: &str, label: &str, control: El| {
+                el("p")
+                    .class("mj-ui-field")
+                    .child(
+                        el("label")
+                            .attr("for", format!("mj-ui-propose-{name}"))
+                            .text(label),
+                    )
+                    .child(control.attr("id", format!("mj-ui-propose-{name}")).attr("name", name))
+            };
+            el("form")
+                .class("mj-runner")
+                .attr("data-mj-propose", "")
+                .attr("data-mj-capability", text(propose.ok().unwrap_or(&Value::Null), "id"))
+                .attr("data-mj-start", start)
+                .attr("data-mj-follow", follow)
+                .attr("data-mj-effect", effect)
+                .attr("data-mj-open", format!("{ROUTE}?intent="))
+                .attr("novalidate", "")
+                .child(field(
+                    "statement",
+                    "What must become true",
+                    el("textarea")
+                        .class("mj-textarea")
+                        .attr("rows", "3")
+                        .attr("spellcheck", "true")
+                        .flag("required")
+                        .attr("aria-required", "true"),
+                ))
+                .child(field(
+                    "title",
+                    "Title (the statement's first line when empty)",
+                    el("input").class("mj-input").attr("type", "text"),
+                ))
+                .child(field(
+                    "id",
+                    "Id (the title's slug when empty)",
+                    el("input").class("mj-input").attr("type", "text").attr("spellcheck", "false"),
+                ))
+                .child(
+                    el("div").class("mj-runner-actions").child(
+                        el("button")
+                            .class("mj-btn mj-btn--primary")
+                            .attr("type", "submit")
+                            .attr("data-mj-propose-submit", "")
+                            // enabled by moves.js: a page whose script did not load offers
+                            // nothing it cannot do
+                            .flag("disabled")
+                            .text("Propose"),
+                    ),
+                )
+                .child(
+                    el("div")
+                        .class("mj-runner-result")
+                        .attr("data-mj-result", "")
+                        .attr("aria-live", "polite"),
+                )
+                .child(
+                    el("p").class("mj-ui-dim").text(
+                        "A proposal writes one record under .ai/repo/project/intents/ and nothing else: it names no milestone or criterion, derives as declared, and no work serves it until it is planned. The workspace reads the records git tracks, so it lists the proposal once the record is staged. From a terminal: majordomus intent propose \"<statement>\".",
+                    ),
+                )
+        }
+        _ => nothing("This executable starts no execution over HTTP, so an intent is proposed from the command line: majordomus intent propose \"<statement>\"."),
+    };
+    panel(
+        "Propose an intent",
+        "What the next work is for: intents.propose, as an execution on this server.",
+        body,
+        &[&propose],
     )
 }
 

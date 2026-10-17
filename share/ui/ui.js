@@ -235,11 +235,19 @@ function catchUp() {
     catchUp();
   }, catchUpIn);
 }
+// Is the reader writing into a form a re-read would replace?
+function typing(main) {
+  return Array.from(main.querySelectorAll('[data-mj-propose] textarea, [data-mj-propose] input'))
+    .some((control) => control.value.trim() !== '');
+}
+
 async function refresh() {
   if (document.visibilityState !== 'visible') return;
   const main = document.getElementById('main');
   if (!main || main.querySelector('[aria-busy="true"]')) return;
   if (main.querySelector('[data-observatory]')) return;
+  // a proposal the reader is typing is not read away from under them
+  if (typing(main)) return;
   // the screen as it is shown, filters included: the query is the reader's, not this script's
   const query = window.location.search ? `${window.location.search}&` : '?';
   const controller = new AbortController();
@@ -303,12 +311,13 @@ async function drawObservatory() {
   holder.observatory = observatory;
 }
 
-// The moves of an issue — start, verify, done — wherever a screen renders the form: the one
-// module the Cockpit's issue page loads too, named by the page (`data-moves-lib`). Never in a
-// snapshot, which no server stands behind: there the buttons stay disabled, as rendered.
+// The moves of an issue — start, verify, done — and the proposal of an intent (I2807), wherever
+// a screen renders the form: the one module the Cockpit's issue page loads too, named by the
+// page (`data-moves-lib`). Never in a snapshot, which no server stands behind: there the
+// buttons stay disabled, as rendered.
 async function wireMoves() {
   const lib = document.body && document.body.dataset.movesLib;
-  if (!lib || !document.querySelector('[data-mj-transition]')) return;
+  if (!lib || !document.querySelector('[data-mj-transition], [data-mj-propose]')) return;
   try {
     (await import(lib)).installAll();
   } catch (e) {

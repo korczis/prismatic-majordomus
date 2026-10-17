@@ -1,0 +1,30 @@
+id: I2808
+milestone: idd-loop
+title: "Every milestone of the open intent says what remains before it is DONE"
+slug: a-milestone-says-what-remains
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "For each milestone of the open intent, show on /ui/idd what stands between it and DONE as the plan derives it: each issue not DONE with its status, each evidence token not covered with the command its issue's validation names, and the milestone's own evidence; read from plan.show and plan.issues, deciding nothing."
+why: "Closing a milestone is the step the owner asks for most, and what remains is read only by opening each issue's record. Its criterion is added to the-owner-directs-work-from-the-ui with its test, when the slice starts."
+serves: []
+current_state: "A milestone's remaining evidence is read issue by issue, in its records or with plan show."
+desired_state: "The workspace lists, per milestone, everything that keeps it from DONE, each with the command that settles it."
+scope:
+  - "apps/majordomus-cli/src/ui"
+  - "apps/majordomus-cli/tests/ui_idd_remaining.rs"
+  - ".ai/repo/project"
+  - "docs"
+  - "site"
+depends_on:
+  - "I2789"
+acceptance_criteria:
+  - "An issue whose evidence token is uncovered is listed under its milestone with that token and its validation command"
+  - "A milestone whose issues are all DONE and whose evidence is complete says nothing remains"
+validation:
+  - "majordomus plan validate"
+  - "cargo test --test ui_idd_remaining"
+evidence_required:
+  - "ui_idd_remaining_tests"
+created_at: 2026-10-17
+updated_at: 2026-10-17

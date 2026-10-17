@@ -1,0 +1,33 @@
+id: idd-loop
+title: The workspace carries an intent from its proposal to its delivery
+slug: idd-loop
+order: 150
+priority: p1
+problem: "After idd-workspace the owner reads an intent, its milestones, issues, waves, graph, standing and moves on /ui/idd and moves an issue from there; but a new intent is still proposed from a terminal, a milestone does not say what stands between it and DONE, and whether the work reached the trunk, a release and the site is read on other screens."
+outcome: "From /ui/idd the owner proposes an intent, sees for each milestone exactly what remains before it is DONE (issues not done, evidence tokens not covered, with the command that covers each), and sees each issue's delivery: merged, released, deployed, as the plan infers it."
+current_state: "intents.propose is reached from the command line and MCP; a milestone's remaining evidence is read in its record; delivery is inferred by I2740's capability on its own branch."
+desired_state: "Each of the three is one panel of the workspace, read or started through the capability that owns it, proven by a served test."
+scope:
+  - apps/majordomus-cli/src/ui
+  - share/ui
+  - share/cockpit
+  - docs/MAJORDOMUS_UI.md
+  - .ai/repo/project
+  - test/cases
+non_scope:
+  - A second plan engine or status vocabulary
+  - Accepting an intent on the owner's behalf; a proposal stays a proposal
+acceptance_criteria:
+  - "An intent proposed from the workspace is a proposal record intents.list reports, made by intents.propose as an execution"
+  - "Every milestone of the open intent names what remains before it is DONE, each item with the command that settles it"
+  - "Every issue of the open intent shows its delivery as the plan infers it"
+validation:
+  - majordomus plan validate
+  - majordomus intent validate
+evidence_required: []
+depends_on:
+  - idd-workspace
+risks:
+  - "Delivery in the workspace waits for I2740 (#1298), which is not on the trunk; its issue (I2782) is recorded when that lands."
+created_at: 2026-10-17
+updated_at: 2026-10-17

@@ -1,0 +1,33 @@
+id: I2807
+milestone: idd-loop
+title: "An intent is proposed from the workspace"
+slug: an-intent-is-proposed-from-the-workspace
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Add to /ui/idd a form that proposes an intent through intents.propose, started as an execution through executions.start exactly as the move form starts plan.transition: title, statement, invariants and criteria in, a proposal record out, refused with the capability's own reason when it is incomplete, and once the execution ends the page says where the record is, that the workspace lists it once it is staged, and links to it."
+why: "The IDD loop starts at the intent, and today an intent is proposed only from a terminal or MCP; the owner directs work from the UI and cannot begin it there."
+serves:
+  - the-owner-directs-work-from-the-ui#an-intent-is-proposed-from-the-workspace
+current_state: "intents.propose is reached from the command line and MCP only."
+desired_state: "The workspace proposes an intent through the same capability, and the proposal appears in intents.list once its record is staged."
+scope:
+  - "apps/majordomus-cli/src/ui"
+  - "share/cockpit"
+  - "apps/majordomus-cli/tests/ui_idd_propose.rs"
+  - ".ai/repo/project"
+  - "docs"
+  - "site"
+depends_on:
+  - "I2789"
+acceptance_criteria:
+  - "A proposal made from the workspace is the record intents.propose writes, and the workspace opens it once the record is staged"
+  - "An incomplete proposal is refused with the capability's reason and writes nothing"
+  - "A proposal from another origin is refused by the server"
+validation:
+  - "majordomus plan validate"
+  - "cargo test --test ui_idd_propose"
+evidence_required:
+  - "ui_idd_propose_tests"
+created_at: 2026-10-17
+updated_at: 2026-10-17

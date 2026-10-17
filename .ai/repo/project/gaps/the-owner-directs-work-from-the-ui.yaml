@@ -18,6 +18,9 @@ observations:
   - id: standing-read-elsewhere
     statement: The workspace shows an intent's criteria and its issues but not why the intent stands where it does, the work realising it or the moves made on its issues; intent_realization.explain (seconds per call) and executions.list answer both, and no screen reads them for an intent
     source: file:apps/majordomus-cli/src/capability/builtin/intent_realization.rs
+  - id: the-loop-has-no-ends
+    statement: The workspace reads an intent's milestones, issues, waves, graph, standing and moves, but a new intent is proposed only from a terminal or MCP
+    source: file:apps/majordomus-cli/src/ui/idd.rs
 conditions:
   - criterion: workspace-is-derived
     state: missing
@@ -35,3 +38,7 @@ conditions:
     state: missing
     because: the evidence and execution steps of the loop are read on the Cockpit, the command line or MCP, away from the workspace
     observations: [standing-read-elsewhere]
+  - criterion: an-intent-is-proposed-from-the-workspace
+    state: missing
+    because: the workspace offers no way to begin with an intent
+    observations: [the-loop-has-no-ends]

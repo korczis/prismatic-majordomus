@@ -11,6 +11,7 @@ non_goals:
   - Mutation from the published site, which serves no runtime
 milestones:
   - idd-workspace
+  - idd-loop
 satisfaction:
   - id: workspace-is-derived
     criterion: /ui/idd shows a chosen intent's milestones, issues, waves and dependency graph read only from the plan's capabilities, an issue added to the plan appears there with no other edit, and an intent it does not know is refused by name
@@ -28,6 +29,10 @@ satisfaction:
     criterion: The workspace shows, for the open intent, why it stands where it stands — each unmet criterion with its evidence state, the command that reproduces it and the issues serving it, the work realising the intent and its drift — asked on its own route so the screen's first paint does not wait for it, and every move this server made on the intent's issues, newest first, each leading to its execution
     evidence: test
     ref: apps/majordomus-cli/tests/ui_idd_evidence.rs
+  - id: an-intent-is-proposed-from-the-workspace
+    criterion: An intent proposed from the workspace is the record intents.propose writes, started as an execution through executions.start, listed and opened in the workspace once the record is staged, with the page saying so, refused with the capability's reason when incomplete and refused by the server from another origin
+    evidence: test
+    ref: apps/majordomus-cli/tests/ui_idd_propose.rs
 governance:
   - rule:project.work-serves-a-declared-intent
   - rule:project.derived-once
