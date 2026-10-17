@@ -30,11 +30,13 @@ evidence_required:
   - decision_recorded
 risk: "A forensic phase can become a rewrite the moment it finds something ugly. It records; the phases that follow change."
 created_at: 2026-09-06
-updated_at: 2026-10-16T12:15:38Z
+updated_at: 2026-10-17T21:35:16Z
 started_at: 2026-10-16T11:25:07Z
 started_event: sha256:31ae9ab3d028d055e36f98af540f82d1b50d13822270862f9e092fc74c8d034b
 verified_at: 2026-10-16T12:15:38Z
 verified_event: sha256:f31eddc643482230f2ae58b767aba250a1c2f92dc035fe10519028cab7d56f92
+completed_at: 2026-10-17T21:35:16Z
+completed_event: sha256:fc73084817b610f7c1db75f1d10dbfd1ad53e6991e481605199b87e48a4bfbde
 evidence:
   - covers: footprint_inventory
     type: test
@@ -48,3 +50,15 @@ evidence:
     result: "ADR 0168 (proposed) examined among 110 decisions: every identity unique, every reference resolves"
     commit: e1997844a18a50e38dcf23c7ba06910c9e189d7a
     recorded_at: 2026-10-16T12:15:34Z
+  - covers: footprint_inventory
+    type: test
+    command: "bash test/run.sh 3113_the_adoption_footprint_is_inventoried"
+    result: "ok, 1 passed on master 707a04c7ce8 (2026-10-17); full suite: ci check-run success on 4a4573690f8, run 39049547899 job 117473773693; master 707a04c7ce8 adds only the v0.29.0 release record"
+    commit: 707a04c7ce83ff9f2effd80e0c6dfc1829e49322
+    recorded_at: 2026-10-17T21:34:18Z
+  - covers: decision_recorded
+    type: test
+    command: "bin/majordomus adr check"
+    result: "exit 0 on master 707a04c7ce8 (2026-10-17): every identity unique, every status known, every reference resolves"
+    commit: 707a04c7ce83ff9f2effd80e0c6dfc1829e49322
+    recorded_at: 2026-10-17T21:34:23Z

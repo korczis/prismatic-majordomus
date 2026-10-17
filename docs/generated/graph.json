@@ -26982,6 +26982,8 @@
             "No surface names the repository's location on the host: the identity says which checkout answered, never where it sits, and a test proves no served or published output carries an absolute path",
             "The behaviour is exercised by a test that serves two roots and proves each surface names its own"
           ],
+          "completed_at": "2026-10-17T21:35:04Z",
+          "completed_event": "sha256:a8415b07f65eca49c4f62a9053f83501964849cd02bd7d0a2045ac3fa0edb74c",
           "created_at": "2026-09-06",
           "depends_on": [],
           "desired_state": "Every served surface carries the repository root and identity it is answering for, close enough to the content that a reader sees it without asking for it.",
@@ -27007,7 +27009,7 @@
           "slug": "served-identity-visible",
           "started_at": "2026-10-16T11:59:02Z",
           "started_event": "sha256:b481964783b38998b04ba4805d010bde2f50aa134a27b91000a53a42ecc4e9c9",
-          "updated_at": "2026-10-16T13:51:16Z",
+          "updated_at": "2026-10-17T21:35:04Z",
           "validation": [
             "cargo test --workspace --all-features",
             "bash test/run.sh"
@@ -27031,6 +27033,8 @@
             "Where an existing mechanism already does what a later phase would add, it is named so the phase extends it rather than replacing it",
             "The architectural decision is recorded in the repository's own ADR mechanism, not in prose beside it"
           ],
+          "completed_at": "2026-10-17T21:35:16Z",
+          "completed_event": "sha256:fc73084817b610f7c1db75f1d10dbfd1ad53e6991e481605199b87e48a4bfbde",
           "created_at": "2026-09-06",
           "depends_on": [],
           "desired_state": "One document records the actual footprint with its writer, its lifecycle and its justification, and names which of them the target architecture keeps, moves or removes.",
@@ -27054,7 +27058,7 @@
           "slug": "adoption-footprint-forensics",
           "started_at": "2026-10-16T11:25:07Z",
           "started_event": "sha256:31ae9ab3d028d055e36f98af540f82d1b50d13822270862f9e092fc74c8d034b",
-          "updated_at": "2026-10-16T12:15:38Z",
+          "updated_at": "2026-10-17T21:35:16Z",
           "validation": [
             "bin/majordomus doctor",
             "bash test/run.sh"
@@ -32853,6 +32857,8 @@
             "The suite reports a case whose recorded cost is within 5% of the per-case budget, by name, before any run exceeds it",
             "Case 417 and the kill bound are unchanged, and no regression threshold is raised"
           ],
+          "completed_at": "2026-10-17T21:35:27Z",
+          "completed_event": "sha256:274a3d1bab462d99a7fabd6efcee53d25edf3182f3505c89ccb7aa8fb812e2cf",
           "created_at": "2026-10-09",
           "evidence_required": [
             "a_single_cold_sample_is_a_warning_and_two_are_a_verdict",
@@ -32872,7 +32878,7 @@
           "slug": "a-timing-verdict-names-its-runner",
           "started_at": "2026-10-16T07:54:07Z",
           "started_event": "sha256:1bf19af5c327183822f9e928ca69962e7ff713ce8886670c96854bb2ded0442f",
-          "updated_at": "2026-10-16T07:54:22Z",
+          "updated_at": "2026-10-17T21:35:27Z",
           "validation": [
             "bash test/run.sh 82_bench_check",
             "bash test/run.sh 417_the_suite_finishes_inside_its_bound"
@@ -36647,6 +36653,8 @@
             "`majordomus evidence --covers` behaves as before",
             "The documented-command check runs the EVIDENCE.md lines it names"
           ],
+          "completed_at": "2026-10-17T21:35:40Z",
+          "completed_event": "sha256:7317c3723c6b1d722c616dd392993d6f511ddf903544f7286f470d2950727e8b",
           "created_at": "2026-10-13",
           "current_state": "bin/majordomus:162 routes `evidence` to lib/evidence.sh, which parses options only and dies on the word `record`.",
           "depends_on": [],
@@ -36670,7 +36678,7 @@
           "slug": "majordomus-evidence-reaches-its-subcommands",
           "started_at": "2026-10-13T11:36:41Z",
           "started_event": "sha256:f6548a9a76dd197f58827bb78a2f525a918ae153a84a0d3a56716c34724b7506",
-          "updated_at": "2026-10-13T17:54:58Z",
+          "updated_at": "2026-10-17T21:35:40Z",
           "validation": [
             "bin/majordomus plan validate",
             "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
@@ -39287,6 +39295,8 @@
             "homepage-check refuses a present-state sentence planted in site/data",
             "The built homepage carries no hand-written state claim, and its plan and release figures come from generated data"
           ],
+          "completed_at": "2026-10-17T21:35:51Z",
+          "completed_event": "sha256:f37ee4704bba52cdf870169bf0d59a2bfdf035515e2019d198739d61af5d7627",
           "created_at": "2026-10-16",
           "current_state": "Hand-written present-tense claims sit in three toml files the homepage renders.",
           "depends_on": [],
@@ -39310,7 +39320,7 @@
           "slug": "the-homepage-states-no-present-it-does-not-read",
           "started_at": "2026-10-16T09:56:46Z",
           "started_event": "sha256:63f7eb039dadc3e77468534ca16eaceff848d72bb872a6e9e31ff2615e349532",
-          "updated_at": "2026-10-16T10:26:57Z",
+          "updated_at": "2026-10-17T21:35:51Z",
           "validation": [
             "bash test/run.sh 333_homepage_narrative 3105_the_homepage_states_no_present_it_does_not_read"
           ],
@@ -39330,6 +39340,8 @@
             "diagram-check fails on box art planted in an ADR, a rule, the handbook or UI markdown",
             "No box-art diagram remains in any covered tree"
           ],
+          "completed_at": "2026-10-17T21:36:04Z",
+          "completed_event": "sha256:deb61e8ee5024d81764d4dabf32bb8622fe1b072a9b8952ff82936d7e83eeb40",
           "created_at": "2026-10-16",
           "current_state": "The rule covers docs, site/content-src and site/templates; box art elsewhere is invisible to the gate.",
           "depends_on": [],
@@ -39355,7 +39367,7 @@
           "slug": "every-published-tree-draws-its-diagrams",
           "started_at": "2026-10-16T09:03:11Z",
           "started_event": "sha256:724c9d42189144390be95b63f0a06b7261a2ecfacb1cc470169ceb4ac4c529e0",
-          "updated_at": "2026-10-16T10:09:11Z",
+          "updated_at": "2026-10-17T21:36:04Z",
           "validation": [
             "scripts/ci/diagram-check",
             "bash test/run.sh 272_diagrams_are_drawn 3106_every_published_tree_draws_its_diagrams"
@@ -39574,6 +39586,8 @@
             "An issue added to the plan appears with no other edit",
             "An intent that is not recorded is refused by name, and a capability that cannot answer says so in its panel"
           ],
+          "completed_at": "2026-10-17T21:36:20Z",
+          "completed_event": "sha256:1d1f6aa41f3b6aaa23b9234f6d9e4cce043c7f29985aa03c36a883e7733a2358",
           "created_at": "2026-10-16",
           "current_state": "No /ui/idd; the plan is read on four screens, the waves on none.",
           "depends_on": [],
@@ -39597,7 +39611,7 @@
           "slug": "the-ui-is-an-idd-workspace",
           "started_at": "2026-10-16T21:12:37Z",
           "started_event": "sha256:da83452b38cd139d71c5d90d7e5ca56c062dbad34446d39aa840959e43583cfc",
-          "updated_at": "2026-10-16T21:13:23Z",
+          "updated_at": "2026-10-17T21:36:20Z",
           "validation": [
             "majordomus plan validate",
             "majordomus intent validate",
