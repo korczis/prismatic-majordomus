@@ -74,7 +74,11 @@ exists, and `GET /api/v1/ready` answers `ready: false` with the same reason (I15
 `git_repository_id` is the repository's (a digest of the git directory every worktree
 shares; absent where git cannot be asked), `linked_worktree` says whether this is the
 primary checkout, and `leaseholder` says whether the process answering is still the one
-(below). `GET /api/v1/server` — the tool `majordomus_server`, the resource
+(below). `branch` and `head` are the branch and commit the served answers were read from,
+as the index read them (I1031). The home page and the Swagger shell at `/swagger` carry the
+same identity in one line beside their content; none of it is a path, because whoever can
+reach the socket is told which checkout answered and never where it sits.
+`GET /api/v1/server` — the tool `majordomus_server`, the resource
 `majordomus://server` — lists every checkout git registers for the repository, the primary
 first, each with its lease, where its server stands and how many peers it holds, and says
 where this checkout's own server stands measured against what this executable would serve:

@@ -27,4 +27,21 @@ evidence_required:
   - a_single_cold_sample_is_a_warning_and_two_are_a_verdict
   - a_case_near_its_budget_is_named_before_it_fails
 created_at: 2026-10-09
-updated_at: 2026-10-09
+updated_at: 2026-10-16T07:54:22Z
+started_at: 2026-10-16T07:54:07Z
+started_event: sha256:1bf19af5c327183822f9e928ca69962e7ff713ce8886670c96854bb2ded0442f
+verified_at: 2026-10-16T07:54:13Z
+verified_event: sha256:5fff9f2e3500b4bfed3b1f868ed034c4a5ea2ed0b635140bc5488dd2f5677f0b
+evidence:
+  - covers: a_single_cold_sample_is_a_warning_and_two_are_a_verdict
+    type: test
+    command: "bash test/run.sh 82_bench_check && cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test bench a_single_cold_sample_is_a_warning_and_two_are_a_verdict"
+    result: "ok 82_bench_check: one cold sample over threshold is WARN on 1 of 1 sample(s) and exits 0; --cold-samples 2 both over is FAIL on 2 of 2 and exits 10; every finding names samples, runner and load. Rust check: 1 sample WARN, 2 agreeing FAIL, verdict line names runner and load"
+    commit: 44ad51ed4f07bc261c934f17955d73f842df420a
+    recorded_at: 2026-10-16T07:54:19Z
+  - covers: a_case_near_its_budget_is_named_before_it_fails
+    type: test
+    command: "bash test/run.sh 3084_a_case_near_its_budget_is_named 417_the_suite_finishes_inside_its_bound"
+    result: "ok both: suite-budget names by case every cost within budget.near_percent (5) of the per-case budget, in this run and as recorded in suite-durations.tsv, as NEAR without changing the exit status; case 417, the 5300 s bound and every budget unchanged"
+    commit: 44ad51ed4f07bc261c934f17955d73f842df420a
+    recorded_at: 2026-10-16T07:54:22Z

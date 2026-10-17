@@ -1,0 +1,21 @@
+id: the-owner-directs-work-from-the-ui
+title: The owner directs the repository's development from the UI, from an intent to the move that starts its next issue
+statement: "A person opens one screen of the UI, picks an intent, and reads what serves it — its milestones, their issues, the waves the dependencies allow, the graph of what waits for what, which issue is ready, active or blocked and why — and reaches from there the move that starts, verifies or finishes an issue and the evidence that proves it, without pasting a prompt into a terminal to find out where the work stands."
+invariants:
+  - The workspace is a projection of intents.list, plan.roadmap, plan.issues and plan.waves; it stores nothing and decides no status, wave or readiness of its own
+  - A new intent, milestone or issue appears in the workspace with no registration anywhere but its own record
+  - A move is made by plan.transition as an execution on the server, which refuses an illegal move and names why; the screen never edits a record
+  - A reading that is not of the repository as it is now says so on the panel it fed
+non_goals:
+  - A second planning engine, wave allocator or status vocabulary in the UI
+  - Mutation from the published site, which serves no runtime
+milestones:
+  - idd-workspace
+satisfaction:
+  - id: workspace-is-derived
+    criterion: /ui/idd shows a chosen intent's milestones, issues, waves and dependency graph read only from the plan's capabilities, an issue added to the plan appears there with no other edit, and an intent it does not know is refused by name
+    evidence: test
+    ref: apps/majordomus-cli/tests/ui_idd.rs
+governance:
+  - rule:project.work-serves-a-declared-intent
+  - rule:project.derived-once

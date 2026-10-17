@@ -1,0 +1,33 @@
+id: I2786
+milestone: test-evidence
+title: "The published UI reads the evidence CI recorded, and a publication that would show tests as not run is refused"
+slug: the-published-ui-reads-the-evidence-ci-recorded
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Give the Pages workflow's UI snapshot job the ledger the validation of the published commit, or of its nearest validated ancestor, recorded (scripts/pages evidence --ledger-out), before the UI is read; then refuse to publish when evidence.report still counts more not-run claims than .ai/repo/evidence/published-not-run.txt declares (scripts/pages published-evidence); with the rule, a case and the documentation."
+why: "On 2026-10-16 the owner saw https://majordomus.dev/ui/kiosk/ show 154 test claims as not run. The validation of the same commit had recorded 606 executions in its evidence artifact; the snapshot read the tracked ledger, which holds fourteen local runs because the recording branch (ADR 0080, I1954) is not built. Over that artifact the report reads 235 proven and 0 not run."
+current_state: "The ui-snapshot job reads the tracked ledger alone, and nothing counts what a publication shows as not run."
+desired_state: "The ui-snapshot job puts the run's ledger in place and refuses a publication whose not-run count exceeds the declared baseline of 0."
+scope:
+  - ".github/workflows/pages.yml"
+  - "scripts/pages"
+  - ".ai/repo/evidence/published-not-run.txt"
+  - ".ai/repo/rules/project/published-evidence-is-what-ci-recorded.v1.md"
+  - ".ai/repo/adrs/0087-evidence-is-indexed-by-subject-and-judged-at-the-presented-revision.md"
+  - "test/cases/3178_the_published_ui_reads_the_evidence_ci_recorded.sh"
+  - "docs/EVIDENCE.md"
+  - "docs/MAJORDOMUS_UI.md"
+depends_on: []
+acceptance_criteria:
+  - "scripts/pages evidence --ledger-out puts the run's ledger in place only for an artifact of the published history"
+  - "scripts/pages published-evidence exits 10 over the baseline, 0 within it, 12 when the report or the baseline cannot be read"
+  - "The published kiosk shows no claim as not run that CI ran"
+validation:
+  - "majordomus plan validate"
+  - "bash test/run.sh 3178_the_published_ui_reads_the_evidence_ci_recorded"
+  - "bash test/run.sh 357_ci_records_evidence"
+evidence_required:
+  - "case_3178"
+created_at: 2026-10-17
+updated_at: 2026-10-17
