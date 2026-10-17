@@ -1,0 +1,36 @@
+id: I2829
+milestone: safe-self-update
+title: "An alpha is published as a pre-release end to end, and never becomes the latest release anywhere"
+slug: an-alpha-is-published-as-a-prerelease
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Let a pre-release tag (vX.Y.Z-alpha.N, -beta.N, -rc.N) go through the release pipeline: the publish job publishes its tag file and leaves latest.json alone, the release smoke waits on that file, installs it pinned and requires latest.json to name another release, release-check holds a published pre-release to its record and orders versions by semantic-version precedence, and the installer installs a pre-release only by name."
+why: "Audit of 2026-10-17 before v1.0.0-alpha.1: once #1313 makes latest_stable stable-only, the derived latest.json keeps naming the stable release, so scripts/site-deploy --release-metadata (release.yml publish job) refused the alpha, the record proposal after it never ran, the smoke waited 15 minutes for latest.json to name the alpha and failed, and install-check --expect required the same. Every one failed closed; the obvious repair of a red alpha run was to make latest.json name the alpha. release-check ignored suffixed tags (an unrecorded alpha went unreported) and its sort -t. ranked 1.0.0-alpha.1 above 1.0.0. The installer resolved whatever latest.json named."
+current_state: "A pre-release tag cannot be published: the publish job and the smoke require latest.json to name it."
+desired_state: "A pre-release is published beside the latest release and installable by name; latest.json naming a pre-release is refused by site-deploy, the smoke, install-check and the installer."
+scope:
+  - "scripts/site-deploy"
+  - "scripts/ci/install-check"
+  - "scripts/ci/release-check"
+  - "site/static/install.sh"
+  - ".github/workflows/release.yml"
+  - "test/cases/3222_an_alpha_publishes_beside_the_latest_release.sh"
+  - "test/cases/3223_the_release_smoke_installs_an_alpha_pinned.sh"
+  - "test/cases/3224_a_published_alpha_owes_its_record.sh"
+  - "test/cases/3225_the_installer_takes_an_alpha_only_by_name.sh"
+depends_on: []
+acceptance_criteria:
+  - "site-deploy --release-metadata of a pre-release changes only its tag file on gh-pages, and refuses a latest.json naming it"
+  - "install-check --expect of a pre-release reads its tag file, installs it pinned, and refuses a site whose latest release is the pre-release"
+  - "release-check reports a published pre-release with no record, ignores a tag whose suffix is not a pre-release, and ranks 1.0.0 above 1.0.0-alpha.1"
+  - "install.sh refuses metadata that resolves to a pre-release it was not asked for by name, and resolves one asked for by name"
+  - "release.yml's smoke waits on a pre-release's tag file and fails when latest.json names it"
+validation:
+  - "bash test/run.sh 3222_an_alpha_publishes_beside_the_latest_release 3223_the_release_smoke_installs_an_alpha_pinned 3224_a_published_alpha_owes_its_record 3225_the_installer_takes_an_alpha_only_by_name"
+  - "bash scripts/ci/shell-lint"
+evidence_required:
+  - "prerelease_cases"
+  - "mutation_check"
+created_at: 2026-10-17
+updated_at: 2026-10-17

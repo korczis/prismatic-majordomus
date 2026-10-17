@@ -39689,6 +39689,52 @@
         }
       },
       {
+        "id": "majordomus://issue/I2829",
+        "kind": "issue",
+        "label": "I2829",
+        "summary": "An alpha is published as a pre-release end to end, and never becomes the latest release anywhere",
+        "route": "/cockpit/objects/issue/i2829",
+        "source": ".ai/repo/project/issues/I2829.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "site-deploy --release-metadata of a pre-release changes only its tag file on gh-pages, and refuses a latest.json naming it",
+            "install-check --expect of a pre-release reads its tag file, installs it pinned, and refuses a site whose latest release is the pre-release",
+            "release-check reports a published pre-release with no record, ignores a tag whose suffix is not a pre-release, and ranks 1.0.0 above 1.0.0-alpha.1",
+            "install.sh refuses metadata that resolves to a pre-release it was not asked for by name, and resolves one asked for by name",
+            "release.yml's smoke waits on a pre-release's tag file and fails when latest.json names it"
+          ],
+          "created_at": "2026-10-17",
+          "current_state": "A pre-release tag cannot be published: the publish job and the smoke require latest.json to name it.",
+          "depends_on": [],
+          "desired_state": "A pre-release is published beside the latest release and installable by name; latest.json naming a pre-release is refused by site-deploy, the smoke, install-check and the installer.",
+          "evidence_required": [
+            "prerelease_cases",
+            "mutation_check"
+          ],
+          "milestone": "safe-self-update",
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "scripts/site-deploy",
+            "scripts/ci/install-check",
+            "scripts/ci/release-check",
+            "site/static/install.sh",
+            ".github/workflows/release.yml",
+            "test/cases/3222_an_alpha_publishes_beside_the_latest_release.sh",
+            "test/cases/3223_the_release_smoke_installs_an_alpha_pinned.sh",
+            "test/cases/3224_a_published_alpha_owes_its_record.sh",
+            "test/cases/3225_the_installer_takes_an_alpha_only_by_name.sh"
+          ],
+          "slug": "an-alpha-is-published-as-a-prerelease",
+          "updated_at": "2026-10-17",
+          "validation": [
+            "bash test/run.sh 3222_an_alpha_publishes_beside_the_latest_release 3223_the_release_smoke_installs_an_alpha_pinned 3224_a_published_alpha_owes_its_record 3225_the_installer_takes_an_alpha_only_by_name",
+            "bash scripts/ci/shell-lint"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "label": "a-commit-stood-behind-a-build-lock",
@@ -57437,6 +57483,34 @@
         "label": "test/cases/31_command_coverage.sh",
         "route": "/cockpit/objects/test/test-cases-31-command-coverage-sh",
         "source": "test/cases/31_command_coverage.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3222_an_alpha_publishes_beside_the_latest_release.sh",
+        "kind": "test",
+        "label": "test/cases/3222_an_alpha_publishes_beside_the_latest_release.sh",
+        "route": "/cockpit/objects/test/test-cases-3222-an-alpha-publishes-beside-the-latest-release-sh",
+        "source": "test/cases/3222_an_alpha_publishes_beside_the_latest_release.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3223_the_release_smoke_installs_an_alpha_pinned.sh",
+        "kind": "test",
+        "label": "test/cases/3223_the_release_smoke_installs_an_alpha_pinned.sh",
+        "route": "/cockpit/objects/test/test-cases-3223-the-release-smoke-installs-an-alpha-pinned-sh",
+        "source": "test/cases/3223_the_release_smoke_installs_an_alpha_pinned.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3224_a_published_alpha_owes_its_record.sh",
+        "kind": "test",
+        "label": "test/cases/3224_a_published_alpha_owes_its_record.sh",
+        "route": "/cockpit/objects/test/test-cases-3224-a-published-alpha-owes-its-record-sh",
+        "source": "test/cases/3224_a_published_alpha_owes_its_record.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3225_the_installer_takes_an_alpha_only_by_name.sh",
+        "kind": "test",
+        "label": "test/cases/3225_the_installer_takes_an_alpha_only_by_name.sh",
+        "route": "/cockpit/objects/test/test-cases-3225-the-installer-takes-an-alpha-only-by-name-sh",
+        "source": "test/cases/3225_the_installer_takes_an_alpha_only_by_name.sh"
       },
       {
         "id": "majordomus://test/test/cases/32_refusal_lifecycle.sh",
@@ -84376,6 +84450,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2829",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2829",
+        "target": "majordomus://milestone/safe-self-update",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -89092,6 +89176,26 @@
       },
       {
         "source": "majordomus://test/test/cases/31_command_coverage.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3222_an_alpha_publishes_beside_the_latest_release.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3223_the_release_smoke_installs_an_alpha_pinned.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3224_a_published_alpha_owes_its_record.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3225_the_installer_takes_an_alpha_only_by_name.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -94377,8 +94481,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2958,
-      "edges": 6499,
+      "nodes": 2963,
+      "edges": 6505,
       "acyclic": false,
       "truncated": false
     }

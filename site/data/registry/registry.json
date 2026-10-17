@@ -6,23 +6,23 @@
     "version": "0.29.0"
   },
   "registry": {
-    "fingerprint": "3e32219937c1d568b08b54d3fa56f1942a027658f202fa4f598c12c485c3535d",
+    "fingerprint": "794c8d3edd8029b8364b73bcbefaa71ab251d2dd66ed3c96b4edb5372b37feb8",
     "summary": {
-      "total": 2526,
+      "total": 2531,
       "builtin": 202,
-      "declarative": 2324,
+      "declarative": 2329,
       "by_kind": {
         "command": 31,
         "query": 171,
-        "resource": 2324
+        "resource": 2329
       },
       "by_stability": {
         "behaviorally_verified": 141,
         "experimental": 52,
-        "implemented": 2333
+        "implemented": 2338
       },
       "mcp_tools": 192,
-      "mcp_resources": 2379,
+      "mcp_resources": 2384,
       "http_routes": 197,
       "cli_commands": 108,
       "modules": 92,
@@ -83231,7 +83231,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 424,
+        "capabilities": 425,
         "capability_ids": []
       },
       {
@@ -83802,7 +83802,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 527,
+        "capabilities": 531,
         "capability_ids": []
       },
       {
@@ -83893,7 +83893,7 @@
     ]
   },
   "index": {
-    "fingerprint": "ca9784f68f976e9f1e605a9893d4f93e1bc87c3f8c00cf32e58450f5384a4f30",
+    "fingerprint": "f2d8a39025cdfdc694b8264bc5a8aa695049f100c32eae4e74c7208a5b20e9fc",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -83933,7 +83933,7 @@
       "gap": 4,
       "implementation": 52,
       "intent": 5,
-      "issue": 424,
+      "issue": 425,
       "knowledge": 4,
       "mesh-declaration": 1,
       "milestone": 41,
@@ -83947,7 +83947,7 @@
       "session": 90,
       "skill": 8,
       "taxonomy": 10,
-      "test": 527,
+      "test": 531,
       "use-case": 49,
       "workspace": 1
     },
@@ -90206,7 +90206,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 170002
+        "bytes": 172569
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -98343,6 +98343,17 @@
         "bytes": 2258
       },
       {
+        "uri": "majordomus://issue/I2829",
+        "kind": "issue",
+        "identity": "I2829",
+        "title": "An alpha is published as a pre-release end to end, and never becomes the latest release anywhere",
+        "description": "Let a pre-release tag (vX.Y.Z-alpha.N, -beta.N, -rc.N) go through the release pipeline: the publish job publishes its tag file and leaves latest.json alone, the release smoke waits on that file, installs it pinned and requires latest.json to name another release, release-check holds a published pre-release to its record and orders versions by semantic-version precedence, and the installer installs a pre-release only by name.",
+        "path": ".ai/repo/project/issues/I2829.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3156
+      },
+      {
         "uri": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "identity": "a-commit-stood-behind-a-build-lock",
@@ -106046,6 +106057,38 @@
         "bytes": 6996
       },
       {
+        "uri": "majordomus://test/test/cases/3222_an_alpha_publishes_beside_the_latest_release.sh",
+        "kind": "test",
+        "identity": "test/cases/3222_an_alpha_publishes_beside_the_latest_release.sh",
+        "path": "test/cases/3222_an_alpha_publishes_beside_the_latest_release.sh",
+        "source_class": "case",
+        "bytes": 4621
+      },
+      {
+        "uri": "majordomus://test/test/cases/3223_the_release_smoke_installs_an_alpha_pinned.sh",
+        "kind": "test",
+        "identity": "test/cases/3223_the_release_smoke_installs_an_alpha_pinned.sh",
+        "path": "test/cases/3223_the_release_smoke_installs_an_alpha_pinned.sh",
+        "source_class": "case",
+        "bytes": 3930
+      },
+      {
+        "uri": "majordomus://test/test/cases/3224_a_published_alpha_owes_its_record.sh",
+        "kind": "test",
+        "identity": "test/cases/3224_a_published_alpha_owes_its_record.sh",
+        "path": "test/cases/3224_a_published_alpha_owes_its_record.sh",
+        "source_class": "case",
+        "bytes": 5067
+      },
+      {
+        "uri": "majordomus://test/test/cases/3225_the_installer_takes_an_alpha_only_by_name.sh",
+        "kind": "test",
+        "identity": "test/cases/3225_the_installer_takes_an_alpha_only_by_name.sh",
+        "path": "test/cases/3225_the_installer_takes_an_alpha_only_by_name.sh",
+        "source_class": "case",
+        "bytes": 2741
+      },
+      {
         "uri": "majordomus://test/test/cases/32_refusal_lifecycle.sh",
         "kind": "test",
         "identity": "test/cases/32_refusal_lifecycle.sh",
@@ -109048,7 +109091,7 @@
       "identity": [
         "id"
       ],
-      "objects": 424
+      "objects": 425
     },
     {
       "name": "knowledge",
@@ -109200,7 +109243,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 527
+      "objects": 531
     },
     {
       "name": "use-case",

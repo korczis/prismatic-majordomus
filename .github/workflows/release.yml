@@ -570,12 +570,23 @@ jobs:
           base="${base%/install.sh}"
           url="$(sed -n 's/.*"latest_url": "\([^"]*\)".*/\1/p' site/data/registry/distribution.json | head -n 1)"
           tag='${{ needs.plan.outputs.tag }}'
+          # A pre-release is never the latest release (I2829): its own tag file is waited on
+          # and, once served, latest.json must name another release. The pattern is the one
+          # scripts/site-deploy publishes by.
+          latest="$url"
+          if printf '%s\n' "$tag" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+-(alpha|beta|rc)\.[0-9]+$'; then
+            url="${url%latest.json}$tag.json"
+          fi
           echo "waiting for  $url"
           echo "to name      $tag"
           for attempt in $(seq 1 60); do
             if curl -fsSL --max-time 60 "$url" 2>/dev/null | grep -q "\"tag\": \"$tag\""; then
               echo "the site publishes $tag after $attempt attempt(s)"
               echo "site built from  $(curl -fsSL --max-time 60 "$base/build.json" 2>/dev/null | sed -n 's/.*"commit": "\([^"]*\)".*/\1/p' | head -n 1)"
+              if [ "$url" != "$latest" ] && curl -fsSL --max-time 60 "$latest" 2>/dev/null | grep -q "\"tag\": \"$tag\""; then
+                echo "::error::$latest names the pre-release $tag; a pre-release is never the latest release"
+                exit 1
+              fi
               exit 0
             fi
             sleep 15
