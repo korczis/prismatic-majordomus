@@ -1,0 +1,24 @@
+id: I2940
+milestone: development-runtime
+title: "Case 3029 measures its fixture whatever MJ_ROOT the caller exports"
+slug: case-3029-measures-its-fixture
+priority: p3
+profile: implementation
+parallel_safe: true
+objective: "Run case 3029's release-check gate with MJ_ROOT unset, as case 3224 does, so the case judges its fixture repository and not the tree of whoever runs it; and find any other case that drives an MJ_ROOT-honouring gate inside a fixture."
+why: "Found on 2026-10-17 while closing I2829: majordomus finish exports MJ_ROOT while it runs a --verify-command, and scripts/ci/release-check honours MJ_ROOT, so a case that runs the gate inside a fixture measures the real worktree under finish. `MJ_ROOT=\"$PWD\" bash test/run.sh 3029_a_tag_in_flight_is_pending` fails on v0.29.0 ('the pending tag does not name its in_progress run') while the same run without MJ_ROOT passes. Case 3029 belongs to I2712 (this milestone). Case 3224 got the fix in I2829. Filed post-alpha by the release seat's ruling: nothing on master runs 3029 with MJ_ROOT exported today, so no gate is red."
+current_state: "Case 3029 passes by hand and fails whenever MJ_ROOT is exported, including under majordomus finish."
+desired_state: "Case 3029 passes with and without MJ_ROOT exported; no fixture case of an MJ_ROOT-honouring gate depends on the caller's environment."
+scope:
+  - "test/cases/3029_a_tag_in_flight_is_pending.sh"
+depends_on: []
+acceptance_criteria:
+  - "MJ_ROOT=\"$PWD\" bash test/run.sh 3029_a_tag_in_flight_is_pending passes, and so does the same run without MJ_ROOT"
+  - "Every other case that runs scripts/ci/release-check or scripts/ci/install-check inside a fixture passes with MJ_ROOT exported"
+validation:
+  - "MJ_ROOT=\"$PWD\" bash test/run.sh 3029_a_tag_in_flight_is_pending"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "case_3029_ignores_mj_root"
+created_at: 2026-10-17
+updated_at: 2026-10-17

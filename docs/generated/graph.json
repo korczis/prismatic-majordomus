@@ -39689,6 +39689,40 @@
         }
       },
       {
+        "id": "majordomus://issue/I2940",
+        "kind": "issue",
+        "label": "I2940",
+        "summary": "Case 3029 measures its fixture whatever MJ_ROOT the caller exports",
+        "route": "/cockpit/objects/issue/i2940",
+        "source": ".ai/repo/project/issues/I2940.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "MJ_ROOT=\\\"$PWD\\\" bash test/run.sh 3029_a_tag_in_flight_is_pending passes, and so does the same run without MJ_ROOT",
+            "Every other case that runs scripts/ci/release-check or scripts/ci/install-check inside a fixture passes with MJ_ROOT exported"
+          ],
+          "created_at": "2026-10-17",
+          "current_state": "Case 3029 passes by hand and fails whenever MJ_ROOT is exported, including under majordomus finish.",
+          "depends_on": [],
+          "desired_state": "Case 3029 passes with and without MJ_ROOT exported; no fixture case of an MJ_ROOT-honouring gate depends on the caller's environment.",
+          "evidence_required": [
+            "case_3029_ignores_mj_root"
+          ],
+          "milestone": "development-runtime",
+          "parallel_safe": true,
+          "priority": "p3",
+          "profile": "implementation",
+          "scope": [
+            "test/cases/3029_a_tag_in_flight_is_pending.sh"
+          ],
+          "slug": "case-3029-measures-its-fixture",
+          "updated_at": "2026-10-17",
+          "validation": [
+            "MJ_ROOT=\\\"$PWD\\\" bash test/run.sh 3029_a_tag_in_flight_is_pending",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "label": "a-commit-stood-behind-a-build-lock",
@@ -84376,6 +84410,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2940",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2940",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -94377,8 +94421,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2958,
-      "edges": 6499,
+      "nodes": 2959,
+      "edges": 6501,
       "acyclic": false,
       "truncated": false
     }
