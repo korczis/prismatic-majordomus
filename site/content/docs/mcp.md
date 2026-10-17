@@ -130,7 +130,9 @@ serving code that is no longer on disk", or because it is an older release than 
 electing. The installer puts each release in a directory of its own, so an upgrade changes
 the executable's path and the rebuild check never sees it; the release check does. One
 verdict (`lease::version_verdict`) decides for the election, `serve ensure` and
-`server.status` alike:
+`server.status` alike, ordering releases by the semantic-version precedence
+`release::version::Version` defines, so a server at `1.0.0-alpha.1` is newer than `0.29.0`
+and older than `1.0.0-alpha.2` and `1.0.0`:
 
 <div class="overflow-x-auto" tabindex="0">
 
@@ -139,7 +141,7 @@ verdict (`lease::version_verdict`) decides for the election, `serve ensure` and
 | the same | attaches |
 | older | takes the lease over; the older server hands its sessions on as below |
 | newer | attaches, and its `initialize` answer says first that this client is the older one |
-| unpublished, or not ordered as a release (a pre-release) | attaches; `server.status` reports `outdated` |
+| unpublished, or not ordered as a release (not a semantic version, such as a local build tag) | attaches; `server.status` reports `outdated` |
 
 </div>
 
