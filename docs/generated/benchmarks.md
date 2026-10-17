@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.27.0 -->
+     Generator: majordomus-cli 0.28.0 -->
 # Benchmark targets and coverage
 
 Every externally callable operation is a benchmark target, derived from the registry: each executable capability directly and on every transport its exposure declares, with the cases its input type provides, plus the transports' own operations. Nothing below is listed by hand; `majordomus bench coverage` computes the same table live, `majordomus bench` times it, and `capabilities validate` fails when a requirement is missing.
@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 202 | 171 | 0 | 31 |
-| http | 197 | 171 | 0 | 26 |
-| mcp | 192 | 167 | 0 | 25 |
+| direct | 203 | 172 | 0 | 31 |
+| http | 198 | 172 | 0 | 26 |
+| mcp | 193 | 168 | 0 | 25 |
 | system | 14 | 14 | 0 | 0 |
-| total | 605 | 523 | 0 | 82 |
+| total | 608 | 526 | 0 | 82 |
 
 ## Capabilities
 
@@ -220,6 +220,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `worktree.migration_plan` | worktree | query | — | covered | covered | covered | `default` |
 | `worktree.status` | worktree | query | — | covered | covered | covered | `default`, `primary-checkout` |
 | `worktree.topology` | worktree | query | — | covered | covered | covered | `default` |
+| `worktree.trunk` | worktree | query | — | covered | covered | covered | `default`, `primary-checkout` |
 | `worktree.uncommitted` | worktree | query | — | covered | covered | covered | `policy-threshold`, `one-hour` |
 
 ## System targets
@@ -254,6 +255,7 @@ Every screen and panel of the UI's own route list, read with `GET` and `Accept: 
 | `system.http.ui.issues` | `/ui/issues` | pinned | — |
 | `system.http.ui.prs` | `/ui/prs` | pinned | — |
 | `system.http.ui.capabilities` | `/ui/capabilities` | pinned | — |
+| `system.http.ui.skills` | `/ui/skills` | pinned | — |
 | `system.http.ui.mesh` | `/ui/mesh` | pinned | — |
 | `system.http.ui.delivery` | `/ui/delivery` | pinned | — |
 | `system.http.ui.deployments` | `/ui/deployments` | pinned | — |
@@ -269,6 +271,7 @@ Every screen and panel of the UI's own route list, read with `GET` and `Accept: 
 | `system.http.live.ui.issues` | `/ui/issues` | live | — |
 | `system.http.live.ui.prs` | `/ui/prs` | live | — |
 | `system.http.live.ui.capabilities` | `/ui/capabilities` | live | — |
+| `system.http.live.ui.skills` | `/ui/skills` | live | — |
 | `system.http.live.ui.mesh` | `/ui/mesh` | live | — |
 | `system.http.live.ui.delivery` | `/ui/delivery` | live | — |
 | `system.http.live.ui.deployments` | `/ui/deployments` | live | — |

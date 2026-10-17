@@ -753,7 +753,40 @@ impl WorktreeService {
             worktree,
             canonical,
             repository_errors: topology.tallies.errors,
+            trunk_distance: self.trunk_distance(),
         })
+    }
+
+    /// How far the work tree this call came from, and the local trunk, are from the remote
+    /// trunk, judged against the thresholds its policy declares. Reads git, fetches nothing.
+    ///
+    /// ```
+    /// use std::process::Command;
+    /// use majordomus_cli::worktree::WorktreeService;
+    /// use majordomus_cli::worktree::trunk::TrunkStanding;
+    ///
+    /// let root = std::env::temp_dir().join(format!("mj-trunk-distance-{}", std::process::id()));
+    /// std::fs::create_dir_all(&root).unwrap();
+    /// let git = |args: &[&str]| assert!(Command::new("git").current_dir(&root).args(args)
+    ///     .env("GIT_AUTHOR_NAME", "a").env("GIT_AUTHOR_EMAIL", "a@b.c")
+    ///     .env("GIT_COMMITTER_NAME", "a").env("GIT_COMMITTER_EMAIL", "a@b.c")
+    ///     .status().unwrap().success());
+    /// git(&["init", "-q", "-b", "master"]);
+    /// git(&["commit", "-q", "--allow-empty", "-m", "base"]);
+    ///
+    /// // a repository with no remote has no remote trunk to be counted against
+    /// let d = WorktreeService::open(&root).unwrap().trunk_distance();
+    /// assert_eq!(d.standing, TrunkStanding::Unmeasured);
+    /// assert!(d.checkout.is_none() && d.remedy.is_none());
+    /// std::fs::remove_dir_all(&root).unwrap();
+    /// ```
+    pub fn trunk_distance(&self) -> super::trunk::TrunkDistance {
+        let here = &self.identity.current_worktree().path;
+        super::trunk::measure(
+            &self.identity,
+            here,
+            super::trunk::TrunkThresholds::declared_at(here),
+        )
     }
 
     /// The guard: may a mutation proceed from the work tree this call came from?

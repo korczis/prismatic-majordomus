@@ -210,8 +210,10 @@ git tag v0.3.0 && git push origin v0.3.0
 # 5. the pipeline publishes, puts releases/v0.3.0.json and releases/latest.json on the
 #    site at once (ADR 0131), then proposes the record as release/record-v0.3.0; confirm
 #    with curl -fsSL https://majordomus.dev/releases/latest.json
-# 6. merge the record's pull request once its ci is green; Pages then deploys master with
-#    the record, and scripts/pages verify --commit <merge sha> confirms it
+# 6. start the record pull request's own run, which the pipeline cannot: approve its
+#    waiting validate run, or close and reopen it (majordomus prs drain reopens it)
+# 7. merge the record's pull request once that run's ci is green; Pages then deploys master
+#    with the record, and scripts/pages verify --commit <merge sha> confirms it
 ```
 
 **The tag comes first and the record second, and the window between them is pending, not
@@ -322,40 +324,56 @@ Stage by stage:
 | `publish`, after the release exists | yes — the release and its assets | yes; the rerun adopts those assets | none |
 | `publish`, after the metadata commit | yes — the record is on the default branch | yes; the commit step finds nothing to add | none |
 | `pages` | yes — the record is committed but not served | `gh workflow run pages.yml --ref master` | none |
-| `smoke`, while the record is a proposal | yes — the release, not its metadata | merge the record pull request the error names once its `ci` is green (`majordomus prs drain` reopens it so that its own run starts; by hand, `gh pr close <n>` then `gh pr reopen <n>`), then rerun `smoke` | none |
+| `smoke`, while the record is a proposal | yes — the release, not its metadata | start the record pull request's own run — `majordomus prs drain` closes and reopens it; by hand, approve its waiting `validate` run, or `gh pr close <n>` then `gh pr reopen <n>` — merge it once that run's `ci` is green, then rerun `smoke`; the dispatched run's `ci` does not let it merge | none |
 | `smoke` | yes — everything is published | fix the cause, then rerun | none; the release stands or is withdrawn below |
 
 </div>
 
 
-#### Why the release asks for the verdict of its record
+#### Who starts the record's verdict
 
 The record is proposed as a pull request, and that pull request is opened with
-`GITHUB_TOKEN`. GitHub starts no workflow from an event that token caused: the run its
-`pull_request` event records concludes failure with no job in it, the required `ci` check
-never reports, and the proposal cannot merge. After `v0.15.0` and after `v0.16.0` it sat so,
-with an empty check rollup, until somebody closed and reopened it, and `smoke` failed by
-design for as long as that took.
+`GITHUB_TOKEN`. GitHub runs no workflow for an event that token caused, so the record's
+pull request has no run of its own until a person starts one. The run its `pull_request`
+event records took two shapes: through `v0.26.0` (2026-10-14) it concluded failure with no
+job in it; on `v0.27.0` (2026-10-16, run 38865305333) it was created `action_required`,
+waiting for approval. In both the required `ci` check never reports and the proposal cannot
+merge. After `v0.15.0` and after `v0.16.0` it sat so, with an empty check rollup, until
+somebody closed and reopened it, and `smoke` failed by design for as long as that took.
 
-A dispatch is the one event that token may cause. So after proposing the record the
-pipeline dispatches `validate` on the record's branch with the input `plan=change`, and
-`validate` plans that run as the pull request's own run would have been planned: the gates
-of the head commit's change, without the on-demand runners a dispatch otherwise asks for.
-The check-runs attach to the branch's head commit, which is what the pull request and its
-required check read. A dispatch that cannot be started is a warning naming the remedy and
-does not fail the job, because the release is published either way and `smoke` must still
-run to say so. `test/cases/996_the_record_pull_request_gets_its_verdict.sh` holds both
-workflows to this.
-
-That dispatch has not, by itself, made a record mergeable. On `v0.19.1` its `ci` passed at
-the record's head and the merge was still refused; the record landed only after a person
-closed and reopened the pull request, 3.4 hours after it was proposed, with every open head
-red meanwhile (I2282). So the integration executor does that part: `majordomus prs drain`
-closes and reopens a `release/record-<tag>` pull request that the workflow's token opened
-and that has no check of its own, once per head, and the run its reopening starts is the one
-the merge waits for ([INTEGRATION.md](@/docs/integration.md), "The record pull request it reopens";
+The pipeline cannot start that run, and does not claim to. What starts it is a person, in
+one of two ways: approving its waiting `validate` run, or closing and reopening the pull
+request. The integration executor does the second: `majordomus prs drain` closes and
+reopens a `release/record-<tag>` pull request that the workflow's token opened and that has
+no check of its own, once per head, and the run its reopening starts is the one the merge
+waits for ([INTEGRATION.md](@/docs/integration.md), "The record pull request it reopens";
 `test/cases/1036_the_executor_reopens_a_record_pull_request.sh`). Without a drain running,
-the remedy is the same two commands by hand: `gh pr close <n>` and `gh pr reopen <n>`.
+either is done by hand: approve the run on its page, or `gh pr close <n>` then
+`gh pr reopen <n>`. The record then merges on that run's `ci`, with no admin merge.
+
+After proposing the record the pipeline also dispatches `validate` on the record's branch
+with the input `plan=change`, and `validate` plans that run as the pull request's own run
+will be planned: the gates of the head commit's change, without the on-demand runners a
+dispatch otherwise asks for. **That run is not the record's verdict.** Its check-runs land on
+the record's head commit, but branch protection and the pull request's check rollup read no
+check suite a dispatch created. `v0.19.1` (#866) and `v0.27.0` (#1273) were refused with
+`base branch policy prohibits` while a dispatched `ci` stood green at their heads, and the
+rollups of `v0.25.0` (#1142) and `v0.26.0` (#1147) list no check at all although their
+dispatched `ci` passed (I2282). What the dispatch gives is an early reading of the record's
+tree: a red record is known before anybody starts the run that counts, and the release path
+holds the runners for it ([CI.md](@/docs/ci.md)). A dispatch that cannot be started is a warning
+naming the remedy and does not fail the job, because the release is published either way and
+`smoke` must still run to say so. `test/cases/996_the_record_pull_request_gets_its_verdict.sh`
+holds both workflows to this, and the workflow and this section to calling the dispatch
+nothing more.
+
+Two remedies would remove the person's step, and neither is taken. A status or check the
+dispatched run posted under the name `ci` would satisfy the required context without the
+pull request's own run having produced it, which is a forged verdict, not a remedy. Opening
+the pull request, or closing and reopening it, with a GitHub App or fine-grained token whose
+events start workflows would make its own run start at once; that needs a credential only the
+repository's owner can create and hold, and is the owner's decision. Until it is made, every
+release costs one person's act between publication and its record reaching master.
 
 #### The site serves a release before its record lands
 

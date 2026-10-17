@@ -1,10 +1,10 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it; regenerate with `majordomus generate`
-# Generator: majordomus-cli 0.27.0
+# Generator: majordomus-cli 0.28.0
 schema: majordomus/cli/v1
 generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it; regenerate with `majordomus generate`"
-generator: majordomus-cli 0.27.0
-version: "0.27.0"
+generator: majordomus-cli 0.28.0
+version: "0.28.0"
 source: apps/majordomus-cli/src/cli.rs
 route_prefix: /docs/cli
 cli:
@@ -135,14 +135,13 @@ cli:
         - name: http_port
           long: http-port
           positional: false
-          help: "Port the shared server binds when this process starts it; when it is taken, a free port is used instead and the URL is logged on stderr either way"
+          help: "Port the shared server binds when this process starts it; without it, the port this checkout derives (8741 for the primary checkout). When it is taken, a free port is used instead and the URL is logged on stderr either way"
           value_name: PORT
           takes_value: true
           required: false
           global: false
           possible_values: []
-          defaults:
-            - "8741"
+          defaults: []
       examples:
         - id: mcp-inspect
           title: "See what would be served, without serving it"
@@ -241,14 +240,13 @@ cli:
         - name: port
           long: port
           positional: false
-          help: Port to bind; 0 picks a free one and the address is logged on stderr
+          help: "Port to bind; without it, the port this checkout derives (8741 for the primary checkout); 0 picks a free one and the address is logged on stderr"
           value_name: PORT
           takes_value: true
           required: false
           global: false
           possible_values: []
-          defaults:
-            - "8741"
+          defaults: []
         - name: fallback
           long: fallback
           positional: false
@@ -401,25 +399,23 @@ cli:
             - name: port
               long: port
               positional: false
-              help: The port the started server asks for first; a taken one is replaced by a free one
+              help: "The port the started server asks for first, without it the one this checkout derives (8741 for the primary checkout); a taken one is replaced by a free one"
               value_name: PORT
               takes_value: true
               required: false
               global: false
               possible_values: []
-              defaults:
-                - "8741"
+              defaults: []
             - name: idle
               long: idle
               positional: false
-              help: The started server stops when no peer has been attached for this many seconds
+              help: "The started server stops when no peer has been attached for this many seconds; without it, the policy's declared `server.idle_seconds`, 900 when none is declared"
               value_name: SECONDS
               takes_value: true
               required: false
               global: false
               possible_values: []
-              defaults:
-                - "900"
+              defaults: []
             - name: wait
               long: wait
               positional: false
@@ -8991,6 +8987,87 @@ cli:
               command: majordomus worktree uncommitted
               setup: []
               expectation: "exits 0; prints 0 with uncommitted work, nothing was changed"
+          subcommands: []
+        - path:
+            - majordomus
+            - worktree
+            - trunk
+          route: /docs/cli/worktree/trunk/
+          executable: true
+          usage: "majordomus worktree trunk [OPTIONS]"
+          about: "How far this checkout and the local trunk are from the remote trunk, as of the last fetch, judged against the policy's checkout.trunk_distance: current, lagging, stale, unjudged or unmeasured, with the commands that bring it current. Fetches nothing; exit 10 when stale"
+          args:
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: worktree-trunk-unmeasured
+              title: How far this checkout is from the remote trunk
+              description: "The checkout's HEAD and the local trunk counted against the remote-tracking trunk, as of the last fetch, and judged against the policy's checkout.trunk_distance. A repository with no remote has nothing to be measured against and says so — `unmeasured`, never `current`; nothing is fetched either way."
+              argv:
+                - worktree
+                - trunk
+              command: majordomus worktree trunk
+              setup: []
+              expectation: "exits 0; prints unmeasured, no remote-tracking branch"
           subcommands: []
         - path:
             - majordomus

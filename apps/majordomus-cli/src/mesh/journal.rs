@@ -102,6 +102,17 @@ pub const NODE_COMPACTION_STREAMS: usize = MAX_STREAMS_PER_NODE * 3 / 4;
 /// its author's record, and publishing it again offers it again under the same id.
 pub const HANDOVER_RETENTION: Duration = Duration::from_secs(24 * 60 * 60);
 
+/// The most bytes of the journal file a reload reads: 64 MiB.
+///
+/// The journal holds at most [`MAX_EVENTS`] events in memory, and compaction rewrites the
+/// file from what it holds, so a file kept by this executable stays far below the bound. A
+/// file beyond it was written by something else, or grew while compaction could not
+/// replace it; reading it whole would put an unbounded file into memory before a single
+/// bound is checked. A reload reads the first `MAX_RELOAD_BYTES` up to the last whole
+/// line, and the rest is left on disk, counted in [`JournalTallies::unread_bytes`] and
+/// named by `mesh doctor` — never dropped in silence, and kept by compaction.
+pub const MAX_RELOAD_BYTES: u64 = 64 * 1024 * 1024;
+
 /// The most events (held and pending) one node may occupy.
 pub const MAX_EVENTS_PER_NODE: usize = 20_000;
 
@@ -1329,6 +1340,74 @@ pub struct JournalTallies {
     /// by something that is not this journal. Counted, never silently dropped.
     #[serde(default)]
     pub unreadable: u64,
+    /// Bytes of the journal file the last reload left unread because they lie beyond
+    /// [`MAX_RELOAD_BYTES`]: on disk and kept by compaction, and not in memory. Nonzero fails
+    /// `mesh doctor`.
+    #[serde(default)]
+    pub unread_bytes: u64,
+}
+
+/// Whether an event this runtime wrote reached this machine's disk: what an append
+/// acknowledges, and the only thing a caller may say about it.
+///
+/// ```
+/// use majordomus_cli::mesh::journal::Durability;
+/// assert_eq!(serde_json::to_value(Durability::NotDurable).unwrap(), "not_durable");
+/// assert_eq!(Durability::default(), Durability::Unknown, "an answer that did not say");
+/// assert!(Durability::Synced.is_on_disk() && !Durability::NotDurable.is_on_disk());
+/// ```
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum Durability {
+    /// Appended to the journal file and synced (`fsync` of its data) before the append
+    /// returned.
+    Synced,
+    /// The journal has no file: it lives in memory and its peers, by configuration.
+    Memory,
+    /// The write to the journal file failed. The event is held in memory and replicated to
+    /// peers, and is lost to this machine when the runtime restarts unless a peer still holds
+    /// it. It is not acknowledged as durable.
+    NotDurable,
+    /// Not reported: an answer from an executable that predates this field.
+    #[default]
+    Unknown,
+}
+
+impl Durability {
+    /// Whether the event is on this machine's disk: only an append that was synced is.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::journal::Durability;
+    /// assert!(Durability::Synced.is_on_disk());
+    /// for not in [Durability::Memory, Durability::NotDurable, Durability::Unknown] {
+    ///     assert!(!not.is_on_disk(), "{not:?} is not on disk");
+    /// }
+    /// ```
+    pub fn is_on_disk(self) -> bool {
+        self == Durability::Synced
+    }
+}
+
+/// An event this runtime wrote, with what its append acknowledges about the disk.
+///
+/// ```
+/// use std::sync::Arc;
+/// use majordomus_cli::mesh::identity::NodeIdentity;
+/// use majordomus_cli::mesh::journal::{Appended, Durability, EventBody, Journal};
+///
+/// let j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
+///     "repo".into(), None).unwrap();
+/// let appended: Appended =
+///     j.append_acknowledged(EventBody::SessionClosed { session: "s1".into() }).unwrap();
+/// assert_eq!(appended.event.seq, 1);
+/// assert_eq!(appended.durability, Durability::Memory);
+/// ```
+#[derive(Debug, Clone)]
+pub struct Appended {
+    /// The event, signed and stamped, held and offered to peers.
+    pub event: MeshEvent,
+    /// Whether it reached this machine's disk.
+    pub durability: Durability,
 }
 
 struct StreamLog {
@@ -1378,6 +1457,10 @@ struct Tombstone {
 }
 
 struct Inner {
+    /// The bytes of the journal file the last reload left unread, as `start..end` offsets in
+    /// the file as it is now: beyond [`MAX_RELOAD_BYTES`]. Compaction copies them into the
+    /// file it writes instead of dropping them.
+    unread_tail: Option<std::ops::Range<u64>>,
     /// Streams compacted away. A stream is here or in `streams`, never in both.
     tombstones: BTreeMap<StreamId, Tombstone>,
     streams: BTreeMap<StreamId, StreamLog>,
@@ -1522,6 +1605,19 @@ impl Journal {
         path: Option<PathBuf>,
         accept: &dyn Fn(&MeshEvent) -> Result<(), Rejection>,
     ) -> Result<Self, MeshError> {
+        Self::open_bounded(identity, runtime, repo, path, accept, MAX_RELOAD_BYTES)
+    }
+
+    /// [`Journal::open_trusting`] with the reload bound given: what the tests use to prove
+    /// the bound without writing [`MAX_RELOAD_BYTES`] to disk.
+    pub(crate) fn open_bounded(
+        identity: Arc<NodeIdentity>,
+        runtime: &str,
+        repo: String,
+        path: Option<PathBuf>,
+        accept: &dyn Fn(&MeshEvent) -> Result<(), Rejection>,
+        reload_limit: u64,
+    ) -> Result<Self, MeshError> {
         let own = StreamId::new(
             identity.public.node_id.as_str(),
             runtime,
@@ -1538,6 +1634,7 @@ impl Journal {
             repo,
             path,
             inner: Mutex::new(Inner {
+                unread_tail: None,
                 tombstones: BTreeMap::new(),
                 streams,
                 lamport: 0,
@@ -1549,7 +1646,7 @@ impl Journal {
             unreadable: std::sync::atomic::AtomicU64::new(0),
         };
         if let Some(path) = journal.path.clone() {
-            journal.reloaded = journal.reload(&path, accept);
+            journal.reloaded = journal.reload(&path, accept, reload_limit);
         }
         Ok(journal)
     }
@@ -1558,11 +1655,21 @@ impl Journal {
         &self,
         path: &Path,
         accept: &dyn Fn(&MeshEvent) -> Result<(), Rejection>,
+        limit: u64,
     ) -> IngestReport {
         let mut report = IngestReport::default();
-        let Ok(bytes) = std::fs::read(path) else {
+        let Some((bytes, unread_tail)) = read_bounded(path, limit) else {
             return report;
         };
+        if let Some(tail) = &unread_tail {
+            tracing::warn!(
+                path = %path.display(),
+                unread_bytes = tail.end - tail.start,
+                limit,
+                "mesh journal: the file is larger than the reload bound; the rest is left on disk unread"
+            );
+        }
+        self.inner.lock().expect("journal lock").unread_tail = unread_tail;
         // Line by line, and a line that does not read is counted rather than dropped in
         // silence: a torn tail after a crash, or bytes that are not this journal's.
         let mut events: Vec<MeshEvent> = Vec::new();
@@ -1662,7 +1769,40 @@ impl Journal {
     /// assert!(j.append_own(escaping).is_err());
     /// assert_eq!(j.events().len(), 2, "and nothing was written");
     /// ```
+    ///
+    /// This answers the event and not what happened on disk; a caller that reports the
+    /// write to anyone uses [`Journal::append_acknowledged`], which says.
     pub fn append_own(&self, body: EventBody) -> Result<MeshEvent, MeshError> {
+        self.append_acknowledged(body)
+            .map(|appended| appended.event)
+    }
+
+    /// [`Journal::append_own`], answering whether the event reached this machine's disk.
+    ///
+    /// An event whose write failed is still held and replicated — a peer that receives it
+    /// is the only copy left once this runtime restarts — and is answered
+    /// [`Durability::NotDurable`]: the append is not acknowledged as durable, the failure is
+    /// counted in [`JournalTallies::write_failures`], and `mesh doctor` fails on it.
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use majordomus_cli::mesh::identity::NodeIdentity;
+    /// use majordomus_cli::mesh::journal::{Durability, EventBody, Journal};
+    ///
+    /// let dir = tempfile::tempdir().unwrap();
+    /// let on_disk = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()),
+    ///     "0000000000000001", "repo".into(), Some(dir.path().join("journal.jsonl"))).unwrap();
+    /// let written = on_disk.append_acknowledged(EventBody::SessionClosed { session: "s1".into() })
+    ///     .unwrap();
+    /// assert_eq!(written.durability, Durability::Synced);
+    ///
+    /// let in_memory = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()),
+    ///     "0000000000000002", "repo".into(), None).unwrap();
+    /// let held = in_memory.append_acknowledged(EventBody::SessionClosed { session: "s1".into() })
+    ///     .unwrap();
+    /// assert_eq!(held.durability, Durability::Memory, "no file, by configuration");
+    /// ```
+    pub fn append_acknowledged(&self, body: EventBody) -> Result<Appended, MeshError> {
         body.validate().map_err(MeshError::Protocol)?;
         let body = serde_json::to_value(&body).map_err(|e| MeshError::Protocol(e.to_string()))?;
         let mut inner = self.inner.lock().expect("journal lock");
@@ -1700,8 +1840,8 @@ impl Journal {
             .events
             .insert(seq, event.clone());
         inner.tallies.written += 1;
-        self.persist(&[event.clone()]);
-        Ok(event)
+        let durability = self.persist(std::slice::from_ref(&event));
+        Ok(Appended { event, durability })
     }
 
     /// Raise this runtime's own beat: one heartbeat, signed, so that no relay can raise it.
@@ -2203,28 +2343,47 @@ impl Journal {
         Some(applied)
     }
 
-    fn persist(&self, events: &[MeshEvent]) {
-        let Some(path) = &self.path else { return };
+    /// Append `events` to the journal file and sync it, answering whether they reached the
+    /// disk. A failure is counted and logged here, once, whoever asked.
+    fn persist(&self, events: &[MeshEvent]) -> Durability {
+        let Some(path) = &self.path else {
+            return Durability::Memory;
+        };
         if events.is_empty() {
-            return;
+            return Durability::Synced;
         }
         let mut text = String::new();
+        let mut unserialised = 0usize;
         for event in events {
-            if let Ok(line) = serde_json::to_string(event) {
-                text.push_str(&line);
-                text.push('\n');
+            match serde_json::to_string(event) {
+                Ok(line) => {
+                    text.push_str(&line);
+                    text.push('\n');
+                }
+                Err(_) => unserialised += 1,
             }
         }
-        if let Err(e) = append_synced(path, &text) {
-            self.write_failures
-                .fetch_add(events.len() as u64, std::sync::atomic::Ordering::SeqCst);
-            tracing::warn!(
-                path = %path.display(),
-                error = %e,
-                events = events.len(),
-                "mesh journal: an append did not reach the disk; the events are held in memory and replicated only"
-            );
+        let written = append_synced(path, &text);
+        if written.is_ok() && unserialised == 0 {
+            return Durability::Synced;
         }
+        let lost = match &written {
+            Ok(()) => unserialised,
+            Err(_) => events.len(),
+        };
+        self.write_failures
+            .fetch_add(lost as u64, std::sync::atomic::Ordering::SeqCst);
+        let error = written.err().map_or_else(
+            || "an event did not serialise".to_string(),
+            |e| e.to_string(),
+        );
+        tracing::warn!(
+            path = %path.display(),
+            error = %error,
+            events = lost,
+            "mesh journal: an append did not reach the disk; the events are held in memory and replicated only"
+        );
+        Durability::NotDurable
     }
 
     /// A stream's liveness on this runtime's clock, against `expiry`. The measurement is
@@ -2511,11 +2670,23 @@ impl Journal {
                     }
                 }
                 // A new file, synced, renamed over the old one: a crash leaves the old journal
-                // or the new one, never a mix of both.
+                // or the new one, never a mix of both. What the reload left unread beyond its
+                // bound is copied into the new file, byte for byte, rather than dropped.
                 let tmp = path.with_extension("jsonl.tmp");
-                let replaced = write_synced(&tmp, &text).and_then(|()| std::fs::rename(&tmp, path));
+                let tail = inner.unread_tail.clone();
+                let replaced = match &tail {
+                    None => write_synced(&tmp, &text),
+                    Some(range) => write_synced_with_tail(&tmp, &text, path, range.clone()),
+                }
+                .and_then(|()| std::fs::rename(&tmp, path));
                 match replaced {
-                    Ok(()) => sync_parent(path),
+                    Ok(()) => {
+                        sync_parent(path);
+                        inner.unread_tail = tail.map(|range| {
+                            let start = text.len() as u64;
+                            start..start + (range.end - range.start)
+                        });
+                    }
                     Err(e) => {
                         let _ = std::fs::remove_file(&tmp);
                         tracing::warn!(path = %path.display(), error = %e, "mesh journal: compaction could not replace the file; the old one stands");
@@ -2561,8 +2732,64 @@ impl Journal {
             .write_failures
             .load(std::sync::atomic::Ordering::SeqCst);
         tallies.unreadable = self.unreadable.load(std::sync::atomic::Ordering::SeqCst);
+        tallies.unread_bytes = inner
+            .unread_tail
+            .as_ref()
+            .map_or(0, |range| range.end - range.start);
         tallies
     }
+}
+
+/// The first `limit` bytes of the journal at `path`, cut after the last whole line, and the
+/// byte range left unread when the file is larger: `None` when the file cannot be read. Only
+/// what is kept is held in memory; the rest is measured by the file's length, not read.
+fn read_bounded(path: &Path, limit: u64) -> Option<(Vec<u8>, Option<std::ops::Range<u64>>)> {
+    use std::io::Read;
+    let file = std::fs::File::open(path).ok()?;
+    let len = file.metadata().ok()?.len();
+    let mut bytes = Vec::new();
+    file.take(limit).read_to_end(&mut bytes).ok()?;
+    if len <= limit {
+        return Some((bytes, None));
+    }
+    // A line that straddles the bound is not half-read into an unreadable line: it is the
+    // first line of what is left on disk.
+    let kept = bytes
+        .iter()
+        .rposition(|b| *b == b'\n')
+        .map_or(0, |at| at + 1);
+    bytes.truncate(kept);
+    Some((bytes, Some(kept as u64..len)))
+}
+
+/// [`write_synced`] of `text`, followed by the bytes `range` of `source` copied as they are:
+/// the part of the journal a bounded reload left on disk, kept by the compaction that
+/// replaces the file. Fails when fewer bytes than the range could be copied.
+fn write_synced_with_tail(
+    path: &Path,
+    text: &str,
+    source: &Path,
+    range: std::ops::Range<u64>,
+) -> std::io::Result<()> {
+    use std::io::{Read, Seek, SeekFrom};
+    let mut file = owner_only(
+        std::fs::OpenOptions::new()
+            .create(true)
+            .write(true)
+            .truncate(true),
+    )
+    .open(path)?;
+    file.write_all(text.as_bytes())?;
+    let mut from = std::fs::File::open(source)?;
+    from.seek(SeekFrom::Start(range.start))?;
+    let want = range.end - range.start;
+    let copied = std::io::copy(&mut from.take(want), &mut file)?;
+    if copied != want {
+        return Err(std::io::Error::other(format!(
+            "copied {copied} of the {want} unread byte(s)"
+        )));
+    }
+    file.sync_all()
 }
 
 /// Open a journal file for writing as its owner alone: it holds other runtimes' events and
@@ -3175,6 +3402,144 @@ mod tests {
         assert!(held.is_ok(), "the event is held in memory and replicated");
         assert_eq!(journal.tallies().write_failures, 1);
         assert!(!crate::mesh::doctor::journal_check(&journal.tallies()).ok);
+    }
+
+    #[test]
+    fn a_failed_append_is_not_acknowledged_as_durable() {
+        let dir = tempfile::tempdir().unwrap();
+        let key = dir.path().join("node.json");
+        let path = dir.path().join("journal.jsonl");
+        let journal = on_disk(&path, &key);
+        let first = journal
+            .append_acknowledged(EventBody::SessionClosed {
+                session: "a".into(),
+            })
+            .unwrap();
+        assert_eq!(first.durability, Durability::Synced);
+
+        // the journal's place is taken by a directory: no write can reach the file, for any
+        // user, root included — a fault the test can inject without a full disk
+        std::fs::remove_file(&path).unwrap();
+        std::fs::create_dir(&path).unwrap();
+        let lost = journal
+            .append_acknowledged(EventBody::SessionClosed {
+                session: "b".into(),
+            })
+            .unwrap();
+        assert_eq!(
+            lost.durability,
+            Durability::NotDurable,
+            "a write that failed is never acknowledged as durable"
+        );
+        assert!(!lost.durability.is_on_disk());
+        assert!(
+            journal.events().iter().any(|e| e.id() == lost.event.id()),
+            "the event is still held, and offered to peers"
+        );
+        assert_eq!(journal.tallies().write_failures, 1);
+        assert!(!crate::mesh::doctor::journal_check(&journal.tallies()).ok);
+    }
+
+    /// The bytes of `events`, one line each, as the journal writes them.
+    fn lines_of(events: &[MeshEvent]) -> Vec<Vec<u8>> {
+        events
+            .iter()
+            .map(|e| {
+                let mut line = serde_json::to_vec(e).unwrap();
+                line.push(b'\n');
+                line
+            })
+            .collect()
+    }
+
+    #[test]
+    fn a_reload_is_bounded_and_the_unread_part_is_counted() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("journal.jsonl");
+        let writer = on_disk(&path, &dir.path().join("writer.json"));
+        let written: Vec<MeshEvent> = (1..=5).map(|n| opened(&writer, &format!("s{n}"))).collect();
+        drop(writer);
+        let lines = lines_of(&written);
+        assert_eq!(std::fs::read(&path).unwrap(), lines.concat());
+        let whole: u64 = lines.iter().map(|l| l.len() as u64).sum();
+        let kept: u64 = lines[..2].iter().map(|l| l.len() as u64).sum();
+
+        // the bound falls three bytes into the third line: two lines are read, and the third
+        // is not torn into an unreadable one — it is the first line of what is left on disk
+        let bounded = Journal::open_bounded(
+            Arc::new(NodeIdentity::ephemeral().unwrap()),
+            "0000000000000003",
+            "repo".into(),
+            Some(path.clone()),
+            &accept_all,
+            kept + 3,
+        )
+        .unwrap();
+        let tallies = bounded.tallies();
+        assert_eq!(tallies.events, 2, "what lies within the bound reloads");
+        assert_eq!(
+            tallies.unreadable, 0,
+            "a line cut by the bound is not unreadable"
+        );
+        assert_eq!(
+            tallies.unread_bytes,
+            whole - kept,
+            "the rest is counted, to the byte"
+        );
+        let check = crate::mesh::doctor::journal_check(&tallies);
+        assert!(
+            !check.ok,
+            "mesh doctor names a journal it did not read whole"
+        );
+        assert!(check.detail.contains(&format!("{} byte(s)", whole - kept)));
+
+        // within the bound, nothing is left unread
+        let whole_read = Journal::open_bounded(
+            Arc::new(NodeIdentity::ephemeral().unwrap()),
+            "0000000000000004",
+            "repo".into(),
+            Some(path.clone()),
+            &accept_all,
+            whole,
+        )
+        .unwrap();
+        assert_eq!(whole_read.tallies().events, 5);
+        assert_eq!(whole_read.tallies().unread_bytes, 0);
+        assert!(crate::mesh::doctor::journal_check(&whole_read.tallies()).ok);
+    }
+
+    #[test]
+    fn a_compaction_keeps_what_a_bounded_reload_left_unread() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("journal.jsonl");
+        let writer = on_disk(&path, &dir.path().join("writer.json"));
+        let written: Vec<MeshEvent> = (1..=5).map(|n| opened(&writer, &format!("s{n}"))).collect();
+        drop(writer);
+        let lines = lines_of(&written);
+        let kept: u64 = lines[..2].iter().map(|l| l.len() as u64).sum();
+        let bounded = Journal::open_bounded(
+            Arc::new(NodeIdentity::ephemeral().unwrap()),
+            "0000000000000003",
+            "repo".into(),
+            Some(path.clone()),
+            &accept_all,
+            kept,
+        )
+        .unwrap();
+        // the writer's stream is silent: compaction drops the two events it reloaded and
+        // rewrites the file from memory — which must not lose the three it never read
+        let dropped = bounded.compact(Duration::ZERO, Duration::ZERO, Duration::ZERO, true);
+        assert_eq!(dropped, 2);
+        assert_eq!(
+            std::fs::read(&path).unwrap(),
+            lines[2..].concat(),
+            "the unread part is copied into the new file, byte for byte"
+        );
+        assert_eq!(
+            bounded.tallies().unread_bytes,
+            lines[2..].iter().map(|l| l.len() as u64).sum::<u64>(),
+            "and is still counted as unread"
+        );
     }
 
     #[test]

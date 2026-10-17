@@ -1,13 +1,13 @@
 +++
 title = "An architectural relationship in a published document is drawn, never typed in box art"
 description = "An architectural relationship in a published document is drawn, never typed in box art"
-weight = 66
+weight = 68
 [extra]
 kind = "rule"
-slug = "project-a-diagram-is-drawn-not-typed-1"
-identity = "project.a-diagram-is-drawn-not-typed@1"
+slug = "project-a-diagram-is-drawn-not-typed-2"
+identity = "project.a-diagram-is-drawn-not-typed@2"
 status = "active"
-source = ".ai/repo/rules/project/a-diagram-is-drawn-not-typed.v1.md"
+source = ".ai/repo/rules/project/a-diagram-is-drawn-not-typed.v2.md"
 +++
 {% raw %}
 
@@ -45,12 +45,23 @@ block.** That is lifecycles, state machines, pipelines, dependency and governanc
 projections from a declaration to its surfaces, and anything else whose content is *what
 connects to what*.
 
-**Published means every form a reader meets it in**, not only the Markdown: `docs/**`, the
-pages written straight into `site/content-src/**`, and the templates those pages are rendered
-through, `site/templates/**`. Those are the canonical trees. `site/content/**` is a
-projection of the first two and the generator overwrites it, so a finding reported there
-would name a file its author cannot fix. And in each of them, both forms a block is written
-in — a ```fenced block and an HTML `<pre>`/`<code>` block. The second is not a technicality: the
+**Published means every form a reader meets it in**, not only the Markdown. The canonical
+trees are:
+
+- `docs/**`, the pages written straight into `site/content-src/**`, and the templates those
+  pages are rendered through, `site/templates/**`;
+- the decisions, `.ai/repo/adrs/**`, and the rules, `.ai/repo/rules/**`. Both are published
+  as pages of the site and read in the handbook's reading room, so a drawing typed into one
+  is a drawing on two surfaces;
+- `handbook/**`, the chapters and the page they are assembled into;
+- the markdown `majordomus ui` renders: the Rust sources under `apps/majordomus-cli/src/ui/**`,
+  whose doc comments rustdoc publishes and whose strings the screens draw, and the scripts
+  under `share/ui/**`.
+
+`site/content/**` is a projection of `docs/` and `site/content-src/` and the generator
+overwrites it, so a finding reported there would name a file its author cannot fix.
+
+And in each of them, both forms a block is written in — a ```fenced block and an HTML `<pre>`/`<code>` block. The second is not a technicality: the
 most-published document in this repository is a template, and for the rule's first weeks a
 hand-drawn control loop sat in one, in HTML, where a gate reading fences only could not see
 it at any scope.
@@ -60,16 +71,32 @@ it at any scope.
 `data-lang="mermaid"` are read the same way, and a `<pre>` wearing only layout classes
 declares nothing and is judged on its contents.
 
-**Three things made of the same characters are not diagrams, and are exempt by declaration:**
+**Four things made of the same characters are not diagrams, or are not published, and are
+exempt by declaration:**
 
 - **literal terminal output** — what a command actually printed. Fence it `console`, `bash`,
   `sh` or `shell-session`. Redrawing a terminal as a graph would be a lie about what the
   terminal showed, and this repository shows real output rather than mock-ups;
 - **a file listing** — `├── lib/` says where files are, not how they relate, and a reader
   compares it against their own `ls`. A tree's `# …` annotations are prose, so an arrow
-  inside one is a sentence, not an edge;
+  inside one is a sentence, not an edge. A listing keeps every glyph in its indentation,
+  before an entry's name; `executor ──┬── MCP` connects two things after a name, and a block
+  that does that is a drawing however tree-like its left margin looks;
 - **quoted file content** — a block showing what a generated header looks like contains
-  `<!-- … -->`, and an HTML comment is not an arrow.
+  `<!-- … -->`, and an HTML comment is not an arrow;
+- **the campaign packs** — `campaigns/**` holds operator prompt packs kept byte for byte as
+  provenance and recorded in `campaigns/MANIFEST.sha256`. Nothing there is published or
+  loaded, and rewriting a brief would falsify the record of what was asked.
+
+**Every diagram is the interactive viewer, and a node is named by what it is.** On the site a
+mermaid block reaches the one viewer of ADR 0152 (`site/diagrams.js`), and the build
+(`scripts/lib/diagrams.mjs`) links every node whose id or label is the identity of an object
+the site has a page for: a rule id, `ADR 0152`, an issue, a capability such as
+`executions.get`, a command such as `majordomus doctor`, a document path. So a node that is
+such an object carries its identity in its label, and is clickable without anybody writing
+an `href`. The handbook draws the same blocks with its own Mermaid, in the page's colours,
+and again when the theme changes; in a handbook chapter the block is a
+`<pre class="mermaid-src" data-lang="mermaid">`.
 
 **Mermaid is a renderer, not a second source.** Where the relationship already exists as data
 — the outcomes a workflow declares, the surfaces a capability is exposed on, the rules a
@@ -94,7 +121,7 @@ that raises it is refused rather than accommodated.
 ```sh
 scripts/ci/diagram-check          # the gate
 scripts/ci/diagram-check --list   # every hand-drawn diagram, for converting
-bash test/run.sh 272_diagrams_are_drawn
+bash test/run.sh 272_diagrams_are_drawn 3106_every_published_tree_draws_its_diagrams
 ```
 
 `test/cases/272_diagrams_are_drawn.sh` builds the blocks the gate must tell apart in a
@@ -105,4 +132,18 @@ Each of those is asked again of the HTML form: a template's `<pre><code>` box ar
 entity-encoded arrows must be caught, and a `<pre class="console">` holding real terminal
 output, a `<pre>` holding a file tree, a `<pre class="mermaid">`, `class="language-bash"`, an
 inline `<code>` in a sentence and a ```html fence quoting the markup of a drawing must not.
+
+`test/cases/3106_every_published_tree_draws_its_diagrams.sh` plants box art in each tree
+version 2 added (a decision, a rule, a handbook chapter, a UI module's doc comment and a UI
+script) and requires the gate to name every one. A mermaid block, a file listing and a
+campaign pack in the same places stay clean, and the real tree stays at zero.
+
+## History
+
+Version 1 covered `docs/**`, `site/content-src/**` and `site/templates/**`. Box art survived
+outside them, in a decision (ADR 0033), the handbook and a UI module. Inside them, a drawing
+whose only arrows were `▼` and `↓` passed as a file listing. Version 2 (ADR 0166, decision 6)
+adds the decisions, the rules, the handbook and the markdown `majordomus ui` renders. It reads
+`▼ ▲ ↓ ↑ ← ◄ ►` as arrows, and it accepts a block as a listing only when the glyphs stay in
+the indentation.
 {% endraw %}

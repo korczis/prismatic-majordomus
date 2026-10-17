@@ -1,7 +1,7 @@
 +++
 title = "A landing that changes what GitHub shows applies the change itself"
 description = "A landing that changes what GitHub shows applies the change itself"
-weight = 164
+weight = 169
 [extra]
 kind = "rule"
 slug = "project-the-projection-is-applied-at-landing-1"

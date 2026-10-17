@@ -73,14 +73,19 @@ pub fn run(args: ServeArgs) -> Result<u8> {
             idle,
             wait,
             format,
-        }) => ensure(
-            &repo,
-            *port,
-            *idle,
-            Duration::from_secs(*wait),
-            *format,
-            &layer,
-        ),
+        }) => {
+            // the declared server timings, the idle life among them, read before the lease
+            // is judged; `--idle` given here overrides the declaration (I2701)
+            let _ = crate::policy::LoadedPolicy::load(&repo);
+            ensure(
+                &repo,
+                port.unwrap_or_else(|| crate::cli::checkout_port(repo.root())),
+                idle.unwrap_or_else(|| lease::timings().idle.as_secs()),
+                Duration::from_secs(*wait),
+                *format,
+                &layer,
+            )
+        }
         Some(ServeCommand::Stop { wait }) => stop(&repo, Duration::from_secs(*wait)),
     }
 }
@@ -123,7 +128,9 @@ fn serve(args: &ServeArgs, repo: &Repository) -> Result<u8> {
                 std::path::Path::new(&app.context.index.repository.root),
             )
             .0,
-            args.port,
+            // the port this checkout asks for on every start, unless one was given (I2702)
+            args.port
+                .unwrap_or_else(|| crate::cli::checkout_port(repo.root())),
         ),
     };
     // The server outlives many commits. It follows the repository rather than freezing
@@ -322,6 +329,16 @@ fn render_status(out: &mut impl Write, s: &Value, checkouts: Checkouts) -> Resul
             out,
             "repository not a git repository: this checkout alone".into(),
         )?,
+    }
+    if let Some(t) = s.get("trunk") {
+        w(
+            out,
+            format!(
+                "trunk      {}: {}",
+                t["standing"].as_str().unwrap_or("?"),
+                t["message"].as_str().unwrap_or("-")
+            ),
+        )?;
     }
     w(
         out,
@@ -846,7 +863,7 @@ fn server_command(exe: &Path, root: &Path, port: u16, idle: u64, layer: &[OsStri
 /// Standard input, output and error are redirected here, and for a long time that looked
 /// like enough. It is not: `Command` only replaces those three, and **every other descriptor
 /// the parent had open is inherited by the child**, which then holds it for its whole life —
-/// fifteen minutes, by `DEFAULT_IDLE_SECONDS`.
+/// fifteen minutes, by `DEFAULT_IDLE_SECONDS`, or the declared `server.idle_seconds`.
 ///
 /// direnv is where that stops being theoretical. It hands the file it evaluates an extra
 /// descriptor of its own (fd 6 here), and it does not return until that pipe closes. On
