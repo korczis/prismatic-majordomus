@@ -103,10 +103,30 @@ mod tests {
         let ids: Vec<&str> = answer.adapters.iter().map(|a| a.id.as_str()).collect();
         assert_eq!(ids, ["antigravity", "claude-code", "zed"]);
         // no skill of the layer and no justfile: what is projected is what the registry
-        // itself declares, the commands every repository has
-        let paths: Vec<&str> = answer.artifacts.iter().map(|a| a.path.as_str()).collect();
-        assert_eq!(paths, [".claude/skills/intent/SKILL.md"]);
-        assert_eq!(answer.artifacts[0].adapters, ["claude-code"]);
-        assert_eq!(answer.artifacts[0].sources, ["capability:intents.propose"]);
+        // itself declares, the commands and the domains every repository has
+        assert!(answer
+            .artifacts
+            .iter()
+            .all(|a| a.adapters == ["claude-code"]));
+        let intent = answer
+            .artifacts
+            .iter()
+            .find(|a| a.path == ".claude/skills/intent/SKILL.md")
+            .expect("the command skill");
+        assert_eq!(intent.sources, ["capability:intents.propose"]);
+        let mesh = answer
+            .artifacts
+            .iter()
+            .find(|a| a.path == ".claude/skills/mj-mesh/SKILL.md")
+            .expect("the mesh domain skill");
+        assert_eq!(mesh.sources, ["module:mesh"]);
+        assert_eq!(mesh.document, "editors/domain");
+        assert!(
+            answer
+                .artifacts
+                .iter()
+                .all(|a| a.path.starts_with(".claude/skills/")),
+            "every derived file is a skill Claude Code reads"
+        );
     }
 }

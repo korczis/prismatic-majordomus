@@ -488,10 +488,17 @@ referenced artifact a peer materialises.
 | a peer restarts while linked | the answerer refuses the old link id as `unknown_link`; the dialer says hello again | the table row is kept, `restarts` counts |
 | a relay dies in a line A–B–C | A and C expire each other's streams through lost beats | when B returns, marks re-align and nothing is duplicated |
 | hostile or broken input | typed refusal, counted, listed; the runtime keeps serving | nothing enters the journal |
-| a crash tears the journal file, or the disk refuses an append | an append writes a missing newline first and syncs; a failed append is counted (`write_failures`), a line that does not read on reload is counted (`unreadable`), and `mesh doctor` fails its `journal` check; compaction writes a synced file and renames it over the old one; the file is the owner's alone (0600) | every complete event reloads, the event after a torn line reads, and an event that did not reach the disk is still replicated from memory and from peers |
+| a crash tears the journal file, or the disk refuses an append | an append writes a missing newline first and syncs; a failed append is counted (`write_failures`) and its operation answers `"durability": "not_durable"` — never acknowledged as durable, and `mesh claim`, `mesh session open` and the other writes print `NOT DURABLE`; a line that does not read on reload is counted (`unreadable`), and `mesh doctor` fails its `journal` check; compaction writes a synced file and renames it over the old one; the file is the owner's alone (0600) | every complete event reloads, the event after a torn line reads, and an event that did not reach the disk is still replicated from memory and from peers |
+| a journal file larger than the reload bound (64 MiB) | a reload reads up to the bound, to the last whole line, and leaves the rest on disk: counted (`unread_bytes`), named by `mesh doctor`'s `journal` check, and copied byte for byte into the file compaction writes | the events within the bound reload; the rest is neither folded nor relayed by this runtime until the file is moved aside and peers refill it |
 
 </div>
 
+
+An operation's answer says what reached the disk: `durability` is `synced` when the event was
+appended to the journal file and its data synced before the answer, `memory` when the journal
+has no file by configuration, and `not_durable` when the write failed. "Synced" is the
+operating system's data sync of the journal file (`fdatasync` on Linux, `fsync` on macOS, which
+does not flush the drive's own cache), not a promise about the storage under it.
 
 ## Security model
 
@@ -509,6 +516,7 @@ What the mesh defends against, and how:
 | a relay that alters or invents events | the origin's signature fails at every consumer |
 | a trusted key stamping events at the end of the Lamport range | an event more than 2^32 ahead of the receiver's clock is refused `clock_ahead` (`MAX_LAMPORT_LEAD`), so the clock rises at most that much per stored event. A stamp set low to win a claim conflict is not refused: Lamport stamps are their writer's own assertion |
 | flooding | bounded datagrams and a bounded queue of them to the registry (1024; a flood beyond it is dropped and counted as `overflow` in `mesh.status`), messages (900 KiB), events, streams (1024, at most 64 per node), events per node (20 000), pending events (256 per stream, 4096 in all), peers (256), dial targets (8 per node, the present runtimes before the stopped ones), listed refusals (128), registry (256; only allowlisted records are never evicted) |
+| a peer or a rendezvous that answers too much, or too slowly | the dialer holds a link reply at most at one 900 KiB message in its wrapper (`MAX_LINK_REPLY`) and a register answer at most at 33 envelopes (`MAX_ANSWER_CANDIDATES`) and 81 KiB (`MAX_REGISTER_ANSWER`), counted without the whitespace the server pretty-prints, and refuses what is over before parsing it; a reply not whole within 20 s (link) or 15 s (rendezvous) is a failure however steadily it drips (I2704) |
 | a forged or replayed liveness report | beats are signed by their origin and only a higher signed beat counts; a relayed age is clamped to the expiry; a stream is created from a mark only when the mark verifies, its origin is trusted and its beat is fresh |
 | a branch or an uncommitted edit that adds a key, a hub, a seed or `tofu` | the declaration in force is the working tree's with every widening of the trunk's committed copy removed; `mesh doctor` names each ignored line (`trust-root`), and `mesh-check` refuses a committed `tofu` (I2135) |
 | a hostile handover consumed here | every front-matter field is single-line at ingest; the record's file name keeps only timestamp digits, hex and `[A-Za-z0-9_-]`, and a path outside the handovers directory is refused |

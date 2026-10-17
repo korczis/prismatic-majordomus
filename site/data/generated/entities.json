@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 109,
+      "count": 115,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -23,7 +23,7 @@
       "title": "Rules",
       "description": "Every rule in force here — the vendored doctrine package and this repository's own — with the class it declares, the artefacts it names as its enforcement, whether the tree holds them, and the rules either side of it in the dependency graph.",
       "weight": 46,
-      "count": 180,
+      "count": 184,
       "dir": "rules",
       "statuses": [
         "active"
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 109
+      "count": 115
     },
     {
       "kind": "application",
@@ -173,7 +173,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 394
+      "count": 419
     },
     {
       "kind": "knowledge",
@@ -197,7 +197,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 38
+      "count": 40
     },
     {
       "kind": "moment",
@@ -245,7 +245,7 @@
       "route": "/rules/",
       "title": "Rules",
       "reason": null,
-      "count": 180
+      "count": 184
     },
     {
       "kind": "scope",
@@ -261,7 +261,7 @@
       "route": "/sessions/",
       "title": null,
       "reason": null,
-      "count": 89
+      "count": 90
     },
     {
       "kind": "skill",
@@ -285,7 +285,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 500
+      "count": 519
     },
     {
       "kind": "use-case",
@@ -396,6 +396,13 @@
           "label": "adr-0126",
           "kind": "adr",
           "route": "/adrs/adr-0126/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0163",
+          "kind": "adr",
+          "route": "/adrs/adr-0163/",
           "external": false
         }
       ]
@@ -1058,6 +1065,13 @@
           "label": "adr-0145",
           "kind": "adr",
           "route": "/adrs/adr-0145/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0163",
+          "kind": "adr",
+          "route": "/adrs/adr-0163/",
           "external": false
         }
       ]
@@ -2160,6 +2174,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0050/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0163",
+          "kind": "adr",
+          "route": "/adrs/adr-0163/",
+          "external": false
         }
       ]
     },
@@ -2851,6 +2872,20 @@
           "kind": "adr",
           "route": "/adrs/adr-0067/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0163",
+          "kind": "adr",
+          "route": "/adrs/adr-0163/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0164",
+          "kind": "adr",
+          "route": "/adrs/adr-0164/",
+          "external": false
         }
       ]
     },
@@ -2982,7 +3017,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0164",
+          "kind": "adr",
+          "route": "/adrs/adr-0164/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -3492,6 +3535,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0123/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0164",
+          "kind": "adr",
+          "route": "/adrs/adr-0164/",
+          "external": false
         }
       ]
     },
@@ -3751,7 +3801,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0157",
+          "kind": "adr",
+          "route": "/adrs/adr-0157/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -4067,6 +4125,13 @@
           "label": "adr-0133",
           "kind": "adr",
           "route": "/adrs/adr-0133/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0163",
+          "kind": "adr",
+          "route": "/adrs/adr-0163/",
           "external": false
         }
       ]
@@ -6226,7 +6291,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0164",
+          "kind": "adr",
+          "route": "/adrs/adr-0164/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -6834,6 +6907,23 @@
     },
     {
       "kind": "adr",
+      "id": "majordomus://adr/adr-0124",
+      "identity": "adr-0124",
+      "slug": "adr-0124",
+      "cockpit": "/cockpit/objects/adr/adr-0124",
+      "title": "An uploaded prompt pack is a provenance-tracked input artifact, not a second intent model",
+      "status": "proposed",
+      "tags": [
+        "artifact-ingestion",
+        "mesh-pack",
+        "prompt-pack"
+      ],
+      "source": ".ai/repo/adrs/0124-an-uploaded-prompt-pack-is-a-provenance-tracked-input-artifa.md",
+      "references": [],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
       "id": "majordomus://adr/adr-0126",
       "identity": "adr-0126",
       "slug": "adr-0126",
@@ -7338,6 +7428,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0160/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0163",
+          "kind": "adr",
+          "route": "/adrs/adr-0163/",
+          "external": false
         }
       ]
     },
@@ -7490,7 +7587,15 @@
       ],
       "source": ".ai/repo/adrs/0139-worktrees-share-what-cargo-compiles-on-the-way-and-keep-thei.md",
       "references": [],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0157",
+          "kind": "adr",
+          "route": "/adrs/adr-0157/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -7514,6 +7619,13 @@
           "label": "adr-0146",
           "kind": "adr",
           "route": "/adrs/adr-0146/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0165",
+          "kind": "adr",
+          "route": "/adrs/adr-0165/",
           "external": false
         }
       ]
@@ -7892,7 +8004,7 @@
       "slug": "adr-0146",
       "cockpit": "/cockpit/objects/adr/adr-0146",
       "title": "A capability is invoked by name through a generated skill",
-      "status": "proposed",
+      "status": "accepted",
       "tags": [
         "capabilities",
         "providers",
@@ -7950,7 +8062,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0165",
+          "kind": "adr",
+          "route": "/adrs/adr-0165/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -8205,9 +8325,9 @@
         },
         {
           "edge": "put_in_force",
-          "label": "project.a-diagram-is-drawn-not-typed@1",
+          "label": "project.a-diagram-is-drawn-not-typed@2",
           "kind": "rule",
-          "route": "/rules/project-a-diagram-is-drawn-not-typed-1/",
+          "route": "/rules/project-a-diagram-is-drawn-not-typed-2/",
           "external": false
         },
         {
@@ -8246,7 +8366,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0166",
+          "kind": "adr",
+          "route": "/adrs/adr-0166/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -8347,6 +8475,60 @@
     },
     {
       "kind": "adr",
+      "id": "majordomus://adr/adr-0157",
+      "identity": "adr-0157",
+      "slug": "adr-0157",
+      "cockpit": "/cockpit/objects/adr/adr-0157",
+      "title": "A mesh node may offer a shared build cache, peers discover and select it, and compilation never depends on it",
+      "status": "proposed",
+      "tags": [
+        "mesh",
+        "build",
+        "cache",
+        "capability"
+      ],
+      "source": ".ai/repo/adrs/0157-the-mesh-offers-a-shared-build-cache.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0055",
+          "kind": "adr",
+          "route": "/adrs/adr-0055/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0139",
+          "kind": "adr",
+          "route": "/adrs/adr-0139/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/MESH.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/OFFLOAD.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.mesh-is-observation-not-authority@1",
+          "kind": "rule",
+          "route": "/rules/project-mesh-is-observation-not-authority-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
       "id": "majordomus://adr/adr-0158",
       "identity": "adr-0158",
       "slug": "adr-0158",
@@ -8438,6 +8620,13 @@
           "label": "adr-0160",
           "kind": "adr",
           "route": "/adrs/adr-0160/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0163",
+          "kind": "adr",
+          "route": "/adrs/adr-0163/",
           "external": false
         }
       ]
@@ -8587,6 +8776,369 @@
           "label": "test/cases/85_installer.sh",
           "kind": "test",
           "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0163",
+      "identity": "adr-0163",
+      "slug": "adr-0163",
+      "cockpit": "/cockpit/objects/adr/adr-0163",
+      "title": "A server serves only a share of its own version, with the surfaces it offers",
+      "status": "proposed",
+      "tags": [
+        "server",
+        "distribution",
+        "ui",
+        "resilience"
+      ],
+      "source": ".ai/repo/adrs/0163-a-server-serves-only-a-share-of-its-own-version.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/capability/builtin/server.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/cockpit/assets.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/commands/serve.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/share.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0003",
+          "kind": "adr",
+          "route": "/adrs/adr-0003/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0019",
+          "kind": "adr",
+          "route": "/adrs/adr-0019/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0035",
+          "kind": "adr",
+          "route": "/adrs/adr-0035/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0044",
+          "kind": "adr",
+          "route": "/adrs/adr-0044/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0067",
+          "kind": "adr",
+          "route": "/adrs/adr-0067/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0135",
+          "kind": "adr",
+          "route": "/adrs/adr-0135/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0158",
+          "kind": "adr",
+          "route": "/adrs/adr-0158/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "lib/rust_bin.sh",
+          "kind": "implementation",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.distribution-canonical@1",
+          "kind": "rule",
+          "route": "/rules/project-distribution-canonical-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.shared-server-resilience@1",
+          "kind": "rule",
+          "route": "/rules/project-shared-server-resilience-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.the-server-sees-the-current-tree@1",
+          "kind": "rule",
+          "route": "/rules/project-the-server-sees-the-current-tree-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0164",
+      "identity": "adr-0164",
+      "slug": "adr-0164",
+      "cockpit": "/cockpit/objects/adr/adr-0164",
+      "title": "A durable record names the session that wrote it, and relates a task only when the task is that session's",
+      "status": "proposed",
+      "tags": [
+        "sessions",
+        "attribution",
+        "records"
+      ],
+      "source": ".ai/repo/adrs/0164-a-record-names-the-session-that-wrote-it.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0044",
+          "kind": "adr",
+          "route": "/adrs/adr-0044/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0047",
+          "kind": "adr",
+          "route": "/adrs/adr-0047/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0052",
+          "kind": "adr",
+          "route": "/adrs/adr-0052/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0103",
+          "kind": "adr",
+          "route": "/adrs/adr-0103/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "lib/checkpoint.sh",
+          "kind": "implementation",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "lib/common.sh",
+          "kind": "implementation",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "lib/decision.sh",
+          "kind": "implementation",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "lib/question.sh",
+          "kind": "implementation",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "lib/start.sh",
+          "kind": "implementation",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.no-new-nouns@1",
+          "kind": "rule",
+          "route": "/rules/project-no-new-nouns-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.the-session-context-is-derived@1",
+          "kind": "rule",
+          "route": "/rules/project-the-session-context-is-derived-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0165",
+      "identity": "adr-0165",
+      "slug": "adr-0165",
+      "cockpit": "/cockpit/objects/adr/adr-0165",
+      "title": "A skill is derived for every domain of the registry and shown wherever skills are",
+      "status": "accepted",
+      "tags": [
+        "capabilities",
+        "providers",
+        "editors",
+        "skills"
+      ],
+      "source": ".ai/repo/adrs/0165-a-skill-is-derived-for-every-domain-of-the-registry.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/editors/claude.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/editors/mod.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0140",
+          "kind": "adr",
+          "route": "/adrs/adr-0140/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0146",
+          "kind": "adr",
+          "route": "/adrs/adr-0146/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/EDITORS.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.every-domain-is-a-skill@1",
+          "kind": "rule",
+          "route": "/rules/project-every-domain-is-a-skill-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0166",
+      "identity": "adr-0166",
+      "slug": "adr-0166",
+      "cockpit": "/cockpit/objects/adr/adr-0166",
+      "title": "The plan's surfaces are inferred from delivery, and nothing the plan shows is typed beside it",
+      "status": "proposed",
+      "tags": [
+        "plan",
+        "site",
+        "ui",
+        "derivation",
+        "diagrams"
+      ],
+      "source": ".ai/repo/adrs/0166-the-plan-surfaces-are-inferred-from-delivery.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/plan.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/ui/roadmap.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "site/templates/index.html",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "site/templates/roadmap.html",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0152",
+          "kind": "adr",
+          "route": "/adrs/adr-0152/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "lib/project.awk",
+          "kind": "implementation",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "truthful-plan-surfaces",
+          "kind": "milestone",
+          "route": "/plan/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.a-diagram-is-drawn-not-typed@2",
+          "kind": "rule",
+          "route": "/rules/project-a-diagram-is-drawn-not-typed-2/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.the-published-ui-is-the-trunks@1",
+          "kind": "rule",
+          "route": "/rules/project-the-published-ui-is-the-trunks-1/",
           "external": false
         }
       ],
@@ -9737,6 +10289,22 @@
           "external": false
         }
       ]
+    },
+    {
+      "kind": "rule",
+      "id": "majordomus://rule/majordomus.knowledge-graph@1",
+      "identity": "majordomus.knowledge-graph@1",
+      "slug": "majordomus-knowledge-graph-1",
+      "cockpit": "/cockpit/objects/rule/majordomus-knowledge-graph-1",
+      "title": "Knowledge graph integrity",
+      "status": "active",
+      "tags": [
+        "knowledge",
+        "integrity"
+      ],
+      "source": ".ai/repo/rules/vendor/majordomus/rules/knowledge-graph.v1.md",
+      "references": [],
+      "referenced_by": []
     },
     {
       "kind": "rule",
@@ -11541,10 +12109,10 @@
     },
     {
       "kind": "rule",
-      "id": "majordomus://rule/project.a-diagram-is-drawn-not-typed@1",
-      "identity": "project.a-diagram-is-drawn-not-typed@1",
-      "slug": "project-a-diagram-is-drawn-not-typed-1",
-      "cockpit": "/cockpit/objects/rule/project-a-diagram-is-drawn-not-typed-1",
+      "id": "majordomus://rule/project.a-diagram-is-drawn-not-typed@2",
+      "identity": "project.a-diagram-is-drawn-not-typed@2",
+      "slug": "project-a-diagram-is-drawn-not-typed-2",
+      "cockpit": "/cockpit/objects/rule/project-a-diagram-is-drawn-not-typed-2",
       "title": "An architectural relationship in a published document is drawn, never typed in box art",
       "status": "active",
       "tags": [
@@ -11553,7 +12121,7 @@
         "web",
         "accessibility"
       ],
-      "source": ".ai/repo/rules/project/a-diagram-is-drawn-not-typed.v1.md",
+      "source": ".ai/repo/rules/project/a-diagram-is-drawn-not-typed.v2.md",
       "references": [
         {
           "edge": "depends_on",
@@ -11576,6 +12144,13 @@
           "label": "adr-0152",
           "kind": "adr",
           "route": "/adrs/adr-0152/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0166",
+          "kind": "adr",
+          "route": "/adrs/adr-0166/",
           "external": false
         }
       ]
@@ -11792,6 +12367,48 @@
           "external": false
         }
       ]
+    },
+    {
+      "kind": "rule",
+      "id": "majordomus://rule/project.a-push-runs-what-ci-would-find-first@1",
+      "identity": "project.a-push-runs-what-ci-would-find-first@1",
+      "slug": "project-a-push-runs-what-ci-would-find-first-1",
+      "cockpit": "/cockpit/objects/rule/project-a-push-runs-what-ci-would-find-first-1",
+      "title": "A push runs what CI would find first",
+      "status": "active",
+      "tags": [
+        "ci",
+        "process"
+      ],
+      "source": ".ai/repo/rules/project/a-push-runs-what-ci-would-find-first.v1.md",
+      "references": [],
+      "referenced_by": []
+    },
+    {
+      "kind": "rule",
+      "id": "majordomus://rule/project.a-standing-approval-is-written-where-permissions-are-read@1",
+      "identity": "project.a-standing-approval-is-written-where-permissions-are-read@1",
+      "slug": "project-a-standing-approval-is-written-where-permissions-are-read-1",
+      "cockpit": "/cockpit/objects/rule/project-a-standing-approval-is-written-where-permissions-are-read-1",
+      "title": "A standing approval is written where the permission layer reads it",
+      "status": "active",
+      "tags": [
+        "process",
+        "governance",
+        "permissions",
+        "evidence"
+      ],
+      "source": ".ai/repo/rules/project/a-standing-approval-is-written-where-permissions-are-read.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.an-expedited-landing-is-the-owners-word@1",
+          "kind": "rule",
+          "route": "/rules/project-an-expedited-landing-is-the-owners-word-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
     },
     {
       "kind": "rule",
@@ -12083,6 +12700,13 @@
           "label": "adr-0155",
           "kind": "adr",
           "route": "/adrs/adr-0155/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.a-standing-approval-is-written-where-permissions-are-read@1",
+          "kind": "rule",
+          "route": "/rules/project-a-standing-approval-is-written-where-permissions-are-read-1/",
           "external": false
         }
       ]
@@ -12694,9 +13318,9 @@
         },
         {
           "edge": "depends_on",
-          "label": "project.a-diagram-is-drawn-not-typed@1",
+          "label": "project.a-diagram-is-drawn-not-typed@2",
           "kind": "rule",
-          "route": "/rules/project-a-diagram-is-drawn-not-typed-1/",
+          "route": "/rules/project-a-diagram-is-drawn-not-typed-2/",
           "external": false
         },
         {
@@ -13103,6 +13727,13 @@
           "external": false
         },
         {
+          "edge": "put_in_force",
+          "label": "adr-0163",
+          "kind": "adr",
+          "route": "/adrs/adr-0163/",
+          "external": false
+        },
+        {
           "edge": "depends_on",
           "label": "project.a-personal-layer-changes-nothing-shared@1",
           "kind": "rule",
@@ -13493,6 +14124,40 @@
           "label": "adr-0046",
           "kind": "adr",
           "route": "/adrs/adr-0046/",
+          "external": false
+        }
+      ]
+    },
+    {
+      "kind": "rule",
+      "id": "majordomus://rule/project.every-domain-is-a-skill@1",
+      "identity": "project.every-domain-is-a-skill@1",
+      "slug": "project-every-domain-is-a-skill-1",
+      "cockpit": "/cockpit/objects/rule/project-every-domain-is-a-skill-1",
+      "title": "Every domain of the registry is a skill, derived and shown wherever skills are",
+      "status": "active",
+      "tags": [
+        "architecture",
+        "capabilities",
+        "skills",
+        "editors"
+      ],
+      "source": ".ai/repo/rules/project/every-domain-is-a-skill.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.interfaces-are-projections@1",
+          "kind": "rule",
+          "route": "/rules/project-interfaces-are-projections-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0165",
+          "kind": "adr",
+          "route": "/adrs/adr-0165/",
           "external": false
         }
       ]
@@ -14271,9 +14936,9 @@
         },
         {
           "edge": "depends_on",
-          "label": "project.a-diagram-is-drawn-not-typed@1",
+          "label": "project.a-diagram-is-drawn-not-typed@2",
           "kind": "rule",
-          "route": "/rules/project-a-diagram-is-drawn-not-typed-1/",
+          "route": "/rules/project-a-diagram-is-drawn-not-typed-2/",
           "external": false
         },
         {
@@ -14351,6 +15016,13 @@
           "label": "project.envrc-is-an-adapter@2",
           "kind": "rule",
           "route": "/rules/project-envrc-is-an-adapter-2/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.every-domain-is-a-skill@1",
+          "kind": "rule",
+          "route": "/rules/project-every-domain-is-a-skill-1/",
           "external": false
         },
         {
@@ -14689,6 +15361,13 @@
           "label": "adr-0067",
           "kind": "adr",
           "route": "/adrs/adr-0067/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0157",
+          "kind": "adr",
+          "route": "/adrs/adr-0157/",
           "external": false
         },
         {
@@ -15366,6 +16045,13 @@
           "label": "adr-0118",
           "kind": "adr",
           "route": "/adrs/adr-0118/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0164",
+          "kind": "adr",
+          "route": "/adrs/adr-0164/",
           "external": false
         },
         {
@@ -16437,6 +17123,13 @@
       ],
       "referenced_by": [
         {
+          "edge": "put_in_force",
+          "label": "adr-0163",
+          "kind": "adr",
+          "route": "/adrs/adr-0163/",
+          "external": false
+        },
+        {
           "edge": "depends_on",
           "label": "project.entry-converges@2",
           "kind": "rule",
@@ -16787,6 +17480,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0158/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0166",
+          "kind": "adr",
+          "route": "/adrs/adr-0166/",
+          "external": false
         }
       ]
     },
@@ -16814,7 +17514,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0163",
+          "kind": "adr",
+          "route": "/adrs/adr-0163/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "rule",
@@ -16845,6 +17553,13 @@
           "label": "adr-0046",
           "kind": "adr",
           "route": "/adrs/adr-0046/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0164",
+          "kind": "adr",
+          "route": "/adrs/adr-0164/",
           "external": false
         }
       ]

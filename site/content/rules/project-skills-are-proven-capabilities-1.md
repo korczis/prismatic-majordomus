@@ -1,7 +1,7 @@
 +++
 title = "A skill is a capability only when something proves it"
 description = "A skill is a capability only when something proves it"
-weight = 157
+weight = 161
 [extra]
 kind = "rule"
 slug = "project-skills-are-proven-capabilities-1"

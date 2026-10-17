@@ -126,7 +126,124 @@ done <<EOF
 $(cd "$root" && git ls-files -- '.ai/repo/mesh/*.yaml' 2>/dev/null)
 EOF
 
+# 8. Every field the mesh carries is listed, and the list says whether it is redacted before
+#    signing (I2708). An event body is signed into the journal and replicated in clear to every
+#    linked runtime, so a field added to EventBody — or to a brace struct of journal.rs that a
+#    variant carries, followed transitively — reaches every machine unless .ai/repo/ci/
+#    mesh-event-fields.yaml names it as `redacted` or `clear`. The check runs both ways: an
+#    entry for a field the source no longer has fails too, or the list drifts into fiction.
+#    It reads rustfmt's layout (variants at four spaces, their fields at eight; struct fields
+#    at four), and a journal it cannot read is a finding, never a clean tree.
+journal="$crate/mesh/journal.rs"
+field_list=".ai/repo/ci/mesh-event-fields.yaml"
+carried_fields=0
+redacted_fields=0
+
+# enum_fields <file> <enum>: "<enum>.<Variant>.<field><TAB><type>" per named variant field,
+# "#found" once the enum is seen, "#tuple <Variant>" for a variant whose fields have no names
+enum_fields() {
+  awk -v name="$2" '
+    $0 ~ "^pub enum " name " [{]" { inside = 1; print "#found"; next }
+    !inside { next }
+    /^}/ { exit }
+    /^    [A-Z][A-Za-z0-9]*[(]/ { v = $1; sub(/[(].*/, "", v); print "#tuple " v; next }
+    /^    [A-Z][A-Za-z0-9]* [{]/ { variant = $1; next }
+    /^    [}]/ { variant = ""; next }
+    variant != "" && /^        [a-z_][a-z0-9_]*: / {
+      field = $1; sub(/:$/, "", field)
+      type = $0; sub(/^[^:]*: /, "", type); sub(/,[[:space:]]*$/, "", type)
+      printf "%s.%s.%s\t%s\n", name, variant, field, type
+    }
+  ' "$1"
+}
+
+# struct_fields <file> <struct>: "<struct>.<field><TAB><type>" per field of a brace struct,
+# "#found" once the struct is seen; nothing for a type the file does not declare that way
+struct_fields() {
+  awk -v name="$2" '
+    $0 ~ "^pub struct " name " [{]" { inside = 1; print "#found"; next }
+    !inside { next }
+    /^}/ { exit }
+    /^    (pub(\([a-z:]+\))? )?[a-z_][a-z0-9_]*: / {
+      line = $0; sub(/^    (pub(\([a-z:]+\))? )?/, "", line)
+      field = line; sub(/:.*/, "", field)
+      type = line; sub(/^[^:]*: /, "", type); sub(/,[[:space:]]*$/, "", type)
+      printf "%s.%s\t%s\n", name, field, type
+    }
+  ' "$1"
+}
+
+carried=""
+[ -f "$root/$journal" ] && carried="$(enum_fields "$root/$journal" EventBody)"
+if [ "${carried%%$'\n'*}" != "#found" ]; then
+  finding "$journal is missing or declares no EventBody — the gate cannot read the fields the mesh carries, so it cannot say they are listed"
+elif [ ! -f "$root/$field_list" ]; then
+  finding "$field_list is missing — every field an EventBody carries is listed there as redacted or clear before the mesh may sign it"
+else
+  while IFS= read -r variant; do
+    [ -n "$variant" ] || continue
+    finding "EventBody::$variant carries unnamed fields — a variant names its fields, so each can be listed in $field_list"
+  done < <(printf '%s\n' "$carried" | sed -n 's/^#tuple //p')
+  carried="$(printf '%s\n' "$carried" | grep -v '^#' || true)"
+  # follow every type a carried field names that journal.rs declares as a brace struct
+  seen=" "
+  queue="$(printf '%s\n' "$carried" | cut -f2 | grep -oE '[A-Z][A-Za-z0-9]*' | tr '\n' ' ' || true)"
+  while [ -n "${queue// /}" ]; do
+    next_queue=""
+    for type in $queue; do
+      case "$seen" in *" $type "*) continue ;; esac
+      seen="$seen$type "
+      found="$(struct_fields "$root/$journal" "$type")"
+      case "$found" in "#found"*) ;; *) continue ;; esac
+      found="$(printf '%s\n' "$found" | grep -v '^#' || true)"
+      [ -n "$found" ] || continue
+      carried="$carried"$'\n'"$found"
+      next_queue="$next_queue $(printf '%s\n' "$found" | cut -f2 | grep -oE '[A-Z][A-Za-z0-9]*' \
+        | tr '\n' ' ' || true)"
+    done
+    queue="$next_queue"
+  done
+
+  # the list: "  <Type>.<path>: <value>" under `fields:`, comments and blank lines ignored
+  listed="$(awk '
+    /^fields:/ { inside = 1; next }
+    inside && /^[^[:space:]#]/ { inside = 0 }
+    !inside || /^[[:space:]]*(#|$)/ { next }
+    {
+      line = $0; sub(/[[:space:]]+#.*/, "", line); sub(/^[[:space:]]+/, "", line)
+      key = line; sub(/:.*/, "", key)
+      value = line; sub(/^[^:]*:[[:space:]]*/, "", value); sub(/[[:space:]]+$/, "", value)
+      printf "%s\t%s\n", key, value
+    }
+  ' "$root/$field_list")"
+
+  carried_keys="$(printf '%s\n' "$carried" | cut -f1 | grep . | LC_ALL=C sort -u || true)"
+  listed_keys="$(printf '%s\n' "$listed" | cut -f1 | grep . | LC_ALL=C sort || true)"
+  carried_fields="$(printf '%s\n' "$carried_keys" | grep -c . || true)"
+  while IFS= read -r key; do
+    [ -n "$key" ] || continue
+    finding "$key is carried by the mesh and not listed in $field_list — list it as redacted or clear: whether its value passes redaction::redact_secrets before the event is signed and replicated to every linked runtime"
+  done < <(LC_ALL=C comm -23 <(printf '%s\n' "$carried_keys") <(printf '%s\n' "$listed_keys" | LC_ALL=C sort -u))
+  while IFS= read -r key; do
+    [ -n "$key" ] || continue
+    finding "$field_list lists $key, which the mesh no longer carries — remove the entry, or the list describes a field nobody can find"
+  done < <(LC_ALL=C comm -13 <(printf '%s\n' "$carried_keys") <(printf '%s\n' "$listed_keys" | LC_ALL=C sort -u))
+  while IFS= read -r key; do
+    [ -n "$key" ] || continue
+    finding "$field_list lists $key more than once — one field, one decision"
+  done < <(printf '%s\n' "$listed_keys" | uniq -d)
+  while IFS=$'\t' read -r key value; do
+    [ -n "$key" ] || continue
+    case "$value" in
+      redacted) redacted_fields=$((redacted_fields + 1)) ;;
+      clear) ;;
+      *) finding "$field_list lists $key as \"$value\" — an entry says redacted or clear, so the field is decided" ;;
+    esac
+  done <<<"$listed"
+fi
+
 if [ "$fail" -ne 0 ]; then
   exit 10
 fi
-printf 'mesh-check: OK   sockets, links and the journal under src/mesh/, one registry, capability-projected surfaces, declaration complete, no committed tofu\n'
+printf 'mesh-check: OK   sockets, links and the journal under src/mesh/, one registry, capability-projected surfaces, declaration complete, no committed tofu, every EventBody field listed (%s carried, %s redacted before signing)\n' \
+  "$carried_fields" "$redacted_fields"
