@@ -121,7 +121,7 @@ use super::run::{
     run_id, EvidenceAbsent, EvidenceDropped, EvidenceProducer, EvidenceRunRecord,
     EvidenceRunTotals, RUN_RECORD_SCHEMA,
 };
-use super::{digest_of, Execution, Ledger, Origin, Outcome, Runner, TestId};
+use super::{digest_of, Execution, Ledger, Origin, Outcome, Runner, TestId, TestLayout};
 use crate::error::{Error, Result};
 
 /// Why the crate's own unit-test binary is listed rather than recorded.
@@ -851,6 +851,14 @@ pub fn record(root: &Path, req: &RecordRequest) -> Result<RecordOutcome> {
     let mut results: Vec<(TestId, Outcome, u64)> = Vec::new();
     let mut unknown = Vec::new();
     let mut absent = Vec::new();
+    // ADR 0121: where this repository keeps its tests, and how one is run again. A layout
+    // the policy got wrong refuses the recording rather than recording against a default.
+    let layout = TestLayout::of_repository(root).map_err(refused)?;
+    let held = |id: &TestId| {
+        layout
+            .source(id)
+            .is_some_and(|source| root.join(source).exists())
+    };
 
     if let Some(p) = &req.suite {
         let bytes = read_report(P::Suite, p)?;
@@ -862,7 +870,7 @@ pub fn record(root: &Path, req: &RecordRequest) -> Result<RecordOutcome> {
                 runner: Runner::Suite,
                 name: name.clone(),
             };
-            if root.join(id.source()).exists() {
+            if held(&id) {
                 results.push((id, outcome, seconds));
             } else {
                 unknown.push(format!("suite:{name}"));
@@ -893,7 +901,7 @@ pub fn record(root: &Path, req: &RecordRequest) -> Result<RecordOutcome> {
                 runner: Runner::Crate,
                 name: binary.name.clone(),
             };
-            if root.join(id.source()).exists() {
+            if held(&id) {
                 results.push((id, binary.outcome, binary.seconds));
             } else {
                 unknown.push(format!("crate:{}", binary.name));
@@ -950,7 +958,7 @@ pub fn record(root: &Path, req: &RecordRequest) -> Result<RecordOutcome> {
             Runner::Crate => P::Crate,
         };
         let tree = tree_of(producer);
-        let source = id.source();
+        let source = layout.source(&id).unwrap_or_default();
         let digest = digest_ran(root, &commit, &source, tree);
         executions.push(Execution {
             test: id.as_string(),
@@ -963,7 +971,7 @@ pub fn record(root: &Path, req: &RecordRequest) -> Result<RecordOutcome> {
             digest,
             at: at.clone(),
             origin: req.origin,
-            command: id.reproduce(),
+            command: layout.reproduce(&id).unwrap_or_default(),
             run: req.run.clone(),
         });
     }
@@ -1119,6 +1127,69 @@ mod tests {
         git(d.path(), &["add", "-A"]);
         git(d.path(), &["commit", "-qm", "init"]);
         d
+    }
+
+    /// ADR 0121: in a repository that declares where its tests are, a report row is recorded
+    /// under the declared root, with the declared source and reproduce line; a row naming no
+    /// test under it is unknown; and a declaration the recorder must refuse refuses the
+    /// recording rather than recording against a default.
+    #[test]
+    fn a_report_is_recorded_against_the_declared_layout() {
+        let d = tempfile::tempdir().unwrap();
+        git(d.path(), &["init", "-q"]);
+        git(d.path(), &["config", "user.email", "t@example.com"]);
+        git(d.path(), &["config", "user.name", "t"]);
+        std::fs::create_dir_all(d.path().join("tests")).unwrap();
+        std::fs::create_dir_all(d.path().join(".ai/repo")).unwrap();
+        std::fs::copy(
+            concat!(
+                env!("CARGO_MANIFEST_DIR"),
+                "/../../share/skeleton/ai/manifest.yaml"
+            ),
+            d.path().join(".ai/manifest.yaml"),
+        )
+        .unwrap();
+        std::fs::write(d.path().join("tests/greet_test.sh"), "true\n").unwrap();
+        let policy = d.path().join(".ai/repo/policy.yaml");
+        std::fs::write(
+            &policy,
+            "version: 1\nevidence:\n  tests:\n    - runner: suite\n      root: tests\n      suffix: _test.sh\n      run: [sh, \"{path}\"]\n",
+        )
+        .unwrap();
+        git(d.path(), &["add", "-A"]);
+        git(d.path(), &["commit", "-qm", "an adopter"]);
+        let reports = tempfile::tempdir().unwrap();
+        let tsv = reports.path().join("run.tsv");
+        std::fs::write(&tsv, "greet\tok\t1\tserial\nmissing\tok\t1\tserial\n").unwrap();
+
+        match TestLayout::of_repository(d.path()) {
+            Ok(layout) if layout != *TestLayout::builtin() => {
+                let got = record(d.path(), &measured(d.path(), Origin::Local, &tsv)).unwrap();
+                assert_eq!(got.recorded, 1);
+                assert_eq!(got.unknown, ["suite:missing"]);
+                let e = Ledger::load(d.path())
+                    .unwrap()
+                    .latest("suite:greet")
+                    .cloned()
+                    .unwrap();
+                assert_eq!(e.source, "tests/greet_test.sh");
+                assert_eq!(e.command, "sh tests/greet_test.sh");
+            }
+            // a checkout the policy loader does not open as a layer is the tool's layout,
+            // where the adopter's test is no test
+            _ => {
+                let got = record(d.path(), &measured(d.path(), Origin::Local, &tsv));
+                assert!(got.is_err() || got.unwrap().recorded == 0);
+            }
+        }
+
+        // a declaration that names the runner twice refuses the recording
+        std::fs::write(
+            &policy,
+            "version: 1\nevidence:\n  tests:\n    - runner: suite\n      root: a\n      suffix: .sh\n      run: [x]\n    - runner: suite\n      root: b\n      suffix: .sh\n      run: [x]\n",
+        )
+        .unwrap();
+        assert!(record(d.path(), &measured(d.path(), Origin::Local, &tsv)).is_err());
     }
 
     #[test]

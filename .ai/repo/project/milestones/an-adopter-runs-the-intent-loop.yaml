@@ -1,0 +1,38 @@
+id: an-adopter-runs-the-intent-loop
+title: An adopter runs the intent loop on its own tests
+slug: an-adopter-runs-the-intent-loop
+order: 135
+priority: p1
+problem: "The evidence engine maps a test path to a test only under test/cases/ and apps/majordomus-cli/tests/, the tool's own layout, so in a repository that adopted the tool a test criterion names no test, a recorded run of its own test is 'no such test here', and no intent there can ever be satisfied (reproduced in a fresh init, 2026-10-09)."
+outcome: "The repository declares where its tests are; the default is the tool's own layout; case 983 runs the whole loop in a fresh adopter with documented commands."
+current_state: "TestId::of and TestId::source hardcode two directories; intent validate tells an adopter to use them."
+desired_state: "evidence.tests declares runner, root and suffix; one resolver serves TestId, the recorder and validation; the skeleton documents the key."
+scope:
+  - apps/majordomus-cli/src/evidence
+  - apps/majordomus-cli/src/intent.rs
+  - apps/majordomus-cli/src/policy.rs
+  - share/schemas/majordomus/policy
+  - share/skeleton/policy.yaml
+  - share/skeleton/ai/repo/project/README.md
+  - share/allow
+  - .ai/repo/adrs
+  - .ai/repo/project
+  - docs
+  - test/cases/983_an_adopter_runs_the_intent_loop_on_its_own_tests.sh
+non_scope:
+  - Nested layouts
+  - Command and deployment runners (ADR 0119)
+acceptance_criteria:
+  - "A declared layout resolves and is recorded; an undeclared path is refused naming the key"
+  - "No declaration changes nothing"
+  - "Case 983 passes in a fresh init"
+validation:
+  - majordomus intent validate
+  - bash test/run.sh 983_an_adopter_runs_the_intent_loop_on_its_own_tests
+  - cargo test --lib -- evidence::
+evidence_required: []
+depends_on: []
+risks:
+  - "Every reader of TestId must go through the one resolver, or a declared test is met in one surface and unknown in another"
+created_at: 2026-10-09
+updated_at: 2026-10-09

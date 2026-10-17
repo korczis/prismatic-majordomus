@@ -1,0 +1,49 @@
+intent: an-adopter-runs-the-intent-loop
+reviewed_at: 6800dcb519
+reviewed_by: "Two other Claude Code sessions of the same operator, each in its own context and owning a neighbouring subsystem: dev-d3 (evidence recording, ADR 0119) reviewed ADR 0121 and the failing case 983 against command and deployment evidence; d1 (the intent engine) reviewed where the engine resolves a criterion's test and which callers must follow. Same model family, independent of the authoring context. Disposition: accept with required changes, all planned below."
+findings:
+  - id: reproduce-line-would-lie
+    class: unproven_assumption
+    subject: I2091
+    finding: "A runner implies how its test is run again (bash test/run.sh, cargo test --test); an adopter declaring a root under suite would see a false reproduce line on every surface, and pytest or jest could name no honest runner."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2091
+      because: "The declaration carries run, an argv with {name} or {path}; TestId's reproduce line goes through the layout; case 983 asserts `sh tests/greet_test.sh`."
+  - id: prefixed-runners-have-no-root
+    class: missed_requirement
+    subject: I2091
+    finding: "Constraint 3 as worded would refuse ADR 0119's command: and deployment: rows, which have no root."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2091
+      because: "ADR 0121 now checks only path-based rows against the roots; prefixed runners resolve by prefix and are refused unless their own recorder wrote them, as ADR 0119 decides."
+  - id: one-root-limit-unstated
+    class: insufficient_work
+    subject: an-adopter-runs-the-intent-loop
+    finding: "One root per runner cannot express tests of one kind in two directories or two languages."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2091
+      because: "Named in ADR 0121's consequences and in the intent's non_goals beside nested layouts."
+  - id: other-callers-would-disagree
+    class: surface_missing
+    subject: I2091
+    finding: "TestId::of is also called by the evidence capability, the rules proof and the skill and subject readers; left on the built-in layout, rules and evidence would disagree with intents for an adopter."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2091
+      because: "The callers that hold a repository — the intent engine, the recorder, evidence.test and both rule-proof readers — go through TestLayout::of_repository; the claims subjects and skills, which read this repository's own CLAIMS and skills, stay on the built-in layout and are named as a limit."
+  - id: refusal-text-and-code
+    class: delivery_verification
+    subject: an-adopter-runs-the-intent-loop#tests-are-where-the-repository-keeps-them
+    finding: "The finding code unresolved_evidence_ref and its exit are what readers and cases match; the text may change."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2091
+      because: "The code and exit are unchanged; the message names the layout in force and the policy key."

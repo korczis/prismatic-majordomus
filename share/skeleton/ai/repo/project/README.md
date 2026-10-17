@@ -31,7 +31,20 @@ The directories below hold instances of these kinds rather than sections of thei
 they owe no contract until this repository decides to describe them
 (`children.require_contract: false`).
 
+Above the milestones, `intents/` may say what must become true: one file per intent, with the
+criteria that settle it, each naming its evidence. An issue names the criteria it serves
+(`serves: [<intent>#<criterion>]`), `gaps/` records what was observed missing and `critiques/`
+the opposition the plan met before execution. Stage and satisfaction are derived on every read;
+nothing stores them. A `test` criterion names a test where this repository keeps its tests, and
+the policy's `evidence.tests` says where that is (ADR 0121).
+
 ```bash
 majordomus plan next          # the issues whose dependencies are satisfied
 majordomus plan validate      # the graph: acyclic, every edge resolves
+```
+
+```bash
+majordomus-cli intent list       # every intent, its derived stage and verdict
+majordomus-cli intent validate   # the model: unknown references, uncovered criteria, missing critique
+majordomus-cli intent explain <id>
 ```

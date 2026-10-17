@@ -1,0 +1,36 @@
+id: I2091
+milestone: an-adopter-runs-the-intent-loop
+title: The repository declares where its tests are, and a test criterion resolves there
+slug: tests-are-declared
+priority: p1
+profile: implementation
+parallel_safe: false
+serves:
+  - an-adopter-runs-the-intent-loop#tests-are-where-the-repository-keeps-them
+objective: "Add policy evidence.tests [{runner, root, suffix, run}] with the built-in default of today's two (run is an argv with {name} or {path}); resolve TestId::of, TestId::source, the recorder and intent validation through one resolver honouring ADR 0121's three constraints; refuse a duplicate runner; teach the key in the refusal; write ADR 0121."
+why: "An adopter's test criterion can never be met while the engine knows only the tool's own directories."
+current_state: "TestId::of and ::source hardcode test/cases/ and apps/majordomus-cli/tests/."
+desired_state: "A declared layout resolves everywhere; no declaration changes nothing."
+scope:
+  - apps/majordomus-cli/src/evidence
+  - apps/majordomus-cli/src/intent.rs
+  - apps/majordomus-cli/src/policy.rs
+  - share/schemas/majordomus/policy
+  - share/skeleton/policy.yaml
+  - share/allow
+  - .ai/repo/adrs
+  - docs
+depends_on: []
+acceptance_criteria:
+  - With no declaration every existing test id and source is unchanged
+  - A declared root and suffix resolve a path to runner:name and back
+  - A prefixed reference resolves by its prefix, and an undeclared runner row is refused by the recorder
+  - A runner declared twice is refused
+  - The reproduce line of a declared test is its declared run argv on every surface
+validation:
+  - cargo test --lib -- evidence::
+  - bash test/run.sh 983_an_adopter_runs_the_intent_loop_on_its_own_tests
+evidence_required:
+  - tests_are_declared
+created_at: 2026-10-09
+updated_at: 2026-10-09

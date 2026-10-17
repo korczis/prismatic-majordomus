@@ -422,22 +422,14 @@ fn proves(ctx: &Context, input: RuleTestInput) -> Result<TestSubjects, Capabilit
     let r = full_report(ctx)?;
     let given = input.test.trim();
     // a path and an identity both name the same test
-    let id = TestId::of(given).or_else(|| {
-        let (prefix, name) = given.split_once(':')?;
-        let runner = match prefix {
-            "suite" => crate::evidence::Runner::Suite,
-            "crate" => crate::evidence::Runner::Crate,
-            _ => return None,
-        };
-        Some(TestId {
-            runner,
-            name: name.to_string(),
-        })
-    });
+    let root = std::path::PathBuf::from(&ctx.index.repository.root);
+    let layout = crate::evidence::TestLayout::of_repository(&root)
+        .unwrap_or(crate::evidence::TestLayout::builtin().clone());
+    let id = layout.of(given);
     let key = id.as_ref().map(TestId::as_string);
     let path = id
         .as_ref()
-        .map(TestId::source)
+        .and_then(|i| layout.source(i))
         .unwrap_or_else(|| given.to_string());
 
     let mut proves = Vec::new();

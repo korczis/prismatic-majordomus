@@ -1,0 +1,35 @@
+intent: an-adopter-runs-the-intent-loop
+observed_at: 6800dcb519
+recorded_by: claude-code (session fa; a fresh init in the session scratchpad with tests/greet_test.sh, and case 983 run against master's executable)
+recorded_at: 2026-10-09
+observations:
+  - id: test-id-hardcodes-layout
+    statement: TestId::of maps only test/cases/<name>.sh and apps/majordomus-cli/tests/<name>.rs to a test; TestId::source maps back to the same two
+    source: file:apps/majordomus-cli/src/evidence/mod.rs
+  - id: validate-names-the-tools-layout
+    statement: intent validate refuses tests/greet_test.sh with "give a path under test/cases/ or apps/majordomus-cli/tests/"
+    source: file:apps/majordomus-cli/src/intent.rs
+  - id: recorder-knows-no-adopter-test
+    statement: evidence record over a suite report naming greet_test answers "suite:greet_test (no such test here)"
+    source: file:apps/majordomus-cli/src/evidence/record.rs
+  - id: skeleton-names-no-intent
+    statement: The skeleton's project README names project.yaml, milestones/ and issues/ and nothing of intents, gaps or critiques
+    source: file:share/skeleton/ai/repo/project/README.md
+conditions:
+  - criterion: tests-are-where-the-repository-keeps-them
+    state: missing
+    because: no declaration exists and the two directories are compiled in
+    observations: [test-id-hardcodes-layout, validate-names-the-tools-layout, recorder-knows-no-adopter-test]
+  - criterion: the-loop-runs-in-an-adopter
+    state: missing
+    because: case 983 fails at its second step, and the skeleton does not mention intents
+    observations: [validate-names-the-tools-layout, skeleton-names-no-intent]
+work:
+  - id: declare
+    title: The repository declares where its tests are, and a test criterion resolves there
+    serves: [tests-are-where-the-repository-keeps-them]
+    issue: I2091
+  - id: prove
+    title: A fresh adopter runs the intent loop end to end with documented commands
+    serves: [the-loop-runs-in-an-adopter]
+    issue: I2092

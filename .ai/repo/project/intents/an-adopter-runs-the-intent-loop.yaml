@@ -1,0 +1,28 @@
+id: an-adopter-runs-the-intent-loop
+title: A repository that adopted the tool runs the intent loop on its own tests
+statement: "A repository fresh from init, keeping its tests in its own layout, states an intent, declares where its tests are, has its plan critiqued, starts bound work, records its own test runs with the documented evidence commands and reads its intent satisfied — and unsatisfied again when its test changes — with nothing that names the tool's own repository."
+invariants:
+  - A repository that declares nothing behaves exactly as before; the default is the tool's own layout
+  - The runner vocabulary stays one enum; a declaration gives a runner a root and never adds a runner
+  - A prefixed reference is resolved by its prefix before any declared root
+milestones:
+  - an-adopter-runs-the-intent-loop
+satisfaction:
+  - id: tests-are-where-the-repository-keeps-them
+    criterion: A test criterion naming a path under a root the policy declares resolves to that runner's test, a recorded run of it meets the criterion, an undeclared path is refused naming the key to declare, and with no declaration every existing identity is unchanged
+    evidence: test
+    ref: test/cases/983_an_adopter_runs_the_intent_loop_on_its_own_tests.sh
+  - id: the-loop-runs-in-an-adopter
+    criterion: In a fresh init with only documented commands, start is unchanged under the skeleton's policy, a critiqued intent binds a named start and refuses an unnamed one under required binding, the recorded run satisfies the verdict while the stage stays open, and a changed test makes the evidence stale and resolves a handover to evidence_moved
+    evidence: test
+    ref: test/cases/983_an_adopter_runs_the_intent_loop_on_its_own_tests.sh
+governance:
+  - rule:project.work-serves-a-declared-intent
+  - rule:project.derived-once
+  - adr:adr-0070
+  - adr:adr-0121
+non_goals:
+  - Nested test layouts; one flat root per runner
+  - Command and deployment evidence, which ADR 0119 adds to the same runner enum
+created_at: 2026-10-09
+updated_at: 2026-10-09

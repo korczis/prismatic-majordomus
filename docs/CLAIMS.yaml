@@ -1974,6 +1974,15 @@ claims:
     responsibility: layer
     note: An empty stdin is refused because an act without evidence is an assertion, and stdin carrying a transcript marker is refused for the reason a record may not carry one. Promotion keeps derived_from, adds the promoting episode, appends the evidence under an Evidence section and writes knowledge.promoted; rejection rewrites the candidate in place as superseded with a Rejected section and writes knowledge.rejected. The deriver skips a promoted or superseded id, so neither act is undone by the next episode boundary.
 
+  - id: an-adopter-runs-the-intent-loop-on-its-own-tests
+    claim: A repository that adopted the tool declares where its tests are, and its intent loop runs on them with documented commands — a declared test resolves, is recorded and meets its criterion, an undeclared one is refused naming the key, and with no declaration every test identity is the tool's own layout as before
+    source: docs/EVIDENCE.md
+    implementation: apps/majordomus-cli/src/evidence/mod.rs
+    test: test/cases/983_an_adopter_runs_the_intent_loop_on_its_own_tests.sh
+    status: guaranteed
+    responsibility: layer
+    note: The case runs in a fresh init with tests in tests/ — start unchanged under the skeleton's policy, a critiqued intent, required binding refusing unrelated work and binding the named issue, a run recorded with evidence stamp and evidence record that satisfies the verdict while the stage stays open, the reproduce line being the declared run, and a changed test making the evidence stale and resolving a handover to evidence_moved. ADR 0121.
+
   - id: briefing-names-candidates
     claim: The start briefing names the candidates awaiting review on this branch, count and ids, bounded and within the briefing budget, and prints their absence rather than omitting it
     source: docs/KNOWLEDGE.md

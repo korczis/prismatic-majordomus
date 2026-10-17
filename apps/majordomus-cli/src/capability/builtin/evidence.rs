@@ -617,26 +617,20 @@ fn claim(ctx: &Context, input: EvidenceClaimInput) -> Result<ClaimEvidence, Capa
 fn test(ctx: &Context, input: EvidenceTestInput) -> Result<TestEvidence, CapabilityError> {
     // a path and an identity both name the same test; a client that has one should not
     // have to know the other's spelling
-    let id = evidence::TestId::of(&input.test)
-        .or_else(|| {
-            let (prefix, name) = input.test.split_once(':')?;
-            let runner = match prefix {
-                "suite" => evidence::Runner::Suite,
-                "crate" => evidence::Runner::Crate,
-                _ => return None,
-            };
-            // the same rule the path form applies: one grammar, not two that disagree
-            evidence::TestId::named(runner, name)
-        })
-        .ok_or_else(|| {
-            CapabilityError::InvalidInput(format!(
-                "`{}` names no test: give `suite:<case>`, `crate:<binary>`, or the path of a \
-                 case under test/cases/ or an integration test under apps/majordomus-cli/tests/",
-                input.test
-            ))
-        })?;
-
     let root = root_of(ctx);
+    // ADR 0121: the repository's declared layout, the same one the intent engine and the
+    // recorder read; a refused declaration is an error rather than a silent default
+    let layout =
+        evidence::TestLayout::of_repository(&root).map_err(CapabilityError::InvalidInput)?;
+    let id = layout.of(&input.test).ok_or_else(|| {
+        CapabilityError::InvalidInput(format!(
+            "`{}` names no test of this repository's layout: give `suite:<case>`, \
+             `crate:<binary>`, or a path under a root the policy's evidence.tests declares \
+             (ADR 0121)",
+            input.test
+        ))
+    })?;
+
     let r = full_report(ctx)?;
     let key = id.as_string();
     let proves: Vec<ClaimProof> = r
@@ -651,9 +645,11 @@ fn test(ctx: &Context, input: EvidenceTestInput) -> Result<TestEvidence, Capabil
     Ok(TestEvidence {
         test: key,
         runner: id.runner,
-        source: id.source(),
-        present: root.join(id.source()).exists(),
-        reproduce: id.reproduce(),
+        source: layout.source(&id).unwrap_or_default(),
+        present: layout
+            .source(&id)
+            .is_some_and(|source| root.join(source).exists()),
+        reproduce: layout.reproduce(&id).unwrap_or_default(),
         execution,
         digest_matches,
         proves,
@@ -923,6 +919,54 @@ mod tests {
                 !e.capability.cache.is_enabled(),
                 "{id} must not cache: the ledger changes outside this process"
             );
+        }
+    }
+
+    /// ADR 0121: `evidence.test` reads the repository's declared layout — a test under a
+    /// declared root answers with its declared source and reproduce line, a path no root
+    /// covers is refused naming the key, and a declaration the layout refuses is an error,
+    /// never the tool's layout by default.
+    #[test]
+    fn a_test_is_looked_up_in_the_declared_layout() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let root = repo.root().to_path_buf();
+        std::fs::create_dir_all(root.join("tests")).unwrap();
+        std::fs::write(root.join("tests/greet_test.sh"), "true\n").unwrap();
+        let policy = root.join(".ai/repo/policy.yaml");
+        let original = std::fs::read_to_string(&policy).unwrap();
+        let declare = |extra: &str| std::fs::write(&policy, format!("{original}{extra}")).unwrap();
+        declare("evidence:\n  tests:\n    - runner: suite\n      root: tests\n      suffix: _test.sh\n      run: [sh, \"{path}\"]\n");
+        let ctx = repo.context().unwrap();
+        let v = ctx
+            .execute(
+                "evidence.test",
+                serde_json::json!({ "test": "tests/greet_test.sh" }),
+            )
+            .unwrap();
+        assert_eq!(v["test"], "suite:greet");
+        assert_eq!(v["source"], "tests/greet_test.sh");
+        assert_eq!(v["present"], true);
+        assert_eq!(v["reproduce"], "sh tests/greet_test.sh");
+        // a crate test has no root here: no source, not present, no reproduce line
+        let v = ctx
+            .execute("evidence.test", serde_json::json!({ "test": "crate:why" }))
+            .unwrap();
+        assert_eq!(
+            (v["source"].as_str(), v["present"].as_bool()),
+            (Some(""), Some(false))
+        );
+        match ctx.execute(
+            "evidence.test",
+            serde_json::json!({ "test": "test/cases/07_scope.sh" }),
+        ) {
+            Err(CapabilityError::InvalidInput(m)) => assert!(m.contains("evidence.tests"), "{m}"),
+            other => panic!("a path no declared root covers was answered: {other:?}"),
+        }
+        declare("evidence:\n  tests:\n    - runner: suite\n      root: a\n      suffix: .sh\n      run: [x]\n    - runner: suite\n      root: b\n      suffix: .sh\n      run: [x]\n");
+        let ctx = repo.context().unwrap();
+        match ctx.execute("evidence.test", serde_json::json!({ "test": "suite:x" })) {
+            Err(CapabilityError::InvalidInput(m)) => assert!(m.contains("twice"), "{m}"),
+            other => panic!("a refused declaration was answered: {other:?}"),
         }
     }
 

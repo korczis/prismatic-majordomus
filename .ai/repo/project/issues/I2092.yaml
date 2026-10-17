@@ -1,0 +1,28 @@
+id: I2092
+milestone: an-adopter-runs-the-intent-loop
+title: A fresh adopter runs the intent loop end to end with documented commands
+slug: the-loop-runs-in-an-adopter
+priority: p1
+profile: implementation
+parallel_safe: false
+serves:
+  - an-adopter-runs-the-intent-loop#the-loop-runs-in-an-adopter
+objective: "Case 983: a fresh init with tests in tests/, the skeleton's policy, then a declared layout, a critiqued intent, required binding, a recorded run, a satisfied verdict with an open stage, a changed test and an evidence_moved handover; the skeleton's project README names intents/, gaps/ and critiques/ and points at the commands, with no second contract."
+why: "The mission asks that intent behaviour be proven in a repository that is not the tool's own, from that repository's state alone."
+current_state: "Fresh-init cases exist per feature, all with tests under test/cases/; nothing scaffolds or proves the loop for an adopter's own layout."
+desired_state: "One case proves the loop in an adopter's layout; the skeleton tells an adopter the plan has intents."
+scope:
+  - share/skeleton/ai/repo/project/README.md
+  - test/cases/983_an_adopter_runs_the_intent_loop_on_its_own_tests.sh
+  - docs
+depends_on:
+  - I2091
+acceptance_criteria:
+  - Case 983 passes in a fresh init
+  - The skeleton's project README names intents/, gaps/ and critiques/ and the intent commands
+validation:
+  - bash test/run.sh 983_an_adopter_runs_the_intent_loop_on_its_own_tests
+evidence_required:
+  - loop_runs_in_adopter
+created_at: 2026-10-09
+updated_at: 2026-10-09

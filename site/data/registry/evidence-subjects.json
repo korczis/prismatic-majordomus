@@ -1019,6 +1019,11 @@
     },
     {
       "kind": "claim",
+      "subject": "claim:an-adopter-runs-the-intent-loop-on-its-own-tests",
+      "path": "/evidence/claims/an-adopter-runs-the-intent-loop-on-its-own-tests/"
+    },
+    {
+      "kind": "claim",
       "subject": "claim:archive-fidelity",
       "path": "/evidence/claims/archive-fidelity/"
     },
@@ -5960,6 +5965,29 @@
             "docs/SCHEMAS.md",
             "lib/init.sh",
             "test/cases/01_init.sh"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "claim:an-adopter-runs-the-intent-loop-on-its-own-tests": {
+      "kind": "claim",
+      "id": "an-adopter-runs-the-intent-loop-on-its-own-tests",
+      "status": "guaranteed",
+      "page": "/evidence/claims/an-adopter-runs-the-intent-loop-on-its-own-tests/",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "claim",
+          "test": "suite:983_an_adopter_runs_the_intent_loop_on_its_own_tests",
+          "path": "test/cases/983_an_adopter_runs_the_intent_loop_on_its_own_tests.sh",
+          "category": "e2e",
+          "inputs": [
+            "docs/EVIDENCE.md",
+            "apps/majordomus-cli/src/evidence/mod.rs",
+            "test/cases/983_an_adopter_runs_the_intent_loop_on_its_own_tests.sh"
           ]
         }
       ],
@@ -13323,6 +13351,12 @@
           "via": "behaviour",
           "test": "suite:131_completion_gates",
           "path": "test/cases/131_completion_gates.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:983_an_adopter_runs_the_intent_loop_on_its_own_tests",
+          "path": "test/cases/983_an_adopter_runs_the_intent_loop_on_its_own_tests.sh",
           "category": "e2e"
         },
         {
