@@ -4,7 +4,7 @@ description: "Remove a file, branch, worktree, record or process only after each
 ---
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: .ai/repo/skills/assess-before-deleting/SKILL.md; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.28.0 -->
+     Generator: majordomus-cli 0.28.1 -->
 
 # Assess before deleting
 
