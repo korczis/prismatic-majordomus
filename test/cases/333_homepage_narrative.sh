@@ -19,7 +19,9 @@
 # surface the page still calls local, and a local one whose mount is not stated; and a
 # declared capability word in the hand-written copy whose claim is absent, planned or
 # unsupported by a recorded run, a declaration naming a claim that does not exist, and a
-# draft feature named in the copy.
+# draft feature named in the copy; a sentence of the homepage's template that states how the
+# work stands (case 3105 holds every form of that, and the real files); and a product view
+# whose release changes are not the newest release record's, counted by the changelog's groups.
 # Rule: project.homepage-tells-a-declared-story.
 . "$ROOT/test/lib.sh"
 CHECK="$ROOT/scripts/ci/homepage-check"
@@ -36,6 +38,9 @@ fresh() {
   # the hand-written copy, clean: no declared word, no feature that is not stable
   printf '[hero]\ntitle = "Keep the work moving"\n' > "$F/site/data/marketing.toml"
   printf '# a comment may say unattended: comments are not copy\n[intro]\nlead = "The repository decides what is done."\n' > "$F/site/data/manifesto.toml"
+  # the homepage's template, clean: a comment may say today, the text says nothing of the present
+  mkdir -p "$F/site/templates"
+  printf '{#- a comment may say what is shipped today: comments are not text -#}\n<section id="hero"><h1>{{ m.hero.title }}</h1></section>\n' > "$F/site/templates/index.html"
   mkdir -p "$F/site/public/js" "$F/site/public/docs/plain" "$F/site/public/docs/diagram"
   printf 'x%.0s' $(seq 1 40) > "$F/site/public/js/app.js"
   printf '<html><head><title>p</title></head><body>plain</body></html>\n' > "$F/site/public/docs/plain/index.html"
@@ -94,7 +99,7 @@ expect_finding() { # <exit> <pattern> <what>
 # --- a clean tree passes, every check reporting
 fresh
 expect_finding 0 '^OK   narrative ' "a clean tree"
-for c in substance honesty map install runtime providers trust surfaces interfaces product evidence declared promises weight indexing; do grep -q "^OK   $c " out.txt || { echo "    a clean tree did not report $c"; cat out.txt; exit 1; }; done
+for c in substance honesty map install runtime providers trust surfaces interfaces product evidence declared promises present weight indexing; do grep -q "^OK   $c " out.txt || { echo "    a clean tree did not report $c"; cat out.txt; exit 1; }; done
 
 # --- narrative, both directions and the order
 fresh; sed -i.bak 's#<section id="how">#<section id="extra"><a href="/x/">x</a></section><section id="how">#' "$F/site/public/index.html"
@@ -199,6 +204,20 @@ fresh; faces; sed -i.bak 's#data-product-view="good"#data-product-view="other"#'
 expect_finding 10 'the hero shows the product view\(s\) \[other\], and the product is good' "a view of something else"
 fresh; faces; sed -i.bak 's#data-issues="READY">2#data-issues="READY">7#' "$F/site/public/index.html"
 expect_finding 10 'counts the issues as \[READY 7, DONE 1\], and the plan gives \[READY 2, DONE 1\]' "a figure the plan does not give"
+# and the changes it counts are the newest release record's, group by group, in the
+# changelog's order: what landed is read from the records, never said in a sentence
+landings() {
+  printf '%s\n' '{"sections":[{"version":"2.0.0","unreleased":false,"groups":[{"kind":"feat","changes":[{},{}]},{"kind":"fix","changes":[]},{"kind":"chore","changes":[{}]}]},{"version":"1.0.0","unreleased":false,"groups":[{"kind":"feat","changes":[{}]}]}]}' > "$F/site/data/generated/changelog.json"
+  sed -i.bak 's#</dl></figure>#</dl><dl data-product-landings="2.0.0"><dd data-landings="feat">2</dd><dd data-landings="chore">1</dd></dl></figure>#' "$F/site/public/index.html"
+}
+fresh; faces; landings
+expect_finding 0 '^OK   product .*counts what the plan and the newest release record count' "a view counting what the newest release carried"
+fresh; faces; landings; sed -i.bak 's#data-landings="feat">2#data-landings="feat">5#' "$F/site/public/index.html"
+expect_finding 10 "counts v2.0.0's changes as \[feat 5, chore 1\], and the changelog gives \[feat 2, chore 1\]" "a change count the changelog does not give"
+fresh; faces; landings; sed -i.bak 's#data-product-landings="2.0.0"#data-product-landings="1.0.0"#' "$F/site/public/index.html"
+expect_finding 10 'counts the changes of v1.0.0, and the newest release record is v2.0.0' "an older release presented as the newest"
+fresh; faces; landings; sed -i.bak 's#<dl data-product-landings="2.0.0">.*</dl></figure>#</figure>#' "$F/site/public/index.html"
+expect_finding 10 'says nothing of what v2.0.0 carried' "a view silent about the release the records hold"
 fresh; sed -i.bak 's#<h1>t</h1>#<h1>t</h1><a href="/x/" data-cta="product" data-product="x">open</a>#' "$F/site/public/index.html"
 expect_finding 10 'the hero opens a product, and the data gives no interface a person opens' "a product where the data gives none"
 # the other way a publication holds a surface: the build names a snapshot of it (ADR 0141),
@@ -293,6 +312,10 @@ fresh; claims guaranteed true
 sed -i.bak 's#{"id":"draft","route":"/features/draft/","status":"draft"}#{"id":"draft","route":"/features/draft/","status":"draft","short_title":"Deployments"}#' "$F/site/data/registry/product.json"
 printf '[intro]\nlead = "Deployments are one object."\n' > "$F/site/data/manifesto.toml"
 promise_finding 10 "site/data/manifesto.toml:2 names feature 'draft' \('Deployments'\), which the product model calls draft" "a draft feature named in the copy"
+# --- present: the template's text states no present it does not read (case 3105 holds the rest)
+fresh; printf '<p>Milestones under way</p>\n' >> "$F/site/templates/index.html"
+expect_finding 10 "present +site/templates/index.html:3 states the present \('under way'\)" "a template sentence stating how the work stands"
+
 # a copy file that is missing is a finding of promises alone: every other check still runs, and a
 # caller asking --only for another check is not stopped (case 544 builds a tree without them)
 fresh; rm "$F/site/data/marketing.toml"

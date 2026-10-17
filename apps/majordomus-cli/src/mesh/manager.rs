@@ -25,15 +25,12 @@ use super::multicast::MulticastProvider;
 use super::protocol::{self, Refusal};
 use super::provider::{Beacon, MeshProvider, Observation, ProviderContext, ProviderStatus};
 use super::registry::{MeshRegistry, MeshSource, NodeRecord, Tallies};
-use super::rendezvous::{RegisterAnswer, RendezvousProvider};
+use super::rendezvous::{RegisterAnswer, RendezvousProvider, MAX_CANDIDATES};
 use super::trust;
 use super::MeshError;
 
 /// How often the manager thread checks the stop flag while nothing arrives.
 const RECV_TIMEOUT: Duration = Duration::from_millis(500);
-
-/// The most candidates one register answer carries.
-const MAX_CANDIDATES: usize = 32;
 
 /// Refused datagrams, by reason. The diagnosis of a hostile or misconfigured network:
 /// a mesh that hears garbage says so, with numbers, instead of being quietly empty.

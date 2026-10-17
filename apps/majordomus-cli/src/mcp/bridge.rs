@@ -103,18 +103,7 @@ fn exchange(
     timeout: Duration,
 ) -> std::io::Result<Reply> {
     stream.set_read_timeout(Some(timeout))?;
-    stream.set_write_timeout(Some(timeout))?;
-    let body = body.unwrap_or("");
-    let mut text = format!(
-        "{method} {path} HTTP/1.1\r\nHost: {host}\r\nConnection: close\r\nAccept: application/json\r\nContent-Type: application/json\r\nContent-Length: {}\r\n",
-        body.len()
-    );
-    for (k, v) in headers {
-        text.push_str(&format!("{k}: {v}\r\n"));
-    }
-    text.push_str("\r\n");
-    text.push_str(body);
-    stream.write_all(text.as_bytes())?;
+    write_request(&mut stream, host, method, path, headers, body, timeout)?;
     let mut raw = Vec::new();
     (&mut stream)
         .take(MAX_REPLY_BYTES as u64 + 1)
@@ -128,11 +117,283 @@ fn exchange(
     parse_reply(&raw)
 }
 
-fn parse_reply(raw: &[u8]) -> std::io::Result<Reply> {
-    let text = String::from_utf8_lossy(raw);
-    let (head, body) = text
-        .split_once("\r\n\r\n")
-        .ok_or_else(|| std::io::Error::other("malformed HTTP response: no header end"))?;
+/// Write one request: the head this client always sends, the caller's headers, the body.
+fn write_request(
+    stream: &mut TcpStream,
+    host: &str,
+    method: &str,
+    path: &str,
+    headers: &[(&str, &str)],
+    body: Option<&str>,
+    timeout: Duration,
+) -> std::io::Result<()> {
+    stream.set_write_timeout(Some(timeout))?;
+    let body = body.unwrap_or("");
+    let mut text = format!(
+        "{method} {path} HTTP/1.1\r\nHost: {host}\r\nConnection: close\r\nAccept: application/json\r\nContent-Type: application/json\r\nContent-Length: {}\r\n",
+        body.len()
+    );
+    for (k, v) in headers {
+        text.push_str(&format!("{k}: {v}\r\n"));
+    }
+    text.push_str("\r\n");
+    text.push_str(body);
+    stream.write_all(text.as_bytes())
+}
+
+/// The most bytes of a reply's head [`request_json_within`] reads before its body begins.
+pub const MAX_HEAD_BYTES: usize = 16 * 1024;
+
+/// What one reply read by [`request_json_within`] may cost: the bytes of it held, and the
+/// time it may take, between two reads and in all.
+///
+/// The two times are different defences. `idle` is what [`request`] bounds: a peer that
+/// goes quiet. `within` bounds a peer that never goes quiet — one byte every few seconds —
+/// which a bound between reads alone lets hold its caller for as long as it likes.
+///
+/// ```
+/// use std::time::Duration;
+/// use majordomus_cli::mcp::bridge::ReplyBound;
+///
+/// let bound = ReplyBound {
+///     bytes: 1024,
+///     idle: Duration::from_secs(5),
+///     within: Duration::from_secs(20),
+/// };
+/// assert!(bound.idle <= bound.within);
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ReplyBound {
+    /// The most bytes of the reply's JSON body held, without its insignificant whitespace.
+    pub bytes: usize,
+    /// The longest wait for the next bytes.
+    pub idle: Duration,
+    /// The longest wait for the whole reply, from the connection on.
+    pub within: Duration,
+}
+
+/// Why [`request_json_within`] stopped reading a reply: the typed half of the
+/// [`std::io::Error`] it returns, reached with [`ReplyRefused::of`]. Neither is a reply a
+/// caller can act on; both say the peer sent more, or more slowly, than it may (I2704).
+///
+/// ```
+/// use majordomus_cli::mcp::bridge::ReplyRefused;
+///
+/// let error = std::io::Error::new(
+///     std::io::ErrorKind::InvalidData,
+///     ReplyRefused::Oversized { bound: 10 },
+/// );
+/// assert_eq!(ReplyRefused::of(&error), Some(&ReplyRefused::Oversized { bound: 10 }));
+/// assert!(error.to_string().contains("10-byte bound"), "{error}");
+/// // an error of another cause is no refusal of the reply
+/// assert_eq!(ReplyRefused::of(&std::io::Error::other("refused")), None);
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
+pub enum ReplyRefused {
+    /// The reply's head, or its body without insignificant whitespace, is over the bound.
+    #[error("the reply is over the {bound}-byte bound and was not read")]
+    Oversized {
+        /// The bound it went over.
+        bound: usize,
+    },
+    /// The whole reply did not arrive within the time allowed for it.
+    #[error("the reply did not arrive whole within {millis} ms")]
+    Late {
+        /// The time allowed, in milliseconds.
+        millis: u64,
+    },
+}
+
+impl ReplyRefused {
+    /// The refusal an error of [`request_json_within`] carries, when that was its cause.
+    ///
+    /// ```
+    /// use majordomus_cli::mcp::bridge::ReplyRefused;
+    ///
+    /// let late = std::io::Error::new(
+    ///     std::io::ErrorKind::TimedOut,
+    ///     ReplyRefused::Late { millis: 250 },
+    /// );
+    /// assert_eq!(ReplyRefused::of(&late), Some(&ReplyRefused::Late { millis: 250 }));
+    /// // a timeout of another cause carries no refusal
+    /// let other = std::io::Error::from(std::io::ErrorKind::TimedOut);
+    /// assert_eq!(ReplyRefused::of(&other), None);
+    /// ```
+    pub fn of(error: &std::io::Error) -> Option<&ReplyRefused> {
+        error
+            .get_ref()
+            .and_then(|e| e.downcast_ref::<ReplyRefused>())
+    }
+
+    fn into_io(self) -> std::io::Error {
+        let kind = match self {
+            ReplyRefused::Oversized { .. } => std::io::ErrorKind::InvalidData,
+            ReplyRefused::Late { .. } => std::io::ErrorKind::TimedOut,
+        };
+        std::io::Error::new(kind, self)
+    }
+}
+
+/// One HTTP/1.1 request whose reply is a JSON document held at most at `bound.bytes` and
+/// read whole within `bound.within`: what a dialer asks of a peer it does not control.
+///
+/// The body is held without the whitespace JSON allows between tokens, which makes the
+/// bound the size of the document rather than of its formatting: the shared server
+/// pretty-prints every answer, and a peer that pads one costs time — bounded by `within` —
+/// never memory. The bound counts what is held, so the first reply refused is the one a
+/// byte over it, however it was formatted. The head is bounded too, at [`MAX_HEAD_BYTES`].
+/// A body that is not JSON loses its spaces: a caller that reads more than the status of
+/// a non-JSON answer uses [`request`].
+///
+/// ```
+/// use std::time::Duration;
+/// use majordomus_cli::mcp::bridge::{request_json_within, ReplyBound, ReplyRefused};
+///
+/// let bound = ReplyBound {
+///     bytes: 1024,
+///     idle: Duration::from_secs(1),
+///     within: Duration::from_secs(2),
+/// };
+/// // port 9 discards: nothing answers there, which is a failure to connect, not a refusal
+/// let error = request_json_within("http://127.0.0.1:9", "GET", "/", &[], None, bound)
+///     .unwrap_err();
+/// assert_eq!(ReplyRefused::of(&error), None);
+/// ```
+pub fn request_json_within(
+    base_url: &str,
+    method: &str,
+    path: &str,
+    headers: &[(&str, &str)],
+    body: Option<&str>,
+    bound: ReplyBound,
+) -> std::io::Result<Reply> {
+    let deadline = std::time::Instant::now() + bound.within;
+    let first = bound.idle.min(bound.within);
+    let (mut stream, host) = connect(base_url, first)?;
+    write_request(&mut stream, &host, method, path, headers, body, first)?;
+    let late = || {
+        ReplyRefused::Late {
+            millis: u64::try_from(bound.within.as_millis()).unwrap_or(u64::MAX),
+        }
+        .into_io()
+    };
+    let mut head: Vec<u8> = Vec::new();
+    let mut parsed: Option<ParsedHead> = None;
+    let mut held: Vec<u8> = Vec::new();
+    let mut json = Compact::default();
+    let mut chunk = vec![0u8; 16 * 1024];
+    loop {
+        if matches!(parsed, Some(ParsedHead { due: Some(0), .. })) {
+            break;
+        }
+        let left = deadline.saturating_duration_since(std::time::Instant::now());
+        if left.is_zero() {
+            return Err(late());
+        }
+        // when what is left of the whole is the shorter wait, a timeout is the deadline's
+        let deadline_wait = left <= bound.idle;
+        stream.set_read_timeout(Some(left.min(bound.idle)))?;
+        let n = match stream.read(&mut chunk) {
+            Ok(0) => break,
+            Ok(n) => n,
+            Err(e)
+                if deadline_wait
+                    && matches!(
+                        e.kind(),
+                        std::io::ErrorKind::WouldBlock | std::io::ErrorKind::TimedOut
+                    ) =>
+            {
+                return Err(late())
+            }
+            Err(e) => return Err(e),
+        };
+        let mut bytes = &chunk[..n];
+        let rest;
+        if parsed.is_none() {
+            head.extend_from_slice(bytes);
+            let Some(end) = head.windows(4).position(|w| w == b"\r\n\r\n") else {
+                if head.len() > MAX_HEAD_BYTES {
+                    return Err(ReplyRefused::Oversized {
+                        bound: MAX_HEAD_BYTES,
+                    }
+                    .into_io());
+                }
+                continue;
+            };
+            rest = head.split_off(end + 4);
+            head.truncate(end);
+            let (status, headers) = parse_head(&String::from_utf8_lossy(&head))?;
+            let due = headers
+                .iter()
+                .find(|(k, _)| k == "content-length")
+                .and_then(|(_, v)| v.parse::<usize>().ok());
+            parsed = Some(ParsedHead {
+                status,
+                headers,
+                due,
+            });
+            bytes = &rest;
+        }
+        if let Some(ParsedHead { due: Some(due), .. }) = parsed.as_mut() {
+            let take = bytes.len().min(*due);
+            *due -= take;
+            bytes = &bytes[..take];
+        }
+        json.feed(bytes, &mut held, bound.bytes)?;
+    }
+    let head =
+        parsed.ok_or_else(|| std::io::Error::other("malformed HTTP response: no header end"))?;
+    Ok(Reply {
+        status: head.status,
+        headers: head.headers,
+        body: String::from_utf8_lossy(&held).into_owned(),
+    })
+}
+
+/// A reply's head once read: its status, its headers, and the body bytes its
+/// Content-Length says are still due, when it names one.
+struct ParsedHead {
+    status: u16,
+    headers: Vec<(String, String)>,
+    due: Option<usize>,
+}
+
+/// A JSON body held without its insignificant whitespace: every byte of a string is kept,
+/// the spaces, tabs and line ends between tokens are dropped, and nothing past the bound
+/// is held.
+#[derive(Debug, Default)]
+struct Compact {
+    in_string: bool,
+    escaped: bool,
+}
+
+impl Compact {
+    fn feed(&mut self, bytes: &[u8], held: &mut Vec<u8>, bound: usize) -> std::io::Result<()> {
+        for &b in bytes {
+            if self.in_string {
+                if self.escaped {
+                    self.escaped = false;
+                } else if b == b'\\' {
+                    self.escaped = true;
+                } else if b == b'"' {
+                    self.in_string = false;
+                }
+            } else if matches!(b, b' ' | b'\t' | b'\n' | b'\r') {
+                continue;
+            } else if b == b'"' {
+                self.in_string = true;
+            }
+            if held.len() >= bound {
+                return Err(ReplyRefused::Oversized { bound }.into_io());
+            }
+            held.push(b);
+        }
+        Ok(())
+    }
+}
+
+/// The status and the lowercased headers of a reply's head.
+fn parse_head(head: &str) -> std::io::Result<(u16, Vec<(String, String)>)> {
     let mut lines = head.lines();
     let status = lines
         .next()
@@ -145,6 +406,15 @@ fn parse_reply(raw: &[u8]) -> std::io::Result<Reply> {
                 .map(|(k, v)| (k.trim().to_ascii_lowercase(), v.trim().to_string()))
         })
         .collect::<Vec<_>>();
+    Ok((status, headers))
+}
+
+fn parse_reply(raw: &[u8]) -> std::io::Result<Reply> {
+    let text = String::from_utf8_lossy(raw);
+    let (head, body) = text
+        .split_once("\r\n\r\n")
+        .ok_or_else(|| std::io::Error::other("malformed HTTP response: no header end"))?;
+    let (status, headers) = parse_head(head)?;
     let length = headers
         .iter()
         .find(|(k, _)| k == "content-length")
@@ -832,5 +1102,85 @@ mod tests {
         assert!(err.calls_for_an_election());
         assert!(!err.may_resend(&write), "a write that may have run");
         assert_eq!(server.join().unwrap().len(), 1);
+    }
+
+    /// A one-connection server: it reads the request's first bytes and answers with `write`.
+    fn answering(write: impl FnOnce(&mut TcpStream) + Send + 'static) -> String {
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let url = format!("http://{}", listener.local_addr().unwrap());
+        std::thread::spawn(move || {
+            let (mut stream, _) = listener.accept().unwrap();
+            let mut head = [0u8; 4096];
+            let _ = stream.read(&mut head);
+            write(&mut stream);
+        });
+        url
+    }
+
+    fn within(bytes: usize) -> ReplyBound {
+        ReplyBound {
+            bytes,
+            idle: Duration::from_secs(5),
+            within: Duration::from_secs(10),
+        }
+    }
+
+    #[test]
+    fn a_bounded_reply_is_held_without_its_whitespace_and_a_byte_over_is_refused() {
+        let pretty = "{\n  \"a\": \"x y\\\" z\",\n  \"b\": [\n    1,\n    2\n  ]\n}";
+        let compact = r#"{"a":"x y\" z","b":[1,2]}"#;
+        let serve = move |s: &mut TcpStream| {
+            let _ = s.write_all(
+                format!(
+                    "HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n{pretty}",
+                    pretty.len()
+                )
+                .as_bytes(),
+            );
+        };
+        let url = answering(serve);
+        let reply = request_json_within(&url, "GET", "/", &[], None, within(compact.len()))
+            .expect("a reply at its bound is read");
+        assert_eq!(reply.status, 200);
+        assert_eq!(
+            reply.body, compact,
+            "the strings keep their spaces and escapes"
+        );
+        assert_eq!(
+            serde_json::from_str::<Value>(&reply.body).unwrap(),
+            serde_json::from_str::<Value>(pretty).unwrap()
+        );
+
+        let url = answering(serve);
+        let error = request_json_within(&url, "GET", "/", &[], None, within(compact.len() - 1))
+            .expect_err("a byte over the bound");
+        assert_eq!(
+            ReplyRefused::of(&error),
+            Some(&ReplyRefused::Oversized {
+                bound: compact.len() - 1
+            })
+        );
+        assert_eq!(error.kind(), std::io::ErrorKind::InvalidData);
+    }
+
+    #[test]
+    fn a_head_that_never_ends_is_refused_at_its_bound() {
+        let url = answering(|s| {
+            let _ = s.write_all(b"HTTP/1.1 200 OK\r\n");
+            let line = format!("X-Pad: {}\r\n", "p".repeat(1000));
+            for _ in 0..(4 * MAX_HEAD_BYTES / line.len()) {
+                if s.write_all(line.as_bytes()).is_err() {
+                    return;
+                }
+            }
+        });
+        let error = request_json_within(&url, "GET", "/", &[], None, within(1024))
+            .expect_err("a head over its bound");
+        assert_eq!(
+            ReplyRefused::of(&error),
+            Some(&ReplyRefused::Oversized {
+                bound: MAX_HEAD_BYTES
+            })
+        );
     }
 }
