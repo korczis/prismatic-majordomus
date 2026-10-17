@@ -6,7 +6,9 @@
 # test:
 #
 #   pick        the intent is chosen in /ui/idd from the list of intents
-#   read        its issues with their status, and the dependency: I0002 waits for I0001
+#   read        its issues with their status, and the dependency: I0002 waits for I0001; every
+#               issue id on the screen is a link, and the issues that share a scope (I0001 and
+#               I0003) are one counted line that opens to the pairs (I2900)
 #   move        I0001 is started from its move form; the row reads active
 #   work        the work I0001 owes is written into its scope and committed
 #   test        the issue's own check, a real test of that work, fails before the work and
@@ -20,7 +22,8 @@
 #               intent_realization.explain, and the Cockpit's issue page shows the
 #               validation command and the evidence present
 #   reproduced  the recorded command, run again, gives the recorded result
-#   clean       no console error, no uncaught exception
+#   clean       no console error, no uncaught exception, no failed request; a distribution
+#               without the vendored graph library is never asked for it (I2900)
 #
 # Needs a browser scripts/lib/browser.mjs can launch. The suite runners have none, so the case
 # defers to the ui job (majordomus-skip-runs-in: ui), which has one and runs it with
@@ -48,6 +51,13 @@ pj_init
 pj_milestone loop 1
 pj_issue I0001 loop
 pj_issue I0002 loop I0001
+# I0003 shares I0001's scope, so the waves name a pair that may not run at the same time
+pj_issue I0003 loop
+sed -i.bak 's#^  - src/I0003$#  - src/I0001#' .ai/repo/project/issues/I0003.yaml && rm -f .ai/repo/project/issues/I0003.yaml.bak
+# titles that do not repeat an id, so that every id the screen shows is a reference to an issue
+for t in "I0001:The answer is written" "I0002:The answer is read" "I0003:The answer is checked again"; do
+  sed -i.bak "s#^title: Issue ${t%%:*}\$#title: ${t#*:}#" ".ai/repo/project/issues/${t%%:*}.yaml" && rm -f ".ai/repo/project/issues/${t%%:*}.yaml.bak"
+done
 mkdir -p checks .ai/repo/project/intents
 cat > checks/the-answer-holds.sh <<'SH'
 #!/bin/sh
@@ -88,8 +98,9 @@ import { writeFileSync, mkdirSync } from 'node:fs';
 const [base, browserLib, mj, shots, graphLib] = process.argv.slice(2);
 // The vendored graph library is built by scripts/cockpit-assets and not committed; a page is
 // complete without it (the table beside the graph says the same). When this distribution has
-// no copy, its one URL answering 404 is that absence, and every other failed request still fails.
-const absent = graphLib === 'absent' ? '/ui/assets/vendor/cytoscape.min.js' : null;
+// no copy, the page must not ask for it at all (I2900): no request, no 404, no console error.
+const GRAPH_LIB = '/ui/assets/vendor/cytoscape.min.js';
+let graphAsked = 0;
 const { launch } = await import(browserLib);
 const browser = await launch();
 if (!browser) { console.log('NO-BROWSER'); process.exit(3); }
@@ -105,7 +116,8 @@ const watch = (page, name) => {
   // a failed request is named by its URL; the console's own line for it names none
   page.on('response', (r) => {
     const path = new URL(r.url()).pathname;
-    if (r.status() >= 400 && path !== absent) problems.push(`${name}: ${r.status()} ${path}`);
+    if (path === GRAPH_LIB) graphAsked += 1;
+    if (r.status() >= 400) problems.push(`${name}: ${r.status()} ${path}`);
   });
   page.on('console', (m) => {
     if (m.type() === 'error' && !m.text().startsWith('Failed to load resource')) problems.push(`${name}: console ${m.text()}`);
@@ -126,6 +138,25 @@ const until = async (page, issue, want, what) => {
   } catch (e) { fail(`${what}: ${issue} never read ${want} (it reads ${await status(page, issue)})`); }
 };
 const sh = (cmd, args) => execFileSync(cmd, args, { encoding: 'utf8' }).trim();
+// Every issue id the screen shows leads to that issue (I2900): an id in a text node that is not
+// inside a link fails, named with where it sits. A path segment (src/I0001) is a path, not an id.
+const noBareIds = async (page, when) => {
+  const bare = await page.evaluate(() => {
+    const found = [];
+    const walker = document.createTreeWalker(document.querySelector('main'), NodeFilter.SHOW_TEXT);
+    for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+      // a link is what is wanted; a command to copy (code, pre, kbd) keeps its text whole
+      if (n.parentElement.closest('a, code, pre, kbd, script, style, [hidden]')) continue;
+      for (const m of n.textContent.matchAll(/(?<![\/\w-])I\d{4}\b/g)) {
+        const where = n.parentElement.closest('section[aria-label], [id]');
+        const label = where ? (where.getAttribute('aria-label') || '#' + where.id) : 'main';
+        found.push(`${m[0]} (in ${label}: "${n.textContent.trim().slice(0, 60)}")`);
+      }
+    }
+    return found;
+  });
+  if (bare.length) fail(`${when}: issue ids on the screen that lead nowhere: ${[...new Set(bare)].join(', ')}`);
+};
 // A move made in a tab ends with that tab reading itself again (moves.js reloads it once the
 // execution has ended): the move is clicked and that load awaited, so that nothing the tab
 // does on its own is later taken for something the live channel did.
@@ -169,7 +200,19 @@ try {
   // I0002's row names what it waits for, wherever the table puts it
   const waits = (await a.locator('#issue-I0002').innerText()).replace(/\s+/g, ' ').trim();
   if (!waits.includes('I0001')) fail(`I0002 does not say it waits for I0001: "${waits}"`);
-  console.log(`    read: I0001 ${await status(a, 'I0001')}, I0002 ${await status(a, 'I0002')} waiting for I0001`);
+  // every issue id the screen shows leads to that issue: none is bare text
+  await noBareIds(a, 'read');
+  // the issues that share a scope are one counted line, folded, that opens to the pairs
+  const shared = a.locator('details:has(> summary:has-text("Shared scope"))');
+  if (await shared.count() !== 1) fail('the shared-scope pairs are not one folded line');
+  const summary = (await shared.locator('summary').innerText()).trim();
+  if (!/Shared scope: \d+ pair\(s\)/.test(summary)) fail(`the shared-scope line gives no count: "${summary}"`);
+  if (await shared.evaluate((d) => d.open)) fail('the shared-scope pairs are open before they are asked for');
+  await shared.locator('summary').click();
+  for (const id of ['I0001', 'I0003']) {
+    if (!(await shared.locator(`a[href*="issue=${id}"]`).count())) fail(`the shared-scope pairs do not lead to ${id}`);
+  }
+  console.log(`    read: I0001 ${await status(a, 'I0001')}, I0002 ${await status(a, 'I0002')} waiting for I0001; every issue id is a link; "${summary}" opens to the pairs`);
   await a.screenshot({ path: `${shots}/1-picked.png`, fullPage: true });
 
   step = 'move';
@@ -238,7 +281,8 @@ try {
   for (const want of ['the-answer-holds', 'intent_realization.explain']) {
     if (!standing.includes(want)) fail(`the standing panel does not explain ${want}`);
   }
-  console.log('    explained: the standing panel names the criterion, its evidence and its source');
+  await noBareIds(a, 'explained');
+  console.log('    explained: the standing panel names the criterion, its evidence and its source, every issue id a link');
   await a.screenshot({ path: `${shots}/2-done.png`, fullPage: true });
 
   // the evidence, as the Cockpit's issue page shows it
@@ -256,6 +300,7 @@ try {
   if (again !== result) fail(`the recorded command now answers "${again}", not "${result}"`);
   console.log('    reproduced: the recorded command answers the recorded result again');
 
+  if (graphLib === 'absent' && graphAsked) fail(`the graph library is not in this distribution and was asked for ${graphAsked} time(s)`);
   if (problems.length) fail('the pages reported: ' + problems.join(' | '));
 } catch (error) {
   console.log(`    the walk stopped at "${step}": ${error.message}`);
@@ -266,7 +311,7 @@ try {
 JS
 mkdir -p shots
 graph=present
-[ -f "$ROOT/share/ui/vendor/cytoscape.min.js" ] || { graph=absent; echo "    the vendored graph library is not built here, so its 404 is not counted"; }
+[ -f "$ROOT/share/ui/vendor/cytoscape.min.js" ] || { graph=absent; echo "    the vendored graph library is not built here, so the page must not ask for it"; }
 rc=0
 node walk.mjs "$U" "$ROOT/scripts/lib/browser.mjs" "$MJ" "$PWD/shots" "$graph" > walk.out 2>&1 || rc=$?
 cat walk.out

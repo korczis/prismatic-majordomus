@@ -430,7 +430,14 @@ impl Ui {
                     favicon: self.assets.url("favicon.svg"),
                     script: self.assets.url(SCRIPT),
                     bar_scripts: BAR_SCRIPTS.iter().map(|s| self.assets.url(s)).collect(),
-                    graph_lib: self.assets.url(GRAPH_LIB),
+                    // named only when the distribution holds it: a checkout that never ran
+                    // scripts/cockpit-assets has none, and asking for it would be a 404 and a
+                    // console error on every screen with a graph; the table stands instead (I2900)
+                    graph_lib: if self.assets.has(GRAPH_LIB) {
+                        self.assets.url(GRAPH_LIB)
+                    } else {
+                        String::new()
+                    },
                     moves_lib: self.cockpit_assets.url(MOVES_LIB),
                     socket_lib: self.cockpit_assets.url(SOCKET_LIB),
                     assets_present: self.assets.present(),

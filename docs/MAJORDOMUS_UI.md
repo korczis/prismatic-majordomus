@@ -424,7 +424,7 @@ The UI's files live in `share/ui/`.
 | `ui.css` | compiled from `share/ui/src/ui.css` by `scripts/cockpit-assets`, beside the Cockpit's stylesheet; `--check` fails when either is stale | yes |
 | `nav.js`, `theme.js` | copied byte for byte from `site/nav.js` and `site/theme.js` by `scripts/cockpit-assets`; `--check` fails when either differs | yes |
 | `favicon.svg` | written from the canonical mark by `majordomus generate` | yes |
-| `vendor/cytoscape.min.js` | copied from the pinned npm package by `scripts/cockpit-assets` | no |
+| `vendor/cytoscape.min.js` | copied from the pinned npm package by `scripts/cockpit-assets`; a distribution without it is never asked for it, and each graph's table stands instead (I2900) | no |
 
 The `ui` class of the CI model (`.ai/repo/ci/gates.yaml`) selects the asset check, the probe,
 the design gate and the UI audit whenever a file under `share/ui/` or
