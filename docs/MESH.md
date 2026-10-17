@@ -306,6 +306,17 @@ meets `apps/majordomus-cli`; `app` does not.
 - **Advisory** claims report overlaps and refuse nothing. The peer board's announcements are
   projected as advisory claims of the announcing MCP session.
 
+### Seats are claims
+
+The repository's way of working puts sessions in seats: the one that lands, the one that
+releases, the lanes that repair conflicting branches, and the workers. A seat is held by
+holding its exclusive claim, so it is subject to everything above: it is refused to a second
+session while it is held, it moves when the claim is released, and it falls vacant when its
+holder stops beating. Which seats there are and which scope each one claims is
+[rule `project.the-cooperation-model-is-the-owners-word`](../.ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v1.md)
+(ADR 0167), the one record of it; this document does not copy the table. The Mesh screen of
+the UI (`/ui/mesh`) asks `mesh.state` for the live claims and draws who holds each seat now.
+
 ## Handovers
 
 `majordomus handover` writes a record under the checkout's `.ai/local/state/handovers/`.
@@ -422,15 +433,24 @@ A task is on the mesh while it works (I2288). `majordomus start` claims the task
 an advisory claim of the mesh session `task-<id>`, with the task's title as its intent and its
 issue, and keeps the claim's key on the task record as `mesh_claim`; `finish` closes that
 session, which ends its claims on every linked runtime. Every machine sees what the task works
-on and reports an overlap; an exclusive claim before building stays the worker's own act. With
-no server, or a mesh that does not run, nothing is claimed and `start` does not fail.
+on and reports an overlap; an exclusive claim before building stays the worker's own act. On
+a repository whose mesh declaration is enabled, `start` first ensures the checkout's shared
+server — a fresh linked worktree has none until something brings it up, since no provider
+start event fired there — with the same bounded `serve ensure` the start event and the shell
+entry run, under the same switches (`session.ensure_server_on_start`, `MAJORDOMUS_RUNTIME=off`),
+and says on stderr when it starts one. When the claim still does not happen (the runtime
+switched off, a stale or missing executable, a server that did not converge) `start` does not
+fail: it reports `WARN mesh` naming why and the repair. With no enabled mesh, `start` claims
+only through a server that already answers.
 
 That claim is enforced (I2289, rule `majordomus.task-on-the-mesh`). On a repository whose
 tracked declaration says `enabled: true`, `check` reports an active task whose record carries
 no `mesh_claim` under `mesh`, and `finish --outcome completed` refuses it, the refusal recorded
-with the rule named. `finish` claims the scope again first, so a server started after the task
-is all the task needs (`majordomus serve ensure`). `partial`, `blocked`, `no_match` and
-`failed` are not refused, and a repository with no enabled mesh is not judged.
+with the rule named. The state is repairable without ending the task: `majordomus serve
+ensure`, then `majordomus check`, which claims the running task's scope once a server answers
+and records the key; `finish` claims again first as well. `finish --check`, the pre-push gate,
+is a question and claims nothing. `partial`, `blocked`, `no_match` and `failed` are not
+refused, and a repository with no enabled mesh is not judged.
 
 An edit is asked for its claim before it happens (I2735). With `session.edits_require_claim:
 true` in the policy, the provider's pre-tool hook (`.claude/hooks/majordomus-edit-guard`, for
