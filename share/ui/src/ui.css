@@ -72,6 +72,9 @@
   }
   .mj-ui-mono {
     @apply font-mono;
+    /* a path, a rule id or a command is one word to the browser: at phone width it breaks
+       rather than widening the page (two rule pages measured 356 and 400 px at 320) */
+    overflow-wrap: anywhere;
   }
   .mj-ui-dim {
     color: var(--mj-muted);
