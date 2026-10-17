@@ -371,6 +371,14 @@ mj_plan_body_issue() {
   mj_plan_sec 'Desired State' "$id" desired_state
   mj_plan_seclist Scope "$id" scope '- `' '`'
   mj_plan_seclist 'Out of Scope' "$id" non_scope
+  # What the issue says it serves, as the record states it and unjudged: which criterion of
+  # which intent. Where a criterion stands is the intent engine's answer and moves with the
+  # evidence, so it is named as a command and never printed here — a body moves when a
+  # record moves, and never because a run went stale (ADR 0116).
+  if [ -n "$(mj_pj_list "$id" serves)" ]; then
+    mj_plan_seclist Serves "$id" serves '- `' '`'
+    printf 'Declared by the record. Where each criterion stands: `majordomus intent coverage`.\n\n'
+  fi
   printf '## Dependencies\n\n'
   dep="$(mj_pj_i_deps "$id")"
   if [ -z "$dep" ]; then printf 'None. This issue is a root of the graph.\n\n'

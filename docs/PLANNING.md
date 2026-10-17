@@ -397,6 +397,13 @@ different opinions about what is ready:
 | the website's roadmap, milestone, issue and DAG pages | `scripts/generate-site-data` |
 | the documentation | this file explains the semantics; the figures are generated |
 
+An issue's generated body names what the issue serves: a `Serves` section lists what the
+record declares, as authored, and an issue that serves nothing has none. It is part of the
+generated region, so a changed mapping reads `behind` and a hand edit reads `edited`. Where a
+criterion stands is not in the body — it moves with the evidence, and the section names the
+command that shows it. A milestone's state on GitHub follows the plan and not an intent's
+verdict (ADR 0116).
+
 GitHub is a projection and a place to talk, never the source. A canonical change updates the
 generated region of an issue body; a person editing that region is reported as drift and not
 overwritten; a person's comments and any text outside the region are never touched. Nothing
