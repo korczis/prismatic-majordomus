@@ -11,7 +11,7 @@ weight: 100
 domain: surfaces
 featured: true
 areas: [observability]
-modules: [health, design]
+modules: [health, design, dashboard]
 rules: [project.interfaces-are-projections]
 claims: [cockpit-is-a-projection-of-the-registry]
 docs: [docs/COCKPIT.md]
