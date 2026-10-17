@@ -9,8 +9,11 @@
 // HTML the server built and escaped; nothing here decides what it says. If the fetch
 // fails, the link stays, and the page says the panel could not be loaded.
 //
-// The theme toggle is revealed and wired to the same storage key and class the Cockpit
-// and the site use. The page carries both as data attributes, so no name is written here.
+// The bar at the top is the site's (project.the-ui-wears-the-sites-navbar), and so are its
+// menus and its theme toggle, which the site's own nav.js and theme.js run. Two things are the
+// UI's: the bar's search button, which the site's search script reveals on the site, is
+// revealed here and leads to the UI's own search; and the bar's height is written into
+// --ui-bar, so the sidebar stays in view beneath the bar.
 //
 // The Observatory's screen (`data-observatory`) is handed to `observatory.js`, below.
 //
@@ -20,26 +23,31 @@
 // script, or without the library, reads instead. Colours are the design system's tones, read
 // from the stylesheet, so nothing here names a colour.
 
-const THEME_KEY = (document.body && document.body.dataset.themeKey) || null;
-const THEME_CLASS = (document.body && document.body.dataset.themeClass) || 'dark';
-
-function storeTheme(value) {
-  if (!THEME_KEY) return;
-  try {
-    localStorage.setItem(THEME_KEY, value);
-  } catch (e) {
-    /* storage refused: the toggle still works for this page */
+// The site's search button opens the site's search; here the search a reader wants is the
+// UI's, so the button, the slash and Ctrl/Cmd+K lead to the UI's search field.
+function wireBarSearch() {
+  const field = document.getElementById('mj-ui-q');
+  if (!field) return;
+  for (const button of document.querySelectorAll('[data-site-search-open]')) {
+    button.hidden = false;
+    button.addEventListener('click', () => field.focus());
   }
+  document.addEventListener('keydown', (event) => {
+    const typing = event.target.closest && event.target.closest('input, textarea, select, [contenteditable]');
+    if ((event.key === '/' && !typing) || ((event.ctrlKey || event.metaKey) && event.key === 'k')) {
+      event.preventDefault();
+      field.focus();
+    }
+  });
 }
 
-function wireTheme() {
-  for (const button of document.querySelectorAll('[data-theme-toggle]')) {
-    button.hidden = false;
-    button.addEventListener('click', () => {
-      const dark = document.documentElement.classList.toggle(THEME_CLASS);
-      storeTheme(dark ? 'dark' : 'light');
-    });
-  }
+// The bar stays at the top of the window; the sidebar beneath it is as tall as what is left.
+function measureBar() {
+  const bar = document.querySelector('nav[aria-label="Main"]');
+  if (!bar) return;
+  const write = () => document.documentElement.style.setProperty('--ui-bar', `${bar.offsetHeight}px`);
+  write();
+  if (window.ResizeObserver) new ResizeObserver(write).observe(bar);
 }
 
 // A slow panel's source can take minutes (the integration queue spawns git per pull request),
@@ -307,7 +315,8 @@ function enhance() {
   drawObservatory();
 }
 
-wireTheme();
+wireBarSearch();
+measureBar();
 enhance();
 if (SNAPSHOT) {
   showSnapshotPath();

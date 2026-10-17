@@ -410,6 +410,16 @@
       "external": false
     },
     {
+      "id": ".ai/local/state/mcp/server.json",
+      "kind": "artifact",
+      "label": "local/state/mcp/server.json",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
       "id": "lib/intent_binding.sh",
       "kind": "module",
       "label": "intent_binding",
@@ -939,6 +949,11 @@
     {
       "source": "lib/changed.sh",
       "target": ".ai/repo/scope.yaml",
+      "kind": "reads"
+    },
+    {
+      "source": "lib/common.sh",
+      "target": ".ai/local/state/mcp/server.json",
       "kind": "reads"
     },
     {
@@ -1683,6 +1698,11 @@
     },
     {
       "source": "lib/start.sh",
+      "target": "lib/context_docs.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/start.sh",
       "target": "lib/handover.sh",
       "kind": "sources"
     },
@@ -2234,6 +2254,11 @@
     {
       "source": "lib/common.sh",
       "target": ".ai/local/state/ledger.jsonl",
+      "kind": "writes"
+    },
+    {
+      "source": "lib/common.sh",
+      "target": ".ai/local/state/mcp/ensure.log",
       "kind": "writes"
     },
     {

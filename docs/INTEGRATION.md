@@ -5,6 +5,24 @@ change into the current master, verifies that it landed, discards what it assume
 decides again from what is there now. The decision is recorded in ADR 0101, the rule is
 `project.integration-follows-the-current-master`, and the code is `crate::integration`.
 
+## The model in force
+
+That is the executor. Who lands, how much at once and how often is decided by the owner, and
+the decision of 2026-10-16 is
+[rule `project.the-cooperation-model-is-the-owners-word`](../.ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v1.md)
+and [ADR 0167](../.ai/repo/adrs/0167-work-moves-through-seats-on-the-mesh-and-lands-in-combined-tops.md).
+The rule is the one record of the seats, the scope each one claims on the mesh and what each
+does, and this document does not copy it: the site renders the rule and the decision from
+those files, so they cannot drift from what is read here. Who holds each seat now is drawn
+by the Mesh screen of the UI (`/ui/mesh`) from the live claims.
+
+What the decision changes here is the lander's unit of work, not the executor. `prs drain`
+below still takes one ready pull request at a time and never passes `--admin`; a combined top
+is the landing seat's own act, the batch ADR 0101 left to a person and the owner has now
+chosen. Everything else this document says of a decision still holds for a top: it is taken
+against the current master and the heads it names, its evidence is recorded, and no check is
+bypassed.
+
 ## The pipeline
 
 ```mermaid
@@ -541,6 +559,9 @@ Everything above is the executor, and the executor never passes `--admin`. One t
 outside it: the owner of the branch protection may decide to spend it. Rule
 `project.an-expedited-landing-is-the-owners-word` and ADR 0155 say when a named lander may
 merge past the required check, and what that never reaches.
+Since 2026-10-16 the lander is the landing seat of
+[*The model in force*](#the-model-in-force), and what it lands may be a combined top rather
+than one pull request: one seat at a time, and a landing may carry a whole top.
 
 The required check takes about an hour and the pool judges one pull request at a time. On
 2026-10-12 a release record that changed one file waited two and a half hours behind runs

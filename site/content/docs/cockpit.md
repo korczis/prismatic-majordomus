@@ -573,14 +573,17 @@ scripts/cockpit-assets --check    # fail if the committed stylesheet differs fro
 | `cockpit.css` | yes | a generated artifact, compiled from `src/cockpit.css` with Tailwind and Flowbite's theme over the shared design sheets; drift-checked |
 | `src/cockpit.css` | yes | the source: what only the Cockpit has (shell, palette, runner, log, canvases), one semantic class per component, over the tokens and primitives it imports from `share/design/` |
 | `favicon.svg` | yes | a generated copy of the canonical mark `share/design/brand/logo-mark.svg`, written by `majordomus generate design` |
-| `*.js` | yes | written by hand, no build step |
+| `*.js` | yes | written by hand, no build step — but `nav.js` and `theme.js`, byte copies of the site's, written and checked by `scripts/cockpit-assets`: the bar at the top of every page is the site's, and so are its scripts ([`MAJORDOMUS_UI.md`](@/docs/majordomus-ui.md#the-navbar-is-the-sites)) |
 | `vendor/alpine.csp.min.js` | yes | the interaction depends on it and it is 70 kB |
 | `vendor/{cytoscape,three.module,three.core,p5}.min.js` | no | ~2 MB, lazy, optional, every page complete without them |
 
 </div>
 
 
-There are no utility classes in the Rust that renders the pages. Everything the markup
+There are no utility classes in the Rust that renders the pages, and the one markup that has
+them is not the Cockpit's: the bar at the top of every page is majordomus.dev's own, compiled
+in from the built site and compiled into the stylesheet from that copy
+(`project.the-ui-wears-the-sites-navbar`). Everything the Cockpit's own markup
 names is defined in `src/cockpit.css` or in the shared `share/design/primitives.css` as a
 composition of Tailwind utilities over the design tokens, which keeps the design readable
 and makes the compiled stylesheet a function of those files and the pinned versions alone —
@@ -725,7 +728,8 @@ The browser sweep is the part a status code cannot reach:
   CSP build is vendored, and the check that catches a regression to the CDN build.
 - **The command palette** opens on `Ctrl`/`Cmd`+K, fills with entries the registry supplied,
   filters, and navigates where the chosen entry says.
-- **The theme toggle** flips the root class and the choice survives a reload.
+- **The theme toggle** — the site's, in the site's bar — flips the root class and the choice
+  survives a reload.
 - **The skip link** is the first tab stop and points at `#main`.
 - **The runner** is generated from the schema (the required string, the bounded integer, the
   disclosure of the capability's own benchmark cases), and submitting it calls the

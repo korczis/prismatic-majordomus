@@ -87,6 +87,48 @@ impl Statistics {
         }
     }
 
+    /// How many samples are certainly at or above a metric's value: the samples a verdict
+    /// on that metric rests on. A nearest-rank percentile of rank `r` has `n - r + 1` samples
+    /// at or above it; the maximum has one, the minimum all of them; the mean is an
+    /// aggregate of every sample and one outlier can carry it, so it counts as one. `None`
+    /// for a metric this does not know.
+    ///
+    /// A metric over its threshold is a regression only when at least two samples agree:
+    /// the median of one sample, or the p99 of twenty, is the single slowest sample, which
+    /// one scheduler hiccup on a loaded runner decides.
+    ///
+    /// ```
+    /// use std::time::Duration;
+    /// use majordomus_cli::bench::Statistics;
+    /// let one = Statistics::of(&[Duration::from_millis(23)]);
+    /// assert_eq!(one.samples_at_or_above("p50"), Some(1));
+    /// let five = Statistics::of(&vec![Duration::from_millis(9); 5]);
+    /// assert_eq!(five.samples_at_or_above("p50"), Some(3));
+    /// assert_eq!(five.samples_at_or_above("p99"), Some(1));
+    /// assert_eq!(five.samples_at_or_above("min"), Some(5));
+    /// assert_eq!(five.samples_at_or_above("mean"), Some(1));
+    /// assert_eq!(five.samples_at_or_above("p42"), None);
+    /// ```
+    pub fn samples_at_or_above(&self, metric: &str) -> Option<usize> {
+        let n = self.samples;
+        if n == 0 {
+            return self.metric(metric).map(|_| 0);
+        }
+        let above_rank = |p: f64| {
+            let rank = ((p / 100.0) * n as f64).ceil() as usize;
+            n - rank.clamp(1, n) + 1
+        };
+        Some(match metric {
+            "min" => n,
+            "p50" => above_rank(50.0),
+            "p90" => above_rank(90.0),
+            "p95" => above_rank(95.0),
+            "p99" => above_rank(99.0),
+            "max" | "mean" => 1,
+            _ => return None,
+        })
+    }
+
     /// One metric by name (`p50`, `p95`, `p99`, `mean`, `max`, `min`, `p90`).
     pub fn metric(&self, name: &str) -> Option<f64> {
         Some(match name {

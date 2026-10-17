@@ -7,8 +7,13 @@
 //! it judged misplaced. None of them decides anything; a second decision somewhere else is
 //! the defect this file exists to prevent.
 //!
-//! Nothing here touches the network. `git fetch` is never run, a ref that does not resolve
-//! locally does not resolve, and every operation works with the machine offline.
+//! One operation touches the network: creating a branch that does not exist here fetches
+//! the trunk, and that branch, from the trunk's remote, so that new work starts from the
+//! remote's trunk as it is now and a branch already pushed is taken up rather than started
+//! again (see [`StartPoint`]). The fetch is bounded and quiet, and a remote that cannot be
+//! read is said, with how far behind the local trunk stands. Nothing else fetches: a ref
+//! that does not resolve locally does not resolve, and every other operation works with
+//! the machine offline.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
@@ -45,8 +50,121 @@ pub enum Detail {
 pub struct CreateRequest {
     /// The branch to check out or create.
     pub branch: String,
-    /// The commit or ref a new branch starts from. Defaults to the trunk, then to HEAD.
+    /// The commit or ref a new branch starts from, as given and never fetched. When absent,
+    /// the remote's trunk as fetched now, then the local trunk, then HEAD ([`StartPoint`]).
     pub base: Option<String>,
+}
+
+/// Where a new branch started, and why there.
+///
+/// The local trunk of a long-lived checkout is routinely hundreds of commits behind its
+/// remote, because nothing advances it; a branch cut from it carries none of that work and
+/// every worker had to reset it by hand. So the default is the remote's trunk, fetched at
+/// the moment of creation, and the local trunk only when the remote cannot be read — said,
+/// never silent.
+///
+/// ```
+/// use majordomus_cli::worktree::StartPoint;
+/// let p = StartPoint::RemoteTrunk { remote: "origin".into(), branch: "master".into() };
+/// assert_eq!(p.reference(), "origin/master");
+/// assert!(p.fallback().is_none());
+/// let fell = StartPoint::LocalTrunk {
+///     branch: "master".into(),
+///     unreachable: Some("origin".into()),
+///     reason: Some("no answer within 60s".into()),
+///     behind: Some(779),
+/// };
+/// assert_eq!(fell.reference(), "master");
+/// assert!(fell.fallback().unwrap().contains("779 commits behind origin/master"));
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(tag = "from", rename_all = "snake_case")]
+pub enum StartPoint {
+    /// The ref `--base` named, as given; never fetched.
+    Given {
+        /// The ref.
+        reference: String,
+    },
+    /// The trunk on its remote, fetched by this command.
+    RemoteTrunk {
+        /// The remote.
+        remote: String,
+        /// The trunk branch.
+        branch: String,
+    },
+    /// The branch already on the remote: the local branch is created at it and tracks it.
+    RemoteBranch {
+        /// The remote.
+        remote: String,
+        /// The branch, the same name on both sides.
+        branch: String,
+        /// Whether it was fetched now; `false` is the remote-tracking ref as last fetched,
+        /// because the remote could not be read.
+        fetched: bool,
+    },
+    /// The local trunk: the trunk has no remote, or its remote could not be read.
+    LocalTrunk {
+        /// The trunk branch.
+        branch: String,
+        /// The remote that could not be read; `None` when the trunk has no remote.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        unreachable: Option<String>,
+        /// Why it could not be read.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        reason: Option<String>,
+        /// How many commits the remote's trunk, as last fetched, has that the local trunk
+        /// lacks; `None` when it was never fetched.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        behind: Option<u64>,
+    },
+    /// HEAD, because no trunk is known.
+    Head,
+}
+
+impl StartPoint {
+    /// The ref git is given to start the branch from.
+    pub fn reference(&self) -> String {
+        match self {
+            StartPoint::Given { reference } => reference.clone(),
+            StartPoint::RemoteTrunk { remote, branch }
+            | StartPoint::RemoteBranch { remote, branch, .. } => format!("{remote}/{branch}"),
+            StartPoint::LocalTrunk { branch, .. } => branch.clone(),
+            StartPoint::Head => "HEAD".into(),
+        }
+    }
+
+    /// The sentence a person must read when the start is not the remote's state as it is
+    /// now; `None` when it is, or when nothing better could have been asked.
+    pub fn fallback(&self) -> Option<String> {
+        match self {
+            StartPoint::LocalTrunk {
+                branch,
+                unreachable: Some(remote),
+                reason,
+                behind,
+            } => {
+                let why = reason.as_deref().unwrap_or("it did not answer");
+                let distance = match behind {
+                    Some(0) => format!("level with {remote}/{branch} as last fetched"),
+                    Some(1) => format!("1 commit behind {remote}/{branch} as last fetched"),
+                    Some(n) => format!("{n} commits behind {remote}/{branch} as last fetched"),
+                    None => format!("{remote}/{branch} was never fetched, so how far behind is unknown"),
+                };
+                Some(format!(
+                    "could not fetch {branch} from {remote} ({why}): started from the local {branch}, {distance}; \
+                     once {remote} answers, `git fetch {remote} && git reset --hard {remote}/{branch}` in the worktree before the first commit"
+                ))
+            }
+            StartPoint::RemoteBranch {
+                remote,
+                branch,
+                fetched: false,
+            } => Some(format!(
+                "could not fetch {branch} from {remote}: tracking {remote}/{branch} as last fetched, which may be behind"
+            )),
+            _ => None,
+        }
+    }
 }
 
 /// What a create did.
@@ -59,8 +177,15 @@ pub struct CreateReport {
     /// Whether that branch was created by this command.
     pub branch_created: bool,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    /// The commit a new branch started from.
+    /// The ref a new branch started from (`origin/master`).
     pub base: Option<String>,
+    /// Where a branch this command created started, and why there.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub start: Option<StartPoint>,
+    /// The exact commit a branch this command created starts at, read back from the
+    /// worktree rather than assumed.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub start_commit: Option<String>,
     /// The container it went into.
     pub container: String,
     /// Whether the container was created by this command.
@@ -78,6 +203,42 @@ pub struct CreateReport {
     /// `core.hooksPath` would have sent it to the primary checkout's (I2718).
     #[serde(default = "default_hooks")]
     pub hooks: HooksPath,
+}
+
+/// The remote the trunk belongs to: the one whose HEAD names it, else the one the trunk's
+/// configuration tracks. `None` when the trunk lives only here.
+fn trunk_remote(primary: &Path, trunk: &str) -> Result<Option<String>> {
+    let remotes = git::try_run(primary, &["remote"])?;
+    if remotes.status != Some(0) {
+        return Ok(None);
+    }
+    let remotes: Vec<String> = remotes
+        .text()?
+        .lines()
+        .map(str::trim)
+        .filter(|r| !r.is_empty())
+        .map(str::to_string)
+        .collect();
+    for remote in &remotes {
+        let head = git::try_run(
+            primary,
+            &["symbolic-ref", "-q", &format!("refs/remotes/{remote}/HEAD")],
+        )?;
+        if head.status == Some(0) && head.text()? == format!("refs/remotes/{remote}/{trunk}") {
+            return Ok(Some(remote.clone()));
+        }
+    }
+    let configured = git::try_run(
+        primary,
+        &["config", "--get", &format!("branch.{trunk}.remote")],
+    )?;
+    if configured.status == Some(0) {
+        let remote = configured.text()?;
+        if remotes.contains(&remote) {
+            return Ok(Some(remote));
+        }
+    }
+    Ok(None)
 }
 
 fn default_local() -> LocalOverrides {
@@ -853,6 +1014,14 @@ impl WorktreeService {
         let resolved_target = ResolvedPath::of(&target);
         let primary = self.identity.primary_worktree().path.clone();
 
+        // The network is asked before the lock is taken, so a slow remote never holds every
+        // other create in this repository behind it; the decision is re-checked under it.
+        let planned = if request.base.is_none() && !git::branch_exists(&primary, name.as_str())? {
+            Some(self.plan_start(&primary, name.as_str())?)
+        } else {
+            None
+        };
+
         // One lock around the whole check-then-act, and the topology re-read under it.
         let _lock = WorktreeLock::acquire(&self.identity.git_common_dir().path)?;
         let mut identity = self.identity.clone();
@@ -871,6 +1040,8 @@ impl WorktreeService {
                         branch: name.as_str().to_string(),
                         branch_created: false,
                         base: None,
+                        start: None,
+                        start_commit: None,
                         container: display(&self.container.path),
                         container_created: false,
                         existed: true,
@@ -903,19 +1074,23 @@ impl WorktreeService {
             });
         }
         let branch_exists = git::branch_exists(&primary, name.as_str())?;
-        let base = if branch_exists {
+        let start = if branch_exists {
             None
         } else {
-            let base = request
-                .base
-                .clone()
-                .or_else(|| self.identity.trunk().branch.clone())
-                .unwrap_or_else(|| "HEAD".to_string());
+            let start = match (&request.base, planned) {
+                (Some(given), _) => StartPoint::Given {
+                    reference: given.clone(),
+                },
+                (None, Some(planned)) => planned,
+                (None, None) => self.plan_start(&primary, name.as_str())?,
+            };
+            let base = start.reference();
             if !git::rev_exists(&primary, &base)? {
                 return Err(WorktreeError::BaseDoesNotExist { base });
             }
-            Some(base)
+            Some(start)
         };
+        let base = start.as_ref().map(StartPoint::reference);
 
         let container_created = self.ensure_container()?;
         if let Some(parent) = target.parent() {
@@ -923,13 +1098,21 @@ impl WorktreeService {
         }
         let target_text = display(&target);
         let mut args: Vec<String> = vec!["worktree".into(), "add".into()];
-        match &base {
-            None => {
+        match (&start, &base) {
+            (None, _) | (_, None) => {
                 args.push("--".into());
                 args.push(target_text.clone());
                 args.push(name.as_str().to_string());
             }
-            Some(base) => {
+            (Some(start), Some(base)) => {
+                match start {
+                    // The same branch on both sides: it is the remote's, and tracks it.
+                    StartPoint::RemoteBranch { .. } => args.push("--track".into()),
+                    // New work cut from the remote's trunk does not track the trunk; its
+                    // upstream is its own branch, set when it is first pushed.
+                    StartPoint::RemoteTrunk { .. } => args.push("--no-track".into()),
+                    _ => {}
+                }
                 args.push("-b".into());
                 args.push(name.as_str().to_string());
                 args.push("--".into());
@@ -955,17 +1138,99 @@ impl WorktreeService {
         let envrc_local = direnv::link_local(&primary, &registered.path);
         // And the moment it is bound to the hooks of its own tree, before its first commit.
         let hooks = hooks::carry_hooks_path(&primary, &registered.path);
+        let start_commit = match start {
+            Some(_) => git::head_of(&registered.path)?,
+            None => None,
+        };
         Ok(CreateReport {
             path: display(&registered.path),
             branch: name.as_str().to_string(),
             branch_created: base.is_some(),
             base,
+            start,
+            start_commit,
             container: display(&self.container.path),
             container_created,
             existed: false,
             envrc,
             envrc_local,
             hooks,
+        })
+    }
+
+    /// Decide where a branch that does not exist here starts, asking the trunk's remote.
+    ///
+    /// The trunk and the branch are fetched from the trunk's remote. A branch the remote
+    /// has is taken up where it stands; any other starts at the remote's trunk. A remote
+    /// that cannot be read leaves the remote-tracking refs as last fetched: a branch known
+    /// there is still taken up, and a new one starts from the local trunk, with how far
+    /// behind it is. A trunk with no remote is the local trunk, and no trunk at all is HEAD.
+    fn plan_start(&self, primary: &Path, branch: &str) -> Result<StartPoint> {
+        let Some(trunk) = self.identity.trunk().branch.clone() else {
+            return Ok(StartPoint::Head);
+        };
+        let Some(remote) = trunk_remote(primary, &trunk)? else {
+            return Ok(StartPoint::LocalTrunk {
+                branch: trunk,
+                unreachable: None,
+                reason: None,
+                behind: None,
+            });
+        };
+        let tracking = |b: &str| format!("refs/remotes/{remote}/{b}");
+        let refspec = |b: &str| format!("+refs/heads/{b}:{}", tracking(b));
+        let trunk_fetch =
+            git::fetch_bounded(primary, &remote, &[refspec(&trunk)], git::FETCH_TIMEOUT)?;
+        let reason = match trunk_fetch {
+            Ok(()) => {
+                let branch_fetch =
+                    git::fetch_bounded(primary, &remote, &[refspec(branch)], git::FETCH_TIMEOUT)?;
+                return Ok(match branch_fetch {
+                    Ok(()) => StartPoint::RemoteBranch {
+                        remote,
+                        branch: branch.to_string(),
+                        fetched: true,
+                    },
+                    // A remote-tracking ref left behind by a branch since deleted there is
+                    // not taken up: the remote has just said it is gone.
+                    Err(git::FetchFailure::NoSuchRemoteRef) => StartPoint::RemoteTrunk {
+                        remote,
+                        branch: trunk,
+                    },
+                    Err(git::FetchFailure::Unreachable(_)) => {
+                        if git::rev_exists(primary, &tracking(branch))? {
+                            StartPoint::RemoteBranch {
+                                remote,
+                                branch: branch.to_string(),
+                                fetched: false,
+                            }
+                        } else {
+                            StartPoint::RemoteTrunk {
+                                remote,
+                                branch: trunk,
+                            }
+                        }
+                    }
+                });
+            }
+            Err(git::FetchFailure::NoSuchRemoteRef) => {
+                format!("{remote} has no branch {trunk}")
+            }
+            Err(git::FetchFailure::Unreachable(why)) => why,
+        };
+        if git::rev_exists(primary, &tracking(branch))? {
+            return Ok(StartPoint::RemoteBranch {
+                remote,
+                branch: branch.to_string(),
+                fetched: false,
+            });
+        }
+        let behind = git::commits_between(primary, &trunk, &tracking(&trunk))?;
+        Ok(StartPoint::LocalTrunk {
+            branch: trunk,
+            unreachable: Some(remote),
+            reason: Some(reason),
+            behind,
         })
     }
 

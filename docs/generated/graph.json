@@ -3370,6 +3370,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/ui/mesh.rs",
+        "kind": "file",
+        "label": "mesh.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/ui/mesh.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/ui/mod.rs",
         "kind": "file",
         "label": "mod.rs",
@@ -7718,6 +7726,71 @@
             "ui",
             "derivation",
             "diagrams"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0167",
+        "kind": "adr",
+        "label": "adr-0167",
+        "summary": "Work moves through seats on the mesh, lands in combined tops, and every checkout is kept current",
+        "route": "/cockpit/objects/adr/adr-0167",
+        "source": ".ai/repo/adrs/0167-work-moves-through-seats-on-the-mesh-and-lands-in-combined-tops.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-16",
+          "related": [
+            "file:.ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v1.md",
+            "file:.ai/repo/adrs/0101-pull-requests-are-integrated-one-at-a-time-against-the-current-master.md",
+            "file:.ai/repo/adrs/0129-a-train-of-pull-requests-lands-in-one-run-of-the-required-check.md",
+            "file:.ai/repo/adrs/0155-an-expedited-landing-is-the-owners-word.md",
+            "file:.ai/repo/rules/project/integration-follows-the-current-master.v3.md",
+            "file:.ai/repo/rules/project/an-expedited-landing-is-the-owners-word.v1.md",
+            "file:.ai/repo/rules/project/work-is-claimed-before-it-is-built.v1.md",
+            "file:.ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md",
+            "file:docs/INTEGRATION.md",
+            "file:docs/MESH.md",
+            "file:docs/RELEASE.md",
+            "file:apps/majordomus-cli/src/ui/mesh.rs",
+            "test:test/cases/3150_the_cooperation_model_is_one_record.sh"
+          ],
+          "tags": [
+            "integration",
+            "governance",
+            "mesh",
+            "release"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0169",
+        "kind": "adr",
+        "label": "adr-0169",
+        "summary": "What an adoption leaves behind is measured, not remembered",
+        "route": "/cockpit/objects/adr/adr-0169",
+        "source": ".ai/repo/adrs/0169-what-an-adoption-leaves-behind-is-measured-not-remembered.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-16",
+          "related": [
+            "file:.ai/repo/project/milestones/two-folder-integration.yaml",
+            "file:.ai/repo/project/issues/I1101.yaml",
+            "file:docs/TWO_FOLDER_CONSOLIDATION.md",
+            "file:docs/ADOPTION.md",
+            "file:lib/init.sh",
+            "file:lib/update.sh",
+            "file:lib/capture.sh",
+            "file:lib/common.sh",
+            "file:apps/majordomus-cli/src/editors/mod.rs",
+            "file:apps/majordomus-cli/src/generate.rs",
+            "file:.ai/repo/adrs/0021-the-branch-to-worktree-topology-is-derived-from-git-identity-and-enfor.md",
+            "test:test/cases/3113_the_adoption_footprint_is_inventoried.sh"
+          ],
+          "tags": [
+            "adoption",
+            "two-folder",
+            "ownership",
+            "footprint"
           ]
         }
       },
@@ -12322,7 +12395,7 @@
           "requires_task": "none",
           "stage": "inspect",
           "summary": "Time every public command of the registry, cold and warm, and compare with the baseline.",
-          "syntax": "majordomus bench [<command>...] [--samples <n>] [--warmup <n>] [--mode cold|warm|both] [--format text|json] [--no-save] [--list] [--check] [--write-baseline [--force]]",
+          "syntax": "majordomus bench [<command>...] [--samples <n>] [--warmup <n>] [--cold-samples <n>] [--mode cold|warm|both] [--format text|json] [--no-save] [--list] [--check] [--write-baseline [--force]]",
           "visibility": "public",
           "writes": [
             ".ai/local/benchmarks/",
@@ -14317,6 +14390,18 @@
         }
       },
       {
+        "id": "majordomus://critique/the-owner-directs-work-from-the-ui",
+        "kind": "critique",
+        "label": "the-owner-directs-work-from-the-ui",
+        "summary": "the-owner-directs-work-from-the-ui",
+        "route": "/cockpit/objects/critique/the-owner-directs-work-from-the-ui",
+        "source": ".ai/repo/project/critiques/the-owner-directs-work-from-the-ui.yaml",
+        "facts": {
+          "intent": "the-owner-directs-work-from-the-ui",
+          "reviewed_at": "d116266803"
+        }
+      },
+      {
         "id": "majordomus://deployment/majordomus",
         "kind": "deployment",
         "label": "majordomus",
@@ -15106,7 +15191,7 @@
         "id": "majordomus://document/docs/TWO_FOLDER_CONSOLIDATION.md",
         "kind": "document",
         "label": "docs/TWO_FOLDER_CONSOLIDATION.md",
-        "summary": "Two-folder consolidation — forensic findings and migration plan",
+        "summary": "Two-folder consolidation — the adoption footprint, and the plan it justifies",
         "route": "/cockpit/objects/document/docs-two-folder-consolidation-md",
         "source": "docs/TWO_FOLDER_CONSOLIDATION.md"
       },
@@ -19133,6 +19218,20 @@
         }
       },
       {
+        "id": "majordomus://gap/the-owner-directs-work-from-the-ui",
+        "kind": "gap",
+        "label": "the-owner-directs-work-from-the-ui",
+        "summary": "the-owner-directs-work-from-the-ui",
+        "route": "/cockpit/objects/gap/the-owner-directs-work-from-the-ui",
+        "source": ".ai/repo/project/gaps/the-owner-directs-work-from-the-ui.yaml",
+        "facts": {
+          "intent": "the-owner-directs-work-from-the-ui",
+          "observed_at": "d116266803",
+          "recorded_at": "2026-10-16",
+          "recorded_by": "claude-code (session 21616f1e, worktree feature/the-ui-is-an-idd-workspace; read-only inventory of /ui, /cockpit, the plan capabilities and the open pull requests at master)"
+        }
+      },
+      {
         "id": "majordomus://implementation/bin/majordomus",
         "kind": "implementation",
         "label": "bin/majordomus",
@@ -19611,6 +19710,33 @@
             "Judging whether a criterion is met; that is the evidence's question (ADR 0070)"
           ],
           "updated_at": "2026-09-15"
+        }
+      },
+      {
+        "id": "majordomus://intent/the-owner-directs-work-from-the-ui",
+        "kind": "intent",
+        "label": "the-owner-directs-work-from-the-ui",
+        "summary": "The owner directs the repository's development from the UI, from an intent to the move that starts its next issue",
+        "route": "/cockpit/objects/intent/the-owner-directs-work-from-the-ui",
+        "source": ".ai/repo/project/intents/the-owner-directs-work-from-the-ui.yaml",
+        "facts": {
+          "governance": [
+            "rule:project.work-serves-a-declared-intent",
+            "rule:project.derived-once"
+          ],
+          "invariants": [
+            "The workspace is a projection of intents.list, plan.roadmap, plan.issues and plan.waves; it stores nothing and decides no status, wave or readiness of its own",
+            "A new intent, milestone or issue appears in the workspace with no registration anywhere but its own record",
+            "A move is made by plan.transition as an execution on the server, which refuses an illegal move and names why; the screen never edits a record",
+            "A reading that is not of the repository as it is now says so on the panel it fed"
+          ],
+          "milestones": [
+            "idd-workspace"
+          ],
+          "non_goals": [
+            "A second planning engine, wave allocator or status vocabulary in the UI",
+            "Mutation from the published site, which serves no runtime"
+          ]
         }
       },
       {
@@ -26847,14 +26973,21 @@
           "priority": "p1",
           "profile": "implementation",
           "scope": [
-            "apps/majordomus-cli/src/http/router.rs"
+            "apps/majordomus-cli/src/http/router.rs",
+            "apps/majordomus-cli/src/http/swagger.rs",
+            "apps/majordomus-cli/src/web/home.rs",
+            "test/cases/3110_a_served_surface_names_its_checkout.sh"
           ],
           "slug": "served-identity-visible",
-          "updated_at": "2026-09-10",
+          "started_at": "2026-10-16T11:59:02Z",
+          "started_event": "sha256:b481964783b38998b04ba4805d010bde2f50aa134a27b91000a53a42ecc4e9c9",
+          "updated_at": "2026-10-16T13:51:16Z",
           "validation": [
             "cargo test --workspace --all-features",
             "bash test/run.sh"
-          ]
+          ],
+          "verified_at": "2026-10-16T13:51:16Z",
+          "verified_event": "sha256:967b4aa5b0abe20d7da48d0066ed2bf41fbea25f3e2fa7cbca09ad042b983d11"
         }
       },
       {
@@ -26889,15 +27022,19 @@
           "profile": "deep-work",
           "risk": "A forensic phase can become a rewrite the moment it finds something ugly. It records; the phases that follow change.",
           "scope": [
-            "docs/INTEGRATION.md",
+            "docs/TWO_FOLDER_CONSOLIDATION.md",
             ".ai/repo/adrs"
           ],
           "slug": "adoption-footprint-forensics",
-          "updated_at": "2026-09-06",
+          "started_at": "2026-10-16T11:25:07Z",
+          "started_event": "sha256:31ae9ab3d028d055e36f98af540f82d1b50d13822270862f9e092fc74c8d034b",
+          "updated_at": "2026-10-16T12:15:38Z",
           "validation": [
             "bin/majordomus doctor",
             "bash test/run.sh"
-          ]
+          ],
+          "verified_at": "2026-10-16T12:15:38Z",
+          "verified_event": "sha256:f31eddc643482230f2ae58b767aba250a1c2f92dc035fe10519028cab7d56f92"
         }
       },
       {
@@ -32707,11 +32844,15 @@
             "apps/majordomus-cli/src/bench"
           ],
           "slug": "a-timing-verdict-names-its-runner",
-          "updated_at": "2026-10-09",
+          "started_at": "2026-10-16T07:54:07Z",
+          "started_event": "sha256:1bf19af5c327183822f9e928ca69962e7ff713ce8886670c96854bb2ded0442f",
+          "updated_at": "2026-10-16T07:54:22Z",
           "validation": [
             "bash test/run.sh 82_bench_check",
             "bash test/run.sh 417_the_suite_finishes_inside_its_bound"
-          ]
+          ],
+          "verified_at": "2026-10-16T07:54:13Z",
+          "verified_event": "sha256:5fff9f2e3500b4bfed3b1f868ed034c4a5ea2ed0b635140bc5488dd2f5677f0b"
         }
       },
       {
@@ -39287,6 +39428,241 @@
         }
       },
       {
+        "id": "majordomus://issue/I2760",
+        "kind": "issue",
+        "label": "I2760",
+        "summary": "A scope entry is one path, and a path context would refuse is refused at start",
+        "route": "/cockpit/objects/issue/i2760",
+        "source": ".ai/repo/project/issues/I2760.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "majordomus start refuses a scope entry holding whitespace with exit 2, writes no task record, and names the entry",
+            "majordomus start refuses a scope entry that resolves outside the repository through a symbolic link",
+            "majordomus context, over a recorded scope that names `/`, prints that entry as refused, still prints the other scope paths' documents, and exits 0",
+            "majordomus context resolve <outside path> still refuses with the same message and exit code",
+            "case 3160 fails against master without the change"
+          ],
+          "created_at": "2026-10-16",
+          "depends_on": [],
+          "evidence_required": [
+            "scope_entry_case"
+          ],
+          "milestone": "development-runtime",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/start.sh",
+            "lib/context.sh",
+            "lib/context_docs.sh",
+            "test/cases/3160_a_scope_entry_is_one_path.sh",
+            ".ai/repo/project/issues/I2760.yaml"
+          ],
+          "slug": "a-scope-entry-is-one-path",
+          "updated_at": "2026-10-16",
+          "validation": [
+            "bash test/run.sh 3160_a_scope_entry_is_one_path 04_start_check",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2770",
+        "kind": "issue",
+        "label": "I2770",
+        "summary": "majordomus ui and the Cockpit wear the site's navbar: one renderer, the same styles and scripts, and a browser comparison that refuses a difference",
+        "route": "/cockpit/objects/issue/i2770",
+        "source": ".ai/repo/project/issues/I2770.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every UI screen and Cockpit page carries exactly one nav[aria-label=Main], the site's, with the executable's version and the product entry leading to /ui",
+            "scripts/ui navbar reports no difference between the bar on the site's front page and on /ui and /cockpit at every declared width, light and dark, closed and with a menu open",
+            "A copy that is not the built bar, and a share/ui script that is not the site's bytes, each fail their check"
+          ],
+          "created_at": "2026-10-16",
+          "depends_on": [],
+          "evidence_required": [
+            "navbar_parity_run",
+            "navbar_unit_tests"
+          ],
+          "milestone": "surfaces-never-disagree",
+          "non_scope": [
+            "The published Cockpit snapshot keeps no script, so its copy of the bar has no working menus there; giving the snapshot the bar's two scripts is a change to the exporter's subject",
+            "A second navigation declaration or a second renderer of the bar for any surface"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "site/templates/partials/navbar.html",
+            "apps/majordomus-cli/src/ui/navbar.rs",
+            "apps/majordomus-cli/src/ui/navbar.html",
+            "apps/majordomus-cli/src/ui/shell.rs",
+            "apps/majordomus-cli/src/ui/mod.rs",
+            "apps/majordomus-cli/src/cockpit/html.rs",
+            "apps/majordomus-cli/src/cockpit/view.rs",
+            "apps/majordomus-cli/src/cockpit/mod.rs",
+            "share/cockpit/src/cockpit.css",
+            "share/cockpit/cockpit.css",
+            "share/cockpit/cockpit.js",
+            "share/cockpit/nav.js",
+            "share/cockpit/theme.js",
+            "scripts/lib/cockpit-probe.mjs",
+            "docs/COCKPIT.md",
+            "apps/majordomus-cli/src/design/render.rs",
+            "share/ui/src/ui.css",
+            "share/ui/ui.css",
+            "share/ui/ui.js",
+            "share/ui/nav.js",
+            "share/ui/theme.js",
+            "scripts/ui",
+            "scripts/lib/ui-navbar.mjs",
+            "scripts/lib/ui.test.mjs",
+            "scripts/cockpit-assets",
+            ".ai/repo/rules/project/the-ui-wears-the-sites-navbar.v1.md",
+            "docs/DESIGN_SYSTEM.md",
+            "docs/MAJORDOMUS_UI.md",
+            ".ai/repo/project/issues/I2770.yaml"
+          ],
+          "slug": "the-ui-wears-the-sites-navbar",
+          "updated_at": "2026-10-16",
+          "validation": [
+            "scripts/site-build && scripts/ui navbar",
+            "scripts/ui test",
+            "scripts/cockpit-assets --check",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- ui::navbar ui::shell cockpit::html"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2780",
+        "kind": "issue",
+        "label": "I2780",
+        "summary": "The UI has an intent workspace: an intent, its milestones, issues, waves and graph on one screen",
+        "route": "/cockpit/objects/issue/i2780",
+        "source": ".ai/repo/project/issues/I2780.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The intent the query names, or the first executing then planned one in intents.list's order, is shown, and the rule is printed",
+            "Milestones, issues and waves come from plan.roadmap, plan.issues and plan.waves and no list of the screen's own",
+            "An issue added to the plan appears with no other edit",
+            "An intent that is not recorded is refused by name, and a capability that cannot answer says so in its panel"
+          ],
+          "created_at": "2026-10-16",
+          "current_state": "No /ui/idd; the plan is read on four screens, the waves on none.",
+          "depends_on": [],
+          "desired_state": "/ui/idd answers with a hero, the intent choice, the criteria, milestones, issues, waves and graph panels, each naming its sources, and refuses an unknown intent by name.",
+          "evidence_required": [
+            "ui_idd_tests"
+          ],
+          "milestone": "idd-workspace",
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui",
+            "apps/majordomus-cli/tests/ui_idd.rs",
+            "docs/MAJORDOMUS_UI.md",
+            ".ai/repo/project"
+          ],
+          "serves": [
+            "the-owner-directs-work-from-the-ui#workspace-is-derived"
+          ],
+          "slug": "the-ui-is-an-idd-workspace",
+          "started_at": "2026-10-16T21:12:37Z",
+          "started_event": "sha256:da83452b38cd139d71c5d90d7e5ca56c062dbad34446d39aa840959e43583cfc",
+          "updated_at": "2026-10-16T21:13:23Z",
+          "validation": [
+            "majordomus plan validate",
+            "majordomus intent validate",
+            "cargo test --lib ui::",
+            "cargo test --test ui_idd"
+          ],
+          "verified_at": "2026-10-16T21:13:23Z",
+          "verified_event": "sha256:d901ca8456495a20970dff1cc4b909f5ef4175721d4232ea73c6d96a0f21db7e"
+        }
+      },
+      {
+        "id": "majordomus://issue/I2786",
+        "kind": "issue",
+        "label": "I2786",
+        "summary": "The published UI reads the evidence CI recorded, and a publication that would show tests as not run is refused",
+        "route": "/cockpit/objects/issue/i2786",
+        "source": ".ai/repo/project/issues/I2786.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "scripts/pages evidence --ledger-out puts the run's ledger in place only for an artifact of the published history",
+            "scripts/pages published-evidence exits 10 over the baseline, 0 within it, 12 when the report or the baseline cannot be read",
+            "The published kiosk shows no claim as not run that CI ran"
+          ],
+          "created_at": "2026-10-17",
+          "current_state": "The ui-snapshot job reads the tracked ledger alone, and nothing counts what a publication shows as not run.",
+          "depends_on": [],
+          "desired_state": "The ui-snapshot job puts the run's ledger in place and refuses a publication whose not-run count exceeds the declared baseline of 0.",
+          "evidence_required": [
+            "case_3178"
+          ],
+          "milestone": "test-evidence",
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            ".github/workflows/pages.yml",
+            "scripts/pages",
+            ".ai/repo/evidence/published-not-run.txt",
+            ".ai/repo/rules/project/published-evidence-is-what-ci-recorded.v1.md",
+            ".ai/repo/adrs/0087-evidence-is-indexed-by-subject-and-judged-at-the-presented-revision.md",
+            "test/cases/3178_the_published_ui_reads_the_evidence_ci_recorded.sh",
+            "docs/EVIDENCE.md",
+            "docs/MAJORDOMUS_UI.md"
+          ],
+          "slug": "the-published-ui-reads-the-evidence-ci-recorded",
+          "updated_at": "2026-10-17",
+          "validation": [
+            "majordomus plan validate",
+            "bash test/run.sh 3178_the_published_ui_reads_the_evidence_ci_recorded",
+            "bash test/run.sh 357_ci_records_evidence"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2787",
+        "kind": "issue",
+        "label": "I2787",
+        "summary": "A build never lets the shared build directory's crate artifacts fill the disk",
+        "route": "/cockpit/objects/issue/i2787",
+        "source": ".ai/repo/project/issues/I2787.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A stale crate artifact in debug/deps older than the declared age, held open by no process, is removed before a bounded build and named on stderr",
+            "An artifact a running process holds open, a recent one, and a dependency crate's artifact all survive",
+            "Free space stays above the declared floor through a day of concurrent sessions on the shared machine"
+          ],
+          "created_at": "2026-10-17",
+          "current_state": "lib/rust_bin.sh refuses a build below a free-space floor; I2713 (#1279) prunes idle incremental sessions; nothing prunes debug/deps.",
+          "depends_on": [
+            "I2713"
+          ],
+          "evidence_required": [
+            "case_deps_pruned"
+          ],
+          "milestone": "development-runtime",
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "lib/rust_bin.sh",
+            "test/cases",
+            "docs/WORKTREES.md"
+          ],
+          "slug": "build-dir-deps-are-pruned",
+          "updated_at": "2026-10-17",
+          "validation": [
+            "majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "label": "a-commit-stood-behind-a-build-lock",
@@ -40502,6 +40878,49 @@
           "validation": [
             "bash test/run.sh",
             "bin/majordomus doctor"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/idd-workspace",
+        "kind": "milestone",
+        "label": "idd-workspace",
+        "summary": "The UI is where the owner directs the work, from an intent to its next move",
+        "route": "/cockpit/objects/milestone/idd-workspace",
+        "source": ".ai/repo/project/milestones/idd-workspace.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "/ui/idd renders a chosen intent's milestones, issues, waves and graph from the plan's capabilities alone, with the selection rule shown",
+            "An issue added to the plan appears in the workspace with no other edit",
+            "Every ready issue leads to the move that starts it"
+          ],
+          "created_at": "2026-10-16",
+          "current_state": "No /ui/idd. Intents, milestones and issues are read on the Roadmap and Issues screens; plan.waves is read by no /ui screen; plan.transition is offered on /cockpit/plan/issues/<id> only.",
+          "depends_on": [],
+          "evidence_required": [],
+          "non_scope": [
+            "A second plan engine, wave allocator or status vocabulary",
+            "Mutation from the published site",
+            "Provider-assisted plan authoring"
+          ],
+          "order": 146,
+          "priority": "p0",
+          "risks": [
+            "#1184 (/ui/waves) and #1302 (roadmap reads delivery) touch ui/mod.rs's screen list; each lands as a textual neighbour and needs one merge."
+          ],
+          "scope": [
+            "apps/majordomus-cli/src/ui",
+            "share/ui",
+            "docs/UI.md",
+            ".ai/repo/project",
+            "test/cases"
+          ],
+          "slug": "idd-workspace",
+          "updated_at": "2026-10-16",
+          "validation": [
+            "majordomus plan validate",
+            "majordomus intent validate",
+            "cargo test --lib ui::"
           ]
         }
       },
@@ -48046,6 +48465,28 @@
         }
       },
       {
+        "id": "majordomus://rule/project.published-evidence-is-what-ci-recorded@1",
+        "kind": "rule",
+        "label": "project.published-evidence-is-what-ci-recorded@1",
+        "summary": "A published UI shows the evidence CI recorded, never \"not run\" for what CI ran",
+        "route": "/cockpit/objects/rule/project-published-evidence-is-what-ci-recorded-1",
+        "source": ".ai/repo/rules/project/published-evidence-is-what-ci-recorded.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.never-reported-is-not-green@1",
+            "project.ui-derived-state@1"
+          ],
+          "tags": [
+            "evidence",
+            "publication",
+            "site",
+            "ui"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.reclaim-only-what-you-own@1",
         "kind": "rule",
         "label": "project.reclaim-only-what-you-own@1",
@@ -48398,6 +48839,31 @@
         }
       },
       {
+        "id": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@1",
+        "kind": "rule",
+        "label": "project.the-cooperation-model-is-the-owners-word@1",
+        "summary": "Work moves through seats held as mesh claims, lands in combined tops, and every checkout is kept current",
+        "route": "/cockpit/objects/rule/project-the-cooperation-model-is-the-owners-word-1",
+        "source": ".ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.integration-follows-the-current-master@3",
+            "project.an-expedited-landing-is-the-owners-word@1",
+            "project.work-is-claimed-before-it-is-built@1",
+            "project.mesh-cooperation-is-authenticated@1"
+          ],
+          "tags": [
+            "process",
+            "integration",
+            "mesh",
+            "release",
+            "governance"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.the-crate-reference-is-published@1",
         "kind": "rule",
         "label": "project.the-crate-reference-is-published@1",
@@ -48576,6 +49042,31 @@
             "publication",
             "web",
             "distribution"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://rule/project.the-ui-wears-the-sites-navbar@1",
+        "kind": "rule",
+        "label": "project.the-ui-wears-the-sites-navbar@1",
+        "summary": "majordomus.dev is the reference for how the product looks, and every page of the UI and the Cockpit wears the site's own navbar",
+        "route": "/cockpit/objects/rule/project-the-ui-wears-the-sites-navbar-1",
+        "source": ".ai/repo/rules/project/the-ui-wears-the-sites-navbar.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.navigation-is-declared-once@1",
+            "project.design-tokens-declared-once@2",
+            "project.ui-conformance@1"
+          ],
+          "tags": [
+            "design",
+            "ui",
+            "navigation",
+            "derived",
+            "projections",
+            "site"
           ]
         }
       },
@@ -56794,6 +57285,13 @@
         "source": "test/cases/3075_knowledge_validate_judges_the_graph.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3084_a_case_near_its_budget_is_named.sh",
+        "kind": "test",
+        "label": "test/cases/3084_a_case_near_its_budget_is_named.sh",
+        "route": "/cockpit/objects/test/test-cases-3084-a-case-near-its-budget-is-named-sh",
+        "source": "test/cases/3084_a_case_near_its_budget_is_named.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/30_command_registry.sh",
         "kind": "test",
         "label": "test/cases/30_command_registry.sh",
@@ -56822,11 +57320,60 @@
         "source": "test/cases/310_rustdoc_projection.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3110_a_served_surface_names_its_checkout.sh",
+        "kind": "test",
+        "label": "test/cases/3110_a_served_surface_names_its_checkout.sh",
+        "route": "/cockpit/objects/test/test-cases-3110-a-served-surface-names-its-checkout-sh",
+        "source": "test/cases/3110_a_served_surface_names_its_checkout.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3113_the_adoption_footprint_is_inventoried.sh",
+        "kind": "test",
+        "label": "test/cases/3113_the_adoption_footprint_is_inventoried.sh",
+        "route": "/cockpit/objects/test/test-cases-3113-the-adoption-footprint-is-inventoried-sh",
+        "source": "test/cases/3113_the_adoption_footprint_is_inventoried.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/3125_the_reaper_asks_cargo_for_the_build_dir.sh",
         "kind": "test",
         "label": "test/cases/3125_the_reaper_asks_cargo_for_the_build_dir.sh",
         "route": "/cockpit/objects/test/test-cases-3125-the-reaper-asks-cargo-for-the-build-dir-sh",
         "source": "test/cases/3125_the_reaper_asks_cargo_for_the_build_dir.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3131_a_new_worktree_starts_from_the_remote_trunk.sh",
+        "kind": "test",
+        "label": "test/cases/3131_a_new_worktree_starts_from_the_remote_trunk.sh",
+        "route": "/cockpit/objects/test/test-cases-3131-a-new-worktree-starts-from-the-remote-trunk-sh",
+        "source": "test/cases/3131_a_new_worktree_starts_from_the_remote_trunk.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3150_the_cooperation_model_is_one_record.sh",
+        "kind": "test",
+        "label": "test/cases/3150_the_cooperation_model_is_one_record.sh",
+        "route": "/cockpit/objects/test/test-cases-3150-the-cooperation-model-is-one-record-sh",
+        "source": "test/cases/3150_the_cooperation_model_is_one_record.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3151_a_task_is_claimed_when_it_starts.sh",
+        "kind": "test",
+        "label": "test/cases/3151_a_task_is_claimed_when_it_starts.sh",
+        "route": "/cockpit/objects/test/test-cases-3151-a-task-is-claimed-when-it-starts-sh",
+        "source": "test/cases/3151_a_task_is_claimed_when_it_starts.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3160_a_scope_entry_is_one_path.sh",
+        "kind": "test",
+        "label": "test/cases/3160_a_scope_entry_is_one_path.sh",
+        "route": "/cockpit/objects/test/test-cases-3160-a-scope-entry-is-one-path-sh",
+        "source": "test/cases/3160_a_scope_entry_is_one_path.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3178_the_published_ui_reads_the_evidence_ci_recorded.sh",
+        "kind": "test",
+        "label": "test/cases/3178_the_published_ui_reads_the_evidence_ci_recorded.sh",
+        "route": "/cockpit/objects/test/test-cases-3178-the-published-ui-reads-the-evidence-ci-recorded-sh",
+        "source": "test/cases/3178_the_published_ui_reads_the_evidence_ci_recorded.sh"
       },
       {
         "id": "majordomus://test/test/cases/318_a_partial_sweep_says_so.sh",
@@ -69520,6 +70067,141 @@
         "kind": "put_in_force"
       },
       {
+        "source": "majordomus://adr/adr-0167",
+        "target": "file:apps/majordomus-cli/src/ui/mesh.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0167",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0167",
+        "target": "majordomus://adr/adr-0101",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0167",
+        "target": "majordomus://adr/adr-0129",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0167",
+        "target": "majordomus://adr/adr-0155",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0167",
+        "target": "majordomus://document/docs/INTEGRATION.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0167",
+        "target": "majordomus://document/docs/MESH.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0167",
+        "target": "majordomus://document/docs/RELEASE.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0167",
+        "target": "majordomus://rule/project.an-expedited-landing-is-the-owners-word@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0167",
+        "target": "majordomus://rule/project.integration-follows-the-current-master@3",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0167",
+        "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0167",
+        "target": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0167",
+        "target": "majordomus://rule/project.work-is-claimed-before-it-is-built@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0167",
+        "target": "majordomus://test/test/cases/3150_the_cooperation_model_is_one_record.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0169",
+        "target": "file:apps/majordomus-cli/src/editors/mod.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0169",
+        "target": "file:apps/majordomus-cli/src/generate.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0169",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0169",
+        "target": "majordomus://adr/adr-0021",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0169",
+        "target": "majordomus://document/docs/ADOPTION.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0169",
+        "target": "majordomus://document/docs/TWO_FOLDER_CONSOLIDATION.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0169",
+        "target": "majordomus://implementation/lib/capture.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0169",
+        "target": "majordomus://implementation/lib/common.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0169",
+        "target": "majordomus://implementation/lib/init.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0169",
+        "target": "majordomus://implementation/lib/update.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0169",
+        "target": "majordomus://issue/I1101",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0169",
+        "target": "majordomus://milestone/two-folder-integration",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0169",
+        "target": "majordomus://test/test/cases/3113_the_adoption_footprint_is_inventoried.sh",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://application/ci-gated-project",
         "target": "kind:application",
         "kind": "is_a"
@@ -75175,6 +75857,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://critique/the-owner-directs-work-from-the-ui",
+        "target": "kind:critique",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://deployment/majordomus",
         "target": "kind:deployment",
         "kind": "is_a"
@@ -77115,6 +77802,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://gap/the-owner-directs-work-from-the-ui",
+        "target": "kind:gap",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://implementation/bin/majordomus",
         "target": "kind:implementation",
         "kind": "is_a"
@@ -77391,6 +78083,11 @@
       },
       {
         "source": "majordomus://intent/intent-planning",
+        "target": "kind:intent",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://intent/the-owner-directs-work-from-the-ui",
         "target": "kind:intent",
         "kind": "is_a"
       },
@@ -83575,6 +84272,61 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2760",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2760",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2770",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2770",
+        "target": "majordomus://milestone/surfaces-never-disagree",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2780",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2780",
+        "target": "majordomus://milestone/idd-workspace",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2786",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2786",
+        "target": "majordomus://milestone/test-evidence",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2787",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2787",
+        "target": "majordomus://issue/I2713",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2787",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -83721,6 +84473,11 @@
       },
       {
         "source": "majordomus://milestone/foundation",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/idd-workspace",
         "target": "kind:milestone",
         "kind": "is_a"
       },
@@ -85900,6 +86657,21 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/project.published-evidence-is-what-ci-recorded@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.published-evidence-is-what-ci-recorded@1",
+        "target": "majordomus://rule/project.never-reported-is-not-green@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.published-evidence-is-what-ci-recorded@1",
+        "target": "majordomus://rule/project.ui-derived-state@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.reclaim-only-what-you-own@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -86060,6 +86832,31 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@1",
+        "target": "majordomus://rule/project.an-expedited-landing-is-the-owners-word@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@1",
+        "target": "majordomus://rule/project.integration-follows-the-current-master@3",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@1",
+        "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@1",
+        "target": "majordomus://rule/project.work-is-claimed-before-it-is-built@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.the-crate-reference-is-published@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -86202,6 +86999,26 @@
       {
         "source": "majordomus://rule/project.the-site-offers-the-release-it-published@1",
         "target": "majordomus://rule/project.release-is-a-projection@2",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.the-ui-wears-the-sites-navbar@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.the-ui-wears-the-sites-navbar@1",
+        "target": "majordomus://rule/project.design-tokens-declared-once@2",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.the-ui-wears-the-sites-navbar@1",
+        "target": "majordomus://rule/project.navigation-is-declared-once@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.the-ui-wears-the-sites-navbar@1",
+        "target": "majordomus://rule/project.ui-conformance@1",
         "kind": "depends_on"
       },
       {
@@ -88150,6 +88967,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3084_a_case_near_its_budget_is_named.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/30_command_registry.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -88170,7 +88992,42 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3110_a_served_surface_names_its_checkout.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3113_the_adoption_footprint_is_inventoried.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/3125_the_reaper_asks_cargo_for_the_build_dir.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3131_a_new_worktree_starts_from_the_remote_trunk.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3150_the_cooperation_model_is_one_record.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3151_a_task_is_claimed_when_it_starts.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3160_a_scope_entry_is_one_path.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3178_the_published_ui_reads_the_evidence_ci_recorded.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -93466,8 +94323,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2934,
-      "edges": 6436,
+      "nodes": 2957,
+      "edges": 6498,
       "acyclic": false,
       "truncated": false
     }
