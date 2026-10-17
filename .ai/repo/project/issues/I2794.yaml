@@ -1,0 +1,28 @@
+id: I2794
+milestone: knowledge-base
+title: "Every capability module and every kind is named by a stable feature"
+slug: every-module-and-kind-has-a-feature
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Close the uncovered findings of product validate: name brief, convergence, dashboard, editors, entity, episodes, guard, mcp, monitor, pack, served, shell and skills, and the kinds critique, deployment, derive-offload, gap and workspace, in the stable feature that presents them (or a new feature where none fits), give coverage.md a mechanism, and settle the contested areas in the feature files."
+why: "On 2026-10-17 product validate reported 33 warnings: 13 modules and 5 kinds the product page says nothing about, and 14 modules claimed by features sharing no area."
+current_state: "product validate: 28 features, modules_covered 45 of 58, kinds_covered 26 of 31."
+desired_state: "product validate reports no uncovered module or kind and no missing_content."
+scope:
+  - ".ai/repo/project/milestones/knowledge-base.yaml"
+  - ".ai/repo/project/issues/I2794.yaml"
+  - ".ai/repo/features"
+  - "site/data"
+non_scope:
+  - "Changing a capability or a kind; the feature files only name them"
+depends_on: []
+acceptance_criteria:
+  - "product validate reports no uncovered and no missing_content finding"
+validation:
+  - "bin/majordomus-cli product validate"
+  - "scripts/derive-check"
+evidence_required:
+  - "product_validate_clean"
+created_at: 2026-10-17
+updated_at: 2026-10-17

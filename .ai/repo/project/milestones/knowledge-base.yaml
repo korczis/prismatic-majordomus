@@ -1,0 +1,52 @@
+id: knowledge-base
+title: The repository's knowledge base is derived from every source that carries know-how, and every surface presents it
+slug: knowledge-base
+order: 106
+priority: p1
+problem: "The knowledge kind holds four curated notes and no tracked candidate, while what the repository has learned lives in places no surface reads: about 4,300 commits whose fix and revert bodies name causes, CI runs whose failed steps repeat, 90 tracked session records, local handovers, and the lessons sessions wrote outside the repository. The deriver stopped 36 days ago with 15 closed episodes underived. No capability lists the base, /ui/knowledge shows only the review queue, and the site publishes no knowledge at all (site/data/publication.toml declares the kind projection none). The product model names 13 capability modules and 5 kinds in no stable feature."
+outcome: "Every source that carries know-how reaches the knowledge kind the repository's way: as observations a worker records with resolving evidence, derived into candidate records by the deterministic deriver, reviewed and promoted by a person. One capability lists the whole base with each record's resolution; /ui/knowledge browses it; the site carries a generated knowledge section; and the product model leaves no module or kind unnamed."
+current_state: "On master at the v0.28.0 release (2026-10-17): 4 curated records and no tracked candidate, knowledge_base.status stale with the writer stopped; knowledge_base.candidates and knowledge_base.record are the only readers; publication.toml projects knowledge nowhere; product validate reports 33 warnings, 18 of them uncovered modules and kinds."
+desired_state: "The candidates directory carries the distilled know-how with every evidence reference resolving; knowledge check passes; knowledge_base.records answers over CLI, HTTP and MCP; /ui/knowledge and https://majordomus.dev/knowledge/ present every record with its class, status, subject and provenance; product validate names no uncovered module or kind."
+scope:
+  - .ai/repo/knowledge
+  - .ai/repo/project
+  - .ai/repo/adrs
+  - .ai/repo/features
+  - apps/majordomus-cli/src/capability/builtin/knowledge_base.rs
+  - apps/majordomus-cli/src/ui/knowledge.rs
+  - apps/majordomus-cli/src/site.rs
+  - apps/majordomus-cli/src/generate.rs
+  - scripts/generate-site-data
+  - site/templates
+  - site/data/nav.toml
+  - site/data/publication.toml
+  - site/content/knowledge
+  - docs/KNOWLEDGE.md
+  - test/cases
+non_scope:
+  - Promoting a candidate or writing status verified; promotion is a person's act with evidence
+  - Deriving a record from a conversation, a prompt or a model; the deriver stays deterministic and reads the ledger and git
+  - Reading git refs, the network or the clock at generate time; a derived page reads tracked records only
+  - Bumping the version on a feature branch; a new capability rides the landing seat's top that carries the bump
+acceptance_criteria:
+  - "Every distilled observation carries at least one evidence reference that resolves, and knowledge check passes over the whole base"
+  - "knowledge_base.records lists curated and candidate records with class, status, subject, route and resolution, over CLI, HTTP and MCP"
+  - "/ui/knowledge presents the base beside the review queue, read from the capability, with nothing written"
+  - "The site carries a generated knowledge section, one page per record, derived only from tracked records, held by generate --check"
+  - "product validate reports no uncovered module and no uncovered kind"
+validation:
+  - bin/majordomus knowledge check
+  - bin/majordomus plan validate
+  - bin/majordomus-cli product validate
+  - scripts/derive-check
+  - bash test/run.sh
+evidence_required:
+  - knowledge_check_clean
+  - records_capability_tests
+  - site_section_case
+depends_on: []
+risks:
+  - "The distilled candidates exceed the policy's review cap of 40; doctor warns until a person reviews them, which is the queue doing its job."
+  - "Distillation is a worker's judgement of what is durable; the deriver records it as an observed lesson and the class is a person's decision at promotion."
+created_at: 2026-10-17
+updated_at: 2026-10-17

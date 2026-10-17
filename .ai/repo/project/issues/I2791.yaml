@@ -1,0 +1,45 @@
+id: I2791
+milestone: knowledge-base
+title: "What commits, CI runs, session records and lessons taught is recorded as observations and derived into candidates"
+slug: the-repository-knows-what-its-history-taught
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Distil the durable know-how held by the commit history (fix, revert and perf bodies that name a cause), the CI runs (the gates and cases that fail repeatedly and how each is reproduced locally), the tracked session records, the handovers and the lessons sessions recorded outside the repository into observations, each with a subject and evidence references that resolve, record them through knowledge observe, and let the deterministic deriver write the candidate records; make a record derived under a task verifiable in every clone, and keep what a record must never publish out of the candidates."
+why: "On 2026-10-17 the knowledge kind held 4 curated notes and 3 candidates; knowledge status read stale with the writer stopped and 15 closed episodes underived, while the same traps were being rediscovered session after session (the lessons outside the repository number in the hundreds and none reached the tree, another checkout or a surface)."
+current_state: "4 curated records and no tracked candidate on master; the deriver last wrote for a closed episode on 2026-09-11; a task or decision reference resolved only through the local ledger, so a clone refused every record derived under a task."
+desired_state: "The candidates directory carries the distilled observations, each derived by knowledge derive with every evidence reference resolving in a clone with no ledger; knowledge check passes; observe refuses and the deriver skips a statement carrying a machine path or a credential shape."
+scope:
+  - ".ai/repo/knowledge/candidates"
+  - ".ai/repo/project/milestones/knowledge-base.yaml"
+  - ".ai/repo/project/issues/I2791.yaml"
+  - ".ai/repo/project/issues/I2792.yaml"
+  - ".ai/repo/project/issues/I2793.yaml"
+  - ".ai/repo/project/issues/I2794.yaml"
+  - ".ai/repo/sessions"
+  - "lib/knowledge.sh"
+  - "apps/majordomus-cli/src/capability/builtin/knowledge_base.rs"
+  - "test/cases/3193_a_task_reference_resolves_in_every_clone.sh"
+  - "test/cases/980_a_session_records_what_it_observed.sh"
+  - "docs/KNOWLEDGE.md"
+  - "site/data"
+non_scope:
+  - "Promoting a candidate or writing status verified: promotion is a person's act with evidence"
+  - "Writing a candidate file by hand: every record is written by the deriver from a ledger line"
+  - "Any statement that names a person, quotes anyone, or carries account, consent or credential detail"
+depends_on: []
+acceptance_criteria:
+  - "Every candidate this issue adds was written by knowledge derive from an observation.recorded line"
+  - "Every evidence reference of every added candidate resolves; knowledge check exits 0"
+  - "No added record opens like a turn of a conversation or names a person"
+  - "A task or decision reference resolves through the tracked session record that names the task, so knowledge check passes in a fresh clone with no ledger"
+validation:
+  - "bin/majordomus knowledge check"
+  - "bin/majordomus-cli knowledge status"
+  - "scripts/derive-check"
+  - "bash test/run.sh 3193_a_task_reference_resolves_in_every_clone"
+evidence_required:
+  - "knowledge_check_clean"
+  - "case_3193"
+created_at: 2026-10-17
+updated_at: 2026-10-17
