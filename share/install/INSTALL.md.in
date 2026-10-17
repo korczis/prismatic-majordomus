@@ -144,6 +144,15 @@ Run the same command again. The installer is idempotent:
 - a newer version installed and no version pinned — it refuses to move you backwards, and
   says how to do it anyway (`--force`, or `--version`).
 
+On macOS the application firewall admits an executable by its path, and each version lives
+at a path of its own. When the firewall is on and admits an earlier
+`versions/<v>/libexec/majordomus-cli` but not the one just installed, the installer ends with
+a warning and the two `socketfilterfw` lines that admit the new path, to run as root (or
+`majordomus mesh firewall apply`, as root in the checkout a hub serves). It never runs them,
+and never takes root itself. Until they
+run, a mesh hub or server restarted on the new version answers on its own machine and is
+dropped for every other one (I2961).
+
 ## Uninstalling
 
 ```bash

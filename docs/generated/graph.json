@@ -39739,7 +39739,7 @@
           "acceptance_criteria": [
             "An upgrade on macOS with the firewall on, an older tree admitted and the new one not, prints the admitting commands for the new path, and only then",
             "A firewall that is off, a first install, or an already admitted path prints nothing about the firewall",
-            "Nothing runs sudo or changes the firewall on its own, and the install still exits zero"
+            "Nothing takes root or changes the firewall on its own, and the install still exits zero"
           ],
           "created_at": "2026-10-17",
           "depends_on": [],
@@ -39754,7 +39754,11 @@
             "share/install/install.sh.in",
             "site/static/install.sh",
             "test/cases/3361_an_upgraded_hub_names_its_firewall_gap.sh",
-            "docs/MESH.md"
+            "docs/MESH.md",
+            "docs/INSTALL.md",
+            "share/install/INSTALL.md.in",
+            "site/content/docs/install.md",
+            "site/content/docs/mesh.md"
           ],
           "slug": "an-upgraded-hub-stays-reachable",
           "updated_at": "2026-10-17",
@@ -57584,6 +57588,13 @@
         "label": "test/cases/335_every_link_resolves.sh",
         "route": "/cockpit/objects/test/test-cases-335-every-link-resolves-sh",
         "source": "test/cases/335_every_link_resolves.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3361_an_upgraded_hub_names_its_firewall_gap.sh",
+        "kind": "test",
+        "label": "test/cases/3361_an_upgraded_hub_names_its_firewall_gap.sh",
+        "route": "/cockpit/objects/test/test-cases-3361-an-upgraded-hub-names-its-firewall-gap-sh",
+        "source": "test/cases/3361_an_upgraded_hub_names_its_firewall_gap.sh"
       },
       {
         "id": "majordomus://test/test/cases/336_every_control_is_claimed.sh",
@@ -89264,6 +89275,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3361_an_upgraded_hub_names_its_firewall_gap.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/336_every_control_is_claimed.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -94510,8 +94526,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2961,
-      "edges": 6506,
+      "nodes": 2962,
+      "edges": 6507,
       "acyclic": false,
       "truncated": false
     }

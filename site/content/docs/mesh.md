@@ -799,6 +799,14 @@ plan there is the server's executable allowed inbound, and a machine whose appli
 firewall is off needs nothing. Where no backend is found nothing is observed and the check
 holds as an absence, like `runtime` in a process no server runs in.
 
+**An upgrade moves the executable.** Every installed version runs from its own
+`versions/<v>/libexec/majordomus-cli`, so the macOS admission of one version does not carry
+to the next. The installer says so at the end of an upgrade, with the commands that admit the
+new path (I2961); `majordomus mesh firewall` and the `firewall` check of `mesh doctor` say it
+whenever they are asked. Recorded 2026-10-17: the second MacBook's hub, upgraded from 0.27.0
+to 0.28.0 and restarted, answered locally and timed out from every other machine of the
+tailnet, while `mesh firewall` there read `missing` for the 0.28.0 path.
+
 **Recorded, 2026-10-08.** On lundra the report above was taken as the owner, then as root
 (`missing`, both rules, 77 and 28 drops in the window), then `sudo majordomus mesh firewall
 apply` added three rules (`Rule added`, `Rule added`, `Rule updated` — the LAN hub rule had

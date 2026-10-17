@@ -120,6 +120,8 @@ environment:
   MAJORDOMUS_REQUIRE_PROVENANCE=1 — refuse to install unless the archive's provenance
                         is verified (needs the GitHub CLI, signed in)
   MAJORDOMUS_GH         the GitHub CLI to verify provenance with (default: gh)
+  MAJORDOMUS_SOCKETFILTERFW  the macOS application firewall tool asked after an install
+                        (default: /usr/libexec/ApplicationFirewall/socketfilterfw)
   NO_COLOR, CI — plain output
 
 Documentation: $MJ_BASE_URL/docs/install/
@@ -656,6 +658,42 @@ tree_holders() {
   printf '%s\n' "$procs" | grep -F -- "$1/"
 }
 
+# --------------------------------------------------------------------------- firewall
+
+# The macOS application firewall admits an executable by its path, and every version lives
+# at a path of its own. A hub restarted on this version answers on its own machine and is
+# dropped by the firewall for every other one, while the version it replaced was admitted
+# (I2961: 0.28.0 cut a hub off the tailnet that way, and the install reported success).
+# Said, with the commands that admit it; never run: they need root, which this installer
+# never takes, and the choice is the person's.
+firewall_hint() {
+  fw=${MAJORDOMUS_SOCKETFILTERFW:-/usr/libexec/ApplicationFirewall/socketfilterfw}
+  [ -x "$fw" ] || return 0
+  "$fw" --getglobalstate 2>/dev/null | grep -q 'enabled' || return 0
+  apps=$("$fw" --listapps 2>/dev/null) || return 0
+  new="$MJ_PREFIX/versions/$MJ_VERSION/libexec/$MJ_BINARY-cli"
+  # --listapps prints "<n> : <path>" and, on the next line, "(Allow incoming connections)"
+  # or "(Block incoming connections)".
+  admitted=$(printf '%s\n' "$apps" | awk -v trees="$MJ_PREFIX/versions/" -v exe="/libexec/$MJ_BINARY-cli" -v new="$new" '
+    path != "" { if ($0 ~ /Allow incoming/) { if (path == new) mine = 1; else older = 1 } path = "" }
+    {
+      line = $0
+      sub(/^[ \t]*[0-9]+[ \t]*:[ \t]*/, "", line)
+      sub(/[ \t]+$/, "", line)
+      if (index(line, trees) == 1 && substr(line, length(line) - length(exe) + 1) == exe) path = line
+    }
+    END { if (mine) print "this"; else if (older) print "older" }')
+  [ "$admitted" = older ] || return 0
+  printf '\n%swarning: the macOS application firewall admits an earlier %s, and not this one.%s\n' \
+    "$mj_colour_on" "$MJ_BINARY" "$mj_colour_off" >&2
+  printf '  A mesh hub or server started on v%s answers here and is dropped for every other machine.\n' "$MJ_VERSION" >&2
+  printf '  Admit it, as root (this installer changed nothing):\n' >&2
+  printf '    %s --add "%s"\n' "$fw" "$new" >&2
+  printf '    %s --unblockapp "%s"\n' "$fw" "$new" >&2
+  printf '  or, as root in the checkout the hub serves: %s mesh firewall apply\n' "$MJ_INSTALL_DIR/$MJ_BINARY" >&2
+  printf '  then restart the hub, and read it from another machine.\n' >&2
+}
+
 # --------------------------------------------------------------------------- path
 
 path_hint() {
@@ -807,6 +845,7 @@ REPORT
     printf 'Then:\n  %s --version\n  %s init\n' "$MJ_BINARY" "$MJ_BINARY" >&2
   fi
   printf '\nDocumentation: %s/docs/install/\n' "$MJ_BASE_URL" >&2
+  firewall_hint
 
   [ "$MJ_INIT" = 1 ] && run_init
   exit 0
