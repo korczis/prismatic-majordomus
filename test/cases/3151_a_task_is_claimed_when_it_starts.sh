@@ -45,8 +45,7 @@ cd "$W1" || exit 1
 [ -s .ai/local/state/mcp/server.json ] && { echo "    the fresh worktree already has a server lease"; exit 1; }
 "$MJ" start "Fresh worktree work" --scope lib >"$T/start1.out" 2>"$T/start1.err" \
   || { echo "    start failed in a fresh worktree"; cat "$T/start1.out" "$T/start1.err"; exit 1; }
-grep -q 'ensuring one for the task.s mesh claim' "$T/start1.err" \
-  || { echo "    start did not say on stderr that it ensures the server"; cat "$T/start1.err"; exit 1; }
+# start says on stderr that it brought a server up, and which: serve ensure's own line
 grep -q 'ready .*(started by this call)' "$T/start1.err" \
   || { echo "    start did not say which server it started"; cat "$T/start1.err"; exit 1; }
 grep -q '^mesh_claim: ' "$CUR" \

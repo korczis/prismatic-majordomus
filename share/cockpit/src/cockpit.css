@@ -30,7 +30,7 @@
 @import "../../design/base.css";
 @import "../../design/primitives.css";
 @plugin "flowbite/plugin";
-@source "../../../apps/majordomus-cli/src/ui/navbar.html";
+@source "../../../apps/*/src/ui/navbar.html";
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* `source(none)` turns off automatic source detection. Nothing in the repository is
@@ -42,7 +42,7 @@
    One file is named as a source, and it is not the Cockpit's markup: the bar at the top of
    every page is majordomus.dev's (project.the-ui-wears-the-sites-navbar), the site's partial
    rendered by the site's build and compiled into the executable
-   (apps/majordomus-cli/src/ui/navbar.html). It is written in the site's utilities, so this
+   (the executable's src/ui/navbar.html). It is written in the site's utilities, so this
    sheet compiles exactly those, from the same Tailwind, Flowbite theme and tokens the
    site's app.css compiles them from, and scripts/ui navbar holds the result to the site's. */
 

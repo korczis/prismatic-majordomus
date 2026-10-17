@@ -1073,4 +1073,36 @@ mod tests {
         assert!(html.contains("<td class=\"mj-ui-dim\">none</td>"), "{html}");
         assert!(html.contains("5 more not shown"), "{html}");
     }
+
+    /// A worker that said nothing reads none, one that said much is cut and said whole in the
+    /// row's title, and a worker's claim names no path, its one path, or its first and a count.
+    #[test]
+    fn a_workers_row_says_what_it_said_and_claims() {
+        let long = "y".repeat(INTENT + 1);
+        let claims = answer(
+            CLAIMS,
+            Ok(serde_json::json!({
+                "active": true,
+                "state": { "claims": [
+                    { "session": "s/board-q1", "scope": [], "mode": "exclusive" },
+                    { "session": "s/board-q2", "scope": ["only/one.rs"], "mode": "exclusive",
+                      "intent": long },
+                ]},
+            })),
+        );
+        let html = seats(&claims).render();
+        assert!(html.contains("board-q1"), "{html}");
+        assert!(
+            html.contains("<td class=\"mj-ui-mono mj-ui-dim\"></td>"),
+            "a claim of no path names none: {html}"
+        );
+        assert!(html.contains(">none</td>"), "said nothing: {html}");
+        assert!(html.contains(">only/one.rs</td>"), "{html}");
+        assert!(!html.contains("only/one.rs and"), "{html}");
+        assert!(html.contains(&format!("title=\"{long}\"")), "{html}");
+        assert!(
+            html.contains(&format!("{}…</td>", "y".repeat(INTENT))),
+            "{html}"
+        );
+    }
 }

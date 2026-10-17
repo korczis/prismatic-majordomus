@@ -11,13 +11,10 @@
 //! choice the screen makes is which intent to open when the link names none, and that rule
 //! ([`PREFERRED_STAGES`]) is printed on the screen.
 //!
-//! ```text
-//!   intents.list ──┐
-//!   plan.roadmap ──┤
-//!   plan.issues  ──┼── /ui/idd?intent=<id> ── milestone, issue, criterion inspectors
-//!   plan.waves   ──┤                       └─ the move (plan.transition) on the issue page
-//!   plan.next    ──┘
-//! ```
+//! The screen at `/ui/idd?intent=<id>` reads five capabilities — `intents.list`,
+//! `plan.roadmap`, `plan.issues`, `plan.waves` and `plan.next` — and links to the milestone,
+//! issue and criterion inspectors; the move itself (`plan.transition`) is offered on the
+//! issue page.
 
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -120,13 +117,25 @@ fn chip(href: String, label: String) -> El {
 /// The Intent workspace screen; `query` may name the intent (`?intent=intent-bound-work`).
 pub fn screen(ctx: &Context, query: &[(String, String)]) -> View {
     let answers = ask_all(ctx, &[INTENTS, ROADMAP, ISSUES, WAVES, NEXT]);
-    let (intents, roadmap, issues, waves, next) = (
+    render(
         &answers[&INTENTS],
         &answers[&ROADMAP],
         &answers[&ISSUES],
         &answers[&WAVES],
         &answers[&NEXT],
-    );
+        query,
+    )
+}
+
+/// The workspace drawn from the five answers, whichever of them could not answer.
+fn render(
+    intents: &Answer,
+    roadmap: &Answer,
+    issues: &Answer,
+    waves: &Answer,
+    next: &Answer,
+    query: &[(String, String)],
+) -> View {
     let all = list(intents, "/intents");
     let id = chosen(query, &all);
     let intent = id
@@ -716,5 +725,162 @@ mod tests {
         let html = screen(&ctx, &[]).main.render();
         assert!(html.contains("No intent is recorded"), "{html}");
         assert!(html.contains("intent propose"), "{html}");
+    }
+
+    fn answer(source: Source, value: Result<Value, String>) -> Answer {
+        Answer {
+            source,
+            route: None,
+            exposure: crate::ui::source::Exposure::default(),
+            value: value.map(Into::into),
+            took: std::time::Duration::ZERO,
+            standing: crate::ui::source::Standing::NOW,
+        }
+    }
+
+    fn intent_i() -> Value {
+        serde_json::json!({
+            "id": "i", "title": "The i intent", "stage": "executing",
+            "milestones": [{ "id": "m1" }, { "id": "m-gone" }],
+        })
+    }
+
+    /// A list of intents that cannot answer refuses no named intent it cannot see, and an
+    /// issue list that cannot answer is said while the intent is still drawn, serving nothing.
+    #[test]
+    fn a_source_that_cannot_answer_is_said_and_nothing_is_invented() {
+        let empty = |s| answer(s, Ok(serde_json::json!({})));
+        let failed = answer(INTENTS, Err("no ledger".into()));
+        let view = render(
+            &failed,
+            &empty(ROADMAP),
+            &empty(ISSUES),
+            &empty(WAVES),
+            &empty(NEXT),
+            &q("intent", "i"),
+        );
+        let html = view.main.render();
+        assert!(
+            html.contains("intents.list could not answer: no ledger"),
+            "{html}"
+        );
+        assert!(!html.contains("is not an intent"), "{html}");
+
+        let intents = answer(INTENTS, Ok(serde_json::json!({ "intents": [intent_i()] })));
+        let issues = answer(ISSUES, Err("no plan".into()));
+        let html = render(
+            &intents,
+            &empty(ROADMAP),
+            &issues,
+            &empty(WAVES),
+            &empty(NEXT),
+            &q("intent", "i"),
+        )
+        .main
+        .render();
+        assert!(html.contains("The i intent"), "{html}");
+        assert!(
+            html.contains("plan.issues could not answer: no plan"),
+            "{html}"
+        );
+        assert!(
+            html.contains("No issue of this intent is in a wave."),
+            "nothing serves the intent: {html}"
+        );
+    }
+
+    /// A milestone the intent names waits for what the roadmap says, as links, and one the
+    /// plan does not hold is said to be missing rather than dropped.
+    #[test]
+    fn a_milestone_says_what_it_waits_for_and_one_the_plan_lacks_is_said() {
+        let roadmap = answer(
+            ROADMAP,
+            Ok(serde_json::json!({ "milestones": [
+                { "id": "m0", "status": "DONE" },
+                { "id": "m1", "status": "ACTIVE", "blocked_by": ["m0"] },
+            ]})),
+        );
+        let html = milestones(&roadmap, &intent_i()).render();
+        assert!(
+            html.contains(&super::super::milestone::href("m0")),
+            "{html}"
+        );
+        assert!(html.contains(">m0</code>"), "the wait is a chip: {html}");
+        assert!(
+            !html.contains("milestone-m0"),
+            "m0 is not the intent's: {html}"
+        );
+        assert!(html.contains(">m-gone</td>"), "{html}");
+        assert!(html.contains("not in the plan"), "{html}");
+        let none = milestones(&roadmap, &serde_json::json!({ "id": "x" })).render();
+        assert!(none.contains("The intent names no milestone."), "{none}");
+    }
+
+    /// Each status the plan can move offers its move, and any other offers none.
+    #[test]
+    fn each_movable_status_offers_its_move() {
+        let mine: Vec<Value> = [
+            ("I1", "ready"),
+            ("I2", "active"),
+            ("I3", "verify"),
+            ("I4", "done"),
+        ]
+        .iter()
+        .map(|(id, status)| serde_json::json!({ "id": id, "status": status, "milestone": "m1" }))
+        .collect();
+        let issues = answer(ISSUES, Ok(serde_json::json!({ "issues": mine })));
+        let waves = answer(WAVES, Ok(serde_json::json!({ "waves": [] })));
+        let next = answer(NEXT, Ok(serde_json::json!({ "issue": { "id": "I1" } })));
+        let html = issue_table(&issues, &waves, &next, &mine).render();
+        for (word, id) in [("start", "I1"), ("verify", "I2"), ("done", "I3")] {
+            assert!(
+                html.contains(&format!("{word} {id}\">{word}</a>")),
+                "{id} offers {word}: {html}"
+            );
+        }
+        assert!(html.contains(">none</span>"), "I4 offers no move: {html}");
+        assert!(html.contains("the plan&#39;s next"), "{html}");
+    }
+
+    /// A wave that holds none of the intent's issues is not drawn; one that does is, and a
+    /// scope conflict among them is said.
+    #[test]
+    fn a_wave_without_the_intents_issues_is_not_drawn() {
+        let waves = answer(
+            WAVES,
+            Ok(serde_json::json!({
+                "waves": [
+                    { "wave": 7, "issues": [{ "id": "OTHER", "status": "READY" }] },
+                    { "wave": 8, "issues": [{ "id": "I1", "status": "READY" }] },
+                ],
+                "serialised_by_scope": [{ "subject": "I1", "message": "shares lib/a.rs" }],
+            })),
+        );
+        let mine = vec![serde_json::json!({ "id": "I1" })];
+        let html = wave_panel(&waves, &mine).render();
+        assert!(html.contains(">8</td>"), "{html}");
+        assert!(!html.contains(">7</td>"), "{html}");
+        assert!(!html.contains("OTHER"), "{html}");
+        assert!(html.contains("shares lib/a.rs"), "{html}");
+    }
+
+    /// A dependency outside the intent is drawn small, and one the plan does not hold reads
+    /// as unknown rather than as any status.
+    #[test]
+    fn a_dependency_outside_the_intent_is_a_leaf_and_an_unknown_one_says_so() {
+        let issues = answer(
+            ISSUES,
+            Ok(serde_json::json!({ "issues": [
+                { "id": "I0", "status": "DONE" },
+                { "id": "I1", "status": "READY", "depends_on": ["I0", "IX"] },
+            ]})),
+        );
+        let mine =
+            vec![serde_json::json!({ "id": "I1", "status": "READY", "depends_on": ["I0", "IX"] })];
+        let html = dependency_graph(&issues, &mine).render();
+        assert!(html.contains("leaf"), "I0 is outside the intent: {html}");
+        assert!(html.contains(">IX</code>"), "{html}");
+        assert!(html.contains(">done<"), "I0's status is drawn: {html}");
+        assert!(html.contains(">unknown<"), "IX's status is unknown: {html}");
     }
 }

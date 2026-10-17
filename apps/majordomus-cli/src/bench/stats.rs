@@ -143,3 +143,57 @@ impl Statistics {
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn micros(values: impl IntoIterator<Item = u64>) -> Vec<Duration> {
+        values.into_iter().map(Duration::from_micros).collect()
+    }
+
+    #[test]
+    fn an_empty_set_counts_zero_for_known_metrics_and_none_for_unknown() {
+        let empty = Statistics::of(&[]);
+        assert_eq!(empty.samples, 0);
+        for metric in ["min", "p50", "p90", "p95", "p99", "max", "mean"] {
+            assert_eq!(empty.samples_at_or_above(metric), Some(0), "{metric}");
+        }
+        assert_eq!(empty.samples_at_or_above("p42"), None);
+    }
+
+    #[test]
+    fn every_metric_names_the_samples_its_verdict_rests_on() {
+        let twenty = Statistics::of(&micros(1..=20));
+        assert_eq!(twenty.samples_at_or_above("min"), Some(20));
+        assert_eq!(twenty.samples_at_or_above("p50"), Some(11));
+        assert_eq!(twenty.samples_at_or_above("p90"), Some(3));
+        assert_eq!(twenty.samples_at_or_above("p95"), Some(2));
+        assert_eq!(twenty.samples_at_or_above("p99"), Some(1));
+        assert_eq!(twenty.samples_at_or_above("max"), Some(1));
+        assert_eq!(twenty.samples_at_or_above("mean"), Some(1));
+        assert_eq!(twenty.samples_at_or_above("stddev"), None);
+    }
+
+    #[test]
+    fn one_sample_rests_every_percentile_on_that_sample() {
+        let one = Statistics::of(&micros([23_000]));
+        for metric in ["min", "p50", "p90", "p95", "p99", "max", "mean"] {
+            assert_eq!(one.samples_at_or_above(metric), Some(1), "{metric}");
+        }
+        assert_eq!(one.metric("p50"), Some(23_000.0));
+    }
+
+    #[test]
+    fn metric_reads_each_named_field() {
+        let s = Statistics::of(&micros(1..=100));
+        assert_eq!(s.metric("min"), Some(1.0));
+        assert_eq!(s.metric("p50"), Some(50.0));
+        assert_eq!(s.metric("p90"), Some(90.0));
+        assert_eq!(s.metric("p95"), Some(95.0));
+        assert_eq!(s.metric("p99"), Some(99.0));
+        assert_eq!(s.metric("max"), Some(100.0));
+        assert_eq!(s.metric("mean"), Some(50.5));
+        assert_eq!(s.metric("p42"), None);
+    }
+}

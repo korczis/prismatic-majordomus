@@ -1889,8 +1889,8 @@ mj_mesh_task_ensure_server() {
     MJ_MESH_WHY="the executable is older than its sources, and no server is started from stale code (run: just build)"; return 1
   fi
   local line
-  [ -s "$MJ_STATE_DIR/mcp/server.json" ] \
-    || mj_err "start: no shared server serves this checkout; ensuring one for the task's mesh claim (serve ensure, bounded by its --wait)"
+  # whether a server already serves the checkout is serve ensure's to answer: it starts
+  # one only when none does, and says so below ("started by this call")
   mkdir -p "$MJ_STATE_DIR/mcp" 2>/dev/null || true
   line="$("$MJ_MESH_BIN" serve ensure --repo "$MJ_ROOT" 2>>"$MJ_STATE_DIR/mcp/ensure.log")" || true
   case "$line" in

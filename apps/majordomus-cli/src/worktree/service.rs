@@ -243,12 +243,17 @@ fn trunk_remote(primary: &Path, trunk: &str) -> Result<Option<String>> {
         .map(str::to_string)
         .collect();
     for remote in &remotes {
+        // A remote with no HEAD, or one git cannot be asked about, names no trunk.
         let head = git::try_run(
             primary,
             &["symbolic-ref", "-q", &format!("refs/remotes/{remote}/HEAD")],
-        )?;
-        if head.status == Some(0) && head.text()? == format!("refs/remotes/{remote}/{trunk}") {
-            return Ok(Some(remote.clone()));
+        )
+        .ok()
+        .filter(|head| head.status == Some(0));
+        if let Some(head) = head {
+            if head.text()? == format!("refs/remotes/{remote}/{trunk}") {
+                return Ok(Some(remote.clone()));
+            }
         }
     }
     let configured = git::try_run(
@@ -1039,7 +1044,9 @@ impl WorktreeService {
 
         // The network is asked before the lock is taken, so a slow remote never holds every
         // other create in this repository behind it; the decision is re-checked under it.
-        let planned = if request.base.is_none() && !git::branch_exists(&primary, name.as_str())? {
+        // A branch git cannot be asked about here is asked about again under the lock.
+        let unknown_here = matches!(git::branch_exists(&primary, name.as_str()), Ok(false));
+        let planned = if request.base.is_none() && unknown_here {
             Some(self.plan_start(&primary, name.as_str())?)
         } else {
             None
@@ -1162,7 +1169,8 @@ impl WorktreeService {
         // And the moment it is bound to the hooks of its own tree, before its first commit.
         let hooks = hooks::carry_hooks_path(&primary, &registered.path);
         let start_commit = match start {
-            Some(_) => git::head_of(&registered.path)?,
+            // The worktree is made; a commit git cannot read back is not a reason to say not.
+            Some(_) => git::head_of(&registered.path).ok().flatten(),
             None => None,
         };
         Ok(CreateReport {
@@ -1203,44 +1211,28 @@ impl WorktreeService {
         let tracking = |b: &str| format!("refs/remotes/{remote}/{b}");
         let refspec = |b: &str| format!("+refs/heads/{b}:{}", tracking(b));
         let trunk_fetch =
-            git::fetch_bounded(primary, &remote, &[refspec(&trunk)], git::FETCH_TIMEOUT)?;
-        let reason = match trunk_fetch {
-            Ok(()) => {
-                let branch_fetch =
-                    git::fetch_bounded(primary, &remote, &[refspec(branch)], git::FETCH_TIMEOUT)?;
-                return Ok(match branch_fetch {
-                    Ok(()) => StartPoint::RemoteBranch {
+            git::fetch_bounded(primary, &remote, &[refspec(&trunk)], git::FETCH_TIMEOUT);
+        if trunk_fetch.is_ok() {
+            match git::fetch_bounded(primary, &remote, &[refspec(branch)], git::FETCH_TIMEOUT) {
+                Ok(()) => {
+                    return Ok(StartPoint::RemoteBranch {
                         remote,
                         branch: branch.to_string(),
                         fetched: true,
-                    },
-                    // A remote-tracking ref left behind by a branch since deleted there is
-                    // not taken up: the remote has just said it is gone.
-                    Err(git::FetchFailure::NoSuchRemoteRef) => StartPoint::RemoteTrunk {
+                    })
+                }
+                // A remote-tracking ref left behind by a branch since deleted there is
+                // not taken up: the remote has just said it is gone.
+                Err(git::FetchFailure::NoSuchRemoteRef) => {
+                    return Ok(StartPoint::RemoteTrunk {
                         remote,
                         branch: trunk,
-                    },
-                    Err(git::FetchFailure::Unreachable(_)) => {
-                        if git::rev_exists(primary, &tracking(branch))? {
-                            StartPoint::RemoteBranch {
-                                remote,
-                                branch: branch.to_string(),
-                                fetched: false,
-                            }
-                        } else {
-                            StartPoint::RemoteTrunk {
-                                remote,
-                                branch: trunk,
-                            }
-                        }
-                    }
-                });
+                    })
+                }
+                Err(git::FetchFailure::Unreachable(_)) => {}
             }
-            Err(git::FetchFailure::NoSuchRemoteRef) => {
-                format!("{remote} has no branch {trunk}")
-            }
-            Err(git::FetchFailure::Unreachable(why)) => why,
-        };
+        }
+        // Either fetch failed: a branch known here as last fetched is still taken up.
         if git::rev_exists(primary, &tracking(branch))? {
             return Ok(StartPoint::RemoteBranch {
                 remote,
@@ -1248,7 +1240,18 @@ impl WorktreeService {
                 fetched: false,
             });
         }
-        let behind = git::commits_between(primary, &trunk, &tracking(&trunk))?;
+        let reason = match trunk_fetch {
+            // The trunk arrived and only the branch could not be asked about.
+            Ok(()) => {
+                return Ok(StartPoint::RemoteTrunk {
+                    remote,
+                    branch: trunk,
+                })
+            }
+            Err(git::FetchFailure::NoSuchRemoteRef) => format!("{remote} has no branch {trunk}"),
+            Err(git::FetchFailure::Unreachable(why)) => why,
+        };
+        let behind = git::commits_between(primary, &trunk, &tracking(&trunk));
         Ok(StartPoint::LocalTrunk {
             branch: trunk,
             unreachable: Some(remote),
@@ -1776,5 +1779,342 @@ mod tests {
         let paths: Vec<&String> = applied.hooks.keys().collect();
         assert_eq!(paths.len(), 1, "{applied:?}");
         assert!(paths[0].ends_with("topic"), "{applied:?}");
+    }
+
+    /// Run git in the primary checkout with arguments that need not be UTF-8.
+    fn git_bytes(repo: &Repo, args: &[&[u8]]) {
+        use std::os::unix::ffi::OsStrExt;
+        let ok = std::process::Command::new("git")
+            .arg("-C")
+            .arg(&repo.primary)
+            .args(args.iter().map(|a| std::ffi::OsStr::from_bytes(a)))
+            .output()
+            .expect("git runs")
+            .status
+            .success();
+        assert!(ok, "git {args:?}");
+    }
+
+    /// A repository whose trunk is pushed to a bare `origin` beside it and tracks it there.
+    fn with_origin() -> (Repo, PathBuf) {
+        let repo = Repo::new();
+        let origin = repo._home.path().join("origin.git");
+        let url = origin.to_string_lossy().to_string();
+        repo.git(&["init", "-q", "--bare", &url]);
+        repo.git(&["remote", "add", "origin", &url]);
+        repo.git(&["push", "-q", "-u", "origin", "master"]);
+        (repo, origin)
+    }
+
+    /// Put `branch` on the remote one commit ahead of the trunk without leaving a local
+    /// branch or a remote-tracking ref for it.
+    fn push_only(repo: &Repo, branch: &str) {
+        repo.git(&["checkout", "-q", "-b", "side"]);
+        repo.git(&["commit", "-q", "--allow-empty", "-m", "side"]);
+        repo.git(&["push", "-q", "origin", &format!("side:{branch}")]);
+        repo.git(&["checkout", "-q", "master"]);
+        repo.git(&["branch", "-q", "-D", "side"]);
+        repo.git(&["update-ref", "-d", &format!("refs/remotes/origin/{branch}")]);
+    }
+
+    fn request(branch: &str, base: Option<&str>) -> CreateRequest {
+        CreateRequest {
+            branch: branch.into(),
+            base: base.map(str::to_string),
+        }
+    }
+
+    #[test]
+    fn a_start_point_names_its_ref_and_says_when_it_is_not_the_remotes_state() {
+        let given = StartPoint::Given {
+            reference: "v1.0".into(),
+        };
+        assert_eq!(given.reference(), "v1.0");
+        assert_eq!(given.fallback(), None);
+        assert_eq!(StartPoint::Head.reference(), "HEAD");
+        assert_eq!(StartPoint::Head.fallback(), None);
+        let local = |behind, reason: Option<&str>| StartPoint::LocalTrunk {
+            branch: "master".into(),
+            unreachable: Some("origin".into()),
+            reason: reason.map(str::to_string),
+            behind,
+        };
+        assert_eq!(local(Some(0), None).reference(), "master");
+        let level = local(Some(0), None).fallback().expect("said");
+        assert!(level.contains("(it did not answer)"), "{level}");
+        assert!(level.contains("level with origin/master"), "{level}");
+        let one = local(Some(1), Some("offline")).fallback().expect("said");
+        assert!(one.contains("(offline)"), "{one}");
+        assert!(one.contains("1 commit behind origin/master"), "{one}");
+        let many = local(Some(4), Some("offline")).fallback().expect("said");
+        assert!(many.contains("4 commits behind origin/master"), "{many}");
+        let never = local(None, Some("offline")).fallback().expect("said");
+        assert!(never.contains("was never fetched"), "{never}");
+        let alone = StartPoint::LocalTrunk {
+            branch: "master".into(),
+            unreachable: None,
+            reason: None,
+            behind: None,
+        };
+        assert_eq!(alone.fallback(), None);
+        let stale = StartPoint::RemoteBranch {
+            remote: "origin".into(),
+            branch: "fix/x".into(),
+            fetched: false,
+        };
+        assert_eq!(stale.reference(), "origin/fix/x");
+        let said = stale.fallback().expect("said");
+        assert!(
+            said.contains("tracking origin/fix/x as last fetched"),
+            "{said}"
+        );
+        let fresh = StartPoint::RemoteBranch {
+            remote: "origin".into(),
+            branch: "fix/x".into(),
+            fetched: true,
+        };
+        assert_eq!(fresh.fallback(), None);
+    }
+
+    #[test]
+    fn the_trunks_remote_is_the_one_whose_head_names_it_else_the_configured_one() {
+        let home = tempfile::tempdir().expect("tempdir");
+        // no repository there: `git remote` refuses, and no remote is named
+        let absent = home.path().join("absent");
+        assert_eq!(trunk_remote(&absent, "master").expect("an answer"), None);
+        // a git that cannot be run is an error, not an answer
+        assert!(trunk_remote(Path::new("no\0where"), "master").is_err());
+
+        let (repo, _origin) = with_origin();
+        let p = repo.primary.clone();
+        // pushed with -u: the configuration names origin, which has no HEAD
+        assert_eq!(
+            trunk_remote(&p, "master").expect("an answer"),
+            Some("origin".into())
+        );
+        // a HEAD that names another branch is passed over; one that names the trunk wins
+        let other = repo._home.path().join("other.git");
+        repo.git(&["init", "-q", "--bare", &other.to_string_lossy()]);
+        repo.git(&["remote", "add", "other", &other.to_string_lossy()]);
+        repo.git(&[
+            "symbolic-ref",
+            "refs/remotes/origin/HEAD",
+            "refs/remotes/origin/develop",
+        ]);
+        repo.git(&[
+            "symbolic-ref",
+            "refs/remotes/other/HEAD",
+            "refs/remotes/other/master",
+        ]);
+        assert_eq!(
+            trunk_remote(&p, "master").expect("an answer"),
+            Some("other".into())
+        );
+        // a trunk configured to a remote that is not there lives only here
+        repo.git(&["config", "branch.lonely.remote", "gone"]);
+        assert_eq!(trunk_remote(&p, "lonely").expect("an answer"), None);
+        // a trunk git cannot be asked about is an error
+        assert!(trunk_remote(&p, "ma\0ster").is_err());
+        // a configured remote that is not text is an error
+        git_bytes(&repo, &[b"config", b"branch.odd.remote", b"o\xff"]);
+        assert!(trunk_remote(&p, "odd").is_err());
+        // a HEAD that is not text is an error
+        repo.git(&["symbolic-ref", "-d", "refs/remotes/other/HEAD"]);
+        std::fs::write(
+            p.join(".git/refs/remotes/origin/HEAD"),
+            b"ref: refs/remotes/origin/\xff\n",
+        )
+        .expect("write");
+        assert!(trunk_remote(&p, "master").is_err());
+    }
+
+    #[test]
+    fn a_remote_whose_name_is_not_text_refuses_the_create_before_anything_is_made() {
+        let (repo, _origin) = with_origin();
+        let svc = repo.service();
+        git_bytes(&repo, &[b"remote", b"add", b"o\xff", b"/nowhere"]);
+        assert!(trunk_remote(&repo.primary, "master").is_err());
+        assert!(svc.create(&request("feature/odd", None)).is_err());
+        assert!(!svc
+            .expected_path_of("feature/odd")
+            .expect("a path")
+            .exists());
+    }
+
+    #[test]
+    fn a_repository_with_no_trunk_starts_from_head_and_one_with_no_remote_from_the_trunk() {
+        let repo = Repo::new();
+        assert_eq!(
+            repo.service()
+                .plan_start(&repo.primary, "feature/x")
+                .expect("a plan"),
+            StartPoint::LocalTrunk {
+                branch: "master".into(),
+                unreachable: None,
+                reason: None,
+                behind: None,
+            }
+        );
+        repo.git(&["branch", "-m", "master", "topic"]);
+        repo.git(&["checkout", "-q", "--detach"]);
+        let svc = repo.service();
+        if svc.identity.trunk().branch.is_some() {
+            eprintln!("a trunk was found in the environment's configuration; nothing to test");
+            return;
+        }
+        assert_eq!(
+            svc.plan_start(&repo.primary, "feature/x").expect("a plan"),
+            StartPoint::Head
+        );
+        let made = svc.create(&request("feature/x", None)).expect("created");
+        assert_eq!(made.base.as_deref(), Some("HEAD"));
+    }
+
+    #[test]
+    fn the_remote_decides_where_a_branch_starts_and_its_last_fetched_refs_when_it_cannot() {
+        let (repo, origin) = with_origin();
+        let p = repo.primary.clone();
+        let svc = repo.service();
+        let plan = |b: &str| svc.plan_start(&p, b).expect("a plan");
+        let remote_trunk = StartPoint::RemoteTrunk {
+            remote: "origin".into(),
+            branch: "master".into(),
+        };
+
+        // the remote has it: taken up as it is there
+        push_only(&repo, "fix/theirs");
+        assert_eq!(
+            plan("fix/theirs"),
+            StartPoint::RemoteBranch {
+                remote: "origin".into(),
+                branch: "fix/theirs".into(),
+                fetched: true,
+            }
+        );
+        // the remote does not have it: the remote's trunk
+        assert_eq!(plan("feature/new"), remote_trunk);
+
+        // the trunk arrives and the branch cannot be written here: never fetched, the
+        // remote's trunk; fetched before, as last fetched
+        push_only(&repo, "fix/locked");
+        let lock = p.join(".git/refs/remotes/origin/fix/locked.lock");
+        std::fs::create_dir_all(lock.parent().expect("a parent")).expect("mkdir");
+        std::fs::write(&lock, "").expect("write");
+        assert_eq!(plan("fix/locked"), remote_trunk);
+        std::fs::remove_file(&lock).expect("unlock");
+        repo.git(&["update-ref", "refs/remotes/origin/fix/locked", "master"]);
+        std::fs::write(&lock, "").expect("lock again");
+        assert_eq!(
+            plan("fix/locked"),
+            StartPoint::RemoteBranch {
+                remote: "origin".into(),
+                branch: "fix/locked".into(),
+                fetched: false,
+            }
+        );
+        std::fs::remove_file(&lock).expect("unlock");
+
+        // the remote cannot be read: a branch known here is taken up, a new one starts
+        // from the local trunk, level with the trunk as last fetched
+        let gone = origin.with_file_name("gone.git");
+        repo.git(&["remote", "set-url", "origin", &gone.to_string_lossy()]);
+        assert_eq!(
+            plan("fix/locked"),
+            StartPoint::RemoteBranch {
+                remote: "origin".into(),
+                branch: "fix/locked".into(),
+                fetched: false,
+            }
+        );
+        match plan("feature/offline") {
+            StartPoint::LocalTrunk {
+                branch,
+                unreachable,
+                reason,
+                behind,
+            } => {
+                assert_eq!(branch, "master");
+                assert_eq!(unreachable.as_deref(), Some("origin"));
+                assert!(reason.is_some());
+                assert_eq!(behind, Some(0));
+            }
+            other => panic!("{other:?}"),
+        }
+        // a branch git cannot be asked about is an error, not a guess
+        assert!(svc.plan_start(&p, "feature/no\0pe").is_err());
+
+        // a remote without the trunk says so, and how far behind is unknown
+        let empty = origin.with_file_name("empty.git");
+        repo.git(&["init", "-q", "--bare", &empty.to_string_lossy()]);
+        repo.git(&["remote", "set-url", "origin", &empty.to_string_lossy()]);
+        repo.git(&["update-ref", "-d", "refs/remotes/origin/master"]);
+        assert_eq!(
+            plan("feature/empty"),
+            StartPoint::LocalTrunk {
+                branch: "master".into(),
+                unreachable: Some("origin".into()),
+                reason: Some("origin has no branch master".into()),
+                behind: None,
+            }
+        );
+    }
+
+    #[test]
+    fn a_given_base_is_taken_as_given_and_an_existing_branch_is_checked_out_as_it_is() {
+        let repo = Repo::new();
+        let svc = repo.service();
+        let made = svc
+            .create(&request("feature/given", Some("master")))
+            .expect("created");
+        assert_eq!(
+            made.start,
+            Some(StartPoint::Given {
+                reference: "master".into()
+            })
+        );
+        assert!(made.branch_created);
+        assert!(made.start_commit.is_some());
+        assert!(svc
+            .create(&request("feature/nothing", Some("no-such-ref")))
+            .is_err());
+
+        repo.git(&["branch", "feature/there"]);
+        let svc = repo.service();
+        let made = svc
+            .create(&request("feature/there", None))
+            .expect("created");
+        assert!(!made.branch_created);
+        assert_eq!(made.start, None);
+        assert_eq!(made.base, None);
+        assert_eq!(made.start_commit, None);
+    }
+
+    /// A branch deleted between the look taken before the lock and the one taken under it is
+    /// planned under the lock, rather than created from nowhere.
+    #[test]
+    fn a_branch_deleted_while_the_create_waits_for_the_lock_is_planned_under_it() {
+        let repo = Repo::new();
+        repo.git(&["branch", "feature/raced"]);
+        let svc = repo.service();
+        let lock = WorktreeLock::acquire(&svc.identity.git_common_dir().path).expect("the lock");
+        let made = std::thread::scope(|s| {
+            let create = s.spawn(|| svc.create(&request("feature/raced", None)));
+            // long enough for the create to have looked and to be waiting on the lock
+            std::thread::sleep(std::time::Duration::from_millis(1500));
+            repo.git(&["branch", "-D", "feature/raced"]);
+            drop(lock);
+            create.join().expect("the create ran")
+        })
+        .expect("created");
+        assert!(made.branch_created);
+        assert_eq!(
+            made.start,
+            Some(StartPoint::LocalTrunk {
+                branch: "master".into(),
+                unreachable: None,
+                reason: None,
+                behind: None,
+            })
+        );
     }
 }

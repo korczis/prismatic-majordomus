@@ -1393,6 +1393,45 @@ mod tests {
         ));
     }
 
+    /// A create that could not reach the trunk's remote warns, and a reader gone at that
+    /// line is a transport error like any other; each attempt is a new branch, because a
+    /// rerun of the same one would find it made and have nothing to warn about.
+    #[test]
+    fn a_create_that_could_not_fetch_warns_and_a_refused_warning_is_a_transport_error() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let root = tmp.path().canonicalize().expect("canonical tempdir");
+        git(&root, &["init", "-q", "repo"]);
+        let repo = root.join("repo");
+        git(&repo, &["commit", "-q", "--allow-empty", "-m", "root"]);
+        let gone = root.join("gone.git").to_string_lossy().to_string();
+        git(&repo, &["remote", "add", "origin", gone.as_str()]);
+        git(&repo, &["config", "branch.master.remote", "origin"]);
+        let svc = WorktreeService::open(&repo).expect("open the service");
+        for lines in 0..20 {
+            let mut out = Refusing {
+                lines,
+                seen: 0,
+                text: String::new(),
+            };
+            let branch = format!("topic-{lines}");
+            match create(&svc, &branch, None, false, OutputFormat::Text, &mut out) {
+                Ok(code) => {
+                    assert_eq!(code, 0);
+                    assert!(
+                        out.text
+                            .contains("warning could not fetch master from origin"),
+                        "{}",
+                        out.text
+                    );
+                    return;
+                }
+                Err(Error::Transport(_)) => {}
+                Err(e) => panic!("a refused write became {e:?}"),
+            }
+        }
+        panic!("the rendering never finished");
+    }
+
     #[test]
     fn create_migrate_and_repair_say_which_hooks_a_worktree_runs() {
         let (tmp, repo) = hooked();

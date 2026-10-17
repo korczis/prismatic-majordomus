@@ -147,4 +147,22 @@ mod tests {
         let links = |s: &str| s.matches("<a ").count();
         assert_eq!(links(&out), links(FRAGMENT));
     }
+
+    /// A bar whose entry is cut short is passed on as it came, and a live entry with no
+    /// `href` keeps its tag while losing its snapshot note.
+    #[test]
+    fn a_cut_entry_is_left_as_it_came_and_one_without_a_link_keeps_its_tag() {
+        let live = [("ui", "/ui")];
+        let unclosed = "<b>bar</b><a data-nav-primary=\"ui\"";
+        assert_eq!(relink(unclosed, &live), unclosed, "no end to the tag");
+        let unended = "<b>bar</b><a data-nav-primary=\"ui\">Product UI";
+        assert_eq!(relink(unended, &live), unended, "no end to the entry");
+        let bare =
+            "<a data-nav-snapshot=\"ui\">UI <span data-nav-snapshot-note>snapshot</span></a>";
+        assert_eq!(
+            relink(bare, &live),
+            "<a data-nav-snapshot=\"ui\">UI</a>",
+            "no href to move"
+        );
+    }
 }

@@ -38,7 +38,7 @@ footprint() {
 }
 gitdir_state() {
   { cat .git/config; printf '%s\n' '--- exclude'; cat .git/info/exclude 2>/dev/null
-    printf '%s\n' '--- hooks'; ls .git/hooks 2>/dev/null; } | shasum -a 256
+    printf '%s\n' '--- hooks'; ls .git/hooks 2>/dev/null; } | cksum
 }
 
 # --- a shared adoption: these paths and no others, and nothing in the git directory
