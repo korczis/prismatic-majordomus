@@ -382,6 +382,13 @@ server runs, and nothing it answers is trusted until the server has recomputed i
   executes the committed module against the shared fixture. Two hosts build different bytes
   from the same sources, so what is held is the sources a module names and the answers it
   gives, not its bytes.
+- The shared fixture, in this browser (I2809): on request, every row of
+  `apps/majordomus-core/fixtures/canonical-digest.v1.json` — compiled into the executable, so
+  the page runs the very rows the gates run and no copy exists — is computed by the module in
+  the reader's browser and judged by `compute.verify`. A case holds when the browser's digest
+  is the fixture's and the server answers `match`; an invalid row holds when the module refuses
+  it and the server answers `invalid`. The page counts the rows that hold and names any that
+  do not.
 - The screen is not read again while the reader works on it (`data-keeps-its-place`). In the
   published snapshot the page still computes, and says that no server recomputed it.
 

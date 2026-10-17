@@ -18,6 +18,9 @@ observations:
   - id: no-page-runs-the-module
     statement: No page runs the wasm32 module; the asset server reads every file as text and serves no application/wasm, and the Cockpit's policy allows no WebAssembly compilation
     source: file:apps/majordomus-cli/src/cockpit/assets.rs
+  - id: one-row-at-a-time
+    statement: The page computes and verifies one digest of the reader's input; whether the module a browser loaded answers every fixture row is proven by node in a gate, not in any browser
+    source: file:apps/majordomus-cli/src/ui/compute.rs
 conditions:
   - criterion: core-agrees-everywhere
     state: missing
@@ -31,3 +34,7 @@ conditions:
     state: missing
     because: the module is executed only by node in a gate; nothing serves it to a browser and nothing ties a served module to the sources it was built from
     observations: [no-page-runs-the-module]
+  - criterion: the-whole-fixture-agrees-in-a-browser
+    state: missing
+    because: no page runs the fixture in a browser
+    observations: [one-row-at-a-time]

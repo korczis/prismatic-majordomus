@@ -312,6 +312,15 @@
       "summary": "The plan of an intent is held to it before execution"
     },
     {
+      "id": "browser-compute-proof",
+      "kind": "milestone",
+      "label": "browser-compute-proof",
+      "status": "BLOCKED",
+      "route": "/plan/browser-compute-proof/",
+      "external": false,
+      "summary": "A browser proves the whole shared fixture, and the server agrees on every row"
+    },
+    {
       "id": "execution-telemetry",
       "kind": "milestone",
       "label": "0.3  execution-telemetry",
@@ -366,6 +375,11 @@
     {
       "source": "intent-lifecycle",
       "target": "intent-planning",
+      "kind": "requires"
+    },
+    {
+      "source": "browser-compute",
+      "target": "browser-compute-proof",
       "kind": "requires"
     },
     {

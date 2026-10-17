@@ -41,6 +41,11 @@ pub const SAMPLE: &str = r#"{"b": [3, 1.5, null], "a": {"z": true, "é": "ü"}}"
 
 const VERIFIER: Source = Source::with("capabilities.describe", r#"{"id":"compute.verify"}"#);
 
+/// The shared fixture every runtime of the portable core is held to (ADR 0170), compiled in
+/// from the core so that the page runs the very rows the gates run and no copy exists (I2809).
+pub const FIXTURE: &str =
+    include_str!("../../../majordomus-core/fixtures/canonical-digest.v1.json");
+
 /// The URLs the page hands to its script: each the digested URL of a file the UI serves.
 #[derive(Debug, Clone, Default)]
 pub struct Files {
@@ -173,7 +178,13 @@ pub fn screen(ctx: &Context, files: &Files, provenance: Option<&Value>) -> View 
             "The committed wasm32 build of the portable core, and the sources it was built from.",
             module,
             &[verifier],
-        ));
+        ))
+        .child(super::view::wide(panel(
+            "The shared fixture, in this browser",
+            "Every row the gates hold each runtime to, computed here by the module and recomputed by the server: only when you ask.",
+            fixture_rows(),
+            &[verifier],
+        )));
 
     View::new(
         "Browser compute",
@@ -183,6 +194,108 @@ pub fn screen(ctx: &Context, files: &Files, provenance: Option<&Value>) -> View 
             .child(top)
             .child(grid),
     )
+}
+
+/// The fixture's rows as a table the page's script fills: each case with the digest the fixture
+/// records, each invalid row with the refusal it must meet. The inputs ride on the rows as
+/// attributes, so the browser computes exactly the fixture's text.
+fn fixture_rows() -> El {
+    let fixture: Value = match serde_json::from_str(FIXTURE) {
+        Ok(v) => v,
+        Err(e) => {
+            return super::view::nothing(&format!(
+                "The fixture compiled into this executable does not parse: {e}"
+            ))
+        }
+    };
+    let out = |key: &str| {
+        el("td").class("mj-cmd--wrap").child(
+            el("output")
+                .class("mj-cmd-text mj-ui-mono")
+                .attr("data-fixture-out", key)
+                .text("—"),
+        )
+    };
+    let rows = |kind: &'static str| {
+        fixture
+            .get(if kind == "case" { "cases" } else { "invalid" })
+            .and_then(Value::as_array)
+            .cloned()
+            .unwrap_or_default()
+            .into_iter()
+            .map(move |row| {
+                let id = row
+                    .get("id")
+                    .and_then(Value::as_str)
+                    .unwrap_or("")
+                    .to_string();
+                let input = row
+                    .get("input")
+                    .and_then(Value::as_str)
+                    .unwrap_or("")
+                    .to_string();
+                let expected = match kind {
+                    "case" => row
+                        .get("digest")
+                        .and_then(Value::as_str)
+                        .unwrap_or("")
+                        .to_string(),
+                    _ => String::new(),
+                };
+                el("tr")
+                    .attr("data-fixture-row", id.clone())
+                    .attr("data-fixture-kind", kind)
+                    .attr("data-fixture-input", input)
+                    .attr("data-fixture-digest", expected.clone())
+                    .child(el("th").attr("scope", "row").child(el("code").text(id)))
+                    .child(el("td").class("mj-cmd--wrap").child(
+                        el("code").class("mj-cmd-text").text(match kind {
+                            "case" => expected,
+                            _ => "refused (not a canonical-digest input)".to_string(),
+                        }),
+                    ))
+                    .child(out("browser"))
+                    .child(out("agrees"))
+                    .child(out("verdict"))
+            })
+            .collect::<Vec<_>>()
+    };
+    let mut all = rows("case");
+    all.extend(rows("invalid"));
+    el("div")
+        .class("mj-ui-stack")
+        .attr("data-compute-fixture", "")
+        .child(
+            el("p")
+                .class("mj-ui-line")
+                .child(
+                    el("button")
+                        .attr("type", "button")
+                        .class("mj-btn mj-btn--primary")
+                        .attr("data-fixture-run", "")
+                        // enabled by page.js: nothing runs without it
+                        .flag("disabled")
+                        .text("Run every row in this browser"),
+                )
+                .child(
+                    el("output")
+                        .class("mj-ui-dim")
+                        .attr("data-fixture-summary", "")
+                        .attr("aria-live", "polite")
+                        .text(" Not run."),
+                ),
+        )
+        .child(table(
+            &[
+                "Row",
+                "The fixture says",
+                "This browser",
+                "Agrees",
+                "The server",
+            ],
+            all,
+            "The fixture holds no row.",
+        ))
 }
 
 /// The module's provenance as rows, or a line saying the distribution has none.

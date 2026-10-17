@@ -6,23 +6,23 @@
     "version": "0.27.0"
   },
   "registry": {
-    "fingerprint": "d0a221aa3b342517222eea8846b103a5f8f3d679c16c40db219d4f78eb8c003d",
+    "fingerprint": "7885e91ee80672c66640d2a67847515fba9173a79de68ff5d6156a5c26c58436",
     "summary": {
-      "total": 2455,
+      "total": 2457,
       "builtin": 203,
-      "declarative": 2252,
+      "declarative": 2254,
       "by_kind": {
         "command": 31,
         "query": 172,
-        "resource": 2252
+        "resource": 2254
       },
       "by_stability": {
         "behaviorally_verified": 141,
         "experimental": 53,
-        "implemented": 2261
+        "implemented": 2263
       },
       "mcp_tools": 193,
-      "mcp_resources": 2307,
+      "mcp_resources": 2309,
       "http_routes": 198,
       "cli_commands": 108,
       "modules": 93,
@@ -83114,7 +83114,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 397,
+        "capabilities": 398,
         "capability_ids": []
       },
       {
@@ -83230,7 +83230,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 39,
+        "capabilities": 40,
         "capability_ids": []
       },
       {
@@ -83776,7 +83776,7 @@
     ]
   },
   "index": {
-    "fingerprint": "354e1564d53f503f0f026261fb301e084835135a938bee9ea993fd10291dbecd",
+    "fingerprint": "5ec17e52f1076df8f420548e53d55296a9181e5c824760a9854cfd72e023eebd",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -83816,10 +83816,10 @@
       "gap": 4,
       "implementation": 52,
       "intent": 5,
-      "issue": 397,
+      "issue": 398,
       "knowledge": 4,
       "mesh-declaration": 1,
-      "milestone": 39,
+      "milestone": 40,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -89881,7 +89881,7 @@
         "title": "`majordomus ui` — the product",
         "path": "docs/MAJORDOMUS_UI.md",
         "source_class": "document",
-        "bytes": 36569
+        "bytes": 37126
       },
       {
         "uri": "majordomus://document/docs/MCP.md",
@@ -89971,7 +89971,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 161654
+        "bytes": 162172
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -92937,7 +92937,7 @@
         "path": ".ai/repo/project/gaps/a-browser-computes-what-the-server-verifies.yaml",
         "section": "project",
         "source_class": "gap",
-        "bytes": 2401
+        "bytes": 2833
       },
       {
         "uri": "majordomus://gap/a-session-leaves-what-it-observed",
@@ -93397,7 +93397,7 @@
         "path": ".ai/repo/project/intents/a-browser-computes-what-the-server-verifies.yaml",
         "section": "project",
         "source_class": "intent",
-        "bytes": 2666
+        "bytes": 3113
       },
       {
         "uri": "majordomus://intent/a-session-leaves-what-it-observed",
@@ -97811,6 +97811,17 @@
         "bytes": 2507
       },
       {
+        "uri": "majordomus://issue/I2809",
+        "kind": "issue",
+        "identity": "I2809",
+        "title": "The page runs the whole shared fixture in the browser and the server recomputes every row",
+        "description": "On /ui/compute, on request, run every row of apps/majordomus-core/fixtures/canonical-digest.v1.json in the reader's browser through the committed module, send each digest to compute.verify, and show per row the browser's answer and the server's verdict with the counts; a disagreeing row is named. The fixture is served as one file, never copied.",
+        "path": ".ai/repo/project/issues/I2809.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1526
+      },
+      {
         "uri": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "identity": "a-commit-stood-behind-a-build-lock",
@@ -98003,6 +98014,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 2664
+      },
+      {
+        "uri": "majordomus://milestone/browser-compute-proof",
+        "kind": "milestone",
+        "identity": "browser-compute-proof",
+        "title": "A browser proves the whole shared fixture, and the server agrees on every row",
+        "description": "/ui/compute runs every row of the shared fixture in the reader's browser, on request, and shows for each row the browser's answer and the server's recomputation, with the counts; a disagreeing row is named.",
+        "path": ".ai/repo/project/milestones/browser-compute-proof.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 1534
       },
       {
         "uri": "majordomus://milestone/capability-graph",
@@ -108139,7 +108161,7 @@
       "identity": [
         "id"
       ],
-      "objects": 397
+      "objects": 398
     },
     {
       "name": "knowledge",
@@ -108169,7 +108191,7 @@
       "identity": [
         "id"
       ],
-      "objects": 39
+      "objects": 40
     },
     {
       "name": "moment",

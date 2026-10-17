@@ -1,0 +1,28 @@
+id: browser-compute-proof
+title: A browser proves the whole shared fixture, and the server agrees on every row
+slug: browser-compute-proof
+order: 151
+priority: p2
+problem: "After browser-compute a person can compute one digest in their browser and see the server agree; nothing shows that the module a browser actually loaded answers every row the native core answers, in that browser."
+outcome: "/ui/compute runs every row of the shared fixture in the reader's browser, on request, and shows for each row the browser's answer and the server's recomputation, with the counts; a disagreeing row is named."
+current_state: "The fixture is executed against the module by node in a gate; no browser is asked."
+desired_state: "The page asks, the Worker computes every row, compute.verify recomputes every claim, and a served test plus a real-browser run hold it."
+scope:
+  - apps/majordomus-cli/src/ui
+  - share/ui/compute
+  - apps/majordomus-core/fixtures
+  - docs/MAJORDOMUS_UI.md
+  - .ai/repo/project
+non_scope:
+  - Recording any browser result before the owner accepts how a remote browser is authenticated (ADR 0170)
+acceptance_criteria:
+  - "Every fixture case is computed in the browser and answered match by the server; every invalid row is answered invalid"
+validation:
+  - majordomus plan validate
+evidence_required: []
+depends_on:
+  - browser-compute
+risks:
+  - "The fixture lives under apps/majordomus-core; serving it to a page makes it a UI asset too, and it must stay one file."
+created_at: 2026-10-17
+updated_at: 2026-10-17

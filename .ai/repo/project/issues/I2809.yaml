@@ -1,0 +1,31 @@
+id: I2809
+milestone: browser-compute-proof
+title: "The page runs the whole shared fixture in the browser and the server recomputes every row"
+slug: the-whole-fixture-in-a-browser
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "On /ui/compute, on request, run every row of apps/majordomus-core/fixtures/canonical-digest.v1.json in the reader's browser through the committed module, send each digest to compute.verify, and show per row the browser's answer and the server's verdict with the counts; a disagreeing row is named. The fixture is served as one file, never copied."
+why: "The gate executes the module with node; nothing shows that the module a reader's browser loaded answers every row the native core answers."
+serves:
+  - a-browser-computes-what-the-server-verifies#the-whole-fixture-agrees-in-a-browser
+current_state: "One digest at a time is computed and verified on the page."
+desired_state: "Every fixture row is computed in the browser and judged by the server, with a served test and a real-browser run."
+scope:
+  - "apps/majordomus-cli/src/ui"
+  - "share/ui/compute"
+  - "apps/majordomus-cli/tests/ui_compute.rs"
+  - ".ai/repo/project"
+  - "docs"
+  - "site"
+depends_on:
+  - "I2788"
+acceptance_criteria:
+  - "Every fixture case computed in a real browser is answered match; every invalid row is answered invalid"
+validation:
+  - "majordomus plan validate"
+  - "cargo test --test ui_compute"
+evidence_required:
+  - "ui_compute_fixture_tests"
+created_at: 2026-10-17
+updated_at: 2026-10-17

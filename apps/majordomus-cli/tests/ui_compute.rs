@@ -353,3 +353,84 @@ fn the_core_module_is_rebuilt_from_its_sources() {
     let text = serde_json::to_string_pretty(&record).expect("the record serialises") + "\n";
     std::fs::write(root.join(PROVENANCE), text).expect("write the provenance");
 }
+
+/// Every attribute value of `name` on the page, in order, unescaped.
+fn attributes(html: &str, name: &str) -> Vec<String> {
+    let needle = format!(" {name}=\"");
+    html.match_indices(&needle)
+        .map(|(at, _)| {
+            let start = at + needle.len();
+            let end = start + html[start..].find('"').expect("the attribute closes");
+            html[start..end]
+                .replace("&quot;", "\"")
+                .replace("&#39;", "'")
+                .replace("&lt;", "<")
+                .replace("&gt;", ">")
+                .replace("&amp;", "&")
+        })
+        .collect()
+}
+
+#[test]
+fn the_page_carries_every_row_of_the_shared_fixture_as_the_fixture_holds_it() {
+    let fixture: Value = serde_json::from_str(
+        &std::fs::read_to_string(
+            repo().join("apps/majordomus-core/fixtures/canonical-digest.v1.json"),
+        )
+        .expect("the shared fixture"),
+    )
+    .expect("the fixture is JSON");
+    let f = Fixture::new();
+    let s = Served::start(&f.root(), &[]);
+    let (status, _, page) = s.request("GET", "/ui/compute", None);
+    assert_eq!(status, 200, "{page}");
+    assert!(
+        page.contains("data-compute-fixture"),
+        "the page offers no fixture run"
+    );
+    let button = page
+        .split("<button")
+        .find(|tag| tag.contains("data-fixture-run"))
+        .and_then(|tag| tag.split('>').next())
+        .expect("the run button");
+    assert!(
+        button.contains("disabled"),
+        "nothing runs without the page's script: {button}"
+    );
+
+    // each row's own tag: an empty attribute is written bare, so it is read as empty
+    let got: Vec<(String, String, String, String)> = page
+        .split("<tr")
+        .filter(|tag| tag.contains("data-fixture-row="))
+        .map(|tag| {
+            let tag = format!(" {}", tag.split('>').next().expect("the tag closes"));
+            let one = |name: &str| {
+                attributes(&tag, name)
+                    .into_iter()
+                    .next()
+                    .unwrap_or_default()
+            };
+            (
+                one("data-fixture-row"),
+                one("data-fixture-input"),
+                one("data-fixture-digest"),
+                one("data-fixture-kind"),
+            )
+        })
+        .collect();
+    let mut want = Vec::new();
+    for (key, kind) in [("cases", "case"), ("invalid", "invalid")] {
+        for row in fixture[key].as_array().expect("rows") {
+            want.push((
+                row["id"].as_str().expect("an id").to_string(),
+                row["input"].as_str().expect("an input").to_string(),
+                row["digest"].as_str().unwrap_or("").to_string(),
+                kind.to_string(),
+            ));
+        }
+    }
+    assert_eq!(
+        got, want,
+        "the page's rows are not the fixture's, byte for byte"
+    );
+}

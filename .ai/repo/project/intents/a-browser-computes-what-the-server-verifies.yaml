@@ -11,6 +11,7 @@ non_goals:
   - Arbitrary code from a peer; only the core's own functions run
 milestones:
   - browser-compute
+  - browser-compute-proof
 satisfaction:
   - id: core-agrees-everywhere
     criterion: The portable core's canonical JSON and digest reproduce every row of the shared fixture on the host, in the executable that links it, and in the wasm32 module executed through the C ABI a browser calls
@@ -22,6 +23,10 @@ satisfaction:
     ref: apps/majordomus-cli/tests/compute_verify.rs
   - id: a-page-computes-and-the-server-agrees
     criterion: A page this server serves computes the canonical digest in a same-origin Worker with the committed wasm32 module, only when the person asks, and shows the server's recomputed verdict; the committed module names the core sources it was built from, those are the current sources, it carries no host path, and executed it answers every fixture row
+    evidence: test
+    ref: apps/majordomus-cli/tests/ui_compute.rs
+  - id: the-whole-fixture-agrees-in-a-browser
+    criterion: On request, the page runs every row of the shared fixture in the reader's browser through the committed module, and each case's digest is the fixture's and is answered match by the server, each invalid row is refused by the module and answered invalid by the server, and the counts are shown
     evidence: test
     ref: apps/majordomus-cli/tests/ui_compute.rs
 governance:
