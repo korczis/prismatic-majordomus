@@ -38,7 +38,7 @@ while IFS= read -r line; do
 done < embeds.txt
 
 # 2. the chain, rendered
-if command -v zola >/dev/null 2>&1; then
+if mj_zola_ready "$ROOT"; then
   site="$PWD/escape-site"
   mkdir -p "$site/templates" "$site/content"
   cat > "$site/config.toml" <<'EOF'

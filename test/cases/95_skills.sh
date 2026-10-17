@@ -255,7 +255,7 @@ git -C "$F" rm -rq .ai/repo/skills/alpha >/dev/null
 expect_exit 0 "$F/scripts/generate-site-data"
 jq -e '.count == 1 and .skills[0].id == "review"' "$SJ" >/dev/null || { echo "    the removed skill is still in the catalogue"; exit 1; }
 [ ! -e "$F/site/content/skills/alpha.md" ] || { echo "    the removed skill still has a page"; exit 1; }
-if command -v zola >/dev/null; then
+if mj_zola_ready "$ROOT"; then
   # zola's own diagnosis, not a sentence that says only that it failed
   ( cd "$F/site" && run_quiet "$S/zola.err" zola build --force -o "$S/public" >/dev/null ) \
     || { echo "    zola could not build the fixture site"; exit 1; }

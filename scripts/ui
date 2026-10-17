@@ -47,6 +47,9 @@
 # Exit: 0 clean, 10 findings, 12 the site is not built, 13 no browser.
 set -eu
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+# shellcheck source=../lib/runnable.sh
+. "$(cd "$(dirname "$0")/.." && pwd)/lib/runnable.sh" 2>/dev/null || { mj_runs() { command -v "$1" >/dev/null 2>&1; }; mj_runs_why() { printf '%s is not available' "$1"; }; mj_zola_ready() { command -v zola >/dev/null 2>&1; }; mj_zola_why() { printf 'zola is not available'; }; mj_node_env() { :; }; }
+mj_node_env "$(cd "$(dirname "$0")/.." && pwd)" || true
 CSS="$ROOT/site/static/app.css"
 # shellcheck source=../lib/rust_bin.sh
 . "$ROOT/lib/rust_bin.sh"

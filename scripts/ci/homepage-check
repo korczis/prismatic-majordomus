@@ -76,13 +76,16 @@
 # 12 when site/public or a declaration it reads is missing.
 set -eu
 ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
+# shellcheck source=../lib/runnable.sh
+. "$(cd "$(dirname "$0")/../.." && pwd)/lib/runnable.sh" 2>/dev/null || { mj_runs() { command -v "$1" >/dev/null 2>&1; }; mj_runs_why() { printf '%s is not available' "$1"; }; mj_zola_ready() { command -v zola >/dev/null 2>&1; }; mj_zola_why() { printf 'zola is not available'; }; mj_node_env() { :; }; }
+mj_node_env "$(cd "$(dirname "$0")/../.." && pwd)" || true
 MJ_HOMEPAGE_ONLY=""
 if [ "${1:-}" = --only ]; then
   [ $# -ge 2 ] || { echo "homepage-check: --only needs a comma-separated list of checks" >&2; exit 2; }
   MJ_HOMEPAGE_ONLY="$2"
 fi
 export MJ_HOMEPAGE_ONLY
-command -v python3 >/dev/null 2>&1 || { echo "homepage-check: python3 is not installed" >&2; exit 12; }
+mj_runs python3 || { echo "homepage-check: $(mj_runs_why python3)" >&2; exit 12; }
 [ -f "$ROOT/site/public/index.html" ] || { echo "homepage-check: $ROOT/site/public/index.html missing; run scripts/site-build" >&2; exit 12; }
 # The pages walked below are the site's own: a surface scripts/site-build composes into the
 # build at its mount (ADR 0086) is another producer's pages, which neither tell this story nor

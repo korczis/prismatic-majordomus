@@ -20,7 +20,7 @@
 # Needs a browser scripts/lib/browser.mjs can launch. Without one it skips locally and fails
 # under CI=true, as case 334 does.
 . "$ROOT/test/lib.sh"
-command -v node >/dev/null 2>&1 || skip "no node"
+mj_runs node || skip "$(mj_runs_why node)"
 [ -d "$ROOT/node_modules/playwright" ] || skip "playwright is not installed (npm ci)"
 
 cat > probe.mjs <<JS

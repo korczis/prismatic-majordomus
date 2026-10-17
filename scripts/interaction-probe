@@ -19,6 +19,9 @@
 # Without a browser: SKIP and exit 0 locally, exit 12 under CI=true. Exit 0 clean, 10 findings, 12 unrunnable.
 set -eu
 ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
+# shellcheck source=../lib/runnable.sh
+. "$(cd "$(dirname "$0")/.." && pwd)/lib/runnable.sh" 2>/dev/null || { mj_runs() { command -v "$1" >/dev/null 2>&1; }; mj_runs_why() { printf '%s is not available' "$1"; }; mj_zola_ready() { command -v zola >/dev/null 2>&1; }; mj_zola_why() { printf 'zola is not available'; }; mj_node_env() { :; }; }
+mj_node_env "$(cd "$(dirname "$0")/.." && pwd)" || true
 LIB="$(cd "$(dirname "$0")/lib" && pwd)"
 ONLY=""; SPEC=""
 while [ $# -gt 0 ]; do
@@ -28,7 +31,7 @@ while [ $# -gt 0 ]; do
     *) echo "interaction-probe: unknown option $1" >&2; exit 2 ;;
   esac
 done
-command -v node >/dev/null 2>&1 || { echo "interaction-probe: node is required" >&2; exit 12; }
+mj_runs node || { echo "interaction-probe: node is required: $(mj_runs_why node)" >&2; exit 12; }
 [ -d "$ROOT/site/public" ] || { echo "interaction-probe: site/public missing; run scripts/site-build" >&2; exit 12; }
 # playwright belongs to the tool, not to the site under test: MJ_ROOT may name a site with no node_modules at all
 TOOL="$(cd "$LIB/../.." && pwd)"
