@@ -1,0 +1,32 @@
+id: I2829
+milestone: architecture-is-enforced
+title: "The site's browser probe is split, so the site job runs well inside its timeout"
+slug: the-site-probe-is-split
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Split `probe the site in a browser` (scripts/site-probe over every route at 320, 390 and 1280 px) so the site job no longer runs at its timeout, and keep the full sweep: no route and no width is dropped."
+why: "Measured on 2026-10-17: the site job of validate took 46.3 min (master 39034132446), 47.5 min (39039860066) and was cancelled at 50.4 min by its own timeout-minutes 50 (39049547899, batch 71a with the 0.29.0 bump), in the browser probe, which alone ran 35-37 min. A job at 95% of its bound turns runner variance into a cancelled release run: the v0.29.0 tag slipped about 50 minutes for a rerun. Batch 71b2 raises the timeout to 65 min, which buys headroom for v1.0.0-alpha.1 but leaves the probe growing with every route the site adds (5330 routes on 25b5fce)."
+current_state: "One step in the site job runs scripts/site-probe with SITE_PROBE_JOBS=4 under `scripts/ci/timed --bound 2700`; the job's timeout-minutes is 65 after 71b2 (50 before)."
+desired_state: "The probe runs as a matrix of shards (by route partition) in parallel jobs, or in a job of its own beside the build, each with a stated bound and its measured duration beside it; together they cover every route at every width the single step covers today, proved by a case that the union of the shards' route lists equals the built site's; the site job finishes in well under half its timeout."
+scope:
+  - ".github/workflows/validate.yml"
+  - "scripts/site-probe"
+  - "scripts/ci"
+  - ".ai/repo/ci/gates.yaml"
+  - "test/cases"
+non_scope:
+  - "Sampling routes instead of probing all of them: every overflow the site has had came from canonical data in a shared template, which no sample sees (the comment above the step)."
+  - "Anything before v1.0.0-alpha.1: owner's Operation Convergence, 2026-10-17; the 65-minute timeout in 71b2 is the alpha's headroom."
+depends_on: []
+acceptance_criteria:
+  - "Every route at every width the current probe visits is visited by exactly one shard, and a case refuses a partition that drops or duplicates one"
+  - "The site job, or each probe job, records its duration and stays under half its timeout on the measured runner"
+  - "A probe finding still fails the job that found it, naming the route and the width"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "probe_partition_case"
+created_at: 2026-10-17
+updated_at: 2026-10-17
