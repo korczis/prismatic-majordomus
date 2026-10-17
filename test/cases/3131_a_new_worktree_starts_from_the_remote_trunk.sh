@@ -42,7 +42,7 @@ local_trunk="$(git -C "$R" rev-parse master)"
 
 # ---------------------------------------------------------------- 1. new work: the remote trunk
 expect_exit 0 mj "$R" worktree create feature/new-work
-expect_grep "branch  feature/new-work [(]new, from origin/master at $remote_trunk[)]"
+expect_grep "branch  feature/new-work [(]new, from origin/master at ${remote_trunk}[)]"
 expect_no_grep "warning"
 [ "$(git -C "$R-wt/feature/new-work" rev-parse HEAD)" = "$remote_trunk" ] \
   || { echo "    the new branch starts at $(git -C "$R-wt/feature/new-work" rev-parse HEAD), not the remote trunk $remote_trunk"; exit 1; }
@@ -66,13 +66,13 @@ expect_grep "branch  fix/pushed-elsewhere [(]from origin/fix/pushed-elsewhere at
 
 # ---------------------------------------------------------------- 3. --base is as given
 expect_exit 0 mj "$R" worktree create feature/from-local --base master
-expect_grep "branch  feature/from-local [(]new, from master at $local_trunk[)]"
+expect_grep "branch  feature/from-local [(]new, from master at ${local_trunk}[)]"
 expect_no_grep "warning"
 
 # ---------------------------------------------------------------- 4. unreachable: said, with the distance
 git -C "$R" remote set-url origin "$W/gone.git"
 expect_exit 0 mj "$R" worktree create feature/offline
-expect_grep "branch  feature/offline [(]new, from master at $local_trunk[)]"
+expect_grep "branch  feature/offline [(]new, from master at ${local_trunk}[)]"
 expect_grep "warning could not fetch master from origin"
 expect_grep "started from the local master, 2 commits behind origin/master as last fetched"
 expect_grep "git fetch origin && git reset --hard origin/master"
@@ -86,5 +86,5 @@ expect_grep '"behind": *2'
 # ---------------------------------------------------------------- 5. no remote: no fetch, no warning
 git -C "$R" remote remove origin
 expect_exit 0 mj "$R" worktree create feature/no-remote
-expect_grep "branch  feature/no-remote [(]new, from master at $local_trunk[)]"
+expect_grep "branch  feature/no-remote [(]new, from master at ${local_trunk}[)]"
 expect_no_grep "warning"
