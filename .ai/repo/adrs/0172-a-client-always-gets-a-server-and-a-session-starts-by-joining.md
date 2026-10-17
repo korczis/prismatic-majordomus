@@ -1,0 +1,124 @@
+---
+schema: adr/v1
+id: adr-0172
+kind: adr
+title: A client always gets a server, and a session that is opened starts by joining the cluster
+status: proposed
+date: 2026-10-17
+tags:
+  - coordination
+  - mesh
+  - mcp
+  - enforcement
+related:
+  - file:.ai/repo/adrs/0161-a-mesh-node-follows-the-published-release.md
+  - file:.ai/repo/adrs/0043-entering-the-repository-brings-its-runtime-up.md
+  - file:.ai/repo/rules/project/shared-server-resilience.v1.md
+  - file:.ai/repo/project/milestones/every-session-joins-the-mesh.yaml
+  - file:docs/MCP.md
+  - file:bin/majordomus-cli
+  - file:share/shell/session-start.sh
+  - test:test/cases/3177_a_client_always_gets_a_server.sh
+  - test:test/cases/3178_a_bare_session_start_joins_the_cluster.sh
+provenance:
+  origin: authored
+---
+
+# 172. A client always gets a server, and a session that is opened starts by joining the cluster
+
+## Context
+
+On 2026-10-16 the owner opened `claude` in this repository and asked why the session did not
+join the mesh through the hook and start working. Two separate things were true, and both
+were already named by ADR 0156 as the way a session ends up working alone.
+
+1. **The server never came up.** `.mcp.json` starts `bin/majordomus-mcp`, which runs the
+   crate's own executable and builds it when it is missing. The checkout had never built one,
+   and the volume had 4.5GB free against the build floor of 5120MB, so the launcher refused
+   the build and exited 12. The client reported `majordomus (CONNECTION_CLOSED)` and carried
+   on without the server, and with it without `majordomus_peers`, `majordomus_announce` and
+   the `majordomus_mesh_*` tools. An installed release that speaks the same protocol, and was
+   already serving this checkout on `:8741`, sat beside it. `project.shared-server-resilience`
+   promises that a client always gets a server; the launcher kept that promise for everything
+   a lease could break and not for the executable itself.
+2. **Nothing started a turn.** The SessionStart hook ran, the mesh was active, and the whole
+   briefing was in the session's context. A hook can only add context. A session that is
+   merely opened waits for its first message, so it was not on the board until a person
+   typed, which is the state ADR 0156 describes as "behaved as the only worker".
+
+## Decision
+
+**`mcp` is served by the installed release when this checkout has nothing it can run.**
+`bin/majordomus-cli mcp` — the one command a client spawns and then waits on — never turns a
+client away for want of an executable it could have run. When the crate's executable is
+missing, or cannot be built (no cargo, less free space than the floor, a failed build), it
+runs the installed release (`MAJORDOMUS_INSTALLED_BIN`, by default `majordomus` in
+`~/.local/bin`) and names the release and the reason on stderr. The fallback is for `mcp`
+only: every other command still exits 12, because a different release answering `generate`
+or `check` unannounced is a different failure. A stale executable that *can* be rebuilt is
+rebuilt as before, and a contributor who wants the build for `mcp` sets
+`MAJORDOMUS_MCP_BUILD=1`. A file inside the repository is never taken for the installed
+release, and neither is one that does not answer `--version`: a launcher that found itself
+would leave the client waiting on a loop.
+
+**A bare session start is handed the repository's own first message.**
+`.ai/repo/prompts/session-start.md` is the prompt, a prompt asset like `continue`: orient,
+say how you are attached (MCP or CLI, and why), read the board before claiming anything,
+find the work that is owed, check for collisions, announce, then work inside the task's
+scope with everything kept local. `share/shell/session-start.sh` wraps `claude`, in bash and
+zsh, so that a bare `claude` inside a repository with an `.ai/` layer starts with
+`majordomus prompt render session-start`. Any argument, a run outside such a repository, the
+opt-out `MAJORDOMUS_NO_AUTOSTART=1`, and a prompt that cannot be rendered leave the session
+exactly as it was: absence of the mechanism is a state, never a reason a person cannot work.
+The prompt lives in the repository, so changing it is a commit and every checkout that pulls
+is updated; the wrapper ships in `share/` and travels with the release (ADR 0161).
+
+**Autonomy is bounded in the prompt, not assumed.** The first message tells the worker to
+stay inside the active task's scope and to keep everything local: no commit, push, merge or
+pull request, no deleting what it did not create, no finishing a task as `completed`, until
+the person says otherwise. Joining the board and continuing an announced task is the default;
+publishing is not.
+
+## Consequences
+
+- A checkout on a full or toolless machine still gets MCP, with its tools, and the briefing
+  can say it is the installed release serving rather than the checkout's build.
+- A worker on an older installed release may be served by it while the checkout's sources are
+  newer. The stderr line names the release; the server's `desired` block (ADR 0035) and ADR
+  0161's follow-the-release keep the installed one current.
+- A person who sources the file gets the behaviour in every supervised repository, on every
+  machine whose checkout they keep up to date; one who does not gets nothing new.
+
+## Not decided here
+
+- **Installing the wrapper.** The installer's contract is that nothing outside its prefix and
+  launchers is touched (`docs/DISTRIBUTION.md`). A shell integration that appends to
+  `~/.zshrc` breaks that, so it is an owner decision, with its own opt-in flag and a case in
+  `85_installer`, not a side effect of this one. Until then the file is sourced by hand.
+- **Codex and Gemini.** Each takes an initial prompt differently; each is wrapped only when
+  it is proved against the real tool (milestone `every-session-joins-the-mesh`).
+- **The four facts of ADR 0156** (current, attached, announced, useful) as a derived block of
+  `majordomus context`, and the refusal in `start`/`check`/`finish`. That is the capability
+  ADR 0156 describes and this ADR does not pre-empt; the prompt asks a worker for the same
+  steps by hand in the meantime.
+
+## Alternatives rejected
+
+- **Build in the background and serve when ready.** A client does not wait for a build that
+  may need minutes and gigabytes; a fallback that answers now is the whole point.
+- **Make `MAJORDOMUS_BIN` the default in the tracked `.mcp.json`.** It names one person's
+  path. The personal layer sets it; the launcher finds the installed release itself.
+- **Let the SessionStart hook start the work.** It cannot: the provider adds hook output to
+  the context it is about to build and waits for a message.
+
+## Verification
+
+Case 3177 stubs cargo, the free-space floor and the installed release, and proves that `mcp`
+is served by the installed release when the executable is missing, when the build fails and
+when there is no room; that another command still exits 12; that a file inside the repository
+and one that does not answer `--version` are refused; that a fresh executable runs as itself;
+and that `MAJORDOMUS_MCP_BUILD=1` keeps the build. It fails on the launcher as it stood on
+2026-10-16 with exit 12. Case 3178 proves, in bash and zsh, that a bare `claude` gets exactly
+one argument, the rendered prompt, and that an argument, a plain repository, the opt-out, a
+failed or an empty render and the session's exit status are left untouched. Claims
+`mcp-client-always-served` and `session-start-prompt`.

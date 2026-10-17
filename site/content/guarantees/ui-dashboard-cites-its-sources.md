@@ -1,7 +1,7 @@
 +++
 title = "The UI's dashboard at /ui links every capability it read to that capability's page, serves under the Cockpit's security policy, and never waits for the pull-request queue, which is a page and a fragment of its own"
 description = "majordomus ui, the primary surface at /ui (ADR 0135), shows a person how the delivery"
-weight = 197
+weight = 199
 [extra]
 claim_id = "ui-dashboard-cites-its-sources"
 status = "guaranteed"

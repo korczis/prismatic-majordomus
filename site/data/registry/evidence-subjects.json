@@ -1674,6 +1674,11 @@
     },
     {
       "kind": "claim",
+      "subject": "claim:mcp-client-always-served",
+      "path": "/evidence/claims/mcp-client-always-served/"
+    },
+    {
+      "kind": "claim",
       "subject": "claim:mcp-client-autostart",
       "path": "/evidence/claims/mcp-client-autostart/"
     },
@@ -2141,6 +2146,11 @@
       "kind": "claim",
       "subject": "claim:session-records",
       "path": "/evidence/claims/session-records/"
+    },
+    {
+      "kind": "claim",
+      "subject": "claim:session-start-prompt",
+      "path": "/evidence/claims/session-start-prompt/"
     },
     {
       "kind": "claim",
@@ -8974,6 +8984,29 @@
       "mechanisms": [],
       "findings": []
     },
+    "claim:mcp-client-always-served": {
+      "kind": "claim",
+      "id": "mcp-client-always-served",
+      "status": "guaranteed",
+      "page": "/evidence/claims/mcp-client-always-served/",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "claim",
+          "test": "suite:3177_a_client_always_gets_a_server",
+          "path": "test/cases/3177_a_client_always_gets_a_server.sh",
+          "category": "e2e",
+          "inputs": [
+            "docs/MCP.md",
+            "bin/majordomus-cli",
+            "test/cases/3177_a_client_always_gets_a_server.sh"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "claim:mcp-client-autostart": {
       "kind": "claim",
       "id": "mcp-client-autostart",
@@ -11115,6 +11148,29 @@
             "docs/SCHEMAS.md",
             "lib/session.sh",
             "test/cases/63_session_records.sh"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "claim:session-start-prompt": {
+      "kind": "claim",
+      "id": "session-start-prompt",
+      "status": "guaranteed",
+      "page": "/evidence/claims/session-start-prompt/",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "claim",
+          "test": "suite:3178_a_bare_session_start_joins_the_cluster",
+          "path": "test/cases/3178_a_bare_session_start_joins_the_cluster.sh",
+          "category": "e2e",
+          "inputs": [
+            "docs/MCP.md",
+            "share/shell/session-start.sh",
+            "test/cases/3178_a_bare_session_start_joins_the_cluster.sh"
           ]
         }
       ],
@@ -25458,6 +25514,16 @@
       "programs": [],
       "members": [],
       "routes": [
+        {
+          "via": "rule",
+          "test": "suite:3177_a_client_always_gets_a_server",
+          "path": "test/cases/3177_a_client_always_gets_a_server.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/3177_a_client_always_gets_a_server.sh",
+            ".ai/repo/rules/project/shared-server-resilience.v1.md"
+          ]
+        },
         {
           "via": "rule",
           "test": "suite:90_mcp_shared_server",

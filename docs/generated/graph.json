@@ -4186,6 +4186,14 @@
         "external": true
       },
       {
+        "id": "file:share/shell/session-start.sh",
+        "kind": "file",
+        "label": "session-start.sh",
+        "summary": "named by the layer; not an object of this index",
+        "source": "share/shell/session-start.sh",
+        "external": true
+      },
+      {
         "id": "file:share/skeleton/ai/repo/knowledge/candidates/README.md",
         "kind": "file",
         "label": "README.md",
@@ -7503,6 +7511,35 @@
         }
       },
       {
+        "id": "majordomus://adr/adr-0172",
+        "kind": "adr",
+        "label": "adr-0172",
+        "summary": "A client always gets a server, and a session that is opened starts by joining the cluster",
+        "route": "/cockpit/objects/adr/adr-0172",
+        "source": ".ai/repo/adrs/0172-a-client-always-gets-a-server-and-a-session-starts-by-joining.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-17",
+          "related": [
+            "file:.ai/repo/adrs/0161-a-mesh-node-follows-the-published-release.md",
+            "file:.ai/repo/adrs/0043-entering-the-repository-brings-its-runtime-up.md",
+            "file:.ai/repo/rules/project/shared-server-resilience.v1.md",
+            "file:.ai/repo/project/milestones/every-session-joins-the-mesh.yaml",
+            "file:docs/MCP.md",
+            "file:bin/majordomus-cli",
+            "file:share/shell/session-start.sh",
+            "test:test/cases/3177_a_client_always_gets_a_server.sh",
+            "test:test/cases/3178_a_bare_session_start_joins_the_cluster.sh"
+          ],
+          "tags": [
+            "coordination",
+            "mesh",
+            "mcp",
+            "enforcement"
+          ]
+        }
+      },
+      {
         "id": "majordomus://application/ci-gated-project",
         "kind": "application",
         "label": "ci-gated-project",
@@ -10044,6 +10081,22 @@
         }
       },
       {
+        "id": "majordomus://claim/mcp-client-always-served",
+        "kind": "claim",
+        "label": "mcp-client-always-served",
+        "summary": "A client that starts the MCP server from a checkout with no executable to run, or none it can build, is served by the installed release and told so, instead of being turned away",
+        "route": "/cockpit/objects/claim/mcp-client-always-served",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "claim": "A client that starts the MCP server from a checkout with no executable to run, or none it can build, is served by the installed release and told so, instead of being turned away",
+          "implementation": "bin/majordomus-cli",
+          "responsibility": "none",
+          "source": "docs/MCP.md",
+          "test": "test/cases/3177_a_client_always_gets_a_server.sh"
+        }
+      },
+      {
         "id": "majordomus://claim/mcp-client-autostart",
         "kind": "claim",
         "label": "mcp-client-autostart",
@@ -11534,6 +11587,21 @@
           "responsibility": "layer",
           "source": "docs/SCHEMAS.md",
           "test": "test/cases/63_session_records.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/session-start-prompt",
+        "kind": "claim",
+        "label": "session-start-prompt",
+        "summary": "A bare claude in a supervised repository starts with the repository's session-start prompt as its first message, and a run with an argument, outside such a repository, with the opt-out, or with a prompt that cannot be rendered is left exactly as it was",
+        "route": "/cockpit/objects/claim/session-start-prompt",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "share/shell/session-start.sh",
+          "responsibility": "none",
+          "source": "docs/MCP.md",
+          "test": "test/cases/3178_a_bare_session_start_joins_the_cluster.sh"
         }
       },
       {
@@ -15925,6 +15993,14 @@
         "source": "docs/claims/local-state-ignored.md"
       },
       {
+        "id": "majordomus://document/docs/claims/mcp-client-always-served.md",
+        "kind": "document",
+        "label": "docs/claims/mcp-client-always-served.md",
+        "summary": "A client that starts the MCP server from a checkout with no executable to run, or none it can build, is served by the installed release and told so, instead of being turned away",
+        "route": "/cockpit/objects/document/docs-claims-mcp-client-always-served-md",
+        "source": "docs/claims/mcp-client-always-served.md"
+      },
+      {
         "id": "majordomus://document/docs/claims/mcp-client-autostart.md",
         "kind": "document",
         "label": "docs/claims/mcp-client-autostart.md",
@@ -16675,6 +16751,14 @@
         "summary": "A closed execution episode is a shared object of the layer, written by the tool from git and the ledger, valid against a contract that admits no conversation and no absolute path, and discovered rather than registered",
         "route": "/cockpit/objects/document/docs-claims-session-records-md",
         "source": "docs/claims/session-records.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/session-start-prompt.md",
+        "kind": "document",
+        "label": "docs/claims/session-start-prompt.md",
+        "summary": "A bare claude in a supervised repository starts with the repository's session-start prompt as its first message, and a run with an argument, outside such a repository, with the opt-out, or with a prompt that cannot be rendered is left exactly as it was",
+        "route": "/cockpit/objects/document/docs-claims-session-start-prompt-md",
+        "source": "docs/claims/session-start-prompt.md"
       },
       {
         "id": "majordomus://document/docs/claims/shared-policy.md",
@@ -38758,7 +38842,9 @@
             "finish refuses a task whose scope was never claimed while the mesh was enabled",
             "A Codex or Gemini session start runs the same lifecycle, proved against the real tool",
             "The provider projections and README name mesh.briefing and the protocol",
-            "The article is published by the site build and passes site-check"
+            "The article is published by the site build and passes site-check",
+            "A client that starts the MCP server from a checkout with no executable it can build is served by the installed release and told so (ADR 0172)",
+            "A bare session start in a checkout is handed the session-start prompt, so the worker joins the board and takes up the active task without being asked (ADR 0172)"
           ],
           "created_at": "2026-10-10",
           "current_state": "Partly automatic: an announcing MCP client is projected as a mesh session with advisory claims; everything else is the worker's memory.",
@@ -38779,6 +38865,9 @@
             "apps/majordomus-cli/src/mesh",
             "apps/majordomus-cli/src/mcp/protocol.rs",
             "lib/capture.sh",
+            "bin/majordomus-cli",
+            "lib/rust_bin.sh",
+            ".ai/repo/prompts",
             "lib/derive.sh",
             ".ai/repo/rules/project",
             ".ai/repo/providers",
@@ -42984,6 +43073,17 @@
         "source": ".ai/repo/prompts/review.md",
         "facts": {
           "name": "review"
+        }
+      },
+      {
+        "id": "majordomus://prompt/session-start",
+        "kind": "prompt",
+        "label": "session-start",
+        "summary": "session-start",
+        "route": "/cockpit/objects/prompt/session-start",
+        "source": ".ai/repo/prompts/session-start.md",
+        "facts": {
+          "name": "session-start"
         }
       },
       {
@@ -55095,6 +55195,20 @@
         "label": "test/cases/310_rustdoc_projection.sh",
         "route": "/cockpit/objects/test/test-cases-310-rustdoc-projection-sh",
         "source": "test/cases/310_rustdoc_projection.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3177_a_client_always_gets_a_server.sh",
+        "kind": "test",
+        "label": "test/cases/3177_a_client_always_gets_a_server.sh",
+        "route": "/cockpit/objects/test/test-cases-3177-a-client-always-gets-a-server-sh",
+        "source": "test/cases/3177_a_client_always_gets_a_server.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3178_a_bare_session_start_joins_the_cluster.sh",
+        "kind": "test",
+        "label": "test/cases/3178_a_bare_session_start_joins_the_cluster.sh",
+        "route": "/cockpit/objects/test/test-cases-3178-a-bare-session-start-joins-the-cluster-sh",
+        "source": "test/cases/3178_a_bare_session_start_joins_the_cluster.sh"
       },
       {
         "id": "majordomus://test/test/cases/318_a_partial_sweep_says_so.sh",
@@ -67528,6 +67642,56 @@
         "kind": "put_in_force"
       },
       {
+        "source": "majordomus://adr/adr-0172",
+        "target": "file:share/shell/session-start.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0172",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0172",
+        "target": "majordomus://adr/adr-0043",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0172",
+        "target": "majordomus://adr/adr-0161",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0172",
+        "target": "majordomus://document/docs/MCP.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0172",
+        "target": "majordomus://implementation/bin/majordomus-cli",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0172",
+        "target": "majordomus://milestone/every-session-joins-the-mesh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0172",
+        "target": "majordomus://rule/project.shared-server-resilience@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0172",
+        "target": "majordomus://test/test/cases/3177_a_client_always_gets_a_server.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0172",
+        "target": "majordomus://test/test/cases/3178_a_bare_session_start_joins_the_cluster.sh",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://application/ci-gated-project",
         "target": "kind:application",
         "kind": "is_a"
@@ -70153,6 +70317,26 @@
         "kind": "tested_by"
       },
       {
+        "source": "majordomus://claim/mcp-client-always-served",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/mcp-client-always-served",
+        "target": "majordomus://document/docs/MCP.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/mcp-client-always-served",
+        "target": "majordomus://implementation/bin/majordomus-cli",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/mcp-client-always-served",
+        "target": "majordomus://test/test/cases/3177_a_client_always_gets_a_server.sh",
+        "kind": "tested_by"
+      },
+      {
         "source": "majordomus://claim/mcp-client-autostart",
         "target": "kind:claim",
         "kind": "is_a"
@@ -72000,6 +72184,26 @@
       {
         "source": "majordomus://claim/session-records",
         "target": "majordomus://test/test/cases/63_session_records.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/session-start-prompt",
+        "target": "file:share/shell/session-start.sh",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/session-start-prompt",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/session-start-prompt",
+        "target": "majordomus://document/docs/MCP.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/session-start-prompt",
+        "target": "majordomus://test/test/cases/3178_a_bare_session_start_joins_the_cluster.sh",
         "kind": "tested_by"
       },
       {
@@ -74318,6 +74522,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/docs/claims/mcp-client-always-served.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/docs/claims/mcp-client-autostart.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -74784,6 +74993,11 @@
       },
       {
         "source": "majordomus://document/docs/claims/session-records.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/session-start-prompt.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -81768,6 +81982,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://prompt/session-start",
+        "target": "kind:prompt",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://release-record/v0.10.0",
         "target": "kind:release-record",
         "kind": "is_a"
@@ -85714,6 +85933,16 @@
       },
       {
         "source": "majordomus://test/test/cases/310_rustdoc_projection.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3177_a_client_always_gets_a_server.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3178_a_bare_session_start_joins_the_cluster.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -91009,8 +91238,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2870,
-      "edges": 6291,
+      "nodes": 2879,
+      "edges": 6314,
       "acyclic": false,
       "truncated": false
     }

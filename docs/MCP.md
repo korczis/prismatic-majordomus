@@ -378,12 +378,43 @@ with what each reads and where it keeps its scratch checkouts, is
 (`MAJORDOMUS_BUILD_PROFILE=release` for a release build; `MAJORDOMUS_BIN` names an
 executable and never builds; `MAJORDOMUS_NO_BUILD=1` refuses to build and exits 12 with the
 command to run), sets `MAJORDOMUS_SHARE` to the distribution's `share/` beside it, writes
-nothing to stdout, and passes every argument to `majordomus mcp`. `just mcp`, `just serve`
+nothing to stdout, and passes every argument to `majordomus mcp`. A client does not wait on a build. `mcp` is the one command a client spawns and then
+waits on, and a client that gets no handshake reports the server as failed and carries on
+without it. So when this checkout has no executable to run, or one it cannot rebuild — no
+cargo, less free space than the build floor (`MAJORDOMUS_MIN_FREE_MB`, 5120 by default), a
+build that failed — `bin/majordomus-mcp` runs the installed release instead
+(`MAJORDOMUS_INSTALLED_BIN`, by default `majordomus` in `~/.local/bin`, where `install.sh`
+puts it), and says on stderr which release and why. A stale executable that can be rebuilt is
+rebuilt as before, `MAJORDOMUS_MCP_BUILD=1` makes `mcp` build like every other command, and
+every other command still exits 12 when it has nothing to run: the fallback is for the client
+that would otherwise be turned away, never a way to run a different release unannounced. A
+file inside the repository is never taken for the installed release, nor one that does not
+answer `--version`. ADR 0172; the case is `test/cases/3177_a_client_always_gets_a_server.sh`.
+
+`just mcp`, `just serve`
 and `just inspect` at the root do the same for a person; `just docs-ui` opens the running
 server's Swagger UI. The same document, with its tags, examples and statuses, is the API
 reference on the site at `/docs/api/` and is served raw at the site's `/openapi.json`; the
 `initialize` instructions, the OpenAPI `info` and `GET /` open with the one summary from
 `about.rs` ([`CAPABILITIES.md`](CAPABILITIES.md)).
+
+### A session that starts by joining
+
+A hook can only add context; nothing but a first message starts a turn. So a session that is
+merely opened is handed the briefing and waits for a person to type, and until someone does
+it is not on the board (ADR 0156, ADR 0172). `share/shell/session-start.sh` closes that for
+Claude Code: sourced from `~/.bashrc` or `~/.zshrc`, it wraps a **bare** `claude` so that,
+inside a repository with an `.ai/` layer, the first message is
+`majordomus prompt render session-start` — the repository's own prompt
+([`.ai/repo/prompts/session-start.md`](../.ai/repo/prompts/session-start.md)): say how you are
+attached, read the board, find the work that is owed, check for collisions, announce, then work
+inside the task's scope and keep everything local. Any argument is the person's own and is
+passed through, so is a run outside a supervised repository, with `MAJORDOMUS_NO_AUTOSTART=1`,
+or when the prompt cannot be rendered. The prompt is the repository's, so changing it is a
+commit and every checkout that pulls it is updated; the file ships in the release's `share/`
+and is updated with it. `test/cases/3178_a_bare_session_start_joins_the_cluster.sh` proves it in
+bash and zsh. It is not installed for you: the installer touches nothing outside its prefix
+(`docs/DISTRIBUTION.md`), so sourcing the file is the one line a person adds.
 
 ## Peers
 

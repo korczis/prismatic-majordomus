@@ -1102,6 +1102,24 @@ claims:
     responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
     note: .mcp.json (Claude Code), .gemini/settings.json (Gemini CLI) and .codex/config.toml (Codex) name the same launcher, which writes nothing to stdout and passes every argument to majordomus mcp; MAJORDOMUS_BIN, MAJORDOMUS_BUILD_PROFILE and MAJORDOMUS_NO_BUILD control the build.
 
+  - id: mcp-client-always-served
+    claim: A client that starts the MCP server from a checkout with no executable to run, or none it can build, is served by the installed release and told so, instead of being turned away
+    source: docs/MCP.md
+    implementation: bin/majordomus-cli
+    test: test/cases/3177_a_client_always_gets_a_server.sh
+    status: guaranteed
+    responsibility: none      # the launcher is the shell tool's, not a supervised responsibility
+    note: Only `mcp` falls back; every other command still exits 12. The fallback runs after a build that could succeed was tried, or without one when there is no cargo or less free space than the floor, and it names the release and the reason on stderr. A file inside the repository, and one that does not answer --version, is never taken for the installed release. MAJORDOMUS_MCP_BUILD=1 restores the build for a contributor. The 2026-10-16 session that began as the only worker of a repository (ADR 0156) began here, with exit 12 on 4.5GB free against a 5120MB floor.
+
+  - id: session-start-prompt
+    claim: A bare claude in a supervised repository starts with the repository's session-start prompt as its first message, and a run with an argument, outside such a repository, with the opt-out, or with a prompt that cannot be rendered is left exactly as it was
+    source: docs/MCP.md
+    implementation: share/shell/session-start.sh
+    test: test/cases/3178_a_bare_session_start_joins_the_cluster.sh
+    status: guaranteed
+    responsibility: none      # a shell function a person sources, not a supervised responsibility
+    note: Proved in bash and zsh against stubs of claude and majordomus; the real claude takes the prompt as its positional argument (claude --help). Only Claude Code is wrapped; Codex and Gemini are not claimed until each is proved against the real tool. The installer does not source the file, because it touches nothing outside its prefix.
+
   - id: mcp-uri-resolution
     claim: A majordomus:// URI resolves the same way through the MCP resource read, the majordomus_get tool and the HTTP object route, and majordomus://repository answers repository.info as a JSON document tagged builtin
     source: docs/MCP.md

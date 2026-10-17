@@ -1104,6 +1104,24 @@
       "note": ".mcp.json (Claude Code), .gemini/settings.json (Gemini CLI) and .codex/config.toml (Codex) name the same launcher, which writes nothing to stdout and passes every argument to majordomus mcp; MAJORDOMUS_BIN, MAJORDOMUS_BUILD_PROFILE and MAJORDOMUS_NO_BUILD control the build."
     },
     {
+      "id": "claim:mcp-client-always-served",
+      "kind": "claim",
+      "label": "A client that starts the MCP server from a checkout with no executable to run, or none it can build, is served by the installed release and told so, instead of being turned away",
+      "status": "guaranteed",
+      "route": "/guarantees/mcp-client-always-served/",
+      "external": false,
+      "note": "Only `mcp` falls back; every other command still exits 12. The fallback runs after a build that could succeed was tried, or without one when there is no cargo or less free space than the floor, and it names the release and the reason on stderr. A file inside the repository, and one that does not answer --version, is never taken for the installed release. MAJORDOMUS_MCP_BUILD=1 restores the build for a contributor. The 2026-10-16 session that began as the only worker of a repository (ADR 0156) began here, with exit 12 on 4.5GB free against a 5120MB floor."
+    },
+    {
+      "id": "claim:session-start-prompt",
+      "kind": "claim",
+      "label": "A bare claude in a supervised repository starts with the repository's session-start prompt as its first message, and a run with an argument, outside such a repository, with the opt-out, or with a prompt that cannot be rendered is left exactly as it was",
+      "status": "guaranteed",
+      "route": "/guarantees/session-start-prompt/",
+      "external": false,
+      "note": "Proved in bash and zsh against stubs of claude and majordomus; the real claude takes the prompt as its positional argument (claude --help). Only Claude Code is wrapped; Codex and Gemini are not claimed until each is proved against the real tool. The installer does not source the file, because it touches nothing outside its prefix."
+    },
+    {
       "id": "claim:mcp-uri-resolution",
       "kind": "claim",
       "label": "A majordomus:// URI resolves the same way through the MCP resource read, the majordomus_get tool and the HTTP object route, and majordomus://repository answers repository.info as a JSON document tagged builtin",
@@ -2721,6 +2739,13 @@
       "external": false
     },
     {
+      "id": "impl:bin/majordomus-cli",
+      "kind": "implementation",
+      "label": "bin/majordomus-cli",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "impl:bin/majordomus-mcp",
       "kind": "implementation",
       "label": "bin/majordomus-mcp",
@@ -3151,6 +3176,13 @@
       "id": "impl:share/providers.yaml",
       "kind": "implementation",
       "label": "share/providers.yaml",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:share/shell/session-start.sh",
+      "kind": "implementation",
+      "label": "share/shell/session-start.sh",
       "route": null,
       "external": false
     },
@@ -3937,6 +3969,20 @@
       "label": "test/cases/30_command_registry.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/30_command_registry.sh"
+    },
+    {
+      "id": "test:test/cases/3177_a_client_always_gets_a_server.sh",
+      "kind": "test",
+      "label": "test/cases/3177_a_client_always_gets_a_server.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/3177_a_client_always_gets_a_server.sh"
+    },
+    {
+      "id": "test:test/cases/3178_a_bare_session_start_joins_the_cluster.sh",
+      "kind": "test",
+      "label": "test/cases/3178_a_bare_session_start_joins_the_cluster.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/3178_a_bare_session_start_joins_the_cluster.sh"
     },
     {
       "id": "test:test/cases/31_command_coverage.sh",
@@ -5162,6 +5208,16 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:mcp-client-always-served",
+      "target": "source:docs/MCP.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:session-start-prompt",
+      "target": "source:docs/MCP.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:mcp-uri-resolution",
       "target": "source:docs/MCP.md",
       "kind": "specified_by"
@@ -6342,6 +6398,16 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:mcp-client-always-served",
+      "target": "impl:bin/majordomus-cli",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:session-start-prompt",
+      "target": "impl:share/shell/session-start.sh",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:mcp-uri-resolution",
       "target": "impl:apps/majordomus-cli/src/capability/builtin/objects.rs",
       "kind": "implemented_by"
@@ -7514,6 +7580,16 @@
     {
       "source": "claim:mcp-client-autostart",
       "target": "test:test/cases/90_mcp_shared_server.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:mcp-client-always-served",
+      "target": "test:test/cases/3177_a_client_always_gets_a_server.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:session-start-prompt",
+      "target": "test:test/cases/3178_a_bare_session_start_joins_the_cluster.sh",
       "kind": "proved_by"
     },
     {
