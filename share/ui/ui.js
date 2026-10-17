@@ -297,11 +297,25 @@ async function drawObservatory() {
   holder.observatory = observatory;
 }
 
+// The moves of an issue — start, verify, done — wherever a screen renders the form: the one
+// module the Cockpit's issue page loads too, named by the page (`data-moves-lib`). Never in a
+// snapshot, which no server stands behind: there the buttons stay disabled, as rendered.
+async function wireMoves() {
+  const lib = document.body && document.body.dataset.movesLib;
+  if (!lib || !document.querySelector('[data-mj-transition]')) return;
+  try {
+    (await import(lib)).installAll();
+  } catch (e) {
+    // the buttons stay disabled and the commands beside them still say what to run
+  }
+}
+
 function enhance() {
   if (!SNAPSHOT) {
     for (const placeholder of document.querySelectorAll('[data-panel-src]')) {
       fillPanel(placeholder);
     }
+    wireMoves();
   }
   drawGraphs();
   drawObservatory();

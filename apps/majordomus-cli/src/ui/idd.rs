@@ -57,9 +57,25 @@ fn issue_href(id: &str) -> String {
     format!("{}?issue={id}#issue", super::prs::ROUTE)
 }
 
-/// The Cockpit's page of an issue, which carries the moves `plan.transition` makes.
-fn move_href(id: &str) -> String {
-    format!("{}/plan/issues/{id}", crate::cockpit::PREFIX)
+/// Where the move of issue `id` is offered: this screen, with the intent kept and the issue
+/// picked, at its move panel (I2781).
+pub fn move_href(intent: &str, id: &str) -> String {
+    format!("{ROUTE}?intent={intent}&issue={id}#move")
+}
+
+/// The issue a query picks, when it names one: the plan's ids are letters, digits, `-` and
+/// `_`, and nothing a link could carry anything else in.
+pub fn picked_issue(query: &[(String, String)]) -> Option<String> {
+    query
+        .iter()
+        .find(|(k, _)| k == "issue")
+        .map(|(_, v)| v.trim().to_string())
+        .filter(|v| {
+            !v.is_empty()
+                && v.len() <= 64
+                && v.bytes()
+                    .all(|b| b.is_ascii_alphanumeric() || b == b'-' || b == b'_')
+        })
 }
 
 fn strings(v: &Value, k: &str) -> Vec<String> {
@@ -170,12 +186,15 @@ pub fn screen(ctx: &Context, query: &[(String, String)]) -> View {
             } else {
                 Vec::new()
             };
+            grid = grid.child(wide(super::intent::inspector_closing_to(
+                intents, issues, id, ROUTE,
+            )));
+            if let Some(issue) = picked_issue(query) {
+                grid = grid.child(wide(move_panel(ctx, issues, &mine, &issue)));
+            }
             grid = grid
-                .child(wide(super::intent::inspector_closing_to(
-                    intents, issues, id, ROUTE,
-                )))
                 .child(wide(milestones(roadmap, intent)))
-                .child(wide(issue_table(issues, waves, next, &mine)))
+                .child(wide(issue_table(issues, waves, next, &mine, id)))
                 .child(wide(wave_panel(waves, &mine)))
                 .child(wide(dependency_graph(issues, &mine)));
         }
@@ -305,7 +324,7 @@ pub fn in_wave_order<'a>(waves: &Answer, mine: &'a [Value]) -> Vec<&'a Value> {
 
 /// The issues that serve the intent, in the plan's wave order, each with what blocks it and
 /// the way to its move.
-fn issue_table(issues: &Answer, waves: &Answer, next: &Answer, mine: &[Value]) -> El {
+fn issue_table(issues: &Answer, waves: &Answer, next: &Answer, mine: &[Value], intent: &str) -> El {
     let next_id = next
         .ok()
         .and_then(|v| v.pointer("/issue/id"))
@@ -357,7 +376,7 @@ fn issue_table(issues: &Answer, waves: &Answer, next: &Answer, mine: &[Value]) -
                         el("td").child(match mv {
                             Some(word) => el("a")
                                 .class("mj-ui-more")
-                                .attr("href", move_href(&id))
+                                .attr("href", move_href(intent, &id))
                                 .attr(
                                     "title",
                                     format!("the move plan.transition makes: {word} {id}"),
@@ -384,11 +403,45 @@ fn issue_table(issues: &Answer, waves: &Answer, next: &Answer, mine: &[Value]) -
     });
     panel_to(
         "Issues",
-        "Every issue of its milestones or naming it, by wave; a move opens the issue's page, where plan.transition makes it and refuses one the plan does not allow.",
+        "Every issue of its milestones or naming it, by wave; a move opens its panel on this screen, where plan.transition makes it and refuses one the plan does not allow.",
         Some(super::issues::ROUTE),
         body,
         &[issues, waves, next],
     )
+}
+
+/// The move panel of the picked issue: the form the Cockpit's issue page renders, offering
+/// the moves `plan.transition` makes as executions (start, verify, done), wired by the one
+/// module both surfaces load. The screen decides no move: the capability refuses one the
+/// plan does not allow and names why, and the form shows that answer as it came. An issue
+/// that does not serve the intent is refused by name rather than moved from here.
+fn move_panel(ctx: &Context, issues: &Answer, mine: &[Value], issue: &str) -> El {
+    let body =
+        unanswered(issues).unwrap_or_else(|| match mine.iter().find(|x| text(x, "id") == issue) {
+            None => nothing(&format!(
+                "{issue} does not serve this intent: pick one of its issues below."
+            )),
+            Some(x) => el("div")
+                .class("mj-ui-stack")
+                .child(
+                    el("p")
+                        .class("mj-ui-badges")
+                        .child(chip(issue_href(issue), issue.to_string()))
+                        .child(state(x, "status"))
+                        .child(el("span").class("mj-ui-cell-title").text(text(x, "title"))),
+                )
+                .child(crate::cockpit::plan::moves(
+                    ctx,
+                    issue,
+                    text(x, "status").eq_ignore_ascii_case("READY"),
+                )),
+        });
+    el("div").attr("id", "move").child(panel(
+        "Move",
+        "The issue's next move, made by plan.transition as an execution on this server; a move the plan does not allow is refused with the reason.",
+        body,
+        &[issues],
+    ))
 }
 
 /// The waves the intent's issues occupy, as `plan.waves` layers the whole plan, and the
@@ -697,6 +750,61 @@ mod tests {
             .main
             .render();
         assert!(after.contains("I9999"), "the added issue is drawn: {after}");
+    }
+
+    /// A picked issue of the intent gets the move form `plan.transition` answers through
+    /// executions.start, and an issue that does not serve the intent is refused by name; the
+    /// issue rows lead to the panel on this screen, not to another surface.
+    #[test]
+    fn a_picked_issue_is_offered_its_moves_here() {
+        let repo = planned_with_an_intent();
+        let ctx = repo.context().expect("a context");
+        let first = list(&crate::ui::source::ask(&ctx, ISSUES), "/issues")
+            .into_iter()
+            .find(|x| text(x, "milestone") == "m-first")
+            .map(|x| text(&x, "id"))
+            .expect("an issue of m-first");
+        let html = screen(
+            &ctx,
+            &[
+                ("intent".into(), "i-first".into()),
+                ("issue".into(), first.clone()),
+            ],
+        )
+        .main
+        .render();
+        assert!(html.contains("id=\"move\""), "{html}");
+        assert!(
+            html.contains(&format!("data-mj-transition=\"{first}\"")),
+            "{html}"
+        );
+        assert!(
+            html.contains("data-mj-capability=\"plan.transition\""),
+            "{html}"
+        );
+        assert!(
+            html.contains(&move_href("i-first", &first).replace('&', "&amp;")),
+            "the row leads to the panel here: {html}"
+        );
+        let outside = screen(
+            &ctx,
+            &[
+                ("intent".into(), "i-first".into()),
+                ("issue".into(), "I9998".into()),
+            ],
+        )
+        .main
+        .render();
+        assert!(
+            outside.contains("I9998 does not serve this intent"),
+            "{outside}"
+        );
+        assert!(!outside.contains("data-mj-transition"), "{outside}");
+        assert_eq!(
+            picked_issue(&q("issue", "I1\"x")),
+            None,
+            "only an id is picked"
+        );
     }
 
     /// An intent the link names that is not recorded is refused by name.
