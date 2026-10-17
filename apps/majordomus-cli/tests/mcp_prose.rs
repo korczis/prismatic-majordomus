@@ -21,6 +21,10 @@ use majordomus_cli::capability::{builtin, CapabilityRegistry};
 const NOT_TOOLS: &[(&str, &str)] = &[
     ("majordomus_cli", "the crate's name in Rust paths"),
     (
+        "majordomus_core",
+        "the portable core's crate name, and the stem of its wasm32 module share/ui/compute/majordomus_core.*",
+    ),
+    (
         "majordomus_executable",
         "a variable of the command templates in docs/COMMANDS.md",
     ),
