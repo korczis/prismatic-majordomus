@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "0.27.0"
   },
-  "fingerprint": "ef86b382e74513eabf579846811b0c3f28ae2394ef9a59c43d3bb971814051dc",
+  "fingerprint": "171caeb243538d476b49004187956788faa88fd3e5e6159c90736e4aafc95699",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -1162,7 +1162,7 @@
         "use_cases": 6,
         "rules": 13,
         "enforced_rules": 11,
-        "capabilities": 70,
+        "capabilities": 72,
         "moments": 17
       },
       "evidence": {
@@ -3229,7 +3229,7 @@
         "use_cases": 10,
         "rules": 15,
         "enforced_rules": 14,
-        "capabilities": 126,
+        "capabilities": 128,
         "moments": 38
       },
       "evidence": {
@@ -9515,6 +9515,24 @@
           "source_path": "apps/majordomus-cli/src/capability/builtin/plan.rs",
           "capabilities": [
             {
+              "id": "plan.delivery",
+              "title": "How far each issue's work has travelled",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_plan_delivery",
+              "route": "GET /api/v1/plan/delivery",
+              "cli": "majordomus plan delivery"
+            },
+            {
+              "id": "plan.drift",
+              "title": "Where the plan's stamps contradict the delivered work",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_plan_drift",
+              "route": "GET /api/v1/plan/drift",
+              "cli": "majordomus plan drift"
+            },
+            {
               "id": "plan.issues",
               "title": "The issues, filtered by what the graph derived",
               "kind": "query",
@@ -9976,11 +9994,11 @@
       ],
       "backlinks": [],
       "counts": {
-        "capabilities": 55,
-        "mcp_tools": 50,
+        "capabilities": 57,
+        "mcp_tools": 52,
         "mcp_resources": 7,
-        "http_routes": 54,
-        "cli_paths": 14,
+        "http_routes": 56,
+        "cli_paths": 16,
         "commands": 0,
         "objects": 0,
         "rules": 2,
@@ -10251,6 +10269,24 @@
           "stability": "behaviorally_verified",
           "source_path": "apps/majordomus-cli/src/capability/builtin/plan.rs",
           "capabilities": [
+            {
+              "id": "plan.delivery",
+              "title": "How far each issue's work has travelled",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_plan_delivery",
+              "route": "GET /api/v1/plan/delivery",
+              "cli": "majordomus plan delivery"
+            },
+            {
+              "id": "plan.drift",
+              "title": "Where the plan's stamps contradict the delivered work",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_plan_drift",
+              "route": "GET /api/v1/plan/drift",
+              "cli": "majordomus plan drift"
+            },
             {
               "id": "plan.issues",
               "title": "The issues, filtered by what the graph derived",
@@ -11341,11 +11377,11 @@
         "observatory"
       ],
       "counts": {
-        "capabilities": 97,
-        "mcp_tools": 89,
+        "capabilities": 99,
+        "mcp_tools": 91,
         "mcp_resources": 16,
-        "http_routes": 94,
-        "cli_paths": 41,
+        "http_routes": 96,
+        "cli_paths": 43,
         "commands": 0,
         "objects": 0,
         "rules": 3,
@@ -12626,6 +12662,24 @@
           "source_path": "apps/majordomus-cli/src/capability/builtin/plan.rs",
           "capabilities": [
             {
+              "id": "plan.delivery",
+              "title": "How far each issue's work has travelled",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_plan_delivery",
+              "route": "GET /api/v1/plan/delivery",
+              "cli": "majordomus plan delivery"
+            },
+            {
+              "id": "plan.drift",
+              "title": "Where the plan's stamps contradict the delivered work",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_plan_drift",
+              "route": "GET /api/v1/plan/drift",
+              "cli": "majordomus plan drift"
+            },
+            {
               "id": "plan.issues",
               "title": "The issues, filtered by what the graph derived",
               "kind": "query",
@@ -12843,7 +12897,7 @@
         },
         {
           "name": "issue",
-          "objects": 403
+          "objects": 405
         },
         {
           "name": "intent",
@@ -13043,13 +13097,13 @@
       ],
       "backlinks": [],
       "counts": {
-        "capabilities": 23,
-        "mcp_tools": 23,
-        "mcp_resources": 449,
-        "http_routes": 23,
-        "cli_paths": 11,
+        "capabilities": 25,
+        "mcp_tools": 25,
+        "mcp_resources": 451,
+        "http_routes": 25,
+        "cli_paths": 13,
         "commands": 1,
-        "objects": 446,
+        "objects": 448,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -16834,7 +16888,7 @@
       },
       {
         "id": "issue",
-        "title": "issue (403)",
+        "title": "issue (405)",
         "features": [
           "planning"
         ]
@@ -17853,17 +17907,17 @@
     }
   ],
   "telemetry": {
-    "capabilities": 2459,
-    "builtin": 202,
-    "declarative": 2257,
+    "capabilities": 2465,
+    "builtin": 204,
+    "declarative": 2261,
     "modules": 58,
-    "mcp_tools": 192,
-    "mcp_resources": 2312,
-    "http_routes": 197,
-    "cli_commands": 206,
+    "mcp_tools": 194,
+    "mcp_resources": 2316,
+    "http_routes": 199,
+    "cli_commands": 208,
     "shell_commands": 30,
     "kinds": 34,
-    "objects": 2257,
+    "objects": 2261,
     "by_kind": {
       "adr": 110,
       "application": 5,
@@ -17882,7 +17936,7 @@
       "gap": 3,
       "implementation": 52,
       "intent": 4,
-      "issue": 403,
+      "issue": 405,
       "knowledge": 4,
       "mesh-declaration": 1,
       "milestone": 39,
@@ -17896,7 +17950,7 @@
       "session": 89,
       "skill": 8,
       "taxonomy": 10,
-      "test": 502,
+      "test": 504,
       "use-case": 49,
       "workspace": 1
     },

@@ -1,0 +1,33 @@
+id: I2749
+milestone: truthful-plan-surfaces
+title: "A commit that only plans an issue is not its delivery"
+slug: a-commit-that-only-plans-an-issue-is-not-its-delivery
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "plan.delivery stops counting as a merge of an issue a commit or pull request that names it while changing only the plan's own records and what is derived from them, so that plan.drift's merged_not_recorded holds only work that was delivered."
+why: "I2748 read plan drift on the trunk (origin/master d1162668036, forge read) on 2026-10-16: of 16 merged_not_recorded findings, six name an issue only because a planning or record commit mentioned it. I1302 (012fed644a0, docs(plan): I1301 is done, and I1302 may not land its schema alone), I1305 (d52f433348b, a merge whose subject says I1305 was restored to its own milestone), I1900 (#1128, fix(plan): I1900 is ready again until the intent it serves has a critique), I1962 (42a5715eec2, fix(project): issue I1962 no longer scopes the deleted script), I1980 (1aaf9f86d58, chore(plan): an adopter's upgrade is a planned outcome, I1980-I1991) and I2484 (#1031, docs(ui): the UI is the accepted primary surface, and its plan says what landed). None of them delivers its issue, and no stamp can settle them honestly: a blocking gate would stay red on them for ever (ADR 0166, decision 2)."
+current_state: "delivery.rs takes the newest commit or merge in the trunk's history whose subject, title or branch names the issue as its merge, whatever that commit changed."
+desired_state: "A commit or pull request whose changes lie only under .ai/repo/project/ and the projections derived from them (docs/PLAN_STATUS.md, docs/PAGES_STATUS.md, docs/generated, site/data/generated, site/data/registry, site/content) is planning, not delivery: it does not make an issue merged, and plan delivery says so in the proof it reports for a merge it passed over."
+scope:
+  - "apps/majordomus-cli/src/plan/delivery.rs"
+  - "apps/majordomus-cli/src/plan/drift.rs"
+  - "apps/majordomus-cli/tests/plan_delivery.rs"
+  - "test/cases/3100_an_issue_delivery_is_inferred.sh"
+  - "docs/PLANNING.md"
+non_scope:
+  - "Writing a stamp from inference: a merge is not acceptance (ADR 0166, alternatives)."
+  - "Reading prose in commit bodies to decide what a commit meant."
+depends_on: [I2741]
+acceptance_criteria:
+  - "A commit naming an issue that changes only its record and derived projections leaves the issue at the stage it had without that commit"
+  - "A commit naming an issue that changes any other path still makes it merged"
+  - "plan drift on the trunk no longer reports I1302, I1305, I1900, I1962, I1980 or I2484 as merged_not_recorded"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test plan_delivery"
+  - "bash test/run.sh 3100_an_issue_delivery_is_inferred 3101_merged_work_unrecorded_is_drift"
+  - "bin/majordomus plan drift --json"
+evidence_required:
+  - "planning_commit_is_not_delivery"
+created_at: 2026-10-16
+updated_at: 2026-10-16

@@ -432,6 +432,86 @@ implementation. `MJ_GH_FIXTURE_PULLS` reads the pull requests from a file in the
 live read produces, so the join is provable with no network and no token — the same seam
 `scripts/github-sync` uses, and what `test/cases/98_traceability.sh` exercises.
 
+## Delivery: how far the work travelled
+
+An issue's status is a stamp; its delivery is a fact about the objects that realised it.
+`majordomus plan delivery [<id>] [--at <rev>] [--json]` answers, for every issue, the
+furthest stage proved, each with the object that proved it and when it was observed
+(ADR 0166). Nothing is stored, and nothing writes a stamp from it: a merge is not acceptance.
+
+| stage | proved by |
+|---|---|
+| `none` | nothing that was read names the issue |
+| `branch` | a branch whose path component is the issue id (the I1405 rule) or the issue's `slug` |
+| `pr_open` | an open pull request in the recorded forge observation whose title or head branch names it |
+| `merged` | the newest commit in the trunk's history that names it: a merge by its pull-request title or branch, or a commit by its subject (`type(scope): description (I2740)`); never a body, which mentions neighbouring issues as readily |
+| `released` | the first release record (`.ai/repo/releases/v*.yaml`) whose `commit` contains that merge |
+| `deployed` | the published `latest.json` names that release or a later one |
+
+The live answer reads the trunk this clone knows (the remote-tracking trunk unless the local
+one is ahead), every branch, the forge observation `majordomus prs refresh` recorded, the
+release records, and the `latest.json` of the commit the last successful Pages deployment
+published (`majordomus served forge` records it). Releases come from the records, never from
+tags: a record names the commit it released and is a file of the tree, while a tag is a ref
+that can appear on any day.
+
+Committed derived data is a function of the commit alone, or every tag, push, pull request
+and deployment would turn `scripts/generate-site-data --check` red on every open branch. So
+`--at <rev>` reads only that commit's merges and the tree's release records: it proves
+`merged` and `released`, and reports branches, the forge and the publication unread.
+`scripts/generate-site-data` writes that answer to `site/data/generated/delivery.json` at
+`HEAD` and reproduces it under `--check` at the commit the file names. The live stages
+(`branch`, `pr_open`, `deployed`) reach the CLI, HTTP, MCP and the UI; bringing them to the
+published site at Pages build time, as the UI snapshot is, is left to the plan surfaces
+(I2743, I2744).
+
+A source that was not read is reported unread with its reason, never as none. An issue an
+unread source could have moved further is not `settled` and names that source in `unread`.
+The same answer is `GET /api/v1/plan/delivery` and the MCP tool `majordomus_plan_delivery`.
+
+A pull request merged inside a combined top reaches the trunk through an octopus merge that
+names it only in prose, and its title is the forge's, not git's. `majordomus served forge`
+therefore also records the newest merged pull requests (up to 1000, a page of 100 at a time)
+in the deployment observation, and the live answer counts a merged pull request's title when
+its merge commit or head is in the history read (`via: forge_title`). That is how #1097 is
+seen to have realised I2653, which its commits name only in a body. The source is
+`merged_titles`; at a commit it is unread, so the committed data stays a function of the
+commit's history.
+
+## Drift: where the stamps contradict the work
+
+Inference never writes a stamp, so the two can disagree. `majordomus plan drift [<id>]
+[--at <rev>] [--gate head|trunk] [--json]` names every disagreement with the objects that
+prove it (ADR 0166, decision 2):
+
+| class | declared | delivered |
+|---|---|---|
+| `merged_not_recorded` | READY, BLOCKED or ACTIVE | a merge names it (pull request, merge commit, release), and no open pull request names it |
+| `active_without_work` | ACTIVE, started before the window | no branch, pull request, merge or live mesh claim names it |
+| `done_without_trace` | DONE | no merge names it; advisory, because record-only issues exist |
+
+Each finding carries its age, whether that is past the window, the sources that were not
+read and could have dissolved it (`unread`; a finding with the forge unread is still a
+finding, and is not `settled`), and the command that settles it:
+`majordomus plan verify|done <id>`.
+
+`.ai/repo/ci/plan.yaml` declares `drift.window` (seconds) and `drift.enforcement`
+(`advisory` or `blocking`). The gate `plan-drift` (`scripts/ci/plan-drift-check`, every
+plan) asks `plan drift --gate trunk` on a push to the default branch and `--gate head`
+everywhere else:
+
+- on a head, every `merged_not_recorded` is PENDING;
+- on the trunk, one merged longer than the window ago is REFUSED, naming the settling
+  command, and a younger one is PENDING;
+- `active_without_work` is a NOTE and `done_without_trace` ADVISORY: neither refuses;
+- a missing or unreadable window refuses (exit 12);
+- refusals fail the gate (exit 10) under `blocking`, and are reported with exit 0 under
+  `advisory`. The gate lands advisory, so that it does not turn the trunk red on drift it
+  predates; I2748 settles that drift and makes it blocking.
+
+The same answer is `GET /api/v1/plan/drift` and the MCP tool `majordomus_plan_drift`.
+`test/cases/3101_merged_work_unrecorded_is_drift.sh` proves the classes, the window and the gate, with six code mutations failing it.
+
 ## Projections
 
 The canonical files are the only source. Everything else is generated from them by one
