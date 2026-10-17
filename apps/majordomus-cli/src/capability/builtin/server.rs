@@ -470,8 +470,8 @@ pub fn local_half(root: &Path) -> String {
 /// asks through here, so that `server.status` and the `server` check of `health.report`
 /// cannot drift into two answers.
 ///
-/// Costs one small file read, and one HTTP round trip bounded by
-/// [`crate::lease::PROBE_TIMEOUT`] when the lease names an address. Nothing is cached: the
+/// Costs one small file read, and one HTTP round trip bounded by the declared probe timeout
+/// ([`crate::lease::timings`]) when the lease names an address. Nothing is cached: the
 /// file is written by other processes.
 ///
 /// ```
@@ -511,8 +511,9 @@ fn peers_of(ctx: &Context, url: &str) -> Option<usize> {
         .as_ref()?
         .path
         .clone();
-    let reply =
-        crate::mcp::bridge::request(url, "GET", &path, &[], None, lease::PROBE_TIMEOUT).ok()?;
+    // the probe timeout the policy declares, as the election reads it (I2129)
+    let timeout = lease::timings().probe_timeout;
+    let reply = crate::mcp::bridge::request(url, "GET", &path, &[], None, timeout).ok()?;
     if reply.status != 200 {
         return None;
     }
@@ -560,6 +561,7 @@ fn server_status(ctx: &Context, input: ServerStatusInput) -> Result<ServerStatus
     let root = root.canonicalize().unwrap_or(root);
     let local_half = local_half(&root);
     let git = repository::git_identity(&root);
+    let linked = git.as_ref().is_some_and(|g| g.linked);
     let checkouts = checkouts_of(&root, git.as_ref(), input.checkouts);
     let mut servers = Vec::with_capacity(checkouts.len());
     for (path, branch, primary) in checkouts {
@@ -600,8 +602,9 @@ fn server_status(ctx: &Context, input: ServerStatusInput) -> Result<ServerStatus
         checkout_id: repository::identity(&root),
         git,
         desired: Desired {
-            host: desired_host(),
-            port: crate::cli::DEFAULT_PORT,
+            host: desired_host(linked),
+            // the port this checkout asks for on every start (I2702)
+            port: crate::cli::checkout_port(&root),
             version: crate::VERSION.into(),
             executable: lease::executable_identity(),
         },
@@ -613,10 +616,11 @@ fn server_status(ctx: &Context, input: ServerStatusInput) -> Result<ServerStatus
 }
 
 /// The interface a server started from this environment would bind — the same resolution
-/// `serve` and `mcp` make, without a flag, so that `desired` and a bind cannot disagree.
-fn desired_host() -> String {
+/// `serve` and `mcp` make for this checkout, without a flag, so that `desired` and a bind
+/// cannot disagree.
+fn desired_host(linked: bool) -> String {
     let environment = std::env::var(crate::cli::HTTP_HOST_ENV).ok();
-    crate::cli::resolve_http_host(None, environment.as_deref()).0
+    crate::cli::resolve_checkout_http_host(None, environment.as_deref(), linked).0
 }
 
 /// The module: one capability, `server.status`, composed into the application by

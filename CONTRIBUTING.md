@@ -68,11 +68,15 @@ arbitrary. Most of them were paid for.
    `90_mcp_shared_server.sh`, `91_canonical_architecture.sh`,
    `93_rust_provider_projections.sh`) drive the executable `MAJORDOMUS_BIN` names, build
    it once with cargo when it is unset, and skip themselves when there is neither.
-   For a change under `apps/majordomus-cli/`, run `scripts/rust-check`: format, clippy
+   For a change under `apps/majordomus-cli/`, run `scripts/rust-check`: the quality report
+   first (the structure job's `rust-quality` gate: an executable example, a behavioural test
+   and documentation beyond the signature for every exported item), then format, clippy
    with warnings as errors (a public item without documentation is one), `cargo test`
    including doctests, `cargo doc`, `majordomus generate --check`, `capabilities validate`
    and the coverage threshold; CI runs the same, plus `bench coverage --check` and a
-   conservative `bench --profile ci --check`. A capability is declared once, in its
+   conservative `bench --profile ci --check`. A change that adds or widens an exported item
+   runs `scripts/rust-check --quality` before it is pushed: the report alone, seconds on a
+   built crate, with the finding the structure job would print. A capability is declared once, in its
    module's file, and every interface, benchmark target, cache behaviour and generated
    document is derived from it (`project.interfaces-are-projections`,
    `project.rust-canonical-declaration`): change the `capability!` block, the declarative

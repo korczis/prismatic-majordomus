@@ -6,7 +6,7 @@ disable-model-invocation: true
 ---
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: apps/majordomus-cli/src/capability/builtin/intents.rs; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.23.0 -->
+     Generator: majordomus-cli 0.28.0 -->
 
 # Propose an intent: what must become true
 

@@ -1,0 +1,40 @@
+id: I2742
+milestone: truthful-plan-surfaces
+title: "A milestone's version is inferred from the release that carried it, never typed"
+slug: a-milestone-version-is-inferred
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Remove version from the milestone schema and the eight records that carry it, refuse a record that carries one, and derive released_in for a milestone as the first v* tag containing the merge of its last accepted issue (unreleased while open), in both the awk and the Rust engines' output; rewrite the vendored roadmap-integrity rule and its validator to match."
+why: "ADR 0166 decision 3. version is typed by hand: 0.1 to 1.0 on eight milestones written before releases existed, two of them 0.5, out of rank order, beside a product at v0.27.0."
+current_state: "lib/project.awk:359 and plan.rs:289 emit the raw field; site/templates/roadmap.html filters on it; lib/doctor.sh mj_validate_roadmap checks a README table against it."
+desired_state: "No version field anywhere in .ai/repo/project/milestones; plan.roadmap and roadmap.json carry released_in with its tag; the README roadmap table and its validator use released_in."
+scope:
+  - ".ai/repo/project/milestones"
+  - "share/schemas"
+  - "share/allow"
+  - "lib/project.awk"
+  - "lib/project.sh"
+  - "lib/plan.sh"
+  - "lib/doctor.sh"
+  - "apps/majordomus-cli/src/plan.rs"
+  - ".ai/repo/rules/vendor/majordomus/rules/roadmap-integrity.v1.md"
+  - "share/standard/majordomus/rules/roadmap-integrity.v1.md"
+  - "README.md"
+  - "docs/PLANNING.md"
+  - "site/data/generated"
+  - "docs/generated"
+  - "test/cases/49_roadmap_integrity.sh"
+  - "test/cases/3102_a_milestone_version_is_inferred.sh"
+depends_on: []
+acceptance_criteria:
+  - "plan validate refuses a milestone record carrying version"
+  - "A milestone whose last issue's merge is contained in v0.27.0 reads released_in v0.27.0; an open one reads unreleased"
+  - "The awk and Rust engines agree (case 99)"
+validation:
+  - "bin/majordomus plan validate"
+  - "bash test/run.sh 49_roadmap_integrity 99_engines_agree 3102_a_milestone_version_is_inferred"
+evidence_required:
+  - "version_inferred_case"
+created_at: 2026-10-16
+updated_at: 2026-10-16

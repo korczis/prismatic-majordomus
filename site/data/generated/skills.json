@@ -72,6 +72,45 @@
       "route": "/skills/deploy-site/"
     },
     {
+      "id": "evolve",
+      "uri": "majordomus://skill/evolve",
+      "title": "Evolve the repository's know-how",
+      "description": "Turn what sessions observed into reviewed knowledge and into the rule, skill, document or test each lesson belongs in, then deliver the change and tell every peer what moved.",
+      "status": "active",
+      "version": 1,
+      "tags": [
+        "knowledge",
+        "review",
+        "delivery",
+        "coordination"
+      ],
+      "related": [
+        "implement",
+        "report-verification-state",
+        "deploy-site"
+      ],
+      "inputs": [
+        "a checkout on a branch of its own, with the tool's task open and its scope naming the knowledge section",
+        "the candidates awaiting review, and whatever this session met and has not yet recorded"
+      ],
+      "outputs": [
+        "every reviewed candidate promoted with its evidence or rejected with its reason",
+        "for each promoted lesson that asks for one, the change to the rule, skill, document or test it belongs in",
+        "a delivered change, and an announcement and a handover that name what moved"
+      ],
+      "path": ".ai/repo/skills/evolve/SKILL.md",
+      "sha256": "6ecab6fd1e252d498a9eb65d37da52af0a2ea47fe988d85bc725baf32d0ddfe4",
+      "examples": [
+        {
+          "path": ".ai/repo/skills/evolve/examples/after-an-incident.md",
+          "title": "After an incident",
+          "body": "\nA commit stood fourteen minutes behind another worktree's build lock, and the cause was\nfound. Evolve from it: record the observation against the rule that should have caught it,\nderive and promote the lesson with the measurement as its evidence, add the shape to the\ngate and the case that proves the gate refuses it, write the post-mortem as a curated note,\namend the decision whose accepted cost this was, deliver, and tell the board which builds\nare bounded now and what to export until the change lands.\n"
+        }
+      ],
+      "valid": true,
+      "route": "/skills/evolve/"
+    },
+    {
       "id": "implement",
       "uri": "majordomus://skill/implement",
       "title": "Implement a change",
@@ -296,7 +335,7 @@
       "route": "/skills/report-verification-state/"
     }
   ],
-  "count": 7,
+  "count": 8,
   "by_tag": {
     "cleanup": [
       "assess-before-deleting"
@@ -320,6 +359,21 @@
     "deploy": [
       "deploy-site"
     ],
+    "knowledge": [
+      "evolve"
+    ],
+    "review": [
+      "evolve",
+      "pack-for-chatgpt",
+      "pack-for-review",
+      "repo-review"
+    ],
+    "delivery": [
+      "evolve"
+    ],
+    "coordination": [
+      "evolve"
+    ],
     "implementation": [
       "implement"
     ],
@@ -329,11 +383,6 @@
     ],
     "drift": [
       "implement",
-      "repo-review"
-    ],
-    "review": [
-      "pack-for-chatgpt",
-      "pack-for-review",
       "repo-review"
     ],
     "archive": [
@@ -353,5 +402,481 @@
     "handover": [
       "report-verification-state"
     ]
+  },
+  "claude": [
+    {
+      "name": "intent",
+      "path": ".claude/skills/intent/SKILL.md",
+      "kind": "command",
+      "source": "apps/majordomus-cli/src/capability/builtin/intents.rs",
+      "description": "Propose an intent: what must become true. Runs the Majordomus capability intents.propose with the text you type as its `statement`."
+    },
+    {
+      "name": "mj-artifacts",
+      "path": ".claude/skills/mj-artifacts/SKILL.md",
+      "kind": "domain",
+      "source": "module:artifacts",
+      "description": "Majordomus artifacts: List the generated artifacts."
+    },
+    {
+      "name": "mj-brief",
+      "path": ".claude/skills/mj-brief/SKILL.md",
+      "kind": "domain",
+      "source": "module:brief",
+      "description": "Majordomus brief: The session brief."
+    },
+    {
+      "name": "mj-capabilities",
+      "path": ".claude/skills/mj-capabilities/SKILL.md",
+      "kind": "domain",
+      "source": "module:capabilities",
+      "description": "Majordomus capabilities: Describe one capability; List capabilities; Where each capability is projected."
+    },
+    {
+      "name": "mj-commands",
+      "path": ".claude/skills/mj-commands/SKILL.md",
+      "kind": "domain",
+      "source": "module:commands",
+      "description": "Majordomus commands: One command in full; The whole command graph; Every command, one line each."
+    },
+    {
+      "name": "mj-commit",
+      "path": ".claude/skills/mj-commit/SKILL.md",
+      "kind": "domain",
+      "source": "module:commit",
+      "description": "Majordomus commit: Judge a range of history; What the working tree would commit; The scope vocabulary; Judge one commit message."
+    },
+    {
+      "name": "mj-continuity",
+      "path": ".claude/skills/mj-continuity/SKILL.md",
+      "kind": "domain",
+      "source": "module:continuity",
+      "description": "Majordomus continuity: This device's identity, and its label; Whether and how a published handover can be resumed here; Publish this checkout's newest handover for another machine; Every published handover the local store admits; Resume a handover another machine published; What the lifecycle is…"
+    },
+    {
+      "name": "mj-convergence",
+      "path": ".claude/skills/mj-convergence/SKILL.md",
+      "kind": "domain",
+      "source": "module:convergence",
+      "description": "Majordomus convergence: Is any work held where it can be lost?."
+    },
+    {
+      "name": "mj-dashboard",
+      "path": ".claude/skills/mj-dashboard/SKILL.md",
+      "kind": "domain",
+      "source": "module:dashboard",
+      "description": "Majordomus dashboard: The Overview: four questions."
+    },
+    {
+      "name": "mj-delivery",
+      "path": ".claude/skills/mj-delivery/SKILL.md",
+      "kind": "domain",
+      "source": "module:delivery",
+      "description": "Majordomus delivery: Does this feature exist; Does each feature exist."
+    },
+    {
+      "name": "mj-deploy",
+      "path": ".claude/skills/mj-deploy/SKILL.md",
+      "kind": "domain",
+      "source": "module:deploy",
+      "description": "Majordomus deploy: Would these deployments work; One deployment; Deployments; What was deployed, and where."
+    },
+    {
+      "name": "mj-design",
+      "path": ".claude/skills/mj-design/SKILL.md",
+      "kind": "domain",
+      "source": "module:design",
+      "description": "Majordomus design: Whether the declared colours can be read; What a design token means; The design system; The design tokens."
+    },
+    {
+      "name": "mj-devcontext",
+      "path": ".claude/skills/mj-devcontext/SKILL.md",
+      "kind": "domain",
+      "source": "module:devcontext",
+      "description": "Majordomus devcontext: Compile the context for a piece of work; Why one thing is or is not in a compiled context; The compiler's own rules."
+    },
+    {
+      "name": "mj-devtask",
+      "path": ".claude/skills/mj-devtask/SKILL.md",
+      "kind": "domain",
+      "source": "module:devtask",
+      "description": "Majordomus devtask: One issue as an executable development task; One milestone as an executable dependency graph."
+    },
+    {
+      "name": "mj-directories",
+      "path": ".claude/skills/mj-directories/SKILL.md",
+      "kind": "domain",
+      "source": "module:directories",
+      "description": "Majordomus directories: The layer's directory contracts."
+    },
+    {
+      "name": "mj-distribution",
+      "path": ".claude/skills/mj-distribution/SKILL.md",
+      "kind": "domain",
+      "source": "module:distribution",
+      "description": "Majordomus distribution: The artifact of a target; This build; The distribution model; Published releases; Whether the published installation works."
+    },
+    {
+      "name": "mj-economics",
+      "path": ".claude/skills/mj-economics/SKILL.md",
+      "kind": "domain",
+      "source": "module:economics",
+      "description": "Majordomus economics: Refuse unsupported economics claims; Explain one economics metric; Recorded benchmark runs; Token economics summary."
+    },
+    {
+      "name": "mj-editors",
+      "path": ".claude/skills/mj-editors/SKILL.md",
+      "kind": "domain",
+      "source": "module:editors",
+      "description": "Majordomus editors: Editor and agent projections."
+    },
+    {
+      "name": "mj-entity",
+      "path": ".claude/skills/mj-entity/SKILL.md",
+      "kind": "domain",
+      "source": "module:entity",
+      "description": "Majordomus entity: Every kind, and whether every object of it is addressable; Read one entity."
+    },
+    {
+      "name": "mj-environment",
+      "path": ".claude/skills/mj-environment/SKILL.md",
+      "kind": "domain",
+      "source": "module:environment",
+      "description": "Majordomus environment: Where an environment value came from; Whether Majordomus is in force here, and what proves it; The repository environment."
+    },
+    {
+      "name": "mj-episodes",
+      "path": ".claude/skills/mj-episodes/SKILL.md",
+      "kind": "domain",
+      "source": "module:episodes",
+      "description": "Majordomus episodes: Attach this connection to an episode; Close this connection's episode; List episodes."
+    },
+    {
+      "name": "mj-evidence",
+      "path": ".claude/skills/mj-evidence/SKILL.md",
+      "kind": "domain",
+      "source": "module:evidence",
+      "description": "Majordomus evidence: What proves this claim; Every claim against the evidence recorded for it; What this test proves."
+    },
+    {
+      "name": "mj-executions",
+      "path": ".claude/skills/mj-executions/SKILL.md",
+      "kind": "domain",
+      "source": "module:executions",
+      "description": "Majordomus executions: Ask an execution to stop; Demonstrate an execution; An execution's event history; One execution; List executions; The live channel's contract; Start a capability as an execution."
+    },
+    {
+      "name": "mj-gates",
+      "path": ".claude/skills/mj-gates/SKILL.md",
+      "kind": "domain",
+      "source": "module:gates",
+      "description": "Majordomus gates: Whether this task may be called finished; The CI model."
+    },
+    {
+      "name": "mj-graph",
+      "path": ".claude/skills/mj-graph/SKILL.md",
+      "kind": "domain",
+      "source": "module:graph",
+      "description": "Majordomus graph: Derive one graph; List graphs."
+    },
+    {
+      "name": "mj-guard",
+      "path": ".claude/skills/mj-guard/SKILL.md",
+      "kind": "domain",
+      "source": "module:guard",
+      "description": "Majordomus guard: Judge one edit."
+    },
+    {
+      "name": "mj-health",
+      "path": ".claude/skills/mj-health/SKILL.md",
+      "kind": "domain",
+      "source": "module:health",
+      "description": "Majordomus health: Health of this process."
+    },
+    {
+      "name": "mj-integration",
+      "path": ".claude/skills/mj-integration/SKILL.md",
+      "kind": "domain",
+      "source": "module:integration",
+      "description": "Majordomus integration: What cleanup would do; The integration audit trail; Why one pull request is where it is; Proof that a dry run moves nothing; The integration queue; How long CI takes; The trains of stacked pull requests."
+    },
+    {
+      "name": "mj-intent-realization",
+      "path": ".claude/skills/mj-intent-realization/SKILL.md",
+      "kind": "domain",
+      "source": "module:intent_realization",
+      "description": "Majordomus intent realization: Why an intent stands where it stands; Which work realises which intent, and what each still lacks."
+    },
+    {
+      "name": "mj-intents",
+      "path": ".claude/skills/mj-intents/SKILL.md",
+      "kind": "domain",
+      "source": "module:intents",
+      "description": "Majordomus intents: What a piece of work is bound to before it starts; Which work carries which criterion, and why each issue exists; Every intent, with its derived stage and verdict; Which intent a piece of work serves, or why it may not proceed; Propose an intent: what must become true; One…"
+    },
+    {
+      "name": "mj-knowledge-base",
+      "path": ".claude/skills/mj-knowledge-base/SKILL.md",
+      "kind": "domain",
+      "source": "module:knowledge_base",
+      "description": "Majordomus knowledge base: Candidates awaiting review; One knowledge record; Whether the deriver is still writing."
+    },
+    {
+      "name": "mj-lifecycle",
+      "path": ".claude/skills/mj-lifecycle/SKILL.md",
+      "kind": "domain",
+      "source": "module:lifecycle",
+      "description": "Majordomus lifecycle: The records a clone receives; Every open episode; What each provider's adapter declares; What the store needs somebody to do; The commit this process is answering about."
+    },
+    {
+      "name": "mj-mcp",
+      "path": ".claude/skills/mj-mcp/SKILL.md",
+      "kind": "domain",
+      "source": "module:mcp",
+      "description": "Majordomus mcp: The MCP projection of this registry."
+    },
+    {
+      "name": "mj-mesh",
+      "path": ".claude/skills/mj-mesh/SKILL.md",
+      "kind": "domain",
+      "source": "module:mesh",
+      "description": "Majordomus mesh: Claim a scope across the mesh; Cooperation, at a glance; The mesh self-check; The cooperation journal; The host firewall, as the mesh needs it; Consume a handover from the mesh; Publish a handover to the mesh; This machine's node identity; The discovered nodes; One runtime; Who…"
+    },
+    {
+      "name": "mj-models",
+      "path": ".claude/skills/mj-models/SKILL.md",
+      "kind": "domain",
+      "source": "module:models",
+      "description": "Majordomus models: The model catalogue; Route a need to a model."
+    },
+    {
+      "name": "mj-monitor",
+      "path": ".claude/skills/mj-monitor/SKILL.md",
+      "kind": "domain",
+      "source": "module:monitor",
+      "description": "Majordomus monitor: Follow everything in one stream."
+    },
+    {
+      "name": "mj-objects",
+      "path": ".claude/skills/mj-objects/SKILL.md",
+      "kind": "domain",
+      "source": "module:objects",
+      "description": "Majordomus objects: Get one object; List objects; Search objects; Verify the index against the working tree."
+    },
+    {
+      "name": "mj-obligations",
+      "path": ".claude/skills/mj-obligations/SKILL.md",
+      "kind": "domain",
+      "source": "module:obligations",
+      "description": "Majordomus obligations: What this task still owes; Every obligation there is."
+    },
+    {
+      "name": "mj-observatory",
+      "path": ".claude/skills/mj-observatory/SKILL.md",
+      "kind": "domain",
+      "source": "module:observatory",
+      "description": "Majordomus observatory: Observatory capture; Observatory events; Observatory replay."
+    },
+    {
+      "name": "mj-pack",
+      "path": ".claude/skills/mj-pack/SKILL.md",
+      "kind": "domain",
+      "source": "module:pack",
+      "description": "Majordomus pack: Plan a source pack; Verify a written source pack."
+    },
+    {
+      "name": "mj-peers",
+      "path": ".claude/skills/mj-peers/SKILL.md",
+      "kind": "domain",
+      "source": "module:peers",
+      "description": "Majordomus peers: Announce what this peer is working on; List peers."
+    },
+    {
+      "name": "mj-perf",
+      "path": ".claude/skills/mj-perf/SKILL.md",
+      "kind": "domain",
+      "source": "module:perf",
+      "description": "Majordomus perf: Performance counters."
+    },
+    {
+      "name": "mj-plan",
+      "path": ".claude/skills/mj-plan/SKILL.md",
+      "kind": "domain",
+      "source": "module:plan",
+      "description": "Majordomus plan: The issues, filtered by what the graph derived; The whole derived plan; The one issue to take now; One milestone or issue, with everything derived about it; The milestones in derived order; Where the plan stands; Move one issue through the lifecycle; What the model refuses; What…"
+    },
+    {
+      "name": "mj-product",
+      "path": ".claude/skills/mj-product/SKILL.md",
+      "kind": "domain",
+      "source": "module:product",
+      "description": "Majordomus product: The domains; One feature; The features; Features against interfaces; The providers; Validate the model."
+    },
+    {
+      "name": "mj-quality",
+      "path": ".claude/skills/mj-quality/SKILL.md",
+      "kind": "domain",
+      "source": "module:quality",
+      "description": "Majordomus quality: Public API quality report; Rustdoc tree integrity."
+    },
+    {
+      "name": "mj-reasoning",
+      "path": ".claude/skills/mj-reasoning/SKILL.md",
+      "kind": "domain",
+      "source": "module:reasoning",
+      "description": "Majordomus reasoning: The advisors and what they can do now; Check that reasoning stays provider-independent; Why a decision was made; What an uncertainty calls for; Record a reasoning step; The session's reasoning state."
+    },
+    {
+      "name": "mj-recover",
+      "path": ".claude/skills/mj-recover/SKILL.md",
+      "kind": "domain",
+      "source": "module:recover",
+      "description": "Majordomus recover: Classify every stray file of the record stores, and sweep the ones that are nobody's."
+    },
+    {
+      "name": "mj-release",
+      "path": ".claude/skills/mj-release/SKILL.md",
+      "kind": "domain",
+      "source": "module:release",
+      "description": "Majordomus release: What the public contract did, and the smallest version it allows; The changelog; The version a landing allocates, and why; The version, and the one the contract requires next."
+    },
+    {
+      "name": "mj-repository",
+      "path": ".claude/skills/mj-repository/SKILL.md",
+      "kind": "domain",
+      "source": "module:repository",
+      "description": "Majordomus repository: Repository and index state; The repository scope; Judge a path against the scope."
+    },
+    {
+      "name": "mj-rules",
+      "path": ".claude/skills/mj-rules/SKILL.md",
+      "kind": "domain",
+      "source": "module:rules",
+      "description": "Majordomus rules: What this test proves; Every rule against the proof there is for it; What proves this rule."
+    },
+    {
+      "name": "mj-served",
+      "path": ".claude/skills/mj-served/SKILL.md",
+      "kind": "domain",
+      "source": "module:served",
+      "description": "Majordomus served: What each deployment was last seen serving."
+    },
+    {
+      "name": "mj-server",
+      "path": ".claude/skills/mj-server/SKILL.md",
+      "kind": "domain",
+      "source": "module:server",
+      "description": "Majordomus server: The shared server, and every server of the repository."
+    },
+    {
+      "name": "mj-session-domain",
+      "path": ".claude/skills/mj-session-domain/SKILL.md",
+      "kind": "domain",
+      "source": "module:session_domain",
+      "description": "Majordomus session domain: What identifies this checkout, and how each store spells it; The episode lifecycle, as data."
+    },
+    {
+      "name": "mj-shell",
+      "path": ".claude/skills/mj-shell/SKILL.md",
+      "kind": "domain",
+      "source": "module:shell",
+      "description": "Majordomus shell: Refuse undeclared shell."
+    },
+    {
+      "name": "mj-skills",
+      "path": ".claude/skills/mj-skills/SKILL.md",
+      "kind": "domain",
+      "source": "module:skills",
+      "description": "Majordomus skills: One skill, with everything derived about it; Every skill, with its derived standing; What the skills owe and do not have."
+    },
+    {
+      "name": "mj-trace",
+      "path": ".claude/skills/mj-trace/SKILL.md",
+      "kind": "domain",
+      "source": "module:trace",
+      "description": "Majordomus trace: What contract this commit served; What realised this issue; The whole work graph above the branch."
+    },
+    {
+      "name": "mj-web",
+      "path": ".claude/skills/mj-web/SKILL.md",
+      "kind": "domain",
+      "source": "module:web",
+      "description": "Majordomus web: Every web surface, resolved."
+    },
+    {
+      "name": "mj-why",
+      "path": ".claude/skills/mj-why/SKILL.md",
+      "kind": "domain",
+      "source": "module:why",
+      "description": "Majordomus why: Operational areas; Audiences; Diagnose a selection; The catalogue; One moment; Validate the catalogue."
+    },
+    {
+      "name": "mj-worktree",
+      "path": ".claude/skills/mj-worktree/SKILL.md",
+      "kind": "domain",
+      "source": "module:worktree",
+      "description": "Majordomus worktree: One branch: where its worktree belongs and what is there; What it would take to bring every worktree home; Where this is, and whether that is where it belongs; The whole topology; Uncommitted work in the linked worktrees, and what holds it."
+    },
+    {
+      "name": "assess-before-deleting",
+      "path": ".claude/skills/assess-before-deleting/SKILL.md",
+      "kind": "skill",
+      "source": ".ai/repo/skills/assess-before-deleting/SKILL.md",
+      "description": "Remove a file, branch, worktree, record or process only after each candidate has been classified by what depends on it and what would be lost, and the reversible step has been taken first."
+    },
+    {
+      "name": "deploy-site",
+      "path": ".claude/skills/deploy-site/SKILL.md",
+      "kind": "skill",
+      "source": ".ai/repo/skills/deploy-site/SKILL.md",
+      "description": "Publish the website to GitHub Pages from a terminal, through the one script the Pages workflow runs, when waiting for the Actions queue is not acceptable."
+    },
+    {
+      "name": "evolve",
+      "path": ".claude/skills/evolve/SKILL.md",
+      "kind": "skill",
+      "source": ".ai/repo/skills/evolve/SKILL.md",
+      "description": "Turn what sessions observed into reviewed knowledge and into the rule, skill, document or test each lesson belongs in, then deliver the change and tell every peer what moved."
+    },
+    {
+      "name": "implement",
+      "path": ".claude/skills/implement/SKILL.md",
+      "kind": "skill",
+      "source": ".ai/repo/skills/implement/SKILL.md",
+      "description": "Carry a requested change through the repository evidence-first, from the invariant it must keep to a verified, reconciled, documented and committed tree, without widening its scope."
+    },
+    {
+      "name": "pack-for-chatgpt",
+      "path": ".claude/skills/pack-for-chatgpt/SKILL.md",
+      "kind": "skill",
+      "source": ".ai/repo/skills/pack-for-chatgpt/SKILL.md",
+      "description": "Turn a committed tree into token-bounded Markdown shards that a ChatGPT project's file search indexes, verified to carry no binary, worktree, link, build output, projection or leaked value, and hand them over with the commit they were cut from."
+    },
+    {
+      "name": "pack-for-review",
+      "path": ".claude/skills/pack-for-review/SKILL.md",
+      "kind": "skill",
+      "source": ".ai/repo/skills/pack-for-review/SKILL.md",
+      "description": "Prepare a bounded, reproducible snapshot of the tracked tree for a reviewer who cannot read the repository directly, with the local half and anything secret left out and the questions the review must answer written down."
+    },
+    {
+      "name": "repo-review",
+      "path": ".claude/skills/repo-review/SKILL.md",
+      "kind": "skill",
+      "source": ".ai/repo/skills/repo-review/SKILL.md",
+      "description": "An evidence-driven review of the actual state of the repository, or of one change to it, before meaningful engineering work is recommended or done."
+    },
+    {
+      "name": "report-verification-state",
+      "path": ".claude/skills/report-verification-state/SKILL.md",
+      "kind": "skill",
+      "source": ".ai/repo/skills/report-verification-state/SKILL.md",
+      "description": "Write the outcome of a piece of work as claims each marked VERIFIED, PARTIAL or BLOCKED by the evidence actually observed, so a reader can tell what was proved from what was only done or intended."
+    }
+  ],
+  "claude_by_kind": {
+    "command": 1,
+    "domain": 58,
+    "skill": 8
   }
 }

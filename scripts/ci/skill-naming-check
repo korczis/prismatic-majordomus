@@ -1,0 +1,100 @@
+#!/usr/bin/env bash
+# skill-naming-check — every active skill is named where a test demands the whole list.
+#
+# Two tests of this repository do not bind themselves to the skills they happen to prove;
+# they demand to name every active skill the repository holds, and fail when one is left out:
+#
+#   apps/majordomus-cli/tests/skills.rs              its `//! majordomus-skill:` header, every
+#                                                    marker line of the file (the last test,
+#                                                    every_active_skill_of_this_repository_...)
+#   test/cases/391_skills_are_proven_capabilities.sh its first `# majordomus-skill:` line
+#
+# On 2026-10-13 a pull request added an active skill, named it in neither, and was merged
+# with --admin after the structure job passed: `skills verify` (the skills-proof gate) asks
+# only that some test names a skill, so it passed. The omission surfaced an hour later in a
+# rust lane of the trunk, and master stayed red until a second fix named the skill in the
+# case as well (issue I2664). This gate asks the same question of the same text in the
+# structure job, in seconds, and builds nothing.
+#
+# It also refuses a named id no SKILL.md declares, which both tests refuse too. It does not
+# judge whether a named skill is valid, invoked or evidenced: that is `skills verify`.
+#
+#   scripts/ci/skill-naming-check     report and refuse
+#
+# MJ_ROOT points it at another tree, which is how case 3020 drives it over a fixture.
+# Exit: 0 every active skill named in both, 10 a finding, 12 a naming file is missing.
+set -eu
+set -o pipefail
+
+ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
+cd "$ROOT"
+[ $# -eq 0 ] || { echo "skill-naming-check: unknown option $1" >&2; exit 2; }
+
+CRATE_TEST="apps/majordomus-cli/tests/skills.rs"
+CASE_TEST="test/cases/391_skills_are_proven_capabilities.sh"
+for f in "$CRATE_TEST" "$CASE_TEST"; do
+  [ -f "$f" ] || { echo "skill-naming-check: $f is missing; it is where the active skills are named" >&2; exit 12; }
+done
+
+# The ids on marker lines, as majordomus_cli::skill::marker_ids reads one: a comment
+# (`//!`, `//` or `#`) whose body starts with the marker, ids split on blanks and commas.
+# $2 = all reads every such line (the crate test), first only the first (case 391's sed).
+marker_ids() { # <file> <all|first>
+  awk -v mode="$2" '
+    {
+      t = $0; sub(/^[[:space:]]+/, "", t)
+      if (sub(/^\/\/!/, "", t) || sub(/^\/\//, "", t) || sub(/^#/, "", t)) {
+        sub(/^[[:space:]]+/, "", t)
+        if (substr(t, 1, 17) != "majordomus-skill:") next
+        t = substr(t, 18); gsub(/,/, " ", t)
+        n = split(t, w, /[[:space:]]+/)
+        for (i = 1; i <= n; i++) if (w[i] ~ /^[a-z0-9][a-z0-9-]*$/) print w[i]
+        if (mode == "first") exit
+      }
+    }' "$1" | LC_ALL=C sort -u
+}
+
+# "<id> <status>" of every SKILL.md, from its front matter; a file with no id is named by
+# its directory, as the index would refuse it anyway.
+skills() {
+  for f in .ai/repo/skills/*/SKILL.md; do
+    [ -f "$f" ] || continue
+    awk -v dir="$(basename "$(dirname "$f")")" -v q="'" '
+      NR == 1 && $0 != "---" { exit }
+      NR > 1 && $0 == "---" { exit }
+      /^id:[[:space:]]/     { v = $0; sub(/^id:[[:space:]]*/, "", v); gsub("[\"" q " \t\r]", "", v); id = v }
+      /^status:[[:space:]]/ { v = $0; sub(/^status:[[:space:]]*/, "", v); gsub("[\"" q " \t\r]", "", v); st = v }
+      END { if (id == "") id = dir; if (st == "") st = "unknown"; print id, st }' "$f"
+  done | LC_ALL=C sort -u
+}
+
+all="$(skills)"
+active="$(printf '%s\n' "$all" | awk '$2 == "active" { print $1 }')"
+known="$(printf '%s\n' "$all" | awk 'NF { print $1 }')"
+
+findings=""
+check() { # <file> <all|first>
+  named="$(marker_ids "$1" "$2")"
+  for id in $active; do
+    printf '%s\n' "$named" | grep -qxF "$id" \
+      || findings="$findings  UNNAMED  active skill '$id' is not named by $1
+"
+  done
+  for id in $named; do
+    printf '%s\n' "$known" | grep -qxF "$id" \
+      || findings="$findings  UNKNOWN  $1 names skill '$id', which no .ai/repo/skills/*/SKILL.md declares
+"
+  done
+}
+check "$CRATE_TEST" all
+check "$CASE_TEST" first
+
+n_active="$(printf '%s\n' "$active" | grep -c . || true)"
+if [ -n "$findings" ]; then
+  echo "skill-naming-check: the tests that name every active skill do not name the skills the repository holds:"
+  printf '%s' "$findings"
+  echo "  add the id to the '//! majordomus-skill:' line of $CRATE_TEST and to the first"
+  echo "  '# majordomus-skill:' line of $CASE_TEST, or drop the id of a skill that is gone"
+  exit 10
+fi
+echo "skill-naming-check: $n_active active skill(s), each named by $CRATE_TEST and $CASE_TEST"

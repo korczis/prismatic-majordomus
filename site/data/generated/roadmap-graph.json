@@ -27,7 +27,7 @@
       "id": "M002",
       "kind": "milestone",
       "label": "M002",
-      "status": "PLANNED",
+      "status": "ACTIVE",
       "route": "/plan/m002/",
       "external": false,
       "summary": "A durable record names the worker that wrote it"
@@ -66,7 +66,7 @@
       "status": "ACTIVE",
       "route": "/plan/fly-deployment/",
       "external": false,
-      "summary": "A deployment is a projection of the repository model, and a reachable URL is its evidence"
+      "summary": "The container image is a projection of the repository model, and its smoke is its evidence"
     },
     {
       "id": "web-sign-in",
@@ -108,7 +108,7 @@
       "id": "derived-data-integrity",
       "kind": "milestone",
       "label": "0.5  derived-data-integrity",
-      "status": "PLANNED",
+      "status": "VERIFY",
       "route": "/plan/derived-data-integrity/",
       "external": false,
       "summary": "A committed derivation describes something it can be a projection of"
@@ -117,7 +117,7 @@
       "id": "work-graph-github",
       "kind": "milestone",
       "label": "work-graph-github",
-      "status": "ACTIVE",
+      "status": "VERIFY",
       "route": "/plan/work-graph-github/",
       "external": false,
       "summary": "The projection to GitHub is gated, identified and traversable, and a merged pull request leads back to the outcome it served"
@@ -153,7 +153,7 @@
       "id": "public-proof",
       "kind": "milestone",
       "label": "public-proof",
-      "status": "PLANNED",
+      "status": "ACTIVE",
       "route": "/plan/public-proof/",
       "external": false,
       "summary": "A visitor sees the product prove itself, and can check every claim it makes"
@@ -171,7 +171,7 @@
       "id": "a-second-adopter-is-served",
       "kind": "milestone",
       "label": "a-second-adopter-is-served",
-      "status": "PLANNED",
+      "status": "ACTIVE",
       "route": "/plan/a-second-adopter-is-served/",
       "external": false,
       "summary": "A second adopter is served: what a foreign repository met on its first day is fixed in the tool"
@@ -180,16 +180,25 @@
       "id": "a-session-leaves-what-it-observed",
       "kind": "milestone",
       "label": "a-session-leaves-what-it-observed",
-      "status": "PLANNED",
+      "status": "DONE",
       "route": "/plan/a-session-leaves-what-it-observed/",
       "external": false,
       "summary": "A session leaves what it observed, and the repository routes it"
     },
     {
+      "id": "automation",
+      "kind": "milestone",
+      "label": "automation",
+      "status": "ACTIVE",
+      "route": "/plan/automation/",
+      "external": false,
+      "summary": "Repository automation is scripted capabilities over typed Rust, not shell"
+    },
+    {
       "id": "runtime-trust",
       "kind": "milestone",
       "label": "runtime-trust",
-      "status": "PLANNED",
+      "status": "ACTIVE",
       "route": "/plan/runtime-trust/",
       "external": false,
       "summary": "A runtime is safe to reach from another machine, and joining the mesh trusts nobody by accident"
@@ -198,7 +207,7 @@
       "id": "runtime-lifecycle",
       "kind": "milestone",
       "label": "runtime-lifecycle",
-      "status": "PLANNED",
+      "status": "ACTIVE",
       "route": "/plan/runtime-lifecycle/",
       "external": false,
       "summary": "One usable server per checkout starts, attaches, stops and reports its state without races or hidden kills"
@@ -207,7 +216,7 @@
       "id": "mesh-journal-converges",
       "kind": "milestone",
       "label": "mesh-journal-converges",
-      "status": "PLANNED",
+      "status": "ACTIVE",
       "route": "/plan/mesh-journal-converges/",
       "external": false,
       "summary": "The cooperation journal is durable, converges under any delivery order, and never lets a stale claim win"
@@ -216,7 +225,7 @@
       "id": "mcp-transports-are-reliable",
       "kind": "milestone",
       "label": "mcp-transports-are-reliable",
-      "status": "PLANNED",
+      "status": "VERIFY",
       "route": "/plan/mcp-transports-are-reliable/",
       "external": false,
       "summary": "Every MCP transport delivers each request at most once, bounds what it carries, and honours cancellation"
@@ -225,7 +234,7 @@
       "id": "surfaces-never-disagree",
       "kind": "milestone",
       "label": "surfaces-never-disagree",
-      "status": "PLANNED",
+      "status": "ACTIVE",
       "route": "/plan/surfaces-never-disagree/",
       "external": false,
       "summary": "Every surface projects the same state, says when it was observed, and keeps no list of its own"
@@ -234,7 +243,7 @@
       "id": "failure-is-visible",
       "kind": "milestone",
       "label": "failure-is-visible",
-      "status": "PLANNED",
+      "status": "ACTIVE",
       "route": "/plan/failure-is-visible/",
       "external": false,
       "summary": "Every failure the runtime can suffer is bounded, tested or stated, and changes the health it reports"
@@ -243,7 +252,7 @@
       "id": "architecture-is-enforced",
       "kind": "milestone",
       "label": "architecture-is-enforced",
-      "status": "PLANNED",
+      "status": "ACTIVE",
       "route": "/plan/architecture-is-enforced/",
       "external": false,
       "summary": "A violated invariant fails a gate, and green means every required check ran"
@@ -252,19 +261,46 @@
       "id": "safe-self-update",
       "kind": "milestone",
       "label": "safe-self-update",
-      "status": "PLANNED",
+      "status": "ACTIVE",
       "route": "/plan/safe-self-update/",
       "external": false,
-      "summary": "Clients and servers of different versions meet safely, and a release's provenance can be checked"
+      "summary": "Every mesh node follows the published release by itself, versions meet safely, and a release's provenance can be checked"
+    },
+    {
+      "id": "every-session-joins-the-mesh",
+      "kind": "milestone",
+      "label": "every-session-joins-the-mesh",
+      "status": "PLANNED",
+      "route": "/plan/every-session-joins-the-mesh/",
+      "external": false,
+      "summary": "Every LLM session joins the Majordomus mesh at start, told the mesh as work"
+    },
+    {
+      "id": "truthful-plan-surfaces",
+      "kind": "milestone",
+      "label": "truthful-plan-surfaces",
+      "status": "ACTIVE",
+      "route": "/plan/truthful-plan-surfaces/",
+      "external": false,
+      "summary": "The plan's surfaces are inferred from delivery, and nothing they show is typed beside the repository"
     },
     {
       "id": "everything-is-followed-in-one-stream",
       "kind": "milestone",
       "label": "everything-is-followed-in-one-stream",
-      "status": "PLANNED",
+      "status": "ACTIVE",
       "route": "/plan/everything-is-followed-in-one-stream/",
       "external": false,
       "summary": "Everything that happens in the repository is followed in one stream"
+    },
+    {
+      "id": "the-mesh-works-out-of-the-box",
+      "kind": "milestone",
+      "label": "the-mesh-works-out-of-the-box",
+      "status": "PLANNED",
+      "route": "/plan/the-mesh-works-out-of-the-box/",
+      "external": false,
+      "summary": "The mesh works out of the box: trusted machines find each other by every means and their sessions cooperate from the first turn"
     },
     {
       "id": "runtime-adapters",

@@ -101,9 +101,9 @@ flowchart TD
 
 Business logic exists once, in `apps/majordomus-cli/src/worktree/`. Every surface is an
 adapter that renders or projects what the service answered; none derives a path, decides a
-standing or judges whether a move is safe. The four read-only questions are capabilities
+standing or judges whether a move is safe. The five read-only questions are capabilities
 of the registry (`worktree.topology`, `worktree.status`, `worktree.inspect`,
-`worktree.migration_plan`), which is what puts them on MCP, HTTP, OpenAPI, the Swagger UI,
+`worktree.migration_plan`, `worktree.uncommitted`), which is what puts them on MCP, HTTP, OpenAPI, the Swagger UI,
 the Cockpit and the generated reference without any of those carrying a route or a schema
 of their own. Creating, migrating, repairing and removing are command-line operations of
 the same service. A capability that writes the repository must declare the effect
@@ -180,6 +180,7 @@ majordomus worktree doctor                     # every diagnostic with its code 
 majordomus worktree migrate --plan             # what would move; changes nothing
 majordomus worktree migrate                    # move, verify, report
 majordomus worktree cleanup                    # what is merged and clean; deletes nothing
+majordomus worktree uncommitted                # uncommitted work in linked worktrees, and what holds it
 ```
 
 <!-- majordomus:unrun it removes worktrees, which a documentation check must never do to the checkout it reads; case 611 runs it in a disposable repository and holds every refusal -->
@@ -206,6 +207,7 @@ majordomus worktree cleanup --remove           # removes those worktrees, refusi
 | `worktree remove <branch\|path> [--force]` | remove one linked worktree; never the primary, never a branch, never dirty work unforced | refused |
 | `worktree cleanup` | branches merged into the trunk, or into the remote-tracking branch the trunk follows, whose worktree is clean or absent, with the commands that would remove them. A primary checkout nobody has pulled does not hide what has already landed. | |
 | `worktree cleanup --remove` | removes those worktrees, each re-measured first; refuses a branch ahead of its remote, a worktree something is working in, uncommitted work, or a reading it could not take | |
+| `worktree uncommitted [--older-than D]` | every linked worktree holding uncommitted work: paths, age of the oldest change, what holds it, `abandoned` or not, and the command that would put it on a remote ref; writes nothing | |
 | `worktree branches [--without-worktree]` | every local branch, one per line | |
 
 </div>
@@ -227,7 +229,7 @@ Shell completion of the branch arguments reads the live set rather than a list:
 ```bash
 # zsh
 _mj_wt_branches() { compadd -- ${(f)"$(majordomus worktree branches 2>/dev/null)"} }
-compdef '_arguments "1:sub:(status list topology root path inspect create ensure migrate validate doctor guard repair remove cleanup branches)" "2:branch:_mj_wt_branches"' majordomus-worktree
+compdef '_arguments "1:sub:(status list topology root path inspect create ensure migrate validate doctor guard repair remove cleanup uncommitted branches)" "2:branch:_mj_wt_branches"' majordomus-worktree
 ```
 
 ## Lifecycle
@@ -278,6 +280,41 @@ the person's own exports, including keychain-backed secrets such as `OPENAI_API_
 there too, from one file. The link is made only where git ignores the name
 (`not_ignored` otherwise), and a worktree with an `.envrc.local` of its own keeps it
 (`own_kept`).
+
+### The hooks of its own tree
+
+A repository that tracks its hooks (`.githooks/`, named by `core.hooksPath`) means each
+commit to be judged by the hooks of the tree it is made in. `core.hooksPath` lives in the
+configuration every worktree shares, so once it holds an absolute path —
+`<primary>/.githooks`, as it did here — every linked worktree runs the primary checkout's
+hooks. On 2026-10-14 the primary checkout was three days behind, and the `doctor` its hooks
+ran refused every commit of current master in every worktree (`FAIL wiring
+ssh-permissions-on-commit … not invoked by <primary>/.githooks/pre-commit`); I2718.
+
+Each linked worktree therefore has a hooks path of its own. `create`, `ensure`, every moved
+step of `migrate` and `repair` read the repository's policy from the primary checkout's
+effective `core.hooksPath`, find the directory it names inside the worktree, and, when git
+would run another checkout's, bind the worktree to its own with git's per-worktree
+configuration:
+
+```sh
+git config core.repositoryformatversion 1          # only when it was 0
+git config extensions.worktreeConfig true          # only when it was off
+git -C <worktree> config --worktree core.hooksPath <worktree>/.githooks
+```
+
+The value is absolute, so a moved worktree is bound again at its new path. The report says
+what happened on a `hooks` line and in the `hooks` field of the JSON (`set`, `own`,
+`not_configured`, `shared`, `untracked`, `failed`). Nothing is invented: a repository with no
+`core.hooksPath` keeps git's own hooks directory, a hooks directory outside the primary
+checkout is shared on purpose and left alone, and a tree that does not carry the directory
+keeps the primary's rather than none. A relative `.githooks` is already resolved by git
+against each worktree's own top level, and is reported as `own`. The primary checkout is
+never changed.
+
+`doctor`, run in a linked worktree that git sends to another checkout's hooks, fails
+`wiring hooks-path` with the exact command that fixes it, and judges the wiring of the
+worktree's own directory — what it will run once fixed — rather than the stale one.
 
 The last step is the one with no mechanism behind it. Creating a worktree is one command;
 removing one is a decision nobody is prompted to make, and `cleanup` deliberately deletes
@@ -368,6 +405,7 @@ says where to `cd`.
 | a locked worktree | `worktree.locked`, the step blocked | `git worktree unlock <path>`, then migrate |
 | the wrong branch in a worktree | `worktree.branch_already_checked_out` on create | migrate the worktree that holds it, or work there |
 | `direnv: error .envrc is blocked` in a worktree | `envrc   differs …` or `envrc   the primary checkout's is not approved …` on the create or migrate report | read the file, then `direnv allow` there; approve the primary checkout's first when that is what the report names. A worktree older than the report: `majordomus worktree ensure <branch>` carries the approval now |
+| a commit in a worktree judged by stale hooks | `FAIL wiring hooks-path … runs <primary>/.githooks, not its own` from `doctor` | the command doctor prints, or `majordomus worktree repair`, which binds every linked worktree to its own `.githooks` |
 | the primary checkout on a feature branch | `worktree.primary_on_non_trunk`; the guard refuses | when clean, `git switch <trunk>`; then `worktree create <branch>` |
 | a scratch checkout of a session on a branch | `worktree.ephemeral`; the guard refuses | `git switch --detach` there and continue in the canonical worktree, or `migrate --include-ephemeral --only <branch>` |
 | a move that crossed devices | `worktree.cross_device` on the step, or a refusal | `migrate --allow-copy` |
@@ -441,4 +479,76 @@ which stay. It includes the combination the refusals exist for: a branch merged 
 trunk *and* carrying a commit its remote has never seen. What changes *after* the listing — a
 commit, a deleted remote branch, a file written — is planted by the unit tests of the reclaim
 in `apps/majordomus-cli/src/commands/worktree.rs`. A missing `lsof` is not planted anywhere.
+
+## Uncommitted work nobody holds
+
+A branch whose commits reach no remote is named by `doctor` (`clone unpushed`). Work that
+reached no commit at all was not: on 2026-10-07 the supersession-trust half of the
+integration safety fixes sat as 45 uncommitted files in the worktree of a session that had
+ended, and on 2026-10-08 the completion doctrine sat as 21 staged files in another. Both
+were found because somebody happened to read those directories, and pushed as
+`rescue/...` branches; the same evening the data volume had 125 MiB free (I1995).
+
+`majordomus worktree uncommitted` (`worktree.uncommitted`, `majordomus_worktree_uncommitted`,
+`GET /api/v1/worktrees/uncommitted`) lists every linked worktree whose index or working tree
+holds changes — staged, unstaged, untracked and conflicted paths counted together — with:
+
+<div class="overflow-x-auto" tabindex="0">
+
+| field | what it is |
+|---|---|
+| `paths`, `work` | how many paths, and the counts `worktree status` gives |
+| `oldest_change`, `age` | the earliest modification time among the changed paths; for a path that no longer exists (a deletion) the index file's time stands in |
+| `task` | the active task recorded there: `.ai/local/state/current.yaml` with outcome `active`, the record `start` writes and `finish` closes |
+| `episodes` | the open episodes there (`.ai/local/state/sessions-open/`), each with its last sign of life and whether it is stranded |
+| `process_inside` | a process has its working directory inside, by the `lsof` reading `cleanup --remove` refuses on |
+| `standing` | `held` when the task, an episode that is not stranded or a process holds it; otherwise `abandoned` when the oldest change is older than the threshold (or its age cannot be read), else `recent` |
+| `remedy` | the command that would commit the work there and push it to `rescue/<branch>-<YYYYMMDD>`; suggested, never run |
+
+</div>
+
+
+The threshold is the policy's `session.stranded_after`, the silence after which an episode's
+client is taken to be gone. It answers both questions asked here — does an open episode
+still hold the work, and has work that nothing holds waited long enough to be abandoned — so
+there is no second number to drift from it; `--older-than` names another for one reading.
+A policy that declares none judges nothing abandoned and says so.
+
+`majordomus doctor` renders the reading: one `WARN clone <path>` per abandoned worktree with
+its count and its age, and the rescue command as the remedy; held and recent work is
+counted in one `OK`. The reading takes one `git status` per linked worktree, about 15 s over
+three hundred of them, so `.githooks/pre-commit` runs doctor as
+`MAJORDOMUS_DOCTOR_CONTEXT=commit bin/majordomus doctor`: in that context, the only one doctor
+accepts, the reading is left out and an `INFO clone uncommitted` line says so and names
+`majordomus worktree uncommitted`. Neither the reading nor doctor writes anything: every `git status`
+runs under `GIT_OPTIONAL_LOCKS=0`, so no index is refreshed, and another worktree's
+`.ai/local/` is read, never written. `test/cases/3025_abandoned_work_in_a_worktree_is_named.sh`
+plants an abandoned worktree, a held one and a recent one, and holds `git status` of every
+worktree byte-identical across the reading, the MCP tool and doctor.
+
+## A build behind another worktree's lock
+
+The worktrees share one build directory (ADR 0139), and cargo locks a build directory for
+as long as a build uses it, so two builds at once are one build and one wait. Every build
+this repository's tooling starts goes through `mj_cargo_bounded` (`lib/rust_bin.sh`):
+
+<div class="overflow-x-auto" tabindex="0">
+
+| what happens | what a worker sees |
+|---|---|
+| nobody else is building | the build runs in the shared directory, as before |
+| another worktree holds the lock | after `MAJORDOMUS_BUILD_LOCK_WAIT` seconds (default 60) one line says how long it waited and which cargo processes exist, and the build runs again in this tree's own directory under `~/.cargo/build-private/` |
+| the lock came free before the bound | nothing: the build went on in the shared directory |
+| the build is already in its own directory and is still blocked | exit 75 with the reason, instead of a wait |
+| the disk floor refuses a private build | exit 12 with the floor's own message |
+
+</div>
+
+
+A private directory compiles every dependency once, so its first build is the slow one.
+`MAJORDOMUS_BUILD_LOCK_WAIT=0` never waits; an exported `CARGO_BUILD_BUILD_DIR` is taken as
+the tree's own directory and is never replaced. The rule is
+`project.a-build-never-waits-in-silence-on-anothers-lock`; `scripts/liveness-check` refuses
+a tracked script that calls cargo any other way, and
+`test/cases/3002_a_build_never_waits_in_silence.sh` proves each row above.
 {% endraw %}

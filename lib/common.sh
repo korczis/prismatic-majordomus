@@ -545,6 +545,37 @@ mj_git_trunk_ref() {
   return 0
 }
 
+# Is this checkout on the trunk? True when HEAD is the local branch named like the trunk's
+# remote-tracking branch (`main` for refs/remotes/origin/main). No trunk known (no remote,
+# or no refs/remotes/<remote>/HEAD) and a detached HEAD are both "not on the trunk", so a
+# repository without a remote keeps writing its records where it always has. ADR 0091,
+# amendment of 2026-10-15: a trunk that changes only through pull requests cannot commit
+# what an episode boundary writes there, so a trunk episode stages it in the outbox.
+mj_on_trunk() {
+  local trunk br
+  trunk="$(mj_git_trunk_ref)"
+  [ -n "$trunk" ] || return 1
+  br="$(mj_git symbolic-ref -q --short HEAD 2>/dev/null)" || return 1
+  trunk="${trunk#refs/remotes/}"
+  [ "${trunk#*/}" = "$br" ]
+}
+
+# Where a trunk episode stages what it would have written into a tracked section: the
+# closed session record under sessions/, the derived knowledge candidates under
+# candidates/. Checkout-local and never tracked; a branch episode moves it into the tracked
+# sections, and that branch's pull request carries it to the trunk.
+mj_outbox_dir() { printf '%s/outbox' "$MJ_STATE_DIR"; }
+
+# "<sessions> <candidates>": how many records wait in the outbox. `context` and `doctor`
+# name a non-empty outbox, so a clone that never branches again still says what it holds.
+mj_outbox_counts() {
+  local d s=0 c=0 f
+  d="$(mj_outbox_dir)"
+  for f in "$d"/sessions/*.md; do [ -f "$f" ] && s=$((s + 1)); done
+  for f in "$d"/candidates/*.md; do [ -f "$f" ] && c=$((c + 1)); done
+  printf '%s %s' "$s" "$c"
+}
+
 # Every commit this checkout made, sorted: the HEAD reflog's entries that created one.
 # A linked worktree has a HEAD reflog of its own, so this is this checkout's, not the
 # repository's. `pull --rebase (pick)` and `rebase -i (pick)` carry the action in
@@ -655,13 +686,33 @@ mj_has()   { command -v "$1" >/dev/null 2>&1; }
 
 # policy + profiles, in that order, for the policy hash. An empty profiles/ is a policy
 # error that doctor reports, not a cat(1) failure that aborts whoever asked for the hash.
+#
+# Each file is hashed in its normal form (mj_yaml_normal), not as bytes: a comment or a
+# blank line changes no setting, so it must not move the stamp and regenerate every
+# bootstrap (I1991). The executable computes the same form (policy::normal_form), and the
+# two are held equal by apps/majordomus-cli/tests/providers_projection.rs.
 mj_policy_cat() {
   local pf
-  cat "$MJ_POLICY_FILE"
+  mj_yaml_normal < "$MJ_POLICY_FILE"
   for pf in "$MJ_PROFILES_DIR"/*.yaml; do
-    if [ -f "$pf" ]; then cat "$pf"; fi
+    if [ -f "$pf" ]; then mj_yaml_normal < "$pf"; fi
   done
   return 0
+}
+# The normal form of a file in the layer's YAML subset, stdin to stdout: trailing spaces,
+# tabs and carriage returns dropped; blank lines and whole-line comments dropped; a
+# trailing comment (a `#` after a space or tab) dropped from a line that holds no quote,
+# since in a quoted scalar ` #` may be text. Indentation, order and every value are kept,
+# so two files with one normal form are one setting. The subset refuses block scalars, so
+# no `#` line is ever content. Every line ends in a newline.
+mj_yaml_normal() {
+  awk -v sq="'" -v dq='"' '
+    { sub(/[ \t\r]+$/, "") }
+    /^[ \t]*$/ || /^[ \t]*#/ { next }
+    index($0, sq) == 0 && index($0, dq) == 0 && match($0, /[ \t]#/) {
+      $0 = substr($0, 1, RSTART - 1); sub(/[ \t]+$/, "")
+    }
+    { print }'
 }
 
 # normalise a repo-relative path: strip ./ and trailing /, collapse //, refuse escapes
@@ -1776,4 +1827,87 @@ mj_web_composed() {
             | select(.kind == "static-directory" and (.artifact // "") != "" and ((.id | IN($ids[])) | not))
             | .artifact as $host | $c[] | $host + .mount)
       end' "$mj_wc_web" || { mj_err "$mj_wc_web does not parse as a web topology"; return 12; }
+}
+
+# A task is on the mesh while it works (I2288). `start` claims the task's scope as an
+# advisory claim of the mesh session `task-<id>` on this checkout's running server, so every
+# linked runtime on every machine sees what the task works on and reports an overlap; the key is
+# kept on the task record. `finish` closes the session, which ends its claims everywhere. An
+# exclusive claim before building stays the worker's own act. Silent, and never a failure, when
+# no server serves this checkout or its mesh does not run: the task is the repository's, the
+# mesh only tells others about it.
+mj_mesh_task_bin() {
+  mj_has jq || return 1
+  # shellcheck source=rust_bin.sh
+  . "$MJ_LIB_DIR/rust_bin.sh"
+  MJ_MESH_BIN="$(mj_rust_bin "$MJ_HOME")"; [ -x "$MJ_MESH_BIN" ] || return 1
+  local share; share="$(mj_rust_share "$MJ_ROOT")"
+  [ -n "$share" ] && export MAJORDOMUS_SHARE="$share"
+  return 0
+}
+
+mj_mesh_task_claim() { # <task id> <scope, one path per word> <intent> <issue>
+  local id="$1" scope="$2" intent="$3" issue="$4" out key
+  mj_mesh_task_bin || return 0
+  set -- --session "task-$id" --advisory --task "$id" --repo "$MJ_ROOT" --format json
+  [ -n "$intent" ] && set -- "$@" --intent "$intent"
+  [ -n "$issue" ] && set -- "$@" --issue "$issue"
+  # shellcheck disable=SC2086 # the scope is one path per word
+  out="$("$MJ_MESH_BIN" mesh claim $scope "$@" 2>/dev/null)" || true
+  key="$(printf '%s' "$out" | jq -r '.key // empty' 2>/dev/null || true)"
+  [ -n "$key" ] || return 0
+  printf 'mesh_claim: %s
+' "$key" >> "$MJ_CUR"
+  mj_info mesh "task-$id" "the scope is claimed on every linked runtime (advisory) as $key" "majordomus mesh state --full"
+  return 0
+}
+
+mj_mesh_task_release() { # <task id>
+  local id="$1"
+  grep -q '^mesh_claim: ' "$MJ_CUR" 2>/dev/null || return 0
+  mj_mesh_task_bin || return 0
+  "$MJ_MESH_BIN" mesh session close --session "task-$id" --repo "$MJ_ROOT" --format json >/dev/null 2>&1 || true
+  return 0
+}
+
+# Whether the repository declares its mesh enabled: a tracked declaration under
+# .ai/repo/mesh/ whose top-level `enabled` is true. The declaration is what the server obeys
+# (ADR 0059); whether a server runs right now is another question, and a task is judged
+# against what the repository declared, not against which processes happen to be up.
+mj_mesh_declared_enabled() {
+  local f
+  for f in $(mj_git ls-files -- '.ai/repo/mesh/*.yaml' '.ai/repo/mesh/*.yml' 2>/dev/null); do
+    grep -qE '^enabled:[[:space:]]*true[[:space:]]*$' "$MJ_ROOT/$f" 2>/dev/null && return 0
+  done
+  return 1
+}
+
+# A task works on the mesh (I2289, project.a-task-works-on-the-mesh). On a repository that
+# declares its mesh enabled, an active task's scope must have been claimed on it — `start`
+# does that when a server runs (I2288) and `finish` tries again before it judges — so that no
+# machine builds what another machine never saw being built. Only a completed finish is
+# refused: a worker whose server never came up still leaves by partial, blocked or failed.
+mj_validate_task_on_the_mesh() {
+  if ! mj_load_current || [ "$(mj_cur outcome)" != active ]; then
+    mj_doctrine_skip mesh "-" "no active task; nothing claims anything"
+    MJ_DOCTRINE_SKIPPED=1; return 0
+  fi
+  local id key; id="$(mj_cur id)"
+  if ! mj_mesh_declared_enabled; then
+    mj_doctrine_skip mesh "$id" "the repository declares no enabled mesh"
+    MJ_DOCTRINE_SKIPPED=1; return 0
+  fi
+  key="$(sed -n 's/^mesh_claim: //p' "$MJ_CUR" 2>/dev/null | head -n 1)"
+  if [ -n "$key" ]; then
+    mj_doctrine_ok mesh "$id" "the scope is claimed on the mesh as $key"
+    return 0
+  fi
+  if [ "${MJ_DOCTRINE_CMD:-}" = finish ] && [ -n "${MJ_FINISH_OUTCOME:-}" ] && [ "$MJ_FINISH_OUTCOME" != completed ]; then
+    mj_doctrine_skip mesh "$id" "the scope was never claimed on the mesh; outcome is $MJ_FINISH_OUTCOME, not completed, so it is not refused"
+    MJ_DOCTRINE_SKIPPED=1; return 0
+  fi
+  mj_doctrine_fail mesh "$id" \
+    "the repository declares its mesh enabled and this task's scope was never claimed on it: no shared server answered when it started, so no other machine saw what it works on" \
+    "majordomus serve ensure, then majordomus finish (finish claims the scope again when a server answers)"
+  return 0
 }

@@ -1,0 +1,35 @@
+id: I2702
+milestone: runtime-lifecycle
+title: "A checkout keeps one address across restarts, because its server binds a port derived from the checkout"
+slug: a-checkout-keeps-one-address
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Bind a port derived from the repository and worktree identity before falling back to a free one, so that a Streamable HTTP client configuration or a bookmarked UI names an address that survives a restart."
+why: "Split from I2131 on 2026-10-14. I2131 made every surface's use count toward the idle timeout, and its desired_state said 'Not done here' of a port derived from the repository and worktree identity, while its acceptance criteria still required it, so it could never close. On 2026-10-09 the live server asked for 8741 and served 61068, an address that changes on every restart. The other deferred question of I2131, whether an entry beyond serve ensure is needed, is decided by ADR 0135 and planned as I2484, and is not carried here. Baseline audit of 2026-10-09 at master 1fb8d6be44, lifecycle gap 9 and drift 10."
+current_state: "DEFAULT_PORT is 8741 (apps/majordomus-cli/src/cli.rs); the first checkout to start takes it and every other is given a free port when http::server::bind (apps/majordomus-cli/src/http/server.rs) cannot have the one asked for, a different one on each restart. docs/MCP.md says a taken port is replaced by a free one and shows :8741 in its examples."
+desired_state: "A server asks first for a port derived from the repository identity and the worktree it serves, so one checkout asks for the same port on every start and two checkouts of one repository ask for different ones; a port that is taken falls back to a free one and both are logged, as today. docs/MCP.md describes the derived port and the fallback."
+scope:
+  - "apps/majordomus-cli/src/cli.rs"
+  - "apps/majordomus-cli/src/http/server.rs"
+  - "apps/majordomus-cli/src/commands/serve.rs"
+  - "apps/majordomus-cli/src/commands/env.rs"
+  - "apps/majordomus-cli/tests/serve_lifecycle.rs"
+  - "docs/MCP.md"
+non_scope:
+  - "The idle timer and what counts as use, which I2131 delivered"
+  - "A majordomus ui command, which ADR 0135 decided and I2484 plans"
+depends_on:
+  - I2131
+acceptance_criteria:
+  - "Two consecutive starts of one checkout's server bind the same port when it is free"
+  - "Two checkouts of one repository derive different ports"
+  - "docs/MCP.md describes the derived port and the fallback"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test serve_lifecycle"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 190_entry_is_automatic"
+evidence_required:
+  - "stable_port_per_checkout_test"
+created_at: 2026-10-14
+updated_at: 2026-10-14

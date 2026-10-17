@@ -160,6 +160,9 @@ never reported as drift.
 
 `wired_by` values: `git-hook:<name>` (resolved through `core.hooksPath` or
 `.git/hooks/`), `ci:<path>` (a file that must exist and contain the invocation),
+`git-config:<key>` (a key the clone's own git configuration must set to a value naming the tool),
+`toolchain:<file>` (the pinned Rust toolchain the file names is installed on this machine, so
+`scripts/derive` and `prs repair --apply` can build),
 `manual` (documented, not verified; doctor lists it as unverified, never as wired).
 The hook line must not swallow the exit code (`|| true`, `|| exit 0`).
 
@@ -221,6 +224,8 @@ context:                      # toggles; projections turn them into loading guid
   failing_output: true
   recent_history_depth: 50    # commits; 0 disables
   architecture_notes: false
+  knowledge: true             # knowledge pointers: what the task's issue references
+  knowledge_max_items: 8      # at most this many; capped by context.max_list_items
 
 verification:
   verify_command_required: true
@@ -247,7 +252,7 @@ The four shipped profiles:
 | effort | low | medium | high | high, escalates to xhigh |
 | verbosity | terse | concise | concise | detailed |
 | presentation | machine | engineering | engineering | engineering |
-| context | task, state | + decisions, files | + failing output, history 50 | + architecture, history 200 |
+| context | task, state | + decisions, files, knowledge 8 | + failing output, history 50 | + architecture, history 200, knowledge 12 |
 | verify command | if files changed | required | required | required |
 | regression test | no | no | required | no |
 | decision record | no | no | no | required |
@@ -1538,6 +1543,7 @@ Events and their extra fields:
 | `knowledge.promoted` | `id`, `path` (the curated record's repository-relative path). A person promoted a candidate to verified with evidence |
 | `knowledge.rejected` | `id`, `reason`; `superseded_by` when `--by` named the record that replaces it. A person rejected a candidate; it is superseded in place |
 | `ledger.rotated` | `archived` (lines moved), `kept`, `archive` (path) |
+| `session.archived` | `archived` (records moved), `kept` (the cap), `archive` (the directory, repository-relative). Written only when `majordomus session archive` moved something; no record is deleted |
 | `prompts.reconciled` | `records` (prompt records re-examined), `linked`, `unlinked`. Every record in the archive is re-matched to the episode it belongs to, from evidence that still exists; a record whose evidence is gone is counted as unlinked rather than guessed at |
 | `task.gate` | `task`, `gate`, `exit`, `inputs_hash` (over the union of the paths of the CI classes that select the gate, so a change to any of them makes the run stale rather than merely old). A gate that has never emitted this event is reported as queued, never as passing |
 | `prompts.pruned` | `records` (prompt records touched), `pruned` (bodies replaced with a tombstone), `bytes_left`. A record is never deleted: what is taken is the body, and the record left behind still says when the prompt happened, in which episode, and the digest and length of what was removed |
@@ -1570,6 +1576,12 @@ the one portable monotonic ordering available without sub-second timestamps.
 `history --rotate` moves all but the newest `ledger.retention_max_lines` lines into
 `ledger.<utc-compact>.jsonl.archived` and appends a `ledger.rotated` event. It never
 deletes and refuses to overwrite an existing archive.
+
+`session archive` is the same promise for the sessions section: it moves the oldest closed
+records beyond `session.retention_max_files` into the section's `archive/` directory and
+appends a `session.archived` event. It runs only when asked and only when the policy's
+`session.archive` is `true`, it never deletes, and it refuses before the first move when a
+record of the same name is already archived.
 
 ---
 

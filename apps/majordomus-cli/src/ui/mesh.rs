@@ -26,7 +26,8 @@ use super::view::{
 pub const ROUTE: &str = "/ui/mesh";
 
 const PEERS: Source = Source::of("mesh.peers");
-const EVENTS: Source = Source::of("mesh.events");
+/// The journal as it stands now: its newest events, not the first page from its beginning.
+const EVENTS: Source = Source::with("mesh.events", r#"{"newest":true}"#);
 
 /// The tone a runtime's liveness is drawn in: presentation of the runtime's own word.
 fn liveness_tone(word: &str) -> &'static str {
@@ -481,7 +482,7 @@ mod tests {
             source: PEERS,
             route: None,
             exposure: Default::default(),
-            value: Ok(serde_json::json!({ "machines": [] })),
+            value: Ok(serde_json::json!({ "machines": [] }).into()),
             took: std::time::Duration::ZERO,
             standing: crate::ui::source::Standing::NOW,
         };
@@ -494,7 +495,7 @@ mod tests {
             source,
             route: None,
             exposure: Default::default(),
-            value,
+            value: value.map(Into::into),
             took: std::time::Duration::ZERO,
             standing: crate::ui::source::Standing::NOW,
         }

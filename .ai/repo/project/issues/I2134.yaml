@@ -8,7 +8,7 @@ parallel_safe: false
 objective: "Re-read the trust declaration while the runtime runs, drop the links and admission of a de-listed key, offer a key rotation that peers can follow, and create the node key file private from its first byte."
 why: "Trust is frozen at activation (apps/majordomus-cli/src/mesh/manager.rs:466,486, apps/majordomus-cli/src/mesh/cooperation.rs:1150): a key removed from trust.allow keeps its links until every peer restarts, and there is no rotate or revoke flow (threat T11). A compromised key therefore cannot be cut off without restarting every runtime. The node key file is written and then chmodded to 0600 (apps/majordomus-cli/src/mesh/identity.rs:338-347), so it exists for a moment at umask permissions. Reloaded events of a revoked key are I2124's (the journal reload applies the trust policy, milestone runtime-trust); this issue is the live half. Baseline audit of 2026-10-09 at master 1fb8d6be44, mesh gap 6 and the identity row."
 current_state: "Revocation takes effect only on each peer's restart. Rotation does not exist. The key file is briefly readable at umask permissions."
-desired_state: "Cooperation holds its trust as a replaceable value; Cooperation::retrust puts a new one in force and ends the link of every peer it no longer trusts, and the server calls it with each new generation of the repository it reads, so a key withdrawn from trust.allow and committed loses its links without a restart: its next sync meets unknown_link and its hello is refused untrusted. Not done here: rotating a node key, and purging a withdrawn key's events from the running journal (the next restart's reload applies the trust in force, I2124)."
+desired_state: "Cooperation holds its trust as a replaceable value; Cooperation::retrust puts a new one in force and ends the link of every peer it no longer trusts, and the server calls it with each new generation of the repository it reads, so a key withdrawn from trust.allow and committed loses its links without a restart: its next sync meets unknown_link and its hello is refused untrusted. The deferred part, rotating a node key and purging a withdrawn key's events from the running journal, is I2705."
 scope:
   - "apps/majordomus-cli/src/mesh/manager.rs"
   - "apps/majordomus-cli/src/mesh/cooperation.rs"
@@ -21,7 +21,6 @@ scope:
 depends_on: []
 acceptance_criteria:
   - "Removing a key from trust.allow on a running runtime closes that key's links within one heartbeat and refuses its next hello, with no restart"
-  - "After a rotation, peers that trusted the old key link to the new one, and the old key's next hello is refused"
   - "Under a permissive umask the node key file is never readable by group or others"
 validation:
   - "bin/majordomus plan validate"
@@ -29,7 +28,25 @@ validation:
   - "cargo test --lib mesh::identity"
 evidence_required:
   - "revocation_without_restart_test"
-  - "key_rotation_test"
   - "key_file_created_private_test"
 created_at: 2026-10-09
-updated_at: 2026-10-09
+updated_at: 2026-10-14T23:33:07Z
+started_at: 2026-10-14T23:32:46Z
+started_event: sha256:5f4f537a93d134531573f4332374a401e5ea215bfd043082ba2cd9cc428c9cf0
+verified_at: 2026-10-14T23:32:54Z
+verified_event: sha256:d4f1ff297c468f9877c7252e79a6ec6c4a8d2f3731f6ef418b586c04eedafc45
+completed_at: 2026-10-14T23:33:07Z
+completed_event: sha256:a1d2499eb1843d6145f5d1189f180c453fb790d3381ed5208f95a5a8255b61de
+evidence:
+  - covers: revocation_without_restart_test
+    type: test
+    command: "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib -- mesh::cooperation::tests::a_withdrawn_key_loses_its_link_without_a_restart"
+    result: "revocation_without_restart_test names a test never written under that name; proved by mesh::cooperation::tests::a_withdrawn_key_loses_its_link_without_a_restart (delivered by 9d09a4a5f22): 1 passed at c0e3585dc8, 2026-10-14 23:3xZ, this Mac"
+    commit: c0e3585dc836201089d6b5dd49f5a79fe8bff798
+    recorded_at: 2026-10-14T23:33:01Z
+  - covers: key_file_created_private_test
+    type: test
+    command: "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib -- mesh::identity::tests::a_node_key_is_never_readable_by_others"
+    result: "key_file_created_private_test names a test never written under that name; proved by mesh::identity::tests::a_node_key_is_never_readable_by_others (delivered by 37c72bbed6c): 1 passed at c0e3585dc8, 2026-10-14 23:3xZ, this Mac"
+    commit: c0e3585dc836201089d6b5dd49f5a79fe8bff798
+    recorded_at: 2026-10-14T23:33:04Z

@@ -150,6 +150,40 @@ pub struct CommandRef {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+/// One capability of a domain, as its skill lists it.
+pub struct DomainEntry {
+    /// The capability's id.
+    pub capability: String,
+    /// The capability's own title.
+    pub title: String,
+    /// Its MCP tool; every entry of a domain has one.
+    pub tool: String,
+    /// The words after `majordomus` on the command line, when it has them.
+    pub cli: Option<String>,
+    /// Whether running it changes anything, so that only a person's request runs it.
+    pub changes_something: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+/// A module of the registry as one skill (ADR 0165): every public capability of the module
+/// that has an MCP tool, reachable as `/mj-<module>` and discoverable by the model from the
+/// skill's description. Derived; nothing names a domain.
+pub struct DomainRef {
+    /// The module the capabilities are declared in.
+    pub module: String,
+    /// The skill's name: `mj-` and the module, underscores as hyphens.
+    pub alias: String,
+    /// Its capabilities, by id.
+    pub entries: Vec<DomainEntry>,
+    /// The content address of every entry's descriptor, in id order.
+    pub sha256: String,
+}
+
+/// The prefix every derived domain skill carries, so that the listing groups them and no
+/// domain takes a name a product or a workflow skill wants.
+pub const DOMAIN_PREFIX: &str = "mj-";
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 /// A workflow as an editor sees it: a recipe a person may run with one keystroke.
 pub struct TaskRef {
     /// What `just` is given: the recipe, prefixed by its module path when it has one.
@@ -399,6 +433,51 @@ pub fn commands(registry: &crate::capability::CapabilityRegistry) -> Vec<Command
         .collect()
 }
 
+/// Every module of the registry that offers at least one public capability with an MCP tool,
+/// as one skill (ADR 0165). Nothing here is listed: a capability joins its module's skill by
+/// having a tool, and the module is the one its declaration already names.
+pub fn domains(registry: &crate::capability::CapabilityRegistry) -> Vec<DomainRef> {
+    // module -> capability id -> (entry, digest): a capability id is unique in the registry,
+    // so the inner map holds each module's entries in id order without a sort of its own
+    type ByCapability = std::collections::BTreeMap<String, (DomainEntry, String)>;
+    let mut by_module: std::collections::BTreeMap<String, ByCapability> =
+        std::collections::BTreeMap::new();
+    for c in registry.iter() {
+        if c.visibility != crate::capability::Visibility::Public {
+            continue;
+        }
+        let Some(tool) = c.exposure.mcp.as_ref().and_then(|m| m.tool.clone()) else {
+            continue;
+        };
+        let entry = DomainEntry {
+            capability: c.id.to_string(),
+            title: c.title.clone(),
+            tool,
+            cli: c.exposure.cli.as_ref().map(|cli| cli.path.join(" ")),
+            changes_something: c.execution.effect != crate::capability::Effect::Read,
+        };
+        let digest = sha256_hex(&serde_json::to_string(c).unwrap_or_default());
+        by_module
+            .entry(c.module.as_str().to_string())
+            .or_default()
+            .insert(entry.capability.clone(), (entry, digest));
+    }
+    by_module
+        .into_iter()
+        .map(|(module, by_capability)| {
+            let entries: Vec<(DomainEntry, String)> = by_capability.into_values().collect();
+            let digests: String = entries.iter().map(|(_, d)| d.as_str()).collect();
+            DomainRef {
+                alias: format!("{DOMAIN_PREFIX}{}", module.replace('_', "-")),
+                module,
+                entries: entries.into_iter().map(|(e, _)| e).collect(),
+                sha256: sha256_hex(&digests),
+            }
+        })
+        .filter(|d| is_skill_name(&d.alias))
+        .collect()
+}
+
 /// The recipes of the *tracked* justfile: `justfile` and `.just/*.just`, read through `just`
 /// from a private copy. The root justfile also imports `.ai/local/cache/command-graph/
 /// bridge.just`, which each checkout materialises for itself; read in place, a checkout that
@@ -561,6 +640,7 @@ pub fn plan(
 ) -> Plan {
     let mut env = environment(index, root);
     let commands = commands(registry);
+    let domains = claude::reachable_domains(domains(registry), &commands, &env.skills);
     // a command's input is its capability's descriptor, named by the capability
     for c in &commands {
         env.inputs.push(EditorInput {
@@ -569,11 +649,19 @@ pub fn plan(
             sha256: c.sha256.clone(),
         });
     }
+    // a domain's input is the descriptors of its capabilities, named by the module
+    for d in &domains {
+        env.inputs.push(EditorInput {
+            path: format!("module:{}", d.module),
+            mutability: EditorInputClass::Repository,
+            sha256: d.sha256.clone(),
+        });
+    }
     crate::order::canonical(&mut env.inputs);
     let mut diagnostics = env.diagnostics.clone();
     let mut artifacts: Vec<(Artifact, Vec<String>, Vec<String>)> = Vec::new();
 
-    // .agents/ sorts before .claude/, and the commands are by alias: path order holds
+    // .agents/ sorts before .claude/, and what is written under .claude/ is keyed by path
 
     for skill in &env.skills {
         match skill_artifact(skill, version) {
@@ -585,13 +673,44 @@ pub fn plan(
             Err(d) => diagnostics.push(*d),
         }
     }
+    // Claude Code discovers skills under .claude/skills/ alone: every workflow skill is
+    // written there too, beside the commands, so that /<id> reaches the layer's own
+    // definition. A command that has the same name keeps it (and is a finding below).
+    // keyed by path, so that what is written under .claude/ comes out in path order
+    let mut for_claude: std::collections::BTreeMap<String, (Artifact, Vec<String>, Vec<String>)> =
+        std::collections::BTreeMap::new();
     for c in &commands {
-        artifacts.push((
-            claude::command_artifact(c, version),
-            vec![claude::ID.into()],
-            vec![format!("capability:{}", c.capability)],
-        ));
+        let a = claude::command_artifact(c, version);
+        for_claude.insert(
+            a.path.clone(),
+            (
+                a,
+                vec![claude::ID.to_string()],
+                vec![format!("capability:{}", c.capability)],
+            ),
+        );
     }
+    for d in &domains {
+        let a = claude::domain_artifact(d, version);
+        for_claude.insert(
+            a.path.clone(),
+            (
+                a,
+                vec![claude::ID.to_string()],
+                vec![format!("module:{}", d.module)],
+            ),
+        );
+    }
+    for skill in claude::workflow_skills(&commands, &env.skills) {
+        // a name both products refuse was already reported by the loop above
+        if let Ok(a) = skill_artifact_in(claude::SKILLS_DIR, skill, version) {
+            for_claude.insert(
+                a.path.clone(),
+                (a, vec![claude::ID.to_string()], vec![skill.path.clone()]),
+            );
+        }
+    }
+    artifacts.extend(for_claude.into_values());
     if let Some(a) = zed::tasks_artifact(&env, version) {
         let sources = env
             .inputs
@@ -602,7 +721,8 @@ pub fn plan(
         artifacts.push((a, vec!["zed".into()], sources));
     }
     // in path order by construction: every skill (canonical by identity) under
-    // .agents/, every command (by alias) under .claude/, then the task list under .zed/
+    // .agents/, every command and workflow skill (by path) under .claude/, then the task
+    // list under .zed/
 
     diagnostics.extend(description_findings(&env.skills));
     diagnostics.extend(claude::name_findings(&commands, &env.skills));
@@ -630,7 +750,7 @@ pub fn plan(
         .collect();
     let adapters = vec![
         antigravity::adapter(&env),
-        claude::adapter(&commands),
+        claude::adapter(&commands, &domains, &env.skills),
         zed::adapter(&env),
     ];
     Plan {
@@ -721,7 +841,19 @@ const DESCRIPTION_BUDGET: usize = 1024;
 /// `description` — the banner, and a pointer to the one definition. The procedure itself is
 /// never copied: it lives in the canonical file, which the agent is told to read.
 pub fn skill_artifact(skill: &SkillRef, version: &str) -> Result<Artifact, Box<EditorDiagnostic>> {
-    let path = format!("{SKILLS_DIR}/{}/SKILL.md", skill.id);
+    skill_artifact_in(SKILLS_DIR, skill, version)
+}
+
+/// The same projection under another directory a product discovers skills in: Claude Code
+/// reads `.claude/skills/` and not `.agents/skills/`, so a workflow skill is reachable there
+/// by its name only when its pointer is written there too. One definition, one text; the
+/// directory is the only thing that differs.
+pub fn skill_artifact_in(
+    dir: &str,
+    skill: &SkillRef,
+    version: &str,
+) -> Result<Artifact, Box<EditorDiagnostic>> {
+    let path = format!("{dir}/{}/SKILL.md", skill.id);
     if !is_skill_name(&skill.id) {
         return Err(Box::new(EditorDiagnostic {
             severity: Severity::Warning,
@@ -751,7 +883,7 @@ pub fn skill_artifact(skill: &SkillRef, version: &str) -> Result<Artifact, Box<E
          # {title}\n\n\
          This skill is defined once, in [`{src}`]({up}{src}). Read that file and follow it: it is \
          the procedure, its inputs and what it must produce. This file only makes the skill \
-         discoverable to agents that load `{SKILLS_DIR}/`, and says nothing the definition does \
+         discoverable to agents that load `{dir}/`, and says nothing the definition does \
          not.\n\n\
          The same definition is served as `majordomus skills explain {name}` and as the MCP \
          resource `majordomus://skill/{name}`.\n",
@@ -948,6 +1080,30 @@ mod tests {
             path: format!(".ai/repo/skills/{id}/SKILL.md"),
             sha256: sha256_hex(id),
         }
+    }
+
+    #[test]
+    fn the_same_skill_is_written_where_claude_code_looks() {
+        let s = skill("evolve", "Turn what was observed into what is enforced.");
+        let shared = skill_artifact(&s, "0.0.0").unwrap();
+        let claude = skill_artifact_in(claude::SKILLS_DIR, &s, "0.0.0").unwrap();
+        assert_eq!(claude.path, ".claude/skills/evolve/SKILL.md");
+        assert!(claude
+            .content
+            .starts_with("---\nname: evolve\ndescription: "));
+        // one definition: the pointer leads to the same file from the same depth
+        assert!(claude
+            .content
+            .contains("(../../../.ai/repo/skills/evolve/SKILL.md)"));
+        assert!(claude
+            .content
+            .contains("agents that load `.claude/skills/`"));
+        // and differs from the shared projection in the directory it names alone
+        assert_eq!(
+            claude.content.replace(".claude/skills/", ".agents/skills/"),
+            shared.content
+        );
+        assert_eq!(claude.source, shared.source);
     }
 
     #[test]

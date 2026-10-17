@@ -1,28 +1,28 @@
 {
   "schema": "majordomus/benchmark-matrix/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.23.0",
+  "generator": "majordomus-cli 0.28.0",
   "coverage": [
     {
       "scope": "direct",
-      "required": 196,
-      "covered": 166,
+      "required": 202,
+      "covered": 171,
       "missing": 0,
-      "waived": 30,
+      "waived": 31,
       "inapplicable": 0
     },
     {
       "scope": "http",
-      "required": 191,
-      "covered": 166,
+      "required": 197,
+      "covered": 171,
       "missing": 0,
-      "waived": 25,
+      "waived": 26,
       "inapplicable": 0
     },
     {
       "scope": "mcp",
-      "required": 187,
-      "covered": 162,
+      "required": 192,
+      "covered": 167,
       "missing": 0,
       "waived": 25,
       "inapplicable": 0
@@ -37,10 +37,10 @@
     },
     {
       "scope": "total",
-      "required": 588,
-      "covered": 508,
+      "required": 605,
+      "covered": 523,
       "missing": 0,
-      "waived": 80,
+      "waived": 82,
       "inapplicable": 0
     }
   ],
@@ -850,6 +850,16 @@
       ]
     },
     {
+      "id": "executions.report",
+      "module": "executions",
+      "kind": "command",
+      "cache": "—",
+      "direct": "waived",
+      "mcp": "none",
+      "http": "waived",
+      "cases": []
+    },
+    {
       "id": "executions.start",
       "module": "executions",
       "kind": "command",
@@ -917,6 +927,19 @@
       "http": "covered",
       "cases": [
         "default"
+      ]
+    },
+    {
+      "id": "guard.edit",
+      "module": "guard",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "in-repository",
+        "outside"
       ]
     },
     {
@@ -1625,6 +1648,43 @@
       "module": "obligations",
       "kind": "query",
       "cache": "process, 2 entries",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "observatory.capture",
+      "module": "observatory",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "observatory.events",
+      "module": "observatory",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "newest",
+        "after a cursor"
+      ]
+    },
+    {
+      "id": "observatory.replay",
+      "module": "observatory",
+      "kind": "query",
+      "cache": "—",
       "direct": "covered",
       "mcp": "covered",
       "http": "covered",
@@ -2404,6 +2464,19 @@
       "cases": [
         "default"
       ]
+    },
+    {
+      "id": "worktree.uncommitted",
+      "module": "worktree",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "policy-threshold",
+        "one-hour"
+      ]
     }
   ],
   "system_targets": [
@@ -2522,6 +2595,12 @@
       "deferred": false
     },
     {
+      "key": "system.http.ui.skills",
+      "route": "/ui/skills",
+      "view": "pinned",
+      "deferred": false
+    },
+    {
       "key": "system.http.ui.mesh",
       "route": "/ui/mesh",
       "view": "pinned",
@@ -2546,6 +2625,12 @@
       "deferred": false
     },
     {
+      "key": "system.http.ui.knowledge",
+      "route": "/ui/knowledge",
+      "view": "pinned",
+      "deferred": false
+    },
+    {
       "key": "system.http.ui.docs",
       "route": "/ui/docs",
       "view": "pinned",
@@ -2554,6 +2639,12 @@
     {
       "key": "system.http.ui.governance",
       "route": "/ui/governance",
+      "view": "pinned",
+      "deferred": false
+    },
+    {
+      "key": "system.http.ui.observatory",
+      "route": "/ui/observatory",
       "view": "pinned",
       "deferred": false
     },
@@ -2600,6 +2691,12 @@
       "deferred": false
     },
     {
+      "key": "system.http.live.ui.skills",
+      "route": "/ui/skills",
+      "view": "live",
+      "deferred": false
+    },
+    {
       "key": "system.http.live.ui.mesh",
       "route": "/ui/mesh",
       "view": "live",
@@ -2624,6 +2721,12 @@
       "deferred": false
     },
     {
+      "key": "system.http.live.ui.knowledge",
+      "route": "/ui/knowledge",
+      "view": "live",
+      "deferred": false
+    },
+    {
       "key": "system.http.live.ui.docs",
       "route": "/ui/docs",
       "view": "live",
@@ -2632,6 +2735,12 @@
     {
       "key": "system.http.live.ui.governance",
       "route": "/ui/governance",
+      "view": "live",
+      "deferred": false
+    },
+    {
+      "key": "system.http.live.ui.observatory",
+      "route": "/ui/observatory",
       "view": "live",
       "deferred": false
     },

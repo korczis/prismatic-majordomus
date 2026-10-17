@@ -175,6 +175,10 @@ cmd_derived() {
   out="$(MAJORDOMUS_NO_BUILD=1 "$cli" generate --check 2>&1)" || rc=$?
   case "$rc" in
     0) [ -n "${MJ_PAGES_QUIET:-}" ] || printf 'pages: the registry projections are in sync with this tree\n'
+       # What the check kept rather than judged is said even when it passes — a changelog
+       # whose release history this object database lacks (I1409): silence would read as a
+       # verdict the check never reached.
+       printf '%s\n' "$out" | grep -F 'not judged' | sed -E 's/^.*(WARN|INFO) +/pages: /' >&2
        return 0 ;;
     12) printf 'pages: the executable is not built, so the registry half of the derived data was not checked\n' >&2
         DERIVED_SKIPPED=1
@@ -1219,6 +1223,17 @@ ui_round() {
       else
         vr_line fail "does not state $marker=$v"; bad=1
         ui_finding "$VR_REQ does not state $marker=\"$v\": the page is not the snapshot its declaration names" "curl -fsS $VR_REQ | grep -o '$marker=\"[^\"]*\"'"
+      fi
+      # The first screen is what a visitor reads the product by. A figure of it that is
+      # undecided — the unknown badge, or a source that did not answer — is a publication
+      # that shows nothing where it shows itself, and the reader of a snapshot is a process
+      # that can decide every figure the screen is allowed to lead with.
+      undecided="$(grep -oE 'class="mj-ui-kpi-label">[^<]*</span><span class="mj-ui-kpi-value">(<span class="mj-badge mj-badge--unknown"|not answered<)' "$VR_WORK/body" \
+        | sed -E 's/^class="mj-ui-kpi-label">([^<]*)<.*/\1/' | paste -sd, - || true)"
+      if [ -z "$undecided" ]; then vr_line ok "first-screen figures decided"
+      else
+        vr_line fail "first-screen figure(s) undecided: $undecided"; bad=1
+        ui_finding "the first screen of $VR_REQ leads with figure(s) nothing decided ($undecided): a publication shows what the repository says, never unknown" "scripts/pages verify-ui --url $base --commit $commit --timeout 0"
       fi ;;
     *) vr_line fail "want 200 text/html"; bad=1
        ui_finding "$VR_REQ answered $VR_STATUS ${VR_TYPE:-with no content type}, not the $VR_NAME's first page" "curl -fsSI $VR_REQ" ;;

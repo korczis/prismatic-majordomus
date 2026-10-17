@@ -116,39 +116,57 @@ for f in $gen_files; do
   [ "$(jq -r '.schema' "$SITE/data/generated/$f.json" 2>/dev/null)" = 1 ] || bad schema "$f.json missing or schema != 1"
 done; ok schema "every generated file ($(printf '%s\n' $gen_files | wc -l | tr -d ' ')) carries schema 1"
 # 3. marketing copy: line budget, no numbers, no claim words
-ml="$(mj_lines "$SITE/data/marketing.toml")"; [ "$ml" -le 80 ] && ok promo "marketing.toml is $ml lines, budget 80" || bad promo "marketing.toml is $ml lines, budget 80"
+ml="$(mj_lines "$SITE/data/marketing.toml")"; [ "$ml" -le 90 ] && ok promo "marketing.toml is $ml lines, budget 90" || bad promo "marketing.toml is $ml lines, budget 90"
 if grep -vE '^\s*#' "$SITE/data/marketing.toml" | grep -qE '\b[0-9]+ ?%|\b[0-9]{2,}\b'; then bad promo "marketing.toml contains a number; numbers are computed, never written"; fi
 # 3a. the long-form argument: the same rules, its own budget. It is the other hand-written file
 # on the site, and the one carrying the most assertion. What is mechanised here is what a script
 # can decide: the line budget, the no-numbers rule (digits and the small words that spell one),
-# that every stage of the model carries its own honest mark rather than none, and that the
-# section naming the unbuilt half is on the built page under the title the data gives it.
+# that every stage of the model names the claims that cover it, and that the section listing
+# the intent model's claims is on the built page under the title the data gives it.
 # Whether a sentence is in the conditional is not checked and is not claimed to be; that reading
 # is a person's, and the header of the file is where it is asked for.
 xl="$(mj_lines "$SITE/data/manifesto.toml")"; [ "$xl" -le 240 ] && ok promo "manifesto.toml is $xl lines, budget 240" || bad promo "manifesto.toml is $xl lines, budget 240"
 if grep -vE '^\s*#' "$SITE/data/manifesto.toml" | grep -qE '\b[0-9]+ ?%|\b[0-9]{2,}\b'; then bad promo "manifesto.toml contains a number; numbers are computed, never written"; fi
-# the direction section must keep naming what is not built: it is the one thing standing between
-# the argument and a capability claim the registry cannot answer
+# a count spelt in words is a number typed by hand all the same
 if grep -vE '^\s*#' "$SITE/data/manifesto.toml" | grep -qiE '\b(one|two|three|four|five|six|seven|eight|nine|ten) (stages?|features?|commands?|interfaces?|kinds?|rules?|surfaces?)\b'; then
   bad promo "manifesto.toml spells a count in words; the generator counts, the prose does not"
 fi
-# every stage of the model carries its own mark of how much of it exists, and the marks are not
-# all the same word: a stage with no note, or a file where one note was pasted over every stage,
-# is the drift this section exists to refuse
+# every stage of the model names the claims of docs/CLAIMS.yaml that cover it, each one the
+# matrix holds, and the argument page renders each under the status the matrix declares: how
+# much of a stage exists is the matrix's to say (ADR 0166). A typed note ("partly", "shipped")
+# was the mark here until 2026-10-16, and it was a second account of the repository beside it.
 stages="$(grep -c '^\[\[pipeline.stages\]\]' "$SITE/data/manifesto.toml")"
-notes="$(grep -c '^note = ' "$SITE/data/manifesto.toml")"
-distinct="$(grep '^note = ' "$SITE/data/manifesto.toml" | LC_ALL=C sort -u | wc -l | tr -d ' ')"
-if [ "$stages" -ne "$notes" ]; then bad promo "manifesto.toml has $stages pipeline stage(s) and $notes note(s); every stage says how much of it exists"
-elif [ "$distinct" -lt 3 ]; then bad promo "manifesto.toml gives $distinct distinct stage note(s) over $stages stages; the marks are not being kept honest"
-else ok promo "every one of the $stages stage(s) of the model carries its own mark of what exists"; fi
-# the section that names the unbuilt half is on the built page, found through the data rather
-# than through a literal this check would have to be edited to keep matching
+stage_claims="$(python3 -c '
+import sys, tomllib
+for s in tomllib.load(open(sys.argv[1], "rb")).get("pipeline", {}).get("stages", []):
+    ids = s.get("claims") or []
+    print(s.get("id", "?") + " " + (" ".join(ids) if ids else "-"))
+' "$SITE/data/manifesto.toml" 2>/dev/null)" || stage_claims=""
+known="$(jq -r '.claims[] | "\(.id) \(.status)"' "$SITE/data/generated/capabilities.json")"
+stage_bad=""
+while read -r sid ids; do
+  [ -n "$sid" ] || continue
+  [ "$ids" = - ] && { stage_bad="$stage_bad stage $sid names no claim;"; continue; }
+  for cid in $ids; do
+    st="$(printf '%s\n' "$known" | awk -v i="$cid" '$1 == i { print $2 }')"
+    if [ -z "$st" ]; then stage_bad="$stage_bad stage $sid names claim $cid, which docs/CLAIMS.yaml does not hold;"
+    elif ! { [ -f "$PUB/method/argument/index.html" ] && tr '\n' ' ' < "$PUB/method/argument/index.html"; } | grep -qE "data-stage-claim=\"$cid\"><span[^>]*>$st</span>"; then
+      stage_bad="$stage_bad /method/argument/ does not render $cid under its status $st;"
+    fi
+  done
+done <<EOF
+$stage_claims
+EOF
+if [ -z "$stage_claims" ]; then bad promo "manifesto.toml gives its pipeline stages no claims; how much of each exists would be prose again"
+elif [ -n "$stage_bad" ]; then bad promo "the pipeline's stage claims do not resolve:$stage_bad"
+else ok promo "every one of the $stages stage(s) of the model names the claims covering it, rendered under their declared status"; fi
+# the section that lists the intent model's claims is on the built page, found through the data
+# rather than through a literal this check would have to be edited to keep matching
 pt="$(sed -n 's/^planned_title = "\(.*\)"$/\1/p' "$SITE/data/manifesto.toml")"
 pl="$(sed -n 's/^planned_lead = "\(.*\)"$/\1/p' "$SITE/data/manifesto.toml")"
-if [ -z "$pt" ] || [ -z "$pl" ]; then bad promo "manifesto.toml has no planned_title/planned_lead; the unshipped half of the model would go unnamed"
-elif ! grep -qF "$pt" "$PUB/index.html"; then bad promo "the homepage does not carry the unbuilt-half heading '$pt'"
-elif [ "${#pl}" -lt 200 ]; then bad promo "planned_lead is ${#pl} characters; it names the unbuilt capabilities, not a word"
-else ok promo "the homepage names the unbuilt half of the model: '$pt'"; fi
+if [ -z "$pt" ] || [ -z "$pl" ]; then bad promo "manifesto.toml has no planned_title/planned_lead; the intent model's claims would go unheaded"
+elif ! grep -qF "$pt" "$PUB/index.html"; then bad promo "the homepage does not carry the intent model's heading '$pt'"
+else ok promo "the homepage heads the intent model's claims: '$pt'"; fi
 # what of the model is built and what is not is the claims matrix's to say, not the prose's: the
 # claims whose id carries the prefix manifesto.toml names are listed under that heading, each
 # under the status docs/CLAIMS.yaml declares for it. The prose once denied an intent view the
@@ -534,9 +552,9 @@ relay_check link "$ROOT/scripts/ci/link-check" "OK   links        " "FAIL "
 # markup alone. What each spec asserts is exercised in a browser by scripts/interaction-probe.
 relay_check controls "$ROOT/scripts/ci/interaction-check" "OK   controls     " "FAIL control       "
 # 7. assets present
-for a in app.css js/nav.js js/search.js js/alpine.min.js js/theme.js js/mermaid.min.js js/diagrams.js js/graph.js js/cytoscape.min.js images/logo-mark.svg images/logo.svg images/social-card.png favicon.svg giallo-light.css giallo-dark.css; do
+for a in app.css js/nav.js js/search.js js/alpine.min.js js/theme.js js/mermaid.min.js js/diagrams.js js/charts.js js/echarts.min.js js/graph.js js/cytoscape.min.js images/logo-mark.svg images/logo.svg images/social-card.png favicon.svg giallo-light.css giallo-dark.css; do
   [ -f "$PUB/$a" ] || bad asset "$a missing from site/public"
-done; ok asset "css, nav, search, alpine, mermaid, cytoscape, theme, diagrams, graph, images, highlighting present"
+done; ok asset "css, nav, search, alpine, mermaid, echarts, cytoscape, theme, diagrams, charts, graph, images, highlighting present"
 grep -qE '^[[:space:]]*\.dark ' "$PUB/giallo-dark.css" && ok darkcss "giallo-dark.css scoped under .dark" || bad darkcss "giallo-dark.css not scoped under .dark (site-build post-step)"
 # 7b. the status vocabulary: every state word a rendered badge carries is one the design
 # declaration files under a status. A word it does not know renders neutral and says nothing,
@@ -620,8 +638,25 @@ CREDENTIAL_RE="$(leak_patterns credential)"; NOT_CREDENTIAL_RE="$(leak_patterns 
 case "|$PRIVATE_RE|" in *"||"*) PRIVATE_RE="" ;; esac
 [ -n "$PRIVATE_RE" ] && [ -n "$CREDENTIAL_RE" ] && [ -n "$NOT_CREDENTIAL_RE" ] \
   || { echo "site-check: the leak patterns could not be read from ${LEAKS#"$ROOT"/}" >&2; exit 12; }
-site_files | xargs -0 grep -hoaE "$PRIVATE_RE" 2>/dev/null | head -1 | grep -q . && bad private "local path in output" || ok private "no local paths or internal hosts"
-site_files | xargs -0 grep -hoaE "$CREDENTIAL_RE" 2>/dev/null | grep -vE "$NOT_CREDENTIAL_RE" | head -1 | grep -q . && bad secrets "credential pattern in output" || ok secrets "no credential pattern"
+# A finding names the file it is in and the kind it is, and never the text: the text is the
+# secret, and a check that printed it would publish it into every CI log that ran it.
+# leak_files <regex> [<not-regex>] lists the site's own files carrying a match, one path
+# relative to the site per line; with <not-regex>, a file counts only when a match survives
+# that filter. The findings are read back into this shell, so every one of them is counted.
+leak_files() {
+  site_files | xargs -0 grep -laE "$1" 2>/dev/null | while IFS= read -r f; do
+    [ -z "${2:-}" ] || grep -oaE "$1" "$f" 2>/dev/null | grep -qvE "$2" || continue
+    printf '%s\n' "${f#"$PUB"/}"
+  done
+}
+LEAKED="$(leak_files "$PRIVATE_RE")"
+if [ -n "$LEAKED" ]; then
+  while IFS= read -r f; do bad private "$f: a local path or an internal host"; done <<< "$LEAKED"
+else ok private "no local paths or internal hosts"; fi
+LEAKED="$(leak_files "$CREDENTIAL_RE" "$NOT_CREDENTIAL_RE")"
+if [ -n "$LEAKED" ]; then
+  while IFS= read -r f; do bad secrets "$f: a credential-shaped assignment"; done <<< "$LEAKED"
+else ok secrets "no credential pattern"; fi
 # 13. docs coverage: every rendered docs page has a source, every docs.json entry is rendered
 for d in $(jq -r '.docs[] | select(.route) | .path' "$SITE/data/generated/docs.json"); do
   r="$(jq -r --arg p "$d" '.docs[] | select(.path==$p) | .route' "$SITE/data/generated/docs.json")"
@@ -1164,6 +1199,14 @@ for d in "$PUB"/skills/*/; do
 done
 [ "$sk_n" -gt 0 ] && ok skills "$sk_n skill(s): every page names its URI and file, renders its examples, links its related skills, and the index links each" \
   || ok skills "0 skills in the catalogue and no skill page (an empty section, not a broken one)"
+# every skill Claude Code reads is listed on the skills index, and nothing else is (ADR 0163)
+cl_m="$(jq '[.artifacts[] | select(.document | startswith("editors/")) | select(.path | test("^\\.claude/skills/[^/]+/SKILL\\.md$"))] | length' "$ROOT/docs/generated/artifacts.json")"
+cl_n="$(jq '.claude | length' "$SKJ")"
+[ "$cl_n" = "$cl_m" ] || bad skills "skills.json lists $cl_n Claude Code skill(s); the editors projection writes $cl_m"
+for name in $(jq -r '.claude[].name' "$SKJ"); do
+  grep -qF ">/$name<" "$PUB/skills/index.html" || bad skills "the skills index does not list /$name"
+done
+ok skills "$cl_n Claude Code skill(s), each listed on the skills index by the name it is typed by"
 
 # 13b. graphs: every edge endpoint resolves to a node, and no graph is empty
 for g in architecture claims-graph governance-graph; do

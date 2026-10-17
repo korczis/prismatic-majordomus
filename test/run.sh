@@ -50,6 +50,30 @@
 # `git status` of the checkout changed, the run fails naming the paths.
 set -u
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+
+# A case builds repositories of its own, and git tells a hook which repository it is in
+# through the environment: a pre-push hook run from a linked worktree gets GIT_DIR. A fixture
+# that inherits it runs `git init`, `git branch -M`, `git commit`, `git config` and `git tag`
+# in the repository the suite was started from. On 2026-10-10 that renamed a feature branch
+# to master, moved master and gh-pages onto fixture commits, and left a fixture identity and
+# core.bare=true in the configuration every worktree shares. So every variable git reads its
+# repository from is dropped here, before a case can run: the ones git itself names, and
+# five by name for a git too old to list them. The two that carry `git -c` settings stay,
+# as they do when git enters another repository itself: they name no repository, and
+# test/lib.sh keeps a case's git quiet through them. Case 1030 holds this and removes it to
+# show what it prevents; scripts/ci/run-plan does the same for the gates it dispatches.
+for mj_git_local in $(git rev-parse --local-env-vars 2>/dev/null) \
+    GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_COMMON_DIR GIT_PREFIX; do
+  case "$mj_git_local" in GIT_CONFIG_PARAMETERS|GIT_CONFIG_COUNT) continue ;; esac
+  unset "$mj_git_local"
+done
+unset mj_git_local
+# The interface a server binds is the operator's choice for this machine, not a case's:
+# .envrc.local exports MAJORDOMUS_HTTP_HOST=0.0.0.0 where the owner wants the shared
+# server on the LAN, and a case that starts a server with it inherits a wildcard bind
+# and fails what it measures about the default (case 85). A case that wants another
+# interface states it itself.
+unset MAJORDOMUS_HTTP_HOST
 MJ="$ROOT/bin/majordomus"; export MJ ROOT
 pass=0; fail=0; skipped=0; failed_names=""; skipped_names=""
 # The status a case exits with to say it declined to run; test/lib.sh's `skip` uses it.
@@ -120,9 +144,14 @@ run_case() {
   set -m
   # the runner's own selection never reaches a case: a case that runs test/run.sh itself
   # (123, 413, 26, 94 do) would otherwise run its own shard of a suite it did not choose
+  #
+  # stdin is closed. Bash gives a background job /dev/null for stdin only while job control
+  # is off, and it is on here, so every case inherited the runner's stdin. A case whose
+  # command reads stdin (54's `session close` reads a summary) then waited for ever whenever
+  # that was an open pipe: 39 minutes on 2026-10-09, with nothing printed.
   ( cd "$T" && unset MJ_TEST_WORKER MJ_TEST_LOGDIR MJ_TEST_JOBS MJ_TEST_REPORT \
       MJ_TEST_SHARD MJ_TEST_DURATIONS MJ_TEST_LIST \
-    && T="$T" MJ_SKIP_MARK="$mark" bash -eu "$case" ) &
+    && T="$T" MJ_SKIP_MARK="$mark" bash -eu "$case" < /dev/null ) &
   pid=$!
   set +m
   if [ "$limit" = 0 ]; then

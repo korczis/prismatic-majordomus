@@ -63,7 +63,13 @@ pub fn screen(ctx: &Context) -> View {
         "How the delivery stands, read from the repository itself.",
         &lead,
         vec![
-            kpi_to(kpi_state("Health", &a(HEALTH).read("/status")), "#health"),
+            // the repository's verdict, not the whole report's: the whole one is `unknown`
+            // in every process that is no server, a published snapshot's reader among them,
+            // and the panel this leads to still lists every dimension with its own word
+            kpi_to(
+                kpi_state("Repository health", &a(HEALTH).read("/repository")),
+                "#health",
+            ),
             kpi_to(
                 kpi("Released", &a(RELEASES).read("/latest/version")),
                 super::delivery::ROUTE,
@@ -80,10 +86,7 @@ pub fn screen(ctx: &Context) -> View {
                 kpi("Issues blocked", &a(PLAN).read("/counts/by_status/BLOCKED")),
                 super::roadmap::ROUTE,
             ),
-            kpi_to(
-                kpi_count("Mesh machines", &a(MESH).read("/machines")),
-                super::mesh::ROUTE,
-            ),
+            kpi_to(mesh_kpi(a(MESH)), super::mesh::ROUTE),
         ],
     );
 
@@ -264,6 +267,16 @@ pub fn releases_panel(releases: &Answer, version: &Answer, limit: Option<usize>)
         body,
         &[releases, version],
     )
+}
+
+/// The mesh as one figure: how many machines the runtime knows, and where no runtime is
+/// active in this process, that — never a count. A process without a mesh runtime knows no
+/// machine because it asked nobody, and `0` there would read as a repository nobody works on.
+fn mesh_kpi(mesh: &Answer) -> El {
+    match mesh.read("/active").state {
+        Availability::Available(Value::Bool(false)) => kpi("Mesh active", &mesh.read("/active")),
+        _ => kpi_count("Mesh machines", &mesh.read("/machines")),
+    }
 }
 
 /// The machines this runtime knows, with the liveness of each runtime.
@@ -679,6 +692,58 @@ mod tests {
         assert!(html.contains(&format!("data-panel-src=\"{PULL_REQUESTS_PANEL}\"")));
     }
 
+    /// The first figures of the screen are what a publication shows first, and the process
+    /// that reads a snapshot is no server: it holds no board and runs no mesh. The health
+    /// figure is therefore the repository's verdict, decided in that process, and the mesh
+    /// figure says no runtime is active here instead of counting zero machines.
+    #[test]
+    fn the_first_figures_are_decided_where_no_server_runs() {
+        let repo = SyntheticRepository::new(Shape::default()).expect("a synthetic repository");
+        let ctx = repo.context().expect("a context");
+        let html = screen(&ctx).main.render();
+        let cite = "read from health.report /repository";
+        let at = html
+            .find(cite)
+            .expect("the health figure cites the repository's verdict");
+        let tile = &html[at..];
+        let tile = &tile[..tile
+            .find("mj-ui-kpi-source")
+            .expect("the figure's source line")];
+        assert!(tile.contains("Repository health"), "{tile}");
+        // the word shown is the report's own, over the repository's dimensions alone
+        let report = ask(&ctx, HEALTH).value.expect("a health report");
+        let undecided: Vec<&str> = report["checks"]
+            .as_array()
+            .expect("checks")
+            .iter()
+            .filter(|c| c["status"] == "unknown")
+            .filter_map(|c| c["id"].as_str())
+            .collect();
+        assert!(
+            undecided.contains(&"peers") && undecided.contains(&"mesh"),
+            "{undecided:?}"
+        );
+        assert_eq!(report["status"], "unknown");
+        let word = report["repository"]
+            .as_str()
+            .expect("the repository's verdict");
+        assert!(tile.contains(&format!(">{word}<")), "{word}: {tile}");
+        let only_the_process = undecided
+            .iter()
+            .all(|id| crate::capability::builtin::health::PROCESS_DIMENSIONS.contains(id));
+        assert_eq!(word != "unknown", only_the_process, "{undecided:?}");
+        assert!(!html.contains("read from health.report /status"));
+        assert!(html.contains("Mesh active"), "no runtime here is said so");
+        assert!(!html.contains("Mesh machines"), "and never counted as zero");
+
+        // where a runtime is active the figure is the count of the machines it knows
+        let mut active = ask(&ctx, MESH);
+        active.value = Ok(serde_json::json!({ "active": true, "machines": [{}, {}] }).into());
+        let figure = mesh_kpi(&active).render();
+        assert!(figure.contains("Mesh machines"), "{figure}");
+        assert!(figure.contains(">2<"), "{figure}");
+    }
+
     /// A selected pull request opens its detail from the queue's own answer, with its gates
     /// and their verdicts; a number the queue did not observe says so.
     #[test]
@@ -694,7 +759,7 @@ mod tests {
                     "gates": [{ "gate": "base", "passed": true }, { "gate": "ci", "passed": false }],
                     "reasons": ["behind_master:2"], "next_action": "bring master in"
                 }]}
-            })),
+            }).into()),
             took: std::time::Duration::ZERO,
             standing: crate::ui::source::Standing::NOW,
         };
@@ -735,7 +800,7 @@ mod tests {
         assert!(health_panel(&failed).render().contains("could not answer"));
         let unobserved = Answer {
             source: QUEUE,
-            value: Ok(serde_json::json!({ "observed": false, "reason": "never refreshed" })),
+            value: Ok(serde_json::json!({ "observed": false, "reason": "never refreshed" }).into()),
             ..failed.clone()
         };
         assert!(queue_panel(&unobserved, None)
@@ -749,7 +814,7 @@ mod tests {
             source,
             route: None,
             exposure: Exposure::default(),
-            value: Ok(value),
+            value: Ok(value.into()),
             took: std::time::Duration::ZERO,
             standing: crate::ui::source::Standing::NOW,
         }
