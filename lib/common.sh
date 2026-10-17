@@ -743,6 +743,11 @@ mj_path_contains() {
   local a b
   mj_norm_path_into a "$1" || a="$1"
   mj_norm_path_into b "$2" || b="$2"
+  # `.` is the repository itself: `start` accepts it as a scope, and read as a literal it
+  # contained no path at all, so a task scoped to the whole repository judged every file
+  # it changed to be outside its scope (case 3190). A path that escapes the repository
+  # is refused by the normalisation and is still not contained.
+  if [ "$a" = . ]; then mj_norm_path_into b "$2" && return 0; return 1; fi
   case "$b" in "$a"|"$a"/*) return 0 ;; esac; return 1
 }
 
