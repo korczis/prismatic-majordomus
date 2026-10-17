@@ -39,7 +39,7 @@ before. What it does that the hand-made arrangement below did not:
 |---|---|
 | `init` writes two lines to `.gitignore`, restored with `git checkout .gitignore` | `.gitignore` is not written |
 | the exclude lines are typed, and nothing checks them | one marked block, verified by `init`, by the installer and by every `doctor` |
-| the policy is narrowed so that `update` writes one private file | `update` covers each target before writing it; a target the project tracks is refused whole, with the advice to point that projection at `CLAUDE.local.md` |
+| the policy is narrowed so that `update` writes one private file | `init --personal` fits the seeded projections to the repository: a target the project already tracks moves to the file its provider reads for one person (`personal_target` in [`share/providers.yaml`](../share/providers.yaml), `CLAUDE.local.md` for Claude Code), and a provider with no such file is left out. `update` covers each target before writing it, and still refuses, whole, a policy that names a tracked target |
 | `capture install` was not run, because it writes under `.claude/` | it covers what it writes the same way |
 | the session record's commit and push are turned off in the policy | under a personal layer neither happens, whatever the policy says |
 | the server needs `--discovery filesystem`, started before the client | discovery walks the work tree by itself when the layer is tracked nowhere |
@@ -47,7 +47,12 @@ before. What it does that the hand-made arrangement below did not:
 | converting means deleting the exclude lines and `init --extend` | `majordomus init --extend --shared` |
 
 The hook is still yours to add, and what the organisation's policy says about tools is
-still the organisation's to say.
+still the organisation's to say. Where to add it is git's answer, and `init` prints it:
+under `.git/hooks/` the two lines go straight in. Where `core.hooksPath` points at a
+directory the project tracks, the hook git calls is the project's; a dispatcher that runs
+`<hook>.d/` leaves room for a file of your own, `<hook>.d/majordomus-personal`, which
+`init --personal` covers before it exists, and a tracked hook with no such directory has
+no place of your own, which `init` says instead of advising an edit to a shared file.
 
 ## What it is for
 

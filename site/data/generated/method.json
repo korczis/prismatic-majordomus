@@ -38,8 +38,8 @@
     }
   ],
   "diagrams": {
-    "axes": "flowchart TD\n    I[\"Intent<br/><small>one task, started once</small>\"]\n    A0[\"Profile<br/><small>4 profiles</small>\"]\n    A1[\"Workflow<br/><small>4 workflows</small>\"]\n    C[\"Capability<br/><small>199 · declared once</small>\"]\n    I --> A0 --> A1 --> C\n    S0[\"Command line<br/><small>108 of 199</small>\"]\n    C --> S0\n    S1[\"HTTP + OpenAPI<br/><small>194 of 199</small>\"]\n    C --> S1\n    S2[\"MCP tools and resources<br/><small>190 of 199</small>\"]\n    C --> S2\n    M([\"Model<br/><small>chosen per run · named in no file of the layer</small>\"])\n    A1 -. \"executed by\" .-> M",
-    "governance": "flowchart TD\n    L0[\"Doctrine<br/><small>10 principles · years</small>\"]\n    L1[\"Policy<br/><small>3 projections · months to years</small>\"]\n    L2[\"Rule<br/><small>48 rules · months</small>\"]\n    L3[\"Enforcement<br/><small>48 validators · the implementation that answers it</small>\"]\n    L4[\"Diagnostic<br/><small>4 reporting commands · one run</small>\"]\n    L0 --> L1 --> L2 --> L3 --> L4\n    L4 -. \"exit 10 · the commit does not land\" .-> L2"
+    "axes": "flowchart TD\n    I[\"Intent<br/><small>one task, started once</small>\"]\n    A0[\"Profile<br/><small>4 profiles</small>\"]\n    A1[\"Workflow<br/><small>4 workflows</small>\"]\n    C[\"Capability<br/><small>202 · declared once</small>\"]\n    I --> A0 --> A1 --> C\n    S0[\"Command line<br/><small>109 of 202</small>\"]\n    C --> S0\n    S1[\"HTTP + OpenAPI<br/><small>197 of 202</small>\"]\n    C --> S1\n    S2[\"MCP tools and resources<br/><small>192 of 202</small>\"]\n    C --> S2\n    M([\"Model<br/><small>chosen per run · named in no file of the layer</small>\"])\n    A1 -. \"executed by\" .-> M",
+    "governance": "flowchart TD\n    L0[\"Doctrine<br/><small>10 principles · years</small>\"]\n    L1[\"Policy<br/><small>3 projections · months to years</small>\"]\n    L2[\"Rule<br/><small>50 rules · months</small>\"]\n    L3[\"Enforcement<br/><small>50 validators · the implementation that answers it</small>\"]\n    L4[\"Diagnostic<br/><small>4 reporting commands · one run</small>\"]\n    L0 --> L1 --> L2 --> L3 --> L4\n    L4 -. \"exit 10 · the commit does not land\" .-> L2"
   },
   "example": {
     "claims": 5,
@@ -83,9 +83,9 @@
         "module": "continuity"
       },
       {
-        "capabilities": 7,
+        "capabilities": 8,
         "cli": 6,
-        "http": 7,
+        "http": 8,
         "mcp": 7,
         "module": "executions"
       },
@@ -146,6 +146,13 @@
         "module": "lifecycle"
       },
       {
+        "capabilities": 5,
+        "cli": 5,
+        "http": 5,
+        "mcp": 5,
+        "module": "worktree"
+      },
+      {
         "capabilities": 4,
         "cli": 4,
         "http": 4,
@@ -186,13 +193,6 @@
         "http": 4,
         "mcp": 4,
         "module": "release"
-      },
-      {
-        "capabilities": 4,
-        "cli": 4,
-        "http": 4,
-        "mcp": 4,
-        "module": "worktree"
       },
       {
         "capabilities": 3,
@@ -416,6 +416,13 @@
         "cli": 0,
         "http": 1,
         "mcp": 1,
+        "module": "guard"
+      },
+      {
+        "capabilities": 1,
+        "cli": 0,
+        "http": 1,
+        "mcp": 1,
         "module": "mcp"
       },
       {
@@ -461,14 +468,14 @@
         "module": "web"
       }
     ],
-    "capabilities": 199,
+    "capabilities": 202,
     "combinations": [
       {
-        "count": 103,
+        "count": 104,
         "surfaces": "cli + http + mcp"
       },
       {
-        "count": 87,
+        "count": 88,
         "surfaces": "http + mcp"
       },
       {
@@ -476,32 +483,32 @@
         "surfaces": "cli"
       },
       {
-        "count": 4,
+        "count": 5,
         "surfaces": "http"
       }
     ],
-    "modules": 57,
+    "modules": 58,
     "surfaces": [
       {
-        "count": 108,
+        "count": 109,
         "id": "cli",
         "label": "Command line"
       },
       {
-        "count": 194,
+        "count": 197,
         "id": "http",
         "label": "HTTP + OpenAPI"
       },
       {
-        "count": 190,
+        "count": 192,
         "id": "mcp",
         "label": "MCP tools and resources"
       }
     ]
   },
   "governance": {
-    "advisory": 6,
-    "blocking": 42,
+    "advisory": 7,
+    "blocking": 43,
     "commands": [
       "check",
       "doctor",
@@ -518,8 +525,13 @@
       "Execution depth is not output verbosity",
       "Parallel work requires isolation"
     ],
-    "rules": 48,
+    "rules": 50,
     "rules_without_principle": [
+      {
+        "route": "/doctrines/knowledge-graph/",
+        "slug": "knowledge-graph",
+        "title": "Knowledge graph integrity"
+      },
       {
         "route": "/doctrines/knowledge-integrity/",
         "slug": "knowledge-integrity",
@@ -556,6 +568,11 @@
         "title": "A record's changed_files names the work, not the tool's exhaust"
       },
       {
+        "route": "/doctrines/task-on-the-mesh/",
+        "slug": "task-on-the-mesh",
+        "title": "A task on a repository whose mesh is enabled works on the mesh"
+      },
+      {
         "route": "/doctrines/use-case-coverage/",
         "slug": "use-case-coverage",
         "title": "Use-case coverage"
@@ -577,8 +594,8 @@
       }
     ],
     "rules_without_test": [],
-    "tests": 40,
-    "validators": 48
+    "tests": 42,
+    "validators": 50
   },
   "layers": [
     {
@@ -601,7 +618,7 @@
     },
     {
       "artifact": "a rule file with a class, a validator, the commands that run it and the test that proves it",
-      "count": 48,
+      "count": 50,
       "level": "Rule",
       "lifetime": "months",
       "question": "What exactly must, or must not, be?",
@@ -610,7 +627,7 @@
     },
     {
       "artifact": "a validator, dispatched from a command, wired to a git hook and to CI",
-      "count": 48,
+      "count": 50,
       "level": "Enforcement",
       "lifetime": "the implementation that answers it",
       "question": "How does a machine decide it?",

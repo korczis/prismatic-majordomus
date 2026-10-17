@@ -27,7 +27,7 @@ use std::io::Write;
 use std::time::Duration;
 
 use crate::app::App;
-use crate::cli::{EnvArgs, EnvCommand, OutputFormat, RepoArgs, DEFAULT_IDLE_SECONDS, DEFAULT_PORT};
+use crate::cli::{EnvArgs, EnvCommand, OutputFormat, RepoArgs};
 use crate::environment::preflight;
 use crate::environment::render::{banner, BannerMode, Presentation};
 use crate::environment::shell::{export, Dialect};
@@ -499,7 +499,8 @@ pub const RUNTIME_ENV: &str = "MAJORDOMUS_RUNTIME";
 /// "a shell is not a client".
 ///
 /// What resolved it is that the objection was about a *process without an owner*, not about
-/// who typed the `cd`: a server `ensure` starts is given [`DEFAULT_IDLE_SECONDS`] and ends
+/// who typed the `cd`: a server `ensure` starts is given the declared `server.idle_seconds`
+/// ([`crate::cli::DEFAULT_IDLE_SECONDS`] when none is declared) and ends
 /// when no peer has been attached for that long, so ADR 0003's line stays true in time.
 /// ADR 0043 records that, and the entry file's one call is this.
 ///
@@ -711,8 +712,9 @@ fn ensure_runtime(repository: &Repository, policy: Option<&LoadedPolicy>, wait: 
     }
     let c = match crate::commands::serve::converge(
         repository,
-        DEFAULT_PORT,
-        DEFAULT_IDLE_SECONDS,
+        crate::cli::checkout_port(repository.root()),
+        // the declared `server.idle_seconds`, read with the policy above (I2701)
+        crate::lease::timings().idle.as_secs(),
         wait,
     ) {
         Ok(c) => c,
@@ -906,6 +908,31 @@ mod tests {
         assert_eq!(
             banner_command(&args, Some("off"), None).expect("no work"),
             0
+        );
+    }
+
+    /// An entry with no policy converges on the checkout's own port and the declared idle
+    /// life. A start another live process has already claimed is waited on rather than
+    /// doubled, and with no time to wait the entry reports that it started nothing.
+    #[test]
+    fn an_entry_whose_start_another_process_claimed_starts_nothing() {
+        let fixture = crate::synthetic::SyntheticRepository::small().unwrap();
+        let root = fixture.root().canonicalize().unwrap();
+        let repo = Repository::discover(&root).unwrap();
+        let lease = crate::lease::lease_path(&repo);
+        // the claim `serve` writes beside the lease, naming this live process
+        let claim = lease.with_file_name("server.spawn");
+        std::fs::create_dir_all(claim.parent().unwrap()).unwrap();
+        std::fs::write(&claim, std::process::id().to_string()).unwrap();
+        assert!(!ensure_runtime(&repo, None, Duration::ZERO));
+        assert!(
+            !lease.exists(),
+            "no server was started, so no lease was written"
+        );
+        assert_eq!(
+            std::fs::read_to_string(&claim).unwrap(),
+            std::process::id().to_string(),
+            "the live claim is left to the process that holds it"
         );
     }
 }
