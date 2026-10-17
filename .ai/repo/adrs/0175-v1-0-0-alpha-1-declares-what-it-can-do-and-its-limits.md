@@ -48,14 +48,16 @@ the claims matrix (`docs/CLAIMS.yaml`) or a case does not hold. A claim that is 
 ### What v1.0.0-alpha.1 can do
 
 - **Install and verify itself** on macOS (aarch64, x86_64) and Linux (x86_64 and aarch64,
-  glibc and musl): `curl -fsSL https://majordomus.dev/install.sh | sh` (`docs/INSTALL.md`).
+  glibc and musl), pinned by name, because a pre-release is never the latest release:
+  `curl -fsSL https://majordomus.dev/install.sh | sh -s -- --version v1.0.0-alpha.1`
+  (`docs/INSTALL.md`).
   The supported targets are `share/distribution.yaml`'s; the installer verifies every
   archive before installing it (`installer-verifies-before-installing`, case
   `85_installer.sh`), a release is complete on every required target or absent
   (`release-is-complete-or-absent`), and the advertised command is derived, not typed
   (`install-command-is-derived`). Feature `install`.
 - **Supervise a repository's AI layer** under `.ai/`: scoped tasks whose scope is enforced
-  at check, finish and push (`scoped-task`, `scope-enforcement`), a finish contract that
+  at check and finish (`scoped-task`, `scope-enforcement`), a finish contract that
   refuses a task with unmet obligations and records the refusal (`finish-contract`,
   `finish-refusal-is-recorded`), handovers without transcripts (`handover-record`,
   `no-transcripts`), and context documents resolved by path (`context-documents`).
@@ -123,8 +125,24 @@ the claims matrix (`docs/CLAIMS.yaml`) or a case does not hold. A claim that is 
   (pull requests #1309, #1343, #1345) are outside the alpha.
 - **No local inference.** Observing and routing to local model runtimes is planned for after
   the alpha; the catalogue's local vendors declare no model (`share/models.yaml`), and the
-  crate calls no model (`no-network`).
+  crate calls no model.
 - **Deployments are a draft feature** (`.ai/repo/features/deployments.md`).
+- **Some modules are experimental.** The capability registry marks the modules delivery,
+  guard, integration, mcp, mesh, models, monitor and reasoning `experimental`
+  (`docs/generated/registry.json`): their capabilities work and are tested, and their
+  inputs, outputs and names may still change before a stable release.
+- **The executable uses the network where it is asked to.** The shell tool performs no network
+  call except the declared loopback peer probe (`no-network`); the Rust executable is outside
+  that scan. `majordomus serve` and `mcp` bind an HTTP server, on loopback unless `--host` or
+  `MAJORDOMUS_HTTP_HOST` names another interface; the mesh links the runtimes a policy enrols;
+  and the integration commands ask the forge through `gh` when they are run. None of these
+  calls a model or sends telemetry.
+- **A server bound beyond loopback exposes the layer to reading.** With the mesh enabled the
+  server binds an interface other hosts can reach. Any host that can reach it can then read
+  the repository's AI layer, its diagnostics and its peers, without authentication and
+  unencrypted. A write from another host is refused (HTTP 403) unless it is a message signed
+  by a linked mesh node (ADR 0126). The server warns about this at start. Bind `127.0.0.1`
+  unless a reachable server is intended, and reach a remote one over a private network.
 
 ## Alternatives rejected
 
