@@ -200,7 +200,7 @@ pub fn screen(ctx: &Context, query: &[(String, String)]) -> View {
                         ),
                     )
                     .child(el("td").child(state(i, "stage")))
-                    .child(el("td").child(state(i, "verdict")))
+                    .child(el("td").child(super::intent::verdict(i)))
             })
             .collect::<Vec<_>>();
         table(
