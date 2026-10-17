@@ -13,6 +13,7 @@ scope:
   - "scripts/site-deploy"
   - "scripts/ci/install-check"
   - "scripts/ci/release-check"
+  - "share/install/install.sh.in"
   - "site/static/install.sh"
   - ".github/workflows/release.yml"
   - "test/cases/3222_an_alpha_publishes_beside_the_latest_release.sh"
@@ -33,4 +34,23 @@ evidence_required:
   - "prerelease_cases"
   - "mutation_check"
 created_at: 2026-10-17
-updated_at: 2026-10-17
+updated_at: 2026-10-17T18:38:30Z
+started_at: 2026-10-17T18:38:11Z
+started_event: sha256:74e4f421c63109c8452d7a41582ee3d8ca3566ad84fa19f7e7c87e7fd18a67c9
+verified_at: 2026-10-17T18:38:18Z
+verified_event: sha256:1668a4c26a9cf60020878be3713bf082cdc73c789aa9cce9767d77726b5240d1
+completed_at: 2026-10-17T18:38:30Z
+completed_event: sha256:8754153e554924cf63076fb2976125705db6d3fd81e8acb2b8aba05fd70efda6
+evidence:
+  - covers: prerelease_cases
+    type: test
+    command: "MJ_TEST_JOBS=4 bash test/run.sh 3222_an_alpha_publishes_beside_the_latest_release 3223_the_release_smoke_installs_an_alpha_pinned 3224_a_published_alpha_owes_its_record 3225_the_installer_takes_an_alpha_only_by_name 85_installer 86_installer_platform"
+    result: "tests: 6 passed, 0 failed (run 2026-10-17 ~18:35Z at 261c45caf74); regression 1041 3021 3029 97_install_gate 87 26 103 1087 green at 2d4131a4a99"
+    commit: 261c45caf74149650dcca26fb9bcf13b65dbf82b
+    recorded_at: 2026-10-17T18:38:24Z
+  - covers: mutation_check
+    type: test
+    command: "per assertion: mutate the fix, run its case, restore (scratchpad mutate.py)"
+    result: "9 of 9 mutations killed: site-deploy prerelease branch and latest refusal (3222); install-check latest refusal, pin flag, pinned install line (3223); release-check tag filter and semver precedence (3224); install.sh refusal at 2d4131a4a99 and again at 261c45caf74 (3225). release.yml smoke is untested by run: actionlint and shell-lint clean only."
+    commit: 261c45caf74149650dcca26fb9bcf13b65dbf82b
+    recorded_at: 2026-10-17T18:38:27Z

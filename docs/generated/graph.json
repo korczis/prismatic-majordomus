@@ -39703,6 +39703,8 @@
             "install.sh refuses metadata that resolves to a pre-release it was not asked for by name, and resolves one asked for by name",
             "release.yml's smoke waits on a pre-release's tag file and fails when latest.json names it"
           ],
+          "completed_at": "2026-10-17T18:38:30Z",
+          "completed_event": "sha256:8754153e554924cf63076fb2976125705db6d3fd81e8acb2b8aba05fd70efda6",
           "created_at": "2026-10-17",
           "current_state": "A pre-release tag cannot be published: the publish job and the smoke require latest.json to name it.",
           "depends_on": [],
@@ -39719,6 +39721,7 @@
             "scripts/site-deploy",
             "scripts/ci/install-check",
             "scripts/ci/release-check",
+            "share/install/install.sh.in",
             "site/static/install.sh",
             ".github/workflows/release.yml",
             "test/cases/3222_an_alpha_publishes_beside_the_latest_release.sh",
@@ -39727,11 +39730,15 @@
             "test/cases/3225_the_installer_takes_an_alpha_only_by_name.sh"
           ],
           "slug": "an-alpha-is-published-as-a-prerelease",
-          "updated_at": "2026-10-17",
+          "started_at": "2026-10-17T18:38:11Z",
+          "started_event": "sha256:74e4f421c63109c8452d7a41582ee3d8ca3566ad84fa19f7e7c87e7fd18a67c9",
+          "updated_at": "2026-10-17T18:38:30Z",
           "validation": [
             "bash test/run.sh 3222_an_alpha_publishes_beside_the_latest_release 3223_the_release_smoke_installs_an_alpha_pinned 3224_a_published_alpha_owes_its_record 3225_the_installer_takes_an_alpha_only_by_name",
             "bash scripts/ci/shell-lint"
-          ]
+          ],
+          "verified_at": "2026-10-17T18:38:18Z",
+          "verified_event": "sha256:1668a4c26a9cf60020878be3713bf082cdc73c789aa9cce9767d77726b5240d1"
         }
       },
       {
