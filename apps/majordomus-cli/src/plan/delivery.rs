@@ -673,7 +673,7 @@ fn latest_path() -> String {
 
 /// The published version in live mode: the `latest.json` of the commit the newest
 /// successful Pages deployment published.
-fn published_live(root: &Path) -> Result<(String, String, String), String> {
+pub(crate) fn published_live(root: &Path) -> Result<(String, String, String), String> {
     let observation = crate::deploy::observed::load(root)?.ok_or_else(|| {
         "no deployment of this repository has been observed from this checkout; \
          `majordomus served forge` records one"

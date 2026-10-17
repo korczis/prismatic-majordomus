@@ -769,6 +769,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:plan.flight",
+      "path": "/evidence/capabilities/plan-flight/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:plan.issues",
       "path": "/evidence/capabilities/plan-issues/"
     },
@@ -5518,6 +5523,16 @@
       "members": [
         "command:plan drift"
       ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:plan.flight": {
+      "kind": "capability",
+      "id": "plan.flight",
+      "page": "/evidence/capabilities/plan-flight/",
+      "programs": [],
+      "members": [],
       "routes": [],
       "mechanisms": [],
       "findings": []
@@ -20717,6 +20732,18 @@
       "mechanisms": [],
       "findings": []
     },
+    "mcp:majordomus_plan_flight": {
+      "kind": "mcp",
+      "id": "majordomus_plan_flight",
+      "alias_of": "capability:plan.flight",
+      "programs": [],
+      "members": [
+        "capability:plan.flight"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
     "mcp:majordomus_plan_issues": {
       "kind": "mcp",
       "id": "majordomus_plan_issues",
@@ -27805,6 +27832,7 @@
     "crate:shared_units",
     "crate:tool_input_schemas",
     "crate:ui_links",
+    "crate:ui_roadmap",
     "crate:worktree",
     "suite:09_site_mobile_first",
     "suite:1023_a_branch_cannot_widen_the_mesh_trust",
@@ -27892,6 +27920,7 @@
     "suite:3066_a_session_joins_the_mesh_at_start",
     "suite:3069_an_edit_no_claim_covers_is_refused",
     "suite:3103_the_roadmap_draws_every_milestone",
+    "suite:3104_the_ui_roadmap_reads_delivery",
     "suite:310_rustdoc_projection",
     "suite:318_a_partial_sweep_says_so",
     "suite:330_a_contract_is_the_kind_it_declares",

@@ -1375,6 +1375,15 @@
         "status": "query"
       },
       {
+        "id": "capability:plan.flight",
+        "kind": "capability",
+        "label": "plan.flight",
+        "summary": "Where the work is now",
+        "route": "/cockpit/capabilities/plan.flight",
+        "source": "apps/majordomus-cli/src/capability/builtin/plan.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:plan.issues",
         "kind": "capability",
         "label": "plan.issues",
@@ -38253,7 +38262,7 @@
             "test/cases/3104_the_ui_roadmap_reads_delivery.sh"
           ],
           "slug": "the-ui-roadmap-reads-delivery",
-          "updated_at": "2026-10-16",
+          "updated_at": "2026-10-16T15:46:53Z",
           "validation": [
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test ui_roadmap",
             "bash test/run.sh 3104_the_ui_roadmap_reads_delivery"
@@ -55782,6 +55791,13 @@
         "source": "test/cases/3103_the_roadmap_draws_every_milestone.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3104_the_ui_roadmap_reads_delivery.sh",
+        "kind": "test",
+        "label": "test/cases/3104_the_ui_roadmap_reads_delivery.sh",
+        "route": "/cockpit/objects/test/test-cases-3104-the-ui-roadmap-reads-delivery-sh",
+        "source": "test/cases/3104_the_ui_roadmap_reads_delivery.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/310_rustdoc_projection.sh",
         "kind": "test",
         "label": "test/cases/310_rustdoc_projection.sh",
@@ -62726,6 +62742,21 @@
       },
       {
         "source": "capability:plan.drift",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:plan.flight",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:plan.flight",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:plan.flight",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -86675,6 +86706,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3104_the_ui_roadmap_reads_delivery.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/310_rustdoc_projection.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -91686,6 +91722,11 @@
       },
       {
         "source": "module:plan",
+        "target": "capability:plan.flight",
+        "kind": "composes"
+      },
+      {
+        "source": "module:plan",
         "target": "capability:plan.issues",
         "kind": "composes"
       },
@@ -91981,8 +92022,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2891,
-      "edges": 6347,
+      "nodes": 2893,
+      "edges": 6352,
       "acyclic": false,
       "truncated": false
     }

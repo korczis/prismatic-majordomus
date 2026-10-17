@@ -36,6 +36,7 @@ use crate::index::Index;
 
 pub(crate) mod delivery;
 pub(crate) mod drift;
+pub(crate) mod flight;
 
 /// The kind of a milestone record.
 pub const MILESTONE: &str = "milestone";

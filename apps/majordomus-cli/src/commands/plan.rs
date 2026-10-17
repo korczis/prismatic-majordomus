@@ -441,5 +441,12 @@ mod tests {
             Err(Error::Protocol { reason }) => assert!(reason.contains("window"), "{reason}"),
             other => panic!("expected a protocol error, got {other:?}"),
         }
+        // a directory that is no git work tree has no history, and both say so
+        for path in [["plan", "delivery"], ["plan", "drift"]] {
+            match execute(&ctx, &path, json!({})) {
+                Err(Error::Protocol { reason }) => assert!(!reason.is_empty()),
+                other => panic!("{path:?} outside a repository answered {other:?}"),
+            }
+        }
     }
 }

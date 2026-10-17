@@ -50,7 +50,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `pack` | Source pack | behaviorally_verified | 2 | [`modules/pack.md`](modules/pack.md) |
 | `peers` | Peers | behaviorally_verified | 2 | [`modules/peers.md`](modules/peers.md) |
 | `perf` | Performance | behaviorally_verified | 1 | [`modules/perf.md`](modules/perf.md) |
-| `plan` | The plan and its derivations | behaviorally_verified | 11 | [`modules/plan.md`](modules/plan.md) |
+| `plan` | The plan and its derivations | behaviorally_verified | 12 | [`modules/plan.md`](modules/plan.md) |
 | `product` | Product | behaviorally_verified | 6 | [`modules/product.md`](modules/product.md) |
 | `quality` | Public API quality | behaviorally_verified | 2 | [`modules/quality.md`](modules/quality.md) |
 | `reasoning` | Reasoning | experimental | 6 | [`modules/reasoning.md`](modules/reasoning.md) |
@@ -217,6 +217,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `perf.counters` | `perf` | query | behaviorally_verified | `majordomus_perf` | — | `GET /api/v1/perf` | — | — | required |
 | `plan.delivery` | `plan` | query | experimental | `majordomus_plan_delivery` | — | `GET /api/v1/plan/delivery` | `majordomus plan delivery` | — | required |
 | `plan.drift` | `plan` | query | experimental | `majordomus_plan_drift` | — | `GET /api/v1/plan/drift` | `majordomus plan drift` | — | required |
+| `plan.flight` | `plan` | query | experimental | `majordomus_plan_flight` | — | `GET /api/v1/plan/flight` | — | — | required |
 | `plan.issues` | `plan` | query | behaviorally_verified | `majordomus_plan_issues` | — | `GET /api/v1/plan/issues` | — | process, 16 entries, per generation | required |
 | `plan.model` | `plan` | query | behaviorally_verified | `majordomus_plan` | `majordomus://plan` | `GET /api/v1/plan` | — | — | required |
 | `plan.next` | `plan` | query | behaviorally_verified | `majordomus_plan_next` | — | `GET /api/v1/plan/next` | — | process, 16 entries, per generation | required |

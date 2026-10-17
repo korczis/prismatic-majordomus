@@ -5,7 +5,7 @@
 
 The milestone and issue model of this repository, and everything derived from it that nobody authored: the status of each record, the dependency graphs above and below the milestone boundary, the topological execution waves, the roadmap order, the milestone being executed and the one issue to take next. Status is never stored — a record says what happened to it and the status follows from that and from the state of its dependencies — so no file can contradict the graph. This capability reads; writing a lifecycle marker into a record is `plan.transition`, which declares that it writes the repository.
 
-Stability: behaviorally_verified. Capabilities: 11.
+Stability: behaviorally_verified. Capabilities: 12.
 
 ## `plan.delivery` — How far each issue's work has travelled
 
@@ -55,6 +55,28 @@ Every contradiction between an issue's declared status and its delivery (plan.de
 | `gate` | object | no | Judge as a gate on a `head` or on the `trunk`. Default: report only, exit 0. |
 
 Output: `DriftReport`.
+
+## `plan.flight` — Where the work is now
+
+The milestones with work in flight, the one the graph allows next, and the latest release as the releases themselves say it, read live on every call (ADR 0166, decision 4). Now is every open milestone holding an open issue with an open pull request that names it (`plan.delivery`'s `pr_open`), a live mesh claim made for it, or a declared ACTIVE status, each with those issues, why they are in flight, their declared status beside their inferred stage, and the objects that prove it (branch, pull request, merge commit, release tag, published `latest.json`, claim), linked on the forge where the forge has them. Next is the first open milestone in the plan's order that is not now and whose unfinished prerequisites are all now. The latest release is the highest stable version among the release records, the `v*` tags of this clone and the `latest.json` the last successful Pages deployment published, so a release whose record merged after its tag is not shown older than it is; `executable_tagged` says whether the answering executable's own version is tagged. `milestone` adds that milestone with every one of its issues. A source that was not read (the forge, the publication, the mesh outside a server) is named with its reason, never treated as empty.
+
+| | |
+|---|---|
+| kind | query |
+| stability | experimental |
+| MCP tool | `majordomus_plan_flight` |
+| HTTP | `GET /api/v1/plan/flight` |
+| cache | — |
+| benchmark | required |
+| provenance | builtin majordomus_cli::capability::builtin::plan |
+| tags | plan, project, delivery, release, mesh |
+
+| input | type | required | description |
+|---|---|---|---|
+| `milestone` | string or null | no | A milestone id: the answer then carries it, with every one of its issues, as
+`inspected`. An id the plan does not declare is not found. |
+
+Output: `PlanFlight`.
 
 ## `plan.issues` — The issues, filtered by what the graph derived
 
