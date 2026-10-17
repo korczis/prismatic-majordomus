@@ -547,6 +547,32 @@ mod tests {
         assert_eq!(trunk_sentence(&d), None);
         d.standing = TrunkStanding::Unmeasured;
         assert_eq!(trunk_sentence(&d), None);
+        // a standing worth naming with no distance under it has nothing to name
+        d.standing = TrunkStanding::Unjudged;
+        d.checkout = None;
+        assert_eq!(trunk_sentence(&d), None);
+    }
+
+    /// The instructions every client reads on `initialize` name the distance of the tree
+    /// the server answers from, when it is behind its remote trunk, and say nothing of a
+    /// current one.
+    #[test]
+    fn the_instructions_name_a_tree_behind_its_remote_trunk() {
+        use crate::worktree::trunk::fixture;
+        let (repo, _origin) = fixture::layered(3, None);
+        let server = || {
+            let surface = crate::mcp::surface::Surface::new(repo.context().expect("a context"));
+            Server::new(surface, "test")
+        };
+        let text = server().instructions();
+        assert!(
+            text.contains(" This server serves a tree 3 commit(s) behind origin/master (unjudged)"),
+            "{text}"
+        );
+        assert!(text.contains(" Remedy: git fetch;"), "{text}");
+        fixture::git(repo.root(), &["merge", "-q", "--ff-only", "origin/master"]);
+        let text = server().instructions();
+        assert!(!text.contains("This server serves a tree"), "{text}");
     }
 
     /// The `initialize` instructions are the one thing every client reads before it does

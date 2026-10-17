@@ -1257,7 +1257,15 @@ mod tests {
     /// Render once with the writer refusing at each line in turn — every write's failure is
     /// a transport error, never a panic or a silent success — and answer the whole text of
     /// the run that was let finish.
-    fn at_every_line(mut render: impl FnMut(&mut Out<'_>) -> Result<u8>) -> String {
+    fn at_every_line(render: impl FnMut(&mut Out<'_>) -> Result<u8>) -> String {
+        let (code, text) = at_every_write(render);
+        assert_eq!(code, 0);
+        text
+    }
+
+    /// [`at_every_line`], answering the exit code of the run that was let finish with its
+    /// text: for a rendering whose answer is a refusal.
+    fn at_every_write(mut render: impl FnMut(&mut Out<'_>) -> Result<u8>) -> (u8, String) {
         for lines in 0..10_000 {
             let mut out = Refusing {
                 lines,
@@ -1265,10 +1273,7 @@ mod tests {
                 text: String::new(),
             };
             match render(&mut out) {
-                Ok(code) => {
-                    assert_eq!(code, 0);
-                    return out.text;
-                }
+                Ok(code) => return (code, out.text),
                 Err(Error::Transport(_)) => {}
                 Err(e) => panic!("a refused write became {e:?}"),
             }
@@ -1474,5 +1479,65 @@ mod tests {
         let text = at_every_line(|out| repair(&svc, false, OutputFormat::Text, out));
         assert!(text.contains("the primary checkout's"), "{text}");
         assert!(!text.contains("its own"), "{text}");
+    }
+
+    /// `worktree status` and `worktree trunk` render one reading of the distance from the
+    /// remote trunk: a stale checkout is flagged and given its remedy, and `trunk` refuses
+    /// while it stays stale; brought current, both say ok and suggest nothing.
+    #[test]
+    fn status_and_trunk_flag_a_stale_checkout_and_trunk_refuses_it() {
+        use crate::worktree::trunk::fixture;
+        let (repo, _origin) = fixture::layered(6, Some((2, 5)));
+        let svc = WorktreeService::open(repo.root()).expect("open the service");
+        let render = |f: &dyn Fn(&mut Out<'_>) -> Result<u8>| at_every_write(f);
+
+        let (_, text) = render(&|out| status(&svc, OutputFormat::Text, out));
+        assert!(
+            text.contains("\ncurrency    !!  stale: this checkout is 6 commit(s) behind"),
+            "{text}"
+        );
+        assert!(
+            text.contains("\n            git fetch; commit or rescue uncommitted work, then: "),
+            "{text}"
+        );
+        let (code, text) = render(&|out| trunk(&svc, OutputFormat::Text, out));
+        assert_eq!(code, EXIT_REFUSED);
+        assert!(
+            text.starts_with("stale: this checkout is 6 commit(s) behind")
+                && text.contains("\nremedy: git fetch;"),
+            "{text}"
+        );
+        let (code, text) = render(&|out| trunk(&svc, OutputFormat::Json, out));
+        assert_eq!(code, EXIT_REFUSED);
+        let v: Value = serde_json::from_str(&text).expect("json");
+        assert_eq!(
+            (v["standing"].as_str(), v["checkout"]["behind"].as_u64()),
+            (Some("stale"), Some(6))
+        );
+        // the command line reaches the same reading, and the same exit
+        let args = WorktreeArgs {
+            repo: repo_args(repo.root()),
+            command: Some(WorktreeCommand::Trunk),
+            format: OutputFormat::Json,
+        };
+        assert_eq!(run(args).expect("a reading"), EXIT_REFUSED);
+        // and refuses a directory no repository holds before it measures anything
+        let plain = tempfile::tempdir().expect("tempdir");
+        let args = WorktreeArgs {
+            repo: repo_args(plain.path()),
+            command: Some(WorktreeCommand::Trunk),
+            format: OutputFormat::Json,
+        };
+        assert!(matches!(run(args), Err(Error::Refused { .. })));
+
+        fixture::git(repo.root(), &["merge", "-q", "--ff-only", "origin/master"]);
+        let (code, text) = render(&|out| trunk(&svc, OutputFormat::Text, out));
+        assert_eq!(code, 0);
+        assert!(
+            text.starts_with("current: ") && !text.contains("remedy:"),
+            "{text}"
+        );
+        let (_, text) = render(&|out| status(&svc, OutputFormat::Text, out));
+        assert!(text.contains("\ncurrency    ok  current: "), "{text}");
     }
 }

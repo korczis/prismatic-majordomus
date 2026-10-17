@@ -289,40 +289,34 @@ impl TrunkDistance {
 /// std::fs::remove_dir_all(&base).unwrap();
 /// ```
 pub fn remote_trunk_of(cwd: &Path, trunk: &str) -> Option<String> {
-    let upstream = git::try_run(
+    // `for-each-ref`, not `rev-parse refs/heads/<trunk>@{upstream}`: git refuses a full ref
+    // name before `@{upstream}` ("no such branch"), so that form never named an upstream,
+    // and a bare `<trunk>@{upstream}` would read a tag of the trunk's name first. An empty
+    // answer is a branch with no upstream, or no such branch.
+    let upstream = answer(
         cwd,
         &[
-            "rev-parse",
-            "--symbolic-full-name",
-            "--end-of-options",
-            &format!("refs/heads/{trunk}@{{upstream}}"),
+            "for-each-ref",
+            "--format=%(upstream)",
+            &format!("refs/heads/{trunk}"),
         ],
     )
-    .ok()?;
-    if upstream.status == Some(0) {
-        if let Some(short) = upstream
-            .text()
-            .ok()
-            .and_then(|t| t.strip_prefix("refs/remotes/").map(str::to_string))
-        {
-            return Some(short);
-        }
+    .and_then(|t| t.strip_prefix("refs/remotes/").map(str::to_string));
+    if upstream.is_some() {
+        return upstream;
     }
-    let remotes = git::try_run(cwd, &["remote"]).ok()?.text().ok()?;
+    let remotes = answer(cwd, &["remote"]).unwrap_or_default();
     let remotes: Vec<&str> = remotes
         .lines()
         .map(str::trim)
         .filter(|r| !r.is_empty())
         .collect();
     for remote in &remotes {
-        let head = git::try_run(
+        let head = answer(
             cwd,
             &["symbolic-ref", "-q", &format!("refs/remotes/{remote}/HEAD")],
-        )
-        .ok()?;
-        if head.status == Some(0)
-            && head.text().ok().as_deref() == Some(&format!("refs/remotes/{remote}/{trunk}"))
-        {
+        );
+        if head == Some(format!("refs/remotes/{remote}/{trunk}")) {
             return Some(format!("{remote}/{trunk}"));
         }
     }
@@ -330,6 +324,15 @@ pub fn remote_trunk_of(cwd: &Path, trunk: &str) -> Option<String> {
         .iter()
         .map(|r| format!("{r}/{trunk}"))
         .find(|r| git::rev_exists(cwd, &format!("refs/remotes/{r}")).unwrap_or(false))
+}
+
+/// What git printed for `args`, when it ran and succeeded; nothing when it could not run,
+/// refused, or printed what is not text. Each reading here treats those alike: as no answer.
+fn answer(cwd: &Path, args: &[&str]) -> Option<String> {
+    git::try_run(cwd, args)
+        .ok()
+        .filter(|o| o.status == Some(0))
+        .and_then(|o| o.text().ok())
 }
 
 /// How far the commits `revs` hold are from `remote_trunk`: the trunk's commits none of
@@ -358,13 +361,8 @@ pub fn remote_trunk_of(cwd: &Path, trunk: &str) -> Option<String> {
 /// ```
 pub fn distance(cwd: &Path, revs: &[&str], remote_trunk: &str) -> Option<Distance> {
     let remote = format!("refs/remotes/{remote_trunk}");
-    let count = |args: Vec<&str>| -> Option<u64> {
-        let out = git::try_run(cwd, &args).ok()?;
-        if out.status != Some(0) {
-            return None;
-        }
-        out.text().ok()?.trim().parse().ok()
-    };
+    let count =
+        |args: Vec<&str>| -> Option<u64> { answer(cwd, &args).and_then(|t| t.trim().parse().ok()) };
     let first = *revs.first()?;
     let mut behind = vec!["rev-list", "--count", remote.as_str(), "--not"];
     behind.extend_from_slice(revs);
@@ -604,12 +602,18 @@ fn remedy_of(
     }
 }
 
+/// Repositories behind their remote trunk, for the tests of every surface that renders the
+/// distance: this module's, `worktree status` and `worktree trunk`, and the MCP instructions.
 #[cfg(test)]
-mod tests {
-    use super::*;
+pub(crate) mod fixture {
+    use std::path::Path;
     use std::process::Command;
 
-    fn git(cwd: &Path, args: &[&str]) {
+    use crate::synthetic::SyntheticRepository;
+
+    /// `git -C <cwd> <args>`, with an identity of its own and none of the caller's hooks or
+    /// signing, refusing anything but success.
+    pub(crate) fn git(cwd: &Path, args: &[&str]) {
         let out = Command::new("git")
             .arg("-C")
             .arg(cwd)
@@ -620,6 +624,8 @@ mod tests {
                 "user.email=t@t",
                 "-c",
                 "commit.gpgsign=false",
+                "-c",
+                "core.hooksPath=/dev/null",
             ])
             .args(args)
             .env_remove("GIT_DIR")
@@ -632,6 +638,57 @@ mod tests {
             String::from_utf8_lossy(&out.stderr)
         );
     }
+
+    /// Put the repository at `repo`, one commit on `master`, `behind` commits behind a
+    /// remote `origin` of its own as of its last fetch, `master` tracking `origin/master`.
+    /// The remote lives in the directory returned; it goes when that does.
+    pub(crate) fn behind_its_origin(repo: &Path, behind: usize) -> tempfile::TempDir {
+        let dir = tempfile::tempdir().unwrap();
+        let origin = dir.path().join("origin");
+        let origin_arg = origin.to_str().unwrap();
+        git(
+            dir.path(),
+            &["clone", "-q", repo.to_str().unwrap(), origin_arg],
+        );
+        for i in 0..behind {
+            git(
+                &origin,
+                &["commit", "-q", "--allow-empty", "-m", &format!("u{i}")],
+            );
+        }
+        git(repo, &["remote", "add", "origin", origin_arg]);
+        git(repo, &["fetch", "-q", "origin"]);
+        git(repo, &["branch", "-q", "-u", "origin/master", "master"]);
+        dir
+    }
+
+    /// A repository with a Majordomus layer, `behind` commits behind its remote trunk, whose
+    /// policy declares `checkout.trunk_distance` as `(warn_behind, fail_behind)`, or nothing.
+    pub(crate) fn layered(
+        behind: usize,
+        thresholds: Option<(u64, u64)>,
+    ) -> (SyntheticRepository, tempfile::TempDir) {
+        let repo = SyntheticRepository::small().unwrap();
+        if let Some((warn, fail)) = thresholds {
+            let policy = repo.root().join(".ai/repo/policy.yaml");
+            let mut text = std::fs::read_to_string(&policy).unwrap();
+            text.push_str(&format!(
+                "checkout:\n  trunk_distance:\n    warn_behind: {warn}\n    fail_behind: {fail}\n"
+            ));
+            std::fs::write(&policy, text).unwrap();
+        }
+        git(repo.root(), &["init", "-q", "-b", "master"]);
+        git(repo.root(), &["add", "-A"]);
+        git(repo.root(), &["commit", "-q", "-m", "the layer"]);
+        let origin = behind_its_origin(repo.root(), behind);
+        (repo, origin)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::fixture::{behind_its_origin, git, layered};
+    use super::*;
 
     /// A remote with `n` commits on its trunk, and a clone of it.
     fn remote_and_clone(n: usize) -> (tempfile::TempDir, std::path::PathBuf) {
@@ -797,6 +854,349 @@ mod tests {
             merging.local_trunk_standing,
             TrunkStanding::Stale,
             "the local trunk did not move"
+        );
+    }
+
+    /// Every standing has the word its JSON carries, and every branch of the judgment is
+    /// reached: a threshold declared alone is a declaration, and judges by itself.
+    #[test]
+    fn every_standing_says_its_word_and_every_judgment_is_reached() {
+        let words = [
+            TrunkStanding::Current,
+            TrunkStanding::Lagging,
+            TrunkStanding::Stale,
+            TrunkStanding::Unjudged,
+            TrunkStanding::Unmeasured,
+        ]
+        .map(TrunkStanding::as_str);
+        assert_eq!(
+            words,
+            ["current", "lagging", "stale", "unjudged", "unmeasured"]
+        );
+        let both = TrunkThresholds {
+            warn_behind: Some(1),
+            fail_behind: Some(2),
+        };
+        assert_eq!(judge(None, both), TrunkStanding::Unmeasured);
+        assert_eq!(
+            judge(Some(3), TrunkThresholds::default()),
+            TrunkStanding::Unjudged
+        );
+        let fail_only = TrunkThresholds {
+            warn_behind: None,
+            fail_behind: Some(10),
+        };
+        assert_eq!(judge(Some(9), fail_only), TrunkStanding::Current);
+        assert_eq!(judge(Some(10), fail_only), TrunkStanding::Stale);
+        let warn_only = TrunkThresholds {
+            warn_behind: Some(5),
+            fail_behind: None,
+        };
+        assert_eq!(judge(Some(4), warn_only), TrunkStanding::Current);
+        assert_eq!(
+            judge(Some(500), warn_only),
+            TrunkStanding::Lagging,
+            "no fail threshold, never stale"
+        );
+    }
+
+    /// `--left-right --count` puts the left side, ahead, first; anything that is not two
+    /// counts is no distance.
+    #[test]
+    fn left_right_counts_are_read_ahead_first_and_nothing_else_is_a_distance() {
+        assert_eq!(
+            parse_left_right("2\t779\n"),
+            Some(Distance {
+                behind: 779,
+                ahead: 2
+            })
+        );
+        assert_eq!(
+            parse_left_right("0 0"),
+            Some(Distance {
+                behind: 0,
+                ahead: 0
+            })
+        );
+        for text in ["", "7", "x\t1", "1\tx", "-1\t2"] {
+            assert_eq!(parse_left_right(text), None, "{text:?}");
+        }
+    }
+
+    /// An upstream that is a local branch is not a remote-tracking trunk: the remote whose
+    /// `HEAD` names the trunk is asked next, and without that `HEAD`, the remote that has a
+    /// branch of the trunk's name.
+    #[test]
+    fn the_remote_trunk_is_found_past_an_upstream_that_is_no_remote() {
+        let (_dir, clone) = remote_and_clone(1);
+        git(&clone, &["branch", "-q", "other"]);
+        git(&clone, &["branch", "-q", "-u", "other", "master"]);
+        assert_eq!(
+            remote_trunk_of(&clone, "master").as_deref(),
+            Some("origin/master"),
+            "found through origin/HEAD"
+        );
+        git(&clone, &["remote", "set-head", "origin", "-d"]);
+        assert_eq!(
+            remote_trunk_of(&clone, "master").as_deref(),
+            Some("origin/master"),
+            "found through the remote's branch of that name"
+        );
+        assert_eq!(remote_trunk_of(&clone, "develop"), None);
+    }
+
+    /// A reading is true as of the last fetch, and one that never happened is said; a path
+    /// no repository holds is unmeasured, with git's reason.
+    #[test]
+    fn a_reading_says_the_repository_never_fetched_and_a_path_outside_one_is_unmeasured() {
+        // `git clone` writes no FETCH_HEAD
+        let (_dir, clone) = remote_and_clone(1);
+        let d = measure_checkout(&clone);
+        assert_eq!(d.standing, TrunkStanding::Current);
+        assert_eq!(d.fetched_at, None);
+        assert!(
+            d.message
+                .ends_with("; current (the repository has never fetched)"),
+            "{}",
+            d.message
+        );
+        let away = tempfile::tempdir().unwrap();
+        let d = measure_checkout(away.path());
+        assert_eq!(d.standing, TrunkStanding::Unmeasured);
+        assert_eq!((d.trunk, d.checkout), (None, None));
+        assert!(!d.message.is_empty(), "the reason is git's");
+    }
+
+    /// The trunk's configured upstream is its remote trunk, ahead of any remote whose `HEAD`
+    /// names a branch of the trunk's name; without one, that remote is asked.
+    #[test]
+    fn the_trunks_configured_upstream_is_its_remote_trunk() {
+        let (dir, clone) = remote_and_clone(1);
+        let origin = dir.path().join("origin");
+        git(
+            &clone,
+            &["remote", "add", "zz-fork", origin.to_str().unwrap()],
+        );
+        git(&clone, &["fetch", "-q", "zz-fork"]);
+        git(&clone, &["branch", "-q", "-u", "zz-fork/master", "master"]);
+        assert_eq!(
+            remote_trunk_of(&clone, "master").as_deref(),
+            Some("zz-fork/master")
+        );
+        git(&clone, &["branch", "-q", "--unset-upstream", "master"]);
+        assert_eq!(
+            remote_trunk_of(&clone, "master").as_deref(),
+            Some("origin/master")
+        );
+    }
+
+    /// A distance is two counts git made, or none: nothing to count from, a remote trunk
+    /// that is not there, a rev git cannot read, or a second count refused after the first
+    /// was made.
+    #[test]
+    fn a_count_git_cannot_make_is_no_distance() {
+        let (_dir, clone) = remote_and_clone(1);
+        assert_eq!(distance(&clone, &[], "origin/master"), None);
+        assert_eq!(distance(&clone, &["HEAD"], "origin/gone"), None);
+        assert_eq!(distance(&clone, &["no-such-rev"], "origin/master"), None);
+        // taken after `--not` by the behind count, refused before it by the ahead count:
+        // half a distance is not reported as one
+        assert_eq!(
+            distance(&clone, &["--end-of-options"], "origin/master"),
+            None
+        );
+        assert_eq!(
+            distance(&clone, &["HEAD"], "origin/master"),
+            Some(Distance {
+                behind: 0,
+                ahead: 0
+            })
+        );
+    }
+
+    /// No remote `HEAD`, no conventional or configured branch and a detached primary: no
+    /// trunk can be named, so nothing is measured, and the answer says why.
+    #[test]
+    fn a_repository_whose_trunk_cannot_be_named_is_unmeasured() {
+        let dir = tempfile::tempdir().unwrap();
+        git(dir.path(), &["init", "-q", "-b", "line-a"]);
+        git(dir.path(), &["commit", "-q", "--allow-empty", "-m", "c"]);
+        git(dir.path(), &["checkout", "-q", "--detach"]);
+        let d = measure_checkout(dir.path());
+        assert_eq!(d.standing, TrunkStanding::Unmeasured);
+        assert_eq!(d.local_trunk_standing, TrunkStanding::Unmeasured);
+        assert_eq!(d.trunk, None);
+        assert!(
+            d.message.contains("the trunk could not be determined"),
+            "{}",
+            d.message
+        );
+        assert_eq!(d.remedy, None);
+    }
+
+    /// A checkout on an unborn branch has no `HEAD` to count: it is unmeasured, while the
+    /// local trunk beside it is still measured, judged and given its remedy.
+    #[test]
+    fn a_head_that_names_no_commit_is_unmeasured_beside_a_measured_local_trunk() {
+        let (dir, clone) = remote_and_clone(1);
+        let origin = dir.path().join("origin");
+        for i in 0..2 {
+            git(
+                &origin,
+                &["commit", "-q", "--allow-empty", "-m", &format!("n{i}")],
+            );
+        }
+        git(&clone, &["fetch", "-q"]);
+        git(&clone, &["checkout", "-q", "--orphan", "fresh"]);
+        let identity = RepositoryIdentity::discover(&clone).unwrap();
+        let here = identity.current_worktree().path.clone();
+        let t = TrunkThresholds {
+            warn_behind: Some(1),
+            fail_behind: Some(5),
+        };
+        let d = measure(&identity, &here, t);
+        assert_eq!(d.checkout, None);
+        assert_eq!(d.standing, TrunkStanding::Unmeasured);
+        assert!(!d.on_trunk);
+        assert_eq!(
+            d.local_trunk,
+            Some(Distance {
+                behind: 2,
+                ahead: 0
+            })
+        );
+        assert_eq!(d.local_trunk_standing, TrunkStanding::Lagging);
+        assert!(
+            d.message.starts_with(
+                "this checkout's HEAD names no commit; \
+                 the local master is 2 behind and 0 ahead (lagging); unmeasured ("
+            ),
+            "{}",
+            d.message
+        );
+        // no work tree holds the local trunk: it is moved by a fetch into the branch
+        assert!(
+            d.remedy.as_deref().is_some_and(|r| r
+                .contains("fetch . refs/remotes/origin/master:refs/heads/master")
+                && !r.contains(" merge origin/master")),
+            "{:?}",
+            d.remedy
+        );
+    }
+
+    /// A policy that declares nothing leaves a distance reported, unjudged, and still given
+    /// its remedy.
+    #[test]
+    fn a_distance_the_policy_declares_nothing_about_is_unjudged() {
+        let (dir, clone) = remote_and_clone(1);
+        git(
+            &dir.path().join("origin"),
+            &["commit", "-q", "--allow-empty", "-m", "n"],
+        );
+        git(&clone, &["fetch", "-q"]);
+        let identity = RepositoryIdentity::discover(&clone).unwrap();
+        let here = identity.current_worktree().path.clone();
+        let d = measure(&identity, &here, TrunkThresholds::default());
+        assert_eq!(d.standing, TrunkStanding::Unjudged);
+        assert!(
+            d.message
+                .contains("; unjudged: the policy declares no checkout.trunk_distance ("),
+            "{}",
+            d.message
+        );
+        assert!(d.remedy.is_some());
+    }
+
+    /// From a feature worktree, the local trunk is brought current where it is checked out:
+    /// the remedy names the work tree that holds it, not a fetch into a branch in use.
+    #[test]
+    fn a_local_trunk_held_by_another_worktree_is_fast_forwarded_there() {
+        let (dir, clone) = remote_and_clone(1);
+        let origin = dir.path().join("origin");
+        for i in 0..3 {
+            git(
+                &origin,
+                &["commit", "-q", "--allow-empty", "-m", &format!("n{i}")],
+            );
+        }
+        git(&clone, &["fetch", "-q"]);
+        let wt = dir.path().join("wt");
+        git(
+            &clone,
+            &[
+                "worktree",
+                "add",
+                "-q",
+                "-b",
+                "feature/y",
+                wt.to_str().unwrap(),
+            ],
+        );
+        let identity = RepositoryIdentity::discover(&wt).unwrap();
+        let here = identity.current_worktree().path.clone();
+        let t = TrunkThresholds {
+            warn_behind: Some(2),
+            fail_behind: Some(10),
+        };
+        let d = measure(&identity, &here, t);
+        assert!(!d.on_trunk);
+        assert_eq!(d.standing, TrunkStanding::Lagging);
+        assert!(
+            d.message
+                .contains("the local master is 3 behind and 0 ahead (lagging)"),
+            "{}",
+            d.message
+        );
+        let holder = identity
+            .record_of_branch("master")
+            .expect("the clone holds master")
+            .path
+            .display()
+            .to_string();
+        let remedy = d.remedy.expect("both are behind");
+        assert!(
+            remedy.contains(&format!("git -C {} merge origin/master", here.display()))
+                && remedy.contains(&format!("git -C {holder} merge --ff-only origin/master")),
+            "{remedy}"
+        );
+    }
+
+    /// The thresholds are the ones the repository's own policy declares, and the checkout
+    /// is judged by them; a policy without them declares nothing.
+    #[test]
+    fn a_checkout_is_judged_by_the_thresholds_its_policy_declares() {
+        let (repo, _origin) = layered(3, Some((2, 5)));
+        assert_eq!(
+            TrunkThresholds::declared_at(repo.root()),
+            TrunkThresholds {
+                warn_behind: Some(2),
+                fail_behind: Some(5),
+            }
+        );
+        let d = measure_checkout(repo.root());
+        assert_eq!(d.standing, TrunkStanding::Lagging, "{}", d.message);
+        assert!(
+            d.message
+                .contains("lagging: at or past checkout.trunk_distance.warn_behind 2"),
+            "{}",
+            d.message
+        );
+        let (bare, _origin) = layered(1, None);
+        assert_eq!(
+            TrunkThresholds::declared_at(bare.root()),
+            TrunkThresholds::default()
+        );
+        // an origin of its own, and nothing between: one commit behind is just that
+        let plain = tempfile::tempdir().unwrap();
+        git(plain.path(), &["init", "-q", "-b", "master"]);
+        git(plain.path(), &["commit", "-q", "--allow-empty", "-m", "c"]);
+        let _origin = behind_its_origin(plain.path(), 1);
+        assert_eq!(
+            measure_checkout(plain.path()).checkout,
+            Some(Distance {
+                behind: 1,
+                ahead: 0
+            })
         );
     }
 }
