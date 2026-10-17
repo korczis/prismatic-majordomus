@@ -3,7 +3,7 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the claims, rules, features, use cases, commands, documented command-line examples and builtin capabilities this repository declares, and the first coverage and negative headers of its test cases; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.28.0"
+    "version": "0.29.0"
   },
   "route": "/evidence/",
   "kinds": [
@@ -12141,6 +12141,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:3113_the_adoption_footprint_is_inventoried",
+          "path": "test/cases/3113_the_adoption_footprint_is_inventoried.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:408_a_receipt_is_provider_neutral",
           "path": "test/cases/408_a_receipt_is_provider_neutral.sh",
           "category": "e2e"
@@ -12336,6 +12342,12 @@
           "via": "behaviour",
           "test": "suite:3023_a_knowledge_record_outlives_the_file_it_cites",
           "path": "test/cases/3023_a_knowledge_record_outlives_the_file_it_cites.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:3151_a_task_is_claimed_when_it_starts",
+          "path": "test/cases/3151_a_task_is_claimed_when_it_starts.sh",
           "category": "e2e"
         },
         {
@@ -12821,6 +12833,12 @@
           "via": "behaviour",
           "test": "suite:3073_context_knowledge_slice",
           "path": "test/cases/3073_context_knowledge_slice.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:3160_a_scope_entry_is_one_path",
+          "path": "test/cases/3160_a_scope_entry_is_one_path.sh",
           "category": "e2e"
         },
         {
@@ -14419,6 +14437,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:3151_a_task_is_claimed_when_it_starts",
+          "path": "test/cases/3151_a_task_is_claimed_when_it_starts.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:32_refusal_lifecycle",
           "path": "test/cases/32_refusal_lifecycle.sh",
           "category": "e2e"
@@ -14774,6 +14798,12 @@
           "via": "behaviour",
           "test": "suite:2979_a_personal_layer_changes_nothing_shared",
           "path": "test/cases/2979_a_personal_layer_changes_nothing_shared.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:3113_the_adoption_footprint_is_inventoried",
+          "path": "test/cases/3113_the_adoption_footprint_is_inventoried.sh",
           "category": "e2e"
         },
         {
@@ -17430,6 +17460,18 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:3151_a_task_is_claimed_when_it_starts",
+          "path": "test/cases/3151_a_task_is_claimed_when_it_starts.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:3160_a_scope_entry_is_one_path",
+          "path": "test/cases/3160_a_scope_entry_is_one_path.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:32_refusal_lifecycle",
           "path": "test/cases/32_refusal_lifecycle.sh",
           "category": "e2e"
@@ -17468,6 +17510,12 @@
           "via": "negative",
           "test": "suite:16_profiles",
           "path": "test/cases/16_profiles.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:3160_a_scope_entry_is_one_path",
+          "path": "test/cases/3160_a_scope_entry_is_one_path.sh",
           "category": "e2e"
         },
         {
@@ -17517,6 +17565,12 @@
           "via": "behaviour",
           "test": "suite:284_a_record_reads_the_whole_declaration",
           "path": "test/cases/284_a_record_reads_the_whole_declaration.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:3113_the_adoption_footprint_is_inventoried",
+          "path": "test/cases/3113_the_adoption_footprint_is_inventoried.sh",
           "category": "e2e"
         },
         {
@@ -22665,6 +22719,16 @@
             "test/cases/3068_a_task_off_the_mesh_is_refused.sh",
             ".ai/repo/rules/vendor/majordomus/rules/task-on-the-mesh.v1.md"
           ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:3151_a_task_is_claimed_when_it_starts",
+          "path": "test/cases/3151_a_task_is_claimed_when_it_starts.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/3151_a_task_is_claimed_when_it_starts.sh",
+            ".ai/repo/rules/vendor/majordomus/rules/task-on-the-mesh.v1.md"
+          ]
         }
       ],
       "mechanisms": [],
@@ -25244,6 +25308,27 @@
       ],
       "findings": []
     },
+    "rule:project.published-evidence-is-what-ci-recorded": {
+      "kind": "rule",
+      "id": "project.published-evidence-is-what-ci-recorded",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:3178_the_published_ui_reads_the_evidence_ci_recorded",
+          "path": "test/cases/3178_the_published_ui_reads_the_evidence_ci_recorded.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/3178_the_published_ui_reads_the_evidence_ci_recorded.sh",
+            ".ai/repo/rules/project/published-evidence-is-what-ci-recorded.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "rule:project.reclaim-only-what-you-own": {
       "kind": "rule",
       "id": "project.reclaim-only-what-you-own",
@@ -25742,6 +25827,47 @@
       "mechanisms": [],
       "findings": []
     },
+    "rule:project.the-cooperation-model-is-the-owners-word": {
+      "kind": "rule",
+      "id": "project.the-cooperation-model-is-the-owners-word",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:2999_delivery_is_expedited_only_where_the_rule_says",
+          "path": "test/cases/2999_delivery_is_expedited_only_where_the_rule_says.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/2999_delivery_is_expedited_only_where_the_rule_says.sh",
+            ".ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:3150_the_cooperation_model_is_one_record",
+          "path": "test/cases/3150_the_cooperation_model_is_one_record.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/3150_the_cooperation_model_is_one_record.sh",
+            ".ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:720_integration_follows_the_current_master",
+          "path": "test/cases/720_integration_follows_the_current_master.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/720_integration_follows_the_current_master.sh",
+            ".ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "rule:project.the-crate-reference-is-published": {
       "kind": "rule",
       "id": "project.the-crate-reference-is-published",
@@ -26083,6 +26209,21 @@
         "scripts/pages",
         "scripts/site-build",
         "scripts/site-check"
+      ],
+      "findings": []
+    },
+    "rule:project.the-ui-wears-the-sites-navbar": {
+      "kind": "rule",
+      "id": "project.the-ui-wears-the-sites-navbar",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [],
+      "mechanisms": [
+        "scripts/cockpit-assets",
+        "scripts/lib/ui-navbar.mjs",
+        "scripts/lib/ui.test.mjs",
+        "scripts/ui"
       ],
       "findings": []
     },
@@ -27842,6 +27983,7 @@
     "crate:session_domain",
     "crate:shared_units",
     "crate:tool_input_schemas",
+    "crate:ui_idd",
     "crate:ui_links",
     "crate:worktree",
     "suite:09_site_mobile_first",
@@ -27937,9 +28079,12 @@
     "suite:305_a_command_is_claimed_or_classified",
     "suite:3066_a_session_joins_the_mesh_at_start",
     "suite:3069_an_edit_no_claim_covers_is_refused",
+    "suite:3084_a_case_near_its_budget_is_named",
     "suite:3105_the_homepage_states_no_present_it_does_not_read",
     "suite:310_rustdoc_projection",
+    "suite:3110_a_served_surface_names_its_checkout",
     "suite:3125_the_reaper_asks_cargo_for_the_build_dir",
+    "suite:3131_a_new_worktree_starts_from_the_remote_trunk",
     "suite:318_a_partial_sweep_says_so",
     "suite:330_a_contract_is_the_kind_it_declares",
     "suite:331_knowledge_nodes_is_gated",

@@ -561,6 +561,12 @@ a schedule, without anybody choosing it. `test/cases/353` asserts exactly that, 
 assertion is a mutation rather than a description: a variant of the workflow with `git tag`
 appended is refused, naming the tag.
 
+Since 2026-10-16 that decision has an owner and a cadence: the release seat of
+[rule `project.the-cooperation-model-is-the-owners-word`](../.ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v1.md)
+(ADR 0167) cuts a release whenever master holds landed work past the last tag, not once per
+milestone, and verifies what the site serves after it. The rule says which mesh claim makes a
+session that seat; the tag still waits for `scripts/ci/release-verdict`.
+
 ## What proves it
 
 | | |

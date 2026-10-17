@@ -367,6 +367,29 @@ pub struct Router {
     git: Arc<std::sync::OnceLock<Option<crate::repository::GitIdentity>>>,
 }
 
+/// Which checkout a router is answering for, read from the repository model: the identity
+/// the home page, its JSON projection and the API shell all name, so that a page fetched
+/// from one server cannot be mistaken for another's (I1031). None of it is a path.
+struct ServedCheckout {
+    repository: String,
+    id: String,
+    git: Option<crate::repository::GitIdentity>,
+    branch: Option<String>,
+    head: Option<String>,
+}
+
+impl ServedCheckout {
+    fn as_home(&self) -> home::Checkout<'_> {
+        home::Checkout {
+            id: &self.id,
+            git_repository: self.git.as_ref().map(|g| g.id.as_str()),
+            linked: self.git.as_ref().is_some_and(|g| g.linked),
+            branch: self.branch.as_deref(),
+            head: self.head.as_deref(),
+        }
+    }
+}
+
 /// What one router serves: the bound surfaces, and the context every capability call is
 /// given so that `web.surfaces` answers with what this process actually serves.
 struct Resolution {
@@ -657,7 +680,10 @@ impl Router {
             }
             Bound::Route(Native::Home) => self.home(req, resolution),
             Bound::Route(Native::OpenApi) => self.openapi(),
-            Bound::Route(Native::Swagger) => swagger_response(),
+            Bound::Route(Native::Swagger) => {
+                let checkout = self.checkout(&resolution.ctx);
+                swagger_response(&checkout.as_home().line(&checkout.repository))
+            }
             Bound::Route(Native::Mcp) => match &self.mcp {
                 Some(endpoint) => endpoint.handle(req),
                 None => error_response(
@@ -732,6 +758,7 @@ impl Router {
             return error_response(405, "method_not_allowed", "the home page is read with GET");
         }
         let topology = resolution.served.topology();
+        let checkout = self.checkout(&resolution.ctx);
         if prefers_html(req) {
             let identity = home::Identity {
                 version: self.version,
@@ -742,6 +769,7 @@ impl Router {
                     crate::git::GitState::Unavailable { .. } => None,
                 },
                 capabilities: resolution.ctx.registry.summary().total,
+                checkout: checkout.as_home(),
             };
             let ready = |id: &str| {
                 if resolution.served.ready(id) {
@@ -771,11 +799,7 @@ impl Router {
                 })
             })
             .collect();
-        let git = self.git.get_or_init(|| {
-            crate::repository::git_identity(std::path::Path::new(
-                &resolution.ctx.index.repository.root,
-            ))
-        });
+        let git = checkout.git.as_ref();
         // whether this process is still the checkout's server. A server whose lease was
         // taken over keeps serving the peers it already has, so it goes on answering here,
         // and every other field is as true of it as of the current server. This is the one
@@ -805,18 +829,43 @@ impl Router {
                 // which repository, without saying where it is: a second process that
                 // already knows the root computes the same value and knows this server is
                 // its own (crate::repository::identity)
-                "repository_id": crate::repository::identity(
-                    std::path::Path::new(&resolution.ctx.index.repository.root),
-                ),
+                "repository_id": checkout.id,
                 // and which git repository that checkout belongs to: one value for every
                 // worktree of it, so that a reader can tell two servers of one repository
                 // from the servers of two (crate::repository::git_identity)
-                "git_repository_id": git.as_ref().map(|g| g.id.clone()),
-                "linked_worktree": git.as_ref().is_some_and(|g| g.linked),
+                "git_repository_id": git.map(|g| g.id.clone()),
+                "linked_worktree": git.is_some_and(|g| g.linked),
+                // the branch and commit the served answers were read from, as the index
+                // read them: two servers of one repository can serve two trees (I1031)
+                "branch": checkout.branch,
+                "head": checkout.head,
                 "surfaces": surfaces,
         });
         index[crate::lease::LEASEHOLDER_KEY] = json!(!crate::lease::was_lost());
         json_response(200, &index)
+    }
+
+    /// Which checkout this router answers for, from the repository model the context was
+    /// built from: the checkout's identity, its git repository's, the branch and commit the
+    /// index read. No second inspection: the identity is the repository module's, asked
+    /// once per process, and the branch and commit are the index's own.
+    fn checkout(&self, ctx: &Context) -> ServedCheckout {
+        let root = std::path::Path::new(&ctx.index.repository.root);
+        let git = self
+            .git
+            .get_or_init(|| crate::repository::git_identity(root))
+            .clone();
+        let (branch, head) = match &ctx.index.repository.git {
+            crate::git::GitState::Available(info) => (info.branch.clone(), info.head.clone()),
+            crate::git::GitState::Unavailable { .. } => (None, None),
+        };
+        ServedCheckout {
+            repository: repository_name(&ctx.index.repository.root).to_string(),
+            id: crate::repository::identity(root),
+            git,
+            branch,
+            head,
+        }
     }
 
     /// The refusal for a state-changing request from another origin, when there is one.
@@ -1092,8 +1141,9 @@ fn repository_name(root: &str) -> &str {
 
 /// The Swagger UI shell. `/swagger` and `/swagger/` both answer it: the page loads its
 /// distribution and the document by absolute path, so neither form can resolve wrongly.
-fn swagger_response() -> Response {
-    Response::new(200, "text/html; charset=utf-8", swagger::page().to_string())
+/// `checkout` is the line naming the checkout that serves it, already escaped.
+fn swagger_response(checkout: &str) -> Response {
+    Response::new(200, "text/html; charset=utf-8", swagger::page_for(checkout))
         .with_header("Content-Security-Policy", swagger::csp())
         .with_header("X-Content-Type-Options", "nosniff")
         .with_header("Referrer-Policy", "no-referrer")
@@ -1348,10 +1398,14 @@ mod tests {
 
     #[test]
     fn the_swagger_shell_is_the_same_page_however_it_is_reached() {
-        let page = swagger_response();
+        let page = swagger_response("<p class=\"mj-checkout\">checkout 0123456789ab</p>");
         assert_eq!(page.status, 200);
         assert!(page.content_type.starts_with("text/html"));
         assert!(page.body.text().contains("/openapi.json"));
+        assert!(
+            page.body.text().contains("checkout 0123456789ab"),
+            "the shell names its checkout"
+        );
     }
 
     #[test]
