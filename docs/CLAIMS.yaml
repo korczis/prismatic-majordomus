@@ -1102,6 +1102,15 @@ claims:
     responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
     note: .mcp.json (Claude Code), .gemini/settings.json (Gemini CLI) and .codex/config.toml (Codex) name the same launcher, which writes nothing to stdout and passes every argument to majordomus mcp; MAJORDOMUS_BIN, MAJORDOMUS_BUILD_PROFILE and MAJORDOMUS_NO_BUILD control the build.
 
+  - id: release-prerelease-channel
+    claim: A tag with a pre-release part is published as a prerelease, recorded on the prerelease channel, and never resolved as the stable release, so an unpinned installer and a node that follows stable keep the highest stable version
+    source: docs/DISTRIBUTION.md
+    implementation: scripts/release-record
+    test: test/cases/3179_a_prerelease_is_never_published_as_stable.sh
+    status: guaranteed
+    responsibility: none      # the release pipeline is the shell tool's and the workflow's, not a supervised responsibility
+    note: Held at three places that must agree. scripts/release-record derives the channel from the tag and refuses stable on a suffixed tag; release.yml passes --prerelease --latest=false for it; Release::is_stable_candidate refuses any version with a pre-release part whatever its record says, and Release::findings reports the mislabel. The resolution and the semver precedence (alpha.2 before alpha.10, build metadata ignored) are proved by the crate's distribution tests, which the case does not run. Found by the audit before v1.0.0-alpha.1, when the pipeline would have published the alpha as the stable release.
+
   - id: mcp-uri-resolution
     claim: A majordomus:// URI resolves the same way through the MCP resource read, the majordomus_get tool and the HTTP object route, and majordomus://repository answers repository.info as a JSON document tagged builtin
     source: docs/MCP.md

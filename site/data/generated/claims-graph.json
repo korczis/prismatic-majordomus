@@ -1104,6 +1104,15 @@
       "note": ".mcp.json (Claude Code), .gemini/settings.json (Gemini CLI) and .codex/config.toml (Codex) name the same launcher, which writes nothing to stdout and passes every argument to majordomus mcp; MAJORDOMUS_BIN, MAJORDOMUS_BUILD_PROFILE and MAJORDOMUS_NO_BUILD control the build."
     },
     {
+      "id": "claim:release-prerelease-channel",
+      "kind": "claim",
+      "label": "A tag with a pre-release part is published as a prerelease, recorded on the prerelease channel, and never resolved as the stable release, so an unpinned installer and a node that follows stable keep the highest stable version",
+      "status": "guaranteed",
+      "route": "/guarantees/release-prerelease-channel/",
+      "external": false,
+      "note": "Held at three places that must agree. scripts/release-record derives the channel from the tag and refuses stable on a suffixed tag; release.yml passes --prerelease --latest=false for it; Release::is_stable_candidate refuses any version with a pre-release part whatever its record says, and Release::findings reports the mislabel. The resolution and the semver precedence (alpha.2 before alpha.10, build metadata ignored) are proved by the crate's distribution tests, which the case does not run. Found by the audit before v1.0.0-alpha.1, when the pipeline would have published the alpha as the stable release."
+    },
+    {
       "id": "claim:mcp-uri-resolution",
       "kind": "claim",
       "label": "A majordomus:// URI resolves the same way through the MCP resource read, the majordomus_get tool and the HTTP object route, and majordomus://repository answers repository.info as a JSON document tagged builtin",
@@ -3939,6 +3948,13 @@
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/30_command_registry.sh"
     },
     {
+      "id": "test:test/cases/3179_a_prerelease_is_never_published_as_stable.sh",
+      "kind": "test",
+      "label": "test/cases/3179_a_prerelease_is_never_published_as_stable.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/3179_a_prerelease_is_never_published_as_stable.sh"
+    },
+    {
       "id": "test:test/cases/31_command_coverage.sh",
       "kind": "test",
       "label": "test/cases/31_command_coverage.sh",
@@ -5162,6 +5178,11 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:release-prerelease-channel",
+      "target": "source:docs/DISTRIBUTION.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:mcp-uri-resolution",
       "target": "source:docs/MCP.md",
       "kind": "specified_by"
@@ -6342,6 +6363,11 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:release-prerelease-channel",
+      "target": "impl:scripts/release-record",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:mcp-uri-resolution",
       "target": "impl:apps/majordomus-cli/src/capability/builtin/objects.rs",
       "kind": "implemented_by"
@@ -7514,6 +7540,11 @@
     {
       "source": "claim:mcp-client-autostart",
       "target": "test:test/cases/90_mcp_shared_server.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:release-prerelease-channel",
+      "target": "test:test/cases/3179_a_prerelease_is_never_published_as_stable.sh",
       "kind": "proved_by"
     },
     {

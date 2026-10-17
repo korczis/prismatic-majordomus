@@ -210,7 +210,12 @@ jobs:
               || { echo "::error::$tag exists but publishes no archive. Delete the release (gh release delete $tag) and rerun this workflow."; exit 1; }
             echo "adopted=true" >> "$GITHUB_OUTPUT"
           else
-            gh release create "$tag" --title "$tag" --generate-notes dist/*.tar.gz
+            # a tag with a pre-release part is published as a prerelease and is never GitHub's
+            # "latest": release-record derives the same channel from the tag (ADR 0172 note)
+            flags=""
+            case "$tag" in *-*) flags="--prerelease --latest=false" ;; esac
+            # shellcheck disable=SC2086
+            gh release create "$tag" --title "$tag" --generate-notes $flags dist/*.tar.gz
             echo "adopted=false" >> "$GITHUB_OUTPUT"
           fi
           ls -l dist

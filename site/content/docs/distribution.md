@@ -294,6 +294,21 @@ a tag that has no release behind it is the other, and only before anyone can hav
 Until one of those happens the advertised install command is broken for everyone, and
 `installer-live` below is what says so.
 
+### A pre-release is never the stable release
+
+A tag with a pre-release part (`v1.0.0-alpha.1`) is published as a GitHub prerelease and never
+as its "latest" (`--prerelease --latest=false` in the publish step of `release.yml`), and
+`scripts/release-record` records it on `channel: prerelease`: the channel is derived from the
+tag unless `--channel` is given, and `--channel stable` on a suffixed tag exits 2. The version
+decides as well as the record: `Release::is_stable_candidate` is false for any version with a
+pre-release part, so even a record that was mislabelled can never become `releases/latest.json`,
+and `Release::findings` reports the mislabel. A pre-release is installed by naming it
+(`install.sh --version 1.0.0-alpha.1`); an unpinned installer and a node that follows `stable`
+keep resolving the highest stable release. Versions order by semantic-version precedence
+(`alpha.2` before `alpha.10`, a pre-release before its own final, build metadata ignored).
+The crate's `distribution::tests` prove the resolution and the order;
+`test/cases/3179_a_prerelease_is_never_published_as_stable.sh` proves the two shell-side writers.
+
 ### When a release fails partway
 
 A release changes things the world can see, and it can fail after some of them have changed.
@@ -586,7 +601,8 @@ announcement: one HTTPS request for `releases/latest.json`, never in the path of
 behind (I2723). A release is rolled out when every enrolled, following node reports it.
 
 `test/cases/85_installer.sh` covers the risky part today, and `self update` resolves releases
-through the same records and the same stable pointer as the installer does.
+through the same records and the same stable pointer as the installer does, once it exists:
+`self update` is the design above and is not implemented yet.
 
 ## Package managers
 

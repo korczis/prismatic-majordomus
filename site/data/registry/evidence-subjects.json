@@ -2004,6 +2004,11 @@
     },
     {
       "kind": "claim",
+      "subject": "claim:release-prerelease-channel",
+      "path": "/evidence/claims/release-prerelease-channel/"
+    },
+    {
+      "kind": "claim",
       "subject": "claim:reproduce-command",
       "path": "/evidence/claims/reproduce-command/"
     },
@@ -10486,6 +10491,29 @@
             "docs/DISTRIBUTION.md",
             "scripts/release-record",
             "test/cases/87_release_pipeline.sh"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "claim:release-prerelease-channel": {
+      "kind": "claim",
+      "id": "release-prerelease-channel",
+      "status": "guaranteed",
+      "page": "/evidence/claims/release-prerelease-channel/",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "claim",
+          "test": "suite:3179_a_prerelease_is_never_published_as_stable",
+          "path": "test/cases/3179_a_prerelease_is_never_published_as_stable.sh",
+          "category": "e2e",
+          "inputs": [
+            "docs/DISTRIBUTION.md",
+            "scripts/release-record",
+            "test/cases/3179_a_prerelease_is_never_published_as_stable.sh"
           ]
         }
       ],

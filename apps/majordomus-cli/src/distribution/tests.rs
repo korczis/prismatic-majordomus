@@ -592,3 +592,86 @@ fn a_record_written_before_the_set_existed_is_judged_on_what_it_says() {
         "internal consistency is still enforced on an older record"
     );
 }
+
+#[test]
+fn a_prerelease_is_never_the_stable_pointer_whatever_its_record_says() {
+    let model = real_model();
+    // the mislabel the release workflow made possible: an alpha recorded as stable
+    let releases = Releases::ordered(vec![
+        sample_release(&model, "v0.27.0", Channel::Stable),
+        sample_release(&model, "v1.0.0-alpha.1", Channel::Stable),
+    ]);
+    assert_eq!(
+        releases.latest_stable().map(|r| r.tag.as_str()),
+        Some("v0.27.0"),
+        "1.0.0-alpha.1 outranks 0.27.0 by version and must still not be resolved by default"
+    );
+    assert!(
+        releases
+            .findings(&model)
+            .iter()
+            .any(|f| f.contains("v1.0.0-alpha.1") && f.contains("stable channel")),
+        "the mislabel is a finding, not only harmless"
+    );
+}
+
+#[test]
+fn a_correctly_labelled_prerelease_is_addressable_but_not_resolved() {
+    let model = real_model();
+    let releases = Releases::ordered(vec![
+        sample_release(&model, "v0.27.0", Channel::Stable),
+        sample_release(&model, "v1.0.0-alpha.1", Channel::Prerelease),
+    ]);
+    assert_eq!(
+        releases.latest_stable().map(|r| r.tag.as_str()),
+        Some("v0.27.0")
+    );
+    assert!(releases.by_tag("v1.0.0-alpha.1").is_some());
+    assert!(
+        !releases.findings(&model).iter().any(|f| f.contains("stable channel")),
+        "a prerelease on the prerelease channel is consistent"
+    );
+}
+
+#[test]
+fn prerelease_versions_order_by_semver_precedence() {
+    let model = real_model();
+    // semver 2.0.0 section 11: 1.0.0-alpha < 1.0.0-alpha.1 < 1.0.0-alpha.2 < 1.0.0-alpha.10
+    // < 1.0.0-beta < 1.0.0-rc.1 < 1.0.0, and 0.27.0 below all of them
+    let order = [
+        "v0.27.0",
+        "v1.0.0-alpha",
+        "v1.0.0-alpha.1",
+        "v1.0.0-alpha.2",
+        "v1.0.0-alpha.10",
+        "v1.0.0-alpha.beta",
+        "v1.0.0-beta",
+        "v1.0.0-rc.1",
+        "v1.0.0",
+    ];
+    let mut shuffled: Vec<Release> = order
+        .iter()
+        .rev()
+        .map(|t| sample_release(&model, t, Channel::Prerelease))
+        .collect();
+    shuffled.rotate_left(3);
+    let releases = Releases::ordered(shuffled);
+    let got: Vec<&str> = releases.releases.iter().map(|r| r.tag.as_str()).collect();
+    let mut want = order.to_vec();
+    want.reverse();
+    assert_eq!(got, want, "highest first, by identifier and not by text");
+}
+
+#[test]
+fn build_metadata_is_not_part_of_precedence() {
+    let model = real_model();
+    let releases = Releases::ordered(vec![
+        sample_release(&model, "v1.0.0-alpha.1", Channel::Prerelease),
+        sample_release(&model, "v1.0.0+build.5", Channel::Stable),
+    ]);
+    assert_eq!(
+        releases.latest_stable().map(|r| r.tag.as_str()),
+        Some("v1.0.0+build.5"),
+        "1.0.0+build.5 is a final release, above its own pre-release"
+    );
+}

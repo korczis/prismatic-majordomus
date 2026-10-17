@@ -11095,6 +11095,21 @@
         }
       },
       {
+        "id": "majordomus://claim/release-prerelease-channel",
+        "kind": "claim",
+        "label": "release-prerelease-channel",
+        "summary": "A tag with a pre-release part is published as a prerelease, recorded on the prerelease channel, and never resolved as the stable release, so an unpinned installer and a node that follows stable keep the highest stable version",
+        "route": "/cockpit/objects/claim/release-prerelease-channel",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "scripts/release-record",
+          "responsibility": "none",
+          "source": "docs/DISTRIBUTION.md",
+          "test": "test/cases/3179_a_prerelease_is_never_published_as_stable.sh"
+        }
+      },
+      {
         "id": "majordomus://claim/reproduce-command",
         "kind": "claim",
         "label": "reproduce-command",
@@ -16451,6 +16466,14 @@
         "summary": "A release publishes an artifact for every supported target or it is not published",
         "route": "/cockpit/objects/document/docs-claims-release-is-complete-or-absent-md",
         "source": "docs/claims/release-is-complete-or-absent.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/release-prerelease-channel.md",
+        "kind": "document",
+        "label": "docs/claims/release-prerelease-channel.md",
+        "summary": "A tag with a pre-release part is published as a prerelease, recorded on the prerelease channel, and never resolved as the stable release, so an unpinned installer and a node that follows stable keep the highest stable version",
+        "route": "/cockpit/objects/document/docs-claims-release-prerelease-channel-md",
+        "source": "docs/claims/release-prerelease-channel.md"
       },
       {
         "id": "majordomus://document/docs/claims/reproduce-command.md",
@@ -55097,6 +55120,13 @@
         "source": "test/cases/310_rustdoc_projection.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3179_a_prerelease_is_never_published_as_stable.sh",
+        "kind": "test",
+        "label": "test/cases/3179_a_prerelease_is_never_published_as_stable.sh",
+        "route": "/cockpit/objects/test/test-cases-3179-a-prerelease-is-never-published-as-stable-sh",
+        "source": "test/cases/3179_a_prerelease_is_never_published_as_stable.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/318_a_partial_sweep_says_so.sh",
         "kind": "test",
         "label": "test/cases/318_a_partial_sweep_says_so.sh",
@@ -71473,6 +71503,26 @@
         "kind": "tested_by"
       },
       {
+        "source": "majordomus://claim/release-prerelease-channel",
+        "target": "file:scripts/release-record",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/release-prerelease-channel",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/release-prerelease-channel",
+        "target": "majordomus://document/docs/DISTRIBUTION.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/release-prerelease-channel",
+        "target": "majordomus://test/test/cases/3179_a_prerelease_is_never_published_as_stable.sh",
+        "kind": "tested_by"
+      },
+      {
         "source": "majordomus://claim/reproduce-command",
         "target": "kind:claim",
         "kind": "is_a"
@@ -74644,6 +74694,11 @@
       },
       {
         "source": "majordomus://document/docs/claims/release-is-complete-or-absent.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/release-prerelease-channel.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -85718,6 +85773,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3179_a_prerelease_is_never_published_as_stable.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/318_a_partial_sweep_says_so.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -91009,8 +91069,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2870,
-      "edges": 6291,
+      "nodes": 2873,
+      "edges": 6297,
       "acyclic": false,
       "truncated": false
     }
