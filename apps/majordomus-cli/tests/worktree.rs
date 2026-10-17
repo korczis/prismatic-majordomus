@@ -1134,6 +1134,95 @@ fn a_branch_the_remote_trunk_contains_is_merged_even_when_the_local_trunk_is_beh
     assert_eq!(b["cleanup_eligible"], true, "{b:#}");
 }
 
+/// A new branch starts from the remote's trunk as it is now, a branch the remote already has
+/// is taken up where it stands, and a remote that cannot be read is said, with how far behind
+/// the local trunk is: the local trunk of a long-lived checkout is never advanced, and every
+/// branch cut from it had to be reset by hand.
+#[test]
+fn a_new_branch_starts_from_the_remote_trunk_and_a_pushed_one_is_taken_up() {
+    let f = Fixture::new();
+    let root = f.root();
+    let parent = root.parent().unwrap().to_path_buf();
+    let remote = parent.join("origin.git");
+    let peer = parent.join("peer");
+    fn with_id<'a>(args: &[&'a str]) -> Vec<&'a str> {
+        let mut all = vec!["-c", "user.email=t@example.com", "-c", "user.name=t"];
+        all.extend_from_slice(args);
+        all
+    }
+    git(&root, &["init", "-q", "--bare", remote.to_str().unwrap()]);
+    git(
+        &root,
+        &["remote", "add", "origin", remote.to_str().unwrap()],
+    );
+    let trunk = git(&root, &["rev-parse", "--abbrev-ref", "HEAD"]);
+    git(&root, &["push", "-q", "-u", "origin", &trunk]);
+    git(
+        &parent,
+        &[
+            "clone",
+            "-q",
+            remote.to_str().unwrap(),
+            peer.to_str().unwrap(),
+        ],
+    );
+    git(
+        &peer,
+        &with_id(&["commit", "-q", "--allow-empty", "-m", "landed"]),
+    );
+    git(&peer, &["push", "-q", "origin", &trunk]);
+    git(&peer, &["checkout", "-q", "-b", "fix/theirs"]);
+    git(
+        &peer,
+        &with_id(&["commit", "-q", "--allow-empty", "-m", "theirs"]),
+    );
+    git(&peer, &["push", "-q", "origin", "fix/theirs"]);
+    let remote_trunk = git(&peer, &["rev-parse", &trunk]);
+    let theirs = git(&peer, &["rev-parse", "fix/theirs"]);
+    let local_trunk = git(&root, &["rev-parse", &trunk]);
+    assert_ne!(remote_trunk, local_trunk);
+
+    let out = ok(&root, &["worktree", "create", "feature/fresh"]);
+    assert!(
+        out.contains(&format!(
+            "feature/fresh (new, from origin/{trunk} at {remote_trunk})"
+        )),
+        "{out}"
+    );
+    let wt = f.container().join("feature/fresh");
+    assert_eq!(git(&wt, &["rev-parse", "HEAD"]), remote_trunk);
+    assert_eq!(
+        git(&root, &["rev-parse", &trunk]),
+        local_trunk,
+        "the local trunk moved"
+    );
+
+    let out = ok(&root, &["worktree", "create", "fix/theirs"]);
+    assert!(out.contains("tracking it"), "{out}");
+    let wt = f.container().join("fix/theirs");
+    assert_eq!(git(&wt, &["rev-parse", "HEAD"]), theirs);
+
+    git(
+        &root,
+        &[
+            "remote",
+            "set-url",
+            "origin",
+            parent.join("gone.git").to_str().unwrap(),
+        ],
+    );
+    let r = json(&root, &["worktree", "create", "feature/offline"]);
+    assert_eq!(r["start"]["from"], "local_trunk", "{r:#}");
+    assert_eq!(r["start"]["unreachable"], "origin", "{r:#}");
+    assert_eq!(r["start"]["behind"], 1, "{r:#}");
+    assert_eq!(r["start_commit"], local_trunk.as_str(), "{r:#}");
+    let out = ok(&root, &["worktree", "create", "feature/offline-text"]);
+    assert!(
+        out.contains(&format!("warning could not fetch {trunk} from origin")),
+        "{out}"
+    );
+}
+
 #[test]
 fn an_issue_is_inferred_only_from_an_exact_id_component_and_create_names_it_that_way() {
     let f = Fixture::new();
