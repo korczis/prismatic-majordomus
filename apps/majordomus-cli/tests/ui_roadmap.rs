@@ -10,8 +10,13 @@
 //!   version outranks an older record, so the screen never shows a release older than the
 //!   executable that drew it (the "Latest release 0.26.0 under a 0.27.0 header").
 //! - A source that was not read says so.
+//! - `plan.flight` is one answer over HTTP and MCP: the tool a client calls is the reading
+//!   the screen draws.
 
 mod common;
+
+use std::io::Write;
+use std::process::Stdio;
 
 use common::{Fixture, Served};
 use serde_json::{json, Value};
@@ -392,5 +397,54 @@ fn a_live_claim_puts_its_issue_in_flight_and_every_proof_is_shown() {
     assert!(
         html.contains("branch fix/the-later-piece"),
         "a local branch is shown, unlinked: {html}"
+    );
+}
+
+/// One `tools/call` of `name` over a fresh MCP session in the fixture, its structured answer.
+fn mcp_tool(f: &Fixture, name: &str, arguments: Value) -> Value {
+    let mut child = common::majordomus()
+        .arg("mcp")
+        .env("MAJORDOMUS_SHARE", common::dist_share())
+        .current_dir(f.root())
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::null())
+        .spawn()
+        .unwrap();
+    {
+        let mut stdin = child.stdin.take().unwrap();
+        writeln!(stdin, "{}", json!({ "jsonrpc": "2.0", "id": 1, "method": "initialize", "params": { "protocolVersion": "2025-06-18", "capabilities": {}, "clientInfo": { "name": "t", "version": "0" } } })).unwrap();
+        writeln!(stdin, "{}", json!({ "jsonrpc": "2.0", "id": 2, "method": "tools/call", "params": { "name": name, "arguments": arguments } })).unwrap();
+    }
+    let out = child.wait_with_output().unwrap();
+    let last = String::from_utf8(out.stdout)
+        .unwrap()
+        .lines()
+        .last()
+        .map(|l| serde_json::from_str::<Value>(l).unwrap())
+        .unwrap();
+    assert_eq!(last["result"]["isError"], false, "{name}: {last}");
+    last["result"]["structuredContent"].clone()
+}
+
+#[test]
+fn plan_flight_is_one_answer_over_http_and_mcp() {
+    let (f, _) = fixture();
+    let mut s = Served::start(&f.root(), &[]);
+    let (status, from_http) = s.get("/api/v1/plan/flight");
+    s.stop();
+    assert_eq!(status, 200, "{from_http}");
+    let from_mcp = mcp_tool(&f, "majordomus_plan_flight", json!({}));
+    // when it was observed differs between two readings; what was observed must not
+    for key in ["schema", "now", "next", "milestones", "release"] {
+        assert_eq!(
+            from_mcp[key], from_http[key],
+            "{key}: MCP {from_mcp} against HTTP {from_http}"
+        );
+    }
+    assert_eq!(
+        from_mcp["now"],
+        json!(["m-busy", "m-started"]),
+        "{from_mcp}"
     );
 }
