@@ -309,7 +309,7 @@ pub(crate) fn layer(facts: &Facts, scope: &str, path: &Path) -> SettingsLayer {
     l.sandbox_enabled = v.pointer("/sandbox/enabled").and_then(Value::as_bool) == Some(true);
     if let Some(hooks) = v.get("hooks").and_then(Value::as_object) {
         l.hooks = hooks.keys().cloned().collect();
-        l.hooks.sort();
+        crate::order::canonical_strings(&mut l.hooks);
     }
     l
 }
@@ -910,19 +910,16 @@ pub(crate) fn friction(
 ) -> Friction {
     let since_text = crate::peers::rfc3339(since);
     let prefix = transcript_slug(&primary_of(root));
-    let mut dirs: Vec<PathBuf> = std::fs::read_dir(projects)
+    let mut names: Vec<String> = std::fs::read_dir(projects)
         .into_iter()
         .flatten()
         .flatten()
-        .map(|e| e.path())
-        .filter(|p| {
-            p.is_dir()
-                && p.file_name()
-                    .and_then(|n| n.to_str())
-                    .is_some_and(|n| n == prefix || n.starts_with(&format!("{prefix}-wt-")))
-        })
+        .filter(|e| e.path().is_dir())
+        .filter_map(|e| e.file_name().to_str().map(str::to_owned))
+        .filter(|n| *n == prefix || n.starts_with(&format!("{prefix}-wt-")))
         .collect();
-    dirs.sort();
+    crate::order::canonical_strings(&mut names);
+    let dirs: Vec<PathBuf> = names.iter().map(|n| projects.join(n)).collect();
     let mut f = Friction {
         schema: FRICTION_SCHEMA.into(),
         since: since_text.clone(),
