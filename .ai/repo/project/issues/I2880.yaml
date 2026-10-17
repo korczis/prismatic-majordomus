@@ -1,0 +1,36 @@
+id: I2880
+milestone: M004
+title: "A derive whose site inputs and generator are unchanged does not regenerate the site data"
+slug: a-derive-with-current-site-data-skips-generation
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Make scripts/derive skip stage B (scripts/generate-site-data) when the committed site data was generated from exactly the inputs and the generator the tree now holds, and run it as before otherwise, so that a derive whose only change touched nothing the site data reads stops paying a full generation under the machine's derive lock."
+why: "Measured on 2026-10-17 from 111 derive logs of the release seat's sessions: a derive's work (stages A-D) had a median of 4.5 min, of which stage B (generate-site-data) was 3.9 min, and the derives waited on the machine's derive lock for 15.3 h in total against 9.5 h of work (median wait 4.0 min, p90 19.8, max 70). scripts/derive runs stage B on every call. generate-site-data --fingerprint already answers in about 0.2 s whether the committed data was generated from the current canonical inputs (the value source.json records as source_hash), but scripts/derive never asks it; only scripts/ci/local-never-published does. The fingerprint alone does not prove equivalence: its input list (generate-site-data --inputs, 1613 paths at 4a4573690f8) contains neither scripts/generate-site-data nor the lib/*.sh it sources nor the executable it calls, so a changed generator with unchanged inputs would be wrongly skipped."
+current_state: "scripts/derive runs stages A-D unconditionally under the lock; stage B regenerates every dataset whatever changed."
+desired_state: "Stage B is skipped, and says so in the derive's output with both fingerprints, when the fingerprint of the canonical inputs and the generator (the script, every library it sources, and the identity of the executable it calls) equals the one the committed site data records. Any difference, or a committed record that names none, runs stage B exactly as before. The committed data and generate-site-data --check are unchanged in either case."
+scope:
+  - "scripts/derive"
+  - "scripts/generate-site-data"
+  - "test/cases"
+  - ".ai/repo/project/issues/I2880.yaml"
+non_scope:
+  - "Incremental generation per dataset (RC4 step 3)"
+  - "Deriving once per task instead of per commit (RC4 step 2)"
+  - "Changing the derive lock or what it serialises"
+depends_on: []
+acceptance_criteria:
+  - "A derive on a tree whose site inputs and generator are unchanged since the committed site data skips stage B and prints the fingerprint it matched"
+  - "A derive after a change to a canonical input, to scripts/generate-site-data, to a library it sources, or to the executable runs stage B and regenerates the data"
+  - "A case proves both halves on a fixture, and a mutation that skips on the input fingerprint alone fails it"
+  - "The committed site data after a skipped derive is byte-identical to a full derive's, and generate-site-data --check passes"
+  - "The before and after wall time of a no-op derive on this repository is recorded as evidence, median of 5 runs each, under a stated load"
+validation:
+  - "bin/majordomus plan validate"
+  - "bash test/run.sh --no-skips <the case this issue adds> 10_site_data 51_derived_artifacts_committed"
+  - "scripts/generate-site-data --check"
+evidence_required:
+  - "derive_skip_case"
+  - "derive_noop_timing"
+created_at: 2026-10-17
+updated_at: 2026-10-17
