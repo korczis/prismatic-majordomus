@@ -1,0 +1,31 @@
+id: I2960
+milestone: "the-mesh-works-out-of-the-box"
+title: "Every mesh node says how much disk it has left, and a node near the cliff is named on every machine"
+slug: the-fleet-disk-is-watched
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Each runtime's presence carries the free space of the volume that holds its repository and its build directory, measured at each beat; mesh.nodes reports it per node, and majordomus brief, the monitor and mesh doctor name every present node whose free space is below the declared reclaim mark (default 50 GiB) or its floor (5 GiB), on every machine of the mesh, so a full disk on a machine where nobody is building is seen before its sessions stop."
+why: "2026-10-17 ~20:30Z the owner asked whether every machine was on the tailnet mesh. The measurement found the iMac at 100% (488 MiB free; its one session's handover had hung 3.5 h), lundra at 99% (6.3 GiB) and the second MacBook at 97% (17 GiB), and nobody had been told: the build-time sweeps (I2713, I2787, #1349) and the reclaim mark only run where a build runs through lib/rust_bin.sh, and only on that machine. The iMac was full of user data (docker volumes, repositories), which no sweep may touch and only the owner can free, so the one remedy there is to say so early. I2500 (#1056, ADR 0150) budgets disk_free_min_mb for one checkout at the episode's events; nothing reports it across machines."
+current_state: "mesh.nodes reports trust, presence, endpoints, capabilities and version per runtime and nothing about the machine's resources; free space is read only by lib/rust_bin.sh before a build and by the reaper; brief and monitor are silent about other machines' disks."
+desired_state: "The presence beat carries free_bytes and total_bytes of the repository's volume (statvfs, no subprocess); mesh.nodes and its HTTP and MCP projections show them per node with the age of the reading; brief, monitor and mesh doctor name each present node below the mark as a warning and below the floor as a failure, citing the node, its free space and when it was read; a node that reports nothing is unknown, never healthy."
+scope:
+  - "apps/majordomus-cli/src/mesh"
+  - "apps/majordomus-cli/src/capability/builtin"
+  - "test/cases/3360_a_low_node_is_named_on_every_machine.sh"
+  - "docs/MESH.md"
+  - "docs/MONITOR.md"
+depends_on:
+  - "I2713"
+  - "I2787"
+acceptance_criteria:
+  - "A runtime's presence carries the free and total bytes of its repository's volume and when they were read"
+  - "mesh.nodes shows each node's free space; a node that sent none is reported unknown, not healthy"
+  - "brief, the monitor and mesh doctor name a present node below the reclaim mark as a warning and below the floor as a failure, on a machine other than the one that is low"
+  - "No sweep, removal or remote command is started by the report: it names the node and what to run there"
+validation:
+  - "majordomus plan validate"
+evidence_required:
+  - "case_a_low_node_is_named_on_every_machine"
+created_at: 2026-10-17
+updated_at: 2026-10-17

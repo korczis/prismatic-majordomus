@@ -6,23 +6,23 @@
     "version": "0.29.0"
   },
   "registry": {
-    "fingerprint": "cfc64482a6796b12eb023f81f50b88a5ee38b5494bb09da51600c6a17806b6c0",
+    "fingerprint": "3bb961ee6a1bfd12155942f15368bb8dce9b46d8df18404554b6e3614709c9fe",
     "summary": {
-      "total": 2527,
+      "total": 2529,
       "builtin": 202,
-      "declarative": 2325,
+      "declarative": 2327,
       "by_kind": {
         "command": 31,
         "query": 171,
-        "resource": 2325
+        "resource": 2327
       },
       "by_stability": {
         "behaviorally_verified": 141,
         "experimental": 52,
-        "implemented": 2334
+        "implemented": 2336
       },
       "mcp_tools": 192,
-      "mcp_resources": 2380,
+      "mcp_resources": 2382,
       "http_routes": 197,
       "cli_commands": 108,
       "modules": 92,
@@ -83231,7 +83231,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 424,
+        "capabilities": 426,
         "capability_ids": []
       },
       {
@@ -83893,7 +83893,7 @@
     ]
   },
   "index": {
-    "fingerprint": "ebbdaff489cce67fe99b529aa57475e97fbadbd238fabae0d224eb928298d8a1",
+    "fingerprint": "e215f044b4003c2dfb1b06ea0ce77e4032bdc7f33971e8e8ad5657d9907fe72b",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -83933,7 +83933,7 @@
       "gap": 4,
       "implementation": 52,
       "intent": 5,
-      "issue": 424,
+      "issue": 426,
       "knowledge": 4,
       "mesh-declaration": 1,
       "milestone": 41,
@@ -90206,7 +90206,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 170002
+        "bytes": 173167
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -98341,6 +98341,28 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 2258
+      },
+      {
+        "uri": "majordomus://issue/I2960",
+        "kind": "issue",
+        "identity": "I2960",
+        "title": "Every mesh node says how much disk it has left, and a node near the cliff is named on every machine",
+        "description": "Each runtime's presence carries the free space of the volume that holds its repository and its build directory, measured at each beat; mesh.nodes reports it per node, and majordomus brief, the monitor and mesh doctor name every present node whose free space is below the declared reclaim mark (default 50 GiB) or its floor (5 GiB), on every machine of the mesh, so a full disk on a machine where nobody is building is seen before its sessions stop.",
+        "path": ".ai/repo/project/issues/I2960.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3044
+      },
+      {
+        "uri": "majordomus://issue/I2961",
+        "kind": "issue",
+        "identity": "I2961",
+        "title": "Upgrading a macOS hub never silently cuts it off the mesh",
+        "description": "After an install or upgrade on macOS, the installer and mesh doctor say whether the application firewall admits the binary the hub now runs, and give the one command that admits it, so an upgrade that moves the hub to a new versions/<v>/libexec path is never left listening behind a firewall that silently drops every other machine.",
+        "path": ".ai/repo/project/issues/I2961.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2937
       },
       {
         "uri": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
@@ -109058,7 +109080,7 @@
       "identity": [
         "id"
       ],
-      "objects": 424
+      "objects": 426
     },
     {
       "name": "knowledge",

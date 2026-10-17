@@ -39689,6 +39689,81 @@
         }
       },
       {
+        "id": "majordomus://issue/I2960",
+        "kind": "issue",
+        "label": "I2960",
+        "summary": "Every mesh node says how much disk it has left, and a node near the cliff is named on every machine",
+        "route": "/cockpit/objects/issue/i2960",
+        "source": ".ai/repo/project/issues/I2960.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A runtime's presence carries the free and total bytes of its repository's volume and when they were read",
+            "mesh.nodes shows each node's free space; a node that sent none is reported unknown, not healthy",
+            "brief, the monitor and mesh doctor name a present node below the reclaim mark as a warning and below the floor as a failure, on a machine other than the one that is low",
+            "No sweep, removal or remote command is started by the report: it names the node and what to run there"
+          ],
+          "created_at": "2026-10-17",
+          "depends_on": [
+            "I2713",
+            "I2787"
+          ],
+          "evidence_required": [
+            "case_a_low_node_is_named_on_every_machine"
+          ],
+          "milestone": "the-mesh-works-out-of-the-box",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh",
+            "apps/majordomus-cli/src/capability/builtin",
+            "test/cases/3360_a_low_node_is_named_on_every_machine.sh",
+            "docs/MESH.md",
+            "docs/MONITOR.md"
+          ],
+          "slug": "the-fleet-disk-is-watched",
+          "updated_at": "2026-10-17",
+          "validation": [
+            "majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2961",
+        "kind": "issue",
+        "label": "I2961",
+        "summary": "Upgrading a macOS hub never silently cuts it off the mesh",
+        "route": "/cockpit/objects/issue/i2961",
+        "source": ".ai/repo/project/issues/I2961.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "An upgrade on macOS with the firewall on and the new binary not admitted prints the admitting command, and only then",
+            "mesh doctor fails a non-loopback hub whose running executable the firewall does not admit, naming the path",
+            "Nothing runs sudo or changes the firewall on its own"
+          ],
+          "created_at": "2026-10-17",
+          "depends_on": [],
+          "evidence_required": [
+            "case_an_upgraded_hub_names_its_firewall_gap"
+          ],
+          "milestone": "the-mesh-works-out-of-the-box",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "share/install/install.sh.in",
+            "apps/majordomus-cli/src/mesh/doctor.rs",
+            "test/cases/3361_an_upgraded_hub_names_its_firewall_gap.sh",
+            "docs/MESH.md"
+          ],
+          "slug": "an-upgraded-hub-stays-reachable",
+          "updated_at": "2026-10-17",
+          "validation": [
+            "majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "label": "a-commit-stood-behind-a-build-lock",
@@ -84399,6 +84474,36 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2960",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2960",
+        "target": "majordomus://issue/I2713",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2960",
+        "target": "majordomus://issue/I2787",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2960",
+        "target": "majordomus://milestone/the-mesh-works-out-of-the-box",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2961",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2961",
+        "target": "majordomus://milestone/the-mesh-works-out-of-the-box",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -94405,8 +94510,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2959,
-      "edges": 6500,
+      "nodes": 2961,
+      "edges": 6506,
       "acyclic": false,
       "truncated": false
     }

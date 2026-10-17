@@ -298,7 +298,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/economics.json` | `economics` | json | 30840 | `4ad295591dd83d94` |
 | `docs/generated/economics.md` | `economics` | markdown | 15299 | `04b99dad2e8318ab` |
 | `docs/generated/economics.yaml` | `economics` | yaml | 25713 | `8254a5fef62e3874` |
-| `docs/generated/graph.json` | `graph` | json | 3596518 | `4fd511efc5a65012` |
+| `docs/generated/graph.json` | `graph` | json | 3600528 | `f7d37af1fde5f449` |
 | `docs/generated/graph.schema.json` | `graph-schema` | json | 7618 | `8bf8f706bda9cbb0` |
 | `docs/generated/modules/artifacts.md` | `modules/artifacts` | markdown | 1742 | `c833e703a90d4c20` |
 | `docs/generated/modules/brief.md` | `modules/brief` | markdown | 2394 | `e1affb6947de4bba` |
@@ -423,9 +423,9 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `site/data/registry/design.json` | `site-design` | json | 11587 | `7eea32efbcdec1a6` |
 | `site/data/registry/distribution.json` | `site-distribution` | json | 3005 | `0eff218ed99f9f24` |
 | `site/data/registry/evidence-subjects.json` | `site-evidence-subjects` | json | 802375 | `c49767ad6aa39c0c` |
-| `site/data/registry/product-graph.json` | `site-product-graph` | json | 111570 | `c85467adb98ba7b9` |
-| `site/data/registry/product.json` | `site-product` | json | 758797 | `69a207df1d03acd3` |
-| `site/data/registry/registry.json` | `site-registry` | json | 6958426 | `f31843a164d45918` |
+| `site/data/registry/product-graph.json` | `site-product-graph` | json | 111570 | `12dd1c00fc790df2` |
+| `site/data/registry/product.json` | `site-product` | json | 758797 | `17d4f475de25b17f` |
+| `site/data/registry/registry.json` | `site-registry` | json | 6959964 | `a7bde694b15013aa` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180163 | `7d44433d8624b20a` |
 | `site/data/registry/why.json` | `site-why` | json | 349924 | `d2557340f9489839` |
 | `site/static/favicon.svg` | `design-mark` | text | 904 | `fd24ab421f13dbc9` |
