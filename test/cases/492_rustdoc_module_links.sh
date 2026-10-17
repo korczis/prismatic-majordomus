@@ -33,8 +33,8 @@
 # (scripts/rust-check --doc), and the case says what it did not measure and ends (skip_case).
 # The builds are real; they skip the stylesheet (--no-css), which no link depends on.
 . "$ROOT/test/lib.sh"
-command -v zola >/dev/null || skip_case "zola is absent, so no site was built and no module page was read"
-command -v node >/dev/null || skip_case "node is absent, so no site was built and no module page was read"
+mj_zola_ready "$ROOT" || skip_case "$(mj_zola_why "$ROOT"), so no site was built and no module page was read"
+mj_runs node || skip_case "$(mj_runs_why node), so no site was built and no module page was read"
 command -v jq >/dev/null 2>&1 || skip_case "no jq, so the dataset and the topology were not read"
 RB="$(rust_bin)" || rust_bin_exit $?
 S="$(mktemp -d "${TMPDIR:-/tmp}/mj492.XXXXXX")"; trap 'rm -rf "$S"' EXIT

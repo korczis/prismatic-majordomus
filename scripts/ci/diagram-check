@@ -77,6 +77,9 @@
 set -euo pipefail
 
 ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
+# shellcheck source=../lib/runnable.sh
+. "$(cd "$(dirname "$0")/../.." && pwd)/lib/runnable.sh" 2>/dev/null || { mj_runs() { command -v "$1" >/dev/null 2>&1; }; mj_runs_why() { printf '%s is not available' "$1"; }; mj_zola_ready() { command -v zola >/dev/null 2>&1; }; mj_zola_why() { printf 'zola is not available'; }; mj_node_env() { :; }; }
+mj_node_env "$(cd "$(dirname "$0")/../.." && pwd)" || true
 cd "$ROOT"
 BASELINE=".ai/repo/diagram-baseline.txt"
 
@@ -90,7 +93,7 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-command -v python3 >/dev/null 2>&1 || { echo "diagram-check: python3 is not installed" >&2; exit 12; }
+mj_runs python3 || { echo "diagram-check: $(mj_runs_why python3)" >&2; exit 12; }
 
 findings="$(python3 - <<'PY'
 import html as htmlmod

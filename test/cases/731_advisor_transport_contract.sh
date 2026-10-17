@@ -7,10 +7,10 @@
 # answers, structured answers, usage reporting, the order of concurrent results, and the
 # redaction of secrets from questions and diagnostics.
 . "$ROOT/test/lib.sh"
-command -v node >/dev/null 2>&1 || {
+mj_runs node || {
   [ -z "${CI:-}" ] || { echo "    node is required on CI: the contract suite cannot run"; exit 1; }
-  skip "no node"; }
-out="$(cd "$ROOT" && env -u OPENAI_API_KEY -u ANTHROPIC_API_KEY node --test scripts/lib/advisors/contract.test.mjs 2>&1)" \
+  skip "$(mj_runs_why node)"; }
+out="$(cd "$ROOT" && env -u OPENAI_API_KEY -u ANTHROPIC_API_KEY node --test --test-reporter=tap scripts/lib/advisors/contract.test.mjs 2>&1)" \
   || { printf '%s\n' "$out" | grep -E '^not ok|# (pass|fail)|Error|expected|actual' | head -40; exit 1; }
 printf '%s\n' "$out" | grep -qE '^# fail 0$' || { printf '%s\n' "$out" | tail -20; exit 1; }
 pass="$(printf '%s\n' "$out" | sed -n 's/^# pass \([0-9]*\)$/\1/p')"

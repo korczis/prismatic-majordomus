@@ -105,6 +105,9 @@ if [ "${1:-}" = --prose-figures ]; then
   exit 10
 fi
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"; SITE="$ROOT/site"; PUB="$SITE/public"
+# shellcheck source=../lib/runnable.sh
+. "$(cd "$(dirname "$0")/.." && pwd)/lib/runnable.sh" 2>/dev/null || { mj_runs() { command -v "$1" >/dev/null 2>&1; }; mj_runs_why() { printf '%s is not available' "$1"; }; mj_zola_ready() { command -v zola >/dev/null 2>&1; }; mj_zola_why() { printf 'zola is not available'; }; mj_node_env() { :; }; }
+mj_node_env "$(cd "$(dirname "$0")/.." && pwd)" || true
 MJ_VERSION="site"; MJ_BIN_DIR="$ROOT/bin"; MJ_LIB_DIR="$ROOT/lib"; export MJ_VERSION MJ_BIN_DIR MJ_LIB_DIR
 # shellcheck source=../lib/common.sh
 . "$ROOT/lib/common.sh"
@@ -726,7 +729,7 @@ if [ -f "$OAP" ]; then
   # id the data holds must be in the map the index publishes, and resolve, through the script the
   # site ships, to its home; so must every heading id a doc comment put under a schema, which is
   # the other kind of address a reader copied. Run over the built map and the shipped script.
-  if command -v node >/dev/null 2>&1 && [ -f "$PUB/js/api-anchors.js" ]; then
+  if mj_runs node && [ -f "$PUB/js/api-anchors.js" ]; then
     node - "$OAP" "$PUB/js/api-anchors.js" "$PAGEROWS.apiwant" "$PAGEROWS.apiids" > "$PAGEROWS.apifound" <<'NODE'
 const fs = require('fs');
 const [index, script, want, ids] = process.argv.slice(2);

@@ -182,7 +182,7 @@ recipe_exists bench
 #     is its own region entry followed by a count-less segment, so a line is covered exactly
 #     when its own count is non-zero; a src file closes with an inline #[cfg(test)] module and
 #     a file under tests/ rides along, both fully executed, as test code always is.
-if command -v python3 >/dev/null 2>&1; then
+if mj_runs python3; then
   CV="$(mktemp -d "${TMPDIR:-/tmp}/mj77cov.XXXXXX")"; CV="$(cd "$CV" && pwd)"
   mkdir -p "$CV/scripts" "$CV/apps/majordomus-cli/src/capability/builtin" "$CV/apps/majordomus-cli/tests"
   cp "$ROOT/scripts/rust-coverage" "$CV/scripts/"

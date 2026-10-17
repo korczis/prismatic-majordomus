@@ -15,7 +15,7 @@
 # MAJORDOMUS_BIN, or no jq or zola.
 . "$ROOT/test/lib.sh"
 command -v jq >/dev/null || skip "jq absent"
-command -v zola >/dev/null || skip "zola absent"
+mj_zola_ready "$ROOT" || skip "$(mj_zola_why "$ROOT")"
 [ -f "$ROOT/apps/majordomus-cli/Cargo.toml" ] || { echo "    apps/majordomus-cli/Cargo.toml is missing"; exit 1; }
 RB="$(rust_bin)" || rust_bin_exit $?
 [ -x "$RB" ] || { echo "    the build produced no executable at $RB"; exit 1; }
