@@ -34,4 +34,17 @@ risks:
   - "Narrowing what the recording covers is silent in the dangerous direction: too narrow and staleness stops being detectable, which reads as green rather than as noise. Every change here needs a case that proves the gate still refuses something."
   - "The subsystem is touched by every branch, so a change lands into constant contention with whatever else is deriving."
 created_at: 2026-09-10
-updated_at: 2026-09-10
+updated_at: 2026-10-17T07:53:40Z
+evidence:
+  - covers: derivation_survives_an_unrelated_merge
+    type: test
+    command: "bash test/run.sh 3048_a_derivation_survives_an_unrelated_merge"
+    result: "tests: 1 passed, 0 failed, 0 skipped on master 01227a0f74a (2026-10-17, MAJORDOMUS_BIN = a build of that tree); I1409 DONE"
+    commit: 01227a0f74ab9de734edd3672dcc9d8d3a2d666c
+    recorded_at: 2026-10-17T07:53:26Z
+  - covers: fixture_without_history_evaluates
+    type: test
+    command: "bash test/run.sh 3055_a_derivation_needs_no_history"
+    result: "tests: 1 passed, 0 failed, 0 skipped on master 01227a0f74a (2026-10-17, MAJORDOMUS_BIN = a build of that tree)"
+    commit: 01227a0f74ab9de734edd3672dcc9d8d3a2d666c
+    recorded_at: 2026-10-17T07:53:40Z
