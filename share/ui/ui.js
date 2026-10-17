@@ -19,6 +19,10 @@
 // the ones the server put on the page; the table beside them is what a reader without the
 // script, or without the library, reads instead. Colours are the design system's tones, read
 // from the stylesheet, so nothing here names a colour.
+//
+// An issue's move form is wired by the Cockpit's `moves.js`, and a screen that follows the
+// executions this server runs holds one channel through the Cockpit's `socket.js`: both are
+// loaded only where the screen needs them, from the URLs the page names, never in a snapshot.
 
 const THEME_KEY = (document.body && document.body.dataset.themeKey) || null;
 const THEME_CLASS = (document.body && document.body.dataset.themeClass) || 'dark';
@@ -205,7 +209,9 @@ async function drawGraphs() {
 
 // Reading the sources again: while the screen is visible, every minute, the server's
 // rendering of this screen replaces the one on the page, and the time it was read is
-// updated. This is a refresh, said as one: nothing here claims a live stream.
+// updated. This is a refresh, said as one. A screen that follows the executions this server
+// runs is also read again when one ends (`followExecutions`, below), and its line says what
+// that channel is doing; nothing claims more than that channel carries.
 //
 // The server never makes a screen wait for a source. A value it read before the repository
 // last changed, or has not read yet, is shown as that, and its source line carries
@@ -310,12 +316,71 @@ async function wireMoves() {
   }
 }
 
+// A screen that follows the executions this server runs (`data-follows-executions`) holds one
+// channel to the stream the page names (`data-events`), through the Cockpit's one WebSocket
+// client (`data-socket-lib`). When an execution ends — completed, failed or cancelled — the
+// screen is read again, once for a burst of them and at most every READ_AGAIN_MS, so a move
+// made anywhere on this server shows here without waiting for the minute's refresh. A channel
+// that reconnected, or saw a gap, may have missed an end, so that reads the screen again too.
+// The line beside the read time says what the channel is doing, from the socket's own state
+// and nothing more. Only executions of this server travel on it: a move another process makes
+// still waits for the minute. Never in a snapshot, which no server stands behind.
+const ENDED = new Set(['execution.completed', 'execution.failed', 'execution.cancelled']);
+const READ_AGAIN_MS = 2000;
+let following = null;
+let readAgainTimer = null;
+let readAgainAt = 0;
+function readAgainSoon() {
+  if (readAgainTimer) return;
+  const wait = Math.max(250, readAgainAt + READ_AGAIN_MS - Date.now());
+  readAgainTimer = setTimeout(async () => {
+    readAgainTimer = null;
+    readAgainAt = Date.now();
+    await refresh();
+    catchUp();
+  }, wait);
+}
+function showChannel(state) {
+  const line = document.querySelector('[data-live-state]');
+  if (!line) return;
+  line.hidden = false;
+  line.dataset.liveState = state;
+  line.textContent = ` · executions ${state}`;
+}
+async function followExecutions() {
+  const body = document.body;
+  const lib = body && body.dataset.socketLib;
+  const path = body && body.dataset.events;
+  if (following || !lib || !path) return;
+  if (!document.querySelector('#main [data-follows-executions]')) return;
+  following = true; // before the import: a refresh's enhance() must not open a second one
+  let socket;
+  try {
+    socket = await import(lib);
+  } catch (e) {
+    following = null;
+    return; // the minute's refresh still reads the screen again
+  }
+  const channel = socket.follow(path, {
+    message(frame) {
+      if (ENDED.has(frame.type)) readAgainSoon();
+    },
+    state: showChannel,
+    resync() {
+      readAgainSoon();
+    },
+  });
+  following = channel;
+  window.addEventListener('pagehide', () => channel.close());
+}
+
 function enhance() {
   if (!SNAPSHOT) {
     for (const placeholder of document.querySelectorAll('[data-panel-src]')) {
       fillPanel(placeholder);
     }
     wireMoves();
+    followExecutions();
   }
   drawGraphs();
   drawObservatory();

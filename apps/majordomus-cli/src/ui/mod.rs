@@ -98,6 +98,10 @@ pub const GRAPH_LIB: &str = "vendor/cytoscape.min.js";
 /// move form: one implementation for both surfaces (I2781).
 pub const MOVES_LIB: &str = "moves.js";
 
+/// The Cockpit's one WebSocket client, loaded only by a screen that follows the executions
+/// this server runs, so that it reads itself again when one ends (I2783).
+pub const SOCKET_LIB: &str = "socket.js";
+
 /// The query parameter that asks a panel route for the panel alone, without the frame:
 /// what the script fetches to fill a slow panel in place.
 pub const FRAGMENT: &str = "fragment";
@@ -231,7 +235,8 @@ pub(crate) struct Ui {
     live: Arc<Live>,
     version: &'static str,
     assets: Assets,
-    /// The Cockpit's files, for the one module the UI borrows from it ([`MOVES_LIB`]).
+    /// The Cockpit's files, for the modules the UI borrows from it ([`MOVES_LIB`],
+    /// [`SOCKET_LIB`]).
     cockpit_assets: Assets,
     /// Whether this UI's screens have been read once behind its first reader.
     warmed: std::sync::atomic::AtomicBool,
@@ -409,6 +414,7 @@ impl Ui {
                     script: self.assets.url(SCRIPT),
                     graph_lib: self.assets.url(GRAPH_LIB),
                     moves_lib: self.cockpit_assets.url(MOVES_LIB),
+                    socket_lib: self.cockpit_assets.url(SOCKET_LIB),
                     assets_present: self.assets.present(),
                     version: self.version,
                 },
