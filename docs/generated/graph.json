@@ -22374,6 +22374,8 @@
             "A stale index is drift under watch and a failure under the command, and neither rebuilds it",
             "doctor reports whether the index is buildable here without leaving one behind"
           ],
+          "completed_at": "2026-10-17T12:03:55Z",
+          "completed_event": "sha256:ea8c835d8545ab751f2a56c8d79db9ddc862e14c6fecd534930b52debeddb964",
           "created_at": "2026-09-04",
           "current_state": "Doctrines are declared with a validator, the commands that enforce it and its test; doctor proves each link of that chain from the source rather than from the declaration.",
           "depends_on": [
@@ -22399,13 +22401,17 @@
             "test/cases"
           ],
           "slug": "knowledge-validation",
-          "updated_at": "2026-10-16",
+          "started_at": "2026-10-17T12:03:09Z",
+          "started_event": "sha256:8b84e26336f679d7167567d692e760b07d58c9f1c190204555d7d31c78736303",
+          "updated_at": "2026-10-17T12:03:55Z",
           "validation": [
             "bash test/run.sh 3075_knowledge_validate_judges_the_graph",
             "bin/majordomus knowledge validate",
             "bin/majordomus doctor",
             "bin/majordomus watch"
           ],
+          "verified_at": "2026-10-17T12:03:31Z",
+          "verified_event": "sha256:e650cfbc9bf4dc58d9d889f5e2bb50a17bd21cbcff878315367252bef3382536",
           "why": "Validation logic that exists twice diverges, and the second copy is the one that stops being run. The registry is the mechanism that makes doctor, watch and the command itself provably the same rule."
         }
       },
@@ -33264,6 +33270,8 @@
             "A hello captured from a link to runtime A and replayed to runtime B within the skew window is refused with a typed refusal and changes no link of B",
             "A hello replayed to A after A restarts cannot displace an established link"
           ],
+          "completed_at": "2026-10-17T12:01:38Z",
+          "completed_event": "sha256:70274f38e185411af1da04f9c7a3647501af35df9972f3d2cf8939118cc8c156",
           "created_at": "2026-10-09",
           "current_state": "A valid hello is accepted by any runtime of the repository that trusts its key and has not seen its nonce.",
           "depends_on": [],
@@ -33283,12 +33291,16 @@
             ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md"
           ],
           "slug": "a-hello-names-its-recipient",
-          "updated_at": "2026-10-14",
+          "started_at": "2026-10-17T12:01:16Z",
+          "started_event": "sha256:5f35c2ae5a6733c22d35a88068cbf88f32a126391ec7f3898c293469fd1bbd6c",
+          "updated_at": "2026-10-17T12:01:38Z",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --test mesh_cooperation",
             "cargo test --lib mesh::cooperation"
-          ]
+          ],
+          "verified_at": "2026-10-17T12:01:30Z",
+          "verified_event": "sha256:edf7dc7eb244a178bd00c266ede26b34cac98395c560c38bc83e8acc42ad64bb"
         }
       },
       {
@@ -33539,6 +33551,8 @@
             "Walking mesh.events with limit 1 over a journal where several streams share a lamport returns every event once, in causal order",
             "The cursor the schema documents is the cursor the next page accepts"
           ],
+          "completed_at": "2026-10-17T12:05:53Z",
+          "completed_event": "sha256:f0f165d0fbe184d3c2ba3a053cadd03327066c2dbffea26a6f4c8a50e8764018",
           "created_at": "2026-10-09",
           "current_state": "A client that follows the documented cursor misses events.",
           "depends_on": [],
@@ -33559,12 +33573,16 @@
             "docs/MESH.md"
           ],
           "slug": "mesh-events-paging-is-complete",
-          "updated_at": "2026-10-09",
+          "started_at": "2026-10-17T12:05:34Z",
+          "started_event": "sha256:d7580bb18d401dd2cb56365519ce0616bbc88a05a8a5c1be434ebbdc17ed3c3c",
+          "updated_at": "2026-10-17T12:05:53Z",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --test mesh",
             "cargo test --lib mesh::journal"
-          ]
+          ],
+          "verified_at": "2026-10-17T12:05:46Z",
+          "verified_event": "sha256:4c81e65ec984987630b8891ea4e7b0b774d3d6d09a6d78dca55c74f0ca3d15e8"
         }
       },
       {
@@ -35014,6 +35032,8 @@
             "Each filter returns exactly the matching items, proved on a fixture state",
             "The full answer is still available with an explicit input"
           ],
+          "completed_at": "2026-10-17T12:00:18Z",
+          "completed_event": "sha256:56bf95226efc4bdd487d3e049e94ae72d4bbad27f5af22ef4fcb56369c888c79",
           "created_at": "2026-10-10",
           "current_state": "Whole-state answers only; mesh.events is the only paged read.",
           "desired_state": "A default answer under 16 kB with counts and the newest items; filters that return exactly the asked slice; the full state still available on request.",
@@ -35042,13 +35062,17 @@
             "docs/MESH.md"
           ],
           "slug": "mesh-reads-are-filtered",
-          "updated_at": "2026-10-10",
+          "started_at": "2026-10-17T11:59:31Z",
+          "started_event": "sha256:a76c5d6ead5c1ced8e3563f07455ac426c68b1373a1d5dda339600e984ded32e",
+          "updated_at": "2026-10-17T12:00:18Z",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --lib capability::builtin::mesh",
             "cargo test --lib mesh::page",
             "cargo test --test mesh_cooperation"
-          ]
+          ],
+          "verified_at": "2026-10-17T12:00:04Z",
+          "verified_event": "sha256:7a74ca529fa368205eb80afeb0b1e892db90b89e2be767589a8ccc16f148523a"
         }
       },
       {
@@ -35064,6 +35088,8 @@
             "A withdrawn or expired request folds to a closed state on every runtime",
             "A requester's result note is shown with its request and is not an answer"
           ],
+          "completed_at": "2026-10-17T12:01:07Z",
+          "completed_event": "sha256:b40e04899ab2c69ed188e738912f51f36ecf02d0bd9746e66b271b678c9457ef",
           "created_at": "2026-10-10",
           "current_state": "Requests stay open until someone else answers; no body, no withdrawal, no expiry.",
           "desired_state": "body up to 8 KiB; review_withdrawn by the requester; expires_at honoured by the fold; a requester's own result note linked to its request without counting as another session's verdict.",
@@ -35082,11 +35108,15 @@
             "docs/MESH.md"
           ],
           "slug": "a-review-request-ends",
-          "updated_at": "2026-10-10",
+          "started_at": "2026-10-17T12:00:46Z",
+          "started_event": "sha256:c69f307a612b0dd84099faf2a3e8fdeaeb788800d1b3dfd04a20f33a402a4246",
+          "updated_at": "2026-10-17T12:01:07Z",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --lib mesh::"
-          ]
+          ],
+          "verified_at": "2026-10-17T12:00:58Z",
+          "verified_event": "sha256:1cccba95c5733a8584da3a3981e18c4723bec19d9864d89e6720f1a34218af13"
         }
       },
       {
@@ -37733,6 +37763,8 @@
             "The idle timeout is a declared policy key validated by the policy schema, and serve --idle overrides it",
             "A server started without --idle under a declared idle timeout of a few seconds stops after the declared time, not after 900 s"
           ],
+          "completed_at": "2026-10-17T12:02:08Z",
+          "completed_event": "sha256:083c2f8771f7e7f1fa85013b6c38c4bc1efdb101e6147f430b705250d169c1f2",
           "created_at": "2026-10-14",
           "depends_on": [
             "I2129"
@@ -37759,11 +37791,15 @@
             "docs/MCP.md"
           ],
           "slug": "the-idle-timeout-is-declared",
-          "updated_at": "2026-10-14",
+          "started_at": "2026-10-17T12:01:46Z",
+          "started_event": "sha256:2ce4c7bb890bb552227ee14273a65917883ca71f887994b181871b1cd1557346",
+          "updated_at": "2026-10-17T12:02:08Z",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --test serve_lifecycle"
-          ]
+          ],
+          "verified_at": "2026-10-17T12:01:59Z",
+          "verified_event": "sha256:2b2991e5d69b8709f668fdc997552eee0aefdb6af35628c25828427137544949"
         }
       },
       {
@@ -37779,6 +37815,8 @@
             "Two checkouts of one repository derive different ports",
             "docs/MCP.md describes the derived port and the fallback"
           ],
+          "completed_at": "2026-10-17T12:02:56Z",
+          "completed_event": "sha256:92d6e46263b4fbe3645b5da4b46640fee9fcfb2539b5f448f0d7bb4681d58e2e",
           "created_at": "2026-10-14",
           "depends_on": [
             "I2131"
@@ -37803,12 +37841,16 @@
             "docs/MCP.md"
           ],
           "slug": "a-checkout-keeps-one-address",
-          "updated_at": "2026-10-14",
+          "started_at": "2026-10-17T12:02:17Z",
+          "started_event": "sha256:c53957b4ed4ce905814d639884d94f765d55dc9f1968f8aac17a11b8dd202d77",
+          "updated_at": "2026-10-17T12:02:56Z",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --test serve_lifecycle",
             "MJ_TEST_JOBS=4 bash test/run.sh 190_entry_is_automatic"
-          ]
+          ],
+          "verified_at": "2026-10-17T12:02:47Z",
+          "verified_event": "sha256:f82854cd059dda9f3f246f91271029bd94d835dacc0c4a0271f6c9f393793d94"
         }
       },
       {
@@ -38050,6 +38092,8 @@
             "A credential-shaped value in any tracing field is absent from server.log",
             "A review whose subject or verdict carries a credential shape is redacted or refused before it is signed into the journal"
           ],
+          "completed_at": "2026-10-17T12:04:47Z",
+          "completed_event": "sha256:1576529c64dc2406196e99d2968df5bbf9301a8cb493fd63b4fd5ba591005ece",
           "created_at": "2026-10-14",
           "depends_on": [
             "I2161"
@@ -38077,12 +38121,16 @@
             "test/cases"
           ],
           "slug": "mesh-event-fields-are-listed",
-          "updated_at": "2026-10-15T08:44:24Z",
+          "started_at": "2026-10-17T12:04:14Z",
+          "started_event": "sha256:5cf74ab6380396a9015662ee9dc1e36fab4605479a32423f07330fc19a4fb96e",
+          "updated_at": "2026-10-17T12:04:47Z",
           "validation": [
             "bin/majordomus plan validate",
             "scripts/ci/mesh-check",
             "cargo test --test redaction"
-          ]
+          ],
+          "verified_at": "2026-10-17T12:04:36Z",
+          "verified_event": "sha256:b5c1d181e8fa194f996e4a090381aaa315c9c93438985fd80ee75cda2c4c5045"
         }
       },
       {
