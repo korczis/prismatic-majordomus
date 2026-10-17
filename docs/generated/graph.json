@@ -79,6 +79,33 @@
         "status": "query"
       },
       {
+        "id": "capability:autonomy.explain",
+        "kind": "capability",
+        "label": "autonomy.explain",
+        "summary": "Judge one shell command",
+        "route": "/cockpit/capabilities/autonomy.explain",
+        "source": "apps/majordomus-cli/src/capability/builtin/autonomy.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:autonomy.friction",
+        "kind": "capability",
+        "label": "autonomy.friction",
+        "summary": "What the permission layer cost",
+        "route": "/cockpit/capabilities/autonomy.friction",
+        "source": "apps/majordomus-cli/src/capability/builtin/autonomy.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:autonomy.status",
+        "kind": "capability",
+        "label": "autonomy.status",
+        "summary": "The autonomy this checkout supports",
+        "route": "/cockpit/capabilities/autonomy.status",
+        "source": "apps/majordomus-cli/src/capability/builtin/autonomy.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:brief.session",
         "kind": "capability",
         "label": "brief.session",
@@ -14355,6 +14382,14 @@
         "summary": "Archiving the repository",
         "route": "/cockpit/objects/document/docs-archive-md",
         "source": "docs/ARCHIVE.md"
+      },
+      {
+        "id": "majordomus://document/docs/AUTONOMY.md",
+        "kind": "document",
+        "label": "docs/AUTONOMY.md",
+        "summary": "Autonomy",
+        "route": "/cockpit/objects/document/docs-autonomy-md",
+        "source": "docs/AUTONOMY.md"
       },
       {
         "id": "majordomus://document/docs/BACKLOG.md",
@@ -37918,6 +37953,58 @@
         }
       },
       {
+        "id": "majordomus://issue/I2790",
+        "kind": "issue",
+        "label": "I2790",
+        "summary": "The autonomy a session has is read from the facts, explained per command, and its cost measured",
+        "route": "/cockpit/objects/issue/i2790",
+        "source": ".ai/repo/project/issues/I2790.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "An untrusted checkout with no isolation is balanced, and names what refused isolated and trusted",
+            "A checked-in bypassPermissions default raises no profile; the person's trust-dialog acceptance raises it to trusted",
+            "isolated requires a container marker and no credential variable or file; a credential's value never leaves",
+            "A layer that disables bypass, a managed default mode and an unreadable layer are ceilings",
+            "A compound command never earns an allow; history rewrites, removal, privilege and external effects require approval under every profile",
+            "friction counts refusals by kind, reason and tool for the primary checkout and its -wt worktrees only, and carries no command or payload"
+          ],
+          "created_at": "2026-10-16",
+          "current_state": "No capability reads the client's permission configuration or the isolation of the host; the friction numbers exist only as a one-off scratch script.",
+          "depends_on": [],
+          "evidence_required": [
+            "autonomy_unit_tests",
+            "case_3177"
+          ],
+          "milestone": "runtime-adapters",
+          "non_scope": [
+            "Writing any settings file: granting autonomy is the person's act, and a session that judged and then granted its own would be what the profile prevents.",
+            "Launching a session with the derived mode (majordomus session start), the generated project permission rules and a PreToolUse hook on Bash: follow-up issues once this is on master."
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/autonomy/mod.rs",
+            "apps/majordomus-cli/src/capability/builtin/autonomy.rs",
+            "apps/majordomus-cli/src/capability/builtin/mod.rs",
+            "apps/majordomus-cli/src/commands/autonomy.rs",
+            "apps/majordomus-cli/src/commands/mod.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/lib.rs",
+            "apps/majordomus-cli/tests/autonomy_mcp.rs",
+            "test/cases/3177_the_autonomy_a_session_has_is_read.sh",
+            "docs/AUTONOMY.md"
+          ],
+          "slug": "the-autonomy-a-session-has-is-measured",
+          "updated_at": "2026-10-16",
+          "validation": [
+            "cargo test --lib autonomy",
+            "cargo test --test autonomy_mcp",
+            "bash test/run.sh 3177_the_autonomy_a_session_has_is_read"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "label": "a-commit-stood-behind-a-build-lock",
@@ -55097,6 +55184,13 @@
         "source": "test/cases/310_rustdoc_projection.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3177_the_autonomy_a_session_has_is_read.sh",
+        "kind": "test",
+        "label": "test/cases/3177_the_autonomy_a_session_has_is_read.sh",
+        "route": "/cockpit/objects/test/test-cases-3177-the-autonomy-a-session-has-is-read-sh",
+        "source": "test/cases/3177_the_autonomy_a_session_has_is_read.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/318_a_partial_sweep_says_so.sh",
         "kind": "test",
         "label": "test/cases/318_a_partial_sweep_says_so.sh",
@@ -59186,6 +59280,11 @@
         "label": "artifacts"
       },
       {
+        "id": "module:autonomy",
+        "kind": "module",
+        "label": "autonomy"
+      },
+      {
         "id": "module:brief",
         "kind": "module",
         "label": "brief"
@@ -59564,6 +59663,66 @@
       },
       {
         "source": "capability:artifacts.list",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:autonomy.explain",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:autonomy.explain",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:autonomy.explain",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:autonomy.explain",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:autonomy.friction",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:autonomy.friction",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:autonomy.friction",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:autonomy.friction",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:autonomy.status",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:autonomy.status",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:autonomy.status",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:autonomy.status",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -73338,6 +73497,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/docs/AUTONOMY.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/docs/BACKLOG.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -81258,6 +81422,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2790",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2790",
+        "target": "majordomus://milestone/runtime-adapters",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -85718,6 +85892,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3177_the_autonomy_a_session_has_is_read.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/318_a_partial_sweep_says_so.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -90003,6 +90182,21 @@
         "kind": "composes"
       },
       {
+        "source": "module:autonomy",
+        "target": "capability:autonomy.explain",
+        "kind": "composes"
+      },
+      {
+        "source": "module:autonomy",
+        "target": "capability:autonomy.friction",
+        "kind": "composes"
+      },
+      {
+        "source": "module:autonomy",
+        "target": "capability:autonomy.status",
+        "kind": "composes"
+      },
+      {
         "source": "module:brief",
         "target": "capability:brief.session",
         "kind": "composes"
@@ -91009,8 +91203,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2870,
-      "edges": 6291,
+      "nodes": 2877,
+      "edges": 6310,
       "acyclic": false,
       "truncated": false
     }
