@@ -39689,6 +39689,47 @@
         }
       },
       {
+        "id": "majordomus://issue/I2813",
+        "kind": "issue",
+        "label": "I2813",
+        "summary": "A published page that answers 503 is asked again before it is called missing",
+        "route": "/cockpit/objects/issue/i2813",
+        "source": ".ai/repo/project/issues/I2813.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A page that answers 503 twice and then 200 passes, and the retry is said",
+            "A page that answers 503 on every try fails as before, after a bounded number of retries",
+            "A listed page that answers 404 fails at once and is never retried",
+            "Removing the retry, retrying every status, or removing its bound each turns case 3221 red"
+          ],
+          "created_at": "2026-10-17",
+          "current_state": "verify-ui asks each listed page once, in one parallel curl, and a 503 is a missing page; with --timeout 0 nothing asks again.",
+          "depends_on": [],
+          "desired_state": "A 503 is asked again a bounded number of times before it counts, and the output says when a page needed it.",
+          "evidence_required": [
+            "pages_503_case"
+          ],
+          "milestone": "development-runtime",
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "scripts/pages",
+            "test/cases/3221_a_pages_503_is_retried_before_a_page_is_called_missing.sh",
+            ".ai/repo/project",
+            "docs",
+            "site"
+          ],
+          "serves": [],
+          "slug": "a-pages-503-is-retried-before-a-page-is-called-missing",
+          "updated_at": "2026-10-17",
+          "validation": [
+            "bash test/run.sh 3221_a_pages_503_is_retried_before_a_page_is_called_missing",
+            "bash test/run.sh 2983_the_published_ui_is_the_trunks"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "label": "a-commit-stood-behind-a-build-lock",
@@ -57437,6 +57478,13 @@
         "label": "test/cases/31_command_coverage.sh",
         "route": "/cockpit/objects/test/test-cases-31-command-coverage-sh",
         "source": "test/cases/31_command_coverage.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3221_a_pages_503_is_retried_before_a_page_is_called_missing.sh",
+        "kind": "test",
+        "label": "test/cases/3221_a_pages_503_is_retried_before_a_page_is_called_missing.sh",
+        "route": "/cockpit/objects/test/test-cases-3221-a-pages-503-is-retried-before-a-page-is-called-missing-sh",
+        "source": "test/cases/3221_a_pages_503_is_retried_before_a_page_is_called_missing.sh"
       },
       {
         "id": "majordomus://test/test/cases/32_refusal_lifecycle.sh",
@@ -84376,6 +84424,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2813",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2813",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -89092,6 +89150,11 @@
       },
       {
         "source": "majordomus://test/test/cases/31_command_coverage.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3221_a_pages_503_is_retried_before_a_page_is_called_missing.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -94377,8 +94440,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2958,
-      "edges": 6499,
+      "nodes": 2960,
+      "edges": 6502,
       "acyclic": false,
       "truncated": false
     }

@@ -81,6 +81,9 @@
 #                                         it). Without --commit, the commit /build.json names:
 #                                         the UI beside the site is the site's. One line per
 #                                         document probed, one per page that did not answer.
+#                                         A page that answered 503 is asked again first, at
+#                                         most MJ_PAGES_RETRIES times (4) with a doubling pause
+#                                         from MJ_PAGES_RETRY_SECONDS (1), each retry said.
 #                                         0 verified, 10 it is absent, another commit's or not
 #                                         whole, 12 it never answered or the probe cannot judge
 #   scripts/pages release-live [--url URL] [--window N] [--wait N] [--expect TAG] [--repo SLUG]
@@ -1290,6 +1293,7 @@ ui_round() {
   ui_pages --parallel --parallel-max 8 > "$VR_WORK/codes" || true
   # a curl older than --parallel refuses the option and asks nothing; it is asked serially then
   [ -s "$VR_WORK/codes" ] || ui_pages > "$VR_WORK/codes" || true
+  ui_retry_unavailable "$base$mount/"
   awk -F '\t' '$1 != "000"' "$VR_WORK/codes" | grep -q . && VR_ANSWERED=1
   awk -F '\t' '$1 != "200"' "$VR_WORK/codes" | LC_ALL=C sort -t "$(printf '\t')" -k2 > "$VR_WORK/missing"
   missing="$(wc -l < "$VR_WORK/missing" | tr -d ' ')"
@@ -1312,6 +1316,38 @@ ui_round() {
   [ "$bad" = 0 ] && return 0
   [ "$VR_ANSWERED" = 1 ] && return 10
   return 12
+}
+
+# A page that answered 503 is asked again, a few times with a doubling pause, before it is called
+# missing (I2813). GitHub Pages answers a burst of requests with a transient 503 that a reader a
+# second later does not meet; on 2026-10-17 that one answer reddened master's validate and 71a's
+# run, because a page was declared absent on its first 503. Only a 503 is asked again: any other
+# status, and a 503 that persists through every try, stays exactly what it was and fails as it
+# did. Each page asked again is said on stderr, with how often it answered 503 and what it
+# answered last, so a verdict that needed a retry reads that way.
+#   MJ_PAGES_RETRIES        how many times a 503 is asked again (default 4)
+#   MJ_PAGES_RETRY_SECONDS  the first pause, doubled before each next try (default 1)
+ui_retry_unavailable() {   # <the base the pages' urls begin with, for the lines it writes>
+  local base="$1" tries="${MJ_PAGES_RETRIES:-4}" wait="${MJ_PAGES_RETRY_SECONDS:-1}" status url asked unavailable pause
+  while IFS="$(printf '\t')" read -r status url; do
+    if [ "$status" = 503 ]; then
+      asked=0; unavailable=1; pause="$wait"
+      while [ "$status" = 503 ] && [ "$asked" -lt "$tries" ]; do
+        sleep "$pause"; pause=$(( pause * 2 )); asked=$(( asked + 1 ))
+        status="$(curl -sS -o /dev/null --max-time "${MJ_PAGES_PROBE_SECONDS:-10}" -H 'Cache-Control: no-cache' \
+          -w '%{http_code}' "$url" 2>/dev/null || true)"
+        [ -n "$status" ] || status=000
+        [ "$status" = 503 ] && unavailable=$(( unavailable + 1 ))
+      done
+      if [ "$status" = 503 ]; then
+        printf 'pages verify-ui: retried /%s: 503 ×%s, still 503 after %s retries\n' "${url#"$base"}" "$unavailable" "$asked" >&2
+      else
+        printf 'pages verify-ui: retried /%s: 503 ×%s then %s\n' "${url#"$base"}" "$unavailable" "$status" >&2
+      fi
+    fi
+    printf '%s\t%s\n' "$status" "$url"
+  done < "$VR_WORK/codes" > "$VR_WORK/codes.retried"
+  mv "$VR_WORK/codes.retried" "$VR_WORK/codes"
 }
 
 # the status of every page in curl.cfg, one "<status><TAB><url>" line each, in no order
