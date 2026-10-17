@@ -131,6 +131,41 @@ fn projected(answer: &Answer) -> El {
 mod tests {
     use super::*;
 
+    use serde_json::json;
+
+    /// Every workflow skill the answer holds is a row, anchored by its id, with its title,
+    /// its description and its status.
+    #[test]
+    fn a_workflow_skill_is_a_row_anchored_by_its_id() {
+        let answer = crate::ui::deployments::tests::answer(
+            SKILLS,
+            Ok(
+                json!({"skills": [{"id": "evolve", "title": "T", "description": "D", "status": "active"}]}),
+            ),
+        );
+        let html = workflows(&answer).render();
+        for said in ["id=\"skill-evolve\"", ">evolve<", ">T<", ">D<"] {
+            assert!(html.contains(said), "{said:?} is missing from {html}");
+        }
+    }
+
+    /// Every file an adapter capability names is a row under the name it is typed by.
+    #[test]
+    fn a_projected_file_is_a_row_under_its_typed_name() {
+        let answer = crate::ui::deployments::tests::answer(
+            EDITORS,
+            Ok(
+                json!({"adapters": [{"title": "Claude Code", "capabilities": [
+                    {"id": "domains", "support": "supported", "artifacts": [".claude/skills/mj-mesh/SKILL.md"]}
+                ]}]}),
+            ),
+        );
+        let html = projected(&answer).render();
+        for said in [">/mj-mesh<", ">Claude Code<", ">domains<"] {
+            assert!(html.contains(said), "{said:?} is missing from {html}");
+        }
+    }
+
     #[test]
     fn a_skill_is_named_as_it_is_typed() {
         assert_eq!(typed(".claude/skills/mj-mesh/SKILL.md"), "/mj-mesh");

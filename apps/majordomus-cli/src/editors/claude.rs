@@ -12,7 +12,9 @@
 //! it accepts and what it answers are its declaration's to say, and this file repeats none of
 //! it beyond the title and description the declaration itself carries (ADR 0144, ADR 0140).
 
-use super::{CommandRef, DomainRef, EditorAdapter, EditorCapability, EditorDiagnostic, EditorSupport};
+use super::{
+    CommandRef, DomainRef, EditorAdapter, EditorCapability, EditorDiagnostic, EditorSupport,
+};
 use crate::generate::{banner_lines, Artifact, ArtifactFormat};
 use crate::model::Severity;
 
@@ -132,28 +134,38 @@ fn domain_description(domain: &DomainRef) -> String {
     format!("{}…", cut[..at].trim_end_matches([';', ',', ' ']))
 }
 
+/// Text as one Markdown table cell: a pipe is escaped and a line break becomes a space, so
+/// a title can neither end its cell nor its row.
+fn table_cell(text: &str) -> String {
+    text.replace('|', "\\|").replace('\n', " ")
+}
+
 /// The skill of one domain (ADR 0165): the module's capabilities as a table the agent chooses
 /// from, the request typed after the name, and the rule that a capability that changes
 /// something runs only when the person asked for that change. The model may load it on its
 /// own, because loading it changes nothing; calling a capability is what the rule governs.
 pub fn domain_artifact(domain: &DomainRef, version: &str) -> Artifact {
     let path = skill_path(&domain.alias);
-    let quoted = serde_json::to_string(&domain_description(domain)).unwrap_or_else(|_| "\"\"".into());
+    let quoted =
+        serde_json::to_string(&domain_description(domain)).unwrap_or_else(|_| "\"\"".into());
     let source = format!("module:{}", domain.module);
     let [a, b, c] = banner_lines(&source, version);
-    let cell = |s: &str| s.replace('|', "\\|").replace('\n', " ");
     let mut rows = String::new();
     for e in &domain.entries {
         rows.push_str(&format!(
             "| `{}` | {} | `{}` | {} | {} |\n",
             e.capability,
-            cell(&e.title),
+            table_cell(&e.title),
             e.tool,
             e.cli
                 .as_ref()
                 .map(|c| format!("`majordomus {c}`"))
                 .unwrap_or_else(|| "—".into()),
-            if e.changes_something { "changes" } else { "reads" },
+            if e.changes_something {
+                "changes"
+            } else {
+                "reads"
+            },
         ));
     }
     let content = format!(
@@ -411,7 +423,10 @@ mod tests {
     /// naming its tool, its command line where it has one, and whether it changes anything.
     #[test]
     fn a_domain_is_one_skill_listing_every_capability_of_its_module() {
-        let d = domain("knowledge_base", &[("Read the base", false), ("Record a | lesson", true)]);
+        let d = domain(
+            "knowledge_base",
+            &[("Read the base", false), ("Record a | lesson", true)],
+        );
         let a = domain_artifact(&d, "1.2.3");
         assert_eq!(a.path, ".claude/skills/mj-knowledge-base/SKILL.md");
         assert_eq!(a.document, "editors/domain");
@@ -419,7 +434,10 @@ mod tests {
         assert!(c.starts_with(
             "---\nname: mj-knowledge-base\ndescription: \"Majordomus knowledge base: Read the base; Record a | lesson.\"\nargument-hint: \"[request]\"\n---\n<!-- "
         ), "{c}");
-        assert!(!c.contains("disable-model-invocation"), "loading a domain changes nothing");
+        assert!(
+            !c.contains("disable-model-invocation"),
+            "loading a domain changes nothing"
+        );
         assert!(crate::editors::banner_is_present(c));
         assert_eq!(c.matches("$ARGUMENTS").count(), 1);
         for said in [
@@ -430,6 +448,12 @@ mod tests {
         ] {
             assert!(c.contains(said), "{said:?} is missing from:\n{c}");
         }
+    }
+
+    #[test]
+    fn a_title_can_end_neither_its_cell_nor_its_row() {
+        assert_eq!(table_cell("a | b\nc"), "a \\| b c");
+        assert_eq!(table_cell("plain"), "plain");
     }
 
     #[test]
@@ -445,11 +469,18 @@ mod tests {
         let mut taken = command(true);
         taken.alias = "mj-plan".into();
         let given = reachable_domains(
-            vec![domain("plan", &[("p", false)]), domain("mesh", &[("m", false)]), domain("brief", &[("b", false)])],
+            vec![
+                domain("plan", &[("p", false)]),
+                domain("mesh", &[("m", false)]),
+                domain("brief", &[("b", false)]),
+            ],
             &[taken],
             &[workflow("mj-brief")],
         );
-        assert_eq!(given.iter().map(|d| d.alias.as_str()).collect::<Vec<_>>(), ["mj-mesh"]);
+        assert_eq!(
+            given.iter().map(|d| d.alias.as_str()).collect::<Vec<_>>(),
+            ["mj-mesh"]
+        );
         let a = adapter(&[], &given, &[]);
         let listed = a.capabilities.iter().find(|c| c.id == "domains").unwrap();
         assert_eq!(listed.artifacts, [".claude/skills/mj-mesh/SKILL.md"]);
