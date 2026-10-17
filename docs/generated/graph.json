@@ -39737,9 +39737,9 @@
         "source": ".ai/repo/project/issues/I2961.yaml",
         "facts": {
           "acceptance_criteria": [
-            "An upgrade on macOS with the firewall on and the new binary not admitted prints the admitting command, and only then",
-            "mesh doctor fails a non-loopback hub whose running executable the firewall does not admit, naming the path",
-            "Nothing runs sudo or changes the firewall on its own"
+            "An upgrade on macOS with the firewall on, an older tree admitted and the new one not, prints the admitting commands for the new path, and only then",
+            "A firewall that is off, a first install, or an already admitted path prints nothing about the firewall",
+            "Nothing runs sudo or changes the firewall on its own, and the install still exits zero"
           ],
           "created_at": "2026-10-17",
           "depends_on": [],
@@ -39752,7 +39752,7 @@
           "profile": "implementation",
           "scope": [
             "share/install/install.sh.in",
-            "apps/majordomus-cli/src/mesh/doctor.rs",
+            "site/static/install.sh",
             "test/cases/3361_an_upgraded_hub_names_its_firewall_gap.sh",
             "docs/MESH.md"
           ],

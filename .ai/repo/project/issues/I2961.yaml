@@ -5,20 +5,20 @@ slug: an-upgraded-hub-stays-reachable
 priority: p1
 profile: implementation
 parallel_safe: true
-objective: "After an install or upgrade on macOS, the installer and mesh doctor say whether the application firewall admits the binary the hub now runs, and give the one command that admits it, so an upgrade that moves the hub to a new versions/<v>/libexec path is never left listening behind a firewall that silently drops every other machine."
+objective: "After an install or upgrade on macOS, the installer itself says when the application firewall admits an older majordomus tree but not the one just installed, and prints the one command that admits it, so an upgrade that moves a hub to a new versions/<v>/libexec path is never left listening behind a firewall that silently drops every other machine."
 why: "2026-10-17 ~20:50Z the second MacBook's hub was upgraded 0.27.0 -> 0.28.0 with install.sh and restarted. It answered locally and was unreachable from every other machine: the macOS application firewall (stealth mode on) admits by binary path, held entries for versions 0.14.0-0.27.0 and none for versions/0.28.0/libexec/majordomus-cli. That hub was the rendezvous through which this Mac knew every remote node; admitting the new path needs sudo, which only the owner can give. Nothing said so: install.sh reported success and the hub's own health was green."
-current_state: "install.sh writes versions/<v> and the launchers and never looks at the firewall; mesh firewall reports the host firewall as the mesh needs it, but nothing runs it after an upgrade and it does not compare the admitted paths with the running hub's executable. Until this lands, the re-admit step after upgrading a macOS mesh hub to version <v>, run on that Mac by its owner: B=$HOME/.local/share/majordomus/versions/<v>/libexec/majordomus-cli; sudo /usr/libexec/ApplicationFirewall/socketfilterfw --add \"$B\" && sudo /usr/libexec/ApplicationFirewall/socketfilterfw --unblockapp \"$B\" — then curl -H 'Accept: application/json' http://<tailnet address>:8791/ from another machine must answer the new version."
-desired_state: "On macOS, install.sh ends by reading socketfilterfw --getglobalstate and --listapps and, when the firewall is on and the new libexec path is not admitted while an older one was, prints the exact sudo socketfilterfw --add/--unblockapp line and exits zero with a warning; mesh doctor fails a hub listening on a non-loopback address whose executable the firewall does not admit, naming the path and the command."
+current_state: "Detection exists and nothing runs it: `majordomus mesh firewall` judges the macOS application firewall for the running executable (measured on the second MacBook 10-17: observation missing for versions/0.28.0/libexec/majordomus-cli) and `majordomus mesh doctor` fails its firewall check, but install.sh never looks at the firewall and reports success. Until this lands, the re-admit step after upgrading a macOS mesh hub, run on that Mac by its owner: `sudo ~/.local/bin/majordomus mesh firewall apply --repo <the hub's checkout>` (or, without a checkout: B=$HOME/.local/share/majordomus/versions/<v>/libexec/majordomus-cli; sudo /usr/libexec/ApplicationFirewall/socketfilterfw --add \"$B\" && sudo /usr/libexec/ApplicationFirewall/socketfilterfw --unblockapp \"$B\"), then restart the hub and read it from another machine: curl -H 'Accept: application/json' http://<tailnet address>:8791/ answers the new version."
+desired_state: "On macOS with the application firewall on, install.sh ends by reading socketfilterfw --getglobalstate and --listapps; when an older versions/*/libexec/majordomus-cli is admitted and the new one is not, it prints a warning naming the new path and the exact sudo socketfilterfw --add/--unblockapp lines, and exits zero. It never runs sudo or changes the firewall. The tool it asks is overridable (MAJORDOMUS_SOCKETFILTERFW) so a case can hold the judgement on any host."
 scope:
   - "share/install/install.sh.in"
-  - "apps/majordomus-cli/src/mesh/doctor.rs"
+  - "site/static/install.sh"
   - "test/cases/3361_an_upgraded_hub_names_its_firewall_gap.sh"
   - "docs/MESH.md"
 depends_on: []
 acceptance_criteria:
-  - "An upgrade on macOS with the firewall on and the new binary not admitted prints the admitting command, and only then"
-  - "mesh doctor fails a non-loopback hub whose running executable the firewall does not admit, naming the path"
-  - "Nothing runs sudo or changes the firewall on its own"
+  - "An upgrade on macOS with the firewall on, an older tree admitted and the new one not, prints the admitting commands for the new path, and only then"
+  - "A firewall that is off, a first install, or an already admitted path prints nothing about the firewall"
+  - "Nothing runs sudo or changes the firewall on its own, and the install still exits zero"
 validation:
   - "majordomus plan validate"
 evidence_required:
