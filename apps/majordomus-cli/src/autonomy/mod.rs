@@ -227,24 +227,31 @@ const CREDENTIAL_FILES: &[&str] = &[
 /// Container marker files.
 const CONTAINER_FILES: &[&str] = &["/.dockerenv", "/run/.containerenv"];
 
+/// Where the client reads the organisation's managed settings on this platform.
+#[cfg(target_os = "macos")]
+const MANAGED_SETTINGS: &str = "/Library/Application Support/ClaudeCode/managed-settings.json";
+#[cfg(not(target_os = "macos"))]
+const MANAGED_SETTINGS: &str = "/etc/claude-code/managed-settings.json";
+
+/// The paths of `paths` that exist.
+fn present(paths: &[&str]) -> Vec<String> {
+    paths
+        .iter()
+        .copied()
+        .filter(|p| Path::new(p).exists())
+        .map(String::from)
+        .collect()
+}
+
 impl Facts {
     /// The facts of this process, for the checkout at `root`.
     pub(crate) fn observe(root: &Path) -> Self {
-        let managed = if cfg!(target_os = "macos") {
-            PathBuf::from("/Library/Application Support/ClaudeCode/managed-settings.json")
-        } else {
-            PathBuf::from("/etc/claude-code/managed-settings.json")
-        };
         Facts {
             root: root.to_path_buf(),
             home: std::env::var_os("HOME").map(PathBuf::from),
-            managed: Some(managed),
+            managed: Some(PathBuf::from(MANAGED_SETTINGS)),
             env: std::env::vars().collect(),
-            container_files: CONTAINER_FILES
-                .iter()
-                .filter(|p| Path::new(p).exists())
-                .map(|p| (*p).to_string())
-                .collect(),
+            container_files: present(CONTAINER_FILES),
         }
     }
 
@@ -257,6 +264,11 @@ impl Facts {
             None => path.display().to_string(),
         }
     }
+}
+
+/// What an error says, for a layer that could not be read.
+fn said<E: std::fmt::Display>(e: E) -> String {
+    e.to_string()
 }
 
 fn count(v: &Value, pointer: &str) -> usize {
@@ -285,8 +297,8 @@ pub(crate) fn layer(facts: &Facts, scope: &str, path: &Path) -> SettingsLayer {
         return l;
     }
     let parsed = std::fs::read_to_string(path)
-        .map_err(|e| e.to_string())
-        .and_then(|t| serde_json::from_str::<Value>(&t).map_err(|e| e.to_string()));
+        .map_err(said)
+        .and_then(|t| serde_json::from_str::<Value>(&t).map_err(said));
     let v = match parsed {
         Ok(v) => v,
         Err(e) => {
@@ -320,14 +332,9 @@ fn checkout_trusted(facts: &Facts) -> Option<bool> {
     let home = facts.home.as_ref()?;
     let text = std::fs::read_to_string(home.join(".claude.json")).ok()?;
     let v: Value = serde_json::from_str(&text).ok()?;
-    let key = facts.root.to_str()?;
-    Some(
-        v.get("projects")?
-            .get(key)?
-            .get("hasTrustDialogAccepted")
-            .and_then(Value::as_bool)
-            .unwrap_or(false),
-    )
+    // a checkout the record does not name is one the person has not accepted
+    let key = facts.root.to_string_lossy();
+    Some(v["projects"][key.as_ref()]["hasTrustDialogAccepted"].as_bool() == Some(true))
 }
 
 /// The isolation evidence of `facts`, given the settings layers already read.
@@ -787,14 +794,14 @@ pub(crate) fn explain(command: &str, profile: AutonomyProfile) -> CommandDecisio
             risk = *escalated;
         }
     }
-    let allowed = match (profile, risk) {
-        (_, RiskClass::Compound) => false,
-        (AutonomyProfile::Conservative, RiskClass::Read) => true,
-        (AutonomyProfile::Conservative, _) => false,
-        (AutonomyProfile::Balanced, RiskClass::Read | RiskClass::Quality) => true,
-        (AutonomyProfile::Balanced, _) => false,
-        (_, RiskClass::Read | RiskClass::Quality | RiskClass::LocalHistory) => true,
-        _ => false,
+    // what each profile lets run unasked; a compound risk is in no profile's set
+    let allowed = match profile {
+        AutonomyProfile::Conservative => matches!(risk, RiskClass::Read),
+        AutonomyProfile::Balanced => matches!(risk, RiskClass::Read | RiskClass::Quality),
+        AutonomyProfile::Trusted | AutonomyProfile::Isolated => matches!(
+            risk,
+            RiskClass::Read | RiskClass::Quality | RiskClass::LocalHistory
+        ),
     };
     let reason = match (allowed, risk) {
         (true, RiskClass::Read) => "it reads the repository or the machine".into(),
@@ -946,10 +953,8 @@ pub(crate) fn friction(
         ],
     };
     for dir in &dirs {
-        let Ok(entries) = std::fs::read_dir(dir) else {
-            continue;
-        };
-        for entry in entries.flatten() {
+        // a directory that cannot be listed holds no transcript this can read
+        for entry in std::fs::read_dir(dir).into_iter().flatten().flatten() {
             let path = entry.path();
             if path.extension().and_then(|e| e.to_str()) != Some("jsonl") {
                 continue;
@@ -974,11 +979,12 @@ pub(crate) fn friction(
 }
 
 fn count_transcript(path: &Path, since: &str, f: &mut Friction) {
-    let Ok(file) = std::fs::File::open(path) else {
-        return;
-    };
     let mut tools: BTreeMap<String, String> = BTreeMap::new();
-    for line in std::io::BufReader::new(file).lines().map_while(Result::ok) {
+    // a transcript that cannot be opened has no line to count
+    let lines = std::fs::File::open(path)
+        .into_iter()
+        .flat_map(|file| std::io::BufReader::new(file).lines().map_while(Result::ok));
+    for line in lines {
         let uses = line.contains("\"tool_use\"");
         let refused = line.contains("\"is_error\":true");
         if !uses && !refused {
@@ -1333,6 +1339,148 @@ mod tests {
         assert!(!serde_json::to_string(&f)
             .unwrap()
             .contains("secret-command"));
+    }
+
+    #[test]
+    fn every_managed_mode_is_its_own_ceiling() {
+        use AutonomyProfile::*;
+        let d = tmp("modes");
+        let mut f = facts(&d);
+        trust(&f, true);
+        f.container_files = vec!["/.dockerenv".into()];
+        let managed = f.managed.clone().unwrap();
+        for (mode, want) in [
+            ("default", Conservative),
+            ("plan", Conservative),
+            ("acceptEdits", Balanced),
+            ("auto", Trusted),
+            ("dontAsk", Trusted),
+            ("bypassPermissions", Isolated),
+        ] {
+            let doc = serde_json::json!({ "permissions": { "defaultMode": mode } });
+            std::fs::write(&managed, doc.to_string()).unwrap();
+            assert_eq!(status(&f).profile, want, "{mode}");
+        }
+    }
+
+    #[test]
+    fn facts_without_a_home_or_managed_settings_read_what_there_is() {
+        let d = tmp("nohome");
+        let mut f = facts(&d);
+        f.home = None;
+        f.managed = None;
+        f.env.insert("container".into(), "podman".into());
+        let s = status(&f);
+        let scopes: Vec<&str> = s.layers.iter().map(|l| l.scope.as_str()).collect();
+        assert_eq!(scopes, ["local", "project"]);
+        assert_eq!(s.isolation.container_markers, ["container variable"]);
+        assert!(s.isolation.credential_files.is_empty());
+        // verified isolation does not need the trust record that a missing home cannot hold
+        assert_eq!(s.profile, AutonomyProfile::Isolated);
+        assert_eq!(f.shown(Path::new("/x/y")), "/x/y");
+    }
+
+    #[test]
+    fn a_trust_record_that_does_not_parse_or_name_the_checkout_trusts_nothing() {
+        let d = tmp("record");
+        let f = facts(&d);
+        let record = f.home.as_ref().unwrap().join(".claude.json");
+        std::fs::write(&record, "{ nope").unwrap();
+        assert_eq!(checkout_trusted(&f), None);
+        std::fs::write(
+            &record,
+            r#"{"projects":{"/elsewhere":{"hasTrustDialogAccepted":true}}}"#,
+        )
+        .unwrap();
+        assert_eq!(checkout_trusted(&f), Some(false));
+        let s = status(&f);
+        assert!(s.refused.iter().any(|r| r.because.contains("not accepted")));
+    }
+
+    #[test]
+    fn only_marker_files_that_exist_are_present() {
+        let d = tmp("present");
+        let marker = d.join("marker");
+        std::fs::write(&marker, "").unwrap();
+        let m = marker.to_str().unwrap();
+        assert_eq!(present(&[m, "/definitely/not/here"]), [m]);
+    }
+
+    #[test]
+    fn words_split_on_runs_of_space_and_an_empty_command_decides_nothing() {
+        assert_eq!(words("ls  -la ").unwrap(), ["ls", "-la"]);
+        assert_eq!(words("echo ''").unwrap(), ["echo", ""]);
+        let d = explain("   ", AutonomyProfile::Trusted);
+        assert_eq!((d.decision, d.risk), (Decision::Defer, RiskClass::Unknown));
+        // a flag can turn a read into a command the table cannot see
+        let d = explain("find . -execdir echo {} +", AutonomyProfile::Isolated);
+        assert_eq!((d.decision, d.risk), (Decision::Defer, RiskClass::Compound));
+        assert!(d.reason.contains("cannot see"), "{}", d.reason);
+    }
+
+    #[test]
+    fn every_refusal_kind_is_told_from_its_text() {
+        assert_eq!(
+            refusal_kind("denied by the Claude Code auto mode classifier."),
+            Some(("classifier_denial", None))
+        );
+        assert_eq!(
+            refusal_kind("blocked by the built-in Claude Code safety check"),
+            Some(("safety_check", None))
+        );
+        assert_eq!(refusal_kind("Exit code 2"), None);
+        assert_eq!(result_text(&Value::Null), "");
+    }
+
+    #[test]
+    fn friction_skips_what_is_not_a_fresh_transcript_record() {
+        let d = tmp("skips");
+        let projects = d.join("projects");
+        let root = Path::new("/w/repo");
+        let dir = projects.join(transcript_slug(root));
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::write(dir.join("notes.txt"), "\"tool_use\"").unwrap();
+        let lines = [
+            r#"{"type":"summary"}"#.to_string(),
+            r#"not json "tool_use""#.to_string(),
+            r#"{"timestamp":"2026-10-16T10:00:00Z","note":"tool_use"}"#.to_string(),
+            serde_json::json!({ "timestamp": "2026-10-16T10:00:01Z", "message": { "content": [
+                { "type": "text", "text": "hi" },
+                { "type": "tool_use" },
+                { "type": "tool_use", "id": "q", "name": "Read" },
+            ] } })
+            .to_string(),
+            serde_json::json!({ "timestamp": "2026-10-16T10:00:02Z", "message": { "content": [
+                { "type": "tool_result", "tool_use_id": "gone", "is_error": true,
+                  "content": "blocked by the built-in Claude Code safety check" },
+            ] } })
+            .to_string(),
+        ];
+        std::fs::write(dir.join("s.jsonl"), lines.join("\n")).unwrap();
+        let since = SystemTime::UNIX_EPOCH + Duration::from_secs(1_760_000_000);
+        let f = friction(&projects, root, since, Some(&d));
+        assert_eq!(
+            (f.transcripts, f.tool_calls),
+            (1, 2),
+            "only the .jsonl file is a transcript"
+        );
+        assert_eq!(
+            f.by_tool.get("unknown"),
+            Some(&1),
+            "a refusal of no known call"
+        );
+        assert_eq!(
+            f.directories,
+            [format!("~/projects/{}", transcript_slug(root))]
+        );
+        // a transcript last written before the window is not read at all
+        let later = friction(
+            &projects,
+            root,
+            days_ago(0) + Duration::from_secs(86_400),
+            None,
+        );
+        assert_eq!(later.transcripts, 0);
     }
 
     #[test]
