@@ -1,0 +1,77 @@
+{% extends "page.html" %}
+{% block body %}
+{%- set it = load_data(path="data/generated/intents.json") -%}
+{%- set plan = load_data(path="data/generated/plan.json") -%}
+{%- set i = [x for x in it.intents if x.id == page.extra.id][0] -%}
+{%- set sec = get_section(path="intents/_index.md") -%}
+<div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
+  <div class="min-w-0" data-intent="{{ i.id }}">
+    <div class="mb-6 flex flex-wrap items-center gap-2 text-sm">
+      <code class="break-all font-mono text-heading">majordomus://intent/{{ i.id }}</code>
+    </div>
+
+    <h2 class="text-xl font-semibold tracking-tight text-heading">What it states</h2>
+    <p class="mt-3 text-body">{{ i.statement }}</p>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Realised by</h2>
+    <p class="mt-2 text-sm text-body">The milestones the record names, each with the status the plan derives for it.</p>
+    {%- if i.milestones | length > 0 %}
+    <ul class="mt-4 grid gap-3 sm:grid-cols-2" role="list">
+      {%- for m in i.milestones %}
+      <li data-milestone="{{ m.id }}">
+        {%- if m.resolved %}
+        <a href="{{ get_url(path='/plan/' ~ m.id ~ '/', trailing_slash=true) }}" class="flex h-full flex-wrap items-center gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><code class="break-all font-mono text-sm text-fg-brand">{{ m.id }}</code>{{ <badge status={m.status} /> }}</a>
+        {%- else %}
+        <span class="flex h-full flex-wrap items-center gap-2 rounded-base border border-default bg-neutral-primary-soft p-4"><code class="break-all font-mono text-sm text-heading">{{ m.id }}</code><span class="text-sm text-body">not a milestone of the plan</span></span>
+        {%- endif %}
+      </li>
+      {%- endfor %}
+    </ul>
+    {%- else %}
+    <p class="mt-4 text-body">The record names no milestone yet: nothing is planned for this intent.</p>
+    {%- endif %}
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Satisfied when</h2>
+    <p class="mt-2 text-sm text-body">Every criterion, the kind of evidence that settles it, and the command that reproduces it. Whether each is met today is not printed here; ask <code class="font-mono text-heading">majordomus intent show {{ i.id }}</code>.</p>
+    {%- if i.criteria | length > 0 %}
+    <div class="mt-4 space-y-3">
+      {%- for c in i.criteria %}
+      <section class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4" data-criterion="{{ c.id }}">
+        <h3 class="flex flex-wrap items-center gap-2"><code class="break-all font-mono text-sm font-medium text-heading">{{ c.id }}</code><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">settled by a {{ c.evidence }}</span></h3>
+        <p class="mt-2 text-sm leading-relaxed text-body">{{ c.criterion }}</p>
+        {%- if c.ref %}<p class="mt-2 break-all font-mono text-xs text-body-subtle">{{ c.ref }}</p>{% endif %}
+        {%- if c.reproduce %}<p class="mt-1 break-all font-mono text-xs text-heading">{{ c.reproduce }}</p>{% endif %}
+      </section>
+      {%- endfor %}
+    </div>
+    {%- else %}
+    <p class="mt-4 text-body">The record names no criterion: nothing could satisfy this intent as it is written.</p>
+    {%- endif %}
+
+    {%- if i.invariants | length > 0 %}
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Must stay true</h2>
+    <ul class="mt-3 list-disc space-y-2 pl-5 text-body">{% for v in i.invariants %}<li>{{ v }}</li>{% endfor %}</ul>
+    {%- endif %}
+
+    {%- if i.non_goals | length > 0 %}
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Not this intent</h2>
+    <ul class="mt-3 list-disc space-y-2 pl-5 text-body">{% for n in i.non_goals %}<li>{{ n }}</li>{% endfor %}</ul>
+    {%- endif %}
+
+    {%- if i.governance | length > 0 %}
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Governed by</h2>
+    <ul class="mt-3 flex flex-wrap gap-2" role="list">{% for g in i.governance %}<li><code class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">{{ g }}</code></li>{% endfor %}</ul>
+    {%- endif %}
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Where this comes from</h2>
+    <dl class="mt-3 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-[max-content_1fr]">
+      <dt class="text-body-subtle">canonical file</dt><dd class="min-w-0"><a class="inline-block break-all py-1 font-mono text-fg-brand hover:underline" href="{{ <source_blob path={i.path} /> }}">{{ i.path }}</a></dd>
+      <dt class="text-body-subtle">contract</dt><dd class="min-w-0"><a class="inline-block break-all py-1 font-mono text-fg-brand hover:underline" href="{{ <source_blob path={it.contract} /> }}">{{ it.contract }}</a></dd>
+      <dt class="text-body-subtle">live answer</dt><dd class="min-w-0 font-mono text-heading"><code>majordomus intent show {{ i.id }}</code> · <code>GET /api/v1/intents/record?id={{ i.id }}</code></dd>
+      <dt class="text-body-subtle">the method</dt><dd class="min-w-0"><a class="text-fg-brand hover:underline" href="{{ get_url(path='/docs/idd/', trailing_slash=true) }}">Intent-driven development</a></dd>
+    </dl>
+    <p class="mt-3 text-sm text-body">This page is generated from the file above by <code class="font-mono text-heading">scripts/generate-site-data</code>, through <code class="font-mono text-heading">majordomus intent list</code>; editing the page changes nothing, editing the record changes every surface.</p>
+  </div>
+  <aside class="min-w-0 lg:sticky lg:top-24 lg:self-start"><div class="rounded-base border border-default bg-neutral-primary-soft p-5"><h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">the {{ sec.pages | length }} intent(s)</h2><ul class="space-y-1 text-sm">{% for p in sec.pages %}<li><a href="{{ p.permalink }}" class="block break-all rounded px-2 py-1 font-mono text-xs {% if p.permalink == page.permalink %}bg-neutral-secondary-medium text-heading{% else %}text-fg-brand hover:underline{% endif %}"{% if p.permalink == page.permalink %} aria-current="page"{% endif %}>{{ p.extra.id }}</a></li>{% endfor %}</ul></div></aside>
+</div>
+{% endblock body %}

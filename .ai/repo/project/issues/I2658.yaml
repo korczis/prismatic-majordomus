@@ -1,0 +1,45 @@
+id: I2658
+milestone: intent-lifecycle
+title: "The intents are published: an index and a page per intent derived from intent list, the method written down, and the site's check holding them"
+slug: the-intents-are-published
+priority: p1
+profile: implementation
+parallel_safe: true
+serves:
+  - intent-lifecycle#surfaces-agree
+objective: "Give intent-driven development a public face that is derived like everything else on the site: what each intent states, what realises it and what would satisfy it, read from the records through the command the API answers from, and the method on one page."
+why: "The owner, 2026-10-13: make intent-driven development derived, inferred, generic, dynamic, integrated, tested, documented and on GitHub Pages. Measured on master a241eb04a1: the engine derives stage, verdict, coverage, binding and realization and serves them over the command line, HTTP and MCP, and the site has no intents index, no page per intent, no navigation entry and no page that explains the method; the phrase appears only on the landing page."
+current_state: "Four intents are declared under .ai/repo/project/intents. The site publishes guarantee, rule, registry, command and API pages that mention intents, and three milestone pages whose names begin with intent. scripts/generate-site-data reads no intent, site/data/generated holds no intents.json, and scripts/site-check has no intents section."
+desired_state: "scripts/generate-site-data asks `majordomus intent list` and writes site/data/generated/intents.json and one page per intent under /intents/, with an index. Each page shows the statement, the invariants, the non-goals, what governs it, the milestones with the status the plan derives, and every criterion with the evidence that settles it and the command that reproduces it; it links the milestones' pages, the canonical file and the method. The pages do not say which criteria are met, and say where the live answer is. docs/IDD.md states the method and is published at /docs/idd/. The navigation leads to both. scripts/site-check holds the section."
+scope:
+  - "scripts/generate-site-data"
+  - "scripts/site-check"
+  - "site/templates/intents-section.html"
+  - "site/templates/intent.html"
+  - "site/data/nav.toml"
+  - "docs/IDD.md"
+  - "docs/README.md"
+  - "test/cases/3009_the_intents_are_published.sh"
+  - ".ai/repo/project/issues/I2658.yaml"
+non_scope:
+  - "Printing which criteria are met: that follows the evidence ledger, which goes stale with files the site does not list among its inputs"
+  - "A screen of its own for intents in the UI, a join from an intent to pull requests, releases and deployments, and deriving a criterion settled by a command or a deployment"
+  - "Landing the unmerged intent branches (the intent loop in the Cockpit, what remains of an intent, the GitHub milestones)"
+depends_on: []
+acceptance_criteria:
+  - "Every intent `majordomus intent list` answers has a page at /intents/<id>/ that names its URI and its canonical file, links every milestone the plan holds for it and shows every criterion with its evidence kind"
+  - "The index at /intents/ links every intent, and no page exists for an intent the records do not hold"
+  - "A page says where the live answer is and prints no criterion as met"
+  - "docs/IDD.md is published at /docs/idd/ and linked from the navigation and from every intent page"
+  - "scripts/site-check refuses a missing page, a missing link and a stale page, by name"
+  - "The intent records are among the generator's inputs, so a changed record changes the site's fingerprint"
+validation:
+  - "bin/majordomus plan validate"
+  - "scripts/generate-site-data --check"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 3009_the_intents_are_published"
+evidence_required:
+  - "intents_projection_case_3009"
+  - "intents_pages_site_check"
+  - "intents_on_pages"
+created_at: 2026-10-13
+updated_at: 2026-10-13

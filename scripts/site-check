@@ -1165,6 +1165,40 @@ done
 [ "$sk_n" -gt 0 ] && ok skills "$sk_n skill(s): every page names its URI and file, renders its examples, links its related skills, and the index links each" \
   || ok skills "0 skills in the catalogue and no skill page (an empty section, not a broken one)"
 
+# 13n. the intents section is the records and nothing else: every intent `intent list`
+# answered has a page that names its URI and its canonical file, links every milestone the
+# plan holds for it, shows every criterion with the evidence that settles it, and is linked
+# from the index; no page exists for an intent the records do not hold. The pages never say
+# a criterion is met: that follows the evidence ledger and is not among the site's inputs.
+ITJ="$SITE/data/generated/intents.json"
+if [ -f "$ITJ" ]; then
+  it_n="$(jq '.intents | length' "$ITJ")"
+  [ -f "$PUB/intents/index.html" ] || bad intents "the intents section has no index page"
+  for id in $(jq -r '.intents[].id' "$ITJ"); do
+    page="$PUB/intents/$id/index.html"
+    [ -f "$page" ] || { bad intents "no page for intent $id"; continue; }
+    grep -qF "intents/$id/" "$PUB/intents/index.html" || bad intents "the index does not link intent $id"
+    grep -qF "majordomus://intent/$id" "$page" || bad intents "intent $id's page does not name its URI"
+    grep -qF "$(jq -r --arg i "$id" '.intents[] | select(.id==$i) | .path' "$ITJ")" "$page" || bad intents "intent $id's page does not name its canonical file"
+    for m in $(jq -r --arg i "$id" '.intents[] | select(.id==$i) | .milestones[] | select(.resolved) | .id' "$ITJ"); do
+      grep -qF "plan/$m/" "$page" || bad intents "intent $id names milestone $m but does not link it"
+      [ -f "$PUB/plan/$m/index.html" ] || bad intents "intent $id links milestone $m, which has no page"
+    done
+    for c in $(jq -r --arg i "$id" '.intents[] | select(.id==$i) | .criteria[].id' "$ITJ"); do
+      grep -qF "data-criterion=\"$c\"" "$page" || bad intents "intent $id's page does not show its criterion $c"
+    done
+    grep -qF "majordomus intent show $id" "$page" || bad intents "intent $id's page does not say where the live answer is"
+  done
+  for d in "$PUB"/intents/*/; do
+    [ -d "$d" ] || continue; id="$(basename "$d")"
+    jq -e --arg i "$id" '.intents[] | select(.id==$i)' "$ITJ" >/dev/null || bad intents "a page exists for '$id', which the records do not hold (stale output)"
+  done
+  [ "$it_n" -gt 0 ] && ok intents "$it_n intent(s): every page names its URI and file, links its milestones, shows its criteria, and the index links each" \
+    || ok intents "0 intents declared and no intent page (an empty section, not a broken one)"
+else
+  bad intents "site/data/generated/intents.json is missing; run scripts/generate-site-data"
+fi
+
 # 13b. graphs: every edge endpoint resolves to a node, and no graph is empty
 for g in architecture claims-graph governance-graph; do
   gf="$SITE/data/generated/$g.json"
