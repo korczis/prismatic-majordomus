@@ -1434,6 +1434,11 @@
     },
     {
       "kind": "claim",
+      "subject": "claim:intent-remains-derived",
+      "path": "/evidence/claims/intent-remains-derived/"
+    },
+    {
+      "kind": "claim",
       "subject": "claim:intent-stage-derived",
       "path": "/evidence/claims/intent-stage-derived/"
     },
@@ -7823,6 +7828,29 @@
             "docs/PLANNING.md",
             "apps/majordomus-cli/src/intent_binding.rs",
             "test/cases/962_plan_start_asks_the_binding_in_both_engines.sh"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "claim:intent-remains-derived": {
+      "kind": "claim",
+      "id": "intent-remains-derived",
+      "status": "guaranteed",
+      "page": "/evidence/claims/intent-remains-derived/",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "claim",
+          "test": "suite:969_a_gap_observation_the_evidence_contradicts_is_named",
+          "path": "test/cases/969_a_gap_observation_the_evidence_contradicts_is_named.sh",
+          "category": "e2e",
+          "inputs": [
+            "docs/PLANNING.md",
+            "apps/majordomus-cli/src/intent_remains.rs",
+            "test/cases/969_a_gap_observation_the_evidence_contradicts_is_named.sh"
           ]
         }
       ],
@@ -24709,6 +24737,9 @@
     "crate:integration_repair",
     "crate:intent_binding",
     "crate:intent_opposition",
+    "crate:intent_remains",
+    "crate:intent_remains_since",
+    "crate:intent_remains_surfaces",
     "crate:lease_busy",
     "crate:lease_declared",
     "crate:live_own_writes",

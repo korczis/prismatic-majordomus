@@ -113,10 +113,18 @@ pub fn run(args: IntentArgs) -> Result<u8> {
                 .and_then(|v| emit(format, &v, stamp_text))
                 .map(|()| 0)
         }
-        IntentCommand::Realization { intent } => {
+        IntentCommand::Realization {
+            intent,
+            since_review_revision,
+            since_remains_digest,
+        } => {
             let mut input = json!({});
             if let Some(intent) = intent {
                 input["intent"] = json!(intent);
+            }
+            if let (Some(r), Some(d)) = (since_review_revision, since_remains_digest) {
+                input["since_review_revision"] = json!(r);
+                input["since_remains_digest"] = json!(d);
             }
             let v = call(&app.context, &["intent", "realization"], input)?;
             emit(format, &v, realization_text)?;
@@ -148,6 +156,12 @@ fn realization_text(v: &Value) -> String {
             i["criteria"],
             s(i, "title")
         ));
+        if let Some(outcome) = i["outcome"].as_str() {
+            out.push(format!("  outcome   {outcome}"));
+        }
+        if let Some(change) = i["change"].as_str() {
+            out.push(format!("  since     {change}"));
+        }
         for c in i["unmet"].as_array().into_iter().flatten() {
             let issues: Vec<&str> = c["issues"]
                 .as_array()
@@ -165,6 +179,12 @@ fn realization_text(v: &Value) -> String {
                     format!("  served by {}", issues.join(" "))
                 }
             ));
+            if let (Some(r), Some(b)) = (c["remains"].as_str(), c["basis"].as_str()) {
+                out.push(format!(
+                    "  remains   {r} ({b})  next: {}",
+                    c["next"]["action"].as_str().unwrap_or("none")
+                ));
+            }
         }
         for w in i["work"].as_array().into_iter().flatten() {
             let providers: Vec<&str> = w["providers"]

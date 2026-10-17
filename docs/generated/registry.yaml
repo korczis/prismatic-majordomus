@@ -22383,6 +22383,26 @@ capabilities:
                 items:
                   "$ref": "#/$defs/IntentFinding"
                 description: "Drift between the plan's closure and the evidence."
+              outcome:
+                anyOf:
+                  - "$ref": "#/$defs/IntentOutcome"
+                  - type: "null"
+                description: What remains of the intent as one word (ADR 0117); absent for a retired intent.
+              review_revision:
+                type:
+                  - string
+                  - "null"
+                description: "The revision a review of this intent is stamped with (ADR 0112); a later reading that\ndiffers means the plan changed."
+              remains_digest:
+                type:
+                  - string
+                  - "null"
+                description: "A digest of the outcome and of each unmet criterion's evidence state, remains and\nbasis; a later reading that differs means what remains moved."
+              change:
+                anyOf:
+                  - "$ref": "#/$defs/IntentChange"
+                  - type: "null"
+                description: "How this reading differs from the one the caller passed as `since`; absent without one."
             required:
               - intent
               - title
@@ -22393,7 +22413,7 @@ capabilities:
               - work
               - providers
               - findings
-            description: "One intent, realised: how far reality is from it, the work realising it and by whom, and the\ndrift between closed work and current evidence.\n\n```\nuse majordomus_cli::intent::IntentStage;\nuse majordomus_cli::intent_realization::IntentRealizationView;\nlet v = IntentRealizationView {\n    intent: \"x\".into(), title: \"X\".into(), stage: IntentStage::Verifying,\n    criteria: 2, met: 1, unmet: vec![], work: vec![], providers: vec![], findings: vec![],\n};\nassert!(v.met < v.criteria);\n```"
+            description: "One intent, realised: how far reality is from it, the work realising it and by whom, and the\ndrift between closed work and current evidence.\n\n```\nuse majordomus_cli::intent::IntentStage;\nuse majordomus_cli::intent_realization::IntentRealizationView;\nlet v = IntentRealizationView {\n    intent: \"x\".into(), title: \"X\".into(), stage: IntentStage::Verifying,\n    criteria: 2, met: 1, unmet: vec![], work: vec![], providers: vec![], findings: vec![],\n    outcome: None, review_revision: None, remains_digest: None, change: None,\n};\nassert!(v.met < v.criteria);\n```"
           IntentUnmetCriterion:
             type: object
             properties:
@@ -22419,12 +22439,159 @@ capabilities:
                 items:
                   type: string
                 description: "The issues declaring they serve it, in plan order."
+              optional:
+                type: boolean
+                description: "Whether the intent declares it optional: shown, and deciding nothing of the outcome."
+              remains:
+                anyOf:
+                  - "$ref": "#/$defs/Remains"
+                  - type: "null"
+                description: What is in the way of it (ADR 0117); absent for a retired intent.
+              basis:
+                anyOf:
+                  - "$ref": "#/$defs/Basis"
+                  - type: "null"
+                description: "Which row of ADR 0117's table decided `remains`."
+              next:
+                anyOf:
+                  - "$ref": "#/$defs/NextAction"
+                  - type: "null"
+                description: "The action `remains` justifies, as data; nothing performs it."
             required:
               - id
               - criterion
               - evidence
               - state
-            description: "A criterion an intent still lacks, with the issues that declare they serve it.\n\n```\nuse majordomus_cli::intent::IntentEvidenceState;\nuse majordomus_cli::intent_realization::IntentUnmetCriterion;\nlet c = IntentUnmetCriterion {\n    id: \"surfaces-agree\".into(), criterion: \"the surfaces agree\".into(),\n    evidence: \"test\".into(), state: IntentEvidenceState::Stale,\n    reproduce: None, issues: vec![\"I1900\".into()],\n};\nassert_eq!(c.state, IntentEvidenceState::Stale);\n```"
+            description: "A criterion an intent still lacks, with the issues that declare they serve it.\n\n```\nuse majordomus_cli::intent::IntentEvidenceState;\nuse majordomus_cli::intent_realization::IntentUnmetCriterion;\nlet c = IntentUnmetCriterion {\n    id: \"surfaces-agree\".into(), criterion: \"the surfaces agree\".into(),\n    evidence: \"test\".into(), state: IntentEvidenceState::Stale,\n    reproduce: None, issues: vec![\"I1900\".into()],\n    optional: false, remains: None, basis: None, next: None,\n};\nassert_eq!(c.state, IntentEvidenceState::Stale);\n```"
+          Remains:
+            oneOf:
+              - type: string
+                const: failed
+                description: Its evidence fails and no open work serves it.
+              - type: string
+                const: exhausted
+                description: "Nothing serves it, nothing observed it, and it never passed: no path to proof."
+              - type: string
+                const: needs_evidence
+                description: No open work serves it and its evidence is not current.
+              - type: string
+                const: unknown
+                description: "Its evidence is of a kind the ledger cannot derive, and no open work serves it."
+              - type: string
+                const: progressing
+                description: Open work serves it.
+              - type: string
+                const: blocked
+                description: Every open issue serving it is blocked.
+            description: "What is in the way of one unmet criterion. Declared in the order an intent's outcome reads\nthem: the first one a required criterion carries decides it.\n\n```\nuse majordomus_cli::intent_remains::Remains;\nassert_eq!(serde_json::to_string(&Remains::NeedsEvidence).unwrap(), \"\\\"needs_evidence\\\"\");\nassert!(Remains::Progressing < Remains::Blocked, \"moving work outranks blocked work\");\n```"
+          Basis:
+            oneOf:
+              - type: string
+                const: work_blocked
+                description: Every open covering issue is blocked.
+              - type: string
+                const: work_open_failing
+                description: An open issue serves it and its evidence fails.
+              - type: string
+                const: work_open
+                description: An open issue serves it.
+              - type: string
+                const: not_derivable
+                description: The evidence is of a kind the ledger cannot derive.
+              - type: string
+                const: closed_work
+                description: Issues served it and every one of them is done.
+              - type: string
+                const: gap_observation
+                description: "No issue serves it, and a gap observed it satisfied."
+              - type: string
+                const: passed_before
+                description: Its evidence passed once and is stale now; nothing serves it.
+              - type: string
+                const: no_work
+                description: No issue serves it and nothing observed it.
+            description: "Why a criterion's `Remains` is what it is: which row of the table decided it.\n\n```\nuse majordomus_cli::intent_remains::Basis;\nassert_eq!(serde_json::to_string(&Basis::GapObservation).unwrap(), \"\\\"gap_observation\\\"\");\n```"
+          NextAction:
+            oneOf:
+              - type: object
+                properties:
+                  issues:
+                    type: array
+                    items:
+                      "$ref": "#/$defs/CoveringIssue"
+                    description: "The open issues, each with its status."
+                  action:
+                    type: string
+                    const: work
+                required:
+                  - action
+                  - issues
+                description: Carry on with the open issues serving it.
+              - type: object
+                properties:
+                  issues:
+                    type: array
+                    items:
+                      type: string
+                    description: The blocked issues.
+                  action:
+                    type: string
+                    const: unblock
+                required:
+                  - action
+                  - issues
+                description: Unblock the issues serving it.
+              - type: object
+                properties:
+                  reproduce:
+                    type:
+                      - string
+                      - "null"
+                    description: "The command that produces its evidence, when one is known."
+                  action:
+                    type: string
+                    const: record_evidence
+                required:
+                  - action
+                description: "Run its evidence on a clean tree, stamp the tree the run left and record the run\n(`majordomus evidence stamp`, then `majordomus evidence record`)."
+              - type: object
+                properties:
+                  reproduce:
+                    type:
+                      - string
+                      - "null"
+                    description: "The command that reproduces the failure, when one is known."
+                  action:
+                    type: string
+                    const: repair
+                required:
+                  - action
+                description: "Find why the evidence of work that closed fails, from the failing run."
+              - type: object
+                properties:
+                  serves:
+                    type: string
+                    description: "The criterion, as an issue's `serves` names it."
+                  action:
+                    type: string
+                    const: plan_work
+                required:
+                  - action
+                  - serves
+                description: Plan an issue that serves it; nothing in the plan will make it true.
+              - type: object
+                properties:
+                  because:
+                    type: string
+                    description: Why.
+                  action:
+                    type: string
+                    const: none
+                required:
+                  - action
+                  - because
+                description: No action can be derived.
+            description: "The next action a criterion's `Remains` justifies, as data. Nothing performs it.\n\n```\nuse majordomus_cli::intent_remains::NextAction;\nlet n = NextAction::PlanWork { serves: \"x#a\".into() };\nassert!(serde_json::to_string(&n).unwrap().contains(\"plan_work\"));\n```"
           IntentWorkRef:
             type: object
             properties:
@@ -22508,6 +22675,42 @@ capabilities:
               - message
               - reproduce
             description: "One validation finding: its level, a stable code a reader greps for, the intent or milestone\nit is about, one line of what is wrong, and the command that shows it again.\n\n```\nuse majordomus_cli::intent::{IntentFinding, FAIL};\nlet f = IntentFinding {\n    level: FAIL.into(),\n    code: \"unknown_milestone\".into(),\n    subject: \"intent-lifecycle\".into(),\n    message: \"`no-such` is not a milestone\".into(),\n    reproduce: \"majordomus intent validate\".into(),\n};\nassert_eq!(f.level, \"FAIL\");\nassert_eq!(f.reproduce, \"majordomus intent validate\");\n```"
+          IntentOutcome:
+            oneOf:
+              - type: string
+                const: satisfied
+                description: The verdict is satisfied.
+              - type: string
+                const: failed
+                description: "A guard is violated, or a required criterion is `Remains::Failed`."
+              - type: string
+                const: exhausted
+                description: A required criterion has no path to proof.
+              - type: string
+                const: needs_evidence
+                description: "A required criterion's work is done and its evidence is not current."
+              - type: string
+                const: unknown
+                description: "A required criterion cannot be judged, or nothing required is unmet and the verdict is\nnot satisfied; the verdict says why."
+              - type: string
+                const: progressing
+                description: Work is moving on the remaining required criteria.
+              - type: string
+                const: blocked
+                description: The only work on the remaining required criteria is blocked.
+            description: "One intent's outcome.\n\n```\nuse majordomus_cli::intent_remains::IntentOutcome;\nassert_eq!(\n    serde_json::to_string(&IntentOutcome::NeedsEvidence).unwrap(),\n    \"\\\"needs_evidence\\\"\",\n);\n```"
+          IntentChange:
+            oneOf:
+              - type: string
+                const: unchanged
+                description: Neither value moved.
+              - type: string
+                const: remains_moved
+                description: "What remains moved — a run was recorded, a serving issue closed — and the plan did not."
+              - type: string
+                const: plan_changed
+                description: "The plan a review judges changed; outranks a move of what remains, because a reader\nwhose criteria were rewritten must read them again first."
+            description: "How a reading differs from an earlier one.\n\n```\nuse majordomus_cli::intent_remains::IntentChange;\nassert_eq!(serde_json::to_string(&IntentChange::RemainsMoved).unwrap(), \"\\\"remains_moved\\\"\");\n```"
           IntentRealizedWork:
             type: object
             properties:
@@ -22684,6 +22887,16 @@ capabilities:
               - string
               - "null"
             description: "An intent id. When given, only that intent, the work linked to it and its findings are\nanswered; the unlinked work is left out."
+          since_review_revision:
+            type:
+              - string
+              - "null"
+            description: "The `review_revision` of an earlier reading of that intent. Given with\n`since_remains_digest`, the answer says how this reading differs (ADR 0117); refused\nwithout `intent`, because one pair cannot describe several intents."
+          since_remains_digest:
+            type:
+              - string
+              - "null"
+            description: "The `remains_digest` of that earlier reading; given with `since_review_revision`."
         description: "Which intent to answer the realization of; every intent when absent.\n\n```\nuse majordomus_cli::capability::builtin::intent_realization::IntentRealizationInput;\nlet all = IntentRealizationInput::default();\nassert!(all.intent.is_none());\n```"
         title: IntentRealizationInput
     output:
@@ -22761,6 +22974,26 @@ capabilities:
                 items:
                   "$ref": "#/$defs/IntentFinding"
                 description: "Drift between the plan's closure and the evidence."
+              outcome:
+                anyOf:
+                  - "$ref": "#/$defs/IntentOutcome"
+                  - type: "null"
+                description: What remains of the intent as one word (ADR 0117); absent for a retired intent.
+              review_revision:
+                type:
+                  - string
+                  - "null"
+                description: "The revision a review of this intent is stamped with (ADR 0112); a later reading that\ndiffers means the plan changed."
+              remains_digest:
+                type:
+                  - string
+                  - "null"
+                description: "A digest of the outcome and of each unmet criterion's evidence state, remains and\nbasis; a later reading that differs means what remains moved."
+              change:
+                anyOf:
+                  - "$ref": "#/$defs/IntentChange"
+                  - type: "null"
+                description: "How this reading differs from the one the caller passed as `since`; absent without one."
             required:
               - intent
               - title
@@ -22771,7 +23004,7 @@ capabilities:
               - work
               - providers
               - findings
-            description: "One intent, realised: how far reality is from it, the work realising it and by whom, and the\ndrift between closed work and current evidence.\n\n```\nuse majordomus_cli::intent::IntentStage;\nuse majordomus_cli::intent_realization::IntentRealizationView;\nlet v = IntentRealizationView {\n    intent: \"x\".into(), title: \"X\".into(), stage: IntentStage::Verifying,\n    criteria: 2, met: 1, unmet: vec![], work: vec![], providers: vec![], findings: vec![],\n};\nassert!(v.met < v.criteria);\n```"
+            description: "One intent, realised: how far reality is from it, the work realising it and by whom, and the\ndrift between closed work and current evidence.\n\n```\nuse majordomus_cli::intent::IntentStage;\nuse majordomus_cli::intent_realization::IntentRealizationView;\nlet v = IntentRealizationView {\n    intent: \"x\".into(), title: \"X\".into(), stage: IntentStage::Verifying,\n    criteria: 2, met: 1, unmet: vec![], work: vec![], providers: vec![], findings: vec![],\n    outcome: None, review_revision: None, remains_digest: None, change: None,\n};\nassert!(v.met < v.criteria);\n```"
           IntentStage:
             oneOf:
               - type: string
@@ -22821,12 +23054,30 @@ capabilities:
                 items:
                   type: string
                 description: "The issues declaring they serve it, in plan order."
+              optional:
+                type: boolean
+                description: "Whether the intent declares it optional: shown, and deciding nothing of the outcome."
+              remains:
+                anyOf:
+                  - "$ref": "#/$defs/Remains"
+                  - type: "null"
+                description: What is in the way of it (ADR 0117); absent for a retired intent.
+              basis:
+                anyOf:
+                  - "$ref": "#/$defs/Basis"
+                  - type: "null"
+                description: "Which row of ADR 0117's table decided `remains`."
+              next:
+                anyOf:
+                  - "$ref": "#/$defs/NextAction"
+                  - type: "null"
+                description: "The action `remains` justifies, as data; nothing performs it."
             required:
               - id
               - criterion
               - evidence
               - state
-            description: "A criterion an intent still lacks, with the issues that declare they serve it.\n\n```\nuse majordomus_cli::intent::IntentEvidenceState;\nuse majordomus_cli::intent_realization::IntentUnmetCriterion;\nlet c = IntentUnmetCriterion {\n    id: \"surfaces-agree\".into(), criterion: \"the surfaces agree\".into(),\n    evidence: \"test\".into(), state: IntentEvidenceState::Stale,\n    reproduce: None, issues: vec![\"I1900\".into()],\n};\nassert_eq!(c.state, IntentEvidenceState::Stale);\n```"
+            description: "A criterion an intent still lacks, with the issues that declare they serve it.\n\n```\nuse majordomus_cli::intent::IntentEvidenceState;\nuse majordomus_cli::intent_realization::IntentUnmetCriterion;\nlet c = IntentUnmetCriterion {\n    id: \"surfaces-agree\".into(), criterion: \"the surfaces agree\".into(),\n    evidence: \"test\".into(), state: IntentEvidenceState::Stale,\n    reproduce: None, issues: vec![\"I1900\".into()],\n    optional: false, remains: None, basis: None, next: None,\n};\nassert_eq!(c.state, IntentEvidenceState::Stale);\n```"
           IntentEvidenceState:
             oneOf:
               - type: string
@@ -22848,6 +23099,158 @@ capabilities:
                 const: unresolved
                 description: The reference is empty or names nothing this repository holds.
             description: "What the evidence behind one criterion says, as a word. Only `Current` meets a criterion:\na stale, failing, unrecorded or underivable reference never does, and neither does one that\nresolves to nothing.\n\nWhether a recorded run is current is not decided here. A `test` or `claim` criterion is\njudged by the evidence module's one truth table (`evidence::freshness()`) at the working\ntree and read through `evidence::current`, the same judgement the claim report and the\nsubject pages make; `IntentEvidenceState::judged` is the whole of the translation. So\nthe state follows the evidence both ways: a criterion met today reads stale or failing\nthe moment the ledger or the tree says so, and met again once a current pass is recorded.\n\n```\nuse majordomus_cli::intent::IntentEvidenceState;\nassert_eq!(serde_json::to_string(&IntentEvidenceState::NotRun).unwrap(), \"\\\"not_run\\\"\");\nassert_ne!(IntentEvidenceState::Stale, IntentEvidenceState::Current);\n```"
+          Remains:
+            oneOf:
+              - type: string
+                const: failed
+                description: Its evidence fails and no open work serves it.
+              - type: string
+                const: exhausted
+                description: "Nothing serves it, nothing observed it, and it never passed: no path to proof."
+              - type: string
+                const: needs_evidence
+                description: No open work serves it and its evidence is not current.
+              - type: string
+                const: unknown
+                description: "Its evidence is of a kind the ledger cannot derive, and no open work serves it."
+              - type: string
+                const: progressing
+                description: Open work serves it.
+              - type: string
+                const: blocked
+                description: Every open issue serving it is blocked.
+            description: "What is in the way of one unmet criterion. Declared in the order an intent's outcome reads\nthem: the first one a required criterion carries decides it.\n\n```\nuse majordomus_cli::intent_remains::Remains;\nassert_eq!(serde_json::to_string(&Remains::NeedsEvidence).unwrap(), \"\\\"needs_evidence\\\"\");\nassert!(Remains::Progressing < Remains::Blocked, \"moving work outranks blocked work\");\n```"
+          Basis:
+            oneOf:
+              - type: string
+                const: work_blocked
+                description: Every open covering issue is blocked.
+              - type: string
+                const: work_open_failing
+                description: An open issue serves it and its evidence fails.
+              - type: string
+                const: work_open
+                description: An open issue serves it.
+              - type: string
+                const: not_derivable
+                description: The evidence is of a kind the ledger cannot derive.
+              - type: string
+                const: closed_work
+                description: Issues served it and every one of them is done.
+              - type: string
+                const: gap_observation
+                description: "No issue serves it, and a gap observed it satisfied."
+              - type: string
+                const: passed_before
+                description: Its evidence passed once and is stale now; nothing serves it.
+              - type: string
+                const: no_work
+                description: No issue serves it and nothing observed it.
+            description: "Why a criterion's `Remains` is what it is: which row of the table decided it.\n\n```\nuse majordomus_cli::intent_remains::Basis;\nassert_eq!(serde_json::to_string(&Basis::GapObservation).unwrap(), \"\\\"gap_observation\\\"\");\n```"
+          NextAction:
+            oneOf:
+              - type: object
+                properties:
+                  issues:
+                    type: array
+                    items:
+                      "$ref": "#/$defs/CoveringIssue"
+                    description: "The open issues, each with its status."
+                  action:
+                    type: string
+                    const: work
+                required:
+                  - action
+                  - issues
+                description: Carry on with the open issues serving it.
+              - type: object
+                properties:
+                  issues:
+                    type: array
+                    items:
+                      type: string
+                    description: The blocked issues.
+                  action:
+                    type: string
+                    const: unblock
+                required:
+                  - action
+                  - issues
+                description: Unblock the issues serving it.
+              - type: object
+                properties:
+                  reproduce:
+                    type:
+                      - string
+                      - "null"
+                    description: "The command that produces its evidence, when one is known."
+                  action:
+                    type: string
+                    const: record_evidence
+                required:
+                  - action
+                description: "Run its evidence on a clean tree, stamp the tree the run left and record the run\n(`majordomus evidence stamp`, then `majordomus evidence record`)."
+              - type: object
+                properties:
+                  reproduce:
+                    type:
+                      - string
+                      - "null"
+                    description: "The command that reproduces the failure, when one is known."
+                  action:
+                    type: string
+                    const: repair
+                required:
+                  - action
+                description: "Find why the evidence of work that closed fails, from the failing run."
+              - type: object
+                properties:
+                  serves:
+                    type: string
+                    description: "The criterion, as an issue's `serves` names it."
+                  action:
+                    type: string
+                    const: plan_work
+                required:
+                  - action
+                  - serves
+                description: Plan an issue that serves it; nothing in the plan will make it true.
+              - type: object
+                properties:
+                  because:
+                    type: string
+                    description: Why.
+                  action:
+                    type: string
+                    const: none
+                required:
+                  - action
+                  - because
+                description: No action can be derived.
+            description: "The next action a criterion's `Remains` justifies, as data. Nothing performs it.\n\n```\nuse majordomus_cli::intent_remains::NextAction;\nlet n = NextAction::PlanWork { serves: \"x#a\".into() };\nassert!(serde_json::to_string(&n).unwrap().contains(\"plan_work\"));\n```"
+          CoveringIssue:
+            type: object
+            properties:
+              id:
+                type: string
+                description: The issue id.
+              milestone:
+                type: string
+                description: Its milestone.
+              status:
+                type: string
+                description: Its derived status.
+              evidence_need:
+                type: integer
+                format: uint32
+                minimum: 0
+                description: How many evidence tokens it requires before it may be DONE.
+            required:
+              - id
+              - milestone
+              - status
+              - evidence_need
+            description: "One issue as coverage sees it: which milestone carries it, the status the plan derived for\nit, and how much evidence it owes before it may be DONE.\n\n```\nuse majordomus_cli::intent_plan::CoveringIssue;\nlet issue = CoveringIssue {\n    id: \"I1901\".into(),\n    milestone: \"intent-planning\".into(),\n    status: \"READY\".into(),\n    evidence_need: 2,\n};\n// an issue that owes no evidence covers a criterion only weakly\nassert!(issue.evidence_need > 0);\n```"
           IntentWorkRef:
             type: object
             properties:
@@ -22931,6 +23334,42 @@ capabilities:
               - message
               - reproduce
             description: "One validation finding: its level, a stable code a reader greps for, the intent or milestone\nit is about, one line of what is wrong, and the command that shows it again.\n\n```\nuse majordomus_cli::intent::{IntentFinding, FAIL};\nlet f = IntentFinding {\n    level: FAIL.into(),\n    code: \"unknown_milestone\".into(),\n    subject: \"intent-lifecycle\".into(),\n    message: \"`no-such` is not a milestone\".into(),\n    reproduce: \"majordomus intent validate\".into(),\n};\nassert_eq!(f.level, \"FAIL\");\nassert_eq!(f.reproduce, \"majordomus intent validate\");\n```"
+          IntentOutcome:
+            oneOf:
+              - type: string
+                const: satisfied
+                description: The verdict is satisfied.
+              - type: string
+                const: failed
+                description: "A guard is violated, or a required criterion is `Remains::Failed`."
+              - type: string
+                const: exhausted
+                description: A required criterion has no path to proof.
+              - type: string
+                const: needs_evidence
+                description: "A required criterion's work is done and its evidence is not current."
+              - type: string
+                const: unknown
+                description: "A required criterion cannot be judged, or nothing required is unmet and the verdict is\nnot satisfied; the verdict says why."
+              - type: string
+                const: progressing
+                description: Work is moving on the remaining required criteria.
+              - type: string
+                const: blocked
+                description: The only work on the remaining required criteria is blocked.
+            description: "One intent's outcome.\n\n```\nuse majordomus_cli::intent_remains::IntentOutcome;\nassert_eq!(\n    serde_json::to_string(&IntentOutcome::NeedsEvidence).unwrap(),\n    \"\\\"needs_evidence\\\"\",\n);\n```"
+          IntentChange:
+            oneOf:
+              - type: string
+                const: unchanged
+                description: Neither value moved.
+              - type: string
+                const: remains_moved
+                description: "What remains moved — a run was recorded, a serving issue closed — and the plan did not."
+              - type: string
+                const: plan_changed
+                description: "The plan a review judges changed; outranks a move of what remains, because a reader\nwhose criteria were rewritten must read them again first."
+            description: "How a reading differs from an earlier one.\n\n```\nuse majordomus_cli::intent_remains::IntentChange;\nassert_eq!(serde_json::to_string(&IntentChange::RemainsMoved).unwrap(), \"\\\"remains_moved\\\"\");\n```"
           IntentRealizedWork:
             type: object
             properties:

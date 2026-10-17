@@ -91,7 +91,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `intent_opposition.record` | intent_opposition | command | — | covered | covered | covered | `check-first-intent` |
 | `intent_opposition.review` | intent_opposition | query | — | covered | covered | covered | `first-intent` |
 | `intent_realization.explain` | intent_realization | query | — | covered | covered | covered | `first-intent` |
-| `intent_realization.work` | intent_realization | query | — | covered | covered | covered | `every-intent`, `first-intent` |
+| `intent_realization.work` | intent_realization | query | — | covered | covered | covered | `every-intent`, `first-intent`, `since-a-reading` |
 | `intents.binding` | intents | query | — | covered | covered | covered | `first-issue` |
 | `intents.coverage` | intents | query | — | covered | covered | covered | `default` |
 | `intents.list` | intents | query | — | covered | covered | covered | `default` |

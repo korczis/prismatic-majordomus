@@ -1,0 +1,59 @@
+intent: what-remains-of-an-intent
+observed_at: 8993bbf173
+recorded_by: claude-code (session fcbeae95; first-hand reads of intent_review.rs, intent.rs and intent_realization.rs at the observed commit)
+recorded_at: 2026-10-09
+observations:
+  - id: gap-shape-only
+    statement: review() checks that a gap names its commit, answers every criterion once with a known state backed by declared observations, and plans each suggested item into an issue serving the intent; it never reads the evidence
+    source: file:apps/majordomus-cli/src/intent_review.rs
+  - id: two-vocabularies
+    statement: A gap condition is satisfied, missing, conflicting or unknown; a derived criterion is current, stale, failing, not_run, not_derivable or unresolved; no function maps one onto the other
+    source: file:apps/majordomus-cli/src/intent.rs
+  - id: closed-unmet-is-per-stage
+    statement: criterion_closed_unmet warns when every issue serving an unmet criterion is DONE, only while the stage is planned or executing, and reads no gap
+    source: file:apps/majordomus-cli/src/intent_realization.rs
+  - id: observed-satisfied-trusts-the-gap
+    statement: When no live issue serves a criterion a gap marked satisfied with observations, coverage counts it observed, no work is owed and criterion_uncovered is silent, whatever the evidence now says
+    source: file:apps/majordomus-cli/src/intent_plan.rs
+  - id: unmet-without-outcome
+    statement: IntentUnmetCriterion carries the evidence state, the reproduce command and the serving issues, and no word for what is in the way or what to do next
+    source: file:apps/majordomus-cli/src/intent_realization.rs
+  - id: pins-are-per-task
+    statement: plan_revision and evidence_standing are computed by the binding over the issues a task serves; intent_opposition::revision_of hashes one intent's reviewed plan without any status; nothing digests what remains of an intent
+    source: file:apps/majordomus-cli/src/intent_opposition.rs
+  - id: realize-has-no-coverage
+    statement: realize() receives the intents, the plan and the work units; the coverage entries, and with them which criteria a gap observed, are computed in Intents::build and not passed on
+    source: file:apps/majordomus-cli/src/capability/builtin/intent_realization.rs
+conditions:
+  - criterion: remains-and-outcome
+    state: missing
+    because: no function names what is in the way of an unmet criterion, the view carries counts and lists and no outcome or next action, and the realization cannot see coverage
+    observations: [unmet-without-outcome, closed-unmet-is-per-stage, realize-has-no-coverage]
+  - criterion: surfaces-agree-and-repeat
+    state: unknown
+    because: the realization is already one capability on three surfaces; whether the new fields agree is a property of what is built
+  - criterion: what-changed
+    state: missing
+    because: the pins exist per task, the intent's review revision ignores work status, and the realization takes no reading to compare with
+    observations: [pins-are-per-task]
+  - criterion: contradicted-is-warned
+    state: missing
+    because: nothing re-checks a gap observation that coverage counted as served
+    observations: [observed-satisfied-trusts-the-gap, gap-shape-only]
+risks:
+  - The outcome is a fourth vocabulary beside stage, verdict and evidence state; documented once, in one table, or readers confuse them
+  - A warning in validate becomes an advisory finding of intent oppose; that is wanted here and must be tested, not discovered
+  - The realization view is read by the Cockpit and the explanation; new fields are added beside the existing ones
+work:
+  - id: table
+    title: What remains, why and the next action, by the table
+    serves: [remains-and-outcome]
+    issue: I2076
+  - id: surfaces
+    title: Every surface, repeated reads, and what changed since a reading
+    serves: [surfaces-agree-and-repeat, what-changed]
+    issue: I2077
+  - id: warning
+    title: A contradicted gap observation is named
+    serves: [contradicted-is-warned]
+    issue: I2078

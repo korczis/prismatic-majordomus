@@ -51,6 +51,7 @@ pub mod intent_binding;
 pub mod intent_opposition;
 pub mod intent_plan;
 pub mod intent_realization;
+pub mod intent_remains;
 pub mod intent_review;
 pub mod lease;
 pub mod ledger;

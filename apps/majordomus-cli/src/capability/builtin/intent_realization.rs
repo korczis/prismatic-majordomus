@@ -46,6 +46,38 @@ pub struct IntentRealizationInput {
     /// answered; the unlinked work is left out.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub intent: Option<String>,
+    /// The `review_revision` of an earlier reading of that intent. Given with
+    /// `since_remains_digest`, the answer says how this reading differs (ADR 0117); refused
+    /// without `intent`, because one pair cannot describe several intents.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub since_review_revision: Option<String>,
+    /// The `remains_digest` of that earlier reading; given with `since_review_revision`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub since_remains_digest: Option<String>,
+}
+
+impl IntentRealizationInput {
+    /// The earlier reading this input names: both values, neither, or a refusal for one alone.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::builtin::intent_realization::IntentRealizationInput;
+    /// let mut i = IntentRealizationInput::default();
+    /// assert_eq!(i.since(), Ok(None));
+    /// i.since_review_revision = Some("r".into());
+    /// assert!(i.since().is_err(), "one value alone describes no reading");
+    /// ```
+    pub fn since(&self) -> Result<Option<crate::intent_remains::Since>, String> {
+        match (&self.since_review_revision, &self.since_remains_digest) {
+            (None, None) => Ok(None),
+            (Some(r), Some(d)) => Ok(Some(crate::intent_remains::Since {
+                review_revision: r.clone(),
+                remains_digest: d.clone(),
+            })),
+            _ => Err(
+                "an earlier reading is both since_review_revision and since_remains_digest".into(),
+            ),
+        }
+    }
 }
 
 fn first_intent(ctx: &CaseContext<'_>) -> Option<String> {
@@ -65,15 +97,33 @@ impl BenchmarkCases for IntentRealizationInput {
         // the narrowed read is measured in every repository, as IntentExplainInput's is: on an
         // intent the repository holds, or else on one it does not, so the `intent` parameter
         // always carries an example (case 92) and the not-found answer is measured too
-        cases.push(match first_intent(ctx) {
-            Some(id) => NamedCase::new("first-intent", IntentRealizationInput { intent: Some(id) }),
+        let id = first_intent(ctx);
+        cases.push(match &id {
+            Some(id) => NamedCase::new(
+                "first-intent",
+                IntentRealizationInput {
+                    intent: Some(id.clone()),
+                    ..Default::default()
+                },
+            ),
             None => NamedCase::new(
                 "absent-intent",
                 IntentRealizationInput {
                     intent: Some("absent".into()),
+                    ..Default::default()
                 },
             ),
         });
+        // a reading compared with an earlier one, so `since` carries an example too (case 92):
+        // the values are no reading's, and the answer is that the plan changed
+        cases.push(NamedCase::new(
+            "since-a-reading",
+            IntentRealizationInput {
+                intent: Some(id.unwrap_or_else(|| "absent".into())),
+                since_review_revision: Some("an-earlier-review-revision".into()),
+                since_remains_digest: Some("an-earlier-remains-digest".into()),
+            },
+        ));
         cases
     }
 }
@@ -116,6 +166,14 @@ fn derived(ctx: &Context) -> Result<(Plan, Intents, IntentRealization), Capabili
     let root = PathBuf::from(&ctx.index.repository.root);
     let (units, skipped) = gather(&root, &ctx.index, &ctx.peers.list());
     let mut realization = realize(&intents, &plan, units);
+    // what remains of each intent, from the coverage `intent validate` computes (ADR 0117)
+    let gaps = crate::intent_review::GapRecord::all(&ctx.index);
+    crate::intent_remains::fill(
+        &mut realization,
+        &intents,
+        &Intents::coverage(&ctx.index, &plan),
+        &|id| crate::intent_opposition::revision_of(&intents, &plan, &gaps, id),
+    );
     if skipped > 0 {
         realization.findings.push(IntentFinding {
             level: crate::intent::WARN.into(),
@@ -142,6 +200,12 @@ fn realization_work(
     input: IntentRealizationInput,
 ) -> Result<IntentRealization, CapabilityError> {
     let (_, intents, mut r) = derived(ctx)?;
+    let since = input.since().map_err(CapabilityError::InvalidInput)?;
+    if since.is_some() && input.intent.as_deref().is_none_or(|s| s.trim().is_empty()) {
+        return Err(CapabilityError::InvalidInput(
+            "`since` describes one reading of one intent; name the intent".into(),
+        ));
+    }
     let Some(id) = input
         .intent
         .as_deref()
@@ -154,6 +218,15 @@ fn realization_work(
         return Err(not_found(id));
     }
     r.intents.retain(|v| v.intent == id);
+    if let Some(since) = &since {
+        for v in &mut r.intents {
+            v.change = Some(crate::intent_remains::change(
+                since,
+                v.review_revision.as_deref(),
+                v.remains_digest.as_deref(),
+            ));
+        }
+    }
     r.work.retain(|w| w.links.iter().any(|l| l.intent == id));
     r.findings.retain(|f| f.subject == id);
     r.orphans = 0;

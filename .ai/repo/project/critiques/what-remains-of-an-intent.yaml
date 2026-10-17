@@ -1,0 +1,235 @@
+intent: what-remains-of-an-intent
+reviewed_at: "8993bbf173"
+reviewed_by: "claude-code subagents (Explore, read-only, fresh context each) dispatched by session fcbeae95 with the plan records and the code and none of the author's reasoning; same model and operator session as the author. Two passes: the first (19 findings, 9 blocking) withdrew the first design, which compared gap conditions with the evidence; this record holds the second pass over the revised plan (21 findings, 4 blocking), after which the plan was revised again."
+reviewed_with: "majordomus-cli 0.17.0"
+findings:
+  - id: unresolved-refs-reject-own-plan
+    class: unproven_assumption
+    subject: I2076
+    finding: "Every criterion names a test file that does not exist yet, which intent validate refuses as an unresolved evidence ref and the opposition turns into a structural blocker."
+    source: the reviewing subagent
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2076
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "The plan lands in one pull request with the tests it names, written before the records are validated, as the satisfaction milestone did."
+  - id: what-changed-blind-to-work-status
+    class: missed_requirement
+    subject: I2077
+    finding: "The proposed pins hash the reviewed plan, which carries no status, and the evidence states, so an issue closing or becoming blocked would read unchanged while what remains moved."
+    source: the reviewing subagent
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2077
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "The second pin is remains_digest, over the outcome and each unmet criterion's evidence state, remains and basis; the answer is unchanged, remains_moved or plan_changed."
+  - id: warning-cannot-reach-validate-or-oppose-from-scope
+    class: surface_missing
+    subject: I2078
+    finding: "realize() has no gaps and no coverage, oppose reads only intents and plan findings, and the issue scopes lacked intent.rs and the capability modules."
+    source: the reviewing subagent
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2078
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "The warning is emitted in Intents::build, which holds gaps, coverage and evaluated criteria; the realization capability computes coverage with the validate function and passes it to realize (I2076); scopes name those files."
+  - id: next-action-names-a-command-that-does-not-exist
+    class: delivery_verification
+    subject: I2076
+    finding: "The next action names majordomus evidence stamp, which the base commit's evidence command does not have."
+    source: the reviewing subagent
+    blocking: true
+    resolution:
+      state: rejected
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "The command exists on master (EvidenceCommand::Stamp in cli.rs, docs/EVIDENCE.md); this branch's base predates it and is brought to master before it is proposed, and case 505 runs it."
+  - id: capability-id-false
+    class: surface_missing
+    subject: I2077
+    finding: "The ADR and I2077 named intents.realization; the capability is intent_realization.work."
+    source: the reviewing subagent
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2077
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "Corrected in the ADR and the issue."
+  - id: outcome-not-total
+    class: missed_requirement
+    subject: I2076
+    finding: "No outcome was given when the verdict is not satisfied, no guard is violated and no required criterion is unmet."
+    source: the reviewing subagent
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2076
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "Row 9 of the outcome table: unknown, the verdict says why."
+  - id: retired-intents-are-told-to-plan-work
+    class: regression_risk
+    subject: I2076
+    finding: "A cancelled or superseded intent would be told to plan work."
+    source: the reviewing subagent
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2076
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "A retired intent carries no remains and no outcome."
+  - id: blocked-outranks-progressing-under-sequencing
+    class: unproven_assumption
+    subject: I2076
+    finding: "Issues in a dependency chain are BLOCKED by their predecessors, so an intent with work moving would read blocked."
+    source: the reviewing subagent
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2076
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "blocked is last in the outcome order; an intent with any work moving is progressing."
+  - id: failing-under-open-work-hides-regression
+    class: regression_risk
+    subject: I2076
+    finding: "A criterion that broke while any serving issue is open read progressing and nothing named it."
+    source: the reviewing subagent
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2076
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "It reads progressing on basis work_open_failing; telling a broken pass from a test written first needs the ledger's history and is stated as not answered."
+  - id: unknown-masks-open-work
+    class: unproven_assumption
+    subject: I2076
+    finding: "not_derivable was read before open work, so a command criterion with open work never read progressing."
+    source: the reviewing subagent
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2076
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "Open work is read first; not_derivable decides only where no open work serves the criterion."
+  - id: row-9-conflates-unplanned-and-stale
+    class: unproven_assumption
+    subject: I2076
+    finding: "A stale pass with no work and a never-planned criterion both got plan an issue."
+    source: the reviewing subagent
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2076
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "A stale criterion nothing serves is needs_evidence on passed_before and is told to record evidence."
+  - id: two-meanings-of-evidence-standing-and-revision
+    class: invariant_conflict
+    subject: I2077
+    finding: "The intent's pins reused the binding's names with different contents."
+    source: the reviewing subagent
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2077
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "Renamed review_revision and remains_digest, named for what they hash."
+  - id: since-without-intent-is-undefined
+    class: missed_requirement
+    subject: I2077
+    finding: "One since pair was given for an answer that covers every intent."
+    source: the reviewing subagent
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2077
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "since is refused without an intent."
+  - id: generated-schema-changes-land-in-the-wrong-issue
+    class: surface_missing
+    subject: I2076
+    finding: "The schema change of the view is projected into generated files no issue scoped."
+    source: the reviewing subagent
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2076
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "docs/generated, site/data/registry and site/data/generated are in the scope of I2076 and I2077."
+  - id: work-outside-every-scope
+    class: dependency_order
+    subject: I2076
+    finding: "intent_remains.rs and lib.rs were edited and scoped by nothing."
+    source: the reviewing subagent
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2076
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "Both are in the milestone's and I2076's scope."
+  - id: table-criterion-is-tautological
+    class: unproven_assumption
+    subject: I2076
+    finding: "A first-match table with an otherwise row meets one row by construction, and current never reaches an unmet criterion."
+    source: the reviewing subagent
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2076
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "The test checks each combination of the five unmet states against an independent predicate per row."
+  - id: four-criteria-one-binary
+    class: insufficient_work
+    subject: I2077
+    finding: "Four criteria named one test binary, so one red test failed all four."
+    source: the reviewing subagent
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2077
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "Three test files and one case, one per criterion."
+  - id: adr-overstates-existing-coverage
+    class: unproven_assumption
+    subject: I2076
+    finding: "The ADR said every other remains already had a finding and misdescribed criterion_closed_unmet and observed."
+    source: the reviewing subagent
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2076
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "The context and consequences were rewritten to name each finding's limits and the one overlap."
+  - id: serving-defined-three-ways
+    class: invariant_conflict
+    subject: I2076
+    finding: "Serving meant one thing in the table, another in coverage and a third in the realization's issue list."
+    source: the reviewing subagent
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2076
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "remains reads coverage's covering issues and strength; no second predicate."
+  - id: names-carry-the-rejected-design
+    class: unproven_assumption
+    subject: I2076
+    finding: "The branch, the intent id and the ADR slug named the rejected reconciliation design."
+    source: the reviewing subagent
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2076
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "Renamed what-remains-of-an-intent while untracked."
+  - id: i2078-over-serialised
+    class: dependency_order
+    subject: I2078
+    finding: "I2078 depended on I2077 though it needs only I2076's function."
+    source: the reviewing subagent
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2078
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "I2078 depends on I2076."

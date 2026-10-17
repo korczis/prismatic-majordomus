@@ -49,6 +49,10 @@ Every unit of work this checkout can see — ledger tasks with their episodes, p
 |---|---|---|---|
 | `intent` | string or null | no | An intent id. When given, only that intent, the work linked to it and its findings are
 answered; the unlinked work is left out. |
+| `since_review_revision` | string or null | no | The `review_revision` of an earlier reading of that intent. Given with
+`since_remains_digest`, the answer says how this reading differs (ADR 0117); refused
+without `intent`, because one pair cannot describe several intents. |
+| `since_remains_digest` | string or null | no | The `remains_digest` of that earlier reading; given with `since_review_revision`. |
 
 Output: `IntentRealization`.
 

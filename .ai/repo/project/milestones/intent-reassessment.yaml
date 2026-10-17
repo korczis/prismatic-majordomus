@@ -1,0 +1,46 @@
+id: intent-reassessment
+title: What remains of an intent is derived on every read
+slug: intent-reassessment
+order: 160
+priority: p1
+problem: "After work or evidence changes, a reader asks what still prevents an intent, why, and what to do next. The facts are derived — evidence states, unmet criteria with their serving issues, four findings — and no read answers the question; and a gap observation the evidence later contradicts is reported by nothing, because coverage takes the observation as served."
+outcome: "The realization view answers per unmet criterion and per intent what remains, why and the next justified action, and what changed since a reading the caller holds; intent validate names a contradicted gap observation."
+current_state: "IntentUnmetCriterion carries state, reproduce and serving issues. criterion_uncovered, criterion_closed_unmet and closed_work_* name planning holes. Coverage counts a gap's satisfied observation as observed and nothing re-checks it."
+desired_state: "remains, basis and next per unmet criterion; outcome, review_revision and remains_digest per intent; a since input for one intent; gap_observation_contradicted as a validate warning; nothing written."
+scope:
+  - apps/majordomus-cli/src/intent_remains.rs
+  - apps/majordomus-cli/src/lib.rs
+  - apps/majordomus-cli/src/intent_realization.rs
+  - apps/majordomus-cli/src/cli.rs
+  - apps/majordomus-cli/src/intent_plan.rs
+  - apps/majordomus-cli/src/intent_opposition.rs
+  - apps/majordomus-cli/src/intent.rs
+  - apps/majordomus-cli/src/capability/builtin
+  - apps/majordomus-cli/src/commands/intent.rs
+  - apps/majordomus-cli/tests
+  - site
+  - .ai/repo/project
+  - .ai/repo/adrs
+  - docs
+  - test/cases
+non_scope:
+  - Drafting work from an outcome
+  - The Cockpit and the briefing
+acceptance_criteria:
+  - "Every unmet criterion has one outcome by the table, and every intent one, on every surface"
+  - "A contradicted gap observation is a validate warning, never a failure"
+  - "No record is written and no action performed"
+validation:
+  - majordomus intent validate
+  - cargo test --test intent_remains
+  - cargo test --test intent_remains_surfaces
+  - cargo test --test intent_remains_since
+  - bash test/run.sh 969_a_gap_observation_the_evidence_contradicts_is_named
+evidence_required: []
+depends_on: []
+risks:
+  - "The outcome is a fourth vocabulary beside stage, verdict and evidence state; the table in ADR 0117 is the only translation and lives in one function."
+  - "IntentRealizationView is read by the Cockpit and the explanation; fields are added beside what exists."
+  - "Every changed line owes an in-process test (project.new-code-is-covered)."
+created_at: 2026-10-09
+updated_at: 2026-10-09

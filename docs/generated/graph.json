@@ -2598,6 +2598,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/intent_remains.rs",
+        "kind": "file",
+        "label": "intent_remains.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/intent_remains.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/intent_review.rs",
         "kind": "file",
         "label": "intent_review.rs",
@@ -6218,6 +6226,33 @@
         }
       },
       {
+        "id": "majordomus://adr/adr-0117",
+        "kind": "adr",
+        "label": "adr-0117",
+        "summary": "What remains of an intent is derived on every read, with the action it justifies, and a gap is never rewritten",
+        "route": "/cockpit/objects/adr/adr-0117",
+        "source": ".ai/repo/adrs/0117-what-remains-of-an-intent-is-derived-on-every-read.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-09",
+          "related": [
+            "file:.ai/repo/adrs/0070-intent-is-a-typed-record-and-satisfaction-is-derived-from-evidence.md",
+            "file:.ai/repo/adrs/0107-completion-discharges-obligations-and-never-decides-whether-an-intent-is-satisfied.md",
+            "file:.ai/repo/adrs/0112-the-opposition-to-a-plan-is-executed-and-revision-bound.md",
+            "file:.ai/repo/adrs/0113-satisfaction-is-explained-and-held-to-its-guards.md",
+            "rule:project.derived-once",
+            "file:apps/majordomus-cli/src/intent_remains.rs",
+            "file:.ai/repo/project/intents/what-remains-of-an-intent.yaml"
+          ],
+          "tags": [
+            "intent",
+            "planning",
+            "evidence",
+            "governance"
+          ]
+        }
+      },
+      {
         "id": "majordomus://application/ci-gated-project",
         "kind": "application",
         "label": "ci-gated-project",
@@ -8433,6 +8468,21 @@
           "responsibility": "plan",
           "source": "docs/PLANNING.md",
           "test": "test/cases/962_plan_start_asks_the_binding_in_both_engines.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/intent-remains-derived",
+        "kind": "claim",
+        "label": "intent-remains-derived",
+        "summary": "Each unmet criterion of an intent carries what stands in its way and the action that justifies, each intent one outcome, and a gap observation the evidence now contradicts is named, all derived on every read with nothing written",
+        "route": "/cockpit/objects/claim/intent-remains-derived",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "apps/majordomus-cli/src/intent_remains.rs",
+          "responsibility": "plan",
+          "source": "docs/PLANNING.md",
+          "test": "test/cases/969_a_gap_observation_the_evidence_contradicts_is_named.sh"
         }
       },
       {
@@ -12581,6 +12631,19 @@
         }
       },
       {
+        "id": "majordomus://critique/what-remains-of-an-intent",
+        "kind": "critique",
+        "label": "what-remains-of-an-intent",
+        "summary": "what-remains-of-an-intent",
+        "route": "/cockpit/objects/critique/what-remains-of-an-intent",
+        "source": ".ai/repo/project/critiques/what-remains-of-an-intent.yaml",
+        "facts": {
+          "intent": "what-remains-of-an-intent",
+          "reviewed_at": "8993bbf173",
+          "reviewed_with": "majordomus-cli 0.17.0"
+        }
+      },
+      {
         "id": "majordomus://deployment/majordomus",
         "kind": "deployment",
         "label": "majordomus",
@@ -14137,6 +14200,14 @@
         "summary": "Where the policy requires binding, starting an issue or a task that serves an intent with no critique, or with a blocking finding open, is refused when it is started rather than reported afterwards",
         "route": "/cockpit/objects/document/docs-claims-intent-refused-at-plan-start-md",
         "source": "docs/claims/intent-refused-at-plan-start.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/intent-remains-derived.md",
+        "kind": "document",
+        "label": "docs/claims/intent-remains-derived.md",
+        "summary": "Each unmet criterion of an intent carries what stands in its way and the action that justifies, each intent one outcome, and a gap observation the evidence now contradicts is named, all derived on every read with nothing written",
+        "route": "/cockpit/objects/document/docs-claims-intent-remains-derived-md",
+        "source": "docs/claims/intent-remains-derived.md"
       },
       {
         "id": "majordomus://document/docs/claims/intent-stage-derived.md",
@@ -17090,6 +17161,25 @@
         }
       },
       {
+        "id": "majordomus://gap/what-remains-of-an-intent",
+        "kind": "gap",
+        "label": "what-remains-of-an-intent",
+        "summary": "what-remains-of-an-intent",
+        "route": "/cockpit/objects/gap/what-remains-of-an-intent",
+        "source": ".ai/repo/project/gaps/what-remains-of-an-intent.yaml",
+        "facts": {
+          "intent": "what-remains-of-an-intent",
+          "observed_at": "8993bbf173",
+          "recorded_at": "2026-10-09",
+          "recorded_by": "claude-code (session fcbeae95; first-hand reads of intent_review.rs, intent.rs and intent_realization.rs at the observed commit)",
+          "risks": [
+            "The outcome is a fourth vocabulary beside stage, verdict and evidence state; documented once, in one table, or readers confuse them",
+            "A warning in validate becomes an advisory finding of intent oppose; that is wanted here and must be tested, not discovered",
+            "The realization view is read by the Cockpit and the explanation; new fields are added beside the existing ones"
+          ]
+        }
+      },
+      {
         "id": "majordomus://implementation/bin/majordomus",
         "kind": "implementation",
         "label": "bin/majordomus",
@@ -17602,6 +17692,44 @@
             "Letting an issue serve a guard, or declaring a guard's inputs; a guard is violated by a failing run and by nothing else"
           ],
           "updated_at": "2026-10-08"
+        }
+      },
+      {
+        "id": "majordomus://intent/what-remains-of-an-intent",
+        "kind": "intent",
+        "label": "what-remains-of-an-intent",
+        "summary": "What remains of an intent is derived on every read, with the action it justifies, and a gap is never rewritten",
+        "route": "/cockpit/objects/intent/what-remains-of-an-intent",
+        "source": ".ai/repo/project/intents/what-remains-of-an-intent.yaml",
+        "facts": {
+          "created_at": "2026-10-09",
+          "governance": [
+            "rule:project.derived-once",
+            "rule:project.completion-never-decides-satisfaction",
+            "adr:adr-0107",
+            "adr:adr-0111",
+            "adr:adr-0112",
+            "adr:adr-0113",
+            "adr:adr-0117"
+          ],
+          "invariants": [
+            "The outcome, the basis and the next action are derived on every read from the criterion's evidence state and its coverage entry; nothing stores them",
+            "Serving means what coverage means; no second predicate decides which issues serve a criterion",
+            "No command writes, appends to or supersedes a gap record",
+            "The engine's evidence state, the verdict, the stage and the coverage strength are read, never recomputed, and none of them reads the outcome",
+            "An outcome that cannot be decided is unknown, never progressing or satisfied",
+            "No action is performed; the next action is data"
+          ],
+          "milestones": [
+            "intent-reassessment"
+          ],
+          "non_goals": [
+            "Drafting an issue or a plan from an exhausted criterion; that is the desired-outcome milestone",
+            "Saying which actor may act; issues carry no actor",
+            "Detecting loops or lack of progress; no history of readings is kept",
+            "Showing the outcome in the Cockpit or the session briefing; the capability carries it and the pages follow"
+          ],
+          "updated_at": "2026-10-09"
         }
       },
       {
@@ -30304,6 +30432,152 @@
         }
       },
       {
+        "id": "majordomus://issue/I2076",
+        "kind": "issue",
+        "label": "I2076",
+        "summary": "Each unmet criterion and each intent carry what remains, why, and the next justified action",
+        "route": "/cockpit/objects/issue/i2076",
+        "source": ".ai/repo/project/issues/I2076.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every combination is checked against an independent predicate per row, not only against the function's own order",
+            "An intent with a violated guard is failed whatever its criteria; an optional criterion never decides the outcome; a retired intent carries no remains",
+            "Each remains has its next action, and unknown names why none is derivable"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "IntentUnmetCriterion carries id, criterion, evidence, state, reproduce and issues; the view carries stage, counts, unmet, work and findings.",
+          "depends_on": [],
+          "desired_state": "One function per answer, every combination tested, every surface reading them.",
+          "evidence_required": [
+            "every_combination_meets_one_row"
+          ],
+          "milestone": "intent-reassessment",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/adrs/0117-what-remains-of-an-intent-is-derived-on-every-read.md",
+            "apps/majordomus-cli/src/intent_remains.rs",
+            "apps/majordomus-cli/src/lib.rs",
+            "apps/majordomus-cli/src/intent_realization.rs",
+            "apps/majordomus-cli/src/capability/builtin/intent_realization.rs",
+            "apps/majordomus-cli/tests/intent_remains.rs",
+            "docs/generated",
+            "site/data/registry",
+            "site/data/generated"
+          ],
+          "serves": [
+            "what-remains-of-an-intent#remains-and-outcome"
+          ],
+          "slug": "what-remains-by-the-table",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "cargo test --doc intent_remains",
+            "cargo test --test intent_remains"
+          ],
+          "why": "A reader assembles what still prevents an intent from four findings and two lists, and no read says what to do next."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2077",
+        "kind": "issue",
+        "label": "I2077",
+        "summary": "The realization answers the same on every surface, and what changed since a reading the caller holds of one intent",
+        "route": "/cockpit/objects/issue/i2077",
+        "source": ".ai/repo/project/issues/I2077.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The three surfaces answer identical JSON for one tree, and two reads are identical",
+            "A reading followed by a recorded run answers remains_moved, by an edit of a criterion plan_changed, and a since without an intent is refused"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "The realization input names an intent or none; nothing in the view lets a caller compare two readings.",
+          "depends_on": [
+            "I2076"
+          ],
+          "desired_state": "Two pins on every intent, one optional input, the comparison a resumed task already uses.",
+          "evidence_required": [
+            "a_reading_is_compared_through_its_pins"
+          ],
+          "milestone": "intent-reassessment",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/intent_remains.rs",
+            "apps/majordomus-cli/src/intent_realization.rs",
+            "apps/majordomus-cli/src/capability/builtin/intent_realization.rs",
+            "apps/majordomus-cli/src/commands/intent.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/tests/intent_remains_surfaces.rs",
+            "apps/majordomus-cli/tests/intent_remains_since.rs",
+            "docs/generated",
+            "site/data/registry",
+            "site/data/generated"
+          ],
+          "serves": [
+            "what-remains-of-an-intent#surfaces-agree-and-repeat",
+            "what-remains-of-an-intent#what-changed"
+          ],
+          "slug": "what-changed-since-a-reading",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "cargo test --test intent_remains_surfaces",
+            "cargo test --test intent_remains_since"
+          ],
+          "why": "A machine consumer must tell what changed since its last reading without anything being stored."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2078",
+        "kind": "issue",
+        "label": "I2078",
+        "summary": "intent validate names a gap observation the evidence now contradicts",
+        "route": "/cockpit/objects/issue/i2078",
+        "source": ".ai/repo/project/issues/I2078.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The warning is listed per contradicted criterion and validate's exit and failure count are the same with and without it",
+            "intent oppose shows it as an advisory finding",
+            "docs/PLANNING.md has one table of the four vocabularies, and the claim names case 969"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "Nothing compares a gap's satisfied observation with the evidence.",
+          "depends_on": [
+            "I2076"
+          ],
+          "desired_state": "One warning, for the one fact nothing else reports.",
+          "evidence_required": [
+            "a_contradicted_observation_is_a_warning"
+          ],
+          "milestone": "intent-reassessment",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/intent.rs",
+            "apps/majordomus-cli/src/intent_remains.rs",
+            "apps/majordomus-cli/src/capability/builtin/intents.rs",
+            "test/cases/969_a_gap_observation_the_evidence_contradicts_is_named.sh",
+            "docs/PLANNING.md",
+            "docs/CLI.md",
+            "docs/CLAIMS.yaml",
+            "docs/claims",
+            "site"
+          ],
+          "serves": [
+            "what-remains-of-an-intent#contradicted-is-warned"
+          ],
+          "slug": "a-contradicted-observation-is-named",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "majordomus intent validate",
+            "bash test/run.sh 969_a_gap_observation_the_evidence_contradicts_is_named"
+          ],
+          "why": "Coverage takes a gap's satisfied observation as served, and when the evidence later fails nothing says the plan rests on a broken observation."
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -31279,6 +31553,62 @@
             "majordomus intent validate",
             "cargo test --test intent_plan",
             "bash test/run.sh 386_a_plan_is_held_to_its_intent"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/intent-reassessment",
+        "kind": "milestone",
+        "label": "intent-reassessment",
+        "summary": "What remains of an intent is derived on every read",
+        "route": "/cockpit/objects/milestone/intent-reassessment",
+        "source": ".ai/repo/project/milestones/intent-reassessment.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every unmet criterion has one outcome by the table, and every intent one, on every surface",
+            "A contradicted gap observation is a validate warning, never a failure",
+            "No record is written and no action performed"
+          ],
+          "created_at": "2026-10-09",
+          "depends_on": [],
+          "desired_state": "remains, basis and next per unmet criterion; outcome, review_revision and remains_digest per intent; a since input for one intent; gap_observation_contradicted as a validate warning; nothing written.",
+          "evidence_required": [],
+          "non_scope": [
+            "Drafting work from an outcome",
+            "The Cockpit and the briefing"
+          ],
+          "order": 160,
+          "priority": "p1",
+          "risks": [
+            "The outcome is a fourth vocabulary beside stage, verdict and evidence state; the table in ADR 0117 is the only translation and lives in one function.",
+            "IntentRealizationView is read by the Cockpit and the explanation; fields are added beside what exists.",
+            "Every changed line owes an in-process test (project.new-code-is-covered)."
+          ],
+          "scope": [
+            "apps/majordomus-cli/src/intent_remains.rs",
+            "apps/majordomus-cli/src/lib.rs",
+            "apps/majordomus-cli/src/intent_realization.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/intent_plan.rs",
+            "apps/majordomus-cli/src/intent_opposition.rs",
+            "apps/majordomus-cli/src/intent.rs",
+            "apps/majordomus-cli/src/capability/builtin",
+            "apps/majordomus-cli/src/commands/intent.rs",
+            "apps/majordomus-cli/tests",
+            "site",
+            ".ai/repo/project",
+            ".ai/repo/adrs",
+            "docs",
+            "test/cases"
+          ],
+          "slug": "intent-reassessment",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "majordomus intent validate",
+            "cargo test --test intent_remains",
+            "cargo test --test intent_remains_surfaces",
+            "cargo test --test intent_remains_since",
+            "bash test/run.sh 969_a_gap_observation_the_evidence_contradicts_is_named"
           ]
         }
       },
@@ -45049,6 +45379,13 @@
         "source": "test/cases/965_a_failing_guard_keeps_an_intent_unsatisfied.sh"
       },
       {
+        "id": "majordomus://test/test/cases/969_a_gap_observation_the_evidence_contradicts_is_named.sh",
+        "kind": "test",
+        "label": "test/cases/969_a_gap_observation_the_evidence_contradicts_is_named.sh",
+        "route": "/cockpit/objects/test/test-cases-969-a-gap-observation-the-evidence-contradicts-is-named-sh",
+        "source": "test/cases/969_a_gap_observation_the_evidence_contradicts_is_named.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/96_rust_public_api_quality.sh",
         "kind": "test",
         "label": "test/cases/96_rust_public_api_quality.sh",
@@ -53932,6 +54269,46 @@
         "kind": "put_in_force"
       },
       {
+        "source": "majordomus://adr/adr-0117",
+        "target": "file:apps/majordomus-cli/src/intent_remains.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0117",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0117",
+        "target": "majordomus://adr/adr-0070",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0117",
+        "target": "majordomus://adr/adr-0107",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0117",
+        "target": "majordomus://adr/adr-0112",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0117",
+        "target": "majordomus://adr/adr-0113",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0117",
+        "target": "majordomus://intent/what-remains-of-an-intent",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0117",
+        "target": "majordomus://rule/project.derived-once@1",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://application/ci-gated-project",
         "target": "kind:application",
         "kind": "is_a"
@@ -56134,6 +56511,26 @@
       {
         "source": "majordomus://claim/intent-refused-at-plan-start",
         "target": "majordomus://test/test/cases/962_plan_start_asks_the_binding_in_both_engines.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/intent-remains-derived",
+        "target": "file:apps/majordomus-cli/src/intent_remains.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/intent-remains-derived",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/intent-remains-derived",
+        "target": "majordomus://document/docs/PLANNING.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/intent-remains-derived",
+        "target": "majordomus://test/test/cases/969_a_gap_observation_the_evidence_contradicts_is_named.sh",
         "kind": "tested_by"
       },
       {
@@ -59322,6 +59719,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://critique/what-remains-of-an-intent",
+        "target": "kind:critique",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://deployment/majordomus",
         "target": "kind:deployment",
         "kind": "is_a"
@@ -60292,6 +60694,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/docs/claims/intent-remains-derived.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/docs/claims/intent-stage-derived.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -61137,6 +61544,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://gap/what-remains-of-an-intent",
+        "target": "kind:gap",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://implementation/bin/majordomus",
         "target": "kind:implementation",
         "kind": "is_a"
@@ -61413,6 +61825,11 @@
       },
       {
         "source": "majordomus://intent/intent-satisfaction",
+        "target": "kind:intent",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://intent/what-remains-of-an-intent",
         "target": "kind:intent",
         "kind": "is_a"
       },
@@ -65747,6 +66164,46 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2076",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2076",
+        "target": "majordomus://milestone/intent-reassessment",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2077",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2077",
+        "target": "majordomus://issue/I2076",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2077",
+        "target": "majordomus://milestone/intent-reassessment",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2078",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2078",
+        "target": "majordomus://issue/I2076",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2078",
+        "target": "majordomus://milestone/intent-reassessment",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -65875,6 +66332,11 @@
         "source": "majordomus://milestone/intent-planning",
         "target": "majordomus://milestone/intent-lifecycle",
         "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://milestone/intent-reassessment",
+        "target": "kind:milestone",
+        "kind": "is_a"
       },
       {
         "source": "majordomus://milestone/intent-satisfaction",
@@ -70447,6 +70909,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/969_a_gap_observation_the_evidence_contradicts_is_named.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/96_rust_public_api_quality.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -74218,8 +74685,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2426,
-      "edges": 5336,
+      "nodes": 2438,
+      "edges": 5362,
       "acyclic": true,
       "truncated": false
     }
