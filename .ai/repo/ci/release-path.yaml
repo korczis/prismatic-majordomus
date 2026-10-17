@@ -22,7 +22,7 @@ version: 1
 #   3. A run that yielded is re-requested once the release path is clear, without a person:
 #      `resume` reruns the newest validate run of each labelled pull request's head when that
 #      run is the cancelled one, and removes the label. It is asked at the end of every
-#      validate run that is not a pull request's (the record's verdict is one), and by the
+#      validate run that is not a pull request's (the record's dispatched reading is one), and by the
 #      schedule below, so the longest a yielded run waits after the path clears is one tick.
 #   4. Nothing of the release path is ever cancelled by this, and neither is master's own
 #      validate: only runs whose event is pull_request, of the verdict workflow, on a branch
@@ -33,7 +33,8 @@ version: 1
 release_path:
   # the release pipeline itself, from the tag push to its smoke
   release: .github/workflows/release.yml
-  # the record's verdict: the validate run the release dispatches on its record branch
+  # the verdict workflow; on a record branch its runs are the release's: the early reading the
+  # release dispatches there, and the record pull request's own run (docs/DISTRIBUTION.md)
   verdict: .github/workflows/validate.yml
   record_branch_prefix: release/record-
   # the deploy the release asks for: a pages run of the trunk dispatched by the release's token

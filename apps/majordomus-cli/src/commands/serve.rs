@@ -73,14 +73,19 @@ pub fn run(args: ServeArgs) -> Result<u8> {
             idle,
             wait,
             format,
-        }) => ensure(
-            &repo,
-            *port,
-            *idle,
-            Duration::from_secs(*wait),
-            *format,
-            &layer,
-        ),
+        }) => {
+            // the declared server timings, the idle life among them, read before the lease
+            // is judged; `--idle` given here overrides the declaration (I2701)
+            let _ = crate::policy::LoadedPolicy::load(&repo);
+            ensure(
+                &repo,
+                port.unwrap_or_else(|| crate::cli::checkout_port(repo.root())),
+                idle.unwrap_or_else(|| lease::timings().idle.as_secs()),
+                Duration::from_secs(*wait),
+                *format,
+                &layer,
+            )
+        }
         Some(ServeCommand::Stop { wait }) => stop(&repo, Duration::from_secs(*wait)),
     }
 }
@@ -123,7 +128,9 @@ fn serve(args: &ServeArgs, repo: &Repository) -> Result<u8> {
                 std::path::Path::new(&app.context.index.repository.root),
             )
             .0,
-            args.port,
+            // the port this checkout asks for on every start, unless one was given (I2702)
+            args.port
+                .unwrap_or_else(|| crate::cli::checkout_port(repo.root())),
         ),
     };
     // The server outlives many commits. It follows the repository rather than freezing
@@ -846,7 +853,7 @@ fn server_command(exe: &Path, root: &Path, port: u16, idle: u64, layer: &[OsStri
 /// Standard input, output and error are redirected here, and for a long time that looked
 /// like enough. It is not: `Command` only replaces those three, and **every other descriptor
 /// the parent had open is inherited by the child**, which then holds it for its whole life —
-/// fifteen minutes, by `DEFAULT_IDLE_SECONDS`.
+/// fifteen minutes, by `DEFAULT_IDLE_SECONDS`, or the declared `server.idle_seconds`.
 ///
 /// direnv is where that stops being theoretical. It hands the file it evaluates an extra
 /// descriptor of its own (fd 6 here), and it does not return until that pipe closes. On
@@ -1221,6 +1228,48 @@ mod tests {
         assert!(
             !lease::lease_path(&repo).exists(),
             "no server was started, so no lease was written"
+        );
+    }
+
+    /// With no `--port`, the server binds the port this checkout derives. The host is an
+    /// address no machine owns (TEST-NET-1), so the bind is refused and the refusal names
+    /// the address that was tried; the lease the election took is released on the way out.
+    #[test]
+    fn serve_without_a_port_binds_the_port_the_checkout_derives() {
+        use clap::Parser;
+        let (_dir, root) = layer_only();
+        // the share is named, not looked up: a test binary under a shared build directory has
+        // no share beside it, and the environment's MAJORDOMUS_SHARE is not this tree's
+        let share = crate::synthetic::crate_share();
+        let cli = crate::cli::Cli::try_parse_from([
+            "majordomus",
+            "serve",
+            "--repo",
+            root.to_str().unwrap(),
+            "--share",
+            share.to_str().unwrap(),
+            "--discovery",
+            "filesystem",
+            "--host",
+            "192.0.2.1",
+        ])
+        .unwrap();
+        let crate::cli::Command::Serve(args) = cli.command else {
+            panic!("not the serve command")
+        };
+        assert_eq!(args.port, None);
+        let port = crate::cli::checkout_port(&root);
+        let err = run(args).expect_err("an address no machine owns cannot be bound");
+        match err {
+            Error::Http { reason } => {
+                assert!(reason.contains(&format!("192.0.2.1:{port}")), "{reason}")
+            }
+            other => panic!("{other:?}"),
+        }
+        let repo = Repository::discover(&root).unwrap();
+        assert!(
+            !lease::lease_path(&repo).exists(),
+            "the lease of a server that never bound is released"
         );
     }
 

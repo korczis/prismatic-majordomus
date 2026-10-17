@@ -64,18 +64,19 @@ the first edit that forgets one.
 **An execution is a capability call this process gave an identity to.** There is no action
 registry, no action definition and no second implementation of anything. What was added is:
 
-```text
-capability!  ──►  CapabilityRegistry  ──►  Context::execute  ──►  the handler
-                          │                       ▲                    │
-                          │                       │                    │ Progress
-                          └──►  ExecutionEngine ──┘                    ▼
-                                       │                        ExecutionEvent
-                                       ▼                               │
-                                 ExecutionStore ◄──────────────────────┘
-                                       │
-                    ┌──────────────────┼──────────────────┐
-                    ▼                  ▼                  ▼
-           executions.get      executions.events     the WebSocket
+```mermaid
+flowchart TD
+  declaration["capability!"] --> registry["CapabilityRegistry"]
+  registry --> execute["Context::execute"]
+  execute --> handler["the handler"]
+  registry --> engine["ExecutionEngine"]
+  engine --> execute
+  handler -->|"Progress"| event["ExecutionEvent"]
+  engine --> store["ExecutionStore"]
+  event --> store
+  store --> get["executions.get"]
+  store --> events["executions.events"]
+  store --> socket["the WebSocket"]
 ```
 
 Four decisions inside that:

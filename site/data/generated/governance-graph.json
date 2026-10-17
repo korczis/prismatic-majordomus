@@ -269,6 +269,11 @@
     },
     {
       "kind": "decided_by",
+      "source": "rule:majordomus.knowledge-graph",
+      "target": "validator:knowledge_graph"
+    },
+    {
+      "kind": "decided_by",
       "source": "rule:majordomus.knowledge-integrity",
       "target": "validator:knowledge_integrity"
     },
@@ -674,6 +679,16 @@
     },
     {
       "kind": "run_by",
+      "source": "validator:knowledge_graph",
+      "target": "command:doctor"
+    },
+    {
+      "kind": "run_by",
+      "source": "validator:knowledge_graph",
+      "target": "command:watch"
+    },
+    {
+      "kind": "run_by",
       "source": "validator:knowledge_integrity",
       "target": "command:check"
     },
@@ -976,6 +991,11 @@
       "kind": "run_by",
       "source": "validator:wiring",
       "target": "command:doctor"
+    },
+    {
+      "kind": "proved_by",
+      "source": "rule:majordomus.knowledge-graph",
+      "target": "test:test/cases/3075_knowledge_validate_judges_the_graph.sh"
     },
     {
       "kind": "proved_by",
@@ -1288,6 +1308,17 @@
       "label": "Verify outcomes, not activity",
       "role": "accent",
       "summary": "An invariant of the standard package. It is not checked; the rules under it are."
+    },
+    {
+      "external": false,
+      "id": "rule:majordomus.knowledge-graph",
+      "kind": "rule",
+      "label": "knowledge-graph",
+      "note": "exit 10 · knowledge",
+      "role": "warn",
+      "route": "/doctrines/knowledge-graph/",
+      "status": "advisory",
+      "summary": "The graph the knowledge compiler builds from what the repository states has one node per identity, no edge with a missing end or without provenance, and no declared path or tracked source that no longer exists; a broken owned reference is a failure, a broken link an author wrote in prose is not."
     },
     {
       "external": false,
@@ -1966,6 +1997,14 @@
     },
     {
       "external": false,
+      "id": "validator:knowledge_graph",
+      "kind": "validator",
+      "label": "mj_validate_knowledge_graph",
+      "role": "muted",
+      "summary": "Decides the rule. Declared in lib/knowledge.sh."
+    },
+    {
+      "external": false,
       "id": "validator:knowledge_integrity",
       "kind": "validator",
       "label": "mj_validate_knowledge_integrity",
@@ -2449,6 +2488,14 @@
       "id": "test:test/cases/3068_a_task_off_the_mesh_is_refused.sh",
       "kind": "test",
       "label": "test/cases/3068_a_task_off_the_mesh_is_refused.sh",
+      "role": "good",
+      "summary": "A behavioural case. It proves the validator answers, not that the rule is written down."
+    },
+    {
+      "external": false,
+      "id": "test:test/cases/3075_knowledge_validate_judges_the_graph.sh",
+      "kind": "test",
+      "label": "test/cases/3075_knowledge_validate_judges_the_graph.sh",
       "role": "good",
       "summary": "A behavioural case. It proves the validator answers, not that the rule is written down."
     },

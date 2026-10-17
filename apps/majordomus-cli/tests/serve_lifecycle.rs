@@ -1,7 +1,8 @@
 //! The server's lifecycle as a person or a hook converges on it: `serve ensure` starts one
 //! server and finds it the next time, three at once start one process and share it, a start
 //! in progress holds another off while a dead one does not, a stale lease and a killed
-//! server are both recovered, an idle server ends by itself, a taken port is not a failure,
+//! server are both recovered, an idle server ends by itself after the idle time it was given
+//! or the one its policy declares, a taken port is not a failure,
 //! `serve stop` ends the server this checkout's lease names and leaves another checkout's
 //! alone.
 
@@ -716,6 +717,101 @@ fn an_idle_server_ends_by_itself() {
     let (code, out, _) = mj(&f.root(), &["serve", "status"]);
     assert_eq!(code, 0);
     assert!(out.starts_with("standing   absent"), "{out}");
+}
+
+/// I2701: the idle life of a server `ensure` starts is declared beside the other server
+/// timings (`server.idle_seconds:`), not compiled. Declared at two seconds, a server started
+/// without `--idle` stops after about that long rather than after 900; and `--idle` on the
+/// command line overrides the declaration, so a server given 120 is still serving well past
+/// the declared two.
+#[test]
+fn idle_timeout_declared_test() {
+    let f = Fixture::new();
+    f.write(
+        ".ai/repo/policy.yaml",
+        &format!("{}\nserver:\n  idle_seconds: 2\n", common::POLICY),
+    );
+    f.commit("declare a short idle timeout");
+
+    // no --idle: the declaration decides
+    let (code, a, err) = ensure(&f.root(), &[]);
+    assert_eq!(code, 0, "{a}\n{err}");
+    let url = a["url"].as_str().unwrap().to_string();
+    wait_until(
+        "a server started without --idle ends after the declared idle time",
+        Duration::from_secs(20),
+        || LeaseFile::read(&lease_path(&f)) == LeaseFile::Absent,
+    );
+    wait_until("its port closes", Duration::from_secs(5), || {
+        get(&url, "/").is_none()
+    });
+
+    // --idle overrides the declaration
+    let (code, b, err) = ensure(&f.root(), &["--idle", "120"]);
+    assert_eq!(code, 0, "{b}\n{err}");
+    let url = b["url"].as_str().unwrap().to_string();
+    std::thread::sleep(Duration::from_secs(6));
+    assert_ne!(
+        LeaseFile::read(&lease_path(&f)),
+        LeaseFile::Absent,
+        "a server given --idle 120 stopped after the declared 2 s: the command line did not override the declaration"
+    );
+    assert!(
+        get(&url, "/").is_some(),
+        "the server given --idle 120 no longer answers"
+    );
+    let (code, _, err) = mj(&f.root(), &["serve", "stop"]);
+    assert_eq!(code, 0, "{err}");
+}
+
+/// The port in a server's URL.
+fn port_of(url: &str) -> u16 {
+    url.rsplit(':')
+        .next()
+        .and_then(|p| p.parse().ok())
+        .unwrap_or_else(|| panic!("no port in {url}"))
+}
+
+/// I2702: a linked worktree's server asks for the port its checkout derives, so two
+/// consecutive starts bind the same address, and two worktrees of one repository ask for
+/// different ones — while the primary checkout keeps the documented default.
+#[test]
+fn stable_port_per_checkout_test() {
+    let f = Fixture::new();
+    // the layer is in HEAD, so that each worktree checks it out
+    f.git(&["add", "-A"]);
+    f.git(&["commit", "-q", "--allow-empty", "-m", "the layer"]);
+    let parent = f.root().parent().unwrap().to_path_buf();
+    let a = parent.join("worktree-a");
+    let b = parent.join("worktree-b");
+    for (dir, branch) in [(&a, "a"), (&b, "b")] {
+        f.git(&["worktree", "add", "-q", "-b", branch, dir.to_str().unwrap()]);
+    }
+    let derived = |dir: &Path| {
+        let repo = majordomus_cli::Repository::discover(dir).expect("a checkout");
+        majordomus_cli::cli::checkout_port(repo.root())
+    };
+    assert_eq!(derived(&f.root()), majordomus_cli::cli::DEFAULT_PORT);
+    let (pa, pb) = (derived(&a), derived(&b));
+    assert_ne!(pa, pb, "two checkouts of one repository ask for one port");
+    assert_ne!(pa, majordomus_cli::cli::DEFAULT_PORT);
+
+    let mut seen = Vec::new();
+    for _ in 0..2 {
+        let (code, v, err) = ensure(&a, &["--idle", "120"]);
+        assert_eq!(code, 0, "{v}\n{err}");
+        seen.push(port_of(v["url"].as_str().unwrap()));
+        let (code, out, _) = mj(&a, &["serve", "stop"]);
+        assert_eq!(code, 0, "{out}");
+    }
+    assert_eq!(seen[0], seen[1], "a restart moved the address: {seen:?}");
+    assert_eq!(
+        seen[0], pa,
+        "the server did not ask for its checkout's port first"
+    );
+    for dir in [&a, &b] {
+        f.git(&["worktree", "remove", "--force", dir.to_str().unwrap()]);
+    }
 }
 
 #[test]
