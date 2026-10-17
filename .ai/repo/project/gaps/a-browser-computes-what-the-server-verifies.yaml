@@ -21,6 +21,9 @@ observations:
   - id: one-row-at-a-time
     statement: The page computes and verifies one digest of the reader's input; whether the module a browser loaded answers every fixture row is proven by node in a gate, not in any browser
     source: file:apps/majordomus-cli/src/ui/compute.rs
+  - id: a-bare-textarea
+    statement: The page's JSON input is a plain textarea that says nothing about its text until the server answers, and reformatting it with JSON.parse would rewrite the values the digest is computed over (1.0, 1e300, integers past 2^53)
+    source: file:apps/majordomus-cli/src/ui/compute.rs
 conditions:
   - criterion: core-agrees-everywhere
     state: missing
@@ -38,3 +41,7 @@ conditions:
     state: missing
     because: no page runs the fixture in a browser
     observations: [one-row-at-a-time]
+  - criterion: the-reader-writes-json-in-an-editor
+    state: missing
+    because: no field of the UI highlights, judges or formats JSON
+    observations: [a-bare-textarea]

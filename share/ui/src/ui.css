@@ -738,4 +738,75 @@
   .mj-obs-button[aria-pressed='false'] {
     color: var(--mj-muted);
   }
+  /* A JSON field as an editor (I2810): the textarea is laid over a highlighted copy of its
+     own text, with the same font, padding and wrapping, so the caret sits on the glyphs it
+     edits. The textarea's text is transparent; its caret and selection are not. */
+  .mj-ui-editor {
+    position: relative;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    line-height: 1.5;
+  }
+  .mj-ui-editor-view,
+  .mj-ui-editor .mj-ui-editor-input {
+    margin: 0;
+    padding: 0.625rem 0.75rem;
+    border: 1px solid var(--mj-line);
+    border-radius: 0.5rem;
+    font: inherit;
+    letter-spacing: normal;
+    tab-size: 2;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    word-break: normal;
+  }
+  .mj-ui-editor-view {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    background: var(--mj-raised);
+    color: var(--mj-body);
+  }
+  .mj-ui-editor .mj-ui-editor-input {
+    position: relative;
+    display: block;
+    width: 100%;
+    min-height: 8rem;
+    resize: vertical;
+    background: transparent;
+    color: transparent;
+    caret-color: var(--mj-fg);
+  }
+  .mj-ui-editor .mj-ui-editor-input::selection {
+    background: var(--mj-accent-soft);
+    color: transparent;
+  }
+  .mj-ui-editor .mj-ui-editor-input:focus-visible {
+    outline: 2px solid var(--mj-accent);
+    outline-offset: 1px;
+  }
+  .mj-ui-editor .mj-ui-editor-input[aria-invalid="true"] {
+    border-color: var(--mj-bad-line);
+  }
+  .mj-ui-tok--key { color: var(--mj-tone-blue); }
+  .mj-ui-tok--string { color: var(--mj-tone-green); }
+  .mj-ui-tok--number { color: var(--mj-tone-orange); }
+  .mj-ui-tok--literal { color: var(--mj-tone-violet); }
+  .mj-ui-tok--punct { color: var(--mj-muted); }
+  .mj-ui-tok--error {
+    color: var(--mj-bad);
+    text-decoration: wavy underline;
+  }
+  .mj-ui-editor-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-top: 0.375rem;
+    font-size: 0.75rem;
+  }
+  .mj-ui-editor-status { color: var(--mj-muted); }
+  .mj-ui-editor-status[data-state="ok"] { color: var(--mj-ok); }
+  .mj-ui-editor-status[data-state="fail"] { color: var(--mj-bad); }
 }

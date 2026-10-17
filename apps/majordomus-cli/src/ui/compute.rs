@@ -97,6 +97,8 @@ pub fn screen(ctx: &Context, files: &Files, provenance: Option<&Value>) -> View 
             el("textarea")
                 .class("mj-textarea")
                 .attr("id", "mj-ui-compute-input")
+                // highlighted, judged as typed and formatted by ui.js (I2810)
+                .attr("data-editor", "json")
                 .attr("name", "input")
                 .attr("rows", "5")
                 .attr("spellcheck", "false")

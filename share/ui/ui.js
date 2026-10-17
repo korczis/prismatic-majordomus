@@ -299,7 +299,246 @@ async function drawObservatory() {
   holder.observatory = observatory;
 }
 
+// editor:begin — the JSON editor (I2810); tests/ui_editor.rs runs this section under node
+// A JSON field is an editor (I2810): a `textarea[data-editor="json"]` the server rendered is
+// laid over a highlighted copy of its own text, says whether its text is JSON as it is typed —
+// and where it is not, at which line and column — and formats on request. The textarea stays
+// the control: the form submits it, a screen reader reads it, and a page without this script
+// keeps a plain textarea. Formatting re-indents the tokens and never re-parses a value, so a
+// number is kept as it was written (`1.0`, `1e300`, `18446744073709551616`): what the field
+// holds is what is computed.
+
+const JSON_TOKEN = /("(?:[^"\\\n]|\\.)*"?)(\s*:)?|(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)|\b(true|false|null)\b|([{}[\],:])|(\s+)|(.)/gsy;
+
+// The text as tokens: { kind, text }, every character in exactly one token.
+function jsonTokens(text) {
+  const tokens = [];
+  JSON_TOKEN.lastIndex = 0;
+  let match;
+  while (JSON_TOKEN.lastIndex < text.length && (match = JSON_TOKEN.exec(text))) {
+    if (match[1] !== undefined) {
+      tokens.push({ kind: match[2] ? 'key' : 'string', text: match[1] });
+      if (match[2]) tokens.push({ kind: 'punct', text: match[2] });
+    } else if (match[3] !== undefined) tokens.push({ kind: 'number', text: match[3] });
+    else if (match[4] !== undefined) tokens.push({ kind: 'literal', text: match[4] });
+    else if (match[5] !== undefined) tokens.push({ kind: 'punct', text: match[5] });
+    else if (match[6] !== undefined) tokens.push({ kind: 'space', text: match[6] });
+    else tokens.push({ kind: 'error', text: match[7] });
+  }
+  return tokens;
+}
+
+function escapeHtml(text) {
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function highlighted(text) {
+  return jsonTokens(text)
+    .map((t) => (t.kind === 'space' ? escapeHtml(t.text)
+      : `<span class="mj-ui-tok mj-ui-tok--${t.kind}">${escapeHtml(t.text)}</span>`))
+    .join('') + '\n'; // a trailing newline keeps the last line's height when the text ends in one
+}
+
+// Where a text stops being JSON, by the grammar: the offset of the first character that cannot
+// continue it, and why. JSON.parse decides whether the text is JSON; this only places the
+// error, because a parser's message names no position in every engine.
+function firstError(text) {
+  let i = 0;
+  const fail = (why) => { throw { at: i, why }; };
+  const ws = () => { while (i < text.length && ' \t\n\r'.includes(text[i])) i += 1; };
+  const string = () => {
+    i += 1;
+    while (i < text.length) {
+      const c = text[i];
+      if (c === '"') { i += 1; return; }
+      if (c === '\\') {
+        const e = text[i + 1];
+        if (e === 'u') {
+          if (!/^[0-9a-fA-F]{4}$/.test(text.slice(i + 2, i + 6))) { i += 1; fail('\\u needs four hex digits'); }
+          i += 6;
+        } else if (e !== undefined && '"\\/bfnrt'.includes(e)) i += 2;
+        else { i += 1; fail('not an escape a JSON string allows'); }
+        continue;
+      }
+      if (c < ' ') fail('a control character inside a string');
+      i += 1;
+    }
+    fail('the string is not closed');
+  };
+  const number = () => {
+    const m = /-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?/y;
+    m.lastIndex = i;
+    if (!m.exec(text)) fail('expected a number');
+    i = m.lastIndex;
+  };
+  const value = () => {
+    ws();
+    const c = text[i];
+    if (c === '{') {
+      i += 1; ws();
+      if (text[i] === '}') { i += 1; return; }
+      for (;;) {
+        ws();
+        if (text[i] !== '"') fail('expected a key in double quotes');
+        string(); ws();
+        if (text[i] !== ':') fail("expected ':' after the key");
+        i += 1; value(); ws();
+        if (text[i] === ',') { i += 1; continue; }
+        if (text[i] === '}') { i += 1; return; }
+        fail("expected ',' or '}'");
+      }
+    }
+    if (c === '[') {
+      i += 1; ws();
+      if (text[i] === ']') { i += 1; return; }
+      for (;;) {
+        value(); ws();
+        if (text[i] === ',') { i += 1; continue; }
+        if (text[i] === ']') { i += 1; return; }
+        fail("expected ',' or ']'");
+      }
+    }
+    if (c === '"') { string(); return; }
+    if (c === '-' || (c >= '0' && c <= '9')) { number(); return; }
+    for (const word of ['true', 'false', 'null']) {
+      if (text.startsWith(word, i)) { i += word.length; return; }
+    }
+    fail(i >= text.length ? 'the text ends where a value should be' : 'expected a value');
+  };
+  try {
+    value(); ws();
+    if (i < text.length) fail('more after the value');
+    return null;
+  } catch (error) {
+    if (error && typeof error.at === 'number') return error;
+    throw error;
+  }
+}
+
+function lineAndColumn(text, offset) {
+  const lines = text.slice(0, offset).split('\n');
+  return { line: lines.length, column: lines[lines.length - 1].length + 1 };
+}
+
+function judge(text) {
+  if (text.trim() === '') return { ok: false, empty: true, message: 'empty' };
+  try {
+    JSON.parse(text);
+    return { ok: true, message: `JSON · ${new TextEncoder().encode(text).length} bytes` };
+  } catch (error) {
+    const where = firstError(text);
+    if (!where) return { ok: false, message: 'not JSON' };
+    const { line, column } = lineAndColumn(text, where.at);
+    return { ok: false, line, column, message: `not JSON at line ${line}, column ${column}: ${where.why}` };
+  }
+}
+
+// Re-indent by two spaces, token by token: values keep the text they were written with.
+function formatted(text) {
+  let depth = 0;
+  let out = '';
+  const pad = () => '\n' + '  '.repeat(depth);
+  const tokens = jsonTokens(text).filter((t) => t.kind !== 'space');
+  tokens.forEach((t, i) => {
+    const next = tokens[i + 1];
+    if (t.text === '{' || t.text === '[') {
+      const closes = next && (next.text === '}' || next.text === ']');
+      depth += 1;
+      out += t.text + (closes ? '' : pad());
+    } else if (t.text === '}' || t.text === ']') {
+      depth -= 1;
+      const prev = tokens[i - 1];
+      const opened = prev && (prev.text === '{' || prev.text === '[');
+      out += (opened ? '' : pad()) + t.text;
+    } else if (t.text === ',') out += ',' + pad();
+    else if (t.kind === 'punct' && t.text.trim() === ':') out += ': ';
+    else out += t.text;
+  });
+  return out;
+}
+
+function enhanceEditor(area) {
+  if (area.dataset.editorReady) return;
+  area.dataset.editorReady = 'yes';
+  const wrap = document.createElement('div');
+  wrap.className = 'mj-ui-editor';
+  const view = document.createElement('pre');
+  view.className = 'mj-ui-editor-view';
+  view.setAttribute('aria-hidden', 'true');
+  area.parentNode.insertBefore(wrap, area);
+  wrap.append(view, area);
+  area.classList.add('mj-ui-editor-input');
+  area.setAttribute('spellcheck', 'false');
+  area.setAttribute('autocomplete', 'off');
+
+  const bar = document.createElement('div');
+  bar.className = 'mj-ui-editor-bar';
+  const status = document.createElement('output');
+  status.className = 'mj-ui-editor-status';
+  status.setAttribute('aria-live', 'polite');
+  if (area.id) status.setAttribute('for', area.id);
+  const format = document.createElement('button');
+  format.type = 'button';
+  format.className = 'mj-btn mj-btn--sm';
+  format.textContent = 'Format';
+  format.title = 'Indent by two spaces; every value keeps the text it was written with';
+  bar.append(status, format);
+  wrap.after(bar);
+
+  let escaped = false;
+  const least = Number(area.getAttribute('rows')) || 5;
+  const render = () => {
+    // the field grows with its text, up to a screenful, rather than scrolling inside itself
+    area.rows = Math.min(30, Math.max(least, area.value.split('\n').length + 1));
+    view.innerHTML = highlighted(area.value);
+    view.scrollTop = area.scrollTop;
+    view.scrollLeft = area.scrollLeft;
+    const verdict = judge(area.value);
+    status.textContent = verdict.message;
+    status.dataset.state = verdict.ok ? 'ok' : verdict.empty ? 'empty' : 'fail';
+    area.setAttribute('aria-invalid', verdict.ok || verdict.empty ? 'false' : 'true');
+    format.disabled = !verdict.ok;
+    area.dataset.editorState = status.dataset.state;
+  };
+  area.addEventListener('input', render);
+  area.addEventListener('scroll', () => {
+    view.scrollTop = area.scrollTop;
+    view.scrollLeft = area.scrollLeft;
+  });
+  area.addEventListener('keydown', (event) => {
+    // Escape releases the field, so that Tab moves focus on again: the field never traps it
+    if (event.key === 'Escape') { escaped = true; return; }
+    if (event.key === 'Tab' && !event.shiftKey && !escaped) {
+      event.preventDefault();
+      const { selectionStart: start, selectionEnd: end, value } = area;
+      area.value = value.slice(0, start) + '  ' + value.slice(end);
+      area.selectionStart = area.selectionEnd = start + 2;
+      render();
+      return;
+    }
+    escaped = false;
+    // Ctrl or Cmd with Enter submits the form the field is in
+    if (event.key === 'Enter' && (event.metaKey || event.ctrlKey) && area.form) {
+      event.preventDefault();
+      area.form.requestSubmit();
+    }
+  });
+  format.addEventListener('click', () => {
+    if (!judge(area.value).ok) return;
+    area.value = formatted(area.value);
+    render();
+    area.focus();
+  });
+  render();
+}
+
+function enhanceEditors() {
+  for (const area of document.querySelectorAll('textarea[data-editor="json"]')) enhanceEditor(area);
+}
+// editor:end
+
 function enhance() {
+  enhanceEditors();
   if (!SNAPSHOT) {
     for (const placeholder of document.querySelectorAll('[data-panel-src]')) {
       fillPanel(placeholder);

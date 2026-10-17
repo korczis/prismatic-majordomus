@@ -1,0 +1,33 @@
+id: I2810
+milestone: browser-compute-proof
+title: "A JSON field of the UI is an editor: highlighted, judged as it is typed, formatted without changing a value"
+slug: a-json-field-is-an-editor
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Make every textarea the UI renders with data-editor=\"json\" an editor, in share/ui/ui.js and share/ui/src/ui.css with no dependency: the textarea laid over a highlighted copy of its text in the design system's tones; a line under it that says, as it is typed, whether the text is JSON and, where it is not, at which line and column; a Format button that re-indents token by token so every value keeps the text it was written with (1.0, 1e300, 18446744073709551616); Tab indents, Escape releases the field so Tab moves focus on, Ctrl or Cmd with Enter submits. The textarea stays the control, and a page without the script keeps it plain. /ui/compute's input is the first field."
+why: "The owner asked for an ergonomic editor where the UI takes JSON: /ui/compute's input is a bare textarea that says nothing about its text until the server answers, and reformatting it with JSON.parse would change the very values the digest is computed over."
+serves:
+  - a-browser-computes-what-the-server-verifies#the-reader-writes-json-in-an-editor
+current_state: "The compute page's input is a plain textarea; nothing highlights, judges or formats JSON in the UI."
+desired_state: "Every data-editor=\"json\" field highlights, judges and formats its text, in the live UI and the published snapshot, held by a served test and a real-browser run."
+scope:
+  - "share/ui"
+  - "apps/majordomus-cli/src/ui"
+  - "apps/majordomus-cli/tests/ui_editor.rs"
+  - ".ai/repo/project"
+  - "docs"
+  - "site"
+depends_on:
+  - "I2809"
+acceptance_criteria:
+  - "The compute page's input is rendered as a data-editor=\"json\" textarea, and the stylesheet and script that make it an editor are served"
+  - "Formatting any fixture case keeps every value's text, and the digest of the formatted text equals the fixture's"
+  - "In a real browser the field highlights keys, strings, numbers and literals, names the line and column of a syntax error, and Format re-indents"
+validation:
+  - "majordomus plan validate"
+  - "cargo test --test ui_editor"
+evidence_required:
+  - "ui_editor_tests"
+created_at: 2026-10-17
+updated_at: 2026-10-17

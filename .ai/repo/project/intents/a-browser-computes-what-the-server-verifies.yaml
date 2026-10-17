@@ -29,6 +29,10 @@ satisfaction:
     criterion: On request, the page runs every row of the shared fixture in the reader's browser through the committed module, and each case's digest is the fixture's and is answered match by the server, each invalid row is refused by the module and answered invalid by the server, and the counts are shown
     evidence: test
     ref: apps/majordomus-cli/tests/ui_compute.rs
+  - id: the-reader-writes-json-in-an-editor
+    criterion: The page's JSON input is an editor that highlights the text, says as it is typed whether it is JSON and where it is not, and formats it token by token so that the formatted text of every fixture case has the fixture's digest; the script and stylesheet that make it one are the ones the UI serves
+    evidence: test
+    ref: apps/majordomus-cli/tests/ui_editor.rs
 governance:
   - adr:adr-0170
   - adr:adr-0126

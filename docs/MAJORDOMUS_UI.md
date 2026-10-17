@@ -392,6 +392,27 @@ server runs, and nothing it answers is trusted until the server has recomputed i
 - The screen is not read again while the reader works on it (`data-keeps-its-place`). In the
   published snapshot the page still computes, and says that no server recomputed it.
 
+## Editing JSON
+
+A field that takes JSON is rendered as `<textarea data-editor="json">`, and `share/ui/ui.js`
+makes it an editor (I2810), first on `/ui/compute`:
+
+- the text is laid over a highlighted copy of itself: keys, strings, numbers, literals and
+  punctuation in the design system's tones, a character that cannot start a JSON token marked
+  as wrong;
+- the line under it says, as it is typed, whether the text is JSON — and where it is not, at
+  which line and column — and the field is marked `aria-invalid` while it is not;
+- **Format** re-indents by two spaces token by token and never re-writes a value, so `1.0`,
+  `1e300` and `18446744073709551616` are kept as written and what is formatted is what is
+  computed; `tests/ui_editor.rs` runs the editor's own code under node over every fixture case
+  and checks with the portable core that each formatted text has the fixture's digest;
+- Tab indents, Escape releases the field so that Tab moves focus on, and Ctrl or Cmd with Enter
+  submits the form.
+
+The textarea stays the control — the form submits it and a screen reader reads it — and a page
+without the script keeps it plain. The editor is in `ui.js`, so the published snapshot has it
+too.
+
 ## Without JavaScript
 
 Every screen is complete HTML, and the menu of a narrow screen opens with a checkbox and its
