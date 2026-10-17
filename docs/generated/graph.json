@@ -39287,6 +39287,46 @@
         }
       },
       {
+        "id": "majordomus://issue/I2795",
+        "kind": "issue",
+        "label": "I2795",
+        "summary": "The trunk's recorded run reaches the tracked evidence ledger, and the baseline is tightened to it",
+        "route": "/cockpit/objects/issue/i2795",
+        "source": ".ai/repo/project/issues/I2795.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The ledger is the evidence artifact's ledger.json byte for byte",
+            "scripts/evidence-check reports no guarantee lost and the baseline pins the supported ones"
+          ],
+          "created_at": "2026-10-17",
+          "current_state": "14 executions in the tracked ledger; evidence show: not run 214, stale 21, no test 12.",
+          "depends_on": [],
+          "evidence_required": [
+            "evidence_check_clean"
+          ],
+          "milestone": "test-evidence",
+          "non_scope": [
+            "Wiring the recording pull request (ADR 0080): it needs the owner's choice of token",
+            "Accepting ADR 0068, 0080 or 0087; acceptance is the owner's act",
+            "Editing a row by hand: the ledger is the one the run's collector wrote"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/evidence/ledger.json",
+            ".ai/repo/evidence-baseline.txt",
+            ".ai/repo/project/issues/I2795.yaml"
+          ],
+          "slug": "the-trunks-recorded-run-reaches-the-ledger",
+          "updated_at": "2026-10-17",
+          "validation": [
+            "scripts/evidence-check",
+            "bin/majordomus-cli evidence show --check"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "label": "a-commit-stood-behind-a-build-lock",
@@ -83598,6 +83638,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2795",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2795",
+        "target": "majordomus://milestone/test-evidence",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -93494,8 +93544,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2935,
-      "edges": 6437,
+      "nodes": 2936,
+      "edges": 6439,
       "acyclic": false,
       "truncated": false
     }
