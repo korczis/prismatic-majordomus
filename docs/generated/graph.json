@@ -26,6 +26,7 @@
       "feature": "an object of kind `feature`",
       "file": "a file the layer names and does not hold as an object",
       "gap": "an object of kind `gap`",
+      "gate": "a gate of the CI model a record is about",
       "implementation": "an object of kind `implementation`",
       "intent": "an object of kind `intent`",
       "issue": "an object of kind `issue`",
@@ -50,6 +51,7 @@
       "workspace": "an object of kind `workspace`"
     },
     "edge_kinds": {
+      "about": "the knowledge record is about that subject",
       "belongs_to": "the issue belongs to that milestone",
       "composes": "the module composes the capability",
       "defined_in": "the claim is defined by that file",
@@ -4362,6 +4364,14 @@
         "external": true
       },
       {
+        "id": "file:site/data/publication.toml",
+        "kind": "file",
+        "label": "publication.toml",
+        "summary": "named by the layer; not an object of this index",
+        "source": "site/data/publication.toml",
+        "external": true
+      },
+      {
         "id": "file:site/diagrams.js",
         "kind": "file",
         "label": "diagrams.js",
@@ -7718,6 +7728,30 @@
             "ui",
             "derivation",
             "diagrams"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0173",
+        "kind": "adr",
+        "label": "adr-0173",
+        "summary": "The knowledge base is published, one page per record, and each record is linked to what it is about",
+        "route": "/cockpit/objects/adr/adr-0173",
+        "source": ".ai/repo/adrs/0173-the-knowledge-base-is-published.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-17",
+          "related": [
+            "file:.ai/repo/adrs/0091-knowledge-is-derived-at-the-episode-boundary-and-a-person-promotes-it.md",
+            "file:site/data/publication.toml",
+            "file:apps/majordomus-cli/src/graph.rs",
+            "file:docs/KNOWLEDGE.md"
+          ],
+          "tags": [
+            "knowledge",
+            "site",
+            "graph",
+            "publication"
           ]
         }
       },
@@ -39287,6 +39321,56 @@
         }
       },
       {
+        "id": "majordomus://issue/I2793",
+        "kind": "issue",
+        "label": "I2793",
+        "summary": "The site carries a generated knowledge section, one page per record, read from the tracked records",
+        "route": "/cockpit/objects/issue/i2793",
+        "source": ".ai/repo/project/issues/I2793.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The knowledge section and one page per record are generated from tracked records only, and generate --check refuses a stale page",
+            "A record about a rule, a file, a capability, a command or a gate is linked to it in the composed graph, and no subject is ever a finding",
+            "A candidate is labelled as unreviewed on its page; a superseded record names its successor",
+            "The navigation entry comes from nav.toml"
+          ],
+          "created_at": "2026-10-17",
+          "current_state": "No knowledge dataset, no knowledge section, knowledge projection none.",
+          "depends_on": [],
+          "desired_state": "https://majordomus.dev/knowledge/ lists every record and links each to its page; generate --check and the site build cases hold it.",
+          "evidence_required": [
+            "site_section_case"
+          ],
+          "milestone": "knowledge-base",
+          "non_scope": [
+            "Reading git refs, the network or the clock at generate time",
+            "Publishing anything under .ai/local"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/milestones/knowledge-base.yaml",
+            ".ai/repo/project/issues/I2793.yaml",
+            "apps/majordomus-cli/src/graph.rs",
+            "apps/majordomus-cli/src/devcontext/select.rs",
+            "site/data/nav.toml",
+            "site/data/publication.toml",
+            "site/content/knowledge",
+            ".ai/repo/adrs/0173-the-knowledge-base-is-published.md",
+            "test/cases/3192_the_site_publishes_the_knowledge_base.sh"
+          ],
+          "slug": "the-site-publishes-the-knowledge-base",
+          "updated_at": "2026-10-17",
+          "validation": [
+            "scripts/derive-check",
+            "bash test/run.sh 3192_the_site_publishes_the_knowledge_base",
+            "bash test/run.sh 12_site_build"
+          ],
+          "why": "publication.toml declares the knowledge kind projection none, so nothing the repository learned reaches the site; the owner asked on 2026-10-17 for the knowledge base on GitHub Pages."
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "label": "a-commit-stood-behind-a-build-lock",
@@ -40653,6 +40737,68 @@
             "majordomus intent validate",
             "cargo test --test intent_plan",
             "bash test/run.sh 386_a_plan_is_held_to_its_intent"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/knowledge-base",
+        "kind": "milestone",
+        "label": "knowledge-base",
+        "summary": "The repository's knowledge base is derived from every source that carries know-how, and every surface presents it",
+        "route": "/cockpit/objects/milestone/knowledge-base",
+        "source": ".ai/repo/project/milestones/knowledge-base.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every distilled observation carries at least one evidence reference that resolves, and knowledge check passes over the whole base",
+            "knowledge_base.records lists curated and candidate records with class, status, subject, route and resolution, over CLI, HTTP and MCP",
+            "/ui/knowledge presents the base beside the review queue, read from the capability, with nothing written",
+            "The site carries a generated knowledge section, one page per record, derived only from tracked records, held by generate --check",
+            "product validate reports no uncovered module and no uncovered kind"
+          ],
+          "created_at": "2026-10-17",
+          "depends_on": [],
+          "evidence_required": [
+            "knowledge_check_clean",
+            "records_capability_tests",
+            "site_section_case"
+          ],
+          "non_scope": [
+            "Promoting a candidate or writing status verified; promotion is a person's act with evidence",
+            "Deriving a record from a conversation, a prompt or a model; the deriver stays deterministic and reads the ledger and git",
+            "Reading git refs, the network or the clock at generate time; a derived page reads tracked records only",
+            "Bumping the version on a feature branch; a new capability rides the landing seat's top that carries the bump"
+          ],
+          "order": 106,
+          "priority": "p1",
+          "risks": [
+            "The distilled candidates exceed the policy's review cap of 40; doctor warns until a person reviews them, which is the queue doing its job.",
+            "Distillation is a worker's judgement of what is durable; the deriver records it as an observed lesson and the class is a person's decision at promotion."
+          ],
+          "scope": [
+            ".ai/repo/knowledge",
+            ".ai/repo/project",
+            ".ai/repo/adrs",
+            ".ai/repo/features",
+            "apps/majordomus-cli/src/capability/builtin/knowledge_base.rs",
+            "apps/majordomus-cli/src/ui/knowledge.rs",
+            "apps/majordomus-cli/src/site.rs",
+            "apps/majordomus-cli/src/generate.rs",
+            "scripts/generate-site-data",
+            "site/templates",
+            "site/data/nav.toml",
+            "site/data/publication.toml",
+            "site/content/knowledge",
+            "docs/KNOWLEDGE.md",
+            "test/cases"
+          ],
+          "slug": "knowledge-base",
+          "updated_at": "2026-10-17",
+          "validation": [
+            "bin/majordomus knowledge check",
+            "bin/majordomus plan validate",
+            "bin/majordomus-cli product validate",
+            "scripts/derive-check",
+            "bash test/run.sh"
           ]
         }
       },
@@ -56859,6 +57005,13 @@
         "source": "test/cases/318_a_partial_sweep_says_so.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3192_the_site_publishes_the_knowledge_base.sh",
+        "kind": "test",
+        "label": "test/cases/3192_the_site_publishes_the_knowledge_base.sh",
+        "route": "/cockpit/objects/test/test-cases-3192-the-site-publishes-the-knowledge-base-sh",
+        "source": "test/cases/3192_the_site_publishes_the_knowledge_base.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/31_command_coverage.sh",
         "kind": "test",
         "label": "test/cases/31_command_coverage.sh",
@@ -69540,6 +69693,31 @@
       {
         "source": "majordomus://adr/adr-0166",
         "target": "majordomus://rule/project.the-published-ui-is-the-trunks@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0173",
+        "target": "file:apps/majordomus-cli/src/graph.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0173",
+        "target": "file:site/data/publication.toml",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0173",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0173",
+        "target": "majordomus://adr/adr-0091",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0173",
+        "target": "majordomus://document/docs/KNOWLEDGE.md",
         "kind": "put_in_force"
       },
       {
@@ -83598,6 +83776,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2793",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2793",
+        "target": "majordomus://milestone/knowledge-base",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -83771,6 +83959,11 @@
         "source": "majordomus://milestone/intent-planning",
         "target": "majordomus://milestone/intent-lifecycle",
         "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://milestone/knowledge-base",
+        "target": "kind:milestone",
+        "kind": "is_a"
       },
       {
         "source": "majordomus://milestone/mcp-transports-are-reliable",
@@ -88204,6 +88397,11 @@
       },
       {
         "source": "majordomus://test/test/cases/318_a_partial_sweep_says_so.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3192_the_site_publishes_the_knowledge_base.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -93494,8 +93692,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2935,
-      "edges": 6437,
+      "nodes": 2940,
+      "edges": 6446,
       "acyclic": false,
       "truncated": false
     }

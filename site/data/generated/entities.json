@@ -9,11 +9,24 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 115,
+      "count": 116,
       "dir": "adrs",
       "statuses": [
         "accepted",
         "proposed"
+      ]
+    },
+    {
+      "kind": "knowledge",
+      "projection": "entity",
+      "route": "/knowledge/",
+      "title": "Knowledge",
+      "description": "What this repository has learned about itself: the traps, workarounds and defect classes its history, its CI runs and its sessions taught, each about one subject and each with the evidence it was derived from. A candidate awaits a person's review; a verified record was promoted with evidence (ADR 0173).",
+      "weight": 47,
+      "count": 4,
+      "dir": "knowledge",
+      "statuses": [
+        "verified"
       ]
     },
     {
@@ -37,7 +50,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 115
+      "count": 116
     },
     {
       "kind": "application",
@@ -173,14 +186,14 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 419
+      "count": 420
     },
     {
       "kind": "knowledge",
-      "projection": "none",
-      "route": null,
-      "title": null,
-      "reason": "Curated knowledge is written for the worker reading the layer, not for a visitor: it is the orientation a session starts from, and it changes with the work rather than with the product.",
+      "projection": "entity",
+      "route": "/knowledge/",
+      "title": "Knowledge",
+      "reason": null,
       "count": 4
     },
     {
@@ -197,7 +210,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 40
+      "count": 41
     },
     {
       "kind": "moment",
@@ -285,7 +298,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 519
+      "count": 520
     },
     {
       "kind": "use-case",
@@ -5896,6 +5909,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0118/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0173",
+          "kind": "adr",
+          "route": "/adrs/adr-0173/",
+          "external": false
         }
       ]
     },
@@ -9142,6 +9162,122 @@
           "external": false
         }
       ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0173",
+      "identity": "adr-0173",
+      "slug": "adr-0173",
+      "cockpit": "/cockpit/objects/adr/adr-0173",
+      "title": "The knowledge base is published, one page per record, and each record is linked to what it is about",
+      "status": "proposed",
+      "tags": [
+        "knowledge",
+        "site",
+        "graph",
+        "publication"
+      ],
+      "source": ".ai/repo/adrs/0173-the-knowledge-base-is-published.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/graph.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "site/data/publication.toml",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0091",
+          "kind": "adr",
+          "route": "/adrs/adr-0091/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/KNOWLEDGE.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "knowledge",
+      "id": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
+      "identity": "a-commit-stood-behind-a-build-lock",
+      "slug": "a-commit-stood-behind-a-build-lock",
+      "cockpit": "/cockpit/objects/knowledge/a-commit-stood-behind-a-build-lock",
+      "title": "A commit stood fourteen minutes behind another worktree's build lock, in silence",
+      "status": "verified",
+      "tags": [
+        "post-mortem",
+        "build",
+        "worktrees",
+        "liveness"
+      ],
+      "source": ".ai/repo/knowledge/curated/a-commit-stood-behind-a-build-lock.md",
+      "references": [],
+      "referenced_by": []
+    },
+    {
+      "kind": "knowledge",
+      "id": "majordomus://knowledge/a-merge-reached-production-an-hour-later",
+      "identity": "a-merge-reached-production-an-hour-later",
+      "slug": "a-merge-reached-production-an-hour-later",
+      "cockpit": "/cockpit/objects/knowledge/a-merge-reached-production-an-hour-later",
+      "title": "A merge reached production an hour later, and the workflow that published it was green",
+      "status": "verified",
+      "tags": [
+        "post-mortem",
+        "delivery",
+        "pages",
+        "ci"
+      ],
+      "source": ".ai/repo/knowledge/curated/a-merge-reached-production-an-hour-later.md",
+      "references": [],
+      "referenced_by": []
+    },
+    {
+      "kind": "knowledge",
+      "id": "majordomus://knowledge/an-expedited-landing",
+      "identity": "an-expedited-landing",
+      "slug": "an-expedited-landing",
+      "cockpit": "/cockpit/objects/knowledge/an-expedited-landing",
+      "title": "How a pull request is landed past the required check, and what that never reaches",
+      "status": "verified",
+      "tags": [
+        "integration",
+        "deployment",
+        "ci"
+      ],
+      "source": ".ai/repo/knowledge/curated/an-expedited-landing.md",
+      "references": [],
+      "referenced_by": []
+    },
+    {
+      "kind": "knowledge",
+      "id": "majordomus://knowledge/start-here",
+      "identity": "start-here",
+      "slug": "start-here",
+      "cockpit": "/cockpit/objects/knowledge/start-here",
+      "title": "The documents that explain this repository are read in a fixed order",
+      "status": "verified",
+      "tags": [
+        "onboarding",
+        "documentation"
+      ],
+      "source": ".ai/repo/knowledge/curated/start-here.md",
+      "references": [],
       "referenced_by": []
     },
     {

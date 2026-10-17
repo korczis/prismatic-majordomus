@@ -109,6 +109,15 @@ pub struct EdgePolicy {
 /// relevance decays with distance and the decay is the edge's own. An edge absent from this
 /// table is not followed at all, and `policy` reports it as refused with the reason.
 pub const EDGES: &[EdgePolicy] = &[
+    // what the repository learned about a thing is context for whoever works on it, more
+    // than the thing is context for a reader of the record (ADR 0173)
+    EdgePolicy {
+        kind: "about",
+        forward: 0.6,
+        reverse: 0.9,
+        forward_reason: "the subject this record is about",
+        reverse_reason: "what the repository learned about it",
+    },
     EdgePolicy {
         kind: "belongs_to",
         forward: 0.95,

@@ -1,0 +1,38 @@
+id: I2793
+milestone: knowledge-base
+title: "The site carries a generated knowledge section, one page per record, read from the tracked records"
+slug: the-site-publishes-the-knowledge-base
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Publish the knowledge kind through the entity projection at /knowledge/ by declaring it in site/data/publication.toml (one page per record, generated from the record's own file, with its references and backlinks read from the composed graph), give the composed graph the relation a record already declares — a record is about its subject — so that a rule's or a file's page shows what was learned about it and the context compiler hands that knowledge to whoever works on the subject, add the navigation entry, and record the publication decision as ADR 0173."
+why: "publication.toml declares the knowledge kind projection none, so nothing the repository learned reaches the site; the owner asked on 2026-10-17 for the knowledge base on GitHub Pages."
+current_state: "No knowledge dataset, no knowledge section, knowledge projection none."
+desired_state: "https://majordomus.dev/knowledge/ lists every record and links each to its page; generate --check and the site build cases hold it."
+scope:
+  - ".ai/repo/project/milestones/knowledge-base.yaml"
+  - ".ai/repo/project/issues/I2793.yaml"
+  - "apps/majordomus-cli/src/graph.rs"
+  - "apps/majordomus-cli/src/devcontext/select.rs"
+  - "site/data/nav.toml"
+  - "site/data/publication.toml"
+  - "site/content/knowledge"
+  - ".ai/repo/adrs/0173-the-knowledge-base-is-published.md"
+  - "test/cases/3192_the_site_publishes_the_knowledge_base.sh"
+non_scope:
+  - "Reading git refs, the network or the clock at generate time"
+  - "Publishing anything under .ai/local"
+depends_on: []
+acceptance_criteria:
+  - "The knowledge section and one page per record are generated from tracked records only, and generate --check refuses a stale page"
+  - "A record about a rule, a file, a capability, a command or a gate is linked to it in the composed graph, and no subject is ever a finding"
+  - "A candidate is labelled as unreviewed on its page; a superseded record names its successor"
+  - "The navigation entry comes from nav.toml"
+validation:
+  - "scripts/derive-check"
+  - "bash test/run.sh 3192_the_site_publishes_the_knowledge_base"
+  - "bash test/run.sh 12_site_build"
+evidence_required:
+  - "site_section_case"
+created_at: 2026-10-17
+updated_at: 2026-10-17

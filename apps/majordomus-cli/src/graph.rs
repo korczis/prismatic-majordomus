@@ -1020,6 +1020,7 @@ fn compose_with(registry: &CapabilityRegistry, objects: &[Object], limit: usize)
     .node_kind("command", "a command a scenario runs")
     .node_kind("doctrine", "a doctrine a scenario exercises")
     .node_kind("claim", "a claim the layer stands behind")
+    .node_kind("gate", "a gate of the CI model a record is about")
     .edge_kind("composes", "the module composes the capability")
     .edge_kind("projects", "the capability is projected through the transport")
     .edge_kind("is_a", "the object is of that kind")
@@ -1036,7 +1037,8 @@ fn compose_with(registry: &CapabilityRegistry, objects: &[Object], limit: usize)
     .edge_kind("tested_by", "the claim is proved by that case")
     .edge_kind("belongs_to", "the issue belongs to that milestone")
     .edge_kind("serves", "the use case serves that application")
-    .edge_kind("governed_by", "the application is governed by that doctrine");
+    .edge_kind("governed_by", "the application is governed by that doctrine")
+    .edge_kind("about", "the knowledge record is about that subject");
 
     // the kinds are read off what was indexed; a kind named here would be a second
     // declaration of something share/kinds.yaml already owns
@@ -1227,6 +1229,11 @@ pub(crate) enum Target {
     Path,
     /// A capability of the registry, by the MCP tool name it is exposed under.
     McpTool,
+    /// What a knowledge record is about (ADR 0118): a repository-relative path, or
+    /// `rule:`, `capability:`, `command:` or `gate:` followed by an identifier. Never a
+    /// finding: whether the subject is right is the knowledge integrity validator's
+    /// judgement (ADR 0173), so what the index does not hold is drawn outside the layer.
+    Subject,
 }
 
 /// The layer writes a reference that points at nothing on purpose as `-`: a claim with no
@@ -1237,6 +1244,15 @@ pub(crate) fn is_absence(reference: &str) -> bool {
 }
 
 pub(crate) const RELATIONS: &[Relation] = &[
+    // a record says what it is about, so the page of a rule, a file or a capability can
+    // show what the repository learned about it (ADR 0173)
+    Relation {
+        kinds: &["knowledge"],
+        field: "about",
+        edge: "about",
+        target: Target::Subject,
+        inverted: false,
+    },
     Relation {
         kinds: &["rule"],
         field: "depends_on",
@@ -1544,6 +1560,22 @@ impl<'a> Resolver<'a> {
             Target::Path => match self.by_path.get(reference) {
                 Some(o) => Outcome::Node(o.uri.clone()),
                 None => Outcome::External(external_node("file", reference, Some(reference))),
+            },
+            Target::Subject => match reference.split_once(':') {
+                Some(("rule", id)) => match self.object("rule", id) {
+                    Some(o) => Outcome::Node(o.uri.clone()),
+                    None => Outcome::External(external_node("rule", id, None)),
+                },
+                Some(("capability", id)) if self.registry.get(id).is_some() => {
+                    Outcome::Node(format!("capability:{id}"))
+                }
+                Some((prefix @ ("capability" | "command" | "gate"), id)) => {
+                    Outcome::External(external_node(prefix, id, None))
+                }
+                _ => match self.by_path.get(reference) {
+                    Some(o) => Outcome::Node(o.uri.clone()),
+                    None => Outcome::External(external_node("file", reference, Some(reference))),
+                },
             },
             Target::McpTool => match self.registry.by_mcp_tool(reference) {
                 Some(c) => Outcome::Node(format!("capability:{}", c.id)),
@@ -2403,6 +2435,49 @@ mod tests {
             assert!(ids.contains(e.target.as_str()), "target missing: {e:?}");
         }
         assert!(g.edges.iter().any(|e| e.kind == "tracks"));
+    }
+    /// ADR 0173: a knowledge record is `about` its subject, whatever form the subject
+    /// takes, and none of them is ever a finding: what the index does not hold is drawn
+    /// outside the layer, because whether a subject is right is the integrity validator's
+    /// question.
+    #[test]
+    fn a_record_is_about_its_subject_in_every_form_and_none_is_a_finding() {
+        let about = |id: &str, subject: &str| {
+            object_with("knowledge", id, serde_json::json!({ "about": subject }))
+        };
+        let objects = vec![
+            object_with("rule", "project.real@1", serde_json::json!({})),
+            about("by-rule", "rule:project.real"),
+            about("by-missing-rule", "rule:project.gone"),
+            about("by-path", ".ai/repo/rules/project.real@1.md"),
+            about("by-file", "lib/session.sh"),
+            about("by-capability", "capability:objects.list"),
+            about("by-unknown-capability", "capability:no.such"),
+            about("by-command", "command:doctor"),
+            about("by-gate", "gate:rust"),
+        ];
+        let g = compose(&registry(), &objects);
+        let target = |id: &str| -> String {
+            g.edges
+                .iter()
+                .find(|e| e.kind == "about" && e.source == format!("majordomus://knowledge/{id}"))
+                .map(|e| e.target.clone())
+                .unwrap_or_else(|| panic!("{id} is about nothing: {:?}", g.edges))
+        };
+        assert_eq!(target("by-rule"), "majordomus://rule/project.real@1");
+        assert_eq!(target("by-missing-rule"), "rule:project.gone");
+        assert_eq!(target("by-path"), "majordomus://rule/project.real@1");
+        assert_eq!(target("by-file"), "file:lib/session.sh");
+        assert_eq!(target("by-capability"), "capability:objects.list");
+        assert_eq!(target("by-unknown-capability"), "capability:no.such");
+        assert_eq!(target("by-command"), "command:doctor");
+        assert_eq!(target("by-gate"), "gate:rust");
+        let ids: BTreeSet<&str> = g.nodes.iter().map(|n| n.id.as_str()).collect();
+        assert!(g
+            .edges
+            .iter()
+            .all(|e| ids.contains(e.source.as_str()) && ids.contains(e.target.as_str())));
+        assert_eq!(unresolved_relations(&registry(), &objects), vec![]);
     }
     #[test]
     fn a_skill_names_its_sibling_by_identity_and_that_resolves() {

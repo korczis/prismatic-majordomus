@@ -6,23 +6,23 @@
     "version": "0.28.0"
   },
   "registry": {
-    "fingerprint": "99c090802eb021bb70bc7c55a8010127207e83cc31644061ac439b95e55d5339",
+    "fingerprint": "15dba906763a7d9b9b121db2eb4a695b1c59db78844a44c9ca3979d9615cf35d",
     "summary": {
-      "total": 2504,
+      "total": 2508,
       "builtin": 202,
-      "declarative": 2302,
+      "declarative": 2306,
       "by_kind": {
         "command": 31,
         "query": 171,
-        "resource": 2302
+        "resource": 2306
       },
       "by_stability": {
         "behaviorally_verified": 141,
         "experimental": 52,
-        "implemented": 2311
+        "implemented": 2315
       },
       "mcp_tools": 192,
-      "mcp_resources": 2357,
+      "mcp_resources": 2361,
       "http_routes": 197,
       "cli_commands": 108,
       "modules": 92,
@@ -82608,7 +82608,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 115,
+        "capabilities": 116,
         "capability_ids": []
       },
       {
@@ -83231,7 +83231,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 419,
+        "capabilities": 420,
         "capability_ids": []
       },
       {
@@ -83347,7 +83347,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 40,
+        "capabilities": 41,
         "capability_ids": []
       },
       {
@@ -83802,7 +83802,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 519,
+        "capabilities": 520,
         "capability_ids": []
       },
       {
@@ -83893,7 +83893,7 @@
     ]
   },
   "index": {
-    "fingerprint": "7a9a9463dc32a460f174f22bec190cc2348cee44f816b4da01e0d104feaa6529",
+    "fingerprint": "2303999880e8d4c47413ab8c2c2515fdb11a2c64d0a87bee1ace008db400ce9d",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -83916,7 +83916,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 115,
+      "adr": 116,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -83933,10 +83933,10 @@
       "gap": 3,
       "implementation": 52,
       "intent": 4,
-      "issue": 419,
+      "issue": 420,
       "knowledge": 4,
       "mesh-declaration": 1,
-      "milestone": 40,
+      "milestone": 41,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -83947,7 +83947,7 @@
       "session": 90,
       "skill": 8,
       "taxonomy": 10,
-      "test": 519,
+      "test": 520,
       "use-case": 49,
       "workspace": 1
     },
@@ -85859,6 +85859,23 @@
           "ui",
           "derivation",
           "diagrams"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0173",
+        "kind": "adr",
+        "identity": "adr-0173",
+        "title": "The knowledge base is published, one page per record, and each record is linked to what it is about",
+        "description": "The knowledge base is published, one page per record, and each record is linked to what it is about",
+        "path": ".ai/repo/adrs/0173-the-knowledge-base-is-published.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 3470,
+        "tags": [
+          "knowledge",
+          "site",
+          "graph",
+          "publication"
         ]
       },
       {
@@ -90161,7 +90178,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 165684
+        "bytes": 168894
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -98221,6 +98238,17 @@
         "bytes": 1460
       },
       {
+        "uri": "majordomus://issue/I2793",
+        "kind": "issue",
+        "identity": "I2793",
+        "title": "The site carries a generated knowledge section, one page per record, read from the tracked records",
+        "description": "Publish the knowledge kind through the entity projection at /knowledge/ by declaring it in site/data/publication.toml (one page per record, generated from the record's own file, with its references and backlinks read from the composed graph), give the composed graph the relation a record already declares — a record is about its subject — so that a rule's or a file's page shows what was learned about it and the context compiler hands that knowledge to whoever works on the subject, add the navigation entry, and record the publication decision as ADR 0173.",
+        "path": ".ai/repo/project/issues/I2793.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2460
+      },
+      {
         "uri": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "identity": "a-commit-stood-behind-a-build-lock",
@@ -98556,6 +98584,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 2652
+      },
+      {
+        "uri": "majordomus://milestone/knowledge-base",
+        "kind": "milestone",
+        "identity": "knowledge-base",
+        "title": "The repository's knowledge base is derived from every source that carries know-how, and every surface presents it",
+        "description": "Every source that carries know-how reaches the knowledge kind the repository's way: as observations a worker records with resolving evidence, derived into candidate records by the deterministic deriver, reviewed and promoted by a person. One capability lists the whole base with each record's resolution; /ui/knowledge browses it; the site carries a generated knowledge section; and the product model leaves no module or kind unnamed.",
+        "path": ".ai/repo/project/milestones/knowledge-base.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 4175
       },
       {
         "uri": "majordomus://milestone/mcp-transports-are-reliable",
@@ -105787,6 +105826,14 @@
         "bytes": 23341
       },
       {
+        "uri": "majordomus://test/test/cases/3192_the_site_publishes_the_knowledge_base.sh",
+        "kind": "test",
+        "identity": "test/cases/3192_the_site_publishes_the_knowledge_base.sh",
+        "path": "test/cases/3192_the_site_publishes_the_knowledge_base.sh",
+        "source_class": "case",
+        "bytes": 4432
+      },
+      {
         "uri": "majordomus://test/test/cases/31_command_coverage.sh",
         "kind": "test",
         "identity": "test/cases/31_command_coverage.sh",
@@ -108634,7 +108681,7 @@
       "identity": [
         "id"
       ],
-      "objects": 115
+      "objects": 116
     },
     {
       "name": "application",
@@ -108797,7 +108844,7 @@
       "identity": [
         "id"
       ],
-      "objects": 419
+      "objects": 420
     },
     {
       "name": "knowledge",
@@ -108827,7 +108874,7 @@
       "identity": [
         "id"
       ],
-      "objects": 40
+      "objects": 41
     },
     {
       "name": "moment",
@@ -108949,7 +108996,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 519
+      "objects": 520
     },
     {
       "name": "use-case",

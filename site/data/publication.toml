@@ -41,6 +41,14 @@ description = "Every architecture decision this repository has recorded, with wh
 weight = 45
 
 [[kinds]]
+kind = "knowledge"
+projection = "entity"
+route = "/knowledge/"
+title = "Knowledge"
+description = "What this repository has learned about itself: the traps, workarounds and defect classes its history, its CI runs and its sessions taught, each about one subject and each with the evidence it was derived from. A candidate awaits a person's review; a verified record was promoted with evidence (ADR 0173)."
+weight = 47
+
+[[kinds]]
 kind = "rule"
 projection = "entity"
 route = "/rules/"
@@ -181,11 +189,6 @@ reason = "An implementation object is a source file a claim names. It is reachab
 kind = "intent"
 projection = "none"
 reason = "An intent's stage and criteria are derived on every read from the plan and the evidence ledger (ADR 0070); a static page would freeze a derivation at the commit the site was built from. The milestones that realise an intent are published on /plan/, and `majordomus intent show` and the Cockpit's /cockpit/intents answer for the intent itself."
-
-[[kinds]]
-kind = "knowledge"
-projection = "none"
-reason = "Curated knowledge is written for the worker reading the layer, not for a visitor: it is the orientation a session starts from, and it changes with the work rather than with the product."
 
 [[kinds]]
 kind = "mesh-declaration"
