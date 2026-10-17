@@ -53348,7 +53348,7 @@ capabilities:
               - on_trunk
               - thresholds
               - message
-            description: "A checkout's distance from the remote trunk, judged."
+            description: "A checkout's distance from the remote trunk, judged.\n\n```\nuse majordomus_cli::worktree::trunk::{Distance, TrunkDistance, TrunkStanding};\nlet d: TrunkDistance = serde_json::from_value(serde_json::json!({\n    \"standing\": \"stale\", \"local_trunk_standing\": \"stale\",\n    \"worktree\": \"/repo\", \"on_trunk\": true,\n    \"checkout\": {\"behind\": 779, \"ahead\": 0},\n    \"thresholds\": {\"warn_behind\": 50, \"fail_behind\": 300},\n    \"message\": \"779 commits behind origin/master\",\n})).unwrap();\nassert_eq!(d.standing, TrunkStanding::Stale);\nassert_eq!(d.checkout, Some(Distance { behind: 779, ahead: 0 }));\n// what is absent stays absent in the answer\nassert!(serde_json::to_value(&d).unwrap().get(\"remedy\").is_none());\n```"
           TrunkStanding:
             oneOf:
               - type: string
@@ -53366,7 +53366,7 @@ capabilities:
               - type: string
                 const: unmeasured
                 description: "The distance could not be measured: no trunk, no remote-tracking trunk, no `HEAD`."
-            description: Where a checkout stands against the remote trunk.
+            description: "Where a checkout stands against the remote trunk.\n\n```\nuse majordomus_cli::worktree::trunk::TrunkStanding;\nlet s: TrunkStanding = serde_json::from_str(r#\"\"lagging\"\"#).unwrap();\nassert_eq!(s, TrunkStanding::Lagging);\nassert_eq!(serde_json::to_value(TrunkStanding::Unmeasured).unwrap(), \"unmeasured\");\n```"
           Distance:
             type: object
             properties:
@@ -58316,7 +58316,7 @@ capabilities:
               - on_trunk
               - thresholds
               - message
-            description: "A checkout's distance from the remote trunk, judged."
+            description: "A checkout's distance from the remote trunk, judged.\n\n```\nuse majordomus_cli::worktree::trunk::{Distance, TrunkDistance, TrunkStanding};\nlet d: TrunkDistance = serde_json::from_value(serde_json::json!({\n    \"standing\": \"stale\", \"local_trunk_standing\": \"stale\",\n    \"worktree\": \"/repo\", \"on_trunk\": true,\n    \"checkout\": {\"behind\": 779, \"ahead\": 0},\n    \"thresholds\": {\"warn_behind\": 50, \"fail_behind\": 300},\n    \"message\": \"779 commits behind origin/master\",\n})).unwrap();\nassert_eq!(d.standing, TrunkStanding::Stale);\nassert_eq!(d.checkout, Some(Distance { behind: 779, ahead: 0 }));\n// what is absent stays absent in the answer\nassert!(serde_json::to_value(&d).unwrap().get(\"remedy\").is_none());\n```"
           TrunkStanding:
             oneOf:
               - type: string
@@ -58334,7 +58334,7 @@ capabilities:
               - type: string
                 const: unmeasured
                 description: "The distance could not be measured: no trunk, no remote-tracking trunk, no `HEAD`."
-            description: Where a checkout stands against the remote trunk.
+            description: "Where a checkout stands against the remote trunk.\n\n```\nuse majordomus_cli::worktree::trunk::TrunkStanding;\nlet s: TrunkStanding = serde_json::from_str(r#\"\"lagging\"\"#).unwrap();\nassert_eq!(s, TrunkStanding::Lagging);\nassert_eq!(serde_json::to_value(TrunkStanding::Unmeasured).unwrap(), \"unmeasured\");\n```"
           Distance:
             type: object
             properties:
@@ -59061,7 +59061,7 @@ capabilities:
           - on_trunk
           - thresholds
           - message
-        description: "A checkout's distance from the remote trunk, judged."
+        description: "A checkout's distance from the remote trunk, judged.\n\n```\nuse majordomus_cli::worktree::trunk::{Distance, TrunkDistance, TrunkStanding};\nlet d: TrunkDistance = serde_json::from_value(serde_json::json!({\n    \"standing\": \"stale\", \"local_trunk_standing\": \"stale\",\n    \"worktree\": \"/repo\", \"on_trunk\": true,\n    \"checkout\": {\"behind\": 779, \"ahead\": 0},\n    \"thresholds\": {\"warn_behind\": 50, \"fail_behind\": 300},\n    \"message\": \"779 commits behind origin/master\",\n})).unwrap();\nassert_eq!(d.standing, TrunkStanding::Stale);\nassert_eq!(d.checkout, Some(Distance { behind: 779, ahead: 0 }));\n// what is absent stays absent in the answer\nassert!(serde_json::to_value(&d).unwrap().get(\"remedy\").is_none());\n```"
         title: TrunkDistance
         "$defs":
           TrunkStanding:
@@ -59081,7 +59081,7 @@ capabilities:
               - type: string
                 const: unmeasured
                 description: "The distance could not be measured: no trunk, no remote-tracking trunk, no `HEAD`."
-            description: Where a checkout stands against the remote trunk.
+            description: "Where a checkout stands against the remote trunk.\n\n```\nuse majordomus_cli::worktree::trunk::TrunkStanding;\nlet s: TrunkStanding = serde_json::from_str(r#\"\"lagging\"\"#).unwrap();\nassert_eq!(s, TrunkStanding::Lagging);\nassert_eq!(serde_json::to_value(TrunkStanding::Unmeasured).unwrap(), \"unmeasured\");\n```"
           Distance:
             type: object
             properties:

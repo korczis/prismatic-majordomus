@@ -13,7 +13,8 @@
 #              0 ahead of origin/master, on the trunk, as of the last fetch: stale
 #   doctor     FAILs clone/trunk with the fast-forward as the remedy; `worktree trunk`
 #              gives the same reading alone and exits 10
-#   server     server.status carries the same reading as `trunk`
+#   server     server.status carries the same reading as `trunk`, and so does the MCP tool
+#              majordomus_worktree_trunk asked by one tools/call
 #   lagging    with fail_behind raised past the distance it WARNs and does not fail
 #   feature    a linked worktree on a feature branch is judged on its own HEAD; the local
 #              trunk behind it is a WARN (clone/local-trunk), never its failure
@@ -79,6 +80,14 @@ field '.trunk_distance.remedy' | grep -qF "merge --ff-only origin/$trunk" \
 expect_exit 10 "$RB" worktree trunk --repo "$T" --format json
 [ "$(printf '%s' "$LAST_OUT" | jq -r '"\(.standing) \(.checkout.behind)"')" = "stale 6" ] \
   || { echo "    worktree trunk does not give the status's reading:"; printf '%s\n' "$LAST_OUT"; exit 1; }
+
+# the same reading as a client asks for it: one MCP session, one tools/call
+mcp_frame="$({ printf '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"case3176","version":"0"}}}\n'
+  printf '{"jsonrpc":"2.0","method":"notifications/initialized"}\n'
+  printf '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"majordomus_worktree_trunk","arguments":{}}}\n'
+} | "$RB" mcp --standalone --repo "$T" 2>/dev/null | sed -n 2p)"
+[ "$(printf '%s' "$mcp_frame" | jq -r '.result.structuredContent | "\(.standing) \(.checkout.behind)"' 2>/dev/null)" = "stale 6" ] \
+  || { echo "    majordomus_worktree_trunk does not answer the reading:"; printf '%s\n' "$mcp_frame" | head -c 600; echo; exit 1; }
 
 # ---------------------------------------------------------------- doctor fails a stale checkout
 # (the fixture has other findings — no hooks, no projections — so the trunk line is read,

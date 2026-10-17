@@ -15,6 +15,22 @@
 //! ever reported as current, and no threshold is invented here (ADR 0167 records the
 //! cooperation model that asks for an always-current checkout; this module is its
 //! measurement, not its restatement).
+//!
+//! The measurement's life, from git's count to the word every surface shows:
+//!
+//! ```
+//! use majordomus_cli::worktree::trunk::{judge, parse_left_right, TrunkStanding, TrunkThresholds};
+//!
+//! // `git rev-list --left-right --count HEAD...origin/master` on the primary of 2026-10-16
+//! let d = parse_left_right("0\t779").unwrap();
+//! let declared: TrunkThresholds =
+//!     serde_json::from_str(r#"{"warn_behind": 50, "fail_behind": 300}"#).unwrap();
+//! let standing = judge(Some(d.behind), declared);
+//! assert_eq!(standing, TrunkStanding::Stale);
+//! assert_eq!(standing.as_str(), "stale");
+//! // nothing declared: the same distance is reported, never judged current
+//! assert_eq!(judge(Some(d.behind), TrunkThresholds::default()), TrunkStanding::Unjudged);
+//! ```
 
 use std::path::Path;
 
@@ -65,6 +81,16 @@ pub struct TrunkThresholds {
 impl TrunkThresholds {
     /// The thresholds the policy of the repository holding `root` declares; none when it
     /// declares none or cannot be read.
+    ///
+    /// ```
+    /// use majordomus_cli::worktree::trunk::TrunkThresholds;
+    ///
+    /// // a directory no repository holds declares nothing, and nothing is invented for it
+    /// let away = std::env::temp_dir().join(format!("mj-no-repo-{}", std::process::id()));
+    /// std::fs::create_dir_all(&away).unwrap();
+    /// assert_eq!(TrunkThresholds::declared_at(&away), TrunkThresholds::default());
+    /// std::fs::remove_dir_all(&away).unwrap();
+    /// ```
     pub fn declared_at(root: &Path) -> Self {
         crate::repository::Repository::discover(root)
             .ok()
@@ -79,6 +105,13 @@ impl TrunkThresholds {
 }
 
 /// Where a checkout stands against the remote trunk.
+///
+/// ```
+/// use majordomus_cli::worktree::trunk::TrunkStanding;
+/// let s: TrunkStanding = serde_json::from_str(r#""lagging""#).unwrap();
+/// assert_eq!(s, TrunkStanding::Lagging);
+/// assert_eq!(serde_json::to_value(TrunkStanding::Unmeasured).unwrap(), "unmeasured");
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum TrunkStanding {
@@ -150,6 +183,21 @@ pub fn judge(behind: Option<u64>, thresholds: TrunkThresholds) -> TrunkStanding 
 }
 
 /// A checkout's distance from the remote trunk, judged.
+///
+/// ```
+/// use majordomus_cli::worktree::trunk::{Distance, TrunkDistance, TrunkStanding};
+/// let d: TrunkDistance = serde_json::from_value(serde_json::json!({
+///     "standing": "stale", "local_trunk_standing": "stale",
+///     "worktree": "/repo", "on_trunk": true,
+///     "checkout": {"behind": 779, "ahead": 0},
+///     "thresholds": {"warn_behind": 50, "fail_behind": 300},
+///     "message": "779 commits behind origin/master",
+/// })).unwrap();
+/// assert_eq!(d.standing, TrunkStanding::Stale);
+/// assert_eq!(d.checkout, Some(Distance { behind: 779, ahead: 0 }));
+/// // what is absent stays absent in the answer
+/// assert!(serde_json::to_value(&d).unwrap().get("remedy").is_none());
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct TrunkDistance {
     /// Where the checkout stands: its `HEAD` — with the commit a merge in progress brings
@@ -217,6 +265,29 @@ impl TrunkDistance {
 /// The remote-tracking ref of the trunk, short (`origin/master`): the trunk's configured
 /// upstream, else the remote whose `HEAD` names the trunk, else the first remote that has
 /// a branch of the trunk's name. `None` when no remote carries it.
+///
+/// ```
+/// use majordomus_cli::worktree::trunk::remote_trunk_of;
+/// use std::{path::Path, process::Command};
+/// let git = |dir: &Path, args: &[&str]| assert!(Command::new("git").current_dir(dir).args(args)
+///     .env("GIT_AUTHOR_NAME", "a").env("GIT_AUTHOR_EMAIL", "a@b.c")
+///     .env("GIT_COMMITTER_NAME", "a").env("GIT_COMMITTER_EMAIL", "a@b.c")
+///     .status().unwrap().success());
+/// // a clone one commit behind its origin, as of its last fetch
+/// let base = std::env::temp_dir().join(format!("mj-remote-trunk-of-{}", std::process::id()));
+/// let (up, co) = (base.join("up"), base.join("co"));
+/// std::fs::create_dir_all(&up).unwrap();
+/// git(&up, &["init", "-q", "-b", "master"]);
+/// git(&up, &["commit", "-q", "--allow-empty", "-m", "base"]);
+/// git(&base, &["clone", "-q", "up", "co"]);
+/// git(&up, &["commit", "-q", "--allow-empty", "-m", "ahead"]);
+/// git(&co, &["fetch", "-q"]);
+///
+/// assert_eq!(remote_trunk_of(&co, "master").as_deref(), Some("origin/master"));
+/// // the upstream itself has no remote that carries its trunk
+/// assert_eq!(remote_trunk_of(&up, "master"), None);
+/// std::fs::remove_dir_all(&base).unwrap();
+/// ```
 pub fn remote_trunk_of(cwd: &Path, trunk: &str) -> Option<String> {
     let upstream = git::try_run(
         cwd,
@@ -263,6 +334,28 @@ pub fn remote_trunk_of(cwd: &Path, trunk: &str) -> Option<String> {
 
 /// How far the commits `revs` hold are from `remote_trunk`: the trunk's commits none of
 /// them reaches (behind), and the first one's commits the trunk lacks (ahead).
+///
+/// ```
+/// use majordomus_cli::worktree::trunk::{distance, Distance};
+/// use std::{path::Path, process::Command};
+/// let git = |dir: &Path, args: &[&str]| assert!(Command::new("git").current_dir(dir).args(args)
+///     .env("GIT_AUTHOR_NAME", "a").env("GIT_AUTHOR_EMAIL", "a@b.c")
+///     .env("GIT_COMMITTER_NAME", "a").env("GIT_COMMITTER_EMAIL", "a@b.c")
+///     .status().unwrap().success());
+/// // a clone one commit behind its origin, as of its last fetch
+/// let base = std::env::temp_dir().join(format!("mj-distance-{}", std::process::id()));
+/// let (up, co) = (base.join("up"), base.join("co"));
+/// std::fs::create_dir_all(&up).unwrap();
+/// git(&up, &["init", "-q", "-b", "master"]);
+/// git(&up, &["commit", "-q", "--allow-empty", "-m", "base"]);
+/// git(&base, &["clone", "-q", "up", "co"]);
+/// git(&up, &["commit", "-q", "--allow-empty", "-m", "ahead"]);
+/// git(&co, &["fetch", "-q"]);
+///
+/// assert_eq!(distance(&co, &["HEAD"], "origin/master"), Some(Distance { behind: 1, ahead: 0 }));
+/// assert_eq!(distance(&co, &["HEAD"], "origin/no-such-branch"), None);
+/// std::fs::remove_dir_all(&base).unwrap();
+/// ```
 pub fn distance(cwd: &Path, revs: &[&str], remote_trunk: &str) -> Option<Distance> {
     let remote = format!("refs/remotes/{remote_trunk}");
     let count = |args: Vec<&str>| -> Option<u64> {
@@ -305,6 +398,33 @@ fn fetched_at(identity: &RepositoryIdentity) -> Option<String> {
 
 /// Measure the work tree `worktree` of a discovered repository against the remote trunk,
 /// judged by `thresholds`. Never fetches and writes nothing.
+///
+/// ```
+/// use majordomus_cli::worktree::RepositoryIdentity;
+/// use majordomus_cli::worktree::trunk::{measure, Distance, TrunkStanding, TrunkThresholds};
+/// use std::{path::Path, process::Command};
+/// let git = |dir: &Path, args: &[&str]| assert!(Command::new("git").current_dir(dir).args(args)
+///     .env("GIT_AUTHOR_NAME", "a").env("GIT_AUTHOR_EMAIL", "a@b.c")
+///     .env("GIT_COMMITTER_NAME", "a").env("GIT_COMMITTER_EMAIL", "a@b.c")
+///     .status().unwrap().success());
+/// // a clone one commit behind its origin, as of its last fetch
+/// let base = std::env::temp_dir().join(format!("mj-measure-{}", std::process::id()));
+/// let (up, co) = (base.join("up"), base.join("co"));
+/// std::fs::create_dir_all(&up).unwrap();
+/// git(&up, &["init", "-q", "-b", "master"]);
+/// git(&up, &["commit", "-q", "--allow-empty", "-m", "base"]);
+/// git(&base, &["clone", "-q", "up", "co"]);
+/// git(&up, &["commit", "-q", "--allow-empty", "-m", "ahead"]);
+/// git(&co, &["fetch", "-q"]);
+///
+/// let identity = RepositoryIdentity::discover(&co).unwrap();
+/// let worktree = identity.current_worktree().path.clone();
+/// let d = measure(&identity, &worktree, TrunkThresholds { warn_behind: Some(1), fail_behind: None });
+/// assert_eq!(d.standing, TrunkStanding::Lagging);
+/// assert_eq!(d.checkout, Some(Distance { behind: 1, ahead: 0 }));
+/// assert!(d.remedy.is_some(), "a checkout behind is told how to come current");
+/// std::fs::remove_dir_all(&base).unwrap();
+/// ```
 pub fn measure(
     identity: &RepositoryIdentity,
     worktree: &Path,
@@ -374,6 +494,30 @@ pub fn measure(
 
 /// Measure the checkout holding `path` with the thresholds its own policy declares. A path
 /// git cannot place in a repository is `unmeasured`, with git's reason.
+///
+/// ```
+/// use majordomus_cli::worktree::trunk::{measure_checkout, TrunkStanding};
+/// use std::{path::Path, process::Command};
+/// let git = |dir: &Path, args: &[&str]| assert!(Command::new("git").current_dir(dir).args(args)
+///     .env("GIT_AUTHOR_NAME", "a").env("GIT_AUTHOR_EMAIL", "a@b.c")
+///     .env("GIT_COMMITTER_NAME", "a").env("GIT_COMMITTER_EMAIL", "a@b.c")
+///     .status().unwrap().success());
+/// // a clone one commit behind its origin, as of its last fetch
+/// let base = std::env::temp_dir().join(format!("mj-measure-checkout-{}", std::process::id()));
+/// let (up, co) = (base.join("up"), base.join("co"));
+/// std::fs::create_dir_all(&up).unwrap();
+/// git(&up, &["init", "-q", "-b", "master"]);
+/// git(&up, &["commit", "-q", "--allow-empty", "-m", "base"]);
+/// git(&base, &["clone", "-q", "up", "co"]);
+/// git(&up, &["commit", "-q", "--allow-empty", "-m", "ahead"]);
+/// git(&co, &["fetch", "-q"]);
+///
+/// // its policy declares no thresholds: one commit behind is reported, and not judged
+/// assert_eq!(measure_checkout(&co).standing, TrunkStanding::Unjudged);
+/// // a path no repository holds is unmeasured, never current
+/// assert_eq!(measure_checkout(&base).standing, TrunkStanding::Unmeasured);
+/// std::fs::remove_dir_all(&base).unwrap();
+/// ```
 pub fn measure_checkout(path: &Path) -> TrunkDistance {
     match RepositoryIdentity::discover(path) {
         Ok(identity) => {
