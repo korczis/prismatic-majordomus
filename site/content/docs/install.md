@@ -24,6 +24,12 @@ Then, in the repository you want supervised:
 majordomus init
 ```
 
+`init` adds what the layer needs and leaves what the repository already has alone. The one
+exception is a `README.md` that does not mention `AGENTS.md`: `init` appends a short
+paragraph naming it, because `doctor` fails a README that cannot lead a reader to the
+agent bootstrap. `init` lists the paragraph with everything else it created. It creates
+no README where there is none, and a personal layer leaves the project's README alone.
+
 ## Install and initialise in one command
 
 ```bash
