@@ -49,10 +49,12 @@ emit out/a.txt "a($(cat src/model.txt))"
 [ -f out/b.txt ] && emit out/c.txt "c($(cat out/b.txt))"
 [ -z "$stale" ] || { echo "majordomus: generated artifact(s) stale:$stale"; exit 10; }
 SH
-# stage B: scripts/generate-site-data [--check]
+# stage B: scripts/generate-site-data [--check]. It answers --derive-key with no key, so
+# scripts/derive never skips it here; case 3280 holds the skip itself (I2880).
 cat > "$G/scripts/generate-site-data" <<'SH'
 #!/usr/bin/env bash
 set -eu
+[ "${1:-}" != --derive-key ] || exit 0
 cd "$(dirname "$0")/.."
 printf 'site-data%s\n' "${1:+ $1}" >> "$STUB_LOG"
 want="b($(cat out/a.txt))"

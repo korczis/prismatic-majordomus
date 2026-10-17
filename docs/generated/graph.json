@@ -39726,7 +39726,9 @@
             ".ai/repo/project/issues/I2880.yaml"
           ],
           "slug": "a-derive-with-current-site-data-skips-generation",
-          "updated_at": "2026-10-17",
+          "started_at": "2026-10-17T19:54:47Z",
+          "started_event": "sha256:3bd0cac52c05a186cbc136cd4df38c6727f9a9c9d3bda0f2e519ef7a860d993a",
+          "updated_at": "2026-10-17T19:54:47Z",
           "validation": [
             "bin/majordomus plan validate",
             "bash test/run.sh --no-skips <the case this issue adds> 10_site_data 51_derived_artifacts_committed",
@@ -57483,6 +57485,13 @@
         "label": "test/cases/31_command_coverage.sh",
         "route": "/cockpit/objects/test/test-cases-31-command-coverage-sh",
         "source": "test/cases/31_command_coverage.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3280_a_derive_with_current_site_data_skips_generation.sh",
+        "kind": "test",
+        "label": "test/cases/3280_a_derive_with_current_site_data_skips_generation.sh",
+        "route": "/cockpit/objects/test/test-cases-3280-a-derive-with-current-site-data-skips-generation-sh",
+        "source": "test/cases/3280_a_derive_with_current_site_data_skips_generation.sh"
       },
       {
         "id": "majordomus://test/test/cases/32_refusal_lifecycle.sh",
@@ -89152,6 +89161,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3280_a_derive_with_current_site_data_skips_generation.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/32_refusal_lifecycle.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -94433,8 +94447,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2959,
-      "edges": 6501,
+      "nodes": 2960,
+      "edges": 6502,
       "acyclic": false,
       "truncated": false
     }

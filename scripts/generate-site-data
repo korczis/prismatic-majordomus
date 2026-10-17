@@ -21,6 +21,9 @@
 #   scripts/generate-site-data --check    write to a temp dir and diff against the committed files
 #   scripts/generate-site-data --no-scenarios
 #                                         derive without executing the use-case scenarios
+#   scripts/generate-site-data --derive-key
+#                                         print the key of inputs and generator a derivation
+#                                         compares with source.json's derive_key (I2880)
 #
 # Exit: 0 generated (or, under --check, in sync) · 10 a finding about the repository: an input
 # that does not hold, or derived data that is stale · 12 the run could not reach its subject —
@@ -181,6 +184,33 @@ mj_site_inputs_hash() { ( cd "$ROOT" && mj_inputs_hash $INPUTS ); }
 # than a full generation. Byte-identical output is what test/cases/10_site_data.sh holds it to.
 if [ "${1:-}" = --fingerprint ]; then
   mj_site_inputs_hash; exit 0
+fi
+# The derivation's key (I2880): the fingerprint of the canonical inputs above joined with the
+# fingerprint of what turns them into the site data — this script, every library and awk/jq
+# program it can read (lib/, scripts/lib/), and the sources of the executable it calls
+# (apps/majordomus-cli/). The input list alone cannot say the committed data is current: it
+# names none of these, so a changed generator over unchanged inputs would read as current.
+# The sets are whole directories rather than the files sourced today: a key that covers too
+# much costs one generation, one that covers too little skips a generation that was owed. The
+# working tree is what is hashed, staged or not; a file the tree ignores is not. Empty when
+# git cannot list the files, so a caller never skips on a key it could not compute.
+# scripts/derive compares it with the derive_key that source.json records.
+mj_site_generator_files() {
+  ( cd "$ROOT" && git ls-files -co --exclude-standard -- scripts/generate-site-data lib scripts/lib apps/majordomus-cli 2>/dev/null ) \
+    | LC_ALL=C sort -u | while IFS= read -r f; do if [ -f "$ROOT/$f" ]; then printf '%s\n' "$f"; fi; done
+}
+mj_site_derive_key() {
+  local files ih gh
+  files="$(mj_site_generator_files)"
+  [ -n "$files" ] || return 0
+  ih="$(mj_site_inputs_hash)" || return 0
+  # shellcheck disable=SC2086  # one path per line, and git ls-files names none with whitespace here
+  gh="$( cd "$ROOT" && mj_inputs_hash $files )" || return 0
+  if [ -n "$ih" ] && [ -n "$gh" ]; then printf 'inputs %s\ngenerator %s\n' "$ih" "$gh" | mj_sha256_hex; fi
+}
+# --derive-key prints that key and exits, without generating anything.
+if [ "${1:-}" = --derive-key ]; then
+  mj_site_derive_key; exit 0
 fi
 
 # The route of a document page, and the one reservation in it. /docs/cli/ is the *native*
@@ -1898,8 +1928,12 @@ HASH="$(mj_site_inputs_hash)"
 # tree. The commit a page was built from is a fact of the build, not of the derivation:
 # scripts/site-build writes it into site/data/build.json (for the templates) and
 # site/static/build.json (served at /build.json), neither of them committed.
-jq -n --arg v "$VERSION" --arg h "$HASH" --argjson g "$GEN_VERSION" --arg inputs "$INPUTS" \
-  '{schema:1, source_version:$v, source_hash:$h, generator_version:$g, input_files: ($inputs | split("\n"))}' > "$OUT/source.json"
+# derive_key is what scripts/derive compares before it pays for this generation again (I2880):
+# equal to `--derive-key` on a tree, the data here was generated from exactly that tree's
+# inputs and generator. null when it could not be computed, which a derivation never matches.
+DKEY="$(mj_site_derive_key)"
+jq -n --arg v "$VERSION" --arg h "$HASH" --argjson g "$GEN_VERSION" --arg inputs "$INPUTS" --arg k "$DKEY" \
+  '{schema:1, source_version:$v, source_hash:$h, derive_key: (if $k == "" then null else $k end), generator_version:$g, input_files: ($inputs | split("\n"))}' > "$OUT/source.json"
 
 mj_phase_end "gen:source.json" "$GEN_T0"
 # ---------------------------------------------------------------- derived section pages (every tile is a page)
