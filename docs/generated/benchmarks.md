@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 202 | 171 | 0 | 31 |
-| http | 197 | 171 | 0 | 26 |
-| mcp | 192 | 167 | 0 | 25 |
+| direct | 203 | 172 | 0 | 31 |
+| http | 198 | 172 | 0 | 26 |
+| mcp | 193 | 168 | 0 | 25 |
 | system | 14 | 14 | 0 | 0 |
-| total | 605 | 523 | 0 | 82 |
+| total | 608 | 526 | 0 | 82 |
 
 ## Capabilities
 
@@ -31,6 +31,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `commit.plan` | commit | query | — | covered | covered | covered | `default` |
 | `commit.scopes` | commit | query | — | covered | covered | covered | `default` |
 | `commit.validate` | commit | query | — | covered | covered | covered | `conventional`, `not-conventional`, `merge` |
+| `compute.verify` | compute | query | — | covered | covered | covered | `match`, `mismatch` |
 | `continuity.device` | continuity | command | — | waived | waived | waived | — |
 | `continuity.plan` | continuity | query | — | covered | covered | covered | `default`, `by-prefix` |
 | `continuity.publish` | continuity | command | — | waived | waived | waived | — |
@@ -249,7 +250,6 @@ Every screen and panel of the UI's own route list, read with `GET` and `Accept: 
 |---|---|---|---|
 | `system.http.ui.index` | `/ui` | pinned | — |
 | `system.http.ui.command` | `/ui/command` | pinned | — |
-| `system.http.ui.idd` | `/ui/idd` | pinned | — |
 | `system.http.ui.roadmap` | `/ui/roadmap` | pinned | — |
 | `system.http.ui.work` | `/ui/work` | pinned | — |
 | `system.http.ui.issues` | `/ui/issues` | pinned | — |
@@ -265,7 +265,6 @@ Every screen and panel of the UI's own route list, read with `GET` and `Accept: 
 | `system.http.ui.observatory` | `/ui/observatory` | pinned | — |
 | `system.http.live.ui.index` | `/ui` | live | — |
 | `system.http.live.ui.command` | `/ui/command` | live | — |
-| `system.http.live.ui.idd` | `/ui/idd` | live | — |
 | `system.http.live.ui.roadmap` | `/ui/roadmap` | live | — |
 | `system.http.live.ui.work` | `/ui/work` | live | — |
 | `system.http.live.ui.issues` | `/ui/issues` | live | — |
