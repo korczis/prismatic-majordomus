@@ -137,4 +137,62 @@ mod tests {
         assert_eq!(typed(".agents/skills/evolve/SKILL.md"), "/evolve");
         assert_eq!(typed(".mcp.json"), ".mcp.json");
     }
+
+    fn answer(value: Result<Value, String>) -> Answer {
+        Answer {
+            source: SKILLS,
+            route: None,
+            exposure: Default::default(),
+            value: value.map(Into::into),
+            took: std::time::Duration::ZERO,
+            standing: super::super::source::Standing::NOW,
+        }
+    }
+
+    /// Each workflow skill is a row anchored by its id, carrying its title, its description
+    /// and its status; a skill with no status is `unknown`, never an empty badge.
+    #[test]
+    fn a_workflow_skill_is_a_row_with_its_title_description_and_status() {
+        let html = workflows(&answer(Ok(serde_json::json!({
+            "skills": [
+                {
+                    "id": "evolve",
+                    "title": "Evolve",
+                    "description": "Turn observations into knowledge.",
+                    "status": "Active"
+                },
+                {"id": "implement", "title": "Implement", "description": "Carry a change."}
+            ]
+        }))))
+        .render();
+        for said in [
+            "id=\"skill-evolve\"",
+            "id=\"skill-implement\"",
+            "Evolve",
+            "Turn observations into knowledge.",
+            "Carry a change.",
+            "active",
+            "unknown",
+        ] {
+            assert!(html.contains(said), "{said:?} is missing from:\n{html}");
+        }
+        assert!(!html.contains("declares no workflow skill"), "{html}");
+    }
+
+    /// No skill is said in words, and a source that could not answer says why.
+    #[test]
+    fn no_workflow_skill_is_said_and_an_unanswered_source_says_why() {
+        let none = workflows(&answer(Ok(serde_json::json!({"skills": []})))).render();
+        assert!(
+            none.contains("The layer declares no workflow skill."),
+            "{none}"
+        );
+        assert!(!none.contains("<tr"), "{none}");
+
+        let failed = workflows(&answer(Err("the index is rebuilding".into()))).render();
+        assert!(
+            failed.contains("skills.status could not answer: the index is rebuilding"),
+            "{failed}"
+        );
+    }
 }

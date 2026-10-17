@@ -346,16 +346,15 @@ fn held_commits<'c>(root: &Path, commits: &[&'c str]) -> HashSet<&'c str> {
         .iter()
         .map(|c| format!("{c}^{{commit}}\n"))
         .collect();
-    if let Some(mut stdin) = child.stdin.take() {
-        // a write that fails leaves fewer answers than questions, which the zip reads as absent
-        let _ = stdin.write_all(names.as_bytes());
-    }
-    let Ok(out) = child.wait_with_output() else {
-        return HashSet::new();
+    // a write that fails leaves fewer answers than questions, which the zip reads as absent
+    let _ = child
+        .stdin
+        .take()
+        .map(|mut stdin| stdin.write_all(names.as_bytes()));
+    let out = match child.wait_with_output() {
+        Ok(out) if out.status.success() => out,
+        _ => return HashSet::new(),
     };
-    if !out.status.success() {
-        return HashSet::new();
-    }
     // one answer per question, in order: `commit`, or `<name> missing`
     commits
         .iter()
@@ -588,7 +587,12 @@ impl Graph {
         if !out.status.success() {
             return Graph::default();
         }
-        let text = String::from_utf8_lossy(&out.stdout);
+        Graph::from_listing(&String::from_utf8_lossy(&out.stdout))
+    }
+
+    /// The graph a `git rev-list --parents` listing describes: one row per commit, its full
+    /// name and then its parents'. Empty when a row names a parent no row lists.
+    fn from_listing(text: &str) -> Graph {
         let rows: Vec<Vec<&str>> = text
             .lines()
             .map(|l| l.split_whitespace().collect::<Vec<_>>())
@@ -1396,5 +1400,98 @@ mod tests {
             unreadable_releases(&shallow.path().join("c"), &objects),
             vec!["0.1.0".to_string()]
         );
+    }
+
+    /// A release's window opens at the previous release: with both commits held both read,
+    /// and with the previous release's commit absent the newer one cannot be read either.
+    #[test]
+    fn a_release_is_unreadable_when_the_previous_release_is_not_held() {
+        let (dir, first) = repo_with_commits(2);
+        let second = git(dir.path(), &["rev-parse", "HEAD"]);
+        assert_ne!(first, second);
+        let record = |version: &str, commit: &str, at: &str| {
+            let mut object = release_record(commit);
+            let metadata = object.metadata.as_object_mut().expect("a mapping");
+            metadata.insert("version".into(), version.into());
+            metadata.insert("tag".into(), format!("v{version}").into());
+            metadata.insert("published_at".into(), at.into());
+            object
+        };
+        let both = vec![
+            record("0.1.0", &first, "2026-09-01T00:00:00Z"),
+            record("0.2.0", &second, "2026-09-02T00:00:00Z"),
+        ];
+        assert!(
+            unreadable_releases(dir.path(), &both).is_empty(),
+            "both windows are held"
+        );
+
+        let absent = "0".repeat(40);
+        let gap = vec![
+            record("0.1.0", &absent, "2026-09-01T00:00:00Z"),
+            record("0.2.0", &second, "2026-09-02T00:00:00Z"),
+        ];
+        assert_eq!(
+            unreadable_releases(dir.path(), &gap),
+            vec!["0.2.0".to_string(), "0.1.0".to_string()],
+            "the newer release's window starts at a commit this repository lacks"
+        );
+    }
+
+    /// A git that cannot be asked — it cannot start, or the directory is no repository —
+    /// holds no commit, so every release reads as unreadable rather than as empty.
+    #[test]
+    fn a_git_that_cannot_answer_holds_no_commit() {
+        let (dir, release) = repo_with_commits(1);
+        let absent = "0".repeat(40);
+        let asked = [release.as_str(), absent.as_str()];
+        assert_eq!(
+            held_commits(dir.path(), &asked),
+            HashSet::from([release.as_str()]),
+            "the repository holds its own commit and not an unknown one"
+        );
+
+        // a NUL in the path: the command cannot even be started
+        let unspawnable = Path::new("no\0where");
+        assert!(held_commits(unspawnable, &asked).is_empty());
+        assert_eq!(
+            unreadable_releases(unspawnable, &[release_record(&release)]),
+            vec!["0.1.0".to_string()]
+        );
+
+        // a directory that does not exist: git starts and refuses
+        let gone = dir.path().join("absent");
+        assert!(held_commits(&gone, &asked).is_empty());
+    }
+
+    /// The shared listing is all or nothing: a git that cannot start lists nothing, and a
+    /// listing that names a parent it does not list is not the whole history.
+    #[test]
+    fn a_listing_git_cannot_give_whole_is_no_graph() {
+        let full = "a".repeat(40);
+        let graph = Graph::list(Path::new("no\0where"), &[full]);
+        assert!(graph.index.is_empty() && graph.parents.is_empty());
+
+        let (c, p) = ("c".repeat(40), "d".repeat(40));
+        let partial = Graph::from_listing(&format!("{c} {p}\n"));
+        assert!(partial.index.is_empty(), "a parent outside the listing");
+        let whole = Graph::from_listing(&format!("{c} {p}\n{p}\n"));
+        assert_eq!(whole.index.len(), 2);
+        assert_eq!(whole.parents[whole.index[&c]], vec![whole.index[&p]]);
+    }
+
+    /// A commit reached along two paths is reached once: a merge whose first parent is also
+    /// the second parent's parent pushes that commit twice before it is popped.
+    #[test]
+    fn a_commit_reached_twice_is_reached_once() {
+        let [m, r, a, x] = ["1", "2", "3", "4"].map(|d| d.repeat(40));
+        let graph = Graph::from_listing(&format!("{m} {r} {a}\n{a} {r}\n{r}\n{x}\n"));
+        let reached = graph.reach(graph.index[&m]);
+        for held in [&m, &r, &a] {
+            assert!(reached[graph.index[held]], "{held} is in the merge");
+        }
+        assert!(!reached[graph.index[&x]], "an unrelated commit is not");
+        let from_a = graph.reach(graph.index[&a]);
+        assert!(from_a[graph.index[&r]] && !from_a[graph.index[&m]]);
     }
 }
