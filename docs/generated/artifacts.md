@@ -297,7 +297,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/economics.json` | `economics` | json | 30840 | `3f8d295bff26c900` |
 | `docs/generated/economics.md` | `economics` | markdown | 15299 | `a0bd687b580daaae` |
 | `docs/generated/economics.yaml` | `economics` | yaml | 25713 | `7954348d628cea10` |
-| `docs/generated/graph.json` | `graph` | json | 3595031 | `989aa66e999c9ca8` |
+| `docs/generated/graph.json` | `graph` | json | 3595577 | `4d82638e899d888b` |
 | `docs/generated/graph.schema.json` | `graph-schema` | json | 7618 | `7a585a29178e802c` |
 | `docs/generated/modules/artifacts.md` | `modules/artifacts` | markdown | 1742 | `3f41ce69bb9d9cb7` |
 | `docs/generated/modules/brief.md` | `modules/brief` | markdown | 2394 | `5d5decdd715e90ed` |
@@ -422,9 +422,9 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `site/data/registry/design.json` | `site-design` | json | 11587 | `ce89335fbfeb458a` |
 | `site/data/registry/distribution.json` | `site-distribution` | json | 3005 | `922b51095b59cca1` |
 | `site/data/registry/evidence-subjects.json` | `site-evidence-subjects` | json | 802375 | `1b8f7ef95cf099fb` |
-| `site/data/registry/product-graph.json` | `site-product-graph` | json | 98732 | `28db93ed4e4e8033` |
-| `site/data/registry/product.json` | `site-product` | json | 739634 | `2e6d3ab54a40ef08` |
-| `site/data/registry/registry.json` | `site-registry` | json | 6958124 | `cf8e6580b42b34f1` |
+| `site/data/registry/product-graph.json` | `site-product-graph` | json | 111570 | `a61f0cb38a1d1712` |
+| `site/data/registry/product.json` | `site-product` | json | 758797 | `08ebddcad14b05d2` |
+| `site/data/registry/registry.json` | `site-registry` | json | 6958124 | `f73e76e8fbfe234c` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180163 | `c3d964ece2af2e0c` |
 | `site/data/registry/why.json` | `site-why` | json | 349924 | `369491bb2e12a860` |
 | `site/static/favicon.svg` | `design-mark` | text | 904 | `a78a3dfd15c1fe3b` |
