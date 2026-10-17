@@ -623,6 +623,12 @@ jobs:
       # only two skipped here.
       - name: the rust gates of the plan
         if: matrix.lane == 3
+        env:
+          # The case gates of this job (release-record-cases, plan-record-cases) drive the
+          # executable rust-check's `cargo test` built, as the suite shards do: without it a
+          # case takes the shell path, and `knowledge validate` warns that it could not ask
+          # the index (case 3075, top 70 run 38980212746).
+          MAJORDOMUS_BIN: ${{ github.workspace }}/apps/majordomus-cli/target/debug/majordomus
         run: MJ_CI_TIMINGS=timings.tsv scripts/ci/run-plan --plan plan.json --job rust --skip rust-check,rust-integration
       - id: target
         if: matrix.lane == 3
