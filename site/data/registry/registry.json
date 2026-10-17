@@ -6,23 +6,23 @@
     "version": "0.28.0"
   },
   "registry": {
-    "fingerprint": "74b5aa3e464796aab7d08de8c77241e140bb3e40a79cf35cfa2a39695f2b0cd6",
+    "fingerprint": "d90392c1cd5b55cf1e41814958b0453bc1baf671599037fab6c4d26fea54e589",
     "summary": {
-      "total": 2537,
+      "total": 2541,
       "builtin": 203,
-      "declarative": 2334,
+      "declarative": 2338,
       "by_kind": {
         "command": 31,
         "query": 172,
-        "resource": 2334
+        "resource": 2338
       },
       "by_stability": {
         "behaviorally_verified": 141,
         "experimental": 53,
-        "implemented": 2343
+        "implemented": 2347
       },
       "mcp_tools": 193,
-      "mcp_resources": 2389,
+      "mcp_resources": 2393,
       "http_routes": 198,
       "cli_commands": 108,
       "modules": 93,
@@ -83407,7 +83407,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 428,
+        "capabilities": 429,
         "capability_ids": []
       },
       {
@@ -83978,7 +83978,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 528,
+        "capabilities": 531,
         "capability_ids": []
       },
       {
@@ -84069,7 +84069,7 @@
     ]
   },
   "index": {
-    "fingerprint": "6a3d7e84e5143d0e67a9adda2f8cfcae410d7df49b98d2fa96686ca2df3ba4a1",
+    "fingerprint": "93bc2af7e473810470fbbbee7be008c7694b9e8174f517137f9247f09dbd69b4",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -84109,7 +84109,7 @@
       "gap": 5,
       "implementation": 52,
       "intent": 6,
-      "issue": 428,
+      "issue": 429,
       "knowledge": 4,
       "mesh-declaration": 1,
       "milestone": 42,
@@ -84123,7 +84123,7 @@
       "session": 90,
       "skill": 8,
       "taxonomy": 10,
-      "test": 528,
+      "test": 531,
       "use-case": 49,
       "workspace": 1
     },
@@ -89951,7 +89951,7 @@
         "title": "Backlog",
         "path": "docs/BACKLOG.md",
         "source_class": "document",
-        "bytes": 13475
+        "bytes": 14423
       },
       {
         "uri": "majordomus://document/docs/BRIEF.md",
@@ -90320,7 +90320,7 @@
         "title": "`majordomus ui` — the product",
         "path": "docs/MAJORDOMUS_UI.md",
         "source_class": "document",
-        "bytes": 39792
+        "bytes": 42236
       },
       {
         "uri": "majordomus://document/docs/MCP.md",
@@ -90410,7 +90410,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 172896
+        "bytes": 170064
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -90590,7 +90590,7 @@
         "title": "Worktrees",
         "path": "docs/WORKTREES.md",
         "source_class": "document",
-        "bytes": 38180
+        "bytes": 45299
       },
       {
         "uri": "majordomus://document/docs/claims/a-candidate-is-routed-by-what-it-is-about.md",
@@ -93376,7 +93376,7 @@
         "path": ".ai/repo/project/gaps/a-browser-computes-what-the-server-verifies.yaml",
         "section": "project",
         "source_class": "gap",
-        "bytes": 1857
+        "bytes": 2401
       },
       {
         "uri": "majordomus://gap/a-session-leaves-what-it-observed",
@@ -93764,7 +93764,7 @@
         "identity": "lib/rust_bin.sh",
         "path": "lib/rust_bin.sh",
         "source_class": "library",
-        "bytes": 28837
+        "bytes": 65651
       },
       {
         "uri": "majordomus://implementation/lib/search.sh",
@@ -93847,7 +93847,7 @@
         "path": ".ai/repo/project/intents/a-browser-computes-what-the-server-verifies.yaml",
         "section": "project",
         "source_class": "intent",
-        "bytes": 2192
+        "bytes": 2666
       },
       {
         "uri": "majordomus://intent/a-session-leaves-what-it-observed",
@@ -98258,7 +98258,7 @@
         "path": ".ai/repo/project/issues/I2713.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2052
+        "bytes": 2689
       },
       {
         "uri": "majordomus://issue/I2714",
@@ -98611,6 +98611,17 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 2258
+      },
+      {
+        "uri": "majordomus://issue/I2788",
+        "kind": "issue",
+        "identity": "I2788",
+        "title": "A page computes the canonical digest in a Worker and shows the server's verdict",
+        "description": "Add the UI screen /ui/compute: when the person asks, a same-origin Worker loads the committed wasm32 portable core, computes the canonical digest of the JSON the page holds, and the page asks compute.verify and shows match, mismatch or invalid. The module is committed under share/ui/compute with the digest of the core sources it was built from; a test refuses a module whose sources moved or that carries a host path, and the portable-core gate executes the committed module against the fixture. Only the Worker's response allows WebAssembly compilation; every page keeps the Cockpit's policy.",
+        "path": ".ai/repo/project/issues/I2788.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2507
       },
       {
         "uri": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
@@ -101375,7 +101386,7 @@
         "path": ".ai/repo/rules/project/accumulation-is-measured.v2.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 10463,
+        "bytes": 13652,
         "tags": [
           "operations",
           "git",
@@ -104460,7 +104471,7 @@
         "identity": "test/cases/08_no_forbidden_constructs.sh",
         "path": "test/cases/08_no_forbidden_constructs.sh",
         "source_class": "case",
-        "bytes": 9096
+        "bytes": 11659
       },
       {
         "uri": "majordomus://test/test/cases/09_site_mobile_first.sh",
@@ -105180,7 +105191,7 @@
         "identity": "test/cases/131_backlog_hygiene.sh",
         "path": "test/cases/131_backlog_hygiene.sh",
         "source_class": "case",
-        "bytes": 7874
+        "bytes": 10107
       },
       {
         "uri": "majordomus://test/test/cases/131_completion_gates.sh",
@@ -105636,7 +105647,7 @@
         "identity": "test/cases/276_disk_is_bounded.sh",
         "path": "test/cases/276_disk_is_bounded.sh",
         "source_class": "case",
-        "bytes": 13832
+        "bytes": 17593
       },
       {
         "uri": "majordomus://test/test/cases/277_entities_are_routable.sh",
@@ -105820,7 +105831,7 @@
         "identity": "test/cases/3002_a_build_never_waits_in_silence.sh",
         "path": "test/cases/3002_a_build_never_waits_in_silence.sh",
         "source_class": "case",
-        "bytes": 8925
+        "bytes": 9361
       },
       {
         "uri": "majordomus://test/test/cases/3003_the_knowledge_screen_answers.sh",
@@ -106207,6 +106218,14 @@
         "bytes": 8738
       },
       {
+        "uri": "majordomus://test/test/cases/3080_idle_incremental_sessions_are_pruned.sh",
+        "kind": "test",
+        "identity": "test/cases/3080_idle_incremental_sessions_are_pruned.sh",
+        "path": "test/cases/3080_idle_incremental_sessions_are_pruned.sh",
+        "source_class": "case",
+        "bytes": 9514
+      },
+      {
         "uri": "majordomus://test/test/cases/3084_a_case_near_its_budget_is_named.sh",
         "kind": "test",
         "identity": "test/cases/3084_a_case_near_its_budget_is_named.sh",
@@ -106325,6 +106344,22 @@
         "path": "test/cases/318_a_partial_sweep_says_so.sh",
         "source_class": "case",
         "bytes": 23341
+      },
+      {
+        "uri": "majordomus://test/test/cases/3196_stale_crate_artifacts_are_pruned_under_cargos_lock.sh",
+        "kind": "test",
+        "identity": "test/cases/3196_stale_crate_artifacts_are_pruned_under_cargos_lock.sh",
+        "path": "test/cases/3196_stale_crate_artifacts_are_pruned_under_cargos_lock.sh",
+        "source_class": "case",
+        "bytes": 8955
+      },
+      {
+        "uri": "majordomus://test/test/cases/3197_idle_private_build_dirs_are_reclaimed.sh",
+        "kind": "test",
+        "identity": "test/cases/3197_idle_private_build_dirs_are_reclaimed.sh",
+        "path": "test/cases/3197_idle_private_build_dirs_are_reclaimed.sh",
+        "source_class": "case",
+        "bytes": 5484
       },
       {
         "uri": "majordomus://test/test/cases/31_command_coverage.sh",
@@ -108132,7 +108167,7 @@
         "identity": "test/cases/910_nothing_merges_around_the_integrator.sh",
         "path": "test/cases/910_nothing_merges_around_the_integrator.sh",
         "source_class": "case",
-        "bytes": 5503
+        "bytes": 5621
       },
       {
         "uri": "majordomus://test/test/cases/911_repair_decides_and_moves_nothing.sh",
@@ -109337,7 +109372,7 @@
       "identity": [
         "id"
       ],
-      "objects": 428
+      "objects": 429
     },
     {
       "name": "knowledge",
@@ -109489,7 +109524,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 528
+      "objects": 531
     },
     {
       "name": "use-case",
@@ -153670,6 +153705,14 @@
         "route": "GET /ui/mesh"
       },
       {
+        "key": "system.http.ui.compute",
+        "kind": "page",
+        "transport": "http",
+        "module": "system",
+        "cached": true,
+        "route": "GET /ui/compute"
+      },
+      {
         "key": "system.http.ui.delivery",
         "kind": "page",
         "transport": "http",
@@ -153804,6 +153847,14 @@
         "module": "system",
         "cached": true,
         "route": "GET /ui/mesh"
+      },
+      {
+        "key": "system.http.live.ui.compute",
+        "kind": "page",
+        "transport": "http",
+        "module": "system",
+        "cached": true,
+        "route": "GET /ui/compute"
       },
       {
         "key": "system.http.live.ui.delivery",

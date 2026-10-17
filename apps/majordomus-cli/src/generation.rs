@@ -224,4 +224,12 @@ mod tests {
         fs::write(t.path().join("tests/it.rs"), "#[test]\nfn t() {}\n").unwrap();
         assert_eq!(before, crate_generation(t.path()));
     }
+
+    /// A directory with no parent has no path dependencies beside it to read: the filesystem
+    /// root holds none of the crate's inputs, so it has no generation, and nothing above it
+    /// is asked.
+    #[test]
+    fn a_root_with_no_parent_has_no_generation() {
+        assert_eq!(crate_generation(std::path::Path::new("/")), None);
+    }
 }

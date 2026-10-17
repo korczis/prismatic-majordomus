@@ -20,6 +20,10 @@ satisfaction:
     criterion: A claimed result of a portable-core function is recomputed by the server on the input the claim carries and answered match, mismatch or invalid with its reason, for every row of the shared fixture, from a caller on any host, and asking writes nothing to the repository and starts no execution
     evidence: test
     ref: apps/majordomus-cli/tests/compute_verify.rs
+  - id: a-page-computes-and-the-server-agrees
+    criterion: A page this server serves computes the canonical digest in a same-origin Worker with the committed wasm32 module, only when the person asks, and shows the server's recomputed verdict; the committed module names the core sources it was built from, those are the current sources, it carries no host path, and executed it answers every fixture row
+    evidence: test
+    ref: apps/majordomus-cli/tests/ui_compute.rs
 governance:
   - adr:adr-0170
   - adr:adr-0126

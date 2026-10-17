@@ -53,6 +53,7 @@ lists it), declared beside the Cockpit in `apps/majordomus-cli/src/web/discover.
 | PR Drain | `/ui/prs` | `plan.status`, `plan.issues` (one issue, `?issue=`); `integration.queue` and `integration.events` on its own route (`/ui/panels/drain`), narrowed by `?disposition=`, `?lane=` and `?q=`, one pull request (`?pr=`) in the inspector with what the executor did to it, the lane's recent activity, and its merges per day over the fortnight the trail ends on |
 | Capabilities | `/ui/capabilities` | `repository.info`, `capabilities.list` by kind; one capability (`?id=`) from `capabilities.describe` |
 | Mesh | `/ui/mesh` | `mesh.peers`, `mesh.events`, `mesh.state` (live claims); one machine (`?node=`) in the inspector, and who holds each seat of [rule `project.the-cooperation-model-is-the-owners-word`](../.ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v1.md) read from the claims |
+| Browser compute | `/ui/compute` | `capabilities.describe` (`compute.verify`), the committed module's provenance; when the reader asks, the portable core's wasm32 module runs in a Worker of this origin and `compute.verify` recomputes what it answered ([Browser compute](#browser-compute)) |
 | CI/CD & Releases | `/ui/delivery` | `distribution.releases`, `release.version`, `deploy.list`, `gates.model`, `integration.timings` (each check's median, 90th percentile and longest run, and the open heads that waited longest, each leading to its pull request) |
 | Deployments | `/ui/deployments` | `deploy.list` (what the layer declares); `deploy.observed` (what the forge recorded: where each environment stands, every deployment to every environment — GitHub Pages among them — and every release, each commit, ref, environment, run and release a link); `delivery.report` on its own route |
 | Evidence | `/ui/evidence` | `evidence.report`; one claim (`?claim=`) in its inspector from `evidence.claim`: what settles it, its last run, what changed since, how to reproduce it, and the claims its test also proves |
@@ -406,12 +407,38 @@ the window of events it holds (first and last time and logical clock) and what w
 and why; `observatory.replay` refuses a recording with an event that lacks its kind, clock or
 time, naming the event. A recording is a moment; it is replaced by capturing again. What is still open is in [What it does not do yet](#what-it-does-not-do-yet).
 
+## Browser compute
+
+`/ui/compute` is the first visible use of ADR 0170: a browser computes with the same code the
+server runs, and nothing it answers is trusted until the server has recomputed it.
+
+- Nothing computes until the reader submits the form. Then a dedicated Worker of this origin
+  (`share/ui/compute/worker.js`) fetches the committed module, calls its C ABI
+  (`mj_alloc`, `mj_canonical_digest`, `mj_free`) on the JSON in the form, and the page sends
+  the digest to `POST /api/v1/compute/verify` as a claim. The verdict shown, `match`,
+  `mismatch` or `invalid` with its reason, is the server's.
+- A box asks the page to claim a digest with one digit changed, so a reader sees the server
+  refuse a wrong claim as well as accept a right one.
+- Only the Worker script's response carries a policy that allows WebAssembly compilation
+  (`'wasm-unsafe-eval'`); a dedicated Worker of this origin is governed by its own script's
+  policy, so every page keeps the Cockpit's, which allows none.
+- The module is committed with the digest of the core sources it was built from
+  (`compute/majordomus_core.json`). `tests/ui_compute.rs` refuses a module whose sources moved
+  since, or that carries a path of the machine that built it, and the `portable-core` gate
+  executes the committed module against the shared fixture. Two hosts build different bytes
+  from the same sources, so what is held is the sources a module names and the answers it
+  gives, not its bytes.
+- The screen is not read again while the reader works on it (`data-keeps-its-place`). In the
+  published snapshot the page still computes, and says that no server recomputed it.
+
 ## Without JavaScript
 
 Every screen is complete HTML, and the menu of a narrow screen opens with a checkbox and its
-label. `share/ui/ui.js` is the only script of the UI's own: it pulls in slow panels, refreshes
+label. `share/ui/ui.js` is the script every screen loads: it pulls in slow panels, refreshes
 the screen, draws graphs, reveals the bar's search button and keeps the sidebar beneath the
-bar. The bar's menus and theme toggle run on the site's own two scripts. The one inline script is the theme
+bar. The bar's menus and theme toggle run on the site's own two scripts. Browser compute is
+the one screen with a script of its own, because computing is what it is for; without
+JavaScript it says so and names the route that verifies. The one inline script is the theme
 statement the policy allows by its digest, the same one the Cockpit ships. A served test
 asserts that the UI and the Cockpit carry one identical policy.
 
@@ -425,6 +452,8 @@ The UI's files live in `share/ui/`.
 | `nav.js`, `theme.js` | copied byte for byte from `site/nav.js` and `site/theme.js` by `scripts/cockpit-assets`; `--check` fails when either differs | yes |
 | `favicon.svg` | written from the canonical mark by `majordomus generate` | yes |
 | `vendor/cytoscape.min.js` | copied from the pinned npm package by `scripts/cockpit-assets` | no |
+| `compute/majordomus_core.wasm`, `compute/majordomus_core.json` | the wasm32 build of `apps/majordomus-core` and the digest of the sources it was built from, written by `cargo test --test ui_compute -- --ignored --exact the_core_module_is_rebuilt_from_its_sources` | yes |
+| `compute/worker.js`, `compute/page.js` | written by hand | yes |
 
 The `ui` class of the CI model (`.ai/repo/ci/gates.yaml`) selects the asset check, the probe,
 the design gate and the UI audit whenever a file under `share/ui/` or
