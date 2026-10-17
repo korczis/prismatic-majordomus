@@ -5,6 +5,460 @@
   "current": "0.29.0",
   "sections": [
     {
+      "version": "0.29.0",
+      "tag": "v0.29.0",
+      "date": "2026-10-17T19:47:09Z",
+      "commit": "4a4573690f861473fad383b4ecfd6f868065c13a",
+      "unreleased": false,
+      "notes_url": "https://github.com/korczis/prismatic-majordomus/releases/tag/v0.29.0",
+      "compare_url": "https://github.com/korczis/prismatic-majordomus/compare/v0.28.0...v0.29.0",
+      "tree_url": "https://github.com/korczis/prismatic-majordomus/tree/v0.29.0",
+      "decisions": [
+        {
+          "id": "adr-0169",
+          "title": "What an adoption leaves behind is measured, not remembered",
+          "status": "proposed",
+          "date": "2026-10-16",
+          "url": "https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0169-what-an-adoption-leaves-behind-is-measured-not-remembered.md",
+          "added": "b0064423d240178051d3aa14c3d4e041632609f2"
+        },
+        {
+          "id": "adr-0167",
+          "title": "Work moves through seats on the mesh, lands in combined tops, and every checkout is kept current",
+          "status": "proposed",
+          "date": "2026-10-16",
+          "url": "https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0167-work-moves-through-seats-on-the-mesh-and-lands-in-combined-tops.md",
+          "added": "7adfcc3d1036d47d76a6d6268d5f87ec2cf4ca3e"
+        }
+      ],
+      "groups": [
+        {
+          "kind": "feat",
+          "heading": "Added",
+          "rank": 0,
+          "changes": [
+            {
+              "kind": "feat",
+              "scope": "features",
+              "subject": "every capability module and every kind is named by a stable feature",
+              "breaking": false,
+              "commit": "359f8223f",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/359f8223f"
+            },
+            {
+              "kind": "feat",
+              "scope": "ui",
+              "subject": "the intent workspace shows an intent and what serves it (I2780)",
+              "breaking": false,
+              "commit": "f1cb08bb7",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/f1cb08bb7",
+              "references": [
+                {
+                  "kind": "issue",
+                  "id": "I2780",
+                  "title": "The UI has an intent workspace: an intent, its milestones, issues, waves and graph on one screen",
+                  "route": "/plan/i2780/"
+                }
+              ]
+            },
+            {
+              "kind": "feat",
+              "scope": "http",
+              "subject": "a served surface names the checkout serving it (I1031)",
+              "breaking": false,
+              "commit": "f178d2bfe",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/f178d2bfe",
+              "references": [
+                {
+                  "kind": "issue",
+                  "id": "I1031",
+                  "title": "A served surface says which checkout it is serving",
+                  "route": "/plan/i1031/"
+                }
+              ]
+            },
+            {
+              "kind": "feat",
+              "scope": "ui",
+              "subject": "the UI and the Cockpit wear the site's navbar (I2770)",
+              "breaking": false,
+              "commit": "3a8ca8549",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/3a8ca8549",
+              "references": [
+                {
+                  "kind": "issue",
+                  "id": "I2770",
+                  "title": "majordomus ui and the Cockpit wear the site's navbar: one renderer, the same styles and scripts, and a browser comparison that refuses a difference",
+                  "route": "/plan/i2770/"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "kind": "fix",
+          "heading": "Fixed",
+          "rank": 1,
+          "changes": [
+            {
+              "kind": "fix",
+              "scope": "ui",
+              "subject": "a monospaced path or id wraps at phone width instead of widening the page",
+              "breaking": false,
+              "commit": "4a4573690",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/4a4573690"
+            },
+            {
+              "kind": "fix",
+              "scope": "top",
+              "subject": "the create under the lock is covered, and a named skill never reads as unnamed",
+              "breaking": false,
+              "commit": "af5c8efe7",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/af5c8efe7"
+            },
+            {
+              "kind": "fix",
+              "scope": "top",
+              "subject": "the UI wears the bar the site renders, and two milestones no longer share an order",
+              "breaking": false,
+              "commit": "40f558749",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/40f558749"
+            },
+            {
+              "kind": "fix",
+              "scope": "top",
+              "subject": "batch 71a passes shellcheck and covers the create planned under the lock",
+              "breaking": false,
+              "commit": "81744db86",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/81744db86"
+            },
+            {
+              "kind": "fix",
+              "scope": "top",
+              "subject": "the navbar heading has an anchor zola and GitHub agree on",
+              "breaking": false,
+              "commit": "d0de74268",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/d0de74268"
+            },
+            {
+              "kind": "fix",
+              "scope": "top",
+              "subject": "batch 71a covers its changed code and meets the structure gates",
+              "breaking": false,
+              "commit": "bc9132ba0",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/bc9132ba0"
+            },
+            {
+              "kind": "fix",
+              "scope": "worktree",
+              "subject": "StartPoint's reference and fallback carry their examples",
+              "breaking": false,
+              "commit": "fe9b99405",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/fe9b99405"
+            },
+            {
+              "kind": "fix",
+              "scope": "pages",
+              "subject": "the published UI reads the evidence CI recorded (I2786)",
+              "breaking": false,
+              "commit": "302adff89",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/302adff89",
+              "references": [
+                {
+                  "kind": "issue",
+                  "id": "I2786",
+                  "title": "The published UI reads the evidence CI recorded, and a publication that would show tests as not run is refused",
+                  "route": "/plan/i2786/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I1954",
+                  "title": "Every runner reaches the ledger, through the recording branch",
+                  "route": "/plan/i1954/"
+                }
+              ]
+            },
+            {
+              "kind": "fix",
+              "scope": "ui",
+              "subject": "the intent workspace passes rustfmt and clippy (I2780)",
+              "breaking": false,
+              "commit": "8def88737",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/8def88737",
+              "references": [
+                {
+                  "kind": "issue",
+                  "id": "I2780",
+                  "title": "The UI has an intent workspace: an intent, its milestones, issues, waves and graph on one screen",
+                  "route": "/plan/i2780/"
+                }
+              ]
+            },
+            {
+              "kind": "fix",
+              "scope": "test",
+              "subject": "case 3110 stops when it cannot enter its temp dir (I1031)",
+              "breaking": false,
+              "commit": "159db73a4",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/159db73a4",
+              "references": [
+                {
+                  "kind": "issue",
+                  "id": "I1031",
+                  "title": "A served surface says which checkout it is serving",
+                  "route": "/plan/i1031/"
+                }
+              ]
+            },
+            {
+              "kind": "fix",
+              "scope": "bench",
+              "subject": "remove a cold sample's repository by the mktemp path it lives under",
+              "breaking": false,
+              "commit": "65e961cd8",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/65e961cd8"
+            },
+            {
+              "kind": "fix",
+              "scope": "test",
+              "subject": "case 3066 reads the mesh state until it answers",
+              "breaking": false,
+              "commit": "3d90e0920",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/3d90e0920"
+            },
+            {
+              "kind": "fix",
+              "scope": "worktree",
+              "subject": "a new worktree starts from the remote trunk",
+              "breaking": false,
+              "commit": "6131bff0f",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/6131bff0f"
+            },
+            {
+              "kind": "fix",
+              "scope": "start",
+              "subject": "a scope entry is one path, and what context refuses is refused at start",
+              "breaking": false,
+              "commit": "71474ebac",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/71474ebac",
+              "references": [
+                {
+                  "kind": "issue",
+                  "id": "I2760",
+                  "title": "A scope entry is one path, and a path context would refuse is refused at start",
+                  "route": "/plan/i2760/"
+                }
+              ]
+            },
+            {
+              "kind": "fix",
+              "scope": "mesh",
+              "subject": "a task is claimed on the mesh when it starts (I2288)",
+              "breaking": false,
+              "commit": "486de96de",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/486de96de",
+              "references": [
+                {
+                  "kind": "issue",
+                  "id": "I2288",
+                  "title": "A task is on the mesh while it works",
+                  "route": "/plan/i2288/"
+                }
+              ]
+            },
+            {
+              "kind": "fix",
+              "scope": "bench",
+              "subject": "a timing verdict names its runner, and one cold sample is not a regression (I2068)",
+              "breaking": false,
+              "commit": "507e38c80",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/507e38c80",
+              "references": [
+                {
+                  "kind": "issue",
+                  "id": "I2068",
+                  "title": "A verdict that depends on the runner says so, and one cold sample is not a regression",
+                  "route": "/plan/i2068/"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "kind": "docs",
+          "heading": "Documentation",
+          "rank": 4,
+          "changes": [
+            {
+              "kind": "docs",
+              "scope": "plan",
+              "subject": "the shared build directory's crate artifacts are bounded (I2787)",
+              "breaking": false,
+              "commit": "cc5362986",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/cc5362986",
+              "references": [
+                {
+                  "kind": "issue",
+                  "id": "I2787",
+                  "title": "A build never lets the shared build directory's crate artifacts fill the disk",
+                  "route": "/plan/i2787/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I2713",
+                  "title": "A build never lets idle incremental sessions fill the disk",
+                  "route": "/plan/i2713/"
+                }
+              ]
+            },
+            {
+              "kind": "docs",
+              "scope": "adr",
+              "subject": "renumber the adoption-footprint ADR to 0169 (I1101)",
+              "breaking": false,
+              "commit": "b0064423d",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/b0064423d",
+              "references": [
+                {
+                  "kind": "issue",
+                  "id": "I1101",
+                  "title": "What this tool leaves behind, established by inspection rather than by memory",
+                  "route": "/plan/i1101/"
+                }
+              ]
+            },
+            {
+              "kind": "docs",
+              "scope": "rules",
+              "subject": "the cooperation rule names its enforcement points by their pull requests",
+              "breaking": false,
+              "commit": "a5f1e0e4a",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/a5f1e0e4a"
+            },
+            {
+              "kind": "docs",
+              "scope": "consolidation",
+              "subject": "what an adoption leaves behind, measured (I1101)",
+              "breaking": false,
+              "commit": "e1997844a",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/e1997844a",
+              "references": [
+                {
+                  "kind": "issue",
+                  "id": "I1101",
+                  "title": "What this tool leaves behind, established by inspection rather than by memory",
+                  "route": "/plan/i1101/"
+                }
+              ]
+            },
+            {
+              "kind": "docs",
+              "scope": "adr",
+              "subject": "the owner's cooperation model is one rule, read by the site and the UI (ADR 0167)",
+              "breaking": false,
+              "commit": "7adfcc3d1",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/7adfcc3d1"
+            }
+          ]
+        },
+        {
+          "kind": "chore",
+          "heading": "Housekeeping",
+          "rank": 7,
+          "changes": [
+            {
+              "kind": "chore",
+              "scope": "release",
+              "subject": "derive the 0.29.0 bump over batch 71a",
+              "breaking": false,
+              "commit": "0a19b7fe3",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/0a19b7fe3"
+            },
+            {
+              "kind": "chore",
+              "scope": "release",
+              "subject": "bump the version to 0.29.0",
+              "breaking": false,
+              "commit": "6e1e527df",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/6e1e527df"
+            },
+            {
+              "kind": "chore",
+              "scope": "release",
+              "subject": "record v0.28.0 and the metadata it publishes",
+              "breaking": false,
+              "commit": "0c8016a43",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/0c8016a43"
+            },
+            {
+              "kind": "chore",
+              "scope": "plan",
+              "subject": "I1101 evidence recorded, issue in VERIFY (I1101)",
+              "breaking": false,
+              "commit": "e3b0e747a",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/e3b0e747a",
+              "references": [
+                {
+                  "kind": "issue",
+                  "id": "I1101",
+                  "title": "What this tool leaves behind, established by inspection rather than by memory",
+                  "route": "/plan/i1101/"
+                }
+              ]
+            },
+            {
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the plan page of I2760",
+              "breaking": false,
+              "commit": "e81e622bd",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/e81e622bd",
+              "references": [
+                {
+                  "kind": "issue",
+                  "id": "I2760",
+                  "title": "A scope entry is one path, and a path context would refuse is refused at start",
+                  "route": "/plan/i2760/"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "artifacts": [
+        {
+          "target": "macos-aarch64",
+          "name": "majordomus-v0.29.0-aarch64-apple-darwin.tar.gz",
+          "sha256": "c0f257a8344734100d6e3cfaed5169ce97a3f84b2cbcd820a823143820b77968"
+        },
+        {
+          "target": "macos-x86_64",
+          "name": "majordomus-v0.29.0-x86_64-apple-darwin.tar.gz",
+          "sha256": "1dfe8ba83f0bfa69bb3e31e9a94ad802931cdf8a6f13e8deb43d18aeab22bb21"
+        },
+        {
+          "target": "linux-x86_64-gnu",
+          "name": "majordomus-v0.29.0-x86_64-unknown-linux-gnu.tar.gz",
+          "sha256": "6bf87c46d4f79a6eb5e9cfacfd95cdee8bb74e915d6590db90de2b3da97166f8"
+        },
+        {
+          "target": "linux-x86_64-musl",
+          "name": "majordomus-v0.29.0-x86_64-unknown-linux-musl.tar.gz",
+          "sha256": "837304bbecc360d5b3f722865fd97fa06710372a76074cd9ef1bd03348113b38"
+        },
+        {
+          "target": "linux-aarch64-gnu",
+          "name": "majordomus-v0.29.0-aarch64-unknown-linux-gnu.tar.gz",
+          "sha256": "869ee0afe99157421e0b3983f91fd2eb9a48230bfbb743e97986d8fbbd383e91"
+        },
+        {
+          "target": "linux-aarch64-musl",
+          "name": "majordomus-v0.29.0-aarch64-unknown-linux-musl.tar.gz",
+          "sha256": "05734268f0e9e44ad2d7a8573d74937785817d3aa1505590992cbd4a403004bd"
+        }
+      ]
+    },
+    {
       "version": "0.28.0",
       "tag": "v0.28.0",
       "date": "2026-10-17T04:25:31Z",
