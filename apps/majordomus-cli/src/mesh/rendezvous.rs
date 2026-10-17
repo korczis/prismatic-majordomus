@@ -481,4 +481,79 @@ mod tests {
         let back: RegisterAnswer = serde_json::from_str(&text).unwrap();
         assert!(back.accepted && back.candidates.is_empty());
     }
+
+    /// A rendezvous that answers one registration with `status` and `body`.
+    fn answering(status: u16, body: String) -> String {
+        use std::io::{Read, Write};
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let endpoint = format!("http://{}", listener.local_addr().unwrap());
+        std::thread::spawn(move || {
+            let Ok((mut stream, _)) = listener.accept() else {
+                return;
+            };
+            let mut request = [0u8; 16 * 1024];
+            let _ = stream.read(&mut request);
+            let _ = stream.write_all(
+                format!(
+                    "HTTP/1.1 {status} X\r\nContent-Length: {}\r\n\r\n{body}",
+                    body.len()
+                )
+                .as_bytes(),
+            );
+        });
+        endpoint
+    }
+
+    fn envelope() -> Envelope {
+        let node = crate::mesh::identity::NodeIdentity::ephemeral().unwrap();
+        crate::mesh::protocol::advertise(&node, 1, &[], &[], &[], "test")
+    }
+
+    #[test]
+    fn a_rendezvous_that_answers_other_than_200_is_refused_by_its_status() {
+        let endpoint = answering(503, "{}".into());
+        assert_eq!(
+            register(&endpoint, &envelope()).unwrap_err(),
+            RegisterError::Status {
+                endpoint: endpoint.clone(),
+                status: 503,
+            }
+        );
+    }
+
+    #[test]
+    fn an_answer_whose_candidates_do_not_parse_is_malformed_not_too_many() {
+        let malformed = |body: String| {
+            let endpoint = answering(200, body);
+            match register(&endpoint, &envelope()).unwrap_err() {
+                RegisterError::Malformed {
+                    endpoint: named,
+                    reason,
+                } => {
+                    assert_eq!(named, endpoint);
+                    reason
+                }
+                other => panic!("malformed, not {other:?}"),
+            }
+        };
+
+        // candidates that are no list: the parser names what it expected
+        let reason = malformed(r#"{"accepted":true,"candidates":5}"#.into());
+        assert!(
+            reason.contains(&format!(
+                "at most {MAX_ANSWER_CANDIDATES} candidate envelopes"
+            )),
+            "{reason}"
+        );
+
+        // a list whose first candidate is no envelope
+        malformed(r#"{"accepted":true,"candidates":[{"x":1}]}"#.into());
+
+        // a full list followed by something that is not JSON: broken where the one over the
+        // bound would be read, which is a malformed answer and not one with too many
+        let one = serde_json::to_string(&envelope()).unwrap();
+        let full = vec![one; MAX_ANSWER_CANDIDATES].join(",");
+        let reason = malformed(format!(r#"{{"accepted":true,"candidates":[{full},}}"#));
+        assert!(!reason.contains(TOO_MANY_CANDIDATES), "{reason}");
+    }
 }

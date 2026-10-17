@@ -146,15 +146,20 @@ pub fn jittered(base: Duration, seed: u64) -> Duration {
 /// assert!(seeds.len() > 1, "a seed is drawn, not fixed");
 /// ```
 pub fn retry_seed() -> u64 {
+    // the clock is read whether or not it is needed, so the fallback is no branch of its own
+    let clock = clock_seed(std::time::SystemTime::now());
     let mut bytes = [0u8; 8];
-    if getrandom::getrandom(&mut bytes).is_err() {
-        let nanos = std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .map(|d| d.subsec_nanos())
-            .unwrap_or(0);
-        bytes[..4].copy_from_slice(&nanos.to_le_bytes());
-    }
-    u64::from_le_bytes(bytes)
+    getrandom::getrandom(&mut bytes)
+        .map(|()| u64::from_le_bytes(bytes))
+        .unwrap_or(clock)
+}
+
+/// The seed a clock gives [`retry_seed`] when the system has no entropy: the nanoseconds
+/// within the clock's second, or zero for a clock set before the epoch.
+fn clock_seed(now: std::time::SystemTime) -> u64 {
+    now.duration_since(std::time::UNIX_EPOCH)
+        .map(|d| u64::from(d.subsec_nanos()))
+        .unwrap_or(0)
 }
 
 /// The message kinds, each its own signing domain. The domain is mixed into the bytes a
@@ -1049,6 +1054,28 @@ mod tests {
             None
         );
         assert_eq!(negotiate(3, 2), None, "an inverted range is no range");
+    }
+
+    #[test]
+    fn a_pause_too_short_to_spread_is_never_jittered() {
+        for seed in [0, 7, u64::MAX] {
+            assert_eq!(jittered(Duration::ZERO, seed), Duration::ZERO);
+            let short = Duration::from_nanos(RETRY_JITTER_DIVISOR as u64 - 1);
+            assert_eq!(jittered(short, seed), short, "a quarter of it is no time");
+        }
+        let base = Duration::from_secs(8);
+        let drawn = jittered(base, 7);
+        assert!(drawn >= base && drawn <= base + base / RETRY_JITTER_DIVISOR);
+    }
+
+    #[test]
+    fn a_seed_from_the_clock_is_the_nanoseconds_of_its_second() {
+        let at = std::time::UNIX_EPOCH + Duration::new(1_700_000_000, 123_456_789);
+        assert_eq!(clock_seed(at), 123_456_789);
+        let before = std::time::UNIX_EPOCH - Duration::from_secs(1);
+        assert_eq!(clock_seed(before), 0, "a clock before the epoch gives zero");
+        let seeds: std::collections::BTreeSet<u64> = (0..16).map(|_| retry_seed()).collect();
+        assert!(seeds.len() > 1, "a seed is drawn, not fixed");
     }
 
     #[test]
