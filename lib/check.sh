@@ -161,7 +161,8 @@ mj_validate_scope() {
          "outcome is $(mj_cur outcome); a scope is what an active task claims, and a finished one claims nothing"
        MJ_DOCTRINE_SKIPPED=1; return 0 ;;
   esac
-  local id f inside n_out=0 n_in=0 s allow_gen scope_list scope_words soft=0 repro
+  local id f inside n_out=0 n_in=0 n_derived=0 s allow_gen scope_list scope_words soft=0 repro
+  local touched derived canonical=0
   id="$(mj_cur id)"; allow_gen="$(mj_projection_targets | tr '\n' ' ')"
   # Only a *completed* finish is refused by scope, for the reason the blocker gate below
   # gives and one more that is specific to this gate: `start` will not begin a task while
@@ -176,6 +177,25 @@ mj_validate_scope() {
   # tree with a long diff paid thousands of them for a list that does not change
   scope_list="$(mj_ylist "$MJ_CUR_FLAT" scope)"; scope_words="$(printf '%s\n' "$scope_list" | paste -sd, -)"
   repro="git status --porcelain; git log --first-parent --no-merges --name-only --format= $(mj_cur head)..HEAD"
+  # A derive writes the projections of what a task changed, and they are not the task's to
+  # claim: the worker scoped the canonical file, the generator chose where its projections
+  # go, and a scope that had to name every one of them would be a list of the generator's
+  # outputs kept by hand. So a path the repository itself declares derived — git's own
+  # `merge=derived` attribute, which scripts/gitattributes writes from the generators — is
+  # admitted when the task also changed something canonical: a file of the layer, or a
+  # file inside its scope that is not derived. A branch that carries projections and no
+  # canonical change is judged as before, because nothing it changed could have written
+  # them. Asked of git, so a repository that declares nothing derived admits nothing.
+  touched="$(mktemp "${TMPDIR:-/tmp}/mj.st.XXXXXX")"; derived="$(mktemp "${TMPDIR:-/tmp}/mj.sd.XXXXXX")"
+  mj_git_touched "$(mj_cur head)" > "$touched"
+  mj_scope_derived_paths "$touched" > "$derived"
+  while IFS= read -r f; do
+    [ -n "$f" ] || continue
+    grep -qxF -- "$f" "$derived" && continue
+    if mj_is_ai_path "$f"; then canonical=1; break; fi
+    for s in $scope_list; do mj_path_contains "$s" "$f" && { canonical=1; break; }; done
+    [ "$canonical" = 1 ] && break
+  done < "$touched"
   # read as lines, not words: a path may hold a space, and as words "a b.png" was two
   # paths outside every scope
   while IFS= read -r f; do
@@ -185,19 +205,32 @@ mj_validate_scope() {
     inside=0
     for s in $scope_list; do mj_path_contains "$s" "$f" && { inside=1; break; }; done
     if [ "$inside" = 1 ]; then n_in=$((n_in+1))
+    elif [ "$canonical" = 1 ] && grep -qxF -- "$f" "$derived"; then n_derived=$((n_derived+1))
     else
       n_out=$((n_out+1))
       if [ "$soft" = 1 ]; then mj_warn scope "$f" "outside claimed scope ($scope_words)" "$repro"
       else mj_doctrine_fail scope "$f" "outside claimed scope ($scope_words)" "$repro"; fi
     fi
-  done < <(mj_git_touched "$(mj_cur head)")
-  if [ "$n_out" = 0 ]; then mj_doctrine_ok scope "$id" "$n_in touched file(s), all within scope"
+  done < "$touched"
+  rm -f "$touched" "$derived"
+  if [ "$n_out" = 0 ] && [ "$n_derived" -gt 0 ]; then
+    mj_doctrine_ok scope "$id" "$n_in touched file(s) within scope, and $n_derived derived from them (merge=derived)" "git check-attr merge -- <path>"
+  elif [ "$n_out" = 0 ]; then mj_doctrine_ok scope "$id" "$n_in touched file(s), all within scope"
   elif [ "$soft" = 1 ]; then
     mj_doctrine_skip scope "$id" "$n_out file(s) outside scope; outcome is $MJ_FINISH_OUTCOME, not completed, so scope does not refuse it"
     MJ_DOCTRINE_SKIPPED=1
   fi
   MJ_TOUCHED_IN="$n_in"
   return 0
+}
+
+# The paths of FILE (one per line) that the repository declares derived: the ones git gives
+# the attribute `merge=derived`. Asked with -z, so git neither quotes a path that holds a
+# space nor escapes a byte outside ASCII, and the name comes back as it went in.
+mj_scope_derived_paths() {
+  [ -s "$1" ] || return 0
+  tr '\n' '\0' < "$1" | mj_git check-attr -z --stdin merge 2>/dev/null \
+    | tr '\0' '\n' | awk 'NR % 3 == 1 { p = $0 } NR % 3 == 0 && $0 == "derived" { print p }'
 }
 
 mj_validate_checkpoint() {

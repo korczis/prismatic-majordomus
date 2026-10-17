@@ -246,7 +246,7 @@ mod tests {
             source: Source::of("evidence.claim"),
             route: Some("GET /api/v1/evidence/claim".into()),
             exposure: Exposure::default(),
-            value,
+            value: value.map(Into::into),
             took: Duration::from_millis(1),
             standing: crate::ui::source::Standing::NOW,
         }

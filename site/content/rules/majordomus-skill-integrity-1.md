@@ -1,7 +1,7 @@
 +++
 title = "Skill integrity"
 description = "Skill integrity"
-weight = 54
+weight = 55
 [extra]
 kind = "rule"
 slug = "majordomus-skill-integrity-1"

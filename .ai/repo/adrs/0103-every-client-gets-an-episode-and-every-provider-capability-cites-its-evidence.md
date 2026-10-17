@@ -112,15 +112,22 @@ state in another.
 
 For `episode: connection`, the MCP connection *is* the boundary:
 
-```
-initialize → peer attaches  (no episode: a reader is not a worker)
-episodes.attach(external_id) → the episode opens, or the client's own is resumed
-  … every message the client sends is that episode's heartbeat …
-connection lost           → detached, not closed
-episodes.attach again     → resumed, same episode, new peer
-episodes.detach           → closed, deliberately
-no reconnect in 15 min    → closed by the reaper, as interrupted
-server stops              → closed, shutdown
+```mermaid
+stateDiagram-v2
+  state "peer attached, no episode" as peer
+  state "episode open" as open
+  state "detached, not closed" as detached
+  state "closed" as closed
+  [*] --> peer : initialize
+  note right of peer : a reader is not a worker
+  peer --> open : episodes.attach(external_id) opens it, or resumes the client's own
+  open --> open : every message the client sends is its heartbeat
+  open --> detached : connection lost
+  detached --> open : episodes.attach again, same episode, new peer
+  open --> closed : episodes.detach, deliberately
+  detached --> closed : no reconnect in 15 min, by the reaper, as interrupted
+  open --> closed : server stops, shutdown
+  closed --> [*]
 ```
 
 `apps/majordomus-cli/src/episodes.rs` holds the board. It does not write a session
