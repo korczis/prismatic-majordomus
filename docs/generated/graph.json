@@ -7821,7 +7821,7 @@
             "file:bin/majordomus-cli",
             "file:share/shell/session-start.sh",
             "test:test/cases/3177_a_client_always_gets_a_server.sh",
-            "test:test/cases/3178_a_bare_session_start_joins_the_cluster.sh"
+            "test:test/cases/3221_a_bare_session_start_joins_the_cluster.sh"
           ],
           "tags": [
             "coordination",
@@ -11893,7 +11893,7 @@
           "implementation": "share/shell/session-start.sh",
           "responsibility": "none",
           "source": "docs/MCP.md",
-          "test": "test/cases/3178_a_bare_session_start_joins_the_cluster.sh"
+          "test": "test/cases/3221_a_bare_session_start_joins_the_cluster.sh"
         }
       },
       {
@@ -57525,13 +57525,6 @@
         "source": "test/cases/3177_a_client_always_gets_a_server.sh"
       },
       {
-        "id": "majordomus://test/test/cases/3178_a_bare_session_start_joins_the_cluster.sh",
-        "kind": "test",
-        "label": "test/cases/3178_a_bare_session_start_joins_the_cluster.sh",
-        "route": "/cockpit/objects/test/test-cases-3178-a-bare-session-start-joins-the-cluster-sh",
-        "source": "test/cases/3178_a_bare_session_start_joins_the_cluster.sh"
-      },
-      {
         "id": "majordomus://test/test/cases/3178_the_published_ui_reads_the_evidence_ci_recorded.sh",
         "kind": "test",
         "label": "test/cases/3178_the_published_ui_reads_the_evidence_ci_recorded.sh",
@@ -57551,6 +57544,13 @@
         "label": "test/cases/31_command_coverage.sh",
         "route": "/cockpit/objects/test/test-cases-31-command-coverage-sh",
         "source": "test/cases/31_command_coverage.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3221_a_bare_session_start_joins_the_cluster.sh",
+        "kind": "test",
+        "label": "test/cases/3221_a_bare_session_start_joins_the_cluster.sh",
+        "route": "/cockpit/objects/test/test-cases-3221-a-bare-session-start-joins-the-cluster-sh",
+        "source": "test/cases/3221_a_bare_session_start_joins_the_cluster.sh"
       },
       {
         "id": "majordomus://test/test/cases/32_refusal_lifecycle.sh",
@@ -70411,7 +70411,7 @@
       },
       {
         "source": "majordomus://adr/adr-0172",
-        "target": "majordomus://test/test/cases/3178_a_bare_session_start_joins_the_cluster.sh",
+        "target": "majordomus://test/test/cases/3221_a_bare_session_start_joins_the_cluster.sh",
         "kind": "put_in_force"
       },
       {
@@ -74926,7 +74926,7 @@
       },
       {
         "source": "majordomus://claim/session-start-prompt",
-        "target": "majordomus://test/test/cases/3178_a_bare_session_start_joins_the_cluster.sh",
+        "target": "majordomus://test/test/cases/3221_a_bare_session_start_joins_the_cluster.sh",
         "kind": "tested_by"
       },
       {
@@ -89305,11 +89305,6 @@
         "kind": "is_a"
       },
       {
-        "source": "majordomus://test/test/cases/3178_a_bare_session_start_joins_the_cluster.sh",
-        "target": "kind:test",
-        "kind": "is_a"
-      },
-      {
         "source": "majordomus://test/test/cases/3178_the_published_ui_reads_the_evidence_ci_recorded.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -89321,6 +89316,11 @@
       },
       {
         "source": "majordomus://test/test/cases/31_command_coverage.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3221_a_bare_session_start_joins_the_cluster.sh",
         "target": "kind:test",
         "kind": "is_a"
       },

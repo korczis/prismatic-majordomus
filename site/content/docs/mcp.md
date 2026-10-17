@@ -470,7 +470,7 @@ inside the task's scope and keep everything local. Any argument is the person's 
 passed through, so is a run outside a supervised repository, with `MAJORDOMUS_NO_AUTOSTART=1`,
 or when the prompt cannot be rendered. The prompt is the repository's, so changing it is a
 commit and every checkout that pulls it is updated; the file ships in the release's `share/`
-and is updated with it. `test/cases/3178_a_bare_session_start_joins_the_cluster.sh` proves it in
+and is updated with it. `test/cases/3221_a_bare_session_start_joins_the_cluster.sh` proves it in
 bash and zsh. It is not installed for you: the installer touches nothing outside its prefix
 (`docs/DISTRIBUTION.md`), so sourcing the file is the one line a person adds.
 
