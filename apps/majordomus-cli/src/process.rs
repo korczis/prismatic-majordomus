@@ -50,6 +50,28 @@ mod tests {
         assert_eq!(attempts, 1);
     }
 
+    /// A start that is busy twice is asked a third time and its answer returned, and one that
+    /// stays busy is answered with the busy error after the bound — on every platform, since
+    /// the start is the caller's and the busy error is what the kernel would have said.
+    #[test]
+    fn a_busy_start_is_asked_again_until_it_answers_or_the_bound_is_spent() {
+        let busy = || io::Error::from(io::ErrorKind::ExecutableFileBusy);
+        let mut attempts = 0;
+        let r = retrying_busy(|| {
+            attempts += 1;
+            if attempts < 3 { Err(busy()) } else { Ok(attempts) }
+        });
+        assert_eq!(r.unwrap(), 3);
+
+        let mut attempts = 0;
+        let r: io::Result<()> = retrying_busy(|| {
+            attempts += 1;
+            Err(busy())
+        });
+        assert_eq!(r.unwrap_err().kind(), io::ErrorKind::ExecutableFileBusy);
+        assert_eq!(attempts, ATTEMPTS, "a start that stays busy is asked exactly the bound");
+    }
+
     /// Linux alone refuses to exec a file held open for writing, so this holds there: the
     /// program is busy while the writer holds it, and runs once the writer lets go.
     #[cfg(target_os = "linux")]
