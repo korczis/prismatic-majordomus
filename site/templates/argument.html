@@ -124,7 +124,7 @@
                 stage names, each under the status docs/CLAIMS.yaml declares (ADR 0166) -#}
             <ul class="mt-auto space-y-1 pt-3 font-mono text-xs" aria-label="Claims covering {{ s.name }}" data-stage-claims="{{ s.id }}">
               {%- for cid in s.claims %}{% set cs = [c for c in caps.claims if c.id == cid] %}{% if cs | length %}
-              <li class="flex min-w-0 gap-2" data-stage-claim="{{ cid }}"><span class="shrink-0 text-body-subtle">{{ cs[0].status }}</span><a href="{{ get_url(path='/guarantees/' ~ cid ~ '/', trailing_slash=true) }}" class="min-w-0 break-words text-fg-brand hover:underline">{{ cid }}</a></li>
+              <li class="flex min-w-0 gap-2" data-stage-claim="{{ cid }}"><span class="shrink-0 text-body-subtle">{{ cs[0].status }}</span><a href="{{ get_url(path='/guarantees/' ~ cid ~ '/', trailing_slash=true) }}" class="inline-flex min-h-6 min-w-0 items-center break-words text-fg-brand hover:underline">{{ cid }}</a></li>
               {%- endif %}{% endfor %}
             </ul>
           </li>

@@ -53,5 +53,5 @@ Sázím taky na to, že v regulovaných oborech se otázka „kdo to udělal a p
 
 ## Co netvrdím
 
-Netvrdím, že Majordomus ověří správnost kódu, že nahradí review, ani že unese stovky agentů. To poslední jsem nezměřil. Co nedělá, stojí v [omezeních](@/limitations.md); co je zaručené, co jen doporučené, co plánované a co odmítnuté, je v `docs/SITE_CLAIMS.md`. Pokud tahle stránka tvrdí víc než ony, platí ony.
+Netvrdím, že Majordomus ověří správnost kódu, že nahradí review, ani že unese stovky agentů. To poslední jsem nezměřil. Co nedělá, stojí v [omezeních](../limitations/); co je zaručené, co jen doporučené, co plánované a co odmítnuté, je v `docs/SITE_CLAIMS.md`. Pokud tahle stránka tvrdí víc než ony, platí ony.
 {% endraw %}
