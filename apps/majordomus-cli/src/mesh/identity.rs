@@ -102,6 +102,10 @@ pub struct PublicIdentity {
     pub display_name: String,
     /// This run of the node.
     pub instance_id: InstanceId,
+    /// Optional release follow policy (`stable`, `off`, or `pinned <version>`) configured in
+    /// the node's identity file.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub follow: Option<String>,
 }
 
 /// The identity a running mesh signs with: the public half plus the signing key.
@@ -128,6 +132,8 @@ struct IdentityFile {
     secret_key: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     display_name: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    follow: Option<String>,
     created_at: String,
 }
 
@@ -187,8 +193,15 @@ impl NodeIdentity {
                 path.display()
             ))
         })?;
+        let follow = match file.follow {
+            Some(raw) => Some(
+                super::config::normalize_follow(&raw)
+                    .map_err(|e| MeshError::Identity(format!("{}: {e}", path.display())))?,
+            ),
+            None => None,
+        };
         let signing = SigningKey::from_bytes(&seed);
-        Self::assemble(signing, file.display_name)
+        Self::assemble(signing, file.display_name, follow)
     }
 
     /// A throwaway identity that touches no disk: what the self-check and tests sign
@@ -202,10 +215,14 @@ impl NodeIdentity {
         getrandom::getrandom(&mut seed)
             .map_err(|e| MeshError::Identity(format!("no OS entropy for a node key: {e}")))?;
         let signing = SigningKey::from_bytes(&seed);
-        Self::assemble(signing, None)
+        Self::assemble(signing, None, None)
     }
 
-    fn assemble(signing: SigningKey, display_name: Option<String>) -> Result<Self, MeshError> {
+    fn assemble(
+        signing: SigningKey,
+        display_name: Option<String>,
+        follow: Option<String>,
+    ) -> Result<Self, MeshError> {
         let verifying = signing.verifying_key();
         let node_id = NodeId::of(&verifying);
         let display_name =
@@ -216,6 +233,7 @@ impl NodeIdentity {
                 public_key: hex(verifying.as_bytes()),
                 display_name,
                 instance_id: InstanceId::fresh()?,
+                follow,
             },
             signing,
         })
@@ -230,6 +248,7 @@ impl NodeIdentity {
             schema: SCHEMA.into(),
             secret_key: hex(&self.signing.to_bytes()),
             display_name: Some(self.public.display_name.clone()),
+            follow: self.public.follow.clone(),
             created_at: crate::peers::rfc3339(std::time::SystemTime::now()),
         };
         let text =
@@ -326,6 +345,29 @@ pub fn relabel(path: &Path, label: &str) -> Result<NodeIdentity, MeshError> {
         schema: SCHEMA.into(),
         secret_key: hex(&identity.signing.to_bytes()),
         display_name: Some(label.to_string()),
+        follow: identity.public.follow.clone(),
+        created_at,
+    };
+    let text = serde_json::to_string_pretty(&file).expect("an identity file is plain data");
+    write_private(path, &text)?;
+    NodeIdentity::load(path)
+}
+
+/// Set the release follow policy (`stable`, `off`, or `pinned <version>`) on the identity
+/// at `path`, keeping its key and display name unchanged.
+pub fn set_follow(path: &Path, follow: &str) -> Result<NodeIdentity, MeshError> {
+    let normalized = super::config::normalize_follow(follow).map_err(MeshError::Identity)?;
+    let identity = NodeIdentity::load_or_create(path)?;
+    let created_at = std::fs::read_to_string(path)
+        .ok()
+        .and_then(|text| serde_json::from_str::<IdentityFile>(&text).ok())
+        .map(|file| file.created_at)
+        .unwrap_or_default();
+    let file = IdentityFile {
+        schema: SCHEMA.into(),
+        secret_key: hex(&identity.signing.to_bytes()),
+        display_name: Some(identity.public.display_name),
+        follow: Some(normalized),
         created_at,
     };
     let text = serde_json::to_string_pretty(&file).expect("an identity file is plain data");

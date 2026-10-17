@@ -163,6 +163,211 @@ pub fn journal_check(tallies: &super::journal::JournalTallies) -> DoctorCheck {
     )
 }
 
+/// One observed mesh node's version and follow policy.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct ObservedNodeVersion {
+    /// The node id (32 hex) or runtime key.
+    pub node: String,
+    /// Its display name.
+    pub name: String,
+    /// The reported version (without leading `v`, e.g. `0.28.0`), or empty if unknown.
+    pub version: String,
+    /// The reported `follow` policy (`stable`, `off`, or `pinned <version>`).
+    pub follow: String,
+    /// How many stable releases behind the stable pointer this node is.
+    pub releases_behind: usize,
+}
+
+/// Rollout progress of one published release across observed enrolled nodes.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct ReleaseRollout {
+    /// The release tag (`v0.28.0`).
+    pub tag: String,
+    /// The release version (`0.28.0`).
+    pub version: String,
+    /// Whether this release is the current stable pointer (`latest`).
+    pub latest_stable: bool,
+    /// Enrolled nodes following this release (`follow: stable` for the stable pointer, or
+    /// `follow: pinned <version>` for a pinned release).
+    pub following_nodes: usize,
+    /// Enrolled following nodes currently reporting this release version.
+    pub reporting_nodes: usize,
+    /// Total observed nodes currently reporting this release version (regardless of follow policy).
+    pub total_reporting_nodes: usize,
+    /// True when `following_nodes > 0` and every enrolled following node reports this version.
+    pub rolled_out: bool,
+}
+
+/// Rollout summary across the repository's published releases and observed mesh nodes.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct RolloutStatus {
+    /// The current stable pointer version (`0.28.0`), when the repository has a stable release.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub stable_version: Option<String>,
+    /// The current stable pointer tag (`v0.28.0`), when the repository has a stable release.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub stable_tag: Option<String>,
+    /// Whether the current stable release has rolled out to every observed following node.
+    pub stable_rolled_out: bool,
+    /// Observed nodes and their versions/follow policies.
+    pub nodes: Vec<ObservedNodeVersion>,
+    /// Rollout progress per published release (newest first).
+    pub releases: Vec<ReleaseRollout>,
+}
+
+fn clean_version(v: &str) -> &str {
+    v.trim().strip_prefix('v').unwrap_or(v.trim())
+}
+
+fn parse_semver(v: &str) -> Option<(u64, u64, u64, u8, String)> {
+    let v = clean_version(v);
+    let (core, pre) = match v.split_once('-') {
+        Some((c, p)) => (c, p.to_string()),
+        None => (v, String::new()),
+    };
+    let mut parts = core.split('.');
+    let major = parts.next()?.parse::<u64>().ok()?;
+    let minor = parts.next()?.parse::<u64>().ok()?;
+    let patch = parts.next()?.parse::<u64>().ok()?;
+    if parts.next().is_some() {
+        return None;
+    }
+    Some((major, minor, patch, u8::from(pre.is_empty()), pre))
+}
+
+/// Compute rollout progress across `releases` and the observed `nodes` (`(node_id, name, version, follow)`).
+pub fn compute_rollout(
+    releases: &crate::distribution::release::Releases,
+    nodes: Vec<(String, String, String, String)>,
+) -> RolloutStatus {
+    let latest_stable = releases.latest_stable();
+    let stable_version = latest_stable.map(|r| r.version.clone());
+    let stable_tag = latest_stable.map(|r| r.tag.clone());
+    let stable_semvers: Vec<(u64, u64, u64, u8, String)> = releases
+        .releases
+        .iter()
+        .filter(|r| r.is_stable_candidate())
+        .filter_map(|r| parse_semver(&r.version))
+        .collect();
+
+    let observed_nodes: Vec<ObservedNodeVersion> = nodes
+        .into_iter()
+        .map(|(node, name, version, follow)| {
+            let clean = clean_version(&version).to_string();
+            let releases_behind = match parse_semver(&clean) {
+                Some(node_ver) => stable_semvers.iter().filter(|s| **s > node_ver).count(),
+                None => 0,
+            };
+            ObservedNodeVersion {
+                node,
+                name,
+                version: clean,
+                follow,
+                releases_behind,
+            }
+        })
+        .collect();
+
+    let release_rollouts: Vec<ReleaseRollout> = releases
+        .releases
+        .iter()
+        .map(|r| {
+            let is_latest = stable_version.as_deref() == Some(r.version.as_str());
+            let pinned_target = format!("pinned {}", r.version);
+            let pinned_tag_target = format!("pinned {}", r.tag);
+            let following: Vec<&ObservedNodeVersion> = observed_nodes
+                .iter()
+                .filter(|n| {
+                    (is_latest && n.follow == "stable")
+                        || n.follow == pinned_target
+                        || n.follow == pinned_tag_target
+                })
+                .collect();
+            let following_nodes = following.len();
+            let reporting_nodes = following.iter().filter(|n| n.version == r.version).count();
+            let total_reporting_nodes = observed_nodes
+                .iter()
+                .filter(|n| n.version == r.version)
+                .count();
+            let rolled_out = following_nodes > 0 && reporting_nodes == following_nodes;
+            ReleaseRollout {
+                tag: r.tag.clone(),
+                version: r.version.clone(),
+                latest_stable: is_latest,
+                following_nodes,
+                reporting_nodes,
+                total_reporting_nodes,
+                rolled_out,
+            }
+        })
+        .collect();
+
+    let stable_rolled_out = release_rollouts
+        .iter()
+        .find(|r| r.latest_stable)
+        .is_some_and(|r| r.rolled_out);
+
+    RolloutStatus {
+        stable_version,
+        stable_tag,
+        stable_rolled_out,
+        nodes: observed_nodes,
+        releases: release_rollouts,
+    }
+}
+
+/// The `rollout` check: names any observed node more than one release behind the stable
+/// pointer, and reports rollout progress of the current stable release across following nodes.
+pub fn rollout_check(rollout: &RolloutStatus) -> DoctorCheck {
+    let Some(stable_tag) = rollout.stable_tag.as_deref() else {
+        return DoctorCheck::pass(
+            "rollout",
+            "no stable release published in .ai/repo/releases/",
+        );
+    };
+    let lagging: Vec<String> = rollout
+        .nodes
+        .iter()
+        .filter(|n| n.releases_behind > 1)
+        .map(|n| {
+            format!(
+                "{} ({}) is on v{} (follow: {}), {} releases behind stable {stable_tag}",
+                n.name, n.node, n.version, n.follow, n.releases_behind
+            )
+        })
+        .collect();
+    if !lagging.is_empty() {
+        return DoctorCheck::fail(
+            "rollout",
+            format!(
+                "{} node(s) more than one release behind stable {stable_tag}: {}",
+                lagging.len(),
+                lagging.join("; ")
+            ),
+            "a node more than one release behind the stable pointer may lack protocol or governance fixes the rest of the mesh relies on",
+            "update the lagging node (`majordomus self-update` or reinstall the current release) and verify its `follow` setting",
+        );
+    }
+    let (reporting, following) = rollout
+        .releases
+        .iter()
+        .find(|r| r.latest_stable)
+        .map(|r| (r.reporting_nodes, r.following_nodes))
+        .unwrap_or((0, 0));
+    let state_word = if rollout.stable_rolled_out {
+        "rolled out"
+    } else {
+        "rolling out"
+    };
+    DoctorCheck::pass(
+        "rollout",
+        format!(
+            "stable {stable_tag}: {reporting}/{following} following node(s) reporting ({state_word}); all {} observed node(s) within one release of {stable_tag}",
+            rollout.nodes.len()
+        ),
+    )
+}
+
 /// The whole self-check.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct MeshDoctorReport {
@@ -170,6 +375,9 @@ pub struct MeshDoctorReport {
     pub ok: bool,
     /// The checks, in the order they ran.
     pub checks: Vec<DoctorCheck>,
+    /// Rollout progress across published releases and observed nodes, when evaluated against a repository.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub rollout: Option<RolloutStatus>,
 }
 
 /// Run the self-check against the declaration as parsed (or its absence, or its error),
@@ -431,6 +639,7 @@ pub fn doctor_at(
     MeshDoctorReport {
         ok: checks.iter().all(|c| c.ok),
         checks,
+        rollout: None,
     }
 }
 
@@ -986,6 +1195,75 @@ mod tests {
                 .contains("failed: udp_multicast (address in use)"),
             "{}",
             runtime.detail
+        );
+    }
+
+    #[test]
+    fn rollout_tracks_following_nodes_and_doctor_names_a_node_more_than_one_release_behind() {
+        use crate::distribution::release::{Channel, Release, Releases};
+        let rel = |v: &str| Release {
+            schema: "release/v1".into(),
+            version: v.into(),
+            tag: format!("v{v}"),
+            channel: Channel::Stable,
+            commit: "0123456789abcdef".into(),
+            published_at: "2026-10-17T00:00:00Z".into(),
+            notes_url: None,
+            yanked: false,
+            required_targets: None,
+            artifacts: vec![],
+        };
+        let releases = Releases::ordered(vec![rel("0.26.0"), rel("0.27.0"), rel("0.28.0")]);
+
+        // Every following node on 0.28.0 -> rolled_out is true, doctor check passes.
+        let rolled = compute_rollout(
+            &releases,
+            vec![
+                (
+                    "node-a".into(),
+                    "macbook".into(),
+                    "0.28.0".into(),
+                    "stable".into(),
+                ),
+                (
+                    "node-b".into(),
+                    "lundra".into(),
+                    "0.27.0".into(),
+                    "pinned 0.27.0".into(),
+                ),
+            ],
+        );
+        assert!(rolled.stable_rolled_out);
+        let check = rollout_check(&rolled);
+        assert!(check.ok, "{}", check.detail);
+
+        // A node on 0.26.0 is 2 releases behind 0.28.0 -> doctor check fails and names it.
+        let behind = compute_rollout(
+            &releases,
+            vec![
+                (
+                    "node-a".into(),
+                    "macbook".into(),
+                    "0.28.0".into(),
+                    "stable".into(),
+                ),
+                (
+                    "node-c".into(),
+                    "jetson".into(),
+                    "0.26.0".into(),
+                    "stable".into(),
+                ),
+            ],
+        );
+        assert!(!behind.stable_rolled_out);
+        let failed = rollout_check(&behind);
+        assert!(!failed.ok);
+        assert!(
+            failed.detail.contains("jetson (node-c)")
+                && failed.detail.contains("v0.26.0")
+                && failed.detail.contains("2 releases behind stable v0.28.0"),
+            "{}",
+            failed.detail
         );
     }
 }

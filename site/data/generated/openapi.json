@@ -776,6 +776,7 @@
     "schema-ObservedClassification": "docs/api/integration/",
     "schema-ObservedDeployment": "docs/api/deploy/",
     "schema-ObservedDeployments": "docs/api/deploy/",
+    "schema-ObservedNodeVersion": "docs/api/mesh/",
     "schema-ObservedRelease": "docs/api/deploy/",
     "schema-OpenEpisode": "docs/api/worktree/",
     "schema-OpenSession": "docs/api/continuity/",
@@ -940,6 +941,7 @@
     "schema-ReleasePolicyMode": "docs/api/release/",
     "schema-ReleaseProducedBy": "docs/api/release/",
     "schema-ReleaseReference": "docs/api/release/",
+    "schema-ReleaseRollout": "docs/api/mesh/",
     "schema-ReleaseSection": "docs/api/release/",
     "schema-ReleaseSeverity": "docs/api/release/",
     "schema-ReleaseStatus": "docs/api/release/",
@@ -982,6 +984,7 @@
     "schema-ReviewView": "docs/api/mesh/",
     "schema-ReviewWithdrawInput": "docs/api/mesh/",
     "schema-Role": "docs/api/mesh/",
+    "schema-RolloutStatus": "docs/api/mesh/",
     "schema-Route": "docs/api/deploy/",
     "schema-RouteCollision": "docs/api/entity/",
     "schema-RoutingDecision": "docs/api/models/",
@@ -1235,7 +1238,7 @@
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
     "operations": 197,
-    "schemas": 976,
+    "schemas": 979,
     "tags": 58
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -2107,6 +2110,7 @@
     "ObservedClassification": "integration",
     "ObservedDeployment": "deploy",
     "ObservedDeployments": "deploy",
+    "ObservedNodeVersion": "mesh",
     "ObservedRelease": "deploy",
     "OpenEpisode": "worktree",
     "OpenSession": "continuity",
@@ -2271,6 +2275,7 @@
     "ReleasePolicyMode": "release",
     "ReleaseProducedBy": "release",
     "ReleaseReference": "release",
+    "ReleaseRollout": "mesh",
     "ReleaseSection": "release",
     "ReleaseSeverity": "release",
     "ReleaseStatus": "release",
@@ -2313,6 +2318,7 @@
     "ReviewView": "mesh",
     "ReviewWithdrawInput": "mesh",
     "Role": "mesh",
+    "RolloutStatus": "mesh",
     "Route": "deploy",
     "RouteCollision": "entity",
     "RoutingDecision": "models",
@@ -11407,6 +11413,20 @@
           ],
           "required": false,
           "type": "MeshRepositoryIdentity | null"
+        },
+        {
+          "description": "This runtime's executable version.",
+          "name": "version",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "This runtime's release follow policy (`stable`, `off`, or `pinned <version>`).",
+          "name": "follow",
+          "refs": [],
+          "required": false,
+          "type": "string"
         },
         {
           "description": "The link protocol range spoken.",
@@ -31160,6 +31180,15 @@
           ],
           "required": true,
           "type": "array of DoctorCheck"
+        },
+        {
+          "description": "Rollout progress across published releases and observed nodes, when evaluated against a repository.",
+          "name": "rollout",
+          "refs": [
+            "RolloutStatus"
+          ],
+          "required": false,
+          "type": "RolloutStatus | null"
         }
       ],
       "type": "object",
@@ -34882,6 +34911,56 @@
       "variants": []
     },
     {
+      "description": "One observed mesh node's version and follow policy.",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "ObservedNodeVersion",
+      "properties": [
+        {
+          "description": "The node id (32 hex) or runtime key.",
+          "name": "node",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its display name.",
+          "name": "name",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The reported version (without leading `v`, e.g. `0.28.0`), or empty if unknown.",
+          "name": "version",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The reported `follow` policy (`stable`, `off`, or `pinned <version>`).",
+          "name": "follow",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How many stable releases behind the stable pointer this node is.",
+          "name": "releases_behind",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "RolloutStatus"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One release the forge published.",
       "home": "deploy",
       "is_enum": false,
@@ -36262,6 +36341,15 @@
           "refs": [],
           "required": false,
           "type": "string | null"
+        },
+        {
+          "description": "Rollout progress across published releases and observed nodes.",
+          "name": "rollout",
+          "refs": [
+            "RolloutStatus"
+          ],
+          "required": false,
+          "type": "RolloutStatus | null"
         }
       ],
       "type": "object",
@@ -36377,6 +36465,13 @@
           "name": "version",
           "refs": [],
           "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The release follow policy (`stable`, `off`, or `pinned <version>`).",
+          "name": "follow",
+          "refs": [],
+          "required": false,
           "type": "string"
         },
         {
@@ -39499,6 +39594,13 @@
           ],
           "required": true,
           "type": "InstanceId"
+        },
+        {
+          "description": "Optional release follow policy (`stable`, `off`, or `pinned <version>`) configured in\nthe node's identity file.",
+          "name": "follow",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
         }
       ],
       "type": "object",
@@ -44336,6 +44438,70 @@
       "variants": []
     },
     {
+      "description": "Rollout progress of one published release across observed enrolled nodes.",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "ReleaseRollout",
+      "properties": [
+        {
+          "description": "The release tag (`v0.28.0`).",
+          "name": "tag",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The release version (`0.28.0`).",
+          "name": "version",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether this release is the current stable pointer (`latest`).",
+          "name": "latest_stable",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Enrolled nodes following this release (`follow: stable` for the stable pointer, or\n`follow: pinned <version>` for a pinned release).",
+          "name": "following_nodes",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Enrolled following nodes currently reporting this release version.",
+          "name": "reporting_nodes",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Total observed nodes currently reporting this release version (regardless of follow policy).",
+          "name": "total_reporting_nodes",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "True when `following_nodes > 0` and every enrolled following node reports this version.",
+          "name": "rolled_out",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "RolloutStatus"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One version's worth of changelog.",
       "home": "release",
       "is_enum": false,
@@ -47140,6 +47306,61 @@
       "variants": []
     },
     {
+      "description": "Rollout summary across the repository's published releases and observed mesh nodes.",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "RolloutStatus",
+      "properties": [
+        {
+          "description": "The current stable pointer version (`0.28.0`), when the repository has a stable release.",
+          "name": "stable_version",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The current stable pointer tag (`v0.28.0`), when the repository has a stable release.",
+          "name": "stable_tag",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Whether the current stable release has rolled out to every observed following node.",
+          "name": "stable_rolled_out",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Observed nodes and their versions/follow policies.",
+          "name": "nodes",
+          "refs": [
+            "ObservedNodeVersion"
+          ],
+          "required": true,
+          "type": "array of ObservedNodeVersion"
+        },
+        {
+          "description": "Rollout progress per published release (newest first).",
+          "name": "releases",
+          "refs": [
+            "ReleaseRollout"
+          ],
+          "required": true,
+          "type": "array of ReleaseRollout"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "MeshDoctorReport",
+        "PeerTree"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "A route a platform polls: an absolute path on this service, never a URL. The host is\nthe deployment's to know and not the object's to state.",
       "home": "deploy",
       "is_enum": false,
@@ -48312,6 +48533,20 @@
           "refs": [],
           "required": true,
           "type": "boolean"
+        },
+        {
+          "description": "The executable version this runtime published (`0.28.0`).",
+          "name": "version",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "Whether this runtime follows the stable pointer (`stable`), stays off (`off`), or pins one release (`pinned <version>`).",
+          "name": "follow",
+          "refs": [],
+          "required": false,
+          "type": "string"
         },
         {
           "description": "Whether its stream beats: own, live, or expired.",

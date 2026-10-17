@@ -141,6 +141,15 @@ fn mesh_doctor(ctx: &Context, _: Empty) -> Result<MeshDoctorReport, CapabilityEr
             &cooperation.journal().tallies(),
         ));
     }
+    let tree = ctx
+        .mesh
+        .cooperation()
+        .map(|c| peer_tree(&c, &Query::default()));
+    let rollout = rollout_for(ctx, tree.as_ref());
+    report
+        .checks
+        .push(crate::mesh::doctor::rollout_check(&rollout));
+    report.rollout = Some(rollout);
     // one conjunction over every check, so neither added check's failure can be lost
     report.ok = report.checks.iter().all(|c| c.ok);
     Ok(report)
@@ -316,6 +325,12 @@ pub struct RuntimeNode {
     pub runtime: String,
     /// Whether this is the runtime answering.
     pub this_runtime: bool,
+    /// The executable version this runtime published (`0.28.0`).
+    #[serde(default)]
+    pub version: String,
+    /// Whether this runtime follows the stable pointer (`stable`), stays off (`off`), or pins one release (`pinned <version>`).
+    #[serde(default)]
+    pub follow: String,
     /// Whether its stream beats: own, live, or expired.
     pub liveness: StreamLiveness,
     /// Milliseconds since its beat last rose, on this runtime's clock.
@@ -376,6 +391,9 @@ pub struct PeerTree {
     /// The digest of the cooperation state: equal digests, equal state.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub digest: Option<String>,
+    /// Rollout progress across published releases and observed nodes.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub rollout: Option<crate::mesh::RolloutStatus>,
 }
 
 fn rank(l: StreamLiveness) -> u8 {
@@ -411,6 +429,8 @@ pub fn peer_tree(c: &Cooperation, query: &Query) -> PeerTree {
             .or_insert_with(|| RuntimeNode {
                 runtime: key.to_string(),
                 this_runtime: key == own,
+                version: String::new(),
+                follow: String::new(),
                 liveness,
                 last_beat_ms: age,
                 link: None,
@@ -432,6 +452,33 @@ pub fn peer_tree(c: &Cooperation, query: &Query) -> PeerTree {
     }
     for (key, node) in runtimes.iter_mut() {
         node.link = links.get(key).cloned();
+        let (j_ver, j_fol) = c.journal().stream_meta(key);
+        node.version = if node.this_runtime {
+            status.version.clone()
+        } else {
+            j_ver
+                .filter(|v| !v.is_empty())
+                .or_else(|| {
+                    node.link
+                        .as_ref()
+                        .map(|l| l.version.clone())
+                        .filter(|v| !v.is_empty())
+                })
+                .unwrap_or_default()
+        };
+        node.follow = if node.this_runtime {
+            status.follow.clone()
+        } else {
+            j_fol
+                .filter(|f| !f.is_empty())
+                .or_else(|| {
+                    node.link
+                        .as_ref()
+                        .map(|l| l.follow.clone())
+                        .filter(|f| !f.is_empty())
+                })
+                .unwrap_or_else(|| "stable".into())
+        };
     }
     for claim in state.claims.iter().filter(|cl| cl.state.is_live()) {
         // every claim's runtime is a node: each stream of the journal was touched above
@@ -522,12 +569,71 @@ pub fn peer_tree(c: &Cooperation, query: &Query) -> PeerTree {
         machines,
         refused: status.refused,
         digest: Some(whole.digest),
+        rollout: None,
     }
+}
+
+pub(crate) fn rollout_for(ctx: &Context, tree: Option<&PeerTree>) -> crate::mesh::RolloutStatus {
+    let root = std::path::Path::new(&ctx.index.repository.root);
+    let releases = crate::distribution::release::Releases::load(root)
+        .or_else(|_| {
+            crate::distribution::release::Releases::from_index(&ctx.index)
+                .map_err(|reason| crate::error::Error::Protocol { reason })
+        })
+        .unwrap_or_default();
+    let mut nodes: Vec<(String, String, String, String)> = Vec::new();
+    if let Some(tree) = tree {
+        for m in &tree.machines {
+            let best = m
+                .runtimes
+                .iter()
+                .find(|r| r.this_runtime)
+                .or_else(|| m.runtimes.iter().min_by_key(|r| rank(r.liveness)));
+            if let Some(rt) = best {
+                if !rt.version.is_empty() {
+                    nodes.push((
+                        m.node.clone(),
+                        m.name.clone(),
+                        rt.version.clone(),
+                        rt.follow.clone(),
+                    ));
+                }
+            }
+        }
+    }
+    if nodes.is_empty() {
+        let decl = declaration(ctx).and_then(|d| d.ok());
+        let id_opt = default_identity_path()
+            .filter(|p| p.is_file())
+            .and_then(|p| NodeIdentity::load_or_create(&p).ok());
+        let version = crate::mesh::config::resolve_version(Some(root), env!("CARGO_PKG_VERSION"));
+        let follow = crate::mesh::config::resolve_follow(
+            Some(root),
+            decl.as_ref().and_then(|c| c.follow.as_deref()),
+            id_opt.as_ref().and_then(|i| i.public.follow.as_deref()),
+            decl.as_ref().is_some_and(|c| c.enabled),
+        )
+        .unwrap_or_else(|_| "off".into());
+        let node_id = id_opt
+            .as_ref()
+            .map(|i| i.public.node_id.to_string())
+            .unwrap_or_else(|| "local".into());
+        let name = id_opt
+            .as_ref()
+            .map(|i| i.public.display_name.clone())
+            .unwrap_or_else(|| "local".into());
+        nodes.push((node_id, name, version, follow));
+    }
+    crate::mesh::doctor::compute_rollout(&releases, nodes)
 }
 
 fn mesh_peers(ctx: &Context, query: Query) -> Result<PeerTree, CapabilityError> {
     Ok(match ctx.mesh.cooperation() {
-        Some(c) => peer_tree(&c, &query),
+        Some(c) => {
+            let mut tree = peer_tree(&c, &query);
+            tree.rollout = Some(rollout_for(ctx, Some(&tree)));
+            tree
+        }
         None => PeerTree {
             active: false,
             view: query.view(),
@@ -537,6 +643,7 @@ fn mesh_peers(ctx: &Context, query: Query) -> Result<PeerTree, CapabilityError> 
             machines: Vec::new(),
             refused: Vec::new(),
             digest: None,
+            rollout: Some(rollout_for(ctx, None)),
         },
     })
 }

@@ -1235,6 +1235,13 @@ pub struct StreamMark {
     /// verbatim; only the origin can raise its own beat.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub sig: Option<String>,
+    /// The executable version reported by the stream's runtime.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub version: Option<String>,
+    /// The release follow policy (`stable`, `off`, or `pinned <version>`) reported by the
+    /// stream's runtime.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub follow: Option<String>,
 }
 
 /// The bytes a beat signature covers.
@@ -1417,6 +1424,8 @@ struct StreamLog {
     beat_pk: Option<String>,
     beat_sig: Option<String>,
     fresh_at: Option<Instant>,
+    version: Option<String>,
+    follow: Option<String>,
     /// When this journal first held the stream: a stream whose beat has never been heard
     /// here has been silent since then, not since forever.
     learned_at: Instant,
@@ -1431,6 +1440,8 @@ impl StreamLog {
             beat_pk: None,
             beat_sig: None,
             fresh_at: None,
+            version: None,
+            follow: None,
             learned_at: Instant::now(),
         }
     }
@@ -1879,6 +1890,35 @@ impl Journal {
         log.fresh_at = Some(Instant::now());
     }
 
+    /// Record this runtime's own version and release follow policy on its stream so every
+    /// mark it sends carries them.
+    pub fn set_own_meta(&self, version: &str, follow: &str) {
+        let mut inner = self.inner.lock().expect("journal lock");
+        let log = inner
+            .streams
+            .entry(self.own.clone())
+            .or_insert_with(StreamLog::new);
+        if !version.is_empty() && version.len() <= 32 && !version.chars().any(char::is_control) {
+            log.version = Some(version.to_string());
+        }
+        if let Ok(normalized) = super::config::normalize_follow(follow) {
+            log.follow = Some(normalized);
+        }
+    }
+
+    /// The `(version, follow)` metadata heard for `runtime_key` (`<node>-<runtime>`) on the
+    /// stream with the highest beat.
+    pub fn stream_meta(&self, runtime_key: &str) -> (Option<String>, Option<String>) {
+        let inner = self.inner.lock().expect("journal lock");
+        inner
+            .streams
+            .iter()
+            .filter(|(id, _)| id.runtime_key() == runtime_key)
+            .max_by_key(|(_, log)| log.beat)
+            .map(|(_, log)| (log.version.clone(), log.follow.clone()))
+            .unwrap_or((None, None))
+    }
+
     /// Every stream's mark, own included, ages measured now. This is the whole of what a
     /// runtime tells a peer about its state: a sequence per stream and a beat per stream,
     /// from which the peer computes what to send. Nothing is asked for and nothing is
@@ -1919,6 +1959,8 @@ impl Journal {
                             .map(|t| now.saturating_duration_since(t).as_millis() as u64),
                         pk: log.beat_pk.clone(),
                         sig: log.beat_sig.clone(),
+                        version: log.version.clone(),
+                        follow: log.follow.clone(),
                     },
                 )
             })
@@ -2066,6 +2108,21 @@ impl Journal {
                 .streams
                 .entry(id.clone())
                 .or_insert_with(StreamLog::new);
+            if mark.beat >= log.beat {
+                if let Some(version) = &mark.version {
+                    if !version.is_empty()
+                        && version.len() <= 32
+                        && !version.chars().any(char::is_control)
+                    {
+                        log.version = Some(version.clone());
+                    }
+                }
+                if let Some(follow) = &mark.follow {
+                    if let Ok(normalized) = super::config::normalize_follow(follow) {
+                        log.follow = Some(normalized);
+                    }
+                }
+            }
             if mark.beat > log.beat {
                 log.beat = mark.beat;
                 log.beat_pk = Some(pk.clone());

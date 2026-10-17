@@ -193,6 +193,12 @@ fn render(peers: &Answer, events: &Answer, selected: Option<&str>) -> View {
             "Links this runtime would not make, and why.",
             refused(peers),
             &[peers],
+        ))
+        .child(panel(
+            "Release rollout",
+            "How far each published release has rolled out across observed following nodes.",
+            rollout_panel(peers),
+            &[peers],
         ));
 
     View::new(
@@ -204,6 +210,26 @@ fn render(peers: &Answer, events: &Answer, selected: Option<&str>) -> View {
 /// One machine as a table row that selects it.
 fn machine_row(m: &Value) -> El {
     let name = text(m, "name");
+    let mut badges: Vec<El> = livenesses(m).iter().map(|w| word_badge(w)).collect();
+    for r in m
+        .get("runtimes")
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+    {
+        let ver = text(r, "version");
+        if !ver.is_empty() {
+            badges.push(
+                el("span")
+                    .class("mj-ui-mono mj-ui-dim")
+                    .text(format!("v{}", ver.trim_start_matches('v'))),
+            );
+        }
+        let fol = text(r, "follow");
+        if !fol.is_empty() {
+            badges.push(word_badge(&fol));
+        }
+    }
     el("tr")
         .child(
             el("td").child(
@@ -224,11 +250,7 @@ fn machine_row(m: &Value) -> El {
                 None => "unknown",
             }),
         )
-        .child(
-            el("td")
-                .class("mj-ui-badges")
-                .children(livenesses(m).iter().map(|w| word_badge(w))),
-        )
+        .child(el("td").class("mj-ui-badges").children(badges))
 }
 
 /// How many claims a session holds. The summary view of `mesh.peers` counts them in
@@ -274,12 +296,24 @@ fn inspector(name: &str, machines: &[Value], peers: &Answer, events: &Answer) ->
                 .get("sessions")
                 .and_then(Value::as_array)
                 .map_or(0, Vec::len);
+            let ver = text(r, "version");
+            let fol = text(r, "follow");
             el("tr")
                 .child(
                     el("td")
                         .class("mj-ui-mono")
                         .text(short(&text(r, "runtime"))),
                 )
+                .child(el("td").class("mj-ui-mono").text(if ver.is_empty() {
+                    "unknown".into()
+                } else {
+                    ver
+                }))
+                .child(el("td").class("mj-ui-mono").text(if fol.is_empty() {
+                    "unknown".into()
+                } else {
+                    fol
+                }))
                 .child(el("td").child(word_badge(&text(r, "liveness"))))
                 .child(el("td").class("mj-ui-mono mj-ui-dim").text(beat))
                 .child(el("td").class("mj-ui-num").text(sessions.to_string()))
@@ -354,7 +388,14 @@ fn inspector(name: &str, machines: &[Value], peers: &Answer, events: &Answer) ->
             ),
         )
         .child(table(
-            &["Runtime", "Liveness", "Last beat", "Active sessions"],
+            &[
+                "Runtime",
+                "Version",
+                "Follow",
+                "Liveness",
+                "Last beat",
+                "Active sessions",
+            ],
             runtime_rows,
             "It runs no runtime the mesh knows.",
         ))
@@ -442,6 +483,43 @@ fn refused(peers: &Answer) -> El {
             &["Endpoint", "Direction", "Why"],
             rows,
             "No link was refused.",
+        )
+    })
+}
+
+fn rollout_panel(peers: &Answer) -> El {
+    unanswered(peers).unwrap_or_else(|| {
+        let rows = list(peers, "/rollout/releases")
+            .iter()
+            .take(ROWS)
+            .map(|r| {
+                let reporting = r
+                    .get("reporting_nodes")
+                    .and_then(Value::as_u64)
+                    .unwrap_or(0);
+                let following = r
+                    .get("following_nodes")
+                    .and_then(Value::as_u64)
+                    .unwrap_or(0);
+                let rolled = r.get("rolled_out").and_then(Value::as_bool) == Some(true);
+                el("tr")
+                    .child(el("td").class("mj-ui-mono").text(text(r, "tag")))
+                    .child(
+                        el("td")
+                            .class("mj-ui-mono")
+                            .text(format!("{reporting}/{following}")),
+                    )
+                    .child(el("td").child(word_badge(if rolled {
+                        "rolled out"
+                    } else {
+                        "rolling out"
+                    })))
+            })
+            .collect::<Vec<_>>();
+        table(
+            &["Release", "Following reporting", "State"],
+            rows,
+            "No release rollout recorded.",
         )
     })
 }

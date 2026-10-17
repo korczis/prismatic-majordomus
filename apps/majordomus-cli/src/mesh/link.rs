@@ -356,6 +356,29 @@ impl RuntimeCard {
         self.features.iter().any(|f| f == feature)
     }
 
+    /// The release follow policy (`stable`, `off`, or `pinned <version>`) this runtime
+    /// states in its card features (`follow:<policy>`), defaulting to `"stable"` when no
+    /// explicit follow feature is present.
+    pub fn follow(&self) -> String {
+        for feature in &self.features {
+            if let Some(raw) = feature.strip_prefix("follow:") {
+                if let Ok(normalized) = super::config::normalize_follow(raw) {
+                    return normalized;
+                }
+            }
+        }
+        "stable".into()
+    }
+
+    /// Attach or replace the `follow:<policy>` entry in this card's `features`.
+    pub fn with_follow(mut self, follow: &str) -> Self {
+        let normalized =
+            super::config::normalize_follow(follow).unwrap_or_else(|_| "stable".into());
+        self.features.retain(|f| !f.starts_with("follow:"));
+        self.features.push(format!("follow:{normalized}"));
+        self
+    }
+
     /// Refuse an out-of-bounds card: a key that does not parse, ids of the wrong shape,
     /// oversized text.
     ///

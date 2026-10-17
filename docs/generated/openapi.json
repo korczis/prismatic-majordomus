@@ -26961,6 +26961,16 @@
             ],
             "description": "The repository identity links are matched on."
           },
+          "version": {
+            "type": "string",
+            "description": "This runtime's executable version.",
+            "default": ""
+          },
+          "follow": {
+            "type": "string",
+            "description": "This runtime's release follow policy (`stable`, `off`, or `pinned <version>`).",
+            "default": "stable"
+          },
           "protocol": {
             "type": "array",
             "prefixItems": [
@@ -42016,6 +42026,17 @@
               "$ref": "#/components/schemas/DoctorCheck"
             },
             "description": "The checks, in the order they ran."
+          },
+          "rollout": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RolloutStatus"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Rollout progress across published releases and observed nodes, when evaluated against a repository."
           }
         },
         "required": [
@@ -44923,6 +44944,41 @@
         ],
         "description": "`deploy.observed`: what was deployed where, or that nothing has been observed here."
       },
+      "ObservedNodeVersion": {
+        "type": "object",
+        "properties": {
+          "node": {
+            "type": "string",
+            "description": "The node id (32 hex) or runtime key."
+          },
+          "name": {
+            "type": "string",
+            "description": "Its display name."
+          },
+          "version": {
+            "type": "string",
+            "description": "The reported version (without leading `v`, e.g. `0.28.0`), or empty if unknown."
+          },
+          "follow": {
+            "type": "string",
+            "description": "The reported `follow` policy (`stable`, `off`, or `pinned <version>`)."
+          },
+          "releases_behind": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many stable releases behind the stable pointer this node is."
+          }
+        },
+        "required": [
+          "node",
+          "name",
+          "version",
+          "follow",
+          "releases_behind"
+        ],
+        "description": "One observed mesh node's version and follow policy."
+      },
       "ObservedRelease": {
         "type": "object",
         "properties": {
@@ -45992,6 +46048,17 @@
               "null"
             ],
             "description": "The digest of the cooperation state: equal digests, equal state."
+          },
+          "rollout": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RolloutStatus"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Rollout progress across published releases and observed nodes."
           }
         },
         "required": [
@@ -46075,6 +46142,11 @@
           "version": {
             "type": "string",
             "description": "The executable version."
+          },
+          "follow": {
+            "type": "string",
+            "description": "The release follow policy (`stable`, `off`, or `pinned <version>`).",
+            "default": "stable"
           },
           "local": {
             "type": "boolean",
@@ -48436,6 +48508,13 @@
           "instance_id": {
             "$ref": "#/components/schemas/InstanceId",
             "description": "This run of the node."
+          },
+          "follow": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional release follow policy (`stable`, `off`, or `pinned <version>`) configured in\nthe node's identity file."
           }
         },
         "required": [
@@ -52332,6 +52411,55 @@
         ],
         "description": "A record of the layer that a commit names in its own text.\n\nInferred, never declared beside the commit: an issue id or a milestone id appearing in a\nsubject or a body is a reference, and the layer already holds the object it refers to. A\nreference to something the layer does not have is not carried — a link to a record that\ndoes not exist is worse than no link, because the reader cannot tell until they follow it.\n\n```\nuse majordomus_cli::release::model::Reference;\nlet r = Reference {\n    kind: \"issue\".into(),\n    id: \"I1305\".into(),\n    title: \"An observed contract has a fingerprint\".into(),\n    route: Some(\"/plan/i1305/\".into()),\n};\nlet json = serde_json::to_value(&r).unwrap();\nassert_eq!(json[\"id\"], \"I1305\");\nassert_eq!(json[\"route\"], \"/plan/i1305/\");\n// a reference the site has no page for carries no route rather than an invented one\nlet bare = Reference { route: None, ..r };\nassert!(serde_json::to_value(&bare).unwrap().get(\"route\").is_none());\n```"
       },
+      "ReleaseRollout": {
+        "type": "object",
+        "properties": {
+          "tag": {
+            "type": "string",
+            "description": "The release tag (`v0.28.0`)."
+          },
+          "version": {
+            "type": "string",
+            "description": "The release version (`0.28.0`)."
+          },
+          "latest_stable": {
+            "type": "boolean",
+            "description": "Whether this release is the current stable pointer (`latest`)."
+          },
+          "following_nodes": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Enrolled nodes following this release (`follow: stable` for the stable pointer, or\n`follow: pinned <version>` for a pinned release)."
+          },
+          "reporting_nodes": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Enrolled following nodes currently reporting this release version."
+          },
+          "total_reporting_nodes": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Total observed nodes currently reporting this release version (regardless of follow policy)."
+          },
+          "rolled_out": {
+            "type": "boolean",
+            "description": "True when `following_nodes > 0` and every enrolled following node reports this version."
+          }
+        },
+        "required": [
+          "tag",
+          "version",
+          "latest_stable",
+          "following_nodes",
+          "reporting_nodes",
+          "total_reporting_nodes",
+          "rolled_out"
+        ],
+        "description": "Rollout progress of one published release across observed enrolled nodes."
+      },
       "ReleaseSection": {
         "type": "object",
         "properties": {
@@ -54484,6 +54612,49 @@
         ],
         "description": "Why a rule exists: which part of the declaration implied it. The role is what a person\nreads beside the rule and what a verdict names, and it is serialised in snake case.\n\n```\nuse majordomus_cli::mesh::firewall::Role;\n\nassert_eq!(serde_json::to_value(Role::Hub).unwrap(), \"hub\");\nlet back: Role = serde_json::from_value(serde_json::json!(\"multicast\")).unwrap();\nassert_eq!(back, Role::Multicast);\n```"
       },
+      "RolloutStatus": {
+        "type": "object",
+        "properties": {
+          "stable_version": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The current stable pointer version (`0.28.0`), when the repository has a stable release."
+          },
+          "stable_tag": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The current stable pointer tag (`v0.28.0`), when the repository has a stable release."
+          },
+          "stable_rolled_out": {
+            "type": "boolean",
+            "description": "Whether the current stable release has rolled out to every observed following node."
+          },
+          "nodes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ObservedNodeVersion"
+            },
+            "description": "Observed nodes and their versions/follow policies."
+          },
+          "releases": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReleaseRollout"
+            },
+            "description": "Rollout progress per published release (newest first)."
+          }
+        },
+        "required": [
+          "stable_rolled_out",
+          "nodes",
+          "releases"
+        ],
+        "description": "Rollout summary across the repository's published releases and observed mesh nodes."
+      },
       "Route": {
         "type": "string",
         "description": "A route a platform polls: an absolute path on this service, never a URL. The host is\nthe deployment's to know and not the object's to state."
@@ -55369,6 +55540,16 @@
           "this_runtime": {
             "type": "boolean",
             "description": "Whether this is the runtime answering."
+          },
+          "version": {
+            "type": "string",
+            "description": "The executable version this runtime published (`0.28.0`).",
+            "default": ""
+          },
+          "follow": {
+            "type": "string",
+            "description": "Whether this runtime follows the stable pointer (`stable`), stays off (`off`), or pins one release (`pinned <version>`).",
+            "default": ""
           },
           "liveness": {
             "$ref": "#/components/schemas/StreamLiveness",

@@ -388,6 +388,9 @@ pub struct PeerView {
     pub name: String,
     /// The executable version.
     pub version: String,
+    /// The release follow policy (`stable`, `off`, or `pinned <version>`).
+    #[serde(default = "default_follow")]
+    pub follow: String,
     /// Whether the peer runs on this machine (the same node key).
     pub local: bool,
     /// The trust verdict the link was admitted under.
@@ -426,6 +429,10 @@ pub struct PeerView {
     pub restarts: u64,
     /// When the current link was established, RFC 3339.
     pub linked_at: String,
+}
+
+fn default_follow() -> String {
+    "stable".into()
 }
 
 /// A candidate that was refused, with the rule that refused it. A refusal is kept and
@@ -615,6 +622,12 @@ pub struct CooperationStatus {
     /// The repository identity links are matched on.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub repository: Option<MeshRepositoryIdentity>,
+    /// This runtime's executable version.
+    #[serde(default)]
+    pub version: String,
+    /// This runtime's release follow policy (`stable`, `off`, or `pinned <version>`).
+    #[serde(default = "default_follow")]
+    pub follow: String,
     /// The link protocol range spoken.
     pub protocol: (u32, u32),
     /// The link features carried.
@@ -662,6 +675,8 @@ impl CooperationStatus {
             runtime: None,
             stream: None,
             repository: None,
+            version: env!("CARGO_PKG_VERSION").into(),
+            follow: "off".into(),
             protocol: (LINK_PROTOCOL_MIN, LINK_PROTOCOL_MAX),
             features: FEATURES.iter().map(|f| f.to_string()).collect(),
             heartbeat_seconds: 0,
@@ -1295,13 +1310,22 @@ impl Cooperation {
                 "mesh journal reload refused events its trust no longer admits"
             );
         }
+        let follow = super::config::resolve_follow(
+            setup.checkout.root.as_deref(),
+            setup.config.follow.as_deref(),
+            setup.identity.public.follow.as_deref(),
+            setup.config.enabled,
+        )
+        .map_err(super::MeshError::Config)?;
+        let version =
+            super::config::resolve_version(setup.checkout.root.as_deref(), &setup.version);
         let card = RuntimeCard {
             pk: setup.identity.public.public_key.clone(),
             runtime: setup.runtime.clone(),
             instance: setup.identity.public.instance_id.as_str().into(),
             repo: setup.repository.id.clone(),
             name: setup.identity.public.display_name.clone(),
-            version: setup.version.chars().take(32).collect(),
+            version,
             features: FEATURES.iter().map(|f| f.to_string()).collect(),
             endpoints: setup
                 .endpoints
@@ -1309,8 +1333,10 @@ impl Cooperation {
                 .take(super::protocol::MAX_ENDPOINTS)
                 .cloned()
                 .collect(),
-        };
+        }
+        .with_follow(&follow);
         card.check().map_err(super::MeshError::Protocol)?;
+        journal.set_own_meta(&card.version, &follow);
         let own_key = journal.own_stream().runtime_key();
         Ok(Arc::new(Cooperation {
             identity: setup.identity,
@@ -2060,10 +2086,14 @@ impl Cooperation {
         }
         self.counters.handshakes_in.fetch_add(1, Ordering::Relaxed);
         tracing::info!(runtime_id = %self.own_key, peer = %runtime_key, link_id = %link, "mesh link accepted");
+        let (version, follow) = self.refresh_own_meta();
+        let mut card = self.card.clone();
+        card.version = version;
+        card = card.with_follow(&follow);
         let welcome = Welcome {
             proto,
             link,
-            card: self.card.clone(),
+            card,
             nonce: hello.nonce,
             ts: super::protocol::now(),
             marks: self.journal.marks(),
@@ -2208,6 +2238,7 @@ impl Cooperation {
         if report.accepted > 0 || report.rejected_total() > 0 {
             tracing::debug!(runtime_id = %self.own_key, peer = %runtime_key, accepted = report.accepted, duplicate = report.duplicate, rejected = report.rejected_total(), "mesh sync ingested");
         }
+        self.refresh_own_meta();
         let marks = self.journal.marks_for(&request.marks);
         let answer =
             self.sync_within_bound(Domain::SyncAnswer, &request.marks, |events| SyncAnswer {
@@ -2595,6 +2626,7 @@ impl Cooperation {
             out.counter += 1;
             (out.clone(), peer.card.pk.clone())
         };
+        self.refresh_own_meta();
         let marks = self.journal.marks_for(&out.remote_marks);
         let (message, sent) = self
             .sync_within_bound(Domain::SyncRequest, &out.remote_marks, |events| {
@@ -2881,6 +2913,20 @@ impl Cooperation {
 
     // ------------------------------------------------------------------ reading
 
+    fn refresh_own_meta(&self) -> (String, String) {
+        let version =
+            super::config::resolve_version(self.checkout.root.as_deref(), &self.card.version);
+        let follow = super::config::resolve_follow(
+            self.checkout.root.as_deref(),
+            self.config.follow.as_deref(),
+            self.identity.public.follow.as_deref(),
+            self.config.enabled,
+        )
+        .unwrap_or_else(|_| self.card.follow());
+        self.journal.set_own_meta(&version, &follow);
+        (version, follow)
+    }
+
     /// Every peer this runtime has a link to, including the ones that have expired and not
     /// yet been forgotten. An expired peer is kept for a retention window rather than
     /// dropped on the spot, because "the peer I had is gone" is the answer a person needs
@@ -2928,29 +2974,37 @@ impl Cooperation {
         table
             .peers
             .iter()
-            .map(|(key, peer)| PeerView {
-                runtime: key.clone(),
-                node: key[..32].to_string(),
-                instance: peer.card.instance.clone(),
-                name: peer.card.name.clone(),
-                version: peer.card.version.clone(),
-                local: &key[..32] == own_node,
-                trust: peer.trust.clone(),
-                protocol: peer.proto,
-                features: peer.card.features.clone(),
-                endpoints: peer.card.endpoints.clone(),
-                state: self.state_of(peer),
-                outbound: peer.outbound.is_some(),
-                inbound: peer.inbound.is_some(),
-                endpoint: peer.outbound.as_ref().map(|o| o.endpoint.clone()),
-                last_exchange_ms: peer.last_exchange.map(|t| t.elapsed().as_millis() as u64),
-                rtt_ms: peer.rtt.map(|d| d.as_millis() as u64),
-                failures: peer.failures,
-                last_error: peer.last_error.clone(),
-                handshakes: peer.handshakes,
-                reconnects: peer.reconnects,
-                restarts: peer.restarts,
-                linked_at: peer.linked_at.clone(),
+            .map(|(key, peer)| {
+                let (j_ver, j_fol) = self.journal.stream_meta(key);
+                PeerView {
+                    runtime: key.clone(),
+                    node: key[..32].to_string(),
+                    instance: peer.card.instance.clone(),
+                    name: peer.card.name.clone(),
+                    version: j_ver
+                        .filter(|v| !v.is_empty())
+                        .unwrap_or_else(|| peer.card.version.clone()),
+                    follow: j_fol
+                        .filter(|f| !f.is_empty())
+                        .unwrap_or_else(|| peer.card.follow()),
+                    local: &key[..32] == own_node,
+                    trust: peer.trust.clone(),
+                    protocol: peer.proto,
+                    features: peer.card.features.clone(),
+                    endpoints: peer.card.endpoints.clone(),
+                    state: self.state_of(peer),
+                    outbound: peer.outbound.is_some(),
+                    inbound: peer.inbound.is_some(),
+                    endpoint: peer.outbound.as_ref().map(|o| o.endpoint.clone()),
+                    last_exchange_ms: peer.last_exchange.map(|t| t.elapsed().as_millis() as u64),
+                    rtt_ms: peer.rtt.map(|d| d.as_millis() as u64),
+                    failures: peer.failures,
+                    last_error: peer.last_error.clone(),
+                    handshakes: peer.handshakes,
+                    reconnects: peer.reconnects,
+                    restarts: peer.restarts,
+                    linked_at: peer.linked_at.clone(),
+                }
             })
             .collect()
     }
@@ -3001,6 +3055,7 @@ impl Cooperation {
         };
         let c = &self.counters;
         let load = |a: &AtomicU64| a.load(Ordering::Relaxed);
+        let (version, follow) = self.refresh_own_meta();
         CooperationStatus {
             active: !self.stopped() && self.config.enabled,
             reason: if self.stopped() {
@@ -3013,6 +3068,8 @@ impl Cooperation {
             runtime: Some(self.own_key.clone()),
             stream: Some(self.journal.own_stream().clone()),
             repository: Some(self.repository.clone()),
+            version,
+            follow,
             protocol: (LINK_PROTOCOL_MIN, LINK_PROTOCOL_MAX),
             features: self.card.features.clone(),
             heartbeat_seconds: self.config.heartbeat_seconds,

@@ -834,8 +834,10 @@ fn render_peers(v: &Value) -> String {
         ));
         for r in m["runtimes"].as_array().into_iter().flatten() {
             let link = &r["link"];
+            let version = s(r, "version");
+            let follow = s(r, "follow");
             out.push_str(&format!(
-                "  runtime  {} {}{}{}{}\n",
+                "  runtime  {} {}{}{}{}{}{}\n",
                 short(s(r, "runtime")),
                 s(r, "liveness"),
                 if link.is_object() {
@@ -851,6 +853,16 @@ fn render_peers(v: &Value) -> String {
                     .as_u64()
                     .map(|ms| format!(" rtt {ms}ms"))
                     .unwrap_or_default(),
+                if version.is_empty() {
+                    String::new()
+                } else {
+                    format!(" version {version}")
+                },
+                if follow.is_empty() {
+                    String::new()
+                } else {
+                    format!(" follow {follow}")
+                },
             ));
             for sess in r["sessions"].as_array().into_iter().flatten() {
                 render_session(sess, "    ", &mut out);
@@ -864,6 +876,24 @@ fn render_peers(v: &Value) -> String {
             s(r, "direction"),
             s(&r["refusal"], "code"),
             s(&r["refusal"], "detail")
+        ));
+    }
+    if let Some(tag) = v["rollout"]["stable_tag"].as_str() {
+        let rolled = v["rollout"]["stable_rolled_out"] == json!(true);
+        let entry = v["rollout"]["releases"]
+            .as_array()
+            .and_then(|rs| rs.iter().find(|r| r["latest_stable"] == json!(true)));
+        let (rep, fol) = entry
+            .map(|r| {
+                (
+                    r["reporting_nodes"].as_u64().unwrap_or(0),
+                    r["following_nodes"].as_u64().unwrap_or(0),
+                )
+            })
+            .unwrap_or((0, 0));
+        out.push_str(&format!(
+            "rollout    {tag} {rep}/{fol} following ({})\n",
+            if rolled { "rolled out" } else { "rolling out" }
         ));
     }
     out.push_str(&format!("digest     {}", s(v, "digest")));
@@ -884,6 +914,12 @@ fn render_peer(v: &Value) -> String {
         s(r, "runtime"),
         s(r, "liveness")
     );
+    if !s(r, "version").is_empty() {
+        out.push_str(&format!("version    {}\n", s(r, "version")));
+    }
+    if !s(r, "follow").is_empty() {
+        out.push_str(&format!("follow     {}\n", s(r, "follow")));
+    }
     let link = &r["link"];
     if link.is_object() {
         out.push_str(&format!(
@@ -1684,6 +1720,38 @@ mod tests {
             "refused": [],
         }));
         assert_eq!(text, "machine    laptop\nruntime    r-1\nliveness   own");
+    }
+
+    #[test]
+    fn a_runtime_in_the_tree_prints_its_version_and_follow_and_rollout() {
+        let mut tree = two_machines();
+        tree["machines"][0]["runtimes"][0]["version"] = json!("0.28.0");
+        tree["machines"][0]["runtimes"][0]["follow"] = json!("stable");
+        tree["machines"][1]["runtimes"][0]["version"] = json!("0.27.0");
+        tree["machines"][1]["runtimes"][0]["follow"] = json!("pinned 0.27.0");
+        tree["rollout"] = json!({
+            "stable_tag": "v0.28.0",
+            "stable_rolled_out": true,
+            "releases": [{
+                "tag": "v0.28.0",
+                "latest_stable": true,
+                "reporting_nodes": 1,
+                "following_nodes": 1,
+            }],
+        });
+        let text = render_peers(&tree);
+        assert!(
+            text.contains("version 0.28.0 follow stable"),
+            "version and follow are printed on the runtime line:\n{text}"
+        );
+        assert!(
+            text.contains("version 0.27.0 follow pinned 0.27.0"),
+            "pinned follow policy is printed on the runtime line:\n{text}"
+        );
+        assert!(
+            text.contains("rollout    v0.28.0 1/1 following (rolled out)"),
+            "rollout summary is printed before digest:\n{text}"
+        );
     }
 
     fn folded_state() -> Value {

@@ -784,6 +784,7 @@ mod tests {
             kind: "mesh-declaration".into(),
             id: "test".into(),
             enabled: true,
+            follow: None,
             multicast: MulticastConfig {
                 enabled: false,
                 ..MulticastConfig::default()

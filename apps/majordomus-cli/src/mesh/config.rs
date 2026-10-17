@@ -70,6 +70,10 @@ pub struct MeshConfig {
     /// and the journal they replicate (ADR 0067).
     #[serde(default)]
     pub cooperation: CooperationConfig,
+    /// Whether this node follows the stable release pointer (`stable`), stays off automatic
+    /// rollout (`off`), or pins one release (`pinned <version>`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub follow: Option<String>,
 }
 
 /// Cooperation settings: whether this runtime links to the trusted runtimes of its
@@ -122,6 +126,10 @@ pub struct CooperationConfig {
     /// what a shallow clone needs, and what separates two repositories sharing a history.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub repository: Option<String>,
+    /// Whether this runtime follows the stable release pointer (`stable`), stays off automatic
+    /// rollout (`off`), or pins one release (`pinned <version>`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub follow: Option<String>,
 }
 
 impl Default for CooperationConfig {
@@ -132,6 +140,7 @@ impl Default for CooperationConfig {
             expiry_seconds: DEFAULT_EXPIRY,
             seeds: Vec::new(),
             repository: None,
+            follow: None,
         }
     }
 }
@@ -284,6 +293,94 @@ fn rendezvous_interval() -> u64 {
     60
 }
 
+/// Normalize a `follow` policy (`stable`, `off`, or `pinned <version>`), or explain why
+/// the setting is not one of the three policies ADR 0161 defines.
+pub fn normalize_follow(raw: &str) -> Result<String, String> {
+    let trimmed = raw.trim();
+    match trimmed {
+        "stable" => Ok("stable".into()),
+        "off" => Ok("off".into()),
+        _ => {
+            let pinned = trimmed
+                .strip_prefix("pinned ")
+                .or_else(|| trimmed.strip_prefix("pinned:"))
+                .map(str::trim);
+            if let Some(version) = pinned {
+                let valid = !version.is_empty()
+                    && version.len() <= 24
+                    && version
+                        .chars()
+                        .all(|c| c.is_ascii_alphanumeric() || matches!(c, '.' | '-' | '_' | '+'));
+                if valid {
+                    return Ok(format!("pinned {version}"));
+                }
+            }
+            Err(format!(
+                "follow policy '{trimmed}' is not 'stable', 'off', or 'pinned <version>'"
+            ))
+        }
+    }
+}
+
+/// Resolve this node's effective `follow` setting from environment (`MAJORDOMUS_FOLLOW`),
+/// checkout state (`.ai/local/state/mesh/follow`), mesh configuration, or node identity,
+/// defaulting to `"stable"` when enrolled and `"off"` otherwise.
+pub fn resolve_follow(
+    checkout_root: Option<&std::path::Path>,
+    config_follow: Option<&str>,
+    identity_follow: Option<&str>,
+    enrolled: bool,
+) -> Result<String, String> {
+    if let Ok(env) = std::env::var("MAJORDOMUS_FOLLOW") {
+        if !env.trim().is_empty() {
+            return normalize_follow(&env);
+        }
+    }
+    if let Some(root) = checkout_root {
+        let local_path = root.join(".ai/local/state/mesh/follow");
+        if let Ok(text) = std::fs::read_to_string(local_path) {
+            if !text.trim().is_empty() {
+                return normalize_follow(&text);
+            }
+        }
+    }
+    if let Some(cfg) = config_follow {
+        if !cfg.trim().is_empty() {
+            return normalize_follow(cfg);
+        }
+    }
+    if let Some(id_follow) = identity_follow {
+        if !id_follow.trim().is_empty() {
+            return normalize_follow(id_follow);
+        }
+    }
+    Ok(if enrolled { "stable" } else { "off" }.into())
+}
+
+/// Resolve this runtime's reported version from environment (`MAJORDOMUS_VERSION_OVERRIDE` or
+/// `MAJORDOMUS_MESH_VERSION`), checkout state (`.ai/local/state/mesh/version`), or the compiled
+/// executable version.
+pub fn resolve_version(checkout_root: Option<&std::path::Path>, default_version: &str) -> String {
+    for var in ["MAJORDOMUS_VERSION_OVERRIDE", "MAJORDOMUS_MESH_VERSION"] {
+        if let Ok(env) = std::env::var(var) {
+            let trimmed = env.trim();
+            if !trimmed.is_empty() {
+                return trimmed.chars().take(32).collect();
+            }
+        }
+    }
+    if let Some(root) = checkout_root {
+        let local_path = root.join(".ai/local/state/mesh/version");
+        if let Ok(text) = std::fs::read_to_string(local_path) {
+            let trimmed = text.trim();
+            if !trimmed.is_empty() {
+                return trimmed.chars().take(32).collect();
+            }
+        }
+    }
+    default_version.chars().take(32).collect()
+}
+
 impl CooperationConfig {
     /// Refuse the settings that cannot work: a zero heartbeat, an expiry under three
     /// heartbeats (one lost round would expire a live runtime), a seed that is not
@@ -317,6 +414,9 @@ impl CooperationConfig {
                 return Err("cooperation.repository is empty or over 128 characters".into());
             }
         }
+        if let Some(follow) = &self.follow {
+            normalize_follow(follow)?;
+        }
         Ok(())
     }
 }
@@ -341,7 +441,7 @@ impl MeshConfig {
     /// assert!(MeshConfig::from_metadata(&wrong, "master:x.yaml").unwrap_err().to_string().contains("master:x.yaml"));
     /// ```
     pub fn from_metadata(metadata: &serde_json::Value, uri: &str) -> Result<MeshConfig, MeshError> {
-        let parsed: MeshConfig = serde_json::from_value(metadata.clone())
+        let mut parsed: MeshConfig = serde_json::from_value(metadata.clone())
             .map_err(|e| MeshError::Config(format!("{}: {e}", uri)))?;
         if parsed.schema != SCHEMA_VERSION {
             return Err(MeshError::Config(format!(
@@ -363,6 +463,19 @@ impl MeshConfig {
                 "{}: an interval of 0 would be a busy loop",
                 uri
             )));
+        }
+        if let Some(follow) = &parsed.follow {
+            let normalized =
+                normalize_follow(follow).map_err(|e| MeshError::Config(format!("{}: {e}", uri)))?;
+            parsed.follow = Some(normalized.clone());
+            if parsed.cooperation.follow.is_none() {
+                parsed.cooperation.follow = Some(normalized);
+            }
+        }
+        if let Some(follow) = &parsed.cooperation.follow {
+            let normalized =
+                normalize_follow(follow).map_err(|e| MeshError::Config(format!("{}: {e}", uri)))?;
+            parsed.cooperation.follow = Some(normalized);
         }
         parsed
             .cooperation

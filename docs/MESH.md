@@ -614,9 +614,14 @@ that writes either unit is still owed as a typed capability (ADR 0059).
 it keeps its installed Majordomus at the version `releases/latest.json` names, restarts onto it
 under its service manager when no session is attached or after a bounded grace, checks its
 readiness and a live `mesh verify` round, and rolls back to the previous version by itself when
-either fails, naming node, version and failed check on the board. A typed capability writes
-the systemd unit and the launchd agent (I2722). Until that lands, the release seat upgrades the
-hubs by hand after each release and reads each version back.
+either fails, naming node, version and failed check on the board. Every runtime publishes its
+`version` and `follow` policy (`stable`, `off`, or `pinned <version>`) in its runtime card and
+stream marks; `majordomus mesh peers` and the UI show each runtime's `version`, `follow` and
+per-release rollout progress (`rolled_out: true` when every observed following node reports the
+release), and `majordomus mesh doctor`'s `rollout` check fails when any observed node is more
+than one release behind the stable pointer (`test/cases/3111_the_mesh_shows_the_rollout.sh`).
+A typed capability writes the systemd unit and the launchd agent (I2722). Until that lands, the
+release seat upgrades the hubs by hand after each release and reads each version back.
 
 **Turning it off.** Commit `enabled: false`; a server started after that opens nothing,
 `mesh status` says why, and the briefing says `Mesh: off, as declared`. That reverses ADR 0059,

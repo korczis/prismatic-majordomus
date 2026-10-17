@@ -38639,6 +38639,8 @@
             "mesh peers prints each runtime's version and follow setting",
             "mesh doctor names a node more than one release behind the stable pointer"
           ],
+          "completed_at": "2026-10-17T13:46:38Z",
+          "completed_event": "sha256:1ea23be5b8ec69e4a2ec4a9c0ed55c0569a6ecce7dddc78f326f62518f3478bb",
           "created_at": "2026-10-14",
           "current_state": "serve status reports an outdated server for one checkout; the mesh carries no versions.",
           "depends_on": [],
@@ -38658,11 +38660,15 @@
             "test/cases"
           ],
           "slug": "the-mesh-shows-the-rollout",
-          "updated_at": "2026-10-14",
+          "started_at": "2026-10-17T13:46:22Z",
+          "started_event": "sha256:18a19a346dc2e5c5c776a7cd6fe734facd6c9a4c5ed7ab87b1bdf4991df0e043",
+          "updated_at": "2026-10-17T13:46:38Z",
           "validation": [
             "bin/majordomus plan validate",
-            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+            "MJ_TEST_JOBS=4 bash test/run.sh 3111_the_mesh_shows_the_rollout"
           ],
+          "verified_at": "2026-10-17T13:46:28Z",
+          "verified_event": "sha256:f6b2f64f716fb0e465578d2b0152fc6b3e43e9ff84fdf8ddc3c365387e88beec",
           "why": "ADR 0161. On 2026-10-14 the primary checkout's server was a 0.21.0 debug build beside a 0.25.0 CLI, and nothing on the board said so."
         }
       },
@@ -56843,6 +56849,13 @@
         "label": "test/cases/310_rustdoc_projection.sh",
         "route": "/cockpit/objects/test/test-cases-310-rustdoc-projection-sh",
         "source": "test/cases/310_rustdoc_projection.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3111_the_mesh_shows_the_rollout.sh",
+        "kind": "test",
+        "label": "test/cases/3111_the_mesh_shows_the_rollout.sh",
+        "route": "/cockpit/objects/test/test-cases-3111-the-mesh-shows-the-rollout-sh",
+        "source": "test/cases/3111_the_mesh_shows_the_rollout.sh"
       },
       {
         "id": "majordomus://test/test/cases/3125_the_reaper_asks_cargo_for_the_build_dir.sh",
@@ -88198,6 +88211,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3111_the_mesh_shows_the_rollout.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/3125_the_reaper_asks_cargo_for_the_build_dir.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -93494,8 +93512,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2935,
-      "edges": 6437,
+      "nodes": 2936,
+      "edges": 6438,
       "acyclic": false,
       "truncated": false
     }

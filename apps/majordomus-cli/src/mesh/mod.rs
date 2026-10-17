@@ -68,7 +68,9 @@ pub mod trust;
 pub(crate) mod testing;
 
 pub use config::{MeshConfig, KIND};
-pub use doctor::{DoctorCheck, MeshDoctorReport};
+pub use doctor::{
+    DoctorCheck, MeshDoctorReport, ObservedNodeVersion, ReleaseRollout, RolloutStatus,
+};
 pub use identity::{default_identity_path, InstanceId, NodeId, NodeIdentity, PublicIdentity};
 pub use manager::{MeshRuntime, MeshStatus, Refusals};
 pub use protocol::{Advertisement, Envelope};

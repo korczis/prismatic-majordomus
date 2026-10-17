@@ -288,7 +288,31 @@ pub fn mesh_panel(mesh: &Answer) -> El {
             .take(ROWS)
             .map(machine_row)
             .collect::<Vec<_>>();
+        let rollout_line = mesh.read("/rollout/stable_tag").text().map(|tag| {
+            let releases = list(mesh, "/rollout/releases");
+            let latest = releases
+                .iter()
+                .find(|r| r.get("latest_stable").and_then(Value::as_bool) == Some(true));
+            let (rep, fol, rolled) = latest
+                .map(|r| {
+                    (
+                        r.get("reporting_nodes")
+                            .and_then(Value::as_u64)
+                            .unwrap_or(0),
+                        r.get("following_nodes")
+                            .and_then(Value::as_u64)
+                            .unwrap_or(0),
+                        r.get("rolled_out").and_then(Value::as_bool) == Some(true),
+                    )
+                })
+                .unwrap_or((0, 0, false));
+            el("p").class("mj-ui-line").text(format!(
+                "Stable {tag} · {rep}/{fol} following reporting ({})",
+                if rolled { "rolled out" } else { "rolling out" }
+            ))
+        });
         el("div")
+            .children(rollout_line)
             .child(table(
                 &["Machine", "Where", "Runtimes"],
                 rows,
@@ -313,16 +337,29 @@ pub fn mesh_panel(mesh: &Answer) -> El {
 /// of its runtimes as the mesh runtime observed it.
 pub fn machine_row(m: &Value) -> El {
     let local = m.get("local").and_then(Value::as_bool);
-    let words: Vec<String> = m
+    let mut badges: Vec<El> = Vec::new();
+    for r in m
         .get("runtimes")
         .and_then(Value::as_array)
-        .map(|rs| {
-            rs.iter()
-                .filter_map(|r| r.get("liveness").and_then(Value::as_str))
-                .map(str::to_string)
-                .collect()
-        })
-        .unwrap_or_default();
+        .into_iter()
+        .flatten()
+    {
+        if let Some(w) = r.get("liveness").and_then(Value::as_str) {
+            badges.push(word_badge(w));
+        }
+        let ver = text(r, "version");
+        if !ver.is_empty() {
+            badges.push(
+                el("span")
+                    .class("mj-ui-mono mj-ui-dim")
+                    .text(format!("v{}", ver.trim_start_matches('v'))),
+            );
+        }
+        let fol = text(r, "follow");
+        if !fol.is_empty() {
+            badges.push(word_badge(&fol));
+        }
+    }
     el("tr")
         .child(el("td").class("mj-ui-mono").text(text(m, "name")))
         .child(el("td").text(match local {
@@ -330,11 +367,7 @@ pub fn machine_row(m: &Value) -> El {
             Some(false) => "remote",
             None => "unknown",
         }))
-        .child(
-            el("td")
-                .class("mj-ui-badges")
-                .children(words.iter().map(|w| word_badge(w))),
-        )
+        .child(el("td").class("mj-ui-badges").children(badges))
 }
 
 /// Every check this process runs on itself and its checkout.
