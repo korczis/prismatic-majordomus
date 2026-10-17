@@ -6,23 +6,23 @@
     "version": "0.29.0"
   },
   "registry": {
-    "fingerprint": "3e32219937c1d568b08b54d3fa56f1942a027658f202fa4f598c12c485c3535d",
+    "fingerprint": "612c70946f4b562c31d7cb47db40bd44faa89953ba52e2a448c6814353d12188",
     "summary": {
-      "total": 2526,
+      "total": 2528,
       "builtin": 202,
-      "declarative": 2324,
+      "declarative": 2326,
       "by_kind": {
         "command": 31,
         "query": 171,
-        "resource": 2324
+        "resource": 2326
       },
       "by_stability": {
         "behaviorally_verified": 141,
         "experimental": 52,
-        "implemented": 2333
+        "implemented": 2335
       },
       "mcp_tools": 192,
-      "mcp_resources": 2379,
+      "mcp_resources": 2381,
       "http_routes": 197,
       "cli_commands": 108,
       "modules": 92,
@@ -82608,7 +82608,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 117,
+        "capabilities": 118,
         "capability_ids": []
       },
       {
@@ -83231,7 +83231,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 424,
+        "capabilities": 425,
         "capability_ids": []
       },
       {
@@ -83893,7 +83893,7 @@
     ]
   },
   "index": {
-    "fingerprint": "ca9784f68f976e9f1e605a9893d4f93e1bc87c3f8c00cf32e58450f5384a4f30",
+    "fingerprint": "e911b8cf45b6d8a5ac601140f200305e20a008061ade2fd32607cf15747c0001",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -83916,7 +83916,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 117,
+      "adr": 118,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -83933,7 +83933,7 @@
       "gap": 4,
       "implementation": 52,
       "intent": 5,
-      "issue": 424,
+      "issue": 425,
       "knowledge": 4,
       "mesh-declaration": 1,
       "milestone": 41,
@@ -85893,6 +85893,23 @@
           "two-folder",
           "ownership",
           "footprint"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0175",
+        "kind": "adr",
+        "identity": "adr-0175",
+        "title": "v1.0.0-alpha.1 declares what it can do and its limits, and every line of the declaration names its proof",
+        "description": "v1.0.0-alpha.1 declares what it can do and its limits, and every line of the declaration names its proof",
+        "path": ".ai/repo/adrs/0175-v1-0-0-alpha-1-declares-what-it-can-do-and-its-limits.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 8205,
+        "tags": [
+          "release",
+          "alpha",
+          "claims",
+          "distribution"
         ]
       },
       {
@@ -90206,7 +90223,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 170002
+        "bytes": 173718
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -98341,6 +98358,17 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 2258
+      },
+      {
+        "uri": "majordomus://issue/I2826",
+        "kind": "issue",
+        "identity": "I2826",
+        "title": "A GitHub release carries the tool's own changelog for its tag, never GitHub's generated notes",
+        "description": "Publish each GitHub release with the body `majordomus release changelog` composes for its tag (the release's decisions, including a release declaration such as ADR 0175, its conventional changes and its artifacts) instead of `gh release create --generate-notes`, and refuse a release whose published body is not that projection.",
+        "path": ".ai/repo/project/issues/I2826.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2260
       },
       {
         "uri": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
@@ -108885,7 +108913,7 @@
       "identity": [
         "id"
       ],
-      "objects": 117
+      "objects": 118
     },
     {
       "name": "application",
@@ -109048,7 +109076,7 @@
       "identity": [
         "id"
       ],
-      "objects": 424
+      "objects": 425
     },
     {
       "name": "knowledge",

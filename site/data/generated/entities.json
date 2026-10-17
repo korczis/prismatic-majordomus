@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 117,
+      "count": 118,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 117
+      "count": 118
     },
     {
       "kind": "application",
@@ -173,7 +173,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 424
+      "count": 425
     },
     {
       "kind": "knowledge",
@@ -1856,6 +1856,13 @@
           "label": "adr-0134",
           "kind": "adr",
           "route": "/adrs/adr-0134/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0175",
+          "kind": "adr",
+          "route": "/adrs/adr-0175/",
           "external": false
         }
       ]
@@ -9382,6 +9389,74 @@
           "label": "test/cases/3113_the_adoption_footprint_is_inventoried.sh",
           "kind": "test",
           "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0175",
+      "identity": "adr-0175",
+      "slug": "adr-0175",
+      "cockpit": "/cockpit/objects/adr/adr-0175",
+      "title": "v1.0.0-alpha.1 declares what it can do and its limits, and every line of the declaration names its proof",
+      "status": "proposed",
+      "tags": [
+        "release",
+        "alpha",
+        "claims",
+        "distribution"
+      ],
+      "source": ".ai/repo/adrs/0175-v1-0-0-alpha-1-declares-what-it-can-do-and-its-limits.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0029",
+          "kind": "adr",
+          "route": "/adrs/adr-0029/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "worktree-topology-derived",
+          "kind": "claim",
+          "route": "/guarantees/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "share/distribution.yaml",
+          "kind": "distribution-model",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/DISTRIBUTION.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/INSTALL.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/RELEASE.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "I2826",
+          "kind": "issue",
+          "route": "/plan/",
           "external": false
         }
       ],
