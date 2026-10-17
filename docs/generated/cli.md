@@ -239,6 +239,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus knowledge`](#majordomus-knowledge) | `/docs/cli/knowledge/` | What the knowledge deriver left for review and whether it is still writing: the candidate records awaiting promotion, one record by id with every reference it names resolved, and the derivation status of this checkout judged against the policy's freshness thresholds |
 | [`majordomus knowledge candidates`](#majordomus-knowledge-candidates) | `/docs/cli/knowledge/candidates/` | The candidate records awaiting review, with the branch of the episode each came from and how long each has waited |
 | [`majordomus knowledge record`](#majordomus-knowledge-record) | `/docs/cli/knowledge/record/` | One knowledge record by id: its front matter, and every reference it names resolved against the index, the ledger and git |
+| [`majordomus knowledge records`](#majordomus-knowledge-records) | `/docs/cli/knowledge/records/` | Every record of the knowledge base, curated and candidate, as its file declares it, newest first, filtered by class, status and subject |
 | [`majordomus knowledge status`](#majordomus-knowledge-status) | `/docs/cli/knowledge/status/` | Whether the deriver is still writing: the last derivation, the newest closed episode, and the stopped-writer judgement against session.freshness |
 | [`majordomus continuity`](#majordomus-continuity) | `/docs/cli/continuity/` | Continue work on another machine: publish this checkout's newest handover as a signed record in refs/majordomus/continuity, exchange records with a git remote, and plan and resume a handover another device published — with its source compatibility, lineage and trust decided before anything is written |
 | [`majordomus continuity status`](#majordomus-continuity-status) | `/docs/cli/continuity/status/` | This device, the record this checkout continues, the store against its remote (no network), every line of work, and what other devices published that could be resumed here |
@@ -6749,7 +6750,7 @@ Examples:
 
 What the knowledge deriver left for review and whether it is still writing: the candidate records awaiting promotion, one record by id with every reference it names resolved, and the derivation status of this checkout judged against the policy's freshness thresholds
 
-Subcommands: [`majordomus knowledge candidates`](#majordomus-knowledge-candidates), [`majordomus knowledge record`](#majordomus-knowledge-record), [`majordomus knowledge status`](#majordomus-knowledge-status).
+Subcommands: [`majordomus knowledge candidates`](#majordomus-knowledge-candidates), [`majordomus knowledge record`](#majordomus-knowledge-record), [`majordomus knowledge records`](#majordomus-knowledge-records), [`majordomus knowledge status`](#majordomus-knowledge-status).
 
 ```text
 majordomus knowledge [OPTIONS] <COMMAND>
@@ -6817,6 +6818,36 @@ Examples:
   ```
 
   Verified: exits 12.
+
+<a id="majordomus-knowledge-records"></a>
+## `majordomus knowledge records`
+
+Every record of the knowledge base, curated and candidate, as its file declares it, newest first, filtered by class, status and subject
+
+```text
+majordomus knowledge records [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--class` | `fact` \| `convention` \| `constraint` \| `memory` \| `lesson` | — | Only records of this class — `fact`: Something observed to be true of the repository; `convention`: How things are done here, decided; `constraint`: A limit the repository must respect; `memory`: Something remembered across episodes; `lesson`: What a failure, a block or an observation taught |
+| `--status` | `candidate` \| `verified` \| `superseded` | — | Only records with this status — `candidate`: Derived by the tool and awaiting a person's review; `verified`: Promoted by a person, with evidence; `superseded`: Replaced by another record, or rejected with a reason |
+| `--about` | `<ABOUT>` | — | Only records about this subject, or about a path beneath it |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **The lessons the base holds** — The same answer `GET /api/v1/knowledge/records?class=lesson` and the MCP tool `majordomus_knowledge_records` serve: every record of that class, curated or candidate, as its file declares it, newest first, with the count each status holds. Nothing is resolved against the ledger or git, so every clone prints the same records.
+
+  ```console
+  $ majordomus knowledge records --class lesson --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /total.
 
 <a id="majordomus-knowledge-status"></a>
 ## `majordomus knowledge status`

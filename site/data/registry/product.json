@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "0.28.0"
   },
-  "fingerprint": "f81725ab1d738209f5a7bb175d8a6ab62a40cb632be2379ba6527723a988d606",
+  "fingerprint": "53a8123dd7f80ade86f16a4588a98e400aa85d7b83b67b8d594bbfd23bf59327",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -629,7 +629,7 @@
         "use_cases": 17,
         "rules": 19,
         "enforced_rules": 16,
-        "capabilities": 28,
+        "capabilities": 29,
         "moments": 32
       },
       "evidence": {
@@ -7189,7 +7189,7 @@
         {
           "id": "knowledge_base",
           "title": "Knowledge base",
-          "description": "What the knowledge deriver left for review and whether it is still writing: the candidate records awaiting promotion with the branch of the episode each came from, one record by id with every reference it names resolved against the index, the ledger and git, and the derivation status of this checkout judged against the policy's freshness thresholds. Read from the index and the ledger; written by nothing here — the deriver is the shell tool's, and a person promotes.",
+          "description": "What the knowledge deriver left for review and whether it is still writing: every record of the base as its file declares it, the candidate records awaiting promotion with the branch of the episode each came from, one record by id with every reference it names resolved against the index, the ledger and git, and the derivation status of this checkout judged against the policy's freshness thresholds. Read from the index and the ledger; written by nothing here — the deriver is the shell tool's, and a person promotes.",
           "stability": "behaviorally_verified",
           "source_path": "apps/majordomus-cli/src/capability/builtin/knowledge_base.rs",
           "capabilities": [
@@ -7211,6 +7211,15 @@
               "tool": "majordomus_knowledge_record",
               "route": "GET /api/v1/knowledge/record",
               "cli": "majordomus knowledge record"
+            },
+            {
+              "id": "knowledge_base.records",
+              "title": "The knowledge base",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_knowledge_records",
+              "route": "GET /api/v1/knowledge/records",
+              "cli": "majordomus knowledge records"
             },
             {
               "id": "knowledge_base.status",
@@ -7545,11 +7554,11 @@
         "provenance"
       ],
       "counts": {
-        "capabilities": 5,
-        "mcp_tools": 5,
+        "capabilities": 6,
+        "mcp_tools": 6,
         "mcp_resources": 469,
-        "http_routes": 5,
-        "cli_paths": 3,
+        "http_routes": 6,
+        "cli_paths": 4,
         "commands": 6,
         "objects": 466,
         "rules": 4,
@@ -12839,11 +12848,11 @@
       "kind_refs": [
         {
           "name": "milestone",
-          "objects": 40
+          "objects": 41
         },
         {
           "name": "issue",
-          "objects": 419
+          "objects": 420
         },
         {
           "name": "intent",
@@ -13045,11 +13054,11 @@
       "counts": {
         "capabilities": 23,
         "mcp_tools": 23,
-        "mcp_resources": 466,
+        "mcp_resources": 468,
         "http_routes": 23,
         "cli_paths": 11,
         "commands": 1,
-        "objects": 463,
+        "objects": 465,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -16834,7 +16843,7 @@
       },
       {
         "id": "issue",
-        "title": "issue (419)",
+        "title": "issue (420)",
         "features": [
           "planning"
         ]
@@ -16855,7 +16864,7 @@
       },
       {
         "id": "milestone",
-        "title": "milestone (40)",
+        "title": "milestone (41)",
         "features": [
           "planning"
         ]
@@ -17853,17 +17862,17 @@
     }
   ],
   "telemetry": {
-    "capabilities": 2504,
-    "builtin": 202,
-    "declarative": 2302,
+    "capabilities": 2508,
+    "builtin": 203,
+    "declarative": 2305,
     "modules": 58,
-    "mcp_tools": 192,
-    "mcp_resources": 2357,
-    "http_routes": 197,
-    "cli_commands": 206,
+    "mcp_tools": 193,
+    "mcp_resources": 2360,
+    "http_routes": 198,
+    "cli_commands": 207,
     "shell_commands": 30,
     "kinds": 34,
-    "objects": 2302,
+    "objects": 2305,
     "by_kind": {
       "adr": 115,
       "application": 5,
@@ -17882,10 +17891,10 @@
       "gap": 3,
       "implementation": 52,
       "intent": 4,
-      "issue": 419,
+      "issue": 420,
       "knowledge": 4,
       "mesh-declaration": 1,
-      "milestone": 40,
+      "milestone": 41,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -17896,7 +17905,7 @@
       "session": 90,
       "skill": 8,
       "taxonomy": 10,
-      "test": 519,
+      "test": 520,
       "use-case": 49,
       "workspace": 1
     },

@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 202 | 171 | 0 | 31 |
-| http | 197 | 171 | 0 | 26 |
-| mcp | 192 | 167 | 0 | 25 |
+| direct | 203 | 172 | 0 | 31 |
+| http | 198 | 172 | 0 | 26 |
+| mcp | 193 | 168 | 0 | 25 |
 | system | 14 | 14 | 0 | 0 |
-| total | 605 | 523 | 0 | 82 |
+| total | 608 | 526 | 0 | 82 |
 
 ## Capabilities
 
@@ -114,6 +114,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `intents.validate` | intents | query | — | covered | covered | covered | `default` |
 | `knowledge_base.candidates` | knowledge_base | query | — | covered | covered | covered | `default` |
 | `knowledge_base.record` | knowledge_base | query | — | covered | covered | covered | `first-record` |
+| `knowledge_base.records` | knowledge_base | query | — | covered | covered | covered | `all`, `lessons-awaiting-review` |
 | `knowledge_base.status` | knowledge_base | query | process, 2 entries, 2s | covered | covered | covered | `default` |
 | `lifecycle.closed` | lifecycle | query | process, 2 entries, 30s | covered | covered | covered | `default` |
 | `lifecycle.episodes` | lifecycle | query | process, 2 entries, 2s | covered | covered | covered | `default` |
