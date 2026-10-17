@@ -40,6 +40,7 @@ S="$T/io"; mkdir -p "$S"
 mj() { local cwd="$1"; shift; ( cd "$cwd" && "$RB" "$@" ); }
 cleanup() {
   exec 3>&- 2>/dev/null || true
+  [ -z "${client_a:-}" ] || kill "$client_a" 2>/dev/null || true
   for w in "$A" "$R"; do "$RB" serve stop --repo "$w" >/dev/null 2>&1 || true; done
 }
 trap cleanup EXIT
@@ -83,6 +84,7 @@ expect_exit 0 mj "$R" worktree create feature/alpha --base "$trunk"
 [ -d "$A" ] || { echo "    the worktree is not at the derived path"; exit 1; }
 mkfifo "$S/in_a"
 ( cd "$A" && exec "$LAUNCHER" --http-port 0 ) < "$S/in_a" > "$S/out_a" 2> "$S/err_a" &
+client_a=$!
 exec 3> "$S/in_a"
 url_a="$(lease_url "$A" "$S/err_a")" || exit 1
 { req 1 initialize '{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"worker-alpha","version":"7"}}'
