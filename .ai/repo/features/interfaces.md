@@ -11,7 +11,7 @@ weight: 20
 domain: surfaces
 featured: false
 areas: [documentation, observability, coordination]
-modules: [repository, objects, web, environment, executions, commands]
+modules: [repository, objects, web, environment, executions, commands, editors, entity, mcp]
 rules: [project.web-surface-declared-once, project.web-surface-topology, project.native-cli-documented, project.shared-server-resilience]
 docs: [docs/MCP.md, docs/WEB.md, docs/CAPABILITIES.md]
 adrs: [adr-0001, adr-0003, adr-0013]

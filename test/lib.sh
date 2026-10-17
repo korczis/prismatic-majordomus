@@ -288,6 +288,69 @@ Y
 # pj_status ID  — the derived status of one issue, from the tool
 pj_status() { "$MJ" plan list | awk -v i="$1" '$1==i{print $2}'; }
 
+# synthetic_repo N  — grow the initialised repository in the current directory by N of each
+# record the validators read: N milestones, N issues (one per milestone, in chains of four —
+# each issue depends on the one before it unless it starts a chain — so the graph has both
+# width and depth),
+# N project rules and N context documents. Every record is the shape the helpers above and
+# the skeleton write, so `plan validate` and `doctor` pass over it; a case grows N to see how
+# the work a command does grows with the repository, which a hand-built fixture of three
+# records cannot show. Calling it again with a larger N adds the records it did not write.
+synthetic_repo() {
+  local n="$1" i m id prev d
+  [ -f .ai/repo/project/project.yaml ] || pj_init
+  mkdir -p .ai/repo/rules/project
+  i=1
+  while [ "$i" -le "$n" ]; do
+    m="$(printf 'M%03d' "$i")"; id="$(printf 'I%04d' "$i")"
+    [ -f ".ai/repo/project/milestones/$m.yaml" ] || pj_milestone "$m" "$i"
+    if [ ! -f ".ai/repo/project/issues/$id.yaml" ]; then
+      if [ "$i" -gt 1 ] && [ $((i % 4)) != 1 ]; then
+        prev="$(printf 'I%04d' $((i - 1)))"; pj_issue "$id" "$m" "$prev"
+      else
+        pj_issue "$id" "$m"
+      fi
+    fi
+    d="$(printf 'synthetic-%03d' "$i")"
+    [ -f ".ai/repo/rules/project/$d.v1.md" ] || cat > ".ai/repo/rules/project/$d.v1.md" <<R
+---
+id: project.$d
+version: 1
+kind: rule
+title: Synthetic rule $i
+description: A rule a scaling case generated, so that the rule set has $n members.
+statement: Follow synthetic rule $i.
+status: active
+class: advisory
+depends_on: []
+tags: [synthetic]
+---
+
+# Rationale
+
+A scaling case needs a rule set of a size it chooses.
+
+# Required behaviour
+
+Nothing beyond being read.
+
+# Failure behaviour
+
+None; no command decides it.
+
+# Verification
+
+The scaling case that generated it.
+R
+    if [ ! -f "src/s$i/README.md" ]; then
+      mkdir -p "src/s$i"
+      printf -- '---\nschema: context/v1\nid: synthetic.s%s\nkind: context\ntitle: Synthetic context %s\ndescription: What src/s%s holds.\nstatus: active\nscope: subtree\nproviders: ["*"]\ncomposition: extend\norder: %s\n---\n\n# src/s%s\n' \
+        "$i" "$i" "$i" "$((100 + i))" "$i" > "src/s$i/README.md"
+    fi
+    i=$((i + 1))
+  done
+}
+
 # Build a fixture copy of the repository into $1: the runtime the tool needs to run, plus
 # every canonical input the site generator declares, plus any extra paths given after $1.
 #

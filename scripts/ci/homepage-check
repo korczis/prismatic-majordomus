@@ -44,6 +44,13 @@
 #               hand-written copy (marketing.toml, manifesto.toml) only while the claim it names is
 #               guaranteed and supported by a recorded run; a declaration naming a claim that does
 #               not exist fails, and so does the name of a feature the model does not call stable
+#   present     no hand-written sentence the homepage renders states how the work stands: the
+#               string values of marketing.toml, manifesto.toml and homepage.toml and the
+#               literal text of site/templates/index.html carry none of the vocabulary of a
+#               present-state claim (today, not yet, nothing ... yet, no command ... today,
+#               shipped, currently, not built, under way, in progress, so far, scheduled, right
+#               now) —
+#               the plan, the releases and the claims matrix say it, rendered (ADR 0166)
 #   interfaces  the working interfaces the homepage lists are the data's, both ways: the stable
 #               features the web topology gives an `interface` surface, in the features' order,
 #               then the product model's other surfaces — and an interface is linked as
@@ -54,8 +61,9 @@
 #   product     the hero opens the product: the first interface a person opens, as the data
 #               orders them — exactly once, named by its feature, at its mount when a
 #               publication holds it there and at no such address when only a running process
-#               answers it; the view beside it is of that product, and the issues it counts
-#               are the plan's, by the plan's statuses, in the plan's order
+#               answers it; the view beside it is of that product, the issues it counts
+#               are the plan's, by the plan's statuses, in the plan's order, and the changes
+#               it counts are the newest release record's, by the changelog's groups
 #   weight      the homepage's own HTML, the scripts and stylesheets it loads from this site, and
 #               any graph data it carries inline, weigh no more than site/data/homepage.toml's
 #               [budget] declares
@@ -547,6 +555,110 @@ if problems:
 else:
     ok("promises", f"the hand-written copy uses no declared word its claim does not permit and names no feature that is not stable: {'; '.join(permits)}")
 
+# ---------------------------------------------------------------- present
+# The landing page states no present tense it does not read (ADR 0166, decision 5). How the
+# work stands — what is shipped, what is not yet built, what nothing does today — is a fact of
+# the plan, the releases and the claims matrix, and the page renders those; a sentence typed
+# beside them describing the same thing is a second account of the repository that nothing
+# updates. The hand-written words the homepage renders are the copy files' string values (a
+# comment is not copy) and the literal text of its template: its markup and its expressions'
+# strings, never its {# comments #}. Each is refused when it carries the vocabulary of a
+# present-state claim. The vocabulary is this check's and is not declared elsewhere, because a
+# declaration a person could empty would make the check pass by saying nothing.
+PRESENT = [
+    ("today", r"\btoday\b"),
+    ("not yet", r"\bnot yet\b"),
+    ("nothing ... yet", r"\bnothing\b[^.!?\"]*\byet\b"),
+    ("no command ... today", r"\bno command\b[^.!?\"]*\b(today|yet|now)\b"),
+    ("shipped", r"\b(is |are |largely |partly )?shipped\b"),
+    ("currently", r"\bcurrently\b"),
+    ("not built", r"\b(mostly |still )?not (yet )?built\b"),
+    ("under way", r"\bunder ?way\b"),
+    ("in progress", r"\bin progress\b"),
+    ("so far", r"\bso far\b"),
+    ("scheduled", r"\bscheduled\b"),
+    ("right now", r"\b(right now|as of now|at present|at the moment)\b"),
+]
+present_re = [(w, re.compile(rx, re.I)) for w, rx in PRESENT]
+present_problems, present_judged = [], []
+
+def mask(text, spans):
+    """text with each (start, end) span blanked, newlines kept so line numbers survive."""
+    out = list(text)
+    for a, b in spans:
+        for i in range(a, b):
+            if out[i] != "\n":
+                out[i] = " "
+    return "".join(out)
+
+def present_scan(rel, text):
+    found = []
+    for word, rx in present_re:
+        for mt in rx.finditer(text):
+            n = text.count("\n", 0, mt.start()) + 1
+            near = " ".join(text[max(0, mt.start() - 40):mt.end() + 40].split())
+            found.append((n, f"{rel}:{n} states the present ({word!r}) instead of reading it: ...{near}..."))
+    present_problems.extend(m for _, m in sorted(found))
+
+STRING = re.compile(r'"((?:[^"\\\n]|\\.)*)"')
+for rel in ("site/data/marketing.toml", "site/data/manifesto.toml", "site/data/homepage.toml"):
+    p = os.path.join(root, rel)
+    try:
+        raw = open(p).read()
+        tomllib.loads(raw)
+    except (OSError, tomllib.TOMLDecodeError) as e:
+        present_problems.append(f"{rel} cannot be read as TOML ({e.__class__.__name__}), so its copy is not judged")
+        continue
+    # keep only the string values of lines that are not comments: a key is not copy
+    keep = []
+    pos = 0
+    for line in raw.splitlines(keepends=True):
+        if not line.lstrip().startswith("#"):
+            for mt in STRING.finditer(line):
+                keep.append((pos + mt.start(1), pos + mt.end(1)))
+        pos += len(line)
+    blank, last = [], 0
+    for a, b in keep:
+        blank.append((last, a)); last = b
+    blank.append((last, len(raw)))
+    present_scan(rel, mask(raw, blank))
+    present_judged.append(rel)
+
+tpl_rel = "site/templates/index.html"
+tpl_path = os.path.join(root, tpl_rel)
+if not os.path.exists(tpl_path):
+    present_problems.append(f"{tpl_rel} is missing, so the homepage's template text is not judged")
+else:
+    raw = open(tpl_path).read()
+    spans = [m.span() for m in re.finditer(r"\{#.*?#\}", raw, re.S)]
+    t = mask(raw, spans)
+    # an expression or a statement is not text, but a string literal inside one is: a label
+    # typed into a {% set %} is as hand-written as a sentence in the markup
+    spans = []
+    for m in re.finditer(r"\{\{.*?\}\}|\{%.*?%\}", t, re.S):
+        last = m.start()
+        for lit in re.finditer(r'"([^"\n]*)"|\'([^\'\n]*)\'', m.group(0)):
+            g = 1 if lit.group(1) is not None else 2
+            spans.append((last, m.start() + lit.start(g))); last = m.start() + lit.end(g)
+        spans.append((last, m.end()))
+    t = mask(t, spans)
+    # a tag is not text, but what it says to a reader is: aria-label, title, alt, placeholder
+    spans = []
+    for m in re.finditer(r"<[^>]*>", t, re.S):
+        last = m.start()
+        for a in re.finditer(r'\b(?:aria-label|title|alt|placeholder)="([^"]*)"', m.group(0)):
+            spans.append((last, m.start() + a.start(1))); last = m.start() + a.end(1)
+        spans.append((last, m.end()))
+    present_scan(tpl_rel, mask(t, spans))
+    present_judged.append(tpl_rel)
+if present_problems:
+    for p_ in present_problems[:24]:
+        bad("present", p_)
+    if len(present_problems) > 24:
+        bad("present", f"... and {len(present_problems) - 24} more")
+else:
+    ok("present", f"no hand-written sentence states how the work stands ({len(present_re)} forms refused in {', '.join(present_judged)})")
+
 # ---------------------------------------------------------------- interfaces
 # The working interfaces are the data's, both ways. Which ones a person opens is the web
 # topology's answer (a public surface of category `interface` that names a feature), which of
@@ -662,13 +774,37 @@ else:
         if views and shown != want_counts:
             pp.append("the product view counts the issues as [" + ", ".join(f"{st} {n}" for st, n in shown)
                       + "], and the plan gives [" + ", ".join(f"{st} {n}" for st, n in want_counts) + "]")
+    # what the newest release carried is the changelog's count, group by group, in its order:
+    # the release records are the account of what landed, and the view reads them rather than
+    # a sentence about how the work stands (ADR 0166)
+    landed = re.search(r'\bdata-product-landings="([^"]*)"', hero)
+    shown_l = [(k, int(n)) for k, n in re.findall(r'\bdata-landings="([^"]+)"[^>]*>\s*([0-9]+)', hero)]
+    log_path = os.path.join(root, "site", "data", "generated", "changelog.json")
+    if (landed or shown_l) and not os.path.exists(log_path):
+        pp.append("the product view counts what a release carried, and site/data/generated/changelog.json is missing (regenerate: scripts/generate-site-data)")
+    elif os.path.exists(log_path):
+        with open(log_path) as f:
+            log = json.load(f)
+        released = [x for x in log.get("sections") or [] if not x.get("unreleased")]
+        if views and released and not landed:
+            pp.append(f"the product view says nothing of what v{released[0].get('version')} carried, and the changelog records it")
+        elif landed and not released:
+            pp.append(f"the product view counts the changes of v{landed.group(1)}, and the changelog records no release")
+        elif landed:
+            rel = released[0]
+            want_l = [(g.get("kind"), len(g.get("changes") or [])) for g in rel.get("groups") or [] if g.get("changes")]
+            if landed.group(1) != rel.get("version"):
+                pp.append(f"the product view counts the changes of v{landed.group(1)}, and the newest release record is v{rel.get('version')}")
+            elif shown_l != want_l:
+                pp.append(f"the product view counts v{rel.get('version')}'s changes as [" + ", ".join(f"{k} {n}" for k, n in shown_l)
+                          + "], and the changelog gives [" + ", ".join(f"{k} {n}" for k, n in want_l) + "]")
 for pr in pp:
     bad("product", pr)
 if not pp:
     if faces:
         ok("product", f"the hero opens {faces[0]['id']}, the first interface the data gives, "
                       + ("at the copy the publication holds" if held else "at the page that says how to open it")
-                      + ", and the view beside it counts what the plan counts")
+                      + ", and the view beside it counts what the plan and the newest release record count")
     else:
         ok("product", "the data gives no interface a person opens, and the hero opens none")
 

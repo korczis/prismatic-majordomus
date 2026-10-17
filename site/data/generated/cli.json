@@ -431,11 +431,9 @@
           "value_name": "HOST"
         },
         {
-          "defaults": [
-            "8741"
-          ],
+          "defaults": [],
           "global": false,
-          "help": "Port the shared server binds when this process starts it; when it is taken, a free port is used instead and the URL is logged on stderr either way",
+          "help": "Port the shared server binds when this process starts it; without it, the port this checkout derives (8741 for the primary checkout). When it is taken, a free port is used instead and the URL is logged on stderr either way",
           "long": "http-port",
           "name": "http_port",
           "positional": false,
@@ -583,11 +581,9 @@
           "value_name": "HOST"
         },
         {
-          "defaults": [
-            "8741"
-          ],
+          "defaults": [],
           "global": false,
-          "help": "Port to bind; 0 picks a free one and the address is logged on stderr",
+          "help": "Port to bind; without it, the port this checkout derives (8741 for the primary checkout); 0 picks a free one and the address is logged on stderr",
           "long": "port",
           "name": "port",
           "positional": false,
@@ -853,11 +849,9 @@
       ],
       "args": [
         {
-          "defaults": [
-            "8741"
-          ],
+          "defaults": [],
           "global": false,
-          "help": "The port the started server asks for first; a taken one is replaced by a free one",
+          "help": "The port the started server asks for first, without it the one this checkout derives (8741 for the primary checkout); a taken one is replaced by a free one",
           "long": "port",
           "name": "port",
           "positional": false,
@@ -867,11 +861,9 @@
           "value_name": "PORT"
         },
         {
-          "defaults": [
-            "900"
-          ],
+          "defaults": [],
           "global": false,
-          "help": "The started server stops when no peer has been attached for this many seconds",
+          "help": "The started server stops when no peer has been attached for this many seconds; without it, the policy's declared `server.idle_seconds`, 900 when none is declared",
           "long": "idle",
           "name": "idle",
           "positional": false,
@@ -11750,7 +11742,7 @@
           "route": "/docs/cli/worktree/inspect/"
         },
         {
-          "about": "Create the canonical worktree of a branch, creating the branch from --base (default: the trunk) when it does not exist. The path is derived; none may be given",
+          "about": "Create the canonical worktree of a branch. A branch that does not exist here is fetched from the trunk's remote and taken up when the remote has it; otherwise it is created from --base, else from the remote's trunk fetched now (the local trunk only when the remote cannot be read, and then said, with how far behind). The path is derived; none may be given",
           "command": "majordomus worktree create",
           "name": "create",
           "route": "/docs/cli/worktree/create/"
@@ -12654,7 +12646,7 @@
       "usage": "majordomus worktree inspect [OPTIONS] <BRANCH>"
     },
     {
-      "about": "Create the canonical worktree of a branch, creating the branch from --base (default: the trunk) when it does not exist. The path is derived; none may be given",
+      "about": "Create the canonical worktree of a branch. A branch that does not exist here is fetched from the trunk's remote and taken up when the remote has it; otherwise it is created from --base, else from the remote's trunk fetched now (the local trunk only when the remote cannot be read, and then said, with how far behind). The path is derived; none may be given",
       "ancestors": [
         {
           "command": "majordomus",
@@ -37222,7 +37214,7 @@
     "runnable": 206
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
-  "generator_version": "0.27.0",
+  "generator_version": "0.29.0",
   "route_prefix": "/docs/cli",
   "schema": 1,
   "source": "docs/generated/cli.json"

@@ -59,6 +59,11 @@ pub const STYLESHEET: &str = "cockpit.css";
 /// overview.
 pub const SHELL_SCRIPTS: &[&str] = &["palette.js"];
 
+/// The site's own scripts the bar at the top of every page behaves by — its menus, then its
+/// theme toggle — served as byte copies of `site/nav.js` and `site/theme.js` that
+/// `scripts/cockpit-assets` writes and checks (`project.the-ui-wears-the-sites-navbar`).
+pub(crate) const BAR_SCRIPTS: &[&str] = &["nav.js", "theme.js"];
+
 /// The vendored libraries the page modules load at run time, through `vendor()` and
 /// `vendorModule()` in `cockpit.js`. A run-time URL is not a static import the server can
 /// rewrite, so the page publishes each one's digested URL on its body (`data-vendor`), the
@@ -198,6 +203,7 @@ impl Cockpit {
             stylesheet: self.assets.url(STYLESHEET),
             favicon: self.assets.url("favicon.svg"),
             scripts,
+            bar_scripts: BAR_SCRIPTS.iter().map(|s| self.assets.url(s)).collect(),
             vendor: self.vendor_urls(),
             assets_present: self.assets.present(),
             version: self.version,

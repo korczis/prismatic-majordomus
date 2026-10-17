@@ -11,7 +11,7 @@ weight: 70
 domain: governance
 featured: true
 areas: [governance, verification]
-modules: [health, rules]
+modules: [health, rules, shell]
 commands: [rules, doctrine, doctor, check, watch]
 kinds: [rule]
 rules: [project.rule-is-a-doctrine, majordomus.doctrine-wiring-integrity, majordomus.enforcement-wiring, majordomus.rule-package-integrity, project.no-claim-without-test, project.english-only, project.finding-carries-reproduce]

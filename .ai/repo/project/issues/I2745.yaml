@@ -1,0 +1,40 @@
+id: I2745
+milestone: truthful-plan-surfaces
+title: "The landing page states no present it does not read"
+slug: the-homepage-states-no-present-it-does-not-read
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Replace every sentence in site/data/marketing.toml, manifesto.toml and homepage.toml that describes the current state of the product with a rendered datum from site/data/generated (release, plan figures, delivery, recent landings) or remove it, fix the link text that promises waves the roadmap does not show, and extend scripts/ci/homepage-check to refuse present-state vocabulary (today, not yet, nothing ... yet, no command ... today, is shipped) in those files."
+why: "ADR 0166 decision 5. manifesto.toml says Nothing replans and No command runs this today; marketing.toml claims straight from the repository over stamp-derived figures; index.html:453 promises wave by wave."
+current_state: "Hand-written present-tense claims sit in three toml files the homepage renders."
+desired_state: "The homepage's state sentences come from generated data; homepage-check refuses the vocabulary; case 333 and a new case prove both."
+scope:
+  - "site/data/marketing.toml"
+  - "site/data/manifesto.toml"
+  - "site/data/homepage.toml"
+  - "site/templates/index.html"
+  - "scripts/ci/homepage-check"
+  - "test/cases/333_homepage_narrative.sh"
+  - "test/cases/3105_the_homepage_states_no_present_it_does_not_read.sh"
+depends_on: []
+acceptance_criteria:
+  - "homepage-check refuses a present-state sentence planted in site/data"
+  - "The built homepage carries no hand-written state claim, and its plan and release figures come from generated data"
+validation:
+  - "bash test/run.sh 333_homepage_narrative 3105_the_homepage_states_no_present_it_does_not_read"
+evidence_required:
+  - "homepage_present_case"
+created_at: 2026-10-16
+updated_at: 2026-10-16T10:26:57Z
+started_at: 2026-10-16T09:56:46Z
+started_event: sha256:63f7eb039dadc3e77468534ca16eaceff848d72bb872a6e9e31ff2615e349532
+verified_at: 2026-10-16T10:26:57Z
+verified_event: sha256:093768ebe179663eddf65afed6a4daca18af124619e7f2f8a7e5cf496bdf2105
+evidence:
+  - covers: homepage_present_case
+    type: test
+    command: "bash test/run.sh 333_homepage_narrative 3105_the_homepage_states_no_present_it_does_not_read"
+    result: "tests: 2 passed, 0 failed, 0 skipped at bad02f37e8f; 3105 refuses 12 planted present-state forms across the copy files and the template, passes the checkout's real files; homepage-check over the local build exit 0"
+    commit: bad02f37e8f904981a2cbd03a1182a013c631a42
+    recorded_at: 2026-10-16T10:26:53Z

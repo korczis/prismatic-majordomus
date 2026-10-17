@@ -16,10 +16,12 @@
 //! - the content-security policy, with its one hash-pinned inline script;
 //! - the design tokens, the kit and the icon set every surface draws from.
 //!
-//! ```text
-//!   capability! ── registry ── executor ──┬── MCP, HTTP, command line
-//!                                         ├── UI       /ui       (the product)
-//!                                         └── Cockpit  /cockpit  (its technical reference)
+//! ```mermaid
+//! flowchart LR
+//!   declaration["capability!"] --> registry["registry"] --> executor["executor"]
+//!   executor --> api["MCP, HTTP, command line"]
+//!   executor --> ui["UI · /ui<br/>(the product)"]
+//!   executor --> cockpit["Cockpit · /cockpit<br/>(its technical reference)"]
 //! ```
 //!
 //! With no JavaScript, every screen is complete HTML and the menu still opens. The one
@@ -46,17 +48,20 @@ pub(crate) mod docs;
 pub(crate) mod evidence;
 pub(crate) mod governance;
 pub(crate) mod icons;
+pub(crate) mod idd;
 pub(crate) mod intent;
 pub(crate) mod issues;
 pub(crate) mod knowledge;
 pub(crate) mod mesh;
 pub(crate) mod milestone;
+pub(crate) mod navbar;
 pub(crate) mod observatory;
 pub(crate) mod prose;
 pub(crate) mod prs;
 pub(crate) mod roadmap;
 pub(crate) mod rule;
 pub(crate) mod shell;
+pub(crate) mod skills;
 pub(crate) mod source;
 pub(crate) mod timings;
 pub(crate) mod view;
@@ -89,6 +94,10 @@ pub const STYLESHEET: &str = "ui.css";
 
 /// The script every screen loads.
 pub const SCRIPT: &str = "ui.js";
+/// The site's own scripts the bar every screen wears behaves by — its menus, then its theme
+/// toggle — served as byte copies of `site/nav.js` and `site/theme.js` that
+/// `scripts/cockpit-assets` writes and checks ([`navbar`]).
+pub(crate) const BAR_SCRIPTS: &[&str] = &["nav.js", "theme.js"];
 
 /// The vendored graph library, loaded only by a screen that draws a graph.
 pub const GRAPH_LIB: &str = "vendor/cytoscape.min.js";
@@ -128,6 +137,12 @@ pub(crate) const SCREENS: &[Screen] = &[
         answers: "Everything that can be run, what it changes, and what is running.",
     },
     Screen {
+        route: idd::ROUTE,
+        title: "Intent workspace",
+        icon: "list-checks",
+        answers: "One intent and what serves it: milestones, issues, waves, dependencies and the next move.",
+    },
+    Screen {
         route: roadmap::ROUTE,
         title: "Roadmap",
         icon: "target",
@@ -156,6 +171,12 @@ pub(crate) const SCREENS: &[Screen] = &[
         title: "Capabilities",
         icon: "puzzle",
         answers: "Everything the product can be asked, and on which surfaces.",
+    },
+    Screen {
+        route: skills::ROUTE,
+        title: "Skills",
+        icon: "sparkles",
+        answers: "What an agent can be asked by name, and where each name comes from.",
     },
     Screen {
         route: mesh::ROUTE,
@@ -329,6 +350,7 @@ impl Ui {
         let path = if kiosk { observatory::ROUTE } else { path };
         let mut screen = match path {
             "" | PREFIX => dashboard::screen(&ctx),
+            idd::ROUTE => idd::screen(&ctx, &req.query),
             roadmap::ROUTE => roadmap::screen(&ctx, &req.query),
             work::ROUTE => work::screen(&ctx, &req.query),
             issues::ROUTE => issues::screen(&ctx, &req.query),
@@ -338,6 +360,7 @@ impl Ui {
             deployments::ROUTE => deployments::screen(&ctx),
             command::ROUTE => command::screen(&ctx, &req.query),
             capabilities::ROUTE => capabilities::screen(&ctx, &req.query),
+            skills::ROUTE => skills::screen(&ctx),
             docs::ROUTE => docs::screen(&ctx),
             evidence::ROUTE => evidence::screen(&ctx, &req.query),
             knowledge::ROUTE => knowledge::screen(&ctx),
@@ -388,6 +411,7 @@ impl Ui {
                     stylesheet: self.assets.url(STYLESHEET),
                     favicon: self.assets.url("favicon.svg"),
                     script: self.assets.url(SCRIPT),
+                    bar_scripts: BAR_SCRIPTS.iter().map(|s| self.assets.url(s)).collect(),
                     graph_lib: self.assets.url(GRAPH_LIB),
                     assets_present: self.assets.present(),
                     version: self.version,
@@ -550,6 +574,10 @@ mod tests {
         for (route, view) in [
             (PREFIX, dashboard::screen(&ctx)),
             (
+                idd::ROUTE,
+                idd::screen(&ctx, &[("intent".into(), "no-such-intent".into())]),
+            ),
+            (
                 roadmap::ROUTE,
                 roadmap::screen(&ctx, &[("milestone".into(), "M001".into())]),
             ),
@@ -584,6 +612,7 @@ mod tests {
                 capabilities::screen(&ctx, &[("id".into(), "plan.status".into())]),
             ),
             (deployments::ROUTE, deployments::screen(&ctx)),
+            (skills::ROUTE, skills::screen(&ctx)),
             (docs::ROUTE, docs::screen(&ctx)),
             (knowledge::ROUTE, knowledge::screen(&ctx)),
         ] {
