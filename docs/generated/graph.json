@@ -39700,7 +39700,7 @@
             "A page that answers 503 twice and then 200 passes, and the retry is said",
             "A page that answers 503 on every try fails as before, after a bounded number of retries",
             "A listed page that answers 404 fails at once and is never retried",
-            "Removing the retry, retrying every status, or removing its bound each turns case 3221 red"
+            "Removing the retry, retrying every status, or removing its bound each turns case 3226 red"
           ],
           "created_at": "2026-10-17",
           "current_state": "verify-ui asks each listed page once, in one parallel curl, and a 503 is a missing page; with --timeout 0 nothing asks again.",
@@ -39715,7 +39715,7 @@
           "profile": "implementation",
           "scope": [
             "scripts/pages",
-            "test/cases/3221_a_pages_503_is_retried_before_a_page_is_called_missing.sh",
+            "test/cases/3226_a_pages_503_is_retried_before_a_page_is_called_missing.sh",
             ".ai/repo/project",
             "docs",
             "site"
@@ -39724,7 +39724,7 @@
           "slug": "a-pages-503-is-retried-before-a-page-is-called-missing",
           "updated_at": "2026-10-17",
           "validation": [
-            "bash test/run.sh 3221_a_pages_503_is_retried_before_a_page_is_called_missing",
+            "bash test/run.sh 3226_a_pages_503_is_retried_before_a_page_is_called_missing",
             "bash test/run.sh 2983_the_published_ui_is_the_trunks"
           ]
         }
@@ -57480,11 +57480,11 @@
         "source": "test/cases/31_command_coverage.sh"
       },
       {
-        "id": "majordomus://test/test/cases/3221_a_pages_503_is_retried_before_a_page_is_called_missing.sh",
+        "id": "majordomus://test/test/cases/3226_a_pages_503_is_retried_before_a_page_is_called_missing.sh",
         "kind": "test",
-        "label": "test/cases/3221_a_pages_503_is_retried_before_a_page_is_called_missing.sh",
-        "route": "/cockpit/objects/test/test-cases-3221-a-pages-503-is-retried-before-a-page-is-called-missing-sh",
-        "source": "test/cases/3221_a_pages_503_is_retried_before_a_page_is_called_missing.sh"
+        "label": "test/cases/3226_a_pages_503_is_retried_before_a_page_is_called_missing.sh",
+        "route": "/cockpit/objects/test/test-cases-3226-a-pages-503-is-retried-before-a-page-is-called-missing-sh",
+        "source": "test/cases/3226_a_pages_503_is_retried_before_a_page_is_called_missing.sh"
       },
       {
         "id": "majordomus://test/test/cases/32_refusal_lifecycle.sh",
@@ -89154,7 +89154,7 @@
         "kind": "is_a"
       },
       {
-        "source": "majordomus://test/test/cases/3221_a_pages_503_is_retried_before_a_page_is_called_missing.sh",
+        "source": "majordomus://test/test/cases/3226_a_pages_503_is_retried_before_a_page_is_called_missing.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
