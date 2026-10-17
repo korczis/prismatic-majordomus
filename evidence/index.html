@@ -166,25 +166,21 @@ refuses to build this page if one does not, and the check that follows the build
 the edge was lost on the way in.</p>
 </article><section class="mt-10" aria-labelledby="ci-evidence-heading">
   <h2 id="ci-evidence-heading" class="text-2xl font-semibold text-heading">Recorded by CI</h2>
-  <p class="mt-3 text-body"><span class="mj-badge mj-badge--stale relative" data-status="stale"><span aria-hidden="true">!</span>stale</span>
+  <p class="mt-3 text-body"><span class="mj-badge mj-badge--current relative" data-status="current"><span aria-hidden="true">✓</span>current</span>
 
-    The newest executions CI recorded are of commit
-    <a class="font-mono underline" href="https://github.com/korczis/prismatic-majordomus/commit/441c965549bd018c1b55d34fa66fa5ab16b47411">441c965549bd</a>,
-    2 commit(s) and 24 changed file(s) before the one this site was built from.
-    They say what held there, not what holds here; the site is published again once CI has recorded this commit.
+    The report below is the tracked ledger's verdict at commit
+    <a class="font-mono underline" href="https://github.com/korczis/prismatic-majordomus/commit/01227a0f74ab9de734edd3672dcc9d8d3a2d666c">01227a0f74ab</a>,
+    the commit this site was built from, and CI's run of that commit confirms it: every job that
+    ran tests measured a clean tree, nothing was absent or refused, and nothing failed.
   </p>
-  <ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body">
-    <li>The run recorded 2 failed, timed-out or errored execution(s).</li>
-  </ul>
   <dl class="mt-4 grid gap-x-8 font-mono text-sm sm:grid-cols-2">
     <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">executions recorded</dt><dd class="text-heading">625</dd></div>
-    <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">fail</dt><dd class="text-heading">2</dd></div>
-    <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">pass</dt><dd class="text-heading">622</dd></div>
+    <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">pass</dt><dd class="text-heading">624</dd></div>
     <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">skip</dt><dd class="text-heading">1</dd></div>
-    <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">crate lines covered</dt><dd class="text-heading">91.31% <span class="text-body-subtle">(104586/114537)</span></dd></div>
+    <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">crate lines covered</dt><dd class="text-heading">91.31% <span class="text-body-subtle">(104583/114537)</span></dd></div>
     <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">crate functions covered</dt><dd class="text-heading">90.27% <span class="text-body-subtle">(12137/13445)</span></dd></div>
-    <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">crate regions covered</dt><dd class="text-heading">90.24% <span class="text-body-subtle">(173160/191889)</span></dd></div>
-    <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">recorded</dt><dd class="text-heading">2026-10-17T05:07:01Z</dd></div>
+    <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">crate regions covered</dt><dd class="text-heading">90.24% <span class="text-body-subtle">(173156/191889)</span></dd></div>
+    <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">recorded</dt><dd class="text-heading">2026-10-17T06:28:20Z</dd></div>
   </dl>
   <div class="mt-6">
     <div class="min-w-0" x-data="{ t: 0 }">
@@ -201,8 +197,8 @@ the edge was lost on the way in.</p>
 <button type="button" x-cloak x-on:click="Promise.resolve(said = '').then(() => navigator.clipboard.writeText($refs.src.innerText)).then(() => { said = 'Copied'; setTimeout(() => { if (said === 'Copied') said = '' }, 1600) }, () => { said = 'Copy failed — select the text' })" class="inline-flex items-center gap-1 rounded-base px-1.5 py-0.5 text-xs font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary" :aria-label="said || 'Copy the command'"><span x-text="said || 'Copy'">Copy</span></button>
     <span class="sr-only" role="status" aria-live="polite" x-text="said"></span>
   </span>
-</div><pre class="m-0 whitespace-pre-wrap break-words bg-neutral-primary p-4 font-mono text-xs leading-relaxed text-body" tabindex="0">head         441c9655 (clean)
-judged at the working tree (HEAD 441c965549bd, clean)
+</div><pre class="m-0 whitespace-pre-wrap break-words bg-neutral-primary p-4 font-mono text-xs leading-relaxed text-body" tabindex="0">head         01227a0f (clean)
+judged at the working tree (HEAD 01227a0f74ab, clean)
 ledger       .ai/repo/evidence/ledger.json — 14 execution(s), newest 2026-09-17T01:14:59Z
 
 subject      247 claim(s), whole
@@ -1006,8 +1002,8 @@ not_run            guaranteed   worktree-topology-derived
 </details>
 <div class="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-default px-4 py-2 text-xs">
       <span class="text-body-subtle">every claim against the tracked ledger as committed at this commit, derived before this run&#39;s executions were recorded; the run&#39;s executions are counted beside it and decide no verdict</span>
-      <a href="https://github.com/korczis/prismatic-majordomus/actions/runs/39000500013/attempts/1" class="text-fg-brand hover:underline">the run that recorded it &rarr;</a>
-      <a href="https://github.com/korczis/prismatic-majordomus/commit/441c965549bd018c1b55d34fa66fa5ab16b47411" class="text-fg-brand hover:underline">commit 441c965549bd &rarr;</a>
+      <a href="https://github.com/korczis/prismatic-majordomus/actions/runs/39004503240/attempts/1" class="text-fg-brand hover:underline">the run that recorded it &rarr;</a>
+      <a href="https://github.com/korczis/prismatic-majordomus/commit/01227a0f74ab9de734edd3672dcc9d8d3a2d666c" class="text-fg-brand hover:underline">commit 01227a0f74ab &rarr;</a>
     </div>
   </figure><figure x-show="t === 1" id="ci-evidence-panel-1" role="tabpanel" aria-labelledby="ci-evidence-tab-1"
     class="mt-3 overflow-hidden rounded-base border border-default bg-neutral-primary-soft shadow-xs"><div class="flex flex-wrap items-start justify-between gap-x-3 gap-y-2 border-b border-default bg-neutral-primary-soft px-4 py-2.5" x-data="{ said: '' }">
@@ -1017,16 +1013,16 @@ not_run            guaranteed   worktree-topology-derived
     <span class="sr-only" role="status" aria-live="polite" x-text="said"></span>
   </span>
 </div><pre class="m-0 whitespace-pre-wrap break-words bg-neutral-primary p-4 font-mono text-xs leading-relaxed text-body" tabindex="0">                                                            lines  functions   regions
-the crate, test code excluded                              91.31%     90.27%    90.24%   104586/114537 lines
-the crate, test code included (the old gate&#39;s subject)     94.09%     92.87%    94.46%   166329/176780 lines
+the crate, test code excluded                              91.31%     90.27%    90.24%   104583/114537 lines
+the crate, test code included (the old gate&#39;s subject)     94.08%     92.87%    94.46%   166322/176780 lines
   the same, as cargo-llvm-cov itself reports it            93.48%     92.65%    93.39%   cargo-llvm-cov&#39;s own summary
 the canonical session/continuity domain                    96.90%    100.00%    97.32%      500/516    lines
   apps/majordomus-cli/src/capability/builtin/continuity.rs   96.90%    100.00%    97.32%      500/516    lines
 </pre>
 <div class="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-default px-4 py-2 text-xs">
       <span class="text-body-subtle">line, function and region coverage of the crate, test code excluded</span>
-      <a href="https://github.com/korczis/prismatic-majordomus/actions/runs/39000500013/attempts/1" class="text-fg-brand hover:underline">the run that recorded it &rarr;</a>
-      <a href="https://github.com/korczis/prismatic-majordomus/commit/441c965549bd018c1b55d34fa66fa5ab16b47411" class="text-fg-brand hover:underline">commit 441c965549bd &rarr;</a>
+      <a href="https://github.com/korczis/prismatic-majordomus/actions/runs/39004503240/attempts/1" class="text-fg-brand hover:underline">the run that recorded it &rarr;</a>
+      <a href="https://github.com/korczis/prismatic-majordomus/commit/01227a0f74ab9de734edd3672dcc9d8d3a2d666c" class="text-fg-brand hover:underline">commit 01227a0f74ab &rarr;</a>
     </div>
   </figure></div>
 
