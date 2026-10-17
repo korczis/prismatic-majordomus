@@ -123,6 +123,14 @@ pub enum StartPoint {
 
 impl StartPoint {
     /// The ref git is given to start the branch from.
+    ///
+    /// ```
+    /// use majordomus_cli::worktree::StartPoint;
+    ///
+    /// let remote = StartPoint::RemoteTrunk { remote: "origin".into(), branch: "master".into() };
+    /// assert_eq!(remote.reference(), "origin/master");
+    /// assert_eq!(StartPoint::Head.reference(), "HEAD");
+    /// ```
     pub fn reference(&self) -> String {
         match self {
             StartPoint::Given { reference } => reference.clone(),
@@ -135,6 +143,21 @@ impl StartPoint {
 
     /// The sentence a person must read when the start is not the remote's state as it is
     /// now; `None` when it is, or when nothing better could have been asked.
+    ///
+    /// ```
+    /// use majordomus_cli::worktree::StartPoint;
+    ///
+    /// let stale = StartPoint::LocalTrunk {
+    ///     branch: "master".into(),
+    ///     unreachable: Some("origin".into()),
+    ///     reason: Some("offline".into()),
+    ///     behind: Some(3),
+    /// };
+    /// let said = stale.fallback().expect("a stale start is said");
+    /// assert!(said.contains("3 commits behind origin/master"), "{said}");
+    /// let remote = StartPoint::RemoteTrunk { remote: "origin".into(), branch: "master".into() };
+    /// assert_eq!(remote.fallback(), None);
+    /// ```
     pub fn fallback(&self) -> Option<String> {
         match self {
             StartPoint::LocalTrunk {
