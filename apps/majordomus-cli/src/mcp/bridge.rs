@@ -292,8 +292,11 @@ pub fn request_json_within(
         }
         // when what is left of the whole is the shorter wait, a timeout is the deadline's
         let deadline_wait = left <= bound.idle;
-        stream.set_read_timeout(Some(left.min(bound.idle)))?;
-        let n = match stream.read(&mut chunk) {
+        // a wait that cannot be set is an error like a read that failed, and is answered so
+        let read = stream
+            .set_read_timeout(Some(left.min(bound.idle)))
+            .and_then(|()| stream.read(&mut chunk));
+        let n = match read {
             Ok(0) => break,
             Ok(n) => n,
             Err(e)
@@ -1182,5 +1185,161 @@ mod tests {
                 bound: MAX_HEAD_BYTES
             })
         );
+    }
+
+    /// A bound of 1 KiB with the two waits given.
+    fn waits(idle: Duration, within: Duration) -> ReplyBound {
+        ReplyBound {
+            bytes: 1024,
+            idle,
+            within,
+        }
+    }
+
+    /// A one-connection server that takes the connection and closes it with nothing read.
+    fn closing() -> String {
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let url = format!("http://{}", listener.local_addr().unwrap());
+        std::thread::spawn(move || drop(listener.accept()));
+        url
+    }
+
+    /// A server that holds the connection and says nothing until the client lets it go.
+    fn silent() -> String {
+        answering(|s| {
+            let mut rest = [0u8; 1];
+            let _ = s.read(&mut rest);
+        })
+    }
+
+    #[test]
+    fn a_request_the_peer_stops_taking_fails_in_the_write_and_is_no_refusal() {
+        // far more than the socket buffers of both ends hold: the write meets the close
+        let body = " ".repeat(32 * 1024 * 1024);
+        let error = request(
+            &closing(),
+            "POST",
+            "/",
+            &[],
+            Some(&body),
+            Duration::from_secs(30),
+        )
+        .expect_err("the peer closed before the request was written");
+        assert_eq!(ReplyRefused::of(&error), None, "{error}");
+
+        let bound = waits(Duration::from_secs(30), Duration::from_secs(60));
+        let error = request_json_within(&closing(), "POST", "/", &[], Some(&body), bound)
+            .expect_err("the peer closed before the request was written");
+        assert_eq!(ReplyRefused::of(&error), None, "{error}");
+    }
+
+    #[test]
+    fn a_reply_that_never_pauses_is_refused_late_once_the_whole_is_due() {
+        // whitespace costs no bytes of the bound, so only the deadline can end this reply;
+        // every read finds bytes waiting, so it ends at the deadline, not at a read's wait
+        let url = answering(|s| {
+            if s.write_all(b"HTTP/1.1 200 OK\r\n\r\n{").is_err() {
+                return;
+            }
+            let pad = vec![b' '; 64 * 1024];
+            while s.write_all(&pad).is_ok() {}
+        });
+        let bound = waits(Duration::from_secs(60), Duration::from_millis(200));
+        let error = request_json_within(&url, "GET", "/", &[], None, bound)
+            .expect_err("a reply that never ends");
+        assert_eq!(
+            ReplyRefused::of(&error),
+            Some(&ReplyRefused::Late { millis: 200 })
+        );
+        assert_eq!(error.kind(), std::io::ErrorKind::TimedOut);
+    }
+
+    #[test]
+    fn a_silent_peer_is_refused_late_when_the_deadline_is_the_nearer_wait() {
+        let bound = waits(Duration::from_secs(60), Duration::from_millis(300));
+        let error = request_json_within(&silent(), "GET", "/", &[], None, bound)
+            .expect_err("nothing arrived");
+        assert_eq!(
+            ReplyRefused::of(&error),
+            Some(&ReplyRefused::Late { millis: 300 })
+        );
+    }
+
+    #[test]
+    fn a_silent_peer_past_its_idle_wait_is_a_timeout_and_no_refusal() {
+        let bound = waits(Duration::from_millis(300), Duration::from_secs(60));
+        let error = request_json_within(&silent(), "GET", "/", &[], None, bound)
+            .expect_err("nothing arrived");
+        assert_eq!(ReplyRefused::of(&error), None, "{error}");
+        assert!(
+            matches!(
+                error.kind(),
+                std::io::ErrorKind::WouldBlock | std::io::ErrorKind::TimedOut
+            ),
+            "{error:?}"
+        );
+    }
+
+    #[test]
+    fn a_peer_that_resets_inside_the_deadline_wait_is_its_error_and_no_refusal() {
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let url = format!("http://{}", listener.local_addr().unwrap());
+        std::thread::spawn(move || {
+            let (mut stream, _) = listener.accept().unwrap();
+            // one byte read and the rest of the request left unread: the close is a reset
+            let mut one = [0u8; 1];
+            let _ = stream.read_exact(&mut one);
+        });
+        let bound = waits(Duration::from_secs(60), Duration::from_secs(30));
+        let error = request_json_within(&url, "GET", "/", &[], None, bound)
+            .expect_err("the peer reset the connection");
+        assert_eq!(ReplyRefused::of(&error), None, "{error}");
+        assert_eq!(
+            error.kind(),
+            std::io::ErrorKind::ConnectionReset,
+            "{error:?}"
+        );
+    }
+
+    #[test]
+    fn a_reply_without_a_length_ends_where_the_peer_closes() {
+        let url = answering(|s| {
+            let _ = s.write_all(b"HTTP/1.1 200 OK\r\n\r\n{ \"a\": 1 }");
+        });
+        let reply = request_json_within(&url, "GET", "/", &[], None, within(1024))
+            .expect("a reply closed after its body is read");
+        assert_eq!(reply.status, 200);
+        assert_eq!(reply.body, r#"{"a":1}"#);
+    }
+
+    #[test]
+    fn a_reply_closed_inside_its_head_is_malformed() {
+        let url = answering(|s| {
+            let _ = s.write_all(b"HTTP/1.1 200 OK\r\n");
+        });
+        let error = request_json_within(&url, "GET", "/", &[], None, within(1024))
+            .expect_err("no end of the head");
+        assert_eq!(ReplyRefused::of(&error), None);
+        assert!(error.to_string().contains("no header end"), "{error}");
+    }
+
+    #[test]
+    fn a_reply_without_a_status_line_is_malformed_to_either_reader() {
+        let serve = |s: &mut TcpStream| {
+            let _ = s.write_all(b"garbage\r\n\r\n{}");
+        };
+        let error = request_json_within(&answering(serve), "GET", "/", &[], None, within(1024))
+            .expect_err("no status line");
+        assert!(error.to_string().contains("no status line"), "{error}");
+        let error = request(
+            &answering(serve),
+            "GET",
+            "/",
+            &[],
+            None,
+            Duration::from_secs(30),
+        )
+        .expect_err("no status line");
+        assert!(error.to_string().contains("no status line"), "{error}");
     }
 }
