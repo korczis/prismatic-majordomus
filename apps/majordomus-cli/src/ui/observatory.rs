@@ -1135,6 +1135,35 @@ mod tests {
         );
     }
 
+    /// Each source carries its reading's own standing: a reading taken before the repository
+    /// last moved is stale with its age, and one that has not arrived is pending with none.
+    #[test]
+    fn each_source_says_whether_its_reading_is_current_stale_or_pending() {
+        let mut answers = all(&[]);
+        answers.get_mut(&PEERS).unwrap().standing = Standing {
+            age: Some(Duration::from_secs(5)),
+            freshness: Freshness::Stale,
+            refreshing: true,
+        };
+        answers.get_mut(&EVENTS).unwrap().standing = Standing {
+            age: None,
+            freshness: Freshness::Pending,
+            refreshing: true,
+        };
+        let p = project_from(&answers, "2026-10-14T00:00:00Z".into());
+        let standing = |capability: &str| {
+            let s = p
+                .sources
+                .iter()
+                .find(|s| s.capability == capability)
+                .expect("the source");
+            (s.freshness, s.age_ms)
+        };
+        assert_eq!(standing(PEERS.capability), ("stale", Some(5000)));
+        assert_eq!(standing(EVENTS.capability), ("pending", None));
+        assert_eq!(standing(STATE.capability), ("current", Some(0)));
+    }
+
     /// Where no mesh runs, a scene of the mesh draws the repository's recording and says it
     /// is a replay; where the source failed, or a mesh runs, the recording is not used.
     #[test]
