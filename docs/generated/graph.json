@@ -19766,6 +19766,21 @@
         }
       },
       {
+        "id": "majordomus://intent/the-plan-flows",
+        "kind": "intent",
+        "label": "the-plan-flows",
+        "summary": "The plan flows: ready work reaches delivery, and every number that shows it is derived, current and enforced",
+        "route": "/cockpit/objects/intent/the-plan-flows",
+        "source": ".ai/repo/project/intents/the-plan-flows.yaml",
+        "facts": {
+          "created_at": "2026-10-17",
+          "invariants": [],
+          "milestones": [],
+          "satisfaction": [],
+          "updated_at": "2026-10-17"
+        }
+      },
+      {
         "id": "majordomus://issue/I0001",
         "kind": "issue",
         "label": "I0001",
@@ -78164,6 +78179,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://intent/the-plan-flows",
+        "target": "kind:intent",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://issue/I0001",
         "target": "kind:issue",
         "kind": "is_a"
@@ -94405,8 +94425,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2959,
-      "edges": 6500,
+      "nodes": 2960,
+      "edges": 6501,
       "acyclic": false,
       "truncated": false
     }
