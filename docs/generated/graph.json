@@ -1213,6 +1213,24 @@
         "status": "query"
       },
       {
+        "id": "capability:models.observe",
+        "kind": "capability",
+        "label": "models.observe",
+        "summary": "Record an observation of local runtimes",
+        "route": "/cockpit/capabilities/models.observe",
+        "source": "apps/majordomus-cli/src/capability/builtin/models.rs",
+        "status": "command"
+      },
+      {
+        "id": "capability:models.observed",
+        "kind": "capability",
+        "label": "models.observed",
+        "summary": "The observed local runtimes",
+        "route": "/cockpit/capabilities/models.observed",
+        "source": "apps/majordomus-cli/src/capability/builtin/models.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:models.route",
         "kind": "capability",
         "label": "models.route",
@@ -3130,6 +3148,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/models/observed.rs",
+        "kind": "file",
+        "label": "observed.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/models/observed.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/monitor/mod.rs",
         "kind": "file",
         "label": "mod.rs",
@@ -3855,6 +3881,14 @@
         "label": "executable-site.jq",
         "summary": "named by the layer; not an object of this index",
         "source": "scripts/lib/executable-site.jq",
+        "external": true
+      },
+      {
+        "id": "file:scripts/lib/inference/observer.mjs",
+        "kind": "file",
+        "label": "observer.mjs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "scripts/lib/inference/observer.mjs",
         "external": true
       },
       {
@@ -7722,6 +7756,33 @@
         }
       },
       {
+        "id": "majordomus://adr/adr-0174",
+        "kind": "adr",
+        "label": "adr-0174",
+        "summary": "A local inference runtime is observed, and what its models can do is evidence, not a declaration",
+        "route": "/cockpit/objects/adr/adr-0174",
+        "source": ".ai/repo/adrs/0174-a-local-runtime-is-observed-its-models-are-evidence-not-declarations.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-17",
+          "related": [
+            "file:.ai/repo/adrs/0032-an-external-workspace-is-not-a-provider-the-term-the-depende.md",
+            "file:.ai/repo/adrs/0049-the-model-catalogue-is-declarative-data-and-routing-is-an-ex.md",
+            "file:.ai/repo/adrs/0098-reasoning-is-provider-independent-advisors-are-optional-and-review-is-recorded.md",
+            "file:share/models.yaml",
+            "file:apps/majordomus-cli/src/models/observed.rs",
+            "file:scripts/lib/inference/observer.mjs",
+            "file:docs/MODELS.md"
+          ],
+          "tags": [
+            "models",
+            "inference",
+            "routing",
+            "evidence"
+          ]
+        }
+      },
+      {
         "id": "majordomus://application/ci-gated-project",
         "kind": "application",
         "label": "ci-gated-project",
@@ -10607,6 +10668,21 @@
         }
       },
       {
+        "id": "majordomus://claim/models-local-runtime-observed",
+        "kind": "claim",
+        "label": "models-local-runtime-observed",
+        "summary": "A local inference runtime the catalogue declares — Ollama, LM Studio or llama.cpp's llama-server — is reached at its declared endpoint, identified by a signature only that runtime gives, and its models recorded typed with digest, quantization, load state and both context windows; a compatible server that is none of them is reported unidentified, not guessed",
+        "route": "/cockpit/objects/claim/models-local-runtime-observed",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "apps/majordomus-cli/src/models/observed.rs",
+          "responsibility": "none",
+          "source": "docs/MODELS.md",
+          "test": "test/cases/3211_a_local_runtime_is_observed.sh"
+        }
+      },
+      {
         "id": "majordomus://claim/models-no-secret-fields",
         "kind": "claim",
         "label": "models-no-secret-fields",
@@ -10620,6 +10696,36 @@
           "responsibility": "none",
           "source": "docs/MODELS.md",
           "test": "test/cases/131_models.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/models-observation-stays-local",
+        "kind": "claim",
+        "label": "models-observation-stays-local",
+        "summary": "Observing local runtimes reaches only declared or named endpoints on the loopback interface unless another host is admitted outright, scans nothing, and keeps the observation in checkout state that is never committed or published",
+        "route": "/cockpit/objects/claim/models-observation-stays-local",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "apps/majordomus-cli/src/models/observed.rs",
+          "responsibility": "none",
+          "source": "docs/MODELS.md",
+          "test": "test/cases/3211_a_local_runtime_is_observed.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/models-observed-evidence-routes",
+        "kind": "claim",
+        "label": "models-observed-evidence-routes",
+        "summary": "An observed model's capability is never stated above its evidence — inferred, advertised or probed, refuted by a failed probe — and routing with --observed chooses on that evidence, refuses a stale observation, and says in its reason what the choice rests on",
+        "route": "/cockpit/objects/claim/models-observed-evidence-routes",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "apps/majordomus-cli/src/models/mod.rs",
+          "responsibility": "none",
+          "source": "docs/MODELS.md",
+          "test": "test/cases/3211_a_local_runtime_is_observed.sh"
         }
       },
       {
@@ -16319,12 +16425,36 @@
         "source": "docs/claims/minimum-context.md"
       },
       {
+        "id": "majordomus://document/docs/claims/models-local-runtime-observed.md",
+        "kind": "document",
+        "label": "docs/claims/models-local-runtime-observed.md",
+        "summary": "A local inference runtime the catalogue declares is reached, identified by its own signature and its models recorded typed; a compatible server that is none of them is reported unidentified",
+        "route": "/cockpit/objects/document/docs-claims-models-local-runtime-observed-md",
+        "source": "docs/claims/models-local-runtime-observed.md"
+      },
+      {
         "id": "majordomus://document/docs/claims/models-no-secret-fields.md",
         "kind": "document",
         "label": "docs/claims/models-no-secret-fields.md",
         "summary": "The model catalogue reports whether a vendor's named credential variable is set and can carry no secret value — the schema has no field one could hide in",
         "route": "/cockpit/objects/document/docs-claims-models-no-secret-fields-md",
         "source": "docs/claims/models-no-secret-fields.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/models-observation-stays-local.md",
+        "kind": "document",
+        "label": "docs/claims/models-observation-stays-local.md",
+        "summary": "Observing local runtimes reaches only declared or named endpoints on the loopback interface unless another host is admitted outright, scans nothing, and keeps the observation in checkout state that is never committed or published",
+        "route": "/cockpit/objects/document/docs-claims-models-observation-stays-local-md",
+        "source": "docs/claims/models-observation-stays-local.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/models-observed-evidence-routes.md",
+        "kind": "document",
+        "label": "docs/claims/models-observed-evidence-routes.md",
+        "summary": "An observed model's capability is never stated above its evidence, and routing with --observed chooses on that evidence, refuses a stale observation and says what the choice rests on",
+        "route": "/cockpit/objects/document/docs-claims-models-observed-evidence-routes-md",
+        "source": "docs/claims/models-observed-evidence-routes.md"
       },
       {
         "id": "majordomus://document/docs/claims/models-one-declaration.md",
@@ -18440,7 +18570,8 @@
         "status": "stable",
         "facts": {
           "adrs": [
-            "adr-0049"
+            "adr-0049",
+            "adr-0174"
           ],
           "areas": [
             "coordination"
@@ -18448,7 +18579,10 @@
           "claims": [
             "models-one-declaration",
             "models-routing-explains-itself",
-            "models-no-secret-fields"
+            "models-no-secret-fields",
+            "models-local-runtime-observed",
+            "models-observed-evidence-routes",
+            "models-observation-stays-local"
           ],
           "cockpit": [
             "models"
@@ -18470,7 +18604,8 @@
           "tags": [
             "models",
             "catalogue",
-            "routing"
+            "routing",
+            "inference"
           ],
           "use_cases": [],
           "weight": 46
@@ -39287,6 +39422,348 @@
         }
       },
       {
+        "id": "majordomus://issue/I2798",
+        "kind": "issue",
+        "label": "I2798",
+        "summary": "A local runtime is observed, its models recorded with evidence, and routing chooses from them",
+        "route": "/cockpit/objects/issue/i2798",
+        "source": ".ai/repo/project/issues/I2798.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Each of the three runtimes is identified by its own signature, and a compatible server that is none of them is unidentified",
+            "A capability word is never stated above its evidence, and a failed probe refutes it",
+            "models route --observed chooses on evidence, refuses a stale observation and names what the choice rests on",
+            "A non-loopback endpoint is reached only when admitted, and the observation is never tracked"
+          ],
+          "created_at": "2026-10-17",
+          "current_state": "Local vendors declared with no endpoint and no model; nothing observed.",
+          "depends_on": [],
+          "desired_state": "Observed runtimes and models with deterministic identities and evidence levels; routing overlays them on request; the observation stays in checkout state.",
+          "evidence_required": [
+            "observation_case",
+            "live_runtimes_observed"
+          ],
+          "milestone": "local-inference",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "share/models.yaml",
+            "apps/majordomus-cli/src/models",
+            "apps/majordomus-cli/src/capability/builtin/models.rs",
+            "apps/majordomus-cli/src/commands/models.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "scripts/lib/inference",
+            "scripts/inference-observe",
+            "docs/MODELS.md",
+            "docs/CLAIMS.yaml",
+            ".ai/repo/features/models.md",
+            ".ai/repo/adrs",
+            "test/cases/3211_a_local_runtime_is_observed.sh"
+          ],
+          "slug": "a-local-runtime-is-observed",
+          "updated_at": "2026-10-17",
+          "validation": [
+            "cargo test --lib models::",
+            "node --test scripts/lib/inference/inference.test.mjs",
+            "bash test/run.sh 3211_a_local_runtime_is_observed 131_models"
+          ],
+          "why": "ADR 0174. On 2026-10-17 models route --local-only selected nothing on any machine, llama.cpp was unknown, and no surface could say which local model can do what or how that is known."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2799",
+        "kind": "issue",
+        "label": "I2799",
+        "summary": "A local-runtime advisor is available when its runtime was seen serving a capable model, not when its binary is on PATH",
+        "route": "/cockpit/objects/issue/i2799",
+        "source": ".ai/repo/project/issues/I2799.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "An advisor whose runtime serves no model with text is not_configured with that reason, and one whose runtime does is available"
+          ],
+          "created_at": "2026-10-17",
+          "depends_on": [
+            "I2798"
+          ],
+          "evidence_required": [
+            "advisor_availability_case"
+          ],
+          "milestone": "local-inference",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/reasoning",
+            "share/advisors.yaml",
+            "scripts/lib/advisors",
+            "docs/REASONING.md",
+            "test/cases"
+          ],
+          "slug": "an-advisor-reads-the-observation",
+          "updated_at": "2026-10-17",
+          "validation": [
+            "bin/majordomus plan validate"
+          ],
+          "why": "On 2026-10-17 Ollama was on PATH with nothing pulled: the plan selected it and the consultation could only fail and open its circuit. ADR 0174 consequence."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2800",
+        "kind": "issue",
+        "label": "I2800",
+        "summary": "Work runs on an observed local model through the execution plane, streamed and cancellable",
+        "route": "/cockpit/objects/issue/i2800",
+        "source": ".ai/repo/project/issues/I2800.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "An execution on a fake runtime streams progress events, is cancelled on request, and records which model instance ran it"
+          ],
+          "created_at": "2026-10-17",
+          "depends_on": [
+            "I2798"
+          ],
+          "evidence_required": [
+            "execution_case"
+          ],
+          "milestone": "local-inference",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "scripts/lib/inference",
+            "apps/majordomus-cli/src/execution",
+            "apps/majordomus-cli/src/capability/builtin/executions.rs",
+            "docs/EXECUTIONS.md",
+            "test/cases"
+          ],
+          "slug": "work-runs-on-an-observed-model",
+          "updated_at": "2026-10-17",
+          "validation": [
+            "bin/majordomus plan validate"
+          ],
+          "why": "ADR 0174 leaves execution open; the execution engine already owns events and cancellation, and nothing may build a second one."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2801",
+        "kind": "issue",
+        "label": "I2801",
+        "summary": "A local run's tokens, latency and throughput are economics records, and its cost is unknown, not zero",
+        "route": "/cockpit/objects/issue/i2801",
+        "source": ".ai/repo/project/issues/I2801.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "economics summary lists a local run with its measured latency and an unknown cost"
+          ],
+          "created_at": "2026-10-17",
+          "depends_on": [
+            "I2800"
+          ],
+          "evidence_required": [
+            "economics_case"
+          ],
+          "milestone": "local-inference",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/economics",
+            "apps/majordomus-cli/src/capability/builtin/economics.rs",
+            "docs/ECONOMICS.md",
+            "test/cases"
+          ],
+          "slug": "local-runs-are-accounted",
+          "updated_at": "2026-10-17",
+          "validation": [
+            "bin/majordomus plan validate"
+          ],
+          "why": "Economics carries only provider-reported cloud usage; a local run's absence of a bill is not a price."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2802",
+        "kind": "issue",
+        "label": "I2802",
+        "summary": "A node advertises its observed inference to the mesh, and trust comes from the link, not the advertisement",
+        "route": "/cockpit/objects/issue/i2802",
+        "source": ".ai/repo/project/issues/I2802.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A linked node's observed model appears as a candidate on another node with the node's identity, and an unlinked node's does not"
+          ],
+          "created_at": "2026-10-17",
+          "depends_on": [
+            "I2798"
+          ],
+          "evidence_required": [
+            "mesh_inference_case"
+          ],
+          "milestone": "local-inference",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh",
+            "apps/majordomus-cli/src/models",
+            "docs/MESH.md",
+            "test/cases"
+          ],
+          "slug": "inference-is-a-mesh-feature",
+          "updated_at": "2026-10-17",
+          "validation": [
+            "bin/majordomus plan validate"
+          ],
+          "why": "The mesh link features are a compile-time constant; another machine's runtimes are invisible to routing."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2803",
+        "kind": "issue",
+        "label": "I2803",
+        "summary": "A host's memory and accelerator are counted once, however many runtimes share them",
+        "route": "/cockpit/objects/issue/i2803",
+        "source": ".ai/repo/project/issues/I2803.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Two runtimes on one host report one resource pool, and a missing measurement is absent, not zero"
+          ],
+          "created_at": "2026-10-17",
+          "depends_on": [
+            "I2802"
+          ],
+          "evidence_required": [
+            "host_pool_case"
+          ],
+          "milestone": "local-inference",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/models",
+            "scripts/lib/inference",
+            "docs/MODELS.md",
+            "test/cases"
+          ],
+          "slug": "a-host-is-counted-once",
+          "updated_at": "2026-10-17",
+          "validation": [
+            "bin/majordomus plan validate"
+          ],
+          "why": "Two runtimes on one machine share its RAM and GPU; summing their reports double counts the machine."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2804",
+        "kind": "issue",
+        "label": "I2804",
+        "summary": "The Cockpit and the Observatory show observed runtimes, evidence and routing from the capabilities",
+        "route": "/cockpit/objects/issue/i2804",
+        "source": ".ai/repo/project/issues/I2804.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The Models page lists the observed models of a fixture observation with their evidence, from the capability alone"
+          ],
+          "created_at": "2026-10-17",
+          "depends_on": [
+            "I2798"
+          ],
+          "evidence_required": [
+            "surfaces_case"
+          ],
+          "milestone": "local-inference",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/cockpit",
+            "apps/majordomus-cli/src/ui",
+            "apps/majordomus-cli/src/capability/builtin/observatory.rs",
+            "share/ui",
+            "test/cases"
+          ],
+          "slug": "surfaces-render-the-observation",
+          "updated_at": "2026-10-17",
+          "validation": [
+            "bin/majordomus plan validate"
+          ],
+          "why": "The Models page renders only the declared catalogue; the observation is invisible outside the CLI, HTTP and MCP."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2805",
+        "kind": "issue",
+        "label": "I2805",
+        "summary": "Bounded task benchmarks raise a capability above probed for a task class, under a budget",
+        "route": "/cockpit/objects/issue/i2805",
+        "source": ".ai/repo/project/issues/I2805.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A benchmark run on a fake runtime records a task-validated level bound to the model digest, and a changed digest drops it"
+          ],
+          "created_at": "2026-10-17",
+          "depends_on": [
+            "I2800"
+          ],
+          "evidence_required": [
+            "benchmark_case"
+          ],
+          "milestone": "local-inference",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/models",
+            "scripts/lib/inference",
+            "docs/MODELS.md",
+            "test/cases"
+          ],
+          "slug": "benchmarks-raise-evidence",
+          "updated_at": "2026-10-17",
+          "validation": [
+            "bin/majordomus plan validate"
+          ],
+          "why": "A probe proves a request shape, not reliable schema adherence or tool use; routing on a quality threshold needs measured evidence per task."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2806",
+        "kind": "issue",
+        "label": "I2806",
+        "summary": "A local model contributes to knowledge candidates, and what it writes stays a candidate with its provenance",
+        "route": "/cockpit/objects/issue/i2806",
+        "source": ".ai/repo/project/issues/I2806.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A candidate annotated by a local model names the model instance that wrote it and is not accepted by that annotation"
+          ],
+          "created_at": "2026-10-17",
+          "depends_on": [
+            "I2800",
+            "I2801"
+          ],
+          "evidence_required": [
+            "knowledge_case"
+          ],
+          "milestone": "local-inference",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/knowledge",
+            "apps/majordomus-cli/src/capability/builtin/knowledge_base.rs",
+            "scripts/lib/inference",
+            "test/cases"
+          ],
+          "slug": "local-models-do-useful-work",
+          "updated_at": "2026-10-17",
+          "validation": [
+            "bin/majordomus plan validate"
+          ],
+          "why": "Observed models do no work yet; the knowledge pipeline already has a candidate stage that admits machine output without making it canonical."
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "label": "a-commit-stood-behind-a-build-lock",
@@ -40653,6 +41130,61 @@
             "majordomus intent validate",
             "cargo test --test intent_plan",
             "bash test/run.sh 386_a_plan_is_held_to_its_intent"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/local-inference",
+        "kind": "milestone",
+        "label": "local-inference",
+        "summary": "Local inference runtimes are observed, verified, routed and put to work through what the repository already has",
+        "route": "/cockpit/objects/milestone/local-inference",
+        "source": ".ai/repo/project/milestones/local-inference.yaml",
+        "facts": {
+          "created_at": "2026-10-17",
+          "current_state": "Observation, admission and routing land with I2798; everything that uses an observed model is open.",
+          "depends_on": [],
+          "evidence_required": [
+            "observed_and_routed",
+            "advisors_read_the_observation",
+            "executed_and_accounted",
+            "mesh_and_surfaces"
+          ],
+          "non_scope": [
+            "An HTTP client in the crate; transports stay in scripts/lib (ADR 0032, ADR 0174).",
+            "Downloading or pulling models; a model enters a runtime by its owner's act.",
+            "Scanning networks for runtimes; endpoints are declared, named or admitted.",
+            "Publishing any machine's runtime state on the site."
+          ],
+          "order": 149,
+          "priority": "p1",
+          "risks": [
+            "Probing loads models and costs memory and minutes; probes stay opt-in and bounded, and benchmarks get a budget before they run unattended.",
+            "Runtime APIs drift between versions; each adapter identifies by signature and reports unidentified rather than misreading a newer shape."
+          ],
+          "scope": [
+            "share/models.yaml",
+            "share/advisors.yaml",
+            "apps/majordomus-cli/src/models",
+            "apps/majordomus-cli/src/capability/builtin/models.rs",
+            "apps/majordomus-cli/src/reasoning",
+            "apps/majordomus-cli/src/execution",
+            "apps/majordomus-cli/src/economics",
+            "apps/majordomus-cli/src/mesh",
+            "apps/majordomus-cli/src/cockpit",
+            "apps/majordomus-cli/src/ui",
+            "scripts/lib/inference",
+            "scripts/lib/advisors",
+            "scripts/inference-observe",
+            "docs/MODELS.md",
+            "test/cases"
+          ],
+          "slug": "local-inference",
+          "updated_at": "2026-10-17",
+          "validation": [
+            "bin/majordomus plan validate",
+            "bash test/run.sh 3211_a_local_runtime_is_observed",
+            "node --test scripts/lib/inference/inference.test.mjs"
           ]
         }
       },
@@ -56866,6 +57398,13 @@
         "source": "test/cases/31_command_coverage.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3211_a_local_runtime_is_observed.sh",
+        "kind": "test",
+        "label": "test/cases/3211_a_local_runtime_is_observed.sh",
+        "route": "/cockpit/objects/test/test-cases-3211-a-local-runtime-is-observed-sh",
+        "source": "test/cases/3211_a_local_runtime_is_observed.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/32_refusal_lifecycle.sh",
         "kind": "test",
         "label": "test/cases/32_refusal_lifecycle.sh",
@@ -63498,6 +64037,46 @@
         "kind": "projects"
       },
       {
+        "source": "capability:models.observe",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:models.observe",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:models.observe",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:models.observe",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:models.observed",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:models.observed",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:models.observed",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:models.observed",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
         "source": "capability:models.route",
         "target": "projection:cli",
         "kind": "projects"
@@ -69543,6 +70122,46 @@
         "kind": "put_in_force"
       },
       {
+        "source": "majordomus://adr/adr-0174",
+        "target": "file:apps/majordomus-cli/src/models/observed.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0174",
+        "target": "file:scripts/lib/inference/observer.mjs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0174",
+        "target": "file:share/models.yaml",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0174",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0174",
+        "target": "majordomus://adr/adr-0032",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0174",
+        "target": "majordomus://adr/adr-0049",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0174",
+        "target": "majordomus://adr/adr-0098",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0174",
+        "target": "majordomus://document/docs/MODELS.md",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://application/ci-gated-project",
         "target": "kind:application",
         "kind": "is_a"
@@ -72608,6 +73227,26 @@
         "kind": "tested_by"
       },
       {
+        "source": "majordomus://claim/models-local-runtime-observed",
+        "target": "file:apps/majordomus-cli/src/models/observed.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/models-local-runtime-observed",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/models-local-runtime-observed",
+        "target": "majordomus://document/docs/MODELS.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/models-local-runtime-observed",
+        "target": "majordomus://test/test/cases/3211_a_local_runtime_is_observed.sh",
+        "kind": "tested_by"
+      },
+      {
         "source": "majordomus://claim/models-no-secret-fields",
         "target": "file:apps/majordomus-cli/src/models/mod.rs",
         "kind": "implemented_by"
@@ -72625,6 +73264,46 @@
       {
         "source": "majordomus://claim/models-no-secret-fields",
         "target": "majordomus://test/test/cases/131_models.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/models-observation-stays-local",
+        "target": "file:apps/majordomus-cli/src/models/observed.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/models-observation-stays-local",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/models-observation-stays-local",
+        "target": "majordomus://document/docs/MODELS.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/models-observation-stays-local",
+        "target": "majordomus://test/test/cases/3211_a_local_runtime_is_observed.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/models-observed-evidence-routes",
+        "target": "file:apps/majordomus-cli/src/models/mod.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/models-observed-evidence-routes",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/models-observed-evidence-routes",
+        "target": "majordomus://document/docs/MODELS.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/models-observed-evidence-routes",
+        "target": "majordomus://test/test/cases/3211_a_local_runtime_is_observed.sh",
         "kind": "tested_by"
       },
       {
@@ -76443,7 +77122,22 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/docs/claims/models-local-runtime-observed.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/docs/claims/models-no-secret-fields.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/models-observation-stays-local.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/models-observed-evidence-routes.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -83598,6 +84292,141 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2798",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2798",
+        "target": "majordomus://milestone/local-inference",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2799",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2799",
+        "target": "majordomus://issue/I2798",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2799",
+        "target": "majordomus://milestone/local-inference",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2800",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2800",
+        "target": "majordomus://issue/I2798",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2800",
+        "target": "majordomus://milestone/local-inference",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2801",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2801",
+        "target": "majordomus://issue/I2800",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2801",
+        "target": "majordomus://milestone/local-inference",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2802",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2802",
+        "target": "majordomus://issue/I2798",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2802",
+        "target": "majordomus://milestone/local-inference",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2803",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2803",
+        "target": "majordomus://issue/I2802",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2803",
+        "target": "majordomus://milestone/local-inference",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2804",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2804",
+        "target": "majordomus://issue/I2798",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2804",
+        "target": "majordomus://milestone/local-inference",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2805",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2805",
+        "target": "majordomus://issue/I2800",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2805",
+        "target": "majordomus://milestone/local-inference",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2806",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2806",
+        "target": "majordomus://issue/I2800",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2806",
+        "target": "majordomus://issue/I2801",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2806",
+        "target": "majordomus://milestone/local-inference",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -83771,6 +84600,11 @@
         "source": "majordomus://milestone/intent-planning",
         "target": "majordomus://milestone/intent-lifecycle",
         "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://milestone/local-inference",
+        "target": "kind:milestone",
+        "kind": "is_a"
       },
       {
         "source": "majordomus://milestone/mcp-transports-are-reliable",
@@ -88209,6 +89043,11 @@
       },
       {
         "source": "majordomus://test/test/cases/31_command_coverage.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3211_a_local_runtime_is_observed.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -93119,6 +93958,16 @@
       },
       {
         "source": "module:models",
+        "target": "capability:models.observe",
+        "kind": "composes"
+      },
+      {
+        "source": "module:models",
+        "target": "capability:models.observed",
+        "kind": "composes"
+      },
+      {
+        "source": "module:models",
         "target": "capability:models.route",
         "kind": "composes"
       },
@@ -93494,8 +94343,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2935,
-      "edges": 6437,
+      "nodes": 2957,
+      "edges": 6499,
       "acyclic": false,
       "truncated": false
     }

@@ -26470,6 +26470,18 @@
           "command": "majordomus models route",
           "name": "route",
           "route": "/docs/cli/models/route/"
+        },
+        {
+          "about": "Record an observation of the local runtimes (JSON from scripts/inference-observe, on --file or standard input)",
+          "command": "majordomus models observe",
+          "name": "observe",
+          "route": "/docs/cli/models/observe/"
+        },
+        {
+          "about": "The checkout's current observation of its local runtimes: what each serves, each capability's evidence, how old it is",
+          "command": "majordomus models observed",
+          "name": "observed",
+          "route": "/docs/cli/models/observed/"
         }
       ],
       "command": "majordomus models",
@@ -26791,6 +26803,57 @@
         },
         {
           "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Also choose from the checkout's observation of local runtimes, after every declared model",
+          "long": "observed",
+          "name": "observed",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "OBSERVED"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The least evidence an observed model's required capability must rest on",
+          "long": "min-evidence",
+          "name": "min_evidence",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "The runtime's kind of model usually can; nothing about this model says so",
+              "name": "inferred"
+            },
+            {
+              "help": "The runtime's own metadata says this model can",
+              "name": "advertised"
+            },
+            {
+              "help": "A bounded request of this kind just succeeded against this model",
+              "name": "probed"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "MIN_EVIDENCE"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The age beyond which the observation is stale, seconds (900 when omitted)",
+          "long": "max-age",
+          "name": "max_age",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "MAX_AGE"
+        },
+        {
+          "defaults": [
             "text"
           ],
           "global": false,
@@ -26830,6 +26893,24 @@
           "id": "models-route",
           "setup": [],
           "title": "Which model a need selects, and why"
+        },
+        {
+          "argv": [
+            "models",
+            "route",
+            "--observed",
+            "--local-only",
+            "--require",
+            "embeddings",
+            "--min-evidence",
+            "probed"
+          ],
+          "command": "majordomus models route --observed --local-only --require embeddings --min-evidence probed",
+          "description": "Observed models are considered after every declared one, loaded first, and held to the observation's age, the runtime's locality and each required capability's evidence. With no observation, or a stale one, no observed model can be selected, and the answer says so.",
+          "expectation": "exits 0; prints selected",
+          "id": "models-route-observed",
+          "setup": [],
+          "title": "Route over the observed local runtimes too"
         }
       ],
       "executable": true,
@@ -26843,6 +26924,290 @@
       ],
       "route": "/docs/cli/models/route/",
       "usage": "majordomus models route [OPTIONS]"
+    },
+    {
+      "about": "Record an observation of the local runtimes (JSON from scripts/inference-observe, on --file or standard input)",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus models",
+          "name": "models",
+          "route": "/docs/cli/models/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Read the observation from this file instead of standard input",
+          "long": "file",
+          "name": "file",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FILE"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": false,
+          "help": "`text` for a person, `json` for a machine; both render the same answer",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus models observe",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "models",
+            "observe",
+            "--file",
+            "share/models.yaml"
+          ],
+          "command": "majordomus models observe --file share/models.yaml",
+          "description": "The writer reads one observation, as scripts/inference-observe reports it, from --file or standard input. Anything else — here a YAML file — is refused with exit 13 and the checkout's observation is left as it was; so is a report naming a vendor that is not a declared local runtime, or an endpoint off the loopback interface the observer did not admit.",
+          "expectation": "exits 13",
+          "id": "models-observe-refused",
+          "setup": [],
+          "title": "Input that is not an observation is refused"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "observe",
+      "parent_route": "/docs/cli/models/",
+      "path": [
+        "majordomus",
+        "models",
+        "observe"
+      ],
+      "route": "/docs/cli/models/observe/",
+      "usage": "majordomus models observe [OPTIONS]"
+    },
+    {
+      "about": "The checkout's current observation of its local runtimes: what each serves, each capability's evidence, how old it is",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus models",
+          "name": "models",
+          "route": "/docs/cli/models/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The age beyond which the observation is stale, seconds (900 when omitted)",
+          "long": "max-age",
+          "name": "max_age",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "MAX_AGE"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": false,
+          "help": "`text` for a person, `json` for a machine; both render the same answer",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus models observed",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "models",
+            "observed"
+          ],
+          "command": "majordomus models observed",
+          "description": "Each observed endpoint and whether it answered as its runtime, each model with its load state, context window and the evidence behind every capability word, and how old the observation is. A checkout that never observed says so and names the command that would.",
+          "expectation": "exits 0; prints observation",
+          "id": "models-observed",
+          "setup": [],
+          "title": "What the local runtimes were last seen serving"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "observed",
+      "parent_route": "/docs/cli/models/",
+      "path": [
+        "majordomus",
+        "models",
+        "observed"
+      ],
+      "route": "/docs/cli/models/observed/",
+      "usage": "majordomus models observed [OPTIONS]"
     },
     {
       "about": "Provider-independent reasoning: the optional advisors and what they can do now, what an uncertainty calls for, the session's reasoning records, their state and provenance, and the checks that keep reasoning independent of any advisor",
@@ -37208,10 +37573,10 @@
     }
   ],
   "counts": {
-    "arguments": 1613,
-    "commands": 234,
-    "examples": 237,
-    "runnable": 206
+    "arguments": 1628,
+    "commands": 236,
+    "examples": 240,
+    "runnable": 208
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
   "generator_version": "0.28.0",

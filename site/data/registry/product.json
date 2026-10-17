@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "0.28.0"
   },
-  "fingerprint": "f81725ab1d738209f5a7bb175d8a6ab62a40cb632be2379ba6527723a988d606",
+  "fingerprint": "4a4224dc342e376c3f17fb79f011a04b8e391ba1568a3cbcf186266d64797c66",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -724,8 +724,8 @@
             "cockpit": true,
             "docs": true
           },
-          "claims": 3,
-          "tested": 3,
+          "claims": 6,
+          "tested": 6,
           "use_cases": 0
         },
         {
@@ -1028,10 +1028,28 @@
           "test": "apps/majordomus-cli/tests/mesh_cooperation.rs"
         },
         {
+          "id": "models-local-runtime-observed",
+          "claim": "A local inference runtime the catalogue declares — Ollama, LM Studio or llama.cpp's llama-server — is reached at its declared endpoint, identified by a signature only that runtime gives, and its models recorded typed with digest, quantization, load state and both context windows; a compatible server that is none of them is reported unidentified, not guessed",
+          "status": "guaranteed",
+          "test": "test/cases/3211_a_local_runtime_is_observed.sh"
+        },
+        {
           "id": "models-no-secret-fields",
           "claim": "The model catalogue reports whether a vendor's named credential variable is set and can carry no secret value — the schema has no field one could hide in",
           "status": "guaranteed",
           "test": "test/cases/131_models.sh"
+        },
+        {
+          "id": "models-observation-stays-local",
+          "claim": "Observing local runtimes reaches only declared or named endpoints on the loopback interface unless another host is admitted outright, scans nothing, and keeps the observation in checkout state that is never committed or published",
+          "status": "guaranteed",
+          "test": "test/cases/3211_a_local_runtime_is_observed.sh"
+        },
+        {
+          "id": "models-observed-evidence-routes",
+          "claim": "An observed model's capability is never stated above its evidence — inferred, advertised or probed, refuted by a failed probe — and routing with --observed chooses on that evidence, refuses a stale observation, and says in its reason what the choice rests on",
+          "status": "guaranteed",
+          "test": "test/cases/3211_a_local_runtime_is_observed.sh"
         },
         {
           "id": "models-one-declaration",
@@ -1157,17 +1175,17 @@
       ],
       "counts": {
         "features": 6,
-        "claims": 41,
-        "tested": 40,
+        "claims": 44,
+        "tested": 43,
         "use_cases": 6,
         "rules": 13,
         "enforced_rules": 11,
-        "capabilities": 70,
+        "capabilities": 72,
         "moments": 17
       },
       "evidence": {
         "claims": {
-          "guaranteed": 40,
+          "guaranteed": 43,
           "rejected": 1
         },
         "modules": {}
@@ -3509,7 +3527,7 @@
         },
         {
           "name": "claim",
-          "objects": 247
+          "objects": 250
         }
       ],
       "rule_refs": [
@@ -3782,11 +3800,11 @@
       "counts": {
         "capabilities": 12,
         "mcp_tools": 12,
-        "mcp_resources": 320,
+        "mcp_resources": 323,
         "http_routes": 12,
         "cli_paths": 11,
         "commands": 2,
-        "objects": 313,
+        "objects": 316,
         "rules": 5,
         "enforced_rules": 4,
         "docs": 3,
@@ -5778,7 +5796,7 @@
       "title": "The models the world offers, declared once and routed with reasons",
       "short_title": "Models",
       "headline": "One declared catalogue of vendors and models — capabilities, context, lifecycle, no fabricated facts — and a routing answer that names why every candidate was chosen or excluded.",
-      "summary": "share/models.yaml declares vendors and models in one place, in routing's preference order, with provenance stated and pricing deliberately absent; models.list and models.route project the catalogue and its explainable routing to the CLI, HTTP, OpenAPI, MCP and the Cockpit, credential presence is reported without any value being read, and nothing anywhere calls a model — the crate's no-network boundary stands.",
+      "summary": "share/models.yaml declares vendors and models in one place, in routing's preference order, with provenance stated and pricing deliberately absent; models.list and models.route project the catalogue and its explainable routing to the CLI, HTTP, OpenAPI, MCP and the Cockpit, credential presence is reported without any value being read, and the crate calls no model — its no-network boundary stands. What local runtimes (Ollama, LM Studio, llama.cpp) actually serve is observed from outside the crate, admitted with each capability's evidence, and routed over on request.",
       "status": "stable",
       "weight": 46,
       "featured": true,
@@ -5797,12 +5815,16 @@
         "docs/MODELS.md"
       ],
       "adrs": [
-        "adr-0049"
+        "adr-0049",
+        "adr-0174"
       ],
       "claims": [
         "models-one-declaration",
         "models-routing-explains-itself",
-        "models-no-secret-fields"
+        "models-no-secret-fields",
+        "models-local-runtime-observed",
+        "models-observed-evidence-routes",
+        "models-observation-stays-local"
       ],
       "use_cases": [],
       "cockpit": [
@@ -5815,7 +5837,8 @@
       "tags": [
         "models",
         "catalogue",
-        "routing"
+        "routing",
+        "inference"
       ],
       "route": "/features/models/",
       "source": ".ai/repo/features/models.md",
@@ -5845,6 +5868,24 @@
               "cli": "majordomus models list"
             },
             {
+              "id": "models.observe",
+              "title": "Record an observation of local runtimes",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_models_observe",
+              "route": "POST /api/v1/models/observations",
+              "cli": "majordomus models observe"
+            },
+            {
+              "id": "models.observed",
+              "title": "The observed local runtimes",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_models_observed",
+              "route": "GET /api/v1/models/observations",
+              "cli": "majordomus models observed"
+            },
+            {
               "id": "models.route",
               "title": "Route a need to a model",
               "kind": "query",
@@ -5871,6 +5912,12 @@
           "title": "The model catalogue is declarative data, and routing is an explainable projection of it",
           "status": "proposed",
           "path": ".ai/repo/adrs/0049-the-model-catalogue-is-declarative-data-and-routing-is-an-ex.md"
+        },
+        {
+          "id": "adr-0174",
+          "title": "A local inference runtime is observed, and what its models can do is evidence, not a declaration",
+          "status": "proposed",
+          "path": ".ai/repo/adrs/0174-a-local-runtime-is-observed-its-models-are-evidence-not-declarations.md"
         }
       ],
       "claim_refs": [
@@ -5891,6 +5938,24 @@
           "claim": "The model catalogue reports whether a vendor's named credential variable is set and can carry no secret value — the schema has no field one could hide in",
           "status": "guaranteed",
           "test": "test/cases/131_models.sh"
+        },
+        {
+          "id": "models-local-runtime-observed",
+          "claim": "A local inference runtime the catalogue declares — Ollama, LM Studio or llama.cpp's llama-server — is reached at its declared endpoint, identified by a signature only that runtime gives, and its models recorded typed with digest, quantization, load state and both context windows; a compatible server that is none of them is reported unidentified, not guessed",
+          "status": "guaranteed",
+          "test": "test/cases/3211_a_local_runtime_is_observed.sh"
+        },
+        {
+          "id": "models-observed-evidence-routes",
+          "claim": "An observed model's capability is never stated above its evidence — inferred, advertised or probed, refuted by a failed probe — and routing with --observed chooses on that evidence, refuses a stale observation, and says in its reason what the choice rests on",
+          "status": "guaranteed",
+          "test": "test/cases/3211_a_local_runtime_is_observed.sh"
+        },
+        {
+          "id": "models-observation-stays-local",
+          "claim": "Observing local runtimes reaches only declared or named endpoints on the loopback interface unless another host is admitted outright, scans nothing, and keeps the observation in checkout state that is never committed or published",
+          "status": "guaranteed",
+          "test": "test/cases/3211_a_local_runtime_is_observed.sh"
         }
       ],
       "use_case_refs": [],
@@ -5908,24 +5973,24 @@
         "reasoning"
       ],
       "counts": {
-        "capabilities": 2,
-        "mcp_tools": 2,
+        "capabilities": 4,
+        "mcp_tools": 4,
         "mcp_resources": 1,
-        "http_routes": 2,
-        "cli_paths": 2,
+        "http_routes": 4,
+        "cli_paths": 4,
         "commands": 0,
         "objects": 0,
         "rules": 0,
         "enforced_rules": 0,
         "docs": 1,
-        "adrs": 1,
-        "claims": 3,
+        "adrs": 2,
+        "claims": 6,
         "use_cases": 0,
         "moments": 0
       },
       "evidence": {
         "claims": {
-          "guaranteed": 3
+          "guaranteed": 6
         },
         "modules": {
           "experimental": 1
@@ -7266,7 +7331,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 115
+          "objects": 116
         },
         {
           "name": "knowledge",
@@ -7274,7 +7339,7 @@
         },
         {
           "name": "document",
-          "objects": 347
+          "objects": 350
         }
       ],
       "rule_refs": [
@@ -7547,11 +7612,11 @@
       "counts": {
         "capabilities": 5,
         "mcp_tools": 5,
-        "mcp_resources": 469,
+        "mcp_resources": 473,
         "http_routes": 5,
         "cli_paths": 3,
         "commands": 6,
-        "objects": 466,
+        "objects": 470,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -12839,11 +12904,11 @@
       "kind_refs": [
         {
           "name": "milestone",
-          "objects": 40
+          "objects": 41
         },
         {
           "name": "issue",
-          "objects": 419
+          "objects": 428
         },
         {
           "name": "intent",
@@ -13045,11 +13110,11 @@
       "counts": {
         "capabilities": 23,
         "mcp_tools": 23,
-        "mcp_resources": 466,
+        "mcp_resources": 476,
         "http_routes": 23,
         "cli_paths": 11,
         "commands": 1,
-        "objects": 463,
+        "objects": 473,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -15603,8 +15668,8 @@
           "cockpit",
           "docs"
         ],
-        "proven": 3,
-        "claims": 3
+        "proven": 6,
+        "claims": 6
       },
       {
         "id": "economics",
@@ -16737,7 +16802,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (115)",
+        "title": "adr (116)",
         "features": [
           "knowledge"
         ]
@@ -16765,7 +16830,7 @@
       },
       {
         "id": "claim",
-        "title": "claim (247)",
+        "title": "claim (250)",
         "features": [
           "declare-once"
         ]
@@ -16834,7 +16899,7 @@
       },
       {
         "id": "issue",
-        "title": "issue (419)",
+        "title": "issue (428)",
         "features": [
           "planning"
         ]
@@ -16855,7 +16920,7 @@
       },
       {
         "id": "milestone",
-        "title": "milestone (40)",
+        "title": "milestone (41)",
         "features": [
           "planning"
         ]
@@ -17853,39 +17918,39 @@
     }
   ],
   "telemetry": {
-    "capabilities": 2504,
-    "builtin": 202,
-    "declarative": 2302,
+    "capabilities": 2524,
+    "builtin": 204,
+    "declarative": 2320,
     "modules": 58,
-    "mcp_tools": 192,
-    "mcp_resources": 2357,
-    "http_routes": 197,
-    "cli_commands": 206,
+    "mcp_tools": 194,
+    "mcp_resources": 2375,
+    "http_routes": 199,
+    "cli_commands": 208,
     "shell_commands": 30,
     "kinds": 34,
-    "objects": 2302,
+    "objects": 2320,
     "by_kind": {
-      "adr": 115,
+      "adr": 116,
       "application": 5,
       "area": 9,
       "audience": 8,
-      "claim": 247,
+      "claim": 250,
       "command": 31,
       "context": 39,
       "critique": 3,
       "deployment": 1,
       "derive-offload": 1,
       "distribution-model": 1,
-      "document": 347,
+      "document": 350,
       "domain": 6,
       "feature": 29,
       "gap": 3,
       "implementation": 52,
       "intent": 4,
-      "issue": 419,
+      "issue": 428,
       "knowledge": 4,
       "mesh-declaration": 1,
-      "milestone": 40,
+      "milestone": 41,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -17896,7 +17961,7 @@
       "session": 90,
       "skill": 8,
       "taxonomy": 10,
-      "test": 519,
+      "test": 520,
       "use-case": 49,
       "workspace": 1
     },
@@ -17914,7 +17979,7 @@
       "executions": 14,
       "newest": "2026-09-17T01:14:59Z"
     },
-    "declared": 229,
+    "declared": 232,
     "supported": 0,
     "claims": {
       "a-candidate-is-routed-by-what-it-is-about": {
@@ -18793,7 +18858,25 @@
         "label": "not run",
         "supported": false
       },
+      "models-local-runtime-observed": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
       "models-no-secret-fields": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "models-observation-stays-local": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "models-observed-evidence-routes": {
         "status": "guaranteed",
         "state": "not-run",
         "label": "not run",

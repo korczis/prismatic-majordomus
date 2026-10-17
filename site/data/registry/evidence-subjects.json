@@ -679,6 +679,16 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:models.observe",
+      "path": "/evidence/capabilities/models-observe/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:models.observed",
+      "path": "/evidence/capabilities/models-observed/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:models.route",
       "path": "/evidence/capabilities/models-route/"
     },
@@ -1784,8 +1794,23 @@
     },
     {
       "kind": "claim",
+      "subject": "claim:models-local-runtime-observed",
+      "path": "/evidence/claims/models-local-runtime-observed/"
+    },
+    {
+      "kind": "claim",
       "subject": "claim:models-no-secret-fields",
       "path": "/evidence/claims/models-no-secret-fields/"
+    },
+    {
+      "kind": "claim",
+      "subject": "claim:models-observation-stays-local",
+      "path": "/evidence/claims/models-observation-stays-local/"
+    },
+    {
+      "kind": "claim",
+      "subject": "claim:models-observed-evidence-routes",
+      "path": "/evidence/claims/models-observed-evidence-routes/"
     },
     {
       "kind": "claim",
@@ -2931,6 +2956,16 @@
       "kind": "command",
       "subject": "command:models list",
       "path": "/evidence/commands/models-list/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:models observe",
+      "path": "/evidence/commands/models-observe/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:models observed",
+      "path": "/evidence/commands/models-observed/"
     },
     {
       "kind": "command",
@@ -5273,6 +5308,30 @@
       "programs": [],
       "members": [
         "command:models list"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:models.observe": {
+      "kind": "capability",
+      "id": "models.observe",
+      "page": "/evidence/capabilities/models-observe/",
+      "programs": [],
+      "members": [
+        "command:models observe"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:models.observed": {
+      "kind": "capability",
+      "id": "models.observed",
+      "page": "/evidence/capabilities/models-observed/",
+      "programs": [],
+      "members": [
+        "command:models observed"
       ],
       "routes": [],
       "mechanisms": [],
@@ -9480,6 +9539,29 @@
       "mechanisms": [],
       "findings": []
     },
+    "claim:models-local-runtime-observed": {
+      "kind": "claim",
+      "id": "models-local-runtime-observed",
+      "status": "guaranteed",
+      "page": "/evidence/claims/models-local-runtime-observed/",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "claim",
+          "test": "suite:3211_a_local_runtime_is_observed",
+          "path": "test/cases/3211_a_local_runtime_is_observed.sh",
+          "category": "e2e",
+          "inputs": [
+            "docs/MODELS.md",
+            "apps/majordomus-cli/src/models/observed.rs",
+            "test/cases/3211_a_local_runtime_is_observed.sh"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "claim:models-no-secret-fields": {
       "kind": "claim",
       "id": "models-no-secret-fields",
@@ -9497,6 +9579,52 @@
             "docs/MODELS.md",
             "apps/majordomus-cli/src/models/mod.rs",
             "test/cases/131_models.sh"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "claim:models-observation-stays-local": {
+      "kind": "claim",
+      "id": "models-observation-stays-local",
+      "status": "guaranteed",
+      "page": "/evidence/claims/models-observation-stays-local/",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "claim",
+          "test": "suite:3211_a_local_runtime_is_observed",
+          "path": "test/cases/3211_a_local_runtime_is_observed.sh",
+          "category": "e2e",
+          "inputs": [
+            "docs/MODELS.md",
+            "apps/majordomus-cli/src/models/observed.rs",
+            "test/cases/3211_a_local_runtime_is_observed.sh"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "claim:models-observed-evidence-routes": {
+      "kind": "claim",
+      "id": "models-observed-evidence-routes",
+      "status": "guaranteed",
+      "page": "/evidence/claims/models-observed-evidence-routes/",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "claim",
+          "test": "suite:3211_a_local_runtime_is_observed",
+          "path": "test/cases/3211_a_local_runtime_is_observed.sh",
+          "category": "e2e",
+          "inputs": [
+            "docs/MODELS.md",
+            "apps/majordomus-cli/src/models/mod.rs",
+            "test/cases/3211_a_local_runtime_is_observed.sh"
           ]
         }
       ],
@@ -13501,6 +13629,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:3211_a_local_runtime_is_observed",
+          "path": "test/cases/3211_a_local_runtime_is_observed.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:36_command_doctrines",
           "path": "test/cases/36_command_doctrines.sh",
           "category": "e2e"
@@ -15641,6 +15775,44 @@
       "kind": "command",
       "id": "models list",
       "page": "/evidence/commands/models-list/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:models observe": {
+      "kind": "command",
+      "id": "models observe",
+      "page": "/evidence/commands/models-observe/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:models observed": {
+      "kind": "command",
+      "id": "models observed",
+      "page": "/evidence/commands/models-observed/",
       "programs": [
         "native"
       ],
@@ -18908,7 +19080,10 @@
       "page": "/evidence/features/models/",
       "programs": [],
       "members": [
+        "claim:models-local-runtime-observed",
         "claim:models-no-secret-fields",
+        "claim:models-observation-stays-local",
+        "claim:models-observed-evidence-routes",
         "claim:models-one-declaration",
         "claim:models-routing-explains-itself"
       ],
@@ -20522,6 +20697,30 @@
       "programs": [],
       "members": [
         "capability:models.list"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_models_observe": {
+      "kind": "mcp",
+      "id": "majordomus_models_observe",
+      "alias_of": "capability:models.observe",
+      "programs": [],
+      "members": [
+        "capability:models.observe"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_models_observed": {
+      "kind": "mcp",
+      "id": "majordomus_models_observed",
+      "alias_of": "capability:models.observed",
+      "programs": [],
+      "members": [
+        "capability:models.observed"
       ],
       "routes": [],
       "mechanisms": [],

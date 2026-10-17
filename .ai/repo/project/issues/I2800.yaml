@@ -1,0 +1,24 @@
+id: I2800
+milestone: local-inference
+title: "Work runs on an observed local model through the execution plane, streamed and cancellable"
+slug: work-runs-on-an-observed-model
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Run a bounded inference on the model models.route --observed selects as an execution reported through executions.report: progress events for streamed tokens over the existing /events WebSocket, cooperative cancellation reaching the runtime, the result kept apart from verified repository facts."
+why: "ADR 0174 leaves execution open; the execution engine already owns events and cancellation, and nothing may build a second one."
+scope:
+  - "scripts/lib/inference"
+  - "apps/majordomus-cli/src/execution"
+  - "apps/majordomus-cli/src/capability/builtin/executions.rs"
+  - "docs/EXECUTIONS.md"
+  - "test/cases"
+depends_on: [I2798]
+acceptance_criteria:
+  - "An execution on a fake runtime streams progress events, is cancelled on request, and records which model instance ran it"
+validation:
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "execution_case"
+created_at: 2026-10-17
+updated_at: 2026-10-17

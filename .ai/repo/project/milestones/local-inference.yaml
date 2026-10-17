@@ -1,0 +1,51 @@
+id: "local-inference"
+title: "Local inference runtimes are observed, verified, routed and put to work through what the repository already has"
+slug: local-inference
+order: 149
+priority: "p1"
+problem: "Measured 2026-10-17 on v0.28.0: share/models.yaml declared Ollama and LM Studio as local vendors with no model and no endpoint, so models route --local-only selected nothing on any machine; llama.cpp was unknown; reasoning advisors called a local runtime available when its executable was on PATH, while Ollama on this machine had nothing pulled; no surface could say which local model can do what, or how that is known. ADR 0174."
+outcome: "Any trusted local runtime that answers becomes a typed, evidenced, routable participant: observed by the Node transport, admitted by the crate, routed with reasons, consulted as an advisor on what it was seen to serve, run through the execution plane with its tokens and latency recorded, advertised to the mesh by its node, accounted against its host's resources, shown on the Cockpit and the Observatory from the same capabilities, and raised to task-validated evidence by bounded benchmarks."
+current_state: "Observation, admission and routing land with I2798; everything that uses an observed model is open."
+desired_state: "models.observe, models.observed and models.route --observed; the advisor catalogue reads the observation; an execution runs on an observed model; economics carries local runs; the mesh carries inference; the UI and Observatory render it; no consumer keeps an inventory of its own."
+scope:
+  - "share/models.yaml"
+  - "share/advisors.yaml"
+  - "apps/majordomus-cli/src/models"
+  - "apps/majordomus-cli/src/capability/builtin/models.rs"
+  - "apps/majordomus-cli/src/reasoning"
+  - "apps/majordomus-cli/src/execution"
+  - "apps/majordomus-cli/src/economics"
+  - "apps/majordomus-cli/src/mesh"
+  - "apps/majordomus-cli/src/cockpit"
+  - "apps/majordomus-cli/src/ui"
+  - "scripts/lib/inference"
+  - "scripts/lib/advisors"
+  - "scripts/inference-observe"
+  - "docs/MODELS.md"
+  - "test/cases"
+non_scope:
+  - "An HTTP client in the crate; transports stay in scripts/lib (ADR 0032, ADR 0174)."
+  - "Downloading or pulling models; a model enters a runtime by its owner's act."
+  - "Scanning networks for runtimes; endpoints are declared, named or admitted."
+  - "Publishing any machine's runtime state on the site."
+acceptance_criteria:
+  - "models route --observed --local-only selects an observed model whose required capability rests on the evidence asked for, and says what it rests on"
+  - "A local-runtime advisor is available only when its runtime was observed serving a model with the capability the plan needs"
+  - "An execution runs on an observed model, streams its progress over the existing events channel, can be cancelled, and records tokens and latency in the economics model with cost unknown rather than zero"
+  - "A linked node's observed runtimes are visible to routing on another node, trusted by the mesh link and not by self-advertisement"
+  - "The Cockpit and the Observatory render runtimes, models, evidence and routing from the capabilities, with no runtime or model name in a frontend"
+validation:
+  - "bin/majordomus plan validate"
+  - "bash test/run.sh 3211_a_local_runtime_is_observed"
+  - "node --test scripts/lib/inference/inference.test.mjs"
+evidence_required:
+  - "observed_and_routed"
+  - "advisors_read_the_observation"
+  - "executed_and_accounted"
+  - "mesh_and_surfaces"
+depends_on: []
+risks:
+  - "Probing loads models and costs memory and minutes; probes stay opt-in and bounded, and benchmarks get a budget before they run unattended."
+  - "Runtime APIs drift between versions; each adapter identifies by signature and reports unidentified rather than misreading a newer shape."
+created_at: 2026-10-17
+updated_at: 2026-10-17

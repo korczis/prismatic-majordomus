@@ -23036,6 +23036,57 @@
                 "defaults": []
               },
               {
+                "name": "observed",
+                "long": "observed",
+                "positional": false,
+                "help": "Also choose from the checkout's observation of local runtimes, after every declared model",
+                "value_name": "OBSERVED",
+                "takes_value": false,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "min_evidence",
+                "long": "min-evidence",
+                "positional": false,
+                "help": "The least evidence an observed model's required capability must rest on",
+                "value_name": "MIN_EVIDENCE",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [
+                  {
+                    "name": "inferred",
+                    "help": "The runtime's kind of model usually can; nothing about this model says so"
+                  },
+                  {
+                    "name": "advertised",
+                    "help": "The runtime's own metadata says this model can"
+                  },
+                  {
+                    "name": "probed",
+                    "help": "A bounded request of this kind just succeeded against this model"
+                  }
+                ],
+                "defaults": []
+              },
+              {
+                "name": "max_age",
+                "long": "max-age",
+                "positional": false,
+                "help": "The age beyond which the observation is stale, seconds (900 when omitted)",
+                "value_name": "MAX_AGE",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
                 "name": "format",
                 "long": "format",
                 "positional": false,
@@ -23073,6 +23124,274 @@
                 "command": "majordomus models route --require text",
                 "setup": [],
                 "expectation": "exits 0; prints selected"
+              },
+              {
+                "id": "models-route-observed",
+                "title": "Route over the observed local runtimes too",
+                "description": "Observed models are considered after every declared one, loaded first, and held to the observation's age, the runtime's locality and each required capability's evidence. With no observation, or a stale one, no observed model can be selected, and the answer says so.",
+                "argv": [
+                  "models",
+                  "route",
+                  "--observed",
+                  "--local-only",
+                  "--require",
+                  "embeddings",
+                  "--min-evidence",
+                  "probed"
+                ],
+                "command": "majordomus models route --observed --local-only --require embeddings --min-evidence probed",
+                "setup": [],
+                "expectation": "exits 0; prints selected"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "models",
+              "observe"
+            ],
+            "route": "/docs/cli/models/observe/",
+            "executable": true,
+            "usage": "majordomus models observe [OPTIONS]",
+            "about": "Record an observation of the local runtimes (JSON from scripts/inference-observe, on --file or standard input)",
+            "args": [
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "file",
+                "long": "file",
+                "positional": false,
+                "help": "Read the observation from this file instead of standard input",
+                "value_name": "FILE",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "`text` for a person, `json` for a machine; both render the same answer",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "models-observe-refused",
+                "title": "Input that is not an observation is refused",
+                "description": "The writer reads one observation, as scripts/inference-observe reports it, from --file or standard input. Anything else — here a YAML file — is refused with exit 13 and the checkout's observation is left as it was; so is a report naming a vendor that is not a declared local runtime, or an endpoint off the loopback interface the observer did not admit.",
+                "argv": [
+                  "models",
+                  "observe",
+                  "--file",
+                  "share/models.yaml"
+                ],
+                "command": "majordomus models observe --file share/models.yaml",
+                "setup": [],
+                "expectation": "exits 13"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "models",
+              "observed"
+            ],
+            "route": "/docs/cli/models/observed/",
+            "executable": true,
+            "usage": "majordomus models observed [OPTIONS]",
+            "about": "The checkout's current observation of its local runtimes: what each serves, each capability's evidence, how old it is",
+            "args": [
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "max_age",
+                "long": "max-age",
+                "positional": false,
+                "help": "The age beyond which the observation is stale, seconds (900 when omitted)",
+                "value_name": "MAX_AGE",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "`text` for a person, `json` for a machine; both render the same answer",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "models-observed",
+                "title": "What the local runtimes were last seen serving",
+                "description": "Each observed endpoint and whether it answered as its runtime, each model with its load state, context window and the evidence behind every capability word, and how old the observation is. A checkout that never observed says so and names the command that would.",
+                "argv": [
+                  "models",
+                  "observed"
+                ],
+                "command": "majordomus models observed",
+                "setup": [],
+                "expectation": "exits 0; prints observation"
               }
             ],
             "subcommands": []

@@ -1,0 +1,39 @@
+id: I2798
+milestone: local-inference
+title: "A local runtime is observed, its models recorded with evidence, and routing chooses from them"
+slug: a-local-runtime-is-observed
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Declare how each local runtime is reached in share/models.yaml (Ollama, LM Studio, llama.cpp), observe them from scripts/lib/inference with one adapter per protocol, admit the report through models.observe with each capability's evidence, read it with models.observed, and route over it with models.route --observed."
+why: "ADR 0174. On 2026-10-17 models route --local-only selected nothing on any machine, llama.cpp was unknown, and no surface could say which local model can do what or how that is known."
+current_state: "Local vendors declared with no endpoint and no model; nothing observed."
+desired_state: "Observed runtimes and models with deterministic identities and evidence levels; routing overlays them on request; the observation stays in checkout state."
+scope:
+  - "share/models.yaml"
+  - "apps/majordomus-cli/src/models"
+  - "apps/majordomus-cli/src/capability/builtin/models.rs"
+  - "apps/majordomus-cli/src/commands/models.rs"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "scripts/lib/inference"
+  - "scripts/inference-observe"
+  - "docs/MODELS.md"
+  - "docs/CLAIMS.yaml"
+  - ".ai/repo/features/models.md"
+  - ".ai/repo/adrs"
+  - "test/cases/3211_a_local_runtime_is_observed.sh"
+depends_on: []
+acceptance_criteria:
+  - "Each of the three runtimes is identified by its own signature, and a compatible server that is none of them is unidentified"
+  - "A capability word is never stated above its evidence, and a failed probe refutes it"
+  - "models route --observed chooses on evidence, refuses a stale observation and names what the choice rests on"
+  - "A non-loopback endpoint is reached only when admitted, and the observation is never tracked"
+validation:
+  - "cargo test --lib models::"
+  - "node --test scripts/lib/inference/inference.test.mjs"
+  - "bash test/run.sh 3211_a_local_runtime_is_observed 131_models"
+evidence_required:
+  - "observation_case"
+  - "live_runtimes_observed"
+created_at: 2026-10-17
+updated_at: 2026-10-17

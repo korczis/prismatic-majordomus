@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 115,
+      "count": 116,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 115
+      "count": 116
     },
     {
       "kind": "application",
@@ -69,7 +69,7 @@
       "route": "/guarantees/",
       "title": null,
       "reason": null,
-      "count": 247
+      "count": 250
     },
     {
       "kind": "command",
@@ -125,7 +125,7 @@
       "route": null,
       "title": null,
       "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-      "count": 347
+      "count": 350
     },
     {
       "kind": "domain",
@@ -173,7 +173,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 419
+      "count": 428
     },
     {
       "kind": "knowledge",
@@ -197,7 +197,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 40
+      "count": 41
     },
     {
       "kind": "moment",
@@ -285,7 +285,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 519
+      "count": 520
     },
     {
       "kind": "use-case",
@@ -2001,6 +2001,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0098/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0174",
+          "kind": "adr",
+          "route": "/adrs/adr-0174/",
+          "external": false
         }
       ]
     },
@@ -3272,6 +3279,13 @@
           "label": "adr-0098",
           "kind": "adr",
           "route": "/adrs/adr-0098/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0174",
+          "kind": "adr",
+          "route": "/adrs/adr-0174/",
           "external": false
         }
       ]
@@ -6019,7 +6033,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0174",
+          "kind": "adr",
+          "route": "/adrs/adr-0174/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -9139,6 +9161,74 @@
           "label": "project.the-published-ui-is-the-trunks@1",
           "kind": "rule",
           "route": "/rules/project-the-published-ui-is-the-trunks-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0174",
+      "identity": "adr-0174",
+      "slug": "adr-0174",
+      "cockpit": "/cockpit/objects/adr/adr-0174",
+      "title": "A local inference runtime is observed, and what its models can do is evidence, not a declaration",
+      "status": "proposed",
+      "tags": [
+        "models",
+        "inference",
+        "routing",
+        "evidence"
+      ],
+      "source": ".ai/repo/adrs/0174-a-local-runtime-is-observed-its-models-are-evidence-not-declarations.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/models/observed.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "scripts/lib/inference/observer.mjs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "share/models.yaml",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0032",
+          "kind": "adr",
+          "route": "/adrs/adr-0032/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0049",
+          "kind": "adr",
+          "route": "/adrs/adr-0049/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0098",
+          "kind": "adr",
+          "route": "/adrs/adr-0098/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/MODELS.md",
+          "kind": "document",
+          "route": null,
           "external": false
         }
       ],

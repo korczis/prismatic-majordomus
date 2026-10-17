@@ -178,6 +178,8 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus models`](#majordomus-models) | `/docs/cli/models/` | The model catalogue the distribution declares, and the explainable routing over it: vendors, canonical model references, typed capabilities, and which model a stated need selects — with why, for every candidate |
 | [`majordomus models list`](#majordomus-models-list) | `/docs/cli/models/list/` | Every declared vendor and model, optionally narrowed; the order is the declaration's, which is routing's preference order |
 | [`majordomus models route`](#majordomus-models-route) | `/docs/cli/models/route/` | Which model a stated need selects, the fallback chain behind it, and why every excluded model fell out |
+| [`majordomus models observe`](#majordomus-models-observe) | `/docs/cli/models/observe/` | Record an observation of the local runtimes (JSON from scripts/inference-observe, on --file or standard input) |
+| [`majordomus models observed`](#majordomus-models-observed) | `/docs/cli/models/observed/` | The checkout's current observation of its local runtimes: what each serves, each capability's evidence, how old it is |
 | [`majordomus reasoning`](#majordomus-reasoning) | `/docs/cli/reasoning/` | Provider-independent reasoning: the optional advisors and what they can do now, what an uncertainty calls for, the session's reasoning records, their state and provenance, and the checks that keep reasoning independent of any advisor |
 | [`majordomus reasoning advisors`](#majordomus-reasoning-advisors) | `/docs/cli/reasoning/advisors/` | Every advisor with its status and why, the mode in force, and who can provide each advisory capability now; no advisor at all is an ordinary answer |
 | [`majordomus reasoning plan`](#majordomus-reasoning-plan) | `/docs/cli/reasoning/plan/` | Whether a stated uncertainty warrants independent review, how much, and from which available advisors — with every advisor left out and why; records nothing |
@@ -5052,7 +5054,7 @@ Examples:
 
 The model catalogue the distribution declares, and the explainable routing over it: vendors, canonical model references, typed capabilities, and which model a stated need selects — with why, for every candidate
 
-Subcommands: [`majordomus models list`](#majordomus-models-list), [`majordomus models route`](#majordomus-models-route).
+Subcommands: [`majordomus models list`](#majordomus-models-list), [`majordomus models route`](#majordomus-models-route), [`majordomus models observe`](#majordomus-models-observe), [`majordomus models observed`](#majordomus-models-observed).
 
 ```text
 majordomus models <COMMAND>
@@ -5110,6 +5112,9 @@ majordomus models route [OPTIONS]
 | `--vendor` | `<VENDOR>` | — | Only this vendor |
 | `--local-only` | flag | — | Only local inference |
 | `--model` | `<MODEL>` | — | A model named outright, by canonical id or alias; still checked against the other requirements |
+| `--observed` | flag | — | Also choose from the checkout's observation of local runtimes, after every declared model |
+| `--min-evidence` | `inferred` \| `advertised` \| `probed` | — | The least evidence an observed model's required capability must rest on — `inferred`: The runtime's kind of model usually can; nothing about this model says so; `advertised`: The runtime's own metadata says this model can; `probed`: A bounded request of this kind just succeeded against this model |
+| `--max-age` | `<MAX_AGE>` | — | The age beyond which the observation is stale, seconds (900 when omitted) |
 | `--format` | `text` \| `json` | `text` | `text` for a person, `json` for a machine; both render the same answer — `text`: Lines for a person; `json`: One JSON document, deterministic |
 
 Examples:
@@ -5121,6 +5126,70 @@ Examples:
   ```
 
   Verified: exits 0; prints selected.
+
+- **Route over the observed local runtimes too** — Observed models are considered after every declared one, loaded first, and held to the observation's age, the runtime's locality and each required capability's evidence. With no observation, or a stale one, no observed model can be selected, and the answer says so.
+
+  ```console
+  $ majordomus models route --observed --local-only --require embeddings --min-evidence probed
+  ```
+
+  Verified: exits 0; prints selected.
+
+<a id="majordomus-models-observe"></a>
+## `majordomus models observe`
+
+Record an observation of the local runtimes (JSON from scripts/inference-observe, on --file or standard input)
+
+```text
+majordomus models observe [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--file` | `<FILE>` | — | Read the observation from this file instead of standard input |
+| `--format` | `text` \| `json` | `text` | `text` for a person, `json` for a machine; both render the same answer — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Input that is not an observation is refused** — The writer reads one observation, as scripts/inference-observe reports it, from --file or standard input. Anything else — here a YAML file — is refused with exit 13 and the checkout's observation is left as it was; so is a report naming a vendor that is not a declared local runtime, or an endpoint off the loopback interface the observer did not admit.
+
+  ```console
+  $ majordomus models observe --file share/models.yaml
+  ```
+
+  Verified: exits 13.
+
+<a id="majordomus-models-observed"></a>
+## `majordomus models observed`
+
+The checkout's current observation of its local runtimes: what each serves, each capability's evidence, how old it is
+
+```text
+majordomus models observed [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--max-age` | `<MAX_AGE>` | — | The age beyond which the observation is stale, seconds (900 when omitted) |
+| `--format` | `text` \| `json` | `text` | `text` for a person, `json` for a machine; both render the same answer — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **What the local runtimes were last seen serving** — Each observed endpoint and whether it answered as its runtime, each model with its load state, context window and the evidence behind every capability word, and how old the observation is. A checkout that never observed says so and names the command that would.
+
+  ```console
+  $ majordomus models observed
+  ```
+
+  Verified: exits 0; prints observation.
 
 <a id="majordomus-reasoning"></a>
 ## `majordomus reasoning`

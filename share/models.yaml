@@ -15,6 +15,13 @@
 # verified installed as local runtimes and declare no model, because which model a local
 # runtime serves is the machine's, not the distribution's.
 #
+# A local vendor's `runtime` (ADR 0174) says how an observation reaches it: the adapter
+# under scripts/lib/inference/ that speaks its protocol, the loopback origin it listens
+# on by default, and the variable that moves it. The endpoints are each runtime's
+# documented defaults; llama.cpp's llama-server entered on 2026-10-17 beside them, its
+# binary verified installed on that date. What each serves is observed by
+# scripts/inference-observe and read with `models observed`, never declared here.
+#
 # `credential_env` names an environment variable; only its *presence* is ever
 # reported. No value is read, held or rendered anywhere.
 version: 1
@@ -31,9 +38,24 @@ vendors:
   - id: ollama
     title: Ollama
     inference: local
+    runtime:
+      adapter: ollama
+      endpoint: http://127.0.0.1:11434
+      endpoint_env: OLLAMA_HOST
   - id: lmstudio
     title: LM Studio
     inference: local
+    runtime:
+      adapter: lmstudio
+      endpoint: http://127.0.0.1:1234
+      endpoint_env: LMSTUDIO_BASE_URL
+  - id: llamacpp
+    title: llama.cpp
+    inference: local
+    runtime:
+      adapter: llamacpp
+      endpoint: http://127.0.0.1:8080
+      endpoint_env: LLAMA_SERVER_URL
 
 models:
   - id: claude-opus-5

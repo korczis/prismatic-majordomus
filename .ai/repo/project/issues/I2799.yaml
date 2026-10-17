@@ -1,0 +1,24 @@
+id: I2799
+milestone: local-inference
+title: "A local-runtime advisor is available when its runtime was seen serving a capable model, not when its binary is on PATH"
+slug: an-advisor-reads-the-observation
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Derive local_runtime advisor availability in reasoning/availability.rs from the checkout's observation (fresh, identified, a model with the advisory capability), have ollama-chat and lmstudio-chat use the observed model instead of the first listed, and add a llamacpp-chat advisor."
+why: "On 2026-10-17 Ollama was on PATH with nothing pulled: the plan selected it and the consultation could only fail and open its circuit. ADR 0174 consequence."
+scope:
+  - "apps/majordomus-cli/src/reasoning"
+  - "share/advisors.yaml"
+  - "scripts/lib/advisors"
+  - "docs/REASONING.md"
+  - "test/cases"
+depends_on: [I2798]
+acceptance_criteria:
+  - "An advisor whose runtime serves no model with text is not_configured with that reason, and one whose runtime does is available"
+validation:
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "advisor_availability_case"
+created_at: 2026-10-17
+updated_at: 2026-10-17

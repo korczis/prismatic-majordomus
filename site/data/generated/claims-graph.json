@@ -1968,6 +1968,33 @@
       "note": "credential_env names an environment variable and only std::env::var_os(..).is_some() is ever consulted; the test walks the catalogue's JSON schema and refuses any property name that smells like a credential."
     },
     {
+      "id": "claim:models-local-runtime-observed",
+      "kind": "claim",
+      "label": "A local inference runtime the catalogue declares — Ollama, LM Studio or llama.cpp's llama-server — is reached at its declared endpoint, identified by a signature only that runtime gives, and its models recorded typed with digest, quantization, load state and both context windows; a compatible server that is none of them is reported unidentified, not guessed",
+      "status": "guaranteed",
+      "route": "/guarantees/models-local-runtime-observed/",
+      "external": false,
+      "note": "ADR 0174. The transport (scripts/lib/inference/) runs every adapter against fakes of each runtime's documented responses in the case; the end-to-end run there uses a fake Ollama on a loopback port. Verified live on 2026-10-17 against Ollama 0.40.4, LM Studio's server and llama-server b10621, which is a recorded observation, not something CI repeats."
+    },
+    {
+      "id": "claim:models-observed-evidence-routes",
+      "kind": "claim",
+      "label": "An observed model's capability is never stated above its evidence — inferred, advertised or probed, refuted by a failed probe — and routing with --observed chooses on that evidence, refuses a stale observation, and says in its reason what the choice rests on",
+      "status": "guaranteed",
+      "route": "/guarantees/models-observed-evidence-routes/",
+      "external": false,
+      "note": "The unit tests prove refutation, the evidence order, min_evidence, staleness, locality, the configured-before-advertised context window and that report order does not change the decision; the case proves a probe raising advertised to probed through the real executable."
+    },
+    {
+      "id": "claim:models-observation-stays-local",
+      "kind": "claim",
+      "label": "Observing local runtimes reaches only declared or named endpoints on the loopback interface unless another host is admitted outright, scans nothing, and keeps the observation in checkout state that is never committed or published",
+      "status": "guaranteed",
+      "route": "/guarantees/models-observation-stays-local/",
+      "external": false,
+      "note": "The observer refuses a non-loopback endpoint without --allow-remote and the crate refuses one the observer did not admit; an endpoint carrying a credential is refused by both; the observation is .ai/local/state/inference/observation.json, under the ignored .ai/local/."
+    },
+    {
       "id": "claim:knowledge-derived-at-the-boundary",
       "kind": "claim",
       "label": "A provider's end event and its compaction event derive the knowledge the episode produced into candidate records under the tracked tree, from the ledger and git and never from a conversation, whether or not a task is active, and record that they did so in the ledger",
@@ -2563,6 +2590,13 @@
       "id": "impl:apps/majordomus-cli/src/models/mod.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/models/mod.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/models/observed.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/models/observed.rs",
       "route": null,
       "external": false
     },
@@ -3944,6 +3978,13 @@
       "label": "test/cases/31_command_coverage.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/31_command_coverage.sh"
+    },
+    {
+      "id": "test:test/cases/3211_a_local_runtime_is_observed.sh",
+      "kind": "test",
+      "label": "test/cases/3211_a_local_runtime_is_observed.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/3211_a_local_runtime_is_observed.sh"
     },
     {
       "id": "test:test/cases/33_event_registry.sh",
@@ -5642,6 +5683,21 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:models-local-runtime-observed",
+      "target": "source:docs/MODELS.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:models-observed-evidence-routes",
+      "target": "source:docs/MODELS.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:models-observation-stays-local",
+      "target": "source:docs/MODELS.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:knowledge-derived-at-the-boundary",
       "target": "source:docs/KNOWLEDGE.md",
       "kind": "specified_by"
@@ -6817,6 +6873,21 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:models-local-runtime-observed",
+      "target": "impl:apps/majordomus-cli/src/models/observed.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:models-observed-evidence-routes",
+      "target": "impl:apps/majordomus-cli/src/models/mod.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:models-observation-stays-local",
+      "target": "impl:apps/majordomus-cli/src/models/observed.rs",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:knowledge-derived-at-the-boundary",
       "target": "impl:lib/knowledge.sh",
       "kind": "implemented_by"
@@ -7989,6 +8060,21 @@
     {
       "source": "claim:models-no-secret-fields",
       "target": "test:test/cases/131_models.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:models-local-runtime-observed",
+      "target": "test:test/cases/3211_a_local_runtime_is_observed.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:models-observed-evidence-routes",
+      "target": "test:test/cases/3211_a_local_runtime_is_observed.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:models-observation-stays-local",
+      "target": "test:test/cases/3211_a_local_runtime_is_observed.sh",
       "kind": "proved_by"
     },
     {

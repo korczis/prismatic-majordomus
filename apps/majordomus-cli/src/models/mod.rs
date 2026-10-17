@@ -25,6 +25,10 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+pub mod observed;
+
+use observed::{CapabilityEvidence, Locality, ObservedModel, ObservedRuntime, RuntimeObservation};
+
 /// The file name under the share directory.
 pub const MODELS_FILE: &str = "models.yaml";
 
@@ -47,6 +51,25 @@ pub struct Vendor {
     /// crate reads the value, and the environment cache refuses to hold one.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub credential_env: Option<String>,
+    /// For a local vendor, the runtime an observation reaches (ADR 0174): which adapter
+    /// speaks to it, where it listens by default, and the variable that moves it. Which
+    /// models it serves is the machine's, so they are observed, never declared here.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub runtime: Option<RuntimeDeclaration>,
+}
+
+/// How a local runtime is reached: data the observer reads, so that no consumer keeps a
+/// runtime's port or adapter name of its own.
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct RuntimeDeclaration {
+    /// The adapter under `scripts/lib/inference/` that speaks the runtime's protocol.
+    pub adapter: String,
+    /// Where the runtime listens by default: an origin on the loopback interface.
+    pub endpoint: String,
+    /// The environment variable that names another endpoint, when the runtime has one.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub endpoint_env: Option<String>,
 }
 
 /// Where a vendor's inference runs.
@@ -194,6 +217,43 @@ pub struct Requirements {
     /// the reason, not a silent selection.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub model: Option<String>,
+    /// The least evidence an observed model's required capability must rest on. Declared
+    /// models stand on the catalogue's own provenance and are not held to it.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub min_evidence: Option<CapabilityEvidence>,
+}
+
+/// The observation routing may also choose from, with how old it is: a separate overlay
+/// on the declared catalogue, never written into it.
+#[derive(Debug, Clone, Copy)]
+pub struct ObservedPool<'a> {
+    /// The checkout's current observation.
+    pub observation: &'a RuntimeObservation,
+    /// Its age now, seconds; `None` when its stamp does not parse, which counts as stale.
+    pub age_seconds: Option<u64>,
+    /// The age beyond which it is stale, seconds.
+    pub ttl_seconds: u64,
+}
+
+impl ObservedPool<'_> {
+    /// Whether the observation is too old to route on.
+    pub fn stale(&self) -> bool {
+        self.age_seconds.is_none_or(|age| age > self.ttl_seconds)
+    }
+}
+
+/// The observation a routing decision considered.
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct ObservedBasis {
+    /// When the observation was recorded.
+    pub recorded_at: String,
+    /// Its age when the decision was made, seconds.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub age_seconds: Option<u64>,
+    /// The age beyond which it is stale, seconds.
+    pub ttl_seconds: u64,
+    /// Whether it was stale, so that no observed model could be selected.
+    pub stale: bool,
 }
 
 /// One model that did not qualify, and exactly why.
@@ -222,12 +282,27 @@ pub struct RoutingDecision {
     /// Every model that did not qualify, with its reason.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub excluded: Vec<ExcludedModel>,
+    /// The observation the decision also chose from, when it was asked to.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub observed: Option<ObservedBasis>,
 }
 
 /// Decide. Pure over the catalogue and the requirements; the preference order is the
 /// catalogue's declaration order, and every exclusion names its first failing check.
 pub fn route(catalogue: &ModelCatalogue, needs: &Requirements) -> RoutingDecision {
-    let mut qualified: Vec<&ModelEntry> = Vec::new();
+    route_observed(catalogue, None, needs)
+}
+
+/// Decide over the catalogue and, when given, an observation of local runtimes. Pure over
+/// its inputs: the observation and its age are arguments, not state this reads. Declared
+/// models come first, in declaration order; observed models follow, loaded ones before
+/// the rest (choosing a loaded model costs no load), then in the observation's order.
+pub fn route_observed(
+    catalogue: &ModelCatalogue,
+    pool: Option<ObservedPool<'_>>,
+    needs: &Requirements,
+) -> RoutingDecision {
+    let mut qualified: Vec<(String, Option<String>)> = Vec::new();
     let mut excluded = Vec::new();
     for model in &catalogue.models {
         match disqualify(catalogue, model, needs) {
@@ -235,20 +310,143 @@ pub fn route(catalogue: &ModelCatalogue, needs: &Requirements) -> RoutingDecisio
                 model: model.id.clone(),
                 reason,
             }),
-            None => qualified.push(model),
+            None => qualified.push((model.id.clone(), None)),
         }
     }
-    let selected = qualified.first().map(|m| m.id.clone());
-    let reason = selected.as_ref().map(|id| match &needs.model {
-        Some(named) => format!("named outright as '{named}' and it satisfies every requirement"),
-        None => format!("'{id}' is the first declared model satisfying every requirement"),
+    if let Some(pool) = pool {
+        let loaded = |m: &ObservedModel| m.report.loaded == Some(true);
+        let models = pool.observation.models();
+        let first = models.clone().filter(|(_, m)| loaded(m));
+        let rest = models.filter(|(_, m)| !loaded(m));
+        for (runtime, model) in first.chain(rest) {
+            match disqualify_observed(runtime, model, &pool, needs) {
+                Some(reason) => excluded.push(ExcludedModel {
+                    model: model.id.clone(),
+                    reason,
+                }),
+                None => {
+                    qualified.push((model.id.clone(), Some(observed_note(model, &pool, needs))))
+                }
+            }
+        }
+    }
+    let selected = qualified.first().map(|(id, _)| id.clone());
+    let reason = qualified.first().map(|(id, note)| {
+        let why = match &needs.model {
+            Some(named) => {
+                format!("named outright as '{named}' and it satisfies every requirement")
+            }
+            None if note.is_some() => {
+                format!("'{id}' is the first observed model satisfying every requirement")
+            }
+            None => format!("'{id}' is the first declared model satisfying every requirement"),
+        };
+        match note {
+            Some(note) => format!("{why} ({note})"),
+            None => why,
+        }
     });
     RoutingDecision {
         selected,
         reason,
-        fallbacks: qualified.iter().skip(1).map(|m| m.id.clone()).collect(),
+        fallbacks: qualified.iter().skip(1).map(|(id, _)| id.clone()).collect(),
         excluded,
+        observed: pool.map(|p| ObservedBasis {
+            recorded_at: p.observation.recorded_at.clone(),
+            age_seconds: p.age_seconds,
+            ttl_seconds: p.ttl_seconds,
+            stale: p.stale(),
+        }),
     }
+}
+
+/// What a selected observed model rests on, for the decision's reason.
+fn observed_note(model: &ObservedModel, pool: &ObservedPool<'_>, needs: &Requirements) -> String {
+    let mut parts = Vec::new();
+    if let Some(age) = pool.age_seconds {
+        parts.push(format!("observed {age} s ago"));
+    }
+    parts.push(match model.report.loaded {
+        Some(true) => "loaded".into(),
+        Some(false) => "not loaded".into(),
+        None => "load state unknown".into(),
+    });
+    for word in &needs.require {
+        if let Some(evidence) = model
+            .standing
+            .iter()
+            .find(|s| &s.word == word)
+            .and_then(|s| s.evidence)
+        {
+            parts.push(format!("{word} {}", evidence.as_str()));
+        }
+    }
+    parts.join("; ")
+}
+
+/// The first reason an observed model does not qualify, in the declared check order with
+/// the observation's own checks in place: freshness instead of lifecycle, the runtime's
+/// locality instead of the vendor's, each capability's evidence beside its presence.
+fn disqualify_observed(
+    runtime: &ObservedRuntime,
+    model: &ObservedModel,
+    pool: &ObservedPool<'_>,
+    needs: &Requirements,
+) -> Option<String> {
+    if let Some(named) = &needs.model {
+        if model.id != *named && model.report.native_id != *named {
+            return Some(format!("not the model named outright ('{named}')"));
+        }
+    }
+    if pool.stale() {
+        return Some(match pool.age_seconds {
+            Some(age) => format!(
+                "the observation is {age} s old, past its {} s; observe again with scripts/inference-observe",
+                pool.ttl_seconds
+            ),
+            None => "the observation's timestamp does not parse; observe again".into(),
+        });
+    }
+    if let Some(vendor) = &needs.vendor {
+        if runtime.report.vendor != *vendor {
+            return Some(format!(
+                "vendor is '{}', not '{vendor}'",
+                runtime.report.vendor
+            ));
+        }
+    }
+    if needs.local_only && runtime.locality != Locality::Loopback {
+        return Some("the runtime is off the loopback interface and the need is local_only".into());
+    }
+    for capability in &needs.require {
+        let Some(found) = model.standing.iter().find(|s| &s.word == capability) else {
+            return Some(format!("missing capability: {capability}"));
+        };
+        if found.refuted {
+            return Some(format!("capability {capability} was refuted by a probe"));
+        }
+        if let (Some(least), Some(has)) = (needs.min_evidence, found.evidence) {
+            if has < least {
+                return Some(format!(
+                    "capability {capability} is {}, under the required {}",
+                    has.as_str(),
+                    least.as_str()
+                ));
+            }
+        }
+    }
+    if let Some(least) = needs.min_context {
+        match model.report.context_window.usable() {
+            Some(window) if window >= least => {}
+            Some(window) => {
+                return Some(format!(
+                    "context window {window} is under the required {least}"
+                ))
+            }
+            None => return Some(format!("no observed context window; {least} required")),
+        }
+    }
+    None
 }
 
 /// The first reason a model does not qualify, in a fixed check order; `None` qualifies.
@@ -471,6 +669,218 @@ models:
         let findings = c.diagnostics();
         assert!(findings.iter().any(|f| f.contains("names two models")));
         assert!(findings.iter().any(|f| f.contains("ghost")));
+    }
+
+    fn observed_catalogue() -> ModelCatalogue {
+        crate::metadata::yaml::parse_into(
+            "version: 1
+vendors:
+  - id: acme
+    title: Acme
+  - id: bench
+    title: Bench
+    inference: local
+    runtime:
+      adapter: bench
+      endpoint: http://127.0.0.1:9
+models:
+  - id: acme-large
+    vendor: acme
+    native_id: acme-large-1
+    capabilities: [text, tools]
+",
+        )
+        .unwrap()
+    }
+
+    fn observation(remote: bool) -> RuntimeObservation {
+        let all = serde_json::json!([
+                { "vendor": "bench", "endpoint": "http://127.0.0.1:9", "state": "identified", "models": [
+                    { "native_id": "cold", "loaded": false, "context_window": { "advertised": 32768 },
+                      "capabilities": [{ "word": "text", "evidence": "advertised", "source": "meta" }] },
+                    { "native_id": "warm", "loaded": true, "context_window": { "advertised": 32768, "configured": 4096 },
+                      "capabilities": [{ "word": "text", "evidence": "inferred", "source": "kind" }],
+                      "probes": [{ "word": "text", "outcome": "passed", "duration_ms": 12 }] },
+                    { "native_id": "embed", "loaded": true,
+                      "capabilities": [{ "word": "embeddings", "evidence": "advertised", "source": "type" }],
+                      "probes": [{ "word": "text", "outcome": "failed", "duration_ms": 3, "diagnostic": "error: no chat" }] }
+                ] },
+                { "vendor": "bench", "endpoint": "http://10.1.2.3:9", "state": "identified", "models": [
+                    { "native_id": "far", "loaded": true,
+                      "capabilities": [{ "word": "text", "evidence": "advertised", "source": "meta" }] }
+                ] }
+        ]);
+        let runtimes: Vec<serde_json::Value> = all
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter(|r| remote || r["endpoint"] == "http://127.0.0.1:9")
+            .cloned()
+            .collect();
+        let report: observed::ObservationReport = serde_json::from_value(serde_json::json!({
+            "version": 1, "observed_at": "2026-10-17T12:00:00Z", "remote_admitted": remote,
+            "runtimes": runtimes,
+        }))
+        .unwrap();
+        observed::admit(report, &observed_catalogue(), "2026-10-17T12:00:00Z".into()).unwrap()
+    }
+
+    fn pool(o: &RuntimeObservation, age: u64) -> ObservedPool<'_> {
+        ObservedPool {
+            observation: o,
+            age_seconds: Some(age),
+            ttl_seconds: 900,
+        }
+    }
+
+    #[test]
+    fn without_an_observation_routing_is_the_catalogue_alone() {
+        let c = observed_catalogue();
+        let d = route(
+            &c,
+            &Requirements {
+                local_only: true,
+                ..Default::default()
+            },
+        );
+        assert_eq!(d.selected, None);
+        assert!(d.observed.is_none());
+    }
+
+    #[test]
+    fn local_only_selects_a_loaded_observed_model_and_says_what_it_rests_on() {
+        let c = observed_catalogue();
+        let o = observation(false);
+        let needs = Requirements {
+            local_only: true,
+            require: vec!["text".into()],
+            ..Default::default()
+        };
+        let d = route_observed(&c, Some(pool(&o, 30)), &needs);
+        assert_eq!(d.selected.as_deref(), Some("bench/warm"), "{d:?}");
+        let reason = d.reason.unwrap();
+        assert!(
+            reason.contains("observed 30 s ago") && reason.contains("text probed"),
+            "{reason}"
+        );
+        assert_eq!(d.fallbacks, vec!["bench/cold"]);
+        let embed = d
+            .excluded
+            .iter()
+            .find(|e| e.model == "bench/embed")
+            .unwrap();
+        assert_eq!(embed.reason, "capability text was refuted by a probe");
+        assert!(!d.observed.unwrap().stale);
+    }
+
+    #[test]
+    fn min_evidence_holds_observed_models_to_what_was_checked() {
+        let c = observed_catalogue();
+        let o = observation(false);
+        let needs = Requirements {
+            require: vec!["text".into()],
+            min_evidence: Some(CapabilityEvidence::Probed),
+            local_only: true,
+            ..Default::default()
+        };
+        let d = route_observed(&c, Some(pool(&o, 30)), &needs);
+        assert_eq!(d.selected.as_deref(), Some("bench/warm"));
+        let cold = d.excluded.iter().find(|e| e.model == "bench/cold").unwrap();
+        assert_eq!(
+            cold.reason,
+            "capability text is advertised, under the required probed"
+        );
+    }
+
+    #[test]
+    fn a_stale_observation_selects_nothing_and_says_to_observe_again() {
+        let c = observed_catalogue();
+        let o = observation(false);
+        let needs = Requirements {
+            local_only: true,
+            ..Default::default()
+        };
+        let d = route_observed(&c, Some(pool(&o, 901)), &needs);
+        assert_eq!(d.selected, None);
+        assert!(
+            d.excluded
+                .iter()
+                .all(|e| e.model == "acme-large" || e.reason.contains("past its 900 s")),
+            "{d:?}"
+        );
+        assert!(d.observed.unwrap().stale);
+    }
+
+    #[test]
+    fn declared_models_come_first_and_a_remote_runtime_is_not_local() {
+        let c = observed_catalogue();
+        let o = observation(true);
+        let d = route_observed(
+            &c,
+            Some(pool(&o, 1)),
+            &Requirements {
+                require: vec!["text".into()],
+                ..Default::default()
+            },
+        );
+        assert_eq!(d.selected.as_deref(), Some("acme-large"));
+        assert!(d.fallbacks.contains(&"bench/far".to_string()));
+        let d = route_observed(
+            &c,
+            Some(pool(&o, 1)),
+            &Requirements {
+                local_only: true,
+                ..Default::default()
+            },
+        );
+        let far = d.excluded.iter().find(|e| e.model == "bench/far").unwrap();
+        assert!(
+            far.reason.contains("off the loopback interface"),
+            "{}",
+            far.reason
+        );
+    }
+
+    #[test]
+    fn min_context_reads_the_configured_window_before_the_advertised() {
+        let c = observed_catalogue();
+        let o = observation(false);
+        let needs = Requirements {
+            local_only: true,
+            min_context: Some(8000),
+            require: vec!["text".into()],
+            ..Default::default()
+        };
+        let d = route_observed(&c, Some(pool(&o, 1)), &needs);
+        assert_eq!(d.selected.as_deref(), Some("bench/cold"));
+        let warm = d.excluded.iter().find(|e| e.model == "bench/warm").unwrap();
+        assert_eq!(
+            warm.reason,
+            "context window 4096 is under the required 8000"
+        );
+    }
+
+    #[test]
+    fn the_order_of_the_report_does_not_change_the_decision() {
+        let c = observed_catalogue();
+        let o = observation(false);
+        let mut shuffled = o.clone();
+        shuffled.runtimes[0].models.reverse();
+        let needs = Requirements {
+            local_only: true,
+            require: vec!["text".into()],
+            ..Default::default()
+        };
+        let a = route_observed(&c, Some(pool(&o, 5)), &needs);
+        let b = route_observed(&c, Some(pool(&shuffled, 5)), &needs);
+        assert_eq!(a.selected, b.selected);
+        // admission sorts models; a stored observation is always in sorted order
+        let admitted_names: Vec<&str> = o.runtimes[0]
+            .models
+            .iter()
+            .map(|m| m.report.native_id.as_str())
+            .collect();
+        assert_eq!(admitted_names, ["cold", "embed", "warm"]);
     }
 
     #[test]

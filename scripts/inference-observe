@@ -1,0 +1,104 @@
+#!/usr/bin/env node
+// inference-observe — find out which local inference runtimes answer, what each serves
+// and what each model can do, and record it (ADR 0174, docs/MODELS.md).
+//
+//   scripts/inference-observe [--probe | --probe-all] [--endpoint VENDOR=URL]...
+//                             [--allow-remote] [--dry-run] [--json]
+//
+// The crate declares and records; this script only reaches the runtimes. Which runtimes
+// exist and where each listens by default is the catalogue's (`models list`): a local
+// vendor's `runtime` names its adapter, its endpoint and the variable that overrides it.
+// Only loopback endpoints are reached unless --allow-remote admits another host; nothing
+// is scanned. Without --probe nothing is loaded and nothing is generated: the inventory
+// is metadata. --probe asks each loaded model for a handful of tokens or one embedding;
+// --probe-all asks every model, which may load each one.
+//
+// Exit: 0 when the observation was recorded (whatever the runtimes did), 2 on bad
+// arguments, 3 when the crate refused the record.
+
+import { execFileSync } from 'node:child_process';
+import path from 'node:path';
+import { plan } from './lib/inference/endpoint.mjs';
+import { observeAll } from './lib/inference/observer.mjs';
+
+const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
+const CLI = process.env.MAJORDOMUS_CLI || path.join(ROOT, 'bin', 'majordomus-cli');
+
+function usage(error) {
+  const text = 'usage: scripts/inference-observe [--probe | --probe-all] [--endpoint VENDOR=URL]... [--allow-remote] [--dry-run] [--json]';
+  if (error) {
+    process.stderr.write(`inference-observe: ${error}\n${text}\n`);
+    process.exit(2);
+  }
+  process.stdout.write(`${text}\n`);
+  process.exit(0);
+}
+
+function parse(argv) {
+  const opts = { probe: false, extra: [], allowRemote: false, dryRun: false, json: false };
+  for (let i = 0; i < argv.length; i += 1) {
+    const a = argv[i];
+    if (a === '--probe') opts.probe = opts.probe || true;
+    else if (a === '--probe-all') opts.probe = 'all';
+    else if (a === '--allow-remote') opts.allowRemote = true;
+    else if (a === '--dry-run') opts.dryRun = true;
+    else if (a === '--json') opts.json = true;
+    else if (a === '--endpoint') {
+      const value = argv[++i];
+      const at = value?.indexOf('=') ?? -1;
+      if (at < 1) usage('--endpoint takes VENDOR=URL');
+      opts.extra.push({ vendor: value.slice(0, at), endpoint: value.slice(at + 1) });
+    } else if (a === '-h' || a === '--help') usage();
+    else usage(`unknown argument ${a}`);
+  }
+  return opts;
+}
+
+function crate(args, input) {
+  try {
+    const out = execFileSync(CLI, [...args, '--format', 'json'], {
+      input: input === undefined ? undefined : JSON.stringify(input),
+      encoding: 'utf8',
+      stdio: ['pipe', 'pipe', 'pipe'],
+      maxBuffer: 64 * 1024 * 1024,
+    });
+    return JSON.parse(out);
+  } catch (e) {
+    const reason = String(e.stderr || e.message).trim().split('\n').pop();
+    process.stderr.write(`inference-observe: majordomus ${args.join(' ')}: ${reason}\n`);
+    process.exit(3);
+  }
+}
+
+const opts = parse(process.argv.slice(2));
+const { vendors } = crate(['models', 'list']);
+const planned = plan(vendors, { env: process.env, extra: opts.extra, allowRemote: opts.allowRemote });
+const controller = new AbortController();
+for (const sig of ['SIGINT', 'SIGTERM']) process.once(sig, () => controller.abort(new Error(sig)));
+const observation = await observeAll({ ...planned, probe: opts.probe, io: { signal: controller.signal } });
+if (opts.allowRemote) observation.remote_admitted = true;
+
+if (opts.dryRun) {
+  process.stdout.write(`${JSON.stringify(observation, null, 2)}\n`);
+  process.exit(0);
+}
+const recorded = crate(['models', 'observe'], observation);
+if (opts.json) {
+  process.stdout.write(`${JSON.stringify(recorded, null, 2)}\n`);
+  process.exit(0);
+}
+for (const r of recorded.runtimes ?? []) {
+  const models = r.models?.length ?? 0;
+  const line = r.state === 'identified'
+    ? `${r.version ? ` ${r.version}` : ''} — ${models} model(s), ${r.models.filter((m) => m.loaded).length} loaded`
+    : ` — ${r.diagnostic ?? ''}`;
+  process.stdout.write(`[inference] ${r.vendor.padEnd(9)} ${r.endpoint.padEnd(24)} ${r.state}${line}\n`);
+  for (const m of r.models ?? []) {
+    const words = m.standing.map((c) => `${c.word}:${c.refuted ? 'refuted' : c.evidence}`).join(' ');
+    process.stdout.write(`  ${m.id}  ${words}\n`);
+  }
+}
+for (const x of recorded.refused ?? []) {
+  process.stdout.write(`[inference] refused ${x.vendor} ${x.endpoint}: ${x.reason}\n`);
+}
+process.stdout.write(`[inference] recorded ${recorded.path}\n`);

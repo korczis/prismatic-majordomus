@@ -488,7 +488,7 @@ pub enum SkillsCommand {
 /// `majordomus models`.
 pub struct ModelsArgs {
     #[command(subcommand)]
-    /// `list`, `route`.
+    /// `list`, `route`, `observe`, `observed`.
     pub command: ModelsCommand,
 }
 
@@ -499,6 +499,10 @@ pub enum ModelsCommand {
     List(ModelsListArgs),
     /// Which model a stated need selects, the fallback chain behind it, and why every excluded model fell out
     Route(ModelsRouteArgs),
+    /// Record an observation of the local runtimes (JSON from scripts/inference-observe, on --file or standard input)
+    Observe(ModelsObserveArgs),
+    /// The checkout's current observation of its local runtimes: what each serves, each capability's evidence, how old it is
+    Observed(ModelsObservedArgs),
 }
 
 #[derive(Debug, Args)]
@@ -638,6 +642,72 @@ pub struct ModelsRouteArgs {
     #[arg(long)]
     /// A model named outright, by canonical id or alias; still checked against the other requirements.
     pub model: Option<String>,
+
+    #[arg(long)]
+    /// Also choose from the checkout's observation of local runtimes, after every declared model.
+    pub observed: bool,
+
+    #[arg(long, value_enum)]
+    /// The least evidence an observed model's required capability must rest on.
+    pub min_evidence: Option<EvidenceLevel>,
+
+    #[arg(long)]
+    /// The age beyond which the observation is stale, seconds (900 when omitted).
+    pub max_age: Option<u64>,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
+    /// `text` for a person, `json` for a machine; both render the same answer.
+    pub format: OutputFormat,
+}
+
+/// How much is known about an observed model's capability, weakest first (ADR 0174).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+pub enum EvidenceLevel {
+    /// The runtime's kind of model usually can; nothing about this model says so.
+    Inferred,
+    /// The runtime's own metadata says this model can.
+    Advertised,
+    /// A bounded request of this kind just succeeded against this model.
+    Probed,
+}
+
+impl EvidenceLevel {
+    /// The word the capability's input spells.
+    pub fn as_str(self) -> &'static str {
+        match self {
+            EvidenceLevel::Inferred => "inferred",
+            EvidenceLevel::Advertised => "advertised",
+            EvidenceLevel::Probed => "probed",
+        }
+    }
+}
+
+#[derive(Debug, Args)]
+/// `majordomus models observe`.
+pub struct ModelsObserveArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[arg(long)]
+    /// Read the observation from this file instead of standard input.
+    pub file: Option<PathBuf>,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
+    /// `text` for a person, `json` for a machine; both render the same answer.
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus models observed`.
+pub struct ModelsObservedArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[arg(long)]
+    /// The age beyond which the observation is stale, seconds (900 when omitted).
+    pub max_age: Option<u64>,
 
     #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
     /// `text` for a person, `json` for a machine; both render the same answer.
@@ -7334,6 +7404,35 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["models", "route", "--require", "text"],
             setup: &[],
             expect: Expect::StdoutContains(&["selected"]),
+        }, ExampleDoc {
+            id: "models-route-observed",
+            title: "Route over the observed local runtimes too",
+            description: "Observed models are considered after every declared one, loaded first, and held to the observation's age, the runtime's locality and each required capability's evidence. With no observation, or a stale one, no observed model can be selected, and the answer says so.",
+            argv: &["models", "route", "--observed", "--local-only", "--require", "embeddings", "--min-evidence", "probed"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["selected"]),
+        }],
+    },
+    CommandExamples {
+        command: "models observe",
+        examples: &[ExampleDoc {
+            id: "models-observe-refused",
+            title: "Input that is not an observation is refused",
+            description: "The writer reads one observation, as scripts/inference-observe reports it, from --file or standard input. Anything else — here a YAML file — is refused with exit 13 and the checkout's observation is left as it was; so is a report naming a vendor that is not a declared local runtime, or an endpoint off the loopback interface the observer did not admit.",
+            argv: &["models", "observe", "--file", "share/models.yaml"],
+            setup: &[],
+            expect: Expect::ExitCode(13),
+        }],
+    },
+    CommandExamples {
+        command: "models observed",
+        examples: &[ExampleDoc {
+            id: "models-observed",
+            title: "What the local runtimes were last seen serving",
+            description: "Each observed endpoint and whether it answered as its runtime, each model with its load state, context window and the evidence behind every capability word, and how old the observation is. A checkout that never observed says so and names the command that would.",
+            argv: &["models", "observed"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["observation"]),
         }],
     },
     CommandExamples {

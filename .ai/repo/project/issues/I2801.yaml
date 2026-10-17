@@ -1,0 +1,23 @@
+id: I2801
+milestone: local-inference
+title: "A local run's tokens, latency and throughput are economics records, and its cost is unknown, not zero"
+slug: local-runs-are-accounted
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Record each local execution in the economics model: input and output tokens as the runtime reports them, time to first token, total latency, tokens per second, queue wait, the model instance and host, with cost unknown when no price is measured; no double count of streamed chunks or retries."
+why: "Economics carries only provider-reported cloud usage; a local run's absence of a bill is not a price."
+scope:
+  - "apps/majordomus-cli/src/economics"
+  - "apps/majordomus-cli/src/capability/builtin/economics.rs"
+  - "docs/ECONOMICS.md"
+  - "test/cases"
+depends_on: [I2800]
+acceptance_criteria:
+  - "economics summary lists a local run with its measured latency and an unknown cost"
+validation:
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "economics_case"
+created_at: 2026-10-17
+updated_at: 2026-10-17

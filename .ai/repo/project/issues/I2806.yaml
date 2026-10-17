@@ -1,0 +1,23 @@
+id: I2806
+milestone: local-inference
+title: "A local model contributes to knowledge candidates, and what it writes stays a candidate with its provenance"
+slug: local-models-do-useful-work
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Use a routed local model to classify and summarise knowledge candidates (and embed them where an embeddings model is observed), recording the model instance and evidence on every output, which stays a candidate until a person or a verified check accepts it."
+why: "Observed models do no work yet; the knowledge pipeline already has a candidate stage that admits machine output without making it canonical."
+scope:
+  - ".ai/repo/knowledge"
+  - "apps/majordomus-cli/src/capability/builtin/knowledge_base.rs"
+  - "scripts/lib/inference"
+  - "test/cases"
+depends_on: [I2800, I2801]
+acceptance_criteria:
+  - "A candidate annotated by a local model names the model instance that wrote it and is not accepted by that annotation"
+validation:
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "knowledge_case"
+created_at: 2026-10-17
+updated_at: 2026-10-17

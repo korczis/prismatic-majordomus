@@ -2290,6 +2290,40 @@
       "tool": "majordomus_models"
     },
     {
+      "api_anchor": "/docs/api/models/#op-models-observe",
+      "claims": [],
+      "cli": "majordomus models observe",
+      "id": "models.observe",
+      "kind": "command",
+      "module": "models",
+      "module_route": "/registry/modules/models/",
+      "resource": null,
+      "route": "/registry/capabilities/models-observe/",
+      "slug": "models-observe",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/models.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/models.rs",
+      "tests": [],
+      "title": "Record an observation of local runtimes",
+      "tool": "majordomus_models_observe"
+    },
+    {
+      "api_anchor": "/docs/api/models/#op-models-observed",
+      "claims": [],
+      "cli": "majordomus models observed",
+      "id": "models.observed",
+      "kind": "query",
+      "module": "models",
+      "module_route": "/registry/modules/models/",
+      "resource": null,
+      "route": "/registry/capabilities/models-observed/",
+      "slug": "models-observed",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/models.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/models.rs",
+      "tests": [],
+      "title": "The observed local runtimes",
+      "tool": "majordomus_models_observed"
+    },
+    {
       "api_anchor": "/docs/api/models/#op-models-route",
       "claims": [],
       "cli": "majordomus models route",
@@ -4088,6 +4122,27 @@
         "test": "test/cases/131_models.sh"
       },
       {
+        "id": "models-local-runtime-observed",
+        "implementation": "apps/majordomus-cli/src/models/observed.rs",
+        "route": "/guarantees/models-local-runtime-observed/",
+        "status": "guaranteed",
+        "test": "test/cases/3211_a_local_runtime_is_observed.sh"
+      },
+      {
+        "id": "models-observed-evidence-routes",
+        "implementation": "apps/majordomus-cli/src/models/mod.rs",
+        "route": "/guarantees/models-observed-evidence-routes/",
+        "status": "guaranteed",
+        "test": "test/cases/3211_a_local_runtime_is_observed.sh"
+      },
+      {
+        "id": "models-observation-stays-local",
+        "implementation": "apps/majordomus-cli/src/models/observed.rs",
+        "route": "/guarantees/models-observation-stays-local/",
+        "status": "guaranteed",
+        "test": "test/cases/3211_a_local_runtime_is_observed.sh"
+      },
+      {
         "id": "commit-message-is-judged",
         "implementation": "apps/majordomus-cli/src/commit/verdict.rs",
         "route": "/guarantees/commit-message-is-judged/",
@@ -4241,8 +4296,8 @@
     ]
   },
   "counts": {
-    "capabilities": 202,
-    "claims": 93,
+    "capabilities": 204,
+    "claims": 96,
     "modules": 58
   },
   "generator": "majordomus-cli 0.28.0",
@@ -5270,6 +5325,16 @@
           "id": "models.list",
           "route": "/registry/capabilities/models-list/",
           "slug": "models-list"
+        },
+        {
+          "id": "models.observe",
+          "route": "/registry/capabilities/models-observe/",
+          "slug": "models-observe"
+        },
+        {
+          "id": "models.observed",
+          "route": "/registry/capabilities/models-observed/",
+          "slug": "models-observed"
         },
         {
           "id": "models.route",

@@ -273,7 +273,7 @@
       "description": "The model catalogue the distribution declares — vendors, canonical model references, typed capabilities, context windows, lifecycle — and the explainable routing over it: what a stated need selects, what stands behind it, and why every excluded model fell out. Declared data; nothing here calls a model or reads a credential's value.",
       "stability": "experimental",
       "source": "builtin",
-      "capabilities": 2
+      "capabilities": 4
     },
     {
       "id": "monitor",
@@ -53721,6 +53721,17 @@
                   ],
                   "description": "The environment variable whose *presence* means a credential is configured.\nOnly the name lives here, and only presence is ever reported — no code in this\ncrate reads the value, and the environment cache refuses to hold one."
                 },
+                "runtime": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/RuntimeDeclaration"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "For a local vendor, the runtime an observation reaches (ADR 0174): which adapter\nspeaks to it, where it listens by default, and the variable that moves it. Which\nmodels it serves is the machine's, so they are observed, never declared here."
+                },
                 "credential_configured": {
                   "type": [
                     "boolean",
@@ -53748,6 +53759,32 @@
                 }
               ],
               "description": "Where a vendor's inference runs."
+            },
+            "RuntimeDeclaration": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "adapter": {
+                  "type": "string",
+                  "description": "The adapter under `scripts/lib/inference/` that speaks the runtime's protocol."
+                },
+                "endpoint": {
+                  "type": "string",
+                  "description": "Where the runtime listens by default: an origin on the loopback interface."
+                },
+                "endpoint_env": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The environment variable that names another endpoint, when the runtime has one."
+                }
+              },
+              "required": [
+                "adapter",
+                "endpoint"
+              ],
+              "description": "How a local runtime is reached: data the observer reads, so that no consumer keeps a\nruntime's port or adapter name of its own."
             },
             "ModelEntry": {
               "type": "object",
@@ -53889,6 +53926,1496 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/models.rs"
     },
     {
+      "id": "models.observe",
+      "module": "models",
+      "kind": "command",
+      "title": "Record an observation of local runtimes",
+      "description": "Admit what scripts/inference-observe found at the local runtimes the catalogue declares — which endpoints answered as which runtime, what each serves, each model's capability words with their evidence (inferred, advertised, probed) and the probes made — and replace the checkout's observation under .ai/local/state/inference/. Refused, with every finding, when a vendor is not a declared local runtime, an endpoint carries a credential or leaves the loopback interface unadmitted, or a field is malformed. Secret shapes are redacted before anything is written.",
+      "input": {
+        "name": "ObservationReport",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "version": {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0,
+              "description": "The format version; only `VERSION` is admitted."
+            },
+            "observed_at": {
+              "type": "string",
+              "description": "When the transport finished, RFC 3339 — reported, not trusted for staleness."
+            },
+            "probe": {
+              "$ref": "#/$defs/ProbeScope",
+              "description": "Which models were probed.",
+              "default": "none"
+            },
+            "remote_admitted": {
+              "type": "boolean",
+              "description": "Whether the observer admitted endpoints off the loopback interface.",
+              "default": false
+            },
+            "runtimes": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/RuntimeReport"
+              },
+              "description": "One report per endpoint, in the observer's plan order.",
+              "default": []
+            },
+            "refused": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/EndpointRefusal"
+              },
+              "description": "The endpoints it would not reach."
+            }
+          },
+          "required": [
+            "version",
+            "observed_at"
+          ],
+          "description": "The input of `models.observe`: one observation, as `scripts/inference-observe` reports it.",
+          "title": "ObservationReport",
+          "$defs": {
+            "ProbeScope": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "none",
+                  "description": "None: metadata only, nothing loaded, nothing generated."
+                },
+                {
+                  "type": "string",
+                  "const": "loaded",
+                  "description": "The models already loaded."
+                },
+                {
+                  "type": "string",
+                  "const": "all",
+                  "description": "Every model, which may have loaded each one."
+                }
+              ],
+              "description": "Which models the transport probed."
+            },
+            "RuntimeReport": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "vendor": {
+                  "type": "string",
+                  "description": "The catalogue vendor whose runtime was expected there."
+                },
+                "endpoint": {
+                  "type": "string",
+                  "description": "The endpoint's origin, `http://127.0.0.1:11434`."
+                },
+                "state": {
+                  "$ref": "#/$defs/RuntimeState",
+                  "description": "Whether it answered as that runtime."
+                },
+                "version": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The runtime's version, when it reports one."
+                },
+                "identified_by": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The response signature that identified it."
+                },
+                "diagnostic": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Why it is not identified, as a class and a sentence."
+                },
+                "duration_ms": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "How long the observation of this endpoint took, milliseconds."
+                },
+                "models": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/ModelReport"
+                  },
+                  "description": "What it serves.",
+                  "default": []
+                }
+              },
+              "required": [
+                "vendor",
+                "endpoint",
+                "state"
+              ],
+              "description": "One endpoint as the transport reported it."
+            },
+            "RuntimeState": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "identified",
+                  "description": "It answered with the runtime's own signature."
+                },
+                {
+                  "type": "string",
+                  "const": "unidentified",
+                  "description": "Something answered, but not as that runtime: a compatible protocol is not an identity."
+                },
+                {
+                  "type": "string",
+                  "const": "unreachable",
+                  "description": "Nothing answered in time."
+                },
+                {
+                  "type": "string",
+                  "const": "failed",
+                  "description": "It answered in a way the adapter could not read."
+                }
+              ],
+              "description": "Whether an endpoint answered as the runtime its vendor names."
+            },
+            "ModelReport": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "native_id": {
+                  "type": "string",
+                  "description": "The runtime's own name for the model, verbatim."
+                },
+                "digest": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The content digest, when the runtime reports one: the model's identity across names."
+                },
+                "family": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The architecture family."
+                },
+                "parameters": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The parameter count, as the runtime spells it."
+                },
+                "quantization": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The quantization."
+                },
+                "format": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The weight format: `gguf`, `mlx`, ..."
+                },
+                "size_bytes": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "The size on disk, bytes."
+                },
+                "loaded": {
+                  "type": [
+                    "boolean",
+                    "null"
+                  ],
+                  "description": "Whether it is loaded now; absent when the runtime did not say."
+                },
+                "context_window": {
+                  "$ref": "#/$defs/ContextWindow",
+                  "description": "Its context window.",
+                  "default": {}
+                },
+                "capabilities": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/CapabilityClaim"
+                  },
+                  "description": "The capability words attached to it, with their evidence.",
+                  "default": []
+                },
+                "probes": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/Probe"
+                  },
+                  "description": "The probes made against it."
+                }
+              },
+              "required": [
+                "native_id"
+              ],
+              "description": "One model as the transport reported it."
+            },
+            "ContextWindow": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "advertised": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "What the model's metadata says it supports, tokens."
+                },
+                "configured": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "What the runtime serves it with now, tokens."
+                }
+              },
+              "description": "A model's context window, as far as it is known. The model's own limit and the one\nthe runtime is configured to serve are different facts, and either may be unknown."
+            },
+            "CapabilityClaim": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "word": {
+                  "type": "string",
+                  "description": "The catalogue's capability word: `text`, `embeddings`, `tools`, `vision`, ..."
+                },
+                "evidence": {
+                  "$ref": "#/$defs/CapabilityEvidence",
+                  "description": "How much the claim rests on."
+                },
+                "source": {
+                  "type": "string",
+                  "description": "Where it came from: the request and the field."
+                }
+              },
+              "required": [
+                "word",
+                "evidence",
+                "source"
+              ],
+              "description": "One capability word a runtime's metadata, or the adapter's inference, attaches to a model."
+            },
+            "CapabilityEvidence": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "inferred",
+                  "description": "The runtime's kind of model usually can; nothing about this model says so."
+                },
+                {
+                  "type": "string",
+                  "const": "advertised",
+                  "description": "The runtime's own metadata says this model can."
+                },
+                {
+                  "type": "string",
+                  "const": "probed",
+                  "description": "A bounded request of this kind just succeeded against this model."
+                }
+              ],
+              "description": "How much is known about one capability of one model, weakest first."
+            },
+            "Probe": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "word": {
+                  "type": "string",
+                  "description": "The capability word it tried."
+                },
+                "outcome": {
+                  "$ref": "#/$defs/ProbeOutcome",
+                  "description": "What it concluded."
+                },
+                "duration_ms": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "How long it took, milliseconds, including any model load it caused."
+                },
+                "diagnostic": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Why it failed, as a class and a sentence."
+                }
+              },
+              "required": [
+                "word",
+                "outcome",
+                "duration_ms"
+              ],
+              "description": "One bounded request the transport made to establish a capability."
+            },
+            "ProbeOutcome": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "passed",
+                  "description": "The request succeeded and its answer had the expected shape."
+                },
+                {
+                  "type": "string",
+                  "const": "failed",
+                  "description": "It did not."
+                }
+              ],
+              "description": "What a probe concluded."
+            },
+            "EndpointRefusal": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "vendor": {
+                  "type": "string",
+                  "description": "The vendor it was for."
+                },
+                "endpoint": {
+                  "type": "string",
+                  "description": "The endpoint, as given."
+                },
+                "reason": {
+                  "type": "string",
+                  "description": "Why it was not reached."
+                }
+              },
+              "required": [
+                "vendor",
+                "endpoint",
+                "reason"
+              ],
+              "description": "An endpoint the transport would not reach, and why."
+            }
+          }
+        }
+      },
+      "output": {
+        "name": "ObservationRecorded",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string",
+              "description": "The file it replaced, relative to the repository."
+            },
+            "version": {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0,
+              "description": "The format version."
+            },
+            "recorded_at": {
+              "type": "string",
+              "description": "When this crate admitted it, RFC 3339: the clock staleness is measured from."
+            },
+            "observed_at": {
+              "type": "string",
+              "description": "When the transport says it finished."
+            },
+            "probe": {
+              "$ref": "#/$defs/ProbeScope",
+              "description": "Which models were probed."
+            },
+            "remote_admitted": {
+              "type": "boolean",
+              "description": "Whether endpoints off the loopback interface were admitted."
+            },
+            "runtimes": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/ObservedRuntime"
+              },
+              "description": "The endpoints, in the observer's order."
+            },
+            "refused": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/EndpointRefusal"
+              },
+              "description": "The endpoints the observer would not reach."
+            }
+          },
+          "required": [
+            "path",
+            "version",
+            "recorded_at",
+            "observed_at",
+            "probe",
+            "remote_admitted",
+            "runtimes"
+          ],
+          "description": "The answer of `models.observe`: the observation as stored, and where.",
+          "title": "ObservationRecorded",
+          "$defs": {
+            "ProbeScope": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "none",
+                  "description": "None: metadata only, nothing loaded, nothing generated."
+                },
+                {
+                  "type": "string",
+                  "const": "loaded",
+                  "description": "The models already loaded."
+                },
+                {
+                  "type": "string",
+                  "const": "all",
+                  "description": "Every model, which may have loaded each one."
+                }
+              ],
+              "description": "Which models the transport probed."
+            },
+            "ObservedRuntime": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The runtime instance identity: the vendor at this endpoint."
+                },
+                "locality": {
+                  "$ref": "#/$defs/Locality",
+                  "description": "Whether inference here stays on the machine."
+                },
+                "vendor": {
+                  "type": "string",
+                  "description": "The vendor."
+                },
+                "endpoint": {
+                  "type": "string",
+                  "description": "The endpoint's origin."
+                },
+                "state": {
+                  "$ref": "#/$defs/RuntimeState",
+                  "description": "Whether it answered as that runtime."
+                },
+                "version": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Its version, when reported."
+                },
+                "identified_by": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The signature that identified it."
+                },
+                "diagnostic": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Why it is not identified."
+                },
+                "duration_ms": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "How long it took, milliseconds."
+                },
+                "models": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/ObservedModel"
+                  },
+                  "description": "The models, sorted by native id."
+                }
+              },
+              "required": [
+                "id",
+                "locality",
+                "vendor",
+                "endpoint",
+                "state",
+                "models"
+              ],
+              "description": "One observed endpoint, as admitted."
+            },
+            "Locality": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "loopback",
+                  "description": "The loopback interface: nothing leaves the machine."
+                },
+                {
+                  "type": "string",
+                  "const": "remote",
+                  "description": "Another host, admitted outright by the observer."
+                }
+              ],
+              "description": "Whether inference at an endpoint stays on this machine."
+            },
+            "RuntimeState": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "identified",
+                  "description": "It answered with the runtime's own signature."
+                },
+                {
+                  "type": "string",
+                  "const": "unidentified",
+                  "description": "Something answered, but not as that runtime: a compatible protocol is not an identity."
+                },
+                {
+                  "type": "string",
+                  "const": "unreachable",
+                  "description": "Nothing answered in time."
+                },
+                {
+                  "type": "string",
+                  "const": "failed",
+                  "description": "It answered in a way the adapter could not read."
+                }
+              ],
+              "description": "Whether an endpoint answered as the runtime its vendor names."
+            },
+            "ObservedModel": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The reference routing and records name: `<vendor>/<native_id>`."
+                },
+                "instance": {
+                  "type": "string",
+                  "description": "The instance identity: this model at this runtime instance, digest-bound when known."
+                },
+                "native_id": {
+                  "type": "string",
+                  "description": "The runtime's own name for the model, verbatim."
+                },
+                "digest": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The content digest, when the runtime reports one: the model's identity across names."
+                },
+                "family": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The architecture family."
+                },
+                "parameters": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The parameter count, as the runtime spells it."
+                },
+                "quantization": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The quantization."
+                },
+                "format": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The weight format: `gguf`, `mlx`, ..."
+                },
+                "size_bytes": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "The size on disk, bytes."
+                },
+                "loaded": {
+                  "type": [
+                    "boolean",
+                    "null"
+                  ],
+                  "description": "Whether it is loaded now; absent when the runtime did not say."
+                },
+                "context_window": {
+                  "$ref": "#/$defs/ContextWindow",
+                  "description": "Its context window.",
+                  "default": {}
+                },
+                "capabilities": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/CapabilityClaim"
+                  },
+                  "description": "The capability words attached to it, with their evidence.",
+                  "default": []
+                },
+                "probes": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/Probe"
+                  },
+                  "description": "The probes made against it."
+                },
+                "standing": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/CapabilityStanding"
+                  },
+                  "description": "Each capability word with its derived standing, sorted by word."
+                }
+              },
+              "required": [
+                "id",
+                "instance",
+                "native_id",
+                "standing"
+              ],
+              "description": "One observed model, as admitted."
+            },
+            "ContextWindow": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "advertised": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "What the model's metadata says it supports, tokens."
+                },
+                "configured": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "What the runtime serves it with now, tokens."
+                }
+              },
+              "description": "A model's context window, as far as it is known. The model's own limit and the one\nthe runtime is configured to serve are different facts, and either may be unknown."
+            },
+            "CapabilityClaim": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "word": {
+                  "type": "string",
+                  "description": "The catalogue's capability word: `text`, `embeddings`, `tools`, `vision`, ..."
+                },
+                "evidence": {
+                  "$ref": "#/$defs/CapabilityEvidence",
+                  "description": "How much the claim rests on."
+                },
+                "source": {
+                  "type": "string",
+                  "description": "Where it came from: the request and the field."
+                }
+              },
+              "required": [
+                "word",
+                "evidence",
+                "source"
+              ],
+              "description": "One capability word a runtime's metadata, or the adapter's inference, attaches to a model."
+            },
+            "CapabilityEvidence": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "inferred",
+                  "description": "The runtime's kind of model usually can; nothing about this model says so."
+                },
+                {
+                  "type": "string",
+                  "const": "advertised",
+                  "description": "The runtime's own metadata says this model can."
+                },
+                {
+                  "type": "string",
+                  "const": "probed",
+                  "description": "A bounded request of this kind just succeeded against this model."
+                }
+              ],
+              "description": "How much is known about one capability of one model, weakest first."
+            },
+            "Probe": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "word": {
+                  "type": "string",
+                  "description": "The capability word it tried."
+                },
+                "outcome": {
+                  "$ref": "#/$defs/ProbeOutcome",
+                  "description": "What it concluded."
+                },
+                "duration_ms": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "How long it took, milliseconds, including any model load it caused."
+                },
+                "diagnostic": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Why it failed, as a class and a sentence."
+                }
+              },
+              "required": [
+                "word",
+                "outcome",
+                "duration_ms"
+              ],
+              "description": "One bounded request the transport made to establish a capability."
+            },
+            "ProbeOutcome": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "passed",
+                  "description": "The request succeeded and its answer had the expected shape."
+                },
+                {
+                  "type": "string",
+                  "const": "failed",
+                  "description": "It did not."
+                }
+              ],
+              "description": "What a probe concluded."
+            },
+            "CapabilityStanding": {
+              "type": "object",
+              "properties": {
+                "word": {
+                  "type": "string",
+                  "description": "The word."
+                },
+                "evidence": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/CapabilityEvidence"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "The strongest evidence for it; absent when the only word about it is a failed probe."
+                },
+                "refuted": {
+                  "type": "boolean",
+                  "description": "A probe failed and none passed: routing does not count the word, whatever was claimed."
+                },
+                "sources": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Where the evidence came from."
+                }
+              },
+              "required": [
+                "word",
+                "sources"
+              ],
+              "description": "A capability word of an observed model, with the standing its evidence gives it."
+            },
+            "EndpointRefusal": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "vendor": {
+                  "type": "string",
+                  "description": "The vendor it was for."
+                },
+                "endpoint": {
+                  "type": "string",
+                  "description": "The endpoint, as given."
+                },
+                "reason": {
+                  "type": "string",
+                  "description": "Why it was not reached."
+                }
+              },
+              "required": [
+                "vendor",
+                "endpoint",
+                "reason"
+              ],
+              "description": "An endpoint the transport would not reach, and why."
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::models"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_models_observe"
+        },
+        "http": {
+          "method": "POST",
+          "path": "/api/v1/models/observations"
+        },
+        "cli": {
+          "path": [
+            "models",
+            "observe"
+          ]
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "experimental",
+      "tags": [
+        "models",
+        "inference",
+        "records"
+      ],
+      "benchmark": {
+        "policy": "required"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "repository_mutation",
+        "cancellable": false,
+        "concurrency": "serial"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/models.rs"
+    },
+    {
+      "id": "models.observed",
+      "module": "models",
+      "kind": "query",
+      "title": "The observed local runtimes",
+      "description": "The checkout's current observation of its local inference runtimes: each endpoint with its runtime instance identity, locality and whether it answered as the runtime its vendor names; each model with its instance identity, digest, quantization, load state, context window (advertised and configured, either possibly unknown) and every capability word with the standing its evidence gives it. Says how old the observation is and whether routing still trusts it; absent and stale are answers, never guessed around.",
+      "input": {
+        "name": "ObservedInput",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "max_age": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint64",
+              "minimum": 0,
+              "description": "The age beyond which the observation is stale, seconds; 900 when omitted."
+            }
+          },
+          "description": "The input of `models.observed`.",
+          "title": "ObservedInput"
+        }
+      },
+      "output": {
+        "name": "ObservedReport",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string",
+              "description": "Where the observation is kept, relative to the repository."
+            },
+            "observation": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/RuntimeObservation"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The observation; absent when this checkout has never observed."
+            },
+            "age_seconds": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint64",
+              "minimum": 0,
+              "description": "Its age now, seconds."
+            },
+            "ttl_seconds": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0,
+              "description": "The age beyond which it is stale, seconds."
+            },
+            "stale": {
+              "type": "boolean",
+              "description": "Whether it is stale, or absent: either way routing chooses no observed model."
+            },
+            "models": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0,
+              "description": "How many models of identified runtimes it holds."
+            },
+            "observe_with": {
+              "type": "string",
+              "description": "What to run to observe again."
+            }
+          },
+          "required": [
+            "path",
+            "ttl_seconds",
+            "stale",
+            "models",
+            "observe_with"
+          ],
+          "description": "The answer of `models.observed`: the checkout's current observation of its local\nruntimes, how old it is, and whether routing would still trust it.",
+          "title": "ObservedReport",
+          "$defs": {
+            "RuntimeObservation": {
+              "type": "object",
+              "properties": {
+                "version": {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0,
+                  "description": "The format version."
+                },
+                "recorded_at": {
+                  "type": "string",
+                  "description": "When this crate admitted it, RFC 3339: the clock staleness is measured from."
+                },
+                "observed_at": {
+                  "type": "string",
+                  "description": "When the transport says it finished."
+                },
+                "probe": {
+                  "$ref": "#/$defs/ProbeScope",
+                  "description": "Which models were probed."
+                },
+                "remote_admitted": {
+                  "type": "boolean",
+                  "description": "Whether endpoints off the loopback interface were admitted."
+                },
+                "runtimes": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/ObservedRuntime"
+                  },
+                  "description": "The endpoints, in the observer's order."
+                },
+                "refused": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/EndpointRefusal"
+                  },
+                  "description": "The endpoints the observer would not reach."
+                }
+              },
+              "required": [
+                "version",
+                "recorded_at",
+                "observed_at",
+                "probe",
+                "remote_admitted",
+                "runtimes"
+              ],
+              "description": "The checkout's current observation, as stored."
+            },
+            "ProbeScope": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "none",
+                  "description": "None: metadata only, nothing loaded, nothing generated."
+                },
+                {
+                  "type": "string",
+                  "const": "loaded",
+                  "description": "The models already loaded."
+                },
+                {
+                  "type": "string",
+                  "const": "all",
+                  "description": "Every model, which may have loaded each one."
+                }
+              ],
+              "description": "Which models the transport probed."
+            },
+            "ObservedRuntime": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The runtime instance identity: the vendor at this endpoint."
+                },
+                "locality": {
+                  "$ref": "#/$defs/Locality",
+                  "description": "Whether inference here stays on the machine."
+                },
+                "vendor": {
+                  "type": "string",
+                  "description": "The vendor."
+                },
+                "endpoint": {
+                  "type": "string",
+                  "description": "The endpoint's origin."
+                },
+                "state": {
+                  "$ref": "#/$defs/RuntimeState",
+                  "description": "Whether it answered as that runtime."
+                },
+                "version": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Its version, when reported."
+                },
+                "identified_by": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The signature that identified it."
+                },
+                "diagnostic": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Why it is not identified."
+                },
+                "duration_ms": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "How long it took, milliseconds."
+                },
+                "models": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/ObservedModel"
+                  },
+                  "description": "The models, sorted by native id."
+                }
+              },
+              "required": [
+                "id",
+                "locality",
+                "vendor",
+                "endpoint",
+                "state",
+                "models"
+              ],
+              "description": "One observed endpoint, as admitted."
+            },
+            "Locality": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "loopback",
+                  "description": "The loopback interface: nothing leaves the machine."
+                },
+                {
+                  "type": "string",
+                  "const": "remote",
+                  "description": "Another host, admitted outright by the observer."
+                }
+              ],
+              "description": "Whether inference at an endpoint stays on this machine."
+            },
+            "RuntimeState": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "identified",
+                  "description": "It answered with the runtime's own signature."
+                },
+                {
+                  "type": "string",
+                  "const": "unidentified",
+                  "description": "Something answered, but not as that runtime: a compatible protocol is not an identity."
+                },
+                {
+                  "type": "string",
+                  "const": "unreachable",
+                  "description": "Nothing answered in time."
+                },
+                {
+                  "type": "string",
+                  "const": "failed",
+                  "description": "It answered in a way the adapter could not read."
+                }
+              ],
+              "description": "Whether an endpoint answered as the runtime its vendor names."
+            },
+            "ObservedModel": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The reference routing and records name: `<vendor>/<native_id>`."
+                },
+                "instance": {
+                  "type": "string",
+                  "description": "The instance identity: this model at this runtime instance, digest-bound when known."
+                },
+                "native_id": {
+                  "type": "string",
+                  "description": "The runtime's own name for the model, verbatim."
+                },
+                "digest": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The content digest, when the runtime reports one: the model's identity across names."
+                },
+                "family": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The architecture family."
+                },
+                "parameters": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The parameter count, as the runtime spells it."
+                },
+                "quantization": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The quantization."
+                },
+                "format": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The weight format: `gguf`, `mlx`, ..."
+                },
+                "size_bytes": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "The size on disk, bytes."
+                },
+                "loaded": {
+                  "type": [
+                    "boolean",
+                    "null"
+                  ],
+                  "description": "Whether it is loaded now; absent when the runtime did not say."
+                },
+                "context_window": {
+                  "$ref": "#/$defs/ContextWindow",
+                  "description": "Its context window.",
+                  "default": {}
+                },
+                "capabilities": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/CapabilityClaim"
+                  },
+                  "description": "The capability words attached to it, with their evidence.",
+                  "default": []
+                },
+                "probes": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/Probe"
+                  },
+                  "description": "The probes made against it."
+                },
+                "standing": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/CapabilityStanding"
+                  },
+                  "description": "Each capability word with its derived standing, sorted by word."
+                }
+              },
+              "required": [
+                "id",
+                "instance",
+                "native_id",
+                "standing"
+              ],
+              "description": "One observed model, as admitted."
+            },
+            "ContextWindow": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "advertised": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "What the model's metadata says it supports, tokens."
+                },
+                "configured": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "What the runtime serves it with now, tokens."
+                }
+              },
+              "description": "A model's context window, as far as it is known. The model's own limit and the one\nthe runtime is configured to serve are different facts, and either may be unknown."
+            },
+            "CapabilityClaim": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "word": {
+                  "type": "string",
+                  "description": "The catalogue's capability word: `text`, `embeddings`, `tools`, `vision`, ..."
+                },
+                "evidence": {
+                  "$ref": "#/$defs/CapabilityEvidence",
+                  "description": "How much the claim rests on."
+                },
+                "source": {
+                  "type": "string",
+                  "description": "Where it came from: the request and the field."
+                }
+              },
+              "required": [
+                "word",
+                "evidence",
+                "source"
+              ],
+              "description": "One capability word a runtime's metadata, or the adapter's inference, attaches to a model."
+            },
+            "CapabilityEvidence": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "inferred",
+                  "description": "The runtime's kind of model usually can; nothing about this model says so."
+                },
+                {
+                  "type": "string",
+                  "const": "advertised",
+                  "description": "The runtime's own metadata says this model can."
+                },
+                {
+                  "type": "string",
+                  "const": "probed",
+                  "description": "A bounded request of this kind just succeeded against this model."
+                }
+              ],
+              "description": "How much is known about one capability of one model, weakest first."
+            },
+            "Probe": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "word": {
+                  "type": "string",
+                  "description": "The capability word it tried."
+                },
+                "outcome": {
+                  "$ref": "#/$defs/ProbeOutcome",
+                  "description": "What it concluded."
+                },
+                "duration_ms": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "How long it took, milliseconds, including any model load it caused."
+                },
+                "diagnostic": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Why it failed, as a class and a sentence."
+                }
+              },
+              "required": [
+                "word",
+                "outcome",
+                "duration_ms"
+              ],
+              "description": "One bounded request the transport made to establish a capability."
+            },
+            "ProbeOutcome": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "passed",
+                  "description": "The request succeeded and its answer had the expected shape."
+                },
+                {
+                  "type": "string",
+                  "const": "failed",
+                  "description": "It did not."
+                }
+              ],
+              "description": "What a probe concluded."
+            },
+            "CapabilityStanding": {
+              "type": "object",
+              "properties": {
+                "word": {
+                  "type": "string",
+                  "description": "The word."
+                },
+                "evidence": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/CapabilityEvidence"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "The strongest evidence for it; absent when the only word about it is a failed probe."
+                },
+                "refuted": {
+                  "type": "boolean",
+                  "description": "A probe failed and none passed: routing does not count the word, whatever was claimed."
+                },
+                "sources": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Where the evidence came from."
+                }
+              },
+              "required": [
+                "word",
+                "sources"
+              ],
+              "description": "A capability word of an observed model, with the standing its evidence gives it."
+            },
+            "EndpointRefusal": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "vendor": {
+                  "type": "string",
+                  "description": "The vendor it was for."
+                },
+                "endpoint": {
+                  "type": "string",
+                  "description": "The endpoint, as given."
+                },
+                "reason": {
+                  "type": "string",
+                  "description": "Why it was not reached."
+                }
+              },
+              "required": [
+                "vendor",
+                "endpoint",
+                "reason"
+              ],
+              "description": "An endpoint the transport would not reach, and why."
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::models"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_models_observed"
+        },
+        "http": {
+          "method": "GET",
+          "path": "/api/v1/models/observations"
+        },
+        "cli": {
+          "path": [
+            "models",
+            "observed"
+          ]
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "experimental",
+      "tags": [
+        "models",
+        "inference"
+      ],
+      "benchmark": {
+        "policy": "required"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "read",
+        "cancellable": false,
+        "concurrency": "unrestricted"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/models.rs"
+    },
+    {
       "id": "models.route",
       "module": "models",
       "kind": "query",
@@ -53936,10 +55463,59 @@
                 "null"
               ],
               "description": "A model named outright, by canonical id or alias — still checked against the\nother requirements."
+            },
+            "observed": {
+              "type": [
+                "boolean",
+                "null"
+              ],
+              "description": "Also choose from the checkout's observation of local runtimes (`models observed`),\nafter every declared model."
+            },
+            "min_evidence": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/CapabilityEvidence"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The least evidence an observed model's required capability must rest on:\n`inferred`, `advertised` or `probed`."
+            },
+            "max_age": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint64",
+              "minimum": 0,
+              "description": "The age beyond which the observation is stale, seconds; 900 when omitted."
             }
           },
           "description": "The input of `models.route`: what the task needs, in transport-friendly scalars\n(`require` is comma-separated so a GET query string can carry it).",
-          "title": "RouteInput"
+          "title": "RouteInput",
+          "$defs": {
+            "CapabilityEvidence": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "inferred",
+                  "description": "The runtime's kind of model usually can; nothing about this model says so."
+                },
+                {
+                  "type": "string",
+                  "const": "advertised",
+                  "description": "The runtime's own metadata says this model can."
+                },
+                {
+                  "type": "string",
+                  "const": "probed",
+                  "description": "A bounded request of this kind just succeeded against this model."
+                }
+              ],
+              "description": "How much is known about one capability of one model, weakest first."
+            }
+          }
         }
       },
       "output": {
@@ -53974,6 +55550,17 @@
                 "$ref": "#/$defs/ExcludedModel"
               },
               "description": "Every model that did not qualify, with its reason."
+            },
+            "observed": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/ObservedBasis"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The observation the decision also chose from, when it was asked to."
             }
           },
           "description": "The routing answer: what was selected, what stands behind it, who fell out and why.\nThe whole decision is derived from the catalogue and the requirements — run it\ntwice, get it twice; there is no state to consult and no health to guess.",
@@ -53996,6 +55583,40 @@
                 "reason"
               ],
               "description": "One model that did not qualify, and exactly why."
+            },
+            "ObservedBasis": {
+              "type": "object",
+              "properties": {
+                "recorded_at": {
+                  "type": "string",
+                  "description": "When the observation was recorded."
+                },
+                "age_seconds": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "Its age when the decision was made, seconds."
+                },
+                "ttl_seconds": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "The age beyond which it is stale, seconds."
+                },
+                "stale": {
+                  "type": "boolean",
+                  "description": "Whether it was stale, so that no observed model could be selected."
+                }
+              },
+              "required": [
+                "recorded_at",
+                "ttl_seconds",
+                "stale"
+              ],
+              "description": "The observation a routing decision considered."
             }
           }
         }

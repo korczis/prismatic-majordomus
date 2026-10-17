@@ -1,0 +1,24 @@
+id: I2804
+milestone: local-inference
+title: "The Cockpit and the Observatory show observed runtimes, evidence and routing from the capabilities"
+slug: surfaces-render-the-observation
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Extend the Cockpit's Models page and add an Observatory scene that read models.observed and models.route: runtimes, models, each capability's evidence and refutations, the observation's age, and a routing inspector with every exclusion reason; nothing names a runtime or a model in a frontend."
+why: "The Models page renders only the declared catalogue; the observation is invisible outside the CLI, HTTP and MCP."
+scope:
+  - "apps/majordomus-cli/src/cockpit"
+  - "apps/majordomus-cli/src/ui"
+  - "apps/majordomus-cli/src/capability/builtin/observatory.rs"
+  - "share/ui"
+  - "test/cases"
+depends_on: [I2798]
+acceptance_criteria:
+  - "The Models page lists the observed models of a fixture observation with their evidence, from the capability alone"
+validation:
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "surfaces_case"
+created_at: 2026-10-17
+updated_at: 2026-10-17

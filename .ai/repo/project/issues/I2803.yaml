@@ -1,0 +1,23 @@
+id: I2803
+milestone: local-inference
+title: "A host's memory and accelerator are counted once, however many runtimes share them"
+slug: a-host-is-counted-once
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Attach each runtime instance to its host (the mesh node identity), record what runtimes report of resident model memory (Ollama size_vram, LM Studio loaded models), and derive one resource pool per host so routing can prefer a loaded model and refuse a load that does not fit, with unknown values left unknown."
+why: "Two runtimes on one machine share its RAM and GPU; summing their reports double counts the machine."
+scope:
+  - "apps/majordomus-cli/src/models"
+  - "scripts/lib/inference"
+  - "docs/MODELS.md"
+  - "test/cases"
+depends_on: [I2802]
+acceptance_criteria:
+  - "Two runtimes on one host report one resource pool, and a missing measurement is absent, not zero"
+validation:
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "host_pool_case"
+created_at: 2026-10-17
+updated_at: 2026-10-17

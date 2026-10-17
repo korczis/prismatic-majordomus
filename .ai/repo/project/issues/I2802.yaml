@@ -1,0 +1,23 @@
+id: I2802
+milestone: local-inference
+title: "A node advertises its observed inference to the mesh, and trust comes from the link, not the advertisement"
+slug: inference-is-a-mesh-feature
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Add an inference feature to the runtime card and replicate a bounded summary of the node's observation (runtime ids, model ids, evidence) through the journal, so models route --observed on a linked node can consider them, held to the link's trust and the observation's age."
+why: "The mesh link features are a compile-time constant; another machine's runtimes are invisible to routing."
+scope:
+  - "apps/majordomus-cli/src/mesh"
+  - "apps/majordomus-cli/src/models"
+  - "docs/MESH.md"
+  - "test/cases"
+depends_on: [I2798]
+acceptance_criteria:
+  - "A linked node's observed model appears as a candidate on another node with the node's identity, and an unlinked node's does not"
+validation:
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "mesh_inference_case"
+created_at: 2026-10-17
+updated_at: 2026-10-17

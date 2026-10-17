@@ -1965,6 +1965,33 @@ claims:
     responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
     note: credential_env names an environment variable and only std::env::var_os(..).is_some() is ever consulted; the test walks the catalogue's JSON schema and refuses any property name that smells like a credential.
 
+  - id: models-local-runtime-observed
+    claim: A local inference runtime the catalogue declares — Ollama, LM Studio or llama.cpp's llama-server — is reached at its declared endpoint, identified by a signature only that runtime gives, and its models recorded typed with digest, quantization, load state and both context windows; a compatible server that is none of them is reported unidentified, not guessed
+    source: docs/MODELS.md
+    implementation: apps/majordomus-cli/src/models/observed.rs
+    test: test/cases/3211_a_local_runtime_is_observed.sh
+    status: guaranteed
+    responsibility: none      # served by apps/majordomus-cli and scripts/lib/inference, not a supervised responsibility
+    note: ADR 0174. The transport (scripts/lib/inference/) runs every adapter against fakes of each runtime's documented responses in the case; the end-to-end run there uses a fake Ollama on a loopback port. Verified live on 2026-10-17 against Ollama 0.40.4, LM Studio's server and llama-server b10621, which is a recorded observation, not something CI repeats.
+
+  - id: models-observed-evidence-routes
+    claim: An observed model's capability is never stated above its evidence — inferred, advertised or probed, refuted by a failed probe — and routing with --observed chooses on that evidence, refuses a stale observation, and says in its reason what the choice rests on
+    source: docs/MODELS.md
+    implementation: apps/majordomus-cli/src/models/mod.rs
+    test: test/cases/3211_a_local_runtime_is_observed.sh
+    status: guaranteed
+    responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
+    note: The unit tests prove refutation, the evidence order, min_evidence, staleness, locality, the configured-before-advertised context window and that report order does not change the decision; the case proves a probe raising advertised to probed through the real executable.
+
+  - id: models-observation-stays-local
+    claim: Observing local runtimes reaches only declared or named endpoints on the loopback interface unless another host is admitted outright, scans nothing, and keeps the observation in checkout state that is never committed or published
+    source: docs/MODELS.md
+    implementation: apps/majordomus-cli/src/models/observed.rs
+    test: test/cases/3211_a_local_runtime_is_observed.sh
+    status: guaranteed
+    responsibility: none      # served by apps/majordomus-cli and scripts/lib/inference, not a supervised responsibility
+    note: The observer refuses a non-loopback endpoint without --allow-remote and the crate refuses one the observer did not admit; an endpoint carrying a credential is refused by both; the observation is .ai/local/state/inference/observation.json, under the ignored .ai/local/.
+
   - id: knowledge-derived-at-the-boundary
     claim: A provider's end event and its compaction event derive the knowledge the episode produced into candidate records under the tracked tree, from the ledger and git and never from a conversation, whether or not a task is active, and record that they did so in the ledger
     source: docs/KNOWLEDGE.md

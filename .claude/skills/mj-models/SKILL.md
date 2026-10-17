@@ -1,6 +1,6 @@
 ---
 name: mj-models
-description: "Majordomus models: The model catalogue; Route a need to a model."
+description: "Majordomus models: The model catalogue; Record an observation of local runtimes; The observed local runtimes; Route a need to a model."
 argument-hint: "[request]"
 ---
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
@@ -16,6 +16,8 @@ $ARGUMENTS
 | Capability | What it is | MCP tool | Command line | Effect |
 |---|---|---|---|---|
 | `models.list` | The model catalogue | `majordomus_models` | `majordomus models list` | reads |
+| `models.observe` | Record an observation of local runtimes | `majordomus_models_observe` | `majordomus models observe` | changes |
+| `models.observed` | The observed local runtimes | `majordomus_models_observed` | `majordomus models observed` | reads |
 | `models.route` | Route a need to a model | `majordomus_models_route` | `majordomus models route` | reads |
 
 A capability that *changes* something runs only when the person asked for that change: call it once, and if it is refused or its outcome is not known, report that as it is and do not try again by another way. One that *reads* may be called whenever the request needs it.

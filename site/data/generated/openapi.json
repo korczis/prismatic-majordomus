@@ -124,6 +124,8 @@
     "op-mesh-status": "docs/api/mesh/",
     "op-mesh-verify": "docs/api/mesh/",
     "op-models-list": "docs/api/models/",
+    "op-models-observe": "docs/api/models/",
+    "op-models-observed": "docs/api/models/",
     "op-models-route": "docs/api/models/",
     "op-monitor-stream": "docs/api/monitor/",
     "op-objects-get": "docs/api/objects/",
@@ -269,11 +271,14 @@
     "schema-CanonicalSchema": "docs/api/capabilities/",
     "schema-Capability": "docs/api/capabilities/",
     "schema-CapabilityAvailability": "docs/api/capabilities/",
+    "schema-CapabilityClaim": "docs/api/models/",
+    "schema-CapabilityEvidence": "docs/api/models/",
     "schema-CapabilityId": "docs/api/shared/",
     "schema-CapabilityKind": "docs/api/shared/",
     "schema-CapabilityList": "docs/api/capabilities/",
     "schema-CapabilityProvenance": "docs/api/shared/",
     "schema-CapabilityRef": "docs/api/product/",
+    "schema-CapabilityStanding": "docs/api/models/",
     "schema-CapabilitySummary": "docs/api/capabilities/",
     "schema-CapabilityVisibility": "docs/api/capabilities/",
     "schema-Carries": "docs/api/design/",
@@ -354,6 +359,7 @@
     "schema-ConsumeAnswer": "docs/api/mesh/",
     "schema-ContainerView": "docs/api/worktree/",
     "schema-ContextEntry": "docs/api/devcontext/",
+    "schema-ContextWindow": "docs/api/models/",
     "schema-Continuity": "docs/api/continuity/",
     "schema-ContractView": "docs/api/directories/",
     "schema-ContrastReport": "docs/api/design/",
@@ -474,6 +480,7 @@
     "schema-EditorSupport": "docs/api/editors/",
     "schema-EffectiveEntry": "docs/api/directories/",
     "schema-Empty": "docs/api/mesh/",
+    "schema-EndpointRefusal": "docs/api/models/",
     "schema-EntityDocumentation": "docs/api/entity/",
     "schema-EntityEdge": "docs/api/entity/",
     "schema-EntityEvidence": "docs/api/entity/",
@@ -690,6 +697,7 @@
     "schema-LinkState": "docs/api/mesh/",
     "schema-Listen": "docs/api/deploy/",
     "schema-Liveness": "docs/api/health/",
+    "schema-Locality": "docs/api/models/",
     "schema-LogStream": "docs/api/executions/",
     "schema-MachineNode": "docs/api/mesh/",
     "schema-MachineReport": "docs/api/session-domain/",
@@ -741,6 +749,7 @@
     "schema-MilestoneNode": "docs/api/devtask/",
     "schema-ModeResolution": "docs/api/reasoning/",
     "schema-ModelEntry": "docs/api/models/",
+    "schema-ModelReport": "docs/api/models/",
     "schema-ModelStatus": "docs/api/models/",
     "schema-ModelsReport": "docs/api/models/",
     "schema-ModuleId": "docs/api/capabilities/",
@@ -770,13 +779,19 @@
     "schema-ObligationClosure": "docs/api/obligations/",
     "schema-ObligationState": "docs/api/obligations/",
     "schema-Observation": "docs/api/served/",
+    "schema-ObservationRecorded": "docs/api/models/",
+    "schema-ObservationReport": "docs/api/models/",
     "schema-ObservatoryEvents": "docs/api/observatory/",
     "schema-ObservatoryRecording": "docs/api/observatory/",
     "schema-ObservatoryReplay": "docs/api/observatory/",
+    "schema-ObservedBasis": "docs/api/models/",
     "schema-ObservedClassification": "docs/api/integration/",
     "schema-ObservedDeployment": "docs/api/deploy/",
     "schema-ObservedDeployments": "docs/api/deploy/",
+    "schema-ObservedModel": "docs/api/models/",
     "schema-ObservedRelease": "docs/api/deploy/",
+    "schema-ObservedReport": "docs/api/models/",
+    "schema-ObservedRuntime": "docs/api/models/",
     "schema-OpenEpisode": "docs/api/worktree/",
     "schema-OpenSession": "docs/api/continuity/",
     "schema-OperationParity": "docs/api/quality/",
@@ -843,6 +858,9 @@
     "schema-PrepState": "docs/api/integration/",
     "schema-PreparedHead": "docs/api/integration/",
     "schema-Presence": "docs/api/mesh/",
+    "schema-Probe": "docs/api/models/",
+    "schema-ProbeOutcome": "docs/api/models/",
+    "schema-ProbeScope": "docs/api/models/",
     "schema-ProductCounts": "docs/api/product/",
     "schema-ProductCoverage": "docs/api/product/",
     "schema-ProductFinding": "docs/api/product/",
@@ -1002,7 +1020,11 @@
     "schema-RuleValidator": "docs/api/rules/",
     "schema-RulesReport": "docs/api/rules/",
     "schema-RulesVerdict": "docs/api/rules/",
+    "schema-RuntimeDeclaration": "docs/api/models/",
     "schema-RuntimeNode": "docs/api/mesh/",
+    "schema-RuntimeObservation": "docs/api/models/",
+    "schema-RuntimeReport": "docs/api/models/",
+    "schema-RuntimeState": "docs/api/models/",
     "schema-RuntimeView": "docs/api/lifecycle/",
     "schema-RustdocAcceptedLinks": "docs/api/quality/",
     "schema-RustdocCounts": "docs/api/quality/",
@@ -1234,8 +1256,8 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 197,
-    "schemas": 976,
+    "operations": 199,
+    "schemas": 996,
     "tags": 58
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1451,6 +1473,8 @@
     "mesh.status": "mesh",
     "mesh.verify": "mesh",
     "models.list": "models",
+    "models.observe": "models",
+    "models.observed": "models",
     "models.route": "models",
     "monitor.stream": "monitor",
     "objects.get": "objects",
@@ -1600,11 +1624,14 @@
     "CanonicalSchema": "capabilities",
     "Capability": "capabilities",
     "CapabilityAvailability": "capabilities",
+    "CapabilityClaim": "models",
+    "CapabilityEvidence": "models",
     "CapabilityId": "shared",
     "CapabilityKind": "shared",
     "CapabilityList": "capabilities",
     "CapabilityProvenance": "shared",
     "CapabilityRef": "product",
+    "CapabilityStanding": "models",
     "CapabilitySummary": "capabilities",
     "CapabilityVisibility": "capabilities",
     "Carries": "design",
@@ -1685,6 +1712,7 @@
     "ConsumeAnswer": "mesh",
     "ContainerView": "worktree",
     "ContextEntry": "devcontext",
+    "ContextWindow": "models",
     "Continuity": "continuity",
     "ContractView": "directories",
     "ContrastReport": "design",
@@ -1805,6 +1833,7 @@
     "EditorSupport": "editors",
     "EffectiveEntry": "directories",
     "Empty": "mesh",
+    "EndpointRefusal": "models",
     "EntityDocumentation": "entity",
     "EntityEdge": "entity",
     "EntityEvidence": "entity",
@@ -2021,6 +2050,7 @@
     "LinkState": "mesh",
     "Listen": "deploy",
     "Liveness": "health",
+    "Locality": "models",
     "LogStream": "executions",
     "MachineNode": "mesh",
     "MachineReport": "session-domain",
@@ -2072,6 +2102,7 @@
     "MilestoneNode": "devtask",
     "ModeResolution": "reasoning",
     "ModelEntry": "models",
+    "ModelReport": "models",
     "ModelStatus": "models",
     "ModelsReport": "models",
     "ModuleId": "capabilities",
@@ -2101,13 +2132,19 @@
     "ObligationClosure": "obligations",
     "ObligationState": "obligations",
     "Observation": "served",
+    "ObservationRecorded": "models",
+    "ObservationReport": "models",
     "ObservatoryEvents": "observatory",
     "ObservatoryRecording": "observatory",
     "ObservatoryReplay": "observatory",
+    "ObservedBasis": "models",
     "ObservedClassification": "integration",
     "ObservedDeployment": "deploy",
     "ObservedDeployments": "deploy",
+    "ObservedModel": "models",
     "ObservedRelease": "deploy",
+    "ObservedReport": "models",
+    "ObservedRuntime": "models",
     "OpenEpisode": "worktree",
     "OpenSession": "continuity",
     "OperationParity": "quality",
@@ -2174,6 +2211,9 @@
     "PrepState": "integration",
     "PreparedHead": "integration",
     "Presence": "mesh",
+    "Probe": "models",
+    "ProbeOutcome": "models",
+    "ProbeScope": "models",
     "ProductCounts": "product",
     "ProductCoverage": "product",
     "ProductFinding": "product",
@@ -2333,7 +2373,11 @@
     "RuleValidator": "rules",
     "RulesReport": "rules",
     "RulesVerdict": "rules",
+    "RuntimeDeclaration": "models",
     "RuntimeNode": "mesh",
+    "RuntimeObservation": "models",
+    "RuntimeReport": "models",
+    "RuntimeState": "models",
     "RuntimeView": "lifecycle",
     "RustdocAcceptedLinks": "quality",
     "RustdocCounts": "quality",
@@ -6319,6 +6363,75 @@
       "variants": []
     },
     {
+      "description": "One capability word a runtime's metadata, or the adapter's inference, attaches to a model.",
+      "home": "models",
+      "is_enum": false,
+      "name": "CapabilityClaim",
+      "properties": [
+        {
+          "description": "The catalogue's capability word: `text`, `embeddings`, `tools`, `vision`, ...",
+          "name": "word",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How much the claim rests on.",
+          "name": "evidence",
+          "refs": [
+            "CapabilityEvidence"
+          ],
+          "required": true,
+          "type": "CapabilityEvidence"
+        },
+        {
+          "description": "Where it came from: the request and the field.",
+          "name": "source",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ModelReport",
+        "ObservedModel"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "How much is known about one capability of one model, weakest first.",
+      "home": "models",
+      "is_enum": true,
+      "name": "CapabilityEvidence",
+      "properties": [],
+      "type": "\"inferred\" | \"advertised\" | \"probed\"",
+      "used_by": [
+        "models.route"
+      ],
+      "used_by_schemas": [
+        "CapabilityClaim",
+        "CapabilityStanding"
+      ],
+      "values": [
+        {
+          "description": "The runtime's kind of model usually can; nothing about this model says so.",
+          "value": "inferred"
+        },
+        {
+          "description": "The runtime's own metadata says this model can.",
+          "value": "advertised"
+        },
+        {
+          "description": "A bounded request of this kind just succeeded against this model.",
+          "value": "probed"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "A stable, globally meaningful identity: a namespace, a dot, and a local part.\n`repository.info` and `objects.get` for executables; `<kind>.<identity>` for a\ndeclarative object (`rule.majordomus.scope-integrity@1`, `document.docs/CLI.md`,\n`policy..ai/repo/policy.yaml`).\n\nGrammar: the namespace matches `[a-z][a-z0-9_-]*`; the local part is non-empty and\ncarries no whitespace or control character, any other Unicode included, because it is\nopaque: a path, a versioned identity, or a name, as the kind's identity rule produced it.",
       "home": "shared",
       "is_enum": false,
@@ -6562,6 +6675,51 @@
       "used_by": [],
       "used_by_schemas": [
         "ModuleRef"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "A capability word of an observed model, with the standing its evidence gives it.",
+      "home": "models",
+      "is_enum": false,
+      "name": "CapabilityStanding",
+      "properties": [
+        {
+          "description": "The word.",
+          "name": "word",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The strongest evidence for it; absent when the only word about it is a failed probe.",
+          "name": "evidence",
+          "refs": [
+            "CapabilityEvidence"
+          ],
+          "required": false,
+          "type": "CapabilityEvidence | null"
+        },
+        {
+          "description": "A probe failed and none passed: routing does not count the word, whatever was claimed.",
+          "name": "refuted",
+          "refs": [],
+          "required": false,
+          "type": "boolean"
+        },
+        {
+          "description": "Where the evidence came from.",
+          "name": "sources",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ObservedModel"
       ],
       "values": [],
       "variants": []
@@ -10797,6 +10955,36 @@
       "used_by_schemas": [
         "CompiledContext",
         "Explanation"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "A model's context window, as far as it is known. The model's own limit and the one\nthe runtime is configured to serve are different facts, and either may be unknown.",
+      "home": "models",
+      "is_enum": false,
+      "name": "ContextWindow",
+      "properties": [
+        {
+          "description": "What the model's metadata says it supports, tokens.",
+          "name": "advertised",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "What the runtime serves it with now, tokens.",
+          "name": "configured",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ModelReport",
+        "ObservedModel"
       ],
       "values": [],
       "variants": []
@@ -17853,6 +18041,44 @@
       "variants": []
     },
     {
+      "description": "An endpoint the transport would not reach, and why.",
+      "home": "models",
+      "is_enum": false,
+      "name": "EndpointRefusal",
+      "properties": [
+        {
+          "description": "The vendor it was for.",
+          "name": "vendor",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The endpoint, as given.",
+          "name": "endpoint",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Why it was not reached.",
+          "name": "reason",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ObservationRecorded",
+        "ObservationReport",
+        "RuntimeObservation"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "The public documentation page of one entity, as its kind's publication decision derives\nit. Every surface that shows an entity carries this value and renders it; none of them\nderives a public address of its own.\n\n```\nuse majordomus_cli::entity::Documentation;\n\nlet d = Documentation {\n    projection: \"entity\".into(),\n    route: Some(\"/adrs/adr-0056/\".into()),\n    url: Some(\"https://majordomus.dev/adrs/adr-0056/\".into()),\n    reason: None,\n    declared_in: \"site/data/publication.toml\".into(),\n};\nlet wire = serde_json::to_value(&d).unwrap();\nassert_eq!(wire[\"url\"], serde_json::json!(\"https://majordomus.dev/adrs/adr-0056/\"));\n// a field that does not apply is absent, not an empty string\nassert!(wire.get(\"reason\").is_none());\n```",
       "home": "entity",
       "is_enum": false,
@@ -19082,6 +19308,8 @@
         "mesh.state",
         "mesh.verify",
         "models.list",
+        "models.observed",
+        "models.observe",
         "models.route",
         "monitor.stream",
         "objects.get",
@@ -29997,6 +30225,29 @@
       "variants": []
     },
     {
+      "description": "Whether inference at an endpoint stays on this machine.",
+      "home": "models",
+      "is_enum": true,
+      "name": "Locality",
+      "properties": [],
+      "type": "\"loopback\" | \"remote\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "ObservedRuntime"
+      ],
+      "values": [
+        {
+          "description": "The loopback interface: nothing leaves the machine.",
+          "value": "loopback"
+        },
+        {
+          "description": "Another host, admitted outright by the observer.",
+          "value": "remote"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "Which stream a log line came from.",
       "home": "executions",
       "is_enum": true,
@@ -32752,6 +33003,104 @@
       "variants": []
     },
     {
+      "description": "One model as the transport reported it.",
+      "home": "models",
+      "is_enum": false,
+      "name": "ModelReport",
+      "properties": [
+        {
+          "description": "The runtime's own name for the model, verbatim.",
+          "name": "native_id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The content digest, when the runtime reports one: the model's identity across names.",
+          "name": "digest",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The architecture family.",
+          "name": "family",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The parameter count, as the runtime spells it.",
+          "name": "parameters",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The quantization.",
+          "name": "quantization",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The weight format: `gguf`, `mlx`, ...",
+          "name": "format",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The size on disk, bytes.",
+          "name": "size_bytes",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "Whether it is loaded now; absent when the runtime did not say.",
+          "name": "loaded",
+          "refs": [],
+          "required": false,
+          "type": "boolean | null"
+        },
+        {
+          "description": "Its context window.",
+          "name": "context_window",
+          "refs": [
+            "ContextWindow"
+          ],
+          "required": false,
+          "type": "ContextWindow"
+        },
+        {
+          "description": "The capability words attached to it, with their evidence.",
+          "name": "capabilities",
+          "refs": [
+            "CapabilityClaim"
+          ],
+          "required": false,
+          "type": "array of CapabilityClaim"
+        },
+        {
+          "description": "The probes made against it.",
+          "name": "probes",
+          "refs": [
+            "Probe"
+          ],
+          "required": false,
+          "type": "array of Probe"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "RuntimeReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "A model's lifecycle standing, as the catalogue declares it. There is no default: a\ncatalogue entry that declares none has an undeclared standing, which is not the same\nfact as \"available\", and no reader may render it as one.",
       "home": "models",
       "is_enum": true,
@@ -34542,6 +34891,146 @@
       "variants": []
     },
     {
+      "description": "The answer of `models.observe`: the observation as stored, and where.",
+      "home": "models",
+      "is_enum": false,
+      "name": "ObservationRecorded",
+      "properties": [
+        {
+          "description": "The file it replaced, relative to the repository.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The format version.",
+          "name": "version",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "When this crate admitted it, RFC 3339: the clock staleness is measured from.",
+          "name": "recorded_at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "When the transport says it finished.",
+          "name": "observed_at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Which models were probed.",
+          "name": "probe",
+          "refs": [
+            "ProbeScope"
+          ],
+          "required": true,
+          "type": "ProbeScope"
+        },
+        {
+          "description": "Whether endpoints off the loopback interface were admitted.",
+          "name": "remote_admitted",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The endpoints, in the observer's order.",
+          "name": "runtimes",
+          "refs": [
+            "ObservedRuntime"
+          ],
+          "required": true,
+          "type": "array of ObservedRuntime"
+        },
+        {
+          "description": "The endpoints the observer would not reach.",
+          "name": "refused",
+          "refs": [
+            "EndpointRefusal"
+          ],
+          "required": false,
+          "type": "array of EndpointRefusal"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "models.observe"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The input of `models.observe`: one observation, as `scripts/inference-observe` reports it.",
+      "home": "models",
+      "is_enum": false,
+      "name": "ObservationReport",
+      "properties": [
+        {
+          "description": "The format version; only `VERSION` is admitted.",
+          "name": "version",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "When the transport finished, RFC 3339 — reported, not trusted for staleness.",
+          "name": "observed_at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Which models were probed.",
+          "name": "probe",
+          "refs": [
+            "ProbeScope"
+          ],
+          "required": false,
+          "type": "ProbeScope"
+        },
+        {
+          "description": "Whether the observer admitted endpoints off the loopback interface.",
+          "name": "remote_admitted",
+          "refs": [],
+          "required": false,
+          "type": "boolean"
+        },
+        {
+          "description": "One report per endpoint, in the observer's plan order.",
+          "name": "runtimes",
+          "refs": [
+            "RuntimeReport"
+          ],
+          "required": false,
+          "type": "array of RuntimeReport"
+        },
+        {
+          "description": "The endpoints it would not reach.",
+          "name": "refused",
+          "refs": [
+            "EndpointRefusal"
+          ],
+          "required": false,
+          "type": "array of EndpointRefusal"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "models.observe"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "The Observatory's events above a cursor, as the activity scene draws them.\n\n```\nuse majordomus_cli::capability::builtin::observatory::ObservatoryEvents;\nlet e: ObservatoryEvents = serde_json::from_value(serde_json::json!({\n    \"active\": true, \"after\": 9, \"cursor\": 12, \"expired\": false, \"events\": [{ \"id\": \"s:3\" }],\n})).unwrap();\nassert!(e.cursor > e.after.unwrap(), \"the next request resumes past what was read\");\n```",
       "home": "observatory",
       "is_enum": false,
@@ -34680,6 +35169,49 @@
         "observatory.replay"
       ],
       "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The observation a routing decision considered.",
+      "home": "models",
+      "is_enum": false,
+      "name": "ObservedBasis",
+      "properties": [
+        {
+          "description": "When the observation was recorded.",
+          "name": "recorded_at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its age when the decision was made, seconds.",
+          "name": "age_seconds",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "The age beyond which it is stale, seconds.",
+          "name": "ttl_seconds",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Whether it was stale, so that no observed model could be selected.",
+          "name": "stale",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "RoutingDecision"
+      ],
       "values": [],
       "variants": []
     },
@@ -34882,6 +35414,127 @@
       "variants": []
     },
     {
+      "description": "One observed model, as admitted.",
+      "home": "models",
+      "is_enum": false,
+      "name": "ObservedModel",
+      "properties": [
+        {
+          "description": "The reference routing and records name: `<vendor>/<native_id>`.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The instance identity: this model at this runtime instance, digest-bound when known.",
+          "name": "instance",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The runtime's own name for the model, verbatim.",
+          "name": "native_id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The content digest, when the runtime reports one: the model's identity across names.",
+          "name": "digest",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The architecture family.",
+          "name": "family",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The parameter count, as the runtime spells it.",
+          "name": "parameters",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The quantization.",
+          "name": "quantization",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The weight format: `gguf`, `mlx`, ...",
+          "name": "format",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The size on disk, bytes.",
+          "name": "size_bytes",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "Whether it is loaded now; absent when the runtime did not say.",
+          "name": "loaded",
+          "refs": [],
+          "required": false,
+          "type": "boolean | null"
+        },
+        {
+          "description": "Its context window.",
+          "name": "context_window",
+          "refs": [
+            "ContextWindow"
+          ],
+          "required": false,
+          "type": "ContextWindow"
+        },
+        {
+          "description": "The capability words attached to it, with their evidence.",
+          "name": "capabilities",
+          "refs": [
+            "CapabilityClaim"
+          ],
+          "required": false,
+          "type": "array of CapabilityClaim"
+        },
+        {
+          "description": "The probes made against it.",
+          "name": "probes",
+          "refs": [
+            "Probe"
+          ],
+          "required": false,
+          "type": "array of Probe"
+        },
+        {
+          "description": "Each capability word with its derived standing, sorted by word.",
+          "name": "standing",
+          "refs": [
+            "CapabilityStanding"
+          ],
+          "required": true,
+          "type": "array of CapabilityStanding"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ObservedRuntime"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One release the forge published.",
       "home": "deploy",
       "is_enum": false,
@@ -34934,6 +35587,164 @@
       "used_by": [],
       "used_by_schemas": [
         "ObservedDeployments"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The answer of `models.observed`: the checkout's current observation of its local\nruntimes, how old it is, and whether routing would still trust it.",
+      "home": "models",
+      "is_enum": false,
+      "name": "ObservedReport",
+      "properties": [
+        {
+          "description": "Where the observation is kept, relative to the repository.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The observation; absent when this checkout has never observed.",
+          "name": "observation",
+          "refs": [
+            "RuntimeObservation"
+          ],
+          "required": false,
+          "type": "RuntimeObservation | null"
+        },
+        {
+          "description": "Its age now, seconds.",
+          "name": "age_seconds",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "The age beyond which it is stale, seconds.",
+          "name": "ttl_seconds",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Whether it is stale, or absent: either way routing chooses no observed model.",
+          "name": "stale",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "How many models of identified runtimes it holds.",
+          "name": "models",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "What to run to observe again.",
+          "name": "observe_with",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "models.observed"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One observed endpoint, as admitted.",
+      "home": "models",
+      "is_enum": false,
+      "name": "ObservedRuntime",
+      "properties": [
+        {
+          "description": "The runtime instance identity: the vendor at this endpoint.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether inference here stays on the machine.",
+          "name": "locality",
+          "refs": [
+            "Locality"
+          ],
+          "required": true,
+          "type": "Locality"
+        },
+        {
+          "description": "The vendor.",
+          "name": "vendor",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The endpoint's origin.",
+          "name": "endpoint",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether it answered as that runtime.",
+          "name": "state",
+          "refs": [
+            "RuntimeState"
+          ],
+          "required": true,
+          "type": "RuntimeState"
+        },
+        {
+          "description": "Its version, when reported.",
+          "name": "version",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The signature that identified it.",
+          "name": "identified_by",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Why it is not identified.",
+          "name": "diagnostic",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "How long it took, milliseconds.",
+          "name": "duration_ms",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "The models, sorted by native id.",
+          "name": "models",
+          "refs": [
+            "ObservedModel"
+          ],
+          "required": true,
+          "type": "array of ObservedModel"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ObservationRecorded",
+        "RuntimeObservation"
       ],
       "values": [],
       "variants": []
@@ -38250,6 +39061,104 @@
         {
           "description": "Nothing within the TTL; the node may be gone or unreachable. It stays listed\nuntil `RETENTION` passes, then expires out entirely.",
           "value": "absent"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "One bounded request the transport made to establish a capability.",
+      "home": "models",
+      "is_enum": false,
+      "name": "Probe",
+      "properties": [
+        {
+          "description": "The capability word it tried.",
+          "name": "word",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What it concluded.",
+          "name": "outcome",
+          "refs": [
+            "ProbeOutcome"
+          ],
+          "required": true,
+          "type": "ProbeOutcome"
+        },
+        {
+          "description": "How long it took, milliseconds, including any model load it caused.",
+          "name": "duration_ms",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Why it failed, as a class and a sentence.",
+          "name": "diagnostic",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ModelReport",
+        "ObservedModel"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What a probe concluded.",
+      "home": "models",
+      "is_enum": true,
+      "name": "ProbeOutcome",
+      "properties": [],
+      "type": "\"passed\" | \"failed\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "Probe"
+      ],
+      "values": [
+        {
+          "description": "The request succeeded and its answer had the expected shape.",
+          "value": "passed"
+        },
+        {
+          "description": "It did not.",
+          "value": "failed"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "Which models the transport probed.",
+      "home": "models",
+      "is_enum": true,
+      "name": "ProbeScope",
+      "properties": [],
+      "type": "\"none\" | \"loaded\" | \"all\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "ObservationRecorded",
+        "ObservationReport",
+        "RuntimeObservation"
+      ],
+      "values": [
+        {
+          "description": "None: metadata only, nothing loaded, nothing generated.",
+          "value": "none"
+        },
+        {
+          "description": "The models already loaded.",
+          "value": "loaded"
+        },
+        {
+          "description": "Every model, which may have loaded each one.",
+          "value": "all"
         }
       ],
       "variants": []
@@ -47238,6 +48147,15 @@
           ],
           "required": false,
           "type": "array of ExcludedModel"
+        },
+        {
+          "description": "The observation the decision also chose from, when it was asked to.",
+          "name": "observed",
+          "refs": [
+            "ObservedBasis"
+          ],
+          "required": false,
+          "type": "ObservedBasis | null"
         }
       ],
       "type": "object",
@@ -48294,6 +49212,42 @@
       "variants": []
     },
     {
+      "description": "How a local runtime is reached: data the observer reads, so that no consumer keeps a\nruntime's port or adapter name of its own.",
+      "home": "models",
+      "is_enum": false,
+      "name": "RuntimeDeclaration",
+      "properties": [
+        {
+          "description": "The adapter under `scripts/lib/inference/` that speaks the runtime's protocol.",
+          "name": "adapter",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Where the runtime listens by default: an origin on the loopback interface.",
+          "name": "endpoint",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The environment variable that names another endpoint, when the runtime has one.",
+          "name": "endpoint_env",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "VendorView"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One runtime in the peer tree.",
       "home": "mesh",
       "is_enum": false,
@@ -48364,6 +49318,183 @@
         "PeerDetail"
       ],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "The checkout's current observation, as stored.",
+      "home": "models",
+      "is_enum": false,
+      "name": "RuntimeObservation",
+      "properties": [
+        {
+          "description": "The format version.",
+          "name": "version",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "When this crate admitted it, RFC 3339: the clock staleness is measured from.",
+          "name": "recorded_at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "When the transport says it finished.",
+          "name": "observed_at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Which models were probed.",
+          "name": "probe",
+          "refs": [
+            "ProbeScope"
+          ],
+          "required": true,
+          "type": "ProbeScope"
+        },
+        {
+          "description": "Whether endpoints off the loopback interface were admitted.",
+          "name": "remote_admitted",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The endpoints, in the observer's order.",
+          "name": "runtimes",
+          "refs": [
+            "ObservedRuntime"
+          ],
+          "required": true,
+          "type": "array of ObservedRuntime"
+        },
+        {
+          "description": "The endpoints the observer would not reach.",
+          "name": "refused",
+          "refs": [
+            "EndpointRefusal"
+          ],
+          "required": false,
+          "type": "array of EndpointRefusal"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ObservedReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One endpoint as the transport reported it.",
+      "home": "models",
+      "is_enum": false,
+      "name": "RuntimeReport",
+      "properties": [
+        {
+          "description": "The catalogue vendor whose runtime was expected there.",
+          "name": "vendor",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The endpoint's origin, `http://127.0.0.1:11434`.",
+          "name": "endpoint",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether it answered as that runtime.",
+          "name": "state",
+          "refs": [
+            "RuntimeState"
+          ],
+          "required": true,
+          "type": "RuntimeState"
+        },
+        {
+          "description": "The runtime's version, when it reports one.",
+          "name": "version",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The response signature that identified it.",
+          "name": "identified_by",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Why it is not identified, as a class and a sentence.",
+          "name": "diagnostic",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "How long the observation of this endpoint took, milliseconds.",
+          "name": "duration_ms",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "What it serves.",
+          "name": "models",
+          "refs": [
+            "ModelReport"
+          ],
+          "required": false,
+          "type": "array of ModelReport"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ObservationReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Whether an endpoint answered as the runtime its vendor names.",
+      "home": "models",
+      "is_enum": true,
+      "name": "RuntimeState",
+      "properties": [],
+      "type": "\"identified\" | \"unidentified\" | \"unreachable\" | \"failed\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "ObservedRuntime",
+        "RuntimeReport"
+      ],
+      "values": [
+        {
+          "description": "It answered with the runtime's own signature.",
+          "value": "identified"
+        },
+        {
+          "description": "Something answered, but not as that runtime: a compatible protocol is not an identity.",
+          "value": "unidentified"
+        },
+        {
+          "description": "Nothing answered in time.",
+          "value": "unreachable"
+        },
+        {
+          "description": "It answered in a way the adapter could not read.",
+          "value": "failed"
+        }
+      ],
       "variants": []
     },
     {
@@ -56106,6 +57237,15 @@
           "refs": [],
           "required": false,
           "type": "string | null"
+        },
+        {
+          "description": "For a local vendor, the runtime an observation reaches (ADR 0174): which adapter\nspeaks to it, where it listens by default, and the variable that moves it. Which\nmodels it serves is the machine's, so they are observed, never declared here.",
+          "name": "runtime",
+          "refs": [
+            "RuntimeDeclaration"
+          ],
+          "required": false,
+          "type": "RuntimeDeclaration | null"
         },
         {
           "description": "Whether the named credential variable is set in this process's environment.\n`None` when the vendor names no variable.",
@@ -65689,6 +66829,137 @@
           "body_schema": "",
           "cache": "disabled",
           "cache_detail": "",
+          "cli": "models observed",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/models/observations?max_age=60\"",
+          "description": "The checkout's current observation of its local inference runtimes: each endpoint with its runtime instance identity, locality and whether it answered as the runtime its vendor names; each model with its instance identity, digest, quantization, load state, context window (advertised and configured, either possibly unknown) and every capability word with the standing its evidence gives it. Says how old the observation is and whether routing still trusts it; absent and stale are answers, never guessed around.",
+          "home": "models",
+          "id": "models.observed",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_models_observed",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "The age beyond which the observation is stale, seconds; 900 when omitted.",
+              "examples": [
+                {
+                  "case": "max-age",
+                  "value": "60"
+                }
+              ],
+              "name": "max_age",
+              "required": false,
+              "type": "integer (uint64)"
+            }
+          ],
+          "path": "/api/v1/models/observations",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::models",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "The observed local runtimes: the result.",
+              "schema": "ObservedReport",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "ObservedReport",
+          "stability": "experimental",
+          "summary": "The observed local runtimes"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [
+            {
+              "case": "refused",
+              "json": "{\"version\":1,\"observed_at\":\"2026-10-17T00:00:00Z\",\"probe\":\"none\",\"remote_admitted\":false,\"runtimes\":[{\"vendor\":\"benchmark-absent\",\"endpoint\":\"http://127.0.0.1:9\",\"state\":\"unreachable\",\"models\":[]}]}"
+            }
+          ],
+          "body_schema": "ObservationReport",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "models observe",
+          "curl": "curl -s -X POST \"http://127.0.0.1:8741/api/v1/models/observations\" -H \"content-type: application/json\" -d '{\"version\":1,\"observed_at\":\"2026-10-17T00:00:00Z\",\"probe\":\"none\",\"remote_admitted\":false,\"runtimes\":[{\"vendor\":\"benchmark-absent\",\"endpoint\":\"http://127.0.0.1:9\",\"state\":\"unreachable\",\"models\":[]}]}'",
+          "description": "Admit what scripts/inference-observe found at the local runtimes the catalogue declares — which endpoints answered as which runtime, what each serves, each model's capability words with their evidence (inferred, advertised, probed) and the probes made — and replace the checkout's observation under .ai/local/state/inference/. Refused, with every finding, when a vendor is not a declared local runtime, an endpoint carries a credential or leaves the loopback interface unadmitted, or a field is malformed. Secret shapes are redacted before anything is written.",
+          "home": "models",
+          "id": "models.observe",
+          "kind": "command",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_models_observe",
+          "method": "POST",
+          "parameters": [],
+          "path": "/api/v1/models/observations",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::models",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Record an observation of local runtimes: the result.",
+              "schema": "ObservationRecorded",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`refused`: The command was understood and turned down for the reason the message gives.",
+              "schema": "ErrorBody",
+              "status": "422"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "ObservationRecorded",
+          "stability": "experimental",
+          "summary": "Record an observation of local runtimes"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
           "cli": "models route",
           "curl": "curl -s \"http://127.0.0.1:8741/api/v1/models/route?require=text\"",
           "description": "Decide which declared model a stated need selects: the first in declaration order satisfying every requirement, the qualifying rest as the fallback chain, and every excluded model with the first check it failed. Pure over the catalogue and the input — the same question gets the same answer, and 'why' is in the answer itself.",
@@ -65738,6 +67009,27 @@
               "name": "model",
               "required": false,
               "type": "string"
+            },
+            {
+              "description": "Also choose from the checkout's observation of local runtimes (`models observed`),\nafter every declared model.",
+              "examples": [],
+              "name": "observed",
+              "required": false,
+              "type": "boolean"
+            },
+            {
+              "description": "The least evidence an observed model's required capability must rest on:\n`inferred`, `advertised` or `probed`.",
+              "examples": [],
+              "name": "min_evidence",
+              "required": false,
+              "type": "CapabilityEvidence | null"
+            },
+            {
+              "description": "The age beyond which the observation is stale, seconds; 900 when omitted.",
+              "examples": [],
+              "name": "max_age",
+              "required": false,
+              "type": "integer (uint64)"
             }
           ],
           "path": "/api/v1/models/route",

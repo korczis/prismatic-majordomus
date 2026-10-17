@@ -1,0 +1,23 @@
+id: I2805
+milestone: local-inference
+title: "Bounded task benchmarks raise a capability above probed for a task class, under a budget"
+slug: benchmarks-raise-evidence
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Add a task-validated evidence level per task class (structured output, tool calls, extraction) measured by bounded benchmark runs with a token and time budget, cached by model digest and invalidated when it changes; self-graded results never raise a level."
+why: "A probe proves a request shape, not reliable schema adherence or tool use; routing on a quality threshold needs measured evidence per task."
+scope:
+  - "apps/majordomus-cli/src/models"
+  - "scripts/lib/inference"
+  - "docs/MODELS.md"
+  - "test/cases"
+depends_on: [I2800]
+acceptance_criteria:
+  - "A benchmark run on a fake runtime records a task-validated level bound to the model digest, and a changed digest drops it"
+validation:
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "benchmark_case"
+created_at: 2026-10-17
+updated_at: 2026-10-17
