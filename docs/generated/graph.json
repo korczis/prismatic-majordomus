@@ -39293,12 +39293,53 @@
         }
       },
       {
-        "id": "majordomus://issue/I2826",
+        "id": "majordomus://issue/I2829",
         "kind": "issue",
-        "label": "I2826",
+        "label": "I2829",
+        "summary": "The site's browser probe is split, so the site job runs well inside its timeout",
+        "route": "/cockpit/objects/issue/i2829",
+        "source": ".ai/repo/project/issues/I2829.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every route at every width the current probe visits is visited by exactly one shard, and a case refuses a partition that drops or duplicates one",
+            "The site job, or each probe job, records its duration and stays under half its timeout on the measured runner",
+            "A probe finding still fails the job that found it, naming the route and the width"
+          ],
+          "created_at": "2026-10-17",
+          "current_state": "One step in the site job runs scripts/site-probe with SITE_PROBE_JOBS=4 under `scripts/ci/timed --bound 2700`; the job's timeout-minutes is 65 after 71b2 (50 before).",
+          "depends_on": [],
+          "evidence_required": [
+            "probe_partition_case"
+          ],
+          "milestone": "architecture-is-enforced",
+          "non_scope": [
+            "Sampling routes instead of probing all of them: every overflow the site has had came from canonical data in a shared template, which no sample sees (the comment above the step).",
+            "Anything before v1.0.0-alpha.1: owner's Operation Convergence, 2026-10-17; the 65-minute timeout in 71b2 is the alpha's headroom."
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".github/workflows/validate.yml",
+            "scripts/site-probe",
+            "scripts/ci",
+            ".ai/repo/ci/gates.yaml"
+          ],
+          "slug": "the-site-probe-is-split",
+          "updated_at": "2026-10-17",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2840",
+        "kind": "issue",
+        "label": "I2840",
         "summary": "A cancelled MCP call stops, and the client is told it stopped",
-        "route": "/cockpit/objects/issue/i2826",
-        "source": ".ai/repo/project/issues/I2826.yaml",
+        "route": "/cockpit/objects/issue/i2840",
+        "source": ".ai/repo/project/issues/I2840.yaml",
         "facts": {
           "acceptance_criteria": [
             "A long-running tool call named by notifications/cancelled stops within the declared bound on stdio, over the bridge and over Streamable HTTP, each proved by a real-process test",
@@ -39331,48 +39372,6 @@
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --test mcp_conformance --test mcp_conformance_http --test mcp_shared"
-          ]
-        }
-      },
-      {
-        "id": "majordomus://issue/I2829",
-        "kind": "issue",
-        "label": "I2829",
-        "summary": "The site's browser probe is split, so the site job runs well inside its timeout",
-        "route": "/cockpit/objects/issue/i2829",
-        "source": ".ai/repo/project/issues/I2829.yaml",
-        "facts": {
-          "acceptance_criteria": [
-            "Every route at every width the current probe visits is visited by exactly one shard, and a case refuses a partition that drops or duplicates one",
-            "The site job, or each probe job, records its duration and stays under half its timeout on the measured runner",
-            "A probe finding still fails the job that found it, naming the route and the width"
-          ],
-          "created_at": "2026-10-17",
-          "current_state": "One step in the site job runs scripts/site-probe with SITE_PROBE_JOBS=4 under `scripts/ci/timed --bound 2700`; the job's timeout-minutes is 65 after 71b2 (50 before).",
-          "depends_on": [],
-          "evidence_required": [
-            "probe_partition_case"
-          ],
-          "milestone": "architecture-is-enforced",
-          "non_scope": [
-            "Sampling routes instead of probing all of them: every overflow the site has had came from canonical data in a shared template, which no sample sees (the comment above the step).",
-            "Anything before v1.0.0-alpha.1: owner's Operation Convergence, 2026-10-17; the 65-minute timeout in 71b2 is the alpha's headroom."
-          ],
-          "parallel_safe": true,
-          "priority": "p2",
-          "profile": "implementation",
-          "scope": [
-            ".github/workflows/validate.yml",
-            "scripts/site-probe",
-            "scripts/ci",
-            ".ai/repo/ci/gates.yaml",
-            "test/cases"
-          ],
-          "slug": "the-site-probe-is-split",
-          "updated_at": "2026-10-17",
-          "validation": [
-            "bin/majordomus plan validate",
-            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
           ]
         }
       },
@@ -83688,16 +83687,6 @@
         "kind": "belongs_to"
       },
       {
-        "source": "majordomus://issue/I2826",
-        "target": "kind:issue",
-        "kind": "is_a"
-      },
-      {
-        "source": "majordomus://issue/I2826",
-        "target": "majordomus://milestone/mcp-transports-are-reliable",
-        "kind": "belongs_to"
-      },
-      {
         "source": "majordomus://issue/I2829",
         "target": "kind:issue",
         "kind": "is_a"
@@ -83705,6 +83694,16 @@
       {
         "source": "majordomus://issue/I2829",
         "target": "majordomus://milestone/architecture-is-enforced",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2840",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2840",
+        "target": "majordomus://milestone/mcp-transports-are-reliable",
         "kind": "belongs_to"
       },
       {
