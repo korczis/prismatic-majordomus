@@ -521,3 +521,75 @@ The build directory is the one `cargo metadata` reports, asked from inside the c
 the pinned toolchain answers. `MAJORDOMUS_INCREMENTAL_IDLE_MIN=0` removes nothing.
 `test/cases/3080_idle_incremental_sessions_are_pruned.sh` proves each row against a fixture
 build directory.
+
+## Stale crate artifacts, and no sweep under a running build
+
+Every build of `majordomus-cli` writes its library, its executable, every test and bench binary
+and, on macOS, one object file per codegen unit into `<build-dir>/<profile>/deps`, named
+`<target>-<hash>`. The hash is the unit's metadata, so a generation that stops being built — a
+dependency bumped, a profile setting changed, a test renamed — stays there for good, and in the
+shared build directory that is every worktree's leftovers. On 2026-10-16 the shared `deps` held
+204 GB; the next morning the volume reached zero and every session on the machine stopped.
+
+So the same sweep that removes idle incremental sessions (`mj_rust_prune_build_dir` in
+`lib/rust_bin.sh`, asked by `mj_cargo_bounded` and the disk floor's check before every build)
+also removes this crate's stale generations, in every profile of the build directory — debug,
+release, each target triple's and a coverage run's `llvm-cov-target/debug`:
+
+| what | what happens |
+|---|---|
+| a generation of this crate's own units (library, executables, tests, benches) no file of which was written for over `MAJORDOMUS_DEPS_IDLE_MIN` minutes (default 120), none of them open | removed whole; one line says how many generations and files and what du counted, the twelve largest by file count are listed, and one line gives the volume's free space before and after |
+| a generation with one recent file, or one file some process holds open (lsof) | never touched |
+| another crate's artifact, a name with no unit hash, a lock, a directory of cargo's own | never touched |
+| a profile a build holds cargo's lock on | not swept, and one line says so |
+| a profile some process names in its command line — a test binary, a doctest's rustdoc, a compiler | not swept, and one line names the process |
+| no `flock(1)` or no `lsof` | nothing is removed, and one line says why |
+
+The lock is the one cargo itself holds for the whole of a build,
+`<profile>/.cargo-build-lock` (flock(2); `.cargo-lock` in a target directory of an older cargo),
+taken without waiting. It is not enough on its own, and the second condition exists because of
+what it misses: `cargo test` releases the lock when compiling ends, before the binaries and
+doctests it built run, and a doctest reads the crate's rlib from `deps`. On 2026-10-16 rlibs
+vanished under a running build while a sweep judged by age alone. Each condition is asked again
+the moment before anything is removed. A generation removed too early costs one compile: cargo
+rebuilds a unit whose output is missing. `test/cases/3196_stale_crate_artifacts_are_pruned_under_cargos_lock.sh`
+proves each row, and that removing the lock or the process check makes it fail.
+
+## Private build directories
+
+A build that waits `MAJORDOMUS_BUILD_LOCK_WAIT` seconds behind another worktree's lock builds
+again in `~/.cargo/build-private/<cksum of the tree's root>` (`mj_cargo_private_dir`; nothing
+in `~/.cargo/config.toml` makes these — `mj_cargo_bounded` does, by exporting
+`CARGO_BUILD_BUILD_DIR`). Each one is a cold build of every dependency, a few GiB, and on a
+machine where many sessions build, most builds wait that long, so nearly every worktree that
+ever built left one. On 2026-10-17 they held 178 GiB in 35 directories, 25 of them idle for
+over two hours, and the volume reached 3.9 GiB.
+
+The disk floor's check therefore also runs `mj_rust_reclaim_private`, at most once per ten
+minutes per machine:
+
+| what | what happens |
+|---|---|
+| a private directory carrying cargo's mark, nothing in it written for over `MAJORDOMUS_PRIVATE_BUILD_IDLE_MIN` minutes (default 120), no profile lock held, no process naming it | renamed out of cargo's reach, then removed whole; one line names what was removed and the free space before and after |
+| one with a recent file, a held lock or a process naming it; one with no mark of cargo's; a symlink; the one this shell builds in | kept |
+| a listing that cannot be read whole | kept |
+
+`test/cases/3197_idle_private_build_dirs_are_reclaimed.sh` proves each row.
+
+All three sweeps are off in the test suite (`test/run.sh` sets `MAJORDOMUS_INCREMENTAL_IDLE_MIN`,
+`MAJORDOMUS_DEPS_IDLE_MIN` and `MAJORDOMUS_PRIVATE_BUILD_IDLE_MIN` to 0): a case must not act on
+the machine it measures. `scripts/ci/backlog-check` refuses a tree in which a build no longer
+sweeps before it starts, a sweep no longer takes cargo's lock or asks the process table, or the
+runner leaves them on (rule `project.accumulation-is-measured`).
+
+## A path crate another worktree built
+
+Sharing the build directory shares every unit cargo names by its path relative to the
+workspace, so the same path crate compiled from two worktrees is one slot. `majordomus-cli`'s
+build script reruns on `MAJORDOMUS_BUILD_TREE` (`.cargo/config.toml`), which makes its slot
+stale in any tree but the one that wrote it. A path crate without that build script does not
+get it: on 2026-10-17 batch 71b's build reused a `majordomus-core` another worktree had compiled
+against different dependency versions and failed with "multiple different versions of crate
+serde_json". Touching that crate's `src/lib.rs` forced the rebuild. Every path crate of the
+workspace needs the same `cargo:rerun-if-env-changed=MAJORDOMUS_BUILD_TREE` in a build script
+of its own.

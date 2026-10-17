@@ -125,6 +125,21 @@ before it acts*, and until version 2 there was no such command.
    so and lets the build run — the opposite of a deleting predicate, and deliberately so:
    refusing every build on a machine whose `df` is unreadable stops all work to prevent a
    hypothetical.
+9. **What a build directory accumulates is swept before every build, and never under one.**
+   Build output inside a worktree is reclaimed by the reaper (5); what accumulates outside any
+   worktree is not, and on 2026-10-16 and 2026-10-17 it was what filled the volume: idle
+   incremental sessions (79 GB), stale generations of this crate in the shared directory's
+   `deps` (204 GB) and private build directories builds fell back to and left (178 GiB in 35).
+   So every build first runs `mj_rust_prune_build_dir` and the disk floor's check also runs
+   `mj_rust_reclaim_private` (`lib/rust_bin.sh`), each with a declared age
+   (`MAJORDOMUS_INCREMENTAL_IDLE_MIN` 30, `MAJORDOMUS_DEPS_IDLE_MIN` 120,
+   `MAJORDOMUS_PRIVATE_BUILD_IDLE_MIN` 120 minutes). A profile is swept only while this sweep
+   holds cargo's own lock on it (`<profile>/.cargo-build-lock`, taken without waiting) **and**
+   no process names it: `cargo test` releases the lock before the binaries and doctests it
+   built run, and a sweep judged by age alone removed rlibs a running build was reading. A
+   generation is judged whole and kept while any file of it is recent or open; a private
+   directory is kept while anything in it is recent, any lock of it is held or a process names
+   it. Without `flock(1)` or `lsof` nothing is removed. The test runner turns all three off.
 8. **Growth is loud before it is a cliff.** `scripts/ci/backlog-check` reports the landable
    backlog and fails when it exceeds its threshold, so that "nothing is being deployed" is
    a gate's finding and not a person's.
@@ -136,10 +151,16 @@ before it acts*, and until version 2 there was no such command.
   it still holds all three conditions for reclaiming one (landed or pushed, not live, clean)
   and still refuses when liveness is unmeasurable, every path that starts a build asks the
   shared space check, that check reclaims below its mark before the floor and the test
-  runner turns that off, the doctrine
+  runner turns that off, every build sweeps its build directories under cargo's lock and
+  the test runner turns those sweeps off, the doctrine
   names the forge constraint, no document advertises the merge button, and (with a token)
   the landable backlog is within its threshold.
 - `test/cases/131_backlog_hygiene.sh` — the behavioural case for the servers and the gate.
+- `test/cases/3080_idle_incremental_sessions_are_pruned.sh`,
+  `test/cases/3196_stale_crate_artifacts_are_pruned_under_cargos_lock.sh` and
+  `test/cases/3197_idle_private_build_dirs_are_reclaimed.sh` — the sweeps of item 9 against
+  fixture build directories: what goes, what stays, and that nothing is removed under cargo's
+  lock or while a process names the profile.
 - `test/cases/276_disk_is_bounded.sh` — the behavioural case for the build output and the
   bound: what the reaper refuses, that a pushed clean unattended worktree is reclaimed and an
   unpushed one kept, that a build below the mark reclaims first and once per interval, and

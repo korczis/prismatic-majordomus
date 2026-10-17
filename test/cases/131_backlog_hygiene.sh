@@ -111,6 +111,24 @@ MJ_ROOT="$W" expect_exit 10 "$W/scripts/ci/backlog-check"
 expect_grep 'no longer reclaims below a mark before the floor'
 cp "$ROOT/lib/rust_bin.sh" "$W/lib/rust_bin.sh"
 
+# a sweep of the build directory that no longer takes cargo's lock first
+sed 's/flock -n -x 9 || exit 75; //' "$ROOT/lib/rust_bin.sh" > "$W/lib/rust_bin.sh"
+MJ_ROOT="$W" expect_exit 10 "$W/scripts/ci/backlog-check"
+expect_grep 'no longer sweeps the build directories before a build under cargo.s lock'
+cp "$ROOT/lib/rust_bin.sh" "$W/lib/rust_bin.sh"
+
+# a space check that no longer reclaims the private build directories builds fell back to
+grep -v '^  mj_rust_reclaim_private$' "$ROOT/lib/rust_bin.sh" > "$W/lib/rust_bin.sh"
+MJ_ROOT="$W" expect_exit 10 "$W/scripts/ci/backlog-check"
+expect_grep 'no longer sweeps the build directories before a build'
+cp "$ROOT/lib/rust_bin.sh" "$W/lib/rust_bin.sh"
+
+# a runner whose cases' builds would sweep the machine's build directories
+grep -v '^MAJORDOMUS_INCREMENTAL_IDLE_MIN=0' "$ROOT/test/run.sh" > "$W/test/run.sh"
+MJ_ROOT="$W" expect_exit 10 "$W/scripts/ci/backlog-check"
+expect_grep 'does not turn the build directory sweeps off'
+cp "$ROOT/test/run.sh" "$W/test/run.sh"
+
 # a runner that lets a case's build sweep the machine it runs on
 grep -v '^MAJORDOMUS_RECLAIM_BELOW_MB=0' "$ROOT/test/run.sh" > "$W/test/run.sh"
 MJ_ROOT="$W" expect_exit 10 "$W/scripts/ci/backlog-check"
