@@ -39435,6 +39435,8 @@
             "models route --observed chooses on evidence, refuses a stale observation and names what the choice rests on",
             "A non-loopback endpoint is reached only when admitted, and the observation is never tracked"
           ],
+          "completed_at": "2026-10-17T13:40:31Z",
+          "completed_event": "sha256:d998776c38db5fbaa12e366fe6cf379917955b71188562cd12461509eb0df4dc",
           "created_at": "2026-10-17",
           "current_state": "Local vendors declared with no endpoint and no model; nothing observed.",
           "depends_on": [],
@@ -39457,17 +39459,24 @@
             "scripts/inference-observe",
             "docs/MODELS.md",
             "docs/CLAIMS.yaml",
+            "docs/claims/models-local-runtime-observed.md",
+            "docs/claims/models-observed-evidence-routes.md",
+            "docs/claims/models-observation-stays-local.md",
             ".ai/repo/features/models.md",
             ".ai/repo/adrs",
             "test/cases/3211_a_local_runtime_is_observed.sh"
           ],
           "slug": "a-local-runtime-is-observed",
-          "updated_at": "2026-10-17",
+          "started_at": "2026-10-17T13:40:11Z",
+          "started_event": "sha256:66dc2a81534f76a1cb1699ea91f7ac5354e47551ce749c9beb4e8f9cdc652f1d",
+          "updated_at": "2026-10-17T13:40:31Z",
           "validation": [
             "cargo test --lib models::",
             "node --test scripts/lib/inference/inference.test.mjs",
             "bash test/run.sh 3211_a_local_runtime_is_observed 131_models"
           ],
+          "verified_at": "2026-10-17T13:40:18Z",
+          "verified_event": "sha256:b82bc101a62a592bd721b6edcfaf7d851d2578530e6d019a75895ccc3fb32d1e",
           "why": "ADR 0174. On 2026-10-17 models route --local-only selected nothing on any machine, llama.cpp was unknown, and no surface could say which local model can do what or how that is known."
         }
       },

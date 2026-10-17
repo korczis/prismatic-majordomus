@@ -19,6 +19,9 @@ scope:
   - "scripts/inference-observe"
   - "docs/MODELS.md"
   - "docs/CLAIMS.yaml"
+  - "docs/claims/models-local-runtime-observed.md"
+  - "docs/claims/models-observed-evidence-routes.md"
+  - "docs/claims/models-observation-stays-local.md"
   - ".ai/repo/features/models.md"
   - ".ai/repo/adrs"
   - "test/cases/3211_a_local_runtime_is_observed.sh"
@@ -36,4 +39,23 @@ evidence_required:
   - "observation_case"
   - "live_runtimes_observed"
 created_at: 2026-10-17
-updated_at: 2026-10-17
+updated_at: 2026-10-17T13:40:31Z
+started_at: 2026-10-17T13:40:11Z
+started_event: sha256:66dc2a81534f76a1cb1699ea91f7ac5354e47551ce749c9beb4e8f9cdc652f1d
+verified_at: 2026-10-17T13:40:18Z
+verified_event: sha256:b82bc101a62a592bd721b6edcfaf7d851d2578530e6d019a75895ccc3fb32d1e
+completed_at: 2026-10-17T13:40:31Z
+completed_event: sha256:d998776c38db5fbaa12e366fe6cf379917955b71188562cd12461509eb0df4dc
+evidence:
+  - covers: observation_case
+    type: test
+    command: "MJ_TEST_JOBS=2 bash test/run.sh 3211_a_local_runtime_is_observed 131_models; node --test scripts/lib/inference/inference.test.mjs; cargo test --lib models::"
+    result: "tests: 2 passed, 0 failed (cases 3211, 131); node 8 pass 0 fail; cargo models:: 27 passed (run 2026-10-17 13:40Z at b9c9718d998)"
+    commit: b9c9718d9981b590f2c7cf9b395877336a70a469
+    recorded_at: 2026-10-17T13:40:25Z
+  - covers: live_runtimes_observed
+    type: manual
+    command: "scripts/inference-observe --probe-all; majordomus models observed; majordomus models route --observed --local-only --require embeddings --min-evidence probed"
+    result: "2026-10-17 on this Mac: Ollama 0.40.4 identified (0 models pulled); LM Studio identified, text-embedding-nomic-embed-text-v1.5 embeddings probed (15.5 s, JIT load); llama-server b10621 identified, nomic GGUF embeddings probed, text refuted (HTTP 500); route selected lmstudio/text-embedding-nomic-embed-text-v1.5 with reason 'observed 6 s ago; loaded; embeddings probed'. Runtimes started for the run were stopped afterwards."
+    commit: b9c9718d9981b590f2c7cf9b395877336a70a469
+    recorded_at: 2026-10-17T13:40:28Z
