@@ -1175,7 +1175,7 @@ mod tests {
                 "realization": {
                     "unmet": [],
                     "findings": [
-                        { "message": "the scope drifted past src/a.rs" },
+                        { "message": "the scope drifted past src/a.rs (I7)" },
                         { "kind": "orphan", "subject": "t-3" },
                     ],
                 },
@@ -1204,8 +1204,8 @@ mod tests {
         );
         assert!(html.contains(">Drift</h3>"), "{html}");
         assert!(
-            html.contains("<li>the scope drifted past src/a.rs</li>"),
-            "{html}"
+            html.contains("<li><span>the scope drifted past src/a.rs (</span><a class=\"mj-ui-chip mj-ui-chip--link\" href=\"/ui/prs?issue=I7#issue\">"),
+            "a drift message reads whole, its issue id a link (I2900): {html}"
         );
         assert!(
             html.contains("&quot;kind&quot;:&quot;orphan&quot;"),
