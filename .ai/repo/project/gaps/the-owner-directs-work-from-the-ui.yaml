@@ -12,6 +12,9 @@ observations:
   - id: moves-only-in-the-cockpit
     statement: The start, verify and done moves exist as plan.transition run through executions.start, on the Cockpit's issue page only; every /ui screen is GET-only and the workspace's move column links away to the Cockpit
     source: file:apps/majordomus-cli/src/cockpit/plan.rs
+  - id: refresh-by-the-minute
+    statement: Every /ui screen reads its sources again once a minute while it is visible; the live channel /events, which reports every execution the server runs, has the Cockpit's socket.js as its one client and no /ui screen follows it
+    source: file:share/ui/ui.js
 conditions:
   - criterion: workspace-is-derived
     state: missing
@@ -21,3 +24,7 @@ conditions:
     state: missing
     because: the move is offered on the Cockpit's issue page, a surface away from where the work is read
     observations: [moves-only-in-the-cockpit]
+  - criterion: the-workspace-follows-moves
+    state: missing
+    because: a move made from another tab, the Cockpit or an agent shows on the workspace only after the next minute's refresh
+    observations: [refresh-by-the-minute]

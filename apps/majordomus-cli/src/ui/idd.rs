@@ -200,9 +200,16 @@ pub fn screen(ctx: &Context, query: &[(String, String)]) -> View {
         }
     }
 
+    // the screen follows the executions this server runs and reads itself again when one
+    // ends, so a move made anywhere on this server shows here without waiting for the
+    // minute's refresh (I2783); what it shows is still only what its sources answer
     View::new(
         "Intent workspace",
-        el("div").class("mj-ui-stack").child(top).child(grid),
+        el("div")
+            .class("mj-ui-stack")
+            .attr("data-follows-executions", "")
+            .child(top)
+            .child(grid),
     )
 }
 
