@@ -48,11 +48,13 @@ pub(crate) mod docs;
 pub(crate) mod evidence;
 pub(crate) mod governance;
 pub(crate) mod icons;
+pub(crate) mod idd;
 pub(crate) mod intent;
 pub(crate) mod issues;
 pub(crate) mod knowledge;
 pub(crate) mod mesh;
 pub(crate) mod milestone;
+pub(crate) mod navbar;
 pub(crate) mod observatory;
 pub(crate) mod prose;
 pub(crate) mod prs;
@@ -92,6 +94,10 @@ pub const STYLESHEET: &str = "ui.css";
 
 /// The script every screen loads.
 pub const SCRIPT: &str = "ui.js";
+/// The site's own scripts the bar every screen wears behaves by — its menus, then its theme
+/// toggle — served as byte copies of `site/nav.js` and `site/theme.js` that
+/// `scripts/cockpit-assets` writes and checks ([`navbar`]).
+pub(crate) const BAR_SCRIPTS: &[&str] = &["nav.js", "theme.js"];
 
 /// The vendored graph library, loaded only by a screen that draws a graph.
 pub const GRAPH_LIB: &str = "vendor/cytoscape.min.js";
@@ -129,6 +135,12 @@ pub(crate) const SCREENS: &[Screen] = &[
         title: "Command",
         icon: "terminal",
         answers: "Everything that can be run, what it changes, and what is running.",
+    },
+    Screen {
+        route: idd::ROUTE,
+        title: "Intent workspace",
+        icon: "list-checks",
+        answers: "One intent and what serves it: milestones, issues, waves, dependencies and the next move.",
     },
     Screen {
         route: roadmap::ROUTE,
@@ -338,6 +350,7 @@ impl Ui {
         let path = if kiosk { observatory::ROUTE } else { path };
         let mut screen = match path {
             "" | PREFIX => dashboard::screen(&ctx),
+            idd::ROUTE => idd::screen(&ctx, &req.query),
             roadmap::ROUTE => roadmap::screen(&ctx, &req.query),
             work::ROUTE => work::screen(&ctx, &req.query),
             issues::ROUTE => issues::screen(&ctx, &req.query),
@@ -398,6 +411,7 @@ impl Ui {
                     stylesheet: self.assets.url(STYLESHEET),
                     favicon: self.assets.url("favicon.svg"),
                     script: self.assets.url(SCRIPT),
+                    bar_scripts: BAR_SCRIPTS.iter().map(|s| self.assets.url(s)).collect(),
                     graph_lib: self.assets.url(GRAPH_LIB),
                     assets_present: self.assets.present(),
                     version: self.version,
@@ -559,6 +573,10 @@ mod tests {
         let ctx = repo.context().expect("a context");
         for (route, view) in [
             (PREFIX, dashboard::screen(&ctx)),
+            (
+                idd::ROUTE,
+                idd::screen(&ctx, &[("intent".into(), "no-such-intent".into())]),
+            ),
             (
                 roadmap::ROUTE,
                 roadmap::screen(&ctx, &[("milestone".into(), "M001".into())]),

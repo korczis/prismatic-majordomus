@@ -63,8 +63,22 @@ fn strings(v: &Value, k: &str) -> Vec<String> {
         .unwrap_or_default()
 }
 
-/// The inspector of intent `id`.
+/// The verdict of an intent as its badge: `intents.list` answers the verdict as an object
+/// whose `state` is the word, which a reader of a plain string would draw as `unknown`.
+pub fn verdict(i: &Value) -> El {
+    match i.get("verdict") {
+        Some(v @ Value::Object(_)) => state(v, "state"),
+        _ => state(i, "verdict"),
+    }
+}
+
+/// The inspector of intent `id`, closed to the Roadmap.
 pub fn inspector(intents: &Answer, issues: &Answer, id: &str) -> El {
+    inspector_closing_to(intents, issues, id, super::roadmap::ROUTE)
+}
+
+/// The inspector of intent `id`, whose "Close" leads to `close`: the screen it is open on.
+pub fn inspector_closing_to(intents: &Answer, issues: &Answer, id: &str, close: &str) -> El {
     let body = unanswered(intents)
         .or_else(|| unanswered(issues))
         .unwrap_or_else(|| {
@@ -135,7 +149,7 @@ pub fn inspector(intents: &Answer, issues: &Answer, id: &str) -> El {
                             el("p")
                                 .class("mj-ui-badges")
                                 .child(state(&i, "stage"))
-                                .child(state(&i, "verdict"))
+                                .child(verdict(&i))
                                 .child(
                                     el("span")
                                         .class("mj-ui-mono mj-ui-dim")
@@ -144,7 +158,7 @@ pub fn inspector(intents: &Answer, issues: &Answer, id: &str) -> El {
                                 .child(
                                     el("a")
                                         .class("mj-ui-more")
-                                        .attr("href", super::roadmap::ROUTE)
+                                        .attr("href", close)
                                         .text("Close"),
                                 ),
                         ),

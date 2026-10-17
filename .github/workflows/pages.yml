@@ -280,12 +280,14 @@ jobs:
     # seconds; the bound is behind the reading's own budget below, not instead of it.
     timeout-minutes: 45
     # This job reads and publishes nothing: the forge is asked what it holds (the open pull
-    # requests, every deployment, every release) so that the snapshot shows them, and no
+    # requests, every deployment, every release, and the evidence artifact the validation of
+    # this commit or its nearest ancestor recorded) so that the snapshot shows them, and no
     # token here can write.
     permissions:
       contents: read
       pull-requests: read
       deployments: read
+      actions: read
     steps:
       # the UI reads the history too (what changed since, what was released), as the deploy does
       - uses: actions/checkout@v4
@@ -322,6 +324,20 @@ jobs:
       # Every page the screens link to, not the first few: the default budget is sized for a
       # person waiting at a terminal and left most inspectors out of the published snapshot.
       # What was still left out is in snapshot.json, and `scripts/pages verify-ui` reports it.
+      # The evidence the screens show is the evidence CI recorded (I2786): the ledger of the
+      # validation of this commit, or of its nearest validated ancestor while that run is
+      # still going (its evidence job dispatches this workflow again when it finishes), put in
+      # place before the UI is read. The tracked ledger alone holds a handful of local runs,
+      # and every test without a row there was published as "not run". Then the screens'
+      # own capability is asked, and a UI that would still show more claims not run than the
+      # baseline declares is not published.
+      - name: the evidence CI recorded, before the UI is read
+        timeout-minutes: 8
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          scripts/pages evidence --commit "$GITHUB_SHA" --out "$RUNNER_TEMP/snapshot-evidence.json" --ledger-out .ai/repo/evidence/ledger.json
+          scripts/pages published-evidence --bin apps/majordomus-cli/target/debug/majordomus
       - name: the UI, read once at this commit
         timeout-minutes: 22
         run: apps/majordomus-cli/target/debug/majordomus web report ui-snapshot --limit 4000 --budget-seconds 1200

@@ -31,7 +31,11 @@
 #                                         only when its build errored and nothing is building:
 #                                         0 requested or none needed, 12 the state unreadable,
 #                                         a build in flight, or the request refused
-#   scripts/pages evidence [--commit SHA] [--from DIR] [--out FILE]
+#   scripts/pages evidence [--commit SHA] [--from DIR] [--out FILE] [--ledger-out FILE]
+#   scripts/pages published-evidence --bin EXE [--baseline FILE]
+#                                         refuse to publish a UI whose evidence report holds more
+#                                         `not run` claims than the declared baseline (I2786):
+#                                         0 within it, 10 over it, 12 when it cannot be read
 #                                         site/data/evidence.json: the CI evidence of that commit
 #                                         or its nearest ancestor (the `evidence` artifact, or DIR),
 #                                         current, stale with the distance, or unavailable with
@@ -762,12 +766,13 @@ cmd_built() {
 # report; and no evidence at all is published as unavailable, with the reason. ADR 68, as
 # ADR 0087 amends it; the reasons withhold `current` and never change the report.
 cmd_evidence() {
-  local commit="" from="" out="$ROOT/site/data/evidence.json" slug="" tmp="" aid="" sha="" best=""
+  local commit="" from="" out="$ROOT/site/data/evidence.json" ledger_out="" slug="" tmp="" aid="" sha="" best=""
   local m ecommit behind changed repo_url cov_json cov_txt report_txt state reasons
   while [ $# -gt 0 ]; do case "$1" in
     --commit) commit="$2"; shift 2 ;;
     --from) from="$2"; shift 2 ;;
     --out) out="$2"; shift 2 ;;
+    --ledger-out) ledger_out="$2"; shift 2 ;;
     *) echo "pages evidence: unknown option $1" >&2; exit 2 ;;
   esac; done
   [ -n "$commit" ] || commit="HEAD"
@@ -807,6 +812,19 @@ cmd_evidence() {
   ecommit="$(jq -r .commit "$m")"
   git -C "$ROOT" merge-base --is-ancestor "$ecommit" "$commit" 2>/dev/null \
     || { evidence_unavailable "the evidence was recorded against ${ecommit:0:12}, which is not in the history of the commit being published"; return 0; }
+  # The ledger the run recorded, for a reader that judges evidence itself: the UI snapshot
+  # (I2786). Only an artifact of this commit's history reaches here, and the rows it carries
+  # name the commit they ran at, so a row of an ancestor reads as stale, never as current.
+  # Unavailable evidence copies nothing: the reader keeps the tracked ledger, and the
+  # published-evidence check below is what refuses what that would publish.
+  if [ -n "$ledger_out" ]; then
+    [ -f "$from/ledger.json" ] && jq -e '.executions | type == "array"' "$from/ledger.json" >/dev/null 2>&1 \
+      || { echo "pages evidence: the artifact carries no ledger this build reads; $ledger_out is left as it was" >&2; ledger_out=""; }
+    if [ -n "$ledger_out" ]; then
+      cp "$from/ledger.json" "$ledger_out" || { echo "pages evidence: could not write $ledger_out" >&2; exit 12; }
+      echo "pages evidence: the ledger of ${ecommit:0:12}'s run ($(jq '.executions | length' "$ledger_out") executions) is $ledger_out"
+    fi
+  fi
   behind="$(git -C "$ROOT" rev-list --count "$ecommit..$commit")"
   changed="$(git -C "$ROOT" diff --name-only "$ecommit" "$commit" | wc -l | tr -d ' ')"
   repo_url="$(jq -r '.repository_url // empty' "$ROOT/site/data/generated/project.json" 2>/dev/null || true)"
@@ -1496,8 +1514,36 @@ cmd_release_live() {
   return 10
 }
 
+# The evidence a published UI shows is the evidence the publication could have recorded
+# (I2786, rule project.published-evidence-is-what-ci-recorded). The snapshot reads the ledger
+# `pages evidence --ledger-out` put in place; this asks the same capability the screens ask,
+# evidence.report, in the same checkout, and refuses when more claims read `not run` than the
+# baseline declares. A report that cannot be read is not a pass: it exits 12.
+cmd_published_evidence() {
+  local bin="" baseline="$ROOT/.ai/repo/evidence/published-not-run.txt" allowed totals notrun
+  while [ $# -gt 0 ]; do case "$1" in
+    --bin) bin="$2"; shift 2 ;;
+    --baseline) baseline="$2"; shift 2 ;;
+    *) echo "pages published-evidence: unknown option $1" >&2; exit 2 ;;
+  esac; done
+  [ -n "$bin" ] && [ -x "$bin" ] || { echo "pages published-evidence: --bin names no executable" >&2; exit 2; }
+  [ -f "$baseline" ] || { echo "pages published-evidence: no baseline at $baseline" >&2; exit 12; }
+  allowed="$(grep -vE '^[[:space:]]*(#|$)' "$baseline" | head -1 | tr -d '[:space:]')"
+  case "$allowed" in ''|*[!0-9]*) echo "pages published-evidence: the baseline holds no count: $baseline" >&2; exit 12 ;; esac
+  totals="$(cd "$ROOT" && "$bin" run evidence.report --format json 2>/dev/null | jq -ce '.output.totals | objects')" \
+    || { echo "pages published-evidence: evidence.report could not be read, so nothing says what the UI would publish" >&2; exit 12; }
+  notrun="$(printf '%s' "$totals" | jq '.["not run"] // 0')"
+  if [ "$notrun" -gt "$allowed" ]; then
+    echo "pages published-evidence: $notrun claim(s) would be published as not run, over the baseline of $allowed ($totals)." >&2
+    echo "  the UI would show tests as never run that CI ran: fetch the run's ledger first (scripts/pages evidence --ledger-out .ai/repo/evidence/ledger.json)" >&2
+    exit 10
+  fi
+  echo "pages published-evidence: $notrun claim(s) not run, within the baseline of $allowed ($totals)"
+}
+
 case "${1:-}" in
   evidence)    shift; cmd_evidence "$@" ;;
+  published-evidence) shift; cmd_published_evidence "$@" ;;
   build)       shift; cmd_build "$@" ;;
   check)       shift; cmd_check "$@" ;;
   fingerprint) shift; cmd_fingerprint "$@" ;;
