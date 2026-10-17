@@ -1,8 +1,8 @@
 {
   "schema": "majordomus/cli/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.28.0",
-  "version": "0.28.0",
+  "generator": "majordomus-cli 0.29.0",
+  "version": "0.29.0",
   "source": "apps/majordomus-cli/src/cli.rs",
   "route_prefix": "/docs/cli",
   "cli": {
@@ -10774,7 +10774,7 @@
             "route": "/docs/cli/worktree/create/",
             "executable": true,
             "usage": "majordomus worktree create [OPTIONS] [BRANCH]",
-            "about": "Create the canonical worktree of a branch, creating the branch from --base (default: the trunk) when it does not exist. The path is derived; none may be given",
+            "about": "Create the canonical worktree of a branch. A branch that does not exist here is fetched from the trunk's remote and taken up when the remote has it; otherwise it is created from --base, else from the remote's trunk fetched now (the local trunk only when the remote cannot be read, and then said, with how far behind). The path is derived; none may be given",
             "args": [
               {
                 "name": "branch",
