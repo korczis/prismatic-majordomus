@@ -39689,6 +39689,46 @@
         }
       },
       {
+        "id": "majordomus://issue/I2849",
+        "kind": "issue",
+        "label": "I2849",
+        "summary": "release next raises from the trunk the repository names, never from a branch name written in the tool",
+        "route": "/cockpit/objects/issue/i2849",
+        "source": ".ai/repo/project/issues/I2849.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "In a clone whose remote default branch is main, release.next with no base raises from origin/main",
+            "A named base is used as named",
+            "A repository whose trunk cannot be told is refused, naming --base"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "--base defaults to `origin/master` on the command line and in the capability input.",
+          "depends_on": [],
+          "evidence_required": [
+            "unnamed_base_is_the_trunk_test"
+          ],
+          "milestone": "adopter-upgrades",
+          "non_scope": [
+            "The other places the trunk name is written as a literal: planned as I2843 (one accessor plus a ratchet scan)."
+          ],
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin/release.rs",
+            "apps/majordomus-cli/src/commands/release.rs",
+            "apps/majordomus-cli/src/cli.rs"
+          ],
+          "slug": "release-next-asks-the-trunk",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --lib -- capability::builtin::release:: commands::release::",
+            "MJ_TEST_JOBS=4 bash test/run.sh 1060_the_version_is_allocated_at_landing"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "label": "a-commit-stood-behind-a-build-lock",
@@ -84399,6 +84439,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2849",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2849",
+        "target": "majordomus://milestone/adopter-upgrades",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -94405,8 +94455,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2959,
-      "edges": 6500,
+      "nodes": 2960,
+      "edges": 6502,
       "acyclic": false,
       "truncated": false
     }

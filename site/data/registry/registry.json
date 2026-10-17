@@ -6,23 +6,23 @@
     "version": "0.29.0"
   },
   "registry": {
-    "fingerprint": "cfc64482a6796b12eb023f81f50b88a5ee38b5494bb09da51600c6a17806b6c0",
+    "fingerprint": "e9a816fd53ac09947e14e51a60cbbc0e0e7ed1cb0261a75c5169735b430cf39c",
     "summary": {
-      "total": 2527,
+      "total": 2528,
       "builtin": 202,
-      "declarative": 2325,
+      "declarative": 2326,
       "by_kind": {
         "command": 31,
         "query": 171,
-        "resource": 2325
+        "resource": 2326
       },
       "by_stability": {
         "behaviorally_verified": 141,
         "experimental": 52,
-        "implemented": 2334
+        "implemented": 2335
       },
       "mcp_tools": 192,
-      "mcp_resources": 2380,
+      "mcp_resources": 2381,
       "http_routes": 197,
       "cli_commands": 108,
       "modules": 92,
@@ -69921,7 +69921,7 @@
                   "string",
                   "null"
                 ],
-                "description": "The trunk the landing raises from; `origin/master` when absent."
+                "description": "The trunk the landing raises from; when absent, the remote-tracking ref of the trunk\nthis repository names (its remote's default branch, else its own trunk)."
               },
               "head": {
                 "type": [
@@ -69931,7 +69931,7 @@
                 "description": "What lands; `HEAD` when absent."
               }
             },
-            "description": "The input of `release.next`: the landing it is asked about.\n\n```\nuse majordomus_cli::capability::builtin::release::NextInput;\n// nothing named is the landing the executor performs: this branch onto the trunk\nlet input = NextInput::default();\nassert_eq!((input.base(), input.head()), (\"origin/master\", \"HEAD\"));\n```",
+            "description": "The input of `release.next`: the landing it is asked about.\n\n```\nuse majordomus_cli::capability::builtin::release::NextInput;\n// nothing named is the landing the executor performs: this branch onto the trunk\nlet input = NextInput::default();\nassert_eq!((input.base.as_deref(), input.head()), (None, \"HEAD\"));\n```",
             "title": "ReleaseNextInput"
           }
         },
@@ -83231,7 +83231,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 424,
+        "capabilities": 425,
         "capability_ids": []
       },
       {
@@ -83893,7 +83893,7 @@
     ]
   },
   "index": {
-    "fingerprint": "ebbdaff489cce67fe99b529aa57475e97fbadbd238fabae0d224eb928298d8a1",
+    "fingerprint": "c0dd0eaf249b2b214cb9c14725eaf6c355ba1aa66e3c6547600bcc4341779938",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -83933,7 +83933,7 @@
       "gap": 4,
       "implementation": 52,
       "intent": 5,
-      "issue": 424,
+      "issue": 425,
       "knowledge": 4,
       "mesh-declaration": 1,
       "milestone": 41,
@@ -90206,7 +90206,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 170002
+        "bytes": 171309
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -98341,6 +98341,17 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 2258
+      },
+      {
+        "uri": "majordomus://issue/I2849",
+        "kind": "issue",
+        "identity": "I2849",
+        "title": "release next raises from the trunk the repository names, never from a branch name written in the tool",
+        "description": "When `majordomus release next` (capability release.next) is given no --base, it measures the landing against the remote-tracking ref of the trunk this repository names, through the one rule the delivery report already uses (delivery::revision::trunk_ref), and refuses by name when the trunk cannot be told.",
+        "path": ".ai/repo/project/issues/I2849.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2252
       },
       {
         "uri": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
@@ -109058,7 +109069,7 @@
       "identity": [
         "id"
       ],
-      "objects": 424
+      "objects": 425
     },
     {
       "name": "knowledge",
@@ -126289,15 +126300,13 @@
                 "name": "base",
                 "long": "base",
                 "positional": false,
-                "help": "The trunk the landing raises from",
+                "help": "The trunk the landing raises from; when absent, the remote-tracking ref of the trunk this repository names",
                 "value_name": "REF",
                 "takes_value": true,
                 "required": false,
                 "global": false,
                 "possible_values": [],
-                "defaults": [
-                  "origin/master"
-                ]
+                "defaults": []
               },
               {
                 "name": "head",

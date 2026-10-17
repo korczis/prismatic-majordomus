@@ -1846,9 +1846,10 @@ pub enum ReleaseCommand {
     },
     /// The version a landing of HEAD onto the trunk allocates, and why: the trunk's version, the measured movement, the policy floor and any exemption (ADR 0134)
     Next {
-        /// The trunk the landing raises from
-        #[arg(long, value_name = "REF", default_value = "origin/master")]
-        base: String,
+        /// The trunk the landing raises from; when absent, the remote-tracking ref of the trunk
+        /// this repository names
+        #[arg(long, value_name = "REF")]
+        base: Option<String>,
         /// What lands
         #[arg(long, value_name = "REF", default_value = "HEAD")]
         head: String,

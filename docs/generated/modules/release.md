@@ -68,7 +68,8 @@ What the integration executor raises the trunk's version to when it lands a head
 
 | input | type | required | description |
 |---|---|---|---|
-| `base` | string or null | no | The trunk the landing raises from; `origin/master` when absent. |
+| `base` | string or null | no | The trunk the landing raises from; when absent, the remote-tracking ref of the trunk
+this repository names (its remote's default branch, else its own trunk). |
 | `head` | string or null | no | What lands; `HEAD` when absent. |
 
 Output: `LandingDecision`.

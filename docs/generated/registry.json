@@ -70359,7 +70359,7 @@
                 "string",
                 "null"
               ],
-              "description": "The trunk the landing raises from; `origin/master` when absent."
+              "description": "The trunk the landing raises from; when absent, the remote-tracking ref of the trunk\nthis repository names (its remote's default branch, else its own trunk)."
             },
             "head": {
               "type": [
@@ -70369,7 +70369,7 @@
               "description": "What lands; `HEAD` when absent."
             }
           },
-          "description": "The input of `release.next`: the landing it is asked about.\n\n```\nuse majordomus_cli::capability::builtin::release::NextInput;\n// nothing named is the landing the executor performs: this branch onto the trunk\nlet input = NextInput::default();\nassert_eq!((input.base(), input.head()), (\"origin/master\", \"HEAD\"));\n```",
+          "description": "The input of `release.next`: the landing it is asked about.\n\n```\nuse majordomus_cli::capability::builtin::release::NextInput;\n// nothing named is the landing the executor performs: this branch onto the trunk\nlet input = NextInput::default();\nassert_eq!((input.base.as_deref(), input.head()), (None, \"HEAD\"));\n```",
           "title": "ReleaseNextInput"
         }
       },

@@ -43,7 +43,7 @@ pub fn run(args: ReleaseArgs) -> Result<u8> {
         }
         Some(ReleaseCommand::Next { ref base, ref head }) => {
             let (base, head) = (base.clone(), head.clone());
-            next(&args, &base, &head)
+            next(&args, base.as_deref(), &head)
         }
         Some(ReleaseCommand::Bump {
             ref level,
@@ -284,25 +284,27 @@ fn analyze(args: &ReleaseArgs, since: Option<&str>, explain: bool) -> Result<u8>
 /// `majordomus release next`: what a landing would allocate, through the capability so
 /// every surface renders one value. Exit 0 when decided, [`EXIT_UNREADABLE`] when an input
 /// could not be read.
-fn next(args: &ReleaseArgs, base: &str, head: &str) -> Result<u8> {
+fn next(args: &ReleaseArgs, base: Option<&str>, head: &str) -> Result<u8> {
     let app = App::load(&args.repo)?;
     let decision = landing_decision(&app.context, base, head)?;
     let stdout = std::io::stdout();
     render_next(&mut stdout.lock(), &decision, args.format).map(|()| 0)
 }
 
-/// The landing decision the capability answers for `head` onto `base`; a refusal is the
-/// command's [`EXIT_UNREADABLE`].
+/// The landing decision the capability answers for `head` onto `base`, or onto the trunk
+/// the repository names when no base is given; a refusal is the command's
+/// [`EXIT_UNREADABLE`].
 fn landing_decision(
     ctx: &crate::capability::Context,
-    base: &str,
+    base: Option<&str>,
     head: &str,
 ) -> Result<release::landing::LandingDecision> {
+    let mut input = serde_json::json!({ "head": head });
+    if let Some(base) = base {
+        input["base"] = serde_json::Value::String(base.to_string());
+    }
     let value = ctx
-        .execute(
-            crate::capability::builtin::release::NEXT_ID,
-            serde_json::json!({ "base": base, "head": head }),
-        )
+        .execute(crate::capability::builtin::release::NEXT_ID, input)
         .map_err(unreadable)?;
     serde_json::from_value(value).map_err(protocol)
 }
@@ -859,10 +861,10 @@ mod tests {
         git(&["add", "-A"]);
         git(&["commit", "-qm", "base"]);
         let ctx = repo.context().expect("a context");
-        let d = landing_decision(&ctx, "HEAD", "HEAD").expect("decided");
+        let d = landing_decision(&ctx, Some("HEAD"), "HEAD").expect("decided");
         assert_eq!(d.trunk_version, "0.3.0");
         assert!(matches!(
-            landing_decision(&ctx, "no-such-ref-of-ours", "HEAD"),
+            landing_decision(&ctx, Some("no-such-ref-of-ours"), "HEAD"),
             Err(Error::Refused {
                 code: EXIT_UNREADABLE,
                 ..
@@ -880,10 +882,10 @@ mod tests {
             command: None,
             format: OutputFormat::Json,
         };
-        assert_eq!(next(&args(root), "HEAD", "HEAD").expect("decided"), 0);
-        assert!(next(&args(root), "no-such-ref-of-ours", "HEAD").is_err());
+        assert_eq!(next(&args(root), Some("HEAD"), "HEAD").expect("decided"), 0);
+        assert!(next(&args(root), Some("no-such-ref-of-ours"), "HEAD").is_err());
         let empty = tempfile::tempdir().unwrap();
-        assert!(next(&args(empty.path()), "HEAD", "HEAD").is_err());
+        assert!(next(&args(empty.path()), Some("HEAD"), "HEAD").is_err());
     }
 
     fn report(decided_by: DecidedBy) -> VersionReport {
