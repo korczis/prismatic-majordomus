@@ -31,7 +31,7 @@ run() {
 }
 run "$R/r1.json" doctor warm 100 120 130  check warm 40 50 55  plan warm 80 90 95  status warm 10 12 14
 run "$R/r2.json" doctor warm 130 150 160  check warm 44 55 60  plan warm 60 70 75  status warm 10 12 14
-before="$(find .ai/local/benchmarks -type f | LC_ALL=C sort | xargs shasum)"
+before="$(find .ai/local/benchmarks -type f | LC_ALL=C sort | xargs cksum)"
 # compare_ok <args>: a comparison that must succeed, its output kept in $OUT for the checks
 OUT="$T/compare.out"
 compare_ok() { expect_exit 0 "$MJ" "$@"; printf '%s\n' "$LAST_OUT" > "$OUT"; }
@@ -69,6 +69,6 @@ expect_grep "no run 'nosuch'"
 expect_exit 12 "$MJ" bench compare r1 baseline
 
 # ---------------------------------------------------------------- 5. it writes nothing
-after="$(find .ai/local/benchmarks -type f | LC_ALL=C sort | xargs shasum)"
+after="$(find .ai/local/benchmarks -type f | LC_ALL=C sort | xargs cksum)"
 [ "$before" = "$after" ] || { echo "    bench compare changed the benchmark store"; diff <(echo "$before") <(echo "$after") | sed 's/^/    | /'; exit 1; }
 echo "    ok: compare ranks regressions and improvements, a run against itself shows none, and it writes nothing"
