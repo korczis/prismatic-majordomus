@@ -698,7 +698,7 @@ mj_rust_crate_stems() {
       [ -f "$mj_cs_f" ] || continue
       mj_cs_b="${mj_cs_f##*/}"; printf '%s\n' "${mj_cs_b%.rs}"
     done
-  } | tr '-' '_' | sort -u | while IFS= read -r mj_cs_s; do
+  } | tr '-' '_' | LC_ALL=C sort -u | while IFS= read -r mj_cs_s; do
     [ -n "$mj_cs_s" ] || continue
     printf '%s\n' "$mj_cs_lock" | grep -qxF -- "$mj_cs_s" || printf '%s\n' "$mj_cs_s"
   done
@@ -776,13 +776,13 @@ mj_rust_prune_deps_of() {
   fi
   cat "$mj_pd_tmp.new" "$mj_pd_tmp.open" | while IFS= read -r mj_pd_f; do
     mj_rust_generation "$mj_pd_f"
-  done | sort -u > "$mj_pd_tmp.keep"
+  done | LC_ALL=C sort -u > "$mj_pd_tmp.keep"
   while IFS= read -r mj_pd_f; do
     mj_pd_g="$(mj_rust_generation "$mj_pd_f")"
     [ -n "$mj_pd_g" ] || continue
     grep -qxF -- "$mj_pd_g" "$mj_pd_tmp.keep" && continue
     printf '%s %s\n' "$mj_pd_g" "$mj_pd_f"
-  done < "$mj_pd_tmp.old" | sort > "$mj_pd_tmp.plan"
+  done < "$mj_pd_tmp.old" | LC_ALL=C sort > "$mj_pd_tmp.plan"
   [ -s "$mj_pd_tmp.plan" ] || { rm -f "$mj_pd_tmp" "$mj_pd_tmp".*; return 0; }
   mj_pd_kb="$(cut -d' ' -f2- "$mj_pd_tmp.plan" | tr '\n' '\0' | xargs -0 du -sk 2>/dev/null \
     | awk '{ s += $1 } END { print s + 0 }')"
@@ -791,7 +791,7 @@ mj_rust_prune_deps_of() {
   {
     printf '%s of %s, no file written for over %s min: removing %s generation(s), %s file(s), %s\n' \
       "$mj_pd_say" "$mj_pd_d" "$mj_pd_age" "$mj_pd_gens" "$mj_pd_files" "$(mj_rust_human_kb "$mj_pd_kb")"
-    cut -d' ' -f1 "$mj_pd_tmp.plan" | sort | uniq -c | head -n 12 \
+    cut -d' ' -f1 "$mj_pd_tmp.plan" | LC_ALL=C sort | uniq -c | head -n 12 \
       | awk '{ printf "  %5d file(s)  %s\n", $1, $2 }'
     [ "$mj_pd_gens" -le 12 ] || printf '  ... and %s more generation(s)\n' "$((mj_pd_gens - 12))"
   } >&2
@@ -1030,9 +1030,9 @@ mj_rust_largest_build_dirs() {
     printf '%s\n' "$mj_lb_target"
   } | while IFS= read -r mj_lb_d; do
     mj_rust_physical "$mj_lb_d" || true
-  done | sort -u | while IFS= read -r mj_lb_d; do
+  done | LC_ALL=C sort -u | while IFS= read -r mj_lb_d; do
     printf '%s\t%s\n' "$(mj_rust_kb "$mj_lb_d" || printf '%s' -1)" "$mj_lb_d"
-  done | sort -rn | head -n 5 | while IFS="$(printf '\t')" read -r mj_lb_kb mj_lb_d; do
+  done | LC_ALL=C sort -rn | head -n 5 | while IFS="$(printf '\t')" read -r mj_lb_kb mj_lb_d; do
     if [ "$mj_lb_kb" = -1 ]; then mj_lb_h='?'; else mj_lb_h="$(mj_rust_human_kb "$mj_lb_kb")"; fi
     printf '%8s  %s\n' "$mj_lb_h" "$mj_lb_d"
   done
