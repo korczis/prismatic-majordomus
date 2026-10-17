@@ -295,8 +295,15 @@ and `Release::findings` reports the mislabel. A pre-release is installed by nami
 (`install.sh --version 1.0.0-alpha.1`); an unpinned installer and a node that follows `stable`
 keep resolving the highest stable release. Versions order by semantic-version precedence
 (`alpha.2` before `alpha.10`, a pre-release before its own final, build metadata ignored).
-The crate's `distribution::tests` prove the resolution and the order;
-`test/cases/3179_a_prerelease_is_never_published_as_stable.sh` proves the two shell-side writers.
+That order is `release::version::Version`'s, the crate's one reading of a version: the stable
+pointer, the release writer and the compatibility gate share it, so they cannot rank a pair
+of versions differently, and a record whose version is not a semantic version at all is never
+the stable pointer either. `release bump --exact 1.0.0-alpha.1` writes a pre-release, and the
+gate accepts a tree that declares one; `docs/RELEASE.md` says how a pre-release meets the floor.
+The crate's `distribution::tests` and `release::version` tests prove the resolution and the
+order; `test/cases/3179_a_prerelease_is_never_published_as_stable.sh` proves the two
+shell-side writers, and `test/cases/3212_a_prerelease_version_is_bumped_and_ordered.sh` the
+writer, the gate and the order against a real repository.
 
 ### When a release fails partway
 

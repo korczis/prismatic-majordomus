@@ -14,6 +14,7 @@ use super::Model;
 use crate::error::{Error, Result};
 use crate::index::Index;
 use crate::metadata::yaml;
+use crate::release::version::Version;
 
 /// The contract a record follows.
 pub const SCHEMA: &str = "release/v1";
@@ -132,7 +133,12 @@ impl Release {
     /// the naming function does not derive, a URL from another repository.
     pub fn findings(&self, model: &Model) -> Vec<String> {
         let mut out = Vec::new();
-        if self.channel == Channel::Stable && has_prerelease(&self.version) {
+        if Version::parse(&self.version).is_none() {
+            out.push(format!(
+                "{}: version `{}` is not a semantic version, so no reader can order it; it is never resolved as the stable release",
+                self.tag, self.version
+            ));
+        } else if self.channel == Channel::Stable && has_prerelease(&self.version) {
             out.push(format!(
                 "{}: version `{}` has a pre-release part and the record puts it on the stable channel; a pre-release is `channel: prerelease` (scripts/release-record derives it from the tag)",
                 self.tag, self.version
@@ -355,54 +361,21 @@ impl Releases {
 
 /// Does this version have a pre-release part (`1.0.0-alpha.1`)? Build metadata (`+x`) is not
 /// part of precedence and is ignored, so `1.0.0+x` is a final release.
+///
+/// Asked of [`Version`], the crate's one reading of a version, so the stable pointer and the
+/// release writer cannot disagree about what a pre-release is (ADR 0004). A version that is
+/// not a semantic version at all is counted as one: nothing can show it is a final release,
+/// and the stable pointer is the one answer that must never be a guess.
 fn has_prerelease(version: &str) -> bool {
-    version.split('+').next().is_some_and(|v| v.contains('-'))
+    Version::parse(version).is_none_or(|v| v.is_prerelease())
 }
 
-/// One dot-separated identifier of a pre-release part. Numeric identifiers compare as numbers
-/// and rank below alphanumeric ones, which compare as text (semver 2.0.0, rule 11), so the
-/// derived order, `Numeric` before `Alpha`, is the specified one.
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
-enum PreIdent {
-    Numeric(u64),
-    Alpha(String),
-}
-
-/// The precedence of a semantic version, as an ordinary `Ord`: the three numbers, then
-/// whether it is a final release (a pre-release sorts below its own final), then the
-/// pre-release identifiers one by one, a shorter list below a longer one it prefixes.
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
-struct VersionKey {
-    core: (u64, u64, u64),
-    is_final: bool,
-    pre: Vec<PreIdent>,
-}
-
-fn version_key(version: &str) -> VersionKey {
-    let version = version.split('+').next().unwrap_or(version);
-    let (core, pre) = match version.split_once('-') {
-        Some((c, p)) => (c, p),
-        None => (version, ""),
-    };
-    let mut parts = core.split('.').map(|p| p.parse::<u64>().unwrap_or(0));
-    let core = (
-        parts.next().unwrap_or(0),
-        parts.next().unwrap_or(0),
-        parts.next().unwrap_or(0),
-    );
-    let pre: Vec<PreIdent> = pre
-        .split('.')
-        .filter(|i| !i.is_empty())
-        .map(|i| match i.parse::<u64>() {
-            Ok(n) => PreIdent::Numeric(n),
-            Err(_) => PreIdent::Alpha(i.to_string()),
-        })
-        .collect();
-    VersionKey {
-        core,
-        is_final: pre.is_empty(),
-        pre,
-    }
+/// The precedence of a record's version, as an ordinary `Ord`: [`Version`]'s, which is
+/// semantic-version precedence (a pre-release below its own final, identifiers one by one,
+/// numeric ones as numbers, build metadata ignored). A version that does not parse sorts
+/// below every one that does, so it can never outrank a release.
+fn version_key(version: &str) -> Option<Version> {
+    Version::parse(version)
 }
 
 /// The stable pointer, rendered from the record it points at. Identical in shape to a

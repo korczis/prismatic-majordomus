@@ -58,7 +58,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use super::surface::{PublicCapability, Surface, SurfaceError};
-use super::version::Version;
+use super::version::{Bump, Version};
 use crate::model::Object;
 
 /// The policy these verdicts were reached under, carried into every plan so that a decision
@@ -1086,7 +1086,8 @@ fn tags(root: &Path) -> Vec<String> {
         .filter(|l| !l.is_empty())
         .filter_map(|l| Version::parse(l.trim_start_matches('v')).map(|v| (v, l.to_string())))
         .collect();
-    list.sort_by_key(|(v, _)| (v.major, v.minor, v.patch));
+    // precedence, so a pre-release tag sorts below its own final and alpha.10 above alpha.2
+    list.sort_by(|(a, _), (b, _)| a.cmp(b));
     list.into_iter().map(|(_, t)| t).collect()
 }
 
@@ -1111,7 +1112,7 @@ fn records(objects: &[Object]) -> Vec<(Version, String, Option<String>, Option<S
             Some((v, raw.to_string(), tag, commit))
         })
         .collect();
-    list.sort_by_key(|(v, _, _, _)| (v.major, v.minor, v.patch));
+    list.sort_by(|(a, ..), (b, ..)| a.cmp(b));
     list
 }
 
@@ -1634,21 +1635,26 @@ impl VersionPlan {
 /// assert_eq!(declared_impact(v("0.5.0"), v("1.0.0")), Impact::Major);
 /// // A version going down is no bump at all, so it can never satisfy a requirement.
 /// assert_eq!(declared_impact(v("0.5.0"), v("0.4.0")), Impact::None);
+/// // A pre-release of the version a level owes is that level on its way.
+/// assert_eq!(declared_impact(v("0.29.0"), v("1.0.0-alpha.1")), Impact::Major);
+/// assert_eq!(declared_impact(v("1.0.0-alpha.1"), v("1.0.0-alpha.2")), Impact::Major);
+/// assert_eq!(declared_impact(v("1.0.0-alpha.2"), v("1.0.0-alpha.1")), Impact::None);
 /// ```
 pub fn declared_impact(from: Version, to: Version) -> Impact {
-    if to.major > from.major {
-        Impact::Major
-    } else if to.major < from.major {
-        Impact::None
-    } else if to.minor > from.minor {
-        Impact::Minor
-    } else if to.minor < from.minor {
-        Impact::None
-    } else if to.patch > from.patch {
-        Impact::Patch
-    } else {
-        Impact::None
+    if to <= from {
+        return Impact::None;
     }
+    // The largest raise `to` reaches: one rule with the floor `release bump` holds a target
+    // to ([`Version::reaches`]), so a pre-release of the version a level owes counts as that
+    // level — 0.29.0 to 1.0.0-alpha.1 is a major — and the gate and the writer agree.
+    [
+        (Bump::Major, Impact::Major),
+        (Bump::Minor, Impact::Minor),
+        (Bump::Patch, Impact::Patch),
+    ]
+    .into_iter()
+    .find(|(bump, _)| to.reaches(&from.clone().raised(*bump)))
+    .map_or(Impact::None, |(_, impact)| impact)
 }
 
 /// The one analysis. Everything that answers a version question calls this.
@@ -1686,11 +1692,7 @@ pub fn analyze(
     let tool_version = super::version::tool(root).unwrap_or_default();
 
     let base_v = Version::parse(&baseline.version);
-    let policy = Policy::for_version(base_v.unwrap_or(Version {
-        major: 0,
-        minor: 0,
-        patch: 0,
-    }));
+    let policy = Policy::for_version(base_v.clone().unwrap_or(Version::new(0, 0, 0)));
     let required = policy.required_of(implied);
 
     if base_v.is_none() {
@@ -1725,15 +1727,17 @@ pub fn analyze(
 
     let (declared, required_version) = match (base_v, declared_v) {
         (Some(b), Some(d)) => {
-            let owed = b.raised_to(required);
+            let owed = b.clone().raised_to(required);
+            let impact = declared_impact(b, d.clone());
             // The smallest acceptable version, which is the baseline raised by the
-            // requirement — unless the tree already declares something at least that big.
-            let required_version = if declared_impact(b, d) >= required && d >= owed {
+            // requirement — unless the tree already declares something that reaches it: at
+            // least that big, or a pre-release of it ([`Version::reaches`]).
+            let required_version = if impact >= required && d.reaches(&owed) {
                 d.to_string()
             } else {
                 owed.to_string()
             };
-            (declared_impact(b, d), required_version)
+            (impact, required_version)
         }
         _ => (Impact::None, declared_version.clone()),
     };
@@ -1855,7 +1859,21 @@ mod tests {
         assert_eq!(unrecorded_tag("v0.1.0", None).severity, Severity::Warning);
         // a tag that is not a version cannot be placed either way
         assert_eq!(
+            unrecorded_tag("v0.2.0-ai_documents", Some(&first)).id,
+            "tag-without-record"
+        );
+        // a pre-release tag is a version, placed by precedence: below its own final, and so
+        // below the earliest record here
+        assert_eq!(
             unrecorded_tag("v0.2.0-ai-documents", Some(&first)).id,
+            "tag-predates-records"
+        );
+        assert_eq!(
+            unrecorded_tag("v0.3.1-rc.1", Some(&first)).id,
+            "tag-predates-records"
+        );
+        assert_eq!(
+            unrecorded_tag("v1.0.0-alpha.1", Some(&first)).id,
             "tag-without-record"
         );
     }
@@ -2264,9 +2282,9 @@ mod tests {
     #[test]
     fn a_version_is_raised_by_a_measured_impact() {
         let v = Version::parse("0.5.0").expect("a version");
-        assert_eq!(v.raised_to(Impact::None).to_string(), "0.5.0");
-        assert_eq!(v.raised_to(Impact::Patch).to_string(), "0.5.1");
-        assert_eq!(v.raised_to(Impact::Minor).to_string(), "0.6.0");
+        assert_eq!(v.clone().raised_to(Impact::None).to_string(), "0.5.0");
+        assert_eq!(v.clone().raised_to(Impact::Patch).to_string(), "0.5.1");
+        assert_eq!(v.clone().raised_to(Impact::Minor).to_string(), "0.6.0");
         assert_eq!(v.raised_to(Impact::Major).to_string(), "1.0.0");
     }
 

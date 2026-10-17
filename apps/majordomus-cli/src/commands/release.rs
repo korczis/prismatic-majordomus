@@ -539,7 +539,9 @@ fn bump(args: &ReleaseArgs, level: Option<&str>, exact: Option<&str>, dry_run: b
     let wanted_exact = match exact {
         Some(v) => Some(version::Version::parse(v).ok_or_else(|| Error::Refused {
             code: 2,
-            reason: format!("'{v}' is not a version; it must be three numbers, `1.2.3`"),
+            reason: format!(
+                "'{v}' is not a version; it must be a semantic version, `1.2.3` or `1.0.0-alpha.1`"
+            ),
         })?),
         None => None,
     };
@@ -598,14 +600,15 @@ fn bump(args: &ReleaseArgs, level: Option<&str>, exact: Option<&str>, dry_run: b
         version::Version::parse(&p.baseline.version).map(|base| base.raised_to(p.required))
     });
 
+    let explicit = wanted_exact.is_some() || wanted_level.is_some();
     let (to, source) = match (wanted_exact, wanted_level) {
         (Some(v), _) => (v, "explicit --exact"),
-        (None, Some(impact)) => (current.raised_to(impact), "explicit --level"),
+        (None, Some(impact)) => (current.clone().raised_to(impact), "explicit --level"),
         // The selected version, which is the whole point: with no argument at all, the
         // contract decides — through the one selection `release version` reports, so the
         // writer raises to exactly the `next` the report states. With no measurable contract
         // no one decided, and there is nothing to raise to.
-        (None, None) => match version::default_target(&selection.report, current) {
+        (None, None) => match version::default_target(&selection.report, &current) {
             Ok(to) => (
                 to,
                 match selection.report.decided_by {
@@ -622,11 +625,11 @@ fn bump(args: &ReleaseArgs, level: Option<&str>, exact: Option<&str>, dry_run: b
             }
         },
     };
-    let explicit = wanted_exact.is_some() || wanted_level.is_some();
 
-    // An override may go above the floor and never below it.
-    if let (Some(f), Some(p)) = (floor, plan) {
-        if to < f {
+    // An override may go above the floor and never below it. A pre-release of the floor is
+    // the floor on its way (`Version::reaches`): `1.0.0-alpha.2` meets a floor of `1.0.0`.
+    if let (Some(f), Some(p)) = (&floor, plan) {
+        if !to.reaches(f) {
             writeln!(
                 out,
                 "release: REFUSED {to} is below {f}, which is the smallest version this tree may declare"
@@ -689,7 +692,7 @@ fn bump(args: &ReleaseArgs, level: Option<&str>, exact: Option<&str>, dry_run: b
     }
     .map_err(Error::Transport)?;
     if explicit {
-        if let Some(f) = floor {
+        if let Some(f) = &floor {
             // Provenance: a version larger than the measurement is allowed and never silent.
             writeln!(
                 out,

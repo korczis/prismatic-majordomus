@@ -628,7 +628,10 @@ fn a_correctly_labelled_prerelease_is_addressable_but_not_resolved() {
     );
     assert!(releases.by_tag("v1.0.0-alpha.1").is_some());
     assert!(
-        !releases.findings(&model).iter().any(|f| f.contains("stable channel")),
+        !releases
+            .findings(&model)
+            .iter()
+            .any(|f| f.contains("stable channel")),
         "a prerelease on the prerelease channel is consistent"
     );
 }
