@@ -31864,10 +31864,13 @@
           "profile": "implementation",
           "scope": [
             "lib/knowledge.sh",
+            "lib/decision.sh",
             "test/cases"
           ],
           "slug": "a-candidate-relates-to-its-own-commit",
-          "updated_at": "2026-10-04",
+          "started_at": "2026-10-17T10:00:20Z",
+          "started_event": "sha256:883b3d3cfd32b9a1df5dfd53a9109f951e6452ac37fe80b0fef12ca1188e69ab",
+          "updated_at": "2026-10-17T10:00:20Z",
           "validation": [
             "bin/majordomus plan validate",
             "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
@@ -56864,6 +56867,13 @@
         "label": "test/cases/31_command_coverage.sh",
         "route": "/cockpit/objects/test/test-cases-31-command-coverage-sh",
         "source": "test/cases/31_command_coverage.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3210_a_candidate_cites_its_own_commit.sh",
+        "kind": "test",
+        "label": "test/cases/3210_a_candidate_cites_its_own_commit.sh",
+        "route": "/cockpit/objects/test/test-cases-3210-a-candidate-cites-its-own-commit-sh",
+        "source": "test/cases/3210_a_candidate_cites_its_own_commit.sh"
       },
       {
         "id": "majordomus://test/test/cases/32_refusal_lifecycle.sh",
@@ -88213,6 +88223,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3210_a_candidate_cites_its_own_commit.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/32_refusal_lifecycle.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -93494,8 +93509,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2935,
-      "edges": 6437,
+      "nodes": 2936,
+      "edges": 6438,
       "acyclic": false,
       "truncated": false
     }
