@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["Node"],"fn":["document","el","empty","escape","raw","text"],"struct":["El"]};
+window.SIDEBAR_ITEMS = {"enum":["Node"],"fn":["document","document_on","el","empty","escape","raw","text"],"struct":["El"]};

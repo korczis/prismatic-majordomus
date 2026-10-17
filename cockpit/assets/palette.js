@@ -10,7 +10,7 @@
 //
 // Nothing is fetched until the palette is opened for the first time.
 
-import { api } from './cockpit.js?v=a592e013efb7adfb';
+import { api } from './cockpit.js?v=340c1e47c9a6c4ea';
 
 const results = document.querySelector('[x-ref="paletteResults"]');
 const input = document.querySelector('[x-ref="paletteInput"]');

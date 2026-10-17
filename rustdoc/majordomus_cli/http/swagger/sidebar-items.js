@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["SPEC_PATH","SWAGGER_BUNDLE_SRI","SWAGGER_CSS_SRI","SWAGGER_PATH","SWAGGER_UI_VERSION"],"fn":["csp","offered_by_a_publication","page"]};
+window.SIDEBAR_ITEMS = {"constant":["CHECKOUT_MARKER","SPEC_PATH","SWAGGER_BUNDLE_SRI","SWAGGER_CSS_SRI","SWAGGER_PATH","SWAGGER_UI_VERSION"],"fn":["csp","offered_by_a_publication","page","page_for"]};

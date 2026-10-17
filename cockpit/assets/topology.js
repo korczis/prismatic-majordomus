@@ -11,7 +11,7 @@
 // no WebGL, no Three.js and no JavaScript at all, the same facts are on
 // /cockpit/graphs/registry as text, and this page says so.
 
-import { api, vendorModule, palette, explainMissing, motionAllowed, whileVisible } from './cockpit.js?v=a592e013efb7adfb';
+import { api, vendorModule, palette, explainMissing, motionAllowed, whileVisible } from './cockpit.js?v=340c1e47c9a6c4ea';
 
 const frame = document.querySelector('[data-mj-topology]');
 if (frame) {

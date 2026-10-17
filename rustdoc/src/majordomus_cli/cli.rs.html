@@ -3753,7 +3753,7 @@
 <a href=#3753 id=3753 data-nosnippet>3753</a>        <span class="doccomment">/// The branch, full name
 <a href=#3754 id=3754 data-nosnippet>3754</a>        </span>branch: String,
 <a href=#3755 id=3755 data-nosnippet>3755</a>    },
-<a href=#3756 id=3756 data-nosnippet>3756</a>    <span class="doccomment">/// Create the canonical worktree of a branch, creating the branch from --base (default: the trunk) when it does not exist. The path is derived; none may be given
+<a href=#3756 id=3756 data-nosnippet>3756</a>    <span class="doccomment">/// Create the canonical worktree of a branch. A branch that does not exist here is fetched from the trunk's remote and taken up when the remote has it; otherwise it is created from --base, else from the remote's trunk fetched now (the local trunk only when the remote cannot be read, and then said, with how far behind). The path is derived; none may be given
 <a href=#3757 id=3757 data-nosnippet>3757</a>    </span>Create {
 <a href=#3758 id=3758 data-nosnippet>3758</a>        <span class="doccomment">/// The branch, full name (`feature/improve-cli`)
 <a href=#3759 id=3759 data-nosnippet>3759</a>        </span><span class="attr">#[arg(value_name = <span class="string">"BRANCH"</span>, required_unless_present = <span class="string">"issue"</span>)]

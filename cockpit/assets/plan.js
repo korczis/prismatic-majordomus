@@ -11,7 +11,7 @@
 // this module shows that answer as it came, and reads the page again so that every status
 // on it is the server's rather than the one the button promised.
 
-import { api } from './cockpit.js?v=a592e013efb7adfb';
+import { api } from './cockpit.js?v=340c1e47c9a6c4ea';
 
 // a wait is bounded: an execution that has not finished in this many reads is reported
 // as still running, with the link to its own page, and the page is not reloaded

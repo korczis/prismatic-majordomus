@@ -11,7 +11,7 @@
 // Optional and lazy: p5 is vendored and loaded only here. Without it the frame says so and
 // the tables stand.
 
-import { api, vendor, palette, explainMissing, motionAllowed } from './cockpit.js?v=a592e013efb7adfb';
+import { api, vendor, palette, explainMissing, motionAllowed } from './cockpit.js?v=340c1e47c9a6c4ea';
 
 const frame = document.querySelector('[data-mj-activity]');
 if (frame) {
