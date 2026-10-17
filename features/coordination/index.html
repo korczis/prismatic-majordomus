@@ -310,6 +310,34 @@ durable, enforced form is the task record and its scope.</p>
             </li>
           </ul>
         </section>
+        <section class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4" aria-label="Edit guard">
+          <p class="flex flex-wrap items-baseline gap-2">
+            <a href="https://majordomus.dev/registry/modules/guard/" class="text-base font-semibold text-heading hover:text-fg-brand hover:underline">Edit guard</a>
+            <code class="font-mono text-xs text-body-subtle">guard</code>
+            <span class="ms-auto font-mono text-xs text-body-subtle">experimental</span>
+          </p>
+          <p class="mt-2 text-sm text-body">Whether a write to a file of this checkout is covered by a claim: the active task&#39;s scope, or a live mesh claim of the writing session. The judgement a provider&#39;s pre-tool hook asks before every edit (majordomus guard hook), switched by session.edits_require_claim.</p>
+          <ul class="mt-3 divide-y divide-default border-t border-default">
+            <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-2">
+              <a href="https://majordomus.dev/registry/capabilities/guard-edit/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">Judge one edit</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </li>
+          </ul>
+        </section>
+        <section class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4" aria-label="The monitor">
+          <p class="flex flex-wrap items-baseline gap-2">
+            <a href="https://majordomus.dev/registry/modules/monitor/" class="text-base font-semibold text-heading hover:text-fg-brand hover:underline">The monitor</a>
+            <code class="font-mono text-xs text-body-subtle">monitor</code>
+            <span class="ms-auto font-mono text-xs text-body-subtle">experimental</span>
+          </p>
+          <p class="mt-2 text-sm text-body">Everything that happens around this repository, followed in one stream: the mesh journal (sessions on every linked machine, this checkout&#39;s board among them, their claims, handovers and reviews), the executor&#39;s trail (merges, refreshes, repairs, closures, failures) and GitHub (pull requests opened, merged and closed, finished workflow runs), folded so that a session re-announcing itself unchanged and a step that decided nothing are counted rather than shown, with what is addressed to the reader marked (ADR 0133).</p>
+          <ul class="mt-3 divide-y divide-default border-t border-default">
+            <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-2">
+              <a href="https://majordomus.dev/registry/capabilities/monitor-stream/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">Follow everything in one stream</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </li>
+          </ul>
+        </section>
       </div>
     </section><section id="relationships" class="mt-12 scroll-mt-24" aria-labelledby="relationships-h">
       <h2 id="relationships-h" class="text-xl font-semibold tracking-tight text-heading">Where it sits</h2>
@@ -439,6 +467,18 @@ durable, enforced form is the task record and its scope.</p>
               <td class="px-3 py-2 font-mono text-xs"><a href="https://majordomus.dev/docs/cli/prs/trains/" class="text-fg-brand hover:underline">majordomus prs trains</a></td>
               <td class="px-3 py-2 font-mono text-xs"><a href="https://majordomus.dev/docs/api/integration/#op-integration-trains" class="text-fg-brand hover:underline">GET /api/v1/pull-requests/trains</a></td>
               <td class="px-3 py-2 font-mono text-xs"><span class="text-body">majordomus_pull_request_trains</span></td>
+            </tr>
+            <tr class="align-baseline">
+              <th scope="row" class="px-3 py-2 font-normal"><a href="https://majordomus.dev/registry/capabilities/guard-edit/" class="font-mono text-xs text-heading hover:text-fg-brand hover:underline">guard.edit</a></th>
+              <td class="px-3 py-2 font-mono text-xs"><span class="text-body-subtle">—<span class="sr-only">none</span></span></td>
+              <td class="px-3 py-2 font-mono text-xs"><a href="https://majordomus.dev/docs/api/guard/#op-guard-edit" class="text-fg-brand hover:underline">GET /api/v1/guard/edit</a></td>
+              <td class="px-3 py-2 font-mono text-xs"><span class="text-body">majordomus_guard_edit</span></td>
+            </tr>
+            <tr class="align-baseline">
+              <th scope="row" class="px-3 py-2 font-normal"><a href="https://majordomus.dev/registry/capabilities/monitor-stream/" class="font-mono text-xs text-heading hover:text-fg-brand hover:underline">monitor.stream</a></th>
+              <td class="px-3 py-2 font-mono text-xs"><span class="text-body-subtle">—<span class="sr-only">none</span></span></td>
+              <td class="px-3 py-2 font-mono text-xs"><a href="https://majordomus.dev/docs/api/monitor/#op-monitor-stream" class="text-fg-brand hover:underline">GET /api/v1/monitor</a></td>
+              <td class="px-3 py-2 font-mono text-xs"><span class="text-body">majordomus_monitor</span></td>
             </tr>
           </tbody>
         </table>
@@ -696,9 +736,9 @@ durable, enforced form is the task record and its scope.</p>
     </nav>
     <h2 class="text-sm font-semibold uppercase tracking-wide text-body-subtle lg:mt-8">Counted at build time</h2>
     <dl class="mt-3 divide-y divide-default rounded-base border border-default bg-neutral-primary-soft">
-      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">capabilities</dt><dd class="font-mono text-sm text-heading">15</dd></div>
-      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">MCP tools</dt><dd class="font-mono text-sm text-heading">15</dd></div>
-      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">HTTP routes</dt><dd class="font-mono text-sm text-heading">15</dd></div>
+      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">capabilities</dt><dd class="font-mono text-sm text-heading">17</dd></div>
+      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">MCP tools</dt><dd class="font-mono text-sm text-heading">17</dd></div>
+      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">HTTP routes</dt><dd class="font-mono text-sm text-heading">17</dd></div>
       <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">command-line paths</dt><dd class="font-mono text-sm text-heading">11</dd></div>
       <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">rules</dt><dd class="font-mono text-sm text-heading">5</dd></div>
       <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">claims</dt><dd class="font-mono text-sm text-heading">5</dd></div>
@@ -754,9 +794,9 @@ durable, enforced form is the task record and its scope.</p>
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/01227a0f74ab9de734edd3672dcc9d8d3a2d666c/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/01227a0f74ab9de734edd3672dcc9d8d3a2d666c/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/01227a0f74ab9de734edd3672dcc9d8d3a2d666c/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/25b5fce9b65ce073b6513e87cf286666368968f6/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/25b5fce9b65ce073b6513e87cf286666368968f6/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/25b5fce9b65ce073b6513e87cf286666368968f6/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -764,7 +804,7 @@ durable, enforced form is the task record and its scope.</p>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.28.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/01227a0f74ab9de734edd3672dcc9d8d3a2d666c" class="font-mono underline">01227a0</a> · inputs <span class="font-mono">42ed8598e64c</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.28.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/25b5fce9b65ce073b6513e87cf286666368968f6" class="font-mono underline">25b5fce</a> · inputs <span class="font-mono">749e8c575b06</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>
