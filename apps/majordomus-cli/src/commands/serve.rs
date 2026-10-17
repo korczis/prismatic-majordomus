@@ -1231,6 +1231,48 @@ mod tests {
         );
     }
 
+    /// With no `--port`, the server binds the port this checkout derives. The host is an
+    /// address no machine owns (TEST-NET-1), so the bind is refused and the refusal names
+    /// the address that was tried; the lease the election took is released on the way out.
+    #[test]
+    fn serve_without_a_port_binds_the_port_the_checkout_derives() {
+        use clap::Parser;
+        let (_dir, root) = layer_only();
+        // the share is named, not looked up: a test binary under a shared build directory has
+        // no share beside it, and the environment's MAJORDOMUS_SHARE is not this tree's
+        let share = crate::synthetic::crate_share();
+        let cli = crate::cli::Cli::try_parse_from([
+            "majordomus",
+            "serve",
+            "--repo",
+            root.to_str().unwrap(),
+            "--share",
+            share.to_str().unwrap(),
+            "--discovery",
+            "filesystem",
+            "--host",
+            "192.0.2.1",
+        ])
+        .unwrap();
+        let crate::cli::Command::Serve(args) = cli.command else {
+            panic!("not the serve command")
+        };
+        assert_eq!(args.port, None);
+        let port = crate::cli::checkout_port(&root);
+        let err = run(args).expect_err("an address no machine owns cannot be bound");
+        match err {
+            Error::Http { reason } => {
+                assert!(reason.contains(&format!("192.0.2.1:{port}")), "{reason}")
+            }
+            other => panic!("{other:?}"),
+        }
+        let repo = Repository::discover(&root).unwrap();
+        assert!(
+            !lease::lease_path(&repo).exists(),
+            "the lease of a server that never bound is released"
+        );
+    }
+
     #[test]
     fn a_relative_share_reaches_the_started_server_absolute() {
         let repo = RepoArgs {

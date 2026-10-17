@@ -516,7 +516,13 @@ jobs:
     # those, the ~50% doctrine the suite job's bound follows (.ai/repo/ci/suite.yaml): a
     # slow runner still reaches a verdict, and a hang still fails inside the hour. Raise it
     # again from a run that measured the whole job, not from this estimate.
-    timeout-minutes: 60
+    #
+    # Measured (top 70, run 38960010919, lane 3, 2026-10-16): rust-check ran 20:27-21:07
+    # (40 min), the plan's rust gates up to release-record-cases to 21:18 (11 min), and the
+    # plan-record-cases gate (#1185, ~50 cases at MJ_TEST_JOBS=4) was killed by the old bound
+    # at 21:28 after 10 of its minutes. 90 leaves that gate about 25 minutes and a slow runner
+    # its margin; lanes 1 and 2 finish far inside it.
+    timeout-minutes: 90
     runs-on: ubuntu-latest
     env:
       # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
@@ -617,6 +623,12 @@ jobs:
       # only two skipped here.
       - name: the rust gates of the plan
         if: matrix.lane == 3
+        env:
+          # The case gates of this job (release-record-cases, plan-record-cases) drive the
+          # executable rust-check's `cargo test` built, as the suite shards do: without it a
+          # case takes the shell path, and `knowledge validate` warns that it could not ask
+          # the index (case 3075, top 70 run 38980212746).
+          MAJORDOMUS_BIN: ${{ github.workspace }}/apps/majordomus-cli/target/debug/majordomus
         run: MJ_CI_TIMINGS=timings.tsv scripts/ci/run-plan --plan plan.json --job rust --skip rust-check,rust-integration
       - id: target
         if: matrix.lane == 3

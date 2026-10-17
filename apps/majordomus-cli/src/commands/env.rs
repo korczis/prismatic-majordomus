@@ -910,4 +910,29 @@ mod tests {
             0
         );
     }
+
+    /// An entry with no policy converges on the checkout's own port and the declared idle
+    /// life. A start another live process has already claimed is waited on rather than
+    /// doubled, and with no time to wait the entry reports that it started nothing.
+    #[test]
+    fn an_entry_whose_start_another_process_claimed_starts_nothing() {
+        let fixture = crate::synthetic::SyntheticRepository::small().unwrap();
+        let root = fixture.root().canonicalize().unwrap();
+        let repo = Repository::discover(&root).unwrap();
+        let lease = crate::lease::lease_path(&repo);
+        // the claim `serve` writes beside the lease, naming this live process
+        let claim = lease.with_file_name("server.spawn");
+        std::fs::create_dir_all(claim.parent().unwrap()).unwrap();
+        std::fs::write(&claim, std::process::id().to_string()).unwrap();
+        assert!(!ensure_runtime(&repo, None, Duration::ZERO));
+        assert!(
+            !lease.exists(),
+            "no server was started, so no lease was written"
+        );
+        assert_eq!(
+            std::fs::read_to_string(&claim).unwrap(),
+            std::process::id().to_string(),
+            "the live claim is left to the process that holds it"
+        );
+    }
 }
