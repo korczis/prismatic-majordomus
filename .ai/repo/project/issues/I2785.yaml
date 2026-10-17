@@ -1,0 +1,36 @@
+id: I2785
+milestone: browser-compute
+title: "The server recomputes a browser's claimed result with the portable core"
+slug: the-server-verifies-a-browsers-result
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Add capability compute.verify (module compute): given a portable-core function, the input it was computed on and the claimed result, recompute it with majordomus-core and answer match, mismatch or invalid with the reason (not JSON, over 1 MiB, not the result's shape). It is a read: it records nothing, starts no execution and is admitted from any host (ADR 0126), over MCP and HTTP POST."
+why: "ADR 0170 makes a browser's result a claim that only the server's recomputation verifies; nothing on the server can check a result computed elsewhere today, so a browser that computes has nobody to agree with."
+serves:
+  - a-browser-computes-what-the-server-verifies#the-server-recomputes-a-claim
+current_state: "executions.report stores what a reporter says; nothing recomputes a claim."
+desired_state: "POST /api/v1/compute/verify and majordomus_compute_verify judge any claimed canonical digest by recomputing it, for every fixture row, writing nothing."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/compute.rs"
+  - "apps/majordomus-cli/src/capability/builtin/mod.rs"
+  - "apps/majordomus-cli/tests/compute_verify.rs"
+  - ".ai/repo/project"
+  - "docs"
+  - "site"
+  - "share"
+depends_on:
+  - "I2784"
+acceptance_criteria:
+  - "Every fixture case is answered match with the claimed digest and mismatch with one digit changed"
+  - "Every invalid fixture row is answered invalid with its reason"
+  - "A caller on another host is answered, and the repository and the execution store are unchanged"
+  - "An input over 1 MiB is answered invalid without being read"
+validation:
+  - "majordomus plan validate"
+  - "cargo test --lib capability::builtin::compute"
+  - "cargo test --test compute_verify"
+evidence_required:
+  - "compute_verify_tests"
+created_at: 2026-10-17
+updated_at: 2026-10-17
