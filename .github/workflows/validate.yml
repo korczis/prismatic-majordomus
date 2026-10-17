@@ -895,7 +895,9 @@ jobs:
     # site-build must still open the job — otherwise the gate is planned and the job that
     # would run it never starts. The UI audit is the ui job's, not this one's.
     if: needs.plan.outputs.site_build == 'true' || needs.plan.outputs.cockpit_assets == 'true' || needs.plan.outputs.site_probe == 'true'
-    timeout-minutes: 50
+    # measured 2026-10-17 on batch 71a: 46, 47.5 and 50.4 min (the last one cancelled at 50);
+    # the browser probe grows with the site, so the bound keeps a quarter's headroom
+    timeout-minutes: 65
     runs-on: ubuntu-latest
     env:
       # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
