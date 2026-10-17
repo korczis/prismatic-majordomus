@@ -1033,6 +1033,22 @@ jq --argjson ex "${EX_JSON:-[]}" --arg src "$AI/repo/skills/" '
    count: .count,
    by_tag: (reduce (.skills[] | . as $s | $s.tags[] | {k: ., v: $s.id}) as $e ({}; .[$e.k] += [$e.v]))}' \
   "$STAGE/skills.base.json" > "$OUT/skills.json"
+# every skill an agent reads by name (ADR 0165): the editors projection's files under
+# .claude/skills/, read from the generated-artifact manifest the projection writes, each with
+# the description its own front matter carries. Nothing here names a skill: a domain the
+# registry gains is a row the next time the projection is generated.
+ARTS="$ROOT/docs/generated/artifacts.json"
+[ -f "$ARTS" ] || { echo "generate-site-data: docs/generated/artifacts.json is missing (run: apps/majordomus-cli/target/debug/majordomus generate)" >&2; exit 10; }
+jq -r '.artifacts[] | select(.document | startswith("editors/")) | select(.path | test("^\\.claude/skills/[^/]+/SKILL\\.md$")) | [.path, .document, .source] | @tsv' "$ARTS" \
+  | while IFS="$MJ_TAB" read -r path doc src; do
+      desc="$(sed -n '2,6{s/^description: //p;}' "$ROOT/$path" | head -1)"
+      [ -n "$desc" ] || desc='""'
+      jq -n --arg p "$path" --arg d "$doc" --arg s "$src" --argjson t "$desc" \
+        '{name: ($p | split("/")[2]), path: $p, kind: ($d | sub("^editors/"; "")), source: $s, description: $t}'
+    done | jq -s 'sort_by(.kind, .name)' > "$STAGE/skills.claude.json"
+jq --slurpfile c "$STAGE/skills.claude.json" \
+  '. + {claude: $c[0], claude_by_kind: (reduce $c[0][] as $s ({}; .[$s.kind] += 1))}' \
+  "$OUT/skills.json" > "$STAGE/skills.with-claude.json" && mv "$STAGE/skills.with-claude.json" "$OUT/skills.json"
 # a related id names a skill in this catalogue or the build fails — the same check the
 # command makes, repeated at the last writer so that a page never links to a 404
 for bad in $(jq -r '[.skills[].id] as $ids | .skills[] | .related[] | select(IN($ids[]) | not)' "$OUT/skills.json"); do

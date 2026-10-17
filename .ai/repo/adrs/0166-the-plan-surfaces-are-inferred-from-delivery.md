@@ -14,7 +14,7 @@ tags:
 related:
   - file:.ai/repo/project/milestones/truthful-plan-surfaces.yaml
   - file:.ai/repo/adrs/0152-a-diagram-and-a-chart-on-the-site-are-one-viewer-each-over-w.md
-  - file:.ai/repo/rules/project/a-diagram-is-drawn-not-typed.v1.md
+  - file:.ai/repo/rules/project/a-diagram-is-drawn-not-typed.v2.md
   - file:.ai/repo/rules/project/the-published-ui-is-the-trunks.v1.md
   - file:site/templates/roadmap.html
   - file:site/templates/index.html

@@ -3,26 +3,26 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and the index of this repository's layer; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.27.0"
+    "version": "0.28.0"
   },
   "registry": {
-    "fingerprint": "01c76a93e900521c3989c288643f232b749edceda3495b4522436b3e5533c7b6",
+    "fingerprint": "14bf9affeaa8ed3d43daf4d7a700b699cf2e547d6158070c17f128bb039421da",
     "summary": {
-      "total": 2467,
+      "total": 2513,
       "builtin": 205,
-      "declarative": 2262,
+      "declarative": 2308,
       "by_kind": {
         "command": 31,
         "query": 174,
-        "resource": 2262
+        "resource": 2308
       },
       "by_stability": {
         "behaviorally_verified": 141,
         "experimental": 55,
-        "implemented": 2271
+        "implemented": 2317
       },
       "mcp_tools": 195,
-      "mcp_resources": 2317,
+      "mcp_resources": 2363,
       "http_routes": 200,
       "cli_commands": 110,
       "modules": 92,
@@ -44981,6 +44981,11 @@
                 "format": "uint64",
                 "minimum": 0,
                 "description": "The event's Lamport stamp."
+              },
+              "durability": {
+                "$ref": "#/$defs/Durability",
+                "description": "Whether the event reached this machine's disk: `synced`, `memory` (a journal with no\nfile, by configuration), or `not_durable` — held and replicated to peers, not on disk\nhere, and not acknowledged as durable. `unknown` from an executable that predates it.",
+                "default": "unknown"
               }
             },
             "required": [
@@ -44988,8 +44993,35 @@
               "event",
               "lamport"
             ],
-            "description": "What an operation wrote, as its answer to the caller. Every mesh operation is an event\nappended to this runtime's journal, and the caller is handed the three facts it cannot\nwork out for itself: the mesh-wide key of the thing it created, the event that says so,\nand the Lamport stamp that places it against everyone else's events.\n\nThe key is what a later operation is addressed by — a claim is released by the key its\nacquisition returned, never by the local name it was given — and the stamp is what a\ncaller waiting for a peer to catch up compares against.\n\n```\n# use std::sync::Arc;\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::HttpTransport;\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::of_root_commits;\n# let cooperation = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: \"0000000000000001\".into(),\n#     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![\"127.0.0.1:9\".into()],\n#     version: \"doc\".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),\n#     journal_path: None, registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),\n# }).unwrap();\nuse majordomus_cli::mesh::cooperation::Written;\nuse majordomus_cli::mesh::journal::{ClaimMode, SessionInfo};\n\nlet session = SessionInfo::named(\"s1\", \"cli\");\nlet written: Written = cooperation\n    .claim(&session, vec![\"docs\".into()], None, ClaimMode::Advisory, None)\n    .unwrap();\nassert!(written.lamport > 0, \"placed against every other runtime's events\");\n\n// and the key it returned is how the claim is addressed from here on\ncooperation.release(&written.key).unwrap();\n```",
-            "title": "Written"
+            "description": "What an operation wrote, as its answer to the caller. Every mesh operation is an event\nappended to this runtime's journal, and the caller is handed the three facts it cannot\nwork out for itself: the mesh-wide key of the thing it created, the event that says so,\nand the Lamport stamp that places it against everyone else's events.\n\nThe key is what a later operation is addressed by — a claim is released by the key its\nacquisition returned, never by the local name it was given — and the stamp is what a\ncaller waiting for a peer to catch up compares against.\n\n```\n# use std::sync::Arc;\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::HttpTransport;\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::of_root_commits;\n# let cooperation = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: \"0000000000000001\".into(),\n#     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![\"127.0.0.1:9\".into()],\n#     version: \"doc\".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),\n#     journal_path: None, registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),\n# }).unwrap();\nuse majordomus_cli::mesh::cooperation::Written;\nuse majordomus_cli::mesh::journal::{ClaimMode, Durability, SessionInfo};\n\nlet session = SessionInfo::named(\"s1\", \"cli\");\nlet written: Written = cooperation\n    .claim(&session, vec![\"docs\".into()], None, ClaimMode::Advisory, None)\n    .unwrap();\nassert!(written.lamport > 0, \"placed against every other runtime's events\");\nassert_eq!(written.durability, Durability::Memory, \"this journal has no file\");\n\n// and the key it returned is how the claim is addressed from here on\ncooperation.release(&written.key).unwrap();\n```",
+            "title": "Written",
+            "$defs": {
+              "Durability": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "synced",
+                    "description": "Appended to the journal file and synced (`fsync` of its data) before the append\nreturned."
+                  },
+                  {
+                    "type": "string",
+                    "const": "memory",
+                    "description": "The journal has no file: it lives in memory and its peers, by configuration."
+                  },
+                  {
+                    "type": "string",
+                    "const": "not_durable",
+                    "description": "The write to the journal file failed. The event is held in memory and replicated to\npeers, and is lost to this machine when the runtime restarts unless a peer still holds\nit. It is not acknowledged as durable."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unknown",
+                    "description": "Not reported: an answer from an executable that predates this field."
+                  }
+                ],
+                "description": "Whether an event this runtime wrote reached this machine's disk: what an append\nacknowledges, and the only thing a caller may say about it.\n\n```\nuse majordomus_cli::mesh::journal::Durability;\nassert_eq!(serde_json::to_value(Durability::NotDurable).unwrap(), \"not_durable\");\nassert_eq!(Durability::default(), Durability::Unknown, \"an answer that did not say\");\nassert!(Durability::Synced.is_on_disk() && !Durability::NotDurable.is_on_disk());\n```"
+              }
+            }
           }
         },
         "provenance": {
@@ -45790,6 +45822,13 @@
                     "format": "uint64",
                     "minimum": 0,
                     "description": "Lines of the journal file the last reload could not read: torn, corrupt, or written\nby something that is not this journal. Counted, never silently dropped.",
+                    "default": 0
+                  },
+                  "unread_bytes": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Bytes of the journal file the last reload left unread because they lie beyond\n`MAX_RELOAD_BYTES`: on disk and kept by compaction, and not in memory. Nonzero fails\n`mesh doctor`.",
                     "default": 0
                   }
                 },
@@ -47155,6 +47194,11 @@
                     "format": "uint64",
                     "minimum": 0,
                     "description": "The event's Lamport stamp."
+                  },
+                  "durability": {
+                    "$ref": "#/$defs/Durability",
+                    "description": "Whether the event reached this machine's disk: `synced`, `memory` (a journal with no\nfile, by configuration), or `not_durable` — held and replicated to peers, not on disk\nhere, and not acknowledged as durable. `unknown` from an executable that predates it.",
+                    "default": "unknown"
                   }
                 },
                 "required": [
@@ -47162,7 +47206,32 @@
                   "event",
                   "lamport"
                 ],
-                "description": "What an operation wrote, as its answer to the caller. Every mesh operation is an event\nappended to this runtime's journal, and the caller is handed the three facts it cannot\nwork out for itself: the mesh-wide key of the thing it created, the event that says so,\nand the Lamport stamp that places it against everyone else's events.\n\nThe key is what a later operation is addressed by — a claim is released by the key its\nacquisition returned, never by the local name it was given — and the stamp is what a\ncaller waiting for a peer to catch up compares against.\n\n```\n# use std::sync::Arc;\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::HttpTransport;\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::of_root_commits;\n# let cooperation = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: \"0000000000000001\".into(),\n#     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![\"127.0.0.1:9\".into()],\n#     version: \"doc\".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),\n#     journal_path: None, registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),\n# }).unwrap();\nuse majordomus_cli::mesh::cooperation::Written;\nuse majordomus_cli::mesh::journal::{ClaimMode, SessionInfo};\n\nlet session = SessionInfo::named(\"s1\", \"cli\");\nlet written: Written = cooperation\n    .claim(&session, vec![\"docs\".into()], None, ClaimMode::Advisory, None)\n    .unwrap();\nassert!(written.lamport > 0, \"placed against every other runtime's events\");\n\n// and the key it returned is how the claim is addressed from here on\ncooperation.release(&written.key).unwrap();\n```"
+                "description": "What an operation wrote, as its answer to the caller. Every mesh operation is an event\nappended to this runtime's journal, and the caller is handed the three facts it cannot\nwork out for itself: the mesh-wide key of the thing it created, the event that says so,\nand the Lamport stamp that places it against everyone else's events.\n\nThe key is what a later operation is addressed by — a claim is released by the key its\nacquisition returned, never by the local name it was given — and the stamp is what a\ncaller waiting for a peer to catch up compares against.\n\n```\n# use std::sync::Arc;\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::HttpTransport;\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::of_root_commits;\n# let cooperation = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: \"0000000000000001\".into(),\n#     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![\"127.0.0.1:9\".into()],\n#     version: \"doc\".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),\n#     journal_path: None, registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),\n# }).unwrap();\nuse majordomus_cli::mesh::cooperation::Written;\nuse majordomus_cli::mesh::journal::{ClaimMode, Durability, SessionInfo};\n\nlet session = SessionInfo::named(\"s1\", \"cli\");\nlet written: Written = cooperation\n    .claim(&session, vec![\"docs\".into()], None, ClaimMode::Advisory, None)\n    .unwrap();\nassert!(written.lamport > 0, \"placed against every other runtime's events\");\nassert_eq!(written.durability, Durability::Memory, \"this journal has no file\");\n\n// and the key it returned is how the claim is addressed from here on\ncooperation.release(&written.key).unwrap();\n```"
+              },
+              "Durability": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "synced",
+                    "description": "Appended to the journal file and synced (`fsync` of its data) before the append\nreturned."
+                  },
+                  {
+                    "type": "string",
+                    "const": "memory",
+                    "description": "The journal has no file: it lives in memory and its peers, by configuration."
+                  },
+                  {
+                    "type": "string",
+                    "const": "not_durable",
+                    "description": "The write to the journal file failed. The event is held in memory and replicated to\npeers, and is lost to this machine when the runtime restarts unless a peer still holds\nit. It is not acknowledged as durable."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unknown",
+                    "description": "Not reported: an answer from an executable that predates this field."
+                  }
+                ],
+                "description": "Whether an event this runtime wrote reached this machine's disk: what an append\nacknowledges, and the only thing a caller may say about it.\n\n```\nuse majordomus_cli::mesh::journal::Durability;\nassert_eq!(serde_json::to_value(Durability::NotDurable).unwrap(), \"not_durable\");\nassert_eq!(Durability::default(), Durability::Unknown, \"an answer that did not say\");\nassert!(Durability::Synced.is_on_disk() && !Durability::NotDurable.is_on_disk());\n```"
               }
             }
           }
@@ -47258,6 +47327,11 @@
                 "format": "uint64",
                 "minimum": 0,
                 "description": "The event's Lamport stamp."
+              },
+              "durability": {
+                "$ref": "#/$defs/Durability",
+                "description": "Whether the event reached this machine's disk: `synced`, `memory` (a journal with no\nfile, by configuration), or `not_durable` — held and replicated to peers, not on disk\nhere, and not acknowledged as durable. `unknown` from an executable that predates it.",
+                "default": "unknown"
               }
             },
             "required": [
@@ -47265,8 +47339,35 @@
               "event",
               "lamport"
             ],
-            "description": "What an operation wrote, as its answer to the caller. Every mesh operation is an event\nappended to this runtime's journal, and the caller is handed the three facts it cannot\nwork out for itself: the mesh-wide key of the thing it created, the event that says so,\nand the Lamport stamp that places it against everyone else's events.\n\nThe key is what a later operation is addressed by — a claim is released by the key its\nacquisition returned, never by the local name it was given — and the stamp is what a\ncaller waiting for a peer to catch up compares against.\n\n```\n# use std::sync::Arc;\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::HttpTransport;\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::of_root_commits;\n# let cooperation = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: \"0000000000000001\".into(),\n#     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![\"127.0.0.1:9\".into()],\n#     version: \"doc\".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),\n#     journal_path: None, registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),\n# }).unwrap();\nuse majordomus_cli::mesh::cooperation::Written;\nuse majordomus_cli::mesh::journal::{ClaimMode, SessionInfo};\n\nlet session = SessionInfo::named(\"s1\", \"cli\");\nlet written: Written = cooperation\n    .claim(&session, vec![\"docs\".into()], None, ClaimMode::Advisory, None)\n    .unwrap();\nassert!(written.lamport > 0, \"placed against every other runtime's events\");\n\n// and the key it returned is how the claim is addressed from here on\ncooperation.release(&written.key).unwrap();\n```",
-            "title": "Written"
+            "description": "What an operation wrote, as its answer to the caller. Every mesh operation is an event\nappended to this runtime's journal, and the caller is handed the three facts it cannot\nwork out for itself: the mesh-wide key of the thing it created, the event that says so,\nand the Lamport stamp that places it against everyone else's events.\n\nThe key is what a later operation is addressed by — a claim is released by the key its\nacquisition returned, never by the local name it was given — and the stamp is what a\ncaller waiting for a peer to catch up compares against.\n\n```\n# use std::sync::Arc;\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::HttpTransport;\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::of_root_commits;\n# let cooperation = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: \"0000000000000001\".into(),\n#     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![\"127.0.0.1:9\".into()],\n#     version: \"doc\".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),\n#     journal_path: None, registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),\n# }).unwrap();\nuse majordomus_cli::mesh::cooperation::Written;\nuse majordomus_cli::mesh::journal::{ClaimMode, Durability, SessionInfo};\n\nlet session = SessionInfo::named(\"s1\", \"cli\");\nlet written: Written = cooperation\n    .claim(&session, vec![\"docs\".into()], None, ClaimMode::Advisory, None)\n    .unwrap();\nassert!(written.lamport > 0, \"placed against every other runtime's events\");\nassert_eq!(written.durability, Durability::Memory, \"this journal has no file\");\n\n// and the key it returned is how the claim is addressed from here on\ncooperation.release(&written.key).unwrap();\n```",
+            "title": "Written",
+            "$defs": {
+              "Durability": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "synced",
+                    "description": "Appended to the journal file and synced (`fsync` of its data) before the append\nreturned."
+                  },
+                  {
+                    "type": "string",
+                    "const": "memory",
+                    "description": "The journal has no file: it lives in memory and its peers, by configuration."
+                  },
+                  {
+                    "type": "string",
+                    "const": "not_durable",
+                    "description": "The write to the journal file failed. The event is held in memory and replicated to\npeers, and is lost to this machine when the runtime restarts unless a peer still holds\nit. It is not acknowledged as durable."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unknown",
+                    "description": "Not reported: an answer from an executable that predates this field."
+                  }
+                ],
+                "description": "Whether an event this runtime wrote reached this machine's disk: what an append\nacknowledges, and the only thing a caller may say about it.\n\n```\nuse majordomus_cli::mesh::journal::Durability;\nassert_eq!(serde_json::to_value(Durability::NotDurable).unwrap(), \"not_durable\");\nassert_eq!(Durability::default(), Durability::Unknown, \"an answer that did not say\");\nassert!(Durability::Synced.is_on_disk() && !Durability::NotDurable.is_on_disk());\n```"
+              }
+            }
           }
         },
         "provenance": {
@@ -50443,6 +50544,11 @@
                 "format": "uint64",
                 "minimum": 0,
                 "description": "The event's Lamport stamp."
+              },
+              "durability": {
+                "$ref": "#/$defs/Durability",
+                "description": "Whether the event reached this machine's disk: `synced`, `memory` (a journal with no\nfile, by configuration), or `not_durable` — held and replicated to peers, not on disk\nhere, and not acknowledged as durable. `unknown` from an executable that predates it.",
+                "default": "unknown"
               }
             },
             "required": [
@@ -50450,8 +50556,35 @@
               "event",
               "lamport"
             ],
-            "description": "What an operation wrote, as its answer to the caller. Every mesh operation is an event\nappended to this runtime's journal, and the caller is handed the three facts it cannot\nwork out for itself: the mesh-wide key of the thing it created, the event that says so,\nand the Lamport stamp that places it against everyone else's events.\n\nThe key is what a later operation is addressed by — a claim is released by the key its\nacquisition returned, never by the local name it was given — and the stamp is what a\ncaller waiting for a peer to catch up compares against.\n\n```\n# use std::sync::Arc;\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::HttpTransport;\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::of_root_commits;\n# let cooperation = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: \"0000000000000001\".into(),\n#     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![\"127.0.0.1:9\".into()],\n#     version: \"doc\".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),\n#     journal_path: None, registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),\n# }).unwrap();\nuse majordomus_cli::mesh::cooperation::Written;\nuse majordomus_cli::mesh::journal::{ClaimMode, SessionInfo};\n\nlet session = SessionInfo::named(\"s1\", \"cli\");\nlet written: Written = cooperation\n    .claim(&session, vec![\"docs\".into()], None, ClaimMode::Advisory, None)\n    .unwrap();\nassert!(written.lamport > 0, \"placed against every other runtime's events\");\n\n// and the key it returned is how the claim is addressed from here on\ncooperation.release(&written.key).unwrap();\n```",
-            "title": "Written"
+            "description": "What an operation wrote, as its answer to the caller. Every mesh operation is an event\nappended to this runtime's journal, and the caller is handed the three facts it cannot\nwork out for itself: the mesh-wide key of the thing it created, the event that says so,\nand the Lamport stamp that places it against everyone else's events.\n\nThe key is what a later operation is addressed by — a claim is released by the key its\nacquisition returned, never by the local name it was given — and the stamp is what a\ncaller waiting for a peer to catch up compares against.\n\n```\n# use std::sync::Arc;\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::HttpTransport;\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::of_root_commits;\n# let cooperation = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: \"0000000000000001\".into(),\n#     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![\"127.0.0.1:9\".into()],\n#     version: \"doc\".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),\n#     journal_path: None, registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),\n# }).unwrap();\nuse majordomus_cli::mesh::cooperation::Written;\nuse majordomus_cli::mesh::journal::{ClaimMode, Durability, SessionInfo};\n\nlet session = SessionInfo::named(\"s1\", \"cli\");\nlet written: Written = cooperation\n    .claim(&session, vec![\"docs\".into()], None, ClaimMode::Advisory, None)\n    .unwrap();\nassert!(written.lamport > 0, \"placed against every other runtime's events\");\nassert_eq!(written.durability, Durability::Memory, \"this journal has no file\");\n\n// and the key it returned is how the claim is addressed from here on\ncooperation.release(&written.key).unwrap();\n```",
+            "title": "Written",
+            "$defs": {
+              "Durability": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "synced",
+                    "description": "Appended to the journal file and synced (`fsync` of its data) before the append\nreturned."
+                  },
+                  {
+                    "type": "string",
+                    "const": "memory",
+                    "description": "The journal has no file: it lives in memory and its peers, by configuration."
+                  },
+                  {
+                    "type": "string",
+                    "const": "not_durable",
+                    "description": "The write to the journal file failed. The event is held in memory and replicated to\npeers, and is lost to this machine when the runtime restarts unless a peer still holds\nit. It is not acknowledged as durable."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unknown",
+                    "description": "Not reported: an answer from an executable that predates this field."
+                  }
+                ],
+                "description": "Whether an event this runtime wrote reached this machine's disk: what an append\nacknowledges, and the only thing a caller may say about it.\n\n```\nuse majordomus_cli::mesh::journal::Durability;\nassert_eq!(serde_json::to_value(Durability::NotDurable).unwrap(), \"not_durable\");\nassert_eq!(Durability::default(), Durability::Unknown, \"an answer that did not say\");\nassert!(Durability::Synced.is_on_disk() && !Durability::NotDurable.is_on_disk());\n```"
+              }
+            }
           }
         },
         "provenance": {
@@ -50550,6 +50683,11 @@
                 "format": "uint64",
                 "minimum": 0,
                 "description": "The event's Lamport stamp."
+              },
+              "durability": {
+                "$ref": "#/$defs/Durability",
+                "description": "Whether the event reached this machine's disk: `synced`, `memory` (a journal with no\nfile, by configuration), or `not_durable` — held and replicated to peers, not on disk\nhere, and not acknowledged as durable. `unknown` from an executable that predates it.",
+                "default": "unknown"
               }
             },
             "required": [
@@ -50557,8 +50695,35 @@
               "event",
               "lamport"
             ],
-            "description": "What an operation wrote, as its answer to the caller. Every mesh operation is an event\nappended to this runtime's journal, and the caller is handed the three facts it cannot\nwork out for itself: the mesh-wide key of the thing it created, the event that says so,\nand the Lamport stamp that places it against everyone else's events.\n\nThe key is what a later operation is addressed by — a claim is released by the key its\nacquisition returned, never by the local name it was given — and the stamp is what a\ncaller waiting for a peer to catch up compares against.\n\n```\n# use std::sync::Arc;\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::HttpTransport;\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::of_root_commits;\n# let cooperation = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: \"0000000000000001\".into(),\n#     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![\"127.0.0.1:9\".into()],\n#     version: \"doc\".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),\n#     journal_path: None, registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),\n# }).unwrap();\nuse majordomus_cli::mesh::cooperation::Written;\nuse majordomus_cli::mesh::journal::{ClaimMode, SessionInfo};\n\nlet session = SessionInfo::named(\"s1\", \"cli\");\nlet written: Written = cooperation\n    .claim(&session, vec![\"docs\".into()], None, ClaimMode::Advisory, None)\n    .unwrap();\nassert!(written.lamport > 0, \"placed against every other runtime's events\");\n\n// and the key it returned is how the claim is addressed from here on\ncooperation.release(&written.key).unwrap();\n```",
-            "title": "Written"
+            "description": "What an operation wrote, as its answer to the caller. Every mesh operation is an event\nappended to this runtime's journal, and the caller is handed the three facts it cannot\nwork out for itself: the mesh-wide key of the thing it created, the event that says so,\nand the Lamport stamp that places it against everyone else's events.\n\nThe key is what a later operation is addressed by — a claim is released by the key its\nacquisition returned, never by the local name it was given — and the stamp is what a\ncaller waiting for a peer to catch up compares against.\n\n```\n# use std::sync::Arc;\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::HttpTransport;\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::of_root_commits;\n# let cooperation = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: \"0000000000000001\".into(),\n#     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![\"127.0.0.1:9\".into()],\n#     version: \"doc\".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),\n#     journal_path: None, registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),\n# }).unwrap();\nuse majordomus_cli::mesh::cooperation::Written;\nuse majordomus_cli::mesh::journal::{ClaimMode, Durability, SessionInfo};\n\nlet session = SessionInfo::named(\"s1\", \"cli\");\nlet written: Written = cooperation\n    .claim(&session, vec![\"docs\".into()], None, ClaimMode::Advisory, None)\n    .unwrap();\nassert!(written.lamport > 0, \"placed against every other runtime's events\");\nassert_eq!(written.durability, Durability::Memory, \"this journal has no file\");\n\n// and the key it returned is how the claim is addressed from here on\ncooperation.release(&written.key).unwrap();\n```",
+            "title": "Written",
+            "$defs": {
+              "Durability": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "synced",
+                    "description": "Appended to the journal file and synced (`fsync` of its data) before the append\nreturned."
+                  },
+                  {
+                    "type": "string",
+                    "const": "memory",
+                    "description": "The journal has no file: it lives in memory and its peers, by configuration."
+                  },
+                  {
+                    "type": "string",
+                    "const": "not_durable",
+                    "description": "The write to the journal file failed. The event is held in memory and replicated to\npeers, and is lost to this machine when the runtime restarts unless a peer still holds\nit. It is not acknowledged as durable."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unknown",
+                    "description": "Not reported: an answer from an executable that predates this field."
+                  }
+                ],
+                "description": "Whether an event this runtime wrote reached this machine's disk: what an append\nacknowledges, and the only thing a caller may say about it.\n\n```\nuse majordomus_cli::mesh::journal::Durability;\nassert_eq!(serde_json::to_value(Durability::NotDurable).unwrap(), \"not_durable\");\nassert_eq!(Durability::default(), Durability::Unknown, \"an answer that did not say\");\nassert!(Durability::Synced.is_on_disk() && !Durability::NotDurable.is_on_disk());\n```"
+              }
+            }
           }
         },
         "provenance": {
@@ -50674,6 +50839,11 @@
                 "format": "uint64",
                 "minimum": 0,
                 "description": "The event's Lamport stamp."
+              },
+              "durability": {
+                "$ref": "#/$defs/Durability",
+                "description": "Whether the event reached this machine's disk: `synced`, `memory` (a journal with no\nfile, by configuration), or `not_durable` — held and replicated to peers, not on disk\nhere, and not acknowledged as durable. `unknown` from an executable that predates it.",
+                "default": "unknown"
               }
             },
             "required": [
@@ -50681,8 +50851,35 @@
               "event",
               "lamport"
             ],
-            "description": "What an operation wrote, as its answer to the caller. Every mesh operation is an event\nappended to this runtime's journal, and the caller is handed the three facts it cannot\nwork out for itself: the mesh-wide key of the thing it created, the event that says so,\nand the Lamport stamp that places it against everyone else's events.\n\nThe key is what a later operation is addressed by — a claim is released by the key its\nacquisition returned, never by the local name it was given — and the stamp is what a\ncaller waiting for a peer to catch up compares against.\n\n```\n# use std::sync::Arc;\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::HttpTransport;\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::of_root_commits;\n# let cooperation = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: \"0000000000000001\".into(),\n#     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![\"127.0.0.1:9\".into()],\n#     version: \"doc\".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),\n#     journal_path: None, registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),\n# }).unwrap();\nuse majordomus_cli::mesh::cooperation::Written;\nuse majordomus_cli::mesh::journal::{ClaimMode, SessionInfo};\n\nlet session = SessionInfo::named(\"s1\", \"cli\");\nlet written: Written = cooperation\n    .claim(&session, vec![\"docs\".into()], None, ClaimMode::Advisory, None)\n    .unwrap();\nassert!(written.lamport > 0, \"placed against every other runtime's events\");\n\n// and the key it returned is how the claim is addressed from here on\ncooperation.release(&written.key).unwrap();\n```",
-            "title": "Written"
+            "description": "What an operation wrote, as its answer to the caller. Every mesh operation is an event\nappended to this runtime's journal, and the caller is handed the three facts it cannot\nwork out for itself: the mesh-wide key of the thing it created, the event that says so,\nand the Lamport stamp that places it against everyone else's events.\n\nThe key is what a later operation is addressed by — a claim is released by the key its\nacquisition returned, never by the local name it was given — and the stamp is what a\ncaller waiting for a peer to catch up compares against.\n\n```\n# use std::sync::Arc;\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::HttpTransport;\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::of_root_commits;\n# let cooperation = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: \"0000000000000001\".into(),\n#     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![\"127.0.0.1:9\".into()],\n#     version: \"doc\".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),\n#     journal_path: None, registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),\n# }).unwrap();\nuse majordomus_cli::mesh::cooperation::Written;\nuse majordomus_cli::mesh::journal::{ClaimMode, Durability, SessionInfo};\n\nlet session = SessionInfo::named(\"s1\", \"cli\");\nlet written: Written = cooperation\n    .claim(&session, vec![\"docs\".into()], None, ClaimMode::Advisory, None)\n    .unwrap();\nassert!(written.lamport > 0, \"placed against every other runtime's events\");\nassert_eq!(written.durability, Durability::Memory, \"this journal has no file\");\n\n// and the key it returned is how the claim is addressed from here on\ncooperation.release(&written.key).unwrap();\n```",
+            "title": "Written",
+            "$defs": {
+              "Durability": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "synced",
+                    "description": "Appended to the journal file and synced (`fsync` of its data) before the append\nreturned."
+                  },
+                  {
+                    "type": "string",
+                    "const": "memory",
+                    "description": "The journal has no file: it lives in memory and its peers, by configuration."
+                  },
+                  {
+                    "type": "string",
+                    "const": "not_durable",
+                    "description": "The write to the journal file failed. The event is held in memory and replicated to\npeers, and is lost to this machine when the runtime restarts unless a peer still holds\nit. It is not acknowledged as durable."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unknown",
+                    "description": "Not reported: an answer from an executable that predates this field."
+                  }
+                ],
+                "description": "Whether an event this runtime wrote reached this machine's disk: what an append\nacknowledges, and the only thing a caller may say about it.\n\n```\nuse majordomus_cli::mesh::journal::Durability;\nassert_eq!(serde_json::to_value(Durability::NotDurable).unwrap(), \"not_durable\");\nassert_eq!(Durability::default(), Durability::Unknown, \"an answer that did not say\");\nassert!(Durability::Synced.is_on_disk() && !Durability::NotDurable.is_on_disk());\n```"
+              }
+            }
           }
         },
         "provenance": {
@@ -50776,6 +50973,11 @@
                 "format": "uint64",
                 "minimum": 0,
                 "description": "The event's Lamport stamp."
+              },
+              "durability": {
+                "$ref": "#/$defs/Durability",
+                "description": "Whether the event reached this machine's disk: `synced`, `memory` (a journal with no\nfile, by configuration), or `not_durable` — held and replicated to peers, not on disk\nhere, and not acknowledged as durable. `unknown` from an executable that predates it.",
+                "default": "unknown"
               }
             },
             "required": [
@@ -50783,8 +50985,35 @@
               "event",
               "lamport"
             ],
-            "description": "What an operation wrote, as its answer to the caller. Every mesh operation is an event\nappended to this runtime's journal, and the caller is handed the three facts it cannot\nwork out for itself: the mesh-wide key of the thing it created, the event that says so,\nand the Lamport stamp that places it against everyone else's events.\n\nThe key is what a later operation is addressed by — a claim is released by the key its\nacquisition returned, never by the local name it was given — and the stamp is what a\ncaller waiting for a peer to catch up compares against.\n\n```\n# use std::sync::Arc;\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::HttpTransport;\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::of_root_commits;\n# let cooperation = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: \"0000000000000001\".into(),\n#     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![\"127.0.0.1:9\".into()],\n#     version: \"doc\".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),\n#     journal_path: None, registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),\n# }).unwrap();\nuse majordomus_cli::mesh::cooperation::Written;\nuse majordomus_cli::mesh::journal::{ClaimMode, SessionInfo};\n\nlet session = SessionInfo::named(\"s1\", \"cli\");\nlet written: Written = cooperation\n    .claim(&session, vec![\"docs\".into()], None, ClaimMode::Advisory, None)\n    .unwrap();\nassert!(written.lamport > 0, \"placed against every other runtime's events\");\n\n// and the key it returned is how the claim is addressed from here on\ncooperation.release(&written.key).unwrap();\n```",
-            "title": "Written"
+            "description": "What an operation wrote, as its answer to the caller. Every mesh operation is an event\nappended to this runtime's journal, and the caller is handed the three facts it cannot\nwork out for itself: the mesh-wide key of the thing it created, the event that says so,\nand the Lamport stamp that places it against everyone else's events.\n\nThe key is what a later operation is addressed by — a claim is released by the key its\nacquisition returned, never by the local name it was given — and the stamp is what a\ncaller waiting for a peer to catch up compares against.\n\n```\n# use std::sync::Arc;\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::HttpTransport;\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::of_root_commits;\n# let cooperation = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: \"0000000000000001\".into(),\n#     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![\"127.0.0.1:9\".into()],\n#     version: \"doc\".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),\n#     journal_path: None, registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),\n# }).unwrap();\nuse majordomus_cli::mesh::cooperation::Written;\nuse majordomus_cli::mesh::journal::{ClaimMode, Durability, SessionInfo};\n\nlet session = SessionInfo::named(\"s1\", \"cli\");\nlet written: Written = cooperation\n    .claim(&session, vec![\"docs\".into()], None, ClaimMode::Advisory, None)\n    .unwrap();\nassert!(written.lamport > 0, \"placed against every other runtime's events\");\nassert_eq!(written.durability, Durability::Memory, \"this journal has no file\");\n\n// and the key it returned is how the claim is addressed from here on\ncooperation.release(&written.key).unwrap();\n```",
+            "title": "Written",
+            "$defs": {
+              "Durability": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "synced",
+                    "description": "Appended to the journal file and synced (`fsync` of its data) before the append\nreturned."
+                  },
+                  {
+                    "type": "string",
+                    "const": "memory",
+                    "description": "The journal has no file: it lives in memory and its peers, by configuration."
+                  },
+                  {
+                    "type": "string",
+                    "const": "not_durable",
+                    "description": "The write to the journal file failed. The event is held in memory and replicated to\npeers, and is lost to this machine when the runtime restarts unless a peer still holds\nit. It is not acknowledged as durable."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unknown",
+                    "description": "Not reported: an answer from an executable that predates this field."
+                  }
+                ],
+                "description": "Whether an event this runtime wrote reached this machine's disk: what an append\nacknowledges, and the only thing a caller may say about it.\n\n```\nuse majordomus_cli::mesh::journal::Durability;\nassert_eq!(serde_json::to_value(Durability::NotDurable).unwrap(), \"not_durable\");\nassert_eq!(Durability::default(), Durability::Unknown, \"an answer that did not say\");\nassert!(Durability::Synced.is_on_disk() && !Durability::NotDurable.is_on_disk());\n```"
+              }
+            }
           }
         },
         "provenance": {
@@ -50864,6 +51093,11 @@
                 "format": "uint64",
                 "minimum": 0,
                 "description": "The event's Lamport stamp."
+              },
+              "durability": {
+                "$ref": "#/$defs/Durability",
+                "description": "Whether the event reached this machine's disk: `synced`, `memory` (a journal with no\nfile, by configuration), or `not_durable` — held and replicated to peers, not on disk\nhere, and not acknowledged as durable. `unknown` from an executable that predates it.",
+                "default": "unknown"
               }
             },
             "required": [
@@ -50871,8 +51105,35 @@
               "event",
               "lamport"
             ],
-            "description": "What an operation wrote, as its answer to the caller. Every mesh operation is an event\nappended to this runtime's journal, and the caller is handed the three facts it cannot\nwork out for itself: the mesh-wide key of the thing it created, the event that says so,\nand the Lamport stamp that places it against everyone else's events.\n\nThe key is what a later operation is addressed by — a claim is released by the key its\nacquisition returned, never by the local name it was given — and the stamp is what a\ncaller waiting for a peer to catch up compares against.\n\n```\n# use std::sync::Arc;\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::HttpTransport;\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::of_root_commits;\n# let cooperation = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: \"0000000000000001\".into(),\n#     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![\"127.0.0.1:9\".into()],\n#     version: \"doc\".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),\n#     journal_path: None, registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),\n# }).unwrap();\nuse majordomus_cli::mesh::cooperation::Written;\nuse majordomus_cli::mesh::journal::{ClaimMode, SessionInfo};\n\nlet session = SessionInfo::named(\"s1\", \"cli\");\nlet written: Written = cooperation\n    .claim(&session, vec![\"docs\".into()], None, ClaimMode::Advisory, None)\n    .unwrap();\nassert!(written.lamport > 0, \"placed against every other runtime's events\");\n\n// and the key it returned is how the claim is addressed from here on\ncooperation.release(&written.key).unwrap();\n```",
-            "title": "Written"
+            "description": "What an operation wrote, as its answer to the caller. Every mesh operation is an event\nappended to this runtime's journal, and the caller is handed the three facts it cannot\nwork out for itself: the mesh-wide key of the thing it created, the event that says so,\nand the Lamport stamp that places it against everyone else's events.\n\nThe key is what a later operation is addressed by — a claim is released by the key its\nacquisition returned, never by the local name it was given — and the stamp is what a\ncaller waiting for a peer to catch up compares against.\n\n```\n# use std::sync::Arc;\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::HttpTransport;\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::of_root_commits;\n# let cooperation = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: \"0000000000000001\".into(),\n#     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![\"127.0.0.1:9\".into()],\n#     version: \"doc\".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),\n#     journal_path: None, registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),\n# }).unwrap();\nuse majordomus_cli::mesh::cooperation::Written;\nuse majordomus_cli::mesh::journal::{ClaimMode, Durability, SessionInfo};\n\nlet session = SessionInfo::named(\"s1\", \"cli\");\nlet written: Written = cooperation\n    .claim(&session, vec![\"docs\".into()], None, ClaimMode::Advisory, None)\n    .unwrap();\nassert!(written.lamport > 0, \"placed against every other runtime's events\");\nassert_eq!(written.durability, Durability::Memory, \"this journal has no file\");\n\n// and the key it returned is how the claim is addressed from here on\ncooperation.release(&written.key).unwrap();\n```",
+            "title": "Written",
+            "$defs": {
+              "Durability": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "synced",
+                    "description": "Appended to the journal file and synced (`fsync` of its data) before the append\nreturned."
+                  },
+                  {
+                    "type": "string",
+                    "const": "memory",
+                    "description": "The journal has no file: it lives in memory and its peers, by configuration."
+                  },
+                  {
+                    "type": "string",
+                    "const": "not_durable",
+                    "description": "The write to the journal file failed. The event is held in memory and replicated to\npeers, and is lost to this machine when the runtime restarts unless a peer still holds\nit. It is not acknowledged as durable."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unknown",
+                    "description": "Not reported: an answer from an executable that predates this field."
+                  }
+                ],
+                "description": "Whether an event this runtime wrote reached this machine's disk: what an append\nacknowledges, and the only thing a caller may say about it.\n\n```\nuse majordomus_cli::mesh::journal::Durability;\nassert_eq!(serde_json::to_value(Durability::NotDurable).unwrap(), \"not_durable\");\nassert_eq!(Durability::default(), Durability::Unknown, \"an answer that did not say\");\nassert!(Durability::Synced.is_on_disk() && !Durability::NotDurable.is_on_disk());\n```"
+              }
+            }
           }
         },
         "provenance": {
@@ -51022,6 +51283,11 @@
                 "format": "uint64",
                 "minimum": 0,
                 "description": "The event's Lamport stamp."
+              },
+              "durability": {
+                "$ref": "#/$defs/Durability",
+                "description": "Whether the event reached this machine's disk: `synced`, `memory` (a journal with no\nfile, by configuration), or `not_durable` — held and replicated to peers, not on disk\nhere, and not acknowledged as durable. `unknown` from an executable that predates it.",
+                "default": "unknown"
               }
             },
             "required": [
@@ -51029,8 +51295,35 @@
               "event",
               "lamport"
             ],
-            "description": "What an operation wrote, as its answer to the caller. Every mesh operation is an event\nappended to this runtime's journal, and the caller is handed the three facts it cannot\nwork out for itself: the mesh-wide key of the thing it created, the event that says so,\nand the Lamport stamp that places it against everyone else's events.\n\nThe key is what a later operation is addressed by — a claim is released by the key its\nacquisition returned, never by the local name it was given — and the stamp is what a\ncaller waiting for a peer to catch up compares against.\n\n```\n# use std::sync::Arc;\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::HttpTransport;\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::of_root_commits;\n# let cooperation = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: \"0000000000000001\".into(),\n#     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![\"127.0.0.1:9\".into()],\n#     version: \"doc\".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),\n#     journal_path: None, registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),\n# }).unwrap();\nuse majordomus_cli::mesh::cooperation::Written;\nuse majordomus_cli::mesh::journal::{ClaimMode, SessionInfo};\n\nlet session = SessionInfo::named(\"s1\", \"cli\");\nlet written: Written = cooperation\n    .claim(&session, vec![\"docs\".into()], None, ClaimMode::Advisory, None)\n    .unwrap();\nassert!(written.lamport > 0, \"placed against every other runtime's events\");\n\n// and the key it returned is how the claim is addressed from here on\ncooperation.release(&written.key).unwrap();\n```",
-            "title": "Written"
+            "description": "What an operation wrote, as its answer to the caller. Every mesh operation is an event\nappended to this runtime's journal, and the caller is handed the three facts it cannot\nwork out for itself: the mesh-wide key of the thing it created, the event that says so,\nand the Lamport stamp that places it against everyone else's events.\n\nThe key is what a later operation is addressed by — a claim is released by the key its\nacquisition returned, never by the local name it was given — and the stamp is what a\ncaller waiting for a peer to catch up compares against.\n\n```\n# use std::sync::Arc;\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::HttpTransport;\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::of_root_commits;\n# let cooperation = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: \"0000000000000001\".into(),\n#     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![\"127.0.0.1:9\".into()],\n#     version: \"doc\".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),\n#     journal_path: None, registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),\n# }).unwrap();\nuse majordomus_cli::mesh::cooperation::Written;\nuse majordomus_cli::mesh::journal::{ClaimMode, Durability, SessionInfo};\n\nlet session = SessionInfo::named(\"s1\", \"cli\");\nlet written: Written = cooperation\n    .claim(&session, vec![\"docs\".into()], None, ClaimMode::Advisory, None)\n    .unwrap();\nassert!(written.lamport > 0, \"placed against every other runtime's events\");\nassert_eq!(written.durability, Durability::Memory, \"this journal has no file\");\n\n// and the key it returned is how the claim is addressed from here on\ncooperation.release(&written.key).unwrap();\n```",
+            "title": "Written",
+            "$defs": {
+              "Durability": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "synced",
+                    "description": "Appended to the journal file and synced (`fsync` of its data) before the append\nreturned."
+                  },
+                  {
+                    "type": "string",
+                    "const": "memory",
+                    "description": "The journal has no file: it lives in memory and its peers, by configuration."
+                  },
+                  {
+                    "type": "string",
+                    "const": "not_durable",
+                    "description": "The write to the journal file failed. The event is held in memory and replicated to\npeers, and is lost to this machine when the runtime restarts unless a peer still holds\nit. It is not acknowledged as durable."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unknown",
+                    "description": "Not reported: an answer from an executable that predates this field."
+                  }
+                ],
+                "description": "Whether an event this runtime wrote reached this machine's disk: what an append\nacknowledges, and the only thing a caller may say about it.\n\n```\nuse majordomus_cli::mesh::journal::Durability;\nassert_eq!(serde_json::to_value(Durability::NotDurable).unwrap(), \"not_durable\");\nassert_eq!(Durability::default(), Durability::Unknown, \"an answer that did not say\");\nassert!(Durability::Synced.is_on_disk() && !Durability::NotDurable.is_on_disk());\n```"
+              }
+            }
           }
         },
         "provenance": {
@@ -83883,7 +84176,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 110,
+        "capabilities": 115,
         "capability_ids": []
       },
       {
@@ -84506,7 +84799,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 405,
+        "capabilities": 421,
         "capability_ids": []
       },
       {
@@ -84622,7 +84915,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 39,
+        "capabilities": 40,
         "capability_ids": []
       },
       {
@@ -84936,7 +85229,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 180,
+        "capabilities": 184,
         "capability_ids": []
       },
       {
@@ -85007,7 +85300,7 @@
         "title": "session",
         "description": "Declarative objects of kind 'session' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 89,
+        "capabilities": 90,
         "capability_ids": []
       },
       {
@@ -85080,7 +85373,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 505,
+        "capabilities": 524,
         "capability_ids": []
       },
       {
@@ -85171,7 +85464,7 @@
     ]
   },
   "index": {
-    "fingerprint": "a182d4b5e0cfd942c57e56d3eaa5dc8e717a2ec62c6b68a8effd6d0dff389f2a",
+    "fingerprint": "c04be90a130732141b2adbe404231b34f52e3cb30d73e46607c62a3efac44f88",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -85194,7 +85487,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 110,
+      "adr": 115,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -85211,21 +85504,21 @@
       "gap": 3,
       "implementation": 52,
       "intent": 4,
-      "issue": 405,
+      "issue": 421,
       "knowledge": 4,
       "mesh-declaration": 1,
-      "milestone": 39,
+      "milestone": 40,
       "moment": 38,
       "policy": 1,
       "profile": 4,
       "prompt": 4,
       "release-record": 27,
-      "rule": 180,
+      "rule": 184,
       "scope": 1,
-      "session": 89,
+      "session": 90,
       "skill": 8,
       "taxonomy": 10,
-      "test": 505,
+      "test": 524,
       "use-case": 49,
       "workspace": 1
     },
@@ -85753,7 +86046,7 @@
         "path": ".ai/repo/adrs/0033-an-execution-is-a-watched-capability-call-not-a-second-registry.md",
         "section": "adrs",
         "source_class": "adr",
-        "bytes": 11327,
+        "bytes": 10819,
         "tags": [
           "architecture",
           "capabilities",
@@ -86196,7 +86489,7 @@
         "path": ".ai/repo/adrs/0067-mesh-cooperation-is-authenticated-links-and-one-replicated-journal.md",
         "section": "adrs",
         "source_class": "adr",
-        "bytes": 10862,
+        "bytes": 18612,
         "tags": [
           "mesh",
           "cooperation",
@@ -86298,7 +86591,7 @@
         "path": ".ai/repo/adrs/0075-intent-realization-is-a-join-and-closed-work-does-not-outrank-evidence.md",
         "section": "adrs",
         "source_class": "adr",
-        "bytes": 6071,
+        "bytes": 10377,
         "tags": [
           "intent",
           "session",
@@ -86469,7 +86762,7 @@
         "path": ".ai/repo/adrs/0091-knowledge-is-derived-at-the-episode-boundary-and-a-person-promotes-it.md",
         "section": "adrs",
         "source_class": "adr",
-        "bytes": 25311,
+        "bytes": 28001,
         "tags": [
           "knowledge",
           "sessions",
@@ -86520,7 +86813,7 @@
         "path": ".ai/repo/adrs/0101-pull-requests-are-integrated-one-at-a-time-against-the-current-master.md",
         "section": "adrs",
         "source_class": "adr",
-        "bytes": 31454,
+        "bytes": 35875,
         "tags": [
           "integration",
           "git",
@@ -86538,7 +86831,7 @@
         "path": ".ai/repo/adrs/0103-every-client-gets-an-episode-and-every-provider-capability-cites-its-evidence.md",
         "section": "adrs",
         "source_class": "adr",
-        "bytes": 11084,
+        "bytes": 11274,
         "tags": [
           "architecture",
           "session",
@@ -86573,7 +86866,7 @@
         "path": ".ai/repo/adrs/0105-a-handover-moves-between-machines-as-a-signed-record-in-a-ref-of-its-own.md",
         "section": "adrs",
         "source_class": "adr",
-        "bytes": 10777,
+        "bytes": 12675,
         "tags": [
           "architecture",
           "continuity",
@@ -86664,6 +86957,22 @@
           "session",
           "handover",
           "provider"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0124",
+        "kind": "adr",
+        "identity": "adr-0124",
+        "title": "An uploaded prompt pack is a provenance-tracked input artifact, not a second intent model",
+        "description": "An uploaded prompt pack is a provenance-tracked input artifact, not a second intent model",
+        "path": ".ai/repo/adrs/0124-an-uploaded-prompt-pack-is-a-provenance-tracked-input-artifa.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 7982,
+        "tags": [
+          "artifact-ingestion",
+          "mesh-pack",
+          "prompt-pack"
         ]
       },
       {
@@ -86988,6 +87297,23 @@
         ]
       },
       {
+        "uri": "majordomus://adr/adr-0157",
+        "kind": "adr",
+        "identity": "adr-0157",
+        "title": "A mesh node may offer a shared build cache, peers discover and select it, and compilation never depends on it",
+        "description": "A mesh node may offer a shared build cache, peers discover and select it, and compilation never depends on it",
+        "path": ".ai/repo/adrs/0157-the-mesh-offers-a-shared-build-cache.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 7644,
+        "tags": [
+          "mesh",
+          "build",
+          "cache",
+          "capability"
+        ]
+      },
+      {
         "uri": "majordomus://adr/adr-0158",
         "kind": "adr",
         "identity": "adr-0158",
@@ -87036,6 +87362,56 @@
           "release",
           "mesh",
           "runtime"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0163",
+        "kind": "adr",
+        "identity": "adr-0163",
+        "title": "A server serves only a share of its own version, with the surfaces it offers",
+        "description": "A server serves only a share of its own version, with the surfaces it offers",
+        "path": ".ai/repo/adrs/0163-a-server-serves-only-a-share-of-its-own-version.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 11640,
+        "tags": [
+          "server",
+          "distribution",
+          "ui",
+          "resilience"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0164",
+        "kind": "adr",
+        "identity": "adr-0164",
+        "title": "A durable record names the session that wrote it, and relates a task only when the task is that session's",
+        "description": "A durable record names the session that wrote it, and relates a task only when the task is that session's",
+        "path": ".ai/repo/adrs/0164-a-record-names-the-session-that-wrote-it.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 6226,
+        "tags": [
+          "sessions",
+          "attribution",
+          "records"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0165",
+        "kind": "adr",
+        "identity": "adr-0165",
+        "title": "A skill is derived for every domain of the registry and shown wherever skills are",
+        "description": "A skill is derived for every domain of the registry and shown wherever skills are",
+        "path": ".ai/repo/adrs/0165-a-skill-is-derived-for-every-domain-of-the-registry.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 4195,
+        "tags": [
+          "capabilities",
+          "providers",
+          "editors",
+          "skills"
         ]
       },
       {
@@ -89842,7 +90218,7 @@
         "description": "The repository's architecture decisions as objects: list, show, ask for the next free identity, propose one with provenance, and validate the whole set against this tree and every other ref.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 34677
+        "bytes": 35346
       },
       {
         "uri": "majordomus://command/archive",
@@ -89852,7 +90228,7 @@
         "description": "Take a snapshot of the tracked tree that can be read, or checked, somewhere else.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 34677
+        "bytes": 35346
       },
       {
         "uri": "majordomus://command/bench",
@@ -89862,7 +90238,7 @@
         "description": "Time every public command of the registry, cold and warm, and compare with the baseline.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 34677
+        "bytes": 35346
       },
       {
         "uri": "majordomus://command/capture",
@@ -89872,7 +90248,7 @@
         "description": "Record the person's raw prompts from a provider hook as a record with its renderings, draw the episode boundary from the provider's own lifecycle hooks, install those hooks, reconcile and prune the archive, and report what each provider actually does here.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 34677
+        "bytes": 35346
       },
       {
         "uri": "majordomus://command/check",
@@ -89882,7 +90258,7 @@
         "description": "Is the current task still consistent with its policy, its scope and this checkout?",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 34677
+        "bytes": 35346
       },
       {
         "uri": "majordomus://command/checkpoint",
@@ -89892,7 +90268,7 @@
         "description": "Record compact progress inside the active task, so the next worker does not start over.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 34677
+        "bytes": 35346
       },
       {
         "uri": "majordomus://command/context",
@@ -89902,7 +90278,7 @@
         "description": "What the next worker needs to know now, in authority order and within a budget.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 34677
+        "bytes": 35346
       },
       {
         "uri": "majordomus://command/decision",
@@ -89912,17 +90288,17 @@
         "description": "Record a decision that was made between real alternatives, with its reason, and read them back.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 34677
+        "bytes": 35346
       },
       {
         "uri": "majordomus://command/doctor",
         "kind": "command",
         "identity": "doctor",
         "title": "doctor",
-        "description": "Is Majordomus itself healthy, and is every enforcement it declares actually wired here?",
+        "description": "It checks governance only: is Majordomus itself healthy, and is every enforcement it declares actually wired here?",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 34677
+        "bytes": 35346
       },
       {
         "uri": "majordomus://command/doctrine",
@@ -89932,7 +90308,7 @@
         "description": "What rules are enforced, by what, and whether each one is actually wired.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 34677
+        "bytes": 35346
       },
       {
         "uri": "majordomus://command/evidence",
@@ -89942,7 +90318,7 @@
         "description": "Record evidence against the active task: one obligation it declared, discharged, or one validation gate of the CI model that has reported — each as a ledger line carrying the hash of the files it was taken over.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 34677
+        "bytes": 35346
       },
       {
         "uri": "majordomus://command/finish",
@@ -89952,7 +90328,7 @@
         "description": "Evaluate the finish contract and refuse the outcome if any line of it is unmet.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 34677
+        "bytes": 35346
       },
       {
         "uri": "majordomus://command/handover",
@@ -89962,7 +90338,7 @@
         "description": "Write an append-only continuation record, and resolve the most relevant prior one.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 34677
+        "bytes": 35346
       },
       {
         "uri": "majordomus://command/help",
@@ -89972,7 +90348,7 @@
         "description": "Print the usage text, which is the list of every public command.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 34677
+        "bytes": 35346
       },
       {
         "uri": "majordomus://command/history",
@@ -89982,7 +90358,7 @@
         "description": "Read the append-only ledger back, filtered by task, event or time.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 34677
+        "bytes": 35346
       },
       {
         "uri": "majordomus://command/init",
@@ -89992,7 +90368,7 @@
         "description": "Create the .ai/ layer in this repository, and refuse to overwrite an existing one.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 34677
+        "bytes": 35346
       },
       {
         "uri": "majordomus://command/knowledge",
@@ -90002,7 +90378,7 @@
         "description": "The compiled index over what this repository states, and the candidate records it derives from what an episode did.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 34677
+        "bytes": 35346
       },
       {
         "uri": "majordomus://command/migrate",
@@ -90012,7 +90388,7 @@
         "description": "Move pre-.ai project data from .majordomus/ into .ai/, explicitly and backed up.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 34677
+        "bytes": 35346
       },
       {
         "uri": "majordomus://command/plan",
@@ -90022,7 +90398,7 @@
         "description": "The milestone and issue model — validate it, read it, and move one issue through it.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 34677
+        "bytes": 35346
       },
       {
         "uri": "majordomus://command/prompt",
@@ -90032,7 +90408,7 @@
         "description": "List, show and render the repository's own prompt assets, substituting known tokens only.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 34677
+        "bytes": 35346
       },
       {
         "uri": "majordomus://command/question",
@@ -90042,7 +90418,7 @@
         "description": "Open a question that blocks acceptance, resolve it, and list what is still open.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 34677
+        "bytes": 35346
       },
       {
         "uri": "majordomus://command/recover",
@@ -90052,7 +90428,7 @@
         "description": "Close episodes nobody ended, fold duplicate records, classify the stores' stray files.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 34677
+        "bytes": 35346
       },
       {
         "uri": "majordomus://command/rules",
@@ -90062,7 +90438,7 @@
         "description": "The effective rule set, vendored baseline plus project rules.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 34677
+        "bytes": 35346
       },
       {
         "uri": "majordomus://command/search",
@@ -90072,7 +90448,7 @@
         "description": "Find a durable record without reading all of them, in authority order.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 34677
+        "bytes": 35346
       },
       {
         "uri": "majordomus://command/session",
@@ -90082,7 +90458,7 @@
         "description": "Open, inspect and close one execution episode.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 34677
+        "bytes": 35346
       },
       {
         "uri": "majordomus://command/skills",
@@ -90092,7 +90468,7 @@
         "description": "The repository's skills — provider-neutral procedures under the skills section — listed, shown and checked from the one catalogue every surface reads.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 34677
+        "bytes": 35346
       },
       {
         "uri": "majordomus://command/start",
@@ -90102,7 +90478,7 @@
         "description": "Begin one scoped task under a profile, and refuse while another is active.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 34677
+        "bytes": 35346
       },
       {
         "uri": "majordomus://command/update",
@@ -90112,7 +90488,7 @@
         "description": "Regenerate every provider instruction file from the one policy, deterministically.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 34677
+        "bytes": 35346
       },
       {
         "uri": "majordomus://command/usecase",
@@ -90122,7 +90498,7 @@
         "description": "The executable use cases: list, show, validate, run against the real tool, coverage, impact, scaffold.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 34677
+        "bytes": 35346
       },
       {
         "uri": "majordomus://command/version",
@@ -90132,7 +90508,7 @@
         "description": "Print the version, without needing a repository or an installation.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 34677
+        "bytes": 35346
       },
       {
         "uri": "majordomus://command/watch",
@@ -90142,7 +90518,7 @@
         "description": "What has drifted since the last update — policy, projections, state, retention.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 34677
+        "bytes": 35346
       },
       {
         "uri": "majordomus://context/ai.layer",
@@ -90502,7 +90878,7 @@
         "path": ".ai/repo/sessions/README.md",
         "section": "sessions",
         "source_class": "context",
-        "bytes": 7086
+        "bytes": 7993
       },
       {
         "uri": "majordomus://context/ai.repo.skills",
@@ -90609,7 +90985,7 @@
         "description": "The cluster machines that derive a branch for a session, and the limits each must meet.",
         "path": ".ai/repo/offload/derive.yaml",
         "source_class": "derive-offload",
-        "bytes": 1937
+        "bytes": 2269
       },
       {
         "uri": "majordomus://distribution-model/share/distribution.yaml",
@@ -90797,7 +91173,7 @@
         "path": ".ai/repo/workflows/task-lifecycle.md",
         "section": "workflows",
         "source_class": "workflow",
-        "bytes": 6763
+        "bytes": 7192
       },
       {
         "uri": "majordomus://document/.ai/repo/workflows/use-cases.md",
@@ -90933,7 +91309,7 @@
         "title": "Continuous integration",
         "path": "docs/CI.md",
         "source_class": "document",
-        "bytes": 37989
+        "bytes": 38689
       },
       {
         "uri": "majordomus://document/docs/CLI.md",
@@ -90942,7 +91318,7 @@
         "title": "CLI specification — `majordomus`",
         "path": "docs/CLI.md",
         "source_class": "document",
-        "bytes": 138610
+        "bytes": 141415
       },
       {
         "uri": "majordomus://document/docs/COCKPIT.md",
@@ -90969,7 +91345,7 @@
         "title": "The command graph",
         "path": "docs/COMMANDS.md",
         "source_class": "document",
-        "bytes": 19525
+        "bytes": 19251
       },
       {
         "uri": "majordomus://document/docs/COMMIT.md",
@@ -91050,7 +91426,7 @@
         "title": "The development runtime",
         "path": "docs/DEVELOPMENT_RUNTIME.md",
         "source_class": "document",
-        "bytes": 38100
+        "bytes": 37337
       },
       {
         "uri": "majordomus://document/docs/DIAGRAMS.md",
@@ -91068,7 +91444,7 @@
         "title": "Distribution",
         "path": "docs/DISTRIBUTION.md",
         "source_class": "document",
-        "bytes": 36334
+        "bytes": 37968
       },
       {
         "uri": "majordomus://document/docs/DOCTRINE.md",
@@ -91077,7 +91453,7 @@
         "title": "Doctrine",
         "path": "docs/DOCTRINE.md",
         "source_class": "document",
-        "bytes": 24229
+        "bytes": 24460
       },
       {
         "uri": "majordomus://document/docs/DOGFOODING.md",
@@ -91113,7 +91489,7 @@
         "title": "Editors and agents",
         "path": "docs/EDITORS.md",
         "source_class": "document",
-        "bytes": 5855
+        "bytes": 6865
       },
       {
         "uri": "majordomus://document/docs/ENTRY.md",
@@ -91158,7 +91534,7 @@
         "title": "Executions — watching a capability call happen",
         "path": "docs/EXECUTIONS.md",
         "source_class": "document",
-        "bytes": 24830
+        "bytes": 25037
       },
       {
         "uri": "majordomus://document/docs/EXTRACTION_REPORT.md",
@@ -91248,7 +91624,7 @@
         "title": "Knowledge — what an episode learned, derived at its boundary and promoted by a person",
         "path": "docs/KNOWLEDGE.md",
         "source_class": "document",
-        "bytes": 21957
+        "bytes": 27464
       },
       {
         "uri": "majordomus://document/docs/LAUNCH.md",
@@ -91275,7 +91651,7 @@
         "title": "MCP surface — `majordomus mcp`",
         "path": "docs/MCP.md",
         "source_class": "document",
-        "bytes": 66855
+        "bytes": 73985
       },
       {
         "uri": "majordomus://document/docs/MESH.md",
@@ -91284,7 +91660,7 @@
         "title": "Majordomus Mesh",
         "path": "docs/MESH.md",
         "source_class": "document",
-        "bytes": 64404
+        "bytes": 65439
       },
       {
         "uri": "majordomus://document/docs/MODELS.md",
@@ -91356,7 +91732,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 161400
+        "bytes": 153376
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -91365,7 +91741,7 @@
         "title": "The preflight — what is in force here, and what proves it",
         "path": "docs/PREFLIGHT.md",
         "source_class": "document",
-        "bytes": 12600
+        "bytes": 12809
       },
       {
         "uri": "majordomus://document/docs/PRODUCT.md",
@@ -91437,7 +91813,7 @@
         "title": "File schemas — every file Majordomus reads or writes",
         "path": "docs/SCHEMAS.md",
         "source_class": "document",
-        "bytes": 80565
+        "bytes": 81007
       },
       {
         "uri": "majordomus://document/docs/SCOPE.md",
@@ -91914,7 +92290,7 @@
         "title": "The context a worker is given is assembled from durable state in authority order",
         "path": "docs/claims/context-assembly.md",
         "source_class": "claim_page",
-        "bytes": 3357
+        "bytes": 3541
       },
       {
         "uri": "majordomus://document/docs/claims/context-budget.md",
@@ -94424,7 +94800,7 @@
         "identity": "lib/check.sh",
         "path": "lib/check.sh",
         "source_class": "library",
-        "bytes": 17339
+        "bytes": 19482
       },
       {
         "uri": "majordomus://implementation/lib/checkpoint.sh",
@@ -94448,7 +94824,7 @@
         "identity": "lib/common.sh",
         "path": "lib/common.sh",
         "source_class": "library",
-        "bytes": 103671
+        "bytes": 105225
       },
       {
         "uri": "majordomus://implementation/lib/context.sh",
@@ -94456,7 +94832,7 @@
         "identity": "lib/context.sh",
         "path": "lib/context.sh",
         "source_class": "library",
-        "bytes": 48820
+        "bytes": 57462
       },
       {
         "uri": "majordomus://implementation/lib/context_docs.sh",
@@ -94496,7 +94872,7 @@
         "identity": "lib/doctor.sh",
         "path": "lib/doctor.sh",
         "source_class": "library",
-        "bytes": 94329
+        "bytes": 99268
       },
       {
         "uri": "majordomus://implementation/lib/doctrine.sh",
@@ -94592,7 +94968,7 @@
         "identity": "lib/knowledge.sh",
         "path": "lib/knowledge.sh",
         "source_class": "library",
-        "bytes": 109389
+        "bytes": 118573
       },
       {
         "uri": "majordomus://implementation/lib/machine_lock.sh",
@@ -94608,7 +94984,7 @@
         "identity": "lib/mermaid.awk",
         "path": "lib/mermaid.awk",
         "source_class": "engine",
-        "bytes": 1166
+        "bytes": 1997
       },
       {
         "uri": "majordomus://implementation/lib/migrate.sh",
@@ -94648,7 +95024,7 @@
         "identity": "lib/project.sh",
         "path": "lib/project.sh",
         "source_class": "library",
-        "bytes": 19750
+        "bytes": 19492
       },
       {
         "uri": "majordomus://implementation/lib/prompt.sh",
@@ -94672,7 +95048,7 @@
         "identity": "lib/recover.sh",
         "path": "lib/recover.sh",
         "source_class": "library",
-        "bytes": 48558
+        "bytes": 48654
       },
       {
         "uri": "majordomus://implementation/lib/rules.sh",
@@ -94704,7 +95080,7 @@
         "identity": "lib/session.sh",
         "path": "lib/session.sh",
         "source_class": "library",
-        "bytes": 68445
+        "bytes": 74137
       },
       {
         "uri": "majordomus://implementation/lib/session_context.sh",
@@ -95288,7 +95664,7 @@
         "path": ".ai/repo/project/issues/I0701.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1909
+        "bytes": 2565
       },
       {
         "uri": "majordomus://issue/I0702",
@@ -95453,7 +95829,7 @@
         "path": ".ai/repo/project/issues/I0812.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2454
+        "bytes": 2544
       },
       {
         "uri": "majordomus://issue/I0813",
@@ -95475,7 +95851,7 @@
         "path": ".ai/repo/project/issues/I0814.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2423
+        "bytes": 4053
       },
       {
         "uri": "majordomus://issue/I0815",
@@ -95717,7 +96093,7 @@
         "path": ".ai/repo/project/issues/I0836.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1153
+        "bytes": 1897
       },
       {
         "uri": "majordomus://issue/I0837",
@@ -96399,7 +96775,7 @@
         "path": ".ai/repo/project/issues/I1023.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1531
+        "bytes": 2049
       },
       {
         "uri": "majordomus://issue/I1024",
@@ -97037,7 +97413,7 @@
         "path": ".ai/repo/project/issues/I1409.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 5194
+        "bytes": 9279
       },
       {
         "uri": "majordomus://issue/I1501",
@@ -97543,7 +97919,7 @@
         "path": ".ai/repo/project/issues/I1966.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 4407
+        "bytes": 6978
       },
       {
         "uri": "majordomus://issue/I1967",
@@ -97609,7 +97985,7 @@
         "path": ".ai/repo/project/issues/I1984.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1689
+        "bytes": 3447
       },
       {
         "uri": "majordomus://issue/I1985",
@@ -97675,7 +98051,7 @@
         "path": ".ai/repo/project/issues/I1990.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1435
+        "bytes": 1851
       },
       {
         "uri": "majordomus://issue/I1991",
@@ -97862,7 +98238,7 @@
         "path": ".ai/repo/project/issues/I2074.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2409
+        "bytes": 3603
       },
       {
         "uri": "majordomus://issue/I2075",
@@ -97873,7 +98249,7 @@
         "path": ".ai/repo/project/issues/I2075.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1732
+        "bytes": 2460
       },
       {
         "uri": "majordomus://issue/I2114",
@@ -97895,7 +98271,7 @@
         "path": ".ai/repo/project/issues/I2123.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2951
+        "bytes": 4822
       },
       {
         "uri": "majordomus://issue/I2124",
@@ -97906,7 +98282,7 @@
         "path": ".ai/repo/project/issues/I2124.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2293
+        "bytes": 3548
       },
       {
         "uri": "majordomus://issue/I2126",
@@ -97939,7 +98315,7 @@
         "path": ".ai/repo/project/issues/I2128.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 4142
+        "bytes": 6352
       },
       {
         "uri": "majordomus://issue/I2129",
@@ -97994,7 +98370,7 @@
         "path": ".ai/repo/project/issues/I2134.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2749
+        "bytes": 4247
       },
       {
         "uri": "majordomus://issue/I2135",
@@ -98005,7 +98381,7 @@
         "path": ".ai/repo/project/issues/I2135.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3186
+        "bytes": 5924
       },
       {
         "uri": "majordomus://issue/I2137",
@@ -98071,7 +98447,7 @@
         "path": ".ai/repo/project/issues/I2151.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3518
+        "bytes": 5722
       },
       {
         "uri": "majordomus://issue/I2156",
@@ -98148,7 +98524,7 @@
         "path": ".ai/repo/project/issues/I2282.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3972
+        "bytes": 4702
       },
       {
         "uri": "majordomus://issue/I2288",
@@ -98347,6 +98723,72 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 986
+      },
+      {
+        "uri": "majordomus://issue/I2410",
+        "kind": "issue",
+        "identity": "I2410",
+        "title": "A trusted machine on the tailnet is found through Tailscale, with no address written by hand",
+        "description": "Add a Tailscale discovery provider beside multicast, broadcast and rendezvous: it reads the local tailnet's peers and offers each one's tailnet address on the declared port as a candidate, which the link then admits or refuses under the trust list.",
+        "path": ".ai/repo/project/issues/I2410.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2123
+      },
+      {
+        "uri": "majordomus://issue/I2411",
+        "kind": "issue",
+        "identity": "I2411",
+        "title": "A server whose mesh is enabled is reachable on the tailnet and the LAN, and only by a trusted peer",
+        "description": "When the mesh is enabled, the shared server listens and advertises on the machine's tailnet and LAN addresses as well as loopback, so a trusted peer can dial it, while a request from a non-loopback address stays limited to what runtime-trust allows.",
+        "path": ".ai/repo/project/issues/I2411.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1885
+      },
+      {
+        "uri": "majordomus://issue/I2412",
+        "kind": "issue",
+        "identity": "I2412",
+        "title": "`majordomus init` declares the mesh and enrols this machine's key, so a fresh repository cooperates",
+        "description": "A fresh `majordomus init` writes a mesh declaration (multicast and Tailscale discovery on, deny_unknown trust) and an enrolment command adds this machine's node key to it, so a repository becomes a mesh by init and one enrolment per machine.",
+        "path": ".ai/repo/project/issues/I2412.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1702
+      },
+      {
+        "uri": "majordomus://issue/I2413",
+        "kind": "issue",
+        "identity": "I2413",
+        "title": "A linked worktree cooperates through its repository's running server, and a start that cannot ensure one says why",
+        "description": "Mesh commands in a linked worktree with no server of its own use a running server of the same repository (the primary's, or the first ready one), and the session-start hook reports, never silently skips, when it cannot ensure a server.",
+        "path": ".ai/repo/project/issues/I2413.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1891
+      },
+      {
+        "uri": "majordomus://issue/I2414",
+        "kind": "issue",
+        "identity": "I2414",
+        "title": "mesh.state and mesh.peers answer a filtered summary that fits one tool answer",
+        "description": "Give mesh.state and mesh.peers inputs that narrow and summarise: a kind (sessions, claims, handovers, reviews), open-only, mine-only, a scope or PR substring and a limit, with a counts-only summary by default.",
+        "path": ".ai/repo/project/issues/I2414.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2358
+      },
+      {
+        "uri": "majordomus://issue/I2415",
+        "kind": "issue",
+        "identity": "I2415",
+        "title": "A mesh review request carries a body, can be withdrawn, and expires",
+        "description": "Give review requests a body beside the 256-byte subject, a withdraw event its requester may write, an optional expiry, and a result note the requester may attach to its own request, so a request ends instead of staying open forever.",
+        "path": ".ai/repo/project/issues/I2415.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1833
       },
       {
         "uri": "majordomus://issue/I2416",
@@ -98767,6 +99209,94 @@
         "bytes": 4263
       },
       {
+        "uri": "majordomus://issue/I2670",
+        "kind": "issue",
+        "identity": "I2670",
+        "title": "A build-cache offer is a typed model and its selection is a pure, explained function",
+        "description": "Model an offer (protocol, provider, scope, non-secret endpoint, bucket, priority, capacity, health) and select among offers deterministically with the reason.",
+        "path": ".ai/repo/project/issues/I2670.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1883
+      },
+      {
+        "uri": "majordomus://issue/I2671",
+        "kind": "issue",
+        "identity": "I2671",
+        "title": "A provider offers its cache as a signed, expiring mesh record, and a stopped provider goes stale",
+        "description": "Let a node publish its offer through the mesh journal so peers discover it without a committed endpoint, and let the offer expire when the provider stops.",
+        "path": ".ai/repo/project/issues/I2671.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1777
+      },
+      {
+        "uri": "majordomus://issue/I2672",
+        "kind": "issue",
+        "identity": "I2672",
+        "title": "The offers and the selection are one read, projected to CLI, MCP, HTTP and OpenAPI",
+        "description": "Declare the read once with capability! so that every surface answers the same offers, the same choice and the same reason.",
+        "path": ".ai/repo/project/issues/I2672.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1507
+      },
+      {
+        "uri": "majordomus://issue/I2673",
+        "kind": "issue",
+        "identity": "I2673",
+        "title": "The sccache client configuration is derived from the selected offer, local disk first",
+        "description": "Emit the sccache environment for the chosen offer through majordomus env, local as level one and the offer as level two, with no hand-set variable.",
+        "path": ".ai/repo/project/issues/I2673.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2220
+      },
+      {
+        "uri": "majordomus://issue/I2674",
+        "kind": "issue",
+        "identity": "I2674",
+        "title": "A node is provisioned as an S3 cache provider, idempotently, with no secret in the repository",
+        "description": "Provision a MinIO service on a chosen node: native or declared service, persistent storage on a bounded path, a private bucket with expiry, a least-privilege client identity, and a bounded bind.",
+        "path": ".ai/repo/project/issues/I2674.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2099
+      },
+      {
+        "uri": "majordomus://issue/I2675",
+        "kind": "issue",
+        "identity": "I2675",
+        "title": "Build-cache health, headroom and hit statistics are visible where the mesh is",
+        "description": "Show which offers exist, which is selected and why, headroom and the statistics sccache supports, labelling estimates, on the existing health, monitor and UI surfaces.",
+        "path": ".ai/repo/project/issues/I2675.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1663
+      },
+      {
+        "uri": "majordomus://issue/I2676",
+        "kind": "issue",
+        "identity": "I2676",
+        "title": "The build cache is verified and validated: failure paths, security and a real second-node hit",
+        "description": "Prove the acceptance contract: stop the provider and build, restart and recover, bad credential, low space, put/get, remote hit across two nodes of one platform.",
+        "path": ".ai/repo/project/issues/I2676.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1798
+      },
+      {
+        "uri": "majordomus://issue/I2677",
+        "kind": "issue",
+        "identity": "I2677",
+        "title": "The build cache is documented, governed by a rule and described on the site and the Pages",
+        "description": "Say once, derived, what the cache is, how a node offers and uses it and how to see it, on the handbook, the site and the landing's account of how the cluster compiles.",
+        "path": ".ai/repo/project/issues/I2677.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1539
+      },
+      {
         "uri": "majordomus://issue/I2678",
         "kind": "issue",
         "identity": "I2678",
@@ -98940,7 +99470,7 @@
         "path": ".ai/repo/project/issues/I2707.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1937
+        "bytes": 2987
       },
       {
         "uri": "majordomus://issue/I2708",
@@ -98951,7 +99481,7 @@
         "path": ".ai/repo/project/issues/I2708.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2967
+        "bytes": 4949
       },
       {
         "uri": "majordomus://issue/I2709",
@@ -99119,6 +99649,28 @@
         "bytes": 1684
       },
       {
+        "uri": "majordomus://issue/I2731",
+        "kind": "issue",
+        "identity": "I2731",
+        "title": "Every failure class in the published failure table names its test or its stated limitation",
+        "description": "Give the runtime's published failure table a proof column, in which every failure class names the tests that drive it or states the limitation that nothing does, and hold the column with a case that refuses a row with neither and a citation that does not resolve.",
+        "path": ".ai/repo/project/issues/I2731.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2945
+      },
+      {
+        "uri": "majordomus://issue/I2733",
+        "kind": "issue",
+        "identity": "I2733",
+        "title": "A resumed mesh.events walk returns every event exactly once, across partitions",
+        "description": "A reader that walks mesh.events page by page and resumes from the cursor each page answers receives every event the runtime accepts, exactly once, including an event from a writer that was partitioned from the mesh and stamped it at or below a position the walk already passed.",
+        "path": ".ai/repo/project/issues/I2733.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4463
+      },
+      {
         "uri": "majordomus://issue/I2734",
         "kind": "issue",
         "identity": "I2734",
@@ -99204,7 +99756,7 @@
         "path": ".ai/repo/project/issues/I2745.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1868
+        "bytes": 2606
       },
       {
         "uri": "majordomus://issue/I2746",
@@ -99215,7 +99767,7 @@
         "path": ".ai/repo/project/issues/I2746.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1846
+        "bytes": 2642
       },
       {
         "uri": "majordomus://issue/I2747",
@@ -99541,7 +100093,7 @@
         "path": ".ai/repo/project/milestones/failure-is-visible.yaml",
         "section": "project",
         "source_class": "milestone",
-        "bytes": 3805
+        "bytes": 5821
       },
       {
         "uri": "majordomus://milestone/fly-deployment",
@@ -99718,6 +100270,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 9891
+      },
+      {
+        "uri": "majordomus://milestone/the-mesh-works-out-of-the-box",
+        "kind": "milestone",
+        "identity": "the-mesh-works-out-of-the-box",
+        "title": "The mesh works out of the box: trusted machines find each other by every means and their sessions cooperate from the first turn",
+        "description": "A trusted machine that starts any Majordomus surface in a repository with the mesh declared is linked to every other trusted machine on the LAN or tailnet without a hand-written address, every worktree takes part, and what the mesh holds can be read in one tool answer.",
+        "path": ".ai/repo/project/milestones/the-mesh-works-out-of-the-box.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 3667
       },
       {
         "uri": "majordomus://milestone/truthful-plan-surfaces",
@@ -100415,7 +100978,7 @@
         "path": ".ai/repo/policy.yaml",
         "section": "policy",
         "source_class": "policy",
-        "bytes": 22977
+        "bytes": 24156
       },
       {
         "uri": "majordomus://profile/debugging",
@@ -100426,7 +100989,7 @@
         "path": ".ai/repo/profiles/debugging.yaml",
         "section": "profiles",
         "source_class": "profile",
-        "bytes": 609
+        "bytes": 652
       },
       {
         "uri": "majordomus://profile/deep-work",
@@ -100437,7 +101000,7 @@
         "path": ".ai/repo/profiles/deep-work.yaml",
         "section": "profiles",
         "source_class": "profile",
-        "bytes": 650
+        "bytes": 694
       },
       {
         "uri": "majordomus://profile/implementation",
@@ -100448,7 +101011,7 @@
         "path": ".ai/repo/profiles/implementation.yaml",
         "section": "profiles",
         "source_class": "profile",
-        "bytes": 568
+        "bytes": 611
       },
       {
         "uri": "majordomus://profile/routine",
@@ -100459,7 +101022,7 @@
         "path": ".ai/repo/profiles/routine.yaml",
         "section": "profiles",
         "source_class": "profile",
-        "bytes": 547
+        "bytes": 566
       },
       {
         "uri": "majordomus://prompt/continue",
@@ -100844,7 +101407,7 @@
         "path": ".ai/repo/rules/vendor/majordomus/rules/candidates-reviewed.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 4195,
+        "bytes": 5229,
         "tags": [
           "knowledge",
           "health",
@@ -101146,6 +101709,21 @@
         "bytes": 1066,
         "tags": [
           "principle"
+        ]
+      },
+      {
+        "uri": "majordomus://rule/majordomus.knowledge-graph@1",
+        "kind": "rule",
+        "identity": "majordomus.knowledge-graph@1",
+        "title": "Knowledge graph integrity",
+        "description": "The graph the knowledge compiler builds from what the repository states has one node per identity, no edge with a missing end or without provenance, and no declared path or tracked source that no longer exists; a broken owned reference is a failure, a broken link an author wrote in prose is not.",
+        "path": ".ai/repo/rules/vendor/majordomus/rules/knowledge-graph.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 4186,
+        "tags": [
+          "knowledge",
+          "integrity"
         ]
       },
       {
@@ -101761,15 +102339,15 @@
         ]
       },
       {
-        "uri": "majordomus://rule/project.a-diagram-is-drawn-not-typed@1",
+        "uri": "majordomus://rule/project.a-diagram-is-drawn-not-typed@2",
         "kind": "rule",
-        "identity": "project.a-diagram-is-drawn-not-typed@1",
+        "identity": "project.a-diagram-is-drawn-not-typed@2",
         "title": "An architectural relationship in a published document is drawn, never typed in box art",
-        "description": "A diagram made of box-drawing characters is a picture nothing can read — it cannot be rendered, linked, themed or checked against what it claims to describe, and on a phone it is the one element that cannot wrap. Every architectural relationship a published document states is a mermaid block; literal terminal output, file listings and quoted file content are not diagrams and are exempt by declaration.",
-        "path": ".ai/repo/rules/project/a-diagram-is-drawn-not-typed.v1.md",
+        "description": "A diagram made of box-drawing characters is a picture nothing can read — it cannot be rendered, linked, themed or checked against what it claims to describe, and on a phone it is the one element that cannot wrap. Every architectural relationship a published document states is a mermaid block — in the documents, the site's own pages and templates, the decisions, the rules, the handbook and the markdown majordomus ui renders; literal terminal output, file listings, quoted file content and the verbatim campaign packs are exempt by declaration.",
+        "path": ".ai/repo/rules/project/a-diagram-is-drawn-not-typed.v2.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 6864,
+        "bytes": 9734,
         "tags": [
           "documentation",
           "diagrams",
@@ -101876,6 +102454,38 @@
           "providers",
           "session",
           "capability",
+          "evidence"
+        ]
+      },
+      {
+        "uri": "majordomus://rule/project.a-push-runs-what-ci-would-find-first@1",
+        "kind": "rule",
+        "identity": "project.a-push-runs-what-ci-would-find-first@1",
+        "title": "A push runs what CI would find first",
+        "description": "Before a push, the pre-push hook runs the plan's structure gates that CI recorded as cheap and that reach no network, and the suite's fast cases, within a stated bound, so a failure a local run finds in seconds never costs a CI round trip.",
+        "path": ".ai/repo/rules/project/a-push-runs-what-ci-would-find-first.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 5020,
+        "tags": [
+          "ci",
+          "process"
+        ]
+      },
+      {
+        "uri": "majordomus://rule/project.a-standing-approval-is-written-where-permissions-are-read@1",
+        "kind": "rule",
+        "identity": "project.a-standing-approval-is-written-where-permissions-are-read@1",
+        "title": "A standing approval is written where the permission layer reads it",
+        "description": "When the owner approves an action for the future that a worker's permission layer refuses, the worker writes that approval, in the same turn, as a narrow rule in the configuration its client's permission layer reads, never only into a memory or a handover, and never by weakening, editing or slipping past a guard.",
+        "path": ".ai/repo/rules/project/a-standing-approval-is-written-where-permissions-are-read.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 4751,
+        "tags": [
+          "process",
+          "governance",
+          "permissions",
           "evidence"
         ]
       },
@@ -102382,6 +102992,23 @@
         ]
       },
       {
+        "uri": "majordomus://rule/project.every-domain-is-a-skill@1",
+        "kind": "rule",
+        "identity": "project.every-domain-is-a-skill@1",
+        "title": "Every domain of the registry is a skill, derived and shown wherever skills are",
+        "description": "Each module of the capability registry with a public MCP tool is projected as one agent skill, /mj-<module>, generated from the registry, checked by generate --check, and listed by the site and the UI from the same projection.",
+        "path": ".ai/repo/rules/project/every-domain-is-a-skill.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 2266,
+        "tags": [
+          "architecture",
+          "capabilities",
+          "skills",
+          "editors"
+        ]
+      },
+      {
         "uri": "majordomus://rule/project.every-link-and-control-is-tested@1",
         "kind": "rule",
         "identity": "project.every-link-and-control-is-tested@1",
@@ -102603,7 +103230,7 @@
         "path": ".ai/repo/rules/project/land-and-publish.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 10936,
+        "bytes": 11247,
         "tags": [
           "process",
           "integration",
@@ -104625,6 +105252,17 @@
         "bytes": 1142
       },
       {
+        "uri": "majordomus://session/s-20261014003330-fef4",
+        "kind": "session",
+        "identity": "s-20261014003330-fef4",
+        "title": "Session s-20261014003330-fef4 on master",
+        "description": "Session s-20261014003330-fef4 on master",
+        "path": ".ai/repo/sessions/20261014T003753Z--s-20261014003330-fef4--master--2ee40c5--0a336fbce0da4d62.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1927
+      },
+      {
         "uri": "majordomus://skill/assess-before-deleting",
         "kind": "skill",
         "identity": "assess-before-deleting",
@@ -105004,12 +105642,20 @@
         "bytes": 3019
       },
       {
+        "uri": "majordomus://test/test/cases/1021_a_push_runs_what_ci_would_find_first.sh",
+        "kind": "test",
+        "identity": "test/cases/1021_a_push_runs_what_ci_would_find_first.sh",
+        "path": "test/cases/1021_a_push_runs_what_ci_would_find_first.sh",
+        "source_class": "case",
+        "bytes": 7294
+      },
+      {
         "uri": "majordomus://test/test/cases/1022_worktrees_share_build_intermediates.sh",
         "kind": "test",
         "identity": "test/cases/1022_worktrees_share_build_intermediates.sh",
         "path": "test/cases/1022_worktrees_share_build_intermediates.sh",
         "source_class": "case",
-        "bytes": 10803
+        "bytes": 11236
       },
       {
         "uri": "majordomus://test/test/cases/1023_a_branch_cannot_widen_the_mesh_trust.sh",
@@ -105034,6 +105680,14 @@
         "path": "test/cases/102_completion_shell.sh",
         "source_class": "case",
         "bytes": 4930
+      },
+      {
+        "uri": "majordomus://test/test/cases/1030_a_derive_machine_has_the_pinned_toolchain.sh",
+        "kind": "test",
+        "identity": "test/cases/1030_a_derive_machine_has_the_pinned_toolchain.sh",
+        "path": "test/cases/1030_a_derive_machine_has_the_pinned_toolchain.sh",
+        "source_class": "case",
+        "bytes": 4451
       },
       {
         "uri": "majordomus://test/test/cases/1036_the_executor_reopens_a_record_pull_request.sh",
@@ -106065,7 +106719,7 @@
         "identity": "test/cases/272_diagrams_are_drawn.sh",
         "path": "test/cases/272_diagrams_are_drawn.sh",
         "source_class": "case",
-        "bytes": 9810
+        "bytes": 11159
       },
       {
         "uri": "majordomus://test/test/cases/273_navigation_is_declared_once.sh",
@@ -106244,6 +106898,14 @@
         "bytes": 8281
       },
       {
+        "uri": "majordomus://test/test/cases/2988_a_scope_admits_what_its_derive_wrote.sh",
+        "kind": "test",
+        "identity": "test/cases/2988_a_scope_admits_what_its_derive_wrote.sh",
+        "path": "test/cases/2988_a_scope_admits_what_its_derive_wrote.sh",
+        "source_class": "case",
+        "bytes": 3270
+      },
+      {
         "uri": "majordomus://test/test/cases/2998_evidence_reaches_the_subcommands_the_executable_owns.sh",
         "kind": "test",
         "identity": "test/cases/2998_evidence_reaches_the_subcommands_the_executable_owns.sh",
@@ -106369,7 +107031,7 @@
         "identity": "test/cases/301_the_mesh_stays_one_subsystem.sh",
         "path": "test/cases/301_the_mesh_stays_one_subsystem.sh",
         "source_class": "case",
-        "bytes": 8469
+        "bytes": 10963
       },
       {
         "uri": "majordomus://test/test/cases/3020_an_active_skill_is_named_where_the_crate_test_demands.sh",
@@ -106508,6 +107170,38 @@
         "bytes": 7998
       },
       {
+        "uri": "majordomus://test/test/cases/3043_site_json_cannot_close_its_script.sh",
+        "kind": "test",
+        "identity": "test/cases/3043_site_json_cannot_close_its_script.sh",
+        "path": "test/cases/3043_site_json_cannot_close_its_script.sh",
+        "source_class": "case",
+        "bytes": 3761
+      },
+      {
+        "uri": "majordomus://test/test/cases/3047_a_leak_finding_names_where_it_is.sh",
+        "kind": "test",
+        "identity": "test/cases/3047_a_leak_finding_names_where_it_is.sh",
+        "path": "test/cases/3047_a_leak_finding_names_where_it_is.sh",
+        "source_class": "case",
+        "bytes": 4786
+      },
+      {
+        "uri": "majordomus://test/test/cases/3048_a_derivation_survives_an_unrelated_merge.sh",
+        "kind": "test",
+        "identity": "test/cases/3048_a_derivation_survives_an_unrelated_merge.sh",
+        "path": "test/cases/3048_a_derivation_survives_an_unrelated_merge.sh",
+        "source_class": "case",
+        "bytes": 4127
+      },
+      {
+        "uri": "majordomus://test/test/cases/3049_a_second_workers_record_lands_on_the_first_workers_task.sh",
+        "kind": "test",
+        "identity": "test/cases/3049_a_second_workers_record_lands_on_the_first_workers_task.sh",
+        "path": "test/cases/3049_a_second_workers_record_lands_on_the_first_workers_task.sh",
+        "source_class": "case",
+        "bytes": 3635
+      },
+      {
         "uri": "majordomus://test/test/cases/304_a_provider_is_declared_once.sh",
         "kind": "test",
         "identity": "test/cases/304_a_provider_is_declared_once.sh",
@@ -106516,12 +107210,68 @@
         "bytes": 12530
       },
       {
+        "uri": "majordomus://test/test/cases/3050_doctor_says_it_checks_governance_only.sh",
+        "kind": "test",
+        "identity": "test/cases/3050_doctor_says_it_checks_governance_only.sh",
+        "path": "test/cases/3050_doctor_says_it_checks_governance_only.sh",
+        "source_class": "case",
+        "bytes": 3705
+      },
+      {
+        "uri": "majordomus://test/test/cases/3051_an_unlisted_event_field_fails_the_mesh_check.sh",
+        "kind": "test",
+        "identity": "test/cases/3051_an_unlisted_event_field_fails_the_mesh_check.sh",
+        "path": "test/cases/3051_an_unlisted_event_field_fails_the_mesh_check.sh",
+        "source_class": "case",
+        "bytes": 6871
+      },
+      {
+        "uri": "majordomus://test/test/cases/3053_a_repository_of_n_records_costs_n.sh",
+        "kind": "test",
+        "identity": "test/cases/3053_a_repository_of_n_records_costs_n.sh",
+        "path": "test/cases/3053_a_repository_of_n_records_costs_n.sh",
+        "source_class": "case",
+        "bytes": 3833
+      },
+      {
+        "uri": "majordomus://test/test/cases/3055_a_derivation_needs_no_history.sh",
+        "kind": "test",
+        "identity": "test/cases/3055_a_derivation_needs_no_history.sh",
+        "path": "test/cases/3055_a_derivation_needs_no_history.sh",
+        "source_class": "case",
+        "bytes": 4097
+      },
+      {
+        "uri": "majordomus://test/test/cases/3056_every_failure_class_names_its_proof.sh",
+        "kind": "test",
+        "identity": "test/cases/3056_every_failure_class_names_its_proof.sh",
+        "path": "test/cases/3056_every_failure_class_names_its_proof.sh",
+        "source_class": "case",
+        "bytes": 9317
+      },
+      {
         "uri": "majordomus://test/test/cases/305_a_command_is_claimed_or_classified.sh",
         "kind": "test",
         "identity": "test/cases/305_a_command_is_claimed_or_classified.sh",
         "path": "test/cases/305_a_command_is_claimed_or_classified.sh",
         "source_class": "case",
         "bytes": 7757
+      },
+      {
+        "uri": "majordomus://test/test/cases/3060_trunk_stays_clean.sh",
+        "kind": "test",
+        "identity": "test/cases/3060_trunk_stays_clean.sh",
+        "path": "test/cases/3060_trunk_stays_clean.sh",
+        "source_class": "case",
+        "bytes": 4710
+      },
+      {
+        "uri": "majordomus://test/test/cases/3063_a_branch_episode_drains_the_outbox.sh",
+        "kind": "test",
+        "identity": "test/cases/3063_a_branch_episode_drains_the_outbox.sh",
+        "path": "test/cases/3063_a_branch_episode_drains_the_outbox.sh",
+        "source_class": "case",
+        "bytes": 7384
       },
       {
         "uri": "majordomus://test/test/cases/3066_a_session_joins_the_mesh_at_start.sh",
@@ -106554,6 +107304,22 @@
         "path": "test/cases/3069_an_edit_no_claim_covers_is_refused.sh",
         "source_class": "case",
         "bytes": 5688
+      },
+      {
+        "uri": "majordomus://test/test/cases/3073_context_knowledge_slice.sh",
+        "kind": "test",
+        "identity": "test/cases/3073_context_knowledge_slice.sh",
+        "path": "test/cases/3073_context_knowledge_slice.sh",
+        "source_class": "case",
+        "bytes": 10122
+      },
+      {
+        "uri": "majordomus://test/test/cases/3075_knowledge_validate_judges_the_graph.sh",
+        "kind": "test",
+        "identity": "test/cases/3075_knowledge_validate_judges_the_graph.sh",
+        "path": "test/cases/3075_knowledge_validate_judges_the_graph.sh",
+        "source_class": "case",
+        "bytes": 8738
       },
       {
         "uri": "majordomus://test/test/cases/30_command_registry.sh",
@@ -106604,12 +107370,36 @@
         "bytes": 8912
       },
       {
+        "uri": "majordomus://test/test/cases/3105_the_homepage_states_no_present_it_does_not_read.sh",
+        "kind": "test",
+        "identity": "test/cases/3105_the_homepage_states_no_present_it_does_not_read.sh",
+        "path": "test/cases/3105_the_homepage_states_no_present_it_does_not_read.sh",
+        "source_class": "case",
+        "bytes": 7642
+      },
+      {
+        "uri": "majordomus://test/test/cases/3106_every_published_tree_draws_its_diagrams.sh",
+        "kind": "test",
+        "identity": "test/cases/3106_every_published_tree_draws_its_diagrams.sh",
+        "path": "test/cases/3106_every_published_tree_draws_its_diagrams.sh",
+        "source_class": "case",
+        "bytes": 6025
+      },
+      {
         "uri": "majordomus://test/test/cases/310_rustdoc_projection.sh",
         "kind": "test",
         "identity": "test/cases/310_rustdoc_projection.sh",
         "path": "test/cases/310_rustdoc_projection.sh",
         "source_class": "case",
         "bytes": 6660
+      },
+      {
+        "uri": "majordomus://test/test/cases/3125_the_reaper_asks_cargo_for_the_build_dir.sh",
+        "kind": "test",
+        "identity": "test/cases/3125_the_reaper_asks_cargo_for_the_build_dir.sh",
+        "path": "test/cases/3125_the_reaper_asks_cargo_for_the_build_dir.sh",
+        "source_class": "case",
+        "bytes": 8192
       },
       {
         "uri": "majordomus://test/test/cases/318_a_partial_sweep_says_so.sh",
@@ -106665,7 +107455,7 @@
         "identity": "test/cases/333_homepage_narrative.sh",
         "path": "test/cases/333_homepage_narrative.sh",
         "source_class": "case",
-        "bytes": 29475
+        "bytes": 31946
       },
       {
         "uri": "majordomus://test/test/cases/334_ui_audit_hears_uncaught_errors.sh",
@@ -106785,7 +107575,7 @@
         "identity": "test/cases/354_a_lease_contest_is_judged_by_a_declaration.sh",
         "path": "test/cases/354_a_lease_contest_is_judged_by_a_declaration.sh",
         "source_class": "case",
-        "bytes": 5513
+        "bytes": 5542
       },
       {
         "uri": "majordomus://test/test/cases/357_ci_records_evidence.sh",
@@ -107185,7 +107975,7 @@
         "identity": "test/cases/48_roadmap_graph.sh",
         "path": "test/cases/48_roadmap_graph.sh",
         "source_class": "case",
-        "bytes": 5511
+        "bytes": 7474
       },
       {
         "uri": "majordomus://test/test/cases/490_rustdoc_new_module.sh",
@@ -108337,7 +109127,7 @@
         "identity": "test/cases/886_the_timing_report_is_json.sh",
         "path": "test/cases/886_the_timing_report_is_json.sh",
         "source_class": "case",
-        "bytes": 4485
+        "bytes": 4677
       },
       {
         "uri": "majordomus://test/test/cases/88_rust_command_tested.sh",
@@ -108641,7 +109431,7 @@
         "identity": "test/cases/94_ci_plan.sh",
         "path": "test/cases/94_ci_plan.sh",
         "source_class": "case",
-        "bytes": 38953
+        "bytes": 42852
       },
       {
         "uri": "majordomus://test/test/cases/94_use_cases.sh",
@@ -108865,7 +109655,7 @@
         "identity": "test/cases/996_the_record_pull_request_gets_its_verdict.sh",
         "path": "test/cases/996_the_record_pull_request_gets_its_verdict.sh",
         "source_class": "case",
-        "bytes": 6009
+        "bytes": 10029
       },
       {
         "uri": "majordomus://test/test/cases/999_a_parser_that_cannot_run_is_not_a_verdict.sh",
@@ -109467,7 +110257,7 @@
       "identity": [
         "id"
       ],
-      "objects": 110
+      "objects": 115
     },
     {
       "name": "application",
@@ -109630,7 +110420,7 @@
       "identity": [
         "id"
       ],
-      "objects": 405
+      "objects": 421
     },
     {
       "name": "knowledge",
@@ -109660,7 +110450,7 @@
       "identity": [
         "id"
       ],
-      "objects": 39
+      "objects": 40
     },
     {
       "name": "moment",
@@ -109727,7 +110517,7 @@
         "id",
         "version"
       ],
-      "objects": 180
+      "objects": 184
     },
     {
       "name": "scope",
@@ -109745,7 +110535,7 @@
       "identity": [
         "session_id"
       ],
-      "objects": 89
+      "objects": 90
     },
     {
       "name": "session-context",
@@ -109782,7 +110572,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 505
+      "objects": 524
     },
     {
       "name": "use-case",
@@ -110000,15 +110790,13 @@
             "name": "http_port",
             "long": "http-port",
             "positional": false,
-            "help": "Port the shared server binds when this process starts it; when it is taken, a free port is used instead and the URL is logged on stderr either way",
+            "help": "Port the shared server binds when this process starts it; without it, the port this checkout derives (8741 for the primary checkout). When it is taken, a free port is used instead and the URL is logged on stderr either way",
             "value_name": "PORT",
             "takes_value": true,
             "required": false,
             "global": false,
             "possible_values": [],
-            "defaults": [
-              "8741"
-            ]
+            "defaults": []
           }
         ],
         "examples": [
@@ -110140,15 +110928,13 @@
             "name": "port",
             "long": "port",
             "positional": false,
-            "help": "Port to bind; 0 picks a free one and the address is logged on stderr",
+            "help": "Port to bind; without it, the port this checkout derives (8741 for the primary checkout); 0 picks a free one and the address is logged on stderr",
             "value_name": "PORT",
             "takes_value": true,
             "required": false,
             "global": false,
             "possible_values": [],
-            "defaults": [
-              "8741"
-            ]
+            "defaults": []
           },
           {
             "name": "fallback",
@@ -110357,29 +111143,25 @@
                 "name": "port",
                 "long": "port",
                 "positional": false,
-                "help": "The port the started server asks for first; a taken one is replaced by a free one",
+                "help": "The port the started server asks for first, without it the one this checkout derives (8741 for the primary checkout); a taken one is replaced by a free one",
                 "value_name": "PORT",
                 "takes_value": true,
                 "required": false,
                 "global": false,
                 "possible_values": [],
-                "defaults": [
-                  "8741"
-                ]
+                "defaults": []
               },
               {
                 "name": "idle",
                 "long": "idle",
                 "positional": false,
-                "help": "The started server stops when no peer has been attached for this many seconds",
+                "help": "The started server stops when no peer has been attached for this many seconds; without it, the policy's declared `server.idle_seconds`, 900 when none is declared",
                 "value_name": "SECONDS",
                 "takes_value": true,
                 "required": false,
                 "global": false,
                 "possible_values": [],
-                "defaults": [
-                  "900"
-                ]
+                "defaults": []
               },
               {
                 "name": "wait",
@@ -154532,6 +155314,14 @@
         "route": "GET /ui/capabilities"
       },
       {
+        "key": "system.http.ui.skills",
+        "kind": "page",
+        "transport": "http",
+        "module": "system",
+        "cached": true,
+        "route": "GET /ui/skills"
+      },
+      {
         "key": "system.http.ui.mesh",
         "kind": "page",
         "transport": "http",
@@ -154650,6 +155440,14 @@
         "module": "system",
         "cached": true,
         "route": "GET /ui/capabilities"
+      },
+      {
+        "key": "system.http.live.ui.skills",
+        "kind": "page",
+        "transport": "http",
+        "module": "system",
+        "cached": true,
+        "route": "GET /ui/skills"
       },
       {
         "key": "system.http.live.ui.mesh",

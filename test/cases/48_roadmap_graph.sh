@@ -78,6 +78,31 @@ for e in "first --> second" "second --> third"; do
   printf '%s' "$g" | grep -q -- "$e" || { echo "    missing roadmap edge: $e"; exit 1; }
 done
 
+# --- a node's text is readable whatever the page's theme. A class that set a stroke and a
+# fill but no text colour let the label follow the theme: the dark theme drew light text on
+# the light fills and the light theme dark text on the dark `done` fill (owner report,
+# 2026-10-16). Every class names its text colour, every pair passes WCAG AA (4.5:1), and the
+# issue graph and the roadmap graph draw from one palette.
+issue_classes="$("$MJ" plan graph | grep '^ *classDef ')"
+road_classes="$(printf '%s\n' "$g" | grep '^ *classDef ')"
+[ -n "$road_classes" ] || { echo "    the roadmap graph defines no status class"; exit 1; }
+[ "$issue_classes" = "$road_classes" ] \
+  || { printf '    the issue graph and the roadmap graph disagree on the palette:\n%s\n--\n%s\n' "$issue_classes" "$road_classes"; exit 1; }
+for st in 'done' active verify ready planned blocked cancelled superseded; do
+  printf '%s\n' "$road_classes" | grep -q "classDef $st " || { echo "    no class for status $st"; exit 1; }
+done
+bad="$(printf '%s\n' "$road_classes" | awk '
+  function lin(c) { c /= 255; return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ^ 2.4 }
+  function hx(s,   i, v) { v = 0; s = tolower(s); for (i = 1; i <= length(s); i++) v = v * 16 + index("0123456789abcdef", substr(s, i, 1)) - 1; return v }
+  function lum(h) { return 0.2126 * lin(hx(substr(h, 2, 2))) + 0.7152 * lin(hx(substr(h, 4, 2))) + 0.0722 * lin(hx(substr(h, 6, 2))) }
+  { fill = ""; fg = ""
+    if (match($0, /fill:#[0-9a-fA-F]+/)) fill = substr($0, RSTART + 5, 7)
+    if (match($0, /color:#[0-9a-fA-F]+/)) fg = substr($0, RSTART + 6, 7)
+    if (fill == "" || fg == "") { print $2 " names no fill or no text colour"; next }
+    a = lum(fill); b = lum(fg); r = (a > b) ? (a + 0.05) / (b + 0.05) : (b + 0.05) / (a + 0.05)
+    if (r < 4.5) printf "%s text %s on %s is %.2f:1, below 4.5:1\n", $2, fg, fill, r }')"
+[ -z "$bad" ] || { printf '    a status class is unreadable:\n%s\n' "$bad"; exit 1; }
+
 # --- every negative the issue graph refuses, refused one level up and by name
 rm_milestone loopa 1 loopb
 rm_milestone loopb 2 loopa

@@ -11,6 +11,7 @@ current_state: "majordomus doctor is the governance doctor of lib/doctor.sh; it 
 desired_state: "majordomus doctor in a checkout whose server is stale reports it, or its help, the shell usage, share/commands.yaml and docs/CLI.md say together that it checks governance only and name where runtime health is read."
 scope:
   - "lib/doctor.sh"
+  - "bin/majordomus"
   - "share/commands.yaml"
   - "docs/CLI.md"
   - "test/cases"
@@ -25,4 +26,18 @@ validation:
 evidence_required:
   - "doctor_states_its_reach_case"
 created_at: 2026-10-14
-updated_at: 2026-10-14
+updated_at: 2026-10-15T01:27:40Z
+started_at: 2026-10-15T01:27:13Z
+started_event: sha256:aaf5ff2302a766428dd3fe1b09bd2c013dd076c92095765f43f5713865b7ba71
+verified_at: 2026-10-15T01:27:25Z
+verified_event: sha256:186d033a36ca7782562f2ecfaaf1e0f2d93e71b5cacb3e2f9087788eb4962107
+completed_at: 2026-10-15T01:27:40Z
+completed_event: sha256:51d46247c5847a0b2dcb28a0d0727aaf4ccb05427ad181504a7847f2586ded0a
+evidence:
+  - covers: doctor_states_its_reach_case
+    type: test
+    command: "bash test/run.sh 3050_doctor_says_it_checks_governance_only"
+    result: "ok 3050: doctor --help, bin/majordomus usage, share/commands.yaml (summary + note) and docs/CLI.md say doctor checks governance only and name majordomus serve status, majordomus mesh doctor, GET /api/v1/health and GET /api/v1/ready; the case failed on master c0e3585dc8 (no 'governance only' in doctor --help) (run 2026-10-15 01:2xZ)"
+    artifact: "test/cases/3050_doctor_says_it_checks_governance_only.sh"
+    commit: c0e3585dc836201089d6b5dd49f5a79fe8bff798
+    recorded_at: 2026-10-15T01:27:35Z
