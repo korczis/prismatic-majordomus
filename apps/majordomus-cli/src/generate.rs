@@ -1503,6 +1503,20 @@ pub fn forbidden_in(content: &str) -> Option<(&'static str, &'static str)> {
 /// and is quietly short of one edge. [`crate::graph::unresolved_relations`] is the verdict
 /// that already decides it — this is the consumer its own contract names.
 pub fn graph_document(ctx: &Context, version: &str) -> Result<String> {
+    graph_document_of(
+        ctx,
+        version,
+        crate::graph::composed_complete(&ctx.registry, &ctx.index),
+    )
+}
+
+/// [`graph_document`] over a composition already made, so the refusal of one that stopped
+/// at a bound is reached by a test as it would be by a bound that comes back.
+fn graph_document_of(
+    ctx: &Context,
+    version: &str,
+    composed: crate::graph::Graph,
+) -> Result<String> {
     let unresolved = crate::graph::unresolved_relations(&ctx.registry, &ctx.index.objects);
     if !unresolved.is_empty() {
         return Err(Error::UnresolvedRelation {
@@ -1519,7 +1533,7 @@ pub fn graph_document(ctx: &Context, version: &str) -> Result<String> {
     }
     // whole: the site's entity pages and its catalogue counts are read off this document,
     // and a prefix of the repository would drop what sorts past MAX_NODES without a word
-    let graph = committed_graph(crate::graph::composed_complete(&ctx.registry, &ctx.index))?;
+    let graph = committed_graph(composed)?;
     let doc = serde_json::json!({
         "schema": GRAPH_SCHEMA,
         "generated": format!("{HEADER}; source: the capability registry and every object of the index; regenerate with `majordomus generate`"),
@@ -3542,7 +3556,13 @@ mod tests {
             serde_json::to_string(&committed).unwrap(),
         )
         .unwrap();
-        let planned = planned_changelog(&args);
+        // the warning that names what is kept is formatted only where a subscriber listens
+        // at warn, so the plan is made under one: its count and its range are executed
+        let subscriber = tracing_subscriber::fmt()
+            .with_max_level(tracing::Level::WARN)
+            .with_writer(std::io::sink)
+            .finish();
+        let planned = tracing::subscriber::with_default(subscriber, || planned_changelog(&args));
         let section = planned
             .sections
             .iter()
@@ -3570,5 +3590,22 @@ mod tests {
                 .any(|n| n["id"].as_str() == Some("capability:worktree.status")),
             "the registry is composed into the graph"
         );
+    }
+
+    /// A composition that stopped at a bound is refused, and nothing is rendered: committing
+    /// it would publish a prefix of the repository that still reads as whole (I1966).
+    #[test]
+    fn a_graph_that_stopped_at_a_bound_is_not_committed() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let ctx = repo.context().unwrap();
+        let mut composed = crate::graph::composed_complete(&ctx.registry, &ctx.index);
+        composed.metadata.truncated = true;
+        match graph_document_of(&ctx, "9.9.9", composed) {
+            Err(Error::Refused { code, reason }) => {
+                assert_eq!(code, 10);
+                assert!(reason.contains("stopped at"), "{reason}");
+            }
+            other => panic!("{other:?}"),
+        }
     }
 }
