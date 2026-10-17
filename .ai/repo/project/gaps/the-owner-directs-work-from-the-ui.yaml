@@ -15,6 +15,9 @@ observations:
   - id: refresh-by-the-minute
     statement: Every /ui screen reads its sources again once a minute while it is visible; the live channel /events, which reports every execution the server runs, has the Cockpit's socket.js as its one client and no /ui screen follows it
     source: file:share/ui/ui.js
+  - id: standing-read-elsewhere
+    statement: The workspace shows an intent's criteria and its issues but not why the intent stands where it does, the work realising it or the moves made on its issues; intent_realization.explain (seconds per call) and executions.list answer both, and no screen reads them for an intent
+    source: file:apps/majordomus-cli/src/capability/builtin/intent_realization.rs
 conditions:
   - criterion: workspace-is-derived
     state: missing
@@ -28,3 +31,7 @@ conditions:
     state: missing
     because: a move made from another tab, the Cockpit or an agent shows on the workspace only after the next minute's refresh
     observations: [refresh-by-the-minute]
+  - criterion: the-workspace-shows-why-and-what-moved
+    state: missing
+    because: the evidence and execution steps of the loop are read on the Cockpit, the command line or MCP, away from the workspace
+    observations: [standing-read-elsewhere]
