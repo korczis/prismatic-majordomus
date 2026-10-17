@@ -1,0 +1,31 @@
+id: I2811
+milestone: idd-loop
+title: "Every intent, milestone and issue inspector leads to its intent's workspace"
+slug: every-inspector-leads-to-its-workspace
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "From the plan's own relation (serves), add to the intent inspector a link to its workspace, to the milestone inspector the workspace of every intent it serves, and to the issue detail its move panel in the workspace of every intent it serves (/ui/idd?intent=<id>&issue=<id>#move); the workspace's own inspector does not lead to itself."
+why: "Only the sidebar leads to /ui/idd: a reader of the Roadmap, a milestone or an issue cannot reach the workspace of what they read, and the published snapshot, which follows links, reaches only the intents the workspace itself lists."
+serves:
+  - the-owner-directs-work-from-the-ui#every-inspector-leads-to-its-workspace
+current_state: "No screen but the sidebar links to /ui/idd."
+desired_state: "Every intent, milestone and issue leads to the workspace of its intent, and an issue to its move there."
+scope:
+  - "apps/majordomus-cli/src/ui"
+  - "apps/majordomus-cli/tests/ui_idd_links.rs"
+  - ".ai/repo/project"
+  - "docs"
+  - "site"
+depends_on:
+  - "I2808"
+acceptance_criteria:
+  - "The intent, milestone and issue inspectors each link to the workspace of the intent they belong to, and each link is answered"
+  - "An issue links to its move panel in that workspace"
+validation:
+  - "majordomus plan validate"
+  - "cargo test --test ui_idd_links"
+evidence_required:
+  - "ui_idd_links_tests"
+created_at: 2026-10-17
+updated_at: 2026-10-17

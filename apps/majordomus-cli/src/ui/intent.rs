@@ -155,6 +155,16 @@ pub fn inspector_closing_to(intents: &Answer, issues: &Answer, id: &str, close: 
                                         .class("mj-ui-mono mj-ui-dim")
                                         .text(format!("{met} of {} criteria met", criteria.len())),
                                 )
+                                .when(close != super::idd::ROUTE, |badges| {
+                                    // the intent's own workspace: its milestones, issues, waves,
+                                    // graph, standing and moves on one screen (I2811)
+                                    badges.child(
+                                        el("a")
+                                            .class("mj-ui-more")
+                                            .attr("href", super::idd::href(id))
+                                            .text("Open its workspace"),
+                                    )
+                                })
                                 .child(
                                     el("a")
                                         .class("mj-ui-more")

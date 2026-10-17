@@ -1301,6 +1301,31 @@ fn issue_panel(issues: &Answer, id: &str, filter: &Filter) -> El {
                                 }))
                         }
                     }))
+                    .child(fact("Its move", {
+                        // the move panel of this issue, in the workspace of each intent it
+                        // serves: the next move is one link from the issue (I2811)
+                        let intents: std::collections::BTreeSet<String> = strings(&i, "serves")
+                            .iter()
+                            .map(|s| super::intent::intent_of(s).to_string())
+                            .collect();
+                        if intents.is_empty() {
+                            none()
+                        } else {
+                            let issue = text(&i, "id");
+                            el("span")
+                                .class("mj-ui-badges")
+                                .children(intents.into_iter().map(|intent| {
+                                    el("a")
+                                        .class("mj-ui-chip mj-ui-chip--link")
+                                        .attr("href", super::idd::move_href(&intent, &issue))
+                                        .child(
+                                            el("code")
+                                                .class("mj-ui-chip-value")
+                                                .text(format!("{intent} workspace")),
+                                        )
+                                }))
+                        }
+                    }))
                     .child(fact("Scope", path_chips(&strings(&i, "scope"))))
                     .child(fact(
                         "Evidence",

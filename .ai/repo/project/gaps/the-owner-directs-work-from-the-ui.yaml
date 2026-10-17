@@ -24,6 +24,9 @@ observations:
   - id: remaining-read-per-issue
     statement: What keeps a milestone from DONE — which issues are not complete and which evidence tokens their records do not hold — is read issue by issue in their records or with devtask, and no screen gathers it for a milestone
     source: file:apps/majordomus-cli/src/capability/builtin/devtask.rs
+  - id: only-the-sidebar-leads-there
+    statement: No screen but the sidebar links to /ui/idd, so a reader of the roadmap, a milestone or an issue cannot reach the workspace of what they read, and the published snapshot reaches only the intents the workspace itself lists
+    source: file:apps/majordomus-cli/src/ui/mod.rs
 conditions:
   - criterion: workspace-is-derived
     state: missing
@@ -49,3 +52,7 @@ conditions:
     state: missing
     because: what remains before a milestone is DONE is read issue by issue
     observations: [remaining-read-per-issue]
+  - criterion: every-inspector-leads-to-its-workspace
+    state: missing
+    because: only the sidebar leads to the workspace
+    observations: [only-the-sidebar-leads-there]

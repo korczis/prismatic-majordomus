@@ -332,7 +332,8 @@ pub fn inspector(roadmap: &Answer, issues: &Answer, id: &str) -> El {
                             "Unblocks",
                             chips(&strings(&m, "dependents"), href_owned),
                         ))
-                        .child(fact("Serves", chips(&serves, super::intent::href))),
+                        .child(fact("Serves", chips(&serves, super::intent::href)))
+                        .child(fact("Workspace", chips(&serves, super::idd::href))),
                 )
                 .child(el("h4").class("mj-ui-panel-title").text("Critical path"))
                 .child(if path.is_empty() {
