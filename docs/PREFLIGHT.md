@@ -14,20 +14,18 @@ the decision is ADR 0066.
 
 ## Architecture
 
-```text
-repository state (git, .ai/local/state, lease, evidence ledger, gh-pages ref, index)
-        │  observe()  — the only reading; bounded, loopback only, never a build
-        ▼
-Observations           — plain data
-        │  derive()   — pure; every verdict is a test over a value
-        ▼
-Preflight              — sections of checks, each a verdict and its evidence
-        │
-        ├── env enter      the compact line drawn on entering (direnv, via .envrc)
-        ├── env preflight  full, --compact, --format json, --full
-        ├── GET  /api/v1/environment/preflight
-        ├── MCP  tool majordomus_preflight, resource majordomus://environment/preflight
-        └── Cockpit overview, the Preflight card (each verdict as data-check / data-verdict)
+```mermaid
+flowchart TD
+  state["repository state<br/><small>git, .ai/local/state, lease, evidence ledger, gh-pages ref, index</small>"]
+  observations["Observations<br/><small>plain data</small>"]
+  preflight["Preflight<br/>environment.preflight<br/><small>sections of checks, each a verdict and its evidence</small>"]
+  state -->|"observe(): the only reading; bounded, loopback only, never a build"| observations
+  observations -->|"derive(): pure; every verdict is a test over a value"| preflight
+  preflight --> enter["env enter<br/><small>the compact line drawn on entering (direnv, via .envrc)</small>"]
+  preflight --> full["majordomus env preflight<br/><small>full, --compact, --format json, --full</small>"]
+  preflight --> http["GET /api/v1/environment/preflight"]
+  preflight --> mcp["MCP<br/><small>tool majordomus_preflight, resource majordomus://environment/preflight</small>"]
+  preflight --> cockpit["Cockpit overview<br/><small>the Preflight card, each verdict as data-check / data-verdict</small>"]
 ```
 
 `RepositoryEnvironment` ([`ENVIRONMENT.md`](ENVIRONMENT.md)) says what a checkout *is*. The

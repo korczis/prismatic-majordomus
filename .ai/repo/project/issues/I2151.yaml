@@ -34,4 +34,32 @@ evidence_required:
   - "rebinding_host_refused_test"
   - "site_script_escape_case"
 created_at: 2026-10-09
-updated_at: 2026-10-09
+updated_at: 2026-10-14T22:17:04Z
+started_at: 2026-10-14T22:16:25Z
+started_event: sha256:f93f4e0c3c662cb786d7a4e1c33f850cfe6fd4a3bac94314e6c91294bc236834
+verified_at: 2026-10-14T22:16:45Z
+verified_event: sha256:e6dd0292f147d0d8a2fe8cb2bb44af5a8233efcd995c817402dfaf55486deff6
+completed_at: 2026-10-14T22:17:04Z
+completed_event: sha256:2e92cbb3cfc543a3de8802185c5363c7d6fb0b64b3a54b0e84a31dd05e2cd963
+evidence:
+  - covers: site_script_escape_case
+    type: test
+    command: "MJ_TEST_JOBS=1 bash test/run.sh 3043_site_json_cannot_close_its_script"
+    result: "1 passed at c0e3585dc83: each of partials/graph.html, api.html and why-section.html escapes the closing sequence before marking JSON safe, and the chain rendered by zola 0.23 over a value carrying a closing script tag closes once and reads back unchanged; with the escape removed from api.html the case fails"
+    artifact: "test/cases/3043_site_json_cannot_close_its_script.sh"
+    commit: c0e3585dc836201089d6b5dd49f5a79fe8bff798
+    recorded_at: 2026-10-14T21:05:17Z
+  - covers: rebinding_host_refused_test
+    type: ci
+    command: "cargo test --test remote_callers a_loopback_request_under_a_foreign_host_name_reads_nothing (validate run 38626102499, job rust (3) 116065669794)"
+    result: "ok on master e8505a431d5: a loopback GET addressed to attacker.example:8741 is answered 403 forbidden before any surface reads (router.rs rebound(), delivered by 21ea43629ce)"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/38626102499/job/116065669794"
+    commit: c0e3585dc836201089d6b5dd49f5a79fe8bff798
+    recorded_at: 2026-10-14T22:15:51Z
+  - covers: swagger_csp_test
+    type: ci
+    command: "cargo test --test remote_callers the_api_page_runs_only_the_scripts_it_ships (validate run 38626102499, job rust (3) 116065669794)"
+    result: "ok on master e8505a431d5: /swagger carries a Content-Security-Policy with frame-ancestors none and no unsafe-eval, and each CDN script carries sha384 integrity (swagger.rs, delivered by 21ea43629ce)"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/38626102499/job/116065669794"
+    commit: c0e3585dc836201089d6b5dd49f5a79fe8bff798
+    recorded_at: 2026-10-14T22:15:58Z

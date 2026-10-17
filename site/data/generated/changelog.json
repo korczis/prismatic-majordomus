@@ -1,5 +1,5 @@
 {
-  "current": "0.27.0",
+  "current": "0.28.0",
   "diagnostics": [],
   "produced_by": {
     "capability": "release.changelog",
@@ -10,6 +10,1308 @@
   },
   "schema": 1,
   "sections": [
+    {
+      "artifacts": [
+        {
+          "name": "majordomus-v0.28.0-aarch64-apple-darwin.tar.gz",
+          "sha256": "48e91654391e59048d17b2ded83d964e5f33c6c6440d5798c547d787553aba84",
+          "target": "macos-aarch64"
+        },
+        {
+          "name": "majordomus-v0.28.0-x86_64-apple-darwin.tar.gz",
+          "sha256": "f3e1f0e686a205159cf4823091885e0bef1046959bed4081703083fbd15cd9f9",
+          "target": "macos-x86_64"
+        },
+        {
+          "name": "majordomus-v0.28.0-x86_64-unknown-linux-gnu.tar.gz",
+          "sha256": "52e8c51339c0c449622793556a3c668127d2930d6b28f2999cddeee9cdac64df",
+          "target": "linux-x86_64-gnu"
+        },
+        {
+          "name": "majordomus-v0.28.0-x86_64-unknown-linux-musl.tar.gz",
+          "sha256": "87e69f3184ebbaa65a2565ba957e579cda4ea16e30b4e44c34a35a16cd4438c5",
+          "target": "linux-x86_64-musl"
+        },
+        {
+          "name": "majordomus-v0.28.0-aarch64-unknown-linux-gnu.tar.gz",
+          "sha256": "b9b600487e2d68f664d0d9bb97505f80fe4ed38443833c0f7a9510e48fab771f",
+          "target": "linux-aarch64-gnu"
+        },
+        {
+          "name": "majordomus-v0.28.0-aarch64-unknown-linux-musl.tar.gz",
+          "sha256": "103134918ff2cddf3dec8fd443287e803e55a12a1c26189d108de02776d41501",
+          "target": "linux-aarch64-musl"
+        }
+      ],
+      "commit": "441c965549bd018c1b55d34fa66fa5ab16b47411",
+      "compare_url": "https://github.com/korczis/prismatic-majordomus/compare/v0.27.0...v0.28.0",
+      "date": "2026-10-17T04:25:31Z",
+      "decisions": [],
+      "groups": [
+        {
+          "changes": [
+            {
+              "breaking": false,
+              "commit": "c598adf8b",
+              "kind": "feat",
+              "references": [
+                {
+                  "id": "I0814",
+                  "kind": "issue",
+                  "route": "/plan/i0814/",
+                  "title": "Give the worker a bounded slice of knowledge, not the knowledge base"
+                }
+              ],
+              "scope": "context",
+              "subject": "a worker is given a bounded slice of knowledge, not the knowledge base",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/c598adf8b"
+            },
+            {
+              "breaking": false,
+              "commit": "c5aec68c9",
+              "kind": "feat",
+              "references": [
+                {
+                  "id": "I0812",
+                  "kind": "issue",
+                  "route": "/plan/i0812/",
+                  "title": "Validate the graph, and let doctor and watch ask the same validator"
+                },
+                {
+                  "id": "I0810",
+                  "kind": "issue",
+                  "route": "/plan/i0810/",
+                  "title": "A content-hash manifest that makes a second sync cheap"
+                }
+              ],
+              "scope": "knowledge",
+              "subject": "the graph is validated, and doctor and watch ask the same validator (I0812)",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/c5aec68c9"
+            },
+            {
+              "breaking": false,
+              "commit": "4e74a42a6",
+              "kind": "feat",
+              "scope": "editors",
+              "subject": "every domain of the registry is a skill, shown wherever skills are (ADR 0165)",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/4e74a42a6"
+            },
+            {
+              "breaking": false,
+              "commit": "6edc0e6a6",
+              "kind": "feat",
+              "references": [
+                {
+                  "id": "I1984",
+                  "kind": "issue",
+                  "route": "/plan/i1984/",
+                  "title": "Knowledge candidates never leave untracked files on a trunk that only pull requests change"
+                }
+              ],
+              "scope": "session",
+              "subject": "a branch episode carries the trunk's outbox into the tracked sections (I1984)",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/6edc0e6a6"
+            },
+            {
+              "breaking": false,
+              "commit": "a5c3ee4c4",
+              "kind": "feat",
+              "references": [
+                {
+                  "id": "I1984",
+                  "kind": "issue",
+                  "route": "/plan/i1984/",
+                  "title": "Knowledge candidates never leave untracked files on a trunk that only pull requests change"
+                }
+              ],
+              "scope": "session",
+              "subject": "a trunk episode writes its records to the outbox (I1984)",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/a5c3ee4c4"
+            },
+            {
+              "breaking": false,
+              "commit": "3774d1ed0",
+              "kind": "feat",
+              "scope": "rules",
+              "subject": "a standing approval is written where the permission layer reads it",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/3774d1ed0"
+            }
+          ],
+          "heading": "Added",
+          "kind": "feat",
+          "rank": 0
+        },
+        {
+          "changes": [
+            {
+              "breaking": false,
+              "commit": "441c96554",
+              "kind": "fix",
+              "scope": "ci",
+              "subject": "the rust job's case gates drive the executable the job built",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/441c96554"
+            },
+            {
+              "breaking": false,
+              "commit": "bd7f0af86",
+              "kind": "fix",
+              "scope": "top",
+              "subject": "the last three changed items of top 70 are covered",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/bd7f0af86"
+            },
+            {
+              "breaking": false,
+              "commit": "a259f94df",
+              "kind": "fix",
+              "scope": "top",
+              "subject": "top 70 covers its changed code, its rust lane fits, its palette waits",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/a259f94df"
+            },
+            {
+              "breaking": false,
+              "commit": "735266fe5",
+              "kind": "fix",
+              "scope": "top",
+              "subject": "the essay links limitations relatively and plan-record-cases runs every plan reader",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/735266fe5"
+            },
+            {
+              "breaking": false,
+              "commit": "611a9a85b",
+              "kind": "fix",
+              "scope": "site",
+              "subject": "the plan diagram is drawn past Mermaid's default size bound",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/611a9a85b"
+            },
+            {
+              "breaking": false,
+              "commit": "e559ee54e",
+              "kind": "fix",
+              "scope": "test",
+              "subject": "the stale-executable readiness test waits out a busy copy",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/e559ee54e"
+            },
+            {
+              "breaking": false,
+              "commit": "078ae6911",
+              "kind": "fix",
+              "scope": "top",
+              "subject": "the members of top 70 meet on the CI wiring, the port and the site audit",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/078ae6911"
+            },
+            {
+              "breaking": false,
+              "commit": "d4cbf8924",
+              "kind": "fix",
+              "scope": "site",
+              "subject": "the skills table on the skills page takes keyboard focus",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/d4cbf8924"
+            },
+            {
+              "breaking": false,
+              "commit": "e97f034bd",
+              "kind": "fix",
+              "references": [
+                {
+                  "id": "I2410",
+                  "kind": "issue",
+                  "route": "/plan/i2410/",
+                  "title": "A trusted machine on the tailnet is found through Tailscale, with no address written by hand"
+                }
+              ],
+              "scope": "top",
+              "subject": "the members of top 70 meet where they first meet",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/e97f034bd"
+            },
+            {
+              "breaking": false,
+              "commit": "8f8825642",
+              "kind": "fix",
+              "scope": "rules",
+              "subject": "the vendored candidates-reviewed rule dates no incident it does not attribute",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/8f8825642"
+            },
+            {
+              "breaking": false,
+              "commit": "bad02f37e",
+              "kind": "fix",
+              "references": [
+                {
+                  "id": "I2745",
+                  "kind": "issue",
+                  "route": "/plan/i2745/",
+                  "title": "The landing page states no present it does not read"
+                }
+              ],
+              "scope": "site",
+              "subject": "the landing page states no present it does not read (I2745)",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/bad02f37e"
+            },
+            {
+              "breaking": false,
+              "commit": "7ff6be98e",
+              "kind": "fix",
+              "scope": "reap",
+              "subject": "the reaper asks cargo where the shared build directory is",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/7ff6be98e"
+            },
+            {
+              "breaking": false,
+              "commit": "337b41ee7",
+              "kind": "fix",
+              "references": [
+                {
+                  "id": "I2746",
+                  "kind": "issue",
+                  "route": "/plan/i2746/",
+                  "title": "Every published tree draws its diagrams, and every diagram is the interactive viewer"
+                }
+              ],
+              "scope": "docs",
+              "subject": "every published tree draws its diagrams (I2746)",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/337b41ee7"
+            },
+            {
+              "breaking": false,
+              "commit": "8ed40f6eb",
+              "kind": "fix",
+              "references": [
+                {
+                  "id": "I2282",
+                  "kind": "issue",
+                  "route": "/plan/i2282/",
+                  "title": "The record pull request's dispatched verdict does not satisfy branch protection"
+                }
+              ],
+              "scope": "release",
+              "subject": "the record pull request's dispatched run is not its verdict (I2282)",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/8ed40f6eb"
+            },
+            {
+              "breaking": false,
+              "commit": "3024cbcc0",
+              "kind": "fix",
+              "scope": "site",
+              "subject": "a diagram's node text is readable in both themes",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/3024cbcc0"
+            },
+            {
+              "breaking": false,
+              "commit": "00fc6a841",
+              "kind": "fix",
+              "scope": "test",
+              "subject": "case 3066 names the step that ended it",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/00fc6a841"
+            },
+            {
+              "breaking": false,
+              "commit": "3c3372d06",
+              "kind": "fix",
+              "references": [
+                {
+                  "id": "I2708",
+                  "kind": "issue",
+                  "route": "/plan/i2708/",
+                  "title": "A mesh event field nobody listed fails the mesh check, and no log field or review body carries a credential the redactor knows"
+                }
+              ],
+              "scope": "mesh",
+              "subject": "a review is redacted before it is signed",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/3c3372d06"
+            },
+            {
+              "breaking": false,
+              "commit": "7111f846b",
+              "kind": "fix",
+              "references": [
+                {
+                  "id": "I2701",
+                  "kind": "issue",
+                  "route": "/plan/i2701/",
+                  "title": "The idle timeout is declared beside the other server timings, and serve --idle overrides the declaration"
+                }
+              ],
+              "scope": "serve",
+              "subject": "the idle timeout is declared beside the other server timings",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/7111f846b"
+            },
+            {
+              "breaking": false,
+              "commit": "3b5833692",
+              "kind": "fix",
+              "references": [
+                {
+                  "id": "I1409",
+                  "kind": "issue",
+                  "route": "/plan/i1409/",
+                  "title": "Derived data stops hashing inputs it cannot control"
+                }
+              ],
+              "scope": "derive",
+              "subject": "a fixture without history gets a verdict on its derived data",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/3b5833692"
+            },
+            {
+              "breaking": false,
+              "commit": "dd4798ce5",
+              "kind": "fix",
+              "references": [
+                {
+                  "id": "I2708",
+                  "kind": "issue",
+                  "route": "/plan/i2708/",
+                  "title": "A mesh event field nobody listed fails the mesh check, and no log field or review body carries a credential the redactor knows"
+                }
+              ],
+              "scope": "logging",
+              "subject": "every tracing field passes the one redactor",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/dd4798ce5"
+            },
+            {
+              "breaking": false,
+              "commit": "e2d7042a4",
+              "kind": "fix",
+              "references": [
+                {
+                  "id": "I2708",
+                  "kind": "issue",
+                  "route": "/plan/i2708/",
+                  "title": "A mesh event field nobody listed fails the mesh check, and no log field or review body carries a credential the redactor knows"
+                }
+              ],
+              "scope": "mesh",
+              "subject": "an EventBody field nobody listed fails the mesh check",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/e2d7042a4"
+            },
+            {
+              "breaking": false,
+              "commit": "1ed658183",
+              "kind": "fix",
+              "references": [
+                {
+                  "id": "I2707",
+                  "kind": "issue",
+                  "route": "/plan/i2707/",
+                  "title": "majordomus doctor reports a stale server, or says plainly that it checks governance only"
+                },
+                {
+                  "id": "I2157",
+                  "kind": "issue",
+                  "route": "/plan/i2157/",
+                  "title": "Ready means ready: a lost lease, a degraded layer or a failing mesh is not reported ready"
+                },
+                {
+                  "id": "I1995",
+                  "kind": "issue",
+                  "route": "/plan/i1995/",
+                  "title": "Work a session left uncommitted in a worktree is named, not found by luck"
+                }
+              ],
+              "scope": "doctor",
+              "subject": "doctor says it checks governance only and names where the runtime is read",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/1ed658183"
+            },
+            {
+              "breaking": false,
+              "commit": "4df3ca5e5",
+              "kind": "fix",
+              "references": [
+                {
+                  "id": "I0806",
+                  "kind": "issue",
+                  "route": "/plan/i0806/",
+                  "title": "Make the session rules doctrines, with retention and archiving"
+                },
+                {
+                  "id": "I2662",
+                  "kind": "issue",
+                  "route": "/plan/i2662/",
+                  "title": "Validation leaves the deployment a runner: a branch's checks never hold the pool a publication or a release record needs"
+                }
+              ],
+              "scope": "ci",
+              "subject": "a plan-record change plans only the gates that read a plan record",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/4df3ca5e5"
+            },
+            {
+              "breaking": false,
+              "commit": "bdc75e2cf",
+              "kind": "fix",
+              "references": [
+                {
+                  "id": "I1023",
+                  "kind": "issue",
+                  "route": "/plan/i1023/",
+                  "title": "Nothing private reaches a published page"
+                }
+              ],
+              "scope": "site",
+              "subject": "a leak finding names the file it is in, never the text (I1023)",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/bdc75e2cf"
+            },
+            {
+              "breaking": false,
+              "commit": "ea7f82b50",
+              "kind": "fix",
+              "scope": "site",
+              "subject": "the essay links the limitations page by its address, not a content path",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/ea7f82b50"
+            },
+            {
+              "breaking": false,
+              "commit": "a2e22b484",
+              "kind": "fix",
+              "references": [
+                {
+                  "id": "I1966",
+                  "kind": "issue",
+                  "route": "/plan/i1966/",
+                  "title": "The composed graph is whole or its generation refuses"
+                }
+              ],
+              "scope": "graph",
+              "subject": "the committed graph is whole or its generation refuses",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/a2e22b484"
+            },
+            {
+              "breaking": false,
+              "commit": "b3f35a34a",
+              "kind": "fix",
+              "references": [
+                {
+                  "id": "I2702",
+                  "kind": "issue",
+                  "route": "/plan/i2702/",
+                  "title": "A checkout keeps one address across restarts, because its server binds a port derived from the checkout"
+                }
+              ],
+              "scope": "serve",
+              "subject": "a checkout keeps one address, its server asks for a port derived from it",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/b3f35a34a"
+            },
+            {
+              "breaking": false,
+              "commit": "06e28bb4d",
+              "kind": "fix",
+              "references": [
+                {
+                  "id": "I2706",
+                  "kind": "issue",
+                  "route": "/plan/i2706/",
+                  "title": "An own event whose append failed is never acknowledged as durable, and a journal reload is bounded in size"
+                }
+              ],
+              "scope": "mesh",
+              "subject": "an append the disk did not take is not acknowledged as durable",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/06e28bb4d"
+            },
+            {
+              "breaking": false,
+              "commit": "ed8afb075",
+              "kind": "fix",
+              "references": [
+                {
+                  "id": "I2114",
+                  "kind": "issue",
+                  "route": "/plan/i2114/",
+                  "title": "A task's scope admits what its derive writes"
+                }
+              ],
+              "scope": "scope",
+              "subject": "a task's scope admits what its derive wrote",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/ed8afb075"
+            },
+            {
+              "breaking": false,
+              "commit": "52b0659d8",
+              "kind": "fix",
+              "scope": "doctor",
+              "subject": "a machine that derives has the pinned Rust toolchain",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/52b0659d8"
+            },
+            {
+              "breaking": false,
+              "commit": "aa6688ddc",
+              "kind": "fix",
+              "scope": "test",
+              "subject": "a case does not inherit the interface the operator binds servers on",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/aa6688ddc"
+            },
+            {
+              "breaking": false,
+              "commit": "4b05ff868",
+              "kind": "fix",
+              "scope": "ci",
+              "subject": "the hook environment is dropped as the fixture fix drops it, keeping git -c settings",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/4b05ff868"
+            },
+            {
+              "breaking": false,
+              "commit": "3c415b146",
+              "kind": "fix",
+              "scope": "ci",
+              "subject": "nothing a hook runs inherits the repository git hands the hook",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/3c415b146"
+            },
+            {
+              "breaking": false,
+              "commit": "8f7fb5bc5",
+              "kind": "fix",
+              "scope": "ci",
+              "subject": "a push runs what CI would find first, and a case never waits on stdin",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/8f7fb5bc5"
+            }
+          ],
+          "heading": "Fixed",
+          "kind": "fix",
+          "rank": 1
+        },
+        {
+          "changes": [
+            {
+              "breaking": false,
+              "commit": "43b8e9bac",
+              "kind": "perf",
+              "scope": "economics",
+              "subject": "a bootstrap median counts its draws instead of sorting each resample",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/43b8e9bac"
+            },
+            {
+              "breaking": false,
+              "commit": "fa8f00f6c",
+              "kind": "perf",
+              "scope": "build",
+              "subject": "dependencies are optimised in the debug build every derive and hook runs",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/fa8f00f6c"
+            },
+            {
+              "breaking": false,
+              "commit": "7eee00861",
+              "kind": "perf",
+              "scope": "changelog",
+              "subject": "every release's ancestry is listed by one git process",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/7eee00861"
+            }
+          ],
+          "heading": "Performance",
+          "kind": "perf",
+          "rank": 2
+        },
+        {
+          "changes": [
+            {
+              "breaking": false,
+              "commit": "52a884282",
+              "kind": "docs",
+              "scope": "cli",
+              "subject": "linked_port carries an example of the port it derives",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/52a884282"
+            },
+            {
+              "breaking": false,
+              "commit": "b80c18350",
+              "kind": "docs",
+              "references": [
+                {
+                  "id": "I2653",
+                  "kind": "issue",
+                  "route": "/plan/i2653/",
+                  "title": "Every diagram on the site is one interactive, linkable viewer whose node links are inferred, and a derived table can be drawn as a chart"
+                },
+                {
+                  "id": "I2740",
+                  "kind": "issue",
+                  "route": "/plan/i2740/",
+                  "title": "An issue's delivery is inferred from branches, pull requests, merges, tags and the published site"
+                },
+                {
+                  "id": "I2748",
+                  "kind": "issue",
+                  "route": "/plan/i2748/",
+                  "title": "The drift already on the trunk is settled before the gate is made blocking"
+                }
+              ],
+              "scope": "plan",
+              "subject": "the plan's surfaces are inferred from delivery (ADR 0166)",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/b80c18350"
+            },
+            {
+              "breaking": false,
+              "commit": "b1a0bff60",
+              "kind": "docs",
+              "references": [
+                {
+                  "id": "I1984",
+                  "kind": "issue",
+                  "route": "/plan/i1984/",
+                  "title": "Knowledge candidates never leave untracked files on a trunk that only pull requests change"
+                }
+              ],
+              "scope": "knowledge",
+              "subject": "the words follow the trunk outbox (I1984 slice 3)",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/b1a0bff60"
+            },
+            {
+              "breaking": false,
+              "commit": "a64fdc1a4",
+              "kind": "docs",
+              "references": [
+                {
+                  "id": "I2733",
+                  "kind": "issue",
+                  "route": "/plan/i2733/",
+                  "title": "A resumed mesh.events walk returns every event exactly once, across partitions"
+                },
+                {
+                  "id": "I2140",
+                  "kind": "issue",
+                  "route": "/plan/i2140/",
+                  "title": "Paging mesh.events returns every event exactly once"
+                }
+              ],
+              "scope": "plan",
+              "subject": "a resumed mesh.events walk misses a partitioned writer's event (I2733)",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/a64fdc1a4"
+            },
+            {
+              "breaking": false,
+              "commit": "a9ff7e1c3",
+              "kind": "docs",
+              "references": [
+                {
+                  "id": "I2705",
+                  "kind": "issue",
+                  "route": "/plan/i2705/",
+                  "title": "A node key can be rotated, peers follow the new key, and the old key is refused"
+                }
+              ],
+              "scope": "adr",
+              "subject": "a node key is rotated by a succession its predecessor signs",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/a9ff7e1c3"
+            },
+            {
+              "breaking": false,
+              "commit": "89a44047b",
+              "kind": "docs",
+              "references": [
+                {
+                  "id": "I1409",
+                  "kind": "issue",
+                  "route": "/plan/i1409/",
+                  "title": "Derived data stops hashing inputs it cannot control"
+                }
+              ],
+              "scope": "adr",
+              "subject": "a merge GitHub makes is guarded by checks, not by strict (I1409-c)",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/89a44047b"
+            },
+            {
+              "breaking": false,
+              "commit": "a53fd3b80",
+              "kind": "docs",
+              "references": [
+                {
+                  "id": "I2731",
+                  "kind": "issue",
+                  "route": "/plan/i2731/",
+                  "title": "Every failure class in the published failure table names its test or its stated limitation"
+                }
+              ],
+              "scope": "runtime",
+              "subject": "every failure class names its proof",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/a53fd3b80"
+            },
+            {
+              "breaking": false,
+              "commit": "e59b86b66",
+              "kind": "docs",
+              "references": [
+                {
+                  "id": "I0702",
+                  "kind": "issue",
+                  "route": "/plan/i0702/",
+                  "title": "Decide how a record is attributed, between named alternatives"
+                },
+                {
+                  "id": "I0701",
+                  "kind": "issue",
+                  "route": "/plan/i0701/",
+                  "title": "Reproduce the misattribution as an executable case"
+                }
+              ],
+              "scope": "adr",
+              "subject": "a durable record names the session that wrote it (ADR 0164, I0702)",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/e59b86b66"
+            },
+            {
+              "breaking": false,
+              "commit": "6ee6b77c5",
+              "kind": "docs",
+              "scope": "adr",
+              "subject": "the realization report names what is not orphan work",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/6ee6b77c5"
+            },
+            {
+              "breaking": false,
+              "commit": "cfff43810",
+              "kind": "docs",
+              "scope": "adr",
+              "subject": "a server serves only a share of its own version (ADR 0163)",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/cfff43810"
+            },
+            {
+              "breaking": false,
+              "commit": "a53f08f11",
+              "kind": "docs",
+              "references": [
+                {
+                  "id": "I1984",
+                  "kind": "issue",
+                  "route": "/plan/i1984/",
+                  "title": "Knowledge candidates never leave untracked files on a trunk that only pull requests change"
+                },
+                {
+                  "id": "I1990",
+                  "kind": "issue",
+                  "route": "/plan/i1990/",
+                  "title": "The pre-push check judges the refs being pushed, or says why the checkout's task binds them"
+                }
+              ],
+              "scope": "adr",
+              "subject": "a trunk episode stages its records and the pre-push judges the pushed branches",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/a53f08f11"
+            },
+            {
+              "breaking": false,
+              "commit": "17fa2c4d0",
+              "kind": "docs",
+              "scope": "site",
+              "subject": "a Czech essay says why the product is a layer and not another agent",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/17fa2c4d0"
+            },
+            {
+              "breaking": false,
+              "commit": "a28c54f27",
+              "kind": "docs",
+              "scope": "adr",
+              "subject": "state the disk and derive time without a typed percentage (ADR 0157)",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/a28c54f27"
+            },
+            {
+              "breaking": false,
+              "commit": "057e3d4f0",
+              "kind": "docs",
+              "scope": "adr",
+              "subject": "the build-cache case is 3013, 3011 is another session's (ADR 0157)",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/057e3d4f0"
+            },
+            {
+              "breaking": false,
+              "commit": "7a749356c",
+              "kind": "docs",
+              "references": [
+                {
+                  "id": "I2673",
+                  "kind": "issue",
+                  "route": "/plan/i2673/",
+                  "title": "The sccache client configuration is derived from the selected offer, local disk first"
+                },
+                {
+                  "id": "I2674",
+                  "kind": "issue",
+                  "route": "/plan/i2674/",
+                  "title": "A node is provisioned as an S3 cache provider, idempotently, with no secret in the repository"
+                }
+              ],
+              "scope": "adr",
+              "subject": "record what the first provider measured in ADR 0157 and I2673/I2674",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/7a749356c"
+            },
+            {
+              "breaking": false,
+              "commit": "cdb52778d",
+              "kind": "docs",
+              "references": [
+                {
+                  "id": "I2670",
+                  "kind": "issue",
+                  "route": "/plan/i2670/",
+                  "title": "A build-cache offer is a typed model and its selection is a pure, explained function"
+                },
+                {
+                  "id": "I2677",
+                  "kind": "issue",
+                  "route": "/plan/i2677/",
+                  "title": "The build cache is documented, governed by a rule and described on the site and the Pages"
+                }
+              ],
+              "scope": "adr",
+              "subject": "a mesh node may offer a shared build cache, never depended on (ADR 0157)",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/cdb52778d"
+            },
+            {
+              "breaking": false,
+              "commit": "809c603e3",
+              "kind": "docs",
+              "scope": "adr",
+              "subject": "the prompt-pack ADR is 0124, 0121 is the fleet ADR on master",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/809c603e3"
+            },
+            {
+              "breaking": false,
+              "commit": "a488c7405",
+              "kind": "docs",
+              "scope": "adr",
+              "subject": "an uploaded prompt pack is a provenance-tracked input artifact",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/a488c7405"
+            }
+          ],
+          "heading": "Documentation",
+          "kind": "docs",
+          "rank": 4
+        },
+        {
+          "changes": [
+            {
+              "breaking": false,
+              "commit": "c081c0b1a",
+              "kind": "test",
+              "references": [
+                {
+                  "id": "I0836",
+                  "kind": "issue",
+                  "route": "/plan/i0836/",
+                  "title": "A synthetic repository generator for scaling cases"
+                }
+              ],
+              "scope": "perf",
+              "subject": "a repository of N records costs N parses, not N squared (I0836)",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/c081c0b1a"
+            },
+            {
+              "breaking": false,
+              "commit": "84d174c23",
+              "kind": "test",
+              "references": [
+                {
+                  "id": "I0701",
+                  "kind": "issue",
+                  "route": "/plan/i0701/",
+                  "title": "Reproduce the misattribution as an executable case"
+                },
+                {
+                  "id": "M002",
+                  "kind": "milestone",
+                  "route": "/plan/m002/",
+                  "title": "A durable record names the worker that wrote it"
+                },
+                {
+                  "id": "I0702",
+                  "kind": "issue",
+                  "route": "/plan/i0702/",
+                  "title": "Decide how a record is attributed, between named alternatives"
+                }
+              ],
+              "scope": "sessions",
+              "subject": "a second worker's record lands on the first worker's task (I0701)",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/84d174c23"
+            },
+            {
+              "breaking": false,
+              "commit": "91b5fdf8e",
+              "kind": "test",
+              "references": [
+                {
+                  "id": "I1409",
+                  "kind": "issue",
+                  "route": "/plan/i1409/",
+                  "title": "Derived data stops hashing inputs it cannot control"
+                }
+              ],
+              "scope": "derive",
+              "subject": "a committed derivation survives a merge that touches none of its inputs",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/91b5fdf8e"
+            },
+            {
+              "breaking": false,
+              "commit": "d5f1289e9",
+              "kind": "test",
+              "references": [
+                {
+                  "id": "I2151",
+                  "kind": "issue",
+                  "route": "/plan/i2151/",
+                  "title": "A page served beside the write routes runs only script it shipped, and a rebinding host reads nothing"
+                }
+              ],
+              "scope": "http",
+              "subject": "a rebinding host, the API page and the site's JSON are proven, and I2151 is done",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/d5f1289e9"
+            }
+          ],
+          "heading": "Tests",
+          "kind": "test",
+          "rank": 5
+        },
+        {
+          "changes": [
+            {
+              "breaking": false,
+              "commit": "54cf30f57",
+              "kind": "chore",
+              "references": [
+                {
+                  "id": "I2745",
+                  "kind": "issue",
+                  "route": "/plan/i2745/",
+                  "title": "The landing page states no present it does not read"
+                }
+              ],
+              "scope": "plan",
+              "subject": "I2745 carries its evidence and reads verify (I2745)",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/54cf30f57"
+            },
+            {
+              "breaking": false,
+              "commit": "3a8ffe184",
+              "kind": "chore",
+              "references": [
+                {
+                  "id": "I2746",
+                  "kind": "issue",
+                  "route": "/plan/i2746/",
+                  "title": "Every published tree draws its diagrams, and every diagram is the interactive viewer"
+                }
+              ],
+              "scope": "plan",
+              "subject": "I2746 records its diagram-scope evidence and is verified (I2746)",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/3a8ffe184"
+            },
+            {
+              "breaking": false,
+              "commit": "4a6abf2a0",
+              "kind": "chore",
+              "scope": "release",
+              "subject": "bump the version to 0.28.0",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/4a6abf2a0"
+            },
+            {
+              "breaking": false,
+              "commit": "bad1720c3",
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the derived data follows the merge of master d116266",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/bad1720c3"
+            },
+            {
+              "breaking": false,
+              "commit": "275f35597",
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the derived data follows the merge of master",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/275f35597"
+            },
+            {
+              "breaking": false,
+              "commit": "d65fd8cca",
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the derived data follows the merge of master d116266",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/d65fd8cca"
+            },
+            {
+              "breaking": false,
+              "commit": "a2aa25f36",
+              "kind": "chore",
+              "scope": "release",
+              "subject": "record v0.27.0 and the metadata it publishes",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/a2aa25f36"
+            },
+            {
+              "breaking": false,
+              "commit": "dc3c36550",
+              "kind": "chore",
+              "references": [
+                {
+                  "id": "I2123",
+                  "kind": "issue",
+                  "route": "/plan/i2123/",
+                  "title": "A caller beyond loopback reads, and changes nothing it cannot authenticate"
+                }
+              ],
+              "scope": "plan",
+              "subject": "I2123 is done, a caller beyond loopback changes nothing it cannot authenticate",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/dc3c36550"
+            },
+            {
+              "breaking": false,
+              "commit": "43933145b",
+              "kind": "chore",
+              "references": [
+                {
+                  "id": "I2124",
+                  "kind": "issue",
+                  "route": "/plan/i2124/",
+                  "title": "An event reloaded from disk meets the trust policy in force, and no stamp outruns the clock"
+                }
+              ],
+              "scope": "plan",
+              "subject": "I2124 is recorded done with the tests that prove it",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/43933145b"
+            },
+            {
+              "breaking": false,
+              "commit": "9910ad089",
+              "kind": "chore",
+              "references": [
+                {
+                  "id": "I1409",
+                  "kind": "issue",
+                  "route": "/plan/i1409/",
+                  "title": "Derived data stops hashing inputs it cannot control"
+                }
+              ],
+              "scope": "plan",
+              "subject": "I1409 records fixture_without_history_evaluates from case 3055",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/9910ad089"
+            },
+            {
+              "breaking": false,
+              "commit": "2caa75bee",
+              "kind": "chore",
+              "references": [
+                {
+                  "id": "I2128",
+                  "kind": "issue",
+                  "route": "/plan/i2128/",
+                  "title": "A lease is removed only by the process that holds it, and serve stop stops the server in order"
+                }
+              ],
+              "scope": "plan",
+              "subject": "I2128 is recorded done with the tests that prove it",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/2caa75bee"
+            },
+            {
+              "breaking": false,
+              "commit": "4056f7302",
+              "kind": "chore",
+              "references": [
+                {
+                  "id": "I2707",
+                  "kind": "issue",
+                  "route": "/plan/i2707/",
+                  "title": "majordomus doctor reports a stale server, or says plainly that it checks governance only"
+                }
+              ],
+              "scope": "plan",
+              "subject": "failure-is-visible records two of its three evidence tokens",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/4056f7302"
+            },
+            {
+              "breaking": false,
+              "commit": "70e203fd2",
+              "kind": "chore",
+              "references": [
+                {
+                  "id": "I2135",
+                  "kind": "issue",
+                  "route": "/plan/i2135/",
+                  "title": "The trust root is read from the default branch, not from whatever the checkout holds"
+                }
+              ],
+              "scope": "plan",
+              "subject": "I2135 is done; a committed tofu declaration fails the mesh check",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/70e203fd2"
+            },
+            {
+              "breaking": false,
+              "commit": "311e092db",
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the changelog follows the merge's whole history",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/311e092db"
+            },
+            {
+              "breaking": false,
+              "commit": "88d1e8075",
+              "kind": "chore",
+              "references": [
+                {
+                  "id": "I2074",
+                  "kind": "issue",
+                  "route": "/plan/i2074/",
+                  "title": "An observation becomes a candidate that says what it is about, and reading groups recurrence"
+                },
+                {
+                  "id": "I2075",
+                  "kind": "issue",
+                  "route": "/plan/i2075/",
+                  "title": "A candidate is routed by what it is about"
+                }
+              ],
+              "scope": "plan",
+              "subject": "an observation becomes a grouped, routed candidate is recorded done",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/88d1e8075"
+            },
+            {
+              "breaking": false,
+              "commit": "db2d2d31b",
+              "kind": "chore",
+              "references": [
+                {
+                  "id": "I2134",
+                  "kind": "issue",
+                  "route": "/plan/i2134/",
+                  "title": "A key removed from the trust list loses its links without a restart, and a node key can be rotated"
+                },
+                {
+                  "id": "I2705",
+                  "kind": "issue",
+                  "route": "/plan/i2705/",
+                  "title": "A node key can be rotated, peers follow the new key, and the old key is refused"
+                }
+              ],
+              "scope": "plan",
+              "subject": "I2134 is done, and its evidence names the tests that prove it",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/db2d2d31b"
+            },
+            {
+              "breaking": false,
+              "commit": "618f825f8",
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the projections follow master c0e3585dc8",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/618f825f8"
+            },
+            {
+              "breaking": false,
+              "commit": "fa31bd31a",
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the projections follow master 97c4521f91",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/fa31bd31a"
+            },
+            {
+              "breaking": false,
+              "commit": "74cd022cd",
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the projections of the Czech essay over master a6b1e1032",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/74cd022cd"
+            },
+            {
+              "breaking": false,
+              "commit": "b406a1e53",
+              "kind": "chore",
+              "scope": "sessions",
+              "subject": "the record of the episode that opened this change, and its projections",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/b406a1e53"
+            },
+            {
+              "breaking": false,
+              "commit": "9dd87294f",
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "regenerate after merging master and renumbering the build-cache case",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/9dd87294f"
+            },
+            {
+              "breaking": false,
+              "commit": "a3a86d364",
+              "kind": "chore",
+              "scope": "offload",
+              "subject": "the iMac is a third derive host",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/a3a86d364"
+            },
+            {
+              "breaking": false,
+              "commit": "4a6f9976e",
+              "kind": "chore",
+              "references": [
+                {
+                  "id": "I2414",
+                  "kind": "issue",
+                  "route": "/plan/i2414/",
+                  "title": "mesh.state and mesh.peers answer a filtered summary that fits one tool answer"
+                }
+              ],
+              "scope": "plan",
+              "subject": "I2414 names the files and the measurements its implementation found",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/4a6f9976e"
+            },
+            {
+              "breaking": false,
+              "commit": "e531f1fe9",
+              "kind": "chore",
+              "references": [
+                {
+                  "id": "I2410",
+                  "kind": "issue",
+                  "route": "/plan/i2410/",
+                  "title": "A trusted machine on the tailnet is found through Tailscale, with no address written by hand"
+                },
+                {
+                  "id": "I2411",
+                  "kind": "issue",
+                  "route": "/plan/i2411/",
+                  "title": "A server whose mesh is enabled is reachable on the tailnet and the LAN, and only by a trusted peer"
+                },
+                {
+                  "id": "I2412",
+                  "kind": "issue",
+                  "route": "/plan/i2412/",
+                  "title": "`majordomus init` declares the mesh and enrols this machine's key, so a fresh repository cooperates"
+                },
+                {
+                  "id": "I2413",
+                  "kind": "issue",
+                  "route": "/plan/i2413/",
+                  "title": "A linked worktree cooperates through its repository's running server, and a start that cannot ensure one says why"
+                },
+                {
+                  "id": "I2414",
+                  "kind": "issue",
+                  "route": "/plan/i2414/",
+                  "title": "mesh.state and mesh.peers answer a filtered summary that fits one tool answer"
+                },
+                {
+                  "id": "I2415",
+                  "kind": "issue",
+                  "route": "/plan/i2415/",
+                  "title": "A mesh review request carries a body, can be withdrawn, and expires"
+                }
+              ],
+              "scope": "plan",
+              "subject": "the mesh works out of the box, and its six missing pieces are issues",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/e531f1fe9"
+            }
+          ],
+          "heading": "Housekeeping",
+          "kind": "chore",
+          "rank": 7
+        },
+        {
+          "changes": [
+            {
+              "breaking": false,
+              "commit": "f37efd935",
+              "kind": "style",
+              "scope": "test",
+              "subject": "cargo fmt over the derived-port assertion in cli_docs",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/f37efd935"
+            }
+          ],
+          "heading": "Formatting",
+          "kind": "style",
+          "rank": 7
+        }
+      ],
+      "notes_url": "https://github.com/korczis/prismatic-majordomus/releases/tag/v0.28.0",
+      "tag": "v0.28.0",
+      "tree_url": "https://github.com/korczis/prismatic-majordomus/tree/v0.28.0",
+      "unreleased": false,
+      "version": "0.28.0"
+    },
     {
       "artifacts": [
         {
@@ -2816,7 +4118,7 @@
           "added": "37067ec232d0b9b68be4c6dbb1378d0085ddff33",
           "date": "2026-10-12",
           "id": "adr-0146",
-          "status": "proposed",
+          "status": "accepted",
           "title": "A capability is invoked by name through a generated skill",
           "url": "https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0146-a-capability-is-invoked-by-name-through-a-generated-skill.md"
         }

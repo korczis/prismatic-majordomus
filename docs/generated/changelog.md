@@ -1,11 +1,134 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the layer's release records, the decisions dated in each release's window, and the commits in its range; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.27.0 -->
+     Generator: majordomus-cli 0.28.0 -->
 # Changelog
 
 Every entry below is derived: a section per release the layer records, its decisions the ADRs dated inside that release's window, its changes the conventional commits in its range, its artifacts the record's own evidence. Nothing here is written by hand, and `majordomus generate changelog --check` fails when it stops matching the tree.
 
-Current version: **0.27.0**
+Current version: **0.28.0**
+
+## v0.28.0 — 2026-10-17
+
+### Added
+
+- **context**: a worker is given a bounded slice of knowledge, not the knowledge base (`c598adf8b`)
+- **knowledge**: the graph is validated, and doctor and watch ask the same validator (I0812) (`c5aec68c9`)
+- **editors**: every domain of the registry is a skill, shown wherever skills are (ADR 0165) (`4e74a42a6`)
+- **session**: a branch episode carries the trunk's outbox into the tracked sections (I1984) (`6edc0e6a6`)
+- **session**: a trunk episode writes its records to the outbox (I1984) (`a5c3ee4c4`)
+- **rules**: a standing approval is written where the permission layer reads it (`3774d1ed0`)
+
+### Fixed
+
+- **ci**: the rust job's case gates drive the executable the job built (`441c96554`)
+- **top**: the last three changed items of top 70 are covered (`bd7f0af86`)
+- **top**: top 70 covers its changed code, its rust lane fits, its palette waits (`a259f94df`)
+- **top**: the essay links limitations relatively and plan-record-cases runs every plan reader (`735266fe5`)
+- **site**: the plan diagram is drawn past Mermaid's default size bound (`611a9a85b`)
+- **test**: the stale-executable readiness test waits out a busy copy (`e559ee54e`)
+- **top**: the members of top 70 meet on the CI wiring, the port and the site audit (`078ae6911`)
+- **site**: the skills table on the skills page takes keyboard focus (`d4cbf8924`)
+- **top**: the members of top 70 meet where they first meet (`e97f034bd`)
+- **rules**: the vendored candidates-reviewed rule dates no incident it does not attribute (`8f8825642`)
+- **site**: the landing page states no present it does not read (I2745) (`bad02f37e`)
+- **reap**: the reaper asks cargo where the shared build directory is (`7ff6be98e`)
+- **docs**: every published tree draws its diagrams (I2746) (`337b41ee7`)
+- **release**: the record pull request's dispatched run is not its verdict (I2282) (`8ed40f6eb`)
+- **site**: a diagram's node text is readable in both themes (`3024cbcc0`)
+- **test**: case 3066 names the step that ended it (`00fc6a841`)
+- **mesh**: a review is redacted before it is signed (`3c3372d06`)
+- **serve**: the idle timeout is declared beside the other server timings (`7111f846b`)
+- **derive**: a fixture without history gets a verdict on its derived data (`3b5833692`)
+- **logging**: every tracing field passes the one redactor (`dd4798ce5`)
+- **mesh**: an EventBody field nobody listed fails the mesh check (`e2d7042a4`)
+- **doctor**: doctor says it checks governance only and names where the runtime is read (`1ed658183`)
+- **ci**: a plan-record change plans only the gates that read a plan record (`4df3ca5e5`)
+- **site**: a leak finding names the file it is in, never the text (I1023) (`bdc75e2cf`)
+- **site**: the essay links the limitations page by its address, not a content path (`ea7f82b50`)
+- **graph**: the committed graph is whole or its generation refuses (`a2e22b484`)
+- **serve**: a checkout keeps one address, its server asks for a port derived from it (`b3f35a34a`)
+- **mesh**: an append the disk did not take is not acknowledged as durable (`06e28bb4d`)
+- **scope**: a task's scope admits what its derive wrote (`ed8afb075`)
+- **doctor**: a machine that derives has the pinned Rust toolchain (`52b0659d8`)
+- **test**: a case does not inherit the interface the operator binds servers on (`aa6688ddc`)
+- **ci**: the hook environment is dropped as the fixture fix drops it, keeping git -c settings (`4b05ff868`)
+- **ci**: nothing a hook runs inherits the repository git hands the hook (`3c415b146`)
+- **ci**: a push runs what CI would find first, and a case never waits on stdin (`8f7fb5bc5`)
+
+### Performance
+
+- **economics**: a bootstrap median counts its draws instead of sorting each resample (`43b8e9bac`)
+- **build**: dependencies are optimised in the debug build every derive and hook runs (`fa8f00f6c`)
+- **changelog**: every release's ancestry is listed by one git process (`7eee00861`)
+
+### Documentation
+
+- **cli**: linked_port carries an example of the port it derives (`52a884282`)
+- **plan**: the plan's surfaces are inferred from delivery (ADR 0166) (`b80c18350`)
+- **knowledge**: the words follow the trunk outbox (I1984 slice 3) (`b1a0bff60`)
+- **plan**: a resumed mesh.events walk misses a partitioned writer's event (I2733) (`a64fdc1a4`)
+- **adr**: a node key is rotated by a succession its predecessor signs (`a9ff7e1c3`)
+- **adr**: a merge GitHub makes is guarded by checks, not by strict (I1409-c) (`89a44047b`)
+- **runtime**: every failure class names its proof (`a53fd3b80`)
+- **adr**: a durable record names the session that wrote it (ADR 0164, I0702) (`e59b86b66`)
+- **adr**: the realization report names what is not orphan work (`6ee6b77c5`)
+- **adr**: a server serves only a share of its own version (ADR 0163) (`cfff43810`)
+- **adr**: a trunk episode stages its records and the pre-push judges the pushed branches (`a53f08f11`)
+- **site**: a Czech essay says why the product is a layer and not another agent (`17fa2c4d0`)
+- **adr**: state the disk and derive time without a typed percentage (ADR 0157) (`a28c54f27`)
+- **adr**: the build-cache case is 3013, 3011 is another session's (ADR 0157) (`057e3d4f0`)
+- **adr**: record what the first provider measured in ADR 0157 and I2673/I2674 (`7a749356c`)
+- **adr**: a mesh node may offer a shared build cache, never depended on (ADR 0157) (`cdb52778d`)
+- **adr**: the prompt-pack ADR is 0124, 0121 is the fleet ADR on master (`809c603e3`)
+- **adr**: an uploaded prompt pack is a provenance-tracked input artifact (`a488c7405`)
+
+### Tests
+
+- **perf**: a repository of N records costs N parses, not N squared (I0836) (`c081c0b1a`)
+- **sessions**: a second worker's record lands on the first worker's task (I0701) (`84d174c23`)
+- **derive**: a committed derivation survives a merge that touches none of its inputs (`91b5fdf8e`)
+- **http**: a rebinding host, the API page and the site's JSON are proven, and I2151 is done (`d5f1289e9`)
+
+### Housekeeping
+
+- **plan**: I2745 carries its evidence and reads verify (I2745) (`54cf30f57`)
+- **plan**: I2746 records its diagram-scope evidence and is verified (I2746) (`3a8ffe184`)
+- **release**: bump the version to 0.28.0 (`4a6abf2a0`)
+- **derive**: the derived data follows the merge of master d116266 (`bad1720c3`)
+- **derive**: the derived data follows the merge of master (`275f35597`)
+- **derive**: the derived data follows the merge of master d116266 (`d65fd8cca`)
+- **release**: record v0.27.0 and the metadata it publishes (`a2aa25f36`)
+- **plan**: I2123 is done, a caller beyond loopback changes nothing it cannot authenticate (`dc3c36550`)
+- **plan**: I2124 is recorded done with the tests that prove it (`43933145b`)
+- **plan**: I1409 records fixture_without_history_evaluates from case 3055 (`9910ad089`)
+- **plan**: I2128 is recorded done with the tests that prove it (`2caa75bee`)
+- **plan**: failure-is-visible records two of its three evidence tokens (`4056f7302`)
+- **plan**: I2135 is done; a committed tofu declaration fails the mesh check (`70e203fd2`)
+- **derive**: the changelog follows the merge's whole history (`311e092db`)
+- **plan**: an observation becomes a grouped, routed candidate is recorded done (`88d1e8075`)
+- **plan**: I2134 is done, and its evidence names the tests that prove it (`db2d2d31b`)
+- **derive**: the projections follow master c0e3585dc8 (`618f825f8`)
+- **derive**: the projections follow master 97c4521f91 (`fa31bd31a`)
+- **derive**: the projections of the Czech essay over master a6b1e1032 (`74cd022cd`)
+- **sessions**: the record of the episode that opened this change, and its projections (`b406a1e53`)
+- **derive**: regenerate after merging master and renumbering the build-cache case (`9dd87294f`)
+- **offload**: the iMac is a third derive host (`a3a86d364`)
+- **plan**: I2414 names the files and the measurements its implementation found (`4a6f9976e`)
+- **plan**: the mesh works out of the box, and its six missing pieces are issues (`e531f1fe9`)
+
+### Formatting
+
+- **test**: cargo fmt over the derived-port assertion in cli_docs (`f37efd935`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v0.28.0-aarch64-apple-darwin.tar.gz (`48e91654391e`)
+- `macos-x86_64` — majordomus-v0.28.0-x86_64-apple-darwin.tar.gz (`f3e1f0e686a2`)
+- `linux-x86_64-gnu` — majordomus-v0.28.0-x86_64-unknown-linux-gnu.tar.gz (`52e8c51339c0`)
+- `linux-x86_64-musl` — majordomus-v0.28.0-x86_64-unknown-linux-musl.tar.gz (`87e69f3184eb`)
+- `linux-aarch64-gnu` — majordomus-v0.28.0-aarch64-unknown-linux-gnu.tar.gz (`b9b600487e2d`)
+- `linux-aarch64-musl` — majordomus-v0.28.0-aarch64-unknown-linux-musl.tar.gz (`103134918ff2`)
+
 
 ## v0.27.0 — 2026-10-16
 
@@ -269,7 +392,7 @@ Current version: **0.27.0**
 
 ### Decisions
 
-- **ADR-0146** A capability is invoked by name through a generated skill _(proposed)_
+- **ADR-0146** A capability is invoked by name through a generated skill _(accepted)_
 
 ### Added
 
