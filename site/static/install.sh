@@ -412,6 +412,14 @@ resolve_release() {
   [ "$MJ_TAG" = "v$MJ_VERSION" ] || fail "the release metadata is not usable" \
     "the tag \"$MJ_TAG\" and the version \"$MJ_VERSION\" do not agree" \
     "Metadata: $MJ_METADATA_URL"
+  # A pre-release is installed only by name. The latest release is never one, so metadata that
+  # resolves to one without being asked is a mistake upstream, not an offer (I2829).
+  case "$MJ_PINNED:$MJ_VERSION" in
+    0:*-*) fail "the release metadata is not usable" \
+             "it resolves to the pre-release $MJ_TAG, and the latest release is never a pre-release" \
+             "Install a pre-release by name: --version $MJ_TAG" \
+             "Metadata: $MJ_METADATA_URL" ;;
+  esac
 
   MJ_ARTIFACT=$(artifact_field "$MJ_TMP/release.json" "$MJ_TARGET" name)
   MJ_URL=$(artifact_field "$MJ_TMP/release.json" "$MJ_TARGET" url)

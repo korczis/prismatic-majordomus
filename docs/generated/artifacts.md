@@ -430,7 +430,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `site/static/favicon.svg` | `design-mark` | text | 904 | `fd24ab421f13dbc9` |
 | `site/static/images/logo-mark.svg` | `design-mark` | text | 904 | `fd24ab421f13dbc9` |
 | `site/static/images/logo.svg` | `design-logo` | text | 1059 | `21f3c0a64421fb3c` |
-| `site/static/install.sh` | `installer` | text | 36904 | `e0c4832bbd949bec` |
+| `site/static/install.sh` | `installer` | text | 37395 | `5cda8b8db46e6667` |
 | `site/static/releases/latest.json` | `release/latest` | json | 2397 | `84647db19b6e7a7c` |
 | `site/static/releases/v0.10.0.json` | `release/v0.10.0` | json | 2397 | `d5d062b81a621263` |
 | `site/static/releases/v0.11.0.json` | `release/v0.11.0` | json | 2397 | `d314f8a7caa0916f` |
