@@ -11742,7 +11742,7 @@
           "route": "/docs/cli/worktree/inspect/"
         },
         {
-          "about": "Create the canonical worktree of a branch, creating the branch from --base (default: the trunk) when it does not exist. The path is derived; none may be given",
+          "about": "Create the canonical worktree of a branch. A branch that does not exist here is fetched from the trunk's remote and taken up when the remote has it; otherwise it is created from --base, else from the remote's trunk fetched now (the local trunk only when the remote cannot be read, and then said, with how far behind). The path is derived; none may be given",
           "command": "majordomus worktree create",
           "name": "create",
           "route": "/docs/cli/worktree/create/"
@@ -12646,7 +12646,7 @@
       "usage": "majordomus worktree inspect [OPTIONS] <BRANCH>"
     },
     {
-      "about": "Create the canonical worktree of a branch, creating the branch from --base (default: the trunk) when it does not exist. The path is derived; none may be given",
+      "about": "Create the canonical worktree of a branch. A branch that does not exist here is fetched from the trunk's remote and taken up when the remote has it; otherwise it is created from --base, else from the remote's trunk fetched now (the local trunk only when the remote cannot be read, and then said, with how far behind). The path is derived; none may be given",
       "ancestors": [
         {
           "command": "majordomus",
