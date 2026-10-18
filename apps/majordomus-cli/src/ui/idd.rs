@@ -824,17 +824,21 @@ fn standing_body(id: &str, explain: &Answer) -> El {
         let mut stack = el("div")
             .class("mj-ui-stack")
             .child(sentences)
-            .child(el("h3").class("mj-ui-subhead").text("What is not yet met"))
+            .child(
+                el("h3")
+                    .class("mj-ui-panel-title")
+                    .text("What is not yet met"),
+            )
             .child(criteria)
             .child(
                 el("h3")
-                    .class("mj-ui-subhead")
+                    .class("mj-ui-panel-title")
                     .text("The work realising it"),
             )
             .child(realising);
         if !findings.is_empty() {
             stack = stack
-                .child(el("h3").class("mj-ui-subhead").text("Drift"))
+                .child(el("h3").class("mj-ui-panel-title").text("Drift"))
                 .child(drift);
         }
         stack
