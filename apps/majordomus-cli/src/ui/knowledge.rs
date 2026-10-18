@@ -102,23 +102,59 @@ pub fn screen(ctx: &Context) -> View {
             review(),
             &[],
         ))
-        .child(wide(panel(
-            "By subject",
-            "The records derived from observations, grouped by what they are about.",
-            unanswered(queue).unwrap_or_else(|| subjects(queue)),
-            &[queue],
-        )))
-        .child(wide(panel(
-            "Awaiting review",
-            "The newest candidates, each leading to its record.",
-            unanswered(queue).unwrap_or_else(|| candidates(queue)),
-            &[queue],
-        )));
+        .children(queue_panels(queue));
 
     View::new(
         "Knowledge",
         el("div").class("mj-ui-stack").child(top).child(grid),
     )
+}
+
+/// The queue's panels: what it is about and what awaits review, or, when the queue answered
+/// that nothing does, one sentence in their place. Two empty tables say the same thing twice
+/// and say neither why nor how a record would arrive.
+fn queue_panels(queue: &Answer) -> Vec<El> {
+    if queue_empty(queue) {
+        return vec![wide(panel(
+            "Awaiting review",
+            "The candidates no reviewer has promoted or rejected yet.",
+            empty_queue(),
+            &[queue],
+        ))];
+    }
+    vec![
+        wide(panel(
+            "By subject",
+            "The records derived from observations, grouped by what they are about.",
+            unanswered(queue).unwrap_or_else(|| subjects(queue)),
+            &[queue],
+        )),
+        wide(panel(
+            "Awaiting review",
+            "The newest candidates, each leading to its record.",
+            unanswered(queue).unwrap_or_else(|| candidates(queue)),
+            &[queue],
+        )),
+    ]
+}
+
+/// Whether the queue answered and holds nothing: a total of zero and no candidate. A queue
+/// that did not answer is not empty; it is unanswered, and its panels say so.
+fn queue_empty(queue: &Answer) -> bool {
+    queue
+        .ok()
+        .is_some_and(|answer| answer.get("total").and_then(Value::as_u64) == Some(0))
+        && list(queue, "/candidates").is_empty()
+}
+
+/// The sentence an empty queue is told in: that nothing awaits review, and how a record
+/// would come to.
+fn empty_queue() -> El {
+    el("p")
+        .class("mj-ui-prose")
+        .text("Nothing awaits review: no candidate record is tracked here. A record arrives when a session closes and the deriver writes down what it left behind, or when ")
+        .child(el("code").class("mj-ui-code").text("majordomus knowledge observe"))
+        .text(" records what was noticed.")
 }
 
 /// The judgement of the deriver: when it last wrote, when an episode last closed, why the
@@ -372,7 +408,6 @@ mod tests {
         for want in [
             "The deriver",
             "Review",
-            "By subject",
             "Awaiting review",
             "knowledge_base.status",
             "knowledge_base.candidates",
@@ -457,6 +492,38 @@ mod tests {
             waited(&json!({ "freshness_reason": "the record carries no date" })),
             " the record carries no date"
         );
+    }
+
+    /// An empty queue is one panel and one sentence, saying how a record arrives; a queue that
+    /// holds records, or did not answer, keeps both panels.
+    #[test]
+    fn an_empty_queue_is_one_sentence_not_two_empty_tables() {
+        let render = |panels: Vec<El>| panels.iter().map(El::render).collect::<String>();
+        let empty = answer(CANDIDATES, json!({ "total": 0, "candidates": [] }));
+        let panels = queue_panels(&empty);
+        assert_eq!(panels.len(), 1);
+        let html = render(panels);
+        assert!(html.contains("Nothing awaits review"), "{html}");
+        assert!(
+            html.contains("<code class=\"mj-ui-code\">majordomus knowledge observe</code>"),
+            "{html}"
+        );
+        assert!(html.contains("knowledge_base.candidates"), "{html}");
+        for gone in ["By subject", "<table", "No candidate awaits review."] {
+            assert!(!html.contains(gone), "{gone}: {html}");
+        }
+
+        let held = answer(
+            CANDIDATES,
+            json!({ "total": 1, "candidates": [candidate(1)] }),
+        );
+        assert_eq!(queue_panels(&held).len(), 2);
+        let failed = Answer {
+            value: Err("no queue".to_string()),
+            ..answer(CANDIDATES, json!({}))
+        };
+        assert!(!queue_empty(&failed));
+        assert_eq!(queue_panels(&failed).len(), 2);
     }
 
     /// The deriver's panel says the judgement in words and every finding the status carries;
