@@ -7,10 +7,11 @@ profile: deep-work
 parallel_safe: false
 objective: "Choose between the alternatives that actually exist — attribute to the session that ran the command, refuse to write when the active task belongs to somebody else, or require the task to be named explicitly — and record the choice with the case each rejected option gets wrong."
 why: "Every option here trades a different thing away, and the wrong one either invents an identity this repository refuses to maintain or makes the common single-worker case tedious. A decision record is the only artefact that survives to explain why the chosen one was chosen."
-current_state: "The gap is reproduced. Nothing has been decided, and the obvious fix — a worker identity the tool maintains — is the one the doctrine against new nouns exists to prevent."
+current_state: "I0701 reproduces the gap as case 3049. ADR 0164 records attribution to the executing session, relates a task only when its task.started session matches, and preserves unattributed records when several episodes are open and the caller supplies no identity. The ADR remains proposed; I0703 remains to implement the recorded choice."
 desired_state: "One decision record naming the choice, both rejected alternatives, and the situation each of them is wrong in, with the conditions the choice imposes on the implementation."
 scope:
-  - docs
+  - .ai/repo/adrs/0164-a-record-names-the-session-that-wrote-it.md
+  - .ai/repo/project/issues/I0702.yaml
 non_scope:
   - Implementing anything
 depends_on:
@@ -21,8 +22,26 @@ acceptance_criteria:
   - The conditions the implementation must meet are stated, not left to the implementer
 validation:
   - bin/majordomus decision list
+  - bin/majordomus adr check
 evidence_required:
   - decision_recorded
 risk: "Choosing to refuse rather than to attribute makes a single worker pay for a problem only concurrent workers have; whichever way it goes, the cost falls on somebody and the record has to say who."
 created_at: 2026-09-04
-updated_at: 2026-09-04
+updated_at: 2026-10-18T21:42:25Z
+started_at: 2026-10-18T21:31:54Z
+started_event: sha256:19f30e6a14a186ec0e9be91409bcf3d60e2334261fd974ca029bc57fc6194463
+completed_at: 2026-10-18T21:42:25Z
+completed_event: sha256:40dff88ea2ceb5afb23c811d1a55fed0b97577ca5b33823996bb7b980362c576
+evidence:
+  - covers: decision_recorded
+    type: artifact
+    result: "ADR 0164 records the executing-session choice, both rejected alternatives and implementation conditions; the existing task.started session detects a foreign task without a new identity. Status remains proposed and I0703 remains implementation work. Reviewed artifact SHA256 e919820766fbdd5d51c3934fa60382ed4b9073451e6d696f95cc6d06a8945150."
+    artifact: ".ai/repo/adrs/0164-a-record-names-the-session-that-wrote-it.md"
+    commit: 2dfff96988afe1c580e8e151cf504d1ea97ad0ad
+    recorded_at: 2026-10-18T21:42:16Z
+  - covers: decision_recorded
+    type: test
+    command: "bin/majordomus decision list; bin/majordomus adr check"
+    result: "decision list exits 0 and shows the reconciliation decision for task t-20261018211825-b14e; adr check exits 0, examines 119 decisions, every identity unique, every status known, every reference resolves. Formal ADR acceptance and runtime implementation are not claimed."
+    commit: 2dfff96988afe1c580e8e151cf504d1ea97ad0ad
+    recorded_at: 2026-10-18T21:42:21Z
