@@ -11,7 +11,7 @@ use crate::capability::Context;
 use crate::cockpit::html::{el, El};
 
 use super::shell::View;
-use super::source::{ask_all, Answer, Source};
+use super::source::{ask_all, Answer, Availability, Reading, Source};
 use super::view::{
     hero, kpi, kpi_state, list, more, nothing, object, panel, state, table, text, unanswered, wide,
 };
@@ -72,8 +72,19 @@ pub fn screen(ctx: &Context) -> View {
             kpi("Awaiting review", &queue.read("/total")),
             kpi("On this branch", &queue.read("/on_this_branch")),
             kpi("Unattributed", &queue.read("/unattributed")),
-            kpi("Closed, underived", &status.read("/closed_without_derivation")),
-            kpi_state("Newest episode", &status.read("/freshness")),
+            ledger_kpi(
+                "Closed, underived",
+                status,
+                kpi(
+                    "Closed, underived",
+                    &status.read("/closed_without_derivation"),
+                ),
+            ),
+            ledger_kpi(
+                "Newest episode",
+                status,
+                kpi_state("Newest episode", &status.read("/freshness")),
+            ),
         ],
     );
 
@@ -116,6 +127,9 @@ fn deriver(status: &Answer) -> El {
     let Some(answer) = status.ok() else {
         return nothing("The status did not answer.");
     };
+    if !ledger_recorded(answer) {
+        return no_ledger();
+    }
     let mark = |key: &str| -> String {
         answer
             .get(key)
@@ -164,6 +178,50 @@ fn deriver(status: &Answer) -> El {
                 .map(|finding| el("li").text(finding)),
         ),
     )
+}
+
+/// What a checkout without a session ledger is told instead of a judgement: the published
+/// snapshot and a fresh clone carry none, and a value read from a ledger that is not there
+/// would read as "never" or "0" about the repository when it is only about this checkout.
+const NO_LEDGER: &str = "not recorded here";
+
+/// Whether the status read any line of the session ledger: a close, a derivation, or a
+/// close no derivation names. The status's own `present` also counts candidates, which are
+/// tracked records and are read in any checkout; the ledger is local, so it is asked apart.
+fn ledger_recorded(answer: &Value) -> bool {
+    answer.get("last_closed").is_some_and(|m| !m.is_null())
+        || answer.get("last_derived").is_some_and(|m| !m.is_null())
+        || answer
+            .get("closed_without_derivation")
+            .and_then(Value::as_u64)
+            .is_some_and(|n| n > 0)
+}
+
+/// A tile whose value is read from the session ledger: as drawn when the status read a
+/// ledger, and as [`NO_LEDGER`] when it read none, so a snapshot never states a count or a
+/// freshness it could not observe.
+fn ledger_kpi(label: &str, status: &Answer, drawn: El) -> El {
+    match status.ok() {
+        Some(answer) if !ledger_recorded(answer) => kpi(
+            label,
+            &Reading {
+                source: STATUS,
+                pointer: "/last_closed",
+                state: Availability::Available(Value::String(NO_LEDGER.to_string())),
+            },
+        ),
+        _ => drawn,
+    }
+}
+
+/// The deriver's panel where no session ledger is here: what that means, and where the
+/// judgement is made instead. Prose, not facts: there is nothing to tabulate.
+fn no_ledger() -> El {
+    el("p")
+        .class("mj-ui-prose")
+        .text("No session ledger is recorded in this checkout, so whether the deriver keeps up is not judged here. The published snapshot and a fresh clone carry none; in a working checkout, ")
+        .child(el("code").class("mj-ui-code").text("majordomus knowledge status"))
+        .text(" judges it, and this panel shows when the deriver last wrote.")
 }
 
 /// The review, as the commands it is made of.
@@ -402,9 +460,63 @@ mod tests {
         assert!(html.contains("never, in this checkout"), "{html}");
         assert!(html.contains("2026-10-13T10:00:00Z, episode s-1"), "{html}");
         assert!(html.contains("no derivation names s-1"), "{html}");
-        let unjudged = answer(STATUS, json!({ "judged": false, "stopped_writer": false }));
+        let unjudged = answer(
+            STATUS,
+            json!({
+                "judged": false,
+                "stopped_writer": false,
+                "last_closed": { "ts": "2026-10-13T10:00:00Z", "episode": "s-1" },
+            }),
+        );
         assert!(deriver(&unjudged)
             .render()
             .contains("not judged; the findings say why"));
+    }
+
+    /// A checkout with no session ledger, as the published snapshot is, states no count and
+    /// no "never" about the repository: the ledger tiles and the deriver say it is not
+    /// recorded here, and where it is judged. A close no derivation names is a ledger line.
+    #[test]
+    fn a_checkout_without_a_ledger_states_nothing_it_could_not_observe() {
+        let fresh = answer(
+            STATUS,
+            json!({
+                "present": false, "judged": false, "stopped_writer": false,
+                "closed_without_derivation": 0, "freshness": "unknown",
+                "freshness_reason": "no episode has closed here",
+                "findings": ["no episode has closed here; nothing to judge"],
+            }),
+        );
+        let html = deriver(&fresh).render();
+        assert!(
+            html.contains("No session ledger is recorded in this checkout"),
+            "{html}"
+        );
+        assert!(
+            html.contains("majordomus knowledge status</code>"),
+            "{html}"
+        );
+        assert!(!html.contains("never"), "{html}");
+        let tile = ledger_kpi("Closed, underived", &fresh, el("span").text("drawn")).render();
+        assert!(tile.contains(NO_LEDGER), "{tile}");
+        assert!(!tile.contains("drawn"), "{tile}");
+        assert!(
+            tile.contains("knowledge_base.status"),
+            "the tile still cites its source: {tile}"
+        );
+
+        let closed = answer(STATUS, json!({ "closed_without_derivation": 2 }));
+        assert!(ledger_recorded(closed.ok().expect("an answer")));
+        let kept = ledger_kpi("Closed, underived", &closed, el("span").text("drawn")).render();
+        assert!(kept.contains("drawn"), "{kept}");
+        let failed = Answer {
+            value: Err("no status".to_string()),
+            ..answer(STATUS, json!({}))
+        };
+        let shown = ledger_kpi("Closed, underived", &failed, el("span").text("drawn")).render();
+        assert!(
+            shown.contains("drawn"),
+            "an unanswered status keeps its own tile: {shown}"
+        );
     }
 }
