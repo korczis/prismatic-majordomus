@@ -613,7 +613,10 @@ mod tests {
                 s[..end].starts_with("mj-").then(|| &s[..end])
             })
             .collect();
-        assert!(defined.len() > 50, "the stylesheet was not read: {defined:?}");
+        assert!(
+            defined.len() > 50,
+            "the stylesheet was not read: {defined:?}"
+        );
         let accounted = |c: &str| {
             defined.contains(c)
                 || defined
@@ -641,8 +644,14 @@ mod tests {
                 }
             }
         }
-        assert!(seen > 100, "only {seen} class(es) were read from the sources");
-        assert!(undefined.is_empty(), "classes the stylesheet does not define: {undefined:?}");
+        assert!(
+            seen > 100,
+            "only {seen} class(es) were read from the sources"
+        );
+        assert!(
+            undefined.is_empty(),
+            "classes the stylesheet does not define: {undefined:?}"
+        );
     }
 
     /// A screen asked as a snapshot carries every slow panel already read where its
@@ -667,7 +676,10 @@ mod tests {
             let r = ui.handle(&asked);
             let html = r.body.text();
             assert_eq!(r.status, 200, "{route}");
-            assert!(!html.contains("data-panel-src="), "{route} defers a panel: {html}");
+            assert!(
+                !html.contains("data-panel-src="),
+                "{route} defers a panel: {html}"
+            );
             assert_eq!(html.matches("<h1").count(), 1, "{route} has one heading");
         }
         // the PR Drain, the Dashboard's pull requests, Deployments' delivery and Work
@@ -676,7 +688,10 @@ mod tests {
         prs.headers
             .push((SNAPSHOT_HEADER.to_string(), "1".to_string()));
         assert!(
-            ui.handle(&prs).body.text().contains("forge was not observed"),
+            ui.handle(&prs)
+                .body
+                .text()
+                .contains("forge was not observed"),
             "the drain's own answer stands in the snapshot's PR Drain"
         );
     }
