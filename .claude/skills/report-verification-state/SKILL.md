@@ -4,7 +4,7 @@ description: "Write the outcome of a piece of work as claims each marked VERIFIE
 ---
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: .ai/repo/skills/report-verification-state/SKILL.md; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.30.0 -->
+     Generator: majordomus-cli 0.31.0 -->
 
 # Report by verification state
 
