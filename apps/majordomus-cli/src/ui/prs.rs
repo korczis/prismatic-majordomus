@@ -18,7 +18,7 @@ use crate::cockpit::view::word_badge;
 
 use super::icons::icon;
 use super::shell::View;
-use super::source::{ask_all, Answer, Source};
+use super::source::{ask_all, Answer, Availability, Reading, Source};
 use super::view::{
     code_link, day, graph, hero, kpi, kpi_to, list, meter, more, none, nothing, panel, panel_to,
     state, status_tone, strip, table, text, unanswered, value, wide, GraphNode, Layout,
@@ -40,7 +40,6 @@ const TRAIL: usize = 15;
 /// How many pull requests a "next up" line names before it says how many more there are.
 const NEXT_UP: usize = 12;
 
-const PLAN: Source = Source::of("plan.status");
 const ISSUES: Source = Source::of("plan.issues");
 
 /// The query parameters this screen reads, and nothing else is carried from one view of it
@@ -194,8 +193,8 @@ pub fn issues_named(a: &Value) -> Vec<String> {
 /// The PR Drain screen.
 pub fn screen(ctx: &Context, query: &[(String, String)]) -> View {
     let filter = Filter::from_query(query);
-    let answers = ask_all(ctx, &[PLAN, ISSUES]);
-    let (plan, issues) = (&answers[&PLAN], &answers[&ISSUES]);
+    let answers = ask_all(ctx, &[ISSUES]);
+    let issues = &answers[&ISSUES];
 
     let top = hero(
         "merge",
@@ -203,12 +202,9 @@ pub fn screen(ctx: &Context, query: &[(String, String)]) -> View {
         "PR Drain",
         "Pull requests converging on master, one at a time.",
         "Every open pull request as the integration lane assessed it: what it waits for, what would move it, what it depends on and overlaps, and the issue it carries.",
-        vec![
-            kpi("Issues ready", &plan.read("/counts/by_status/READY")),
-            kpi("Issues active", &plan.read("/counts/by_status/ACTIVE")),
-            kpi("Issues blocked", &plan.read("/counts/by_status/BLOCKED")),
-            kpi("Issues done", &plan.read("/counts/by_status/DONE")),
-        ],
+        // the screen counts pull requests, and those only the drain below reads: the plan's
+        // issue counts belong to the Roadmap and Issues screens, not to this one's hero
+        Vec::new(),
     );
 
     let src = filter.href(PANEL, "", None);
@@ -540,26 +536,46 @@ fn number(a: &Value) -> Option<u64> {
 /// The lane's tallies, each tile a link to the pull requests it counts.
 fn tallies(queue: &Answer) -> El {
     let to_lane = |lane: &str| Filter::default().href(ROUTE, "lane", Some(lane));
-    strip(vec![
-        kpi_to(kpi("Open", &queue.read("/queue/tallies/open")), ROUTE),
-        kpi_to(
-            kpi("Repair lane", &queue.read("/queue/tallies/by_lane/repair")),
-            &to_lane("repair"),
-        ),
-        kpi_to(
-            kpi("Waiting", &queue.read("/queue/tallies/by_lane/waiting")),
-            &to_lane("waiting"),
-        ),
-        kpi_to(
-            kpi("Held", &queue.read("/queue/tallies/by_lane/held")),
-            &to_lane("held"),
-        ),
-        kpi(
-            &super::dashboard::merged_label(queue),
-            &queue.read("/throughput/merges"),
-        ),
-        kpi("Merges per day", &queue.read("/throughput/merges_per_day")),
-    ])
+    // every lane the queue counted, in the queue's own words: a lane it adds is a card
+    // here without a change to this screen, and one it drops is not a card counting nothing
+    let lanes: Vec<String> = queue
+        .ok()
+        .and_then(|v| v.pointer("/queue/tallies/by_lane"))
+        .and_then(Value::as_object)
+        .map(|m| m.keys().cloned().collect())
+        .unwrap_or_default();
+    // each count is read from the one map the queue answers, which its source line names
+    let by_lane = queue.read("/queue/tallies/by_lane");
+    let count = |lane: &str| Reading {
+        state: match &by_lane.state {
+            Availability::Available(m) => m
+                .get(lane)
+                .cloned()
+                .map_or(Availability::Absent, Availability::Available),
+            other => other.clone(),
+        },
+        ..by_lane.clone()
+    };
+    let mut cards = vec![kpi_to(kpi("Open", &queue.read("/queue/tallies/open")), ROUTE)];
+    cards.extend(
+        lanes
+            .iter()
+            .map(|lane| kpi_to(kpi(&lane_label(lane), &count(lane)), &to_lane(lane))),
+    );
+    cards.push(kpi(
+        &super::dashboard::merged_label(queue),
+        &queue.read("/throughput/merges"),
+    ));
+    cards.push(kpi("Merges per day", &queue.read("/throughput/merges_per_day")));
+    strip(cards)
+}
+
+/// A lane's word as a card's label: `repair` reads "Repair lane", `waiting` "Waiting lane".
+fn lane_label(lane: &str) -> String {
+    let words = lane.replace('_', " ");
+    let mut chars = words.chars();
+    let first = chars.next().map(|c| c.to_uppercase().collect::<String>());
+    format!("{}{} lane", first.unwrap_or_default(), chars.as_str())
 }
 
 /// What the lane does next: the pull request it would merge, those it would refresh, those
@@ -854,7 +870,7 @@ fn inspector(a: &Value, all: &[Value], repository: &str, filter: &Filter) -> El 
         .cloned()
         .unwrap_or_default();
     let dep_list = el("ul")
-        .class("mj-ui-list")
+        .class("mj-ui-prose-list")
         .children(dependencies.iter().filter_map(|d| {
             let m = d.get("number").and_then(Value::as_u64)?;
             let satisfied = d.get("satisfied").and_then(Value::as_bool).unwrap_or(false);
@@ -873,7 +889,7 @@ fn inspector(a: &Value, all: &[Value], repository: &str, filter: &Filter) -> El 
             ))
         }));
     let overlap_list = el("ul")
-        .class("mj-ui-list")
+        .class("mj-ui-prose-list")
         .children(overlaps.iter().filter_map(|o| {
             let m = o.get("number").and_then(Value::as_u64)?;
             let paths = strings(o, "paths");
@@ -1717,6 +1733,28 @@ mod tests {
             html78.contains("pr=77#pr"),
             "an open dependency leads to its inspector: {html78}"
         );
+    }
+
+    /// The drain counts pull requests by every lane the queue counted, each card a link to
+    /// that lane, and a lane the queue did not count is no card; the screen's hero counts no
+    /// plan issues, since this screen is about pull requests (I2850).
+    #[test]
+    fn the_counts_are_the_queues_own_lanes_and_never_the_plans_issues() {
+        let mut v = sample();
+        v["queue"]["tallies"]["by_lane"] = serde_json::json!({ "held": 4, "repair": 1, "ready": 2 });
+        let html = tallies(&queue(v)).render();
+        for (label, lane) in [("Held lane", "held"), ("Repair lane", "repair"), ("Ready lane", "ready")] {
+            assert!(html.contains(label), "no card {label}: {html}");
+            assert!(html.contains(&format!("{ROUTE}?lane={lane}")), "{lane} is not a link: {html}");
+        }
+        assert!(!html.contains("Waiting lane"), "a lane the queue did not count is a card");
+        assert_eq!(lane_label("waiting_for_review"), "Waiting for review lane");
+
+        let repo = crate::synthetic::SyntheticRepository::new(crate::synthetic::Shape::default())
+            .expect("a synthetic repository");
+        let ctx = repo.context().expect("a context");
+        let hero = screen(&ctx, &[]).main.render();
+        assert!(!hero.contains("Issues ready") && !hero.contains("plan.status"), "{hero}");
     }
 
     #[test]

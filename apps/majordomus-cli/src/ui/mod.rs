@@ -106,6 +106,10 @@ pub const GRAPH_LIB: &str = "vendor/cytoscape.min.js";
 /// what the script fetches to fill a slow panel in place.
 pub const FRAGMENT: &str = "fragment";
 
+/// The request header a snapshot reads every page with: a screen asked with it carries each
+/// of its slow panels already read, since a published page has no script to fetch them.
+pub const SNAPSHOT_HEADER: &str = "X-Majordomus-Snapshot";
+
 /// One screen of the UI: where it is, what the navigation calls it, its icon in the kit's
 /// set, and the question it answers.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -348,36 +352,19 @@ impl Ui {
         // the kiosk is the Observatory's screen under a second name, never a second screen
         let kiosk = path == observatory::KIOSK;
         let path = if kiosk { observatory::ROUTE } else { path };
-        let mut screen = match path {
-            "" | PREFIX => dashboard::screen(&ctx),
-            idd::ROUTE => idd::screen(&ctx, &req.query),
-            roadmap::ROUTE => roadmap::screen(&ctx, &req.query),
-            work::ROUTE => work::screen(&ctx, &req.query),
-            issues::ROUTE => issues::screen(&ctx, &req.query),
-            prs::ROUTE => prs::screen(&ctx, &req.query),
-            mesh::ROUTE => mesh::screen(&ctx, &req.query),
-            delivery::ROUTE => delivery::screen(&ctx),
-            deployments::ROUTE => deployments::screen(&ctx),
-            command::ROUTE => command::screen(&ctx, &req.query),
-            capabilities::ROUTE => capabilities::screen(&ctx, &req.query),
-            skills::ROUTE => skills::screen(&ctx),
-            docs::ROUTE => docs::screen(&ctx),
-            evidence::ROUTE => evidence::screen(&ctx, &req.query),
-            knowledge::ROUTE => knowledge::screen(&ctx),
-            governance::ROUTE => governance::screen(&ctx, &req.query),
-            observatory::ROUTE => {
-                let libs = observatory::Libs {
-                    director: self.assets.url(observatory::LIB),
-                    scenes: self.assets.url(observatory::SCENES_LIB),
-                    p5: self.assets.url(observatory::P5_LIB),
-                };
-                observatory::screen(&ctx, &req.query, &libs, kiosk)
-            }
-            dashboard::PULL_REQUESTS_PANEL => dashboard::pull_requests_panel(&ctx, &req.query),
-            deployments::DELIVERY_PANEL => deployments::delivery_panel(&ctx),
-            prs::PANEL => prs::panel_view(&ctx, &req.query),
-            other => shell::not_found(other),
-        };
+        let mut screen = self.view(&ctx, path, &req.query, kiosk);
+        // A snapshot has no script to fetch a slow panel after the screen has painted, so the
+        // panel is read now and stands where its placeholder stood, as the script would have
+        // put it: a published screen carries what the live one shows (ADR 0141).
+        if req.header(SNAPSHOT_HEADER).is_some() {
+            screen.main = screen.main.replacing("data-panel-src", &mut |src| {
+                let panel = Request::parse_target("GET", src, Vec::new());
+                let route = panel.path.trim_end_matches('/');
+                PANELS
+                    .contains(&route)
+                    .then(|| self.view(&ctx, route, &panel.query, false).main)
+            });
+        }
         if behind {
             screen.main = crate::cockpit::html::el("div")
                 .class("mj-ui-stack")
@@ -430,6 +417,47 @@ impl Ui {
         }
         response
     }
+
+    /// The view a route answers with: a screen, a panel, or the page that says the route is
+    /// not one.
+    fn view(
+        &self,
+        ctx: &crate::capability::Context,
+        path: &str,
+        query: &[(String, String)],
+        kiosk: bool,
+    ) -> shell::View {
+        match path {
+            "" | PREFIX => dashboard::screen(ctx),
+            idd::ROUTE => idd::screen(ctx, query),
+            roadmap::ROUTE => roadmap::screen(ctx, query),
+            work::ROUTE => work::screen(ctx, query),
+            issues::ROUTE => issues::screen(ctx, query),
+            prs::ROUTE => prs::screen(ctx, query),
+            mesh::ROUTE => mesh::screen(ctx, query),
+            delivery::ROUTE => delivery::screen(ctx),
+            deployments::ROUTE => deployments::screen(ctx),
+            command::ROUTE => command::screen(ctx, query),
+            capabilities::ROUTE => capabilities::screen(ctx, query),
+            skills::ROUTE => skills::screen(ctx),
+            docs::ROUTE => docs::screen(ctx),
+            evidence::ROUTE => evidence::screen(ctx, query),
+            knowledge::ROUTE => knowledge::screen(ctx),
+            governance::ROUTE => governance::screen(ctx, query),
+            observatory::ROUTE => {
+                let libs = observatory::Libs {
+                    director: self.assets.url(observatory::LIB),
+                    scenes: self.assets.url(observatory::SCENES_LIB),
+                    p5: self.assets.url(observatory::P5_LIB),
+                };
+                observatory::screen(ctx, query, &libs, kiosk)
+            }
+            dashboard::PULL_REQUESTS_PANEL => dashboard::pull_requests_panel(ctx, query),
+            deployments::DELIVERY_PANEL => deployments::delivery_panel(ctx),
+            prs::PANEL => prs::panel_view(ctx, query),
+            other => shell::not_found(other),
+        }
+    }
 }
 
 #[cfg(test)]
@@ -443,7 +471,7 @@ mod tests {
     fn every_screen_is_answered_and_every_answered_route_is_a_screen_or_a_panel() {
         let source = include_str!("mod.rs");
         let dispatcher = source
-            .split("let mut screen = match path {")
+            .split("fn view(")
             .nth(1)
             .and_then(|rest| rest.split("other =>").next())
             .expect("the dispatcher's match");
@@ -562,6 +590,42 @@ mod tests {
         let bare = Ui::new(ctx, "0.0.0-test", None);
         let r = bare.handle(&Request::parse_target("GET", PREFIX, Vec::new()));
         assert!(r.body.text().contains("the UI is unstyled"));
+    }
+
+    /// A screen asked as a snapshot carries every slow panel already read where its
+    /// placeholder stood, as the script would have put it, and keeps its one heading; asked
+    /// live it still paints first and defers the panel (I2850).
+    #[test]
+    fn a_snapshot_reads_every_slow_panel_into_its_screen() {
+        let repo = crate::synthetic::SyntheticRepository::new(crate::synthetic::Shape::default())
+            .expect("a synthetic repository");
+        let ui = Ui::new(repo.context().expect("a context"), "0.0.0-test", None);
+        let mut deferring = 0;
+        for route in SCREENS.iter().map(|s| s.route) {
+            let live = ui.handle(&Request::parse_target("GET", route, Vec::new()));
+            if !live.body.text().contains("data-panel-src=") {
+                continue;
+            }
+            deferring += 1;
+            let mut asked = Request::parse_target("GET", route, Vec::new());
+            asked
+                .headers
+                .push((SNAPSHOT_HEADER.to_string(), "1".to_string()));
+            let r = ui.handle(&asked);
+            let html = r.body.text();
+            assert_eq!(r.status, 200, "{route}");
+            assert!(!html.contains("data-panel-src="), "{route} defers a panel: {html}");
+            assert_eq!(html.matches("<h1").count(), 1, "{route} has one heading");
+        }
+        // the PR Drain, the Dashboard's pull requests, Deployments' delivery and Work
+        assert!(deferring >= 3, "only {deferring} screen(s) defer a panel");
+        let mut prs = Request::parse_target("GET", prs::ROUTE, Vec::new());
+        prs.headers
+            .push((SNAPSHOT_HEADER.to_string(), "1".to_string()));
+        assert!(
+            ui.handle(&prs).body.text().contains("forge was not observed"),
+            "the drain's own answer stands in the snapshot's PR Drain"
+        );
     }
 
     /// Every screen renders against a real registry, with its hero and at least one panel,
