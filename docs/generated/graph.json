@@ -40822,6 +40822,45 @@
         }
       },
       {
+        "id": "majordomus://issue/I2853",
+        "kind": "issue",
+        "label": "I2853",
+        "summary": "a Pages deploy on a fresh master is not refused for claims newer than the ledger it reads",
+        "route": "/cockpit/objects/issue/i2853",
+        "source": ".ai/repo/project/issues/I2853.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A not-run claim whose test exists at no ledger commit is named and not counted against the baseline",
+            "A not-run claim whose test existed at a ledger commit is still refused over the baseline",
+            "A ledger none of whose commits is in the history excuses no claim"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "published-evidence compares the total `not run` count with the baseline and refuses over it, whatever made each claim `not run`.",
+          "depends_on": [],
+          "evidence_required": [
+            "a_claim_newer_than_the_ledger_case"
+          ],
+          "milestone": "test-evidence",
+          "non_scope": [
+            "Making the deploy wait for master's evidence artifact: the other remedy the release seat named. Not needed once a newer claim is not a refusal, and it would delay every deploy.",
+            "How the published UI words a claim newer than the ledger: it reads `not run`, which is true; a distinct `not yet recorded` state in evidence.report is a change to the capability."
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "scripts/pages",
+            "test/cases/3242_a_claim_newer_than_the_ledger_is_not_yet_recorded.sh"
+          ],
+          "slug": "a-claim-newer-than-the-ledger-is-not-yet-recorded",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "bin/majordomus plan validate",
+            "bash test/run.sh 3242_a_claim_newer_than_the_ledger_is_not_yet_recorded 3178_the_published_ui_reads_the_evidence_ci_recorded"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I2900",
         "kind": "issue",
         "label": "I2900",
@@ -60104,6 +60143,13 @@
         "label": "test/cases/3240_the_published_screens_carry_their_slow_panels.sh",
         "route": "/cockpit/objects/test/test-cases-3240-the-published-screens-carry-their-slow-panels-sh",
         "source": "test/cases/3240_the_published_screens_carry_their_slow_panels.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3242_a_claim_newer_than_the_ledger_is_not_yet_recorded.sh",
+        "kind": "test",
+        "label": "test/cases/3242_a_claim_newer_than_the_ledger_is_not_yet_recorded.sh",
+        "route": "/cockpit/objects/test/test-cases-3242-a-claim-newer-than-the-ledger-is-not-yet-recorded-sh",
+        "source": "test/cases/3242_a_claim_newer_than_the_ledger_is_not_yet_recorded.sh"
       },
       {
         "id": "majordomus://test/test/cases/32_refusal_lifecycle.sh",
@@ -87546,6 +87592,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2853",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2853",
+        "target": "majordomus://milestone/test-evidence",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I2900",
         "target": "kind:issue",
         "kind": "is_a"
@@ -92737,6 +92793,11 @@
       },
       {
         "source": "majordomus://test/test/cases/3240_the_published_screens_carry_their_slow_panels.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3242_a_claim_newer_than_the_ledger_is_not_yet_recorded.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -98062,8 +98123,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3052,
-      "edges": 6697,
+      "nodes": 3054,
+      "edges": 6700,
       "acyclic": false,
       "truncated": false
     }
