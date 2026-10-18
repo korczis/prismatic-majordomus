@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>One registry over the command line, HTTP, OpenAPI, Swagger UI and MCP — Prismatic Majordomus</title>
-<meta name="description" content="The Rust executable serves the layer read-only over stdio MCP, MCP over HTTP, routes under /api/v1/, an OpenAPI document with a Swagger UI, and a command line, all derived from the capability registry; one shared server per repository, and every attached client is a peer the others can see.">
+<meta name="description" content="The Rust executable serves the layer over stdio MCP, MCP over HTTP, routes under /api/v1/, an OpenAPI document with a Swagger UI, and a command line, all derived from the capability registry, which names what each capability changes; one shared server per repository, and every attached client is a peer the others can see.">
 <link rel="canonical" href="https://majordomus.dev/features/interfaces/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Prismatic Majordomus">
 <meta property="og:title" content="One registry over the command line, HTTP, OpenAPI, Swagger UI and MCP — Prismatic Majordomus">
-<meta property="og:description" content="The Rust executable serves the layer read-only over stdio MCP, MCP over HTTP, routes under /api/v1/, an OpenAPI document with a Swagger UI, and a command line, all derived from the capability registry; one shared server per repository, and every attached client is a peer the others can see.">
+<meta property="og:description" content="The Rust executable serves the layer over stdio MCP, MCP over HTTP, routes under /api/v1/, an OpenAPI document with a Swagger UI, and a command line, all derived from the capability registry, which names what each capability changes; one shared server per repository, and every attached client is a peer the others can see.">
 <meta property="og:url" content="https://majordomus.dev/features/interfaces/">
 <meta property="og:image" content="https://majordomus.dev/images/social-card.png">
 <meta name="twitter:card" content="summary_large_image">
@@ -29,7 +29,7 @@
     <a href="https://majordomus.dev/" class="flex min-w-0 items-center gap-1.5 sm:gap-2.5 rtl:space-x-reverse">
       <span class="inline-flex h-6 w-6 shrink-0 text-heading sm:h-7 sm:w-7 [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.30.0 -->
+     Generator: majordomus-cli 0.30.1 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
   <title>Prismatic Majordomus</title>
   <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
@@ -178,14 +178,18 @@ report, the Swagger UI — is discovered from the thing that produces it, or fro
 that says it exists, and resolved once into a topology the router, the home page, the
 publication and the validator all read.</p>
 <h2 id="what-it-does-not-do"><a class="zola-anchor" href="#what-it-does-not-do" aria-label="Anchor link for: what-it-does-not-do">What it does not do</a></h2>
-<p>Almost nothing here writes to the repository: all but two of the capabilities over MCP and
-HTTP are reads, and most of the commands that change anything change only this process's
-memory. The exceptions are named rather than implied — <code>plan.transition</code> and
-<code>recover.orphans</code> — and the <code>initialize</code> instructions every client reads name them too,
-counted off the registry rather than stated by hand, because a sentence that promises a
-read-only surface is exactly the sentence an agent acts on. There is no
+<p>Most of what is served reads. Every capability carries its effect in the registry: a read,
+a change to the answering runtime's own state (the peer board, the mesh journal, the
+evidence ledger), or a change to the repository. The ones that write the repository are
+<code>continuity.publish</code>, <code>continuity.resume</code>, <code>continuity.sync</code>, <code>executions.start</code>,
+<code>intents.propose</code>, <code>plan.transition</code>, <code>reasoning.record</code> and <code>recover.orphans</code>;
+the <code>initialize</code> instructions every client reads name them from the registry, and case
+3363 refuses this page when its list and the registry's differ, because a sentence that
+promises a read-only surface is exactly the sentence an agent acts on. There is no
 authentication and no remote binding by default; the server is for the clients on this
-machine. It does not run a model and it does not route work to one.</p>
+machine. When it is bound beyond loopback, its reads answer whoever reaches it, and every
+capability that changes something is refused to a remote caller unless a linked node
+signed the input. It does not run a model and it does not route work to one.</p>
 </article>
     <section id="why" class="mt-12 scroll-mt-24" aria-labelledby="why-h">
       <h2 id="why-h" class="text-xl font-semibold tracking-tight text-heading">Why it exists</h2>
@@ -639,7 +643,7 @@ machine. It does not run a model and it does not route work to one.</p>
           <span class="inline-flex gap-1"><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed" data-status-kind="claim"><span aria-hidden="true">○</span><span class="sr-only">declared status: </span>guaranteed</span>
 <span class="mj-badge mj-badge--not-run relative" data-status="not-run" data-status-kind="proof" data-claim="mcp-stdio-surface"><span aria-hidden="true">○</span><span class="sr-only">recorded evidence: </span>not run</span>
 </span>
-          <a href="https://majordomus.dev/guarantees/mcp-stdio-surface/" class="min-w-0 text-sm text-heading hover:text-fg-brand hover:underline">The Rust executable serves the repository&#39;s AI layer to an MCP client over stdio, read-only, with protocol frames alone on stdout</a>
+          <a href="https://majordomus.dev/guarantees/mcp-stdio-surface/" class="min-w-0 text-sm text-heading hover:text-fg-brand hover:underline">The Rust executable serves the repository&#39;s AI layer to an MCP client over stdio, with protocol frames alone on stdout</a>
           <span class="ml-auto min-w-0 break-all font-mono text-xs text-body-subtle" title="the test that settles this claim">test/cases/72_rust_mcp.sh</span>
         </li>
         <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 p-3">
@@ -949,9 +953,9 @@ machine. It does not run a model and it does not route work to one.</p>
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/2dfff96988afe1c580e8e151cf504d1ea97ad0ad/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/2dfff96988afe1c580e8e151cf504d1ea97ad0ad/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/2dfff96988afe1c580e8e151cf504d1ea97ad0ad/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/9904000d2df5e88b24ea69defd453e5760dd7602/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/9904000d2df5e88b24ea69defd453e5760dd7602/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/9904000d2df5e88b24ea69defd453e5760dd7602/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -959,7 +963,7 @@ machine. It does not run a model and it does not route work to one.</p>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.30.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/2dfff96988afe1c580e8e151cf504d1ea97ad0ad" class="font-mono underline">2dfff96</a> · inputs <span class="font-mono">084e28b75364</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.30.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/9904000d2df5e88b24ea69defd453e5760dd7602" class="font-mono underline">9904000</a> · inputs <span class="font-mono">5446d7fda381</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>
