@@ -576,7 +576,9 @@ fn linked_issues(message: &str) -> Vec<El> {
             run.push_str(word);
             continue;
         }
-        let at = word.find(core).unwrap_or(0);
+        // where the id starts: `core` is `word` with its opening brackets trimmed off the front,
+        // so the offset is the length of what was trimmed, and there is nothing to default
+        let at = word.len() - word.trim_start_matches(['(', '[']).len();
         run.push_str(&word[..at]);
         if !run.is_empty() {
             out.push(el("span").text(std::mem::take(&mut run)));
