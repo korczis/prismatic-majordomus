@@ -391,6 +391,11 @@ pub const LOCAL: &[LocalCommand] = &[
         note: "runs mesh.claim on this checkout's running server, whose journal replicates it; exits 10 with the conflicting claims when it is refused.",
     },
     LocalCommand {
+        command: "mesh allocate",
+        reason: LocalReason::RendersCapability("plan.allocate"),
+        note: "runs plan.allocate on this checkout's running server, whose mesh admits the reservation under one lock; exits 10 when no server runs the mesh.",
+    },
+    LocalCommand {
         command: "mesh release",
         reason: LocalReason::RendersCapability("mesh.release"),
         note: "runs mesh.release on this checkout's running server, the only process that holds the claim.",
