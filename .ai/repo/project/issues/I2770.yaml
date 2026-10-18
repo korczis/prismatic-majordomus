@@ -56,4 +56,23 @@ evidence_required:
   - "navbar_parity_run"
   - "navbar_unit_tests"
 created_at: 2026-10-16
-updated_at: 2026-10-16
+updated_at: 2026-10-17T18:26:36Z
+started_at: 2026-10-17T18:26:19Z
+started_event: sha256:127bf4b17adb386eb5ab28e82308b25f1a40b20466b8f7414d37023b3ccfcf8d
+verified_at: 2026-10-17T18:26:31Z
+verified_event: sha256:53e5ae8c0d3582690db95bb361423b80ad2226d82ed5f7fd9c4f5c4e46bc1d31
+completed_at: 2026-10-17T18:26:36Z
+completed_event: sha256:5fced18d6567d7217f7572c5d979f47a1c416f1292f6e6be9f3ecb80f0b8649e
+evidence:
+  - covers: navbar_parity_run
+    type: test
+    command: "scripts/site-build --no-data && scripts/ui navbar --port 8811; scripts/ui test; scripts/cockpit-assets --check"
+    result: "navbar: 40 comparisons of the site bar with /ui and /cockpit at 320, 390, 1024, 1280, 1600 px, light and dark, closed and open: 0 differences; ui test 39 passed; cockpit-assets clean (code since 3a8ca854904, an ancestor of 4a4573690f8; re-run at 4a4573690f8)"
+    commit: 4a4573690f861473fad383b4ecfd6f868065c13a
+    recorded_at: 2026-10-17T18:26:25Z
+  - covers: navbar_unit_tests
+    type: test
+    command: "cargo test --lib -- ui::navbar ui::shell cockpit::html"
+    result: "passed (56 in the combined run with mesh::journal), incl. the_compiled_bar_is_the_sites (code since 3a8ca854904, an ancestor of 4a4573690f8; re-run at 4a4573690f8)"
+    commit: 4a4573690f861473fad383b4ecfd6f868065c13a
+    recorded_at: 2026-10-17T18:26:28Z

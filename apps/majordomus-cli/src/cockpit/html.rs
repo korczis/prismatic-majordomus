@@ -169,6 +169,44 @@ impl El {
         }
     }
 
+    /// This element with every element that carries the attribute `name` replaced by what
+    /// `with` makes of its value, when it makes anything; an element it leaves is searched
+    /// on, one it replaces is not.
+    ///
+    /// ```
+    /// use majordomus_cli::cockpit::html::el;
+    /// let page = el("div").child(el("p").attr("data-src", "/a").text("later"));
+    /// let filled = page.replacing("data-src", &mut |src| Some(el("p").text(src)));
+    /// assert_eq!(filled.render(), "<div><p>/a</p></div>");
+    /// ```
+    pub fn replacing(self, name: &str, with: &mut dyn FnMut(&str) -> Option<El>) -> El {
+        let value = self
+            .attributes
+            .iter()
+            .find(|(n, _)| n == name)
+            .map(|(_, v)| v.clone());
+        if let Some(replacement) = value.and_then(|v| with(&v)) {
+            return replacement;
+        }
+        let El {
+            tag,
+            attributes,
+            children,
+        } = self;
+        let children = children
+            .into_iter()
+            .map(|c| match c {
+                Node::Element(e) => Node::Element(e.replacing(name, with)),
+                other => other,
+            })
+            .collect();
+        El {
+            tag,
+            attributes,
+            children,
+        }
+    }
+
     /// The element as markup.
     pub fn render(&self) -> String {
         let mut out = String::new();

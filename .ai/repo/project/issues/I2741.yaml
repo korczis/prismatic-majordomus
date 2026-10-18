@@ -32,4 +32,17 @@ evidence_required:
   - "drift_case"
   - "mutations_fail_the_case"
 created_at: 2026-10-16
-updated_at: 2026-10-16
+updated_at: 2026-10-16T16:07:33Z
+evidence:
+  - covers: drift_case
+    type: test
+    command: "bash test/run.sh 3101_merged_work_unrecorded_is_drift"
+    result: "ok 3101: merged_not_recorded with PR and merge commit, forge-title proof, trunk gate exit 10 past window / 0 inside / head pending / advisory 0, missing or unreadable window exit 12, done_without_trace never refuses"
+    commit: ee02079b1bc9224657b2c46563ff9aa68befba69
+    recorded_at: 2026-10-16T16:07:29Z
+  - covers: mutations_fail_the_case
+    type: test
+    command: "6 code mutations of plan/drift.rs and plan/delivery.rs, one at a time, then bash test/run.sh 3101_merged_work_unrecorded_is_drift"
+    result: "6 of 6 killed: never-merged, ignore-open-pr, no-forge-titles, trunk-never-refuses, done-refuses, no-window-judged"
+    commit: ee02079b1bc9224657b2c46563ff9aa68befba69
+    recorded_at: 2026-10-16T16:07:33Z

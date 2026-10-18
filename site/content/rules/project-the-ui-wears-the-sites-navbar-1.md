@@ -1,7 +1,7 @@
 +++
 title = "majordomus.dev is the reference for how the product looks, and every page of the UI and the Cockpit wears the site's own navbar"
 description = "majordomus.dev is the reference for how the product looks, and every page of the UI and the Cockpit wears the site's own navbar"
-weight = 175
+weight = 176
 [extra]
 kind = "rule"
 slug = "project-the-ui-wears-the-sites-navbar-1"

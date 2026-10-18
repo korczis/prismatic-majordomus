@@ -1,0 +1,28 @@
+id: I2916
+milestone: idd-reads-at-a-glance
+title: "The workspace reads in the order a person asks"
+slug: the-workspace-reads-in-order
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Order the panels: what the intent is, what is missing, what to do next, the work (milestones, issues, waves, graph), then evidence and moves."
+why: "On 2026-10-18 the owner read the published /ui/idd three times and found it unergonomic: the panels follow the capabilities, not the questions."
+serves:
+  - the-owner-directs-work-from-the-ui#the-workspace-reads-at-a-glance
+current_state: "Capability order."
+desired_state: "Reading order."
+scope:
+  - "apps/majordomus-cli/src/ui/idd.rs"
+  - "test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh"
+  - ".ai/repo/project"
+  - "docs"
+  - "site"
+depends_on: []
+acceptance_criteria:
+  - "The panels of /ui/idd appear in the reading order the record states"
+validation:
+  - "majordomus plan validate"
+  - "bash test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh"
+evidence_required: []
+created_at: 2026-10-18
+updated_at: 2026-10-18

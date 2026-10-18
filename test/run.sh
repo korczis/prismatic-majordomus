@@ -75,6 +75,15 @@ unset mj_git_local
 # interface states it itself.
 unset MAJORDOMUS_HTTP_HOST
 MJ="$ROOT/bin/majordomus"; export MJ ROOT
+# A case must not act on the machine it measures: a build a case starts on a machine below the
+# reclaim mark would otherwise run the reaper over this machine's real worktrees
+# (lib/rust_bin.sh mj_rust_reclaim). Case 276 sets its own mark against a fixture.
+MAJORDOMUS_RECLAIM_BELOW_MB=0; export MAJORDOMUS_RECLAIM_BELOW_MB
+# Nor may a case's build sweep the build directory every worktree of this machine shares
+# (lib/rust_bin.sh mj_rust_prune_build_dir): the incremental and deps sweeps are proved
+# against fixtures by cases 3080, 3196 and 3197, which set their own ages.
+MAJORDOMUS_INCREMENTAL_IDLE_MIN=0; MAJORDOMUS_DEPS_IDLE_MIN=0; MAJORDOMUS_PRIVATE_BUILD_IDLE_MIN=0
+export MAJORDOMUS_INCREMENTAL_IDLE_MIN MAJORDOMUS_DEPS_IDLE_MIN MAJORDOMUS_PRIVATE_BUILD_IDLE_MIN
 pass=0; fail=0; skipped=0; failed_names=""; skipped_names=""
 # The status a case exits with to say it declined to run; test/lib.sh's `skip` uses it.
 # Read here rather than sourced: run.sh is the runner, not a case, and the two agree on one
@@ -259,6 +268,9 @@ while [ $# -gt 0 ]; do
   esac
 done
 [ -z "$runs_in" ] || [ "$no_skips" = 1 ] || { echo "run.sh: --runs-in reads cases whose skip is excused elsewhere; it means nothing without --no-skips" >&2; exit 2; }
+# the job this run stands for, so a case that belongs to one job can tell it is in another: empty
+# outside a --runs-in run (case 3220 walks its browser loop only under the ui job)
+MAJORDOMUS_RUNS_IN="$runs_in"; export MAJORDOMUS_RUNS_IN
 
 only=""
 for n in "$@"; do

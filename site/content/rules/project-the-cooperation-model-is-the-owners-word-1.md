@@ -1,7 +1,7 @@
 +++
 title = "Work moves through seats held as mesh claims, lands in combined tops, and every checkout is kept current"
 description = "Work moves through seats held as mesh claims, lands in combined tops, and every checkout is kept current"
-weight = 166
+weight = 167
 [extra]
 kind = "rule"
 slug = "project-the-cooperation-model-is-the-owners-word-1"

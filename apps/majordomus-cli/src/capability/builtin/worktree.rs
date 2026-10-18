@@ -1,6 +1,6 @@
 //! The `worktree` module: the branch-to-worktree topology of this repository, projected.
 //!
-//! Five questions, all read-only, all answered by [`crate::worktree::WorktreeService`] —
+//! Six questions, all read-only, all answered by [`crate::worktree::WorktreeService`] —
 //! the same service the command line renders and the git hooks ask. Declaring them here is
 //! what puts them on MCP (as tools and as a resource), on HTTP, in the OpenAPI document, in
 //! the Swagger UI, in the Cockpit and in the generated reference, without any of those
@@ -25,7 +25,7 @@ use crate::capability::model::{
 use crate::capability::module::ModuleDescriptor;
 use crate::worktree::{
     migrate, Detail, InspectReport, MigrationPlan, RepositoryTopology, StatusReport, Threshold,
-    UncommittedReport, WorktreeError, WorktreeService,
+    TrunkDistance, UncommittedReport, WorktreeError, WorktreeService,
 };
 use crate::{capability, module};
 
@@ -175,6 +175,10 @@ fn worktree_migration_plan(ctx: &Context, _: Empty) -> Result<MigrationPlan, Cap
     migrate::plan(&service_of(ctx)?).map_err(refused)
 }
 
+fn worktree_trunk(ctx: &Context, input: StatusInput) -> Result<TrunkDistance, CapabilityError> {
+    Ok(service_at(ctx, input.path.as_deref())?.trunk_distance())
+}
+
 fn worktree_uncommitted(
     ctx: &Context,
     input: UncommittedInput,
@@ -280,6 +284,22 @@ pub fn module() -> ModuleDescriptor {
                 cache: CachePolicy::Disabled,
                 handler: worktree_uncommitted,
             },
+            capability! {
+                id: "worktree.trunk",
+                title: "How far a checkout is from the remote trunk",
+                description: "The checkout's `HEAD` and the local trunk branch, each counted against the remote-tracking trunk — commits behind and ahead, a merge in progress counting what it brings in — as of the last fetch, whose time is part of the answer; judged against the policy's `checkout.trunk_distance` as `current`, `lagging`, `stale`, `unjudged` (no threshold declared) or `unmeasured` (no remote trunk), with the commands that bring it current. What doctor renders and what `server.status` and the MCP instructions say about the tree a server serves (`project.a-checkout-serves-the-current-trunk`). Fetches nothing and writes nothing.",
+                input: StatusInput,
+                output: TrunkDistance,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_worktree_trunk"),
+                    http: get("/api/v1/worktrees/trunk"),
+                    cli: Some(CliExposure { path: vec!["worktree".into(), "trunk".into()] }),
+                },
+                tags: ["worktree", "git", "freshness", "introspection"],
+                cache: CachePolicy::Disabled,
+                handler: worktree_trunk,
+            },
         ],
     }
 }
@@ -319,6 +339,11 @@ mod tests {
                 "worktree.uncommitted",
                 "majordomus_worktree_uncommitted",
                 "/api/v1/worktrees/uncommitted",
+            ),
+            (
+                "worktree.trunk",
+                "majordomus_worktree_trunk",
+                "/api/v1/worktrees/trunk",
             ),
         ];
         let ids: Vec<&str> = m

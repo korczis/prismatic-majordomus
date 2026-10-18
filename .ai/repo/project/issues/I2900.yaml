@@ -1,0 +1,33 @@
+id: I2900
+milestone: idd-workspace
+title: "Every issue id on the intent workspace is a link, the shared-scope pairs are one folded line, and no missing library is asked for"
+slug: every-issue-on-the-workspace-is-a-link
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "On /ui/idd, the plan's next issue tile leads to that issue, and each shared-scope pair names both of its issues as links; the pairs fold into one line that gives their count and opens to them. The UI names the vendored graph library only when the distribution holds it, so a checkout without it serves the graph's table with no request, no 404 and no console error. Case 3220 asserts all three in a real browser. No new feature."
+why: "A read of the workspace on 2026-10-17 (a3) found most issue ids in its text were not links — the plan's next issue and every id of the shared-scope lines — the shared-scope lines outweighed the waves they qualify on an intent of three issues, and every /ui/idd load on a fresh master checkout asked for the untracked cytoscape.min.js, a 404 and a console error on the alpha's product page."
+serves:
+  - the-owner-directs-work-from-the-ui#the-loop-is-walked-end-to-end
+current_state: "The next-issue tile and the shared-scope lines show issue ids as text; the pairs are listed in full under a heading."
+desired_state: "Every issue id the workspace shows is a link, and the pairs are one counted, folded line."
+scope:
+  - "apps/majordomus-cli/src/ui/idd.rs"
+  - "test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh"
+  - ".ai/repo/project"
+  - "docs"
+  - "site"
+  - ".gitattributes"
+depends_on:
+  - "I2812"
+acceptance_criteria:
+  - "No issue id in the workspace's main is bare text"
+  - "The shared-scope pairs are one closed disclosure whose summary gives their count, and open to links to both issues of each pair"
+  - "A distribution without the vendored graph library is never asked for it: no request, no failed response, no console error"
+validation:
+  - "bash test/run.sh --runs-in ui"
+  - "cargo test --test ui_idd"
+evidence_required:
+  - "idd_loop_case"
+created_at: 2026-10-17
+updated_at: 2026-10-17

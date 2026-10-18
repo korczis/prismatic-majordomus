@@ -61,11 +61,11 @@ lists it), declared beside the Cockpit in `apps/majordomus-cli/src/web/discover.
 |---|---|---|
 | Dashboard | `/ui` | `repository.info`, `health.report`, `release.version`, `distribution.releases`, `plan.status`, `plan.roadmap`, `mesh.peers`; the queue on its own route |
 | Command | `/ui/command` | `commands.list` (its `origin` filter is the screen's tabs), `executions.list`; `capabilities.list` for the capability a command is |
-| Intent workspace | `/ui/idd` | `intents.list`, `plan.roadmap`, `plan.issues`, `plan.waves`, `plan.next`: one intent (`?intent=`, else the first `intents.list` reports executing, then verifying, planned, declared — the rule is printed) with its inspector, the milestones it names in the roadmap's order with what each waits for, every issue of those milestones or naming the intent by wave with its status, priority, blockers and the move its status allows (on the issue's Cockpit page, where `plan.transition` makes it), the waves those issues occupy with the scope conflicts that serialise them, and their dependency graph over a table of the same edges. The screen decides no status, wave or membership of its own |
+| Intent workspace | `/ui/idd` | `intents.list`, `plan.roadmap`, `plan.issues`, `plan.waves`, `plan.next`: one intent (`?intent=`, else the first `intents.list` reports executing, then verifying, planned, declared — the rule is printed) with its inspector, the milestones it names in the roadmap's order with what each waits for, every issue of those milestones or naming the intent by wave with its status, priority, blockers and the move its status allows; `?issue=` opens that issue's move panel on the screen itself, the form the Cockpit's issue page renders, wired by the one module both surfaces load (`share/cockpit/moves.js`, named by the page as `data-moves-lib`) and made by `plan.transition` as an execution, which refuses a move the plan does not allow and names why, the waves those issues occupy with the scope conflicts that serialise them, and their dependency graph over a table of the same edges. Why the intent stands where it stands is asked on its own route (`/ui/panels/standing?intent=`, `intent_realization.explain`, which takes seconds): the sentences its stage and verdict rest on, each unmet criterion with its evidence state, the command that reproduces it and the issues serving it, the work realising the intent with each link's provenance, and its drift. `executions.list` gives every `plan.transition` this server ran on the intent's issues, newest first, each leading to its execution on the Cockpit. The screen reads itself again when an execution of its server ends on `/events`, and says what that channel is doing (below). It decides no status, wave or membership of its own |
 | Roadmap | `/ui/roadmap` | `plan.roadmap`, `plan.status`, `intents.list`; one milestone (`?milestone=`) in the inspector, with `plan.issues`: its issues, what can start, its critical path and its neighbours; one intent (`?intent=`) in its inspector: its statement, invariants and criteria with their evidence, and the milestones and issues that serve it |
 | Issues & PRs | `/ui/work` | `plan.status`, `plan.issues`; the queue on its own route, one pull request (`?pr=`) in its detail |
 | Issues | `/ui/issues` | `plan.issues`, `plan.status`, `plan.roadmap`: every issue, narrowed by `?status=` (the plan's own statuses as tabs), `?milestone=`, `?priority=` and `?q=`, each leading to its inspector |
-| PR Drain | `/ui/prs` | `plan.status`, `plan.issues` (one issue, `?issue=`); `integration.queue` and `integration.events` on its own route (`/ui/panels/drain`), narrowed by `?disposition=`, `?lane=` and `?q=`, one pull request (`?pr=`) in the inspector with what the executor did to it, the lane's recent activity, and its merges per day over the fortnight the trail ends on |
+| PR Drain | `/ui/prs` | `plan.issues` (one issue, `?issue=`); `integration.queue` (one count per lane it counted) and `integration.events` on its own route (`/ui/panels/drain`), narrowed by `?disposition=`, `?lane=` and `?q=`, one pull request (`?pr=`) in the inspector with what the executor did to it, the lane's recent activity, and its merges per day over the fortnight the trail ends on |
 | Capabilities | `/ui/capabilities` | `repository.info`, `capabilities.list` by kind; one capability (`?id=`) from `capabilities.describe` |
 | Mesh | `/ui/mesh` | `mesh.peers`, `mesh.events`, `mesh.state` (live claims); one machine (`?node=`) in the inspector, and who holds each seat of [rule `project.the-cooperation-model-is-the-owners-word`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v1.md) read from the claims |
 | CI/CD & Releases | `/ui/delivery` | `distribution.releases`, `release.version`, `deploy.list`, `gates.model`, `integration.timings` (each check's median, 90th percentile and longest run, and the open heads that waited longest, each leading to its pull request) |
@@ -282,8 +282,18 @@ queue (`integration.queue`) is `/ui/panels/pull-requests`:
 While a screen is visible, `ui.js` asks the server for it again every minute, puts the new
 rendering in place, and updates the time in the tool bar. That time is when the page was
 rendered; each source line says when its own reading is older. This is a refresh and is said
-as one; nothing claims a live stream. A streamed page and one stream of changed readings
-replace it in I2487.
+as one. A streamed page and one stream of changed readings replace it in I2487.
+
+The intent workspace also follows the executions its server runs (I2783). Its screen carries
+`data-follows-executions`, and the page names the channel (`data-events`, `/events`) and the
+Cockpit's one WebSocket client (`share/cockpit/socket.js`, `data-socket-lib`). When an execution
+ends there (completed, failed or cancelled), `ui.js` reads the screen again within seconds, once
+for a burst and at most every two seconds. It does the same after a reconnect or a gap, which
+may have missed an end. After the read time, the top bar says what that channel is doing:
+`executions live`, `reconnecting` or `offline`, taken from the socket's own state. The channel
+only signals when to read again; the screen still says only what its sources answer. It
+carries only this server's executions, so a move another process makes still shows at the
+next minute.
 
 How fast is measured, not written here. `majordomus bench` derives a target from every
 screen in `SCREENS` and every panel in `PANELS`, cold and warm:
@@ -470,7 +480,7 @@ The UI's files live in `share/ui/`.
 | `ui.css` | compiled from `share/ui/src/ui.css` by `scripts/cockpit-assets`, beside the Cockpit's stylesheet; `--check` fails when either is stale | yes |
 | `nav.js`, `theme.js` | copied byte for byte from `site/nav.js` and `site/theme.js` by `scripts/cockpit-assets`; `--check` fails when either differs | yes |
 | `favicon.svg` | written from the canonical mark by `majordomus generate` | yes |
-| `vendor/cytoscape.min.js` | copied from the pinned npm package by `scripts/cockpit-assets` | no |
+| `vendor/cytoscape.min.js` | copied from the pinned npm package by `scripts/cockpit-assets`; a distribution without it is never asked for it, and each graph's table stands instead (I2900) | no |
 
 </div>
 
@@ -536,7 +546,8 @@ they cost. It renders nothing itself. What it changes is only what a file cannot
 | a link to a page of the Cockpit: the "technical view" of a source or of an object | that page of the Cockpit's own snapshot at `/cockpit/` when it holds it (ADR 0147), and the page about the live UI when it does not |
 | a link to a surface a publication holds (`/rustdoc`, `/openapi.json`) | unchanged |
 | a link into the served documentation (`/docs/…`) | the same page of the published site |
-| the script reads the screen again every minute and pulls in slow panels | it does neither: the body carries `data-snapshot` |
+| the script reads the screen again every minute and follows the executions of its server | it does neither: the body carries `data-snapshot` |
+| a slow panel is a placeholder (`data-panel-src`) the script fills once the screen has painted | the panel itself, already read: the snapshot asks every page with the `X-Majordomus-Snapshot` header and the UI puts each panel where its placeholder stood |
 | "Read at" in the tool bar | also a notice on every page: the commit, the time, the executable, and a link to the live UI |
 
 </div>

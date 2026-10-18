@@ -39,6 +39,13 @@ const ROADMAP: Source = Source::of("plan.roadmap");
 const ISSUES: Source = Source::of("plan.issues");
 const WAVES: Source = Source::of("plan.waves");
 const NEXT: Source = Source::of("plan.next");
+/// Every move the plan's issues were given on this server: `plan.transition` as executions.
+const MOVES: Source = Source::with("executions.list", r#"{"capability":"plan.transition"}"#);
+
+/// The route that answers why the open intent stands where it stands: its own route, because
+/// `intent_realization.explain` takes seconds and the screen's first paint must not wait for
+/// it (I2789).
+pub const STANDING_PANEL: &str = "/ui/panels/standing";
 
 /// The stages, in the order the screen prefers them when the link names no intent: the
 /// first intent `intents.list` reports at the earliest of these is opened. A presentation
@@ -54,9 +61,25 @@ fn issue_href(id: &str) -> String {
     format!("{}?issue={id}#issue", super::prs::ROUTE)
 }
 
-/// The Cockpit's page of an issue, which carries the moves `plan.transition` makes.
-fn move_href(id: &str) -> String {
-    format!("{}/plan/issues/{id}", crate::cockpit::PREFIX)
+/// Where the move of issue `id` is offered: this screen, with the intent kept and the issue
+/// picked, at its move panel (I2781).
+pub fn move_href(intent: &str, id: &str) -> String {
+    format!("{ROUTE}?intent={intent}&issue={id}#move")
+}
+
+/// The issue a query picks, when it names one: the plan's ids are letters, digits, `-` and
+/// `_`, and nothing a link could carry anything else in.
+pub fn picked_issue(query: &[(String, String)]) -> Option<String> {
+    query
+        .iter()
+        .find(|(k, _)| k == "issue")
+        .map(|(_, v)| v.trim().to_string())
+        .filter(|v| {
+            !v.is_empty()
+                && v.len() <= 64
+                && v.bytes()
+                    .all(|b| b.is_ascii_alphanumeric() || b == b'-' || b == b'_')
+        })
 }
 
 fn strings(v: &Value, k: &str) -> Vec<String> {
@@ -116,24 +139,29 @@ fn chip(href: String, label: String) -> El {
 
 /// The Intent workspace screen; `query` may name the intent (`?intent=intent-bound-work`).
 pub fn screen(ctx: &Context, query: &[(String, String)]) -> View {
-    let answers = ask_all(ctx, &[INTENTS, ROADMAP, ISSUES, WAVES, NEXT]);
+    let answers = ask_all(ctx, &[INTENTS, ROADMAP, ISSUES, WAVES, NEXT, MOVES]);
     render(
+        ctx,
         &answers[&INTENTS],
         &answers[&ROADMAP],
         &answers[&ISSUES],
         &answers[&WAVES],
         &answers[&NEXT],
+        &answers[&MOVES],
         query,
     )
 }
 
-/// The workspace drawn from the five answers, whichever of them could not answer.
+/// The workspace drawn from the six answers, whichever of them could not answer.
+#[allow(clippy::too_many_arguments)]
 fn render(
+    ctx: &Context,
     intents: &Answer,
     roadmap: &Answer,
     issues: &Answer,
     waves: &Answer,
     next: &Answer,
+    moves: &Answer,
     query: &[(String, String)],
 ) -> View {
     let all = list(intents, "/intents");
@@ -152,7 +180,11 @@ fn render(
             kpi_count("Intents", &intents.read("/intents")),
             kpi_count("Milestones", &roadmap.read("/milestones")),
             kpi("Roadmap now", &roadmap.read("/now")),
-            kpi("Plan's next issue", &next.read("/issue/id")),
+            // the plan's next issue leads to it, as every other issue on the screen does (I2900)
+            match next.read("/issue/id").text().filter(|n| !n.is_empty()) {
+                Some(n) => super::view::kpi_to(kpi("Plan's next issue", &next.read("/issue/id")), &issue_href(&n)),
+                None => kpi("Plan's next issue", &next.read("/issue/id")),
+            },
         ],
     );
 
@@ -179,20 +211,32 @@ fn render(
             } else {
                 Vec::new()
             };
+            grid = grid.child(wide(super::intent::inspector_closing_to(
+                intents, issues, id, ROUTE,
+            )));
+            if let Some(issue) = picked_issue(query) {
+                grid = grid.child(wide(move_panel(ctx, issues, &mine, &issue)));
+            }
             grid = grid
-                .child(wide(super::intent::inspector_closing_to(
-                    intents, issues, id, ROUTE,
-                )))
+                .child(wide(standing_placeholder(id)))
                 .child(wide(milestones(roadmap, intent)))
-                .child(wide(issue_table(issues, waves, next, &mine)))
+                .child(wide(issue_table(issues, waves, next, &mine, id)))
+                .child(wide(moves_panel(moves, &mine)))
                 .child(wide(wave_panel(waves, &mine)))
                 .child(wide(dependency_graph(issues, &mine)));
         }
     }
 
+    // the screen follows the executions this server runs and reads itself again when one
+    // ends, so a move made anywhere on this server shows here without waiting for the
+    // minute's refresh (I2783); what it shows is still only what its sources answer
     View::new(
         "Intent workspace",
-        el("div").class("mj-ui-stack").child(top).child(grid),
+        el("div")
+            .class("mj-ui-stack")
+            .attr("data-follows-executions", "")
+            .child(top)
+            .child(grid),
     )
 }
 
@@ -314,7 +358,7 @@ pub fn in_wave_order<'a>(waves: &Answer, mine: &'a [Value]) -> Vec<&'a Value> {
 
 /// The issues that serve the intent, in the plan's wave order, each with what blocks it and
 /// the way to its move.
-fn issue_table(issues: &Answer, waves: &Answer, next: &Answer, mine: &[Value]) -> El {
+fn issue_table(issues: &Answer, waves: &Answer, next: &Answer, mine: &[Value], intent: &str) -> El {
     let next_id = next
         .ok()
         .and_then(|v| v.pointer("/issue/id"))
@@ -366,7 +410,7 @@ fn issue_table(issues: &Answer, waves: &Answer, next: &Answer, mine: &[Value]) -
                         el("td").child(match mv {
                             Some(word) => el("a")
                                 .class("mj-ui-more")
-                                .attr("href", move_href(&id))
+                                .attr("href", move_href(intent, &id))
                                 .attr(
                                     "title",
                                     format!("the move plan.transition makes: {word} {id}"),
@@ -393,11 +437,45 @@ fn issue_table(issues: &Answer, waves: &Answer, next: &Answer, mine: &[Value]) -
     });
     panel_to(
         "Issues",
-        "Every issue of its milestones or naming it, by wave; a move opens the issue's page, where plan.transition makes it and refuses one the plan does not allow.",
+        "Every issue of its milestones or naming it, by wave; a move opens its panel on this screen, where plan.transition makes it and refuses one the plan does not allow.",
         Some(super::issues::ROUTE),
         body,
         &[issues, waves, next],
     )
+}
+
+/// The move panel of the picked issue: the form the Cockpit's issue page renders, offering
+/// the moves `plan.transition` makes as executions (start, verify, done), wired by the one
+/// module both surfaces load. The screen decides no move: the capability refuses one the
+/// plan does not allow and names why, and the form shows that answer as it came. An issue
+/// that does not serve the intent is refused by name rather than moved from here.
+fn move_panel(ctx: &Context, issues: &Answer, mine: &[Value], issue: &str) -> El {
+    let body =
+        unanswered(issues).unwrap_or_else(|| match mine.iter().find(|x| text(x, "id") == issue) {
+            None => nothing(&format!(
+                "{issue} does not serve this intent: pick one of its issues below."
+            )),
+            Some(x) => el("div")
+                .class("mj-ui-stack")
+                .child(
+                    el("p")
+                        .class("mj-ui-badges")
+                        .child(chip(issue_href(issue), issue.to_string()))
+                        .child(state(x, "status"))
+                        .child(el("span").class("mj-ui-cell-title").text(text(x, "title"))),
+                )
+                .child(crate::cockpit::plan::moves(
+                    ctx,
+                    issue,
+                    text(x, "status").eq_ignore_ascii_case("READY"),
+                )),
+        });
+    el("div").attr("id", "move").child(panel(
+        "Move",
+        "The issue's next move, made by plan.transition as an execution on this server; a move the plan does not allow is refused with the reason.",
+        body,
+        &[issues],
+    ))
 }
 
 /// The waves the intent's issues occupy, as `plan.waves` layers the whole plan, and the
@@ -442,9 +520,11 @@ fn wave_panel(waves: &Answer, mine: &[Value]) -> El {
             .iter()
             .filter(|f| ids.contains(&text(f, "subject")))
             .map(|f| {
+                let subject = text(f, "subject");
                 el("li")
-                    .child(el("code").class("mj-ui-mono").text(text(f, "subject")))
-                    .child(el("span").text(format!(" {}", text(f, "message"))))
+                    .child(chip(issue_href(&subject), subject))
+                    .child(el("span").text(" "))
+                    .children(linked_issues(&text(f, "message")))
             })
             .collect();
         let mut body = el("div").class("mj-ui-stack").child(table(
@@ -453,13 +533,16 @@ fn wave_panel(waves: &Answer, mine: &[Value]) -> El {
             "No issue of this intent is in a wave.",
         ));
         if !conflicts.is_empty() {
-            body = body
-                .child(
-                    el("h4")
-                        .class("mj-ui-panel-title")
-                        .text("Shared scope: these may not run at the same time"),
-                )
-                .child(el("ul").class("mj-ui-list").children(conflicts));
+            // one line says how many pairs share a scope; the pairs are one click away, so they
+            // never outweigh the waves they qualify (I2900)
+            let pairs = conflicts.len();
+            body = body.child(
+                el("details")
+                    .child(el("summary").text(format!(
+                        "Shared scope: {pairs} pair(s) of these issues may not run at the same time"
+                    )))
+                    .child(el("ul").class("mj-ui-prose-list").children(conflicts)),
+            );
         }
         body
     });
@@ -469,6 +552,44 @@ fn wave_panel(waves: &Answer, mine: &[Value]) -> El {
         body,
         &[waves],
     )
+}
+
+/// A sentence of the plan's own words with every issue id in it a link to that issue, the
+/// brackets and punctuation around an id kept as they were (I2900). A path segment
+/// (`src/I0001`) is a path, never an issue.
+fn linked_issues(message: &str) -> Vec<El> {
+    // the words between two ids stay one run of text, so a sentence without an id reads
+    // exactly as it was written
+    let mut out = Vec::new();
+    let mut run = String::new();
+    for (n, word) in message.split(' ').enumerate() {
+        if n > 0 {
+            run.push(' ');
+        }
+        let core = word
+            .trim_start_matches(['(', '['])
+            .trim_end_matches([')', ']', ',', ';', '.', ':']);
+        let is_issue = core.len() > 1
+            && core.starts_with('I')
+            && core[1..].bytes().all(|b| b.is_ascii_digit());
+        if !is_issue {
+            run.push_str(word);
+            continue;
+        }
+        // where the id starts: `core` is `word` with its opening brackets trimmed off the front,
+        // so the offset is the length of what was trimmed, and there is nothing to default
+        let at = word.len() - word.trim_start_matches(['(', '[']).len();
+        run.push_str(&word[..at]);
+        if !run.is_empty() {
+            out.push(el("span").text(std::mem::take(&mut run)));
+        }
+        out.push(chip(issue_href(core), core.to_string()));
+        run.push_str(&word[at + core.len()..]);
+    }
+    if !run.is_empty() {
+        out.push(el("span").text(run));
+    }
+    out
 }
 
 /// The dependency graph of the intent's issues: each a node in the tone of its status, each
@@ -535,6 +656,246 @@ fn dependency_graph(issues: &Answer, mine: &[Value]) -> El {
         "What waits for what, as the plan records it; a dependency outside this intent is drawn small.",
         body,
         &[issues],
+    )
+}
+
+/// Where the standing of intent `id` is answered.
+pub fn standing_href(id: &str) -> String {
+    format!("{STANDING_PANEL}?intent={id}")
+}
+
+/// The standing panel as the screen draws it before it is asked: a placeholder the script
+/// fills from [`STANDING_PANEL`], and a link to that route for a reader without it.
+fn standing_placeholder(id: &str) -> El {
+    el("section")
+        .class("mj-ui-panel")
+        .attr("aria-label", "Why it stands where it stands")
+        .attr("data-panel-src", standing_href(id))
+        .attr("aria-busy", "false")
+        .child(
+            el("header").class("mj-ui-panel-head").child(
+                el("div")
+                    .class("mj-ui-panel-heading")
+                    .child(el("h2").class("mj-ui-panel-title").text("Why it stands where it stands"))
+                    .child(el("p").class("mj-ui-panel-sub").text(
+                        "Asked on its own: intent_realization.explain joins the ledger, the session records and the peer board, which would hold this screen back.",
+                    )),
+            ),
+        )
+        .child(
+            el("p").class("mj-ui-panel-body").child(
+                el("a")
+                    .class("mj-ui-link")
+                    .attr("href", standing_href(id))
+                    .text("Open why this intent stands where it stands"),
+            ),
+        )
+}
+
+/// The intent a panel query names, when it is one an id could be: letters, digits, `-` and
+/// `_`.
+fn named_intent(query: &[(String, String)]) -> Option<String> {
+    query
+        .iter()
+        .find(|(k, _)| k == "intent")
+        .map(|(_, v)| v.trim().to_string())
+        .filter(|v| {
+            !v.is_empty()
+                && v.len() <= 128
+                && v.bytes()
+                    .all(|b| b.is_ascii_alphanumeric() || b == b'-' || b == b'_')
+        })
+}
+
+/// Why the intent the query names stands where it stands, from `intent_realization.explain`:
+/// the sentences its stage and verdict rest on, each unmet criterion with its evidence state,
+/// the command that reproduces it and the issues serving it, the work realising the intent
+/// and its drift.
+pub fn standing_panel(ctx: &Context, query: &[(String, String)]) -> View {
+    let Some(id) = named_intent(query) else {
+        return View::new(
+            "Why it stands where it stands",
+            panel(
+                "Why it stands where it stands",
+                "One intent's standing, from intent_realization.explain.",
+                nothing("Name an intent: open it from the intent workspace."),
+                &[],
+            ),
+        );
+    };
+    let explain = super::source::ask_input(
+        ctx,
+        "intent_realization.explain",
+        serde_json::json!({ "id": id }),
+    );
+    let body = standing_body(&id, &explain);
+    View::new(
+        "Why it stands where it stands",
+        panel(
+            "Why it stands where it stands",
+            &format!("{id}: its stage, its verdict, what is not yet met and who is on it, as intent_realization.explain derives them."),
+            body,
+            &[&explain],
+        ),
+    )
+}
+
+/// The standing of intent `id` as `intent_realization.explain` answered it: the sentences, the
+/// unmet criteria, the work realising it and its drift; or why there is no answer.
+fn standing_body(id: &str, explain: &Answer) -> El {
+    unanswered(explain).unwrap_or_else(|| {
+        let because = list(explain, "/because");
+        let unmet = list(explain, "/realization/unmet");
+        let work = list(explain, "/work");
+        let findings = list(explain, "/realization/findings");
+        let sentences = el("ul").class("mj-ui-prose-list").children(
+            because
+                .iter()
+                .filter_map(Value::as_str)
+                .map(|line| el("li").children(linked_issues(line))),
+        );
+        let criteria = table(
+            &["Criterion", "Evidence", "State", "Reproduce", "Served by"],
+            unmet
+                .iter()
+                .map(|c| {
+                    el("tr")
+                        .child(el("td").child(el("code").text(text(c, "id"))))
+                        .child(el("td").text(text(c, "evidence")))
+                        .child(el("td").child(state(c, "state")))
+                        .child(
+                            el("td")
+                                .child(el("code").class("mj-ui-mono").text(text(c, "reproduce"))),
+                        )
+                        .child(
+                            el("td").child(
+                                el("p").class("mj-ui-badges").children(
+                                    strings(c, "issues")
+                                        .into_iter()
+                                        .map(|i| chip(issue_href(&i), i)),
+                                ),
+                            ),
+                        )
+                })
+                .collect(),
+            "Every criterion is met.",
+        );
+        let realising = table(
+            &["Work", "Outcome", "Issue", "Provenance"],
+            work.iter()
+                .map(|w| {
+                    let unit = w.get("work").unwrap_or(&Value::Null);
+                    let links = w
+                        .get("links")
+                        .and_then(Value::as_array)
+                        .cloned()
+                        .unwrap_or_default();
+                    let link = links.iter().find(|l| text(l, "intent") == id);
+                    el("tr")
+                        .child(
+                            el("td")
+                                .child(el("span").class("mj-ui-mono mj-ui-dim").text(format!(
+                                    "{} {}",
+                                    text(unit, "kind"),
+                                    text(unit, "id")
+                                )))
+                                .child(
+                                    el("span")
+                                        .class("mj-ui-cell-title")
+                                        .text(text(unit, "title")),
+                                ),
+                        )
+                        .child(el("td").child(state(unit, "outcome")))
+                        .child(el("td").text(link.map(|l| text(l, "issue")).unwrap_or_default()))
+                        .child(
+                            el("td").text(link.map(|l| text(l, "provenance")).unwrap_or_default()),
+                        )
+                })
+                .collect(),
+            "No work this checkout can see realises this intent.",
+        );
+        let drift =
+            el("ul")
+                .class("mj-ui-prose-list")
+                .children(findings.iter().map(
+                    |f| match f.get("message").and_then(Value::as_str) {
+                        Some(m) => el("li").children(linked_issues(m)),
+                        None => el("li").text(f.to_string()),
+                    },
+                ));
+        let mut stack = el("div")
+            .class("mj-ui-stack")
+            .child(sentences)
+            .child(
+                el("h3")
+                    .class("mj-ui-panel-title")
+                    .text("What is not yet met"),
+            )
+            .child(criteria)
+            .child(
+                el("h3")
+                    .class("mj-ui-panel-title")
+                    .text("The work realising it"),
+            )
+            .child(realising);
+        if !findings.is_empty() {
+            stack = stack
+                .child(el("h3").class("mj-ui-panel-title").text("Drift"))
+                .child(drift);
+        }
+        stack
+    })
+}
+
+/// Every move this server made on the intent's issues, newest first, each leading to its
+/// execution on the Cockpit.
+fn moves_panel(moves: &Answer, mine: &[Value]) -> El {
+    let ids: BTreeSet<String> = mine.iter().map(|x| text(x, "id")).collect();
+    let body = unanswered(moves).unwrap_or_else(|| {
+        let rows = list(moves, "/executions")
+            .iter()
+            .filter(|x| {
+                x.pointer("/input/issue")
+                    .and_then(Value::as_str)
+                    .is_some_and(|i| ids.contains(i))
+            })
+            .map(|x| {
+                let id = text(x, "id");
+                let issue = x
+                    .pointer("/input/issue")
+                    .and_then(Value::as_str)
+                    .unwrap_or_default();
+                let transition = x
+                    .pointer("/input/transition")
+                    .and_then(Value::as_str)
+                    .unwrap_or_default();
+                el("tr")
+                    .attr("id", format!("move-{id}"))
+                    .child(
+                        el("td").child(
+                            el("a")
+                                .class("mj-ui-row-link")
+                                .attr("href", format!("/cockpit/executions/{id}"))
+                                .child(el("span").class("mj-ui-mono mj-ui-dim").text(id.clone())),
+                        ),
+                    )
+                    .child(el("td").child(chip(issue_href(issue), issue.to_string())))
+                    .child(el("td").text(transition))
+                    .child(el("td").child(state(x, "state")))
+                    .child(el("td").class("mj-ui-mono").text(text(x, "created_at")))
+            })
+            .collect::<Vec<_>>();
+        table(
+            &["Execution", "Issue", "Move", "State", "Started"],
+            rows,
+            "No move was made on this intent's issues on this server.",
+        )
+    });
+    panel(
+        "Moves made here",
+        "Every plan.transition this server ran on the intent's issues, newest first.",
+        body,
+        &[moves],
     )
 }
 
@@ -708,6 +1069,61 @@ mod tests {
         assert!(after.contains("I9999"), "the added issue is drawn: {after}");
     }
 
+    /// A picked issue of the intent gets the move form `plan.transition` answers through
+    /// executions.start, and an issue that does not serve the intent is refused by name; the
+    /// issue rows lead to the panel on this screen, not to another surface.
+    #[test]
+    fn a_picked_issue_is_offered_its_moves_here() {
+        let repo = planned_with_an_intent();
+        let ctx = repo.context().expect("a context");
+        let first = list(&crate::ui::source::ask(&ctx, ISSUES), "/issues")
+            .into_iter()
+            .find(|x| text(x, "milestone") == "m-first")
+            .map(|x| text(&x, "id"))
+            .expect("an issue of m-first");
+        let html = screen(
+            &ctx,
+            &[
+                ("intent".into(), "i-first".into()),
+                ("issue".into(), first.clone()),
+            ],
+        )
+        .main
+        .render();
+        assert!(html.contains("id=\"move\""), "{html}");
+        assert!(
+            html.contains(&format!("data-mj-transition=\"{first}\"")),
+            "{html}"
+        );
+        assert!(
+            html.contains("data-mj-capability=\"plan.transition\""),
+            "{html}"
+        );
+        assert!(
+            html.contains(&move_href("i-first", &first).replace('&', "&amp;")),
+            "the row leads to the panel here: {html}"
+        );
+        let outside = screen(
+            &ctx,
+            &[
+                ("intent".into(), "i-first".into()),
+                ("issue".into(), "I9998".into()),
+            ],
+        )
+        .main
+        .render();
+        assert!(
+            outside.contains("I9998 does not serve this intent"),
+            "{outside}"
+        );
+        assert!(!outside.contains("data-mj-transition"), "{outside}");
+        assert_eq!(
+            picked_issue(&q("issue", "I1\"x")),
+            None,
+            "only an id is picked"
+        );
+    }
+
     /// An intent the link names that is not recorded is refused by name.
     #[test]
     fn an_unknown_intent_is_refused_by_name() {
@@ -738,6 +1154,142 @@ mod tests {
         }
     }
 
+    /// The work realising an intent is a row each: the unit's kind, id and title, its outcome,
+    /// and the issue and provenance of the link that names this intent; a unit linked only to
+    /// another intent leaves those two cells empty. Drift is a list of each finding's message,
+    /// or the finding itself where it has none, and is not drawn when there is no drift.
+    #[test]
+    fn the_standing_names_the_work_realising_the_intent_and_its_drift() {
+        const EXPLAIN: Source = Source::of("intent_realization.explain");
+        let explain = answer(
+            EXPLAIN,
+            Ok(serde_json::json!({
+                "because": ["executing: an issue is ACTIVE"],
+                "work": [
+                    {
+                        "work": { "kind": "task", "id": "t-1", "title": "Walk the loop", "outcome": "completed" },
+                        "links": [
+                            { "intent": "other", "issue": "I9", "provenance": "inferred" },
+                            { "intent": "i", "issue": "I7", "provenance": "declared" },
+                        ],
+                    },
+                    {
+                        "work": { "kind": "episode", "id": "e-2", "title": "Elsewhere", "outcome": "partial" },
+                        "links": [{ "intent": "other", "issue": "I8", "provenance": "inferred" }],
+                    },
+                ],
+                "realization": {
+                    "unmet": [],
+                    "findings": [
+                        { "message": "the scope drifted past src/a.rs (I7)" },
+                        { "kind": "orphan", "subject": "t-3" },
+                    ],
+                },
+            })),
+        );
+        let html = standing_body("i", &explain).render();
+        assert!(html.contains("The work realising it"), "{html}");
+        assert!(
+            html.contains(">task t-1</span>"),
+            "the unit is named: {html}"
+        );
+        assert!(html.contains(">Walk the loop</span>"), "its title: {html}");
+        assert!(html.contains("completed"), "its outcome: {html}");
+        assert!(
+            html.contains("<td>I7</td><td>declared</td>"),
+            "the link naming i: {html}"
+        );
+        assert!(
+            !html.contains(">I9<") && !html.contains(">inferred<"),
+            "not another intent's link: {html}"
+        );
+        assert!(html.contains(">episode e-2</span>"), "{html}");
+        assert!(
+            html.contains("<td></td><td></td>"),
+            "a unit not linked to i has no issue: {html}"
+        );
+        assert!(html.contains(">Drift</h3>"), "{html}");
+        assert!(
+            html.contains("<li><span>the scope drifted past src/a.rs (</span><a class=\"mj-ui-chip mj-ui-chip--link\" href=\"/ui/prs?issue=I7#issue\">"),
+            "a drift message reads whole, its issue id a link (I2900): {html}"
+        );
+        assert!(
+            html.contains("&quot;kind&quot;:&quot;orphan&quot;"),
+            "a finding without a message is shown as it is: {html}"
+        );
+
+        let calm = answer(
+            EXPLAIN,
+            Ok(
+                serde_json::json!({ "because": [], "work": [], "realization": { "unmet": [], "findings": [] } }),
+            ),
+        );
+        let html = standing_body("i", &calm).render();
+        assert!(
+            !html.contains(">Drift</h3>"),
+            "no drift, no heading: {html}"
+        );
+        assert!(
+            html.contains("No work this checkout can see realises this intent."),
+            "{html}"
+        );
+        assert!(html.contains("Every criterion is met."), "{html}");
+    }
+
+    /// A sentence keeps every word between two ids as one run of text, and each id becomes a
+    /// link with the brackets and punctuation around it kept as written; a word that only
+    /// looks like an id (one letter, or letters after the I) stays text (I2900).
+    #[test]
+    fn a_sentence_links_its_ids_and_keeps_its_words() {
+        let html = |m: &str| -> String { linked_issues(m).iter().map(El::render).collect() };
+
+        let plain = html("no issue is named here");
+        assert_eq!(
+            plain, "<span>no issue is named here</span>",
+            "one run: {plain}"
+        );
+
+        let first = html("I7 is ready");
+        assert!(
+            first.starts_with("<a "),
+            "an id first opens with its link: {first}"
+        );
+        assert!(
+            first.contains(&issue_href("I7")) && first.ends_with("<span> is ready</span>"),
+            "{first}"
+        );
+
+        let wrapped = html("waits for (I7), then [I8].");
+        assert!(
+            wrapped.contains("<span>waits for (</span>"),
+            "the text and the bracket before: {wrapped}"
+        );
+        assert!(
+            wrapped.contains("<span>), then [</span>"),
+            "between two ids, one run: {wrapped}"
+        );
+        assert!(
+            wrapped.ends_with("<span>].</span>"),
+            "the punctuation after the last id: {wrapped}"
+        );
+        assert!(
+            wrapped.contains(&issue_href("I7")) && wrapped.contains(&issue_href("I8")),
+            "{wrapped}"
+        );
+
+        let alone = html("I8");
+        assert!(
+            alone.contains(&issue_href("I8")) && !alone.contains("<span>"),
+            "{alone}"
+        );
+
+        let lookalike = html("I and Ix and I7x are words");
+        assert!(
+            !lookalike.contains("<a "),
+            "no lookalike is a link: {lookalike}"
+        );
+    }
+
     fn intent_i() -> Value {
         serde_json::json!({
             "id": "i", "title": "The i intent", "stage": "executing",
@@ -751,12 +1303,16 @@ mod tests {
     fn a_source_that_cannot_answer_is_said_and_nothing_is_invented() {
         let empty = |s| answer(s, Ok(serde_json::json!({})));
         let failed = answer(INTENTS, Err("no ledger".into()));
+        let repo = SyntheticRepository::small().expect("a synthetic repository");
+        let ctx = repo.context().expect("a context");
         let view = render(
+            &ctx,
             &failed,
             &empty(ROADMAP),
             &empty(ISSUES),
             &empty(WAVES),
             &empty(NEXT),
+            &empty(MOVES),
             &q("intent", "i"),
         );
         let html = view.main.render();
@@ -769,11 +1325,13 @@ mod tests {
         let intents = answer(INTENTS, Ok(serde_json::json!({ "intents": [intent_i()] })));
         let issues = answer(ISSUES, Err("no plan".into()));
         let html = render(
+            &ctx,
             &intents,
             &empty(ROADMAP),
             &issues,
             &empty(WAVES),
             &empty(NEXT),
+            &empty(MOVES),
             &q("intent", "i"),
         )
         .main
@@ -831,7 +1389,7 @@ mod tests {
         let issues = answer(ISSUES, Ok(serde_json::json!({ "issues": mine })));
         let waves = answer(WAVES, Ok(serde_json::json!({ "waves": [] })));
         let next = answer(NEXT, Ok(serde_json::json!({ "issue": { "id": "I1" } })));
-        let html = issue_table(&issues, &waves, &next, &mine).render();
+        let html = issue_table(&issues, &waves, &next, &mine, "i").render();
         for (word, id) in [("start", "I1"), ("verify", "I2"), ("done", "I3")] {
             assert!(
                 html.contains(&format!("{word} {id}\">{word}</a>")),

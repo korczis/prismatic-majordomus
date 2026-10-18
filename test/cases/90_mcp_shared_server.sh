@@ -116,7 +116,10 @@ grep -q 'listening on http://127\.0\.0\.1:' "$S/err4.txt" || { echo "    no serv
 
 # --- the launcher refuses, by name, when told not to build and the executable is absent
 ( MAJORDOMUS_BIN="$S/no-such-binary"; export MAJORDOMUS_BIN; expect_exit 12 "$LAUNCHER" --inspect; expect_grep 'is not an executable' ) || exit 1
-( unset MAJORDOMUS_BIN; MAJORDOMUS_NO_BUILD=1 MAJORDOMUS_BUILD_PROFILE=nonexistent; export MAJORDOMUS_NO_BUILD MAJORDOMUS_BUILD_PROFILE; expect_exit 12 "$LAUNCHER" --inspect; expect_grep 'MAJORDOMUS_NO_BUILD is set' ) || exit 1
+# no executable, no build and no installed release to fall back to (ADR 0172 serves `mcp`
+# from the installed release when there is one; case 3177 holds that half), so the refusal
+# is the same on a runner and on a machine that has a release installed
+( unset MAJORDOMUS_BIN; MAJORDOMUS_NO_BUILD=1 MAJORDOMUS_BUILD_PROFILE=nonexistent MAJORDOMUS_INSTALLED_BIN="$S/no-installed-release"; export MAJORDOMUS_NO_BUILD MAJORDOMUS_BUILD_PROFILE MAJORDOMUS_INSTALLED_BIN; expect_exit 12 "$LAUNCHER" --inspect; expect_grep 'MAJORDOMUS_NO_BUILD is set' ) || exit 1
 # and everything after the launcher's name reaches `majordomus mcp`
 expect_exit 0 "$LAUNCHER" --help
 expect_grep '^Usage: majordomus mcp'

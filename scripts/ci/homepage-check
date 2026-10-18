@@ -760,7 +760,8 @@ else:
             pp.append(f"the hero opens {pid} at {pmount}, and no publication holds it: only a running process answers that address")
     if views != [pid]:
         pp.append(f"the hero shows the product view(s) [{', '.join(views)}], and the product is {pid}")
-    shown = [(st, int(n)) for st, n in re.findall(r'\bdata-issues="([^"]+)"[^>]*>\s*([0-9]+)', hero)]
+    # a count may be a link (into /roadmap/): the number is read inside it
+    shown = [(st, int(n)) for st, n in re.findall(r'\bdata-issues="([^"]+)"[^>]*>\s*(?:<a\b[^>]*>\s*)?([0-9]+)', hero)]
     plan_path = os.path.join(root, "site", "data", "generated", "plan.json")
     if shown and not os.path.exists(plan_path):
         pp.append("the product view counts issues, and site/data/generated/plan.json is missing (regenerate: scripts/generate-site-data)")
@@ -774,6 +775,23 @@ else:
         if views and shown != want_counts:
             pp.append("the product view counts the issues as [" + ", ".join(f"{st} {n}" for st, n in shown)
                       + "], and the plan gives [" + ", ".join(f"{st} {n}" for st, n in want_counts) + "]")
+    # how far the work travelled is the inferred delivery's count, stage by stage in its order
+    # (plan.delivery, ADR 0166): a stage the history proves no issue reached is not drawn, and
+    # `none` is the absence of a stage, never one; once the projection exists the view shows it
+    shown_d = [(k, int(n)) for k, n in re.findall(r'\bdata-delivery="([^"]+)"[^>]*>\s*(?:<a\b[^>]*>\s*)?([0-9]+)', hero)]
+    delivery_path = os.path.join(root, "site", "data", "generated", "delivery.json")
+    if shown_d and not os.path.exists(delivery_path):
+        pp.append("the product view counts delivery stages, and site/data/generated/delivery.json is missing (regenerate: scripts/generate-site-data)")
+    elif os.path.exists(delivery_path) and views:
+        with open(delivery_path) as f:
+            delivery = json.load(f)
+        tallies = delivery.get("tallies") or {}
+        want_d = [(k, tallies[k]) for k in delivery.get("stages") or [] if k != "none" and tallies.get(k)]
+        if want_d and not shown_d:
+            pp.append("the product view counts no delivery stage, and the inferred delivery gives [" + ", ".join(f"{k} {n}" for k, n in want_d) + "]")
+        elif shown_d != want_d:
+            pp.append("the product view counts the delivery as [" + ", ".join(f"{k} {n}" for k, n in shown_d)
+                      + "], and the inferred delivery gives [" + ", ".join(f"{k} {n}" for k, n in want_d) + "]")
     # what the newest release carried is the changelog's count, group by group, in its order:
     # the release records are the account of what landed, and the view reads them rather than
     # a sentence about how the work stands (ADR 0166)
@@ -804,7 +822,9 @@ if not pp:
     if faces:
         ok("product", f"the hero opens {faces[0]['id']}, the first interface the data gives, "
                       + ("at the copy the publication holds" if held else "at the page that says how to open it")
-                      + ", and the view beside it counts what the plan and the newest release record count")
+                      + ", and the view beside it counts what the plan"
+                      + (", the inferred delivery" if shown_d else "")
+                      + " and the newest release record count")
     else:
         ok("product", "the data gives no interface a person opens, and the hero opens none")
 
