@@ -135,6 +135,16 @@ try {
   // the first tab's live channel can be held closed: while `holdChannel` is set, the request
   // for the module that opens it waits (routing also turns the tab's HTTP cache off)
   let holdChannel = null;
+  // and while it is held, nothing but a timer can read the first tab's screen again: its
+  // catch-up and its minute's refresh fetch the screen's fragment. While `holdRefresh` is set
+  // those are given up, so a move that shows there before the channel opens is the channel's
+  // failure and never a refresh that happened to come first (run 39087400247, shard 4)
+  let holdRefresh = false;
+  let timerRefreshes = 0;
+  await a.route(/[?&]fragment(&|$)/, async (route) => {
+    if (holdRefresh) { timerRefreshes += 1; return route.abort(); }
+    return route.continue();
+  });
   await a.route('**/cockpit/assets/socket.js*', async (route) => {
     if (holdChannel) await holdChannel;
     await route.continue();
@@ -183,18 +193,25 @@ try {
   await reopened;
   const before = navigationsOfA();
   if (await a.locator('[data-live-state="live"]').count()) fail('the first tab\'s channel opened while it was held');
+  // the test step's commit moved the repository, so the reopened screen may still be reading it
+  // again; it is read whole first (its catch-up still allowed), and only then is every other
+  // way of reading it again held, or that catch-up would carry the move instead of the channel
+  await a.waitForFunction(() => !document.querySelector('#main [data-catching-up]'), null, { timeout: WAIT })
+    .catch(() => fail('the reopened first tab never finished reading the repository again'));
+  holdRefresh = true;
   const b = await browser.newPage({ viewport: { width: 1200, height: 1000 } });
   watch(b, 'second tab');
   await b.goto(`${base}/ui/idd?intent=the-answer-is-known&issue=I0001#move`, { waitUntil: 'networkidle' });
   await move(b, 'verify');
   if (await status(a, 'I0001') === 'verify') fail('the first tab showed the move before its channel opened');
+  holdRefresh = false;
   release();
   holdChannel = null;
   await a.waitForFunction(() => document.querySelector('[data-live-state]')?.dataset.liveState === 'live')
     .catch(() => fail('the first tab\'s channel never went live'));
   await until(a, 'I0001', 'verify', 'live');
   if (navigationsOfA() !== before) fail(`the first tab navigated ${navigationsOfA() - before} time(s) to show the move`);
-  console.log('    live: verified in a second tab before the first tab\'s channel opened; once it opened, the first tab caught up without navigating');
+  console.log(`    live: verified in a second tab before the first tab's channel opened (${timerRefreshes} timer refresh(es) held meanwhile); once it opened, the first tab caught up without navigating`);
   await b.close();
 
   step = 'done';
