@@ -239,7 +239,29 @@ function catchUp() {
     catchUp();
   }, catchUpIn);
 }
+// One reading at a time. A screen asked to be read again while a reading is in flight is read
+// once more after it, so a later answer is never overwritten by an earlier one that arrived
+// last, and a request that came during a failed reading is not lost.
+let reading = null;
+let readAgain = false;
 async function refresh() {
+  if (reading) {
+    readAgain = true;
+    return reading;
+  }
+  reading = (async () => {
+    do {
+      readAgain = false;
+      await readScreen();
+    } while (readAgain);
+  })();
+  try {
+    await reading;
+  } finally {
+    reading = null;
+  }
+}
+async function readScreen() {
   if (document.visibilityState !== 'visible') return;
   const main = document.getElementById('main');
   if (!main || main.querySelector('[aria-busy="true"]')) return;

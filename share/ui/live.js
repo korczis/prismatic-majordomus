@@ -27,7 +27,6 @@ export const SAID = {
  */
 export function followScreen(path, screen) {
   let word = 'connecting';
-  let connections = 0;
   const tell = (next) => {
     word = next;
     screen.say(SAID[next]);
@@ -35,21 +34,18 @@ export function followScreen(path, screen) {
   tell('connecting');
   const channel = follow(path, {
     message(frame) {
-      // a connection's first snapshot is what the page was served with, or what a
-      // reconnection read again below; a later one is a change
+      // Every snapshot reads the screen again, a connection's first one too: the blackboard
+      // may have changed between the page being rendered and the channel opening, and the
+      // server does not send a snapshot that says nothing new, so a change in that gap would
+      // otherwise never reach a page that says it is live. One read per connection is the
+      // price; after a reconnection it is also what brings in what changed while it was down.
       if (frame.type !== 'blackboard.snapshot' || !frame.data) return;
-      if (frame.data.trigger === 'connect') return;
       screen.refresh();
     },
     state(name) {
       if (name === LIVE) tell('live');
       else if (name === RECONNECTING) tell('reconnecting');
       else tell('offline');
-    },
-    ready() {
-      // whatever changed while the channel was down is on the screen read now
-      connections += 1;
-      if (connections > 1) screen.refresh();
     },
   });
   return {

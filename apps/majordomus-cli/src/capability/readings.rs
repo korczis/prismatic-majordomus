@@ -286,6 +286,9 @@ struct World {
     reading: u64,
     fingerprint: String,
     writes: u64,
+    /// The generation the source follows beyond the repository (`crate::change`), zero for
+    /// a source that follows none: part of one source's world, never of the repository's.
+    followed: u64,
 }
 
 impl World {
@@ -294,6 +297,17 @@ impl World {
             reading: ctx.reading,
             fingerprint: ctx.registry.fingerprint().to_string(),
             writes: ctx.executor.writes(),
+            followed: 0,
+        }
+    }
+
+    /// The world a reading of `id` is taken in: the repository's, and the generation the
+    /// source follows when it follows one, so that a reading from before that generation
+    /// moved is stale like one from before the repository moved.
+    fn of_source(&self, id: &str) -> World {
+        World {
+            followed: crate::change::generation_of(id).unwrap_or(0),
+            ..self.clone()
         }
     }
 }
@@ -417,11 +431,14 @@ impl Readings {
     fn behind(&self, world: &World) -> Vec<(String, Arc<Slot>)> {
         lock(&self.slots)
             .iter()
-            .filter(|(_, slot)| {
+            .filter(|((id, _), slot)| {
                 let state = lock(&slot.state);
                 !state.flying
                     && state.asked.elapsed() < REMEMBERED
-                    && state.outcome.as_ref().is_some_and(|o| &o.world != world)
+                    && state
+                        .outcome
+                        .as_ref()
+                        .is_some_and(|o| o.world != world.of_source(id))
             })
             .map(|((id, _), slot)| (id.clone(), Arc::clone(slot)))
             .collect()
@@ -472,8 +489,10 @@ pub(crate) fn read_shared(
         return Latest::now(value.map(Arc::new), started.elapsed());
     }
     let readings = &ctx.executor.readings;
-    let world = World::of(ctx);
-    let moved = readings.moved_to(&world);
+    let repository = World::of(ctx);
+    let moved = readings.moved_to(&repository);
+    // this source's world: the repository's, and the generation it follows if it follows one
+    let world = repository.of_source(id);
     let slot = readings.slot(id, &input);
 
     let wait = {
@@ -514,14 +533,15 @@ pub(crate) fn read_shared(
         wait
     };
     if moved {
-        for (other, behind) in readings.behind(&world) {
+        for (other, behind) in readings.behind(&repository) {
             let mut state = lock(&behind.state);
             if state.flying {
                 continue;
             }
             state.flying = true;
             drop(state);
-            work(ctx, &other, behind, world.clone(), false);
+            let theirs = repository.of_source(&other);
+            work(ctx, &other, behind, theirs, false);
         }
     }
 
@@ -714,5 +734,57 @@ impl Drop for Landing {
                 Duration::ZERO,
             );
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    /// A source that follows a change generation of its own (the blackboard, ADR 0176) is
+    /// current until that generation moves, is then handed over as stale and read again, and
+    /// a caller that waits is given the reading of the new generation. A source that follows
+    /// no such generation is not disturbed by it.
+    #[test]
+    fn a_followed_source_goes_stale_when_its_generation_moves() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let ctx = repo.context().unwrap();
+        let input = json!({ "signals": 0 });
+        let first = read(&ctx, "blackboard.snapshot", input.clone(), Patience::WAIT);
+        assert_eq!(first.freshness, Freshness::Current);
+        let plan = read(&ctx, "plan.status", json!({}), Patience::WAIT);
+        assert_eq!(plan.freshness, Freshness::Current);
+
+        crate::change::BLACKBOARD.advance();
+        let behind = read(&ctx, "blackboard.snapshot", input.clone(), Patience::PAGE);
+        assert!(
+            behind.freshness == Freshness::Stale || behind.freshness == Freshness::Current,
+            "{:?}",
+            behind.freshness
+        );
+        if behind.freshness == Freshness::Stale {
+            assert!(behind.refreshing, "a stale reading is being read again");
+            assert!(
+                behind.read_at.is_some() && behind.age.is_some(),
+                "it keeps its age"
+            );
+        } else {
+            // current only as a new reading, never as the one from before the change
+            assert_ne!(
+                behind.read_at, first.read_at,
+                "the reading before the change"
+            );
+        }
+        let caught = read(&ctx, "blackboard.snapshot", input, Patience::WAIT);
+        assert_eq!(caught.freshness, Freshness::Current);
+        let plan = read(&ctx, "plan.status", json!({}), Patience::PAGE);
+        assert_eq!(
+            plan.freshness,
+            Freshness::Current,
+            "an unrelated source stays current"
+        );
+        assert_eq!(crate::change::generation_of("plan.status"), None);
+        assert!(crate::change::generation_of("blackboard.snapshot").is_some());
     }
 }

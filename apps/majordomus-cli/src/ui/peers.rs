@@ -1,8 +1,10 @@
 //! Peers: who works on this repository, on every board and every linked machine, what each
 //! claims, which claims meet and what waits for whom (ADR 0176). One source, the blackboard
-//! (`blackboard.snapshot`), read through the same shared read the live channel's followers
-//! take, so the screen a change frame asks for is the blackboard at that change and not a
-//! reading from before it. Nothing here joins, counts or ranks a worker: the capability did.
+//! (`blackboard.snapshot`), read as every screen reads a source: its latest reading, which
+//! follows the blackboard's change generation as well as the repository
+//! (`crate::change::generation_of`), so a screen read after a change frame is either that
+//! change or says it is catching up with it. Nothing here joins, counts or ranks a worker:
+//! the capability did.
 //!
 //! The screen follows `/events?follow=blackboard&frames=snapshot` while JavaScript runs:
 //! `share/ui/live.js` reads the screen again when the server says the blackboard changed,
@@ -14,7 +16,7 @@ use crate::capability::Context;
 use crate::cockpit::html::{el, El};
 
 use super::shell::View;
-use super::source::{answered, Answer, Source};
+use super::source::{ask, Answer, Source};
 use super::view::{hero, kpi, kpi_count, list, panel, state, table, text, unanswered, wide};
 
 /// The route of the screen.
@@ -30,9 +32,7 @@ const BLACKBOARD: Source = Source::with("blackboard.snapshot", r#"{"signals":0}"
 
 /// The Peers screen; `lib` is the URL of [`LIB`] the page loads to follow the channel.
 pub fn screen(ctx: &Context, lib: &str) -> View {
-    let started = std::time::Instant::now();
-    let read = crate::http::follow::blackboard(ctx).map_err(|e| e.to_string());
-    let board = answered(ctx, BLACKBOARD, read, started.elapsed());
+    let board = ask(ctx, BLACKBOARD);
 
     let top = hero(
         "users",

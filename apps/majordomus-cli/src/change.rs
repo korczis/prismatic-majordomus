@@ -74,6 +74,15 @@ impl Default for Generation {
 /// its mesh journal.
 pub static BLACKBOARD: Generation = Generation::new();
 
+/// The generation a capability's answer follows beyond the repository, when it has one: the
+/// blackboard's for `blackboard.snapshot`, none for any other. A reading of such a source
+/// taken before the generation moved is not current (`capability::readings`), so a screen
+/// read after a change frame never shows the blackboard from before the change as if it were
+/// now.
+pub fn generation_of(capability: &str) -> Option<u64> {
+    (capability == "blackboard.snapshot").then(|| BLACKBOARD.current())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -3,8 +3,10 @@
 #
 # Who works on what was on the blackboard and on no UI screen. What is decided here:
 #
-#   1. share/ui/live.js reads the screen again on a change frame and after a reconnection,
-#      never on a connection's first snapshot, and its state line says live or reconnecting;
+#   1. share/ui/live.js reads the screen again on every snapshot, a connection's first one
+#      included (the blackboard may have changed between the page and the channel), and its
+#      state line says live or reconnecting; ui.js reads one screen at a time, so an earlier
+#      answer that arrives last never replaces a later one;
 #   2. on a running server, /ui/peers lists a worker announced over MCP with its intent and
 #      its claim, names the channel it follows and the module that follows it, and that
 #      module and the one socket client are served beside ui.js — the client byte for byte
@@ -19,7 +21,7 @@ command -v curl >/dev/null 2>&1 || skip "curl not installed"
 # ---------------------------------------------------------------- 1. the module
 M="$T/modules"
 mkdir -p "$M"
-cp "$ROOT/share/ui/live.js" "$ROOT/share/ui/socket.js" "$M/"
+cp "$ROOT/share/ui/live.js" "$ROOT/share/ui/socket.js" "$ROOT/share/ui/ui.js" "$M/"
 cat > "$M/run.mjs" <<'JS'
 let now = 0;
 let timers = [];
@@ -67,12 +69,12 @@ if (new URL(s.url).searchParams.get('frames') !== 'snapshot') fail(`not the scre
 s.emit('open');
 s.send({ type: 'stream.ready', data: { heartbeat_seconds: 20, scope: 'blackboard', epoch: 'e1' } });
 s.send({ type: 'blackboard.snapshot', data: { trigger: 'connect', blackboard: {} } });
-if (reads !== 0) fail('the first snapshot of a connection read the screen again');
+if (reads !== 1) fail(`the connection's snapshot did not read the screen again: ${reads}`);
 if (line !== SAID.live || !followed.live()) fail(`the line does not say live: ${line}`);
 s.send({ type: 'blackboard.snapshot', data: { trigger: 'change', blackboard: {} } });
-if (reads !== 1) fail(`a change did not read the screen again: ${reads}`);
+if (reads !== 2) fail(`a change did not read the screen again: ${reads}`);
 s.send({ type: 'blackboard.snapshot', data: { trigger: 'refresh', blackboard: {} } });
-if (reads !== 2) fail(`a refresh that found a change did not read the screen again: ${reads}`);
+if (reads !== 3) fail(`a refresh that found a change did not read the screen again: ${reads}`);
 s.close();
 if (line !== SAID.reconnecting || followed.live()) fail(`a dropped channel does not say reconnecting: ${line}`);
 advance(1000);
@@ -80,14 +82,47 @@ s = sockets.at(-1);
 if (sockets.length !== 2) fail('a dropped channel did not reconnect');
 s.emit('open');
 s.send({ type: 'stream.ready', data: { heartbeat_seconds: 20, scope: 'blackboard', epoch: 'e1' } });
-if (reads !== 3) fail(`a reconnection did not read the screen again: ${reads}`);
+if (reads !== 3) fail(`a reconnection read the screen before its snapshot: ${reads}`);
 s.send({ type: 'blackboard.snapshot', data: { trigger: 'connect', blackboard: {} } });
-if (reads !== 3) fail(`a reconnection read the screen twice: ${reads}`);
+if (reads !== 4) fail(`a reconnection did not read the screen once: ${reads}`);
+
+// ui.js: one reading at a time. Two changes in quick succession: the second waits for the
+// first and is read after it, so the later screen is the one that stays
+const ui = (await import('node:fs')).readFileSync(new URL('./ui.js', import.meta.url), 'utf8');
+const from = ui.indexOf('// One reading at a time.');
+const to = ui.indexOf('// A snapshot (ADR 0141)', from);
+if (from < 0 || to < 0) fail('ui.js has no one-reading-at-a-time refresh');
+const requests = [];
+let shown = 'G0';
+const screenOf = (revision) => ({ revision, replaceWith(next) { main.current = next; shown = next.revision; } });
+const main = { current: screenOf('G0'), querySelector: () => null, get lastElementChild() { return this.current; } };
+const { runInNewContext } = await import('node:vm');
+const read = runInNewContext(ui.slice(from, to) + '\nrefresh;', {
+  document: {
+    visibilityState: 'visible', getElementById: () => main, querySelector: () => null,
+    createElement: () => ({ set innerHTML(v) { this.firstElementChild = screenOf(v); } }),
+  },
+  window: { location: { pathname: '/ui/peers', search: '' } },
+  AbortController, inFlight: new Set(), PANEL_TIMEOUT_MS: 15000,
+  setTimeout, clearTimeout, enhance: () => {},
+  fetch: (url) => new Promise((resolve) => requests.push({ url, resolve })),
+});
+const first = read();
+const second = read();
+await Promise.resolve();
+if (requests.length !== 1) fail(`two readings were in flight at once: ${requests.length}`);
+requests[0].resolve({ ok: true, text: async () => 'G1' });
+for (let i = 0; i < 20 && requests.length < 2; i++) await new Promise((r) => setImmediate(r));
+if (requests.length !== 2) fail('the reading asked for during the first was not made after it');
+requests[1].resolve({ ok: true, text: async () => 'G2' });
+await first; await second;
+if (shown !== 'G2') fail(`the screen shows ${shown}, not the later reading`);
+if (!/[?&]fragment(&|$)/.test(requests[1].url)) fail(`the reading is not the fragment: ${requests[1].url}`);
 console.log('live.js: a change and a reconnection read the screen again');
 JS
 node "$M/run.mjs" > "$T/live.out" 2>&1 || { echo "    live.js:"; sed 's/^/    | /' "$T/live.out"; exit 1; }
 grep -q '^live.js: a change and a reconnection' "$T/live.out" || { echo "    live.js did not finish"; cat "$T/live.out"; exit 1; }
-echo "    live.js reads the screen again on a change and after a reconnection, never on a first snapshot"
+echo "    live.js reads the screen again on every snapshot, and ui.js reads one screen at a time"
 
 # ---------------------------------------------------------------- 2. the screen
 RB="$(rust_bin)" || rust_bin_exit $?
