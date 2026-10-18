@@ -105,6 +105,30 @@ pub fn kpi_state(label: &str, reading: &Reading) -> El {
     kpi_with(label, reading, shown(reading), badge)
 }
 
+/// A KPI tile for a figure this process did not observe, and why: never a `0` and never a
+/// `no`, because a runtime that is not here measured nothing (a published snapshot's runner
+/// is on no mesh, a checkout may run no forge). The reason is the answer's own word.
+pub fn kpi_not_observed(label: &str, reason: &str, reading: &Reading) -> El {
+    el("span")
+        .class("mj-ui-kpi")
+        .attr(
+            "title",
+            format!("not observed: {reason}; read from {}", reading.cite()),
+        )
+        .child(el("span").class("mj-ui-kpi-label").text(label))
+        .child(el("span").class("mj-ui-kpi-value").text("not observed"))
+        .child(el("span").class("mj-ui-kpi-source").text(reading.cite()))
+}
+
+/// The body of a panel whose subject this process did not observe, with the reason the
+/// source gave: an unobserved subject is said in words, never drawn as an empty one.
+pub fn not_observed(subject: &str, reason: &str) -> El {
+    el("p")
+        .class("mj-ui-empty")
+        .child(word_badge("unknown"))
+        .text(format!(" {subject} was not observed here: {reason}"))
+}
+
 fn kpi_with(label: &str, reading: &Reading, value: String, badge: Option<El>) -> El {
     el("span")
         .class("mj-ui-kpi")

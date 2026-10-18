@@ -391,6 +391,10 @@
   .mj-ui-empty {
     @apply text-sm;
     color: var(--mj-muted);
+    /* an empty or unobserved panel says why in the source's words, which can hold a key or a
+       path with no place to break: a runner's "this machine's key <64 hex digits> is not in
+       trust.allow" made /ui 578 px wide at 320 (run 39115660488) */
+    overflow-wrap: anywhere;
   }
 
   /* Prose a record carries (ui/prose.rs): a milestone's problem and outcome, a list of

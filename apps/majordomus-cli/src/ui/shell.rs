@@ -65,6 +65,12 @@ pub struct Frame<'a> {
     /// The graph library's URL, with its digest: loaded by the script only on a screen that
     /// draws a graph.
     pub graph_lib: String,
+    /// The module that wires an issue's moves (the Cockpit's `moves.js`), with its digest:
+    /// loaded by the script only on a screen that renders a move form (I2781).
+    pub moves_lib: String,
+    /// The Cockpit's one WebSocket client (`socket.js`), with its digest: loaded by the script
+    /// only on a screen that follows the executions this server runs (I2783).
+    pub socket_lib: String,
     /// Whether the distribution has the UI's asset directory at all.
     pub assets_present: bool,
     /// The executable's version.
@@ -115,6 +121,9 @@ pub fn page(ctx: &Context, frame: &Frame<'_>, view: &View) -> String {
         .attr_if("data-theme-class", design.map(|d| d.theme.class.clone()))
         .attr_if("data-design", design.map(|d| d.short_fingerprint()))
         .attr("data-graph-lib", frame.graph_lib.clone())
+        .attr("data-moves-lib", frame.moves_lib.clone())
+        .attr("data-socket-lib", frame.socket_lib.clone())
+        .attr("data-events", crate::http::events::PATH)
         .child(
             el("a")
                 .class("mj-skip")
@@ -281,7 +290,10 @@ fn topbar(read_at: &str) -> El {
                                 .attr("datetime", read_at)
                                 .text(read_at.replace('T', " ")),
                         ),
-                ),
+                )
+                // what the channel a following screen holds is doing, written by the script
+                // from the socket's own state and hidden until it has one (I2783)
+                .child(el("span").attr("data-live-state", "").flag("hidden")),
         )
         .child(
             el("nav")
@@ -339,6 +351,8 @@ mod tests {
                 "/ui/assets/theme.js?v=1".into(),
             ],
             graph_lib: "/ui/assets/vendor/cytoscape.min.js?v=1".into(),
+            moves_lib: "/cockpit/assets/moves.js?v=1".into(),
+            socket_lib: "/cockpit/assets/socket.js?v=1".into(),
             assets_present: true,
             version: "0.0.0",
         }

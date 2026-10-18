@@ -66,4 +66,29 @@ evidence_required:
   - "diagram_case_3006"
   - "site_check_passes"
 created_at: 2026-10-13
-updated_at: 2026-10-13
+updated_at: 2026-10-16T17:05:34Z
+started_at: 2026-10-16T17:05:18Z
+started_event: sha256:22925d03a3cd93616831edf617107d1393fda58068c916d0838041cbf1a3e72c
+verified_at: 2026-10-16T17:05:23Z
+verified_event: sha256:cbfe6cba6ed0da8be25e45fe512e8b843652609a71b721a28f11f48f77db32eb
+completed_at: 2026-10-16T17:05:34Z
+completed_event: sha256:96a762214263c92fb271bf9528742f7ed4269bb1c663c58c9f54c49ae0549aea
+evidence:
+  - covers: diagram_pass_unit_tests
+    type: test
+    command: "node --test scripts/lib/diagrams.test.mjs"
+    result: "# tests 20, # pass 20, # fail 0, # skipped 0 at 09c334079f5"
+    commit: 09c334079f57de3429ce4e707d4bb4297d589245
+    recorded_at: 2026-10-16T17:05:27Z
+  - covers: diagram_case_3006
+    type: test
+    command: "MJ_TEST_JOBS=2 bash test/run.sh 3006_diagrams_are_interactive_and_linkable 12_site_build 272_diagrams_are_drawn; scripts/ci/diagram-check"
+    result: "ok 3006 2s, ok 272 2s, ok 12_site_build 386s (with npm ci node_modules and target/web/rustdoc from scripts/rust-check --doc; 0 skipped); diagram-check: no hand-drawn diagram in the published documents; at 09c334079f5 with the executable of #1304"
+    commit: 09c334079f57de3429ce4e707d4bb4297d589245
+    recorded_at: 2026-10-16T17:05:29Z
+  - covers: site_check_passes
+    type: test
+    command: "scripts/site-build && scripts/site-check; scripts/ci/link-check; scripts/interaction-probe --spec diagram; node <scratch>/chart.mjs https://majordomus.dev/plan/"
+    result: "site-build ok, 2023 routes; site-check: 0 failure(s); link-check OK 431283 links on 2023 pages resolve, 21664 fragments incl. #diagram-<name>:<node>; interaction-probe OK 798 diagram controls on 78 pages do what their spec says (zoom, fit, pan, keys, Link, node links); published /plan/ figure[data-chart=bar] drawn as a 1214x1058 canvas from its 38-row table, which stays shown; at 09c334079f5; delivered by #1097 in the grand top 11e53f5a451"
+    commit: 09c334079f57de3429ce4e707d4bb4297d589245
+    recorded_at: 2026-10-16T17:05:31Z

@@ -32,4 +32,21 @@ evidence_required:
   - "delivery_stage_case"
   - "mutations_fail_the_case"
 created_at: 2026-10-16
-updated_at: 2026-10-16
+updated_at: 2026-10-16T13:32:49Z
+started_at: 2026-10-16T09:56:45Z
+started_event: sha256:ccff17b4f443c1326ed94192c2b84e32c3bf57cfb052b2b1650d417b1731a5c2
+verified_at: 2026-10-16T13:32:49Z
+verified_event: sha256:38d3cda74594483b46d7cfc344f41bce5935a6c47ac60f45983027b7ec5e3be4
+evidence:
+  - covers: delivery_stage_case
+    type: test
+    command: "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test plan_delivery"
+    result: "3 passed, 0 failed (merged with merge commit and PR #5, released by the first release record v0.1.0, pr_open #9 from the forge observation, unread forge reported unread and unsettled, deployed from the observed Pages deployment's latest.json; --at reads history only and is byte-stable across a later tag; CLI = HTTP = MCP)"
+    commit: b80c183508fdd3a4b6e3455ee22620394deaee38
+    recorded_at: 2026-10-16T13:32:37Z
+  - covers: mutations_fail_the_case
+    type: test
+    command: "bash test/run.sh 3100_an_issue_delivery_is_inferred"
+    result: "1 passed; 4 code mutations of src/plan/delivery.rs applied one at a time each failed it where named (slug half of branch_names, merge title dropped, unread forge not named, open pulls empty)"
+    commit: b80c183508fdd3a4b6e3455ee22620394deaee38
+    recorded_at: 2026-10-16T13:32:41Z

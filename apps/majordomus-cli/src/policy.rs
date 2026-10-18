@@ -173,6 +173,29 @@ pub struct Policy {
     /// its version exactly as it did.
     #[serde(default)]
     pub release: crate::release::landing::ReleasePolicy,
+    /// `checkout:` — what a checkout is held to against the remote trunk. Absent declares
+    /// no threshold, and a distance is then reported as unjudged rather than judged by a
+    /// number nobody wrote down.
+    #[serde(default)]
+    pub checkout: CheckoutPolicy,
+}
+
+/// `checkout:` — how far a checkout may drift from the remote trunk before what it serves
+/// is reported as lagging or stale (`project.a-checkout-serves-the-current-trunk`).
+///
+/// ```
+/// use majordomus_cli::policy::CheckoutPolicy;
+/// assert_eq!(CheckoutPolicy::default().trunk_distance, None, "absent is not a default");
+/// let p: CheckoutPolicy = serde_json::from_str(
+///     r#"{"trunk_distance": {"warn_behind": 50, "fail_behind": 300}}"#).unwrap();
+/// assert_eq!(p.trunk_distance.and_then(|t| t.fail_behind), Some(300));
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Default)]
+pub struct CheckoutPolicy {
+    /// `checkout.trunk_distance:` — the commits behind the remote trunk at which a checkout
+    /// is lagging (`warn_behind`) and stale (`fail_behind`).
+    #[serde(default)]
+    pub trunk_distance: Option<crate::worktree::TrunkThresholds>,
 }
 
 /// How strictly a start is held to its binding.

@@ -1,0 +1,30 @@
+id: I2795
+milestone: test-evidence
+title: "The trunk's recorded run reaches the tracked evidence ledger, and the baseline is tightened to it"
+slug: the-trunks-recorded-run-reaches-the-ledger
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Land the executions the newest green trunk run recorded (validate run 38844702397, artifact evidence, origin ci, 606 executions) in .ai/repo/evidence/ledger.json, as the recording pull request ADR 0080 proposes would, and tighten .ai/repo/evidence-baseline.txt to what that ledger supports with scripts/evidence-check --baseline."
+why: "On 2026-10-17 the tracked ledger held 14 local executions, so evidence show read 214 claims not run and evidence-check supported none of the guarantees, while every green trunk run records the whole suite and the crate tests in its evidence artifact and the recording pull request is not wired."
+current_state: "14 executions in the tracked ledger; evidence show: not run 214, stale 21, no test 12."
+desired_state: "The tracked ledger carries the trunk run's 606 executions; evidence show: inputs unchanged 106, stale 129, no test 12, none not run; evidence-check: 106 guarantees supported and pinned by the baseline, none lost."
+scope:
+  - ".ai/repo/evidence/ledger.json"
+  - ".ai/repo/evidence-baseline.txt"
+  - ".ai/repo/project/issues/I2795.yaml"
+non_scope:
+  - "Wiring the recording pull request (ADR 0080): it needs the owner's choice of token"
+  - "Accepting ADR 0068, 0080 or 0087; acceptance is the owner's act"
+  - "Editing a row by hand: the ledger is the one the run's collector wrote"
+depends_on: []
+acceptance_criteria:
+  - "The ledger is the evidence artifact's ledger.json byte for byte"
+  - "scripts/evidence-check reports no guarantee lost and the baseline pins the supported ones"
+validation:
+  - "scripts/evidence-check"
+  - "bin/majordomus-cli evidence show --check"
+evidence_required:
+  - "evidence_check_clean"
+created_at: 2026-10-17
+updated_at: 2026-10-17

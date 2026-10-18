@@ -895,7 +895,9 @@ jobs:
     # site-build must still open the job — otherwise the gate is planned and the job that
     # would run it never starts. The UI audit is the ui job's, not this one's.
     if: needs.plan.outputs.site_build == 'true' || needs.plan.outputs.cockpit_assets == 'true' || needs.plan.outputs.site_probe == 'true'
-    timeout-minutes: 50
+    # measured 2026-10-17 on batch 71a: 46, 47.5 and 50.4 min (the last one cancelled at 50);
+    # the browser probe grows with the site, so the bound keeps a quarter's headroom
+    timeout-minutes: 65
     runs-on: ubuntu-latest
     env:
       # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
@@ -1046,12 +1048,14 @@ jobs:
   # so it needs the executable; the Rust cache makes that a restore in nearly every run.
   # It grew with the site: on #723's run (int/batch-j be9f675f16) the audit took 2,345 s over
   # 5,902 visits of 1,740 pages at 4 jobs, 55 s inside its 2,400 s bound, and on master's run of
-  # the same tree (37087514909) it was stopped at 2,400 s mid-audit. The bound is 3,600 s and
-  # the job's 75 minutes, so a third more site still finishes and reports.
+  # the same tree (37087514909) it was stopped at 2,400 s mid-audit. It grew again: on batch
+  # 71b2 the audit took 3,581 s (run 39087400247, f17855bf9de) and was stopped at its 3,600 s
+  # bound at visit 7,850 with no finding (run 39097403850, bc782b40f28). The bound is 5,400 s
+  # and the job's 105 minutes, so half again as much site still finishes and reports.
   ui:
     needs: plan
     if: needs.plan.outputs.ui_audit == 'true'
-    timeout-minutes: 75
+    timeout-minutes: 105
     runs-on: ubuntu-latest
     env:
       # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
@@ -1081,7 +1085,13 @@ jobs:
       - name: every warm screen of the UI is within its budget
         run: scripts/ci/timed --bound 600 ui-audit ui-budget timings.tsv "$MAJORDOMUS_BIN" bench system.http. --transport system --profile ci --no-write --check
       - name: audit the UI in a browser
-        run: scripts/ci/timed --bound 3600 ui-audit ui-audit timings.tsv scripts/ui audit --report
+        run: scripts/ci/timed --bound 5400 ui-audit ui-audit timings.tsv scripts/ui audit --report
+      # The cases whose subject is the live UI driven in a browser, which the suite runners do
+      # not have: each declares "# majordomus-skip-runs-in: ui" and is excused there only
+      # because it is held here, against the executable this job built, with no skip excused
+      # (3220, the IDD loop walked end to end).
+      - name: the cases that drive the UI in a browser
+        run: scripts/ci/timed --bound 900 ui-audit ui-cases timings.tsv bash test/run.sh --no-skips --runs-in ui
       - if: always()
         uses: actions/upload-artifact@v4
         with:

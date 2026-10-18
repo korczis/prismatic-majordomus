@@ -18,8 +18,8 @@ use super::dashboard::ROWS;
 use super::shell::View;
 use super::source::{ask_all, Answer, Source};
 use super::view::{
-    graph, hero, kpi, kpi_count, list, nothing, panel, table, text, unanswered, wide, GraphNode,
-    Layout,
+    graph, hero, kpi, kpi_count, kpi_not_observed, list, not_observed, nothing, panel, table, text,
+    unanswered, wide, GraphNode, Layout,
 };
 
 /// The route of the screen.
@@ -132,6 +132,23 @@ fn short(id: &str) -> String {
         .collect()
 }
 
+/// Why this process observed no mesh, when `mesh.peers` answered that cooperation does not
+/// run here: the runtime's absence, never an empty mesh. A published snapshot is read on a
+/// runner that is on no mesh, and drawing that as `Mesh active: no` and `Machines: 0` states a
+/// measurement nobody made (I2943). `None` when the mesh runs or the answer says nothing.
+pub(crate) fn unobserved(peers: &Answer) -> Option<String> {
+    let v = peers.ok()?;
+    if v.get("active").and_then(Value::as_bool) != Some(false) {
+        return None;
+    }
+    let why = v
+        .get("reason")
+        .and_then(Value::as_str)
+        .filter(|r| !r.is_empty())
+        .unwrap_or("cooperation does not run in this process");
+    Some(format!("this runtime is not on the mesh ({why})"))
+}
+
 /// The Mesh screen; `query` may select one machine (`node`).
 pub fn screen(ctx: &Context, query: &[(String, String)]) -> View {
     let answers = ask_all(ctx, &[PEERS, EVENTS, CLAIMS]);
@@ -150,6 +167,7 @@ pub fn screen(ctx: &Context, query: &[(String, String)]) -> View {
 /// The screen drawn from the three answers it reads, with `selected` the machine to inspect.
 fn render(peers: &Answer, events: &Answer, claims: &Answer, selected: Option<&str>) -> View {
     let machines = list(peers, "/machines");
+    let absent = unobserved(peers);
 
     let top = hero(
         "nodes",
@@ -157,86 +175,91 @@ fn render(peers: &Answer, events: &Answer, claims: &Answer, selected: Option<&st
         "Mesh",
         "The machines working on this repository, and what they told each other.",
         "Select a machine, a runtime or a session to inspect it: what it runs, how alive each runtime is, who is working there and what the mesh recorded from it.",
-        vec![
-            kpi("Mesh active", &peers.read("/active")),
-            kpi_count("Machines", &peers.read("/machines")),
-            kpi_count("Refused links", &peers.read("/refused")),
-            kpi("Journal clock", &events.read("/lamport")),
-        ],
+        match &absent {
+            Some(why) => vec![kpi_not_observed("Mesh", why, &peers.read("/active"))],
+            None => vec![
+                kpi("Mesh active", &peers.read("/active")),
+                kpi_count("Machines", &peers.read("/machines")),
+                kpi_count("Refused links", &peers.read("/refused")),
+                kpi("Journal clock", &events.read("/lamport")),
+            ],
+        },
     );
 
-    let topology = unanswered(peers).unwrap_or_else(|| {
-        let mut nodes: Vec<GraphNode> = Vec::new();
-        let mut edges: Vec<(String, String)> = Vec::new();
-        for m in &machines {
-            let name = text(m, "name");
-            let words = livenesses(m);
-            let alive = words.iter().any(|w| w == "live" || w == "own");
-            let machine_id = format!("machine:{name}");
-            nodes.push(GraphNode {
-                id: machine_id.clone(),
-                label: if m.get("local").and_then(Value::as_bool) == Some(true) {
-                    format!("{name} (this machine)")
-                } else {
-                    name.clone()
-                },
-                tone: if alive { "cyan" } else { "rose" },
-                href: select(&name),
-                kind: "node",
-            });
-            for r in m
-                .get("runtimes")
-                .and_then(Value::as_array)
-                .into_iter()
-                .flatten()
-            {
-                let rid = text(r, "runtime");
-                let runtime_id = format!("runtime:{rid}");
+    let topology = unanswered(peers)
+        .or_else(|| absent.as_ref().map(|why| not_observed("The mesh", why)))
+        .unwrap_or_else(|| {
+            let mut nodes: Vec<GraphNode> = Vec::new();
+            let mut edges: Vec<(String, String)> = Vec::new();
+            for m in &machines {
+                let name = text(m, "name");
+                let words = livenesses(m);
+                let alive = words.iter().any(|w| w == "live" || w == "own");
+                let machine_id = format!("machine:{name}");
                 nodes.push(GraphNode {
-                    id: runtime_id.clone(),
-                    label: short(&rid),
-                    tone: liveness_tone(&text(r, "liveness")),
+                    id: machine_id.clone(),
+                    label: if m.get("local").and_then(Value::as_bool) == Some(true) {
+                        format!("{name} (this machine)")
+                    } else {
+                        name.clone()
+                    },
+                    tone: if alive { "cyan" } else { "rose" },
                     href: select(&name),
                     kind: "node",
                 });
-                edges.push((machine_id.clone(), runtime_id.clone()));
-                for s in r
-                    .get("sessions")
+                for r in m
+                    .get("runtimes")
                     .and_then(Value::as_array)
                     .into_iter()
                     .flatten()
                 {
-                    let key = text(s, "key");
-                    let session_id = format!("session:{key}");
-                    let label = s
-                        .pointer("/info/session")
-                        .and_then(Value::as_str)
-                        .unwrap_or("session")
-                        .to_string();
+                    let rid = text(r, "runtime");
+                    let runtime_id = format!("runtime:{rid}");
                     nodes.push(GraphNode {
-                        id: session_id.clone(),
-                        label,
-                        tone: "violet",
+                        id: runtime_id.clone(),
+                        label: short(&rid),
+                        tone: liveness_tone(&text(r, "liveness")),
                         href: select(&name),
-                        kind: "leaf",
+                        kind: "node",
                     });
-                    edges.push((runtime_id.clone(), session_id));
+                    edges.push((machine_id.clone(), runtime_id.clone()));
+                    for s in r
+                        .get("sessions")
+                        .and_then(Value::as_array)
+                        .into_iter()
+                        .flatten()
+                    {
+                        let key = text(s, "key");
+                        let session_id = format!("session:{key}");
+                        let label = s
+                            .pointer("/info/session")
+                            .and_then(Value::as_str)
+                            .unwrap_or("session")
+                            .to_string();
+                        nodes.push(GraphNode {
+                            id: session_id.clone(),
+                            label,
+                            tone: "violet",
+                            href: select(&name),
+                            kind: "leaf",
+                        });
+                        edges.push((runtime_id.clone(), session_id));
+                    }
                 }
             }
-        }
-        let rows = machines.iter().map(machine_row).collect::<Vec<_>>();
-        graph(
-            "The mesh: machines, the runtimes they run and the sessions those runtimes hold",
-            Layout::Force,
-            &nodes,
-            &edges,
-            table(
-                &["Machine", "Where", "Runtimes"],
-                rows,
-                "No machine is known to the mesh runtime.",
-            ),
-        )
-    });
+            let rows = machines.iter().map(machine_row).collect::<Vec<_>>();
+            graph(
+                "The mesh: machines, the runtimes they run and the sessions those runtimes hold",
+                Layout::Force,
+                &nodes,
+                &edges,
+                table(
+                    &["Machine", "Where", "Runtimes"],
+                    rows,
+                    "No machine is known to the mesh runtime.",
+                ),
+            )
+        });
 
     let mut grid = el("div").class("mj-ui-grid");
     if let Some(name) = selected {
@@ -258,13 +281,19 @@ fn render(peers: &Answer, events: &Answer, claims: &Answer, selected: Option<&st
         .child(panel(
             "Journal",
             "The latest events the mesh recorded, newest first.",
-            journal(events, None),
+            absent
+                .as_ref()
+                .map(|why| not_observed("The journal", why))
+                .unwrap_or_else(|| journal(events, None)),
             &[events],
         ))
         .child(panel(
             "Refused links",
             "Links this runtime would not make, and why.",
-            refused(peers),
+            absent
+                .as_ref()
+                .map(|why| not_observed("Refused links", why))
+                .unwrap_or_else(|| refused(peers)),
             &[peers],
         ));
 
@@ -355,7 +384,7 @@ fn inspector(name: &str, machines: &[Value], peers: &Answer, events: &Answer) ->
                 )
                 .child(el("td").child(word_badge(&text(r, "liveness"))))
                 .child(el("td").class("mj-ui-mono mj-ui-dim").text(beat))
-                .child(el("td").class("mj-ui-num").text(sessions.to_string()))
+                .child(el("td").class("mj-ui-mono").text(sessions.to_string()))
         })
         .collect::<Vec<_>>();
     let session_rows = runtimes
@@ -392,7 +421,7 @@ fn inspector(name: &str, machines: &[Value], peers: &Answer, events: &Answer) ->
                             .to_string(),
                     ),
                 )
-                .child(el("td").class("mj-ui-num").text(claims.to_string()))
+                .child(el("td").class("mj-ui-mono").text(claims.to_string()))
                 .child(
                     el("td")
                         .class("mj-ui-dim")
@@ -1029,6 +1058,43 @@ mod tests {
         assert!(html.contains("No machine is known to the mesh runtime."));
         assert!(html.contains("No link was refused."));
         assert!(html.contains("The journal holds no event from here."));
+    }
+
+    /// A process on no mesh (a published snapshot's runner) says the mesh was not observed,
+    /// with the runtime's own reason, and draws no count, no clock and no `no` (I2943).
+    #[test]
+    fn a_mesh_this_process_is_not_on_is_not_observed_never_zero() {
+        let off = answer(
+            PEERS,
+            Ok(serde_json::json!({
+                "active": false, "view": "summary", "reason": "not active: the mesh is not enabled",
+                "machines": [], "refused": []
+            })),
+        );
+        let events = answer(
+            EVENTS,
+            Ok(serde_json::json!({ "events": [], "lamport": 0 })),
+        );
+        let html = render(&off, &events, &claims(), None).main.render();
+        assert!(html.contains(">not observed<"), "{html}");
+        assert!(
+            html.contains("this runtime is not on the mesh (not active: the mesh is not enabled)"),
+            "{html}"
+        );
+        assert!(html.contains("The mesh was not observed here"), "{html}");
+        assert!(html.contains("The journal was not observed here"), "{html}");
+        for measured in [
+            "Mesh active",
+            "Journal clock",
+            ">Machines<",
+            "No machine is known",
+        ] {
+            assert!(
+                !html.contains(measured),
+                "{measured} drawn for an unobserved mesh: {html}"
+            );
+        }
+        assert_eq!(unobserved(&peers()), None, "a running mesh is observed");
     }
 
     /// A label is the last segment of an id, at most ten characters, and the id itself when
