@@ -39689,6 +39689,40 @@
         }
       },
       {
+        "id": "majordomus://issue/I2963",
+        "kind": "issue",
+        "label": "I2963",
+        "summary": "The README's exit codes are the commands' contract",
+        "route": "/cockpit/objects/issue/i2963",
+        "source": ".ai/repo/project/issues/I2963.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every row of the README's command table states the exit codes its command's model declares",
+            "Case 3365 fails on a row whose codes differ from the model"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "Corrected in this change: every row of the README's command table states the model's codes. Generating the table from the model is post-alpha (ledger row derivable-counts-in-prose).",
+          "depends_on": [],
+          "desired_state": "Case 3365 refuses a README whose command table states any command's exit codes otherwise than the model declares them, and proves its comparison on a mutated row.",
+          "evidence_required": [
+            "case_the_readme_exit_codes_are_the_contracts"
+          ],
+          "milestone": "development-runtime",
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "README.md",
+            "test/cases/3365_the_readme_exit_codes_are_the_contracts.sh"
+          ],
+          "slug": "the-readme-exit-codes-are-the-contracts",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "label": "a-commit-stood-behind-a-build-lock",
@@ -57509,6 +57543,13 @@
         "label": "test/cases/335_every_link_resolves.sh",
         "route": "/cockpit/objects/test/test-cases-335-every-link-resolves-sh",
         "source": "test/cases/335_every_link_resolves.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3365_the_readme_exit_codes_are_the_contracts.sh",
+        "kind": "test",
+        "label": "test/cases/3365_the_readme_exit_codes_are_the_contracts.sh",
+        "route": "/cockpit/objects/test/test-cases-3365-the-readme-exit-codes-are-the-contracts-sh",
+        "source": "test/cases/3365_the_readme_exit_codes_are_the_contracts.sh"
       },
       {
         "id": "majordomus://test/test/cases/336_every_control_is_claimed.sh",
@@ -84399,6 +84440,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2963",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2963",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -89155,6 +89206,11 @@
       },
       {
         "source": "majordomus://test/test/cases/335_every_link_resolves.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3365_the_readme_exit_codes_are_the_contracts.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -94405,8 +94461,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2959,
-      "edges": 6500,
+      "nodes": 2961,
+      "edges": 6503,
       "acyclic": false,
       "truncated": false
     }
