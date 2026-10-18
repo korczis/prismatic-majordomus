@@ -16,9 +16,9 @@ expect_file "$REG"; expect_file "$PAGE"
 # ---------------------------------------------------------------- 1. the page names the registry's set
 named() { # <feature page> -> the backticked ids of its "The ones that write the repository are" sentence
   awk '/The ones that write the repository are/ { on = 1 } on { print } on && /;/ { exit }' "$1" \
-    | grep -oE '`[a-z][a-z0-9_.]*`' | tr -d '`' | sort -u
+    | grep -oE '`[a-z][a-z0-9_.]*`' | tr -d '`' | LC_ALL=C sort -u
 }
-registry="$(jq -r '.capabilities[] | select(.execution.effect == "repository_mutation") | .id' "$REG" | sort -u)"
+registry="$(jq -r '.capabilities[] | select(.execution.effect == "repository_mutation") | .id' "$REG" | LC_ALL=C sort -u)"
 [ -n "$registry" ] || { echo "    the registry names no repository_mutation capability: the read is wrong"; exit 1; }
 page="$(named "$PAGE")"
 [ -n "$page" ] || { echo "    the interfaces feature has no sentence naming what writes the repository"; exit 1; }
