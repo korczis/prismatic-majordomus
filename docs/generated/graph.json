@@ -41807,6 +41807,43 @@
         }
       },
       {
+        "id": "majordomus://issue/I2995",
+        "kind": "issue",
+        "label": "I2995",
+        "summary": "doctor does no work whose answer cannot change a finding: the roadmap lookups and the board's wide status",
+        "route": "/cockpit/objects/issue/i2995",
+        "source": ".ai/repo/project/issues/I2995.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A README whose roadmap lists no releases is judged OK with no pickaxe; with the change undone the case counts the lookups and fails",
+            "A README that lists releases is accepted when it matches the records and refused when it omits one",
+            "context asks only `serve status --checkouts this` when this checkout has a server; with the change undone the case sees the wide question and fails",
+            "doctor's findings on this repository are the same before and after, and validate:roadmap and validate:budget take less time"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "The roadmap doctrine computes every DONE milestone's release before it reads the README; the board lookup asks the wide server status on every context.",
+          "depends_on": [],
+          "desired_state": "A README that lists no releases costs no release lookup; a worktree with a server costs one lease read and one probe for the board's address; the findings are unchanged.",
+          "evidence_required": [
+            "case_doctor_no_needless_work"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/doctor.sh",
+            "lib/context.sh",
+            "test/cases/3385_doctor_fits_its_budget_in_the_commit_hook.sh"
+          ],
+          "slug": "doctor-fits-its-budget-in-the-commit-hook",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "bash test/run.sh 3385_doctor_fits_its_budget_in_the_commit_hook 49_roadmap_doctrine 106_context_peers"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I3000",
         "kind": "issue",
         "label": "I3000",
@@ -60195,6 +60232,13 @@
         "label": "test/cases/337_every_control_does_what_it_says.sh",
         "route": "/cockpit/objects/test/test-cases-337-every-control-does-what-it-says-sh",
         "source": "test/cases/337_every_control_does_what_it_says.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3385_doctor_fits_its_budget_in_the_commit_hook.sh",
+        "kind": "test",
+        "label": "test/cases/3385_doctor_fits_its_budget_in_the_commit_hook.sh",
+        "route": "/cockpit/objects/test/test-cases-3385-doctor-fits-its-budget-in-the-commit-hook-sh",
+        "source": "test/cases/3385_doctor_fits_its_budget_in_the_commit_hook.sh"
       },
       {
         "id": "majordomus://test/test/cases/33_event_registry.sh",
@@ -87801,6 +87845,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2995",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2995",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I3000",
         "target": "kind:issue",
         "kind": "is_a"
@@ -92802,6 +92856,11 @@
       },
       {
         "source": "majordomus://test/test/cases/337_every_control_does_what_it_says.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3385_doctor_fits_its_budget_in_the_commit_hook.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -98062,8 +98121,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3052,
-      "edges": 6697,
+      "nodes": 3054,
+      "edges": 6700,
       "acyclic": false,
       "truncated": false
     }

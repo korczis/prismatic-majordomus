@@ -1323,18 +1323,21 @@ mj_validate_roadmap() {
     mj_doctrine_ok roadmap "README.md" "no authored roadmap section; the roadmap is only a projection"
     return 0
   fi
-  # only a DONE milestone can have been released
-  canon="$(for id in $(awk -F'\t' '$1=="M" && $3=="DONE" { print $2 }' "$MJ_PJ/model.tsv"); do
-             mj_pj_m_released_in "$id"; printf '\n'; done | { grep -v '^unreleased$' || :; } | LC_ALL=C sort -u)"
   doc="$(awk '/^## Roadmap/{f=1;next} /^## /{f=0} f' "$readme" \
          | sed -n 's/^| *\**v\{0,1\}\([0-9][0-9.]*\)\** *|.*/v\1/p' | LC_ALL=C sort -u)"
   # A section that lists no releases is prose pointing at the projection, not a second
   # authority. The rule is about an authored release list, not about the heading: a partial
-  # list is the dangerous case, and no list at all is the intended end state.
+  # list is the dangerous case, and no list at all is the intended end state. It is decided
+  # before any milestone's release is looked up, because there is nothing to compare them
+  # with: each lookup walks the history, and all of them took a minute of every doctor in a
+  # repository whose README lists none (I2995).
   if [ -z "$doc" ]; then
     mj_doctrine_ok roadmap "README.md" "the roadmap section lists no releases; it points at the projection rather than restating it"
     return 0
   fi
+  # only a DONE milestone can have been released
+  canon="$(for id in $(awk -F'\t' '$1=="M" && $3=="DONE" { print $2 }' "$MJ_PJ/model.tsv"); do
+             mj_pj_m_released_in "$id"; printf '\n'; done | { grep -v '^unreleased$' || :; } | LC_ALL=C sort -u)"
   missing="$(LC_ALL=C comm -23 <(printf '%s\n' "$canon") <(printf '%s\n' "$doc") | tr '\n' ' ')"
   extra="$(LC_ALL=C comm -13 <(printf '%s\n' "$canon") <(printf '%s\n' "$doc") | tr '\n' ' ')"
   missing="${missing% }"; extra="${extra% }"

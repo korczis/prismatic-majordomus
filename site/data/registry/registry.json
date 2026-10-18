@@ -6,23 +6,23 @@
     "version": "0.30.0"
   },
   "registry": {
-    "fingerprint": "408361137b02916f1bb3739ad848e39a6bc03df8727bfdbc6c470f740c2dc519",
+    "fingerprint": "08c4a27dfdde57aa9b6637711604d6720cedd44bb270d95b20b0c0f4e9b4f315",
     "summary": {
-      "total": 2619,
+      "total": 2621,
       "builtin": 206,
-      "declarative": 2413,
+      "declarative": 2415,
       "by_kind": {
         "command": 31,
         "query": 175,
-        "resource": 2413
+        "resource": 2415
       },
       "by_stability": {
         "behaviorally_verified": 142,
         "experimental": 55,
-        "implemented": 2422
+        "implemented": 2424
       },
       "mcp_tools": 196,
-      "mcp_resources": 2468,
+      "mcp_resources": 2470,
       "http_routes": 201,
       "cli_commands": 111,
       "modules": 92,
@@ -85404,7 +85404,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 474,
+        "capabilities": 475,
         "capability_ids": []
       },
       {
@@ -85978,7 +85978,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 554,
+        "capabilities": 555,
         "capability_ids": []
       },
       {
@@ -86070,7 +86070,7 @@
     ]
   },
   "index": {
-    "fingerprint": "b59c42ebfb8d9f06ed30f374f1d179c3989f7d15b6e0c32534905aaf0caab582",
+    "fingerprint": "ba4bfb153e70f1b332b39ffe81b842bb0811196f75845d1e98c920391c6cb3fb",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -86110,7 +86110,7 @@
       "gap": 4,
       "implementation": 52,
       "intent": 5,
-      "issue": 474,
+      "issue": 475,
       "knowledge": 4,
       "mesh-declaration": 1,
       "milestone": 42,
@@ -86124,7 +86124,7 @@
       "session": 90,
       "skill": 8,
       "taxonomy": 10,
-      "test": 554,
+      "test": 555,
       "use-case": 49,
       "workspace": 1
     },
@@ -92447,7 +92447,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 169709
+        "bytes": 171795
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -95585,7 +95585,7 @@
         "identity": "lib/context.sh",
         "path": "lib/context.sh",
         "source_class": "library",
-        "bytes": 57746
+        "bytes": 58167
       },
       {
         "uri": "majordomus://implementation/lib/context_docs.sh",
@@ -95625,7 +95625,7 @@
         "identity": "lib/doctor.sh",
         "path": "lib/doctor.sh",
         "source_class": "library",
-        "bytes": 102421
+        "bytes": 102665
       },
       {
         "uri": "majordomus://implementation/lib/doctrine.sh",
@@ -101082,6 +101082,17 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 3039
+      },
+      {
+        "uri": "majordomus://issue/I2995",
+        "kind": "issue",
+        "identity": "I2995",
+        "title": "doctor does no work whose answer cannot change a finding: the roadmap lookups and the board's wide status",
+        "description": "Remove the two readings that dominated doctor in the commit hook without changing a finding. (1) The roadmap doctrine reads the README's release list first, and when the section lists none it decides OK before looking up any milestone's release; a list is still compared with the release records both ways (ADR 0166, I2742: records, not tags). (2) The context builder's board asks `serve status --checkouts this` for the address it uses, and asks every checkout only when this one has no server, so its answer is the one the wide question gave.",
+        "path": ".ai/repo/project/issues/I2995.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2764
       },
       {
         "uri": "majordomus://issue/I3000",
@@ -109203,6 +109214,14 @@
         "bytes": 6725
       },
       {
+        "uri": "majordomus://test/test/cases/3385_doctor_fits_its_budget_in_the_commit_hook.sh",
+        "kind": "test",
+        "identity": "test/cases/3385_doctor_fits_its_budget_in_the_commit_hook.sh",
+        "path": "test/cases/3385_doctor_fits_its_budget_in_the_commit_hook.sh",
+        "source_class": "case",
+        "bytes": 6079
+      },
+      {
         "uri": "majordomus://test/test/cases/33_event_registry.sh",
         "kind": "test",
         "identity": "test/cases/33_event_registry.sh",
@@ -112133,7 +112152,7 @@
       "identity": [
         "id"
       ],
-      "objects": 474
+      "objects": 475
     },
     {
       "name": "knowledge",
@@ -112285,7 +112304,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 554
+      "objects": 555
     },
     {
       "name": "use-case",
