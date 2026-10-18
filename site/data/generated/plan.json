@@ -30286,6 +30286,7 @@
       "dependents": [],
       "scope": [
         "apps/majordomus-cli/src/ui/idd.rs",
+        "apps/majordomus-cli/src/plan.rs",
         "test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh",
         ".ai/repo/project",
         "docs",
@@ -30297,7 +30298,8 @@
       "current_state": "Every move looks alike.",
       "desired_state": "One primary action, the rest secondary.",
       "acceptance_criteria": [
-        "The primary action names the plan's next issue of the intent and the move its status admits"
+        "The primary action names the plan's next issue of the intent and the move its status admits",
+        "Exactly one primary action is drawn, and the walk in case 3220 makes its move through it"
       ],
       "validation": [
         "majordomus plan validate",
