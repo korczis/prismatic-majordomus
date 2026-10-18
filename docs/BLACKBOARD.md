@@ -77,15 +77,67 @@ never reads "nobody is here" when the truth is "I could not ask".
 
 ## Cost
 
-One answer for one checkout on the shared development machine, with 52 workers and this
-repository's journal, took about 0.8 s (measured 2026-10-18 over HTTP). The monitor and the mesh
-fold each read the journal.
+Measured on 2026-10-18 on the shared development machine, against this repository's journal,
+at load averages between 37 and 55:
+
+| reading | time |
+|---|---|
+| `blackboard.snapshot`, one checkout, 52 workers | about 0.8 s; 1.0 to 1.8 s with `signals: 0` |
+| `mesh.state` alone (the full fold of the journal) | 0.45 to 0.6 s |
+| `peers.list`, one checkout | 20 ms |
+| announcement to frame, live channel, 20 announcements | p50 1.1 s, p95 1.5 s, max 1.5 s |
+| announcement to frame, case 3381 fixture (small journal) | 265 ms |
+
+The live channel's latency is the snapshot's cost plus a 150 ms settle. The snapshot's cost
+is mostly the mesh fold, which rereads the whole journal. A target of one second at p95 on
+this machine needs an incremental fold. That is not built, and it is planned on its own.
+
+## Following it live
+
+The blackboard rides the one live channel the server already has, `/events`:
+
+<!-- majordomus:unrun it is a WebSocket a running server answers; case 3381 follows it with a real client -->
+```text
+GET /events?follow=blackboard                               the blackboard, then each change
+GET /events?follow=blackboard&checkouts=this                this checkout's board alone
+GET /events?follow=blackboard&after=<cursor>&epoch=<epoch>  resumed
+```
+
+The board and the mesh journal advance one change generation whenever they change
+(`crate::change`): a peer attaching, identifying, announcing or leaving, and a journal event
+written or ingested. A follower waits on that generation. The frames are:
+
+| frame | when |
+|---|---|
+| `stream.ready` | first; carries the server's `epoch` |
+| `blackboard.snapshot` | on connect, and whenever what the blackboard says changed |
+| `blackboard.signals` | what happened after the connection's cursor, with the new cursor |
+| `stream.resync` | the cursor or epoch sent cannot be served; the snapshot after it starts again |
+| `stream.heartbeat`, `stream.closing` | as on every connection of `/events` |
+
+- **Trigger.** Every `blackboard.*` frame names its `trigger`. `change` means the board or
+  the journal said so. `refresh` means nothing said so and 30 s passed; that is how a source
+  that cannot push is followed: a runtime whose beat stopped, the executor's trail, GitHub.
+  `connect` is the first frame of a connection.
+- **Resuming.** A cursor is good only on the server process that issued it, which is what the
+  epoch names. A follower that reconnects sends both back. A cursor of another process, or
+  one with more than ten pages of signals after it, is answered with `stream.resync` and a
+  fresh snapshot.
+- **One read for every tab.** One read of the blackboard per generation, and one page of
+  signals per cursor, are shared by every connection.
+- **Slow clients.** A slow client blocks only its own connection and is written the newest
+  snapshot, not a queue of old ones.
+- **Large snapshots.** A snapshot too large for one frame is written as a `withheld` reference
+  to `GET /api/v1/blackboard`.
+- **Signals are reader-neutral.** Marking what is for whom is the reader's to do.
+- **Who may follow.** A page of another origin is refused, as on `/events`. A caller beyond
+  loopback follows the blackboard exactly when it may read `blackboard.snapshot` (ADR 0126).
 
 ## Not yet
 
 These are planned in milestone `peer-blackboard` and are not built:
 
-- pushing the blackboard over a WebSocket;
+- one browser client for the channel, with a truthful live, poll or snapshot state;
 - the `/ui` and `/cockpit` screens that render it;
 - its public-safe published snapshot.
 

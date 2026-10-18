@@ -6,23 +6,23 @@
     "version": "0.29.0"
   },
   "registry": {
-    "fingerprint": "b6472d46985653da5ca19695f0a38622e09fa8e558f00cb51ea4462bcf59c204",
+    "fingerprint": "954663d0b468ae7b279203b00eca21c625eeab308662519e2c52f2c4a22cc815",
     "summary": {
-      "total": 2535,
+      "total": 2537,
       "builtin": 203,
-      "declarative": 2332,
+      "declarative": 2334,
       "by_kind": {
         "command": 31,
         "query": 172,
-        "resource": 2332
+        "resource": 2334
       },
       "by_stability": {
         "behaviorally_verified": 141,
         "experimental": 53,
-        "implemented": 2341
+        "implemented": 2343
       },
       "mcp_tools": 193,
-      "mcp_resources": 2387,
+      "mcp_resources": 2389,
       "http_routes": 198,
       "cli_commands": 109,
       "modules": 93,
@@ -448,7 +448,7 @@
                 ],
                 "format": "uint64",
                 "minimum": 0,
-                "description": "How many of the newest signals of the last hour it carries (default 30, at most 200)."
+                "description": "How many of the newest signals of the last hour it carries (default 30, at most 200); 0 reads no signals at all, for a follower that reads them by its own cursor."
               },
               "sources": {
                 "type": [
@@ -84257,7 +84257,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 425,
+        "capabilities": 426,
         "capability_ids": []
       },
       {
@@ -84828,7 +84828,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 528,
+        "capabilities": 529,
         "capability_ids": []
       },
       {
@@ -84919,7 +84919,7 @@
     ]
   },
   "index": {
-    "fingerprint": "b9366fb4069f0ff73442bc44b9989f2e74c4f8aaac55d168a5f4b4b2ae976759",
+    "fingerprint": "1202206d1ff7d1e3e6901981d14af30a9f3db9bf67cd81975c261fef9d1484b3",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -84959,7 +84959,7 @@
       "gap": 4,
       "implementation": 52,
       "intent": 6,
-      "issue": 425,
+      "issue": 426,
       "knowledge": 4,
       "mesh-declaration": 1,
       "milestone": 42,
@@ -84973,7 +84973,7 @@
       "session": 90,
       "skill": 8,
       "taxonomy": 10,
-      "test": 528,
+      "test": 529,
       "use-case": 49,
       "workspace": 1
     },
@@ -86930,7 +86930,7 @@
         "path": ".ai/repo/adrs/0176-the-blackboard-is-one-projection-pushed-over-one-socket.md",
         "section": "adrs",
         "source_class": "adr",
-        "bytes": 5655,
+        "bytes": 6138,
         "tags": [
           "peers",
           "mesh",
@@ -90494,7 +90494,7 @@
         "path": ".ai/repo/project/critiques/the-peer-blackboard-is-one-reality.yaml",
         "section": "project",
         "source_class": "critique",
-        "bytes": 8467
+        "bytes": 8693
       },
       {
         "uri": "majordomus://deployment/majordomus",
@@ -90811,7 +90811,7 @@
         "title": "The peer blackboard",
         "path": "docs/BLACKBOARD.md",
         "source_class": "document",
-        "bytes": 5515
+        "bytes": 8591
       },
       {
         "uri": "majordomus://document/docs/BRIEF.md",
@@ -91270,7 +91270,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 173076
+        "bytes": 173228
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -94751,7 +94751,7 @@
         "path": ".ai/repo/project/intents/the-peer-blackboard-is-one-reality.yaml",
         "section": "project",
         "source_class": "intent",
-        "bytes": 2035
+        "bytes": 2358
       },
       {
         "uri": "majordomus://issue/I0001",
@@ -99427,6 +99427,17 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 2411
+      },
+      {
+        "uri": "majordomus://issue/I2981",
+        "kind": "issue",
+        "identity": "I2981",
+        "title": "A board or journal change is pushed over one WebSocket",
+        "description": "Give the board and the mesh journal one change generation (crate::change), advanced by every board mutation and every journal append or ingest, and carry the blackboard on the one live channel: GET /events?follow=blackboard sends stream.ready with the server epoch, the snapshot, then a new snapshot whenever what it says changed and the monitor signals after the connection cursor; a resumed connection sends after and epoch, and a cursor of another process or one the monitor cannot page through is answered with stream.resync and a fresh snapshot. One read per generation is shared by every connection; a frame says whether a change pushed it or a refresh found it.",
+        "path": ".ai/repo/project/issues/I2981.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2442
       },
       {
         "uri": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
@@ -107233,6 +107244,14 @@
         "bytes": 8379
       },
       {
+        "uri": "majordomus://test/test/cases/3381_the_blackboard_is_pushed.sh",
+        "kind": "test",
+        "identity": "test/cases/3381_the_blackboard_is_pushed.sh",
+        "path": "test/cases/3381_the_blackboard_is_pushed.sh",
+        "source_class": "case",
+        "bytes": 10515
+      },
+      {
         "uri": "majordomus://test/test/cases/33_event_registry.sh",
         "kind": "test",
         "identity": "test/cases/33_event_registry.sh",
@@ -110163,7 +110182,7 @@
       "identity": [
         "id"
       ],
-      "objects": 425
+      "objects": 426
     },
     {
       "name": "knowledge",
@@ -110315,7 +110334,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 528
+      "objects": 529
     },
     {
       "name": "use-case",

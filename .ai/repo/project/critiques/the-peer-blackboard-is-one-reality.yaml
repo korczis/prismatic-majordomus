@@ -62,24 +62,27 @@ findings:
     finding: "for_you differs per reader, so one snapshot per change cannot be shared by every subscriber as ADR 0176 says."
     blocking: false
     resolution:
-      state: open
-      because: "To be settled by the push issue that follows I2980: the shared computation is the reader-neutral snapshot and signals; marking what is for a subscriber is done per subscriber over the shared signals."
+      state: planned
+      issue: I2981
+      because: "The live channel reads the blackboard reader-neutral (no for), so one read per generation and width is shared by every follower; marking what is for whom is the reader's, in the client."
   - id: cost-of-one-snapshot
     class: unproven_assumption
     subject: the-peer-blackboard-is-one-reality
     finding: "One snapshot clones the whole journal for the monitor and folds it again for state(), does the repository-wide gather and could ask GitHub."
     blocking: false
     resolution:
-      state: open
-      because: "GitHub is no longer asked by default. Baseline measured on 2026-10-18 on the shared Mac with this repository's journal: about 0.8 s per answer of checkouts=this with 52 workers. The push issue owes one computation per change and an incremental fold where the measurement says it matters."
+      state: planned
+      issue: I2981
+      because: "One read per generation is shared by every connection under a single-flight lock, a burst of changes settles 150 ms and is read once, and GitHub stays off the channel (sources mesh,executor). Measured per announce in case 3381."
   - id: the-monitor-never-refuses-a-well-formed-cursor
     class: unproven_assumption
     subject: the-peer-blackboard-is-one-reality
     finding: "A well-formed cursor naming a dropped stream, a rotated trail or another server's journal is accepted silently, so a resynchronisation never fires."
     blocking: false
     resolution:
-      state: open
-      because: "The push issue owes a cursor epoch and a cannot-serve answer before it claims gap recovery."
+      state: planned
+      issue: I2981
+      because: "stream.ready carries the server epoch (its mesh stream, which names the process instance); a resumed follower sends after and epoch back, and a cursor of another process, or one more than ten pages behind, is answered with stream.resync and a fresh snapshot (case 3381)."
   - id: the-published-snapshot-would-leak-before-the-public-form
     class: regression_risk
     subject: the-peer-blackboard-is-one-reality
@@ -94,8 +97,9 @@ findings:
     finding: "The blackboard gathers paths, intents, review subjects and handover branches behind one GET; a socket upgrade is not a capability route and must ask the remote-caller policy itself."
     blocking: false
     resolution:
-      state: open
-      because: "I2980 publishes nothing peers.list and mesh.state did not already serve to the same callers. The socket issue owes the remote-caller check of ADR 0126 on its upgrade."
+      state: planned
+      issue: I2981
+      because: "The upgrade asks the remote-caller policy of blackboard.snapshot itself (CapabilityError::remote when it does not admit), and the origin check of /events refuses a page of another origin (case 3381)."
   - id: generated-surfaces-and-version-are-out-of-scope
     class: surface_missing
     subject: I2980

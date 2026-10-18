@@ -13,6 +13,10 @@ satisfaction:
     criterion: The command line, HTTP and MCP answer the same blackboard, with the boards and sources it covers, whether it is complete, every worker with its claims, the conflicts, the open reviews and untaken handovers, the typed relations and the recent signals
     evidence: test
     ref: test/cases/3380_the_blackboard_is_one_projection.sh
+  - id: pushed-live
+    criterion: A peer's announcement reaches a connected follower of the blackboard as a frame without a poll, a resumed follower repeats nothing, and a cursor the server cannot serve is answered with a resync and a fresh snapshot
+    evidence: test
+    ref: test/cases/3381_the_blackboard_is_pushed.sh
 governance:
   - rule:project.derived-once
   - adr:adr-0044

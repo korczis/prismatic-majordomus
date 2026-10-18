@@ -27,7 +27,7 @@ Every worker of this repository — attached to a checkout's board or in an acti
 |---|---|---|---|
 | `checkouts` | Checkouts | no | Which checkouts' boards it covers: `repository` (every one, the default) or `this`. |
 | `for` | string or null | no | Comma-separated names of the reader — a worker (`1b`), a role, a login — so that the signals addressed to it are marked `for_you`. An MCP caller is also its own board session. |
-| `signals` | integer or null | no | How many of the newest signals of the last hour it carries (default 30, at most 200). |
+| `signals` | integer or null | no | How many of the newest signals of the last hour it carries (default 30, at most 200); 0 reads no signals at all, for a follower that reads them by its own cursor. |
 | `sources` | string or null | no | A comma-separated subset of the monitor's sources, `mesh`, `executor` and `github` (default: `mesh,executor`). |
 
 Output: `Blackboard`.

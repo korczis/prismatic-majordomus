@@ -578,6 +578,19 @@ impl Router {
             Ok(resolution) => &resolution.ctx,
             Err(reason) => return Some(Err(Response::error(500, "internal", reason))),
         };
+        // the blackboard on the same channel: a read of `blackboard.snapshot`, so a caller
+        // beyond loopback may follow it exactly when it may read it (ADR 0126)
+        if let Some(follow) = events::accept_follow(ctx, req) {
+            let admitted = ctx
+                .registry
+                .get("blackboard.snapshot")
+                .is_some_and(|c| !req.is_remote() || c.execution.admits_remote());
+            if !admitted {
+                let e = CapabilityError::remote("blackboard.snapshot");
+                return Some(Err(error_response(403, e.code(), &e.to_string())));
+            }
+            return Some(follow);
+        }
         Some(events::accept(
             ctx.executions.store(),
             req,

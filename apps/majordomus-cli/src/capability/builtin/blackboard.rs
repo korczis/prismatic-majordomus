@@ -63,7 +63,7 @@ pub struct BlackboardInput {
     /// Comma-separated names of the reader — a worker (`1b`), a role, a login — so that the signals addressed to it are marked `for_you`. An MCP caller is also its own board session.
     #[serde(default, rename = "for", skip_serializing_if = "Option::is_none")]
     pub reader: Option<String>,
-    /// How many of the newest signals of the last hour it carries (default 30, at most 200).
+    /// How many of the newest signals of the last hour it carries (default 30, at most 200); 0 reads no signals at all, for a follower that reads them by its own cursor.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub signals: Option<u64>,
     /// A comma-separated subset of the monitor's sources, `mesh`, `executor` and `github` (default: `mesh,executor`).
@@ -846,21 +846,23 @@ fn snapshot(ctx: &Context, input: BlackboardInput) -> Result<Blackboard, Capabil
             checkouts: input.checkouts,
         },
     )?;
-    let monitor = super::monitor::monitor(
-        ctx,
-        MonitorInput {
-            after: None,
-            limit: Some(
-                input
-                    .signals
-                    .unwrap_or(DEFAULT_SIGNALS)
-                    .clamp(1, MAX_SIGNALS),
-            ),
-            sources: Some(input.sources.unwrap_or_else(|| DEFAULT_SOURCES.into())),
-            reader: input.reader,
-            since: None,
-        },
-    )?;
+    let wanted = input.signals.unwrap_or(DEFAULT_SIGNALS).min(MAX_SIGNALS);
+    // no signals asked for is no monitor read: the journal is read once less, which is most
+    // of what the answer costs
+    let monitor = if wanted == 0 {
+        MonitorPage::default()
+    } else {
+        super::monitor::monitor(
+            ctx,
+            MonitorInput {
+                after: None,
+                limit: Some(wanted),
+                sources: Some(input.sources.unwrap_or_else(|| DEFAULT_SOURCES.into())),
+                reader: input.reader,
+                since: None,
+            },
+        )?
+    };
     let cooperation = ctx.mesh.cooperation();
     let state = cooperation.as_ref().map(|c| c.state());
     let beats: HashMap<String, (StreamLiveness, Option<u64>)> = cooperation

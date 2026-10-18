@@ -39830,6 +39830,59 @@
         }
       },
       {
+        "id": "majordomus://issue/I2981",
+        "kind": "issue",
+        "label": "I2981",
+        "summary": "A board or journal change is pushed over one WebSocket",
+        "route": "/cockpit/objects/issue/i2981",
+        "source": ".ai/repo/project/issues/I2981.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "An announce, a claim and a review each reach a connected client as a frame without a poll",
+            "A reconnect with the last cursor repeats nothing; a refused cursor resynchronises",
+            "A slow client is told it lagged and never holds an unbounded queue"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "No change notification exists in the board, the journal or the monitor; /events is wired to the execution store.",
+          "depends_on": [
+            "I2980"
+          ],
+          "desired_state": "A peer's announce reaches a connected socket in under a second at P95 on this machine, measured.",
+          "evidence_required": [
+            "case_blackboard_pushed"
+          ],
+          "milestone": "peer-blackboard",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/change.rs",
+            "apps/majordomus-cli/src/lib.rs",
+            "apps/majordomus-cli/src/peers.rs",
+            "apps/majordomus-cli/src/mesh/journal.rs",
+            "apps/majordomus-cli/src/http/events.rs",
+            "apps/majordomus-cli/src/http/follow.rs",
+            "apps/majordomus-cli/src/http/mod.rs",
+            "apps/majordomus-cli/src/http/router.rs",
+            "apps/majordomus-cli/src/monitor/mod.rs",
+            "apps/majordomus-cli/src/capability/builtin/blackboard.rs",
+            ".ai/repo/adrs/0176-the-blackboard-is-one-projection-pushed-over-one-socket.md",
+            "docs/BLACKBOARD.md",
+            "test/cases/3381_the_blackboard_is_pushed.sh"
+          ],
+          "serves": [
+            "the-peer-blackboard-is-one-reality#pushed-live"
+          ],
+          "slug": "the-blackboard-is-pushed",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "majordomus plan validate",
+            "bash test/run.sh 3381_the_blackboard_is_pushed"
+          ],
+          "why": "/cockpit/monitor polls the whole monitor every five seconds per tab, and the board changes nobody hears about until the next poll or the cooperation tick."
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "label": "a-commit-stood-behind-a-build-lock",
@@ -57720,6 +57773,13 @@
         "label": "test/cases/3380_the_blackboard_is_one_projection.sh",
         "route": "/cockpit/objects/test/test-cases-3380-the-blackboard-is-one-projection-sh",
         "source": "test/cases/3380_the_blackboard_is_one_projection.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3381_the_blackboard_is_pushed.sh",
+        "kind": "test",
+        "label": "test/cases/3381_the_blackboard_is_pushed.sh",
+        "route": "/cockpit/objects/test/test-cases-3381-the-blackboard-is-pushed-sh",
+        "source": "test/cases/3381_the_blackboard_is_pushed.sh"
       },
       {
         "id": "majordomus://test/test/cases/33_event_registry.sh",
@@ -84686,6 +84746,21 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2981",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2981",
+        "target": "majordomus://issue/I2980",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2981",
+        "target": "majordomus://milestone/peer-blackboard",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -89462,6 +89537,11 @@
       },
       {
         "source": "majordomus://test/test/cases/3380_the_blackboard_is_one_projection.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3381_the_blackboard_is_pushed.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -94707,8 +94787,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2969,
-      "edges": 6520,
+      "nodes": 2971,
+      "edges": 6524,
       "acyclic": false,
       "truncated": false
     }

@@ -1841,6 +1841,7 @@ impl Journal {
             .insert(seq, event.clone());
         inner.tallies.written += 1;
         let durability = self.persist(std::slice::from_ref(&event));
+        crate::change::BLACKBOARD.advance();
         Ok(Appended { event, durability })
     }
 
@@ -2204,6 +2205,9 @@ impl Journal {
             }
         }
         self.persist(&stored);
+        if !stored.is_empty() {
+            crate::change::BLACKBOARD.advance();
+        }
         report
     }
 

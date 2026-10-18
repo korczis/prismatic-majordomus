@@ -1,0 +1,103 @@
+//! That something a follower of the blackboard reads has changed in this process (ADR 0176).
+//!
+//! The board and the mesh journal hold the facts and say nothing when they change. A page
+//! that wants to show them live would otherwise ask again on a timer. Each of them now
+//! advances one generation when it changes. The live channel waits on that generation and
+//! reads the blackboard again only when it moves. The generation is a number, not a
+//! message: what changed is read from the records, as it always was, so nothing can be told
+//! twice or told wrong.
+//!
+//! One generation serves the whole process, because a follower reads one projection of all
+//! of it. A change is counted, never queued, so a burst of a thousand ingested events wakes
+//! a waiter once.
+
+use std::sync::{Condvar, Mutex};
+use std::time::Duration;
+
+/// A generation that only moves forward, and that a thread can wait on.
+pub struct Generation {
+    n: Mutex<u64>,
+    moved: Condvar,
+}
+
+impl Generation {
+    /// A generation at zero.
+    pub const fn new() -> Self {
+        Self {
+            n: Mutex::new(0),
+            moved: Condvar::new(),
+        }
+    }
+
+    /// Something changed: move on and wake every waiter.
+    pub fn advance(&self) {
+        let mut n = self.n.lock().unwrap_or_else(|e| e.into_inner());
+        *n += 1;
+        self.moved.notify_all();
+    }
+
+    /// Where it stands now.
+    pub fn current(&self) -> u64 {
+        *self.n.lock().unwrap_or_else(|e| e.into_inner())
+    }
+
+    /// Wait until it is past `seen`, or `timeout` passes, and say where it stands. A
+    /// generation already past `seen` answers at once.
+    ///
+    /// ```
+    /// use std::time::Duration;
+    /// use majordomus_cli::change::Generation;
+    ///
+    /// let g = Generation::new();
+    /// assert_eq!(g.wait_past(0, Duration::from_millis(10)), 0, "nothing moved: the timeout");
+    /// g.advance();
+    /// g.advance();
+    /// assert_eq!(g.wait_past(0, Duration::from_secs(5)), 2, "two changes, one wake");
+    /// ```
+    pub fn wait_past(&self, seen: u64, timeout: Duration) -> u64 {
+        let n = self.n.lock().unwrap_or_else(|e| e.into_inner());
+        let (n, _) = self
+            .moved
+            .wait_timeout_while(n, timeout, |n| *n <= seen)
+            .unwrap_or_else(|e| e.into_inner());
+        *n
+    }
+}
+
+impl Default for Generation {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+/// The blackboard's generation: advanced by every change of a board of this process and of
+/// its mesh journal.
+pub static BLACKBOARD: Generation = Generation::new();
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::sync::Arc;
+    use std::time::Instant;
+
+    /// A waiter on another thread is woken by the change, not by its timeout.
+    #[test]
+    fn a_change_wakes_a_waiter_at_once() {
+        let g = Arc::new(Generation::new());
+        let waiter = {
+            let g = Arc::clone(&g);
+            std::thread::spawn(move || {
+                let started = Instant::now();
+                (g.wait_past(0, Duration::from_secs(30)), started.elapsed())
+            })
+        };
+        std::thread::sleep(Duration::from_millis(50));
+        g.advance();
+        let (n, waited) = waiter.join().unwrap();
+        assert_eq!(n, 1);
+        assert!(
+            waited < Duration::from_secs(5),
+            "woken by the change: {waited:?}"
+        );
+    }
+}
