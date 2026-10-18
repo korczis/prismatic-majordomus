@@ -33088,6 +33088,44 @@
         }
       },
       {
+        "id": "majordomus://issue/I2115",
+        "kind": "issue",
+        "label": "I2115",
+        "summary": "The slowest case costs a fraction of its budget, and its budget is never raised to follow runner load again",
+        "route": "/cockpit/objects/issue/i2115",
+        "source": ".ai/repo/project/issues/I2115.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every assertion of case 95 holds after the change, and a mutation of each relation it proves still fails it",
+            "The case's cost on three GitHub runs, named, is under half of the slowest-case budget",
+            "The slowest-case budget is lowered or unchanged, never raised"
+          ],
+          "created_at": "2026-10-09",
+          "depends_on": [],
+          "desired_state": "The case proves every relation it proves today, costs well under half its budget on a loaded runner, and the slowest-case budget is lowered toward the new worst rather than raised.",
+          "evidence_required": [
+            "the_slowest_case_is_cut"
+          ],
+          "milestone": "ci-critical-path",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "test/cases/95_executable_reference.sh",
+            "test/lib.sh",
+            "scripts/generate-site-data",
+            ".ai/repo/ci/suite.yaml",
+            ".ai/repo/ci/suite-durations.tsv"
+          ],
+          "slug": "the-slowest-case-is-cut-not-budgeted",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bash test/run.sh 95_executable_reference",
+            "scripts/ci/suite-budget"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I2123",
         "kind": "issue",
         "label": "I2123",
@@ -34510,6 +34548,105 @@
             "bash test/run.sh 1041_a_release_publishes_its_metadata",
             "MJ_TEST_JOBS=3 bash test/run.sh 87_release_pipeline 26_ci_wiring 996_the_record_pull_request_gets_its_verdict",
             "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2348",
+        "kind": "issue",
+        "label": "I2348",
+        "summary": "A gate's result is reused only for the exact inputs it judged, and a skipped gate carries the proof that nothing it reads changed",
+        "route": "/cockpit/objects/issue/i2348",
+        "source": ".ai/repo/project/issues/I2348.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A gate whose declared inputs are unchanged is satisfied by its recorded pass, and the verdict shows which run it reused",
+            "Changing one declared input, or the gate's own script, makes the gate run",
+            "A recorded failure is never reused as a pass, and a result older than its inputs is refused",
+            "A gate with no declaration of what it reads is never reused"
+          ],
+          "created_at": "2026-10-10",
+          "depends_on": [
+            "I2350"
+          ],
+          "evidence_required": [
+            "gate_result_reuse_case",
+            "stale_result_refused_case"
+          ],
+          "milestone": "ci-critical-path",
+          "non_scope": [
+            "Skipping a gate the branch rules require to report.",
+            "Reusing a result across a changed gate script."
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "scripts/ci-plan",
+            "scripts/ci/run-plan",
+            "scripts/ci/verdict",
+            ".ai/repo/ci/gates.yaml",
+            ".github/workflows/validate.yml",
+            "scripts/ci/evidence-collect",
+            "docs/CI.md"
+          ],
+          "slug": "a-gate-result-is-bound-to-its-inputs",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "bin/majordomus plan validate",
+            "scripts/ci-plan --check",
+            "MJ_TEST_JOBS=4 bash test/run.sh 26_ci_wiring 94_ci_plan <the cases this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2350",
+        "kind": "issue",
+        "label": "I2350",
+        "summary": "One gate model names what a local check, a pull request, an integration and a release must run, and no second inventory exists",
+        "route": "/cockpit/objects/issue/i2350",
+        "source": ".ai/repo/project/issues/I2350.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A gate added to the model with its tiers appears in the local check, the plan and the release selection with no other file edited",
+            "No script outside the model carries a list of gates, proved by a check that finds one when it is put back",
+            "A change whose impact cannot be proved runs the full plan, and the plan says which path caused it",
+            "A failing gate's output names the selection reason, the reproducing command and its owner",
+            "Every gate in gates.yaml declares one lane of feedback, proof and release, the pull-request verdict waits on the feedback lane alone, and a combined top lands only with its proof lane green",
+            "The structure job is split into an instant tier on the feedback lane and a proof tier"
+          ],
+          "created_at": "2026-10-10",
+          "depends_on": [],
+          "evidence_required": [
+            "tier_selection_case",
+            "no_second_gate_list_check"
+          ],
+          "milestone": "ci-critical-path",
+          "non_scope": [
+            "Reusing recorded results, which is I2348.",
+            "A tier an adopter must declare: a repository with no model keeps today's behaviour.",
+            "Case-level affected-test selection, which the derive-performance plan moves to its drv-06"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/ci/gates.yaml",
+            ".ai/repo/ci/release.yaml",
+            "scripts/ci-plan",
+            "scripts/ci/core-check",
+            "lib/gates.sh",
+            "apps/majordomus-cli/src/gates/model.rs",
+            "apps/majordomus-cli/src/gates/judge.rs",
+            "docs/CI.md",
+            "scripts/ci/verdict"
+          ],
+          "slug": "one-gate-model-names-every-tier",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "bin/majordomus plan validate",
+            "scripts/ci-plan --check",
+            "MJ_TEST_JOBS=4 bash test/run.sh 94_ci_plan <the cases this issue adds>"
           ]
         }
       },
@@ -36632,6 +36769,729 @@
           ],
           "verified_at": "2026-10-13T12:51:17Z",
           "verified_event": "sha256:badc5d79f88beea02bc656a173f6da95aea7c3867ee3c20aba42889c5a18b014"
+        }
+      },
+      {
+        "id": "majordomus://issue/I2521",
+        "kind": "issue",
+        "label": "I2521",
+        "summary": "What a derive costs is measured per stage and per kind of change, and every file a stage reads is listed",
+        "route": "/cockpit/objects/issue/i2521",
+        "source": ".ai/repo/project/issues/I2521.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Each of the eight scenarios has a recorded duration per stage with the commit, the machine, the load at the time and the number of samples",
+            "Every file scripts/generate-site-data was observed to read is in the output of scripts/generate-site-data --inputs or is named in the document with the reason it is not an input",
+            "The document states which stage is the largest share of a no-op derive, from the measurements and not from an estimate",
+            "No tracked generated file differs before and after the measurements"
+          ],
+          "created_at": "2026-10-13",
+          "depends_on": [],
+          "evidence_required": [
+            "derive_baseline_measurements",
+            "stage_b_observed_reads"
+          ],
+          "milestone": "a-derive-does-only-the-work-its-inputs-changed",
+          "non_scope": [
+            "Changing what any generator writes",
+            "A cold measurement taken by cleaning a build directory other worktrees share; cold runs happen in a disposable checkout with a build directory of its own",
+            "Budgets or gates on the measured durations"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "deep-work",
+          "scope": [
+            "docs/PERFORMANCE.md",
+            "scripts/generate-site-data",
+            "apps/majordomus-cli/src/bench",
+            ".ai/repo/project/issues/I2521.yaml"
+          ],
+          "slug": "a-derive-is-measured-before-it-is-changed",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=2 bash test/run.sh 10_site_data 51_derived_artifacts_committed",
+            "scripts/derive-check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2522",
+        "kind": "issue",
+        "label": "I2522",
+        "summary": "The derivation is a typed graph in the crate: every producer is a node with declared inputs and outputs, answered by one capability",
+        "route": "/cockpit/objects/issue/i2522",
+        "source": ".ai/repo/project/issues/I2522.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every path in docs/generated/artifacts.json and every tree scripts/gitattributes marks merge=derived is the output of exactly one node, by a test that reads both",
+            "A fixture graph with a cycle, with one output claimed twice, and with an undeclared generator is refused, each with the node named",
+            "The order is identical for every permutation of the node declarations, and adding an unrelated node does not reorder the others",
+            "A variant added to Target without a node fails a test of the crate",
+            "derive.graph is projected to the command line, HTTP and MCP by majordomus generate with no hand edit of a transport table"
+          ],
+          "created_at": "2026-10-13",
+          "depends_on": [
+            "I2521"
+          ],
+          "evidence_required": [
+            "derivation_graph_capability",
+            "graph_covers_every_generated_path",
+            "unsound_graph_refused"
+          ],
+          "milestone": "a-derive-does-only-the-work-its-inputs-changed",
+          "non_scope": [
+            "Computing keys or skipping anything: I2523 and I2525",
+            "Changing the order scripts/derive runs today, or what any producer writes",
+            "One node per generated file; a node is a producer whose run is the unit of cost"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/derivation",
+            "apps/majordomus-cli/src/lib.rs",
+            "apps/majordomus-cli/src/generate.rs",
+            "apps/majordomus-cli/src/capability/builtin/derive.rs",
+            "apps/majordomus-cli/src/capability/builtin/mod.rs",
+            "apps/majordomus-cli/tests/derivation_graph.rs",
+            ".ai/repo/adrs",
+            "docs/CAPABILITIES.md",
+            "docs/GITHUB_PAGES_ARCHITECTURE.md",
+            ".ai/repo/project/issues/I2522.yaml"
+          ],
+          "slug": "the-derivation-is-a-typed-graph",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib derivation",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test derivation_graph",
+            "majordomus generate --check",
+            "MJ_TEST_JOBS=2 bash test/run.sh 400_derivation_is_one_graph 241_merge_policy_claims_only_generator_output"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2523",
+        "kind": "issue",
+        "label": "I2523",
+        "summary": "A node's key is computed from the bytes its producer reads, the index membership it enumerates and the generation of the executable",
+        "route": "/cockpit/objects/issue/i2523",
+        "source": ".ai/repo/project/issues/I2523.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The key is equal for every permutation of the input declarations and of directory listing order",
+            "Editing, renaming, deleting or staging a new file under a declared selector changes the key, and the same change to an undeclared path does not",
+            "A missing declared file and an empty one give different keys",
+            "A different crate generation or operation version changes every key that depends on it",
+            "A symbolic link pointing outside the repository root is not read, and its node is reported as always regenerating",
+            "For each node, the declared inputs contain every path the producer was observed to read in I2521"
+          ],
+          "created_at": "2026-10-13",
+          "depends_on": [
+            "I2522"
+          ],
+          "evidence_required": [
+            "node_key_property_tests",
+            "declared_inputs_cover_observed_reads"
+          ],
+          "milestone": "a-derive-does-only-the-work-its-inputs-changed",
+          "non_scope": [
+            "Changing the fingerprint committed in site/data/generated/source.json or any stamp a generated file carries; those are I1409's",
+            "A new hash algorithm or a new cryptographic dependency; the crate already uses sha2",
+            "Remembering keys by modification time or size"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/derivation/key.rs",
+            "apps/majordomus-cli/src/derivation/mod.rs",
+            "apps/majordomus-cli/src/generation.rs",
+            "apps/majordomus-cli/src/git",
+            "apps/majordomus-cli/tests/derivation_key.rs",
+            "apps/majordomus-cli/tests/properties.rs",
+            ".ai/repo/project/issues/I2523.yaml"
+          ],
+          "slug": "a-node-key-covers-what-its-producer-reads",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib derivation::key",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test derivation_key",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --doc generation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2524",
+        "kind": "issue",
+        "label": "I2524",
+        "summary": "majordomus derive plan and derive explain say, without writing, which nodes would run and which input moved each one",
+        "route": "/cockpit/objects/issue/i2524",
+        "source": ".ai/repo/project/issues/I2524.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "derive plan, derive status and derive explain leave git status and the modification time of every file unchanged",
+            "After a full derive, derive plan reports every node reuse; after one declared input is edited it reports that node and its dependents regenerate and no other",
+            "derive explain for a regenerated node names the path that changed, and for an unrelated edited path says that no node reads it",
+            "A deleted or altered output is reported for its node although the key did not move",
+            "An executable of another generation is refused with exit 15 before any node is judged",
+            "The JSON of each command validates against its generated schema and is identical across two runs on one tree"
+          ],
+          "created_at": "2026-10-13",
+          "current_state": "No command reports a node, its key or why it would run. majordomus generate --check prints one line per artifact and a list of differing or missing files.",
+          "depends_on": [
+            "I2523"
+          ],
+          "evidence_required": [
+            "derive_plan_is_read_only",
+            "explain_names_the_moved_input"
+          ],
+          "milestone": "a-derive-does-only-the-work-its-inputs-changed",
+          "non_scope": [
+            "Running or skipping a producer: I2525",
+            "Renaming or removing majordomus generate, scripts/derive or scripts/derive-check",
+            "A command of the shell tool; lib/derive.sh composes handover bodies and is unrelated to this command group"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/derivation/plan.rs",
+            "apps/majordomus-cli/src/derivation/mod.rs",
+            "apps/majordomus-cli/src/capability/builtin/derive.rs",
+            "apps/majordomus-cli/src/commands/derive.rs",
+            "apps/majordomus-cli/src/commands/mod.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/tests/derivation_plan.rs",
+            "apps/majordomus-cli/tests/cli_examples.rs",
+            "docs/DERIVE.md",
+            "test/cases",
+            ".ai/repo/project/issues/I2524.yaml"
+          ],
+          "slug": "a-derive-decision-can-be-read",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib derivation::plan",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test derivation_plan",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test cli_examples",
+            "majordomus generate --check",
+            "MJ_TEST_JOBS=2 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2525",
+        "kind": "issue",
+        "label": "I2525",
+        "summary": "An incremental derive runs only the nodes its plan marks, a no-op derive runs no generator, and the full derive stays as it is",
+        "route": "/cockpit/objects/issue/i2525",
+        "source": ".ai/repo/project/issues/I2525.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "On a tree a full derive just produced, scripts/derive --incremental starts no producer, writes no file and exits 0",
+            "After one declared input is edited, only the producers of that node and of its dependents run, and scripts/derive-check then exits 0",
+            "A producer killed in the middle of a node leaves that node's previous outputs in place and no key recorded for it, and the next run regenerates it",
+            "A deleted or altered output is regenerated although its node's key did not move",
+            "scripts/derive and scripts/derive --full run the build and the stages A, B, C and D in order, as case 400 asserts today",
+            "The exit codes 2, 10, 12, 15 and 75 of scripts/derive are returned for the same conditions in both modes",
+            "The durations of a no-op and of a single-node change are recorded beside the baseline of I2521, on the same machine"
+          ],
+          "created_at": "2026-10-13",
+          "depends_on": [
+            "I2524"
+          ],
+          "evidence_required": [
+            "warm_no_op_runs_no_generator",
+            "interrupted_node_is_regenerated",
+            "full_mode_unchanged"
+          ],
+          "milestone": "a-derive-does-only-the-work-its-inputs-changed",
+          "non_scope": [
+            "Restoring outputs from a store: I2529. A node whose outputs are missing is regenerated",
+            "Running nodes in parallel; ready nodes run one at a time",
+            "Making the incremental path the default: I2533",
+            "New shell logic in scripts/derive beyond passing the mode through; the decisions are the crate's (ADR 0069)"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/derivation/run.rs",
+            "apps/majordomus-cli/src/derivation/mod.rs",
+            "apps/majordomus-cli/src/commands/derive.rs",
+            "apps/majordomus-cli/src/commands/generate.rs",
+            "apps/majordomus-cli/src/capability/builtin/derive.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/tests/derivation_run.rs",
+            "scripts/derive",
+            "docs/DERIVE.md",
+            "test/cases",
+            ".ai/repo/project/issues/I2525.yaml"
+          ],
+          "slug": "an-incremental-derive-runs-only-what-moved",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib derivation::run",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test derivation_run",
+            "MJ_TEST_JOBS=2 bash test/run.sh 400_derivation_is_one_graph 1018_one_derive_at_a_time_and_no_orphans 1020_a_derive_sees_what_the_commit_will",
+            "MJ_TEST_JOBS=2 bash test/run.sh <the case this issue adds>",
+            "scripts/derive-check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2526",
+        "kind": "issue",
+        "label": "I2526",
+        "summary": "The site generator's sections are nodes with inputs of their own, and the use-case scenarios run only when what they exercise changed",
+        "route": "/cockpit/objects/issue/i2526",
+        "source": ".ai/repo/project/issues/I2526.yaml",
+        "facts": {
+          "created_at": "2026-10-13",
+          "depends_on": [
+            "I2525"
+          ],
+          "evidence_required": [
+            "scenario_node_reused_on_unrelated_edit",
+            "site_split_equals_full",
+            "split_measured_faster"
+          ],
+          "milestone": "a-derive-does-only-the-work-its-inputs-changed",
+          "non_scope": [
+            "One node per page. A page's front matter weight depends on the whole list of commands (.gitattributes), so per-page nodes would each depend on everything",
+            "Rewriting the site generator in Rust",
+            "Changing what site/data/generated or site/content contains",
+            "Inferring that a section is unaffected from a file name or extension"
+          ],
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "scripts/generate-site-data",
+            "apps/majordomus-cli/src/derivation",
+            "apps/majordomus-cli/tests/derivation_graph.rs",
+            "test/cases/10_site_data.sh",
+            "test/cases/11_site_derivation.sh",
+            "test/cases/12b_site_data_transactional.sh",
+            "docs/GITHUB_PAGES_ARCHITECTURE.md",
+            "docs/DERIVE.md",
+            ".ai/repo/project/issues/I2526.yaml"
+          ],
+          "slug": "the-site-generator-is-more-than-one-node",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=2 bash test/run.sh 10_site_data 11_site_derivation 12b_site_data_transactional 51_derived_artifacts_committed",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test derivation_graph",
+            "scripts/derive-check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2527",
+        "kind": "issue",
+        "label": "I2527",
+        "summary": "An incremental derive equals a full derive byte for byte, and an omitted dependency turns a gate red",
+        "route": "/cockpit/objects/issue/i2527",
+        "source": ".ai/repo/project/issues/I2527.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "For every scenario of the case, the set of tracked files and their bytes are equal after the incremental and after the full path",
+            "With one edge removed from the graph, the case fails and names the stale file",
+            "With an output altered and its key left alone, the incremental path regenerates it and scripts/derive-check on the altered tree exits 10",
+            "A consumer that carries its own list of nodes or of generated paths is reported by the rule's check",
+            "The rule is listed by majordomus rules with its enforcement declared, and the claim page names the case that proves it"
+          ],
+          "created_at": "2026-10-13",
+          "depends_on": [
+            "I2525"
+          ],
+          "evidence_required": [
+            "incremental_equals_full_case",
+            "omitted_edge_turns_the_gate_red",
+            "rule_check_registered"
+          ],
+          "milestone": "a-derive-does-only-the-work-its-inputs-changed",
+          "non_scope": [
+            "Gating on a duration. Durations are recorded, and a timeout guessed from one machine is not a rule",
+            "Regenerating golden files automatically when the comparison fails",
+            "Running the real full derive twice inside the suite; the case uses stand-in producers, as case 400 does, and the real comparison is recorded as evidence on I2533"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/rules/project",
+            ".ai/repo/ci/gates.yaml",
+            "apps/majordomus-cli/tests/derivation_differential.rs",
+            "apps/majordomus-cli/src/derivation",
+            "test/cases",
+            "docs/CLAIMS.yaml",
+            "docs/claims",
+            "docs/DERIVE.md",
+            ".ai/repo/project/issues/I2527.yaml"
+          ],
+          "slug": "incremental-derive-equals-full-derive",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test derivation_differential",
+            "MJ_TEST_JOBS=2 bash test/run.sh <the case this issue adds>",
+            "MJ_TEST_JOBS=2 bash test/run.sh 51_derived_artifacts_committed 56_derived_current_gate",
+            "scripts/ci-plan --check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2528",
+        "kind": "issue",
+        "label": "I2528",
+        "summary": "The UI shows the derivation graph and its last plan, and one documentation page explains the model",
+        "route": "/cockpit/objects/issue/i2528",
+        "source": ".ai/repo/project/issues/I2528.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The screen renders every node the derive.graph capability answers, and a node added to the graph appears with no edit to the screen",
+            "A node with no recorded run is shown as unknown, never as current",
+            "The screen answers while a derive holds the machine lock, within the bound the other screens are held to",
+            "Every node and output the screen names is a link that resolves",
+            "docs/DERIVE.md contains no enumerated list of nodes, and the documentation gates pass"
+          ],
+          "created_at": "2026-10-13",
+          "depends_on": [
+            "I2524"
+          ],
+          "evidence_required": [
+            "ui_derive_screen",
+            "unknown_is_not_current"
+          ],
+          "milestone": "a-derive-does-only-the-work-its-inputs-changed",
+          "non_scope": [
+            "A control that starts a derive from the browser",
+            "A page in the superseded Cockpit",
+            "A list of nodes written by hand in any document",
+            "Publishing to GitHub Pages by any route other than the existing workflow"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui/derive.rs",
+            "apps/majordomus-cli/src/ui/mod.rs",
+            "apps/majordomus-cli/src/ui/shell.rs",
+            "apps/majordomus-cli/tests/ui_surface.rs",
+            "apps/majordomus-cli/tests/ui_links.rs",
+            "docs/DERIVE.md",
+            "docs/GITHUB_PAGES_ARCHITECTURE.md",
+            "docs/MAJORDOMUS_UI.md",
+            "README.md",
+            ".ai/repo/project/issues/I2528.yaml"
+          ],
+          "slug": "the-derivation-graph-is-shown-and-documented",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test ui_surface --test ui_links",
+            "majordomus generate --check",
+            "MJ_TEST_JOBS=2 bash test/run.sh 547_the_ui_says_only_what_is_derived"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2529",
+        "kind": "issue",
+        "label": "I2529",
+        "summary": "A node's outputs are kept under its key and restored only after every digest is verified",
+        "route": "/cockpit/objects/issue/i2529",
+        "source": ".ai/repo/project/issues/I2529.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The files a restore leaves are byte-identical, modes included, to those a full derive leaves, in the differential case of I2527 run with the store on",
+            "A truncated manifest, a digest that does not match, an entry of an older schema and an unreadable directory are each a reported miss followed by regeneration, and none exits 0 with a stale file",
+            "A manifest naming an absolute path, a path containing a parent component, a path through a symbolic link or a path the node does not own is refused and nothing is written",
+            "A restore does not replace a file that is not an output of the node",
+            "A write interrupted before the rename leaves no entry a reader can see",
+            "With --no-store the run neither reads nor writes the store directory"
+          ],
+          "created_at": "2026-10-13",
+          "depends_on": [
+            "I2525",
+            "I2527"
+          ],
+          "evidence_required": [
+            "store_restore_equals_full",
+            "store_corruption_is_a_miss",
+            "store_path_escape_refused"
+          ],
+          "milestone": "a-derivation-computed-once-is-reused",
+          "non_scope": [
+            "Eviction and size limits: I2530, which lands before the store is enabled anywhere by default",
+            "Two processes computing one key at the same time: I2531",
+            "A store reached over the network",
+            "Treating a hit as proof that the committed files are current; scripts/derive-check compares bytes regardless (ADR 0041)"
+          ],
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/derivation/store.rs",
+            "apps/majordomus-cli/src/derivation/plan.rs",
+            "apps/majordomus-cli/src/derivation/run.rs",
+            "apps/majordomus-cli/src/commands/derive.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/tests/derivation_store.rs",
+            ".ai/repo/adrs",
+            "docs/DERIVE.md",
+            ".ai/repo/project/issues/I2529.yaml"
+          ],
+          "slug": "a-node-output-is-kept-under-its-key",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib derivation::store",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test derivation_store --test derivation_differential",
+            "MJ_TEST_JOBS=2 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2530",
+        "kind": "issue",
+        "label": "I2530",
+        "summary": "The derivation store is bounded and measured: its size and hit rate are read by a capability, and only an explicit command removes entries",
+        "route": "/cockpit/objects/issue/i2530",
+        "source": ".ai/repo/project/issues/I2530.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "derive stats reports the store's entry count and bytes equal to what is on disk in a fixture",
+            "derive store gc --dry-run removes nothing and names the entries a real run would remove",
+            "gc removes entries beyond the declared age or quota, oldest first, and leaves an entry held by a running derive",
+            "A derive that starts while gc runs either restores a whole entry or regenerates, and never restores a partial one",
+            "The command is refused for a caller that may not mutate, by the same effect check as every other mutating capability",
+            "The environment's disk report includes the store's bytes"
+          ],
+          "created_at": "2026-10-13",
+          "current_state": "The store of I2529 grows without limit and nothing reports it. The environment capabilities measure disk and the reclaimable build directories (apps/majordomus-cli/src/environment).",
+          "depends_on": [
+            "I2529"
+          ],
+          "evidence_required": [
+            "store_size_reported_and_reclaimed",
+            "gc_spares_entries_in_use"
+          ],
+          "milestone": "a-derivation-computed-once-is-reused",
+          "non_scope": [
+            "Eviction as a side effect of a derive or of any read",
+            "Removing anything outside the store directory",
+            "A background process that prunes"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/derivation/store.rs",
+            "apps/majordomus-cli/src/derivation/stats.rs",
+            "apps/majordomus-cli/src/capability/builtin/derive.rs",
+            "apps/majordomus-cli/src/commands/derive.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/environment",
+            "apps/majordomus-cli/tests/derivation_store.rs",
+            ".ai/repo/policy.yaml",
+            "docs/DERIVE.md",
+            "docs/ENVIRONMENT.md",
+            ".ai/repo/project/issues/I2530.yaml"
+          ],
+          "slug": "the-derivation-store-is-bounded-and-measured",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib derivation::stats",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test derivation_store --test environment",
+            "majordomus generate --check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2531",
+        "kind": "issue",
+        "label": "I2531",
+        "summary": "Two worktrees deriving the same key compute it once, and the machine lock covers the write into a tree, not the computation",
+        "route": "/cockpit/objects/issue/i2531",
+        "source": ".ai/repo/project/issues/I2531.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Two worktrees at one commit deriving at once run each producer once in total, and both end with scripts/derive-check exit 0",
+            "Three worktrees with distinct keys each end with their own tree's outputs, and no file of one tree was written by another's run",
+            "A holder of a key lock that is killed is detected, and the waiting process computes the key itself within a declared bound",
+            "A worktree whose index differs from another's at the same commit does not restore the other's entry",
+            "A run that only restores does not wait for the machine lock while another worktree computes",
+            "No test of the set leaves a process running after it ends",
+            "The lock wait and the total duration for two worktrees are recorded with and without the store on one machine"
+          ],
+          "created_at": "2026-10-13",
+          "depends_on": [
+            "I2529"
+          ],
+          "evidence_required": [
+            "single_flight_across_worktrees",
+            "killed_holder_is_reclaimed",
+            "two_worktrees_measured"
+          ],
+          "milestone": "a-derivation-computed-once-is-reused",
+          "non_scope": [
+            "Running two producers of one worktree in parallel",
+            "Changing how cargo shares its build directory (ADR 0139)",
+            "Changing the owner line of the derive lock, which scripts/reap-orphans and case 1018 read",
+            "The offload queue on another host (I2398)"
+          ],
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/derivation/store.rs",
+            "apps/majordomus-cli/src/derivation/run.rs",
+            "apps/majordomus-cli/tests/derivation_concurrency.rs",
+            "lib/machine_lock.sh",
+            "scripts/derive",
+            ".ai/repo/rules/project/one-derive-at-a-time.v1.md",
+            "test/cases/1018_one_derive_at_a_time_and_no_orphans.sh",
+            "docs/DERIVE.md",
+            "docs/WORKTREES.md",
+            ".ai/repo/project/issues/I2531.yaml"
+          ],
+          "slug": "one-key-is-computed-once-across-worktrees",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test derivation_concurrency",
+            "MJ_TEST_JOBS=2 bash test/run.sh 1018_one_derive_at_a_time_and_no_orphans 1022_worktrees_share_build_intermediates",
+            "majordomus shell check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2532",
+        "kind": "issue",
+        "label": "I2532",
+        "summary": "CI reuses derivation entries keyed by the graph, and still fails on a stale committed file whether or not the cache was restored",
+        "route": "/cockpit/objects/issue/i2532",
+        "source": ".ai/repo/project/issues/I2532.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A run whose cache restored and a run whose cache was absent give the same verdict on the same commit",
+            "A commit with one stale derived file fails the job with the cache restored",
+            "A cache entry whose manifest was altered is a miss and the job regenerates",
+            "A node added to the graph is checked by the job with no edit to the workflow or to gates.yaml",
+            "An entry saved by a pull request's run is not restored by a run on the default branch, shown by the cache keys of two recorded runs",
+            "The job summary of a warm and of a cold run records the duration of the check and of the cache transfer, on the actual commit"
+          ],
+          "created_at": "2026-10-13",
+          "depends_on": [
+            "I2527",
+            "I2529"
+          ],
+          "evidence_required": [
+            "ci_warm_and_cold_measured",
+            "ci_stale_file_fails_with_cache",
+            "pr_cache_not_restored_on_default_branch"
+          ],
+          "milestone": "a-derivation-computed-once-is-reused",
+          "non_scope": [
+            "The Pages and release workflows, which do not generate and restore nothing",
+            "Archiving target directories; the Rust cache stays as it is",
+            "Changing which check is required on the default branch, or any repository setting",
+            "New logic in workflow YAML or new shell beyond calling the capability (ADR 0069)"
+          ],
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".github/workflows/validate.yml",
+            ".ai/repo/ci/gates.yaml",
+            "scripts/ci-plan",
+            "scripts/ci",
+            "apps/majordomus-cli/src/derivation",
+            "apps/majordomus-cli/src/capability/builtin/derive.rs",
+            "test/cases",
+            "docs/CI.md",
+            "docs/DERIVE.md",
+            ".ai/repo/project/issues/I2532.yaml"
+          ],
+          "slug": "ci-reuses-derivations-and-still-compares-bytes",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "bin/majordomus plan validate",
+            "scripts/ci-plan --check",
+            "MJ_TEST_JOBS=2 bash test/run.sh 56_derived_current_gate",
+            "MJ_TEST_JOBS=2 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2533",
+        "kind": "issue",
+        "label": "I2533",
+        "summary": "The incremental derive becomes the default after a shadow period proves it equal, and one flag returns to the full derive",
+        "route": "/cockpit/objects/issue/i2533",
+        "source": ".ai/repo/project/issues/I2533.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "scripts/derive --shadow exits non-zero and names the file when the two paths differ, shown by a fixture with an omitted edge",
+            "Recorded shadow runs on the real tree show no differing file for each of the eight kinds of change, each with its commit",
+            "With the default switched, scripts/derive --full leaves the same bytes as scripts/derive on an unchanged tree",
+            "A case switches back to the full path and passes without the store directory present",
+            "majordomus offload derive produces the same staged files as before the switch",
+            "The before and after durations are published with commit, machine, store state and sample count, and no figure is published for a scenario that was not run"
+          ],
+          "created_at": "2026-10-13",
+          "current_state": "After I2525 the incremental path exists behind scripts/derive --incremental and the default is the full sequence. No record compares the two on the real tree.",
+          "depends_on": [
+            "I2527",
+            "I2529",
+            "I2531",
+            "I2532"
+          ],
+          "evidence_required": [
+            "shadow_runs_on_the_real_tree",
+            "default_enabled_with_rollback_case",
+            "before_and_after_measured"
+          ],
+          "milestone": "a-derivation-computed-once-is-reused",
+          "non_scope": [
+            "Removing the full derive, scripts/derive-check or the stage order as a fallback",
+            "A release or a deployment; those follow the release procedure and the owner's acceptance",
+            "Switching the default on a platform with no recorded shadow comparison"
+          ],
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "scripts/derive",
+            "apps/majordomus-cli/src/derivation/run.rs",
+            "apps/majordomus-cli/src/commands/derive.rs",
+            "apps/majordomus-cli/src/offload",
+            "test/cases/400_derivation_is_one_graph.sh",
+            "test/cases",
+            "docs/DERIVE.md",
+            "docs/PERFORMANCE.md",
+            "docs/OFFLOAD.md",
+            "docs/CLAIMS.yaml",
+            "justfile",
+            ".ai/repo/project/issues/I2533.yaml"
+          ],
+          "slug": "incremental-derive-is-the-default-on-evidence",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=2 bash test/run.sh 400_derivation_is_one_graph 51_derived_artifacts_committed 1020_a_derive_sees_what_the_commit_will",
+            "MJ_TEST_JOBS=2 bash test/run.sh <the case this issue adds>",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib offload",
+            "scripts/derive-check"
+          ]
         }
       },
       {
@@ -39689,6 +40549,53 @@
         }
       },
       {
+        "id": "majordomus://issue/I3100",
+        "kind": "issue",
+        "label": "I3100",
+        "summary": "What the ChatGPT project decided is promoted into the layer, each record naming the conversation and message it came from",
+        "route": "/cockpit/objects/issue/i3100",
+        "source": ".ai/repo/project/issues/I3100.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every conversation of the project is accounted for in a coverage ledger: promoted, already recorded, superseded, open question or off-topic",
+            "Every promoted record names at least one source conversation and message",
+            "majordomus plan validate, majordomus intent validate, majordomus adr check and majordomus knowledge check pass on the branch",
+            "No tracked file carries raw conversation text, a credential or third-party personal data"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "The workspace is declared (I1301); no capability or command reads it; promoted records exist only where sessions copied text by hand.",
+          "evidence_required": [
+            "plan_validate",
+            "intent_validate"
+          ],
+          "milestone": "external-workspaces",
+          "non_scope": [
+            "Raw conversation content in any tracked file",
+            "The sync command, store layout and read capability of I1303-I1308",
+            "Accepting an ADR: the records are proposed and the owner accepts them"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "deep-work",
+          "scope": [
+            ".ai/repo/project/intents",
+            ".ai/repo/project/milestones",
+            ".ai/repo/project/issues",
+            ".ai/repo/project/critiques",
+            ".ai/repo/adrs",
+            ".ai/repo/knowledge/curated"
+          ],
+          "slug": "chatgpt-project-is-promoted",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "majordomus plan validate",
+            "majordomus intent validate",
+            "majordomus adr check",
+            "majordomus knowledge check"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "label": "a-commit-stood-behind-a-build-lock",
@@ -40066,6 +40973,142 @@
         }
       },
       {
+        "id": "majordomus://milestone/a-derivation-computed-once-is-reused",
+        "kind": "milestone",
+        "label": "a-derivation-computed-once-is-reused",
+        "summary": "A derivation computed once is reused by every worktree and by CI, and the incremental path becomes the default on evidence",
+        "route": "/cockpit/objects/milestone/a-derivation-computed-once-is-reused",
+        "source": ".ai/repo/project/milestones/a-derivation-computed-once-is-reused.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A restored node's tracked files are byte-identical to a full derive's, and a truncated manifest, a mismatched digest or an entry of an older schema is reported as a miss and regenerated",
+            "The store refuses an output path outside the repository root, a path through a symbolic link and a restore over a file no node owns",
+            "Two worktrees deriving the same key at once run the producer once, and a holder that is killed does not leave the other waiting past a bound",
+            "The store's size is reported by a capability, and entries are removed only by an explicit command that spares entries in use",
+            "The CI site job fails on a stale committed artifact whether or not the cache was restored, and a missing cache falls back to generation",
+            "With the incremental path as default, scripts/derive --full produces the same bytes, and a case proves the return to the full path",
+            "Every duration published about the change names its commit, machine, cache state and sample count"
+          ],
+          "created_at": "2026-10-13",
+          "evidence_required": [
+            "store_restore_equals_full",
+            "store_corruption_is_a_miss",
+            "single_flight_across_worktrees",
+            "store_size_reported_and_reclaimed",
+            "ci_warm_and_cold_measured",
+            "default_enabled_with_rollback_case"
+          ],
+          "non_scope": [
+            "The graph, the keys and the incremental run themselves: milestone a-derive-does-only-the-work-its-inputs-changed.",
+            "A remote store service, or sharing entries between machines over the mesh. The offload host keeps a store of its own like any other machine.",
+            "Archiving cargo's target directory. The compiler cache is ADR 0139's and the CI Rust cache's.",
+            "Restoring an entry written by a pull request's run into a release or Pages publication.",
+            "Removing scripts/derive --full or scripts/derive-check."
+          ],
+          "order": 511,
+          "priority": "p2",
+          "risks": [
+            "A store shared by every worktree is one more quantity that fills the disk, which ADR 0055 makes a measured quantity reclaimed by predicate. The bound and the reclaim land with the store, not after it.",
+            "Machine-dependent content (I1409) makes an entry computed on one machine wrong on another unless the key covers what differs; until it does, reuse stays inside one machine and one CI runner image.",
+            "Narrowing the derive lock changes rule project.one-derive-at-a-time; a mistake interleaves two writers in one tree.",
+            "A cache restored from an untrusted run is an injection path into a privileged job."
+          ],
+          "scope": [
+            ".ai/repo/adrs",
+            ".ai/repo/project",
+            ".ai/repo/rules/project",
+            ".ai/repo/ci",
+            "apps/majordomus-cli/src/derivation",
+            "apps/majordomus-cli/src/capability/builtin",
+            "apps/majordomus-cli/src/commands",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/environment",
+            "apps/majordomus-cli/tests",
+            "lib/machine_lock.sh",
+            "scripts/derive",
+            "scripts/ci-plan",
+            ".github/workflows/validate.yml",
+            "test/cases",
+            "docs"
+          ],
+          "slug": "a-derivation-computed-once-is-reused",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib derivation::store",
+            "MJ_TEST_JOBS=2 bash test/run.sh 1018_one_derive_at_a_time_and_no_orphans 1022_worktrees_share_build_intermediates 56_derived_current_gate",
+            "scripts/ci-plan --check",
+            "scripts/derive-check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/a-derive-does-only-the-work-its-inputs-changed",
+        "kind": "milestone",
+        "label": "a-derive-does-only-the-work-its-inputs-changed",
+        "summary": "A derive does only the work its inputs changed, and can say why",
+        "route": "/cockpit/objects/milestone/a-derive-does-only-the-work-its-inputs-changed",
+        "source": ".ai/repo/project/milestones/a-derive-does-only-the-work-its-inputs-changed.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "One capability answers the derivation graph, and every path in docs/generated/artifacts.json and every tree scripts/generate-site-data publishes belongs to exactly one node of it",
+            "A graph with a cycle, an output claimed by two nodes or a generator no node declares is refused, and the refusal names the node",
+            "A node's key changes when a declared input is edited, renamed, deleted or added and when the executable's generation changes, and does not change when an undeclared path changes",
+            "A second incremental derive on an unchanged tree runs no generator and writes no file",
+            "A missing or altered output is regenerated even when the node's key did not move",
+            "For every fixture of the differential case, the tracked files an incremental derive leaves are byte-identical to those of a full derive, deletions included",
+            "derive plan and derive explain write nothing, and explain names the input that moved a node's key",
+            "scripts/derive-check exits 0, 10 and 15 for the same trees as before"
+          ],
+          "created_at": "2026-10-13",
+          "evidence_required": [
+            "derive_baseline_measurements",
+            "derivation_graph_capability",
+            "node_key_property_tests",
+            "warm_no_op_runs_no_generator",
+            "incremental_equals_full_case",
+            "omitted_edge_turns_the_gate_red"
+          ],
+          "non_scope": [
+            "A store of outputs shared between worktrees or with CI, and making the incremental path the default: milestone a-derivation-computed-once-is-reused.",
+            "Narrowing what a committed fingerprint covers so that an unrelated merge does not invalidate it: milestone derived-data-integrity and I1409.",
+            "Rewriting scripts/generate-site-data in Rust. Its sections become nodes of the graph; its migration off shell is the automation inventory's (ADR 0069).",
+            "A daemon, a database or a second scheduler outside the crate.",
+            "Weakening scripts/derive-check, the derived merge driver or the generation guard that refuses a borrowed executable."
+          ],
+          "order": 510,
+          "priority": "p1",
+          "scope": [
+            ".ai/repo/adrs",
+            ".ai/repo/project",
+            ".ai/repo/rules/project",
+            "apps/majordomus-cli/src/derivation",
+            "apps/majordomus-cli/src/generate.rs",
+            "apps/majordomus-cli/src/generation.rs",
+            "apps/majordomus-cli/src/commands",
+            "apps/majordomus-cli/src/capability/builtin",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/ui",
+            "apps/majordomus-cli/tests",
+            "scripts/derive",
+            "scripts/derive-check",
+            "scripts/generate-site-data",
+            "scripts/gitattributes",
+            "test/cases",
+            "docs"
+          ],
+          "slug": "a-derive-does-only-the-work-its-inputs-changed",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib derivation",
+            "MJ_TEST_JOBS=2 bash test/run.sh 400_derivation_is_one_graph 51_derived_artifacts_committed 104_strict_derivation",
+            "scripts/derive-check",
+            "majordomus generate --check"
+          ]
+        }
+      },
+      {
         "id": "majordomus://milestone/a-second-adopter-is-served",
         "kind": "milestone",
         "label": "a-second-adopter-is-served",
@@ -40197,6 +41240,119 @@
             "bin/majordomus plan validate",
             "bin/majordomus usecase validate",
             "scripts/derive-check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/an-outcome-becomes-a-reviewed-plan",
+        "kind": "milestone",
+        "label": "an-outcome-becomes-a-reviewed-plan",
+        "summary": "A desired outcome becomes a draft plan that is checked before a record is written",
+        "route": "/cockpit/objects/milestone/an-outcome-becomes-a-reviewed-plan",
+        "source": ".ai/repo/project/milestones/an-outcome-becomes-a-reviewed-plan.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "intent draft check refuses a draft whose criterion no issue serves, whose issue serves nothing, whose dependencies cycle or whose link does not resolve, naming each finding, and writes nothing",
+            "intent draft apply writes exactly the records of a checked draft with identities above the high-water mark, and refuses a draft that does not check",
+            "intent draft brief lists the intents, milestones, issues, ADRs and rules the outcome touches, each with the source it was read from",
+            "An advisor-written draft that does not parse is refused with the reason, and a refused draft's findings are handed back at most the policy's bound of rounds",
+            "The command line, HTTP and MCP answer the same check and the same brief"
+          ],
+          "created_at": "2026-10-09",
+          "depends_on": [],
+          "evidence_required": [
+            "draft_check_writes_nothing",
+            "draft_apply_writes_only_a_checked_draft",
+            "brief_names_its_sources",
+            "malformed_advisor_draft_refused"
+          ],
+          "non_scope": [
+            "Executing a draft; a written draft is planned work held to the binding and the opposition like any other",
+            "A Cockpit wizard; the Cockpit may show a draft check's answer and owns no planning logic",
+            "Requiring an advisor; drafting by hand enters the same check",
+            "Rewriting records a draft does not name"
+          ],
+          "order": 301,
+          "priority": "p2",
+          "scope": [
+            "apps/majordomus-cli/src/intent_draft.rs",
+            "apps/majordomus-cli/src/intent.rs",
+            "apps/majordomus-cli/src/intent_plan.rs",
+            "apps/majordomus-cli/src/plan.rs",
+            "apps/majordomus-cli/src/lib.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/commands/intent.rs",
+            "apps/majordomus-cli/src/capability/builtin",
+            "apps/majordomus-cli/src/reasoning",
+            "scripts/lib/advisors",
+            "share/schemas/majordomus",
+            "share/kinds.yaml",
+            "share/allow",
+            "apps/majordomus-cli/tests",
+            "test/cases",
+            ".ai/repo/adrs",
+            ".ai/repo/project",
+            "docs/PLANNING.md"
+          ],
+          "slug": "an-outcome-becomes-a-reviewed-plan",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "majordomus intent validate",
+            "majordomus plan validate",
+            "cargo test --test intent_draft",
+            "bash test/run.sh <the case I2207 adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/an-unmet-criterion-is-drafted-into-work",
+        "kind": "milestone",
+        "label": "an-unmet-criterion-is-drafted-into-work",
+        "summary": "An unmet criterion is drafted into work from the evidence, and the draft is the same on every run",
+        "route": "/cockpit/objects/milestone/an-unmet-criterion-is-drafted-into-work",
+        "source": ".ai/repo/project/milestones/an-unmet-criterion-is-drafted-into-work.yaml",
+        "facts": {
+          "created_at": "2026-10-09",
+          "depends_on": [],
+          "evidence_required": [
+            "gap_draft_follows_the_evidence_test",
+            "plan_draft_is_idempotent_test",
+            "intent_next_explains_what_it_passed_over_test",
+            "stalled_intent_case"
+          ],
+          "non_scope": [
+            "Drafting an intent, a criterion or an invariant from an outcome statement; that is the outcome-to-plan pipeline of the intent-tight-integration pack (prompt 80), which lane A audits",
+            "Writing a gap, an issue or a critique; every draft is printed and the worker commits it",
+            "Calling a model or an advisor; the drafts are derived from records alone and an advisor is reached only through the existing reasoning plan",
+            "Changing the ranking of plan next or the plan engines; intents.next filters and explains, it does not reorder the plan"
+          ],
+          "order": 304,
+          "priority": "p1",
+          "scope": [
+            "apps/majordomus-cli/src/intent_draft.rs",
+            "apps/majordomus-cli/src/intent.rs",
+            "apps/majordomus-cli/src/intent_plan.rs",
+            "apps/majordomus-cli/src/intent_review.rs",
+            "apps/majordomus-cli/src/intent_realization.rs",
+            "apps/majordomus-cli/src/capability/builtin/intents.rs",
+            "apps/majordomus-cli/src/commands/intent.rs",
+            "apps/majordomus-cli/tests",
+            ".ai/repo/project/intents",
+            ".ai/repo/project/gaps",
+            ".ai/repo/project/critiques",
+            ".ai/repo/adrs",
+            "docs/PLANNING.md",
+            "docs/CLAIMS.yaml",
+            "test/cases"
+          ],
+          "slug": "an-unmet-criterion-is-drafted-into-work",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "majordomus intent validate",
+            "bin/majordomus plan validate",
+            "cargo test --test intent_draft",
+            "cargo test --test intent_next",
+            "bash test/run.sh <the draft case this milestone adds>"
           ]
         }
       },
@@ -40374,6 +41530,101 @@
             "cargo test --workspace --all-features",
             "majordomus generate --check",
             "scripts/cockpit-probe"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/ci-critical-path",
+        "kind": "milestone",
+        "label": "ci-critical-path",
+        "summary": "The critical path from a change to its verdict, and from a merge to its verified deploy, runs under a minute warm",
+        "route": "/cockpit/objects/milestone/ci-critical-path",
+        "source": ".ai/repo/project/milestones/ci-critical-path.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The baseline of change-to-verdict and merge-to-verified-deploy, warm, partial and cold, is committed with the runs it was measured from",
+            "Both paths meet the outcome's percentiles over the runs named, and every gate a change skips names the impact rule that skipped it",
+            "No required test was removed, skipped or made advisory, shown by the gate model's required set before and after"
+          ],
+          "created_at": "2026-10-09",
+          "desired_state": "A measured baseline of both paths is committed before any redesign; each change that shortens them names the measurement it moves; and the budget of a case is never raised to follow runner load again.",
+          "evidence_required": [
+            "baseline_measured_on_github",
+            "critical_path_under_a_minute"
+          ],
+          "non_scope": [
+            "Removing, skipping or making advisory any required test to reach the number",
+            "Redesigning anything before the baseline of both paths is measured on GitHub and committed",
+            "Local timings as the measure; the number is GitHub's"
+          ],
+          "order": 125,
+          "priority": "p1",
+          "scope": [
+            ".ai/repo/project",
+            ".ai/repo/ci",
+            ".github/workflows",
+            "scripts/ci",
+            "scripts/ci-plan",
+            "test/run.sh",
+            "test/cases"
+          ],
+          "slug": "ci-critical-path",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "scripts/ci-plan --check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/command-and-deployment-criteria-are-judged",
+        "kind": "milestone",
+        "label": "command-and-deployment-criteria-are-judged",
+        "summary": "A command or deployment criterion is met by a recorded run of exactly that command, or an observation of exactly that deployment, current at the presented revision",
+        "route": "/cockpit/objects/milestone/command-and-deployment-criteria-are-judged",
+        "source": ".ai/repo/project/milestones/command-and-deployment-criteria-are-judged.yaml",
+        "facts": {
+          "created_at": "2026-10-09",
+          "depends_on": [],
+          "evidence_required": [
+            "deployment_criterion_judged_test",
+            "command_criterion_judged_test",
+            "evidence_negative_matrix_case",
+            "claim_guaranteed"
+          ],
+          "non_scope": [
+            "Deploying anything; a criterion reads what was observed and records nothing on its own",
+            "Running a command from an intent read; a read never executes a criterion's command",
+            "Probing a deployment from inside intent show; observation stays `majordomus served observe`",
+            "Authenticating ledger lines cryptographically; the decision on forged lines is recorded and its limitation stated if not implemented",
+            "The finish contract, which is finish-reads-what-its-work-serves"
+          ],
+          "order": 305,
+          "priority": "p1",
+          "scope": [
+            "apps/majordomus-cli/src/intent.rs",
+            "apps/majordomus-cli/src/evidence",
+            "apps/majordomus-cli/src/served.rs",
+            "apps/majordomus-cli/src/commands/evidence.rs",
+            "apps/majordomus-cli/src/capability/builtin",
+            "apps/majordomus-cli/tests",
+            "share/schemas/majordomus/intent",
+            ".ai/repo/project/intents",
+            ".ai/repo/adrs",
+            "docs/PLANNING.md",
+            "docs/CLAIMS.yaml",
+            "site/content/guarantees",
+            "test/cases"
+          ],
+          "slug": "command-and-deployment-criteria-are-judged",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "majordomus intent validate",
+            "cargo test --test intent",
+            "cargo test --test intent_command_evidence",
+            "bash test/run.sh 384_a_deployment_is_evidence",
+            "bash test/run.sh <the negative-matrix case this milestone adds>",
+            "bash test/run.sh 892_what_is_said_of_intents_is_what_the_claims_matrix_says"
           ]
         }
       },
@@ -40790,6 +42041,49 @@
             "bin/majordomus plan validate",
             "cargo test --test health_server --test http_serve --test mcp_shared --test lease_busy",
             "MJ_TEST_JOBS=4 bash test/run.sh <the cases these issues add>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/finish-reads-what-its-work-serves",
+        "kind": "milestone",
+        "label": "finish-reads-what-its-work-serves",
+        "summary": "A finish reads what its work serves",
+        "route": "/cockpit/objects/milestone/finish-reads-what-its-work-serves",
+        "source": ".ai/repo/project/milestones/finish-reads-what-its-work-serves.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Where the policy requires it, finish with the outcome completed is refused while a served required criterion is unmet or a guard is violated",
+            "A partial finish is always available and the refusal says so",
+            "No intent record, stage or verdict is written by any finish"
+          ],
+          "created_at": "2026-10-08",
+          "depends_on": [
+            "intent-bound-work"
+          ],
+          "evidence_required": [],
+          "non_scope": [
+            "Any change to how a criterion, a guard or a verdict is derived",
+            "Recording evidence at finish"
+          ],
+          "order": 140,
+          "priority": "p1",
+          "scope": [
+            "apps/majordomus-cli/src/gates",
+            "apps/majordomus-cli/src/capability/builtin/gates.rs",
+            "apps/majordomus-cli/tests",
+            "share/completion.yaml",
+            "lib/gates.sh",
+            "test/cases",
+            ".ai/repo",
+            "docs",
+            "site"
+          ],
+          "slug": "finish-reads-what-its-work-serves",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "bash test/run.sh 966_a_finish_reads_what_its_work_serves",
+            "bash test/run.sh 895_a_finished_task_does_not_satisfy_an_intent"
           ]
         }
       },
@@ -41709,6 +43003,64 @@
             "cargo test --workspace --all-features",
             "majordomus generate --check",
             "scripts/ci/pages-check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/the-intent-loop-is-proved-end-to-end",
+        "kind": "milestone",
+        "label": "the-intent-loop-is-proved-end-to-end",
+        "summary": "The intent loop is proved end to end, and the plan and the documents say what it does",
+        "route": "/cockpit/objects/milestone/the-intent-loop-is-proved-end-to-end",
+        "source": ".ai/repo/project/milestones/the-intent-loop-is-proved-end-to-end.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every scenario A01 to A26 of the intent-outcome acceptance matrix is named by a claim in docs/CLAIMS.yaml, guaranteed with a test that exists or planned with a note saying what is missing",
+            "The claims-matrix case fails when a claim's note or its guarantee page calls another claim planned while that claim is guaranteed",
+            "One test fails if the command line, HTTP, MCP or the Cockpit page disagree about one intent's verdict, criteria, binding, disposition or remains",
+            "One test tries each named bypass and fails if any passes",
+            "One case runs from a desired outcome to a reopened and re-satisfied intent with documented commands only",
+            "No sentence of docs/HOW_IT_WORKS.md, docs/PLANNING.md or docs/CLAIMS.yaml describes the intent loop as it was before these milestones"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "Shipped per piece, proved per piece; no whole-loop case; the closest is the unpushed case 983 of an-adopter-runs-the-intent-loop.",
+          "depends_on": [],
+          "desired_state": "one parity test; one bypass test; one end-to-end case extending case 983; HOW_IT_WORKS, PLANNING and the claims matrix rewritten to the shipped state.",
+          "evidence_required": [
+            "acceptance_matrix_claimed",
+            "one_intent_reads_alike_everywhere",
+            "every_bypass_refused",
+            "loop_runs_end_to_end",
+            "documents_match_the_loop"
+          ],
+          "non_scope": [
+            "New behaviour; every behaviour proved here is built by another milestone",
+            "Releasing or deploying; that is the release lander's"
+          ],
+          "order": 303,
+          "priority": "p1",
+          "risks": [
+            "Most issues here wait for six branch milestones to land; I2215 and the acceptance-matrix claims are executable now.",
+            "A parity test that compares rendered HTML to JSON compares formats, not facts; compare the capability answers the page asks and the words the page prints from them.",
+            "An end-to-end case that builds every subsystem in one fixture is slow and fragile; keep it offline, fixture-only and within the case time budget, and let unit tests carry the edge cases."
+          ],
+          "scope": [
+            ".ai/repo/project",
+            "apps/majordomus-cli/tests",
+            "test/cases",
+            "docs/HOW_IT_WORKS.md",
+            "docs/PLANNING.md",
+            "docs/CLAIMS.yaml",
+            "docs/claims",
+            "site"
+          ],
+          "slug": "the-intent-loop-is-proved-end-to-end",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "majordomus plan validate",
+            "majordomus intent validate",
+            "cargo test --test intent_loop_surfaces --test intent_loop_bypass",
+            "bash test/run.sh <the case I2213 adds>"
           ]
         }
       },
@@ -82599,6 +83951,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2115",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2115",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I2123",
         "target": "kind:issue",
         "kind": "is_a"
@@ -82921,6 +84283,31 @@
       {
         "source": "majordomus://issue/I2303",
         "target": "majordomus://milestone/test-evidence",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2348",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2348",
+        "target": "majordomus://issue/I2350",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2348",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2350",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2350",
+        "target": "majordomus://milestone/ci-critical-path",
         "kind": "belongs_to"
       },
       {
@@ -83521,6 +84908,221 @@
       {
         "source": "majordomus://issue/I2495",
         "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2521",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2521",
+        "target": "majordomus://milestone/a-derive-does-only-the-work-its-inputs-changed",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2522",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2522",
+        "target": "majordomus://issue/I2521",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2522",
+        "target": "majordomus://milestone/a-derive-does-only-the-work-its-inputs-changed",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2523",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2523",
+        "target": "majordomus://issue/I2522",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2523",
+        "target": "majordomus://milestone/a-derive-does-only-the-work-its-inputs-changed",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2524",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2524",
+        "target": "majordomus://issue/I2523",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2524",
+        "target": "majordomus://milestone/a-derive-does-only-the-work-its-inputs-changed",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2525",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2525",
+        "target": "majordomus://issue/I2524",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2525",
+        "target": "majordomus://milestone/a-derive-does-only-the-work-its-inputs-changed",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2526",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2526",
+        "target": "majordomus://issue/I2525",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2526",
+        "target": "majordomus://milestone/a-derive-does-only-the-work-its-inputs-changed",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2527",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2527",
+        "target": "majordomus://issue/I2525",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2527",
+        "target": "majordomus://milestone/a-derive-does-only-the-work-its-inputs-changed",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2528",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2528",
+        "target": "majordomus://issue/I2524",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2528",
+        "target": "majordomus://milestone/a-derive-does-only-the-work-its-inputs-changed",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2529",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2529",
+        "target": "majordomus://issue/I2525",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2529",
+        "target": "majordomus://issue/I2527",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2529",
+        "target": "majordomus://milestone/a-derivation-computed-once-is-reused",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2530",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2530",
+        "target": "majordomus://issue/I2529",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2530",
+        "target": "majordomus://milestone/a-derivation-computed-once-is-reused",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2531",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2531",
+        "target": "majordomus://issue/I2529",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2531",
+        "target": "majordomus://milestone/a-derivation-computed-once-is-reused",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2532",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2532",
+        "target": "majordomus://issue/I2527",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2532",
+        "target": "majordomus://issue/I2529",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2532",
+        "target": "majordomus://milestone/a-derivation-computed-once-is-reused",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2533",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2533",
+        "target": "majordomus://issue/I2527",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2533",
+        "target": "majordomus://issue/I2529",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2533",
+        "target": "majordomus://issue/I2531",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2533",
+        "target": "majordomus://issue/I2532",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2533",
+        "target": "majordomus://milestone/a-derivation-computed-once-is-reused",
         "kind": "belongs_to"
       },
       {
@@ -84399,6 +86001,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3100",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3100",
+        "target": "majordomus://milestone/external-workspaces",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -84449,6 +86061,16 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://milestone/a-derivation-computed-once-is-reused",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/a-derive-does-only-the-work-its-inputs-changed",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://milestone/a-second-adopter-is-served",
         "target": "kind:milestone",
         "kind": "is_a"
@@ -84464,6 +86086,16 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://milestone/an-outcome-becomes-a-reviewed-plan",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/an-unmet-criterion-is-drafted-into-work",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://milestone/architecture-is-enforced",
         "target": "kind:milestone",
         "kind": "is_a"
@@ -84475,6 +86107,16 @@
       },
       {
         "source": "majordomus://milestone/capability-graph",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/ci-critical-path",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/command-and-deployment-criteria-are-judged",
         "target": "kind:milestone",
         "kind": "is_a"
       },
@@ -84537,6 +86179,16 @@
         "source": "majordomus://milestone/failure-is-visible",
         "target": "kind:milestone",
         "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/finish-reads-what-its-work-serves",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/finish-reads-what-its-work-serves",
+        "target": "majordomus://milestone/intent-bound-work",
+        "kind": "depends_on"
       },
       {
         "source": "majordomus://milestone/fly-deployment",
@@ -84660,6 +86312,11 @@
       },
       {
         "source": "majordomus://milestone/test-evidence",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/the-intent-loop-is-proved-end-to-end",
         "target": "kind:milestone",
         "kind": "is_a"
       },
@@ -94405,8 +96062,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2959,
-      "edges": 6500,
+      "nodes": 2984,
+      "edges": 6561,
       "acyclic": false,
       "truncated": false
     }

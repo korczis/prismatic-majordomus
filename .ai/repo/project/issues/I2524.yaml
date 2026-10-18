@@ -1,0 +1,48 @@
+id: I2524
+milestone: a-derive-does-only-the-work-its-inputs-changed
+title: "majordomus derive plan and derive explain say, without writing, which nodes would run and which input moved each one"
+slug: a-derive-decision-can-be-read
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Add the read-only half of incremental derivation: a planner that marks every node reuse, regenerate, invalid or blocked with its reason, and the commands derive plan, derive status and derive explain over it, declared once as capabilities and projected everywhere."
+why: "campaigns/majordomus-incremental-derive-prompt-pack/06_06_CLI_EXPLAIN.md asks that a person can diagnose any derive decision without reading source or logs, and 04_04_INCREMENTAL_EXECUTOR.md asks for a planner that states a concrete reason per node. The executable has no derive command today: the only verbs are majordomus generate (write or --check, apps/majordomus-cli/src/commands/generate.rs) and majordomus offload derive. scripts/derive-check names stale files and cannot say what made them stale. Landing the decision as a read before any run acts on it lets the decision be compared with what a full derive actually changes."
+current_state: "No command reports a node, its key or why it would run. majordomus generate --check prints one line per artifact and a list of differing or missing files."
+desired_state: "derivation::plan compares each node's key with the key recorded at its last successful run and checks that its outputs exist with the recorded digests. The capabilities derive.plan, derive.status and derive.explain answer the result; majordomus derive plan, derive status and derive explain <node or path> print it, with --format json validated against a generated schema. The record of last keys lives under the ignored .ai/local of the checkout and is advisory: its absence means regenerate. Explain names the first input whose bytes or presence changed, or the dependency whose key moved, or the output that is missing or altered."
+scope:
+  - "apps/majordomus-cli/src/derivation/plan.rs"
+  - "apps/majordomus-cli/src/derivation/mod.rs"
+  - "apps/majordomus-cli/src/capability/builtin/derive.rs"
+  - "apps/majordomus-cli/src/commands/derive.rs"
+  - "apps/majordomus-cli/src/commands/mod.rs"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "apps/majordomus-cli/tests/derivation_plan.rs"
+  - "apps/majordomus-cli/tests/cli_examples.rs"
+  - "docs/DERIVE.md"
+  - "test/cases"
+  - ".ai/repo/project/issues/I2524.yaml"
+non_scope:
+  - "Running or skipping a producer: I2525"
+  - "Renaming or removing majordomus generate, scripts/derive or scripts/derive-check"
+  - "A command of the shell tool; lib/derive.sh composes handover bodies and is unrelated to this command group"
+depends_on:
+  - "I2523"
+acceptance_criteria:
+  - "derive plan, derive status and derive explain leave git status and the modification time of every file unchanged"
+  - "After a full derive, derive plan reports every node reuse; after one declared input is edited it reports that node and its dependents regenerate and no other"
+  - "derive explain for a regenerated node names the path that changed, and for an unrelated edited path says that no node reads it"
+  - "A deleted or altered output is reported for its node although the key did not move"
+  - "An executable of another generation is refused with exit 15 before any node is judged"
+  - "The JSON of each command validates against its generated schema and is identical across two runs on one tree"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib derivation::plan"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test derivation_plan"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test cli_examples"
+  - "majordomus generate --check"
+  - "MJ_TEST_JOBS=2 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "derive_plan_is_read_only"
+  - "explain_names_the_moved_input"
+created_at: 2026-10-13
+updated_at: 2026-10-13

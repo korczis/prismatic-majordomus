@@ -42,6 +42,7 @@ survived only on one disk, in a directory git was told to ignore. `.ai/repo/scop
 | `majordomus-flux-v1-20261011` | 2026-10-11 | 15 | Majordomus Flux V1 — Derived Delivery Engine | `~/Downloads/majordomus-flux-v1-20261011.zip` (request-scoped snapshots, fragment cache, incremental derive, pagination and live streaming under every UI surface) |
 | `majordomus-github-workgraph-prompt-pack` | 2026-09-09 | 17 | Majordomus GitHub / Work Graph Prompt Pack | `~/Downloads/majordomus-github-workgraph-prompt-pack` |
 | `majordomus-idd-completion-prompt-pack` | 2026-09-16 | 15 | Majordomus IDD Completion Prompt Pack | `~/Downloads/majordomus-idd-completion-prompt-pack.zip` |
+| `majordomus-incremental-derive-prompt-pack` | 2026-10-12 | 14 | Majordomus Incremental Derivation — Executable Prompt Pack | `~/Downloads/majordomus-incremental-derive-prompt-pack.zip` |
 | `majordomus-intent-closure-pack` | 2026-10-07 | 12 | Majordomus Intent Closure Pack | `~/Downloads/majordomus-intent-closure-pack.zip` |
 | `majordomus-intent-outcome-prompt-pack` | 2026-10-08 | 13 | Majordomus: Intent → Verified Outcome | `~/Downloads/majordomus-intent-outcome-prompt-pack.zip` |
 | `majordomus-intent-tight-integration-pack` | 2026-10-07 | 15 | Majordomus Intent Tight Integration Pack | `~/Downloads/majordomus-intent-tight-integration-pack.zip` |

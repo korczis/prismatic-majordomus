@@ -6,23 +6,23 @@
     "version": "0.29.0"
   },
   "registry": {
-    "fingerprint": "cfc64482a6796b12eb023f81f50b88a5ee38b5494bb09da51600c6a17806b6c0",
+    "fingerprint": "333cd22b5e8f3bd9ee17ed0306e5fbb837a4315763ff134f57f759ac051c8a13",
     "summary": {
-      "total": 2527,
+      "total": 2552,
       "builtin": 202,
-      "declarative": 2325,
+      "declarative": 2350,
       "by_kind": {
         "command": 31,
         "query": 171,
-        "resource": 2325
+        "resource": 2350
       },
       "by_stability": {
         "behaviorally_verified": 141,
         "experimental": 52,
-        "implemented": 2334
+        "implemented": 2359
       },
       "mcp_tools": 192,
-      "mcp_resources": 2380,
+      "mcp_resources": 2405,
       "http_routes": 197,
       "cli_commands": 108,
       "modules": 92,
@@ -83231,7 +83231,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 424,
+        "capabilities": 441,
         "capability_ids": []
       },
       {
@@ -83347,7 +83347,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 41,
+        "capabilities": 49,
         "capability_ids": []
       },
       {
@@ -83893,7 +83893,7 @@
     ]
   },
   "index": {
-    "fingerprint": "ebbdaff489cce67fe99b529aa57475e97fbadbd238fabae0d224eb928298d8a1",
+    "fingerprint": "1f33688f554526cf13dbb5f6d21e408614a9f7a984d54c5898f7ecd9cc02a61e",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -83933,10 +83933,10 @@
       "gap": 4,
       "implementation": 52,
       "intent": 5,
-      "issue": 424,
+      "issue": 441,
       "knowledge": 4,
       "mesh-declaration": 1,
-      "milestone": 41,
+      "milestone": 49,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -90206,7 +90206,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 170002
+        "bytes": 186437
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -96759,6 +96759,17 @@
         "bytes": 2884
       },
       {
+        "uri": "majordomus://issue/I2115",
+        "kind": "issue",
+        "identity": "I2115",
+        "title": "The slowest case costs a fraction of its budget, and its budget is never raised to follow runner load again",
+        "description": "Cut case 95_executable_reference to a fraction of its cost instead of raising the slowest-case budget again. Measure first where its time goes: it runs scripts/generate-site-data eight times over a full fixture copied by fixture_repo. Then reduce what each run regenerates or how many runs the case needs, keeping every assertion it makes, so the case proves the same things in a fraction of the time.",
+        "path": ".ai/repo/project/issues/I2115.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2119
+      },
+      {
         "uri": "majordomus://issue/I2123",
         "kind": "issue",
         "identity": "I2123",
@@ -97098,6 +97109,28 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 4712
+      },
+      {
+        "uri": "majordomus://issue/I2348",
+        "kind": "issue",
+        "identity": "I2348",
+        "title": "A gate's result is reused only for the exact inputs it judged, and a skipped gate carries the proof that nothing it reads changed",
+        "description": "Join the path-class gates and their implications with the affected closure, a cache key, a proof for each skipped gate, integrity of a remote against a local cache, concurrency and precise invalidation, so that a stale verification is never reused.",
+        "path": ".ai/repo/project/issues/I2348.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2931
+      },
+      {
+        "uri": "majordomus://issue/I2350",
+        "kind": "issue",
+        "identity": "I2350",
+        "title": "One gate model names what a local check, a pull request, an integration and a release must run, and no second inventory exists",
+        "description": "Model the fast local, the pull-request impacted, the complete integration and the release-level checks as selections of the existing gate dispatch and claim and evidence system, with a conservative, reproducible affected-test selection that falls back to the full plan when impact cannot be proved, and diagnostics that name the cause, the reproducing command and the owner.",
+        "path": ".ai/repo/project/issues/I2350.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4056
       },
       {
         "uri": "majordomus://issue/I2396",
@@ -97582,6 +97615,149 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 6346
+      },
+      {
+        "uri": "majordomus://issue/I2521",
+        "kind": "issue",
+        "identity": "I2521",
+        "title": "What a derive costs is measured per stage and per kind of change, and every file a stage reads is listed",
+        "description": "Measure the present derive on a named commit, stage by stage, for the kinds of change the incremental design is meant to make cheap, and establish which files each stage reads, so that every later issue of this milestone is judged against a recorded baseline and a known input set.",
+        "path": ".ai/repo/project/issues/I2521.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3439
+      },
+      {
+        "uri": "majordomus://issue/I2522",
+        "kind": "issue",
+        "identity": "I2522",
+        "title": "The derivation is a typed graph in the crate: every producer is a node with declared inputs and outputs, answered by one capability",
+        "description": "Declare the derivation graph as data in the Rust crate: one node per producer, with a stable identity, input selectors, exact outputs, an operation version and edges, ordered deterministically and refused when it is unsound, and answer it through one read capability and its generated schema.",
+        "path": ".ai/repo/project/issues/I2522.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4220
+      },
+      {
+        "uri": "majordomus://issue/I2523",
+        "kind": "issue",
+        "identity": "I2523",
+        "title": "A node's key is computed from the bytes its producer reads, the index membership it enumerates and the generation of the executable",
+        "description": "Give every node of the derivation graph a deterministic SHA-256 key over its identity, its operation version, its declared inputs as the producer actually reads them, the keys of the nodes it depends on and the generation of the executable, with a schema version of its own.",
+        "path": ".ai/repo/project/issues/I2523.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3868
+      },
+      {
+        "uri": "majordomus://issue/I2524",
+        "kind": "issue",
+        "identity": "I2524",
+        "title": "majordomus derive plan and derive explain say, without writing, which nodes would run and which input moved each one",
+        "description": "Add the read-only half of incremental derivation: a planner that marks every node reuse, regenerate, invalid or blocked with its reason, and the commands derive plan, derive status and derive explain over it, declared once as capabilities and projected everywhere.",
+        "path": ".ai/repo/project/issues/I2524.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4051
+      },
+      {
+        "uri": "majordomus://issue/I2525",
+        "kind": "issue",
+        "identity": "I2525",
+        "title": "An incremental derive runs only the nodes its plan marks, a no-op derive runs no generator, and the full derive stays as it is",
+        "description": "Execute the plan of I2524: run the producers of the nodes marked regenerate in graph order, leave the others untouched, record the keys of what succeeded, and keep the present full derive reachable and unchanged as the oracle. Opt-in; the default does not change here.",
+        "path": ".ai/repo/project/issues/I2525.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4447
+      },
+      {
+        "uri": "majordomus://issue/I2526",
+        "kind": "issue",
+        "identity": "I2526",
+        "title": "The site generator's sections are nodes with inputs of their own, and the use-case scenarios run only when what they exercise changed",
+        "description": "Split stage B into the nodes its real dependencies allow, starting with the execution of the use-case scenarios, so that an edit to one canonical file does not rerun every section of the site generator, and keep a coarser node wherever a finer one cannot be shown to be both correct and faster.",
+        "path": ".ai/repo/project/issues/I2526.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4128
+      },
+      {
+        "uri": "majordomus://issue/I2527",
+        "kind": "issue",
+        "identity": "I2527",
+        "title": "An incremental derive equals a full derive byte for byte, and an omitted dependency turns a gate red",
+        "description": "Hold the invariant that an incremental derive and a clean full derive of the same inputs leave the same tracked bytes, by a differential case over disposable repositories, by mutation tests that break the graph on purpose, and by a project rule with a check that runs.",
+        "path": ".ai/repo/project/issues/I2527.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4009
+      },
+      {
+        "uri": "majordomus://issue/I2528",
+        "kind": "issue",
+        "identity": "I2528",
+        "title": "The UI shows the derivation graph and its last plan, and one documentation page explains the model",
+        "description": "Show the derivation graph, the state of each node and the reason for it on one screen of majordomus ui, reading the capabilities of I2522 and I2524 and nothing else, and complete the documentation of the model in docs/DERIVE.md so that the published site carries it.",
+        "path": ".ai/repo/project/issues/I2528.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3257
+      },
+      {
+        "uri": "majordomus://issue/I2529",
+        "kind": "issue",
+        "identity": "I2529",
+        "title": "A node's outputs are kept under its key and restored only after every digest is verified",
+        "description": "Add a local content-addressed store of node outputs: a typed manifest and the output bytes per key, published atomically, verified on read, restored into the work tree only for paths the node owns, and never able to turn a damaged entry into a success.",
+        "path": ".ai/repo/project/issues/I2529.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4197
+      },
+      {
+        "uri": "majordomus://issue/I2530",
+        "kind": "issue",
+        "identity": "I2530",
+        "title": "The derivation store is bounded and measured: its size and hit rate are read by a capability, and only an explicit command removes entries",
+        "description": "Make the store a quantity the repository measures and reclaims like its other accumulating directories: report its size, entries, hits, misses and time saved or spent, and remove entries by age and quota only through one explicit mutating command that spares entries in use.",
+        "path": ".ai/repo/project/issues/I2530.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3618
+      },
+      {
+        "uri": "majordomus://issue/I2531",
+        "kind": "issue",
+        "identity": "I2531",
+        "title": "Two worktrees deriving the same key compute it once, and the machine lock covers the write into a tree, not the computation",
+        "description": "Let the worktrees of one machine share the store safely: one computation per key at a time, each worktree's files written only by its own run, and the machine-wide derive lock narrowed to what must not interleave, with the rule that states it amended in the same change.",
+        "path": ".ai/repo/project/issues/I2531.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4112
+      },
+      {
+        "uri": "majordomus://issue/I2532",
+        "kind": "issue",
+        "identity": "I2532",
+        "title": "CI reuses derivation entries keyed by the graph, and still fails on a stale committed file whether or not the cache was restored",
+        "description": "Restore and save the derivation store in the CI job that proves the derived data current, keyed from the graph and never from a second mapping of paths, while the job's verdict remains the byte comparison against the committed files.",
+        "path": ".ai/repo/project/issues/I2532.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3947
+      },
+      {
+        "uri": "majordomus://issue/I2533",
+        "kind": "issue",
+        "identity": "I2533",
+        "title": "The incremental derive becomes the default after a shadow period proves it equal, and one flag returns to the full derive",
+        "description": "Move scripts/derive to the incremental path by default in guarded steps: a shadow mode that runs both and compares, a recorded comparison on the real repository, the switch of the default, and a tested way back.",
+        "path": ".ai/repo/project/issues/I2533.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3830
       },
       {
         "uri": "majordomus://issue/I2601",
@@ -98343,6 +98519,17 @@
         "bytes": 2258
       },
       {
+        "uri": "majordomus://issue/I3100",
+        "kind": "issue",
+        "identity": "I3100",
+        "title": "What the ChatGPT project decided is promoted into the layer, each record naming the conversation and message it came from",
+        "description": "Read every conversation of the declared workspace chatgpt-majordomus once, extract what the owner ordered, decided and learned, verify each candidate against master and the peer board, and promote what is not yet recorded as intents, milestones, issues, proposed ADRs and curated knowledge, each record citing its sources as chatgpt-majordomus:<conversation>#<message> so it drills back to its root; raw content stays in the git-ignored workspace store.",
+        "path": ".ai/repo/project/issues/I3100.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2823
+      },
+      {
         "uri": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "identity": "a-commit-stood-behind-a-build-lock",
@@ -98471,6 +98658,28 @@
         "bytes": 4617
       },
       {
+        "uri": "majordomus://milestone/a-derivation-computed-once-is-reused",
+        "kind": "milestone",
+        "identity": "a-derivation-computed-once-is-reused",
+        "title": "A derivation computed once is reused by every worktree and by CI, and the incremental path becomes the default on evidence",
+        "description": "A node's outputs are kept under its key outside every work tree, restored only after their digests are verified, bounded in size and age, and shared by the worktrees of one machine and by CI runs. The machine lock covers the moment a worktree's files are written and no longer the computation. The incremental path is the default only after the differential case, the measurements and a rollback case exist, and scripts/derive --full remains.",
+        "path": ".ai/repo/project/milestones/a-derivation-computed-once-is-reused.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 6093
+      },
+      {
+        "uri": "majordomus://milestone/a-derive-does-only-the-work-its-inputs-changed",
+        "kind": "milestone",
+        "identity": "a-derive-does-only-the-work-its-inputs-changed",
+        "title": "A derive does only the work its inputs changed, and can say why",
+        "description": "The derivation is a typed graph the executable owns: every producer is a node with declared inputs and outputs, every node has a key computed from the bytes it reads, a read-only plan says for each node whether it would be reused or regenerated and why, and an incremental run regenerates only the nodes whose keys moved. The full derivation stays as the oracle, and a test holds the incremental result byte-identical to it.",
+        "path": ".ai/repo/project/milestones/a-derive-does-only-the-work-its-inputs-changed.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 6749
+      },
+      {
         "uri": "majordomus://milestone/a-second-adopter-is-served",
         "kind": "milestone",
         "identity": "a-second-adopter-is-served",
@@ -98504,6 +98713,28 @@
         "bytes": 3523
       },
       {
+        "uri": "majordomus://milestone/an-outcome-becomes-a-reviewed-plan",
+        "kind": "milestone",
+        "identity": "an-outcome-becomes-a-reviewed-plan",
+        "title": "A desired outcome becomes a draft plan that is checked before a record is written",
+        "description": "A desired outcome enters as a typed draft: one document holding a draft intent, its gap, its milestones and the issues with what each serves and depends on. intent draft brief derives what the repository already holds about the outcome; intent draft check judges a draft with the same derivations that judge the tree, as if it were written, and writes nothing; intent draft apply writes a checked draft as records with identities allocated above the high-water mark, and refuses an unchecked one. An advisor may write the draft from the brief; without one a person or a worker writes it, and the check is the same.",
+        "path": ".ai/repo/project/milestones/an-outcome-becomes-a-reviewed-plan.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 5253
+      },
+      {
+        "uri": "majordomus://milestone/an-unmet-criterion-is-drafted-into-work",
+        "kind": "milestone",
+        "identity": "an-unmet-criterion-is-drafted-into-work",
+        "title": "An unmet criterion is drafted into work from the evidence, and the draft is the same on every run",
+        "description": "`majordomus-cli intent draft gap <intent>` prints a gap record whose conditions are derived from the evidence at the presented commit, with every observation citing the ledger execution or claim it read; `majordomus-cli intent draft plan <intent>` prints one issue draft per criterion no live issue serves, with an identity derived from the intent and the criterion, so a rerun on unchanged inputs prints the same bytes and a criterion already served prints nothing; `majordomus-cli intent next` names the next READY issue that serves an unmet criterion and whose binding would be accepted, with why each issue ranked above it was passed over; and an intent under which tasks keep finishing while no criterion changes state is named stalled. Every draft is a read: nothing is written, and a draft becomes a record only through the worker's own commit.",
+        "path": ".ai/repo/project/milestones/an-unmet-criterion-is-drafted-into-work.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 7673
+      },
+      {
         "uri": "majordomus://milestone/architecture-is-enforced",
         "kind": "milestone",
         "identity": "architecture-is-enforced",
@@ -98535,6 +98766,28 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 6038
+      },
+      {
+        "uri": "majordomus://milestone/ci-critical-path",
+        "kind": "milestone",
+        "identity": "ci-critical-path",
+        "title": "The critical path from a change to its verdict, and from a merge to its verified deploy, runs under a minute warm",
+        "description": "The change-to-verdict path runs p50 under 40 s and p95 under 60 s warm, and merge-to-verified-deploy p50 under 45 s and p95 under 60 s, measured on GitHub with warm, partial and cold reported apart, every skip of a gate explained by the repository's own impact model, and no required test removed, skipped or made advisory to reach the number.",
+        "path": ".ai/repo/project/milestones/ci-critical-path.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 2748
+      },
+      {
+        "uri": "majordomus://milestone/command-and-deployment-criteria-are-judged",
+        "kind": "milestone",
+        "identity": "command-and-deployment-criteria-are-judged",
+        "title": "A command or deployment criterion is met by a recorded run of exactly that command, or an observation of exactly that deployment, current at the presented revision",
+        "description": "A deployment criterion is met when a recorded observation of that deployment served a build containing the newest commit that changed the criterion's serving scope, and reads stale, failing or not_run otherwise, never met on an unreachable, malformed, dirty or undecided answer. A command criterion is met when a recorded execution of exactly the argument vector the criterion names exited 0 at a revision the evidence module's one freshness function judges current, with the scope it serves as its inputs; a different command exiting 0 meets nothing. Both carry the same evaluation a test criterion carries. The negative cases are executable, the claim is guaranteed with its test, and intent-lifecycle can be satisfied.",
+        "path": ".ai/repo/project/milestones/command-and-deployment-criteria-are-judged.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 7002
       },
       {
         "uri": "majordomus://milestone/cost-per-accepted-outcome",
@@ -98623,6 +98876,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 5821
+      },
+      {
+        "uri": "majordomus://milestone/finish-reads-what-its-work-serves",
+        "kind": "milestone",
+        "identity": "finish-reads-what-its-work-serves",
+        "title": "A finish reads what its work serves",
+        "description": "The completion policy asks the intent engine what stands for the work a task named, refuses completed while a served criterion is unmet or a guard is violated where the policy says completed means complete, and decides nothing about any intent.",
+        "path": ".ai/repo/project/milestones/finish-reads-what-its-work-serves.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 2957
       },
       {
         "uri": "majordomus://milestone/fly-deployment",
@@ -98810,6 +99074,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 9891
+      },
+      {
+        "uri": "majordomus://milestone/the-intent-loop-is-proved-end-to-end",
+        "kind": "milestone",
+        "identity": "the-intent-loop-is-proved-end-to-end",
+        "title": "The intent loop is proved end to end, and the plan and the documents say what it does",
+        "description": "One fixture asserts the same intent id, verdict, criterion states, binding standing, disposition and remains on the command line, HTTP, MCP and the Cockpit page. A test tries every bypass the owner packs name and each is refused or exempted by policy, never passed. One case carries a desired outcome through draft, check, opposition, bound start, recorded evidence, a refused and then accepted finish, the GitHub body, a moved revision that stales the evidence and fresh evidence that restores it. The documents and the claims say what the loop does and nothing more.",
+        "path": ".ai/repo/project/milestones/the-intent-loop-is-proved-end-to-end.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 4004
       },
       {
         "uri": "majordomus://milestone/the-mesh-works-out-of-the-box",
@@ -109058,7 +109333,7 @@
       "identity": [
         "id"
       ],
-      "objects": 424
+      "objects": 441
     },
     {
       "name": "knowledge",
@@ -109088,7 +109363,7 @@
       "identity": [
         "id"
       ],
-      "objects": 41
+      "objects": 49
     },
     {
       "name": "moment",

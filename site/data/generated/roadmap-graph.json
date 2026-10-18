@@ -177,13 +177,13 @@
       "summary": "A second adopter is served: what a foreign repository met on its first day is fixed in the tool"
     },
     {
-      "id": "a-session-leaves-what-it-observed",
+      "id": "ci-critical-path",
       "kind": "milestone",
-      "label": "a-session-leaves-what-it-observed",
-      "status": "DONE",
-      "route": "/plan/a-session-leaves-what-it-observed/",
+      "label": "ci-critical-path",
+      "status": "PLANNED",
+      "route": "/plan/ci-critical-path/",
       "external": false,
-      "summary": "A session leaves what it observed, and the repository routes it"
+      "summary": "The critical path from a change to its verdict, and from a merge to its verified deploy, runs under a minute warm"
     },
     {
       "id": "automation",
@@ -193,6 +193,15 @@
       "route": "/plan/automation/",
       "external": false,
       "summary": "Repository automation is scripted capabilities over typed Rust, not shell"
+    },
+    {
+      "id": "a-session-leaves-what-it-observed",
+      "kind": "milestone",
+      "label": "a-session-leaves-what-it-observed",
+      "status": "DONE",
+      "route": "/plan/a-session-leaves-what-it-observed/",
+      "external": false,
+      "summary": "A session leaves what it observed, and the repository routes it"
     },
     {
       "id": "runtime-trust",
@@ -294,6 +303,42 @@
       "summary": "The UI is where the owner directs the work, from an intent to its next move"
     },
     {
+      "id": "an-outcome-becomes-a-reviewed-plan",
+      "kind": "milestone",
+      "label": "an-outcome-becomes-a-reviewed-plan",
+      "status": "PLANNED",
+      "route": "/plan/an-outcome-becomes-a-reviewed-plan/",
+      "external": false,
+      "summary": "A desired outcome becomes a draft plan that is checked before a record is written"
+    },
+    {
+      "id": "the-intent-loop-is-proved-end-to-end",
+      "kind": "milestone",
+      "label": "the-intent-loop-is-proved-end-to-end",
+      "status": "PLANNED",
+      "route": "/plan/the-intent-loop-is-proved-end-to-end/",
+      "external": false,
+      "summary": "The intent loop is proved end to end, and the plan and the documents say what it does"
+    },
+    {
+      "id": "an-unmet-criterion-is-drafted-into-work",
+      "kind": "milestone",
+      "label": "an-unmet-criterion-is-drafted-into-work",
+      "status": "PLANNED",
+      "route": "/plan/an-unmet-criterion-is-drafted-into-work/",
+      "external": false,
+      "summary": "An unmet criterion is drafted into work from the evidence, and the draft is the same on every run"
+    },
+    {
+      "id": "command-and-deployment-criteria-are-judged",
+      "kind": "milestone",
+      "label": "command-and-deployment-criteria-are-judged",
+      "status": "PLANNED",
+      "route": "/plan/command-and-deployment-criteria-are-judged/",
+      "external": false,
+      "summary": "A command or deployment criterion is met by a recorded run of exactly that command, or an observation of exactly that deployment, current at the presented revision"
+    },
+    {
       "id": "everything-is-followed-in-one-stream",
       "kind": "milestone",
       "label": "everything-is-followed-in-one-stream",
@@ -310,6 +355,24 @@
       "route": "/plan/the-mesh-works-out-of-the-box/",
       "external": false,
       "summary": "The mesh works out of the box: trusted machines find each other by every means and their sessions cooperate from the first turn"
+    },
+    {
+      "id": "a-derive-does-only-the-work-its-inputs-changed",
+      "kind": "milestone",
+      "label": "a-derive-does-only-the-work-its-inputs-changed",
+      "status": "PLANNED",
+      "route": "/plan/a-derive-does-only-the-work-its-inputs-changed/",
+      "external": false,
+      "summary": "A derive does only the work its inputs changed, and can say why"
+    },
+    {
+      "id": "a-derivation-computed-once-is-reused",
+      "kind": "milestone",
+      "label": "a-derivation-computed-once-is-reused",
+      "status": "BLOCKED",
+      "route": "/plan/a-derivation-computed-once-is-reused/",
+      "external": false,
+      "summary": "A derivation computed once is reused by every worktree and by CI, and the incremental path becomes the default on evidence"
     },
     {
       "id": "runtime-adapters",
@@ -357,6 +420,15 @@
       "summary": "Cost per accepted outcome, only on measured data"
     },
     {
+      "id": "finish-reads-what-its-work-serves",
+      "kind": "milestone",
+      "label": "finish-reads-what-its-work-serves",
+      "status": "BLOCKED",
+      "route": "/plan/finish-reads-what-its-work-serves/",
+      "external": false,
+      "summary": "A finish reads what its work serves"
+    },
+    {
       "id": "routing-recommendations",
       "kind": "milestone",
       "label": "0.5  routing-recommendations",
@@ -399,6 +471,11 @@
     {
       "source": "execution-telemetry",
       "target": "cost-per-accepted-outcome",
+      "kind": "requires"
+    },
+    {
+      "source": "intent-bound-work",
+      "target": "finish-reads-what-its-work-serves",
       "kind": "requires"
     },
     {
