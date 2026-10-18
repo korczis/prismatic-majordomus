@@ -93,6 +93,19 @@ pub fn inspector_closing_to(intents: &Answer, issues: &Answer, id: &str, close: 
                 .and_then(Value::as_array)
                 .cloned()
                 .unwrap_or_default();
+            // the records the intent's prose may name: every issue of the plan and every
+            // milestone the intent names that the plan resolves; an id links only to those (I3000)
+            let known = super::prose::Known {
+                issues: list(issues, "/issues")
+                    .iter()
+                    .map(|x| text(x, "id"))
+                    .collect(),
+                milestones: milestones
+                    .iter()
+                    .filter(|m| m.get("resolved").and_then(Value::as_bool) == Some(true))
+                    .map(|m| text(m, "id"))
+                    .collect(),
+            };
             let serving: Vec<Value> = list(issues, "/issues")
                 .into_iter()
                 .filter(|x| strings(x, "serves").iter().any(|s| intent_of(s) == id))
@@ -117,7 +130,7 @@ pub fn inspector_closing_to(intents: &Answer, issues: &Answer, id: &str, close: 
                                 .child(
                                     el("span")
                                         .class("mj-ui-cell-title")
-                                        .text(text(c, "criterion")),
+                                        .nodes(super::prose::inline(&text(c, "criterion"), &known)),
                                 ),
                         )
                         .child(el("td").class("mj-ui-mono").text(text(c, "evidence")))
@@ -163,7 +176,7 @@ pub fn inspector_closing_to(intents: &Answer, issues: &Answer, id: &str, close: 
                                 ),
                         ),
                 )
-                .child(el("p").class("mj-ui-lead").text(text(&i, "statement")))
+                .child(super::prose::paragraph(&text(&i, "statement"), &known))
                 .child(
                     el("h4")
                         .class("mj-ui-panel-title")
@@ -174,9 +187,7 @@ pub fn inspector_closing_to(intents: &Answer, issues: &Answer, id: &str, close: 
                     if inv.is_empty() {
                         nothing("It declares no invariant.")
                     } else {
-                        el("ul")
-                            .class("mj-ui-prose-list")
-                            .children(inv.into_iter().map(|t| el("li").text(t)))
+                        super::prose::bullets(&inv, &known)
                     }
                 })
                 .child(

@@ -245,7 +245,7 @@ fn render(
                 .child(wide(milestones(roadmap, intent)))
                 .child(wide(issue_table(issues, waves, next, &mine, id)))
                 .child(wide(moves_panel(moves, &mine)))
-                .child(wide(wave_panel(waves, &mine)))
+                .child(wide(wave_panel(waves, &mine, &known(issues, roadmap))))
                 .child(wide(dependency_graph(issues, &mine)));
         }
     }
@@ -503,7 +503,7 @@ fn move_panel(ctx: &Context, issues: &Answer, mine: &[Value], issue: &str) -> El
 
 /// The waves the intent's issues occupy, as `plan.waves` layers the whole plan, and the
 /// scope conflicts among them that serialise issues of one wave.
-fn wave_panel(waves: &Answer, mine: &[Value]) -> El {
+fn wave_panel(waves: &Answer, mine: &[Value], known: &super::prose::Known) -> El {
     let ids: BTreeSet<String> = mine.iter().map(|x| text(x, "id")).collect();
     let body = unanswered(waves).unwrap_or_else(|| {
         let rows = list(waves, "/waves")
@@ -547,7 +547,7 @@ fn wave_panel(waves: &Answer, mine: &[Value]) -> El {
                 el("li")
                     .child(chip(issue_href(&subject), subject))
                     .child(el("span").text(" "))
-                    .children(linked_issues(&text(f, "message")))
+                    .nodes(super::prose::inline(&text(f, "message"), known))
             })
             .collect();
         let mut body = el("div").class("mj-ui-stack").child(table(
@@ -577,42 +577,19 @@ fn wave_panel(waves: &Answer, mine: &[Value]) -> El {
     )
 }
 
-/// A sentence of the plan's own words with every issue id in it a link to that issue, the
-/// brackets and punctuation around an id kept as they were (I2900). A path segment
-/// (`src/I0001`) is a path, never an issue.
-fn linked_issues(message: &str) -> Vec<El> {
-    // the words between two ids stay one run of text, so a sentence without an id reads
-    // exactly as it was written
-    let mut out = Vec::new();
-    let mut run = String::new();
-    for (n, word) in message.split(' ').enumerate() {
-        if n > 0 {
-            run.push(' ');
-        }
-        let core = word
-            .trim_start_matches(['(', '['])
-            .trim_end_matches([')', ']', ',', ';', '.', ':']);
-        let is_issue = core.len() > 1
-            && core.starts_with('I')
-            && core[1..].bytes().all(|b| b.is_ascii_digit());
-        if !is_issue {
-            run.push_str(word);
-            continue;
-        }
-        // where the id starts: `core` is `word` with its opening brackets trimmed off the front,
-        // so the offset is the length of what was trimmed, and there is nothing to default
-        let at = word.len() - word.trim_start_matches(['(', '[']).len();
-        run.push_str(&word[..at]);
-        if !run.is_empty() {
-            out.push(el("span").text(std::mem::take(&mut run)));
-        }
-        out.push(chip(issue_href(core), core.to_string()));
-        run.push_str(&word[at + core.len()..]);
+/// The records the workspace's prose may name: every issue and every milestone the plan holds, so
+/// an id in a sentence is a link exactly when there is a record behind it (I3000).
+fn known(issues: &Answer, roadmap: &Answer) -> super::prose::Known {
+    super::prose::Known {
+        issues: list(issues, "/issues")
+            .iter()
+            .map(|x| text(x, "id"))
+            .collect(),
+        milestones: list(roadmap, "/milestones")
+            .iter()
+            .map(|m| text(m, "id"))
+            .collect(),
     }
-    if !run.is_empty() {
-        out.push(el("span").text(run));
-    }
-    out
 }
 
 /// The dependency graph of the intent's issues: each a node in the tone of its status, each
@@ -751,7 +728,9 @@ pub fn standing_panel(ctx: &Context, query: &[(String, String)]) -> View {
         "intent_realization.explain",
         serde_json::json!({ "id": id }),
     );
-    let body = standing_body(&id, &explain);
+    // the records its sentences may name, read from the plan's own answers (I3000)
+    let plan = ask_all(ctx, &[ISSUES, ROADMAP]);
+    let body = standing_body(&id, &explain, &known(&plan[&ISSUES], &plan[&ROADMAP]));
     View::new(
         "Why it stands where it stands",
         panel(
@@ -765,7 +744,7 @@ pub fn standing_panel(ctx: &Context, query: &[(String, String)]) -> View {
 
 /// The standing of intent `id` as `intent_realization.explain` answered it: the sentences, the
 /// unmet criteria, the work realising it and its drift; or why there is no answer.
-fn standing_body(id: &str, explain: &Answer) -> El {
+fn standing_body(id: &str, explain: &Answer, known: &super::prose::Known) -> El {
     unanswered(explain).unwrap_or_else(|| {
         let because = list(explain, "/because");
         let unmet = list(explain, "/realization/unmet");
@@ -775,7 +754,7 @@ fn standing_body(id: &str, explain: &Answer) -> El {
             because
                 .iter()
                 .filter_map(Value::as_str)
-                .map(|line| el("li").children(linked_issues(line))),
+                .map(|line| el("li").nodes(super::prose::inline(line, known))),
         );
         let criteria = table(
             &["Criterion", "Evidence", "State", "Reproduce", "Served by"],
@@ -842,7 +821,7 @@ fn standing_body(id: &str, explain: &Answer) -> El {
                 .class("mj-ui-prose-list")
                 .children(findings.iter().map(
                     |f| match f.get("message").and_then(Value::as_str) {
-                        Some(m) => el("li").children(linked_issues(m)),
+                        Some(m) => el("li").nodes(super::prose::inline(m, known)),
                         None => el("li").text(f.to_string()),
                     },
                 ));
@@ -1204,13 +1183,17 @@ mod tests {
                 "realization": {
                     "unmet": [],
                     "findings": [
-                        { "message": "the scope drifted past src/a.rs (I7)" },
+                        { "message": "the scope drifted past `src/a.rs` (I7), not I99" },
                         { "kind": "orphan", "subject": "t-3" },
                     ],
                 },
             })),
         );
-        let html = standing_body("i", &explain).render();
+        let known = super::super::prose::Known {
+            issues: ["I7".to_string()].into(),
+            milestones: Default::default(),
+        };
+        let html = standing_body("i", &explain, &known).render();
         assert!(html.contains("The work realising it"), "{html}");
         assert!(
             html.contains(">task t-1</span>"),
@@ -1233,8 +1216,8 @@ mod tests {
         );
         assert!(html.contains(">Drift</h3>"), "{html}");
         assert!(
-            html.contains("<li><span>the scope drifted past src/a.rs (</span><a class=\"mj-ui-chip mj-ui-chip--link\" href=\"/ui/prs?issue=I7#issue\">"),
-            "a drift message reads whole, its issue id a link (I2900): {html}"
+            html.contains("<li>the scope drifted past <code class=\"mj-ui-code\">src/a.rs</code> (<a class=\"mj-ui-link mj-ui-mono\" href=\"/ui/prs?issue=I7#issue\">I7</a>), not I99</li>"),
+            "a drift message is prose: its path is code, the issue the plan holds a link, one it does not hold text (I3000): {html}"
         );
         assert!(
             html.contains("&quot;kind&quot;:&quot;orphan&quot;"),
@@ -1247,7 +1230,7 @@ mod tests {
                 serde_json::json!({ "because": [], "work": [], "realization": { "unmet": [], "findings": [] } }),
             ),
         );
-        let html = standing_body("i", &calm).render();
+        let html = standing_body("i", &calm, &known).render();
         assert!(
             !html.contains(">Drift</h3>"),
             "no drift, no heading: {html}"
@@ -1257,60 +1240,6 @@ mod tests {
             "{html}"
         );
         assert!(html.contains("Every criterion is met."), "{html}");
-    }
-
-    /// A sentence keeps every word between two ids as one run of text, and each id becomes a
-    /// link with the brackets and punctuation around it kept as written; a word that only
-    /// looks like an id (one letter, or letters after the I) stays text (I2900).
-    #[test]
-    fn a_sentence_links_its_ids_and_keeps_its_words() {
-        let html = |m: &str| -> String { linked_issues(m).iter().map(El::render).collect() };
-
-        let plain = html("no issue is named here");
-        assert_eq!(
-            plain, "<span>no issue is named here</span>",
-            "one run: {plain}"
-        );
-
-        let first = html("I7 is ready");
-        assert!(
-            first.starts_with("<a "),
-            "an id first opens with its link: {first}"
-        );
-        assert!(
-            first.contains(&issue_href("I7")) && first.ends_with("<span> is ready</span>"),
-            "{first}"
-        );
-
-        let wrapped = html("waits for (I7), then [I8].");
-        assert!(
-            wrapped.contains("<span>waits for (</span>"),
-            "the text and the bracket before: {wrapped}"
-        );
-        assert!(
-            wrapped.contains("<span>), then [</span>"),
-            "between two ids, one run: {wrapped}"
-        );
-        assert!(
-            wrapped.ends_with("<span>].</span>"),
-            "the punctuation after the last id: {wrapped}"
-        );
-        assert!(
-            wrapped.contains(&issue_href("I7")) && wrapped.contains(&issue_href("I8")),
-            "{wrapped}"
-        );
-
-        let alone = html("I8");
-        assert!(
-            alone.contains(&issue_href("I8")) && !alone.contains("<span>"),
-            "{alone}"
-        );
-
-        let lookalike = html("I and Ix and I7x are words");
-        assert!(
-            !lookalike.contains("<a "),
-            "no lookalike is a link: {lookalike}"
-        );
     }
 
     /// The headline numbers are the chosen intent's own, each read from its record and citing
@@ -1499,7 +1428,7 @@ mod tests {
             })),
         );
         let mine = vec![serde_json::json!({ "id": "I1" })];
-        let html = wave_panel(&waves, &mine).render();
+        let html = wave_panel(&waves, &mine, &Default::default()).render();
         assert!(html.contains(">8</td>"), "{html}");
         assert!(!html.contains(">7</td>"), "{html}");
         assert!(!html.contains("OTHER"), "{html}");
