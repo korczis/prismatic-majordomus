@@ -106,8 +106,7 @@ if ! command -v flock >/dev/null 2>&1 || ! command -v lsof >/dev/null 2>&1; then
   stale_kept; never_all
   expect_grep 'flock\(1\) is not installed|could not be read \(lsof\)'
   echo "    ok (degraded): without flock(1) or lsof nothing is removed, and that is said"
-  exit 0
-fi
+else
 
 # hold <path>: a process that holds that file open until the case ends
 hold() {
@@ -186,3 +185,4 @@ expect_grep "$B/debug not swept: in use by [0-9]+ "
 cleanup_pids
 
 echo "    ok: stale generations are removed whole in every profile; recent, open, foreign and unhashed ones stay; nothing is removed under cargo's lock or while a process names the profile"
+fi

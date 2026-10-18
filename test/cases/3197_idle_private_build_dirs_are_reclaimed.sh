@@ -73,8 +73,7 @@ if ! command -v flock >/dev/null 2>&1; then
     [ -e "$P/$d" ] || { echo "    without flock(1) the sweep removed $d"; exit 1; }
   done
   echo "    ok (degraded): without flock(1) no build's lock can be asked, and nothing is removed"
-  exit 0
-fi
+else
 
 # ---------------------------------------------------------------- the idle one goes, nothing else
 fixture
@@ -121,3 +120,4 @@ sweep MAJORDOMUS_PRIVATE_BUILD_IDLE_MIN=0
 [ "$RC" = 0 ] && [ -z "$OUT" ] && [ -e "$P/idle" ] || { echo "    an age of 0 was not a no-op: $OUT"; exit 1; }
 
 echo "    ok: an idle private build directory is removed whole; a recent, held, used, unmarked, linked or current one stays; the look is rate-limited"
+fi
