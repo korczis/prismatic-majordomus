@@ -39689,6 +39689,44 @@
         }
       },
       {
+        "id": "majordomus://issue/I2943",
+        "kind": "issue",
+        "label": "I2943",
+        "summary": "A mesh this process is not on is said as not observed, never as zero or no",
+        "route": "/cockpit/objects/issue/i2943",
+        "source": ".ai/repo/project/issues/I2943.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A served /ui/mesh of a repository whose mesh is off says 'not observed' with the reason, and contains no 'Mesh active', 'Journal clock', machine count or empty-mesh sentence",
+            "The dashboard of the same repository says the mesh was not observed and draws no 'Mesh machines' count",
+            "A running mesh is drawn with its counts as before"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "An unobserved mesh is drawn as 'Mesh active: no', 'Machines: 0' and 'Journal clock: 0' on /ui/mesh, and as 'Mesh active: no' on the dashboard.",
+          "depends_on": [],
+          "desired_state": "Both say 'not observed: this runtime is not on the mesh (<reason>)' and draw no figure; a running mesh is drawn as before.",
+          "evidence_required": [
+            "unobserved_mesh_case"
+          ],
+          "milestone": "surfaces-never-disagree",
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui/view.rs",
+            "apps/majordomus-cli/src/ui/mesh.rs",
+            "apps/majordomus-cli/src/ui/dashboard.rs",
+            "test/cases/3343_an_unobserved_mesh_is_never_zero.sh"
+          ],
+          "slug": "an-unobserved-mesh-is-not-zero",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "cargo test --lib ui::",
+            "bash test/run.sh 3343_an_unobserved_mesh_is_never_zero 1089_the_work_and_mesh_screens_answer"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "label": "a-commit-stood-behind-a-build-lock",
@@ -57495,6 +57533,13 @@
         "label": "test/cases/333_homepage_narrative.sh",
         "route": "/cockpit/objects/test/test-cases-333-homepage-narrative-sh",
         "source": "test/cases/333_homepage_narrative.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3343_an_unobserved_mesh_is_never_zero.sh",
+        "kind": "test",
+        "label": "test/cases/3343_an_unobserved_mesh_is_never_zero.sh",
+        "route": "/cockpit/objects/test/test-cases-3343-an-unobserved-mesh-is-never-zero-sh",
+        "source": "test/cases/3343_an_unobserved_mesh_is_never_zero.sh"
       },
       {
         "id": "majordomus://test/test/cases/334_ui_audit_hears_uncaught_errors.sh",
@@ -84399,6 +84444,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2943",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2943",
+        "target": "majordomus://milestone/surfaces-never-disagree",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -89145,6 +89200,11 @@
       },
       {
         "source": "majordomus://test/test/cases/333_homepage_narrative.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3343_an_unobserved_mesh_is_never_zero.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -94405,8 +94465,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2959,
-      "edges": 6500,
+      "nodes": 2961,
+      "edges": 6503,
       "acyclic": false,
       "truncated": false
     }
