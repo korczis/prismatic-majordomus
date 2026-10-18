@@ -579,7 +579,7 @@ pub(crate) fn each_checkout<C: Sync, T: Send>(
     ask: impl Fn(&C) -> T + Sync,
 ) -> Vec<T> {
     use std::sync::atomic::{AtomicUsize, Ordering};
-    use std::sync::Mutex;
+    use std::sync::{Mutex, PoisonError};
     if checkouts.len() <= 1 {
         return checkouts.iter().map(ask).collect();
     }
@@ -592,7 +592,7 @@ pub(crate) fn each_checkout<C: Sync, T: Send>(
                 break;
             };
             let answer = ask(checkout);
-            *answers[i].lock().unwrap_or_else(|e| e.into_inner()) = Some(answer);
+            *answers[i].lock().unwrap_or_else(PoisonError::into_inner) = Some(answer);
         };
         for _ in 1..ASKED_AT_ONCE.min(checkouts.len()) {
             let _ = std::thread::Builder::new()
@@ -603,7 +603,7 @@ pub(crate) fn each_checkout<C: Sync, T: Send>(
     });
     answers
         .into_iter()
-        .filter_map(|a| a.into_inner().unwrap_or_else(|e| e.into_inner()))
+        .filter_map(|a| a.into_inner().unwrap_or_else(PoisonError::into_inner))
         .collect()
 }
 
@@ -615,7 +615,7 @@ fn server_status(ctx: &Context, input: ServerStatusInput) -> Result<ServerStatus
     let linked = git.as_ref().is_some_and(|g| g.linked);
     let checkouts = checkouts_of(&root, git.as_ref(), input.checkouts);
     let servers = each_checkout(&checkouts, |(path, branch, primary)| {
-        let worktree = path.canonicalize().unwrap_or_else(|_| path.clone());
+        let worktree = path.canonicalize().unwrap_or(path.clone());
         let (standing, reason, read) = standing_at(&worktree, &local_half);
         let peers = match standing {
             // this process's own board is in memory; asking it over the wire would queue

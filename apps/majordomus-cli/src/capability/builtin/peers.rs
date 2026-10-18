@@ -185,7 +185,7 @@ fn peers_list(ctx: &Context, input: PeerListInput) -> Result<PeerList, Capabilit
     // every checkout is asked at once, a bounded number at a time (server::each_checkout,
     // I2987), and the answers are folded in the order git lists the checkouts
     let read = server::each_checkout(&checkouts, |(path, branch, _primary)| {
-        let worktree = path.canonicalize().unwrap_or_else(|_| path.clone());
+        let worktree = path.canonicalize().unwrap_or(path.clone());
         let this_checkout = worktree == root;
         let checkout = PeerCheckout {
             id: repository::identity(&worktree),

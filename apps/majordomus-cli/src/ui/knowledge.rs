@@ -676,4 +676,35 @@ mod tests {
         })));
         assert!(!read(json!({})));
     }
+
+    /// Every judgement the status can carry is said in its own words: learned from, stopped,
+    /// not judged, and a status that carries no judgement at all.
+    #[test]
+    fn each_judgement_of_the_deriver_is_said_in_words() {
+        // a ledger line, so the panel judges rather than saying no ledger is recorded here
+        let said = |mut value: Value| {
+            value["closed_without_derivation"] = json!(1);
+            deriver(&answer(STATUS, value)).render()
+        };
+        let learned = said(json!({ "judged": true, "stopped_writer": false }));
+        assert!(
+            learned.contains("yes: the newest closed session was learned from"),
+            "{learned}"
+        );
+        let stopped = said(json!({ "judged": true, "stopped_writer": true }));
+        assert!(
+            stopped.contains("no: sessions close and nothing was learned from the newest"),
+            "{stopped}"
+        );
+        let unjudged = said(json!({ "judged": false }));
+        assert!(
+            unjudged.contains("not judged; the findings say why"),
+            "{unjudged}"
+        );
+        let silent = said(json!({}));
+        assert!(
+            silent.contains("the status carries no judgement"),
+            "{silent}"
+        );
+    }
 }
