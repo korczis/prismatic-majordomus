@@ -609,9 +609,11 @@ through the same records and the same stable pointer as the installer does.
 ## Package managers
 
 The release model is the primary contract and it is package-manager neutral: an archive per
-target with a digest, and a machine-readable index. A Homebrew formula, an APT repository,
-a Nix derivation or a container image would each read that index rather than replacing it,
-and none of them is implemented. Nothing in the model prevents one.
+target with a digest, and a machine-readable index. A Homebrew formula, an APT repository
+or a Nix derivation would each read that index rather than replacing it, and none of them is
+implemented. Nothing in the model prevents one. The container image is the one consumer that
+exists: the release workflow's `image` job builds it from the release's own Linux archives
+and pushes it to the GitHub container registry under the release's tag.
 
 Windows is representable — the schema carries `zip`, a `binary_suffix` and a `windows`
 operating system — and is declared `unavailable` with its reason: the command a person runs

@@ -687,7 +687,12 @@ PLATFORM
   if [ -n "$current" ] && [ "$MJ_FORCE" = 0 ]; then
     if [ "$current" = "$MJ_VERSION" ]; then
       say "$MJ_BINARY v$MJ_VERSION is already installed at $MJ_INSTALL_DIR/$MJ_BINARY."
-      [ "$MJ_INIT" = 1 ] && run_init
+      # A dry run changes nothing, and initialising a repository is a change (I2942).
+      if [ "$MJ_INIT" = 1 ] && [ "$MJ_DRY_RUN" = 1 ]; then
+        say "dry run: would run $MJ_BINARY init$( [ "$MJ_PERSONAL" = 1 ] && echo ' --personal') in $(pwd); nothing was changed."
+      elif [ "$MJ_INIT" = 1 ]; then
+        run_init
+      fi
       exit 0
     fi
     if [ "$MJ_PINNED" = 0 ] && version_ge "$current" "$MJ_VERSION"; then

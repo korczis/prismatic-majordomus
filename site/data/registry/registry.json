@@ -6,23 +6,23 @@
     "version": "0.29.0"
   },
   "registry": {
-    "fingerprint": "cfc64482a6796b12eb023f81f50b88a5ee38b5494bb09da51600c6a17806b6c0",
+    "fingerprint": "713b86a082036da4845957fd89667aeff5902f84cdb7d453db736dd30a5086cf",
     "summary": {
-      "total": 2527,
+      "total": 2529,
       "builtin": 202,
-      "declarative": 2325,
+      "declarative": 2327,
       "by_kind": {
         "command": 31,
         "query": 171,
-        "resource": 2325
+        "resource": 2327
       },
       "by_stability": {
         "behaviorally_verified": 141,
         "experimental": 52,
-        "implemented": 2334
+        "implemented": 2336
       },
       "mcp_tools": 192,
-      "mcp_resources": 2380,
+      "mcp_resources": 2382,
       "http_routes": 197,
       "cli_commands": 108,
       "modules": 92,
@@ -83231,7 +83231,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 424,
+        "capabilities": 425,
         "capability_ids": []
       },
       {
@@ -83802,7 +83802,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 527,
+        "capabilities": 528,
         "capability_ids": []
       },
       {
@@ -83893,7 +83893,7 @@
     ]
   },
   "index": {
-    "fingerprint": "ebbdaff489cce67fe99b529aa57475e97fbadbd238fabae0d224eb928298d8a1",
+    "fingerprint": "7ecdef85fcb9e330de5f59e77b2970d0d8e0b1d29c70b9c35a3be11ecc6db4f8",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -83933,7 +83933,7 @@
       "gap": 4,
       "implementation": 52,
       "intent": 5,
-      "issue": 424,
+      "issue": 425,
       "knowledge": 4,
       "mesh-declaration": 1,
       "milestone": 41,
@@ -83947,7 +83947,7 @@
       "session": 90,
       "skill": 8,
       "taxonomy": 10,
-      "test": 527,
+      "test": 528,
       "use-case": 49,
       "workspace": 1
     },
@@ -89918,7 +89918,7 @@
         "title": "Distribution",
         "path": "docs/DISTRIBUTION.md",
         "source_class": "document",
-        "bytes": 37968
+        "bytes": 38157
       },
       {
         "uri": "majordomus://document/docs/DOCTRINE.md",
@@ -90071,7 +90071,7 @@
         "title": "Installing Majordomus",
         "path": "docs/INSTALL.md",
         "source_class": "document",
-        "bytes": 14499
+        "bytes": 14685
       },
       {
         "uri": "majordomus://document/docs/INTEGRATION.md",
@@ -90206,7 +90206,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 170002
+        "bytes": 172523
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -98343,6 +98343,17 @@
         "bytes": 2258
       },
       {
+        "uri": "majordomus://issue/I2942",
+        "kind": "issue",
+        "identity": "I2942",
+        "title": "An installer dry run changes nothing, and the install guide says only what is true",
+        "description": "Stop `install.sh --dry-run --init` from initialising the repository when the resolved version is already installed, and correct what the install and distribution documents state by hand that is not true: the clone directory of the build-from-source steps, provenance for releases before attestation existed, the one call to GitHub the installer can make, and the container image the release workflow already publishes.",
+        "path": ".ai/repo/project/issues/I2942.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2722
+      },
+      {
         "uri": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "identity": "a-commit-stood-behind-a-build-lock",
@@ -106096,6 +106107,14 @@
         "bytes": 31946
       },
       {
+        "uri": "majordomus://test/test/cases/3342_a_dry_run_initialises_nothing.sh",
+        "kind": "test",
+        "identity": "test/cases/3342_a_dry_run_initialises_nothing.sh",
+        "path": "test/cases/3342_a_dry_run_initialises_nothing.sh",
+        "source_class": "case",
+        "bytes": 2453
+      },
+      {
         "uri": "majordomus://test/test/cases/334_ui_audit_hears_uncaught_errors.sh",
         "kind": "test",
         "identity": "test/cases/334_ui_audit_hears_uncaught_errors.sh",
@@ -109058,7 +109077,7 @@
       "identity": [
         "id"
       ],
-      "objects": 424
+      "objects": 425
     },
     {
       "name": "knowledge",
@@ -109210,7 +109229,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 527
+      "objects": 528
     },
     {
       "name": "use-case",

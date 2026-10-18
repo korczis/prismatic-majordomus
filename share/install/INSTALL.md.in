@@ -160,8 +160,10 @@ the tool's, and no command of this project deletes them.
 {{releases}}
 
 Each release publishes one archive per supported target plus a `{{checksums_file}}` file, and
-its metadata is served as JSON beside the installer. The installer reads that JSON and never
-GitHub's API or HTML, so a change in GitHub's pages cannot break an installation.
+its metadata is served as JSON beside the installer. The installer resolves a release from
+that JSON, never from GitHub's API or HTML, so a change in GitHub's pages cannot break an
+installation. The one call to GitHub it can make is the optional provenance check below,
+through the GitHub CLI.
 
 ## Security model
 
@@ -188,7 +190,8 @@ What is protected, and how:
 What remains trusted: GitHub Pages serving the metadata, GitHub Releases serving the
 artifacts, and the release pipeline that produced both. Checksums bind the artifact to the
 metadata; they do not, on their own, prove who wrote the metadata. That is what provenance
-is for: every release archive is attested by the release workflow, and where the GitHub CLI
+is for: every release archive since v0.20.0 is attested by the release workflow (earlier ones
+carry their checksums only), and where the GitHub CLI
 is installed and signed in the installer asks it whether this archive was built by this
 repository's workflow. The closing report says which it verified — `provenance (…) and
 checksum`, or `checksum only` with the reason. `MAJORDOMUS_REQUIRE_PROVENANCE=1` installs
@@ -243,7 +246,7 @@ For contributors, not for installation. The repository's own tooling is document
 `CONTRIBUTING.md`:
 
 ```bash
-git clone https://github.com/{{repository}}
+git clone https://github.com/{{repository}} {{binary}}
 cd {{binary}}
 cargo build --release --manifest-path apps/majordomus-cli/Cargo.toml
 ```
