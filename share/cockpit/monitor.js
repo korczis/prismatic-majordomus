@@ -107,8 +107,11 @@ function add(frame, signals) {
 function live(frame) {
   const path = frame.dataset.mjMonitorLive;
   const note = frame.querySelector('[data-mj-monitor-note]');
+  // a gap the server could not fill stays said until the page is read again: the list may be
+  // missing something, and "Live" after it is true of what follows, not of what came before
+  let gap = '';
   const say = (text) => {
-    if (note) note.textContent = text;
+    if (note) note.textContent = gap ? `${text} ${gap}` : text;
   };
   if (!path || typeof WebSocket === 'undefined') {
     poll(frame, frame.dataset.mjMonitorCursor || '', say);
@@ -134,10 +137,10 @@ function live(frame) {
     resync(reason) {
       // a reconnection resumes from the channel's own cursor: nothing is missing
       if (reason === 'reconnect') return;
-      say(
-        `The server could not continue from this page's cursor (${reason}); ` +
-          'a refresh shows what may be missing.',
-      );
+      gap =
+        `Earlier signals may be missing: the server could not continue from this page's ` +
+        `cursor (${reason}); reload the page to see them.`;
+      say('Live from now on.');
     },
   });
   // a channel that never opens is not waited for: the page polls, and says so

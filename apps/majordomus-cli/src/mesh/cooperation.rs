@@ -1179,8 +1179,10 @@ pub const MAX_TARGETS_PER_NODE: usize = 8;
 
 /// `text` cut to at most `max` bytes on a character boundary, with control characters
 /// removed: what the journal's single-line bounds accept, so a projection never fails
-/// validation on a long or multi-byte title and silently retries forever.
-fn clip(text: &str, max: usize) -> String {
+/// validation on a long or multi-byte title and silently retries forever. A reader that
+/// matches a projection against what it was projected from cuts the same way (the
+/// blackboard's join).
+pub(crate) fn clip(text: &str, max: usize) -> String {
     let mut out = String::new();
     for c in text.chars().filter(|c| !c.is_control()) {
         if out.len() + c.len_utf8() > max {

@@ -54,9 +54,11 @@ export function follow(path, handlers) {
   const single = followsOne(path);
   let cursor = cursorOf(path);
   const last = new Map();
-  // a blackboard channel resumes by the opaque cursor and the epoch that issued it
+  // a blackboard channel resumes by the opaque cursor and the epoch that issued it; no cursor
+  // (`null`) is a fresh start from now, and an empty one is the start of the stream: a page
+  // rendered when nothing had happened yet resumes from there, so nothing since is missed
   const board = followsBoard(path);
-  let tail = board ? paramOf(path, 'after') : '';
+  let tail = board ? cursorParam(path) : null;
   let epoch = board ? paramOf(path, 'epoch') : '';
   // the replay began after the cursor's history was already dropped: the first event it
   // writes starts the picture, and is not a gap
@@ -82,7 +84,7 @@ export function follow(path, handlers) {
     if (board) {
       target.searchParams.delete('after');
       target.searchParams.delete('epoch');
-      if (tail && epoch) {
+      if (tail !== null && epoch) {
         target.searchParams.set('after', tail);
         target.searchParams.set('epoch', epoch);
       }
@@ -181,8 +183,16 @@ export function follow(path, handlers) {
         const data = frame.data || {};
         if (Number(data.heartbeat_seconds) > 0) heartbeat = Number(data.heartbeat_seconds);
         rebase = data.truncated === true;
-        // a cursor of another process is worth nothing here: the server says resync
-        if (board && typeof data.epoch === 'string') epoch = data.epoch;
+        // A cursor is good only with the epoch that issued it, so the two change together.
+        // A server of another epoch says resync, but the connection may drop before that
+        // frame arrives: the cursor is dropped here, on the new epoch, and the page is told,
+        // so that no later connection offers it with an epoch that never issued it.
+        if (board && typeof data.epoch === 'string' && data.epoch !== epoch) {
+          const stale = tail !== null;
+          tail = null;
+          epoch = data.epoch;
+          if (stale && handlers.resync) handlers.resync('the epoch changed before its resync arrived');
+        }
         arm();
         if (handlers.ready) handlers.ready(data);
         return;
@@ -190,7 +200,7 @@ export function follow(path, handlers) {
       if (frame.type === 'stream.resync') {
         // the server could not serve the cursor and starts again from what it holds now:
         // the page's picture before this frame may miss something
-        tail = '';
+        tail = null;
         if (handlers.resync) handlers.resync((frame.data && frame.data.reason) || 'resync');
         return;
       }
@@ -252,6 +262,14 @@ function followsOne(path) {
 
 function followsBoard(path) {
   return paramOf(path, 'follow') === 'blackboard';
+}
+
+function cursorParam(path) {
+  try {
+    return new URL(path, window.location.href).searchParams.get('after');
+  } catch (e) {
+    return null;
+  }
 }
 
 function paramOf(path, name) {

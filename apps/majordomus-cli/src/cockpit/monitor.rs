@@ -88,14 +88,13 @@ pub fn page(ctx: &Context, query: &[(String, String)]) -> Page {
         .text("While this page is open the server pushes what happens and it is added on top.");
     let mut source_url = "/api/v1/monitor?limit=200".to_string();
     let mut live_url = format!("/events?follow=blackboard&frames=signals&sources={SOURCES}");
-    // a first page with no cursor (nothing recorded yet) starts the channel from now
-    if !page.cursor.is_empty() {
-        live_url.push_str(&format!(
-            "&after={}&epoch={}",
-            percent_encode(&page.cursor),
-            percent_encode(&crate::http::follow::epoch(ctx))
-        ));
-    }
+    // the page's cursor always, an empty one too: it is the start of the stream, so a page
+    // rendered before anything happened resumes from there and misses nothing since
+    live_url.push_str(&format!(
+        "&after={}&epoch={}",
+        percent_encode(&page.cursor),
+        percent_encode(&crate::http::follow::epoch(ctx))
+    ));
     if let Some(reader) = &reader {
         source_url.push_str(&format!("&for={}", percent_encode(reader)));
         live_url.push_str(&format!("&for={}", percent_encode(reader)));
