@@ -130,9 +130,10 @@ written or ingested. A follower waits on that generation. The frames are:
 | frame | when |
 |---|---|
 | `stream.ready` | first; carries the server's `epoch` |
-| `blackboard.snapshot` | on connect, and whenever what the blackboard says changed |
-| `blackboard.signals` | what happened after the connection's cursor, with the new cursor |
+| `blackboard.snapshot` | on connect, and whenever what the blackboard says changed; carries the connection's `cursor` |
+| `blackboard.signals` | what happened after the connection's cursor, one frame per page, each with the cursor of its last signal |
 | `stream.resync` | the cursor or epoch sent cannot be served; the snapshot after it starts again |
+| `stream.lagged` | changes passed while the connection was still being written to; the next snapshot holds them |
 | `stream.heartbeat`, `stream.closing` | as on every connection of `/events` |
 
 </div>
@@ -145,11 +146,17 @@ written or ingested. A follower waits on that generation. The frames are:
 - **Resuming.** A cursor is good only on the server process that issued it, which is what the
   epoch names. A follower that reconnects sends both back. A cursor of another process, or
   one with more than ten pages of signals after it, is answered with `stream.resync` and a
-  fresh snapshot.
+  fresh snapshot. Every snapshot carries the cursor, so a client that was sent no signal
+  resumes from it too.
+- **Frames fit.** A page of signals whose frame would pass the 256 KiB frame bound is read
+  again with half as many, so the cursor only advances through signals that were written. A
+  single signal larger than a frame is a resync, never a closed connection.
 - **One read for every tab.** One read of the blackboard per generation, and one page of
-  signals per cursor, are shared by every connection.
-- **Slow clients.** A slow client blocks only its own connection and is written the newest
-  snapshot, not a queue of old ones.
+  signals per cursor and size, are shared by every connection.
+- **Slow clients.** A slow client blocks only its own connection, is told it lagged
+  (`stream.lagged`), and is written the newest snapshot, not a queue of old ones. Whether it
+  hung up, and the heartbeat, are asked on every round, so a stream of changes that say
+  nothing new keeps no departed client's thread.
 - **Large snapshots.** A snapshot too large for one frame is written as a `withheld` reference
   to `GET /api/v1/blackboard`.
 - **Signals are reader-neutral.** Marking what is for whom is the reader's to do.

@@ -18,9 +18,14 @@
 //! - `stream.ready`: the protocol, the heartbeat, and the server's `epoch`. A cursor is only
 //!   good on the server process that issued it, so a client that reconnects sends both back.
 //! - `blackboard.snapshot`: the whole blackboard, on connect and whenever what it says
-//!   changed. A snapshot too large for one frame is written as a `withheld` reference to
-//!   `GET /api/v1/blackboard`, which carries it whole.
-//! - `blackboard.signals`: what happened after the connection's cursor, and the new cursor.
+//!   changed, with the connection's `cursor`, so that a client that was sent no signal still
+//!   has a point to resume from. A snapshot too large for one frame is written as a
+//!   `withheld` reference to `GET /api/v1/blackboard`, which carries it whole.
+//! - `blackboard.signals`: what happened after the connection's cursor, and the new cursor:
+//!   one frame per page, each within the frame bound, the cursor that of the page's last
+//!   signal.
+//! - `stream.lagged`: changes passed while this connection was still being written to and
+//!   were not each sent as a snapshot of their own; the next snapshot holds them.
 //! - `stream.resync`: the cursor or epoch the client sent cannot be served. The snapshot that
 //!   follows is the client's new starting point.
 //! - `stream.heartbeat` and `stream.closing`, as on every connection of the channel.
@@ -38,8 +43,9 @@
 //! tabs cost one computation per change, not a hundred.
 //!
 //! **Slow clients.** A write blocks only its own connection's thread, and nothing is queued
-//! for it. A slow client skips the snapshots it was too slow to receive and is written the
-//! newest one, so its memory is bounded by one frame.
+//! for it. A slow client skips the snapshots it was too slow to receive, is told so
+//! (`stream.lagged`), and is written the newest one, so its memory is bounded by one frame.
+//! Whether the client hung up, and the heartbeat, are asked on every round, a change or not.
 
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
@@ -62,6 +68,10 @@ pub const SETTLE: Duration = Duration::from_millis(150);
 
 /// The most pages of signals a resumed connection is replayed before it is told to resync.
 const MAX_PAGES: usize = 10;
+
+/// The most signals one page asks for; a page whose frame would pass the frame bound is asked
+/// again with half as many, so every frame written fits.
+const PAGE_LIMIT: u64 = 500;
 
 /// The capability that reads the blackboard and the one that reads the signals, by id.
 const SNAPSHOT: &str = "blackboard.snapshot";
@@ -87,6 +97,9 @@ enum Frame<'a> {
     Snapshot {
         trigger: Trigger,
         blackboard: &'a Value,
+        /// Where this connection's signals stand: a client that reconnects with it is told
+        /// what happened after this snapshot, even when no signal was sent before it.
+        cursor: &'a str,
     },
     #[serde(rename = "blackboard.signals")]
     Signals {
@@ -247,7 +260,9 @@ impl Follower {
 
     /// Where the signals stand now: the cursor a fresh connection starts from.
     fn now(&self, generation: u64) -> Result<String, String> {
-        let page = shared(&PAGE, "", generation, || {
+        // keyed by what is asked, so that the latest signal is never the page after an
+        // empty cursor
+        let page = shared(&PAGE, "latest", generation, || {
             self.ctx
                 .execute(SIGNALS, json!({ "limit": 1, "sources": "mesh,executor" }))
                 .map_err(|e| e.to_string())
@@ -255,40 +270,49 @@ impl Follower {
         Ok(page["cursor"].as_str().unwrap_or_default().to_string())
     }
 
-    /// The signals after `after`, every page of them, or why they cannot be read from there.
-    fn signals(&self, after: &str, generation: u64) -> Result<(Vec<Value>, String), String> {
-        let mut cursor = after.to_string();
-        let mut signals = Vec::new();
-        for _ in 0..MAX_PAGES {
-            let page = shared(&PAGE, &cursor, generation, || {
-                self.ctx
-                    .execute(
-                        SIGNALS,
-                        json!({ "after": cursor, "limit": 500, "sources": "mesh,executor" }),
-                    )
-                    .map_err(|e| e.to_string())
-            })?;
-            signals.extend(page["signals"].as_array().cloned().unwrap_or_default());
-            cursor = page["cursor"].as_str().unwrap_or(&cursor).to_string();
-            if page["more"].as_bool() != Some(true) {
-                return Ok((signals, cursor));
-            }
-        }
-        Err(format!(
-            "more than {MAX_PAGES} pages of signals happened after the cursor; read the blackboard again"
-        ))
+    /// One page of the signals after `after`, at most `limit` of them.
+    fn page(&self, after: &str, limit: u64, generation: u64) -> Result<Value, String> {
+        let key = format!("after|{limit}|{after}");
+        let page = shared(&PAGE, &key, generation, || {
+            self.ctx
+                .execute(
+                    SIGNALS,
+                    json!({ "after": after, "limit": limit, "sources": "mesh,executor" }),
+                )
+                .map_err(|e| e.to_string())
+        })?;
+        Ok((*page).clone())
     }
 
-    /// Write the snapshot, or a reference to it when it is too large for one frame.
+    /// Write the signals after `after`, one frame per page, each within the frame bound.
+    fn send_signals(
+        &self,
+        socket: &mut Box<dyn std::io::Write + Send>,
+        trigger: Trigger,
+        after: &str,
+        generation: u64,
+    ) -> Sent {
+        send_pages(
+            after,
+            |cursor, limit| self.page(cursor, limit, generation),
+            |text| frame_ok(socket, text),
+            trigger,
+        )
+    }
+
+    /// Write the snapshot, or a reference to it when it is too large for one frame, with the
+    /// connection's cursor either way.
     fn write_snapshot(
         &self,
         socket: &mut Box<dyn std::io::Write + Send>,
         trigger: Trigger,
         snapshot: &Value,
+        cursor: &str,
     ) -> bool {
         let frame = Frame::Snapshot {
             trigger,
             blackboard: snapshot,
+            cursor,
         };
         let Ok(text) = serde_json::to_string(&frame) else {
             return true;
@@ -308,6 +332,7 @@ impl Follower {
             &Frame::Snapshot {
                 trigger,
                 blackboard: &withheld,
+                cursor,
             },
         )
     }
@@ -355,23 +380,10 @@ impl Follower {
                     self.follow.epoch.as_deref().unwrap_or("not given")
                 ));
             } else {
-                match self.signals(after, generation) {
-                    Ok((signals, next)) => {
-                        if !signals.is_empty()
-                            && !write(
-                                &mut socket,
-                                &Frame::Signals {
-                                    trigger: Trigger::Connect,
-                                    signals: &Value::Array(signals),
-                                    cursor: &next,
-                                },
-                            )
-                        {
-                            return;
-                        }
-                        cursor = next;
-                    }
-                    Err(reason) => resync = Some(reason),
+                match self.send_signals(&mut socket, Trigger::Connect, after, generation) {
+                    Sent::Through { cursor: next, .. } => cursor = next,
+                    Sent::Unreadable(reason) => resync = Some(reason),
+                    Sent::Gone => return,
                 }
             }
         }
@@ -380,12 +392,15 @@ impl Follower {
                 return;
             }
         }
-        if !self.write_snapshot(&mut socket, Trigger::Connect, &first) {
+        if !self.write_snapshot(&mut socket, Trigger::Connect, &first, &cursor) {
             return;
         }
         let mut said = substance(&first);
         let mut quiet = Instant::now();
         let mut read_at = Instant::now();
+        // how long the last round of writes took: a change that passes while this connection
+        // is still being written to is not sent as its own snapshot, and the client is told
+        let mut busy = Duration::ZERO;
         loop {
             let wait = HEARTBEAT
                 .saturating_sub(quiet.elapsed())
@@ -401,54 +416,58 @@ impl Follower {
                 None
             };
             if let Some(trigger) = trigger {
-                generation = BLACKBOARD.current();
+                let latest = BLACKBOARD.current();
+                let skipped = latest.saturating_sub(generation).saturating_sub(1);
+                if trigger == Trigger::Change && skipped > 0 && busy > SETTLE {
+                    if !write(&mut socket, &StreamMessage::Lagged { dropped: skipped }) {
+                        break;
+                    }
+                    quiet = Instant::now();
+                }
+                generation = latest;
                 read_at = Instant::now();
+                let writing = Instant::now();
                 if let Ok(snapshot) = self.snapshot(generation) {
                     let substance = substance(&snapshot);
                     if substance != said {
-                        if !self.write_snapshot(&mut socket, trigger, &snapshot) {
+                        if !self.write_snapshot(&mut socket, trigger, &snapshot, &cursor) {
                             break;
                         }
                         said = substance;
                         quiet = Instant::now();
                     }
                 }
-                match self.signals(&cursor, generation) {
-                    Ok((signals, next)) => {
-                        if !signals.is_empty() {
-                            if !write(
-                                &mut socket,
-                                &Frame::Signals {
-                                    trigger,
-                                    signals: &Value::Array(signals),
-                                    cursor: &next,
-                                },
-                            ) {
-                                break;
-                            }
+                match self.send_signals(&mut socket, trigger, &cursor, generation) {
+                    Sent::Through {
+                        cursor: next,
+                        wrote,
+                    } => {
+                        if wrote {
                             quiet = Instant::now();
                         }
                         cursor = next;
                     }
-                    Err(reason) => {
-                        // the client starts again from a snapshot with a cursor of its own
-                        let Ok(snapshot) = self.snapshot(generation) else {
-                            continue;
-                        };
-                        if !write(&mut socket, &StreamMessage::Resync { reason })
-                            || !self.write_snapshot(&mut socket, trigger, &snapshot)
-                        {
-                            break;
+                    Sent::Gone => break,
+                    Sent::Unreadable(reason) => {
+                        // the client starts again from a snapshot and the cursor it carries
+                        if let Ok(snapshot) = self.snapshot(generation) {
+                            if let Ok(now) = self.now(generation) {
+                                cursor = now;
+                            }
+                            if !write(&mut socket, &StreamMessage::Resync { reason })
+                                || !self.write_snapshot(&mut socket, trigger, &snapshot, &cursor)
+                            {
+                                break;
+                            }
+                            said = substance(&snapshot);
+                            quiet = Instant::now();
                         }
-                        if let Ok(now) = self.now(generation) {
-                            cursor = now;
-                        }
-                        said = substance(&snapshot);
-                        quiet = Instant::now();
                     }
                 }
-                continue;
+                busy = writing.elapsed();
             }
+            // asked on every round, a change or not: a stream of changes that say nothing new
+            // must not keep a departed client's thread, nor starve the heartbeat
             if hung_up() {
                 tracing::debug!("the client of a blackboard follower hung up");
                 break;
@@ -466,6 +485,82 @@ impl Follower {
                 }
                 quiet = Instant::now();
             }
+        }
+    }
+}
+
+/// What sending the signals after a cursor came to.
+#[derive(Debug, PartialEq, Eq)]
+enum Sent {
+    /// Every signal after the cursor was written, in frames within the frame bound: the cursor
+    /// after the last one delivered, and whether anything was written.
+    Through { cursor: String, wrote: bool },
+    /// They cannot be sent from there: the client starts again from a snapshot.
+    Unreadable(String),
+    /// A write failed: the client is gone.
+    Gone,
+}
+
+/// The pages of signals after `after`, read through `fetch` and written through `emit`, one
+/// frame each. A page whose frame would pass [`ws::MAX_FRAME_BYTES`] is read again with half
+/// as many signals, so the cursor only ever advances through signals that were written; a
+/// single signal larger than a frame, or more than [`MAX_PAGES`] pages, is a resync.
+fn send_pages(
+    after: &str,
+    mut fetch: impl FnMut(&str, u64) -> Result<Value, String>,
+    mut emit: impl FnMut(&str) -> bool,
+    trigger: Trigger,
+) -> Sent {
+    let mut cursor = after.to_string();
+    let mut limit = PAGE_LIMIT;
+    let mut wrote = false;
+    let mut pages = 0;
+    loop {
+        let page = match fetch(&cursor, limit) {
+            Ok(page) => page,
+            Err(reason) => return Sent::Unreadable(reason),
+        };
+        let next = page["cursor"].as_str().unwrap_or(&cursor).to_string();
+        let more = page["more"].as_bool() == Some(true);
+        let signals = page
+            .get("signals")
+            .cloned()
+            .unwrap_or(Value::Array(Vec::new()));
+        if signals.as_array().is_some_and(|s| !s.is_empty()) {
+            let frame = Frame::Signals {
+                trigger,
+                signals: &signals,
+                cursor: &next,
+            };
+            let Ok(text) = serde_json::to_string(&frame) else {
+                return Sent::Unreadable("a page of signals could not be encoded".into());
+            };
+            if text.len() > ws::MAX_FRAME_BYTES {
+                if limit > 1 {
+                    limit = (limit / 2).max(1);
+                    continue;
+                }
+                return Sent::Unreadable(format!(
+                    "a signal after the cursor is larger than one frame ({} bytes, the bound is {})",
+                    text.len(),
+                    ws::MAX_FRAME_BYTES
+                ));
+            }
+            if !emit(&text) {
+                return Sent::Gone;
+            }
+            wrote = true;
+        }
+        cursor = next;
+        limit = PAGE_LIMIT;
+        pages += 1;
+        if !more {
+            return Sent::Through { cursor, wrote };
+        }
+        if pages >= MAX_PAGES {
+            return Sent::Unreadable(format!(
+                "more than {MAX_PAGES} pages of signals happened after the cursor; read the blackboard again"
+            ));
         }
     }
 }
@@ -552,5 +647,95 @@ mod tests {
             "another key"
         );
         assert_eq!(reads.get(), 3);
+    }
+
+    /// A log of signals that `fetch` pages from: each signal is `size` bytes of text, its
+    /// cursor is its position, and a page holds at most `limit` of them.
+    fn log(count: usize, size: usize) -> impl FnMut(&str, u64) -> Result<Value, String> {
+        move |after: &str, limit: u64| {
+            let from: usize = after.parse().unwrap_or(0);
+            let to = (from + limit as usize).min(count);
+            let signals: Vec<Value> = (from..to)
+                .map(|i| json!({ "n": i, "summary": "x".repeat(size) }))
+                .collect();
+            Ok(json!({ "signals": signals, "cursor": to.to_string(), "more": to < count }))
+        }
+    }
+
+    /// Every frame of signals fits the frame bound: a page that would not is asked again with
+    /// fewer signals, every signal is written once and in order, and each frame's cursor is
+    /// the position after its last signal, so a client that keeps any frame's cursor resumes
+    /// after exactly what it received.
+    #[test]
+    fn a_backlog_is_written_in_frames_within_the_bound() {
+        let mut frames: Vec<Value> = Vec::new();
+        let sent = send_pages(
+            "0",
+            log(1200, 600),
+            |text| {
+                assert!(text.len() <= ws::MAX_FRAME_BYTES, "{} bytes", text.len());
+                frames.push(serde_json::from_str(text).unwrap());
+                true
+            },
+            Trigger::Change,
+        );
+        assert_eq!(
+            sent,
+            Sent::Through {
+                cursor: "1200".into(),
+                wrote: true
+            }
+        );
+        assert!(frames.len() > 3, "{} frames", frames.len());
+        let mut next = 0;
+        for frame in &frames {
+            let signals = frame["data"]["signals"].as_array().unwrap();
+            for s in signals {
+                assert_eq!(s["n"], json!(next));
+                next += 1;
+            }
+            assert_eq!(frame["data"]["cursor"], json!(next.to_string()));
+        }
+        assert_eq!(next, 1200);
+    }
+
+    /// A signal larger than one frame cannot be sent, and the client is told to start again
+    /// rather than the connection being closed by a refused write; more than the page bound is
+    /// the same; a write that fails is a gone client; nothing to send writes nothing.
+    #[test]
+    fn what_cannot_be_sent_is_a_resync_and_a_failed_write_is_gone() {
+        let huge = send_pages("0", log(1, ws::MAX_FRAME_BYTES), |_| true, Trigger::Change);
+        assert!(matches!(huge, Sent::Unreadable(r) if r.contains("larger than one frame")));
+        let long = send_pages("0", log(10_000, 10), |_| true, Trigger::Change);
+        assert!(matches!(long, Sent::Unreadable(r) if r.contains("pages")));
+        let gone = send_pages("0", log(3, 10), |_| false, Trigger::Change);
+        assert_eq!(gone, Sent::Gone);
+        let quiet = send_pages(
+            "5",
+            log(5, 10),
+            |_| panic!("nothing to write"),
+            Trigger::Refresh,
+        );
+        assert_eq!(
+            quiet,
+            Sent::Through {
+                cursor: "5".into(),
+                wrote: false
+            }
+        );
+    }
+
+    /// A snapshot frame carries the connection's cursor, the withheld reference included, so
+    /// a client that received no signals still has a point to resume from.
+    #[test]
+    fn a_snapshot_frame_carries_the_cursor() {
+        let frame = Frame::Snapshot {
+            trigger: Trigger::Connect,
+            blackboard: &json!({ "workers": [] }),
+            cursor: "m1.7",
+        };
+        let v = serde_json::to_value(&frame).unwrap();
+        assert_eq!(v["type"], "blackboard.snapshot");
+        assert_eq!(v["data"]["cursor"], "m1.7");
     }
 }
