@@ -268,6 +268,9 @@ while [ $# -gt 0 ]; do
   esac
 done
 [ -z "$runs_in" ] || [ "$no_skips" = 1 ] || { echo "run.sh: --runs-in reads cases whose skip is excused elsewhere; it means nothing without --no-skips" >&2; exit 2; }
+# the job this run stands for, so a case that belongs to one job can tell it is in another: empty
+# outside a --runs-in run (case 3220 walks its browser loop only under the ui job)
+MAJORDOMUS_RUNS_IN="$runs_in"; export MAJORDOMUS_RUNS_IN
 
 only=""
 for n in "$@"; do
