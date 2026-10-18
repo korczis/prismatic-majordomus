@@ -41807,6 +41807,41 @@
         }
       },
       {
+        "id": "majordomus://issue/I2993",
+        "kind": "issue",
+        "label": "I2993",
+        "summary": "doctor counts the work no remote holds in one walk, whatever the number of branches",
+        "route": "/cockpit/objects/issue/i2993",
+        "source": ".ai/repo/project/issues/I2993.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A branch on a remote is not named, a branch two commits ahead is named with 2, and a branch that merged another unpushed branch counts each commit it reaches once",
+            "Every count equals the per-branch `git rev-list --count <branch> --not --remotes`",
+            "doctor walks the commits no remote holds once for 156 branches; the per-branch version walks them 156 times and the case fails"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "mj_report_clone runs one rev-list per local branch, so doctor's time grows with the branch count and every commit hook pays it.",
+          "depends_on": [],
+          "desired_state": "One rev-list and one for-each-ref, whatever the number of branches; the same branches named with the same counts.",
+          "evidence_required": [
+            "case_doctor_one_walk"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/doctor.sh",
+            "test/cases/3384_doctor_reads_unpushed_in_one_pass.sh"
+          ],
+          "slug": "doctor-reads-unpushed-in-one-pass",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "bash test/run.sh 3384_doctor_reads_unpushed_in_one_pass 02_doctor_basic 276_disk_is_bounded"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I3000",
         "kind": "issue",
         "label": "I3000",
@@ -60195,6 +60230,13 @@
         "label": "test/cases/337_every_control_does_what_it_says.sh",
         "route": "/cockpit/objects/test/test-cases-337-every-control-does-what-it-says-sh",
         "source": "test/cases/337_every_control_does_what_it_says.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3384_doctor_reads_unpushed_in_one_pass.sh",
+        "kind": "test",
+        "label": "test/cases/3384_doctor_reads_unpushed_in_one_pass.sh",
+        "route": "/cockpit/objects/test/test-cases-3384-doctor-reads-unpushed-in-one-pass-sh",
+        "source": "test/cases/3384_doctor_reads_unpushed_in_one_pass.sh"
       },
       {
         "id": "majordomus://test/test/cases/33_event_registry.sh",
@@ -87801,6 +87843,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2993",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2993",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I3000",
         "target": "kind:issue",
         "kind": "is_a"
@@ -92802,6 +92854,11 @@
       },
       {
         "source": "majordomus://test/test/cases/337_every_control_does_what_it_says.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3384_doctor_reads_unpushed_in_one_pass.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -98062,8 +98119,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3052,
-      "edges": 6697,
+      "nodes": 3054,
+      "edges": 6700,
       "acyclic": false,
       "truncated": false
     }

@@ -577,14 +577,32 @@ mj_report_clone() {
   # Work that exists on one disk. A branch whose commits reach no remote is not backed up,
   # is invisible to every other session, and cannot be folded by whoever is integrating —
   # fifteen commits over sixty-eight files sat in exactly that state for three days.
-  local unpushed="" b n
-  while read -r b; do
-    [ -n "$b" ] || continue
-    n="$(git -C "$MJ_ROOT" rev-list --count "$b" --not --remotes 2>/dev/null || echo 0)"
-    [ "$n" -gt 0 ] 2>/dev/null && unpushed="$unpushed $b($n)"
-  done <<EOF
-$(git -C "$MJ_ROOT" for-each-ref --format='%(refname:short)' refs/heads 2>/dev/null)
-EOF
+  #
+  # One walk, whatever the number of branches (I2993): the commits some branch reaches and no
+  # remote does, each with its parents, then every branch's tip. A branch's count is the
+  # commits of that set its tip reaches, walked inside the set: a commit a remote reaches has
+  # only ancestors a remote reaches, so the walk never has to leave it. The commits a walk has
+  # seen are the branch's, not its tip's: two branches at one commit are counted alike. One `rev-list` per
+  # branch took minutes on a clone of six hundred branches, in every commit hook.
+  local unpushed
+  unpushed="$({
+    git -C "$MJ_ROOT" rev-list --parents --branches --not --remotes 2>/dev/null
+    echo '--'
+    git -C "$MJ_ROOT" for-each-ref --format='%(objectname) %(refname:short)' refs/heads 2>/dev/null
+  } | awk '
+    $0 == "--" { tips = 1; next }
+    !tips { held[$1] = 1; parents[$1] = $0; next }
+    ($1 in held) {
+      count = 0; top = 1; stack[1] = $1
+      while (top > 0) {
+        c = stack[top--]
+        if (!(c in held) || ((NR, c) in seen)) continue
+        seen[NR, c] = 1; count++
+        m = split(parents[c], p, " ")
+        for (j = 2; j <= m; j++) stack[++top] = p[j]
+      }
+      printf " %s(%d)", $2, count
+    }')"
   if [ -n "$unpushed" ]; then
     mj_warn clone "unpushed" \
       "commits on no remote:${unpushed} — work on one disk is invisible to every other session and cannot be integrated" \
