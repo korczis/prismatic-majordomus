@@ -529,9 +529,13 @@ mj_ctxd_resolve() {
     else
       [ "$dir" = "$tree" ] && [ "$scope" = subtree ] && reason="the tree root; the target is outside $tree/"
       if [ -z "$reason" ]; then
+        # A directory target takes the documents of the files it holds, but the repository
+        # root is not such a directory: since `.` contains every path (case 3190), it would
+        # take every document that tracks anything, and its chain is the layer's alone (case 69).
         for p in $(mj_ctxd_list "$i" tracks); do
           for v in $(mj_git ls-files -- "$p" 2>/dev/null); do
-            if mj_path_contains "$MJ_CTXD_TARGET" "$v" || mj_path_contains "$v" "$MJ_CTXD_TARGET"; then reason="tracks $p"; break; fi
+            if { [ "$MJ_CTXD_TARGET" != . ] && mj_path_contains "$MJ_CTXD_TARGET" "$v"; } \
+              || mj_path_contains "$v" "$MJ_CTXD_TARGET"; then reason="tracks $p"; break; fi
           done
           [ -n "$reason" ] && break
         done
