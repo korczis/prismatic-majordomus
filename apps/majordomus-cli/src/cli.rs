@@ -795,6 +795,8 @@ pub enum MeshCommand {
     Verify(MeshQueryArgs),
     /// Claim repository paths for a session; exits 10 naming the claims it meets when an exclusive claim on any linked runtime holds them
     Claim(MeshClaimArgs),
+    /// Reserve the next issue, case or ADR number for a session with one exclusive mesh claim on its id key, after surveying the tree, the worktrees, every ref and the journal; exits 10 when no server runs the mesh
+    Allocate(MeshAllocateArgs),
     /// Release a claim this server's current run holds
     Release(MeshReleaseArgs),
     /// Open, update or close a session on the mesh
@@ -1113,6 +1115,43 @@ pub struct MeshClaimArgs {
     /// The task the session works under
     #[arg(long)]
     pub task: Option<String>,
+    #[command(flatten)]
+    /// Where the repository is and how to answer.
+    pub query: MeshQueryArgs,
+}
+
+#[derive(Debug, Args)]
+/// `mesh allocate`: `plan.allocate` on the command line, asked of the server whose mesh makes
+/// the reservation atomic. `--session` is required because a reservation belongs to a session
+/// and ends with it.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::capability::builtin::allocate::IdKind;
+/// use majordomus_cli::cli::{Cli, Command, MeshAllocateArgs, MeshCommand};
+///
+/// let cli = Cli::try_parse_from([
+///     "majordomus", "mesh", "allocate", "case", "--session", "s1", "--at-least", "3440",
+/// ])
+/// .unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Allocate(a) = mesh.command else { panic!("expected `allocate`") };
+/// let a: MeshAllocateArgs = a;
+/// assert_eq!((a.kind, a.session.as_str(), a.at_least), (IdKind::Case, "s1", Some(3440)));
+///
+/// // a reservation belongs to a session, so there is none without one
+/// assert!(Cli::try_parse_from(["majordomus", "mesh", "allocate", "case"]).is_err());
+/// ```
+pub struct MeshAllocateArgs {
+    /// The kind of identifier
+    #[arg(value_enum)]
+    pub kind: crate::capability::builtin::allocate::IdKind,
+    /// The mesh session the number is reserved for
+    #[arg(long)]
+    pub session: String,
+    /// The lowest number to take: a survey run elsewhere, or a block a seat was given
+    #[arg(long, value_name = "N")]
+    pub at_least: Option<u32>,
     #[command(flatten)]
     /// Where the repository is and how to answer.
     pub query: MeshQueryArgs,
@@ -7290,6 +7329,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             title: "Claim paths for a session across the mesh",
             description: "An exclusive claim that meets a live exclusive claim on any linked runtime exits 10 with claim_conflict naming it. A claim needs the running server that replicates it; without one the command exits 10 and says so.",
             argv: &["mesh", "claim", "docs", "--session", "s1", "--issue", "#184"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "mesh allocate",
+        examples: &[ExampleDoc {
+            id: "mesh-allocate",
+            title: "Reserve the next case number for a session",
+            description: "The number is reserved by one exclusive claim on `id:case/<n>` in the mesh of the server holding this checkout's lease, after surveying the tree, the sibling worktrees, every ref and every reservation the journal remembers. A reservation needs the running server that makes it atomic; without one the command exits 10 and says so.",
+            argv: &["mesh", "allocate", "case", "--session", "s1"],
             setup: &[],
             expect: Expect::ExitCode(10),
         }],

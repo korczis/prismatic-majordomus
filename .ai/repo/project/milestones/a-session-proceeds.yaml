@@ -26,8 +26,10 @@ validation:
   - "bin/majordomus plan validate"
   - "bin/majordomus intent validate a-session-proceeds"
   - "bash test/run.sh 3367_a_session_is_told_what_to_proceed_with_and_why"
+  - "bash test/run.sh 3440_an_id_is_taken_by_one_atomic_claim"
 evidence_required:
   - "case_a_session_is_told_what_to_proceed_with_and_why"
+  - "case_an_id_is_taken_by_one_atomic_claim"
 risks:
   - "Without mesh fencing two machines can admit one claim; the loser must stop on the fold's verdict"
   - "A ranking that hides its terms becomes a second opinion nobody can check; every term is shown"

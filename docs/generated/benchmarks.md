@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 203 | 172 | 0 | 31 |
-| http | 198 | 172 | 0 | 26 |
-| mcp | 193 | 168 | 0 | 25 |
+| direct | 204 | 172 | 0 | 32 |
+| http | 199 | 172 | 0 | 27 |
+| mcp | 194 | 168 | 0 | 26 |
 | system | 14 | 14 | 0 | 0 |
-| total | 608 | 526 | 0 | 82 |
+| total | 611 | 526 | 0 | 85 |
 
 ## Capabilities
 
@@ -162,6 +162,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `peers.announce` | peers | command | — | covered | covered | covered | `default` |
 | `peers.list` | peers | query | — | covered | covered | covered | `default` |
 | `perf.counters` | perf | query | — | covered | covered | covered | `default` |
+| `plan.allocate` | plan | command | — | waived | waived | waived | — |
 | `plan.issues` | plan | query | process, 16 entries, per generation | covered | covered | covered | `all`, `ready`, `one-milestone` |
 | `plan.model` | plan | query | — | covered | covered | covered | `default` |
 | `plan.next` | plan | query | process, 16 entries, per generation | covered | covered | covered | `whole-plan`, `one-milestone` |

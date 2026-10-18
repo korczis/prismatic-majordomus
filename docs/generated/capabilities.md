@@ -50,7 +50,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `pack` | Source pack | behaviorally_verified | 2 | [`modules/pack.md`](modules/pack.md) |
 | `peers` | Peers | behaviorally_verified | 2 | [`modules/peers.md`](modules/peers.md) |
 | `perf` | Performance | behaviorally_verified | 1 | [`modules/perf.md`](modules/perf.md) |
-| `plan` | The plan and its derivations | behaviorally_verified | 9 | [`modules/plan.md`](modules/plan.md) |
+| `plan` | The plan and its derivations | behaviorally_verified | 10 | [`modules/plan.md`](modules/plan.md) |
 | `proceed` | What a session proceeds with | behaviorally_verified | 1 | [`modules/proceed.md`](modules/proceed.md) |
 | `product` | Product | behaviorally_verified | 6 | [`modules/product.md`](modules/product.md) |
 | `quality` | Public API quality | behaviorally_verified | 2 | [`modules/quality.md`](modules/quality.md) |
@@ -216,6 +216,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `peers.announce` | `peers` | command | behaviorally_verified | `majordomus_announce` | — | `POST /api/v1/peers/announce` | — | — | required |
 | `peers.list` | `peers` | query | behaviorally_verified | `majordomus_peers` | — | `GET /api/v1/peers` | — | — | required |
 | `perf.counters` | `perf` | query | behaviorally_verified | `majordomus_perf` | — | `GET /api/v1/perf` | — | — | required |
+| `plan.allocate` | `plan` | command | behaviorally_verified | `majordomus_plan_allocate` | — | `POST /api/v1/plan/allocate` | — | — | waived (transient_state) |
 | `plan.issues` | `plan` | query | behaviorally_verified | `majordomus_plan_issues` | — | `GET /api/v1/plan/issues` | — | process, 16 entries, per generation | required |
 | `plan.model` | `plan` | query | behaviorally_verified | `majordomus_plan` | `majordomus://plan` | `GET /api/v1/plan` | — | — | required |
 | `plan.next` | `plan` | query | behaviorally_verified | `majordomus_plan_next` | — | `GET /api/v1/plan/next` | — | process, 16 entries, per generation | required |

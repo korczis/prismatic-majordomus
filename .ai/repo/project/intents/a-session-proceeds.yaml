@@ -11,6 +11,10 @@ satisfaction:
     criterion: proceed.plan names the READY issue a session should take, every READY issue it passed over with the claim or exclusive scope that refused it and the hold that did, and every term of the order, as one capability on the command line, MCP and HTTP that writes nothing
     evidence: test
     ref: test/cases/3367_a_session_is_told_what_to_proceed_with_and_why.sh
+  - id: an-id-is-reserved-once
+    criterion: plan.allocate reserves an issue, case or ADR number for one session with one exclusive mesh claim on id:<kind>/<n> after surveying the tree, the sibling worktrees, every ref and the mesh journal, so that allocations at once on one runtime answer different numbers and no number on a ref or in the journal is handed out again
+    evidence: test
+    ref: test/cases/3440_an_id_is_taken_by_one_atomic_claim.sh
 milestones:
   - a-session-proceeds
 governance:

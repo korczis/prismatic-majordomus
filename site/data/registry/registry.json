@@ -6,28 +6,28 @@
     "version": "0.29.0"
   },
   "registry": {
-    "fingerprint": "26da5df0b50aec9791ce19a009f2391bc13ce485aa9b93447cfdb5873742dc79",
+    "fingerprint": "9d00280ca19f34e73707c7707a7fea038295f00dd8bad5482b25cd49273e113a",
     "summary": {
-      "total": 2534,
-      "builtin": 203,
-      "declarative": 2331,
+      "total": 2537,
+      "builtin": 204,
+      "declarative": 2333,
       "by_kind": {
-        "command": 31,
+        "command": 32,
         "query": 172,
-        "resource": 2331
+        "resource": 2333
       },
       "by_stability": {
-        "behaviorally_verified": 142,
+        "behaviorally_verified": 143,
         "experimental": 52,
-        "implemented": 2340
+        "implemented": 2342
       },
-      "mcp_tools": 193,
-      "mcp_resources": 2386,
-      "http_routes": 198,
+      "mcp_tools": 194,
+      "mcp_resources": 2388,
+      "http_routes": 199,
       "cli_commands": 109,
       "modules": 93,
       "benchmark_required": 172,
-      "benchmark_waived": 31,
+      "benchmark_waived": 32,
       "cached": 54
     },
     "builtin": [
@@ -57338,6 +57338,238 @@
         "source_path": "apps/majordomus-cli/src/capability/builtin/perf.rs"
       },
       {
+        "id": "plan.allocate",
+        "module": "plan",
+        "kind": "command",
+        "title": "Reserve the next issue, case or ADR number",
+        "description": "One number of the kind asked (`issue`, `case`, `adr`), reserved for one mesh session by one exclusive claim on the identifier's own key, `id:<kind>/<number>`. The candidate is one past the highest number this tree, the sibling worktrees, every ref and every reservation the mesh journal remembers hold, or the caller's `at_least` when that is higher; a number another session's claim already holds is skipped and its holder named. On one runtime the claim is admitted under the admission lock, so two allocations at once answer two numbers; across linked runtimes two claims made before they sync are both admitted and the fold names one winner, whose loser allocates again (fencing is mesh-journal-converges' work). Writes this runtime's mesh journal only, never the repository; the reservation ends with its session or `mesh release`.",
+        "input": {
+          "name": "AllocateInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "$ref": "#/$defs/IdKind",
+                "description": "`issue`, `case` or `adr`."
+              },
+              "session": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The mesh session the number is reserved for; the calling MCP session's own when omitted."
+              },
+              "at_least": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "format": "uint32",
+                "minimum": 0,
+                "description": "The lowest number the caller will take: a survey it ran itself, or a block it was given. The candidate is the higher of this and one past every source."
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "description": "The input of `plan.allocate`.",
+            "title": "AllocateInput",
+            "$defs": {
+              "IdKind": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "issue",
+                    "description": "An issue id, `I<nnnn>`, the name of `.ai/repo/project/issues/<id>.yaml`."
+                  },
+                  {
+                    "type": "string",
+                    "const": "case",
+                    "description": "A case number, the identity before the first underscore of `test/cases/<n>_*.sh`."
+                  },
+                  {
+                    "type": "string",
+                    "const": "adr",
+                    "description": "An ADR number, the four digits that open `.ai/repo/adrs/<nnnn>-*.md`."
+                  }
+                ],
+                "description": "The kind of identifier allocated: what `majordomus mesh allocate <kind>` and\n`plan.allocate` take.\n\n```\nuse majordomus_cli::capability::builtin::allocate::IdKind;\n\nlet kind: IdKind = serde_json::from_value(serde_json::json!(\"adr\")).unwrap();\nassert_eq!(kind, IdKind::Adr);\nassert!(serde_json::from_value::<IdKind>(serde_json::json!(\"ticket\")).is_err());\n```"
+              }
+            }
+          }
+        },
+        "output": {
+          "name": "Allocation",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "$ref": "#/$defs/IdKind",
+                "description": "The kind."
+              },
+              "value": {
+                "type": "string",
+                "description": "The identifier as it is written: `I3041`, `3441`, `0178`."
+              },
+              "number": {
+                "type": "integer",
+                "format": "uint32",
+                "minimum": 0,
+                "description": "The number."
+              },
+              "reservation": {
+                "type": "string",
+                "description": "The mesh key it is reserved under, `id:<kind>/<number>`."
+              },
+              "claim": {
+                "type": "string",
+                "description": "The key of the exclusive claim that holds it, for `majordomus mesh release`."
+              },
+              "sources": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/IdSource"
+                },
+                "description": "What each source held."
+              },
+              "skipped": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/IdSkip"
+                },
+                "description": "Numbers tried before this one and held by another session's claim, with the holder."
+              }
+            },
+            "required": [
+              "kind",
+              "value",
+              "number",
+              "reservation",
+              "claim",
+              "sources",
+              "skipped"
+            ],
+            "description": "A number reserved for one session, with the survey it was chosen from.",
+            "title": "Allocation",
+            "$defs": {
+              "IdKind": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "issue",
+                    "description": "An issue id, `I<nnnn>`, the name of `.ai/repo/project/issues/<id>.yaml`."
+                  },
+                  {
+                    "type": "string",
+                    "const": "case",
+                    "description": "A case number, the identity before the first underscore of `test/cases/<n>_*.sh`."
+                  },
+                  {
+                    "type": "string",
+                    "const": "adr",
+                    "description": "An ADR number, the four digits that open `.ai/repo/adrs/<nnnn>-*.md`."
+                  }
+                ],
+                "description": "The kind of identifier allocated: what `majordomus mesh allocate <kind>` and\n`plan.allocate` take.\n\n```\nuse majordomus_cli::capability::builtin::allocate::IdKind;\n\nlet kind: IdKind = serde_json::from_value(serde_json::json!(\"adr\")).unwrap();\nassert_eq!(kind, IdKind::Adr);\nassert!(serde_json::from_value::<IdKind>(serde_json::json!(\"ticket\")).is_err());\n```"
+              },
+              "IdSource": {
+                "type": "object",
+                "properties": {
+                  "source": {
+                    "type": "string",
+                    "description": "`tree`, `worktrees`, `refs`, `mesh` or `at_least`."
+                  },
+                  "highest": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "The highest number it holds; absent when it holds none."
+                  },
+                  "read": {
+                    "type": "boolean",
+                    "description": "Whether it could be read."
+                  },
+                  "detail": {
+                    "type": "string",
+                    "description": "What was read, or why not."
+                  }
+                },
+                "required": [
+                  "source",
+                  "read",
+                  "detail"
+                ],
+                "description": "One source of an allocation's survey."
+              },
+              "IdSkip": {
+                "type": "object",
+                "properties": {
+                  "number": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "The number."
+                  },
+                  "holder": {
+                    "type": "string",
+                    "description": "Its claim's holding session."
+                  },
+                  "claim": {
+                    "type": "string",
+                    "description": "Its claim's key."
+                  }
+                },
+                "required": [
+                  "number",
+                  "holder",
+                  "claim"
+                ],
+                "description": "A number another session holds."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::plan"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_plan_allocate"
+          },
+          "http": {
+            "method": "POST",
+            "path": "/api/v1/plan/allocate"
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "plan",
+          "mesh",
+          "identity",
+          "allocation"
+        ],
+        "benchmark": {
+          "policy": "waived",
+          "reason": "transient_state"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "process_state",
+          "cancellable": false,
+          "concurrency": "serial"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/plan.rs"
+      },
+      {
         "id": "plan.issues",
         "module": "plan",
         "kind": "query",
@@ -83601,7 +83833,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 425,
+        "capabilities": 426,
         "capability_ids": []
       },
       {
@@ -83859,8 +84091,9 @@
         "description": "The milestone and issue model of this repository, and everything derived from it that nobody authored: the status of each record, the dependency graphs above and below the milestone boundary, the topological execution waves, the roadmap order, the milestone being executed and the one issue to take next. Status is never stored — a record says what happened to it and the status follows from that and from the state of its dependencies — so no file can contradict the graph. This capability reads; writing a lifecycle marker into a record is `plan.transition`, which declares that it writes the repository.",
         "stability": "behaviorally_verified",
         "source": "builtin",
-        "capabilities": 9,
+        "capabilities": 10,
         "capability_ids": [
+          "plan.allocate",
           "plan.issues",
           "plan.model",
           "plan.next",
@@ -84184,7 +84417,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 528,
+        "capabilities": 529,
         "capability_ids": []
       },
       {
@@ -84275,7 +84508,7 @@
     ]
   },
   "index": {
-    "fingerprint": "59859a89dd07ea7d10a8d3a49dd30d3c4b13058487bb720cd83c6cf8d8686730",
+    "fingerprint": "31c9223ead7757a1be9a2644637aa590a80fd33b9e0d4e158f4da2baa2889c3f",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -84315,7 +84548,7 @@
       "gap": 4,
       "implementation": 52,
       "intent": 6,
-      "issue": 425,
+      "issue": 426,
       "knowledge": 4,
       "mesh-declaration": 1,
       "milestone": 42,
@@ -84329,7 +84562,7 @@
       "session": 90,
       "skill": 8,
       "taxonomy": 10,
-      "test": 528,
+      "test": 529,
       "use-case": 49,
       "workspace": 1
     },
@@ -90617,7 +90850,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 174094
+        "bytes": 177668
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -94054,7 +94287,7 @@
         "path": ".ai/repo/project/intents/a-session-proceeds.yaml",
         "section": "project",
         "source_class": "intent",
-        "bytes": 1907
+        "bytes": 2360
       },
       {
         "uri": "majordomus://intent/intent-bound-work",
@@ -98776,6 +99009,17 @@
         "bytes": 2001
       },
       {
+        "uri": "majordomus://issue/I3040",
+        "kind": "issue",
+        "identity": "I3040",
+        "title": "An id is taken by one atomic claim",
+        "description": "Add plan.allocate (a command that writes only the mesh journal; MCP majordomus_plan_allocate, POST /api/v1/plan/allocate, `majordomus mesh allocate <issue|case|adr> --session S [--at-least N]`): survey this tree, the sibling worktrees, every ref (git log --all --diff-filter=A) and every reservation the mesh journal remembers, take one past the highest (or --at-least), and reserve it with one exclusive mesh claim on the identifier's own key `id:<kind>/<n>`, moving to the next number on a claim_conflict and naming its holder.",
+        "path": ".ai/repo/project/issues/I3040.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2891
+      },
+      {
         "uri": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "identity": "a-commit-stood-behind-a-build-lock",
@@ -98934,7 +99178,7 @@
         "path": ".ai/repo/project/milestones/a-session-proceeds.yaml",
         "section": "project",
         "source_class": "milestone",
-        "bytes": 2842
+        "bytes": 2951
       },
       {
         "uri": "majordomus://milestone/adopter-upgrades",
@@ -106620,6 +106864,14 @@
         "bytes": 5880
       },
       {
+        "uri": "majordomus://test/test/cases/3440_an_id_is_taken_by_one_atomic_claim.sh",
+        "kind": "test",
+        "identity": "test/cases/3440_an_id_is_taken_by_one_atomic_claim.sh",
+        "path": "test/cases/3440_an_id_is_taken_by_one_atomic_claim.sh",
+        "source_class": "case",
+        "bytes": 5995
+      },
+      {
         "uri": "majordomus://test/test/cases/349_a_step_reports_its_own_time.sh",
         "kind": "test",
         "identity": "test/cases/349_a_step_reports_its_own_time.sh",
@@ -109510,7 +109762,7 @@
       "identity": [
         "id"
       ],
-      "objects": 425
+      "objects": 426
     },
     {
       "name": "knowledge",
@@ -109662,7 +109914,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 528
+      "objects": 529
     },
     {
       "name": "use-case",
@@ -130827,6 +131079,169 @@
             "path": [
               "majordomus",
               "mesh",
+              "allocate"
+            ],
+            "route": "/docs/cli/mesh/allocate/",
+            "executable": true,
+            "usage": "majordomus mesh allocate [OPTIONS] <KIND>",
+            "about": "Reserve the next issue, case or ADR number for a session with one exclusive mesh claim on its id key, after surveying the tree, the worktrees, every ref and the journal; exits 10 when no server runs the mesh",
+            "args": [
+              {
+                "name": "kind",
+                "positional": true,
+                "help": "The kind of identifier",
+                "value_name": "KIND",
+                "takes_value": true,
+                "required": true,
+                "global": false,
+                "possible_values": [
+                  {
+                    "name": "issue",
+                    "help": "An issue id, `I<nnnn>`, the name of `.ai/repo/project/issues/<id>.yaml`"
+                  },
+                  {
+                    "name": "case",
+                    "help": "A case number, the identity before the first underscore of `test/cases/<n>_*.sh`"
+                  },
+                  {
+                    "name": "adr",
+                    "help": "An ADR number, the four digits that open `.ai/repo/adrs/<nnnn>-*.md`"
+                  }
+                ],
+                "defaults": []
+              },
+              {
+                "name": "session",
+                "long": "session",
+                "positional": false,
+                "help": "The mesh session the number is reserved for",
+                "value_name": "SESSION",
+                "takes_value": true,
+                "required": true,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "at_least",
+                "long": "at-least",
+                "positional": false,
+                "help": "The lowest number to take: a survey run elsewhere, or a block a seat was given",
+                "value_name": "N",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "`text` for a person, `json` for a machine; both render the same answer",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "mesh-allocate",
+                "title": "Reserve the next case number for a session",
+                "description": "The number is reserved by one exclusive claim on `id:case/<n>` in the mesh of the server holding this checkout's lease, after surveying the tree, the sibling worktrees, every ref and every reservation the journal remembers. A reservation needs the running server that makes it atomic; without one the command exits 10 and says so.",
+                "argv": [
+                  "mesh",
+                  "allocate",
+                  "case",
+                  "--session",
+                  "s1"
+                ],
+                "command": "majordomus mesh allocate case --session s1",
+                "setup": [],
+                "expectation": "exits 10"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "mesh",
               "release"
             ],
             "route": "/docs/cli/mesh/release/",
@@ -144245,6 +144660,23 @@
         "output": "CounterSnapshot"
       },
       {
+        "name": "majordomus_plan_allocate",
+        "id": "plan.allocate",
+        "title": "Reserve the next issue, case or ADR number",
+        "description": "One number of the kind asked (`issue`, `case`, `adr`), reserved for one mesh session by one exclusive claim on the identifier's own key, `id:<kind>/<number>`. The candidate is one past the highest number this tree, the sibling worktrees, every ref and every reservation the mesh journal remembers hold, or the caller's `at_least` when that is higher; a number another session's claim already holds is skipped and its holder named. On one runtime the claim is admitted under the admission lock, so two allocations at once answer two numbers; across linked runtimes two claims made before they sync are both admitted and the fold names one winner, whose loser allocates again (fencing is mesh-journal-converges' work). Writes this runtime's mesh journal only, never the repository; the reservation ends with its session or `mesh release`.",
+        "kind": "command",
+        "read_only": false,
+        "effect": "process_state",
+        "hints": {
+          "read_only": false,
+          "destructive": false,
+          "idempotent": false,
+          "open_world": false
+        },
+        "input": "AllocateInput",
+        "output": "Allocation"
+      },
+      {
         "name": "majordomus_plan_issues",
         "id": "plan.issues",
         "title": "The issues, filtered by what the graph derived",
@@ -146461,6 +146893,12 @@
         "path": "/api/v1/perf",
         "id": "perf.counters",
         "kind": "query"
+      },
+      {
+        "method": "POST",
+        "path": "/api/v1/plan/allocate",
+        "id": "plan.allocate",
+        "kind": "command"
       },
       {
         "method": "GET",
@@ -157297,6 +157735,30 @@
           "cases": 1
         },
         {
+          "subject": "plan.allocate",
+          "module": "plan",
+          "transport": "direct",
+          "state": "waived",
+          "cases": 0,
+          "reason": "transient_state"
+        },
+        {
+          "subject": "plan.allocate",
+          "module": "plan",
+          "transport": "mcp",
+          "state": "waived",
+          "cases": 0,
+          "reason": "transient_state"
+        },
+        {
+          "subject": "plan.allocate",
+          "module": "plan",
+          "transport": "http",
+          "state": "waived",
+          "cases": 0,
+          "reason": "transient_state"
+        },
+        {
           "subject": "plan.issues",
           "module": "plan",
           "transport": "direct",
@@ -158640,24 +159102,24 @@
       ],
       "tallies": {
         "direct": {
-          "required": 203,
+          "required": 204,
           "covered": 172,
           "missing": 0,
-          "waived": 31,
+          "waived": 32,
           "inapplicable": 0
         },
         "http": {
-          "required": 198,
+          "required": 199,
           "covered": 172,
           "missing": 0,
-          "waived": 26,
+          "waived": 27,
           "inapplicable": 0
         },
         "mcp": {
-          "required": 193,
+          "required": 194,
           "covered": 168,
           "missing": 0,
-          "waived": 25,
+          "waived": 26,
           "inapplicable": 0
         },
         "system": {
@@ -158668,10 +159130,10 @@
           "inapplicable": 0
         },
         "total": {
-          "required": 608,
+          "required": 611,
           "covered": 526,
           "missing": 0,
-          "waived": 82,
+          "waived": 85,
           "inapplicable": 0
         }
       }

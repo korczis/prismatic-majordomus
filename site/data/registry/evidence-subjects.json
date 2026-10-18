@@ -759,6 +759,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:plan.allocate",
+      "path": "/evidence/capabilities/plan-allocate/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:plan.issues",
       "path": "/evidence/capabilities/plan-issues/"
     },
@@ -2826,6 +2831,11 @@
       "kind": "command",
       "subject": "command:mcp",
       "path": "/evidence/commands/mcp/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:mesh allocate",
+      "path": "/evidence/commands/mesh-allocate/"
     },
     {
       "kind": "command",
@@ -5482,6 +5492,16 @@
       "kind": "capability",
       "id": "perf.counters",
       "page": "/evidence/capabilities/perf-counters/",
+      "programs": [],
+      "members": [],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:plan.allocate": {
+      "kind": "capability",
+      "id": "plan.allocate",
+      "page": "/evidence/capabilities/plan-allocate/",
       "programs": [],
       "members": [],
       "routes": [],
@@ -15284,6 +15304,25 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:mesh allocate": {
+      "kind": "command",
+      "id": "mesh allocate",
+      "page": "/evidence/commands/mesh-allocate/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:mesh claim": {
       "kind": "command",
       "id": "mesh claim",
@@ -20761,6 +20800,18 @@
       "programs": [],
       "members": [
         "capability:plan.model"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_plan_allocate": {
+      "kind": "mcp",
+      "id": "majordomus_plan_allocate",
+      "alias_of": "capability:plan.allocate",
+      "programs": [],
+      "members": [
+        "capability:plan.allocate"
       ],
       "routes": [],
       "mechanisms": [],
@@ -28143,6 +28194,7 @@
     "suite:331_knowledge_nodes_is_gated",
     "suite:3367_a_session_is_told_what_to_proceed_with_and_why",
     "suite:343_the_cockpit_shows_who_else_is_here",
+    "suite:3440_an_id_is_taken_by_one_atomic_claim",
     "suite:349_a_step_reports_its_own_time",
     "suite:34_command_fixtures",
     "suite:350_the_queue_measures_itself",

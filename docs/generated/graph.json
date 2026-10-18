@@ -1357,6 +1357,15 @@
         "status": "query"
       },
       {
+        "id": "capability:plan.allocate",
+        "kind": "capability",
+        "label": "plan.allocate",
+        "summary": "Reserve the next issue, case or ADR number",
+        "route": "/cockpit/capabilities/plan.allocate",
+        "source": "apps/majordomus-cli/src/capability/builtin/plan.rs",
+        "status": "command"
+      },
+      {
         "id": "capability:plan.issues",
         "kind": "capability",
         "label": "plan.issues",
@@ -39825,6 +39834,46 @@
         }
       },
       {
+        "id": "majordomus://issue/I3040",
+        "kind": "issue",
+        "label": "I3040",
+        "summary": "An id is taken by one atomic claim",
+        "route": "/cockpit/objects/issue/i3040",
+        "source": ".ai/repo/project/issues/I3040.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Allocations of one kind at once on one runtime answer different numbers, and a number another session holds is skipped with its holder named",
+            "A number on any ref, in any sibling worktree or reserved in the mesh journal is never handed out again",
+            "Across linked runtimes two claims made before they sync are both admitted and the fold names one winner; the loser allocates again (fencing is mesh-journal-converges')"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "A number is surveyed (scripts/case-numbers next, majordomus adr next) and then announced in prose on the board; nothing reserves it, and the seats hold hand-assigned blocks.",
+          "depends_on": [],
+          "evidence_required": [
+            "case_an_id_is_taken_by_one_atomic_claim"
+          ],
+          "milestone": "a-session-proceeds",
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/commands/mesh.rs",
+            "test/cases/3440_an_id_is_taken_by_one_atomic_claim.sh"
+          ],
+          "serves": [
+            "a-session-proceeds#an-id-is-reserved-once"
+          ],
+          "slug": "an-id-is-taken-by-one-atomic-claim",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "majordomus plan validate",
+            "bash test/run.sh 3440_an_id_is_taken_by_one_atomic_claim"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "label": "a-commit-stood-behind-a-build-lock",
@@ -40313,7 +40362,8 @@
           "created_at": "2026-10-18",
           "current_state": "No entrypoint composes the capabilities; plan.next is not claim-aware and gives no reason; a second start in a session opens a second task.",
           "evidence_required": [
-            "case_a_session_is_told_what_to_proceed_with_and_why"
+            "case_a_session_is_told_what_to_proceed_with_and_why",
+            "case_an_id_is_taken_by_one_atomic_claim"
           ],
           "non_scope": [
             "Mesh fencing and claim convergence (milestone mesh-journal-converges)",
@@ -40336,7 +40386,8 @@
           "validation": [
             "bin/majordomus plan validate",
             "bin/majordomus intent validate a-session-proceeds",
-            "bash test/run.sh 3367_a_session_is_told_what_to_proceed_with_and_why"
+            "bash test/run.sh 3367_a_session_is_told_what_to_proceed_with_and_why",
+            "bash test/run.sh 3440_an_id_is_taken_by_one_atomic_claim"
           ]
         }
       },
@@ -57749,6 +57800,13 @@
         "source": "test/cases/343_the_cockpit_shows_who_else_is_here.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3440_an_id_is_taken_by_one_atomic_claim.sh",
+        "kind": "test",
+        "label": "test/cases/3440_an_id_is_taken_by_one_atomic_claim.sh",
+        "route": "/cockpit/objects/test/test-cases-3440-an-id-is-taken-by-one-atomic-claim-sh",
+        "source": "test/cases/3440_an_id_is_taken_by_one_atomic_claim.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/349_a_step_reports_its_own_time.sh",
         "kind": "test",
         "label": "test/cases/349_a_step_reports_its_own_time.sh",
@@ -64539,6 +64597,21 @@
       },
       {
         "source": "capability:perf.counters",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:plan.allocate",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:plan.allocate",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:plan.allocate",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -84698,6 +84771,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3040",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3040",
+        "target": "majordomus://milestone/a-session-proceeds",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -89499,6 +89582,11 @@
       },
       {
         "source": "majordomus://test/test/cases/343_the_cockpit_shows_who_else_is_here.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3440_an_id_is_taken_by_one_atomic_claim.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -94419,6 +94507,11 @@
       },
       {
         "source": "module:plan",
+        "target": "capability:plan.allocate",
+        "kind": "composes"
+      },
+      {
+        "source": "module:plan",
         "target": "capability:plan.issues",
         "kind": "composes"
       },
@@ -94719,8 +94812,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2968,
-      "edges": 6524,
+      "nodes": 2971,
+      "edges": 6531,
       "acyclic": false,
       "truncated": false
     }

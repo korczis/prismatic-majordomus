@@ -30,6 +30,7 @@
 //! );
 //! ```
 
+pub mod allocate;
 pub mod artifacts;
 pub(crate) mod brief;
 pub(crate) mod capabilities;

@@ -140,6 +140,7 @@
     "op-peers-announce": "docs/api/peers/",
     "op-peers-list": "docs/api/peers/",
     "op-perf-counters": "docs/api/perf/",
+    "op-plan-allocate": "docs/api/plan/",
     "op-plan-issues": "docs/api/plan/",
     "op-plan-model": "docs/api/plan/",
     "op-plan-next": "docs/api/plan/",
@@ -211,6 +212,8 @@
     "schema-AdvisorUsage": "docs/api/reasoning/",
     "schema-AdvisorsReport": "docs/api/reasoning/",
     "schema-AgeSource": "docs/api/knowledge-base/",
+    "schema-AllocateInput": "docs/api/plan/",
+    "schema-Allocation": "docs/api/plan/",
     "schema-AnnounceInput": "docs/api/peers/",
     "schema-Announced": "docs/api/peers/",
     "schema-Announcement": "docs/api/peers/",
@@ -592,6 +595,9 @@
     "schema-HooksPath": "docs/api/worktree/",
     "schema-HttpExposure": "docs/api/capabilities/",
     "schema-HttpMethod": "docs/api/capabilities/",
+    "schema-IdKind": "docs/api/plan/",
+    "schema-IdSkip": "docs/api/plan/",
+    "schema-IdSource": "docs/api/plan/",
     "schema-Identity": "docs/api/design/",
     "schema-IdentityFacet": "docs/api/session-domain/",
     "schema-IdentityRead": "docs/api/delivery/",
@@ -1244,8 +1250,8 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 198,
-    "schemas": 984,
+    "operations": 199,
+    "schemas": 989,
     "tags": 59
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1477,6 +1483,7 @@
     "peers.announce": "peers",
     "peers.list": "peers",
     "perf.counters": "perf",
+    "plan.allocate": "plan",
     "plan.issues": "plan",
     "plan.model": "plan",
     "plan.next": "plan",
@@ -1552,6 +1559,8 @@
     "AdvisorUsage": "reasoning",
     "AdvisorsReport": "reasoning",
     "AgeSource": "knowledge-base",
+    "AllocateInput": "plan",
+    "Allocation": "plan",
     "AnnounceInput": "peers",
     "Announced": "peers",
     "Announcement": "peers",
@@ -1933,6 +1942,9 @@
     "HooksPath": "worktree",
     "HttpExposure": "capabilities",
     "HttpMethod": "capabilities",
+    "IdKind": "plan",
+    "IdSkip": "plan",
+    "IdSource": "plan",
     "Identity": "design",
     "IdentityFacet": "session-domain",
     "IdentityRead": "delivery",
@@ -3176,6 +3188,114 @@
           "value": "date"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "The input of `plan.allocate`.",
+      "home": "plan",
+      "is_enum": false,
+      "name": "AllocateInput",
+      "properties": [
+        {
+          "description": "`issue`, `case` or `adr`.",
+          "name": "kind",
+          "refs": [
+            "IdKind"
+          ],
+          "required": true,
+          "type": "IdKind"
+        },
+        {
+          "description": "The mesh session the number is reserved for; the calling MCP session's own when omitted.",
+          "name": "session",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The lowest number the caller will take: a survey it ran itself, or a block it was given. The candidate is the higher of this and one past every source.",
+          "name": "at_least",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "plan.allocate"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "A number reserved for one session, with the survey it was chosen from.",
+      "home": "plan",
+      "is_enum": false,
+      "name": "Allocation",
+      "properties": [
+        {
+          "description": "The kind.",
+          "name": "kind",
+          "refs": [
+            "IdKind"
+          ],
+          "required": true,
+          "type": "IdKind"
+        },
+        {
+          "description": "The identifier as it is written: `I3041`, `3441`, `0178`.",
+          "name": "value",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The number.",
+          "name": "number",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "The mesh key it is reserved under, `id:<kind>/<number>`.",
+          "name": "reservation",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The key of the exclusive claim that holds it, for `majordomus mesh release`.",
+          "name": "claim",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What each source held.",
+          "name": "sources",
+          "refs": [
+            "IdSource"
+          ],
+          "required": true,
+          "type": "array of IdSource"
+        },
+        {
+          "description": "Numbers tried before this one and held by another session's claim, with the holder.",
+          "name": "skipped",
+          "refs": [
+            "IdSkip"
+          ],
+          "required": true,
+          "type": "array of IdSkip"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "plan.allocate"
+      ],
+      "used_by_schemas": [],
+      "values": [],
       "variants": []
     },
     {
@@ -19117,6 +19237,7 @@
         "peers.announce",
         "perf.counters",
         "plan.model",
+        "plan.allocate",
         "plan.issues",
         "plan.next",
         "plan.record",
@@ -24635,6 +24756,113 @@
           "value": "POST"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "The kind of identifier allocated: what `majordomus mesh allocate <kind>` and\n`plan.allocate` take.\n\n```\nuse majordomus_cli::capability::builtin::allocate::IdKind;\n\nlet kind: IdKind = serde_json::from_value(serde_json::json!(\"adr\")).unwrap();\nassert_eq!(kind, IdKind::Adr);\nassert!(serde_json::from_value::<IdKind>(serde_json::json!(\"ticket\")).is_err());\n```",
+      "home": "plan",
+      "is_enum": true,
+      "name": "IdKind",
+      "properties": [],
+      "type": "\"issue\" | \"case\" | \"adr\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "AllocateInput",
+        "Allocation"
+      ],
+      "values": [
+        {
+          "description": "An issue id, `I<nnnn>`, the name of `.ai/repo/project/issues/<id>.yaml`.",
+          "value": "issue"
+        },
+        {
+          "description": "A case number, the identity before the first underscore of `test/cases/<n>_*.sh`.",
+          "value": "case"
+        },
+        {
+          "description": "An ADR number, the four digits that open `.ai/repo/adrs/<nnnn>-*.md`.",
+          "value": "adr"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "A number another session holds.",
+      "home": "plan",
+      "is_enum": false,
+      "name": "IdSkip",
+      "properties": [
+        {
+          "description": "The number.",
+          "name": "number",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "Its claim's holding session.",
+          "name": "holder",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its claim's key.",
+          "name": "claim",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Allocation"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One source of an allocation's survey.",
+      "home": "plan",
+      "is_enum": false,
+      "name": "IdSource",
+      "properties": [
+        {
+          "description": "`tree`, `worktrees`, `refs`, `mesh` or `at_least`.",
+          "name": "source",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The highest number it holds; absent when it holds none.",
+          "name": "highest",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "Whether it could be read.",
+          "name": "read",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "What was read, or why not.",
+          "name": "detail",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Allocation"
+      ],
+      "values": [],
       "variants": []
     },
     {
@@ -67350,6 +67578,70 @@
           "result_schema": "Plan",
           "stability": "behaviorally_verified",
           "summary": "The whole derived plan"
+        },
+        {
+          "benchmark": "waived",
+          "benchmark_reason": "transient_state",
+          "body_examples": [
+            {
+              "case": "case_from_a_floor",
+              "json": "{\"kind\":\"case\",\"session\":\"bench\",\"at_least\":9000}"
+            }
+          ],
+          "body_schema": "AllocateInput",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s -X POST \"http://127.0.0.1:8741/api/v1/plan/allocate\" -H \"content-type: application/json\" -d '{\"kind\":\"case\",\"session\":\"bench\",\"at_least\":9000}'",
+          "description": "One number of the kind asked (`issue`, `case`, `adr`), reserved for one mesh session by one exclusive claim on the identifier's own key, `id:<kind>/<number>`. The candidate is one past the highest number this tree, the sibling worktrees, every ref and every reservation the mesh journal remembers hold, or the caller's `at_least` when that is higher; a number another session's claim already holds is skipped and its holder named. On one runtime the claim is admitted under the admission lock, so two allocations at once answer two numbers; across linked runtimes two claims made before they sync are both admitted and the fold names one winner, whose loser allocates again (fencing is mesh-journal-converges' work). Writes this runtime's mesh journal only, never the repository; the reservation ends with its session or `mesh release`.",
+          "home": "plan",
+          "id": "plan.allocate",
+          "kind": "command",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_plan_allocate",
+          "method": "POST",
+          "parameters": [],
+          "path": "/api/v1/plan/allocate",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::plan",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Reserve the next issue, case or ADR number: the result.",
+              "schema": "Allocation",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`refused`: The command was understood and turned down for the reason the message gives.",
+              "schema": "ErrorBody",
+              "status": "422"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "Allocation",
+          "stability": "behaviorally_verified",
+          "summary": "Reserve the next issue, case or ADR number"
         },
         {
           "benchmark": "required",

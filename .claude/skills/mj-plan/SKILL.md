@@ -1,6 +1,6 @@
 ---
 name: mj-plan
-description: "Majordomus plan: The issues, filtered by what the graph derived; The whole derived plan; The one issue to take now; One milestone or issue, with everything derived about it; The milestones in derived order; Where the plan stands; Move one issue through the lifecycle; What the model refuses; What…"
+description: "Majordomus plan: Reserve the next issue, case or ADR number; The issues, filtered by what the graph derived; The whole derived plan; The one issue to take now; One milestone or issue, with everything derived about it; The milestones in derived order; Where the plan stands; Move one issue through…"
 argument-hint: "[request]"
 ---
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
@@ -15,6 +15,7 @@ $ARGUMENTS
 
 | Capability | What it is | MCP tool | Command line | Effect |
 |---|---|---|---|---|
+| `plan.allocate` | Reserve the next issue, case or ADR number | `majordomus_plan_allocate` | — | changes |
 | `plan.issues` | The issues, filtered by what the graph derived | `majordomus_plan_issues` | — | reads |
 | `plan.model` | The whole derived plan | `majordomus_plan` | — | reads |
 | `plan.next` | The one issue to take now | `majordomus_plan_next` | — | reads |

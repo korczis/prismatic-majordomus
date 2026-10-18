@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "0.29.0"
   },
-  "fingerprint": "cd01dda564d8ba73be819a6008248acfd7ea4015b1ead39b344a229126bf849a",
+  "fingerprint": "f96c37932de5060a2ec9e24ed27d8d60e0886bfbc4c73fd511b4e559cc0e0db4",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -1162,7 +1162,7 @@
         "use_cases": 6,
         "rules": 13,
         "enforced_rules": 11,
-        "capabilities": 73,
+        "capabilities": 74,
         "moments": 17
       },
       "evidence": {
@@ -3229,7 +3229,7 @@
         "use_cases": 10,
         "rules": 15,
         "enforced_rules": 14,
-        "capabilities": 134,
+        "capabilities": 135,
         "moments": 38
       },
       "evidence": {
@@ -9745,6 +9745,14 @@
           "source_path": "apps/majordomus-cli/src/capability/builtin/plan.rs",
           "capabilities": [
             {
+              "id": "plan.allocate",
+              "title": "Reserve the next issue, case or ADR number",
+              "kind": "command",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_plan_allocate",
+              "route": "POST /api/v1/plan/allocate"
+            },
+            {
               "id": "plan.issues",
               "title": "The issues, filtered by what the graph derived",
               "kind": "query",
@@ -10244,10 +10252,10 @@
       ],
       "backlinks": [],
       "counts": {
-        "capabilities": 58,
-        "mcp_tools": 51,
+        "capabilities": 59,
+        "mcp_tools": 52,
         "mcp_resources": 9,
-        "http_routes": 55,
+        "http_routes": 56,
         "cli_paths": 17,
         "commands": 0,
         "objects": 1,
@@ -10519,6 +10527,14 @@
           "stability": "behaviorally_verified",
           "source_path": "apps/majordomus-cli/src/capability/builtin/plan.rs",
           "capabilities": [
+            {
+              "id": "plan.allocate",
+              "title": "Reserve the next issue, case or ADR number",
+              "kind": "command",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_plan_allocate",
+              "route": "POST /api/v1/plan/allocate"
+            },
             {
               "id": "plan.issues",
               "title": "The issues, filtered by what the graph derived",
@@ -11609,10 +11625,10 @@
         "observatory"
       ],
       "counts": {
-        "capabilities": 97,
-        "mcp_tools": 89,
+        "capabilities": 98,
+        "mcp_tools": 90,
         "mcp_resources": 16,
-        "http_routes": 94,
+        "http_routes": 95,
         "cli_paths": 41,
         "commands": 0,
         "objects": 0,
@@ -12915,6 +12931,14 @@
           "source_path": "apps/majordomus-cli/src/capability/builtin/plan.rs",
           "capabilities": [
             {
+              "id": "plan.allocate",
+              "title": "Reserve the next issue, case or ADR number",
+              "kind": "command",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_plan_allocate",
+              "route": "POST /api/v1/plan/allocate"
+            },
+            {
               "id": "plan.issues",
               "title": "The issues, filtered by what the graph derived",
               "kind": "query",
@@ -13132,7 +13156,7 @@
         },
         {
           "name": "issue",
-          "objects": 425
+          "objects": 426
         },
         {
           "name": "intent",
@@ -13340,13 +13364,13 @@
       ],
       "backlinks": [],
       "counts": {
-        "capabilities": 23,
-        "mcp_tools": 23,
-        "mcp_resources": 485,
-        "http_routes": 23,
+        "capabilities": 24,
+        "mcp_tools": 24,
+        "mcp_resources": 486,
+        "http_routes": 24,
         "cli_paths": 11,
         "commands": 1,
-        "objects": 482,
+        "objects": 483,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -17260,7 +17284,7 @@
       },
       {
         "id": "issue",
-        "title": "issue (425)",
+        "title": "issue (426)",
         "features": [
           "planning"
         ]
@@ -18281,17 +18305,17 @@
     }
   ],
   "telemetry": {
-    "capabilities": 2534,
-    "builtin": 203,
-    "declarative": 2331,
+    "capabilities": 2537,
+    "builtin": 204,
+    "declarative": 2333,
     "modules": 59,
-    "mcp_tools": 193,
-    "mcp_resources": 2386,
-    "http_routes": 198,
-    "cli_commands": 207,
+    "mcp_tools": 194,
+    "mcp_resources": 2388,
+    "http_routes": 199,
+    "cli_commands": 208,
     "shell_commands": 30,
     "kinds": 34,
-    "objects": 2331,
+    "objects": 2333,
     "by_kind": {
       "adr": 118,
       "application": 5,
@@ -18310,7 +18334,7 @@
       "gap": 4,
       "implementation": 52,
       "intent": 6,
-      "issue": 425,
+      "issue": 426,
       "knowledge": 4,
       "mesh-declaration": 1,
       "milestone": 42,
@@ -18324,7 +18348,7 @@
       "session": 90,
       "skill": 8,
       "taxonomy": 10,
-      "test": 528,
+      "test": 529,
       "use-case": 49,
       "workspace": 1
     },

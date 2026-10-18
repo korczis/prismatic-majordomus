@@ -22558,6 +22558,12 @@
           "route": "/docs/cli/mesh/claim/"
         },
         {
+          "about": "Reserve the next issue, case or ADR number for a session with one exclusive mesh claim on its id key, after surveying the tree, the worktrees, every ref and the journal; exits 10 when no server runs the mesh",
+          "command": "majordomus mesh allocate",
+          "name": "allocate",
+          "route": "/docs/cli/mesh/allocate/"
+        },
+        {
           "about": "Release a claim this server's current run holds",
           "command": "majordomus mesh release",
           "name": "release",
@@ -24555,6 +24561,186 @@
       ],
       "route": "/docs/cli/mesh/claim/",
       "usage": "majordomus mesh claim [OPTIONS] <SCOPE>"
+    },
+    {
+      "about": "Reserve the next issue, case or ADR number for a session with one exclusive mesh claim on its id key, after surveying the tree, the worktrees, every ref and the journal; exits 10 when no server runs the mesh",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus mesh",
+          "name": "mesh",
+          "route": "/docs/cli/mesh/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The kind of identifier",
+          "name": "kind",
+          "positional": true,
+          "possible_values": [
+            {
+              "help": "An issue id, `I<nnnn>`, the name of `.ai/repo/project/issues/<id>.yaml`",
+              "name": "issue"
+            },
+            {
+              "help": "A case number, the identity before the first underscore of `test/cases/<n>_*.sh`",
+              "name": "case"
+            },
+            {
+              "help": "An ADR number, the four digits that open `.ai/repo/adrs/<nnnn>-*.md`",
+              "name": "adr"
+            }
+          ],
+          "required": true,
+          "takes_value": true,
+          "value_name": "KIND"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The mesh session the number is reserved for",
+          "long": "session",
+          "name": "session",
+          "positional": false,
+          "possible_values": [],
+          "required": true,
+          "takes_value": true,
+          "value_name": "SESSION"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The lowest number to take: a survey run elsewhere, or a block a seat was given",
+          "long": "at-least",
+          "name": "at_least",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "N"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": false,
+          "help": "`text` for a person, `json` for a machine; both render the same answer",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus mesh allocate",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "mesh",
+            "allocate",
+            "case",
+            "--session",
+            "s1"
+          ],
+          "command": "majordomus mesh allocate case --session s1",
+          "description": "The number is reserved by one exclusive claim on `id:case/<n>` in the mesh of the server holding this checkout's lease, after surveying the tree, the sibling worktrees, every ref and every reservation the journal remembers. A reservation needs the running server that makes it atomic; without one the command exits 10 and says so.",
+          "expectation": "exits 10",
+          "id": "mesh-allocate",
+          "setup": [],
+          "title": "Reserve the next case number for a session"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "allocate",
+      "parent_route": "/docs/cli/mesh/",
+      "path": [
+        "majordomus",
+        "mesh",
+        "allocate"
+      ],
+      "route": "/docs/cli/mesh/allocate/",
+      "usage": "majordomus mesh allocate [OPTIONS] <KIND>"
     },
     {
       "about": "Release a claim this server's current run holds",
@@ -37486,10 +37672,10 @@
     }
   ],
   "counts": {
-    "arguments": 1625,
-    "commands": 236,
-    "examples": 238,
-    "runnable": 207
+    "arguments": 1633,
+    "commands": 237,
+    "examples": 239,
+    "runnable": 208
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
   "generator_version": "0.29.0",
