@@ -25,4 +25,17 @@ validation:
 evidence_required:
   - "unobserved_mesh_case"
 created_at: 2026-10-18
-updated_at: 2026-10-18
+updated_at: 2026-10-18T03:06:33Z
+started_at: 2026-10-18T03:06:03Z
+started_event: sha256:b35e4f02772d6e846b0d002fa98ffeca76c1bc5954b0b863344f8b13cf03a20f
+verified_at: 2026-10-18T03:06:15Z
+verified_event: sha256:cf606ebda2187c40692073402a9c9ae4d39f1cc74b4b77cf63494bbe6a28a471
+completed_at: 2026-10-18T03:06:33Z
+completed_event: sha256:f38df2552aa16d2bea2191dc61c3ee3fe03792ee36f48dbb38f886a93da345cf
+evidence:
+  - covers: unobserved_mesh_case
+    type: test
+    command: "bash test/run.sh 3343_an_unobserved_mesh_is_never_zero 1089_the_work_and_mesh_screens_answer; cargo test --lib ui::"
+    result: "tests: 2 passed, 0 failed; ui:: 182 passed, 0 failed (2026-10-18 ~02:40Z at a636d944881). Mutation: unobserved() forced to None fails 3343 ('/ui/mesh does not say the mesh was not observed'). scripts/ui audit --only /ui/mesh and /ui/ on this commit's binary: finding sets identical to master 707a04c's (26 and 153, environmental 404s from an unbuilt site/public)"
+    commit: a636d9448819260066eca1f257241ece406a2ab5
+    recorded_at: 2026-10-18T03:06:27Z
