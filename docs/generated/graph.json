@@ -41807,6 +41807,41 @@
         }
       },
       {
+        "id": "majordomus://issue/I2987",
+        "kind": "issue",
+        "label": "I2987",
+        "summary": "server.status and peers.list ask every checkout at once, a bounded number at a time",
+        "route": "/cockpit/objects/issue/i2987",
+        "source": ".ai/repo/project/issues/I2987.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every checkout is answered in the order given, more than one is asked at once, and never more than ASKED_AT_ONCE (unit test every_checkout_is_asked_at_once_and_answered_in_order)",
+            "The existing server and peers unit tests and their cases pass unchanged"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "server_status and peers_list loop over the checkouts sequentially; the wait is the sum of every probe.",
+          "depends_on": [],
+          "desired_state": "The checkouts are asked sixteen at a time and the answer is the same, in the same order.",
+          "evidence_required": [
+            "unit_checkouts_at_once"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin/server.rs",
+            "apps/majordomus-cli/src/capability/builtin/peers.rs"
+          ],
+          "slug": "every-checkout-is-asked-at-once",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "cargo test --lib -- capability::builtin::server",
+            "cargo test --lib -- capability::builtin::peers"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I3000",
         "kind": "issue",
         "label": "I3000",
@@ -87801,6 +87836,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2987",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2987",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I3000",
         "target": "kind:issue",
         "kind": "is_a"
@@ -98062,8 +98107,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3052,
-      "edges": 6697,
+      "nodes": 3053,
+      "edges": 6699,
       "acyclic": false,
       "truncated": false
     }
