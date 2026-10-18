@@ -298,7 +298,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/economics.json` | `economics` | json | 30840 | `1b87a5f6c6ffd953` |
 | `docs/generated/economics.md` | `economics` | markdown | 15299 | `4124fab09354a7b3` |
 | `docs/generated/economics.yaml` | `economics` | yaml | 25713 | `42835ddab5f6ab85` |
-| `docs/generated/graph.json` | `graph` | json | 3609606 | `5abc89cff99e26bb` |
+| `docs/generated/graph.json` | `graph` | json | 3611966 | `be7fc254e2553d2f` |
 | `docs/generated/graph.schema.json` | `graph-schema` | json | 7618 | `be68fa1c9b2a3640` |
 | `docs/generated/modules/artifacts.md` | `modules/artifacts` | markdown | 1742 | `6c004f78b46b28b0` |
 | `docs/generated/modules/brief.md` | `modules/brief` | markdown | 2394 | `a6e2eb45bb23dac2` |
@@ -423,9 +423,9 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `site/data/registry/design.json` | `site-design` | json | 11587 | `0e4465b4a2917da1` |
 | `site/data/registry/distribution.json` | `site-distribution` | json | 3005 | `0eff218ed99f9f24` |
 | `site/data/registry/evidence-subjects.json` | `site-evidence-subjects` | json | 803801 | `63d62cd1197003b1` |
-| `site/data/registry/product-graph.json` | `site-product-graph` | json | 111570 | `021d6161e949e1d0` |
-| `site/data/registry/product.json` | `site-product` | json | 758797 | `0d81680f51c848ee` |
-| `site/data/registry/registry.json` | `site-registry` | json | 6963730 | `c184b0fc5502f047` |
+| `site/data/registry/product-graph.json` | `site-product-graph` | json | 111570 | `b5fb8abf1d956a77` |
+| `site/data/registry/product.json` | `site-product` | json | 758797 | `64b096f371b46391` |
+| `site/data/registry/registry.json` | `site-registry` | json | 6964588 | `afaa48289415530a` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180163 | `d9d436d75efbda23` |
 | `site/data/registry/why.json` | `site-why` | json | 349924 | `1b27a29d3e661a46` |
 | `site/static/favicon.svg` | `design-mark` | text | 904 | `a687ae96355c4592` |
