@@ -519,4 +519,18 @@ mod tests {
             "an unanswered status keeps its own tile: {shown}"
         );
     }
+
+    /// Each line of the session ledger counts on its own, and a null or a zero is no line:
+    /// a close, a derivation and an underived close are each enough to read the ledger.
+    #[test]
+    fn each_ledger_line_is_read_on_its_own_and_a_null_is_none() {
+        let read = |value: Value| ledger_recorded(&value);
+        assert!(read(json!({ "last_closed": { "episode": "s-1" } })));
+        assert!(read(json!({ "last_derived": { "episode": "s-1" } })));
+        assert!(read(json!({ "closed_without_derivation": 1 })));
+        assert!(!read(json!({
+            "last_closed": null, "last_derived": null, "closed_without_derivation": 0,
+        })));
+        assert!(!read(json!({})));
+    }
 }
