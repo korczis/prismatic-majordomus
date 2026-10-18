@@ -3,7 +3,7 @@ title = "Roadmap"
 description = "What comes next, in the order the milestone graph derives, each version gated by the previous one being accepted rather than by anyone's intention."
 template = "roadmap.html"
 [extra]
-source = ".majordomus/project/milestones/"
+source = ".ai/repo/project/milestones/"
 next = [["Planned claims", "/guarantees/planned/"], ["Limitations", "/limitations/"], ["Economics", "/docs/economics/"]]
 +++
 A milestone here is an outcome, not a bucket of tickets. Its status comes from its own issues
