@@ -42055,6 +42055,50 @@
         }
       },
       {
+        "id": "majordomus://issue/I3007",
+        "kind": "issue",
+        "label": "I3007",
+        "summary": "A commit that a record or the site's data names is a commit the history holds",
+        "route": "/cockpit/objects/issue/i3007",
+        "source": ".ai/repo/project/issues/I3007.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A data field or record link naming a commit outside the history fails `link-check --sources`, naming the file and field",
+            "A field no template links as a commit is not decided",
+            "A shallow clone defers (exit 12) and reports no finding",
+            "Removing the data walk, the source scan or the template key filter each turns case 3400 red",
+            "mj_commit_in_history answers 0, 1 and 2 as stated"
+          ],
+          "created_at": "2026-10-18",
+          "depends_on": [],
+          "desired_state": "A record or data file that names a commit outside the history is refused before the build, by the same rules as a page, and one predicate answers whether a commit is in the history.",
+          "evidence_required": [],
+          "milestone": "surfaces-never-disagree",
+          "non_scope": [
+            "Fetching anything: the check decides offline, against the clone it is given",
+            "Rewriting prose that tells where work once lived; only a field or link that becomes a commit link is held"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "scripts/ci/link-check",
+            "lib/common.sh",
+            "test/cases/3400_a_recorded_commit_link_names_the_history.sh",
+            ".ai/repo/project",
+            "docs",
+            "site"
+          ],
+          "slug": "a-recorded-commit-link-names-the-history",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "majordomus plan validate",
+            "bash test/run.sh 3400_a_recorded_commit_link_names_the_history",
+            "scripts/ci/link-check --sources"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I3020",
         "kind": "issue",
         "label": "I3020",
@@ -60209,6 +60253,13 @@
         "label": "test/cases/33_stale_executable.sh",
         "route": "/cockpit/objects/test/test-cases-33-stale-executable-sh",
         "source": "test/cases/33_stale_executable.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3400_a_recorded_commit_link_names_the_history.sh",
+        "kind": "test",
+        "label": "test/cases/3400_a_recorded_commit_link_names_the_history.sh",
+        "route": "/cockpit/objects/test/test-cases-3400-a-recorded-commit-link-names-the-history-sh",
+        "source": "test/cases/3400_a_recorded_commit_link_names_the_history.sh"
       },
       {
         "id": "majordomus://test/test/cases/340_a_brief_is_kept_as_received.sh",
@@ -87861,6 +87912,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3007",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3007",
+        "target": "majordomus://milestone/surfaces-never-disagree",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I3020",
         "target": "kind:issue",
         "kind": "is_a"
@@ -92812,6 +92873,11 @@
       },
       {
         "source": "majordomus://test/test/cases/33_stale_executable.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3400_a_recorded_commit_link_names_the_history.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -98062,8 +98128,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3052,
-      "edges": 6697,
+      "nodes": 3054,
+      "edges": 6700,
       "acyclic": false,
       "truncated": false
     }

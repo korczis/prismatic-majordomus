@@ -751,6 +751,20 @@ mj_path_contains() {
   case "$b" in "$a"|"$a"/*) return 0 ;; esac; return 1
 }
 
+# Is commit $1 in the history of $2 (default HEAD)? 0 it is, 1 it is not, 2 this clone cannot
+# know: it is shallow, or it lacks the object, and an absent commit is then no evidence that the
+# commit does not exist. The one predicate for whoever records or checks a commit (I3007, and the
+# producer side I3050); scripts/ci/link-check decides a page's commit links by the same rule.
+mj_commit_in_history() {
+  local sha="$1" head="${2:-HEAD}"
+  case "$sha" in ''|*[!0-9a-f]*) return 1 ;; esac
+  [ "${#sha}" -ge 7 ] && [ "${#sha}" -le 40 ] || return 1
+  [ "$(mj_git rev-parse --is-shallow-repository 2>/dev/null)" = true ] && return 2
+  mj_git cat-file -e "$sha^{commit}" 2>/dev/null || return 2
+  mj_git merge-base --is-ancestor "$sha" "$head" 2>/dev/null && return 0
+  return 1
+}
+
 # "15m" / "2h" / "90s" -> seconds
 mj_duration_secs() {
   local v="$1" n u

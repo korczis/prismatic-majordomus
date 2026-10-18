@@ -6,23 +6,23 @@
     "version": "0.30.0"
   },
   "registry": {
-    "fingerprint": "408361137b02916f1bb3739ad848e39a6bc03df8727bfdbc6c470f740c2dc519",
+    "fingerprint": "7b5b54355004859701b63b0ebea64ee8253517ff785cc00d9688f9672cd3873a",
     "summary": {
-      "total": 2619,
+      "total": 2621,
       "builtin": 206,
-      "declarative": 2413,
+      "declarative": 2415,
       "by_kind": {
         "command": 31,
         "query": 175,
-        "resource": 2413
+        "resource": 2415
       },
       "by_stability": {
         "behaviorally_verified": 142,
         "experimental": 55,
-        "implemented": 2422
+        "implemented": 2424
       },
       "mcp_tools": 196,
-      "mcp_resources": 2468,
+      "mcp_resources": 2470,
       "http_routes": 201,
       "cli_commands": 111,
       "modules": 92,
@@ -85404,7 +85404,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 474,
+        "capabilities": 475,
         "capability_ids": []
       },
       {
@@ -85978,7 +85978,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 554,
+        "capabilities": 555,
         "capability_ids": []
       },
       {
@@ -86070,7 +86070,7 @@
     ]
   },
   "index": {
-    "fingerprint": "b59c42ebfb8d9f06ed30f374f1d179c3989f7d15b6e0c32534905aaf0caab582",
+    "fingerprint": "4cd5140bd74028d9b2b7357e348a7bcb65400aef3a18015711eb8ddb7ecad24a",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -86110,7 +86110,7 @@
       "gap": 4,
       "implementation": 52,
       "intent": 5,
-      "issue": 474,
+      "issue": 475,
       "knowledge": 4,
       "mesh-declaration": 1,
       "milestone": 42,
@@ -86124,7 +86124,7 @@
       "session": 90,
       "skill": 8,
       "taxonomy": 10,
-      "test": 554,
+      "test": 555,
       "use-case": 49,
       "workspace": 1
     },
@@ -92447,7 +92447,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 169709
+        "bytes": 173941
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -95577,7 +95577,7 @@
         "identity": "lib/common.sh",
         "path": "lib/common.sh",
         "source_class": "library",
-        "bytes": 109307
+        "bytes": 110089
       },
       {
         "uri": "majordomus://implementation/lib/context.sh",
@@ -96648,7 +96648,7 @@
         "path": ".ai/repo/project/issues/I0817.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2049
+        "bytes": 2053
       },
       {
         "uri": "majordomus://issue/I0818",
@@ -96659,7 +96659,7 @@
         "path": ".ai/repo/project/issues/I0818.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2373
+        "bytes": 2377
       },
       {
         "uri": "majordomus://issue/I0819",
@@ -101148,6 +101148,17 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 890
+      },
+      {
+        "uri": "majordomus://issue/I3007",
+        "kind": "issue",
+        "identity": "I3007",
+        "title": "A commit that a record or the site's data names is a commit the history holds",
+        "description": "`scripts/ci/link-check --sources` decides, before any site is built, every commit/<sha> link written in a tracked file under .ai/repo/project, site/data or site/content-src, and every commit a data file hands a template to link, the key names read from the templates' `/commit/{{ … }}`, by the rules the built-page check already uses: a commit outside the history being published is a finding, and a shallow clone defers. lib/common.sh gains mj_commit_in_history (0 in, 1 not, 2 undecidable), the one predicate for the producer side (I3050). Two issue records that cited rebased evidence commits name the commits that landed.",
+        "path": ".ai/repo/project/issues/I3007.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2762
       },
       {
         "uri": "majordomus://issue/I3020",
@@ -109219,6 +109230,14 @@
         "bytes": 9054
       },
       {
+        "uri": "majordomus://test/test/cases/3400_a_recorded_commit_link_names_the_history.sh",
+        "kind": "test",
+        "identity": "test/cases/3400_a_recorded_commit_link_names_the_history.sh",
+        "path": "test/cases/3400_a_recorded_commit_link_names_the_history.sh",
+        "source_class": "case",
+        "bytes": 4170
+      },
+      {
         "uri": "majordomus://test/test/cases/340_a_brief_is_kept_as_received.sh",
         "kind": "test",
         "identity": "test/cases/340_a_brief_is_kept_as_received.sh",
@@ -112133,7 +112152,7 @@
       "identity": [
         "id"
       ],
-      "objects": 474
+      "objects": 475
     },
     {
       "name": "knowledge",
@@ -112285,7 +112304,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 554
+      "objects": 555
     },
     {
       "name": "use-case",
