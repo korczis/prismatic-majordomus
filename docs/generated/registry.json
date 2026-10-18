@@ -947,7 +947,7 @@
             },
             "complete": {
               "type": "boolean",
-              "description": "Whether every source was read whole: every board, the mesh, and every monitor source\nasked for. `false` names its reason in `sources`, so that \"nobody is here\" is never what\n\"I could not ask\" reads as."
+              "description": "Whether every board was read and the mesh, when the repository declares one, could be\nasked. `false` names its reason in `sources`, so that \"nobody is here\" is never what\n\"I could not ask\" reads as. The monitor's sources are reported in `sources` with their\nstate and do not decide it: an empty executor trail or an absent `gh` is no board that\ncould not be read."
             },
             "sources": {
               "type": "array",

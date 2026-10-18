@@ -369,9 +369,11 @@ pub struct Blackboard {
     /// That checkout's HEAD, when it has one.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub head: Option<String>,
-    /// Whether every source was read whole: every board, the mesh, and every monitor source
-    /// asked for. `false` names its reason in `sources`, so that "nobody is here" is never what
-    /// "I could not ask" reads as.
+    /// Whether every board was read and the mesh, when the repository declares one, could be
+    /// asked. `false` names its reason in `sources`, so that "nobody is here" is never what
+    /// "I could not ask" reads as. The monitor's sources are reported in `sources` with their
+    /// state and do not decide it: an empty executor trail or an absent `gh` is no board that
+    /// could not be read.
     pub complete: bool,
     /// Each source and how it was read.
     pub sources: Vec<BlackboardSource>,
@@ -442,7 +444,8 @@ pub(crate) fn join<'s>(
         return Vec::new();
     };
     let name = format!("board-{}", peer.id);
-    let client: String = peer.client.name.chars().take(64).collect();
+    // cut exactly as the projection cut it: bytes on a character boundary, controls removed
+    let client = crate::mesh::cooperation::clip(&peer.client.name, 64);
     sessions
         .iter()
         .copied()
@@ -720,7 +723,10 @@ pub(crate) fn project(
 /// A board peer's claims: its announcements, and the live claims its joined session holds
 /// beside them — an exclusive `mesh.claim` taken through its MCP session, say. The advisory
 /// claims its server projected from the announcements are the announcements themselves and
-/// are not counted twice.
+/// are not counted twice; a projected claim is one that carries exactly what the projection
+/// writes (`Cooperation::project_board`): advisory, the announcement's scope and clipped
+/// intent, no issue. Each announcement stands for one such claim. Any other claim of the
+/// session, a same-scope advisory claim with its own intent or issue among them, is kept.
 fn claims_of_peer(peer: &Peer, session: Vec<BlackboardClaim>) -> Vec<BlackboardClaim> {
     let normal = |scope: &[String]| -> Vec<String> {
         scope
@@ -742,9 +748,27 @@ fn claims_of_peer(peer: &Peer, session: Vec<BlackboardClaim>) -> Vec<BlackboardC
             conflicted: false,
         })
         .collect();
-    let announced: Vec<Vec<String>> = peer.claims.iter().map(|c| normal(&c.scope)).collect();
+    // what the projection wrote for each announcement, each matched at most once
+    let mut projected: Vec<Option<(Vec<String>, Option<String>)>> = peer
+        .claims
+        .iter()
+        .map(|c| {
+            let intent = crate::mesh::cooperation::clip(&c.intent, 512);
+            Some((normal(&c.scope), Some(intent).filter(|i| !i.is_empty())))
+        })
+        .collect();
     claims.extend(session.into_iter().filter(|c| {
-        c.mode == ClaimMode::Exclusive || c.conflicted || !announced.contains(&normal(&c.scope))
+        if c.mode != ClaimMode::Advisory || c.conflicted || c.issue.is_some() {
+            return true;
+        }
+        let this = (normal(&c.scope), c.intent.clone());
+        match projected.iter_mut().find(|p| p.as_ref() == Some(&this)) {
+            Some(slot) => {
+                *slot = None;
+                false
+            }
+            None => true,
+        }
     }));
     claims
 }
@@ -1117,11 +1141,11 @@ mod tests {
             Some(&here),
         );
         let s = session(&here, "board-p1", "codex", Some("c1"));
+        // what the projection writes for the announcement: advisory, its scope, its intent
+        let mut projected = claim(&s, "k1", &["docs"], ClaimMode::Advisory);
+        projected.intent = Some("x".into());
         let state = CooperationState {
-            claims: vec![
-                claim(&s, "k1", &["docs"], ClaimMode::Advisory),
-                claim(&s, "k2", &["apps"], ClaimMode::Exclusive),
-            ],
+            claims: vec![projected, claim(&s, "k2", &["apps"], ClaimMode::Exclusive)],
             sessions: vec![s],
             ..CooperationState::default()
         };
@@ -1130,6 +1154,57 @@ mod tests {
         assert_eq!(claims.len(), 2, "{claims:#?}");
         assert_eq!(claims[1].mode, ClaimMode::Exclusive);
         assert_eq!(claims[1].record.as_deref(), Some("k2"));
+    }
+
+    /// An advisory claim the session took itself over the same paths as an announcement, with
+    /// its own intent or issue, is not the announcement's projection: it is kept with its
+    /// record. Only a claim carrying exactly what the projection writes is folded, once.
+    #[test]
+    fn an_independent_same_scope_claim_is_kept() {
+        let here = stream("1", "1", "a");
+        let board = list(
+            vec![peer("p1", "codex", "c1", &[("document UI", &["docs"])])],
+            "c1",
+            Some(&here),
+        );
+        let s = session(&here, "board-p1", "codex", Some("c1"));
+        let mut projected = claim(&s, "k1", &["docs"], ClaimMode::Advisory);
+        projected.intent = Some("document UI".into());
+        let mut review = claim(&s, "k2", &["docs"], ClaimMode::Advisory);
+        review.intent = Some("review delivery".into());
+        review.issue = Some("I2980".into());
+        let mut twin = claim(&s, "k3", &["./docs"], ClaimMode::Advisory);
+        twin.intent = Some("document UI".into());
+        let state = CooperationState {
+            claims: vec![projected, review, twin],
+            sessions: vec![s],
+            ..CooperationState::default()
+        };
+        let b = answer(&board, Ok(&state));
+        let claims = &b.workers[0].claims;
+        let records: Vec<Option<&str>> = claims.iter().map(|c| c.record.as_deref()).collect();
+        assert_eq!(records, vec![None, Some("k2"), Some("k3")], "{claims:#?}");
+        assert_eq!(claims[1].issue.as_deref(), Some("I2980"));
+        assert_eq!(claims[1].intent.as_deref(), Some("review delivery"));
+    }
+
+    /// A client name is cut for the join exactly as the projection cut it — at 64 bytes on a
+    /// character boundary, controls removed — so a long multi-byte or control-bearing name is
+    /// one worker, not two.
+    #[test]
+    fn a_multibyte_client_name_joins_as_the_projection_cut_it() {
+        let here = stream("1", "1", "a");
+        let name = format!("{}\u{7}", "ž".repeat(40));
+        let board = list(vec![peer("p1", &name, "c1", &[])], "c1", Some(&here));
+        let projected_client = crate::mesh::cooperation::clip(&name, 64);
+        assert_eq!(projected_client, "ž".repeat(32));
+        let state = CooperationState {
+            sessions: vec![session(&here, "board-p1", &projected_client, Some("c1"))],
+            ..CooperationState::default()
+        };
+        let b = answer(&board, Ok(&state));
+        assert_eq!(b.workers.len(), 1, "{:#?}", b.workers);
+        assert_eq!(b.relations[0].evidence, BlackboardEvidence::Verified);
     }
 
     /// Two sessions of one stream that fit the same peer are candidates, neither is joined,
