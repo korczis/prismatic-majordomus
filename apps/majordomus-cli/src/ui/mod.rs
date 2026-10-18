@@ -71,7 +71,7 @@ use std::sync::Arc;
 
 use crate::cockpit::assets::Assets;
 use crate::http::router::{Request, Response};
-use crate::live::{IntoLive, Live};
+use crate::live::{IntoLive, Lag, Live};
 
 /// Every UI route starts here.
 pub const PREFIX: &str = "/ui";
@@ -85,6 +85,11 @@ pub const ASSETS_DIR: &str = "ui";
 
 /// The URL prefix the UI's files are served under.
 pub const ASSETS_PREFIX: &str = "/ui/assets/";
+
+/// What a page asks, a few seconds apart, to know whether the repository moved under it: the
+/// generation it was read from, whether the server is behind and why. A page that was drawn
+/// from another generation reads itself again at once, rather than at the next minute.
+pub const PULSE: &str = "/ui/pulse";
 
 /// The UI's favicon, written from the canonical mark by `majordomus generate`.
 pub const FAVICON: &str = "share/ui/favicon.svg";
@@ -344,10 +349,14 @@ impl Ui {
         if let Some(name) = req.path.strip_prefix(ASSETS_PREFIX) {
             return self.assets.respond(name, req);
         }
+        if req.path == PULSE {
+            return self.pulse();
+        }
         // one reading of the repository for the whole screen: the generation there is, never
         // a wait for the next one (ADR 0142); a screen drawn from a generation the repository
         // has moved past says so, and the page's script reads it again
         let (reading, behind) = self.live.view_without_waiting();
+        let generation = reading.generation;
         let ctx = reading.ctx;
         let fragment = req.query.iter().any(|(k, _)| k == FRAGMENT);
         let path = req.path.trim_end_matches('/');
@@ -383,14 +392,10 @@ impl Ui {
             });
         }
         if behind {
+            let note = catching_up_note(&self.live.lag(), generation);
             screen.main = crate::cockpit::html::el("div")
                 .class("mj-ui-stack")
-                .child(
-                    crate::cockpit::html::el("p")
-                        .class("mj-ui-dim")
-                        .attr(view::CATCHING_UP, "")
-                        .text("The repository changed: this screen shows it as it was, and is being read again."),
-                )
+                .child(note)
                 .child(screen.main);
         }
         // A panel read as a page of its own has no hero, so it carries the page's one heading
@@ -487,6 +492,64 @@ impl Ui {
     }
 }
 
+/// What the UI tells a reader whose screen is drawn from a generation the repository has
+/// moved past. A reload in progress and a reload that fails are different facts, and a page
+/// that says the first of the second is the frozen picture again, with a reassurance.
+fn catching_up_note(lag: &Lag, generation: u64) -> crate::cockpit::html::El {
+    let note = crate::cockpit::html::el("p")
+        .class("mj-ui-dim")
+        .attr(view::CATCHING_UP, "");
+    match lag {
+        Lag::Failed { error, retry_in } => note.attr(RELOAD_FAILED, "").text(format!(
+            "The repository changed and this server could not read it: {error}. This screen shows generation {generation} as it was, and the next attempt is in {} s.",
+            retry_in.as_secs().max(1)
+        )),
+        Lag::Current | Lag::Reloading => note.text(
+            "The repository changed: this screen shows it as it was, and is being read again.",
+        ),
+    }
+}
+
+/// The attribute a screen carries while the server is behind because a reload failed, which
+/// the script and the kiosk read to say so instead of "live".
+pub const RELOAD_FAILED: &str = "data-reload-failed";
+
+impl Ui {
+    /// The pulse: the generation, its head and how it stands, as JSON a page can compare
+    /// with the one it was drawn from. Asking it also starts the reload a moved repository
+    /// is owed, so a UI left open follows the repository with nobody navigating.
+    fn pulse(&self) -> Response {
+        let _ = self.live.view_without_waiting();
+        let lag = self.live.lag();
+        let (state, error, retry_in) = match &lag {
+            Lag::Current => ("current", None, None),
+            Lag::Reloading => ("reloading", None, None),
+            Lag::Failed { error, retry_in } => {
+                ("failed", Some(error.as_str()), Some(retry_in.as_secs()))
+            }
+        };
+        let body = serde_json::json!({
+            "schema": "ui-pulse/v1",
+            "generation": self.live.generation(),
+            "head": self.live.head(),
+            "version": self.version,
+            "lag": state,
+            "error": error,
+            "retry_in_s": retry_in,
+        });
+        let mut response = Response::new(200, "application/json", body.to_string());
+        for (name, value) in [
+            ("Cache-Control", "no-store"),
+            ("Content-Security-Policy", crate::cockpit::csp()),
+            ("X-Content-Type-Options", "nosniff"),
+            ("Referrer-Policy", "no-referrer"),
+        ] {
+            response.headers.push((name.into(), value.into()));
+        }
+        response
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -528,6 +591,61 @@ mod tests {
             routes.len(),
             SCREENS.len() + PANELS.len(),
             "a route is declared twice"
+        );
+    }
+
+    /// A screen behind the repository for a reason says the reason. "Being read again" of a
+    /// reload that fails every interval is the frozen picture with a reassurance, which is
+    /// what a kiosk on a wall showed for hours (2026-10-16): the note names what failed and
+    /// when the next attempt is, and a reload in progress still says what it always did.
+    #[test]
+    fn a_screen_behind_a_failing_reload_says_why_and_a_reload_in_progress_says_so() {
+        let failed = catching_up_note(
+            &Lag::Failed {
+                error: "manifest: duplicate key `id`".into(),
+                retry_in: std::time::Duration::from_secs(3),
+            },
+            7,
+        )
+        .render();
+        assert!(failed.contains(RELOAD_FAILED), "{failed}");
+        assert!(
+            failed.contains(view::CATCHING_UP),
+            "the page still reads again: {failed}"
+        );
+        assert!(failed.contains("duplicate key"), "{failed}");
+        assert!(failed.contains("generation 7"), "{failed}");
+        assert!(failed.contains("in 3 s"), "{failed}");
+        assert!(!failed.contains("is being read again"), "{failed}");
+        let reloading = catching_up_note(&Lag::Reloading, 7).render();
+        assert!(reloading.contains("is being read again"), "{reloading}");
+        assert!(!reloading.contains(RELOAD_FAILED), "{reloading}");
+    }
+
+    /// The pulse is the generation, its head and how it stands, as JSON that is never cached,
+    /// under the UI's own security headers; a pinned view is always current.
+    #[test]
+    fn the_pulse_names_the_generation_and_how_it_stands() {
+        let repo = crate::synthetic::SyntheticRepository::new(crate::synthetic::Shape::default())
+            .expect("a synthetic repository");
+        let ui = Ui::new(repo.context().expect("a context"), "0.0.0-test", None);
+        let pulse = ui.handle(&Request::parse_target("GET", PULSE, Vec::new()));
+        assert_eq!(pulse.status, 200);
+        assert!(pulse
+            .headers
+            .iter()
+            .any(|(k, v)| k == "Cache-Control" && v == "no-store"));
+        let body: serde_json::Value =
+            serde_json::from_str(&pulse.body.text()).expect("the pulse is JSON");
+        assert_eq!(body["schema"], "ui-pulse/v1");
+        assert_eq!(body["generation"], 0);
+        assert_eq!(body["lag"], "current");
+        assert_eq!(body["version"], "0.0.0-test");
+        assert!(body["error"].is_null() && body["retry_in_s"].is_null());
+        let post = ui.handle(&Request::parse_target("POST", PULSE, Vec::new()));
+        assert_eq!(
+            post.status, 405,
+            "the pulse is read with GET like every screen"
         );
     }
 
