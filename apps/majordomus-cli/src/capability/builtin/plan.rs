@@ -842,20 +842,22 @@ pub struct PlanFlightInput {
 
 impl BenchmarkCases for PlanFlightInput {
     fn benchmark_cases(ctx: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        // a repository with no milestone yet still shows what `milestone` takes: the
+        // placeholder id, as `plan.delivery` falls back to I0001 when there is no issue
         let plan = Plan::build(ctx.index);
-        let mut cases = vec![NamedCase::new(
-            "where-the-work-is",
-            PlanFlightInput::default(),
-        )];
-        if let Some(m) = plan.milestones.first() {
-            cases.push(NamedCase::new(
+        let milestone = plan
+            .milestones
+            .first()
+            .map_or_else(|| "M001".to_string(), |m| m.id.clone());
+        vec![
+            NamedCase::new("where-the-work-is", PlanFlightInput::default()),
+            NamedCase::new(
                 "one-milestone-inspected",
                 PlanFlightInput {
-                    milestone: Some(m.id.clone()),
+                    milestone: Some(milestone),
                 },
-            ));
-        }
-        cases
+            ),
+        ]
     }
 }
 

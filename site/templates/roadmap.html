@@ -37,7 +37,7 @@
   <dd class="text-heading">{{ roadmap.milestones | length }}, every one the plan holds, in the order the graph derives</dd>
   <dt id="delivery" class="scroll-mt-24 text-body">Delivery</dt>
   <dd class="min-w-0 break-words text-heading">
-    {%- if delivery %}inferred from the history at <a href="{{ repo }}/commit/{{ delivery.observed.commit }}" class="font-mono underline hover:text-fg-brand">{{ delivery.observed.commit | truncate(length=11, end="") }}</a>: merged and released, each linked to the pull request, commit or release that proves it
+    {%- if delivery %}inferred from the history at <a href="{{ repo }}/commit/{{ delivery.observed.commit }}" class="font-mono underline hover:text-fg-brand">{{ delivery.observed.commit | truncate(length=11, end="") }}</a>: merged and released, each linked to the commit or release that proves it and naming its pull request
     {%- else %}<span class="text-body">not shown: the inferred delivery projection (<code class="font-mono">plan delivery</code>) is not part of this build</span>{% endif -%}
   </dd>
 </dl>
@@ -89,7 +89,7 @@
             <span class="flex shrink-0 flex-wrap items-baseline gap-x-2 font-mono text-xs text-heading" data-delivery="{{ d.stage }}">
               <span class="rounded border border-default px-1.5 py-0.5">{{ d.stage | replace(from="_", to=" ") }}</span>
               {%- if d.released %}<a href="{{ repo }}/releases/tag/{{ d.released.tag }}" class="underline">{{ d.released.tag }}</a>{% endif %}
-              {%- if d.merged %}{% if d.merged.pull_request %}<a href="{{ repo }}/pull/{{ d.merged.pull_request }}" class="underline">#{{ d.merged.pull_request }}</a>{% endif %}<a href="{{ repo }}/commit/{{ d.merged.commit }}" class="underline">{{ d.merged.commit | truncate(length=7, end="") }}</a>{% endif %}
+              {%- if d.merged %}{% if d.merged.pull_request %}<span title="the pull request that merged it">#{{ d.merged.pull_request }}</span>{% endif %}<a href="{{ repo }}/commit/{{ d.merged.commit }}" class="underline">{{ d.merged.commit | truncate(length=7, end="") }}</a>{% endif %}
             </span>
             {%- endif %}
           </li>

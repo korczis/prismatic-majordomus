@@ -1,4 +1,5 @@
 # majordomus-covers: none
+# majordomus-skip-runs-in: site
 # /roadmap/ draws every milestone of the plan, in the milestone graph's order, each issue under
 # its milestone grouped by declared status, and names the commit its data was observed at
 # (I2743, ADR 0166 decision 4). It used to keep the eight milestones whose hand-typed version
@@ -9,8 +10,10 @@
 # is held to its verdict both ways: green over the page as built, red over a page that drops a
 # milestone, one that reorders them, and one that names another commit than the build's.
 # The inferred delivery (plan.delivery, I2740) is drawn only when delivery.json is there: absent,
-# the page says so and draws no stage; present, a merged issue shows `merged` with a link to its
-# pull request and its merge commit, and a released one names its tag.
+# the page says so and draws no stage; present, a merged issue shows `merged`, names its pull
+# request and links its merge commit, and a released one names its tag. The pull request is named,
+# not linked: the published site's link check decides every link offline, and a pull link cannot
+# be decided offline, while the merge commit is in the published history.
 . "$ROOT/test/lib.sh"
 command -v zola >/dev/null || skip "zola absent"
 command -v jq >/dev/null || skip "jq absent"
@@ -96,7 +99,7 @@ expect_exit 10 "$SITECHECK" --roadmap "$P" "$DATA" S/data/build.json
 expect_grep "names $COMMIT as observed, the build records fedcba9876543210fedcba9876543210fedcba98"
 build_json "$COMMIT"
 
-# --- delivery.json present: a merged issue links its pull request and merge, a released one
+# --- delivery.json present: a merged issue names its pull request and links its merge, a released one
 #     its tag. The shape is plan.delivery's (schema 1); the issues are the plan's own.
 mi="$(jq -r '.issues[0].id' "$DATA/plan.json")"; ri="$(jq -r '.issues[1].id' "$DATA/plan.json")"
 MERGE=abcdef0123456789abcdef0123456789abcdef01
@@ -115,11 +118,15 @@ expect_exit 0 "$SITECHECK" --roadmap "$D" "$DATA" S/data/build.json
 # MUTATION, RUN: load delivery.json from a path that is not there (`data/generated/delivery.json`
 # renamed in the template) -> no stage is drawn, and the first assertion below fails.
 expect_grep 'data-delivery="merged"' "$D"
-expect_grep "href=\"$REPO/pull/4242\"" "$D"
+expect_grep '>#4242</span>' "$D"
+# MUTATION, RUN: link the pull request again -> the published site's link check refuses /roadmap/
+grep -q "href=\"$REPO/pull/" "$D" && { echo "    the page links a pull request, which the link check cannot decide offline"; exit 1; }
 expect_grep "href=\"$REPO/commit/$MERGE\"" "$D"
 expect_grep 'data-delivery="released"' "$D"
 expect_grep "href=\"$REPO/releases/tag/v0.27.0\"" "$D"
 expect_grep "inferred from the history at <a href=\"$REPO/commit/$COMMIT\"" "$D"
+# the homepage's delivery card links /roadmap/#delivery; the anchor is the page's own
+expect_grep '<dt id="delivery"' "$D"
 [ "$(grep -o 'data-delivery="' "$D" | wc -l | tr -d ' ')" = 2 ] \
   || { echo "    the page drew a stage for an issue delivery.json does not name"; exit 1; }
 

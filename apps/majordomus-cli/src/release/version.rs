@@ -331,13 +331,15 @@ impl Version {
             Some((c, p)) => (c, Some(p)),
             None => (text, None),
         };
+        // exactly three parts: a split always yields a first one, so asking for each part in
+        // turn left a branch no input reaches; the count is decided once instead
         let mut parts = core.split('.');
-        let major = numeric(parts.next()?)?;
-        let minor = numeric(parts.next()?)?;
-        let patch = numeric(parts.next()?)?;
-        if parts.next().is_some() {
+        let (Some(major), Some(minor), Some(patch), None) =
+            (parts.next(), parts.next(), parts.next(), parts.next())
+        else {
             return None;
-        }
+        };
+        let (major, minor, patch) = (numeric(major)?, numeric(minor)?, numeric(patch)?);
         let pre = match pre {
             None => Vec::new(),
             Some(p) => p
@@ -2402,12 +2404,15 @@ mod tests {
         assert_eq!(found[0].id, LABEL_IN_PROSE);
     }
 
-    /// A version is three numbers before anything else: a first part that is not a number
-    /// is no version, whatever follows it, so `x.1.2`, `1a.2.3` and an empty string never
-    /// parse into something a reader would order.
+    /// A version is exactly three numbers before anything else: a part that is not a
+    /// number, and one, two or four parts, are no version, so `x.1.2`, `1.2`, `1.2.3.4` and
+    /// an empty string never parse into something a reader would order.
     #[test]
-    fn a_version_whose_major_is_not_a_number_is_no_version() {
-        for text in ["x.1.2", "1a.2.3", "", "-1.0.0", ".1.2", "v1.2.3"] {
+    fn a_version_not_of_three_numbers_is_no_version() {
+        for text in [
+            "x.1.2", "1a.2.3", "", "-1.0.0", ".1.2", "v1.2.3", "1", "1.2", "1.2.3.4", "1.x.3",
+            "1.2.x",
+        ] {
             assert_eq!(Version::parse(text), None, "{text:?}");
         }
         assert_eq!(

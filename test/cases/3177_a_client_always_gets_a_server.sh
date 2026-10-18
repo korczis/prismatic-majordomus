@@ -32,7 +32,10 @@ printf '#!/bin/sh\necho "$@" >> "%s/cargo.log"\nexit 1\n' "$S" > "$S/withcargo/c
 
 # the installed release: answers --version and says it ran
 INSTALLED="$S/installed/majordomus"; mkdir -p "$S/installed"
-printf '#!/bin/sh\n[ "$1" = --version ] && { echo "majordomus 9.9.9"; exit 0; }\necho "INSTALLED $*"\n' > "$INSTALLED"; chmod +x "$INSTALLED"
+printf '#!/bin/sh\n[ "$1" = --version ] && { echo "majordomus 9.9.9"; exit; }\necho "INSTALLED $*"\n' > "$INSTALLED"; chmod +x "$INSTALLED"
+# what the launcher asked cargo to build: the floor's reclaim may ask `cargo metadata` where a
+# build keeps its output, which builds nothing, so only a `build` line is a build
+built() { grep -q '^build\( \|$\)' "$S/cargo.log" 2>/dev/null; }
 
 # run <path-dir> <args...>: the launcher with nothing inherited that would change its mind
 run() {
@@ -61,14 +64,14 @@ touch -t 202001010000 "$TARGET/debug/majordomus"
 rm -f "$S/cargo.log"
 rc=0; run "$S/withcargo" mcp || rc=$?
 [ "$rc" = 0 ] || fail "mcp with a failing build exited $rc, not 0"
-[ -s "$S/cargo.log" ] || fail "a stale executable that can be rebuilt was not rebuilt first"
+built || fail "a stale executable that can be rebuilt was not rebuilt first"
 grep -q 'the build failed; serving this client from the installed release' "$S/err" || fail "stderr does not say the build failed"
 
 # 4. too little room: no build is started at all, mcp falls back
 rm -f "$S/cargo.log"
 rc=0; FREE=999999999 run "$S/withcargo" mcp || rc=$?
 [ "$rc" = 0 ] || fail "mcp below the free-space floor exited $rc, not 0"
-[ ! -e "$S/cargo.log" ] || fail "a build was started below the free-space floor"
+! built || fail "a build was started below the free-space floor"
 grep -q 'there is not room to build; serving this client from the installed release' "$S/err" || fail "stderr does not say there was no room"
 # ... and any other command is still refused, not served by the wrong release
 rc=0; FREE=999999999 run "$S/withcargo" worktree status || rc=$?

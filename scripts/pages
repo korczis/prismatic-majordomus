@@ -1328,8 +1328,9 @@ ui_round() {
   return 12
 }
 
-# A page that answered 503, or did not answer at all (000: a connection refused or timed out), is
-# asked again, a few times with a doubling pause, before it is called missing (I2813). GitHub
+# A page that answered 503, or did not answer at all (000: a connection that was refused or
+# never answered), is asked again, a few times with a doubling pause, before it is called
+# missing (I2813). GitHub
 # Pages answers a burst of requests with a transient 503 that a reader a second later does not
 # meet; on 2026-10-17 that one answer reddened master's validate and 71a's run, because a page was
 # declared absent on its first 503. On 2026-10-17 at 23:49Z the scheduled run read five cockpit
