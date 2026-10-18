@@ -6,7 +6,7 @@
     "version": "0.30.1"
   },
   "registry": {
-    "fingerprint": "44bcb5be67f699ffabd7afed7827560d0d1ec0b9303b3d1ceed765a838898977",
+    "fingerprint": "c9364e548551d13d782134822a395bf601839af41a8e71df6bd9de96d24025ee",
     "summary": {
       "total": 2641,
       "builtin": 206,
@@ -86070,7 +86070,7 @@
     ]
   },
   "index": {
-    "fingerprint": "bf0828d82fb5f85b99e840cb0f961d7f7b28ea31a0b36865351fada04fccc022",
+    "fingerprint": "dec5ceacd0545e9029b2506be703784b148eebccb6e27de997f6573fc0a50cae",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -101242,11 +101242,11 @@
         "kind": "issue",
         "identity": "I3007",
         "title": "A commit that a record or the site's data names is a commit the history holds",
-        "description": "`scripts/ci/link-check --sources` decides, before any site is built, every commit/<sha> link written in a tracked file under .ai/repo/project, site/data or site/content-src, and every commit a data file hands a template to link, the key names read from the templates' `/commit/{{ … }}`, by the rules the built-page check already uses: a commit outside the history being published is a finding, and a shallow clone defers. lib/common.sh gains mj_commit_in_history (0 in, 1 not, 2 undecidable), the one predicate for the producer side (I3050). Two issue records that cited rebased evidence commits name the commits that landed.",
+        "description": "`scripts/ci/link-check --sources` decides, before any site is built, every commit/<sha> link written in a tracked file under .ai/repo/project, site/data or site/content-src, and every commit a data file hands a template to link, the key names read from the commit links the templates build, by the rules the built-page check already uses: a commit outside the history being published is a finding, and a shallow clone defers. lib/common.sh gains mj_commit_in_history (0 in, 1 not, 2 undecidable), the one predicate for the producer side (I3050). Two issue records that cited rebased evidence commits name the commits that landed.",
         "path": ".ai/repo/project/issues/I3007.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2762
+        "bytes": 2764
       },
       {
         "uri": "majordomus://issue/I3008",
