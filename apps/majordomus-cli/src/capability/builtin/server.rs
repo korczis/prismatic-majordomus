@@ -29,7 +29,7 @@
 //! `repository`, the whole list, because that is what every caller of this capability got
 //! before the field existed.
 //!
-//! The wide answer asks [`ASKED_AT_ONCE`] checkouts at a time ([`each_checkout`]), so its
+//! The wide answer asks sixteen checkouts at a time (`ASKED_AT_ONCE`, `each_checkout`), so its
 //! wait is a few probe timeouts however many checkouts there are, not one per checkout: on
 //! a machine of sixty servers, a few of them wedged, one at a time took more than thirty
 //! seconds (I2987).
