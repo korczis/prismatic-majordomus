@@ -152,7 +152,7 @@ The order above is a list of gates, and every gate is asked whatever the others 
 | `auto_merge` | the forge has no auto-merge armed on it | `auto_merge_armed` |
 | `supersession` | its cross-references were read whole, and no authorised successor is open, landed, merged elsewhere or unread | `declarations_unread`, then `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, one per successor |
 | `relation_to_master` | its merge is clean and changes something | `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT` |
-| `merge_method` | the repository allows a merge commit | `merge_commit_not_allowed` |
+| `merge_method` | the repository allows a merge commit | `merge_commit_not_allowed`, or `merge_settings_unread` |
 | `dependency` | every declared dependency landed | `depends_on:#N`, one per open dependency |
 | `review` | the review policy is satisfied on the head | `review:STATE`, or `review_policy_unread` |
 | `no_failing_check` | no required check failed | `required_check_failed` |
@@ -229,8 +229,12 @@ and a squash or a rebase would replay commits it never saw. The merge method
 (`policy.merge_method`) is `merge` when the repository's settings allow a merge commit
 (`allow_merge_commit`, read with `gh api repos/OWNER/NAME`), and none otherwise. With none,
 every pull request the relation to master does not already decide is `blocked` with
-`merge_commit_not_allowed` and `repository_settings` evidence, and the queue says why. The
-executor never falls back to a squash or a rebase. The `merge_method` gate comes after
+`merge_commit_not_allowed` and `repository_settings` evidence, and the queue says why. When
+the forge's answer carries none of the merge settings — a token that may not read them gets
+the repository without them, as the Pages workflow's does — nothing is known: the policy says
+`merge_settings_unread`, such a pull request is `unknown` with `merge_settings_unread`, and
+the queue says the settings could not be read, never that the repository allows nothing
+(I2966). The executor never falls back to a squash or a rebase. The `merge_method` gate comes after
 `relation_to_master` because closing work that is already on master does not depend on the
 merge setting: a `redundant` pull request stays `redundant`, lists
 `merge_commit_not_allowed` after its own reason, and `prs cleanup --apply` still closes it. So

@@ -25847,6 +25847,13 @@
           "type": "string | null"
         },
         {
+          "description": "Whether the repository's merge settings went unread (the forge's answer carried none\nof them): `merge_method` is then `None` because nothing is known, not because a merge\ncommit is refused, and a held pull request says `merge_settings_unread` (I2966). Absent\nin a policy recorded before it was read, which read them.",
+          "name": "merge_settings_unread",
+          "refs": [],
+          "required": false,
+          "type": "boolean"
+        },
+        {
           "description": "Whether the base requires a branch to be up to date before it merges (the\nprotection's `required_status_checks.strict`, or a ruleset's): the forge-side half of\nthe guard against a merge onto a master nobody tested with the change. The executor's\nhalf is its parent check after every merge. `Some(false)` is the owner's to change\n(decision D8) and decides no disposition; `None` when unread.",
           "name": "up_to_date_required",
           "refs": [],

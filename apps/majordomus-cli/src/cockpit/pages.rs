@@ -7606,7 +7606,7 @@ mod tests {
                 required_checks: Some(vec!["ci".into()]),
                 review_policy: Some(Default::default()),
                 up_to_date_required: Some(true),
-                merge_methods: vec!["merge".into()],
+                merge_methods: Some(vec!["merge".into()]),
                 pull_requests: vec![
                     observed_pr(1, &sha, CheckRunState::Passed),
                     observed_pr(2, &sha, CheckRunState::Failed),
@@ -7783,7 +7783,7 @@ mod tests {
                     required_checks: required,
                     review_policy: review,
                     up_to_date_required: up_to_date,
-                    merge_methods: vec!["merge".into()],
+                    merge_methods: Some(vec!["merge".into()]),
                     pull_requests: vec![pr],
                     resolved: [(2, landed)].into(),
                     delete_branch_on_merge: None,

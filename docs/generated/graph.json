@@ -39689,6 +39689,50 @@
         }
       },
       {
+        "id": "majordomus://issue/I2966",
+        "kind": "issue",
+        "label": "I2966",
+        "summary": "A forge setting that could not be read is unknown, never \\\"allows nothing\\\"",
+        "route": "/cockpit/objects/issue/i2966",
+        "source": ".ai/repo/project/issues/I2966.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A forge answer without the merge settings yields no merge methods (unknown), and one with them yields what they allow",
+            "A pull request held for unread settings reads merge_settings_unread with disposition unknown, and nothing merges",
+            "The queue's diagnostic says the merge settings could not be read and never that the repository allows nothing"
+          ],
+          "created_at": "2026-10-18",
+          "depends_on": [],
+          "desired_state": "An unread merge setting is unknown on every surface that shows the queue; a read `false` still holds as merge_commit_not_allowed; recorded observations that carry the array read as before.",
+          "evidence_required": [
+            "unread_merge_settings_are_unknown_and_never_allow_nothing"
+          ],
+          "milestone": "development-runtime",
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/integration/forge.rs",
+            "apps/majordomus-cli/src/integration/mod.rs",
+            "apps/majordomus-cli/src/integration/classify.rs",
+            "apps/majordomus-cli/src/integration/model.rs",
+            "apps/majordomus-cli/src/integration/tests.rs",
+            "apps/majordomus-cli/src/integration/train.rs",
+            "apps/majordomus-cli/src/integration/drain.rs",
+            "apps/majordomus-cli/src/capability/builtin/brief.rs",
+            "apps/majordomus-cli/src/capability/builtin/integration.rs",
+            "apps/majordomus-cli/src/cockpit/pages.rs",
+            "apps/majordomus-cli/src/commands/prs.rs",
+            "docs/INTEGRATION.md"
+          ],
+          "slug": "an-unread-forge-setting-is-unknown",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "label": "a-commit-stood-behind-a-build-lock",
@@ -84399,6 +84443,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2966",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2966",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -94405,8 +94459,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2959,
-      "edges": 6500,
+      "nodes": 2960,
+      "edges": 6502,
       "acyclic": false,
       "truncated": false
     }
