@@ -7,6 +7,155 @@ Every entry below is derived: a section per release the layer records, its decis
 
 Current version: **0.30.1**
 
+## v0.30.0 — 2026-10-18
+
+### Decisions
+
+- **ADR-0175** v1.0.0-alpha.1 declares what it can do and its limits, and every line of the declaration names its proof _(proposed)_
+- **ADR-0172** A client always gets a server, and a session that is opened starts by joining the cluster _(proposed)_
+
+### Added
+
+- **site**: the homepage counts the delivery the history proves, each count a link (I2851) (`ca277ce74`)
+- **ui**: the intent workspace shows why its intent stands where it does, and its moves (I2789) (`49f348d2e`)
+- **ui**: the intent workspace reads itself again when a move ends on its server (I2783) (`afaecfe34`)
+- **ui**: an issue is started, verified and finished from the intent workspace (I2781) (`6811d1eeb`)
+- **site**: /plan/ names its observed commit and each milestone's release (I2743) (`5485fee6b`)
+- **plan**: merged work the plan has not recorded is drift, gated past a window (I2741) (`09c334079`)
+- **ui**: the roadmap reads delivery, and its now is where work is (I2744) (`c3f6618cf`)
+- **worktree**: a checkout says how far it is from the remote trunk, and a stale one fails doctor (`f4635ab71`)
+- **plan**: an issue's delivery is inferred from merges, releases and the forge (I2740) (`ee02079b1`)
+- **site**: the roadmap draws every milestone in the graph's order (I2743) (`4d75789ea`)
+- **plan**: a milestone's version is inferred from the release that carried it (I2742) (`f8fe91332`)
+
+### Fixed
+
+- **site**: a navigation link's fragment names an element, not a file (`2dfff9698`)
+- **ui**: an unobserved panel's reason wraps at phone width (I2943) (`81d1fb302`)
+- **release**: a version's part count is decided once, so no parse branch is unreachable (`0dea534e7`)
+- **ui**: the id offset in the workspace's prose is derived, not defaulted (I2900) (`c969471ec`)
+- **ui**: the standing panel's subheadings wear a class the kit defines (I2900) (`1808c4ccb`)
+- **ui**: every issue id on the IDD workspace is a link; a missing library is not asked for (I2900) (`3782bedcf`)
+- **top**: the IDD sub-headings use the kit's panel title (`01b1aae0a`)
+- **ui**: every class a screen gives an element is one the stylesheet defines (I2852) (`500f0d48b`)
+- **pages**: a published page that does not answer at all is asked again like a 503 (I2813) (`3f36b5bd2`)
+- **ui**: the Knowledge screen states nothing its checkout could not observe (I3020) (`4767d1be4`)
+- **integration**: a forge setting that could not be read is unknown (`269bf5d67`)
+- **ui**: a mesh this process is not on is said as not observed, never as zero or no (I2943) (`a636d9448`)
+- **install**: a dry run initialises nothing, and the install guide says only what is true (I2942) (`5b4f8ba6a`)
+- **ui**: the published PR Drain carries its pull requests and counts them by lane (I2850) (`82ace9a10`)
+- **ui**: the IDD lists wrap a long path, and the shared-scope heading follows its panel's (I2789) (`9bcbc988b`)
+- **top**: 71b2's cases skip properly, its gate model parses, case 18 mutes every suite step (`4ada9a40e`)
+- **release**: release next raises from the trunk the repository names (I2849) (`6dceb97e7`)
+- **pages**: every snapshot read step can ask the forge (`3aa828e5b`)
+- **lease**: a server's release is ordered by semantic-version precedence (`f7183e329`)
+- **init**: a fresh init leaves doctor clean (I2941) (`4f3b3490d`)
+- **install**: the installer refuses an unpinned pre-release, in its source (I2829) (`261c45caf`)
+- **release**: an alpha is published as a pre-release end to end (I2829) (`2d4131a4a`)
+- **pages**: a published page that answers 503 is asked again before it is called missing (I2813) (`9d016bb19`)
+- **process**: a tool written a moment ago is run once its writer lets go (I2827) (`8a82388e0`)
+- **release**: a pre-release version is parsed, ordered and bumped to (`5b2bfa723`)
+- **scope**: a task scoped . claims the whole repository (`2dedd2d78`)
+- **ci**: plan-record-cases runs the plan surfaces' cases 3100-3104 (`1135b5236`)
+- **build**: the build dir sweeps sort in one locale (`f6d28ada9`)
+- **knowledge**: a candidate cites its own commit, and a superseded decision yields none (I1985) (`2d3ee66da`)
+- **build**: build dirs are swept before every build, under cargo's lock (I2713) (`36de9d126`)
+- **scope**: a task scoped . claims the whole repository (`c7def1192`)
+- **release**: a pre-release is never published or resolved as the stable release (`13670b1f0`)
+- **mcp**: a client always gets a server, and a bare session starts by joining the cluster (ADR 0172) (`80eb4a539`)
+- **plan**: a milestone DONE with no issue is released where its evidence was recorded (I2742) (`dcabb286c`)
+- **plan**: release-record-cases runs 3102 and 49; release records ordered by a set (I2742) (`c67c4407e`)
+- **plan**: the delivery and drift code is covered and ordered canonically (I2741) (`043955cc7`)
+- **build**: case 08 declares the idle incremental-session sweep as its one non-temp rm -rf (`51246dd95`)
+- **plan**: released_in reads the release records, not the tags (I2742) (`e82e6edb9`)
+- **pages**: a publication that did not arrive is a finding, never a green step (I2661) (`194e207f3`)
+- **build**: a build prunes the idle incremental sessions of its build directory (I2713) (`309665056`)
+- **reap**: disk and load are bounded before the cliff, not at it (`7be59b023`)
+
+### Documentation
+
+- **release**: Version's docs name the distribution module without linking it (`1a74d3627`)
+- **plan**: the owner's /ui/idd review is milestone idd-reads-at-a-glance (I2914) (`4b15b432b`)
+- **adr**: the alpha declaration states its install pin and its network limits (`22ed9fd9a`)
+- **adr**: the hub re-admit step is the supported command (`4d0da4d80`)
+- **adr**: a macOS mesh hub upgrade can drop it from the tailnet, as an alpha limit (`c2746d4af`)
+- **plan**: I2842, the live site is verified on a schedule (after the alpha) (`70b5804e8`)
+- **plan**: the site-probe split is I2841, in this lane's id block (`b6be53111`)
+- **plan**: the MCP cancellation issue is I2840, and I2829 claims no case it does not add (`33b682111`)
+- **plan**: I2829, the site's browser probe is split (after the alpha) (`0549a8cb1`)
+- **plan**: renumber the MCP cancellation issue to I2826 (`644a6d053`)
+- **adr**: the alpha declaration points at no record master will not hold (`e2d69a022`)
+- **adr**: v1.0.0-alpha.1 declares what it can do and its limits (ADR 0175) (`d605fbeb4`)
+- **plan**: a released mesh claim reaches every runtime that holds it (I2825) (`91ed1dac1`)
+- **plan**: the MCP cancellation issue is recorded, a cancelled call stops (`907697ecb`)
+- **worktree**: the trunk-distance surface carries its examples, and its MCP tool is invoked (`3d16d1c08`)
+
+### Tests
+
+- **ui**: every branch of the workspace's id linking and the graph library's absence is held (I2900) (`a119ab213`)
+- **ui**: the PR Drain's lane cards are read from the one map the queue answers (I2850) (`38f2e9b7f`)
+- **release**: a pre-release is ordered, printed and refused the way the release paths rely on (`aa68933a7`)
+- **ui**: each session-ledger line is read on its own (I3020) (`6afb12403`)
+- **ui**: a drift message in the standing panel reads whole with its issue id a link (I2900) (`d0d2d01f7`)
+- **ui**: case 3220 walks its loop in the ui job, not wherever a browser exists (I2812) (`627eae882`)
+- **ui**: case 3220's live step shows a move only through the channel it holds (I2812) (`bc782b40f`)
+- **server**: a pre-release server is older than its final; unorderable means not semver (`1bb0dcc04`)
+- **process**: the busy retry is proved on every platform, not only Linux (`f7385e854`)
+- **ui**: the standing panel's realising rows and drift are rendered from an answer (I2789) (`fab8869e2`)
+- **mcp**: the oversized body is one byte over the bound, so its 413 is always read (`2306da302`)
+- **release**: case 3224 measures its fixture whatever MJ_ROOT the caller exports (`877ff431c`)
+- **pages**: the 503 retry's case is 3226, not the 3221 #1312 carries (I2813) (`fe777b442`)
+- **ui**: the IDD loop is walked end to end in a real browser (I2812) (`f199ded8a`)
+- **plan**: plan.flight is one answer over HTTP and MCP (`a92f60917`)
+- **worktree**: the trunk distance is covered to the last changed line (`9223ef689`)
+- **plan**: every path of release_records and release_key is covered (I2742) (`a1be751f0`)
+- **backlog**: the integrator case copies what the gate now reads (`d8936063c`)
+
+### Pipeline
+
+- **ui**: the audit's bound follows the surface it walks (`2d0c9df40`)
+- the site job's bound keeps headroom, and plan-record-cases runs the IDD loop (`68062918e`)
+
+### Housekeeping
+
+- **derive**: the 0.30.0 top derived after its coverage merge (`ad1dfe7ce`)
+- **derive**: delivery.json observes the pushed 0.30.0 top (`bd3219d01`)
+- **derive**: I2900 over the 3220 deferral (I2900) (`a77d2a93b`)
+- **derive**: I2900 over 0.29.1 (I2900) (`2e80ec3f7`)
+- **derive**: I2900 over 71b2's head with master 707a04c (I2900) (`03aa72b7b`)
+- **plan**: I2942 is done, with the evidence that settles it (`2b383cf28`)
+- **plan**: I2943 is done, with the evidence that settles it (`21b661513`)
+- **plan**: I2826 names its own case, so the plan status names no missing file (`4960fa3c7`)
+- **release**: bump the version to 0.29.1 (`f17855bf9`)
+- **plan**: the VERIFY issues whose work is on master are settled (`f9c4d9b94`)
+- **plan**: I2941 is done, with the evidence that settles it (`65220a9e5`)
+- **release**: record v0.29.0 and the metadata it publishes (`707a04c7c`)
+- **plan**: I2829 is done, with the evidence that settles it (`c554c08bc`)
+- **plan**: four issues whose code the integration top carries are recorded done (I2706) (`90bf65b4a`)
+- **quality**: the baseline drops the three examples Version now carries (`c50657244`)
+- **derive**: the merged #1312 tree (`7cf2236f2`)
+- **derive**: #1299 over the release candidate 0a19b7fe3ec (`50905c443`)
+- **derive**: the batch derived over the 0.29.0 release candidate (`fd2023800`)
+- **plan**: eight issues whose code master already carries are recorded done (I2414) (`8d0b36d99`)
+- **evidence**: the trunk's recorded run reaches the tracked ledger, and the baseline holds it (`99667818d`)
+- **plan**: close I2601, I2745, I2746 and two milestones whose evidence holds (`58d522c1a`)
+- **release**: bump the version to 0.29.0 (`040dcb14d`)
+- **plan**: delivery.json observes the merge of #1304's CI fix (I2748) (`c34a3c008`)
+- **plan**: I2743 evidence recorded (I2743) (`33cd3f9a0`)
+- **plan**: eight merged issues are recorded done, the rest of the drift is planned (I2748) (`822cd914f`)
+- **plan**: record I2744's evidence (I2744) (`b4247f312`)
+- **plan**: I2742 evidence recorded and verified (I2742) (`8642d7437`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v0.30.0-aarch64-apple-darwin.tar.gz (`e15586cfe0da`)
+- `macos-x86_64` — majordomus-v0.30.0-x86_64-apple-darwin.tar.gz (`ecea13aa20dc`)
+- `linux-x86_64-gnu` — majordomus-v0.30.0-x86_64-unknown-linux-gnu.tar.gz (`7fcc015c688b`)
+- `linux-x86_64-musl` — majordomus-v0.30.0-x86_64-unknown-linux-musl.tar.gz (`dff34a9a3015`)
+- `linux-aarch64-gnu` — majordomus-v0.30.0-aarch64-unknown-linux-gnu.tar.gz (`0fea0290e04c`)
+- `linux-aarch64-musl` — majordomus-v0.30.0-aarch64-unknown-linux-musl.tar.gz (`51df29dea8b4`)
+
+
 ## v0.29.0 — 2026-10-17
 
 ### Decisions
