@@ -1,6 +1,6 @@
 intent: a-session-proceeds
 reviewed_at: 707a04c7ce8
-reviewed_by: "claude-code Plan subagent (read-only, fresh context) dispatched by session f6 with the plan records, the I2972 implementation and a summary of the owner's /proceed proposal, and none of the author's reasoning; independent of the authoring context, not of the model's blind spots. Read only: nothing was run. Disposition: accept the I2972 slice's shape with required changes; 5 of 10 findings blocking. In answer the slice tells a claim from a mention (named), runs a real mesh in its case, recognises the caller's own session on any runtime and on the command line, and calls a decision over an unread source provisional."
+reviewed_by: "claude-code Plan subagent (read-only, fresh context) dispatched by session f6 with the plan records, the I2972 implementation and a summary of the owner's /proceed proposal, and none of the author's reasoning; independent of the authoring context, not of the model's blind spots. Read only: nothing was run. Disposition: accept the I2972 slice's shape with required changes; 5 of 10 findings blocking. In answer the slice tells a claim from a mention (named), runs a real mesh in its case, recognises the caller's own session on this runtime and on the command line, and calls a decision over an unread source provisional."
 findings:
   - id: one-criterion-carries-a-whole-intent
     class: missed_requirement
@@ -37,7 +37,7 @@ findings:
     resolution:
       state: planned
       issue: I2972
-      because: "A mesh claim is the caller's when its session is the caller's, on any runtime, as mesh.claim admits it. `--session board-<peer>` (or the calling MCP peer) also leaves out that peer's board announcements on this checkout, and case 3367 asserts `--session` on the command line."
+      because: "A mesh claim is the caller's when its session key is the caller's on this runtime (`<stream>/<session>`), as mesh.claim admits it; the same name on another runtime is another session (corrected after Codex's review r-acbf14c3efa5). `--session board-<peer>` (or the calling MCP peer) also leaves out that peer's board announcements on this checkout, and case 3367 asserts `--session` on the command line."
   - id: selection-over-an-unread-mesh
     class: unproven_assumption
     subject: I2972

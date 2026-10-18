@@ -15,6 +15,10 @@ satisfaction:
     criterion: plan.allocate reserves an issue, case or ADR number for one session with one exclusive mesh claim on id:<kind>/<n> after surveying the tree, the sibling worktrees, every ref and the mesh journal, so that allocations at once on one runtime answer different numbers and no number on a ref or in the journal is handed out again
     evidence: test
     ref: test/cases/3440_an_id_is_taken_by_one_atomic_claim.sh
+  - id: the-choice-ranks-by-what-it-unblocks
+    criterion: Among READY issues equal in milestone, wave and priority, the one that unblocks more unfinished issues (transitively, each counted once) is handed out first by plan.next, majordomus plan next and proceed.plan alike, and adding a dependency changes that order with no list edited
+    evidence: test
+    ref: test/cases/3441_the_choice_ranks_by_what_it_unblocks.sh
 milestones:
   - a-session-proceeds
 governance:

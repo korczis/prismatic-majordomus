@@ -39834,6 +39834,49 @@
         }
       },
       {
+        "id": "majordomus://issue/I2973",
+        "kind": "issue",
+        "label": "I2973",
+        "summary": "The choice ranks by what it unblocks",
+        "route": "/cockpit/objects/issue/i2973",
+        "source": ".ai/repo/project/issues/I2973.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Of two READY issues equal in milestone, wave and priority, the one that unblocks more comes first in plan.next, majordomus plan next and proceed.plan",
+            "Adding a dependency to the plan changes the order and the reason, and a shared downstream issue is counted once",
+            "The shell and Rust engines answer the same next issue on every plan case 99 compares"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "READY issues are ordered by milestone membership, wave, priority and id; proceed.plan reports unblocks without ranking by it.",
+          "depends_on": [
+            "I2972"
+          ],
+          "evidence_required": [
+            "case_the_choice_ranks_by_what_it_unblocks"
+          ],
+          "milestone": "a-session-proceeds",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/plan.rs",
+            "apps/majordomus-cli/src/capability/builtin/proceed.rs",
+            "lib/project.sh",
+            "test/cases/99_plan_capabilities.sh",
+            "test/cases/3441_the_choice_ranks_by_what_it_unblocks.sh"
+          ],
+          "serves": [
+            "a-session-proceeds#the-choice-ranks-by-what-it-unblocks"
+          ],
+          "slug": "the-choice-ranks-by-what-it-unblocks",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "majordomus plan validate",
+            "bash test/run.sh 99_plan_capabilities 3441_the_choice_ranks_by_what_it_unblocks"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I3040",
         "kind": "issue",
         "label": "I3040",
@@ -40363,7 +40406,8 @@
           "current_state": "No entrypoint composes the capabilities; plan.next is not claim-aware and gives no reason; a second start in a session opens a second task.",
           "evidence_required": [
             "case_a_session_is_told_what_to_proceed_with_and_why",
-            "case_an_id_is_taken_by_one_atomic_claim"
+            "case_an_id_is_taken_by_one_atomic_claim",
+            "case_the_choice_ranks_by_what_it_unblocks"
           ],
           "non_scope": [
             "Mesh fencing and claim convergence (milestone mesh-journal-converges)",
@@ -40387,7 +40431,8 @@
             "bin/majordomus plan validate",
             "bin/majordomus intent validate a-session-proceeds",
             "bash test/run.sh 3367_a_session_is_told_what_to_proceed_with_and_why",
-            "bash test/run.sh 3440_an_id_is_taken_by_one_atomic_claim"
+            "bash test/run.sh 3440_an_id_is_taken_by_one_atomic_claim",
+            "bash test/run.sh 3441_the_choice_ranks_by_what_it_unblocks"
           ]
         }
       },
@@ -57805,6 +57850,13 @@
         "label": "test/cases/3440_an_id_is_taken_by_one_atomic_claim.sh",
         "route": "/cockpit/objects/test/test-cases-3440-an-id-is-taken-by-one-atomic-claim-sh",
         "source": "test/cases/3440_an_id_is_taken_by_one_atomic_claim.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3441_the_choice_ranks_by_what_it_unblocks.sh",
+        "kind": "test",
+        "label": "test/cases/3441_the_choice_ranks_by_what_it_unblocks.sh",
+        "route": "/cockpit/objects/test/test-cases-3441-the-choice-ranks-by-what-it-unblocks-sh",
+        "source": "test/cases/3441_the_choice_ranks_by_what_it_unblocks.sh"
       },
       {
         "id": "majordomus://test/test/cases/349_a_step_reports_its_own_time.sh",
@@ -84771,6 +84823,21 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2973",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2973",
+        "target": "majordomus://issue/I2972",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2973",
+        "target": "majordomus://milestone/a-session-proceeds",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I3040",
         "target": "kind:issue",
         "kind": "is_a"
@@ -89587,6 +89654,11 @@
       },
       {
         "source": "majordomus://test/test/cases/3440_an_id_is_taken_by_one_atomic_claim.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3441_the_choice_ranks_by_what_it_unblocks.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -94812,8 +94884,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2971,
-      "edges": 6531,
+      "nodes": 2973,
+      "edges": 6535,
       "acyclic": false,
       "truncated": false
     }

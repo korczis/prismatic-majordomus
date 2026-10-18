@@ -148,7 +148,10 @@ mod tests {
     fn args(argv: &[&str]) -> ProceedArgs {
         let mut full = vec!["majordomus", "proceed"];
         full.extend_from_slice(argv);
-        match crate::cli::Cli::try_parse_from(full).expect("parses").command {
+        match crate::cli::Cli::try_parse_from(full)
+            .expect("parses")
+            .command
+        {
             crate::cli::Command::Proceed(a) => a,
             _ => panic!("not the proceed command"),
         }
@@ -197,7 +200,10 @@ mod tests {
     fn the_exit_code_is_the_decisions_own_word() {
         assert_eq!(exit_for(&json!({"selected": null})), EXIT_NOTHING_SELECTED);
         let sel = json!({"issue": "I1"});
-        assert_eq!(exit_for(&json!({"selected": sel, "provisional": true})), EXIT_PROVISIONAL);
+        assert_eq!(
+            exit_for(&json!({"selected": sel, "provisional": true})),
+            EXIT_PROVISIONAL
+        );
         assert_eq!(exit_for(&json!({"selected": sel, "provisional": false})), 0);
     }
 
@@ -208,7 +214,15 @@ mod tests {
         let mut out = Vec::new();
         let code = answer(
             &ctx,
-            &args(&["plan", "--milestone", "M", "--session", "s", "--format", "json"]),
+            &args(&[
+                "plan",
+                "--milestone",
+                "M",
+                "--session",
+                "s",
+                "--format",
+                "json",
+            ]),
             &mut out,
         )
         .unwrap();
@@ -218,6 +232,8 @@ mod tests {
         assert!(v["selected"].is_null());
         let mut out = Vec::new();
         answer(&ctx, &args(&["plan"]), &mut out).unwrap();
-        assert!(String::from_utf8(out).unwrap().starts_with("selected  nothing\n"));
+        assert!(String::from_utf8(out)
+            .unwrap()
+            .starts_with("selected  nothing\n"));
     }
 }

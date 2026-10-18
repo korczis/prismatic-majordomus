@@ -26,9 +26,10 @@
 //! nothing and is reported beside the issue as `shared_with`: a cost of coordination, not a
 //! reason to walk away.
 //!
-//! The caller's own holds are never held against it: the mesh claims of its session (on any
-//! runtime, as `mesh.claim` admits them by session alone) and its board announcements (the
-//! peer whose board session `board-<peer>` is the session, or the calling MCP peer).
+//! The caller's own holds are never held against it: the mesh claims of its session on this
+//! runtime (`<stream>/<session>`, the key `mesh.claim` writes and admits; the same name on
+//! another runtime is another session, and holds) and its board announcements (the peer whose
+//! board session `board-<peer>` is the session, or the calling MCP peer).
 //!
 //! # A decision over a source it could not read
 //!
@@ -46,7 +47,7 @@
 //! true`, so it never asks back) and composes it itself only when none answers — saying so in
 //! `sources`, because a decision taken over a mesh it could not read is not the same decision.
 
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeMap;
 use std::path::PathBuf;
 use std::time::Duration;
 
@@ -260,7 +261,10 @@ pub(crate) fn decide(
         }
     }
     let selected = candidates.iter().find(|c| c.refused.is_empty()).cloned();
-    let passed = candidates.iter().take_while(|c| !c.refused.is_empty()).count();
+    let passed = candidates
+        .iter()
+        .take_while(|c| !c.refused.is_empty())
+        .count();
     let unread: Vec<&str> = sources
         .iter()
         .filter(|s| {
@@ -329,9 +333,15 @@ fn candidate(plan: &Plan, asked: &str, issue: &PlanIssue, holds: &[Hold]) -> Pro
     let mut shared_with = Vec::new();
     for h in holds {
         let held = if h.issue.as_deref() == Some(issue.id.as_str()) {
-            Some((ProceedConstraint::Claimed, format!("claims {} as its issue", issue.id)))
+            Some((
+                ProceedConstraint::Claimed,
+                format!("claims {} as its issue", issue.id),
+            ))
         } else if h.scope.contains(&record) {
-            Some((ProceedConstraint::Claimed, format!("claims the record {record}")))
+            Some((
+                ProceedConstraint::Claimed,
+                format!("claims the record {record}"),
+            ))
         } else if names(&h.words, &issue.id) {
             Some((
                 ProceedConstraint::Named,
@@ -368,7 +378,7 @@ fn candidate(plan: &Plan, asked: &str, issue: &PlanIssue, holds: &[Hold]) -> Pro
             in_milestone: asked.is_empty() || issue.milestone == asked,
             wave: issue.wave,
             priority: issue.priority.clone(),
-            unblocks: unblocks(plan, issue),
+            unblocks: plan.unblocks(&issue.id),
         },
         refused,
         shared_with,
@@ -381,22 +391,6 @@ fn candidate(plan: &Plan, asked: &str, issue: &PlanIssue, holds: &[Hold]) -> Pro
     }
 }
 
-/// The unfinished issues that depend on `issue`, transitively, each once.
-fn unblocks(plan: &Plan, issue: &PlanIssue) -> Vec<String> {
-    let mut seen = BTreeSet::new();
-    let mut todo: Vec<&str> = issue.dependents.iter().map(String::as_str).collect();
-    while let Some(id) = todo.pop() {
-        let Some(d) = plan.issue(id) else { continue };
-        if FINISHED.contains(&d.status.as_str()) || !seen.insert(d.id.clone()) {
-            continue;
-        }
-        todo.extend(d.dependents.iter().map(String::as_str));
-    }
-    let mut out: Vec<String> = seen.into_iter().collect();
-    crate::order::canonical_strings(&mut out);
-    out
-}
-
 /// Whether `words` name `id` as a word of their own: `I2972,` does, `I29720` does not.
 fn names(words: &str, id: &str) -> bool {
     let word = |c: Option<char>| c.is_some_and(|c| c.is_ascii_alphanumeric());
@@ -406,25 +400,35 @@ fn names(words: &str, id: &str) -> bool {
 }
 
 /// The commands that take the selection: claim it, give it a worktree, start its task. The
-/// branch is the worker's to name (`project.worktree-topology`); everything else is filled in.
+/// branch is the worker's to name (`project.worktree-topology`); everything else is filled in,
+/// each value one shell word that carries it literally: a title or a path is data, and a
+/// command copied from here never substitutes, splits or expands it.
 fn steps(c: &ProceedCandidate, session: Option<&str>) -> Vec<String> {
     // `mesh claim` takes the paths as words, `start --scope` as one comma-separated value
-    let words = c.scope.join(" ");
-    let listed = c.scope.join(",");
+    let words: Vec<String> = c.scope.iter().map(|s| word(s)).collect();
+    let listed = word(&c.scope.join(","));
+    let what = word(&format!("{}: {}", c.issue, c.title));
+    let issue = word(&c.issue);
+    let session = session.map_or_else(|| "<your mesh session>".to_string(), word);
     vec![
         format!(
-            "majordomus mesh claim {words} --session {} --issue {} --intent \"{}: {}\"",
-            session.unwrap_or("<your mesh session>"),
-            c.issue,
-            c.issue,
-            c.title
+            "majordomus mesh claim {} --session {session} --issue {issue} --intent {what}",
+            words.join(" ")
         ),
         "majordomus worktree create <branch>".to_string(),
-        format!(
-            "majordomus start \"{}: {}\" --issue {} --scope {listed}",
-            c.issue, c.title, c.issue
-        ),
+        format!("majordomus start {what} --issue {issue} --scope {listed}"),
     ]
+}
+
+/// One shell word that means `s`: bare when no character of it is special to a shell, single
+/// quoted otherwise.
+fn word(s: &str) -> String {
+    let plain = |c: char| c.is_ascii_alphanumeric() || "_-./:,=@+%".contains(c);
+    if !s.is_empty() && s.chars().all(plain) {
+        s.to_string()
+    } else {
+        crate::worktree::uncommitted::shell_quote(s)
+    }
 }
 
 fn clip(s: &str, n: usize) -> String {
@@ -438,7 +442,10 @@ fn clip(s: &str, n: usize) -> String {
 
 // ---------------------------------------------------------------- the handler
 
-fn proceed_plan(ctx: &Context, input: ProceedPlanInput) -> Result<ProceedDecision, CapabilityError> {
+fn proceed_plan(
+    ctx: &Context,
+    input: ProceedPlanInput,
+) -> Result<ProceedDecision, CapabilityError> {
     let root = PathBuf::from(&ctx.index.repository.root);
     let root = root.canonicalize().unwrap_or(root);
     let (standing, _, read) = server::standing_at(&root, &server::local_half(&root));
@@ -447,11 +454,17 @@ fn proceed_plan(ctx: &Context, input: ProceedPlanInput) -> Result<ProceedDecisio
     let url = doc.and_then(|d| d.url.clone());
     let answering = matches!(standing, ServerStanding::Ready | ServerStanding::Outdated);
     let mut note = None;
+    // the board of this checkout is the leaseholder's: when it answers and cannot be asked,
+    // this process's own (empty) board says nothing about who is there
+    let mut unasked = None;
     if !own && !input.local && ctx.caller.is_none() {
         match (answering, url.as_deref()) {
             (true, Some(url)) => match forward(ctx, url, &input) {
                 Ok(d) => return Ok(d),
-                Err(why) => note = Some(why),
+                Err(why) => {
+                    unasked = Some(why.clone());
+                    note = Some(why)
+                }
             },
             _ => {
                 note = Some(format!(
@@ -461,13 +474,15 @@ fn proceed_plan(ctx: &Context, input: ProceedPlanInput) -> Result<ProceedDecisio
             }
         }
     }
-    let session = input.session.clone().or_else(|| {
-        ctx.caller
-            .as_ref()
-            .map(|p| format!("board-{}", p.as_str()))
-    });
+    let session = input
+        .session
+        .clone()
+        .or_else(|| ctx.caller.as_ref().map(|p| format!("board-{}", p.as_str())));
     let mut holds = Vec::new();
-    let board = board_holds(ctx, &root, session.as_deref(), &mut holds);
+    let mut board = board_holds(ctx, &root, session.as_deref(), &mut holds);
+    if let Some(why) = unasked {
+        unasked_board(&mut board, &why);
+    }
     let mut mesh = mesh_holds(ctx, session.as_deref(), &mut holds);
     if let Some(n) = note {
         mesh.summary = format!("{}; {n}", mesh.summary);
@@ -479,6 +494,18 @@ fn proceed_plan(ctx: &Context, input: ProceedPlanInput) -> Result<ProceedDecisio
         &holds,
         vec![board, mesh],
     ))
+}
+
+/// A board read while this checkout's server answered and could not be asked: what the
+/// server's board holds was not read, so the source is at most partial.
+fn unasked_board(board: &mut ProceedSource, why: &str) {
+    if board.state == ProceedSourceState::Read {
+        board.state = ProceedSourceState::Partial;
+    }
+    board.summary = format!(
+        "{}; this checkout's own board is its server's: {why}",
+        board.summary
+    );
 }
 
 /// The announcements of every attached peer but the caller's own, on every checkout's board.
@@ -548,21 +575,25 @@ fn board_holds(
             ProceedSourceState::Partial
         },
         holds: holds.len() - before,
-        summary: format!(
-            "{} board(s), {} of them unread",
-            list.boards.len(),
-            unread
-        ),
+        summary: format!("{} board(s), {} of them unread", list.boards.len(), unread),
     }
 }
 
 /// The live claims of every session but `session`, on every runtime this one has heard.
 fn mesh_holds(ctx: &Context, session: Option<&str>, holds: &mut Vec<Hold>) -> ProceedSource {
     let status = ctx.mesh.cooperation_status();
-    let declared = matches!(
-        super::mesh::resolved_declaration(ctx).declaration,
-        Some(Ok(ref c)) if c.enabled
-    );
+    let declared = match super::mesh::resolved_declaration(ctx).declaration {
+        Some(Ok(c)) => c.enabled,
+        Some(Err(e)) => {
+            return ProceedSource {
+                source: "mesh".into(),
+                state: ProceedSourceState::Unread,
+                holds: 0,
+                summary: format!("the mesh declaration could not be read ({e})"),
+            }
+        }
+        None => false,
+    };
     if !declared {
         return ProceedSource {
             source: "mesh".into(),
@@ -586,9 +617,16 @@ fn mesh_holds(ctx: &Context, session: Option<&str>, holds: &mut Vec<Hold>) -> Pr
         };
     };
     let before = holds.len();
-    for c in cooperation.state().claims.iter().filter(|c| c.state.is_live()) {
-        // a session is the holder wherever its claim was written, as mesh.claim admits it
-        if session.is_some_and(|s| c.session.rsplit('/').next() == Some(s)) {
+    // the caller is a session of this runtime, named as mesh.claim names it: its own stream,
+    // then its name. The same name on another runtime is another session, and holds.
+    let own = session.map(|s| format!("{}/{s}", cooperation.journal().own_stream()));
+    for c in cooperation
+        .state()
+        .claims
+        .iter()
+        .filter(|c| c.state.is_live())
+    {
+        if own.as_deref() == Some(c.session.as_str()) {
             continue;
         }
         holds.push(Hold {
@@ -630,8 +668,9 @@ fn forward(ctx: &Context, url: &str, input: &ProceedPlanInput) -> Result<Proceed
             reply.status
         ));
     }
-    serde_json::from_str(&reply.body)
-        .map_err(|e| format!("the leaseholder at {url} answered a decision this executable cannot read ({e})"))
+    serde_json::from_str(&reply.body).map_err(|e| {
+        format!("the leaseholder at {url} answered a decision this executable cannot read ({e})")
+    })
 }
 
 // ---------------------------------------------------------------- module
@@ -646,7 +685,7 @@ pub fn module() -> ModuleDescriptor {
             capability! {
                 id: "proceed.plan",
                 title: "What to proceed with, and why",
-                description: "The READY issues in the plan's hand-out order (the asked milestone first, then wave, priority and id, as `plan.next`), each refused when another worker holds it: a live mesh claim names it as its issue or a hold claims its record (`claimed`), a board or mesh announcement names its id as a word of its own (`named`, quoted beside it), or a live exclusive mesh claim of another session meets its scope (`scope_held`); advisory holds over its scope are listed as `shared_with` and refuse nothing. The first issue nothing refuses is `selected`, with what it unblocks, what finishes it and the commands that take it; `reason` says why in one sentence, and `sources` whether the board and the mesh could be read. A decision that could not read the board, or a declared mesh, is `provisional` and gives no commands. The caller's own session (its mesh claims on any runtime, and its board announcements) is never held against it. Composed by the server holding this checkout's lease, which holds the board and the mesh; the command line asks it. Writes nothing.",
+                description: "The READY issues in the plan's hand-out order (the asked milestone first, then wave, priority and id, as `plan.next`), each refused when another worker holds it: a live mesh claim names it as its issue or a hold claims its record (`claimed`), a board or mesh announcement names its id as a word of its own (`named`, quoted beside it), or a live exclusive mesh claim of another session meets its scope (`scope_held`); advisory holds over its scope are listed as `shared_with` and refuse nothing. The first issue nothing refuses is `selected`, with what it unblocks, what finishes it and the commands that take it; `reason` says why in one sentence, and `sources` whether the board and the mesh could be read. A decision that could not read the board, or a declared mesh, is `provisional` and gives no commands. The caller's own session (its mesh claims on this runtime, and its board announcements) is never held against it; a session of the same name on another runtime is another worker. Composed by the server holding this checkout's lease, which holds the board and the mesh; the command line asks it. Writes nothing.",
                 input: ProceedPlanInput,
                 output: ProceedDecision,
                 stability: Stability::BehaviorallyVerified,
@@ -758,20 +797,50 @@ mod tests {
             ("I0004", &[], &["src/d"]),
         ]);
         let plan = plan_of(&repo);
-        let d = decide(&plan, None, Some("s1"), &[], vec![read("board"), read("mesh")]);
+        let d = decide(
+            &plan,
+            None,
+            Some("s1"),
+            &[],
+            vec![read("board"), read("mesh")],
+        );
         let picked = d.selected.as_ref().expect("an issue is selected");
-        assert_eq!(Some(picked.issue.as_str()), plan.next_ready(None).map(|i| i.id.as_str()));
+        assert_eq!(
+            Some(picked.issue.as_str()),
+            plan.next_ready(None).map(|i| i.id.as_str())
+        );
         assert_eq!(picked.issue, "I0001");
-        assert_eq!(picked.terms.unblocks, ["I0002", "I0003"], "transitively, each once");
+        assert_eq!(
+            picked.terms.unblocks,
+            ["I0002", "I0003"],
+            "transitively, each once"
+        );
         assert!(picked.terms.in_milestone);
         let order: Vec<&str> = d.candidates.iter().map(|c| c.issue.as_str()).collect();
-        assert_eq!(order, ["I0001", "I0004"], "only READY issues are candidates");
+        assert_eq!(
+            order,
+            ["I0001", "I0004"],
+            "only READY issues are candidates"
+        );
         assert_eq!(d.waiting.get("BLOCKED"), Some(&2));
-        assert!(d.reason.starts_with("I0001 is the first READY issue that nothing refuses in M000"), "{}", d.reason);
+        assert!(
+            d.reason
+                .starts_with("I0001 is the first READY issue that nothing refuses in M000"),
+            "{}",
+            d.reason
+        );
         assert!(!d.provisional);
         assert_eq!(d.next.len(), 3);
-        assert!(d.next[0].starts_with("majordomus mesh claim src/a --session s1 --issue I0001"), "{:?}", d.next);
-        assert!(d.next[2].contains("--issue I0001 --scope src/a"), "{:?}", d.next);
+        assert!(
+            d.next[0].starts_with("majordomus mesh claim src/a --session s1 --issue I0001"),
+            "{:?}",
+            d.next
+        );
+        assert!(
+            d.next[2].contains("--issue I0001 --scope src/a"),
+            "{:?}",
+            d.next
+        );
     }
 
     #[test]
@@ -787,7 +856,13 @@ mod tests {
         let holds = [
             hold("m/c1", false, Some("I0001"), "", &[]),
             hold("board:x:p2", false, None, "taking I0002, then I00030", &[]),
-            hold("m/c3", false, None, "", &[".ai/repo/project/issues/I0003.yaml"]),
+            hold(
+                "m/c3",
+                false,
+                None,
+                "",
+                &[".ai/repo/project/issues/I0003.yaml"],
+            ),
             hold("m/c4", true, None, "", &["src"]),
             hold("m/c5", false, None, "", &["src/e"]),
         ];
@@ -798,7 +873,10 @@ mod tests {
             .map(|c| {
                 (
                     c.issue.as_str(),
-                    c.refused.iter().map(|r| (r.constraint, r.hold.as_str())).collect(),
+                    c.refused
+                        .iter()
+                        .map(|r| (r.constraint, r.hold.as_str()))
+                        .collect(),
                 )
             })
             .collect();
@@ -814,16 +892,31 @@ mod tests {
             ]
         );
         assert!(d.selected.is_none());
-        assert_eq!(d.reason, "every one of the 5 READY issue(s) is held by another worker");
+        assert_eq!(
+            d.reason,
+            "every one of the 5 READY issue(s) is held by another worker"
+        );
         assert!(d.next.is_empty());
 
         // without the exclusive claim over src, the first free issue is taken, and an
         // advisory hold over its scope is shared, not refused
-        let d = decide(&plan, None, None, &holds[..3], vec![read("board"), read("mesh")]);
+        let d = decide(
+            &plan,
+            None,
+            None,
+            &holds[..3],
+            vec![read("board"), read("mesh")],
+        );
         let picked = d.selected.expect("one is free");
         assert_eq!(picked.issue, "I0004");
         assert!(d.reason.contains("after 3 held by others"), "{}", d.reason);
-        let d = decide(&plan, None, None, &holds[4..], vec![read("board"), read("mesh")]);
+        let d = decide(
+            &plan,
+            None,
+            None,
+            &holds[4..],
+            vec![read("board"), read("mesh")],
+        );
         let e = d.candidates.iter().find(|c| c.issue == "I0005").unwrap();
         assert!(e.refused.is_empty());
         assert_eq!(e.shared_with, ["m/c5"]);
@@ -838,33 +931,61 @@ mod tests {
             holds: 0,
             summary: "not active here".into(),
         };
-        let d = decide(&plan_of(&repo), None, None, &[], vec![read("board"), unread]);
+        let d = decide(
+            &plan_of(&repo),
+            None,
+            None,
+            &[],
+            vec![read("board"), unread],
+        );
         assert!(
-            d.reason.ends_with("; provisional, decided without all of: mesh (see sources)"),
+            d.reason
+                .ends_with("; provisional, decided without all of: mesh (see sources)"),
             "{}",
             d.reason
         );
-        assert!(d.provisional && d.next.is_empty(), "a partial read takes nothing");
-        assert_eq!(d.selected.map(|c| c.issue).as_deref(), Some("I0001"), "but names its choice");
+        assert!(
+            d.provisional && d.next.is_empty(),
+            "a partial read takes nothing"
+        );
+        assert_eq!(
+            d.selected.map(|c| c.issue).as_deref(),
+            Some("I0001"),
+            "but names its choice"
+        );
         let undeclared = ProceedSource {
             source: "mesh".into(),
             state: ProceedSourceState::Undeclared,
             holds: 0,
             summary: String::new(),
         };
-        let d = decide(&plan_of(&repo), None, None, &[], vec![read("board"), undeclared]);
-        assert!(!d.provisional && d.next.len() == 3, "no mesh declared is no mesh missed");
+        let d = decide(
+            &plan_of(&repo),
+            None,
+            None,
+            &[],
+            vec![read("board"), undeclared],
+        );
+        assert!(
+            !d.provisional && d.next.len() == 3,
+            "no mesh declared is no mesh missed"
+        );
 
         let empty = crate::synthetic::SyntheticRepository::small().unwrap();
         let d = decide(&plan_of(&empty), None, None, &[], vec![]);
-        assert_eq!(d.reason, "the plan declares no unfinished issue to hand out");
+        assert_eq!(
+            d.reason,
+            "the plan declares no unfinished issue to hand out"
+        );
 
         // the only issue is ACTIVE: unfinished, and not READY
         let waiting = planned(&[("I0001", &[], &["src/a"])]);
         let at = "2026-09-01T00:00:00Z";
         let record = waiting.root().join(".ai/repo/project/issues/I0001.yaml");
         let mut y = std::fs::read_to_string(&record).unwrap();
-        y.push_str(&format!("started_at: {at}\nunsealed_stamps:\n  - started_at {at}\n"));
+        y.push_str(&format!(
+            "started_at: {at}\nunsealed_stamps:\n  - started_at {at}\n"
+        ));
         std::fs::write(&record, y).unwrap();
         let d = decide(&plan_of(&waiting), None, None, &[], vec![]);
         assert_eq!(d.waiting.get("ACTIVE"), Some(&1));
@@ -900,8 +1021,34 @@ mod tests {
             },
         };
         let s = steps(&two, None);
-        assert!(s[0].starts_with("majordomus mesh claim src/a docs/b.md --session <your mesh session>"), "{}", s[0]);
-        assert!(s[2].ends_with("--issue I1 --scope src/a,docs/b.md"), "start takes one comma list: {}", s[2]);
+        assert!(
+            s[0].starts_with("majordomus mesh claim src/a docs/b.md --session <your mesh session>"),
+            "{}",
+            s[0]
+        );
+        assert!(
+            s[2].ends_with("--issue I1 --scope src/a,docs/b.md"),
+            "start takes one comma list: {}",
+            s[2]
+        );
+        // a title and a path are data: quoted where a shell would read them as code
+        let odd = ProceedCandidate {
+            title: "Keep $(printf X) and `id` literally, it's said".into(),
+            scope: vec!["src/file name".into(), "src/*.rs".into()],
+            ..two.clone()
+        };
+        let s = steps(&odd, Some("board-p1"));
+        assert_eq!(
+            s[0],
+            "majordomus mesh claim 'src/file name' 'src/*.rs' --session board-p1 --issue I1 \
+             --intent 'I1: Keep $(printf X) and `id` literally, it'\\''s said'"
+        );
+        assert!(
+            s[2].ends_with("--scope 'src/file name,src/*.rs'"),
+            "{}",
+            s[2]
+        );
+        assert_eq!(word(""), "''");
         assert_eq!(clip("abcdef", 3), "abc…");
         assert_eq!(clip("abc", 3), "abc");
     }
@@ -931,6 +1078,86 @@ mod tests {
         let mesh = d.sources.iter().find(|s| s.source == "mesh").unwrap();
         assert_eq!(mesh.state, ProceedSourceState::Unread, "{}", mesh.summary);
         assert!(d.provisional && d.next.is_empty(), "{}", d.reason);
+
+        // and a declaration that does not parse is not the absence of one
+        std::fs::write(dir.join("majordomus.yaml"), "enabled: bananas\n").unwrap();
+        let d = proceed_plan(&repo.context().unwrap(), local()).unwrap();
+        let mesh = d.sources.iter().find(|s| s.source == "mesh").unwrap();
+        assert_eq!(mesh.state, ProceedSourceState::Unread, "{}", mesh.summary);
+        assert!(
+            mesh.summary.contains("could not be read"),
+            "{}",
+            mesh.summary
+        );
+        assert!(d.provisional && d.next.is_empty(), "{}", d.reason);
+    }
+
+    #[test]
+    fn a_server_that_cannot_be_asked_leaves_its_board_unread() {
+        let mut board = read("board");
+        unasked_board(&mut board, "the leaseholder at http://x answered 404");
+        assert_eq!(board.state, ProceedSourceState::Partial);
+        let plan = plan_of(&planned(&[("I0001", &[], &["src/a"])]));
+        let d = decide(&plan, None, None, &[], vec![board, read("mesh")]);
+        assert!(d.provisional && d.next.is_empty(), "{}", d.reason);
+        assert!(d.reason.contains("board"), "{}", d.reason);
+    }
+
+    #[test]
+    fn a_session_of_the_same_name_on_another_runtime_holds() {
+        use crate::mesh::journal::{ClaimMode, SessionInfo};
+        let repo = planned(&[("I0002", &[], &["src/b"]), ("I0003", &[], &["src/c"])]);
+        let dir = repo.root().join(".ai/repo/mesh");
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::write(
+            dir.join("majordomus.yaml"),
+            "schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\n",
+        )
+        .unwrap();
+        let ctx = repo.context().unwrap();
+        let net = std::sync::Arc::new(crate::mesh::testing::Net::default());
+        let here = crate::mesh::testing::runtime(&net, "here:1");
+        let there = crate::mesh::testing::runtime(&net, "there:1");
+        let info = SessionInfo {
+            session: "board-p1".into(),
+            client: "test".into(),
+            ..SessionInfo::default()
+        };
+        let claim = |c: &crate::mesh::cooperation::Cooperation, scope: &str, issue: &str| {
+            c.claim(
+                &info,
+                vec![scope.into()],
+                None,
+                ClaimMode::Exclusive,
+                Some(issue.into()),
+            )
+            .expect("admitted")
+        };
+        claim(&there, "src/b", "I0002");
+        claim(&here, "src/c", "I0003");
+        here.dial(&["there:1".into()]).expect("linked");
+        here.sync_with(there.runtime_key()).expect("synced");
+        crate::mesh::testing::attach(&ctx, here.clone());
+        let d = proceed_plan(
+            &ctx,
+            ProceedPlanInput {
+                session: Some("board-p1".into()),
+                local: true,
+                ..Default::default()
+            },
+        )
+        .unwrap();
+        let why = |id: &str| -> Vec<ProceedConstraint> {
+            let c = d.candidates.iter().find(|c| c.issue == id).unwrap();
+            c.refused.iter().map(|r| r.constraint).collect()
+        };
+        assert_eq!(
+            why("I0002"),
+            [ProceedConstraint::Claimed],
+            "board-p1 there is another session"
+        );
+        assert!(why("I0003").is_empty(), "board-p1 here is the caller");
+        assert_eq!(d.selected.map(|c| c.issue).as_deref(), Some("I0003"));
     }
 
     #[test]
@@ -979,16 +1206,28 @@ mod tests {
         )
         .unwrap();
         let mesh = d.sources.iter().find(|s| s.source == "mesh").unwrap();
-        assert_eq!((mesh.state, mesh.holds), (ProceedSourceState::Read, 2), "{}", mesh.summary);
+        assert_eq!(
+            (mesh.state, mesh.holds),
+            (ProceedSourceState::Read, 2),
+            "{}",
+            mesh.summary
+        );
         let why = |id: &str| -> Vec<ProceedConstraint> {
             let c = d.candidates.iter().find(|c| c.issue == id).unwrap();
             c.refused.iter().map(|r| r.constraint).collect()
         };
         assert_eq!(why("I0001"), [ProceedConstraint::Claimed]);
         assert_eq!(why("I0002"), [ProceedConstraint::ScopeHeld]);
-        assert!(why("I0003").is_empty(), "the caller's own claim is not held against it");
+        assert!(
+            why("I0003").is_empty(),
+            "the caller's own claim is not held against it"
+        );
         assert_eq!(d.selected.map(|c| c.issue).as_deref(), Some("I0003"));
-        assert!(!d.provisional && d.next[0].contains("--session me"), "{:?}", d.next);
+        assert!(
+            !d.provisional && d.next[0].contains("--session me"),
+            "{:?}",
+            d.next
+        );
     }
 
     #[test]
@@ -998,7 +1237,10 @@ mod tests {
         assert_eq!(e.capability.id.as_str(), "proceed.plan");
         assert!(e.capability.kind.is_read_only());
         let http = e.capability.exposure.http.as_ref().unwrap();
-        assert_eq!((http.method.as_str(), http.path.as_str()), ("GET", "/api/v1/proceed/plan"));
+        assert_eq!(
+            (http.method.as_str(), http.path.as_str()),
+            ("GET", "/api/v1/proceed/plan")
+        );
         assert_eq!(
             e.capability.exposure.cli.as_ref().unwrap().path,
             ["proceed", "plan"]

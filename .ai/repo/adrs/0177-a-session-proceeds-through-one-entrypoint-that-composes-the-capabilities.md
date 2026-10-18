@@ -80,10 +80,10 @@ What is missing is not another orchestrator. It is:
 2. **The ranking is explainable before it is clever.** Eligibility is a hard filter, and it
    removes an issue from the plan's own hand-out order (`plan.next`'s: the asked milestone,
    then wave, priority and id) without reordering what remains; the number of distinct issues
-   each candidate transitively unblocks (counted once, never per path) is shown beside it.
-   Ordering by that number is the second step, taken in `plan.rs` and `lib/project.sh`
-   together (case 99 holds the two engines to one answer), so that `plan.next` and
-   `proceed.plan` keep one order. A weighted score
+   each candidate transitively unblocks (counted once, never per path, walked only through
+   unfinished issues) is part of that order: after milestone membership, wave and priority,
+   before id (I2973), computed once by `Plan::unblocks` and by `lib/project.sh` alike (case 99
+   holds the two engines to one answer), so `plan.next` and `proceed.plan` keep one order. A weighted score
    (impact, confidence, effort, risk, coordination cost) is a later change that must be
    calibrated against finished work and must show its terms; it is not decided here.
 3. **One command, `proceed`, acts.** It takes the decision and performs, through the existing

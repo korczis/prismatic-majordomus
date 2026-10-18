@@ -6,23 +6,23 @@
     "version": "0.29.0"
   },
   "registry": {
-    "fingerprint": "9d00280ca19f34e73707c7707a7fea038295f00dd8bad5482b25cd49273e113a",
+    "fingerprint": "adbc991ceb50d9965ff1a4bd05e5e1ffd81b04036f91ec08dac2425c2e944756",
     "summary": {
-      "total": 2537,
+      "total": 2539,
       "builtin": 204,
-      "declarative": 2333,
+      "declarative": 2335,
       "by_kind": {
         "command": 32,
         "query": 172,
-        "resource": 2333
+        "resource": 2335
       },
       "by_stability": {
         "behaviorally_verified": 143,
         "experimental": 52,
-        "implemented": 2342
+        "implemented": 2344
       },
       "mcp_tools": 194,
-      "mcp_resources": 2388,
+      "mcp_resources": 2390,
       "http_routes": 199,
       "cli_commands": 109,
       "modules": 93,
@@ -60075,7 +60075,7 @@
         "module": "proceed",
         "kind": "query",
         "title": "What to proceed with, and why",
-        "description": "The READY issues in the plan's hand-out order (the asked milestone first, then wave, priority and id, as `plan.next`), each refused when another worker holds it: a live mesh claim names it as its issue or a hold claims its record (`claimed`), a board or mesh announcement names its id as a word of its own (`named`, quoted beside it), or a live exclusive mesh claim of another session meets its scope (`scope_held`); advisory holds over its scope are listed as `shared_with` and refuse nothing. The first issue nothing refuses is `selected`, with what it unblocks, what finishes it and the commands that take it; `reason` says why in one sentence, and `sources` whether the board and the mesh could be read. A decision that could not read the board, or a declared mesh, is `provisional` and gives no commands. The caller's own session (its mesh claims on any runtime, and its board announcements) is never held against it. Composed by the server holding this checkout's lease, which holds the board and the mesh; the command line asks it. Writes nothing.",
+        "description": "The READY issues in the plan's hand-out order (the asked milestone first, then wave, priority and id, as `plan.next`), each refused when another worker holds it: a live mesh claim names it as its issue or a hold claims its record (`claimed`), a board or mesh announcement names its id as a word of its own (`named`, quoted beside it), or a live exclusive mesh claim of another session meets its scope (`scope_held`); advisory holds over its scope are listed as `shared_with` and refuse nothing. The first issue nothing refuses is `selected`, with what it unblocks, what finishes it and the commands that take it; `reason` says why in one sentence, and `sources` whether the board and the mesh could be read. A decision that could not read the board, or a declared mesh, is `provisional` and gives no commands. The caller's own session (its mesh claims on this runtime, and its board announcements) is never held against it; a session of the same name on another runtime is another worker. Composed by the server holding this checkout's lease, which holds the board and the mesh; the command line asks it. Writes nothing.",
         "input": {
           "name": "ProceedPlanInput",
           "schema": {
@@ -83833,7 +83833,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 426,
+        "capabilities": 427,
         "capability_ids": []
       },
       {
@@ -84417,7 +84417,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 529,
+        "capabilities": 530,
         "capability_ids": []
       },
       {
@@ -84508,7 +84508,7 @@
     ]
   },
   "index": {
-    "fingerprint": "31c9223ead7757a1be9a2644637aa590a80fd33b9e0d4e158f4da2baa2889c3f",
+    "fingerprint": "0e2c01fb0c99676d2413e4854d56ab069a9389281401646192bf693cc33f4903",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -84548,7 +84548,7 @@
       "gap": 4,
       "implementation": 52,
       "intent": 6,
-      "issue": 426,
+      "issue": 427,
       "knowledge": 4,
       "mesh-declaration": 1,
       "milestone": 42,
@@ -84562,7 +84562,7 @@
       "session": 90,
       "skill": 8,
       "taxonomy": 10,
-      "test": 529,
+      "test": 530,
       "use-case": 49,
       "workspace": 1
     },
@@ -86519,7 +86519,7 @@
         "path": ".ai/repo/adrs/0177-a-session-proceeds-through-one-entrypoint-that-composes-the-capabilities.md",
         "section": "adrs",
         "source_class": "adr",
-        "bytes": 6733,
+        "bytes": 6807,
         "tags": [
           "proceed",
           "orchestration",
@@ -90050,7 +90050,7 @@
         "path": ".ai/repo/project/critiques/a-session-proceeds.yaml",
         "section": "project",
         "source_class": "critique",
-        "bytes": 8411
+        "bytes": 8540
       },
       {
         "uri": "majordomus://critique/intent-bound-work",
@@ -90850,7 +90850,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 177668
+        "bytes": 177805
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -94153,7 +94153,7 @@
         "identity": "lib/project.sh",
         "path": "lib/project.sh",
         "source_class": "library",
-        "bytes": 16061
+        "bytes": 17435
       },
       {
         "uri": "majordomus://implementation/lib/prompt.sh",
@@ -94287,7 +94287,7 @@
         "path": ".ai/repo/project/intents/a-session-proceeds.yaml",
         "section": "project",
         "source_class": "intent",
-        "bytes": 2360
+        "bytes": 2783
       },
       {
         "uri": "majordomus://intent/intent-bound-work",
@@ -99009,6 +99009,17 @@
         "bytes": 2001
       },
       {
+        "uri": "majordomus://issue/I2973",
+        "kind": "issue",
+        "identity": "I2973",
+        "title": "The choice ranks by what it unblocks",
+        "description": "Move the transitive-unblock count from proceed.rs into Plan::unblocks (distinct unfinished issues that depend on an issue, walked only through unfinished ones, each counted once), and order READY issues by it after milestone membership, wave and priority and before id, in plan.rs (ready_in_order, so plan.next and proceed.plan) and lib/project.sh (mj_pj_ready_ranked) together, held to one answer by case 99.",
+        "path": ".ai/repo/project/issues/I2973.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2299
+      },
+      {
         "uri": "majordomus://issue/I3040",
         "kind": "issue",
         "identity": "I3040",
@@ -99178,7 +99189,7 @@
         "path": ".ai/repo/project/milestones/a-session-proceeds.yaml",
         "section": "project",
         "source_class": "milestone",
-        "bytes": 2951
+        "bytes": 3064
       },
       {
         "uri": "majordomus://milestone/adopter-upgrades",
@@ -106872,6 +106883,14 @@
         "bytes": 5995
       },
       {
+        "uri": "majordomus://test/test/cases/3441_the_choice_ranks_by_what_it_unblocks.sh",
+        "kind": "test",
+        "identity": "test/cases/3441_the_choice_ranks_by_what_it_unblocks.sh",
+        "path": "test/cases/3441_the_choice_ranks_by_what_it_unblocks.sh",
+        "source_class": "case",
+        "bytes": 3094
+      },
+      {
         "uri": "majordomus://test/test/cases/349_a_step_reports_its_own_time.sh",
         "kind": "test",
         "identity": "test/cases/349_a_step_reports_its_own_time.sh",
@@ -109762,7 +109781,7 @@
       "identity": [
         "id"
       ],
-      "objects": 426
+      "objects": 427
     },
     {
       "name": "knowledge",
@@ -109914,7 +109933,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 529
+      "objects": 530
     },
     {
       "name": "use-case",
@@ -144833,7 +144852,7 @@
         "name": "majordomus_proceed_plan",
         "id": "proceed.plan",
         "title": "What to proceed with, and why",
-        "description": "The READY issues in the plan's hand-out order (the asked milestone first, then wave, priority and id, as `plan.next`), each refused when another worker holds it: a live mesh claim names it as its issue or a hold claims its record (`claimed`), a board or mesh announcement names its id as a word of its own (`named`, quoted beside it), or a live exclusive mesh claim of another session meets its scope (`scope_held`); advisory holds over its scope are listed as `shared_with` and refuse nothing. The first issue nothing refuses is `selected`, with what it unblocks, what finishes it and the commands that take it; `reason` says why in one sentence, and `sources` whether the board and the mesh could be read. A decision that could not read the board, or a declared mesh, is `provisional` and gives no commands. The caller's own session (its mesh claims on any runtime, and its board announcements) is never held against it. Composed by the server holding this checkout's lease, which holds the board and the mesh; the command line asks it. Writes nothing.",
+        "description": "The READY issues in the plan's hand-out order (the asked milestone first, then wave, priority and id, as `plan.next`), each refused when another worker holds it: a live mesh claim names it as its issue or a hold claims its record (`claimed`), a board or mesh announcement names its id as a word of its own (`named`, quoted beside it), or a live exclusive mesh claim of another session meets its scope (`scope_held`); advisory holds over its scope are listed as `shared_with` and refuse nothing. The first issue nothing refuses is `selected`, with what it unblocks, what finishes it and the commands that take it; `reason` says why in one sentence, and `sources` whether the board and the mesh could be read. A decision that could not read the board, or a declared mesh, is `provisional` and gives no commands. The caller's own session (its mesh claims on this runtime, and its board announcements) is never held against it; a session of the same name on another runtime is another worker. Composed by the server holding this checkout's lease, which holds the board and the mesh; the command line asks it. Writes nothing.",
         "kind": "query",
         "read_only": true,
         "effect": "read",

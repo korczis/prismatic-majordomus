@@ -1,0 +1,32 @@
+id: I2973
+milestone: "a-session-proceeds"
+title: "The choice ranks by what it unblocks"
+slug: the-choice-ranks-by-what-it-unblocks
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Move the transitive-unblock count from proceed.rs into Plan::unblocks (distinct unfinished issues that depend on an issue, walked only through unfinished ones, each counted once), and order READY issues by it after milestone membership, wave and priority and before id, in plan.rs (ready_in_order, so plan.next and proceed.plan) and lib/project.sh (mj_pj_ready_ranked) together, held to one answer by case 99."
+why: "ADR 0177 decision 2: the order is explainable before it is clever, and the first term beyond the plan's own order is what a choice unblocks. Until now proceed.plan shows the count and does not rank by it; a READY issue that unblocks seven others waits behind one that unblocks none whenever their ids say so."
+current_state: "READY issues are ordered by milestone membership, wave, priority and id; proceed.plan reports unblocks without ranking by it."
+desired_state: "Among READY issues of equal milestone membership, wave and priority, the one that unblocks more is handed out first by plan.next, majordomus plan next and proceed.plan alike; adding a dependency to the plan changes that order and the reason with no list edited."
+serves:
+  - a-session-proceeds#the-choice-ranks-by-what-it-unblocks
+scope:
+  - "apps/majordomus-cli/src/plan.rs"
+  - "apps/majordomus-cli/src/capability/builtin/proceed.rs"
+  - "lib/project.sh"
+  - "test/cases/99_plan_capabilities.sh"
+  - "test/cases/3441_the_choice_ranks_by_what_it_unblocks.sh"
+depends_on:
+  - "I2972"
+acceptance_criteria:
+  - "Of two READY issues equal in milestone, wave and priority, the one that unblocks more comes first in plan.next, majordomus plan next and proceed.plan"
+  - "Adding a dependency to the plan changes the order and the reason, and a shared downstream issue is counted once"
+  - "The shell and Rust engines answer the same next issue on every plan case 99 compares"
+validation:
+  - "majordomus plan validate"
+  - "bash test/run.sh 99_plan_capabilities 3441_the_choice_ranks_by_what_it_unblocks"
+evidence_required:
+  - "case_the_choice_ranks_by_what_it_unblocks"
+created_at: 2026-10-18
+updated_at: 2026-10-18
