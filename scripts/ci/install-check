@@ -161,11 +161,12 @@ if [ -n "$EXPECT" ] && [ "$tag" != "v${EXPECT#v}" ]; then
 fi
 if [ -n "$pin_env" ]; then
   stable="$(fetch "$latest_url" 2>/dev/null | sed -n 's/.*"tag": "\([^"]*\)".*/\1/p' | head -n 1)"
-  if [ "$stable" = "$tag" ]; then
-    fail "$latest_url names the pre-release $tag; a pre-release is never the latest release"
-    printf 'install-check: %s finding(s)\n' "$findings" >&2
-    exit 10
-  fi
+  case "$stable" in
+    *-alpha.[0-9]*|*-beta.[0-9]*|*-rc.[0-9]*)
+      fail "$latest_url names the pre-release $stable; a pre-release is never the latest release"
+      printf 'install-check: %s finding(s)\n' "$findings" >&2
+      exit 10 ;;
+  esac
   ok "the latest release is ${stable:-not served}, not the pre-release $tag"
 fi
 

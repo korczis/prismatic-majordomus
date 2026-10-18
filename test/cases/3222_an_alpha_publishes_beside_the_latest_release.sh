@@ -66,6 +66,15 @@ git fetch -q origin gh-pages
 [ "$(git rev-parse origin/gh-pages)" = "$now" ] || { echo "    a refused pre-release deploy pushed gh-pages"; exit 1; }
 [ "$(tag_served)" = v0.29.0 ] || { echo "    the refusal left latest.json naming $(tag_served)"; exit 1; }
 
+# A different pre-release is no more a stable pointer than the one being published.
+meta 1.0.0-alpha.2 prerelease > site/static/releases/v1.0.0-alpha.2.json
+git add site/static/releases
+expect_exit 10 scripts/site-deploy --release-metadata v1.0.0-alpha.2
+expect_grep 'REFUSE .*latest.json names the pre-release v1.0.0-alpha.1; a pre-release is never the latest release'
+git fetch -q origin gh-pages
+[ "$(git rev-parse origin/gh-pages)" = "$now" ] || { echo "    publishing another pre-release bypassed the latest.json refusal"; exit 1; }
+[ "$(tag_served)" = v0.29.0 ] || { echo "    the refusal changed the latest release"; exit 1; }
+
 # ---------------------------------------------------------------- 4. another suffix is not a pre-release
 meta 0.29.0 > site/static/releases/latest.json
 meta 0.2.0-ai-documents > site/static/releases/v0.2.0-ai-documents.json
