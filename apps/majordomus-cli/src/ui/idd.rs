@@ -39,6 +39,8 @@ const ROADMAP: Source = Source::of("plan.roadmap");
 const ISSUES: Source = Source::of("plan.issues");
 const WAVES: Source = Source::of("plan.waves");
 const NEXT: Source = Source::of("plan.next");
+/// One intent in full, asked by id for the headline numbers (I2907).
+const RECORD: &str = "intents.record";
 /// Every move the plan's issues were given on this server: `plan.transition` as executions.
 const MOVES: Source = Source::with("executions.list", r#"{"capability":"plan.transition"}"#);
 
@@ -140,8 +142,12 @@ fn chip(href: String, label: String) -> El {
 /// The Intent workspace screen; `query` may name the intent (`?intent=intent-bound-work`).
 pub fn screen(ctx: &Context, query: &[(String, String)]) -> View {
     let answers = ask_all(ctx, &[INTENTS, ROADMAP, ISSUES, WAVES, NEXT, MOVES]);
+    // the chosen intent in full, asked by its id, so the headline numbers are its own (I2907)
+    let record = chosen(query, &list(&answers[&INTENTS], "/intents"))
+        .map(|id| super::source::ask_input(ctx, RECORD, serde_json::json!({ "id": id })));
     render(
         ctx,
+        record.as_ref(),
         &answers[&INTENTS],
         &answers[&ROADMAP],
         &answers[&ISSUES],
@@ -152,10 +158,36 @@ pub fn screen(ctx: &Context, query: &[(String, String)]) -> View {
     )
 }
 
+/// The headline numbers: the chosen intent's own, read from `intents.record` (its stage, its
+/// verdict, how many of its criteria are met of how many, how many milestones it names), so
+/// nothing at the top of the screen counts outside the intent on it (I2907); the plan's next
+/// issue leads to it. With no intent chosen there is only how many intents there are to choose.
+fn headline(record: Option<&Answer>, intents: &Answer, next: &Answer) -> Vec<El> {
+    let next_tile = match next.read("/issue/id").text().filter(|n| !n.is_empty()) {
+        Some(n) => super::view::kpi_to(
+            kpi("Plan's next issue", &next.read("/issue/id")),
+            &issue_href(&n),
+        ),
+        None => kpi("Plan's next issue", &next.read("/issue/id")),
+    };
+    match record {
+        Some(r) => vec![
+            super::view::kpi_state("Stage", &r.read("/stage")),
+            super::view::kpi_state("Verdict", &r.read("/verdict/state")),
+            kpi("Criteria met", &r.read("/met")),
+            kpi_count("Criteria", &r.read("/satisfaction")),
+            kpi_count("Its milestones", &r.read("/milestones")),
+            next_tile,
+        ],
+        None => vec![kpi_count("Intents", &intents.read("/intents")), next_tile],
+    }
+}
+
 /// The workspace drawn from the six answers, whichever of them could not answer.
 #[allow(clippy::too_many_arguments)]
 fn render(
     ctx: &Context,
+    record: Option<&Answer>,
     intents: &Answer,
     roadmap: &Answer,
     issues: &Answer,
@@ -176,16 +208,7 @@ fn render(
         "Intent workspace",
         "From what the work is for to the move that starts it.",
         "One intent and everything that serves it: its milestones, their issues and what blocks them, the waves the dependencies allow and the graph of what waits for what.",
-        vec![
-            kpi_count("Intents", &intents.read("/intents")),
-            kpi_count("Milestones", &roadmap.read("/milestones")),
-            kpi("Roadmap now", &roadmap.read("/now")),
-            // the plan's next issue leads to it, as every other issue on the screen does (I2900)
-            match next.read("/issue/id").text().filter(|n| !n.is_empty()) {
-                Some(n) => super::view::kpi_to(kpi("Plan's next issue", &next.read("/issue/id")), &issue_href(&n)),
-                None => kpi("Plan's next issue", &next.read("/issue/id")),
-            },
-        ],
+        headline(record, intents, next),
     );
 
     let mut grid = el("div")
@@ -1290,6 +1313,65 @@ mod tests {
         );
     }
 
+    /// The headline numbers are the chosen intent's own, each read from its record and citing
+    /// it; nothing global (the plan's milestones, the roadmap's now) is counted at the top, and
+    /// with no intent chosen there is only how many intents there are (I2907).
+    #[test]
+    fn the_headline_numbers_are_the_chosen_intents() {
+        let record = answer(
+            Source::of(RECORD),
+            Ok(serde_json::json!({
+                "id": "i", "stage": "executing", "met": 1,
+                "verdict": { "state": "unsatisfied", "reasons": [] },
+                "satisfaction": [{ "id": "a" }, { "id": "b" }, { "id": "c" }],
+                "milestones": [{ "id": "m1", "status": "DONE" }, { "id": "m2", "status": "ACTIVE" }],
+            })),
+        );
+        let intents = answer(
+            INTENTS,
+            Ok(serde_json::json!({ "intents": [intent_i(), intent_i()] })),
+        );
+        let next = answer(NEXT, Ok(serde_json::json!({ "issue": { "id": "I0702" } })));
+        let html: String = headline(Some(&record), &intents, &next)
+            .iter()
+            .map(El::render)
+            .collect();
+        for want in [
+            "Stage",
+            "executing",
+            "Verdict",
+            "unsatisfied",
+            "Criteria met",
+            "Its milestones",
+            "intents.record",
+        ] {
+            assert!(
+                html.contains(want),
+                "the headline leaves out {want}: {html}"
+            );
+        }
+        assert!(html.contains(">1<"), "one criterion met: {html}");
+        assert!(html.contains(">3<"), "of three criteria: {html}");
+        assert!(html.contains(">2<"), "two milestones: {html}");
+        assert!(
+            !html.contains("Roadmap now") && !html.contains(">Intents<"),
+            "a global count at the top: {html}"
+        );
+        assert!(
+            html.contains(&issue_href("I0702")),
+            "the plan's next issue leads to it: {html}"
+        );
+
+        let html: String = headline(None, &intents, &next)
+            .iter()
+            .map(El::render)
+            .collect();
+        assert!(
+            html.contains("Intents") && !html.contains("Criteria met"),
+            "{html}"
+        );
+    }
+
     fn intent_i() -> Value {
         serde_json::json!({
             "id": "i", "title": "The i intent", "stage": "executing",
@@ -1307,6 +1389,7 @@ mod tests {
         let ctx = repo.context().expect("a context");
         let view = render(
             &ctx,
+            None,
             &failed,
             &empty(ROADMAP),
             &empty(ISSUES),
@@ -1326,6 +1409,7 @@ mod tests {
         let issues = answer(ISSUES, Err("no plan".into()));
         let html = render(
             &ctx,
+            None,
             &intents,
             &empty(ROADMAP),
             &issues,
