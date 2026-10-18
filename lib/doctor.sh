@@ -80,6 +80,7 @@ mj_cmd_doctor() {
   mj_doctrine_dispatch doctor
   mj_report_environment
   mj_report_reasoning
+  mj_report_machine_sweep
   mj_report_budget doctor "$t_start"
   mj_finish_doctor
 }
@@ -552,6 +553,28 @@ mj_report_reasoning() {
   if [ -n "$check" ] && [ "$(printf '%s' "$check" | jq -r '.checks | index("ci") == null')" = true ]; then
     mj_info reasoning "-" "ci, claims: not run; they judge Majordomus's own workflows and documents and apply where project.advisors-are-optional is declared (majordomus reasoning check)"
   fi
+  return 0
+}
+
+# The scheduled sweep of this machine's build output (I2881). Read through the executable and
+# never changed here: doctor reports, `majordomus machine schedule --install` sets the entry
+# up. Information rather than a warning, because a CI runner and a fresh clone have no entry
+# and are not wrong to lack one; the line says how to install it where it belongs.
+mj_report_machine_sweep() {
+  # shellcheck source=rust_bin.sh
+  . "$MJ_LIB_DIR/rust_bin.sh"
+  local bin share sched
+  bin="$(mj_rust_bin "$MJ_HOME")"
+  [ -x "$bin" ] || { mj_info machine "-" "the executable is not built, so the scheduled sweep is not reported here (majordomus machine schedule)"; return 0; }
+  share="$(mj_rust_share "$MJ_ROOT")"
+  sched="$( ( [ -z "$share" ] || export MAJORDOMUS_SHARE="$share"
+              "$bin" machine schedule --repo "$MJ_ROOT" --format json ) 2>/dev/null )" || {
+    mj_info machine "-" "the scheduled sweep could not be read (majordomus machine schedule)"; return 0; }
+  case "$(printf '%s' "$sched" | jq -r '"\(.scheduler) \(.installed)"')" in
+    "none "*) mj_info machine "-" "this platform has neither launchd nor systemd; run majordomus machine sweep --reclaim from its own scheduler" ;;
+    *" true") mj_ok machine "$(printf '%s' "$sched" | jq -r '.files[0]')" "the build output is swept every $(printf '%s' "$sched" | jq -r .every_minutes) minutes" ;;
+    *) mj_info machine "-" "this machine does not sweep its build output on a schedule: majordomus machine schedule --install" ;;
+  esac
   return 0
 }
 

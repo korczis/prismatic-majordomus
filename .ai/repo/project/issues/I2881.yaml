@@ -1,0 +1,32 @@
+id: I2881
+milestone: development-runtime
+title: "Every machine sweeps its own build output on a schedule"
+slug: the-machine-sweeps-its-build-output
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "A typed capability, machine.sweep, classifies what cargo left under every cargo cache home of the machine (private build directories, coverage targets, incremental sessions) and reclaims what is idle, named by no process and held by no build; machine.schedule installs the per-user scheduler entry (launchd agent on macOS, systemd --user timer on Linux) that runs it every 15 minutes, sweeping at 30 minutes of idleness when the volume is below the floor."
+why: "2026-10-18: lundra reached 0 bytes free twice in one morning (87 GB in ~/.cargo/build-shared/majordomus, 48 GB of it llvm-cov-target; 19 GB in build-private), imac fell to 3 GiB and the shared Mac below 25 GiB. Every sweep the repository had ran only inside a build of this repository (lib/rust_bin.sh, reap-orphans below a mark), so a machine whose builds came from offloads, remote runs or a bare cargo never swept. The owner ordered disk space solved systemically on every machine, so that the cluster and the mesh keep working."
+current_state: "(Follows I2882, recorded beside it on their own branches.) lib/rust_bin.sh removes idle private build directories and incremental sessions when a build of this repository starts; scripts/reap-orphans --targets --reclaim runs below MAJORDOMUS_RECLAIM_BELOW_MB from the same path; nothing runs on a schedule and nothing reclaims a shared build directory's llvm-cov-target."
+desired_state: "majordomus machine sweep (check by default, --reclaim to remove) and majordomus machine schedule (--install / --remove / status) are the command lines of machine.sweep and machine.schedule; every candidate gets a fail-closed verdict (reclaimable, recent, in_use, held, unmeasurable) asked again before removal; the scheduler entry starts the majordomus on PATH so an upgrade does not orphan it; doctor reports a machine whose entry is missing."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/machine.rs"
+  - "apps/majordomus-cli/src/commands/machine.rs"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "docs/WORKTREES.md"
+  - "test/cases"
+acceptance_criteria:
+  - "An idle private build directory named by no process and held by no build is removed by machine sweep --reclaim; a recent one, one a process names and one whose cargo lock is held are kept"
+  - "A coverage target is kept while any coverage run is alive and removed whole when idle; an idle incremental session is removed and a recent one kept"
+  - "A check removes nothing; a process table that cannot be read keeps everything; a directory whose age cannot be read is kept"
+  - "Below the floor every candidate is swept at 30 minutes of idleness"
+  - "machine schedule --install writes and loads the launchd agent or systemd timer that runs the sweep every 15 minutes; status reports it; --remove unloads and deletes it"
+validation:
+  - "cargo test --lib -- machine"
+  - "bash test/run.sh 3281_the_machine_sweeps_its_build_output"
+  - "majordomus plan validate"
+evidence_required:
+  - "machine_sweep_tests"
+  - "case_machine_sweep"
+created_at: 2026-10-18
+updated_at: 2026-10-18

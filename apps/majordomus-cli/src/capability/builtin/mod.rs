@@ -62,6 +62,7 @@ pub mod intent_realization;
 pub mod intents;
 pub mod knowledge_base;
 pub mod lifecycle;
+pub mod machine;
 pub mod mcp;
 pub(crate) mod mesh;
 pub(crate) mod models;
@@ -214,6 +215,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         perf,
         plan,
         recover,
+        machine,
         directories,
         devcontext,
         artifacts,
@@ -334,6 +336,10 @@ mod tests {
                 "executions.start",
                 // writes one new intent record, never a stage (ADR 0144)
                 "intents.propose",
+                // remove build output and write the scheduler entry outside the repository;
+                // classified with the writers so that every surface asks first (I2881)
+                "machine.schedule",
+                "machine.sweep",
                 "plan.transition",
                 "reasoning.record",
                 "recover.orphans"

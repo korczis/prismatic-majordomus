@@ -979,6 +979,24 @@
         "status": "query"
       },
       {
+        "id": "capability:machine.schedule",
+        "kind": "capability",
+        "label": "machine.schedule",
+        "summary": "Report, install or remove the scheduler entry that sweeps this machine every fifteen minutes",
+        "route": "/cockpit/capabilities/machine.schedule",
+        "source": "apps/majordomus-cli/src/capability/builtin/machine.rs",
+        "status": "command"
+      },
+      {
+        "id": "capability:machine.sweep",
+        "kind": "capability",
+        "label": "machine.sweep",
+        "summary": "Classify the build output under every cargo cache home of this machine, and reclaim what nothing uses",
+        "route": "/cockpit/capabilities/machine.sweep",
+        "source": "apps/majordomus-cli/src/capability/builtin/machine.rs",
+        "status": "command"
+      },
+      {
         "id": "capability:mcp.projection",
         "kind": "capability",
         "label": "mcp.projection",
@@ -39689,6 +39707,46 @@
         }
       },
       {
+        "id": "majordomus://issue/I2881",
+        "kind": "issue",
+        "label": "I2881",
+        "summary": "Every machine sweeps its own build output on a schedule",
+        "route": "/cockpit/objects/issue/i2881",
+        "source": ".ai/repo/project/issues/I2881.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "An idle private build directory named by no process and held by no build is removed by machine sweep --reclaim; a recent one, one a process names and one whose cargo lock is held are kept",
+            "A coverage target is kept while any coverage run is alive and removed whole when idle; an idle incremental session is removed and a recent one kept",
+            "A check removes nothing; a process table that cannot be read keeps everything; a directory whose age cannot be read is kept",
+            "Below the floor every candidate is swept at 30 minutes of idleness",
+            "machine schedule --install writes and loads the launchd agent or systemd timer that runs the sweep every 15 minutes; status reports it; --remove unloads and deletes it"
+          ],
+          "created_at": "2026-10-18",
+          "evidence_required": [
+            "machine_sweep_tests",
+            "case_machine_sweep"
+          ],
+          "milestone": "development-runtime",
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin/machine.rs",
+            "apps/majordomus-cli/src/commands/machine.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "docs/WORKTREES.md",
+            "test/cases"
+          ],
+          "slug": "the-machine-sweeps-its-build-output",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "cargo test --lib -- machine",
+            "bash test/run.sh 3281_the_machine_sweeps_its_build_output",
+            "majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "label": "a-commit-stood-behind-a-build-lock",
@@ -57462,6 +57520,13 @@
         "source": "test/cases/31_command_coverage.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3281_the_machine_sweeps_its_build_output.sh",
+        "kind": "test",
+        "label": "test/cases/3281_the_machine_sweeps_its_build_output.sh",
+        "route": "/cockpit/objects/test/test-cases-3281-the-machine-sweeps-its-build-output-sh",
+        "source": "test/cases/3281_the_machine_sweeps_its_build_output.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/32_refusal_lifecycle.sh",
         "kind": "test",
         "label": "test/cases/32_refusal_lifecycle.sh",
@@ -61687,6 +61752,11 @@
         "label": "lifecycle"
       },
       {
+        "id": "module:machine",
+        "kind": "module",
+        "label": "machine"
+      },
+      {
         "id": "module:mcp",
         "kind": "module",
         "label": "mcp"
@@ -63695,6 +63765,46 @@
       },
       {
         "source": "capability:lifecycle.runtime",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:machine.schedule",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:machine.schedule",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:machine.schedule",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:machine.schedule",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:machine.sweep",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:machine.sweep",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:machine.sweep",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:machine.sweep",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -84399,6 +84509,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2881",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2881",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -89120,6 +89240,11 @@
       },
       {
         "source": "majordomus://test/test/cases/31_command_coverage.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3281_the_machine_sweeps_its_build_output.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -93899,6 +94024,16 @@
         "kind": "composes"
       },
       {
+        "source": "module:machine",
+        "target": "capability:machine.schedule",
+        "kind": "composes"
+      },
+      {
+        "source": "module:machine",
+        "target": "capability:machine.sweep",
+        "kind": "composes"
+      },
+      {
         "source": "module:mcp",
         "target": "capability:mcp.projection",
         "kind": "composes"
@@ -94405,8 +94540,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2959,
-      "edges": 6500,
+      "nodes": 2964,
+      "edges": 6513,
       "acyclic": false,
       "truncated": false
     }

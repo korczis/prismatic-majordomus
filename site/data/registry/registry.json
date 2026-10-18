@@ -6,27 +6,27 @@
     "version": "0.29.0"
   },
   "registry": {
-    "fingerprint": "cfc64482a6796b12eb023f81f50b88a5ee38b5494bb09da51600c6a17806b6c0",
+    "fingerprint": "a2e3132124689ae9f52674cbb143f84e8f42fe9cd7c64637a9534d38d1bbdf75",
     "summary": {
-      "total": 2527,
-      "builtin": 202,
-      "declarative": 2325,
+      "total": 2531,
+      "builtin": 204,
+      "declarative": 2327,
       "by_kind": {
-        "command": 31,
+        "command": 33,
         "query": 171,
-        "resource": 2325
+        "resource": 2327
       },
       "by_stability": {
-        "behaviorally_verified": 141,
+        "behaviorally_verified": 143,
         "experimental": 52,
-        "implemented": 2334
+        "implemented": 2336
       },
-      "mcp_tools": 192,
-      "mcp_resources": 2380,
-      "http_routes": 197,
-      "cli_commands": 108,
-      "modules": 92,
-      "benchmark_required": 171,
+      "mcp_tools": 194,
+      "mcp_resources": 2382,
+      "http_routes": 199,
+      "cli_commands": 110,
+      "modules": 93,
+      "benchmark_required": 173,
       "benchmark_waived": 31,
       "cached": 54
     },
@@ -44401,6 +44401,416 @@
         "source_path": "apps/majordomus-cli/src/capability/builtin/lifecycle.rs"
       },
       {
+        "id": "machine.schedule",
+        "module": "machine",
+        "kind": "command",
+        "title": "Report, install or remove the scheduler entry that sweeps this machine every fifteen minutes",
+        "description": "The per-user scheduler entry that runs `majordomus machine sweep --reclaim` every fifteen minutes from this checkout: a launchd agent (~/Library/LaunchAgents/dev.majordomus.sweep.plist) on macOS, a systemd --user service and timer (~/.config/systemd/user/majordomus-sweep.*) on Linux. `status` reports whether its files are there; `install` writes them and loads them with launchctl or systemctl, each command's outcome reported; `remove` unloads and deletes them. The entry starts the `majordomus` on PATH unless another program is named, so an upgrade does not leave it pointing at a removed version. Refused on a platform with neither scheduler.",
+        "input": {
+          "name": "SweepScheduleInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "action": {
+                "$ref": "#/$defs/SweepScheduleAction",
+                "description": "`status` (the default), `install` or `remove`.",
+                "default": "status"
+              },
+              "floor_gib": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "format": "uint64",
+                "minimum": 0,
+                "description": "The floor the scheduled sweep runs with, in GiB (default 30)."
+              },
+              "program": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The executable the scheduler starts; by default the `majordomus` on PATH, so that an\nupgrade does not leave the entry pointing at a removed version."
+              },
+              "activate": {
+                "type": "boolean",
+                "description": "Load or unload the entry with launchctl or systemctl after writing it (default true).",
+                "default": true
+              }
+            },
+            "description": "The input of `machine.schedule`: whether to report, install or remove the per-user\nscheduler entry, the floor the scheduled sweep runs with, the program it starts, and\nwhether launchctl or systemctl is asked to load or unload it.\n\n```\nuse majordomus_cli::capability::builtin::machine::{SweepScheduleAction, SweepScheduleInput};\nlet i: SweepScheduleInput = serde_json::from_str(\"{}\").unwrap();\nassert_eq!(i.action, SweepScheduleAction::Status);\nassert!(i.activate);\n```",
+            "title": "SweepScheduleInput",
+            "$defs": {
+              "SweepScheduleAction": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "status",
+                    "description": "Report whether the scheduler entry is there, and change nothing."
+                  },
+                  {
+                    "type": "string",
+                    "const": "install",
+                    "description": "Write the scheduler entry and, unless told not to, load it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "remove",
+                    "description": "Unload the scheduler entry and remove its files."
+                  }
+                ],
+                "description": "What `machine.schedule` is asked to do.\n\n```\nuse majordomus_cli::capability::builtin::machine::SweepScheduleAction;\nassert_eq!(SweepScheduleAction::default(), SweepScheduleAction::Status);\n```"
+              }
+            }
+          }
+        },
+        "output": {
+          "name": "SweepScheduleReport",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "scheduler": {
+                "type": "string",
+                "description": "`launchd`, `systemd`, or `none` on a platform with neither."
+              },
+              "installed": {
+                "type": "boolean",
+                "description": "Whether every file of the entry is there after this call."
+              },
+              "files": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The entry's files."
+              },
+              "program": {
+                "type": "string",
+                "description": "The executable the entry starts."
+              },
+              "every_minutes": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0,
+                "description": "Minutes between two sweeps."
+              },
+              "activation": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Each scheduler command run, with its outcome."
+              }
+            },
+            "required": [
+              "scheduler",
+              "installed",
+              "files",
+              "program",
+              "every_minutes",
+              "activation"
+            ],
+            "description": "What `machine.schedule` found or did: the scheduler this platform has, whether every file\nof the entry is there after the call, those files, the program the entry starts, how\noften it runs, and each scheduler command that was run with its outcome.\n\n```\nuse majordomus_cli::capability::builtin::machine::SweepScheduleReport;\nlet r: SweepScheduleReport = serde_json::from_value(serde_json::json!({\n    \"scheduler\": \"systemd\", \"installed\": false, \"files\": [], \"program\": \"majordomus\",\n    \"every_minutes\": 15, \"activation\": []\n})).unwrap();\nassert!(!r.installed && r.activation.is_empty());\n```",
+            "title": "SweepScheduleReport"
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::machine"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_machine_schedule"
+          },
+          "http": {
+            "method": "POST",
+            "path": "/api/v1/machine/schedule"
+          },
+          "cli": {
+            "path": [
+              "machine",
+              "schedule"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "machine",
+          "disk",
+          "schedule",
+          "maintenance"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "repository_mutation",
+          "cancellable": false,
+          "concurrency": "serial"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/machine.rs"
+      },
+      {
+        "id": "machine.sweep",
+        "module": "machine",
+        "kind": "command",
+        "title": "Classify the build output under every cargo cache home of this machine, and reclaim what nothing uses",
+        "description": "Walks every cargo cache home of this machine ($CARGO_HOME, ~/.cargo and each ~/.asdf/installs/rust/*, or the homes named): every directory under build-private/, every shared build directory's llvm-cov-target, and every incremental session. Each gets a verdict: unmeasurable when its age cannot be read, recent when written within the idle threshold (120 minutes, 30 for sessions), in_use when a running process names it (any coverage run, for a coverage target; every path when the process table cannot be read), held when its cargo lock cannot be taken, and otherwise reclaimable. A check by default; asked to reclaim, it asks each reclaimable directory again, renames it out of cargo's reach and removes it. Below the floor (30 GiB free by default) everything is swept at 30 minutes. Answers with the free space before and after, every candidate and the bytes reclaimed.",
+        "input": {
+          "name": "BuildSweepInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "check": {
+                "type": "boolean",
+                "description": "Classify and report, and remove nothing. The default, because the alternative deletes.",
+                "default": true
+              },
+              "idle_minutes": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "format": "uint64",
+                "minimum": 0,
+                "description": "Minutes a private build directory or a coverage target must have been idle (default\n120). Below the floor the sweep uses 30 whatever this says."
+              },
+              "floor_gib": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "format": "uint64",
+                "minimum": 0,
+                "description": "GiB free below which the sweep is below the floor (default 30)."
+              },
+              "cargo_homes": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The cargo cache homes to sweep; by default `$CARGO_HOME`, `~/.cargo` and every\n`~/.asdf/installs/rust/*` that exists."
+              }
+            },
+            "description": "The input of `machine.sweep`: whether it is a check, the idle threshold, the free-space\nfloor, and the cargo cache homes to sweep when not the machine's own.\n\n```\nuse majordomus_cli::capability::builtin::machine::BuildSweepInput;\nlet i: BuildSweepInput = serde_json::from_str(\"{}\").unwrap();\nassert!(i.check, \"a check unless asked to reclaim\");\nassert!(i.cargo_homes.is_empty());\n```",
+            "title": "BuildSweepInput"
+          }
+        },
+        "output": {
+          "name": "BuildSweepReport",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "check": {
+                "type": "boolean",
+                "description": "Whether this was a check (nothing removed)."
+              },
+              "homes": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The cargo cache homes swept."
+              },
+              "free_before_bytes": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "format": "uint64",
+                "minimum": 0,
+                "description": "The fewest bytes free on any swept home's volume before the sweep, when readable."
+              },
+              "free_after_bytes": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "format": "uint64",
+                "minimum": 0,
+                "description": "The same after the sweep."
+              },
+              "below_floor": {
+                "type": "boolean",
+                "description": "Whether the volume was below the floor, so everything was swept at 30 minutes."
+              },
+              "idle_minutes": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0,
+                "description": "The idle threshold applied to private build directories and coverage targets."
+              },
+              "items": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/BuildSweepItem"
+                },
+                "description": "Every candidate, in canonical order."
+              },
+              "reclaimed_bytes": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0,
+                "description": "Bytes this call removed."
+              }
+            },
+            "required": [
+              "check",
+              "homes",
+              "below_floor",
+              "idle_minutes",
+              "items",
+              "reclaimed_bytes"
+            ],
+            "description": "What one sweep found and did: the homes it covered, the free space before and after,\nwhether it ran below the floor and at which threshold, every candidate, and the bytes it\nremoved.\n\n```\nuse majordomus_cli::capability::builtin::machine::BuildSweepReport;\nlet r: BuildSweepReport = serde_json::from_value(serde_json::json!({\n    \"check\": true, \"homes\": [], \"free_before_bytes\": null, \"free_after_bytes\": null,\n    \"below_floor\": false, \"idle_minutes\": 120, \"items\": [], \"reclaimed_bytes\": 0\n})).unwrap();\nassert!(r.check && r.items.is_empty());\n```",
+            "title": "BuildSweepReport",
+            "$defs": {
+              "BuildSweepItem": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "The directory."
+                  },
+                  "kind": {
+                    "$ref": "#/$defs/BuildSweepKind",
+                    "description": "What it is."
+                  },
+                  "verdict": {
+                    "$ref": "#/$defs/BuildSweepVerdict",
+                    "description": "What the sweep decided."
+                  },
+                  "idle_minutes": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Minutes since anything in it was written; absent when that could not be read."
+                  },
+                  "bytes": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Its size in bytes, as far as it could be read."
+                  },
+                  "removed": {
+                    "type": "boolean",
+                    "description": "Whether this call removed it."
+                  }
+                },
+                "required": [
+                  "path",
+                  "kind",
+                  "verdict",
+                  "bytes",
+                  "removed"
+                ],
+                "description": "One candidate and what was done with it: its path, what it is, the verdict, how long it has\nbeen idle, its size, and whether this call removed it.\n\n```\nuse majordomus_cli::capability::builtin::machine::{BuildSweepItem, BuildSweepVerdict};\nlet i: BuildSweepItem = serde_json::from_value(serde_json::json!({\n    \"path\": \"/h/build-private/a\", \"kind\": \"private_build_dir\", \"verdict\": \"recent\",\n    \"idle_minutes\": 5, \"bytes\": 10, \"removed\": false\n})).unwrap();\nassert_eq!(i.verdict, BuildSweepVerdict::Recent);\n```"
+              },
+              "BuildSweepKind": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "private_build_dir",
+                    "description": "A whole directory under `<cargo home>/build-private/`: one worktree's own build, made\nwhen the shared build directory was busy."
+                  },
+                  {
+                    "type": "string",
+                    "const": "coverage_target",
+                    "description": "A coverage run's `llvm-cov-target` inside a shared build directory; every coverage run\nremoves it when it starts, so an idle one is only space."
+                  },
+                  {
+                    "type": "string",
+                    "const": "incremental_session",
+                    "description": "One `s-*` session of a profile's `incremental/` directory in a shared build directory."
+                  }
+                ],
+                "description": "What a candidate is: a whole private build directory, a coverage run's target inside a\nshared build directory, or one incremental session — each with its own idle threshold and\nits own way of being held by a build.\n\n```\nuse majordomus_cli::capability::builtin::machine::BuildSweepKind;\nlet k: BuildSweepKind = serde_json::from_str(\"\\\"coverage_target\\\"\").unwrap();\nassert_eq!(k, BuildSweepKind::CoverageTarget);\n```"
+              },
+              "BuildSweepVerdict": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "reclaimable",
+                    "description": "Idle past the threshold, named by no process and held by no build."
+                  },
+                  {
+                    "type": "string",
+                    "const": "recent",
+                    "description": "Written within the idle threshold."
+                  },
+                  {
+                    "type": "string",
+                    "const": "in_use",
+                    "description": "A running process names it, or the process table could not be read."
+                  },
+                  {
+                    "type": "string",
+                    "const": "held",
+                    "description": "Its cargo lock is held by a build, or the lock could not be opened."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unmeasurable",
+                    "description": "Its age could not be read, so it is never a candidate."
+                  }
+                ],
+                "description": "What the sweep decided about a candidate.\n\n```\nuse majordomus_cli::capability::builtin::machine::BuildSweepVerdict;\nassert_eq!(serde_json::to_string(&BuildSweepVerdict::InUse).unwrap(), \"\\\"in_use\\\"\");\n```"
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::machine"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_machine_sweep"
+          },
+          "http": {
+            "method": "POST",
+            "path": "/api/v1/machine/sweep"
+          },
+          "cli": {
+            "path": [
+              "machine",
+              "sweep"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "machine",
+          "disk",
+          "build",
+          "maintenance"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "repository_mutation",
+          "cancellable": false,
+          "concurrency": "serial"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/machine.rs"
+      },
+      {
         "id": "mcp.projection",
         "module": "mcp",
         "kind": "query",
@@ -83231,7 +83641,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 424,
+        "capabilities": 425,
         "capability_ids": []
       },
       {
@@ -83280,6 +83690,24 @@
           "surface": "rustdoc",
           "module": "majordomus_cli::capability::builtin::lifecycle",
           "path": "majordomus_cli/capability/builtin/lifecycle/index.html"
+        }
+      },
+      {
+        "id": "machine",
+        "title": "This machine's build output",
+        "description": "What this repository's builds leave on the machine they run on — private build directories, coverage targets, incremental sessions under every cargo cache home — classified and, when asked, reclaimed; and the per-user scheduler entry that runs that sweep every fifteen minutes on every machine, whether or not a build of this repository ever starts there (I2881).",
+        "stability": "behaviorally_verified",
+        "source": "builtin",
+        "capabilities": 2,
+        "capability_ids": [
+          "machine.schedule",
+          "machine.sweep"
+        ],
+        "source_path": "apps/majordomus-cli/src/capability/builtin/machine.rs",
+        "rustdoc": {
+          "surface": "rustdoc",
+          "module": "majordomus_cli::capability::builtin::machine",
+          "path": "majordomus_cli/capability/builtin/machine/index.html"
         }
       },
       {
@@ -83802,7 +84230,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 527,
+        "capabilities": 528,
         "capability_ids": []
       },
       {
@@ -83893,7 +84321,7 @@
     ]
   },
   "index": {
-    "fingerprint": "ebbdaff489cce67fe99b529aa57475e97fbadbd238fabae0d224eb928298d8a1",
+    "fingerprint": "c9dab03f96a5cacffc64dedbc515db993d6a8ab748a33b5277bba8c36a0c91e3",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -83933,7 +84361,7 @@
       "gap": 4,
       "implementation": 52,
       "intent": 5,
-      "issue": 424,
+      "issue": 425,
       "knowledge": 4,
       "mesh-declaration": 1,
       "milestone": 41,
@@ -83947,7 +84375,7 @@
       "session": 90,
       "skill": 8,
       "taxonomy": 10,
-      "test": 527,
+      "test": 528,
       "use-case": 49,
       "workspace": 1
     },
@@ -90206,7 +90634,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 170002
+        "bytes": 173742
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -90386,7 +90814,7 @@
         "title": "Worktrees",
         "path": "docs/WORKTREES.md",
         "source_class": "document",
-        "bytes": 38180
+        "bytes": 40443
       },
       {
         "uri": "majordomus://document/docs/claims/a-candidate-is-routed-by-what-it-is-about.md",
@@ -93357,7 +93785,7 @@
         "identity": "lib/doctor.sh",
         "path": "lib/doctor.sh",
         "source_class": "library",
-        "bytes": 98995
+        "bytes": 100537
       },
       {
         "uri": "majordomus://implementation/lib/doctrine.sh",
@@ -98341,6 +98769,17 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 2258
+      },
+      {
+        "uri": "majordomus://issue/I2881",
+        "kind": "issue",
+        "identity": "I2881",
+        "title": "Every machine sweeps its own build output on a schedule",
+        "description": "A typed capability, machine.sweep, classifies what cargo left under every cargo cache home of the machine (private build directories, coverage targets, incremental sessions) and reclaims what is idle, named by no process and held by no build; machine.schedule installs the per-user scheduler entry (launchd agent on macOS, systemd --user timer on Linux) that runs it every 15 minutes, sweeping at 30 minutes of idleness when the volume is below the floor.",
+        "path": ".ai/repo/project/issues/I2881.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3261
       },
       {
         "uri": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
@@ -106056,6 +106495,14 @@
         "bytes": 6996
       },
       {
+        "uri": "majordomus://test/test/cases/3281_the_machine_sweeps_its_build_output.sh",
+        "kind": "test",
+        "identity": "test/cases/3281_the_machine_sweeps_its_build_output.sh",
+        "path": "test/cases/3281_the_machine_sweeps_its_build_output.sh",
+        "source_class": "case",
+        "bytes": 3929
+      },
+      {
         "uri": "majordomus://test/test/cases/32_refusal_lifecycle.sh",
         "kind": "test",
         "identity": "test/cases/32_refusal_lifecycle.sh",
@@ -109058,7 +109505,7 @@
       "identity": [
         "id"
       ],
-      "objects": 424
+      "objects": 425
     },
     {
       "name": "knowledge",
@@ -109210,7 +109657,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 527
+      "objects": 528
     },
     {
       "name": "use-case",
@@ -134699,6 +135146,453 @@
       {
         "path": [
           "majordomus",
+          "machine"
+        ],
+        "route": "/docs/cli/machine/",
+        "executable": false,
+        "usage": "majordomus machine [OPTIONS] <COMMAND>",
+        "about": "This machine's build output: classify what cargo left under every cargo cache home and reclaim what nothing uses, and the per-user scheduler entry that does it every fifteen minutes",
+        "args": [
+          {
+            "name": "repo",
+            "long": "repo",
+            "positional": false,
+            "help": "Start the search for the repository root here (default: the current directory)",
+            "value_name": "PATH",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "discovery",
+            "long": "discovery",
+            "positional": false,
+            "help": "How declarative files are enumerated",
+            "value_name": "DISCOVERY",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "vcs",
+                "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+              },
+              {
+                "name": "filesystem",
+                "help": "A walk of the work tree with the same glob semantics; untracked files included"
+              }
+            ],
+            "defaults": [
+              "vcs"
+            ]
+          },
+          {
+            "name": "strict",
+            "long": "strict",
+            "positional": false,
+            "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+            "value_name": "STRICT",
+            "takes_value": false,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": [
+              "false"
+            ]
+          },
+          {
+            "name": "share",
+            "long": "share",
+            "positional": false,
+            "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+            "value_name": "DIR",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "format",
+            "long": "format",
+            "positional": false,
+            "help": "Output shape",
+            "value_name": "FORMAT",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "text",
+                "help": "Lines for a person"
+              },
+              {
+                "name": "json",
+                "help": "One JSON document, deterministic"
+              }
+            ],
+            "defaults": [
+              "text"
+            ]
+          }
+        ],
+        "examples": [],
+        "subcommands": [
+          {
+            "path": [
+              "majordomus",
+              "machine",
+              "sweep"
+            ],
+            "route": "/docs/cli/machine/sweep/",
+            "executable": true,
+            "usage": "majordomus machine sweep [OPTIONS]",
+            "about": "Classify the build output under every cargo cache home, and with --reclaim remove what nothing uses",
+            "args": [
+              {
+                "name": "reclaim",
+                "long": "reclaim",
+                "positional": false,
+                "help": "Remove what is reclaimable; without it the sweep is a check",
+                "value_name": "RECLAIM",
+                "takes_value": false,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "idle_minutes",
+                "long": "idle-minutes",
+                "positional": false,
+                "help": "Minutes a private build directory or coverage target must have been idle (default 120)",
+                "value_name": "IDLE_MINUTES",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "floor_gib",
+                "long": "floor-gib",
+                "positional": false,
+                "help": "GiB free below which everything is swept at 30 minutes (default 30)",
+                "value_name": "FLOOR_GIB",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "cargo_home",
+                "long": "cargo-home",
+                "positional": false,
+                "help": "A cargo cache home to sweep instead of the ones this machine has; repeatable",
+                "value_name": "CARGO_HOME",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "machine-sweep-check-a-named-home",
+                "title": "What the sweep would reclaim under a cargo cache home, removing nothing",
+                "description": "A check of one named cargo cache home: every private build directory, coverage target and incremental session under it, each with its verdict (reclaimable, recent, in_use, held, unmeasurable), its idle minutes and its size, then the free space before and after. Without `--cargo-home` it covers every home this machine has; with `--reclaim` it removes what is reclaimable. A home that does not exist has nothing in it, which is an answer, not an error.",
+                "argv": [
+                  "machine",
+                  "sweep",
+                  "--cargo-home",
+                  "no-such-cargo-home",
+                  "--format",
+                  "json"
+                ],
+                "command": "majordomus machine sweep --cargo-home no-such-cargo-home --format json",
+                "setup": [],
+                "expectation": "exits 0; prints one JSON document carrying /check, /homes, /items, /reclaimed_bytes"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "machine",
+              "schedule"
+            ],
+            "route": "/docs/cli/machine/schedule/",
+            "executable": true,
+            "usage": "majordomus machine schedule [OPTIONS]",
+            "about": "Report, install or remove the scheduler entry that sweeps this machine every fifteen minutes",
+            "args": [
+              {
+                "name": "install",
+                "long": "install",
+                "positional": false,
+                "help": "Write the entry and load it",
+                "value_name": "INSTALL",
+                "takes_value": false,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "remove",
+                "long": "remove",
+                "positional": false,
+                "help": "Unload the entry and delete its files",
+                "value_name": "REMOVE",
+                "takes_value": false,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "floor_gib",
+                "long": "floor-gib",
+                "positional": false,
+                "help": "The floor the scheduled sweep runs with, in GiB (default 30)",
+                "value_name": "FLOOR_GIB",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "program",
+                "long": "program",
+                "positional": false,
+                "help": "The executable the entry starts (default: the majordomus on PATH)",
+                "value_name": "PROGRAM",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "no_activate",
+                "long": "no-activate",
+                "positional": false,
+                "help": "Write or delete the files without loading or unloading them",
+                "value_name": "NO_ACTIVATE",
+                "takes_value": false,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "machine-schedule-status",
+                "title": "Whether this machine runs the sweep on a schedule",
+                "description": "The scheduler this platform has (launchd on macOS, systemd on Linux), whether the entry that runs `majordomus machine sweep --reclaim` every fifteen minutes is installed, its files and the program it starts. Changes nothing; `--install` writes and loads the entry, `--remove` unloads and deletes it.",
+                "argv": [
+                  "machine",
+                  "schedule",
+                  "--program",
+                  "/opt/majordomus/bin/majordomus",
+                  "--format",
+                  "json"
+                ],
+                "command": "majordomus machine schedule --program /opt/majordomus/bin/majordomus --format json",
+                "setup": [],
+                "expectation": "exits 0; prints one JSON document carrying /scheduler, /installed, /files, /program, /every_minutes"
+              }
+            ],
+            "subcommands": []
+          }
+        ]
+      },
+      {
+        "path": [
+          "majordomus",
           "rules"
         ],
         "route": "/docs/cli/rules/",
@@ -142893,6 +143787,40 @@
         "output": "RuntimeView"
       },
       {
+        "name": "majordomus_machine_schedule",
+        "id": "machine.schedule",
+        "title": "Report, install or remove the scheduler entry that sweeps this machine every fifteen minutes",
+        "description": "The per-user scheduler entry that runs `majordomus machine sweep --reclaim` every fifteen minutes from this checkout: a launchd agent (~/Library/LaunchAgents/dev.majordomus.sweep.plist) on macOS, a systemd --user service and timer (~/.config/systemd/user/majordomus-sweep.*) on Linux. `status` reports whether its files are there; `install` writes them and loads them with launchctl or systemctl, each command's outcome reported; `remove` unloads and deletes them. The entry starts the `majordomus` on PATH unless another program is named, so an upgrade does not leave it pointing at a removed version. Refused on a platform with neither scheduler.",
+        "kind": "command",
+        "read_only": false,
+        "effect": "repository_mutation",
+        "hints": {
+          "read_only": false,
+          "destructive": true,
+          "idempotent": false,
+          "open_world": false
+        },
+        "input": "SweepScheduleInput",
+        "output": "SweepScheduleReport"
+      },
+      {
+        "name": "majordomus_machine_sweep",
+        "id": "machine.sweep",
+        "title": "Classify the build output under every cargo cache home of this machine, and reclaim what nothing uses",
+        "description": "Walks every cargo cache home of this machine ($CARGO_HOME, ~/.cargo and each ~/.asdf/installs/rust/*, or the homes named): every directory under build-private/, every shared build directory's llvm-cov-target, and every incremental session. Each gets a verdict: unmeasurable when its age cannot be read, recent when written within the idle threshold (120 minutes, 30 for sessions), in_use when a running process names it (any coverage run, for a coverage target; every path when the process table cannot be read), held when its cargo lock cannot be taken, and otherwise reclaimable. A check by default; asked to reclaim, it asks each reclaimable directory again, renames it out of cargo's reach and removes it. Below the floor (30 GiB free by default) everything is swept at 30 minutes. Answers with the free space before and after, every candidate and the bytes reclaimed.",
+        "kind": "command",
+        "read_only": false,
+        "effect": "repository_mutation",
+        "hints": {
+          "read_only": false,
+          "destructive": true,
+          "idempotent": false,
+          "open_world": false
+        },
+        "input": "BuildSweepInput",
+        "output": "BuildSweepReport"
+      },
+      {
         "name": "majordomus_mcp",
         "id": "mcp.projection",
         "title": "The MCP projection of this registry",
@@ -145509,6 +146437,18 @@
         "path": "/api/v1/lifecycle/runtime",
         "id": "lifecycle.runtime",
         "kind": "query"
+      },
+      {
+        "method": "POST",
+        "path": "/api/v1/machine/schedule",
+        "id": "machine.schedule",
+        "kind": "command"
+      },
+      {
+        "method": "POST",
+        "path": "/api/v1/machine/sweep",
+        "id": "machine.sweep",
+        "kind": "command"
       },
       {
         "method": "GET",
@@ -149641,6 +150581,93 @@
         "case": "default",
         "cached": true,
         "route": "GET /api/v1/lifecycle/runtime"
+      },
+      {
+        "key": "machine.schedule|direct|status",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "machine.schedule",
+        "module": "machine",
+        "case": "status",
+        "cached": false
+      },
+      {
+        "key": "machine.schedule|mcp|status",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "machine.schedule",
+        "module": "machine",
+        "case": "status",
+        "cached": false,
+        "tool": "majordomus_machine_schedule"
+      },
+      {
+        "key": "machine.schedule|http|status",
+        "kind": "capability",
+        "transport": "http",
+        "id": "machine.schedule",
+        "module": "machine",
+        "case": "status",
+        "cached": false,
+        "route": "POST /api/v1/machine/schedule"
+      },
+      {
+        "key": "machine.sweep|direct|check-a-named-home",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "machine.sweep",
+        "module": "machine",
+        "case": "check-a-named-home",
+        "cached": false
+      },
+      {
+        "key": "machine.sweep|direct|check-below-a-high-floor",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "machine.sweep",
+        "module": "machine",
+        "case": "check-below-a-high-floor",
+        "cached": false
+      },
+      {
+        "key": "machine.sweep|mcp|check-a-named-home",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "machine.sweep",
+        "module": "machine",
+        "case": "check-a-named-home",
+        "cached": false,
+        "tool": "majordomus_machine_sweep"
+      },
+      {
+        "key": "machine.sweep|mcp|check-below-a-high-floor",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "machine.sweep",
+        "module": "machine",
+        "case": "check-below-a-high-floor",
+        "cached": false,
+        "tool": "majordomus_machine_sweep"
+      },
+      {
+        "key": "machine.sweep|http|check-a-named-home",
+        "kind": "capability",
+        "transport": "http",
+        "id": "machine.sweep",
+        "module": "machine",
+        "case": "check-a-named-home",
+        "cached": false,
+        "route": "POST /api/v1/machine/sweep"
+      },
+      {
+        "key": "machine.sweep|http|check-below-a-high-floor",
+        "kind": "capability",
+        "transport": "http",
+        "id": "machine.sweep",
+        "module": "machine",
+        "case": "check-below-a-high-floor",
+        "cached": false,
+        "route": "POST /api/v1/machine/sweep"
       },
       {
         "key": "mcp.projection|direct|every-tool",
@@ -155639,6 +156666,48 @@
           "cases": 1
         },
         {
+          "subject": "machine.schedule",
+          "module": "machine",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "machine.schedule",
+          "module": "machine",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "machine.schedule",
+          "module": "machine",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "machine.sweep",
+          "module": "machine",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "machine.sweep",
+          "module": "machine",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "machine.sweep",
+          "module": "machine",
+          "transport": "http",
+          "state": "covered",
+          "cases": 2
+        },
+        {
           "subject": "mcp.projection",
           "module": "mcp",
           "transport": "direct",
@@ -157849,22 +158918,22 @@
       ],
       "tallies": {
         "direct": {
-          "required": 202,
-          "covered": 171,
+          "required": 204,
+          "covered": 173,
           "missing": 0,
           "waived": 31,
           "inapplicable": 0
         },
         "http": {
-          "required": 197,
-          "covered": 171,
+          "required": 199,
+          "covered": 173,
           "missing": 0,
           "waived": 26,
           "inapplicable": 0
         },
         "mcp": {
-          "required": 192,
-          "covered": 167,
+          "required": 194,
+          "covered": 169,
           "missing": 0,
           "waived": 25,
           "inapplicable": 0
@@ -157877,8 +158946,8 @@
           "inapplicable": 0
         },
         "total": {
-          "required": 605,
-          "covered": 523,
+          "required": 611,
+          "covered": 529,
           "missing": 0,
           "waived": 82,
           "inapplicable": 0

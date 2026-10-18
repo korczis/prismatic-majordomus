@@ -51,6 +51,7 @@ pub(crate) mod generate;
 pub(crate) mod guard;
 pub(crate) mod intent;
 pub(crate) mod knowledge;
+pub(crate) mod machine;
 pub(crate) mod mcp;
 pub(crate) mod mesh;
 pub(crate) mod models;
@@ -109,6 +110,7 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Reasoning(args) => reasoning::run(args),
         Command::Evidence(args) => evidence::run(args),
         Command::Served(args) => served::run(args),
+        Command::Machine(args) => machine::run(args),
         Command::Rules(args) => rules::run(args),
         Command::Intent(args) => intent::run(args),
         Command::Delivery(args) => delivery::run(args),

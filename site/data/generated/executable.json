@@ -1848,6 +1848,40 @@
       "tool": "majordomus_lifecycle_runtime"
     },
     {
+      "api_anchor": "/docs/api/machine/#op-machine-schedule",
+      "claims": [],
+      "cli": "majordomus machine schedule",
+      "id": "machine.schedule",
+      "kind": "command",
+      "module": "machine",
+      "module_route": "/registry/modules/machine/",
+      "resource": null,
+      "route": "/registry/capabilities/machine-schedule/",
+      "slug": "machine-schedule",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/machine.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/machine.rs",
+      "tests": [],
+      "title": "Report, install or remove the scheduler entry that sweeps this machine every fifteen minutes",
+      "tool": "majordomus_machine_schedule"
+    },
+    {
+      "api_anchor": "/docs/api/machine/#op-machine-sweep",
+      "claims": [],
+      "cli": "majordomus machine sweep",
+      "id": "machine.sweep",
+      "kind": "command",
+      "module": "machine",
+      "module_route": "/registry/modules/machine/",
+      "resource": null,
+      "route": "/registry/capabilities/machine-sweep/",
+      "slug": "machine-sweep",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/machine.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/machine.rs",
+      "tests": [],
+      "title": "Classify the build output under every cargo cache home of this machine, and reclaim what nothing uses",
+      "tool": "majordomus_machine_sweep"
+    },
+    {
       "api_anchor": "/docs/api/mcp/#op-mcp-projection",
       "claims": [],
       "cli": null,
@@ -4241,9 +4275,9 @@
     ]
   },
   "counts": {
-    "capabilities": 202,
+    "capabilities": 204,
     "claims": 93,
-    "modules": 58
+    "modules": 59
   },
   "generator": "majordomus-cli 0.29.0",
   "modules": [
@@ -5116,6 +5150,27 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/lifecycle.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/lifecycle.rs",
       "title": "Session lifecycle"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "machine.schedule",
+          "route": "/registry/capabilities/machine-schedule/",
+          "slug": "machine-schedule"
+        },
+        {
+          "id": "machine.sweep",
+          "route": "/registry/capabilities/machine-sweep/",
+          "slug": "machine-sweep"
+        }
+      ],
+      "claims": [],
+      "id": "machine",
+      "route": "/registry/modules/machine/",
+      "slug": "machine",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/machine.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/machine.rs",
+      "title": "This machine's build output"
     },
     {
       "capabilities": [

@@ -549,6 +549,16 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:machine.schedule",
+      "path": "/evidence/capabilities/machine-schedule/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:machine.sweep",
+      "path": "/evidence/capabilities/machine-sweep/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:mcp.projection",
       "path": "/evidence/capabilities/mcp-projection/"
     },
@@ -2819,6 +2829,16 @@
     },
     {
       "kind": "command",
+      "subject": "command:machine schedule",
+      "path": "/evidence/commands/machine-schedule/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:machine sweep",
+      "path": "/evidence/commands/machine-sweep/"
+    },
+    {
+      "kind": "command",
       "subject": "command:mcp",
       "path": "/evidence/commands/mcp/"
     },
@@ -5003,6 +5023,30 @@
       "programs": [],
       "members": [
         "claim:session-observability"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:machine.schedule": {
+      "kind": "capability",
+      "id": "machine.schedule",
+      "page": "/evidence/capabilities/machine-schedule/",
+      "programs": [],
+      "members": [
+        "command:machine schedule"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:machine.sweep": {
+      "kind": "capability",
+      "id": "machine.sweep",
+      "page": "/evidence/capabilities/machine-sweep/",
+      "programs": [],
+      "members": [
+        "command:machine sweep"
       ],
       "routes": [],
       "mechanisms": [],
@@ -15243,6 +15287,44 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:machine schedule": {
+      "kind": "command",
+      "id": "machine schedule",
+      "page": "/evidence/commands/machine-schedule/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:machine sweep": {
+      "kind": "command",
+      "id": "machine sweep",
+      "page": "/evidence/commands/machine-sweep/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:mcp": {
       "kind": "command",
       "id": "mcp",
@@ -20300,6 +20382,30 @@
       "programs": [],
       "members": [
         "capability:objects.list"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_machine_schedule": {
+      "kind": "mcp",
+      "id": "majordomus_machine_schedule",
+      "alias_of": "capability:machine.schedule",
+      "programs": [],
+      "members": [
+        "capability:machine.schedule"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_machine_sweep": {
+      "kind": "mcp",
+      "id": "majordomus_machine_sweep",
+      "alias_of": "capability:machine.sweep",
+      "programs": [],
+      "members": [
+        "capability:machine.sweep"
       ],
       "routes": [],
       "mechanisms": [],
@@ -28086,6 +28192,7 @@
     "suite:3125_the_reaper_asks_cargo_for_the_build_dir",
     "suite:3131_a_new_worktree_starts_from_the_remote_trunk",
     "suite:318_a_partial_sweep_says_so",
+    "suite:3281_the_machine_sweeps_its_build_output",
     "suite:330_a_contract_is_the_kind_it_declares",
     "suite:331_knowledge_nodes_is_gated",
     "suite:343_the_cockpit_shows_who_else_is_here",

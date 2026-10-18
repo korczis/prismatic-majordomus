@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 202 | 171 | 0 | 31 |
-| http | 197 | 171 | 0 | 26 |
-| mcp | 192 | 167 | 0 | 25 |
+| direct | 204 | 173 | 0 | 31 |
+| http | 199 | 173 | 0 | 26 |
+| mcp | 194 | 169 | 0 | 25 |
 | system | 14 | 14 | 0 | 0 |
-| total | 605 | 523 | 0 | 82 |
+| total | 611 | 529 | 0 | 82 |
 
 ## Capabilities
 
@@ -120,6 +120,8 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `lifecycle.providers` | lifecycle | query | process, 2 entries | covered | covered | covered | `default` |
 | `lifecycle.recovery` | lifecycle | query | process, 2 entries, 2s | covered | covered | covered | `default` |
 | `lifecycle.runtime` | lifecycle | query | process, 2 entries, 2s | covered | covered | covered | `default` |
+| `machine.schedule` | machine | command | — | covered | covered | covered | `status` |
+| `machine.sweep` | machine | command | — | covered | covered | covered | `check-a-named-home`, `check-below-a-high-floor` |
 | `mcp.projection` | mcp | query | — | covered | covered | covered | `every-tool`, `writers` |
 | `mesh.claim` | mesh | command | — | waived | waived | waived | — |
 | `mesh.cooperation` | mesh | query | — | covered | covered | covered | `default` |

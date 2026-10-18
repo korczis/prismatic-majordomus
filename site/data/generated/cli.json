@@ -192,6 +192,12 @@
           "route": "/docs/cli/served/"
         },
         {
+          "about": "This machine's build output: classify what cargo left under every cargo cache home and reclaim what nothing uses, and the per-user scheduler entry that does it every fifteen minutes",
+          "command": "majordomus machine",
+          "name": "machine",
+          "route": "/docs/cli/machine/"
+        },
+        {
           "about": "Every rule against the proof there is for it: what each one names, whether it is in the tree, whether a runner drives it, whether anything ran, and whether what ran is older than what it is about",
           "command": "majordomus rules",
           "name": "rules",
@@ -29566,6 +29572,511 @@
       "usage": "majordomus served show [OPTIONS]"
     },
     {
+      "about": "This machine's build output: classify what cargo left under every cargo cache home and reclaim what nothing uses, and the per-user scheduler entry that does it every fifteen minutes",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [
+        {
+          "about": "Classify the build output under every cargo cache home, and with --reclaim remove what nothing uses",
+          "command": "majordomus machine sweep",
+          "name": "sweep",
+          "route": "/docs/cli/machine/sweep/"
+        },
+        {
+          "about": "Report, install or remove the scheduler entry that sweeps this machine every fifteen minutes",
+          "command": "majordomus machine schedule",
+          "name": "schedule",
+          "route": "/docs/cli/machine/schedule/"
+        }
+      ],
+      "command": "majordomus machine",
+      "depth": 1,
+      "examples": [],
+      "executable": false,
+      "long_about": null,
+      "name": "machine",
+      "parent_route": "/docs/cli/",
+      "path": [
+        "majordomus",
+        "machine"
+      ],
+      "route": "/docs/cli/machine/",
+      "usage": "majordomus machine [OPTIONS] <COMMAND>"
+    },
+    {
+      "about": "Classify the build output under every cargo cache home, and with --reclaim remove what nothing uses",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus machine",
+          "name": "machine",
+          "route": "/docs/cli/machine/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Remove what is reclaimable; without it the sweep is a check",
+          "long": "reclaim",
+          "name": "reclaim",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "RECLAIM"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Minutes a private build directory or coverage target must have been idle (default 120)",
+          "long": "idle-minutes",
+          "name": "idle_minutes",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "IDLE_MINUTES"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "GiB free below which everything is swept at 30 minutes (default 30)",
+          "long": "floor-gib",
+          "name": "floor_gib",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FLOOR_GIB"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "A cargo cache home to sweep instead of the ones this machine has; repeatable",
+          "long": "cargo-home",
+          "name": "cargo_home",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "CARGO_HOME"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus machine sweep",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "machine",
+            "sweep",
+            "--cargo-home",
+            "no-such-cargo-home",
+            "--format",
+            "json"
+          ],
+          "command": "majordomus machine sweep --cargo-home no-such-cargo-home --format json",
+          "description": "A check of one named cargo cache home: every private build directory, coverage target and incremental session under it, each with its verdict (reclaimable, recent, in_use, held, unmeasurable), its idle minutes and its size, then the free space before and after. Without `--cargo-home` it covers every home this machine has; with `--reclaim` it removes what is reclaimable. A home that does not exist has nothing in it, which is an answer, not an error.",
+          "expectation": "exits 0; prints one JSON document carrying /check, /homes, /items, /reclaimed_bytes",
+          "id": "machine-sweep-check-a-named-home",
+          "setup": [],
+          "title": "What the sweep would reclaim under a cargo cache home, removing nothing"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "sweep",
+      "parent_route": "/docs/cli/machine/",
+      "path": [
+        "majordomus",
+        "machine",
+        "sweep"
+      ],
+      "route": "/docs/cli/machine/sweep/",
+      "usage": "majordomus machine sweep [OPTIONS]"
+    },
+    {
+      "about": "Report, install or remove the scheduler entry that sweeps this machine every fifteen minutes",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus machine",
+          "name": "machine",
+          "route": "/docs/cli/machine/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Write the entry and load it",
+          "long": "install",
+          "name": "install",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "INSTALL"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Unload the entry and delete its files",
+          "long": "remove",
+          "name": "remove",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "REMOVE"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The floor the scheduled sweep runs with, in GiB (default 30)",
+          "long": "floor-gib",
+          "name": "floor_gib",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FLOOR_GIB"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The executable the entry starts (default: the majordomus on PATH)",
+          "long": "program",
+          "name": "program",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PROGRAM"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Write or delete the files without loading or unloading them",
+          "long": "no-activate",
+          "name": "no_activate",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "NO_ACTIVATE"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus machine schedule",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "machine",
+            "schedule",
+            "--program",
+            "/opt/majordomus/bin/majordomus",
+            "--format",
+            "json"
+          ],
+          "command": "majordomus machine schedule --program /opt/majordomus/bin/majordomus --format json",
+          "description": "The scheduler this platform has (launchd on macOS, systemd on Linux), whether the entry that runs `majordomus machine sweep --reclaim` every fifteen minutes is installed, its files and the program it starts. Changes nothing; `--install` writes and loads the entry, `--remove` unloads and deletes it.",
+          "expectation": "exits 0; prints one JSON document carrying /scheduler, /installed, /files, /program, /every_minutes",
+          "id": "machine-schedule-status",
+          "setup": [],
+          "title": "Whether this machine runs the sweep on a schedule"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "schedule",
+      "parent_route": "/docs/cli/machine/",
+      "path": [
+        "majordomus",
+        "machine",
+        "schedule"
+      ],
+      "route": "/docs/cli/machine/schedule/",
+      "usage": "majordomus machine schedule [OPTIONS]"
+    },
+    {
       "about": "Every rule against the proof there is for it: what each one names, whether it is in the tree, whether a runner drives it, whether anything ran, and whether what ran is older than what it is about",
       "ancestors": [
         {
@@ -37208,10 +37719,10 @@
     }
   ],
   "counts": {
-    "arguments": 1613,
-    "commands": 234,
-    "examples": 237,
-    "runnable": 206
+    "arguments": 1637,
+    "commands": 237,
+    "examples": 239,
+    "runnable": 208
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
   "generator_version": "0.29.0",

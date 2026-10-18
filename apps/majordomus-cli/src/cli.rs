@@ -99,6 +99,8 @@ pub enum Command {
     Evidence(EvidenceArgs),
     /// Whether a deployment serves the commit it was meant to: observe the build identity it serves, judged by commit containment, and read each deployment's recorded standing against a commit
     Served(ServedArgs),
+    /// This machine's build output: classify what cargo left under every cargo cache home and reclaim what nothing uses, and the per-user scheduler entry that does it every fifteen minutes
+    Machine(MachineArgs),
     /// Every rule against the proof there is for it: what each one names, whether it is in the tree, whether a runner drives it, whether anything ran, and whether what ran is older than what it is about
     Rules(RulesArgs),
     /// What must become true above the milestones: every intent with its stage derived from the plan and its satisfaction from the recorded evidence, one intent, the model's own validation, and which intent a piece of work serves
@@ -2707,6 +2709,80 @@ pub enum DeliveryCommand {
         /// Exit 10 when the feature does not exist
         #[arg(long)]
         check: bool,
+    },
+}
+
+/// `majordomus machine`: the build output this repository's builds leave on the machine, and
+/// the scheduler entry that sweeps it (I2881).
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MachineArgs, MachineCommand};
+/// let cli = Cli::try_parse_from(["majordomus", "machine", "sweep", "--reclaim"]).unwrap();
+/// let Command::Machine(args) = cli.command else { panic!("machine") };
+/// let args: MachineArgs = args; // the group's own arguments
+/// assert!(matches!(args.command, MachineCommand::Sweep { reclaim: true, .. }));
+/// assert!(Cli::try_parse_from(["majordomus", "machine"]).is_err());
+/// ```
+#[derive(Debug, Args)]
+pub struct MachineArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `sweep` or `schedule`.
+    pub command: MachineCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus machine`: `sweep` is the command line of `machine.sweep`
+/// and `schedule` of `machine.schedule`.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MachineCommand};
+/// let cli = Cli::try_parse_from(["majordomus", "machine", "schedule", "--install"]).unwrap();
+/// let Command::Machine(args) = cli.command else { panic!("machine") };
+/// assert!(matches!(args.command, MachineCommand::Schedule { install: true, remove: false, .. }));
+/// ```
+pub enum MachineCommand {
+    /// Classify the build output under every cargo cache home, and with --reclaim remove what nothing uses
+    Sweep {
+        /// Remove what is reclaimable; without it the sweep is a check
+        #[arg(long)]
+        reclaim: bool,
+        /// Minutes a private build directory or coverage target must have been idle (default 120)
+        #[arg(long)]
+        idle_minutes: Option<u64>,
+        /// GiB free below which everything is swept at 30 minutes (default 30)
+        #[arg(long)]
+        floor_gib: Option<u64>,
+        /// A cargo cache home to sweep instead of the ones this machine has; repeatable
+        #[arg(long = "cargo-home")]
+        cargo_home: Vec<std::path::PathBuf>,
+    },
+    /// Report, install or remove the scheduler entry that sweeps this machine every fifteen minutes
+    Schedule {
+        /// Write the entry and load it
+        #[arg(long, conflicts_with = "remove")]
+        install: bool,
+        /// Unload the entry and delete its files
+        #[arg(long)]
+        remove: bool,
+        /// The floor the scheduled sweep runs with, in GiB (default 30)
+        #[arg(long)]
+        floor_gib: Option<u64>,
+        /// The executable the entry starts (default: the majordomus on PATH)
+        #[arg(long)]
+        program: Option<String>,
+        /// Write or delete the files without loading or unloading them
+        #[arg(long)]
+        no_activate: bool,
     },
 }
 
@@ -5498,6 +5574,28 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["served", "forge"],
             setup: &[],
             expect: Expect::ExitCode(12),
+        }],
+    },
+    CommandExamples {
+        command: "machine sweep",
+        examples: &[ExampleDoc {
+            id: "machine-sweep-check-a-named-home",
+            title: "What the sweep would reclaim under a cargo cache home, removing nothing",
+            description: "A check of one named cargo cache home: every private build directory, coverage target and incremental session under it, each with its verdict (reclaimable, recent, in_use, held, unmeasurable), its idle minutes and its size, then the free space before and after. Without `--cargo-home` it covers every home this machine has; with `--reclaim` it removes what is reclaimable. A home that does not exist has nothing in it, which is an answer, not an error.",
+            argv: &["machine", "sweep", "--cargo-home", "no-such-cargo-home", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/check", "/homes", "/items", "/reclaimed_bytes"]),
+        }],
+    },
+    CommandExamples {
+        command: "machine schedule",
+        examples: &[ExampleDoc {
+            id: "machine-schedule-status",
+            title: "Whether this machine runs the sweep on a schedule",
+            description: "The scheduler this platform has (launchd on macOS, systemd on Linux), whether the entry that runs `majordomus machine sweep --reclaim` every fifteen minutes is installed, its files and the program it starts. Changes nothing; `--install` writes and loads the entry, `--remove` unloads and deletes it.",
+            argv: &["machine", "schedule", "--program", "/opt/majordomus/bin/majordomus", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/scheduler", "/installed", "/files", "/program", "/every_minutes"]),
         }],
     },
     CommandExamples {

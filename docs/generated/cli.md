@@ -195,6 +195,9 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus served observe`](#majordomus-served-observe) | `/docs/cli/served/observe/` | Probe the build identity a deployment serves, judge it against a commit and record it |
 | [`majordomus served forge`](#majordomus-served-forge) | `/docs/cli/served/forge/` | Ask the forge which deployments and releases it recorded, and keep the answer for the readers |
 | [`majordomus served show`](#majordomus-served-show) | `/docs/cli/served/show/` | Each deployment's newest record, re-judged against a commit |
+| [`majordomus machine`](#majordomus-machine) | `/docs/cli/machine/` | This machine's build output: classify what cargo left under every cargo cache home and reclaim what nothing uses, and the per-user scheduler entry that does it every fifteen minutes |
+| [`majordomus machine sweep`](#majordomus-machine-sweep) | `/docs/cli/machine/sweep/` | Classify the build output under every cargo cache home, and with --reclaim remove what nothing uses |
+| [`majordomus machine schedule`](#majordomus-machine-schedule) | `/docs/cli/machine/schedule/` | Report, install or remove the scheduler entry that sweeps this machine every fifteen minutes |
 | [`majordomus rules`](#majordomus-rules) | `/docs/cli/rules/` | Every rule against the proof there is for it: what each one names, whether it is in the tree, whether a runner drives it, whether anything ran, and whether what ran is older than what it is about |
 | [`majordomus rules report`](#majordomus-rules-report) | `/docs/cli/rules/report/` | Every rule against the proof there is for it |
 | [`majordomus rules show`](#majordomus-rules-show) | `/docs/cli/rules/show/` | One rule: what proves it, what it depends on, and what is missing |
@@ -254,7 +257,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 
 Majordomus control plane: a data-driven MCP server over the repository's .ai/ layer
 
-Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus devtask`](#majordomus-devtask), [`majordomus distribution`](#majordomus-distribution), [`majordomus env`](#majordomus-env), [`majordomus commands`](#majordomus-commands), [`majordomus completion`](#majordomus-completion), [`majordomus worktree`](#majordomus-worktree), [`majordomus prs`](#majordomus-prs), [`majordomus offload`](#majordomus-offload), [`majordomus convergence`](#majordomus-convergence), [`majordomus commit`](#majordomus-commit), [`majordomus product`](#majordomus-product), [`majordomus release`](#majordomus-release), [`majordomus quality`](#majordomus-quality), [`majordomus run`](#majordomus-run), [`majordomus executions`](#majordomus-executions), [`majordomus devcontext`](#majordomus-devcontext), [`majordomus guard`](#majordomus-guard), [`majordomus mesh`](#majordomus-mesh), [`majordomus monitor`](#majordomus-monitor), [`majordomus models`](#majordomus-models), [`majordomus reasoning`](#majordomus-reasoning), [`majordomus evidence`](#majordomus-evidence), [`majordomus served`](#majordomus-served), [`majordomus rules`](#majordomus-rules), [`majordomus intent`](#majordomus-intent), [`majordomus delivery`](#majordomus-delivery), [`majordomus economics`](#majordomus-economics), [`majordomus entity`](#majordomus-entity), [`majordomus shell`](#majordomus-shell), [`majordomus pack`](#majordomus-pack), [`majordomus dashboard`](#majordomus-dashboard), [`majordomus brief`](#majordomus-brief), [`majordomus skills`](#majordomus-skills), [`majordomus knowledge`](#majordomus-knowledge), [`majordomus continuity`](#majordomus-continuity).
+Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus devtask`](#majordomus-devtask), [`majordomus distribution`](#majordomus-distribution), [`majordomus env`](#majordomus-env), [`majordomus commands`](#majordomus-commands), [`majordomus completion`](#majordomus-completion), [`majordomus worktree`](#majordomus-worktree), [`majordomus prs`](#majordomus-prs), [`majordomus offload`](#majordomus-offload), [`majordomus convergence`](#majordomus-convergence), [`majordomus commit`](#majordomus-commit), [`majordomus product`](#majordomus-product), [`majordomus release`](#majordomus-release), [`majordomus quality`](#majordomus-quality), [`majordomus run`](#majordomus-run), [`majordomus executions`](#majordomus-executions), [`majordomus devcontext`](#majordomus-devcontext), [`majordomus guard`](#majordomus-guard), [`majordomus mesh`](#majordomus-mesh), [`majordomus monitor`](#majordomus-monitor), [`majordomus models`](#majordomus-models), [`majordomus reasoning`](#majordomus-reasoning), [`majordomus evidence`](#majordomus-evidence), [`majordomus served`](#majordomus-served), [`majordomus machine`](#majordomus-machine), [`majordomus rules`](#majordomus-rules), [`majordomus intent`](#majordomus-intent), [`majordomus delivery`](#majordomus-delivery), [`majordomus economics`](#majordomus-economics), [`majordomus entity`](#majordomus-entity), [`majordomus shell`](#majordomus-shell), [`majordomus pack`](#majordomus-pack), [`majordomus dashboard`](#majordomus-dashboard), [`majordomus brief`](#majordomus-brief), [`majordomus skills`](#majordomus-skills), [`majordomus knowledge`](#majordomus-knowledge), [`majordomus continuity`](#majordomus-continuity).
 
 ```text
 majordomus <COMMAND>
@@ -5614,6 +5617,88 @@ Examples:
   ```
 
   Verified: exits 0; prints one JSON document carrying /expected, /observations, /unreadable, /deployments.
+
+<a id="majordomus-machine"></a>
+## `majordomus machine`
+
+This machine's build output: classify what cargo left under every cargo cache home and reclaim what nothing uses, and the per-user scheduler entry that does it every fifteen minutes
+
+Subcommands: [`majordomus machine sweep`](#majordomus-machine-sweep), [`majordomus machine schedule`](#majordomus-machine-schedule).
+
+```text
+majordomus machine [OPTIONS] <COMMAND>
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+<a id="majordomus-machine-sweep"></a>
+## `majordomus machine sweep`
+
+Classify the build output under every cargo cache home, and with --reclaim remove what nothing uses
+
+```text
+majordomus machine sweep [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--reclaim` | flag | — | Remove what is reclaimable; without it the sweep is a check |
+| `--idle-minutes` | `<IDLE_MINUTES>` | — | Minutes a private build directory or coverage target must have been idle (default 120) |
+| `--floor-gib` | `<FLOOR_GIB>` | — | GiB free below which everything is swept at 30 minutes (default 30) |
+| `--cargo-home` | `<CARGO_HOME>` | — | A cargo cache home to sweep instead of the ones this machine has; repeatable |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **What the sweep would reclaim under a cargo cache home, removing nothing** — A check of one named cargo cache home: every private build directory, coverage target and incremental session under it, each with its verdict (reclaimable, recent, in_use, held, unmeasurable), its idle minutes and its size, then the free space before and after. Without `--cargo-home` it covers every home this machine has; with `--reclaim` it removes what is reclaimable. A home that does not exist has nothing in it, which is an answer, not an error.
+
+  ```console
+  $ majordomus machine sweep --cargo-home no-such-cargo-home --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /check, /homes, /items, /reclaimed_bytes.
+
+<a id="majordomus-machine-schedule"></a>
+## `majordomus machine schedule`
+
+Report, install or remove the scheduler entry that sweeps this machine every fifteen minutes
+
+```text
+majordomus machine schedule [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--install` | flag | — | Write the entry and load it |
+| `--remove` | flag | — | Unload the entry and delete its files |
+| `--floor-gib` | `<FLOOR_GIB>` | — | The floor the scheduled sweep runs with, in GiB (default 30) |
+| `--program` | `<PROGRAM>` | — | The executable the entry starts (default: the majordomus on PATH) |
+| `--no-activate` | flag | — | Write or delete the files without loading or unloading them |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Whether this machine runs the sweep on a schedule** — The scheduler this platform has (launchd on macOS, systemd on Linux), whether the entry that runs `majordomus machine sweep --reclaim` every fifteen minutes is installed, its files and the program it starts. Changes nothing; `--install` writes and loads the entry, `--remove` unloads and deletes it.
+
+  ```console
+  $ majordomus machine schedule --program /opt/majordomus/bin/majordomus --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /scheduler, /installed, /files, /program, /every_minutes.
 
 <a id="majordomus-rules"></a>
 ## `majordomus rules`

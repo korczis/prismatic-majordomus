@@ -513,6 +513,45 @@ trunk *and* carrying a commit its remote has never seen. What changes *after* th
 commit, a deleted remote branch, a file written — is planted by the unit tests of the reclaim
 in `apps/majordomus-cli/src/commands/worktree.rs`. A missing `lsof` is not planted anywhere.
 
+### The machine sweeps its build output
+
+A worktree removed is not the only thing a machine accumulates: cargo leaves whole private
+build directories under `~/.cargo/build-private/`, a coverage run's `llvm-cov-target` inside
+the shared build directory, and an incremental session per compilation. The sweeps that
+remove those used to run only inside a build of this repository, so a machine whose builds
+came from a derive offload, a remote coverage run or a bare `cargo` never swept: on
+2026-10-18 lundra reached 0 bytes free twice with 87 GB in its shared build directory
+(I2881).
+
+`majordomus machine sweep` classifies every candidate under every cargo cache home of the
+machine (`$CARGO_HOME`, `~/.cargo`, each `~/.asdf/installs/rust/*`) and, with `--reclaim`,
+removes the reclaimable ones. It fails closed:
+
+<div class="overflow-x-auto" tabindex="0">
+
+| verdict | when | removed |
+|---|---|---|
+| `unmeasurable` | an entry under it could not be read, so its age is unknown | never |
+| `recent` | written within the idle threshold: 120 minutes, 30 for an incremental session | no |
+| `in_use` | a running process names it, any coverage run is alive (for a coverage target), or the process table could not be read | no |
+| `held` | its cargo lock cannot be taken, or cannot be opened | no |
+| `reclaimable` | none of the above, asked again just before removal | renamed out of cargo's reach, then removed |
+
+</div>
+
+
+Below the floor (30 GiB free by default, `--floor-gib`) every candidate is swept at 30
+minutes. `majordomus machine schedule --install` writes the per-user scheduler entry that
+runs `majordomus machine sweep --reclaim` every fifteen minutes from this checkout — a
+launchd agent (`~/Library/LaunchAgents/dev.majordomus.sweep.plist`) on macOS, a systemd
+`--user` service and timer (`~/.config/systemd/user/majordomus-sweep.*`) on Linux — and loads
+it; without a flag it reports whether the entry is there, and `--remove` unloads and deletes
+it. The entry starts the `majordomus` on `PATH`, so an upgrade does not leave it pointing at a
+removed version. The verdicts are planted by the unit tests in
+`apps/majordomus-cli/src/capability/builtin/machine.rs`, and
+`test/cases/3281_the_machine_sweeps_its_build_output.sh` runs both commands against a
+disposable cargo home and a disposable `HOME`.
+
 ## Uncommitted work nobody holds
 
 A branch whose commits reach no remote is named by `doctor` (`clone unpushed`). Work that
