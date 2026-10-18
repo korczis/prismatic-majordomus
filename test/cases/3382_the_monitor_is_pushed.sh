@@ -6,7 +6,8 @@
 # decided here:
 #
 #   1. share/cockpit/socket.js resumes a blackboard channel with the cursor of the last signals
-#      frame and the epoch of stream.ready, and hands a stream.resync to the page;
+#      frame and the epoch of stream.ready, never one without the other, and hands a
+#      stream.resync to the page, also when a new epoch is followed by no resync;
 #   2. share/cockpit/monitor.js adds a pushed signal as a row without asking /api/v1/monitor,
 #      and polls — saying so — only when the channel does not open;
 #   3. on a running server, the page names a channel that continues from its own cursor, and a
@@ -95,6 +96,16 @@ advance(1000);
 s = sockets.at(-1);
 eq([param(s, 'after'), param(s, 'epoch')], ['m9.c', 'e2'], 'a reconnect after a resync resumes with the new epoch');
 
+// a server of another epoch answers and the connection drops before its resync: the cursor
+// of the old epoch is never offered with the new one, and the page is told at once
+s.emit('open');
+s.send({ type: 'stream.ready', data: { heartbeat_seconds: 20, scope: 'blackboard', epoch: 'e4' } });
+if (!resyncs.some((r) => r.includes('epoch changed'))) fail(`a new epoch was not reported: ${resyncs}`);
+s.close();
+advance(1000);
+s = sockets.at(-1);
+eq([param(s, 'after'), param(s, 'epoch')], [null, null], 'an interrupted handshake offers no cursor of another epoch');
+
 // a resync with no frame after it leaves no cursor: the next connection asks for a fresh start
 s.emit('open');
 s.send({ type: 'stream.ready', data: { heartbeat_seconds: 20, scope: 'blackboard', epoch: 'e3' } });
@@ -103,6 +114,18 @@ s.close();
 advance(1000);
 s = sockets.at(-1);
 eq([param(s, 'after'), param(s, 'epoch')], [null, null], 'a refused cursor is not offered again');
+
+// a page rendered before anything happened carries an empty cursor: the start of the stream,
+// which every connection resumes from until a frame names a later one
+follow('/events?follow=blackboard&frames=signals&after=&epoch=e5', { resync: () => {} });
+s = sockets.at(-1);
+eq([param(s, 'after'), param(s, 'epoch')], ['', 'e5'], 'an empty cursor is offered as the start');
+s.emit('open');
+s.send({ type: 'stream.ready', data: { heartbeat_seconds: 20, scope: 'blackboard', epoch: 'e5' } });
+s.close();
+advance(1000);
+s = sockets.at(-1);
+eq([param(s, 'after'), param(s, 'epoch')], ['', 'e5'], 'a reconnection keeps the start of the stream');
 console.log('socket.js: a blackboard channel resumes by its cursor and epoch and reports a resync');
 NODE
 grep -q '^socket.js: a blackboard channel resumes' "$CHECK" \
@@ -184,6 +207,17 @@ if (mode === 'pushed') {
   const tr = tbody.children[0];
   if (tr.dataset.mjForYou !== 'yes') fail('the row is not marked for the reader');
   if (!/^Live: /.test(note.textContent)) fail(`the note does not say live: ${note.textContent}`);
+} else if (mode === 'gap') {
+  // the server cannot continue from the page's cursor: what follows is live, and the page keeps
+  // saying that something before it may be missing, however many signals arrive after
+  s.emit('open');
+  s.send({ type: 'stream.ready', data: { heartbeat_seconds: 20, scope: 'blackboard', epoch: 'e1' } });
+  s.send({ type: 'stream.resync', data: { reason: 'more than 10 pages of signals' } });
+  s.send({ type: 'blackboard.signals', data: { trigger: 'change', cursor: 'm3.c',
+    signals: [{ at: 8, source: 'mesh', summary: 'after the gap' }] } });
+  if (!/^Live: /.test(note.textContent) || !/may be missing/.test(note.textContent)) {
+    fail(`the gap is not kept with the live state: ${note.textContent}`);
+  }
 } else {
   // the channel never opens
   opening();
@@ -194,12 +228,12 @@ if (mode === 'pushed') {
 }
 console.log(`monitor.js: ${mode}`);
 JS
-for mode in pushed refused; do
+for mode in pushed gap refused; do
   node "$M/run.mjs" "$mode" > "$T/page-$mode.out" 2>&1 \
     || { echo "    monitor.js ($mode):"; sed 's/^/    | /' "$T/page-$mode.out"; exit 1; }
   grep -q "^monitor.js: $mode" "$T/page-$mode.out" || { echo "    monitor.js ($mode) did not finish"; cat "$T/page-$mode.out"; exit 1; }
 done
-echo "    monitor.js adds a pushed signal without polling, and polls with a label only when the channel does not open"
+echo "    monitor.js adds a pushed signal without polling, keeps saying a gap it was told of, and polls with a label only when the channel does not open"
 
 # ---------------------------------------------------------------- 3. on a running server
 RB="$(rust_bin)" || rust_bin_exit $?
@@ -242,12 +276,11 @@ CURSOR="$(python3 -c 'import html,re,sys; m=re.search(r"data-mj-monitor-cursor=\
 python3 - "$LIVE" "$CURSOR" <<'PY' || exit 1
 import sys, urllib.parse
 live, cursor = sys.argv[1], sys.argv[2]
-q = urllib.parse.parse_qs(urllib.parse.urlsplit(live).query)
-if cursor:
-    if q.get("after") != [cursor] or not q.get("epoch"):
-        sys.exit("    the channel does not continue from the page's cursor %s: %s" % (cursor, live))
-elif "after" in q:
-    sys.exit("    a page with no cursor names one on its channel: %s" % live)
+q = urllib.parse.parse_qs(urllib.parse.urlsplit(live).query, keep_blank_values=True)
+# an empty cursor is the start of the stream and is named too: a page rendered before
+# anything happened misses nothing that happens before its channel opens
+if q.get("after") != [cursor] or not q.get("epoch", [""])[0]:
+    sys.exit("    the channel does not continue from the page's cursor %r: %s" % (cursor, live))
 PY
 echo "    the page names a channel that continues from its own cursor and epoch, for its reader"
 
