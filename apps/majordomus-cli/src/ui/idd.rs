@@ -529,11 +529,11 @@ fn wave_panel(waves: &Answer, mine: &[Value]) -> El {
         if !conflicts.is_empty() {
             body = body
                 .child(
-                    el("h4")
+                    el("h3")
                         .class("mj-ui-panel-title")
                         .text("Shared scope: these may not run at the same time"),
                 )
-                .child(el("ul").class("mj-ui-list").children(conflicts));
+                .child(el("ul").class("mj-ui-prose-list").children(conflicts));
         }
         body
     });
@@ -701,7 +701,7 @@ fn standing_body(id: &str, explain: &Answer) -> El {
         let unmet = list(explain, "/realization/unmet");
         let work = list(explain, "/work");
         let findings = list(explain, "/realization/findings");
-        let sentences = el("ul").class("mj-ui-list").children(
+        let sentences = el("ul").class("mj-ui-prose-list").children(
             because
                 .iter()
                 .filter_map(Value::as_str)
@@ -768,7 +768,7 @@ fn standing_body(id: &str, explain: &Answer) -> El {
             "No work this checkout can see realises this intent.",
         );
         let drift = el("ul")
-            .class("mj-ui-list")
+            .class("mj-ui-prose-list")
             .children(findings.iter().map(|f| {
                 el("li").text(match f.get("message").and_then(Value::as_str) {
                     Some(m) => m.to_string(),
