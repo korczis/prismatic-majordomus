@@ -28025,7 +28025,7 @@
         "apps/majordomus-cli/src/capability/builtin/release.rs",
         "scripts/ci/release-check",
         "docs/RELEASE.md",
-        "test/cases"
+        "test/cases/3341_a_release_carries_its_own_changelog.sh"
       ],
       "non_scope": [],
       "objective": "Publish each GitHub release with the body `majordomus release changelog` composes for its tag (the release's decisions, including a release declaration such as ADR 0175, its conventional changes and its artifacts) instead of `gh release create --generate-notes`, and refuse a release whose published body is not that projection.",
@@ -33226,12 +33226,6 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
-      "subject": "I2653",
-      "message": "shares test/cases/3006_diagrams_are_interactive_and_linkable.sh with I2826; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
       "subject": "I2660",
       "message": "shares .github/workflows/pages.yml with I2661; they may not run concurrently"
     },
@@ -33976,26 +33970,8 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
-      "subject": "I2734",
-      "message": "shares test/cases/3066_a_session_joins_the_mesh_at_start.sh with I2826; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
       "subject": "I2740",
       "message": "shares apps/majordomus-cli/src/plan.rs with I2742; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I2740",
-      "message": "shares test/cases/3100_an_issue_delivery_is_inferred.sh with I2826; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I2742",
-      "message": "shares test/cases/49_roadmap_integrity.sh with I2826; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -34006,26 +33982,8 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
-      "subject": "I2747",
-      "message": "shares test/cases/3107_one_highlighter.sh with I2826; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I2760",
-      "message": "shares test/cases/3160_a_scope_entry_is_one_path.sh with I2826; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
       "subject": "I2770",
       "message": "shares docs/MAJORDOMUS_UI.md with I2786; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I2786",
-      "message": "shares test/cases/3178_the_published_ui_reads_the_evidence_ci_recorded.sh with I2826; they may not run concurrently"
     }
   ]
 }
