@@ -35,7 +35,7 @@
   </dd>
   <dt class="text-body">Milestones</dt>
   <dd class="text-heading">{{ roadmap.milestones | length }}, every one the plan holds, in the order the graph derives</dd>
-  <dt class="text-body">Delivery</dt>
+  <dt id="delivery" class="scroll-mt-24 text-body">Delivery</dt>
   <dd class="min-w-0 break-words text-heading">
     {%- if delivery %}inferred from the history at <a href="{{ repo }}/commit/{{ delivery.observed.commit }}" class="font-mono underline hover:text-fg-brand">{{ delivery.observed.commit | truncate(length=11, end="") }}</a>: merged and released, each linked to the pull request, commit or release that proves it
     {%- else %}<span class="text-body">not shown: the inferred delivery projection (<code class="font-mono">plan delivery</code>) is not part of this build</span>{% endif -%}
