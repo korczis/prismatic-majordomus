@@ -56,6 +56,7 @@ pub(crate) mod mesh;
 pub(crate) mod milestone;
 pub(crate) mod navbar;
 pub(crate) mod observatory;
+pub(crate) mod peers;
 pub(crate) mod prose;
 pub(crate) mod prs;
 pub(crate) mod roadmap;
@@ -183,6 +184,12 @@ pub(crate) const SCREENS: &[Screen] = &[
         title: "Mesh",
         icon: "nodes",
         answers: "Which machines and runtimes are on the mesh, and what they recorded.",
+    },
+    Screen {
+        route: peers::ROUTE,
+        title: "Peers",
+        icon: "users",
+        answers: "Who works on this repository, what each claims, and what waits for whom.",
     },
     Screen {
         route: delivery::ROUTE,
@@ -356,6 +363,7 @@ impl Ui {
             issues::ROUTE => issues::screen(&ctx, &req.query),
             prs::ROUTE => prs::screen(&ctx, &req.query),
             mesh::ROUTE => mesh::screen(&ctx, &req.query),
+            peers::ROUTE => peers::screen(&ctx, &self.assets.url(peers::LIB)),
             delivery::ROUTE => delivery::screen(&ctx),
             deployments::ROUTE => deployments::screen(&ctx),
             command::ROUTE => command::screen(&ctx, &req.query),
@@ -597,6 +605,7 @@ mod tests {
                 mesh::ROUTE,
                 mesh::screen(&ctx, &[("node".into(), "nowhere".into())]),
             ),
+            (peers::ROUTE, peers::screen(&ctx, "/ui/assets/live.js")),
             (delivery::ROUTE, delivery::screen(&ctx)),
             (
                 evidence::ROUTE,

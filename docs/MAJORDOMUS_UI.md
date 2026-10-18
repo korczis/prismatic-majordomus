@@ -53,6 +53,7 @@ lists it), declared beside the Cockpit in `apps/majordomus-cli/src/web/discover.
 | PR Drain | `/ui/prs` | `plan.status`, `plan.issues` (one issue, `?issue=`); `integration.queue` and `integration.events` on its own route (`/ui/panels/drain`), narrowed by `?disposition=`, `?lane=` and `?q=`, one pull request (`?pr=`) in the inspector with what the executor did to it, the lane's recent activity, and its merges per day over the fortnight the trail ends on |
 | Capabilities | `/ui/capabilities` | `repository.info`, `capabilities.list` by kind; one capability (`?id=`) from `capabilities.describe` |
 | Mesh | `/ui/mesh` | `mesh.peers`, `mesh.events`, `mesh.state` (live claims); one machine (`?node=`) in the inspector, and who holds each seat of [rule `project.the-cooperation-model-is-the-owners-word`](../.ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v1.md) read from the claims |
+| Peers | `/ui/peers` | `blackboard.snapshot`, read through the live channel's shared read: every worker of every board and linked machine with its intent and claims, the claims that meet, the reviews and handovers that wait, the typed relations and every source; read again when the channel says the blackboard changed ([Followed live](#followed-live)) |
 | CI/CD & Releases | `/ui/delivery` | `distribution.releases`, `release.version`, `deploy.list`, `gates.model`, `integration.timings` (each check's median, 90th percentile and longest run, and the open heads that waited longest, each leading to its pull request) |
 | Deployments | `/ui/deployments` | `deploy.list` (what the layer declares); `deploy.observed` (what the forge recorded: where each environment stands, every deployment to every environment — GitHub Pages among them — and every release, each commit, ref, environment, run and release a link); `delivery.report` on its own route |
 | Evidence | `/ui/evidence` | `evidence.report`; one claim (`?claim=`) in its inspector from `evidence.claim`: what settles it, its last run, what changed since, how to reproduce it, and the claims its test also proves |
@@ -272,6 +273,21 @@ a platform with no baseline compares nothing. The first run of the check found `
 at 400-660 ms, where every other screen read 1-21 ms. The first request after the repository
 moved is not measured by the bench yet (I2485).
 
+## Followed live
+
+A screen that shows what changes faster than a minute follows the server's live channel instead
+of waiting for the minute's refresh (ADR 0176). Its markup names the channel (`data-follow`)
+and the module that follows it (`data-follow-lib`, `share/ui/live.js`), which opens it through
+`share/ui/socket.js`, a byte copy of the Cockpit's one socket client that
+`scripts/cockpit-assets` keeps. The module draws nothing: when the server says the blackboard
+changed, or after a reconnection, it asks `ui.js` to read the screen again, and the screen is
+rendered by the server through the same shared read the channel's followers take, so it shows
+that change. Its first snapshot on a connection is what the page was served with and is not
+read again. The line marked `data-follow-state` says whether the channel is live, reconnecting
+or closed, and while it is not live the minute's refresh runs as on every other screen.
+`/ui/peers` is the first such screen. The published snapshot withholds it (I2984): it names
+every worker's intent, worktree and machine as they are now.
+
 ## Relationship graphs
 
 A relationship the source records is drawn as a graph: the dependencies between
@@ -400,8 +416,8 @@ time, naming the event. A recording is a moment; it is replaced by capturing aga
 
 Every screen is complete HTML, and the menu of a narrow screen opens with a checkbox and its
 label. `share/ui/ui.js` is the only script of the UI's own: it pulls in slow panels, refreshes
-the screen, draws graphs, reveals the bar's search button and keeps the sidebar beneath the
-bar. The bar's menus and theme toggle run on the site's own two scripts. The one inline script is the theme
+the screen, draws graphs, loads `live.js` on a screen that follows the live channel, reveals
+the bar's search button and keeps the sidebar beneath the bar. The bar's menus and theme toggle run on the site's own two scripts. The one inline script is the theme
 statement the policy allows by its digest, the same one the Cockpit ships. A served test
 asserts that the UI and the Cockpit carry one identical policy.
 

@@ -21,6 +21,10 @@ satisfaction:
     criterion: The browser's one socket client resumes a blackboard channel by its cursor and epoch and reports a resync, and the monitor page adds what the server pushes without polling and says when it has to poll
     evidence: test
     ref: test/cases/3382_the_monitor_is_pushed.sh
+  - id: the-screen-follows
+    criterion: The UI's Peers screen lists every worker with its intent and claims from the blackboard, is read again on a change frame and after a reconnection but not on a connection's first snapshot, says whether it is live, and is withheld from the published snapshot
+    evidence: test
+    ref: test/cases/3383_the_peers_screen_follows_the_blackboard.sh
 governance:
   - rule:project.derived-once
   - adr:adr-0044

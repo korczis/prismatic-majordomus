@@ -89,8 +89,9 @@ findings:
     finding: "Once /ui/peers exists, an in-process UI snapshot would publish worktree paths and intents before the public-safe form exists."
     blocking: false
     resolution:
-      state: open
-      because: "The public-safe form lands with or before the first UI screen of the blackboard; I2980 adds no screen."
+      state: planned
+      issue: I2983
+      because: "The UI's snapshot withholds /ui/peers (Subject::withheld), so no publication holds a page of it and the navigation's link leads to the live page; the public-safe form is I2984. The snapshot's unit test asserts the screen is left out and its link leads to the live page."
   - id: the-blackboard-is-readable-beyond-loopback
     class: regression_risk
     subject: the-peer-blackboard-is-one-reality

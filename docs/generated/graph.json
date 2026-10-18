@@ -39931,6 +39931,61 @@
         }
       },
       {
+        "id": "majordomus://issue/I2983",
+        "kind": "issue",
+        "label": "I2983",
+        "summary": "/ui/peers shows the blackboard and is read again when it changes",
+        "route": "/cockpit/objects/issue/i2983",
+        "source": ".ai/repo/project/issues/I2983.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "/ui/peers lists a worker announced over MCP with its intent and claim, and its fragment read after a second announcement shows the new intent at once",
+            "live.js reads the screen again on a change frame and after a reconnection, never on a connection's first snapshot, and says live, reconnecting or offline",
+            "The UI snapshot holds no /ui/peers page and a link to it leads to the live page"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "No /ui screen renders blackboard.snapshot; /ui screens are refreshed every minute and never pushed.",
+          "depends_on": [
+            "I2982"
+          ],
+          "desired_state": "An announcement reaches an open /ui/peers within a second of the change on this machine, with the screen saying it is live.",
+          "evidence_required": [
+            "case_peers_screen_follows"
+          ],
+          "milestone": "peer-blackboard",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui/peers.rs",
+            "apps/majordomus-cli/src/ui/mod.rs",
+            "apps/majordomus-cli/src/ui/source.rs",
+            "apps/majordomus-cli/src/http/follow.rs",
+            "apps/majordomus-cli/src/web/report/snapshot.rs",
+            "share/ui/live.js",
+            "share/ui/socket.js",
+            "share/ui/ui.js",
+            "scripts/cockpit-assets",
+            "docs/MAJORDOMUS_UI.md",
+            "docs/BLACKBOARD.md",
+            ".ai/repo/project/intents/the-peer-blackboard-is-one-reality.yaml",
+            "test/cases/3383_the_peers_screen_follows_the_blackboard.sh",
+            "test/cases/1092_the_ui_snapshot_holds_every_screen.sh",
+            ".ai/repo/project/critiques/the-peer-blackboard-is-one-reality.yaml"
+          ],
+          "serves": [
+            "the-peer-blackboard-is-one-reality#the-screen-follows"
+          ],
+          "slug": "the-peers-screen-follows-the-blackboard",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "majordomus plan validate",
+            "bash test/run.sh 3383_the_peers_screen_follows_the_blackboard"
+          ],
+          "why": "Who works on what is on the blackboard and on no UI screen; /cockpit/peers reads peers.list, which knows one board's machines and nothing of the mesh."
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "label": "a-commit-stood-behind-a-build-lock",
@@ -57835,6 +57890,13 @@
         "label": "test/cases/3382_the_monitor_is_pushed.sh",
         "route": "/cockpit/objects/test/test-cases-3382-the-monitor-is-pushed-sh",
         "source": "test/cases/3382_the_monitor_is_pushed.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3383_the_peers_screen_follows_the_blackboard.sh",
+        "kind": "test",
+        "label": "test/cases/3383_the_peers_screen_follows_the_blackboard.sh",
+        "route": "/cockpit/objects/test/test-cases-3383-the-peers-screen-follows-the-blackboard-sh",
+        "source": "test/cases/3383_the_peers_screen_follows_the_blackboard.sh"
       },
       {
         "id": "majordomus://test/test/cases/33_event_registry.sh",
@@ -84831,6 +84893,21 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2983",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2983",
+        "target": "majordomus://issue/I2982",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2983",
+        "target": "majordomus://milestone/peer-blackboard",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -89617,6 +89694,11 @@
       },
       {
         "source": "majordomus://test/test/cases/3382_the_monitor_is_pushed.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3383_the_peers_screen_follows_the_blackboard.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -94862,8 +94944,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2973,
-      "edges": 6528,
+      "nodes": 2975,
+      "edges": 6532,
       "acyclic": false,
       "truncated": false
     }

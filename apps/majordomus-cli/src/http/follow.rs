@@ -45,7 +45,9 @@
 //! **Shared reads.** One read of the blackboard per generation and per width is shared by
 //! every connection. One page of signals per cursor, sources and reader is shared the same
 //! way. A hundred open
-//! tabs cost one computation per change, not a hundred.
+//! tabs cost one computation per change, not a hundred. A screen that renders the blackboard
+//! reads it through the same shared read ([`blackboard`]), so the UI's Peers screen read
+//! again after a change frame shows that change.
 //!
 //! **Slow clients.** A write blocks only its own connection's thread, and nothing is queued
 //! for it. A slow client skips the snapshots it was too slow to receive and is written the
@@ -262,6 +264,16 @@ fn shared(
         value: Arc::clone(&value),
     });
     Ok(value)
+}
+
+/// The blackboard of every checkout, through the read the channel's followers share: a screen
+/// read again after a change frame is the blackboard at that change, not a reading from
+/// before it, and a screen read with nothing changed costs no read of its own (I2983).
+pub fn blackboard(ctx: &Context) -> Result<Arc<Value>, String> {
+    shared(&BOARD, "repository", BLACKBOARD.current(), || {
+        ctx.execute(SNAPSHOT, json!({ "checkouts": "repository", "signals": 0 }))
+            .map_err(|e| e.to_string())
+    })
 }
 
 /// What a snapshot says, without what changes on every read: the time of the read, the

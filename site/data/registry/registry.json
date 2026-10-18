@@ -6,23 +6,23 @@
     "version": "0.29.0"
   },
   "registry": {
-    "fingerprint": "7b2d34550e2ff694b7c533ac87aea0d2bc27a8ca82d5fb379fb1cffb7d03bb07",
+    "fingerprint": "70532fe3ffa31aae995712e5ecc4fc2eb95d279682bfe036d140a24b37e14264",
     "summary": {
-      "total": 2539,
+      "total": 2541,
       "builtin": 203,
-      "declarative": 2336,
+      "declarative": 2338,
       "by_kind": {
         "command": 31,
         "query": 172,
-        "resource": 2336
+        "resource": 2338
       },
       "by_stability": {
         "behaviorally_verified": 141,
         "experimental": 53,
-        "implemented": 2345
+        "implemented": 2347
       },
       "mcp_tools": 193,
-      "mcp_resources": 2391,
+      "mcp_resources": 2393,
       "http_routes": 198,
       "cli_commands": 109,
       "modules": 93,
@@ -84257,7 +84257,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 427,
+        "capabilities": 428,
         "capability_ids": []
       },
       {
@@ -84828,7 +84828,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 530,
+        "capabilities": 531,
         "capability_ids": []
       },
       {
@@ -84919,7 +84919,7 @@
     ]
   },
   "index": {
-    "fingerprint": "4a79429087b895f57a85001e51fd49d85cf22b295574fe95efca8b42d85129dc",
+    "fingerprint": "216d4feedb6409c582fcf431d8a289e011db624ac1f01db5a47cdfa1c8b0b9a7",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -84959,7 +84959,7 @@
       "gap": 4,
       "implementation": 52,
       "intent": 6,
-      "issue": 427,
+      "issue": 428,
       "knowledge": 4,
       "mesh-declaration": 1,
       "milestone": 42,
@@ -84973,7 +84973,7 @@
       "session": 90,
       "skill": 8,
       "taxonomy": 10,
-      "test": 530,
+      "test": 531,
       "use-case": 49,
       "workspace": 1
     },
@@ -90494,7 +90494,7 @@
         "path": ".ai/repo/project/critiques/the-peer-blackboard-is-one-reality.yaml",
         "section": "project",
         "source_class": "critique",
-        "bytes": 8693
+        "bytes": 8882
       },
       {
         "uri": "majordomus://deployment/majordomus",
@@ -90811,7 +90811,7 @@
         "title": "The peer blackboard",
         "path": "docs/BLACKBOARD.md",
         "source_class": "document",
-        "bytes": 9943
+        "bytes": 10540
       },
       {
         "uri": "majordomus://document/docs/BRIEF.md",
@@ -91180,7 +91180,7 @@
         "title": "`majordomus ui` — the product",
         "path": "docs/MAJORDOMUS_UI.md",
         "source_class": "document",
-        "bytes": 38553
+        "bytes": 40055
       },
       {
         "uri": "majordomus://document/docs/MCP.md",
@@ -91270,7 +91270,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 173398
+        "bytes": 173560
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -94751,7 +94751,7 @@
         "path": ".ai/repo/project/intents/the-peer-blackboard-is-one-reality.yaml",
         "section": "project",
         "source_class": "intent",
-        "bytes": 2670
+        "bytes": 3056
       },
       {
         "uri": "majordomus://issue/I0001",
@@ -99449,6 +99449,17 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 2322
+      },
+      {
+        "uri": "majordomus://issue/I2983",
+        "kind": "issue",
+        "identity": "I2983",
+        "title": "/ui/peers shows the blackboard and is read again when it changes",
+        "description": "Add the Peers screen to the UI: every worker of the repository with where it works, its client, whether it is here, its intent and its claims; the claims that meet; the reviews and handovers that wait; the typed relations; and every source with its state. It renders blackboard.snapshot through the same shared read the live channel's followers take (http::follow::blackboard), so a screen read after a change frame is the blackboard at that change. share/ui/live.js follows /events?follow=blackboard&frames=snapshot through the one socket client (share/ui/socket.js, a byte copy of share/cockpit/socket.js kept by scripts/cockpit-assets), asks ui.js to read the screen again on a change or a reconnection, and keeps a state line that says live, reconnecting or read on a timer. The minute refresh runs only while the channel is not live. The published UI snapshot withholds the screen until its public-safe form exists (I2984).",
+        "path": ".ai/repo/project/issues/I2983.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2944
       },
       {
         "uri": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
@@ -105772,7 +105783,7 @@
         "identity": "test/cases/1092_the_ui_snapshot_holds_every_screen.sh",
         "path": "test/cases/1092_the_ui_snapshot_holds_every_screen.sh",
         "source_class": "case",
-        "bytes": 5806
+        "bytes": 6036
       },
       {
         "uri": "majordomus://test/test/cases/1093_the_ui_snapshot_links_nothing_absent.sh",
@@ -107269,6 +107280,14 @@
         "path": "test/cases/3382_the_monitor_is_pushed.sh",
         "source_class": "case",
         "bytes": 15577
+      },
+      {
+        "uri": "majordomus://test/test/cases/3383_the_peers_screen_follows_the_blackboard.sh",
+        "kind": "test",
+        "identity": "test/cases/3383_the_peers_screen_follows_the_blackboard.sh",
+        "path": "test/cases/3383_the_peers_screen_follows_the_blackboard.sh",
+        "source_class": "case",
+        "bytes": 8380
       },
       {
         "uri": "majordomus://test/test/cases/33_event_registry.sh",
@@ -110201,7 +110220,7 @@
       "identity": [
         "id"
       ],
-      "objects": 427
+      "objects": 428
     },
     {
       "name": "knowledge",
@@ -110353,7 +110372,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 530
+      "objects": 531
     },
     {
       "name": "use-case",
@@ -154685,6 +154704,14 @@
         "route": "GET /ui/mesh"
       },
       {
+        "key": "system.http.ui.peers",
+        "kind": "page",
+        "transport": "http",
+        "module": "system",
+        "cached": true,
+        "route": "GET /ui/peers"
+      },
+      {
         "key": "system.http.ui.delivery",
         "kind": "page",
         "transport": "http",
@@ -154819,6 +154846,14 @@
         "module": "system",
         "cached": true,
         "route": "GET /ui/mesh"
+      },
+      {
+        "key": "system.http.live.ui.peers",
+        "kind": "page",
+        "transport": "http",
+        "module": "system",
+        "cached": true,
+        "route": "GET /ui/peers"
       },
       {
         "key": "system.http.live.ui.delivery",

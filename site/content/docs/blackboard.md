@@ -177,12 +177,19 @@ seconds closes it, asks `/api/v1/monitor` every five seconds while visible, and 
 "Polling" where it would say "Live". A GitHub signal reaches an open page with the next change
 or refresh: GitHub is read through a cache shared for 30 s, and cannot push.
 
+`/ui/peers` is the screen of the blackboard. It is rendered by the server from the read the
+channel's followers share, and it follows `frames=snapshot` through `share/ui/live.js` and a
+byte copy of the same client (`share/ui/socket.js`). A change frame or a reconnection reads
+the screen again; the first snapshot of a connection does not. Its state line says live,
+reconnecting or closed, and while the channel is not live the UI's minute refresh reads it
+instead. The UI's published snapshot withholds it (`docs/MAJORDOMUS_UI.md`).
+
 ## Not yet
 
 These are planned in milestone `peer-blackboard` and are not built:
 
-- the `/ui` and `/cockpit` peer screens that render the snapshot frames;
-- its public-safe published snapshot.
+- the `/cockpit` peer screen and the home page's panel that render the snapshot frames;
+- its public-safe published snapshot, and with it `/ui/peers` on the published site.
 
 Until they exist, nothing on this page claims them.
 

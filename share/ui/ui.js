@@ -213,7 +213,9 @@ async function drawGraphs() {
 
 // Reading the sources again: while the screen is visible, every minute, the server's
 // rendering of this screen replaces the one on the page, and the time it was read is
-// updated. This is a refresh, said as one: nothing here claims a live stream.
+// updated. This is a refresh, said as one: nothing here claims a live stream. A screen that
+// follows the server's live channel (`data-follow`, below) is read again when the server says
+// it changed instead, and the minute's refresh leaves it alone while that channel is open.
 //
 // The server never makes a screen wait for a source. A value it read before the repository
 // last changed, or has not read yet, is shown as that, and its source line carries
@@ -305,6 +307,45 @@ async function drawObservatory() {
   holder.observatory = observatory;
 }
 
+// A screen that follows a live channel (`data-follow`, ADR 0176) is read again when the server
+// says what it shows changed. The module that follows it, `live.js`, is loaded only on such a
+// screen, from the URL the page names (`data-follow-lib`), and opens the channel through the
+// one socket client the Cockpit runs too. The line the screen marks `data-follow-state` says
+// what the module says: live, reconnecting, or read every minute instead. A change that
+// arrives while the page is hidden is read once it is shown again.
+let followed = null;
+let missed = false;
+function sayFollowing() {
+  const line = document.querySelector('#main [data-follow-state]');
+  if (line && followed) line.textContent = followed.said();
+}
+async function followLive() {
+  const holder = document.querySelector('#main [data-follow]');
+  if (!holder || followed || SNAPSHOT) return;
+  const lib = holder.dataset.followLib;
+  if (!lib) return;
+  let module;
+  try {
+    module = await import(lib);
+  } catch (e) {
+    return; // the minute's refresh stands
+  }
+  followed = module.followScreen(holder.dataset.follow, {
+    refresh: () => {
+      if (document.visibilityState === 'visible') refresh();
+      else missed = true;
+    },
+    say: sayFollowing,
+  });
+  sayFollowing();
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && missed) {
+    missed = false;
+    refresh();
+  }
+});
+
 function enhance() {
   if (!SNAPSHOT) {
     for (const placeholder of document.querySelectorAll('[data-panel-src]')) {
@@ -313,6 +354,8 @@ function enhance() {
   }
   drawGraphs();
   drawObservatory();
+  followLive();
+  sayFollowing();
 }
 
 wireBarSearch();
@@ -322,6 +365,8 @@ if (SNAPSHOT) {
   showSnapshotPath();
   window.addEventListener('hashchange', showSnapshotPath);
 } else if (!window.location.pathname.includes('/panels/')) {
-  setInterval(refresh, REFRESH_MS);
+  setInterval(() => {
+    if (!followed || !followed.live()) refresh();
+  }, REFRESH_MS);
   catchUp();
 }

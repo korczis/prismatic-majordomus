@@ -89,7 +89,9 @@ pub const UI: Subject = Subject {
     live_title: "The live UI · majordomus ui",
     fragment: crate::ui::FRAGMENT,
     scripts: true,
-    withheld: &[],
+    // `/ui/peers` names every worker's intent, worktree and machine as it is now: a
+    // publication holds no page of it until its public-safe form exists (I2984).
+    withheld: &[crate::ui::peers::ROUTE],
     redirects: crate::ui::observatory::REDIRECTS,
 };
 
@@ -1125,13 +1127,30 @@ mod tests {
                 .expect("a topology");
         let snapshot =
             render(root.path(), &UI, &ask, seeds(), &topology, 60, 600).expect("a snapshot");
-        for screen in crate::ui::SCREENS {
+        let published = || {
+            crate::ui::SCREENS
+                .iter()
+                .filter(|s| UI.page_file(s.route).is_some())
+        };
+        for screen in published() {
             assert!(
                 snapshot.pages.contains_key(screen.route),
                 "{} is not in the snapshot",
                 screen.route
             );
         }
+        // a screen the subject withholds is no page, and the navigation's link to it leads to
+        // the live page with the path it meant
+        assert!(!snapshot.pages.contains_key(crate::ui::peers::ROUTE));
+        assert!(snapshot
+            .left_out
+            .iter()
+            .any(|p| p == crate::ui::peers::ROUTE));
+        let overview = std::fs::read_to_string(snapshot.dir.join("index.html")).unwrap();
+        assert!(
+            overview.contains(&format!("{LIVE_PAGE}#{}", crate::ui::peers::ROUTE)),
+            "the navigation's link to the withheld screen leads to the live page"
+        );
         assert!(snapshot.pages.len() <= 60);
         // no budget at all still writes every screen and panel, and says what stopped it
         let hurried =
@@ -1139,7 +1158,7 @@ mod tests {
         assert_eq!(hurried.stopped_by, "budget");
         assert_eq!(
             hurried.pages.len(),
-            crate::ui::SCREENS.len() + crate::ui::PANELS.len(),
+            published().count() + crate::ui::PANELS.len(),
             "the screens and panels, and nothing they link to"
         );
         let snapshot =

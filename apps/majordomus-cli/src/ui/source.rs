@@ -279,6 +279,27 @@ pub fn ask_input(ctx: &Context, capability: &'static str, input: Value) -> Answe
     }
 }
 
+/// What `source` answered through a read the screen shares with another surface rather than
+/// through the readings: the live channel's followers read the blackboard once per change,
+/// and a screen that follows that channel renders the same read (ADR 0176). The answer was
+/// read now, and its source line names the capability as every other answer's does.
+pub fn answered(
+    ctx: &Context,
+    source: Source,
+    value: Result<Arc<Value>, String>,
+    took: Duration,
+) -> Answer {
+    let (route, exposure) = describe(ctx, source.capability);
+    Answer {
+        source,
+        route,
+        exposure,
+        value,
+        took,
+        standing: Standing::NOW,
+    }
+}
+
 /// One source asked through the executor.
 pub fn ask(ctx: &Context, source: Source) -> Answer {
     let (route, exposure) = describe(ctx, source.capability);
