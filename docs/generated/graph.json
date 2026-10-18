@@ -39692,15 +39692,16 @@
         "id": "majordomus://issue/I2813",
         "kind": "issue",
         "label": "I2813",
-        "summary": "A published page that answers 503 is asked again before it is called missing",
+        "summary": "A published page that answers 503, or does not answer, is asked again before it is called missing",
         "route": "/cockpit/objects/issue/i2813",
         "source": ".ai/repo/project/issues/I2813.yaml",
         "facts": {
           "acceptance_criteria": [
             "A page that answers 503 twice and then 200 passes, and the retry is said",
             "A page that answers 503 on every try fails as before, after a bounded number of retries",
+            "A page unanswered once (000) and then served passes, and the retry is said; one never answered fails after the same bound",
             "A listed page that answers 404 fails at once and is never retried",
-            "Removing the retry, retrying every status, or removing its bound each turns case 3226 red"
+            "Removing the retry, retrying every status, removing its bound, or leaving 000 out of it each turns case 3226 red"
           ],
           "created_at": "2026-10-17",
           "current_state": "verify-ui asks each listed page once, in one parallel curl, and a 503 is a missing page; with --timeout 0 nothing asks again.",

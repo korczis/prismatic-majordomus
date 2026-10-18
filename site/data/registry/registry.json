@@ -6,7 +6,7 @@
     "version": "0.29.0"
   },
   "registry": {
-    "fingerprint": "eadedef8c28f86783c4b268f0017b1f6ed17fca738e901d0988ae0e4a3e231c1",
+    "fingerprint": "9a1e33581fe6c7425a697ba15c5d85224387d48dc199fc7a2e74775a0bc35f07",
     "summary": {
       "total": 2528,
       "builtin": 202,
@@ -83893,7 +83893,7 @@
     ]
   },
   "index": {
-    "fingerprint": "ec8c17e20961d8538224dc4535de78d77d98217e36191f6db19c988919fd4aa7",
+    "fingerprint": "cf5498254c07be0a5bbee4f67c12ade6e6e06e5c1698acbe2ebf04405542a6eb",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -90206,7 +90206,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 174631
+        "bytes": 174673
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -98346,12 +98346,12 @@
         "uri": "majordomus://issue/I2813",
         "kind": "issue",
         "identity": "I2813",
-        "title": "A published page that answers 503 is asked again before it is called missing",
-        "description": "In scripts/pages verify-ui, ask again every page that answered 503, at most MJ_PAGES_RETRIES times (default 4) with a pause that starts at MJ_PAGES_RETRY_SECONDS (default 1) and doubles, and say each retry on stderr (\\\"retried /x: 503 ×2 then 200\\\", or \\\"still 503 after N retries\\\"); any other status, and a 503 that persists, fails exactly as before. Case 3221 holds both halves and the 404 that is never retried, against a server of its own.",
+        "title": "A published page that answers 503, or does not answer, is asked again before it is called missing",
+        "description": "In scripts/pages verify-ui, ask again every page that answered 503 or did not answer at all (000: a connection refused or timed out), at most MJ_PAGES_RETRIES times (default 4) with a pause that starts at MJ_PAGES_RETRY_SECONDS (default 1) and doubles, and say each retry on stderr (\\\"retried /x: 503 ×2 then 200\\\", \\\"retried /x: 000 ×1 then 200\\\", or \\\"still 503 after N retries\\\"); any other status, and a 503 or 000 that persists, fails exactly as before. Case 3226 holds both halves of each and the 404 that is never retried, against a server of its own.",
         "path": ".ai/repo/project/issues/I2813.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2080
+        "bytes": 2549
       },
       {
         "uri": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
@@ -106062,7 +106062,7 @@
         "identity": "test/cases/3226_a_pages_503_is_retried_before_a_page_is_called_missing.sh",
         "path": "test/cases/3226_a_pages_503_is_retried_before_a_page_is_called_missing.sh",
         "source_class": "case",
-        "bytes": 5564
+        "bytes": 7348
       },
       {
         "uri": "majordomus://test/test/cases/32_refusal_lifecycle.sh",

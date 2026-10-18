@@ -1318,33 +1318,42 @@ ui_round() {
   return 12
 }
 
-# A page that answered 503 is asked again, a few times with a doubling pause, before it is called
-# missing (I2813). GitHub Pages answers a burst of requests with a transient 503 that a reader a
-# second later does not meet; on 2026-10-17 that one answer reddened master's validate and 71a's
-# run, because a page was declared absent on its first 503. Only a 503 is asked again: any other
-# status, and a 503 that persists through every try, stays exactly what it was and fails as it
-# did. Each page asked again is said on stderr, with how often it answered 503 and what it
-# answered last, so a verdict that needed a retry reads that way.
-#   MJ_PAGES_RETRIES        how many times a 503 is asked again (default 4)
+# A page that answered 503, or did not answer at all (000: a connection refused or timed out), is
+# asked again, a few times with a doubling pause, before it is called missing (I2813). GitHub
+# Pages answers a burst of requests with a transient 503 that a reader a second later does not
+# meet; on 2026-10-17 that one answer reddened master's validate and 71a's run, because a page was
+# declared absent on its first 503. On 2026-10-17 at 23:49Z the scheduled run read five cockpit
+# pages as 000 and called them "not served" while each answered 200 a minute later. Only those two
+# are asked again: any other status, and a 503 or 000 that persists through every try, stays
+# exactly what it was and fails as it did. Each page asked again is said on stderr, with how often
+# it answered each and what it answered last, so a verdict that needed a retry reads that way.
+#   MJ_PAGES_RETRIES        how many times such a page is asked again (default 4)
 #   MJ_PAGES_RETRY_SECONDS  the first pause, doubled before each next try (default 1)
 ui_retry_unavailable() {   # <the base the pages' urls begin with, for the lines it writes>
-  local base="$1" tries="${MJ_PAGES_RETRIES:-4}" wait="${MJ_PAGES_RETRY_SECONDS:-1}" status url asked unavailable pause
+  local base="$1" tries="${MJ_PAGES_RETRIES:-4}" wait="${MJ_PAGES_RETRY_SECONDS:-1}" status url asked pause
+  local n503 n000 seen
   while IFS="$(printf '\t')" read -r status url; do
-    if [ "$status" = 503 ]; then
-      asked=0; unavailable=1; pause="$wait"
-      while [ "$status" = 503 ] && [ "$asked" -lt "$tries" ]; do
-        sleep "$pause"; pause=$(( pause * 2 )); asked=$(( asked + 1 ))
-        status="$(curl -sS -o /dev/null --max-time "${MJ_PAGES_PROBE_SECONDS:-10}" -H 'Cache-Control: no-cache' \
-          -w '%{http_code}' "$url" 2>/dev/null || true)"
-        [ -n "$status" ] || status=000
-        [ "$status" = 503 ] && unavailable=$(( unavailable + 1 ))
-      done
-      if [ "$status" = 503 ]; then
-        printf 'pages verify-ui: retried /%s: 503 ×%s, still 503 after %s retries\n' "${url#"$base"}" "$unavailable" "$asked" >&2
-      else
-        printf 'pages verify-ui: retried /%s: 503 ×%s then %s\n' "${url#"$base"}" "$unavailable" "$status" >&2
-      fi
-    fi
+    case "$status" in
+      503|000)
+        asked=0; pause="$wait"; n503=0; n000=0
+        [ "$status" = 503 ] && n503=1 || n000=1
+        while { [ "$status" = 503 ] || [ "$status" = 000 ]; } && [ "$asked" -lt "$tries" ]; do
+          sleep "$pause"; pause=$(( pause * 2 )); asked=$(( asked + 1 ))
+          status="$(curl -sS -o /dev/null --max-time "${MJ_PAGES_PROBE_SECONDS:-10}" -H 'Cache-Control: no-cache' \
+            -w '%{http_code}' "$url" 2>/dev/null || true)"
+          [ -n "$status" ] || status=000
+          case "$status" in 503) n503=$(( n503 + 1 )) ;; 000) n000=$(( n000 + 1 )) ;; esac
+        done
+        seen=""
+        [ "$n503" -gt 0 ] && seen="503 ×$n503"
+        [ "$n000" -gt 0 ] && seen="${seen:+$seen, }000 ×$n000"
+        if [ "$status" = 503 ] || [ "$status" = 000 ]; then
+          printf 'pages verify-ui: retried /%s: %s, still %s after %s retries\n' "${url#"$base"}" "$seen" "$status" "$asked" >&2
+        else
+          printf 'pages verify-ui: retried /%s: %s then %s\n' "${url#"$base"}" "$seen" "$status" >&2
+        fi
+        ;;
+    esac
     printf '%s\t%s\n' "$status" "$url"
   done < "$VR_WORK/codes" > "$VR_WORK/codes.retried"
   mv "$VR_WORK/codes.retried" "$VR_WORK/codes"
