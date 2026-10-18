@@ -5,7 +5,8 @@
 # capability the UI would not; every move is a click, and the page is never reloaded by the
 # test:
 #
-#   pick        the intent is chosen in /ui/idd from the list of intents
+#   pick        the intent is chosen in /ui/idd from the list of intents, and its title is the
+#               page's heading with the screen's name above it (I3001)
 #   read        its issues with their status, and the dependency: I0002 waits for I0001; every
 #               issue id on the screen is a link, and the issues that share a scope (I0001 and
 #               I0003) are one counted line that opens to the pairs (I2900)
@@ -194,6 +195,11 @@ try {
   await a.click('a[href="/ui/idd?intent=the-answer-is-known"]');
   await a.waitForURL(/intent=the-answer-is-known/);
   console.log('    pick: the workspace opened the-answer-is-known');
+  // the page is titled by the intent it opened, the screen's name above it (I3001)
+  const h1 = (await a.locator('h1').innerText()).trim();
+  if (h1 !== 'The answer is known') fail(`the page's heading reads "${h1}", not the intent's title`);
+  const eyebrow = (await a.locator('.mj-ui-eyebrow').innerText()).trim();
+  if (eyebrow.toLowerCase() !== 'intent workspace') fail(`the eyebrow reads "${eyebrow}"`);
 
   // read: the issues and the dependency, as the plan derives them
   if (await status(a, 'I0001') !== 'ready') fail(`I0001 reads ${await status(a, 'I0001')}, not ready`);
@@ -274,10 +280,10 @@ try {
   step = 'explained';
   // explained: the standing panel, filled from its own route, explains the intent
   await a.waitForFunction(() => {
-    const s = document.querySelector('section[aria-label="Why it stands where it stands"]');
+    const s = document.querySelector('section[aria-label="Why does it stand where it stands?"]');
     return s && !s.hasAttribute('data-panel-src') && s.querySelector('.mj-ui-source');
   }, null, { timeout: WAIT }).catch(() => fail('the standing panel was never filled'));
-  const standing = await a.locator('section[aria-label="Why it stands where it stands"]').innerText();
+  const standing = await a.locator('section[aria-label="Why does it stand where it stands?"]').innerText();
   for (const want of ['the-answer-holds', 'intent_realization.explain']) {
     if (!standing.includes(want)) fail(`the standing panel does not explain ${want}`);
   }

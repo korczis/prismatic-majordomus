@@ -27,8 +27,8 @@ use super::dashboard::milestone_row;
 use super::shell::View;
 use super::source::{ask_all, Answer, Source};
 use super::view::{
-    graph, hero, kpi, kpi_count, list, nothing, panel, panel_to, state, status_tone, table, text,
-    unanswered, wide, GraphNode, Layout,
+    graph, hero, hero_under, kpi, kpi_count, list, nothing, panel, panel_to, state, status_tone,
+    table, text, unanswered, wide, GraphNode, Layout,
 };
 
 /// The route of the screen.
@@ -53,6 +53,9 @@ pub const STANDING_PANEL: &str = "/ui/panels/standing";
 /// first intent `intents.list` reports at the earliest of these is opened. A presentation
 /// rule, printed on the screen, never a status.
 pub const PREFERRED_STAGES: &[&str] = &["executing", "verifying", "planned", "declared"];
+
+/// The question the standing panel answers, its heading and its accessible name.
+pub const STANDING_TITLE: &str = "Why does it stand where it stands?";
 
 /// Where the workspace of intent `id` is.
 pub fn href(id: &str) -> String {
@@ -165,10 +168,10 @@ pub fn screen(ctx: &Context, query: &[(String, String)]) -> View {
 fn headline(record: Option<&Answer>, intents: &Answer, next: &Answer) -> Vec<El> {
     let next_tile = match next.read("/issue/id").text().filter(|n| !n.is_empty()) {
         Some(n) => super::view::kpi_to(
-            kpi("Plan's next issue", &next.read("/issue/id")),
+            kpi("Next issue to start", &next.read("/issue/id")),
             &issue_href(&n),
         ),
-        None => kpi("Plan's next issue", &next.read("/issue/id")),
+        None => kpi("Next issue to start", &next.read("/issue/id")),
     };
     match record {
         Some(r) => vec![
@@ -202,14 +205,22 @@ fn render(
         .as_deref()
         .and_then(|id| all.iter().find(|i| text(i, "id") == id));
 
-    let top = hero(
-        "target",
-        "violet",
-        "Intent workspace",
-        "From what the work is for to the move that starts it.",
-        "One intent and everything that serves it: its milestones, their issues and what blocks them, the waves the dependencies allow and the graph of what waits for what.",
-        headline(record, intents, next),
-    );
+    let tagline = "From what the work is for to the move that starts it.";
+    let lead = "One intent and everything that serves it: its milestones, their issues and what blocks them, the waves the dependencies allow and the graph of what waits for what.";
+    let kpis = headline(record, intents, next);
+    // the chosen intent's title is the page's heading, the screen's name its eyebrow (I3001)
+    let top = match intent.map(|i| text(i, "title")).filter(|t| !t.is_empty()) {
+        Some(title) => hero_under(
+            "Intent workspace",
+            "target",
+            "violet",
+            &title,
+            tagline,
+            lead,
+            kpis,
+        ),
+        None => hero("target", "violet", "Intent workspace", tagline, lead, kpis),
+    };
 
     let mut grid = el("div")
         .class("mj-ui-grid")
@@ -219,7 +230,7 @@ fn render(
         (Some(id), None) => {
             if unanswered(intents).is_none() {
                 grid = grid.child(wide(panel(
-                    "Intent",
+                    "Which intent?",
                     "The intent the link names.",
                     nothing(&format!(
                         "{id} is not an intent of this repository: pick one above."
@@ -296,12 +307,12 @@ fn choice(intents: &Answer, open: Option<&str>) -> El {
             .class("mj-ui-stack")
             .child(table(&["Intent", "Stage", "Verdict"], rows, ""))
             .child(el("p").class("mj-ui-dim").text(format!(
-                "A link that names no intent opens the first one intents.list reports {}, in that order.",
+                "A link that names no intent opens the first intent whose stage is {}, in that order.",
                 PREFERRED_STAGES.join(", then ")
             )))
     });
     panel(
-        "Intents",
+        "Which intent?",
         "What the work is for: pick one to see what serves it.",
         body,
         &[intents],
@@ -350,7 +361,7 @@ fn milestones(roadmap: &Answer, intent: &Value) -> El {
         )
     });
     panel_to(
-        "Milestones",
+        "Which milestones carry it?",
         "The milestones this intent names, in the roadmap's order; issues done is a count, not the milestone's acceptance.",
         Some(super::roadmap::ROUTE),
         body,
@@ -459,8 +470,8 @@ fn issue_table(issues: &Answer, waves: &Answer, next: &Answer, mine: &[Value], i
         )
     });
     panel_to(
-        "Issues",
-        "Every issue of its milestones or naming it, by wave; a move opens its panel on this screen, where plan.transition makes it and refuses one the plan does not allow.",
+        "What work serves it?",
+        "Every issue of its milestones or naming it, by wave; a move opens its panel on this screen, where the plan makes it, or refuses it and says why.",
         Some(super::issues::ROUTE),
         body,
         &[issues, waves, next],
@@ -494,8 +505,8 @@ fn move_panel(ctx: &Context, issues: &Answer, mine: &[Value], issue: &str) -> El
                 )),
         });
     el("div").attr("id", "move").child(panel(
-        "Move",
-        "The issue's next move, made by plan.transition as an execution on this server; a move the plan does not allow is refused with the reason.",
+        "What does this move do?",
+        "The issue's next move, made as an execution on this server; a move the plan does not allow is refused with the reason.",
         body,
         &[issues],
     ))
@@ -570,7 +581,7 @@ fn wave_panel(waves: &Answer, mine: &[Value], known: &super::prose::Known) -> El
         body
     });
     panel(
-        "Waves",
+        "What can run together?",
         "An issue enters a wave once every dependency has left it; sharing a wave is necessary to run together, not sufficient.",
         body,
         &[waves],
@@ -652,8 +663,8 @@ fn dependency_graph(issues: &Answer, mine: &[Value]) -> El {
         )
     });
     panel(
-        "Dependencies",
-        "What waits for what, as the plan records it; a dependency outside this intent is drawn small.",
+        "What waits for what?",
+        "As the plan records it; a dependency outside this intent is drawn small.",
         body,
         &[issues],
     )
@@ -669,16 +680,16 @@ pub fn standing_href(id: &str) -> String {
 fn standing_placeholder(id: &str) -> El {
     el("section")
         .class("mj-ui-panel")
-        .attr("aria-label", "Why it stands where it stands")
+        .attr("aria-label", STANDING_TITLE)
         .attr("data-panel-src", standing_href(id))
         .attr("aria-busy", "false")
         .child(
             el("header").class("mj-ui-panel-head").child(
                 el("div")
                     .class("mj-ui-panel-heading")
-                    .child(el("h2").class("mj-ui-panel-title").text("Why it stands where it stands"))
+                    .child(el("h2").class("mj-ui-panel-title").text(STANDING_TITLE))
                     .child(el("p").class("mj-ui-panel-sub").text(
-                        "Asked on its own: intent_realization.explain joins the ledger, the session records and the peer board, which would hold this screen back.",
+                        "Asked on its own: the answer joins the ledger, the session records and the peer board, which would hold this screen back.",
                     )),
             ),
         )
@@ -714,10 +725,10 @@ fn named_intent(query: &[(String, String)]) -> Option<String> {
 pub fn standing_panel(ctx: &Context, query: &[(String, String)]) -> View {
     let Some(id) = named_intent(query) else {
         return View::new(
-            "Why it stands where it stands",
+            STANDING_TITLE,
             panel(
-                "Why it stands where it stands",
-                "One intent's standing, from intent_realization.explain.",
+                STANDING_TITLE,
+                "One intent's stage, its verdict and what it still misses.",
                 nothing("Name an intent: open it from the intent workspace."),
                 &[],
             ),
@@ -732,10 +743,10 @@ pub fn standing_panel(ctx: &Context, query: &[(String, String)]) -> View {
     let plan = ask_all(ctx, &[ISSUES, ROADMAP]);
     let body = standing_body(&id, &explain, &known(&plan[&ISSUES], &plan[&ROADMAP]));
     View::new(
-        "Why it stands where it stands",
+        STANDING_TITLE,
         panel(
-            "Why it stands where it stands",
-            &format!("{id}: its stage, its verdict, what is not yet met and who is on it, as intent_realization.explain derives them."),
+            STANDING_TITLE,
+            &format!("{id}: its stage, its verdict, what is still missing and who is on it."),
             body,
             &[&explain],
         ),
@@ -828,21 +839,21 @@ fn standing_body(id: &str, explain: &Answer, known: &super::prose::Known) -> El 
         let mut stack = el("div")
             .class("mj-ui-stack")
             .child(sentences)
-            .child(
-                el("h3")
-                    .class("mj-ui-panel-title")
-                    .text("What is not yet met"),
-            )
+            .child(el("h3").class("mj-ui-panel-title").text("What is missing?"))
             .child(criteria)
             .child(
                 el("h3")
                     .class("mj-ui-panel-title")
-                    .text("The work realising it"),
+                    .text("What work realises it?"),
             )
             .child(realising);
         if !findings.is_empty() {
             stack = stack
-                .child(el("h3").class("mj-ui-panel-title").text("Drift"))
+                .child(
+                    el("h3")
+                        .class("mj-ui-panel-title")
+                        .text("Where has the record drifted?"),
+                )
                 .child(drift);
         }
         stack
@@ -894,8 +905,8 @@ fn moves_panel(moves: &Answer, mine: &[Value]) -> El {
         )
     });
     panel(
-        "Moves made here",
-        "Every plan.transition this server ran on the intent's issues, newest first.",
+        "What was done here?",
+        "Every move this server made on the intent's issues, newest first.",
         body,
         &[moves],
     )
@@ -1029,6 +1040,62 @@ mod tests {
         assert!(html.contains("Issues of this intent in it"), "{html}");
         assert!(!html.contains("No issue serves this intent yet."), "{html}");
         assert!(!html.contains("NaN") && !html.contains("undefined"));
+    }
+
+    /// The text of every element of `class` in `html`, in order.
+    fn texts_of(html: &str, class: &str) -> Vec<String> {
+        let open = format!("class=\"{class}\"");
+        html.match_indices(&open)
+            .filter_map(|(at, _)| {
+                let rest = &html[at..];
+                let start = rest.find('>')? + 1;
+                let end = rest[start..].find('<')? + start;
+                Some(rest[start..end].to_string())
+            })
+            .collect()
+    }
+
+    /// The chosen intent's title is the page's heading with the screen's name above it, and
+    /// every panel is titled as a question a person asks, in plain words: no heading names a
+    /// capability, which only the panel's source line does (I3001, I2915).
+    #[test]
+    fn the_intent_is_the_heading_and_every_panel_asks_a_plain_question() {
+        let repo = planned_with_an_intent();
+        let ctx = repo.context().expect("a context");
+        let html = screen(&ctx, &[]).main.render();
+        assert_eq!(
+            texts_of(&html, "mj-ui-title"),
+            ["The first intent"],
+            "{html}"
+        );
+        assert_eq!(
+            texts_of(&html, "mj-ui-eyebrow"),
+            ["Intent workspace"],
+            "{html}"
+        );
+        let titles = texts_of(&html, "mj-ui-panel-title");
+        assert!(titles.len() >= 5, "the panels are titled: {titles:?}");
+        for title in &titles {
+            assert!(title.ends_with('?'), "{title} is a question");
+            assert!(
+                !title.split_whitespace().any(|w| {
+                    let w = w.trim_end_matches('?');
+                    w.contains('.') || w.contains('_')
+                }),
+                "{title} names no capability"
+            );
+        }
+        // with no intent recorded there is no record to title the page: the screen's name is
+        let empty = SyntheticRepository::planned();
+        let html = screen(&empty.context().expect("a context"), &[])
+            .main
+            .render();
+        assert_eq!(
+            texts_of(&html, "mj-ui-title"),
+            ["Intent workspace"],
+            "{html}"
+        );
+        assert!(texts_of(&html, "mj-ui-eyebrow").is_empty(), "{html}");
     }
 
     /// An issue added to the plan's record appears in the workspace with no other edit.
@@ -1194,7 +1261,7 @@ mod tests {
             milestones: Default::default(),
         };
         let html = standing_body("i", &explain, &known).render();
-        assert!(html.contains("The work realising it"), "{html}");
+        assert!(html.contains("What work realises it?"), "{html}");
         assert!(
             html.contains(">task t-1</span>"),
             "the unit is named: {html}"
@@ -1214,7 +1281,10 @@ mod tests {
             html.contains("<td></td><td></td>"),
             "a unit not linked to i has no issue: {html}"
         );
-        assert!(html.contains(">Drift</h3>"), "{html}");
+        assert!(
+            html.contains(">Where has the record drifted?</h3>"),
+            "{html}"
+        );
         assert!(
             html.contains("<li>the scope drifted past <code class=\"mj-ui-code\">src/a.rs</code> (<a class=\"mj-ui-link mj-ui-mono\" href=\"/ui/prs?issue=I7#issue\">I7</a>), not I99</li>"),
             "a drift message is prose: its path is code, the issue the plan holds a link, one it does not hold text (I3000): {html}"

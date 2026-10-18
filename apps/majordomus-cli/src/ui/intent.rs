@@ -180,7 +180,7 @@ pub fn inspector_closing_to(intents: &Answer, issues: &Answer, id: &str, close: 
                 .child(
                     el("h4")
                         .class("mj-ui-panel-title")
-                        .text("What it holds the work to"),
+                        .text("What does it hold the work to?"),
                 )
                 .child({
                     let inv = strings(&i, "invariants");
@@ -193,7 +193,7 @@ pub fn inspector_closing_to(intents: &Answer, issues: &Answer, id: &str, close: 
                 .child(
                     el("h4")
                         .class("mj-ui-panel-title")
-                        .text("Milestones that serve it"),
+                        .text("Which milestones serve it?"),
                 )
                 .child(if milestones.is_empty() {
                     nothing("No milestone serves it yet.")
@@ -210,7 +210,7 @@ pub fn inspector_closing_to(intents: &Answer, issues: &Answer, id: &str, close: 
                 .child(
                     el("h4")
                         .class("mj-ui-panel-title")
-                        .text("Issues that serve it"),
+                        .text("Which issues serve it?"),
                 )
                 .child(if serving.is_empty() {
                     nothing("No issue of the plan names it.")
@@ -225,7 +225,7 @@ pub fn inspector_closing_to(intents: &Answer, issues: &Answer, id: &str, close: 
                 .child(
                     el("h4")
                         .class("mj-ui-panel-title")
-                        .text("When it is satisfied"),
+                        .text("When is it satisfied?"),
                 )
                 .child(table(
                     &["Criterion", "Evidence", "State", "Met", "Reproduce"],
@@ -234,7 +234,7 @@ pub fn inspector_closing_to(intents: &Answer, issues: &Answer, id: &str, close: 
                 ))
         });
     panel(
-        "Intent",
+        "What is this intent for?",
         "What the work is for, what it holds the work to, and whether the evidence says it is met.",
         body,
         &[intents, issues],
