@@ -4,7 +4,7 @@ description: "Read every conversation of a declared external workspace into a wo
 ---
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: .ai/repo/skills/promote-a-workspace/SKILL.md; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.29.0 -->
+     Generator: majordomus-cli 0.30.0 -->
 
 # Promote a workspace into the layer
 

@@ -3,7 +3,7 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the claims, rules, features, use cases, commands, documented command-line examples and builtin capabilities this repository declares, and the first coverage and negative headers of its test cases; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.29.0"
+    "version": "0.30.0"
   },
   "route": "/evidence/",
   "kinds": [
@@ -759,6 +759,21 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:plan.delivery",
+      "path": "/evidence/capabilities/plan-delivery/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:plan.drift",
+      "path": "/evidence/capabilities/plan-drift/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:plan.flight",
+      "path": "/evidence/capabilities/plan-flight/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:plan.issues",
       "path": "/evidence/capabilities/plan-issues/"
     },
@@ -1046,6 +1061,11 @@
       "kind": "capability",
       "subject": "capability:worktree.topology",
       "path": "/evidence/capabilities/worktree-topology/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:worktree.trunk",
+      "path": "/evidence/capabilities/worktree-trunk/"
     },
     {
       "kind": "capability",
@@ -1674,6 +1694,11 @@
     },
     {
       "kind": "claim",
+      "subject": "claim:mcp-client-always-served",
+      "path": "/evidence/claims/mcp-client-always-served/"
+    },
+    {
+      "kind": "claim",
       "subject": "claim:mcp-client-autostart",
       "path": "/evidence/claims/mcp-client-autostart/"
     },
@@ -2004,6 +2029,11 @@
     },
     {
       "kind": "claim",
+      "subject": "claim:release-prerelease-channel",
+      "path": "/evidence/claims/release-prerelease-channel/"
+    },
+    {
+      "kind": "claim",
       "subject": "claim:reproduce-command",
       "path": "/evidence/claims/reproduce-command/"
     },
@@ -2141,6 +2171,11 @@
       "kind": "claim",
       "subject": "claim:session-records",
       "path": "/evidence/claims/session-records/"
+    },
+    {
+      "kind": "claim",
+      "subject": "claim:session-start-prompt",
+      "path": "/evidence/claims/session-start-prompt/"
     },
     {
       "kind": "claim",
@@ -2974,6 +3009,16 @@
     },
     {
       "kind": "command",
+      "subject": "command:plan delivery",
+      "path": "/evidence/commands/plan-delivery/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:plan drift",
+      "path": "/evidence/commands/plan-drift/"
+    },
+    {
+      "kind": "command",
       "subject": "command:plan",
       "path": "/evidence/commands/plan/"
     },
@@ -3446,6 +3491,11 @@
       "kind": "command",
       "subject": "command:worktree topology",
       "path": "/evidence/commands/worktree-topology/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:worktree trunk",
+      "path": "/evidence/commands/worktree-trunk/"
     },
     {
       "kind": "command",
@@ -5478,6 +5528,40 @@
       "mechanisms": [],
       "findings": []
     },
+    "capability:plan.delivery": {
+      "kind": "capability",
+      "id": "plan.delivery",
+      "page": "/evidence/capabilities/plan-delivery/",
+      "programs": [],
+      "members": [
+        "command:plan delivery"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:plan.drift": {
+      "kind": "capability",
+      "id": "plan.drift",
+      "page": "/evidence/capabilities/plan-drift/",
+      "programs": [],
+      "members": [
+        "command:plan drift"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:plan.flight": {
+      "kind": "capability",
+      "id": "plan.flight",
+      "page": "/evidence/capabilities/plan-flight/",
+      "programs": [],
+      "members": [],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
     "capability:plan.issues": {
       "kind": "capability",
       "id": "plan.issues",
@@ -6125,6 +6209,18 @@
       "programs": [],
       "members": [
         "command:worktree topology"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:worktree.trunk": {
+      "kind": "capability",
+      "id": "worktree.trunk",
+      "page": "/evidence/capabilities/worktree-trunk/",
+      "programs": [],
+      "members": [
+        "command:worktree trunk"
       ],
       "routes": [],
       "mechanisms": [],
@@ -8974,6 +9070,29 @@
       "mechanisms": [],
       "findings": []
     },
+    "claim:mcp-client-always-served": {
+      "kind": "claim",
+      "id": "mcp-client-always-served",
+      "status": "guaranteed",
+      "page": "/evidence/claims/mcp-client-always-served/",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "claim",
+          "test": "suite:3177_a_client_always_gets_a_server",
+          "path": "test/cases/3177_a_client_always_gets_a_server.sh",
+          "category": "e2e",
+          "inputs": [
+            "docs/MCP.md",
+            "bin/majordomus-cli",
+            "test/cases/3177_a_client_always_gets_a_server.sh"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "claim:mcp-client-autostart": {
       "kind": "claim",
       "id": "mcp-client-autostart",
@@ -10492,6 +10611,29 @@
       "mechanisms": [],
       "findings": []
     },
+    "claim:release-prerelease-channel": {
+      "kind": "claim",
+      "id": "release-prerelease-channel",
+      "status": "guaranteed",
+      "page": "/evidence/claims/release-prerelease-channel/",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "claim",
+          "test": "suite:3179_a_prerelease_is_never_published_as_stable",
+          "path": "test/cases/3179_a_prerelease_is_never_published_as_stable.sh",
+          "category": "e2e",
+          "inputs": [
+            "docs/DISTRIBUTION.md",
+            "scripts/release-record",
+            "test/cases/3179_a_prerelease_is_never_published_as_stable.sh"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "claim:reproduce-command": {
       "kind": "claim",
       "id": "reproduce-command",
@@ -11115,6 +11257,29 @@
             "docs/SCHEMAS.md",
             "lib/session.sh",
             "test/cases/63_session_records.sh"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "claim:session-start-prompt": {
+      "kind": "claim",
+      "id": "session-start-prompt",
+      "status": "guaranteed",
+      "page": "/evidence/claims/session-start-prompt/",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "claim",
+          "test": "suite:3221_a_bare_session_start_joins_the_cluster",
+          "path": "test/cases/3221_a_bare_session_start_joins_the_cluster.sh",
+          "category": "e2e",
+          "inputs": [
+            "docs/MCP.md",
+            "share/shell/session-start.sh",
+            "test/cases/3221_a_bare_session_start_joins_the_cluster.sh"
           ]
         }
       ],
@@ -12364,6 +12529,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:3190_a_scope_of_dot_is_the_repository",
+          "path": "test/cases/3190_a_scope_of_dot_is_the_repository.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:32_refusal_lifecycle",
           "path": "test/cases/32_refusal_lifecycle.sh",
           "category": "e2e"
@@ -12432,6 +12603,12 @@
           "via": "negative",
           "test": "suite:25_continuity_lifecycle",
           "path": "test/cases/25_continuity_lifecycle.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:3190_a_scope_of_dot_is_the_repository",
+          "path": "test/cases/3190_a_scope_of_dot_is_the_repository.sh",
           "category": "e2e"
         },
         {
@@ -13087,6 +13264,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:3210_a_candidate_cites_its_own_commit",
+          "path": "test/cases/3210_a_candidate_cites_its_own_commit.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:33_event_registry",
           "path": "test/cases/33_event_registry.sh",
           "category": "e2e"
@@ -13527,6 +13710,12 @@
           "via": "behaviour",
           "test": "suite:3036_a_worktree_runs_its_own_hooks",
           "path": "test/cases/3036_a_worktree_runs_its_own_hooks.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:3340_a_fresh_init_leaves_doctor_clean",
+          "path": "test/cases/3340_a_fresh_init_leaves_doctor_clean.sh",
           "category": "e2e"
         },
         {
@@ -14819,6 +15008,12 @@
           "category": "e2e"
         },
         {
+          "via": "behaviour",
+          "test": "suite:3340_a_fresh_init_leaves_doctor_clean",
+          "path": "test/cases/3340_a_fresh_init_leaves_doctor_clean.sh",
+          "category": "e2e"
+        },
+        {
           "via": "negative",
           "test": "suite:01_init",
           "path": "test/cases/01_init.sh",
@@ -15048,6 +15243,12 @@
           "via": "behaviour",
           "test": "suite:3063_a_branch_episode_drains_the_outbox",
           "path": "test/cases/3063_a_branch_episode_drains_the_outbox.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:3210_a_candidate_cites_its_own_commit",
+          "path": "test/cases/3210_a_candidate_cites_its_own_commit.sh",
           "category": "e2e"
         },
         {
@@ -15861,6 +16062,24 @@
       "routes": [
         {
           "via": "behaviour",
+          "test": "suite:3100_an_issue_delivery_is_inferred",
+          "path": "test/cases/3100_an_issue_delivery_is_inferred.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:3101_merged_work_unrecorded_is_drift",
+          "path": "test/cases/3101_merged_work_unrecorded_is_drift.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:3102_a_milestone_version_is_inferred",
+          "path": "test/cases/3102_a_milestone_version_is_inferred.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:40_project_model",
           "path": "test/cases/40_project_model.sh",
           "category": "e2e"
@@ -15966,6 +16185,44 @@
           "test": "suite:582_the_done_guard_holds_in_both_engines",
           "path": "test/cases/582_the_done_guard_holds_in_both_engines.sh",
           "category": "e2e"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:plan delivery": {
+      "kind": "command",
+      "id": "plan delivery",
+      "page": "/evidence/commands/plan-delivery/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:plan drift": {
+      "kind": "command",
+      "id": "plan drift",
+      "page": "/evidence/commands/plan-drift/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
         }
       ],
       "mechanisms": [],
@@ -17490,6 +17747,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:3190_a_scope_of_dot_is_the_repository",
+          "path": "test/cases/3190_a_scope_of_dot_is_the_repository.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:32_refusal_lifecycle",
           "path": "test/cases/32_refusal_lifecycle.sh",
           "category": "e2e"
@@ -17589,6 +17852,12 @@
           "via": "behaviour",
           "test": "suite:3113_the_adoption_footprint_is_inventoried",
           "path": "test/cases/3113_the_adoption_footprint_is_inventoried.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:3340_a_fresh_init_leaves_doctor_clean",
+          "path": "test/cases/3340_a_fresh_init_leaves_doctor_clean.sh",
           "category": "e2e"
         },
         {
@@ -18433,6 +18702,25 @@
       "kind": "command",
       "id": "worktree topology",
       "page": "/evidence/commands/worktree-topology/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:worktree trunk": {
+      "kind": "command",
+      "id": "worktree trunk",
+      "page": "/evidence/commands/worktree-trunk/",
       "programs": [
         "native"
       ],
@@ -20743,6 +21031,42 @@
       "mechanisms": [],
       "findings": []
     },
+    "mcp:majordomus_plan_delivery": {
+      "kind": "mcp",
+      "id": "majordomus_plan_delivery",
+      "alias_of": "capability:plan.delivery",
+      "programs": [],
+      "members": [
+        "capability:plan.delivery"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_plan_drift": {
+      "kind": "mcp",
+      "id": "majordomus_plan_drift",
+      "alias_of": "capability:plan.drift",
+      "programs": [],
+      "members": [
+        "capability:plan.drift"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_plan_flight": {
+      "kind": "mcp",
+      "id": "majordomus_plan_flight",
+      "alias_of": "capability:plan.flight",
+      "programs": [],
+      "members": [
+        "capability:plan.flight"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
     "mcp:majordomus_plan_issues": {
       "kind": "mcp",
       "id": "majordomus_plan_issues",
@@ -21494,6 +21818,18 @@
       "programs": [],
       "members": [
         "capability:worktree.status"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_worktree_trunk": {
+      "kind": "mcp",
+      "id": "majordomus_worktree_trunk",
+      "alias_of": "capability:worktree.trunk",
+      "programs": [],
+      "members": [
+        "capability:worktree.trunk"
       ],
       "routes": [],
       "mechanisms": [],
@@ -22521,6 +22857,16 @@
       "routes": [
         {
           "via": "rule",
+          "test": "suite:3102_a_milestone_version_is_inferred",
+          "path": "test/cases/3102_a_milestone_version_is_inferred.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/3102_a_milestone_version_is_inferred.sh",
+            ".ai/repo/rules/vendor/majordomus/rules/roadmap-integrity.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
           "test": "suite:49_roadmap_doctrine",
           "path": "test/cases/49_roadmap_doctrine.sh",
           "category": "e2e",
@@ -22862,6 +23208,27 @@
           "inputs": [
             "test/cases/3002_a_build_never_waits_in_silence.sh",
             ".ai/repo/rules/project/a-build-never-waits-in-silence-on-anothers-lock.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "rule:project.a-checkout-serves-the-current-trunk": {
+      "kind": "rule",
+      "id": "project.a-checkout-serves-the-current-trunk",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:3176_a_checkout_serves_the_current_trunk",
+          "path": "test/cases/3176_a_checkout_serves_the_current_trunk.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/3176_a_checkout_serves_the_current_trunk.sh",
+            ".ai/repo/rules/project/a-checkout-serves-the-current-trunk.v1.md"
           ]
         }
       ],
@@ -23240,6 +23607,36 @@
           "category": "e2e",
           "inputs": [
             "test/cases/276_disk_is_bounded.sh",
+            ".ai/repo/rules/project/accumulation-is-measured.v2.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:3080_idle_incremental_sessions_are_pruned",
+          "path": "test/cases/3080_idle_incremental_sessions_are_pruned.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/3080_idle_incremental_sessions_are_pruned.sh",
+            ".ai/repo/rules/project/accumulation-is-measured.v2.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:3196_stale_crate_artifacts_are_pruned_under_cargos_lock",
+          "path": "test/cases/3196_stale_crate_artifacts_are_pruned_under_cargos_lock.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/3196_stale_crate_artifacts_are_pruned_under_cargos_lock.sh",
+            ".ai/repo/rules/project/accumulation-is-measured.v2.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:3197_idle_private_build_dirs_are_reclaimed",
+          "path": "test/cases/3197_idle_private_build_dirs_are_reclaimed.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/3197_idle_private_build_dirs_are_reclaimed.sh",
             ".ai/repo/rules/project/accumulation-is-measured.v2.md"
           ]
         }
@@ -25737,6 +26134,16 @@
       "routes": [
         {
           "via": "rule",
+          "test": "suite:3177_a_client_always_gets_a_server",
+          "path": "test/cases/3177_a_client_always_gets_a_server.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/3177_a_client_always_gets_a_server.sh",
+            ".ai/repo/rules/project/shared-server-resilience.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
           "test": "suite:90_mcp_shared_server",
           "path": "test/cases/90_mcp_shared_server.sh",
           "category": "e2e",
@@ -27986,6 +28393,8 @@
     "crate:observatory",
     "crate:pack",
     "crate:peer_claims",
+    "crate:plan_delivery",
+    "crate:plan_drift",
     "crate:properties",
     "crate:providers_projection",
     "crate:reasoning_mesh",
@@ -28002,7 +28411,11 @@
     "crate:shared_units",
     "crate:tool_input_schemas",
     "crate:ui_idd",
+    "crate:ui_idd_evidence",
+    "crate:ui_idd_live",
+    "crate:ui_idd_moves",
     "crate:ui_links",
+    "crate:ui_roadmap",
     "crate:worktree",
     "suite:09_site_mobile_first",
     "suite:1023_a_branch_cannot_widen_the_mesh_trust",
@@ -28098,14 +28511,28 @@
     "suite:3066_a_session_joins_the_mesh_at_start",
     "suite:3069_an_edit_no_claim_covers_is_refused",
     "suite:3084_a_case_near_its_budget_is_named",
+    "suite:3103_the_roadmap_draws_every_milestone",
+    "suite:3104_the_ui_roadmap_reads_delivery",
     "suite:3105_the_homepage_states_no_present_it_does_not_read",
     "suite:310_rustdoc_projection",
     "suite:3110_a_served_surface_names_its_checkout",
+    "suite:3112_a_publication_that_did_not_arrive_is_a_finding",
     "suite:3125_the_reaper_asks_cargo_for_the_build_dir",
     "suite:3131_a_new_worktree_starts_from_the_remote_trunk",
     "suite:318_a_partial_sweep_says_so",
+    "suite:3212_a_prerelease_version_is_bumped_and_ordered",
+    "suite:3220_the_idd_loop_is_walked_in_a_browser",
+    "suite:3222_an_alpha_publishes_beside_the_latest_release",
+    "suite:3223_the_release_smoke_installs_an_alpha_pinned",
+    "suite:3224_a_published_alpha_owes_its_record",
+    "suite:3225_the_installer_takes_an_alpha_only_by_name",
+    "suite:3226_a_pages_503_is_retried_before_a_page_is_called_missing",
+    "suite:3240_the_published_screens_carry_their_slow_panels",
     "suite:330_a_contract_is_the_kind_it_declares",
     "suite:331_knowledge_nodes_is_gated",
+    "suite:3342_a_dry_run_initialises_nothing",
+    "suite:3343_an_unobserved_mesh_is_never_zero",
+    "suite:3362_every_snapshot_read_can_ask_the_forge",
     "suite:343_the_cockpit_shows_who_else_is_here",
     "suite:349_a_step_reports_its_own_time",
     "suite:34_command_fixtures",

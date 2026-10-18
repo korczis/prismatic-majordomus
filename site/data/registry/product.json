@@ -3,9 +3,9 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the product features of this repository's layer, resolved against the registry, the index, the catalogue and the topology; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.29.0"
+    "version": "0.30.0"
   },
-  "fingerprint": "49d4dc818d35823f779393e8ed22d82cb31b21d6cdde4bb7d68d29d91a3ed821",
+  "fingerprint": "e40b9f808a2dedd04770e5bd763b236d316653339e774c2a52484c8cc342dd2b",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -1162,7 +1162,7 @@
         "use_cases": 6,
         "rules": 13,
         "enforced_rules": 11,
-        "capabilities": 73,
+        "capabilities": 77,
         "moments": 17
       },
       "evidence": {
@@ -3087,7 +3087,7 @@
         },
         {
           "id": "no-network",
-          "claim": "Nothing performs a network call, evaluates generated text, or deletes recursively",
+          "claim": "The shell tool performs no network call, evaluates no generated text and deletes nothing recursively; its one declared request is the loopback peer probe",
           "status": "guaranteed",
           "test": "test/cases/08_no_forbidden_constructs.sh"
         },
@@ -3229,7 +3229,7 @@
         "use_cases": 10,
         "rules": 15,
         "enforced_rules": 14,
-        "capabilities": 134,
+        "capabilities": 137,
         "moments": 38
       },
       "evidence": {
@@ -3509,7 +3509,7 @@
         },
         {
           "name": "claim",
-          "objects": 247
+          "objects": 250
         }
       ],
       "rule_refs": [
@@ -3782,11 +3782,11 @@
       "counts": {
         "capabilities": 12,
         "mcp_tools": 12,
-        "mcp_resources": 320,
+        "mcp_resources": 323,
         "http_routes": 12,
         "cli_paths": 11,
         "commands": 2,
-        "objects": 313,
+        "objects": 316,
         "rules": 5,
         "enforced_rules": 4,
         "docs": 3,
@@ -4811,6 +4811,15 @@
               "cli": "majordomus worktree topology"
             },
             {
+              "id": "worktree.trunk",
+              "title": "How far a checkout is from the remote trunk",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_worktree_trunk",
+              "route": "GET /api/v1/worktrees/trunk",
+              "cli": "majordomus worktree trunk"
+            },
+            {
               "id": "worktree.uncommitted",
               "title": "Uncommitted work in the linked worktrees, and what holds it",
               "kind": "query",
@@ -5184,11 +5193,11 @@
         "worktrees"
       ],
       "counts": {
-        "capabilities": 17,
-        "mcp_tools": 17,
+        "capabilities": 18,
+        "mcp_tools": 18,
         "mcp_resources": 2,
-        "http_routes": 17,
-        "cli_paths": 11,
+        "http_routes": 18,
+        "cli_paths": 12,
         "commands": 3,
         "objects": 0,
         "rules": 5,
@@ -5321,6 +5330,15 @@
               "cli": "majordomus worktree topology"
             },
             {
+              "id": "worktree.trunk",
+              "title": "How far a checkout is from the remote trunk",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_worktree_trunk",
+              "route": "GET /api/v1/worktrees/trunk",
+              "cli": "majordomus worktree trunk"
+            },
+            {
               "id": "worktree.uncommitted",
               "title": "Uncommitted work in the linked worktrees, and what holds it",
               "kind": "query",
@@ -5450,11 +5468,11 @@
         "planning"
       ],
       "counts": {
-        "capabilities": 6,
-        "mcp_tools": 6,
+        "capabilities": 7,
+        "mcp_tools": 7,
         "mcp_resources": 2,
-        "http_routes": 6,
-        "cli_paths": 6,
+        "http_routes": 7,
+        "cli_paths": 7,
         "commands": 0,
         "objects": 0,
         "rules": 2,
@@ -6866,11 +6884,11 @@
       "kind_refs": [
         {
           "name": "session",
-          "objects": 90
+          "objects": 91
         },
         {
           "name": "prompt",
-          "objects": 6
+          "objects": 7
         }
       ],
       "rule_refs": [
@@ -7220,11 +7238,11 @@
       "counts": {
         "capabilities": 20,
         "mcp_tools": 20,
-        "mcp_resources": 101,
+        "mcp_resources": 103,
         "http_routes": 20,
         "cli_paths": 8,
         "commands": 7,
-        "objects": 96,
+        "objects": 98,
         "rules": 8,
         "enforced_rules": 7,
         "docs": 2,
@@ -7442,15 +7460,15 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 117
+          "objects": 119
         },
         {
           "name": "knowledge",
-          "objects": 4
+          "objects": 25
         },
         {
           "name": "document",
-          "objects": 348
+          "objects": 351
         }
       ],
       "rule_refs": [
@@ -7723,11 +7741,11 @@
       "counts": {
         "capabilities": 5,
         "mcp_tools": 5,
-        "mcp_resources": 472,
+        "mcp_resources": 498,
         "http_routes": 5,
         "cli_paths": 3,
         "commands": 6,
-        "objects": 469,
+        "objects": 495,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -7962,7 +7980,7 @@
       "kind_refs": [
         {
           "name": "rule",
-          "objects": 187
+          "objects": 188
         }
       ],
       "rule_refs": [
@@ -8338,11 +8356,11 @@
       "counts": {
         "capabilities": 7,
         "mcp_tools": 5,
-        "mcp_resources": 189,
+        "mcp_resources": 190,
         "http_routes": 7,
         "cli_paths": 4,
         "commands": 5,
-        "objects": 187,
+        "objects": 188,
         "rules": 7,
         "enforced_rules": 7,
         "docs": 2,
@@ -9745,6 +9763,32 @@
           "source_path": "apps/majordomus-cli/src/capability/builtin/plan.rs",
           "capabilities": [
             {
+              "id": "plan.delivery",
+              "title": "How far each issue's work has travelled",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_plan_delivery",
+              "route": "GET /api/v1/plan/delivery",
+              "cli": "majordomus plan delivery"
+            },
+            {
+              "id": "plan.drift",
+              "title": "Where the plan's stamps contradict the delivered work",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_plan_drift",
+              "route": "GET /api/v1/plan/drift",
+              "cli": "majordomus plan drift"
+            },
+            {
+              "id": "plan.flight",
+              "title": "Where the work is now",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_plan_flight",
+              "route": "GET /api/v1/plan/flight"
+            },
+            {
               "id": "plan.issues",
               "title": "The issues, filtered by what the graph derived",
               "kind": "query",
@@ -10244,11 +10288,11 @@
       ],
       "backlinks": [],
       "counts": {
-        "capabilities": 58,
-        "mcp_tools": 51,
+        "capabilities": 61,
+        "mcp_tools": 54,
         "mcp_resources": 9,
-        "http_routes": 55,
-        "cli_paths": 17,
+        "http_routes": 58,
+        "cli_paths": 19,
         "commands": 0,
         "objects": 1,
         "rules": 2,
@@ -10519,6 +10563,32 @@
           "stability": "behaviorally_verified",
           "source_path": "apps/majordomus-cli/src/capability/builtin/plan.rs",
           "capabilities": [
+            {
+              "id": "plan.delivery",
+              "title": "How far each issue's work has travelled",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_plan_delivery",
+              "route": "GET /api/v1/plan/delivery",
+              "cli": "majordomus plan delivery"
+            },
+            {
+              "id": "plan.drift",
+              "title": "Where the plan's stamps contradict the delivered work",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_plan_drift",
+              "route": "GET /api/v1/plan/drift",
+              "cli": "majordomus plan drift"
+            },
+            {
+              "id": "plan.flight",
+              "title": "Where the work is now",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_plan_flight",
+              "route": "GET /api/v1/plan/flight"
+            },
             {
               "id": "plan.issues",
               "title": "The issues, filtered by what the graph derived",
@@ -11609,11 +11679,11 @@
         "observatory"
       ],
       "counts": {
-        "capabilities": 97,
-        "mcp_tools": 89,
+        "capabilities": 100,
+        "mcp_tools": 92,
         "mcp_resources": 16,
-        "http_routes": 94,
-        "cli_paths": 41,
+        "http_routes": 97,
+        "cli_paths": 43,
         "commands": 0,
         "objects": 0,
         "rules": 3,
@@ -12120,7 +12190,7 @@
       "kind_refs": [
         {
           "name": "session",
-          "objects": 90
+          "objects": 91
         }
       ],
       "rule_refs": [
@@ -12353,11 +12423,11 @@
       "counts": {
         "capabilities": 0,
         "mcp_tools": 0,
-        "mcp_resources": 90,
+        "mcp_resources": 91,
         "http_routes": 0,
         "cli_paths": 0,
         "commands": 4,
-        "objects": 90,
+        "objects": 91,
         "rules": 4,
         "enforced_rules": 4,
         "docs": 2,
@@ -12701,7 +12771,7 @@
         },
         {
           "id": "no-network",
-          "claim": "Nothing performs a network call, evaluates generated text, or deletes recursively",
+          "claim": "The shell tool performs no network call, evaluates no generated text and deletes nothing recursively; its one declared request is the loopback peer probe",
           "status": "guaranteed",
           "test": "test/cases/08_no_forbidden_constructs.sh"
         },
@@ -12914,6 +12984,32 @@
           "stability": "behaviorally_verified",
           "source_path": "apps/majordomus-cli/src/capability/builtin/plan.rs",
           "capabilities": [
+            {
+              "id": "plan.delivery",
+              "title": "How far each issue's work has travelled",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_plan_delivery",
+              "route": "GET /api/v1/plan/delivery",
+              "cli": "majordomus plan delivery"
+            },
+            {
+              "id": "plan.drift",
+              "title": "Where the plan's stamps contradict the delivered work",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_plan_drift",
+              "route": "GET /api/v1/plan/drift",
+              "cli": "majordomus plan drift"
+            },
+            {
+              "id": "plan.flight",
+              "title": "Where the work is now",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_plan_flight",
+              "route": "GET /api/v1/plan/flight"
+            },
             {
               "id": "plan.issues",
               "title": "The issues, filtered by what the graph derived",
@@ -13128,11 +13224,11 @@
       "kind_refs": [
         {
           "name": "milestone",
-          "objects": 41
+          "objects": 42
         },
         {
           "name": "issue",
-          "objects": 425
+          "objects": 475
         },
         {
           "name": "intent",
@@ -13340,13 +13436,13 @@
       ],
       "backlinks": [],
       "counts": {
-        "capabilities": 23,
-        "mcp_tools": 23,
-        "mcp_resources": 482,
-        "http_routes": 23,
-        "cli_paths": 11,
+        "capabilities": 26,
+        "mcp_tools": 26,
+        "mcp_resources": 533,
+        "http_routes": 26,
+        "cli_paths": 13,
         "commands": 1,
-        "objects": 479,
+        "objects": 530,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -17150,7 +17246,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (117)",
+        "title": "adr (119)",
         "features": [
           "knowledge"
         ]
@@ -17178,7 +17274,7 @@
       },
       {
         "id": "claim",
-        "title": "claim (247)",
+        "title": "claim (250)",
         "features": [
           "declare-once"
         ]
@@ -17255,14 +17351,14 @@
       },
       {
         "id": "issue",
-        "title": "issue (425)",
+        "title": "issue (475)",
         "features": [
           "planning"
         ]
       },
       {
         "id": "knowledge",
-        "title": "knowledge (4)",
+        "title": "knowledge (25)",
         "features": [
           "knowledge"
         ]
@@ -17276,7 +17372,7 @@
       },
       {
         "id": "milestone",
-        "title": "milestone (41)",
+        "title": "milestone (42)",
         "features": [
           "planning"
         ]
@@ -17304,7 +17400,7 @@
       },
       {
         "id": "prompt",
-        "title": "prompt (6)",
+        "title": "prompt (7)",
         "features": [
           "continuity"
         ]
@@ -17318,7 +17414,7 @@
       },
       {
         "id": "rule",
-        "title": "rule (187)",
+        "title": "rule (188)",
         "features": [
           "doctrine"
         ]
@@ -17332,7 +17428,7 @@
       },
       {
         "id": "session",
-        "title": "session (90)",
+        "title": "session (91)",
         "features": [
           "continuity",
           "provenance"
@@ -18276,50 +18372,50 @@
     }
   ],
   "telemetry": {
-    "capabilities": 2533,
-    "builtin": 202,
-    "declarative": 2331,
+    "capabilities": 2647,
+    "builtin": 206,
+    "declarative": 2441,
     "modules": 58,
-    "mcp_tools": 192,
-    "mcp_resources": 2386,
-    "http_routes": 197,
-    "cli_commands": 206,
+    "mcp_tools": 196,
+    "mcp_resources": 2496,
+    "http_routes": 201,
+    "cli_commands": 209,
     "shell_commands": 30,
     "kinds": 34,
-    "objects": 2331,
+    "objects": 2441,
     "by_kind": {
-      "adr": 117,
+      "adr": 119,
       "application": 5,
       "area": 9,
       "audience": 8,
-      "claim": 247,
+      "claim": 250,
       "command": 31,
       "context": 39,
       "critique": 4,
       "deployment": 1,
       "derive-offload": 1,
       "distribution-model": 1,
-      "document": 348,
+      "document": 351,
       "domain": 6,
       "feature": 29,
       "gap": 4,
       "implementation": 52,
       "intent": 5,
-      "issue": 425,
-      "knowledge": 4,
+      "issue": 475,
+      "knowledge": 25,
       "mesh-declaration": 1,
-      "milestone": 41,
+      "milestone": 42,
       "moment": 38,
       "policy": 1,
       "profile": 4,
-      "prompt": 6,
+      "prompt": 7,
       "release-record": 29,
-      "rule": 187,
+      "rule": 188,
       "scope": 1,
-      "session": 90,
+      "session": 91,
       "skill": 9,
       "taxonomy": 10,
-      "test": 528,
+      "test": 555,
       "use-case": 49,
       "workspace": 1
     },
@@ -18337,7 +18433,7 @@
       "executions": 14,
       "newest": "2026-09-17T01:14:59Z"
     },
-    "declared": 229,
+    "declared": 232,
     "supported": 0,
     "claims": {
       "a-candidate-is-routed-by-what-it-is-about": {
@@ -19084,6 +19180,12 @@
         "label": "not run",
         "supported": false
       },
+      "mcp-client-always-served": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
       "mcp-client-autostart": {
         "status": "guaranteed",
         "state": "not-run",
@@ -19480,6 +19582,12 @@
         "label": "not run",
         "supported": false
       },
+      "release-prerelease-channel": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
       "reproduce-command": {
         "status": "guaranteed",
         "state": "not-run",
@@ -19643,6 +19751,12 @@
         "supported": false
       },
       "session-records": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "session-start-prompt": {
         "status": "guaranteed",
         "state": "not-run",
         "label": "not run",
