@@ -1,0 +1,24 @@
+id: I2886
+milestone: development-runtime
+title: "The build helpers' sweep is the machine.sweep capability"
+slug: the-build-sweep-is-the-machine-sweep
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "lib/rust_bin.sh asks `majordomus machine sweep --reclaim` for the sweep it runs before a build whenever the executable exists, and keeps its own shell sweep only as the fallback for a machine with no executable yet, so that one definition decides what is reclaimable on every path (ADR 0004)."
+why: "2026-10-18: the scheduled sweep (I2881) and the sweeps a build runs (lib/rust_bin.sh: private build directories, incremental sessions, the shared build directory's deps and llvm-cov-target; I2713, I2787) decide the same question twice, in two languages, and two definitions drift."
+current_state: "(Follows I2881, recorded beside it on its own branch.) mj_rust_reclaim_private and the deps/incremental/llvm-cov sweeps in lib/rust_bin.sh implement their own predicates; machine.sweep implements the scheduled one."
+desired_state: "rust_bin.sh's sweep delegates to the executable's machine.sweep when one is present and only falls back to its shell predicates when none is; a case plants the same candidates and holds that both paths reach the same verdicts, and that the build path calls the capability when it can."
+scope:
+  - "lib/rust_bin.sh"
+  - "apps/majordomus-cli/src/capability/builtin/machine.rs"
+  - "test/cases"
+acceptance_criteria:
+  - "With an executable present, the build helpers' sweep runs majordomus machine sweep --reclaim and implements no predicate of its own"
+  - "With no executable, the shell fallback reclaims the same candidates the capability would"
+validation:
+  - "majordomus plan validate"
+evidence_required:
+  - "case_one_sweep_definition"
+created_at: 2026-10-18
+updated_at: 2026-10-18

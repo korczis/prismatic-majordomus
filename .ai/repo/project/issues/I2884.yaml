@@ -1,0 +1,22 @@
+id: I2884
+milestone: the-mesh-works-out-of-the-box
+title: "A cluster host's checkout follows the trunk"
+slug: a-host-checkout-follows-the-trunk
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Every machine of the cluster that builds for the mesh keeps its checkout of this repository at the trunk (fast-forward only, a rescue ref for anything local), or runs the installed release for what does not need the checkout, so that the sweeps and gates it runs are the current ones."
+why: "2026-10-18: lundra's ~/dev/prismatic-majordomus was four days behind master (c0e3585), so it had neither the private build directory reaper nor the coverage target sweep that master carried, and its disk filled with exactly what those remove."
+current_state: "(Follows I2881, recorded beside it on their own branches.) A host's checkout moves only when a person or a session updates it; nothing reports how far behind it is."
+desired_state: "The scheduled sweep (I2881) or the mesh runtime reports a host checkout's distance from the trunk and fast-forwards it when clean, keeping a rescue ref otherwise; doctor names a checkout more than a day behind."
+scope:
+  - "apps/majordomus-cli/src/mesh"
+  - "apps/majordomus-cli/src/capability/builtin/machine.rs"
+acceptance_criteria:
+  - "A clean host checkout behind the trunk is fast-forwarded by the scheduled run, and one with local commits is reported with a rescue ref and left alone"
+validation:
+  - "majordomus plan validate"
+evidence_required:
+  - "host_checkout_follows_trunk_test"
+created_at: 2026-10-18
+updated_at: 2026-10-18

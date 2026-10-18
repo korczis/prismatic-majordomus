@@ -1,0 +1,25 @@
+id: I2883
+milestone: the-mesh-works-out-of-the-box
+title: "Mesh nodes publish their free disk, and no hand-off goes to a node below the floor"
+slug: a-node-below-the-floor-takes-no-hand-off
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Every mesh runtime publishes the free space of the volumes its builds use (the cargo cache homes and the checkout) with its heartbeat, and every hand-off that builds on another machine — majordomus offload derive, a remote coverage or test run, a mesh handover that resumes a build — refuses a node whose published free space is below its declared floor, naming the node, the space and the floor."
+why: "2026-10-18: offloads and remote coverage kept going to lundra while it was at 0 bytes free, because nothing on the mesh said so; only majordomus offload probe measured df, and only for derive offloads, at the moment of the call. The owner ordered disk space solved systemically on every machine so the cluster and the mesh keep working."
+current_state: "(Follows I2881 and I2882, recorded beside it on their own branches.) offload/declaration.rs has min_free_gib per host and offload probe measures df over ssh before a derive; mesh nodes publish identity, presence and endpoints, not free space; remote coverage and test runs are personal scripts with no gate."
+desired_state: "mesh.nodes and mesh.peers carry each node's free space and its floor with the observation time; offload probe reads the published value before contacting a host and still measures it at the call; a remote run refuses a node below the floor; the Cockpit and /ui/mesh show the free space beside each node."
+scope:
+  - "apps/majordomus-cli/src/mesh"
+  - "apps/majordomus-cli/src/offload"
+  - "apps/majordomus-cli/src/ui/mesh.rs"
+acceptance_criteria:
+  - "A runtime's heartbeat carries the free bytes of its cargo cache homes' volumes and the time they were read"
+  - "offload derive refuses a host whose published or measured free space is below its floor, and names both"
+  - "/ui/mesh shows each node's free space and marks one below its floor"
+validation:
+  - "majordomus plan validate"
+evidence_required:
+  - "mesh_free_space_test"
+created_at: 2026-10-18
+updated_at: 2026-10-18

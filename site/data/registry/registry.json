@@ -6,23 +6,23 @@
     "version": "0.29.0"
   },
   "registry": {
-    "fingerprint": "cfc64482a6796b12eb023f81f50b88a5ee38b5494bb09da51600c6a17806b6c0",
+    "fingerprint": "bde27eac62cbeb89904a4cdf0966fa4556266c1a8794e8564c784bfc29b631a6",
     "summary": {
-      "total": 2527,
+      "total": 2531,
       "builtin": 202,
-      "declarative": 2325,
+      "declarative": 2329,
       "by_kind": {
         "command": 31,
         "query": 171,
-        "resource": 2325
+        "resource": 2329
       },
       "by_stability": {
         "behaviorally_verified": 141,
         "experimental": 52,
-        "implemented": 2334
+        "implemented": 2338
       },
       "mcp_tools": 192,
-      "mcp_resources": 2380,
+      "mcp_resources": 2384,
       "http_routes": 197,
       "cli_commands": 108,
       "modules": 92,
@@ -83231,7 +83231,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 424,
+        "capabilities": 428,
         "capability_ids": []
       },
       {
@@ -83893,7 +83893,7 @@
     ]
   },
   "index": {
-    "fingerprint": "ebbdaff489cce67fe99b529aa57475e97fbadbd238fabae0d224eb928298d8a1",
+    "fingerprint": "1313e14c74318b3ce30470c50d23e87bf57a6afce0a12dfca9cfff7dcdc5a838",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -83933,7 +83933,7 @@
       "gap": 4,
       "implementation": 52,
       "intent": 5,
-      "issue": 424,
+      "issue": 428,
       "knowledge": 4,
       "mesh-declaration": 1,
       "milestone": 41,
@@ -90206,7 +90206,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 170002
+        "bytes": 179120
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -98341,6 +98341,50 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 2258
+      },
+      {
+        "uri": "majordomus://issue/I2883",
+        "kind": "issue",
+        "identity": "I2883",
+        "title": "Mesh nodes publish their free disk, and no hand-off goes to a node below the floor",
+        "description": "Every mesh runtime publishes the free space of the volumes its builds use (the cargo cache homes and the checkout) with its heartbeat, and every hand-off that builds on another machine — majordomus offload derive, a remote coverage or test run, a mesh handover that resumes a build — refuses a node whose published free space is below its declared floor, naming the node, the space and the floor.",
+        "path": ".ai/repo/project/issues/I2883.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2226
+      },
+      {
+        "uri": "majordomus://issue/I2884",
+        "kind": "issue",
+        "identity": "I2884",
+        "title": "A cluster host's checkout follows the trunk",
+        "description": "Every machine of the cluster that builds for the mesh keeps its checkout of this repository at the trunk (fast-forward only, a rescue ref for anything local), or runs the installed release for what does not need the checkout, so that the sweeps and gates it runs are the current ones.",
+        "path": ".ai/repo/project/issues/I2884.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1586
+      },
+      {
+        "uri": "majordomus://issue/I2885",
+        "kind": "issue",
+        "identity": "I2885",
+        "title": "Build output that no declared owner holds is measured and refused before it accumulates",
+        "description": "The accumulation gate measures build output outside the declared locations — ~/.cache/*-target and ~/.cache/*-build directories written by workers' remote runs, offload targets of runs that ended — and the machine sweep reclaims those that are idle and named by no process, so a worker's private copy cannot outlive its run unnoticed.",
+        "path": ".ai/repo/project/issues/I2885.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1669
+      },
+      {
+        "uri": "majordomus://issue/I2886",
+        "kind": "issue",
+        "identity": "I2886",
+        "title": "The build helpers' sweep is the machine.sweep capability",
+        "description": "lib/rust_bin.sh asks `majordomus machine sweep --reclaim` for the sweep it runs before a build whenever the executable exists, and keeps its own shell sweep only as the fallback for a machine with no executable yet, so that one definition decides what is reclaimable on every path (ADR 0004).",
+        "path": ".ai/repo/project/issues/I2886.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1836
       },
       {
         "uri": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
@@ -109058,7 +109102,7 @@
       "identity": [
         "id"
       ],
-      "objects": 424
+      "objects": 428
     },
     {
       "name": "knowledge",
