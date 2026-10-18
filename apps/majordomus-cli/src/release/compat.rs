@@ -2493,4 +2493,83 @@ mod tests {
             Err("the contract's required version '0.1' is not three numbers".to_string())
         );
     }
+
+    /// The version tags are ordered by precedence, not by their spelling: a pre-release
+    /// sorts below its own final, `alpha.10` above `alpha.2`, and a `v` tag that is not a
+    /// version is left out. So the release measured from is the final `v1.0.0`, though
+    /// `v1.0.0-alpha.2` sorts after it as text.
+    #[test]
+    fn version_tags_order_by_precedence_so_a_prerelease_sorts_below_its_final() {
+        let empty = json!({"schema": "majordomus/capability-registry/v1", "capabilities": []});
+        let dir = tagged(empty, "0.9.0");
+        for tag in ["v1.0.0", "v1.0.0-alpha.10", "v1.0.0-alpha.2", "v1.x"] {
+            let out = std::process::Command::new("git")
+                .current_dir(dir.path())
+                .args(["tag", tag])
+                .output()
+                .expect("git runs");
+            assert!(out.status.success(), "git tag {tag}: {out:?}");
+        }
+        assert_eq!(
+            tags(dir.path()),
+            ["v0.9.0", "v1.0.0-alpha.2", "v1.0.0-alpha.10", "v1.0.0"]
+        );
+        let last = last_release(dir.path(), &[]).expect("a release");
+        assert_eq!(
+            (last.version.as_str(), last.reference.as_str()),
+            ("1.0.0", "v1.0.0")
+        );
+        assert!(!last.recorded);
+    }
+
+    /// A release record object of the layer's own kind, carrying `version` and its tag.
+    fn release_object(version: &str) -> Object {
+        let mut metadata = serde_json::Map::new();
+        metadata.insert("version".into(), version.into());
+        metadata.insert("tag".into(), format!("v{version}").into());
+        metadata.insert("commit".into(), "0".repeat(40).into());
+        Object {
+            kind: super::super::changelog::RELEASE_KIND.into(),
+            identity: format!("v{version}"),
+            uri: format!("majordomus://release-record/v{version}"),
+            title: None,
+            description: None,
+            metadata: Value::Object(metadata),
+            body: String::new(),
+            content: String::new(),
+            media_type: "application/yaml",
+            provenance: crate::model::Provenance {
+                path: format!(".ai/repo/releases/v{version}.yaml"),
+                directory: ".ai/repo/releases".into(),
+                source_class: "release".into(),
+                section: None,
+                bytes: 0,
+                member: None,
+            },
+        }
+    }
+
+    /// The release records are ordered the same way, whatever order the index holds them
+    /// in: a recorded alpha sorts below the final it precedes, alpha.10 above alpha.2, and
+    /// a record whose version no reader can order is left out. The newest record by
+    /// precedence is the release the contract is measured from.
+    #[test]
+    fn release_records_order_by_precedence_and_an_unorderable_one_is_left_out() {
+        let objects = [
+            release_object("1.0.0"),
+            release_object("1.0.0-alpha.10"),
+            release_object("0.29.0"),
+            release_object("1.0.0-rc.01"),
+            release_object("1.0.0-alpha.2"),
+        ];
+        let ordered: Vec<String> = records(&objects).into_iter().map(|r| r.1).collect();
+        assert_eq!(
+            ordered,
+            ["0.29.0", "1.0.0-alpha.2", "1.0.0-alpha.10", "1.0.0"]
+        );
+        let dir = tempfile::tempdir().expect("a temporary directory");
+        let last = last_release(dir.path(), &objects[1..]).expect("a recorded release");
+        assert_eq!(last.version, "1.0.0-alpha.10");
+        assert!(last.recorded);
+    }
 }

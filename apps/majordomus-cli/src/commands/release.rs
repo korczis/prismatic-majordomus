@@ -1004,4 +1004,48 @@ mod tests {
              `--exact <version>`\n"
         );
     }
+
+    /// `release bump --exact` takes a semantic version, a pre-release among them, and
+    /// refuses anything else with exit 2 before the repository is read: junk is refused
+    /// even in a directory that is no repository, while `1.0.0-alpha.1` gets past the
+    /// argument and fails only on what it then reads. A level that is not one is refused
+    /// the same way.
+    #[test]
+    fn bump_refuses_an_exact_that_is_no_version_before_reading_the_repository() {
+        let empty = tempfile::tempdir().expect("a temporary directory");
+        let args = ReleaseArgs {
+            repo: crate::cli::RepoArgs {
+                repo: Some(empty.path().to_path_buf()),
+                share: Some(crate::synthetic::crate_share()),
+                ..Default::default()
+            },
+            command: None,
+            format: OutputFormat::Text,
+        };
+        for junk in ["banana", "1.2", "1.0.0-alpha.01", "v1.2.3"] {
+            match bump(&args, None, Some(junk), true) {
+                Err(Error::Refused { code: 2, reason }) => {
+                    assert!(
+                        reason.contains(&format!("'{junk}' is not a version"))
+                            && reason.contains("1.0.0-alpha.1"),
+                        "{reason}"
+                    );
+                }
+                other => panic!("--exact {junk}: expected a refusal with exit 2, got {other:?}"),
+            }
+        }
+        match bump(&args, Some("huge"), None, true) {
+            Err(Error::Refused { code: 2, reason }) => {
+                assert!(reason.contains("'huge' is not a level"), "{reason}")
+            }
+            other => panic!("--level huge: expected a refusal with exit 2, got {other:?}"),
+        }
+        // a pre-release is a version: the argument is accepted, and what fails is the
+        // directory, which holds no repository
+        let alpha = bump(&args, None, Some("1.0.0-alpha.1"), true);
+        assert!(
+            !matches!(alpha, Err(Error::Refused { code: 2, .. }) | Ok(_)),
+            "{alpha:?}"
+        );
+    }
 }
