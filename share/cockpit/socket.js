@@ -9,6 +9,11 @@
 // writes `stream.heartbeat` on every quiet interval, so a channel silent for a few of them
 // is retired and reconnected from its cursor instead of showing "live" forever.
 //
+// A channel that follows the blackboard (`follow=blackboard`, ADR 0176) has no sequence:
+// its cursor is the opaque string of the last `blackboard.signals` frame, good only for the
+// server process whose epoch `stream.ready` named. A reconnection sends both, and a cursor
+// the server cannot serve is answered with `stream.resync`, which is handed to the page.
+//
 // It speaks the protocol the server describes at /api/v1/executions/protocol, and every
 // URL it uses is given to it by the server-rendered markup — there is no path written
 // down here.
@@ -49,6 +54,10 @@ export function follow(path, handlers) {
   const single = followsOne(path);
   let cursor = cursorOf(path);
   const last = new Map();
+  // a blackboard channel resumes by the opaque cursor and the epoch that issued it
+  const board = followsBoard(path);
+  let tail = board ? paramOf(path, 'after') : '';
+  let epoch = board ? paramOf(path, 'epoch') : '';
   // the replay began after the cursor's history was already dropped: the first event it
   // writes starts the picture, and is not a gap
   let rebase = false;
@@ -69,6 +78,14 @@ export function follow(path, handlers) {
     // a reconnection asks for what it missed rather than for everything again
     if (cursor > 0 && single) {
       target.searchParams.set('after', String(cursor));
+    }
+    if (board) {
+      target.searchParams.delete('after');
+      target.searchParams.delete('epoch');
+      if (tail && epoch) {
+        target.searchParams.set('after', tail);
+        target.searchParams.set('epoch', epoch);
+      }
     }
     return target.toString();
   };
@@ -164,9 +181,21 @@ export function follow(path, handlers) {
         const data = frame.data || {};
         if (Number(data.heartbeat_seconds) > 0) heartbeat = Number(data.heartbeat_seconds);
         rebase = data.truncated === true;
+        // a cursor of another process is worth nothing here: the server says resync
+        if (board && typeof data.epoch === 'string') epoch = data.epoch;
         arm();
         if (handlers.ready) handlers.ready(data);
         return;
+      }
+      if (frame.type === 'stream.resync') {
+        // the server could not serve the cursor and starts again from what it holds now:
+        // the page's picture before this frame may miss something
+        tail = '';
+        if (handlers.resync) handlers.resync((frame.data && frame.data.reason) || 'resync');
+        return;
+      }
+      if (board && frame.data && typeof frame.data.cursor === 'string') {
+        tail = frame.data.cursor;
       }
       if (typeof frame.sequence === 'number' && !admit(ws, frame)) return;
       if (handlers.message) handlers.message(frame);
@@ -218,6 +247,18 @@ function followsOne(path) {
     return new URL(path, window.location.href).searchParams.getAll('execution').length === 1;
   } catch (e) {
     return false;
+  }
+}
+
+function followsBoard(path) {
+  return paramOf(path, 'follow') === 'blackboard';
+}
+
+function paramOf(path, name) {
+  try {
+    return new URL(path, window.location.href).searchParams.get(name) || '';
+  } catch (e) {
+    return '';
   }
 }
 

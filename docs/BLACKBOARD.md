@@ -101,7 +101,14 @@ The blackboard rides the one live channel the server already has, `/events`:
 GET /events?follow=blackboard                               the blackboard, then each change
 GET /events?follow=blackboard&checkouts=this                this checkout's board alone
 GET /events?follow=blackboard&after=<cursor>&epoch=<epoch>  resumed
+GET /events?follow=blackboard&frames=signals&for=1b         the signals alone, marked for 1b
+GET /events?follow=blackboard&sources=mesh,executor,github  the signals of these sources
 ```
+
+`frames` names what a connection is written: `snapshot`, `signals`, or both (the default).
+`sources` names the monitor sources of the signals, mesh and executor when not given. `for`
+names the reader whose signals are marked `for_you`, as `majordomus monitor --for` does.
+Anything else in the query is refused.
 
 The board and the mesh journal advance one change generation whenever they change
 (`crate::change`): a peer attaching, identifying, announcing or leaving, and a journal event
@@ -124,21 +131,34 @@ written or ingested. A follower waits on that generation. The frames are:
   one with more than ten pages of signals after it, is answered with `stream.resync` and a
   fresh snapshot.
 - **One read for every tab.** One read of the blackboard per generation, and one page of
-  signals per cursor, are shared by every connection.
+  signals per cursor, sources and reader, are shared by every connection.
 - **Slow clients.** A slow client blocks only its own connection and is written the newest
   snapshot, not a queue of old ones.
 - **Large snapshots.** A snapshot too large for one frame is written as a `withheld` reference
   to `GET /api/v1/blackboard`.
-- **Signals are reader-neutral.** Marking what is for whom is the reader's to do.
+- **For whom.** The snapshot is reader-neutral, so one read serves every tab. Signals are
+  marked for the reader the connection names with `for`, by the monitor's own rule.
 - **Who may follow.** A page of another origin is refused, as on `/events`. A caller beyond
   loopback follows the blackboard exactly when it may read `blackboard.snapshot` (ADR 0126).
+
+## In the browser
+
+`share/cockpit/socket.js` is the one WebSocket client of the browser. On a blackboard channel
+it keeps the cursor of the last `blackboard.signals` frame and the epoch of `stream.ready`,
+reconnects with both, and hands a `stream.resync` to the page.
+
+`/cockpit/monitor` is the first page on it. The server renders the first rows and the channel
+that continues from their cursor (`frames=signals`, all three sources, the page's reader), and
+the server pushes each signal as it happens. A page whose channel does not open within five
+seconds closes it, asks `/api/v1/monitor` every five seconds while visible, and says
+"Polling" where it would say "Live". A GitHub signal reaches an open page with the next change
+or refresh: GitHub is read through a cache shared for 30 s, and cannot push.
 
 ## Not yet
 
 These are planned in milestone `peer-blackboard` and are not built:
 
-- one browser client for the channel, with a truthful live, poll or snapshot state;
-- the `/ui` and `/cockpit` screens that render it;
+- the `/ui` and `/cockpit` peer screens that render the snapshot frames;
 - its public-safe published snapshot.
 
 Until they exist, nothing on this page claims them.

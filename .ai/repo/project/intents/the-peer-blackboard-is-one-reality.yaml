@@ -17,6 +17,10 @@ satisfaction:
     criterion: A peer's announcement reaches a connected follower of the blackboard as a frame without a poll, a resumed follower repeats nothing, and a cursor the server cannot serve is answered with a resync and a fresh snapshot
     evidence: test
     ref: test/cases/3381_the_blackboard_is_pushed.sh
+  - id: the-client-follows
+    criterion: The browser's one socket client resumes a blackboard channel by its cursor and epoch and reports a resync, and the monitor page adds what the server pushes without polling and says when it has to poll
+    evidence: test
+    ref: test/cases/3382_the_monitor_is_pushed.sh
 governance:
   - rule:project.derived-once
   - adr:adr-0044

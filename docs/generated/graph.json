@@ -39883,6 +39883,54 @@
         }
       },
       {
+        "id": "majordomus://issue/I2982",
+        "kind": "issue",
+        "label": "I2982",
+        "summary": "The monitor page is pushed over the live channel, and says when it polls",
+        "route": "/cockpit/objects/issue/i2982",
+        "source": ".ai/repo/project/issues/I2982.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A follower given for= receives signals marked for_you for that reader, and one given frames=signals receives no snapshot",
+            "socket.js resumes a blackboard channel with the last cursor and epoch, and reports stream.resync to the page",
+            "The monitor page adds a pushed signal without polling, and polls with a label only when the channel is refused"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "socket.js follows executions only, with a numeric sequence cursor; monitor.js polls /api/v1/monitor every five seconds while visible.",
+          "depends_on": [
+            "I2981"
+          ],
+          "desired_state": "A review request reaches an open monitor page as a row without a poll; a page whose channel is refused polls and labels itself as polling.",
+          "evidence_required": [
+            "case_monitor_pushed"
+          ],
+          "milestone": "peer-blackboard",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/http/follow.rs",
+            "apps/majordomus-cli/src/cockpit/monitor.rs",
+            "share/cockpit/socket.js",
+            "share/cockpit/monitor.js",
+            ".ai/repo/adrs/0176-the-blackboard-is-one-projection-pushed-over-one-socket.md",
+            ".ai/repo/project/intents/the-peer-blackboard-is-one-reality.yaml",
+            "docs/BLACKBOARD.md",
+            "test/cases/3382_the_monitor_is_pushed.sh"
+          ],
+          "serves": [
+            "the-peer-blackboard-is-one-reality#the-client-follows"
+          ],
+          "slug": "the-monitor-is-pushed",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "majordomus plan validate",
+            "bash test/run.sh 3382_the_monitor_is_pushed"
+          ],
+          "why": "/cockpit/monitor asks the whole monitor every five seconds per tab, and says it is live while it polls."
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "label": "a-commit-stood-behind-a-build-lock",
@@ -57780,6 +57828,13 @@
         "label": "test/cases/3381_the_blackboard_is_pushed.sh",
         "route": "/cockpit/objects/test/test-cases-3381-the-blackboard-is-pushed-sh",
         "source": "test/cases/3381_the_blackboard_is_pushed.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3382_the_monitor_is_pushed.sh",
+        "kind": "test",
+        "label": "test/cases/3382_the_monitor_is_pushed.sh",
+        "route": "/cockpit/objects/test/test-cases-3382-the-monitor-is-pushed-sh",
+        "source": "test/cases/3382_the_monitor_is_pushed.sh"
       },
       {
         "id": "majordomus://test/test/cases/33_event_registry.sh",
@@ -84761,6 +84816,21 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2982",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2982",
+        "target": "majordomus://issue/I2981",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2982",
+        "target": "majordomus://milestone/peer-blackboard",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -89542,6 +89612,11 @@
       },
       {
         "source": "majordomus://test/test/cases/3381_the_blackboard_is_pushed.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3382_the_monitor_is_pushed.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -94787,8 +94862,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2971,
-      "edges": 6524,
+      "nodes": 2973,
+      "edges": 6528,
       "acyclic": false,
       "truncated": false
     }
