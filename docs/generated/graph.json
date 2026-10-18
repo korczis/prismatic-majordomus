@@ -10449,12 +10449,12 @@
         "id": "majordomus://claim/mcp-stdio-surface",
         "kind": "claim",
         "label": "mcp-stdio-surface",
-        "summary": "The Rust executable serves the repository's AI layer to an MCP client over stdio, read-only, with protocol frames alone on stdout",
+        "summary": "The Rust executable serves the repository's AI layer to an MCP client over stdio, with protocol frames alone on stdout",
         "route": "/cockpit/objects/claim/mcp-stdio-surface",
         "source": "docs/CLAIMS.yaml",
         "status": "guaranteed",
         "facts": {
-          "claim": "The Rust executable serves the repository's AI layer to an MCP client over stdio, read-only, with protocol frames alone on stdout",
+          "claim": "The Rust executable serves the repository's AI layer to an MCP client over stdio, with protocol frames alone on stdout",
           "implementation": "apps/majordomus-cli/src/mcp/protocol.rs",
           "responsibility": "none",
           "source": "docs/MCP.md",
@@ -10588,12 +10588,11 @@
         "id": "majordomus://claim/mesh-observation-not-authority",
         "kind": "claim",
         "label": "mesh-observation-not-authority",
-        "summary": "A discovered node — trusted or not — gains no execution, no authorization and no write surface; trust labels records under an explicit policy that defaults to deny_unknown",
+        "summary": "A discovered node gains no execution and no authorization from being heard; only signed traffic from a linked node may change mesh state, and trust labels records under an explicit policy that defaults to deny_unknown",
         "route": "/cockpit/objects/claim/mesh-observation-not-authority",
         "source": "docs/CLAIMS.yaml",
         "status": "guaranteed",
         "facts": {
-          "claim": "A discovered node — trusted or not — gains no execution, no authorization and no write surface; trust labels records under an explicit policy that defaults to deny_unknown",
           "implementation": "apps/majordomus-cli/src/mesh/trust.rs",
           "responsibility": "none",
           "source": ".ai/repo/rules/project/mesh-is-observation-not-authority.v1.md",
@@ -16287,7 +16286,7 @@
         "id": "majordomus://document/docs/claims/mcp-stdio-surface.md",
         "kind": "document",
         "label": "docs/claims/mcp-stdio-surface.md",
-        "summary": "The Rust executable serves the repository's AI layer to an MCP client over stdio, read-only, with protocol frames alone on stdout",
+        "summary": "The Rust executable serves the repository's AI layer to an MCP client over stdio, with protocol frames alone on stdout",
         "route": "/cockpit/objects/document/docs-claims-mcp-stdio-surface-md",
         "source": "docs/claims/mcp-stdio-surface.md"
       },
@@ -16359,7 +16358,7 @@
         "id": "majordomus://document/docs/claims/mesh-observation-not-authority.md",
         "kind": "document",
         "label": "docs/claims/mesh-observation-not-authority.md",
-        "summary": "A discovered node — trusted or not — gains no execution, no authorization and no write surface; trust labels records under an explicit policy that defaults to deny_unknown",
+        "summary": "A discovered node gains no execution and no authorization from being heard; only signed traffic from a linked node may change mesh state, and trust labels records under an explicit policy that defaults to deny_unknown",
         "route": "/cockpit/objects/document/docs-claims-mesh-observation-not-authority-md",
         "source": "docs/claims/mesh-observation-not-authority.md"
       },
@@ -39689,6 +39688,45 @@
         }
       },
       {
+        "id": "majordomus://issue/I2962",
+        "kind": "issue",
+        "label": "I2962",
+        "summary": "What the served surfaces change is said as the registry says it",
+        "route": "/cockpit/objects/issue/i2962",
+        "source": ".ai/repo/project/issues/I2962.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The interfaces feature names exactly the capabilities whose registry effect is repository_mutation, and a page that drops one is refused",
+            "No retired read-only or one-command sentence remains in README, docs or the features",
+            "README's mesh paragraph states exclusivity as the milestone records it"
+          ],
+          "created_at": "2026-10-18",
+          "depends_on": [],
+          "evidence_required": [
+            "case_what_mutates_is_said_as_it_is"
+          ],
+          "milestone": "development-runtime",
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "README.md",
+            ".ai/repo/features/interfaces.md",
+            "docs/MCP.md",
+            "docs/CLAIMS.yaml",
+            "docs/claims/mcp-stdio-surface.md",
+            "docs/claims/mcp-peers.md",
+            "docs/claims/mesh-observation-not-authority.md",
+            "test/cases/3363_what_mutates_is_said_as_it_is.sh"
+          ],
+          "slug": "what-mutates-is-said-as-it-is",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "label": "a-commit-stood-behind-a-build-lock",
@@ -57509,6 +57547,13 @@
         "label": "test/cases/335_every_link_resolves.sh",
         "route": "/cockpit/objects/test/test-cases-335-every-link-resolves-sh",
         "source": "test/cases/335_every_link_resolves.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3363_what_mutates_is_said_as_it_is.sh",
+        "kind": "test",
+        "label": "test/cases/3363_what_mutates_is_said_as_it_is.sh",
+        "route": "/cockpit/objects/test/test-cases-3363-what-mutates-is-said-as-it-is-sh",
+        "source": "test/cases/3363_what_mutates_is_said_as_it_is.sh"
       },
       {
         "id": "majordomus://test/test/cases/336_every_control_is_claimed.sh",
@@ -84399,6 +84444,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2962",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2962",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -89155,6 +89210,11 @@
       },
       {
         "source": "majordomus://test/test/cases/335_every_link_resolves.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3363_what_mutates_is_said_as_it_is.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -94405,8 +94465,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2959,
-      "edges": 6500,
+      "nodes": 2961,
+      "edges": 6503,
       "acyclic": false,
       "truncated": false
     }

@@ -331,9 +331,12 @@ seeds, and discovery grants nothing: a **link** is admitted only by a signed han
 that checks the peer's key is trusted, its repository is the same one (by root commits or
 a declared identity — never a path) and its protocol is compatible. Linked runtimes
 replicate one journal of signed events — sessions, claims, handovers, reviews — every
-heartbeat and fold it into the same state, so an exclusive claim on one machine refuses an
-overlapping claim on another, a handover published on one is consumed on another, and a
-runtime that crashes expires everywhere on its own. The whole subsystem is **off until the
+heartbeat and fold it into the same state, so a claim taken on one machine is seen on every
+other, a handover published on one is consumed on another, and the claims of a runtime
+that stops beating expire everywhere. Exclusivity is admission on the runtime that takes the
+claim plus a deterministic naming of the winner when two claims meet, not a lock across
+machines: there is no fencing yet, and an expired claim can return when its runtime beats
+again (milestone `mesh-journal-converges`). The whole subsystem is **off until the
 repository commits an enabled `mesh` declaration** with the keys to trust, so the default
 posture — nothing leaves the machine — holds until a person decides otherwise.
 
@@ -418,8 +421,10 @@ Unknown keys anywhere are errors, so a typo fails loudly.
 - not an agent framework, orchestrator, or runtime
 - not a prompt library or a memory system
 - not a daemon, database, queue, or hosted service; the Rust executable's `mcp` and
-  `serve` are read-only processes a client or a person starts and owns, one shared server
-  per repository on the loopback interface that ends when its last client leaves
+  `serve` are processes a client or a person starts and owns, one shared server per
+  repository on the loopback interface that ends when its last client leaves. Most of what
+  they serve reads; the capabilities whose registry effect is `repository_mutation` write
+  the repository, and the `initialize` instructions every client reads name them
   ([`docs/MCP.md`](docs/MCP.md))
 - not a slice of any other platform; there is no shared code
 
@@ -467,7 +472,7 @@ ordering, the gate and the claim linkage are derived.
 ## Interfaces
 
 The Rust executable under [`apps/majordomus-cli/`](apps/majordomus-cli/) exposes the same
-`.ai/` layer to programs, read-only, through several interfaces that are all derived from
+`.ai/` layer to programs through several interfaces that are all derived from
 one capability registry: a capability is defined once, in a typed descriptor or in a
 declarative file with its JSON Schema, and MCP, HTTP, OpenAPI, Swagger UI, the Cockpit, the
 command line and the generated reference are projections of it, so nothing is maintained

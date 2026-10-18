@@ -986,7 +986,7 @@ claims:
     note: Such a criterion resolves and reads `not_derivable`, and never meets a criterion by itself, because the evidence ledger records runs of tests and claims only. An intent whose criteria are all of these kinds cannot be satisfied today.
 
   - id: mcp-stdio-surface
-    claim: The Rust executable serves the repository's AI layer to an MCP client over stdio, read-only, with protocol frames alone on stdout
+    claim: The Rust executable serves the repository's AI layer to an MCP client over stdio, with protocol frames alone on stdout
     source: docs/MCP.md
     implementation: apps/majordomus-cli/src/mcp/protocol.rs
     test: test/cases/72_rust_mcp.sh
@@ -1912,7 +1912,7 @@ claims:
     note: Four containers on one docker bridge, no seeds; ten scenarios with measured timings written to target/mesh-lab/evidence.json; the mesh-lab CI job runs the lab and then scripts/ci/mesh-lab-evidence, which refuses a record that is not a complete acceptance — the lab does not judge itself. Case 414 covers that reader and holds its required set equal to the scenarios the lab reaches. One layer-2 segment and one kernel — not a routed, NATed or WAN topology; physical machines are a documented manual procedure.
 
   - id: mesh-observation-not-authority
-    claim: A discovered node — trusted or not — gains no execution, no authorization and no write surface; trust labels records under an explicit policy that defaults to deny_unknown
+    claim: A discovered node gains no execution and no authorization from being heard; only signed traffic from a linked node may change mesh state, and trust labels records under an explicit policy that defaults to deny_unknown
     source: .ai/repo/rules/project/mesh-is-observation-not-authority.v1.md
     implementation: apps/majordomus-cli/src/mesh/trust.rs
     test: apps/majordomus-cli/tests/mesh.rs

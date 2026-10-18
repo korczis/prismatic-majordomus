@@ -1419,7 +1419,7 @@
     },
     {
       "id": "mcp-stdio-surface",
-      "claim": "The Rust executable serves the repository's AI layer to an MCP client over stdio, read-only, with protocol frames alone on stdout",
+      "claim": "The Rust executable serves the repository's AI layer to an MCP client over stdio, with protocol frames alone on stdout",
       "source": "docs/MCP.md",
       "implementation": "apps/majordomus-cli/src/mcp/protocol.rs",
       "test": "test/cases/72_rust_mcp.sh",
@@ -2758,7 +2758,7 @@
     },
     {
       "id": "mesh-observation-not-authority",
-      "claim": "A discovered node — trusted or not — gains no execution, no authorization and no write surface; trust labels records under an explicit policy that defaults to deny_unknown",
+      "claim": "A discovered node gains no execution and no authorization from being heard; only signed traffic from a linked node may change mesh state, and trust labels records under an explicit policy that defaults to deny_unknown",
       "source": ".ai/repo/rules/project/mesh-is-observation-not-authority.v1.md",
       "implementation": "apps/majordomus-cli/src/mesh/trust.rs",
       "test": "apps/majordomus-cli/tests/mesh.rs",

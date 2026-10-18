@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "0.29.0"
   },
-  "fingerprint": "b72ab0d70037237d854a2aa3eff0dfbc8d753a93c3f25cb254b996dfe6cd20f0",
+  "fingerprint": "d843c997a1319957ff55aac20a923b40765b24a5c4ba64973e708da71bb53649",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -999,7 +999,7 @@
         },
         {
           "id": "mesh-observation-not-authority",
-          "claim": "A discovered node — trusted or not — gains no execution, no authorization and no write surface; trust labels records under an explicit policy that defaults to deny_unknown",
+          "claim": "A discovered node gains no execution and no authorization from being heard; only signed traffic from a linked node may change mesh state, and trust labels records under an explicit policy that defaults to deny_unknown",
           "status": "guaranteed",
           "test": "apps/majordomus-cli/tests/mesh.rs"
         },
@@ -3075,7 +3075,7 @@
         },
         {
           "id": "mcp-stdio-surface",
-          "claim": "The Rust executable serves the repository's AI layer to an MCP client over stdio, read-only, with protocol frames alone on stdout",
+          "claim": "The Rust executable serves the repository's AI layer to an MCP client over stdio, with protocol frames alone on stdout",
           "status": "guaranteed",
           "test": "test/cases/72_rust_mcp.sh"
         },
@@ -3814,7 +3814,7 @@
       "title": "One registry over the command line, HTTP, OpenAPI, Swagger UI and MCP",
       "short_title": "Interfaces",
       "headline": "Every agent, script and person reads the same repository through the interface it already speaks, and none of the interfaces is maintained by hand.",
-      "summary": "The Rust executable serves the layer read-only over stdio MCP, MCP over HTTP, routes under /api/v1/, an OpenAPI document with a Swagger UI, and a command line, all derived from the capability registry; one shared server per repository, and every attached client is a peer the others can see.",
+      "summary": "The Rust executable serves the layer over stdio MCP, MCP over HTTP, routes under /api/v1/, an OpenAPI document with a Swagger UI, and a command line, all derived from the capability registry, which names what each capability changes; one shared server per repository, and every attached client is a peer the others can see.",
       "status": "stable",
       "weight": 20,
       "featured": false,
@@ -4284,7 +4284,7 @@
       "claim_refs": [
         {
           "id": "mcp-stdio-surface",
-          "claim": "The Rust executable serves the repository's AI layer to an MCP client over stdio, read-only, with protocol frames alone on stdout",
+          "claim": "The Rust executable serves the repository's AI layer to an MCP client over stdio, with protocol frames alone on stdout",
           "status": "guaranteed",
           "test": "test/cases/72_rust_mcp.sh"
         },
@@ -5835,7 +5835,7 @@
         },
         {
           "id": "mesh-observation-not-authority",
-          "claim": "A discovered node — trusted or not — gains no execution, no authorization and no write surface; trust labels records under an explicit policy that defaults to deny_unknown",
+          "claim": "A discovered node gains no execution and no authorization from being heard; only signed traffic from a linked node may change mesh state, and trust labels records under an explicit policy that defaults to deny_unknown",
           "status": "guaranteed",
           "test": "apps/majordomus-cli/tests/mesh.rs"
         },
@@ -13132,7 +13132,7 @@
         },
         {
           "name": "issue",
-          "objects": 424
+          "objects": 425
         },
         {
           "name": "intent",
@@ -13342,11 +13342,11 @@
       "counts": {
         "capabilities": 23,
         "mcp_tools": 23,
-        "mcp_resources": 481,
+        "mcp_resources": 482,
         "http_routes": 23,
         "cli_paths": 11,
         "commands": 1,
-        "objects": 478,
+        "objects": 479,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -17255,7 +17255,7 @@
       },
       {
         "id": "issue",
-        "title": "issue (424)",
+        "title": "issue (425)",
         "features": [
           "planning"
         ]
@@ -18276,17 +18276,17 @@
     }
   ],
   "telemetry": {
-    "capabilities": 2527,
+    "capabilities": 2529,
     "builtin": 202,
-    "declarative": 2325,
+    "declarative": 2327,
     "modules": 58,
     "mcp_tools": 192,
-    "mcp_resources": 2380,
+    "mcp_resources": 2382,
     "http_routes": 197,
     "cli_commands": 206,
     "shell_commands": 30,
     "kinds": 34,
-    "objects": 2325,
+    "objects": 2327,
     "by_kind": {
       "adr": 117,
       "application": 5,
@@ -18305,7 +18305,7 @@
       "gap": 4,
       "implementation": 52,
       "intent": 5,
-      "issue": 424,
+      "issue": 425,
       "knowledge": 4,
       "mesh-declaration": 1,
       "milestone": 41,
@@ -18319,7 +18319,7 @@
       "session": 90,
       "skill": 8,
       "taxonomy": 10,
-      "test": 527,
+      "test": 528,
       "use-case": 49,
       "workspace": 1
     },
