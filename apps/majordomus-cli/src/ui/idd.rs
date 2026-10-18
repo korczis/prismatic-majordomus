@@ -459,7 +459,7 @@ fn wave_panel(waves: &Answer, mine: &[Value]) -> El {
                         .class("mj-ui-panel-title")
                         .text("Shared scope: these may not run at the same time"),
                 )
-                .child(el("ul").class("mj-ui-list").children(conflicts));
+                .child(el("ul").class("mj-ui-prose-list").children(conflicts));
         }
         body
     });

@@ -355,7 +355,7 @@ fn inspector(name: &str, machines: &[Value], peers: &Answer, events: &Answer) ->
                 )
                 .child(el("td").child(word_badge(&text(r, "liveness"))))
                 .child(el("td").class("mj-ui-mono mj-ui-dim").text(beat))
-                .child(el("td").class("mj-ui-num").text(sessions.to_string()))
+                .child(el("td").class("mj-ui-mono").text(sessions.to_string()))
         })
         .collect::<Vec<_>>();
     let session_rows = runtimes
@@ -392,7 +392,7 @@ fn inspector(name: &str, machines: &[Value], peers: &Answer, events: &Answer) ->
                             .to_string(),
                     ),
                 )
-                .child(el("td").class("mj-ui-num").text(claims.to_string()))
+                .child(el("td").class("mj-ui-mono").text(claims.to_string()))
                 .child(
                     el("td")
                         .class("mj-ui-dim")

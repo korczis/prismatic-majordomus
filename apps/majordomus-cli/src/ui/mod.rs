@@ -592,6 +592,59 @@ mod tests {
         assert!(r.body.text().contains("the UI is unstyled"));
     }
 
+    /// Every class a screen's source gives an element is one the UI's stylesheet defines, or
+    /// a block whose parts it defines (`mj-ui-graph` beside `.mj-ui-graph-canvas`): a class
+    /// nothing styles is a promise the page does not keep, as the search labels were visible
+    /// while `mj-ui-sr-only` was meant to hide them (I2852). Read from the sources, so a
+    /// screen added later is held too.
+    #[test]
+    fn every_class_a_screen_emits_is_one_the_stylesheet_defines() {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+        // the stylesheet the UI ships, compiled from its source and the design files it imports
+        let css = std::fs::read_to_string(root.join("../../share/ui/ui.css"))
+            .expect("the UI's stylesheet");
+        let defined: std::collections::BTreeSet<&str> = css
+            .split('.')
+            .skip(1)
+            .filter_map(|s| {
+                let end = s
+                    .find(|c: char| !(c.is_ascii_alphanumeric() || c == '-' || c == '_'))
+                    .unwrap_or(s.len());
+                s[..end].starts_with("mj-").then(|| &s[..end])
+            })
+            .collect();
+        assert!(defined.len() > 50, "the stylesheet was not read: {defined:?}");
+        let accounted = |c: &str| {
+            defined.contains(c)
+                || defined
+                    .iter()
+                    .any(|d| d.starts_with(&format!("{c}-")) || d.starts_with(&format!("{c}--")))
+        };
+        let mut undefined: Vec<String> = Vec::new();
+        let mut seen = 0;
+        for entry in std::fs::read_dir(root.join("src/ui")).expect("the UI's sources") {
+            let path = entry.expect("a source").path();
+            if path.extension().and_then(|e| e.to_str()) != Some("rs") {
+                continue;
+            }
+            let source = std::fs::read_to_string(&path).expect("a source file");
+            for (n, line) in source.lines().enumerate() {
+                for call in line.split(".class(\"").skip(1) {
+                    let value = call.split('"').next().unwrap_or_default();
+                    for class in value.split_whitespace().filter(|c| c.starts_with("mj-")) {
+                        seen += 1;
+                        if !class.contains('{') && !accounted(class) {
+                            let file = path.file_name().and_then(|f| f.to_str()).unwrap_or("?");
+                            undefined.push(format!("{file}:{} {class}", n + 1));
+                        }
+                    }
+                }
+            }
+        }
+        assert!(seen > 100, "only {seen} class(es) were read from the sources");
+        assert!(undefined.is_empty(), "classes the stylesheet does not define: {undefined:?}");
+    }
+
     /// A screen asked as a snapshot carries every slow panel already read where its
     /// placeholder stood, as the script would have put it, and keeps its one heading; asked
     /// live it still paints first and defers the panel (I2850).

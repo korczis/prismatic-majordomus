@@ -713,7 +713,7 @@ fn search(filter: &Filter) -> El {
         .child(icon("search"))
         .child(
             el("label")
-                .class("mj-ui-sr-only")
+                .class("mj-sr-only")
                 .attr("for", "mj-ui-drain-q")
                 .text("Search pull requests"),
         )
