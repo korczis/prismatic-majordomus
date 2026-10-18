@@ -25,7 +25,7 @@
 //   the refresh     is a poll of the same HTTP route, every `data-mj-trains-poll` seconds,
 //                   paused while the tab is hidden. No stream is invented for it.
 
-import { api, vendor, explainMissing, motionAllowed } from './cockpit.js?v=340c1e47c9a6c4ea';
+import { api, vendor, explainMissing, motionAllowed } from './cockpit.js?v=4d0ffef4b79e4673';
 
 /**
  * Which declared role each disposition wears: `fill` is the ground inside the circle and

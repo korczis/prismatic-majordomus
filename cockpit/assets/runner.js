@@ -7,7 +7,7 @@
 // second validation: what the Cockpit sends is what any other HTTP client would send, and
 // what comes back is what any other client would get, error shape included.
 
-import { api } from './cockpit.js?v=340c1e47c9a6c4ea';
+import { api } from './cockpit.js?v=4d0ffef4b79e4673';
 
 const form = document.querySelector('[data-mj-runner]');
 if (form) {

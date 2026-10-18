@@ -475,64 +475,67 @@
 <a href=#475 id=475 data-nosnippet>475</a>    </span><span class="kw">pub </span>canonical: bool,
 <a href=#476 id=476 data-nosnippet>476</a>    <span class="doccomment">/// How many error-level diagnostics the whole topology carries.
 <a href=#477 id=477 data-nosnippet>477</a>    </span><span class="kw">pub </span>repository_errors: usize,
-<a href=#478 id=478 data-nosnippet>478</a>}
-<a href=#479 id=479 data-nosnippet>479</a>
-<a href=#480 id=480 data-nosnippet>480</a><span class="doccomment">/// What the guard decided, for a hook or a mutation that must not proceed out of place.
-<a href=#481 id=481 data-nosnippet>481</a></span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-<a href=#482 id=482 data-nosnippet>482</a></span><span class="kw">pub struct </span>GuardVerdict {
-<a href=#483 id=483 data-nosnippet>483</a>    <span class="doccomment">/// Proceed.
-<a href=#484 id=484 data-nosnippet>484</a>    </span><span class="kw">pub </span>ok: bool,
-<a href=#485 id=485 data-nosnippet>485</a>    <span class="doccomment">/// The work tree judged.
-<a href=#486 id=486 data-nosnippet>486</a>    </span><span class="kw">pub </span>path: String,
-<a href=#487 id=487 data-nosnippet>487</a>    <span class="attr">#[serde(default, skip_serializing_if = <span class="string">"Option::is_none"</span>)]
-<a href=#488 id=488 data-nosnippet>488</a>    </span><span class="doccomment">/// Its branch.
-<a href=#489 id=489 data-nosnippet>489</a>    </span><span class="kw">pub </span>branch: <span class="prelude-ty">Option</span>&lt;String&gt;,
+<a href=#478 id=478 data-nosnippet>478</a>    <span class="doccomment">/// How far this work tree and the local trunk are from the remote trunk, judged against
+<a href=#479 id=479 data-nosnippet>479</a>    /// the policy's `checkout.trunk_distance`: what it would serve, and how old that is.
+<a href=#480 id=480 data-nosnippet>480</a>    </span><span class="kw">pub </span>trunk_distance: <span class="kw">super</span>::trunk::TrunkDistance,
+<a href=#481 id=481 data-nosnippet>481</a>}
+<a href=#482 id=482 data-nosnippet>482</a>
+<a href=#483 id=483 data-nosnippet>483</a><span class="doccomment">/// What the guard decided, for a hook or a mutation that must not proceed out of place.
+<a href=#484 id=484 data-nosnippet>484</a></span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+<a href=#485 id=485 data-nosnippet>485</a></span><span class="kw">pub struct </span>GuardVerdict {
+<a href=#486 id=486 data-nosnippet>486</a>    <span class="doccomment">/// Proceed.
+<a href=#487 id=487 data-nosnippet>487</a>    </span><span class="kw">pub </span>ok: bool,
+<a href=#488 id=488 data-nosnippet>488</a>    <span class="doccomment">/// The work tree judged.
+<a href=#489 id=489 data-nosnippet>489</a>    </span><span class="kw">pub </span>path: String,
 <a href=#490 id=490 data-nosnippet>490</a>    <span class="attr">#[serde(default, skip_serializing_if = <span class="string">"Option::is_none"</span>)]
-<a href=#491 id=491 data-nosnippet>491</a>    </span><span class="doccomment">/// Where the branch belongs.
-<a href=#492 id=492 data-nosnippet>492</a>    </span><span class="kw">pub </span>expected_path: <span class="prelude-ty">Option</span>&lt;String&gt;,
-<a href=#493 id=493 data-nosnippet>493</a>    <span class="doccomment">/// Where it stands.
-<a href=#494 id=494 data-nosnippet>494</a>    </span><span class="kw">pub </span>standing: Standing,
-<a href=#495 id=495 data-nosnippet>495</a>    <span class="doccomment">/// Not subject to the rule: detached, or the trunk in the primary checkout.
-<a href=#496 id=496 data-nosnippet>496</a>    </span><span class="kw">pub </span>exempt: bool,
-<a href=#497 id=497 data-nosnippet>497</a>    <span class="attr">#[serde(default, skip_serializing_if = <span class="string">"Option::is_none"</span>)]
-<a href=#498 id=498 data-nosnippet>498</a>    </span><span class="doccomment">/// Why not, when not.
-<a href=#499 id=499 data-nosnippet>499</a>    </span><span class="kw">pub </span>reason: <span class="prelude-ty">Option</span>&lt;TopologyDiagnostic&gt;,
-<a href=#500 id=500 data-nosnippet>500</a>}
-<a href=#501 id=501 data-nosnippet>501</a>
-<a href=#502 id=502 data-nosnippet>502</a><span class="doccomment">/// One branch, inspected: where its work tree belongs and what is there.
-<a href=#503 id=503 data-nosnippet>503</a></span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-<a href=#504 id=504 data-nosnippet>504</a></span><span class="kw">pub struct </span>InspectReport {
-<a href=#505 id=505 data-nosnippet>505</a>    <span class="doccomment">/// The branch asked about.
-<a href=#506 id=506 data-nosnippet>506</a>    </span><span class="kw">pub </span>branch: String,
-<a href=#507 id=507 data-nosnippet>507</a>    <span class="doccomment">/// The branch exists locally.
-<a href=#508 id=508 data-nosnippet>508</a>    </span><span class="kw">pub </span>branch_exists: bool,
-<a href=#509 id=509 data-nosnippet>509</a>    <span class="doccomment">/// Where its work tree belongs.
-<a href=#510 id=510 data-nosnippet>510</a>    </span><span class="kw">pub </span>expected_path: String,
-<a href=#511 id=511 data-nosnippet>511</a>    <span class="doccomment">/// Something exists at that path.
-<a href=#512 id=512 data-nosnippet>512</a>    </span><span class="kw">pub </span>destination_exists: bool,
-<a href=#513 id=513 data-nosnippet>513</a>    <span class="attr">#[serde(default, skip_serializing_if = <span class="string">"Option::is_none"</span>)]
-<a href=#514 id=514 data-nosnippet>514</a>    </span><span class="doccomment">/// The work tree that holds the branch, when one does.
-<a href=#515 id=515 data-nosnippet>515</a>    </span><span class="kw">pub </span>worktree: <span class="prelude-ty">Option</span>&lt;WorktreeState&gt;,
-<a href=#516 id=516 data-nosnippet>516</a>    <span class="doccomment">/// The branch is checked out at its canonical path.
-<a href=#517 id=517 data-nosnippet>517</a>    </span><span class="kw">pub </span>canonical: bool,
-<a href=#518 id=518 data-nosnippet>518</a>    <span class="doccomment">/// What stands in the way, if anything.
-<a href=#519 id=519 data-nosnippet>519</a>    </span><span class="kw">pub </span>diagnostics: Vec&lt;TopologyDiagnostic&gt;,
-<a href=#520 id=520 data-nosnippet>520</a>}
-<a href=#521 id=521 data-nosnippet>521</a>
-<a href=#522 id=522 data-nosnippet>522</a><span class="doccomment">/// What a repair did.
-<a href=#523 id=523 data-nosnippet>523</a></span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-<a href=#524 id=524 data-nosnippet>524</a></span><span class="kw">pub struct </span>RepairReport {
-<a href=#525 id=525 data-nosnippet>525</a>    <span class="doccomment">/// Registrations git dropped, or would drop, because their directory is gone.
-<a href=#526 id=526 data-nosnippet>526</a>    </span><span class="kw">pub </span>pruned: Vec&lt;String&gt;,
-<a href=#527 id=527 data-nosnippet>527</a>    <span class="doccomment">/// What `git worktree repair` reported.
-<a href=#528 id=528 data-nosnippet>528</a>    </span><span class="kw">pub </span>repaired: Vec&lt;String&gt;,
-<a href=#529 id=529 data-nosnippet>529</a>    <span class="doccomment">/// Which hooks each existing linked worktree runs once repaired, by its path: a
-<a href=#530 id=530 data-nosnippet>530</a>    /// worktree moved by hand keeps a per-worktree `core.hooksPath` naming its old path,
-<a href=#531 id=531 data-nosnippet>531</a>    /// and one made by plain `git worktree add` may run the primary checkout's (I2718).
-<a href=#532 id=532 data-nosnippet>532</a>    /// Empty on a dry run.
-<a href=#533 id=533 data-nosnippet>533</a>    </span><span class="attr">#[serde(default, skip_serializing_if = <span class="string">"std::collections::BTreeMap::is_empty"</span>)]
-<a href=#534 id=534 data-nosnippet>534</a>    </span><span class="kw">pub </span>hooks: std::collections::BTreeMap&lt;String, <span class="kw">super</span>::hooks::HooksPath&gt;,
-<a href=#535 id=535 data-nosnippet>535</a>    <span class="doccomment">/// Whether anything was changed.
-<a href=#536 id=536 data-nosnippet>536</a>    </span><span class="kw">pub </span>applied: bool,
-<a href=#537 id=537 data-nosnippet>537</a>}
+<a href=#491 id=491 data-nosnippet>491</a>    </span><span class="doccomment">/// Its branch.
+<a href=#492 id=492 data-nosnippet>492</a>    </span><span class="kw">pub </span>branch: <span class="prelude-ty">Option</span>&lt;String&gt;,
+<a href=#493 id=493 data-nosnippet>493</a>    <span class="attr">#[serde(default, skip_serializing_if = <span class="string">"Option::is_none"</span>)]
+<a href=#494 id=494 data-nosnippet>494</a>    </span><span class="doccomment">/// Where the branch belongs.
+<a href=#495 id=495 data-nosnippet>495</a>    </span><span class="kw">pub </span>expected_path: <span class="prelude-ty">Option</span>&lt;String&gt;,
+<a href=#496 id=496 data-nosnippet>496</a>    <span class="doccomment">/// Where it stands.
+<a href=#497 id=497 data-nosnippet>497</a>    </span><span class="kw">pub </span>standing: Standing,
+<a href=#498 id=498 data-nosnippet>498</a>    <span class="doccomment">/// Not subject to the rule: detached, or the trunk in the primary checkout.
+<a href=#499 id=499 data-nosnippet>499</a>    </span><span class="kw">pub </span>exempt: bool,
+<a href=#500 id=500 data-nosnippet>500</a>    <span class="attr">#[serde(default, skip_serializing_if = <span class="string">"Option::is_none"</span>)]
+<a href=#501 id=501 data-nosnippet>501</a>    </span><span class="doccomment">/// Why not, when not.
+<a href=#502 id=502 data-nosnippet>502</a>    </span><span class="kw">pub </span>reason: <span class="prelude-ty">Option</span>&lt;TopologyDiagnostic&gt;,
+<a href=#503 id=503 data-nosnippet>503</a>}
+<a href=#504 id=504 data-nosnippet>504</a>
+<a href=#505 id=505 data-nosnippet>505</a><span class="doccomment">/// One branch, inspected: where its work tree belongs and what is there.
+<a href=#506 id=506 data-nosnippet>506</a></span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+<a href=#507 id=507 data-nosnippet>507</a></span><span class="kw">pub struct </span>InspectReport {
+<a href=#508 id=508 data-nosnippet>508</a>    <span class="doccomment">/// The branch asked about.
+<a href=#509 id=509 data-nosnippet>509</a>    </span><span class="kw">pub </span>branch: String,
+<a href=#510 id=510 data-nosnippet>510</a>    <span class="doccomment">/// The branch exists locally.
+<a href=#511 id=511 data-nosnippet>511</a>    </span><span class="kw">pub </span>branch_exists: bool,
+<a href=#512 id=512 data-nosnippet>512</a>    <span class="doccomment">/// Where its work tree belongs.
+<a href=#513 id=513 data-nosnippet>513</a>    </span><span class="kw">pub </span>expected_path: String,
+<a href=#514 id=514 data-nosnippet>514</a>    <span class="doccomment">/// Something exists at that path.
+<a href=#515 id=515 data-nosnippet>515</a>    </span><span class="kw">pub </span>destination_exists: bool,
+<a href=#516 id=516 data-nosnippet>516</a>    <span class="attr">#[serde(default, skip_serializing_if = <span class="string">"Option::is_none"</span>)]
+<a href=#517 id=517 data-nosnippet>517</a>    </span><span class="doccomment">/// The work tree that holds the branch, when one does.
+<a href=#518 id=518 data-nosnippet>518</a>    </span><span class="kw">pub </span>worktree: <span class="prelude-ty">Option</span>&lt;WorktreeState&gt;,
+<a href=#519 id=519 data-nosnippet>519</a>    <span class="doccomment">/// The branch is checked out at its canonical path.
+<a href=#520 id=520 data-nosnippet>520</a>    </span><span class="kw">pub </span>canonical: bool,
+<a href=#521 id=521 data-nosnippet>521</a>    <span class="doccomment">/// What stands in the way, if anything.
+<a href=#522 id=522 data-nosnippet>522</a>    </span><span class="kw">pub </span>diagnostics: Vec&lt;TopologyDiagnostic&gt;,
+<a href=#523 id=523 data-nosnippet>523</a>}
+<a href=#524 id=524 data-nosnippet>524</a>
+<a href=#525 id=525 data-nosnippet>525</a><span class="doccomment">/// What a repair did.
+<a href=#526 id=526 data-nosnippet>526</a></span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+<a href=#527 id=527 data-nosnippet>527</a></span><span class="kw">pub struct </span>RepairReport {
+<a href=#528 id=528 data-nosnippet>528</a>    <span class="doccomment">/// Registrations git dropped, or would drop, because their directory is gone.
+<a href=#529 id=529 data-nosnippet>529</a>    </span><span class="kw">pub </span>pruned: Vec&lt;String&gt;,
+<a href=#530 id=530 data-nosnippet>530</a>    <span class="doccomment">/// What `git worktree repair` reported.
+<a href=#531 id=531 data-nosnippet>531</a>    </span><span class="kw">pub </span>repaired: Vec&lt;String&gt;,
+<a href=#532 id=532 data-nosnippet>532</a>    <span class="doccomment">/// Which hooks each existing linked worktree runs once repaired, by its path: a
+<a href=#533 id=533 data-nosnippet>533</a>    /// worktree moved by hand keeps a per-worktree `core.hooksPath` naming its old path,
+<a href=#534 id=534 data-nosnippet>534</a>    /// and one made by plain `git worktree add` may run the primary checkout's (I2718).
+<a href=#535 id=535 data-nosnippet>535</a>    /// Empty on a dry run.
+<a href=#536 id=536 data-nosnippet>536</a>    </span><span class="attr">#[serde(default, skip_serializing_if = <span class="string">"std::collections::BTreeMap::is_empty"</span>)]
+<a href=#537 id=537 data-nosnippet>537</a>    </span><span class="kw">pub </span>hooks: std::collections::BTreeMap&lt;String, <span class="kw">super</span>::hooks::HooksPath&gt;,
+<a href=#538 id=538 data-nosnippet>538</a>    <span class="doccomment">/// Whether anything was changed.
+<a href=#539 id=539 data-nosnippet>539</a>    </span><span class="kw">pub </span>applied: bool,
+<a href=#540 id=540 data-nosnippet>540</a>}
 </code></pre></div></section></main></body></html>

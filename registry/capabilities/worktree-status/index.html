@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=73e5b3c1db68d9622d70">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=d5f331cd7e4cefa13d66">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -29,7 +29,7 @@
     <a href="https://majordomus.dev/" class="flex min-w-0 items-center gap-1.5 sm:gap-2.5 rtl:space-x-reverse">
       <span class="inline-flex h-6 w-6 shrink-0 text-heading sm:h-7 sm:w-7 [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.29.0 -->
+     Generator: majordomus-cli 0.30.0 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
   <title>Prismatic Majordomus</title>
   <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
@@ -52,7 +52,7 @@
       <span class="self-center whitespace-nowrap text-base font-semibold text-heading sm:text-xl">Majordomus</span>
       
       
-      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading" data-release="0.29.0">v0.29.0</span>
+      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading" data-release="0.30.0">v0.30.0</span>
       
     </a>
     <div class="flex items-center gap-1 sm:gap-2 md:order-2"><button type="button" data-site-search-open hidden aria-haspopup="dialog" aria-controls="site-search" aria-expanded="false" aria-keyshortcuts="/ Control+K Meta+K" class="inline-flex h-10 min-w-10 items-center justify-center gap-2 rounded-base border border-default px-2.5 text-sm font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">
@@ -261,6 +261,12 @@ the trunk, or detached.</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The trunk.</td>
       </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">trunk_distance</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How far this work tree and the local trunk are from the remote trunk, judged against
+the policy's <code>checkout.trunk_distance</code>: what it would serve, and how old that is.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">worktree</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
@@ -437,6 +443,28 @@ the trunk, or detached.</td>
       ],
       &quot;type&quot;: &quot;object&quot;
     },
+    &quot;Distance&quot;: {
+      &quot;description&quot;: &quot;How many commits two refs have that the other lacks.\n\n```\nuse majordomus_cli::worktree::trunk::Distance;\nlet d = Distance { behind: 779, ahead: 0 };\nassert_eq!(serde_json::to_value(d).unwrap(), serde_json::json!({\&quot;behind\&quot;: 779, \&quot;ahead\&quot;: 0}));\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;ahead&quot;: {
+          &quot;description&quot;: &quot;Commits of this ref the remote trunk lacks.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;behind&quot;: {
+          &quot;description&quot;: &quot;Commits of the remote trunk this ref lacks.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;behind&quot;,
+        &quot;ahead&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
     &quot;RepositoryView&quot;: {
       &quot;description&quot;: &quot;The repository&#39;s identity, as the topology reports it.&quot;,
       &quot;properties&quot;: {
@@ -564,6 +592,101 @@ the trunk, or detached.</td>
       ],
       &quot;type&quot;: &quot;object&quot;
     },
+    &quot;TrunkDistance&quot;: {
+      &quot;description&quot;: &quot;A checkout&#39;s distance from the remote trunk, judged.\n\n```\nuse majordomus_cli::worktree::trunk::{Distance, TrunkDistance, TrunkStanding};\nlet d: TrunkDistance = serde_json::from_value(serde_json::json!({\n    \&quot;standing\&quot;: \&quot;stale\&quot;, \&quot;local_trunk_standing\&quot;: \&quot;stale\&quot;,\n    \&quot;worktree\&quot;: \&quot;/repo\&quot;, \&quot;on_trunk\&quot;: true,\n    \&quot;checkout\&quot;: {\&quot;behind\&quot;: 779, \&quot;ahead\&quot;: 0},\n    \&quot;thresholds\&quot;: {\&quot;warn_behind\&quot;: 50, \&quot;fail_behind\&quot;: 300},\n    \&quot;message\&quot;: \&quot;779 commits behind origin/master\&quot;,\n})).unwrap();\nassert_eq!(d.standing, TrunkStanding::Stale);\nassert_eq!(d.checkout, Some(Distance { behind: 779, ahead: 0 }));\n// what is absent stays absent in the answer\nassert!(serde_json::to_value(&amp;d).unwrap().get(\&quot;remedy\&quot;).is_none());\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;checkout&quot;: {
+          &quot;anyOf&quot;: [
+            {
+              &quot;$ref&quot;: &quot;#/$defs/Distance&quot;
+            },
+            {
+              &quot;type&quot;: &quot;null&quot;
+            }
+          ],
+          &quot;description&quot;: &quot;The checkout&#39;s `HEAD` against the remote trunk. While a merge is in progress, the\ncommits it brings in count as present: the commit being made will hold them, so the\nmerge that brings a checkout current is never judged by the tree it is replacing.&quot;
+        },
+        &quot;fetched_at&quot;: {
+          &quot;description&quot;: &quot;When the repository last fetched (the time of `FETCH_HEAD`), RFC 3339: the moment\nthis answer is true as of. Absent when it never fetched.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;local_trunk&quot;: {
+          &quot;anyOf&quot;: [
+            {
+              &quot;$ref&quot;: &quot;#/$defs/Distance&quot;
+            },
+            {
+              &quot;type&quot;: &quot;null&quot;
+            }
+          ],
+          &quot;description&quot;: &quot;The local trunk branch against the remote trunk: what a branch made from the local\ntrunk starts from.&quot;
+        },
+        &quot;local_trunk_standing&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/TrunkStanding&quot;,
+          &quot;description&quot;: &quot;Where the local trunk branch stands, judged the same way: what a branch made from it\nstarts from. The same as `standing` when the checkout holds the trunk.&quot;
+        },
+        &quot;message&quot;: {
+          &quot;description&quot;: &quot;What the standing means here, in one line.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;on_trunk&quot;: {
+          &quot;description&quot;: &quot;The work tree holds the trunk branch itself.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;remedy&quot;: {
+          &quot;description&quot;: &quot;The commands that bring the checkout and the local trunk current, when either is\nbehind. Suggested, never run.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;remote_head&quot;: {
+          &quot;description&quot;: &quot;The commit the remote-tracking trunk names.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;remote_trunk&quot;: {
+          &quot;description&quot;: &quot;The remote-tracking trunk counted against (`origin/master`).&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;standing&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/TrunkStanding&quot;,
+          &quot;description&quot;: &quot;Where the checkout stands: its `HEAD` — with the commit a merge in progress brings\nin — judged against the thresholds. This is what its server serves.&quot;
+        },
+        &quot;thresholds&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/TrunkThresholds&quot;,
+          &quot;description&quot;: &quot;The thresholds judged against, as `checkout.trunk_distance` declares them.&quot;
+        },
+        &quot;trunk&quot;: {
+          &quot;description&quot;: &quot;The trunk branch, short.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;worktree&quot;: {
+          &quot;description&quot;: &quot;The work tree measured.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;standing&quot;,
+        &quot;local_trunk_standing&quot;,
+        &quot;worktree&quot;,
+        &quot;on_trunk&quot;,
+        &quot;thresholds&quot;,
+        &quot;message&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
     &quot;TrunkSource&quot;: {
       &quot;description&quot;: &quot;Where the trunk was learned from, in the order it is looked for.&quot;,
       &quot;oneOf&quot;: [
@@ -593,6 +716,60 @@ the trunk, or detached.</td>
           &quot;type&quot;: &quot;string&quot;
         }
       ]
+    },
+    &quot;TrunkStanding&quot;: {
+      &quot;description&quot;: &quot;Where a checkout stands against the remote trunk.\n\n```\nuse majordomus_cli::worktree::trunk::TrunkStanding;\nlet s: TrunkStanding = serde_json::from_str(r#\&quot;\&quot;lagging\&quot;\&quot;#).unwrap();\nassert_eq!(s, TrunkStanding::Lagging);\nassert_eq!(serde_json::to_value(TrunkStanding::Unmeasured).unwrap(), \&quot;unmeasured\&quot;);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;current&quot;,
+          &quot;description&quot;: &quot;Behind by less than the warn threshold, or not behind at all.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;lagging&quot;,
+          &quot;description&quot;: &quot;At or past the warn threshold: what it serves is old enough to mislead.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;stale&quot;,
+          &quot;description&quot;: &quot;At or past the fail threshold: what it serves is the wrong tree.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;unjudged&quot;,
+          &quot;description&quot;: &quot;Behind, and the policy declares no threshold to judge the distance by.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;unmeasured&quot;,
+          &quot;description&quot;: &quot;The distance could not be measured: no trunk, no remote-tracking trunk, no `HEAD`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;TrunkThresholds&quot;: {
+      &quot;description&quot;: &quot;The thresholds `checkout.trunk_distance` declares, in commits behind the remote trunk.\nAbsent is absent: the reader supplies no default, and a distance with nothing to judge\nit against is reported as `unjudged`.\n\n```\nuse majordomus_cli::worktree::trunk::TrunkThresholds;\nlet t: TrunkThresholds = serde_json::from_str(r#\&quot;{\&quot;warn_behind\&quot;: 50, \&quot;fail_behind\&quot;: 300}\&quot;#).unwrap();\nassert_eq!((t.warn_behind, t.fail_behind), (Some(50), Some(300)));\nassert_eq!(TrunkThresholds::default().warn_behind, None, \&quot;absent is not a default\&quot;);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;fail_behind&quot;: {
+          &quot;description&quot;: &quot;At or past this many commits behind, the checkout is `stale`: a failure.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: [
+            &quot;integer&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;warn_behind&quot;: {
+          &quot;description&quot;: &quot;At or past this many commits behind, the checkout is `lagging`: a warning.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: [
+            &quot;integer&quot;,
+            &quot;null&quot;
+          ]
+        }
+      },
+      &quot;type&quot;: &quot;object&quot;
     },
     &quot;TrunkView&quot;: {
       &quot;description&quot;: &quot;The trunk, as the topology reports it.&quot;,
@@ -816,6 +993,10 @@ the trunk, or detached.</td>
       &quot;$ref&quot;: &quot;#/$defs/TrunkView&quot;,
       &quot;description&quot;: &quot;The trunk.&quot;
     },
+    &quot;trunk_distance&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/TrunkDistance&quot;,
+      &quot;description&quot;: &quot;How far this work tree and the local trunk are from the remote trunk, judged against\nthe policy&#39;s `checkout.trunk_distance`: what it would serve, and how old that is.&quot;
+    },
     &quot;worktree&quot;: {
       &quot;$ref&quot;: &quot;#/$defs/WorktreeState&quot;,
       &quot;description&quot;: &quot;The work tree the call came from, with its uncommitted work counted.&quot;
@@ -828,7 +1009,8 @@ the trunk, or detached.</td>
     &quot;trunk&quot;,
     &quot;worktree&quot;,
     &quot;canonical&quot;,
-    &quot;repository_errors&quot;
+    &quot;repository_errors&quot;,
+    &quot;trunk_distance&quot;
   ],
   &quot;title&quot;: &quot;StatusReport&quot;,
   &quot;type&quot;: &quot;object&quot;
@@ -862,8 +1044,8 @@ the trunk, or detached.</td>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::worktree</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">StatusInput</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">StatusReport</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/707a04c7ce83ff9f2effd80e0c6dfc1829e49322/docs/generated/modules/worktree.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/worktree.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">cfc64482a6796b12eb023f81f50b88a5ee38b5494bb09da51600c6a17806b6c0</dd></div>
-        <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.29.0</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/2dfff96988afe1c580e8e151cf504d1ea97ad0ad/docs/generated/modules/worktree.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/worktree.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">2450cb695929a4de209be81e50d934fdac8163f8ce3c057cb4f8d0b6ce721ed0</dd></div>
+        <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.30.0</dd></div>
       </dl>
     </div>
   </aside>
@@ -918,9 +1100,9 @@ the trunk, or detached.</td>
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/707a04c7ce83ff9f2effd80e0c6dfc1829e49322/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/707a04c7ce83ff9f2effd80e0c6dfc1829e49322/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/707a04c7ce83ff9f2effd80e0c6dfc1829e49322/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/2dfff96988afe1c580e8e151cf504d1ea97ad0ad/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/2dfff96988afe1c580e8e151cf504d1ea97ad0ad/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/2dfff96988afe1c580e8e151cf504d1ea97ad0ad/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -928,7 +1110,7 @@ the trunk, or detached.</td>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.29.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/707a04c7ce83ff9f2effd80e0c6dfc1829e49322" class="font-mono underline">707a04c</a> · inputs <span class="font-mono">bf4e4e0e8cc9</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.30.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/2dfff96988afe1c580e8e151cf504d1ea97ad0ad" class="font-mono underline">2dfff96</a> · inputs <span class="font-mono">084e28b75364</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

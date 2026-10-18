@@ -10,7 +10,7 @@
 // The page is complete before this runs. What this adds is that it stops being a
 // photograph.
 
-import { api } from './cockpit.js?v=340c1e47c9a6c4ea';
+import { api } from './cockpit.js?v=4d0ffef4b79e4673';
 import { follow, LIVE, RECONNECTING, OFFLINE } from './socket.js?v=1304f666c558c8db';
 
 installStartButton();

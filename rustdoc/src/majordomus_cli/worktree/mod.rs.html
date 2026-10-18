@@ -57,30 +57,32 @@
 <a href=#57 id=57 data-nosnippet>57</a><span class="kw">pub mod </span>state;
 <a href=#58 id=58 data-nosnippet>58</a><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod </span>topology;
 <a href=#59 id=59 data-nosnippet>59</a><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod </span>trace;
-<a href=#60 id=60 data-nosnippet>60</a><span class="kw">pub mod </span>uncommitted;
-<a href=#61 id=61 data-nosnippet>61</a>
-<a href=#62 id=62 data-nosnippet>62</a><span class="kw">pub use </span>direnv::EnvrcApproval;
-<a href=#63 id=63 data-nosnippet>63</a><span class="kw">pub use </span>error::{<span class="prelude-ty">Result</span>, WorktreeError, EXIT_INTERNAL, EXIT_MISSING, EXIT_REFUSED};
-<a href=#64 id=64 data-nosnippet>64</a><span class="kw">pub use </span>fingerprint::WorktreeFingerprint;
-<a href=#65 id=65 data-nosnippet>65</a><span class="kw">pub use </span>hooks::{carry_hooks_path, HooksPath};
-<a href=#66 id=66 data-nosnippet>66</a><span class="kw">pub use </span>identity::{RepositoryIdentity, ResolvedPath, Trunk, TrunkSource};
-<a href=#67 id=67 data-nosnippet>67</a><span class="kw">pub use </span>lock::WorktreeLock;
-<a href=#68 id=68 data-nosnippet>68</a><span class="kw">pub use </span>migrate::{MigrationAction, MigrationOptions, MigrationPlan, MigrationStep, StepOutcome};
-<a href=#69 id=69 data-nosnippet>69</a><span class="kw">pub use </span>model::{
-<a href=#70 id=70 data-nosnippet>70</a>    BranchState, ContainerView, DiagnosticCode, DirtyState, GuardVerdict, InspectReport,
-<a href=#71 id=71 data-nosnippet>71</a>    RepairReport, RepositoryTopology, RepositoryView, Severity, Standing, StatusReport,
-<a href=#72 id=72 data-nosnippet>72</a>    TopologyDiagnostic, TopologyTallies, TrunkView, UpstreamState, WorktreeKind, WorktreeState,
-<a href=#73 id=73 data-nosnippet>73</a>    SCHEMA,
-<a href=#74 id=74 data-nosnippet>74</a>};
-<a href=#75 id=75 data-nosnippet>75</a><span class="kw">pub use </span>path::{container_root, detached_label, expected_path, BranchName, CONTAINER_SUFFIX};
-<a href=#76 id=76 data-nosnippet>76</a><span class="kw">pub use </span>service::{CreateReport, CreateRequest, Detail, RemoveReport, StartPoint, WorktreeService};
-<a href=#77 id=77 data-nosnippet>77</a><span class="kw">pub use </span>topology::{parse_porcelain, parse_porcelain_nul, WorktreeRecord};
-<a href=#78 id=78 data-nosnippet>78</a><span class="kw">pub use </span>trace::{
-<a href=#79 id=79 data-nosnippet>79</a>    first_merge, parse_commit, parse_issue_refs, Attribution, BranchTrace, CommitAttribution,
-<a href=#80 id=80 data-nosnippet>80</a>    CommitRef, Integration, IssueTrace, TraceReport, TraceTallies, Tracer,
-<a href=#81 id=81 data-nosnippet>81</a>};
-<a href=#82 id=82 data-nosnippet>82</a><span class="kw">pub use </span>uncommitted::{
-<a href=#83 id=83 data-nosnippet>83</a>    OpenEpisode, Threshold, UncommittedReport, UncommittedTallies, UncommittedWorktree,
-<a href=#84 id=84 data-nosnippet>84</a>    WorkStanding,
-<a href=#85 id=85 data-nosnippet>85</a>};
+<a href=#60 id=60 data-nosnippet>60</a><span class="kw">pub mod </span>trunk;
+<a href=#61 id=61 data-nosnippet>61</a><span class="kw">pub mod </span>uncommitted;
+<a href=#62 id=62 data-nosnippet>62</a>
+<a href=#63 id=63 data-nosnippet>63</a><span class="kw">pub use </span>direnv::EnvrcApproval;
+<a href=#64 id=64 data-nosnippet>64</a><span class="kw">pub use </span>error::{<span class="prelude-ty">Result</span>, WorktreeError, EXIT_INTERNAL, EXIT_MISSING, EXIT_REFUSED};
+<a href=#65 id=65 data-nosnippet>65</a><span class="kw">pub use </span>fingerprint::WorktreeFingerprint;
+<a href=#66 id=66 data-nosnippet>66</a><span class="kw">pub use </span>hooks::{carry_hooks_path, HooksPath};
+<a href=#67 id=67 data-nosnippet>67</a><span class="kw">pub use </span>identity::{RepositoryIdentity, ResolvedPath, Trunk, TrunkSource};
+<a href=#68 id=68 data-nosnippet>68</a><span class="kw">pub use </span>lock::WorktreeLock;
+<a href=#69 id=69 data-nosnippet>69</a><span class="kw">pub use </span>migrate::{MigrationAction, MigrationOptions, MigrationPlan, MigrationStep, StepOutcome};
+<a href=#70 id=70 data-nosnippet>70</a><span class="kw">pub use </span>model::{
+<a href=#71 id=71 data-nosnippet>71</a>    BranchState, ContainerView, DiagnosticCode, DirtyState, GuardVerdict, InspectReport,
+<a href=#72 id=72 data-nosnippet>72</a>    RepairReport, RepositoryTopology, RepositoryView, Severity, Standing, StatusReport,
+<a href=#73 id=73 data-nosnippet>73</a>    TopologyDiagnostic, TopologyTallies, TrunkView, UpstreamState, WorktreeKind, WorktreeState,
+<a href=#74 id=74 data-nosnippet>74</a>    SCHEMA,
+<a href=#75 id=75 data-nosnippet>75</a>};
+<a href=#76 id=76 data-nosnippet>76</a><span class="kw">pub use </span>path::{container_root, detached_label, expected_path, BranchName, CONTAINER_SUFFIX};
+<a href=#77 id=77 data-nosnippet>77</a><span class="kw">pub use </span>service::{CreateReport, CreateRequest, Detail, RemoveReport, StartPoint, WorktreeService};
+<a href=#78 id=78 data-nosnippet>78</a><span class="kw">pub use </span>topology::{parse_porcelain, parse_porcelain_nul, WorktreeRecord};
+<a href=#79 id=79 data-nosnippet>79</a><span class="kw">pub use </span>trace::{
+<a href=#80 id=80 data-nosnippet>80</a>    first_merge, parse_commit, parse_issue_refs, Attribution, BranchTrace, CommitAttribution,
+<a href=#81 id=81 data-nosnippet>81</a>    CommitRef, Integration, IssueTrace, TraceReport, TraceTallies, Tracer,
+<a href=#82 id=82 data-nosnippet>82</a>};
+<a href=#83 id=83 data-nosnippet>83</a><span class="kw">pub use </span>trunk::{Distance, TrunkDistance, TrunkStanding, TrunkThresholds};
+<a href=#84 id=84 data-nosnippet>84</a><span class="kw">pub use </span>uncommitted::{
+<a href=#85 id=85 data-nosnippet>85</a>    OpenEpisode, Threshold, UncommittedReport, UncommittedTallies, UncommittedWorktree,
+<a href=#86 id=86 data-nosnippet>86</a>    WorkStanding,
+<a href=#87 id=87 data-nosnippet>87</a>};
 </code></pre></div></section></main></body></html>

@@ -65,406 +65,420 @@
 <a href=#65 id=65 data-nosnippet>65</a>    <span class="doccomment">/// The graph library's URL, with its digest: loaded by the script only on a screen that
 <a href=#66 id=66 data-nosnippet>66</a>    /// draws a graph.
 <a href=#67 id=67 data-nosnippet>67</a>    </span><span class="kw">pub </span>graph_lib: String,
-<a href=#68 id=68 data-nosnippet>68</a>    <span class="doccomment">/// Whether the distribution has the UI's asset directory at all.
-<a href=#69 id=69 data-nosnippet>69</a>    </span><span class="kw">pub </span>assets_present: bool,
-<a href=#70 id=70 data-nosnippet>70</a>    <span class="doccomment">/// The executable's version.
-<a href=#71 id=71 data-nosnippet>71</a>    </span><span class="kw">pub </span>version: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>str,
-<a href=#72 id=72 data-nosnippet>72</a>}
-<a href=#73 id=73 data-nosnippet>73</a>
-<a href=#74 id=74 data-nosnippet>74</a><span class="doccomment">/// One whole page: the frame around a screen.
-<a href=#75 id=75 data-nosnippet>75</a></span><span class="kw">pub fn </span>page(ctx: <span class="kw-2">&amp;</span>Context, frame: <span class="kw-2">&amp;</span>Frame&lt;<span class="lifetime">'_</span>&gt;, view: <span class="kw-2">&amp;</span>View) -&gt; String {
-<a href=#76 id=76 data-nosnippet>76</a>    <span class="kw">let </span>head: Vec&lt;El&gt; = <span class="macro">vec!</span>[
-<a href=#77 id=77 data-nosnippet>77</a>        el(<span class="string">"link"</span>)
-<a href=#78 id=78 data-nosnippet>78</a>            .attr(<span class="string">"rel"</span>, <span class="string">"stylesheet"</span>)
-<a href=#79 id=79 data-nosnippet>79</a>            .attr(<span class="string">"href"</span>, frame.stylesheet.clone()),
-<a href=#80 id=80 data-nosnippet>80</a>        el(<span class="string">"link"</span>)
-<a href=#81 id=81 data-nosnippet>81</a>            .attr(<span class="string">"rel"</span>, <span class="string">"icon"</span>)
-<a href=#82 id=82 data-nosnippet>82</a>            .attr(<span class="string">"href"</span>, frame.favicon.clone()),
-<a href=#83 id=83 data-nosnippet>83</a>        <span class="comment">// the one inline script, the statement every surface ships for its theme; the policy
-<a href=#84 id=84 data-nosnippet>84</a>        // allows it by its digest (crate::cockpit::csp)
-<a href=#85 id=85 data-nosnippet>85</a>        </span>el(<span class="string">"script"</span>).raw(theme_bootstrap()),
-<a href=#86 id=86 data-nosnippet>86</a>        el(<span class="string">"script"</span>)
-<a href=#87 id=87 data-nosnippet>87</a>            .attr(<span class="string">"type"</span>, <span class="string">"module"</span>)
-<a href=#88 id=88 data-nosnippet>88</a>            .attr(<span class="string">"src"</span>, frame.script.clone())
-<a href=#89 id=89 data-nosnippet>89</a>            .flag(<span class="string">"defer"</span>),
-<a href=#90 id=90 data-nosnippet>90</a>    ]
-<a href=#91 id=91 data-nosnippet>91</a>    .into_iter()
-<a href=#92 id=92 data-nosnippet>92</a>    .chain(
-<a href=#93 id=93 data-nosnippet>93</a>        frame
-<a href=#94 id=94 data-nosnippet>94</a>            .bar_scripts
-<a href=#95 id=95 data-nosnippet>95</a>            .iter()
-<a href=#96 id=96 data-nosnippet>96</a>            .map(|src| el(<span class="string">"script"</span>).attr(<span class="string">"src"</span>, src.clone()).flag(<span class="string">"defer"</span>)),
-<a href=#97 id=97 data-nosnippet>97</a>    )
-<a href=#98 id=98 data-nosnippet>98</a>    .collect();
-<a href=#99 id=99 data-nosnippet>99</a>    <span class="kw">let </span>design = DesignSystem::compiled().ok();
-<a href=#100 id=100 data-nosnippet>100</a>    <span class="comment">// the theme contract on the root too, where the site's theme script reads it
-<a href=#101 id=101 data-nosnippet>101</a>    </span><span class="kw">let </span>root: Vec&lt;(<span class="kw-2">&amp;</span>str, String)&gt; = design
-<a href=#102 id=102 data-nosnippet>102</a>        .map(|d| {
-<a href=#103 id=103 data-nosnippet>103</a>            <span class="macro">vec!</span>[
-<a href=#104 id=104 data-nosnippet>104</a>                (<span class="string">"data-theme-key"</span>, d.theme.storage_key.clone()),
-<a href=#105 id=105 data-nosnippet>105</a>                (<span class="string">"data-theme-class"</span>, d.theme.class.clone()),
-<a href=#106 id=106 data-nosnippet>106</a>            ]
-<a href=#107 id=107 data-nosnippet>107</a>        })
-<a href=#108 id=108 data-nosnippet>108</a>        .unwrap_or_default();
-<a href=#109 id=109 data-nosnippet>109</a>    <span class="kw">let </span>body = el(<span class="string">"body"</span>)
-<a href=#110 id=110 data-nosnippet>110</a>        .class(<span class="string">"mj-body mj-ui"</span>)
-<a href=#111 id=111 data-nosnippet>111</a>        .attr_if(
-<a href=#112 id=112 data-nosnippet>112</a>            <span class="string">"data-theme-key"</span>,
-<a href=#113 id=113 data-nosnippet>113</a>            design.map(|d| d.theme.storage_key.clone()),
-<a href=#114 id=114 data-nosnippet>114</a>        )
-<a href=#115 id=115 data-nosnippet>115</a>        .attr_if(<span class="string">"data-theme-class"</span>, design.map(|d| d.theme.class.clone()))
-<a href=#116 id=116 data-nosnippet>116</a>        .attr_if(<span class="string">"data-design"</span>, design.map(|d| d.short_fingerprint()))
-<a href=#117 id=117 data-nosnippet>117</a>        .attr(<span class="string">"data-graph-lib"</span>, frame.graph_lib.clone())
-<a href=#118 id=118 data-nosnippet>118</a>        .child(
-<a href=#119 id=119 data-nosnippet>119</a>            el(<span class="string">"a"</span>)
-<a href=#120 id=120 data-nosnippet>120</a>                .class(<span class="string">"mj-skip"</span>)
-<a href=#121 id=121 data-nosnippet>121</a>                .attr(<span class="string">"href"</span>, <span class="string">"#main"</span>)
-<a href=#122 id=122 data-nosnippet>122</a>                .text(<span class="string">"Skip to content"</span>),
-<a href=#123 id=123 data-nosnippet>123</a>        )
-<a href=#124 id=124 data-nosnippet>124</a>        .raw(navbar::render(frame.version, <span class="kw-2">&amp;</span>[(SURFACE, PREFIX)]))
-<a href=#125 id=125 data-nosnippet>125</a>        .child(
-<a href=#126 id=126 data-nosnippet>126</a>            el(<span class="string">"input"</span>)
-<a href=#127 id=127 data-nosnippet>127</a>                .class(<span class="string">"mj-ui-menu-toggle"</span>)
-<a href=#128 id=128 data-nosnippet>128</a>                .attr(<span class="string">"type"</span>, <span class="string">"checkbox"</span>)
-<a href=#129 id=129 data-nosnippet>129</a>                .attr(<span class="string">"id"</span>, <span class="string">"mj-ui-menu"</span>)
-<a href=#130 id=130 data-nosnippet>130</a>                .attr(<span class="string">"aria-label"</span>, <span class="string">"Show the menu"</span>),
-<a href=#131 id=131 data-nosnippet>131</a>        )
-<a href=#132 id=132 data-nosnippet>132</a>        .child(
-<a href=#133 id=133 data-nosnippet>133</a>            el(<span class="string">"div"</span>)
-<a href=#134 id=134 data-nosnippet>134</a>                .class(<span class="string">"mj-ui-frame"</span>)
-<a href=#135 id=135 data-nosnippet>135</a>                .child(sidebar(ctx, frame))
-<a href=#136 id=136 data-nosnippet>136</a>                .child(
-<a href=#137 id=137 data-nosnippet>137</a>                    el(<span class="string">"div"</span>)
-<a href=#138 id=138 data-nosnippet>138</a>                        .class(<span class="string">"mj-ui-body"</span>)
-<a href=#139 id=139 data-nosnippet>139</a>                        .child(topbar(<span class="kw-2">&amp;</span><span class="kw">crate</span>::peers::rfc3339(std::time::SystemTime::now())))
-<a href=#140 id=140 data-nosnippet>140</a>                        .child(
-<a href=#141 id=141 data-nosnippet>141</a>                            el(<span class="string">"main"</span>)
-<a href=#142 id=142 data-nosnippet>142</a>                                .attr(<span class="string">"id"</span>, <span class="string">"main"</span>)
-<a href=#143 id=143 data-nosnippet>143</a>                                .class(<span class="string">"mj-ui-main"</span>)
-<a href=#144 id=144 data-nosnippet>144</a>                                .when(!frame.assets_present, |m| {
-<a href=#145 id=145 data-nosnippet>145</a>                                    m.child(alert(
-<a href=#146 id=146 data-nosnippet>146</a>                                        <span class="string">"warn"</span>,
-<a href=#147 id=147 data-nosnippet>147</a>                                        <span class="string">"This distribution has no share/ui/ directory, so the UI is unstyled. Run scripts/cockpit-assets."</span>,
-<a href=#148 id=148 data-nosnippet>148</a>                                    ))
-<a href=#149 id=149 data-nosnippet>149</a>                                })
-<a href=#150 id=150 data-nosnippet>150</a>                                .child(view.main.clone()),
-<a href=#151 id=151 data-nosnippet>151</a>                        ),
-<a href=#152 id=152 data-nosnippet>152</a>                ),
-<a href=#153 id=153 data-nosnippet>153</a>        );
-<a href=#154 id=154 data-nosnippet>154</a>    document_on(
-<a href=#155 id=155 data-nosnippet>155</a>        <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"{} · majordomus ui"</span>, view.title),
-<a href=#156 id=156 data-nosnippet>156</a>        <span class="kw-2">&amp;</span>root,
-<a href=#157 id=157 data-nosnippet>157</a>        head,
-<a href=#158 id=158 data-nosnippet>158</a>        body,
-<a href=#159 id=159 data-nosnippet>159</a>    )
-<a href=#160 id=160 data-nosnippet>160</a>}
-<a href=#161 id=161 data-nosnippet>161</a>
-<a href=#162 id=162 data-nosnippet>162</a><span class="doccomment">/// The sidebar: the screens, and the version card.
-<a href=#163 id=163 data-nosnippet>163</a></span><span class="kw">fn </span>sidebar(ctx: <span class="kw-2">&amp;</span>Context, frame: <span class="kw-2">&amp;</span>Frame&lt;<span class="lifetime">'_</span>&gt;) -&gt; El {
-<a href=#164 id=164 data-nosnippet>164</a>    <span class="kw">let </span>screens = el(<span class="string">"ul"</span>)
-<a href=#165 id=165 data-nosnippet>165</a>        .class(<span class="string">"mj-ui-nav-list"</span>)
-<a href=#166 id=166 data-nosnippet>166</a>        .attr(<span class="string">"aria-label"</span>, <span class="string">"Screens"</span>)
-<a href=#167 id=167 data-nosnippet>167</a>        .children(SCREENS.iter().map(|s| {
-<a href=#168 id=168 data-nosnippet>168</a>            el(<span class="string">"li"</span>).child(
-<a href=#169 id=169 data-nosnippet>169</a>                el(<span class="string">"a"</span>)
-<a href=#170 id=170 data-nosnippet>170</a>                    .class(<span class="string">"mj-ui-nav-item"</span>)
-<a href=#171 id=171 data-nosnippet>171</a>                    .attr(<span class="string">"href"</span>, s.route)
-<a href=#172 id=172 data-nosnippet>172</a>                    .attr(<span class="string">"title"</span>, s.answers)
-<a href=#173 id=173 data-nosnippet>173</a>                    .attr_if(<span class="string">"aria-current"</span>, (frame.current == s.route).then_some(<span class="string">"page"</span>))
-<a href=#174 id=174 data-nosnippet>174</a>                    .child(icon(s.icon))
-<a href=#175 id=175 data-nosnippet>175</a>                    .child(el(<span class="string">"span"</span>).class(<span class="string">"mj-ui-label"</span>).text(s.title)),
-<a href=#176 id=176 data-nosnippet>176</a>            )
-<a href=#177 id=177 data-nosnippet>177</a>        }));
-<a href=#178 id=178 data-nosnippet>178</a>    <span class="comment">// no brand of its own: the bar above carries the site's
-<a href=#179 id=179 data-nosnippet>179</a>    </span>el(<span class="string">"aside"</span>)
-<a href=#180 id=180 data-nosnippet>180</a>        .class(<span class="string">"mj-ui-sidebar"</span>)
-<a href=#181 id=181 data-nosnippet>181</a>        .attr(<span class="string">"aria-label"</span>, <span class="string">"majordomus ui"</span>)
-<a href=#182 id=182 data-nosnippet>182</a>        .child(
-<a href=#183 id=183 data-nosnippet>183</a>            el(<span class="string">"nav"</span>)
-<a href=#184 id=184 data-nosnippet>184</a>                .class(<span class="string">"mj-ui-nav"</span>)
-<a href=#185 id=185 data-nosnippet>185</a>                .attr(<span class="string">"aria-label"</span>, <span class="string">"Screens"</span>)
-<a href=#186 id=186 data-nosnippet>186</a>                .child(screens),
-<a href=#187 id=187 data-nosnippet>187</a>        )
-<a href=#188 id=188 data-nosnippet>188</a>        .child(version_card(ctx, frame))
-<a href=#189 id=189 data-nosnippet>189</a>}
-<a href=#190 id=190 data-nosnippet>190</a>
-<a href=#191 id=191 data-nosnippet>191</a><span class="doccomment">/// The version card: what this executable is, and what was last released, as
-<a href=#192 id=192 data-nosnippet>192</a>/// `distribution.releases` answers it.
-<a href=#193 id=193 data-nosnippet>193</a></span><span class="kw">fn </span>version_card(ctx: <span class="kw-2">&amp;</span>Context, frame: <span class="kw-2">&amp;</span>Frame&lt;<span class="lifetime">'_</span>&gt;) -&gt; El {
-<a href=#194 id=194 data-nosnippet>194</a>    <span class="kw">let </span>releases = ask(ctx, Source::of(<span class="string">"distribution.releases"</span>));
-<a href=#195 id=195 data-nosnippet>195</a>    <span class="kw">let </span>latest = releases.read(<span class="string">"/latest/version"</span>);
-<a href=#196 id=196 data-nosnippet>196</a>    <span class="kw">let </span>published = releases.read(<span class="string">"/latest/published_at"</span>);
-<a href=#197 id=197 data-nosnippet>197</a>    <span class="kw">let </span>commit = releases.read(<span class="string">"/latest/commit"</span>);
-<a href=#198 id=198 data-nosnippet>198</a>    el(<span class="string">"div"</span>)
-<a href=#199 id=199 data-nosnippet>199</a>        .class(<span class="string">"mj-ui-version-card"</span>)
-<a href=#200 id=200 data-nosnippet>200</a>        .attr(<span class="string">"title"</span>, <span class="macro">format!</span>(<span class="string">"read from {}"</span>, releases.provenance()))
-<a href=#201 id=201 data-nosnippet>201</a>        .child(
-<a href=#202 id=202 data-nosnippet>202</a>            el(<span class="string">"p"</span>)
-<a href=#203 id=203 data-nosnippet>203</a>                .class(<span class="string">"mj-ui-version-head"</span>)
-<a href=#204 id=204 data-nosnippet>204</a>                .child(
-<a href=#205 id=205 data-nosnippet>205</a>                    el(<span class="string">"span"</span>)
-<a href=#206 id=206 data-nosnippet>206</a>                        .class(<span class="string">"mj-ui-version"</span>)
-<a href=#207 id=207 data-nosnippet>207</a>                        .text(<span class="macro">format!</span>(<span class="string">"v{}"</span>, frame.version)),
-<a href=#208 id=208 data-nosnippet>208</a>                )
-<a href=#209 id=209 data-nosnippet>209</a>                .child(
-<a href=#210 id=210 data-nosnippet>210</a>                    el(<span class="string">"span"</span>)
-<a href=#211 id=211 data-nosnippet>211</a>                        .class(<span class="string">"mj-ui-version-note"</span>)
-<a href=#212 id=212 data-nosnippet>212</a>                        .text(<span class="string">"this executable"</span>),
-<a href=#213 id=213 data-nosnippet>213</a>                ),
-<a href=#214 id=214 data-nosnippet>214</a>        )
-<a href=#215 id=215 data-nosnippet>215</a>        .child(
-<a href=#216 id=216 data-nosnippet>216</a>            el(<span class="string">"p"</span>)
-<a href=#217 id=217 data-nosnippet>217</a>                .class(<span class="string">"mj-ui-version-line"</span>)
-<a href=#218 id=218 data-nosnippet>218</a>                .text(release_line(<span class="kw-2">&amp;</span>latest, <span class="kw-2">&amp;</span>published, <span class="kw-2">&amp;</span>commit)),
-<a href=#219 id=219 data-nosnippet>219</a>        )
-<a href=#220 id=220 data-nosnippet>220</a>}
-<a href=#221 id=221 data-nosnippet>221</a>
-<a href=#222 id=222 data-nosnippet>222</a><span class="doccomment">/// The latest release in one line: its version, the day it was published and its short
-<a href=#223 id=223 data-nosnippet>223</a>/// commit, each one said to be missing in the reading's own words when it is.
-<a href=#224 id=224 data-nosnippet>224</a></span><span class="kw">fn </span>release_line(latest: <span class="kw-2">&amp;</span>Reading, published: <span class="kw-2">&amp;</span>Reading, commit: <span class="kw-2">&amp;</span>Reading) -&gt; String {
-<a href=#225 id=225 data-nosnippet>225</a>    <span class="kw">let </span>day_of = <span class="kw">match </span>published.text() {
-<a href=#226 id=226 data-nosnippet>226</a>        <span class="prelude-val">Some</span>(d) =&gt; day(<span class="kw-2">&amp;</span>d),
-<a href=#227 id=227 data-nosnippet>227</a>        <span class="prelude-val">None </span>=&gt; shown(published),
-<a href=#228 id=228 data-nosnippet>228</a>    };
-<a href=#229 id=229 data-nosnippet>229</a>    <span class="kw">let </span>short = <span class="kw">match </span>commit.text() {
-<a href=#230 id=230 data-nosnippet>230</a>        <span class="prelude-val">Some</span>(c) =&gt; c.chars().take(<span class="number">10</span>).collect::&lt;String&gt;(),
-<a href=#231 id=231 data-nosnippet>231</a>        <span class="prelude-val">None </span>=&gt; shown(commit),
-<a href=#232 id=232 data-nosnippet>232</a>    };
-<a href=#233 id=233 data-nosnippet>233</a>    <span class="macro">format!</span>(<span class="string">"Latest release {} · {day_of} · {short}"</span>, shown(latest))
-<a href=#234 id=234 data-nosnippet>234</a>}
-<a href=#235 id=235 data-nosnippet>235</a>
-<a href=#236 id=236 data-nosnippet>236</a><span class="doccomment">/// The tool bar beneath the site's: the menu button of a narrow screen, the search, the other
-<a href=#237 id=237 data-nosnippet>237</a>/// surfaces. The theme toggle is the site's, in the bar above.
-<a href=#238 id=238 data-nosnippet>238</a></span><span class="kw">fn </span>topbar(read_at: <span class="kw-2">&amp;</span>str) -&gt; El {
-<a href=#239 id=239 data-nosnippet>239</a>    el(<span class="string">"header"</span>)
-<a href=#240 id=240 data-nosnippet>240</a>        .class(<span class="string">"mj-ui-topbar"</span>)
-<a href=#241 id=241 data-nosnippet>241</a>        .child(
-<a href=#242 id=242 data-nosnippet>242</a>            el(<span class="string">"label"</span>)
-<a href=#243 id=243 data-nosnippet>243</a>                .class(<span class="string">"mj-ui-menu-button"</span>)
-<a href=#244 id=244 data-nosnippet>244</a>                .attr(<span class="string">"for"</span>, <span class="string">"mj-ui-menu"</span>)
-<a href=#245 id=245 data-nosnippet>245</a>                .child(icon(<span class="string">"menu"</span>))
-<a href=#246 id=246 data-nosnippet>246</a>                .child(el(<span class="string">"span"</span>).class(<span class="string">"mj-sr-only"</span>).text(<span class="string">"Menu"</span>)),
-<a href=#247 id=247 data-nosnippet>247</a>        )
-<a href=#248 id=248 data-nosnippet>248</a>        .child(
-<a href=#249 id=249 data-nosnippet>249</a>            el(<span class="string">"form"</span>)
-<a href=#250 id=250 data-nosnippet>250</a>                .class(<span class="string">"mj-ui-search"</span>)
-<a href=#251 id=251 data-nosnippet>251</a>                .attr(<span class="string">"role"</span>, <span class="string">"search"</span>)
-<a href=#252 id=252 data-nosnippet>252</a>                .attr(<span class="string">"method"</span>, <span class="string">"get"</span>)
-<a href=#253 id=253 data-nosnippet>253</a>                .attr(<span class="string">"action"</span>, <span class="macro">format!</span>(<span class="string">"{}/search"</span>, <span class="kw">crate</span>::cockpit::PREFIX))
-<a href=#254 id=254 data-nosnippet>254</a>                .child(icon(<span class="string">"search"</span>))
-<a href=#255 id=255 data-nosnippet>255</a>                .child(
-<a href=#256 id=256 data-nosnippet>256</a>                    el(<span class="string">"label"</span>)
-<a href=#257 id=257 data-nosnippet>257</a>                        .class(<span class="string">"mj-sr-only"</span>)
-<a href=#258 id=258 data-nosnippet>258</a>                        .attr(<span class="string">"for"</span>, <span class="string">"mj-ui-q"</span>)
-<a href=#259 id=259 data-nosnippet>259</a>                        .text(<span class="string">"Search capabilities, objects, commands"</span>),
-<a href=#260 id=260 data-nosnippet>260</a>                )
-<a href=#261 id=261 data-nosnippet>261</a>                .child(
-<a href=#262 id=262 data-nosnippet>262</a>                    el(<span class="string">"input"</span>)
-<a href=#263 id=263 data-nosnippet>263</a>                        .attr(<span class="string">"id"</span>, <span class="string">"mj-ui-q"</span>)
-<a href=#264 id=264 data-nosnippet>264</a>                        .attr(<span class="string">"type"</span>, <span class="string">"search"</span>)
-<a href=#265 id=265 data-nosnippet>265</a>                        .attr(<span class="string">"name"</span>, <span class="string">"q"</span>)
-<a href=#266 id=266 data-nosnippet>266</a>                        .attr(<span class="string">"placeholder"</span>, <span class="string">"Search capabilities, objects, commands…"</span>),
-<a href=#267 id=267 data-nosnippet>267</a>                ),
-<a href=#268 id=268 data-nosnippet>268</a>        )
-<a href=#269 id=269 data-nosnippet>269</a>        .child(
-<a href=#270 id=270 data-nosnippet>270</a>            el(<span class="string">"p"</span>)
-<a href=#271 id=271 data-nosnippet>271</a>                .class(<span class="string">"mj-ui-fresh"</span>)
-<a href=#272 id=272 data-nosnippet>272</a>                .attr(<span class="string">"aria-live"</span>, <span class="string">"polite"</span>)
-<a href=#273 id=273 data-nosnippet>273</a>                .attr(<span class="string">"title"</span>, <span class="string">"when this screen read its sources; it reads them again every minute while it is open"</span>)
-<a href=#274 id=274 data-nosnippet>274</a>                .child(el(<span class="string">"span"</span>).class(<span class="string">"mj-ui-fresh-dot"</span>).attr(<span class="string">"aria-hidden"</span>, <span class="string">"true"</span>))
-<a href=#275 id=275 data-nosnippet>275</a>                .child(
-<a href=#276 id=276 data-nosnippet>276</a>                    el(<span class="string">"span"</span>)
-<a href=#277 id=277 data-nosnippet>277</a>                        .text(<span class="string">"Read at "</span>)
-<a href=#278 id=278 data-nosnippet>278</a>                        .child(
-<a href=#279 id=279 data-nosnippet>279</a>                            el(<span class="string">"time"</span>)
-<a href=#280 id=280 data-nosnippet>280</a>                                .attr(<span class="string">"data-read-at"</span>, <span class="string">""</span>)
-<a href=#281 id=281 data-nosnippet>281</a>                                .attr(<span class="string">"datetime"</span>, read_at)
-<a href=#282 id=282 data-nosnippet>282</a>                                .text(read_at.replace(<span class="string">'T'</span>, <span class="string">" "</span>)),
-<a href=#283 id=283 data-nosnippet>283</a>                        ),
-<a href=#284 id=284 data-nosnippet>284</a>                ),
-<a href=#285 id=285 data-nosnippet>285</a>        )
-<a href=#286 id=286 data-nosnippet>286</a>        .child(
-<a href=#287 id=287 data-nosnippet>287</a>            el(<span class="string">"nav"</span>)
-<a href=#288 id=288 data-nosnippet>288</a>                .class(<span class="string">"mj-ui-tools"</span>)
-<a href=#289 id=289 data-nosnippet>289</a>                .attr(<span class="string">"aria-label"</span>, <span class="string">"Other surfaces"</span>)
-<a href=#290 id=290 data-nosnippet>290</a>                .child(tool(<span class="kw">crate</span>::web::discover::DOCS_MOUNT, <span class="string">"book"</span>, <span class="string">"Docs"</span>))
-<a href=#291 id=291 data-nosnippet>291</a>                .child(tool(<span class="kw">crate</span>::http::swagger::SWAGGER_PATH, <span class="string">"code"</span>, <span class="string">"API"</span>))
-<a href=#292 id=292 data-nosnippet>292</a>                .child(tool(<span class="kw">crate</span>::cockpit::PREFIX, <span class="string">"terminal"</span>, <span class="string">"Cockpit"</span>)),
-<a href=#293 id=293 data-nosnippet>293</a>        )
-<a href=#294 id=294 data-nosnippet>294</a>}
-<a href=#295 id=295 data-nosnippet>295</a>
-<a href=#296 id=296 data-nosnippet>296</a><span class="doccomment">/// A link to another surface. Below the medium width its label is hidden and only the icon,
-<a href=#297 id=297 data-nosnippet>297</a>/// which is `aria-hidden`, is drawn, so the link carries its name itself.
-<a href=#298 id=298 data-nosnippet>298</a></span><span class="kw">fn </span>tool(href: <span class="kw-2">&amp;</span>str, glyph: <span class="kw-2">&amp;</span>str, label: <span class="kw-2">&amp;</span>str) -&gt; El {
-<a href=#299 id=299 data-nosnippet>299</a>    el(<span class="string">"a"</span>)
-<a href=#300 id=300 data-nosnippet>300</a>        .class(<span class="string">"mj-ui-tool"</span>)
-<a href=#301 id=301 data-nosnippet>301</a>        .attr(<span class="string">"href"</span>, href)
-<a href=#302 id=302 data-nosnippet>302</a>        .attr(<span class="string">"aria-label"</span>, label)
-<a href=#303 id=303 data-nosnippet>303</a>        .child(icon(glyph))
-<a href=#304 id=304 data-nosnippet>304</a>        .child(el(<span class="string">"span"</span>).class(<span class="string">"mj-ui-label"</span>).text(label))
-<a href=#305 id=305 data-nosnippet>305</a>}
-<a href=#306 id=306 data-nosnippet>306</a>
-<a href=#307 id=307 data-nosnippet>307</a><span class="doccomment">/// A route under the UI that answers nothing.
-<a href=#308 id=308 data-nosnippet>308</a></span><span class="kw">pub fn </span>not_found(path: <span class="kw-2">&amp;</span>str) -&gt; View {
-<a href=#309 id=309 data-nosnippet>309</a>    View {
-<a href=#310 id=310 data-nosnippet>310</a>        title: <span class="string">"Not a screen"</span>.into(),
-<a href=#311 id=311 data-nosnippet>311</a>        main: el(<span class="string">"div"</span>)
-<a href=#312 id=312 data-nosnippet>312</a>            .class(<span class="string">"mj-ui-stack"</span>)
-<a href=#313 id=313 data-nosnippet>313</a>            .child(alert(<span class="string">"fail"</span>, <span class="macro">format!</span>(<span class="string">"The UI serves no screen at {path}."</span>)))
-<a href=#314 id=314 data-nosnippet>314</a>            .child(
-<a href=#315 id=315 data-nosnippet>315</a>                el(<span class="string">"p"</span>).child(
-<a href=#316 id=316 data-nosnippet>316</a>                    el(<span class="string">"a"</span>)
-<a href=#317 id=317 data-nosnippet>317</a>                        .class(<span class="string">"mj-ui-link"</span>)
-<a href=#318 id=318 data-nosnippet>318</a>                        .attr(<span class="string">"href"</span>, PREFIX)
-<a href=#319 id=319 data-nosnippet>319</a>                        .text(<span class="string">"Back to the dashboard"</span>),
-<a href=#320 id=320 data-nosnippet>320</a>                ),
-<a href=#321 id=321 data-nosnippet>321</a>            ),
-<a href=#322 id=322 data-nosnippet>322</a>        status: <span class="number">404</span>,
-<a href=#323 id=323 data-nosnippet>323</a>    }
-<a href=#324 id=324 data-nosnippet>324</a>}
-<a href=#325 id=325 data-nosnippet>325</a>
-<a href=#326 id=326 data-nosnippet>326</a><span class="attr">#[cfg(test)]
-<a href=#327 id=327 data-nosnippet>327</a></span><span class="kw">mod </span>tests {
-<a href=#328 id=328 data-nosnippet>328</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
-<a href=#329 id=329 data-nosnippet>329</a>    <span class="kw">use </span><span class="kw">crate</span>::synthetic::{Shape, SyntheticRepository};
-<a href=#330 id=330 data-nosnippet>330</a>
-<a href=#331 id=331 data-nosnippet>331</a>    <span class="kw">fn </span>frame(current: <span class="kw-2">&amp;</span>str) -&gt; Frame&lt;<span class="lifetime">'_</span>&gt; {
-<a href=#332 id=332 data-nosnippet>332</a>        Frame {
-<a href=#333 id=333 data-nosnippet>333</a>            current,
-<a href=#334 id=334 data-nosnippet>334</a>            stylesheet: <span class="string">"/ui/assets/ui.css?v=1"</span>.into(),
-<a href=#335 id=335 data-nosnippet>335</a>            favicon: <span class="string">"/ui/assets/favicon.svg?v=1"</span>.into(),
-<a href=#336 id=336 data-nosnippet>336</a>            script: <span class="string">"/ui/assets/ui.js?v=1"</span>.into(),
-<a href=#337 id=337 data-nosnippet>337</a>            bar_scripts: <span class="macro">vec!</span>[
-<a href=#338 id=338 data-nosnippet>338</a>                <span class="string">"/ui/assets/nav.js?v=1"</span>.into(),
-<a href=#339 id=339 data-nosnippet>339</a>                <span class="string">"/ui/assets/theme.js?v=1"</span>.into(),
-<a href=#340 id=340 data-nosnippet>340</a>            ],
-<a href=#341 id=341 data-nosnippet>341</a>            graph_lib: <span class="string">"/ui/assets/vendor/cytoscape.min.js?v=1"</span>.into(),
-<a href=#342 id=342 data-nosnippet>342</a>            assets_present: <span class="bool-val">true</span>,
-<a href=#343 id=343 data-nosnippet>343</a>            version: <span class="string">"0.0.0"</span>,
-<a href=#344 id=344 data-nosnippet>344</a>        }
-<a href=#345 id=345 data-nosnippet>345</a>    }
-<a href=#346 id=346 data-nosnippet>346</a>
-<a href=#347 id=347 data-nosnippet>347</a>    <span class="doccomment">/// The release line shows the day and the short commit of a release it was given, and
-<a href=#348 id=348 data-nosnippet>348</a>    /// says which reading is missing when it was not.
-<a href=#349 id=349 data-nosnippet>349</a>    </span><span class="attr">#[test]
-<a href=#350 id=350 data-nosnippet>350</a>    </span><span class="kw">fn </span>the_release_line_says_what_it_read_and_what_is_missing() {
-<a href=#351 id=351 data-nosnippet>351</a>        <span class="kw">let </span>releases = <span class="kw">crate</span>::ui::source::Answer {
-<a href=#352 id=352 data-nosnippet>352</a>            source: Source::of(<span class="string">"distribution.releases"</span>),
-<a href=#353 id=353 data-nosnippet>353</a>            route: <span class="prelude-val">None</span>,
-<a href=#354 id=354 data-nosnippet>354</a>            exposure: Default::default(),
-<a href=#355 id=355 data-nosnippet>355</a>            value: <span class="prelude-val">Ok</span>(<span class="macro">serde_json::json!</span>({ <span class="string">"latest"</span>: {
-<a href=#356 id=356 data-nosnippet>356</a>                <span class="string">"version"</span>: <span class="string">"0.20.0"</span>,
-<a href=#357 id=357 data-nosnippet>357</a>                <span class="string">"published_at"</span>: <span class="string">"2026-10-10T16:38:00Z"</span>,
-<a href=#358 id=358 data-nosnippet>358</a>                <span class="string">"commit"</span>: <span class="string">"c8f0e4c50123456789"</span>,
-<a href=#359 id=359 data-nosnippet>359</a>            }})
-<a href=#360 id=360 data-nosnippet>360</a>            .into()),
-<a href=#361 id=361 data-nosnippet>361</a>            took: std::time::Duration::ZERO,
-<a href=#362 id=362 data-nosnippet>362</a>            standing: <span class="kw">crate</span>::ui::source::Standing::NOW,
-<a href=#363 id=363 data-nosnippet>363</a>        };
-<a href=#364 id=364 data-nosnippet>364</a>        <span class="kw">let </span>line = release_line(
-<a href=#365 id=365 data-nosnippet>365</a>            <span class="kw-2">&amp;</span>releases.read(<span class="string">"/latest/version"</span>),
-<a href=#366 id=366 data-nosnippet>366</a>            <span class="kw-2">&amp;</span>releases.read(<span class="string">"/latest/published_at"</span>),
-<a href=#367 id=367 data-nosnippet>367</a>            <span class="kw-2">&amp;</span>releases.read(<span class="string">"/latest/commit"</span>),
-<a href=#368 id=368 data-nosnippet>368</a>        );
-<a href=#369 id=369 data-nosnippet>369</a>        <span class="macro">assert_eq!</span>(line, <span class="string">"Latest release 0.20.0 · 2026-10-10 · c8f0e4c501"</span>);
-<a href=#370 id=370 data-nosnippet>370</a>        <span class="kw">let </span>missing = releases.read(<span class="string">"/latest/nothing"</span>);
-<a href=#371 id=371 data-nosnippet>371</a>        <span class="macro">assert_eq!</span>(
-<a href=#372 id=372 data-nosnippet>372</a>            release_line(<span class="kw-2">&amp;</span>missing, <span class="kw-2">&amp;</span>missing, <span class="kw-2">&amp;</span>missing),
-<a href=#373 id=373 data-nosnippet>373</a>            <span class="string">"Latest release none · none · none"
-<a href=#374 id=374 data-nosnippet>374</a>        </span>);
-<a href=#375 id=375 data-nosnippet>375</a>    }
-<a href=#376 id=376 data-nosnippet>376</a>
-<a href=#377 id=377 data-nosnippet>377</a>    <span class="doccomment">/// A distribution without the UI's files still serves every screen, and says why it
-<a href=#378 id=378 data-nosnippet>378</a>    /// is unstyled.
-<a href=#379 id=379 data-nosnippet>379</a>    </span><span class="attr">#[test]
-<a href=#380 id=380 data-nosnippet>380</a>    </span><span class="kw">fn </span>an_unstyled_distribution_says_so_on_every_page() {
-<a href=#381 id=381 data-nosnippet>381</a>        <span class="kw">let </span>repo = SyntheticRepository::new(Shape::default()).expect(<span class="string">"a synthetic repository"</span>);
-<a href=#382 id=382 data-nosnippet>382</a>        <span class="kw">let </span>ctx = repo.context().expect(<span class="string">"a context"</span>);
-<a href=#383 id=383 data-nosnippet>383</a>        <span class="kw">let </span><span class="kw-2">mut </span>bare = frame(<span class="string">"/ui"</span>);
-<a href=#384 id=384 data-nosnippet>384</a>        bare.assets_present = <span class="bool-val">false</span>;
-<a href=#385 id=385 data-nosnippet>385</a>        <span class="kw">let </span>html = page(<span class="kw-2">&amp;</span>ctx, <span class="kw-2">&amp;</span>bare, <span class="kw-2">&amp;</span>View::new(<span class="string">"Dashboard"</span>, el(<span class="string">"p"</span>)));
-<a href=#386 id=386 data-nosnippet>386</a>        <span class="macro">assert!</span>(html.contains(<span class="string">"the UI is unstyled"</span>), <span class="string">"{html}"</span>);
-<a href=#387 id=387 data-nosnippet>387</a>    }
-<a href=#388 id=388 data-nosnippet>388</a>
-<a href=#389 id=389 data-nosnippet>389</a>    <span class="kw">fn </span>render(current: <span class="kw-2">&amp;</span>str) -&gt; String {
-<a href=#390 id=390 data-nosnippet>390</a>        <span class="kw">let </span>repo = SyntheticRepository::new(Shape::default()).expect(<span class="string">"a synthetic repository"</span>);
-<a href=#391 id=391 data-nosnippet>391</a>        <span class="kw">let </span>ctx = repo.context().expect(<span class="string">"a context"</span>);
-<a href=#392 id=392 data-nosnippet>392</a>        page(<span class="kw-2">&amp;</span>ctx, <span class="kw-2">&amp;</span>frame(current), <span class="kw-2">&amp;</span>View::new(<span class="string">"Dashboard"</span>, el(<span class="string">"p"</span>)))
-<a href=#393 id=393 data-nosnippet>393</a>    }
-<a href=#394 id=394 data-nosnippet>394</a>
-<a href=#395 id=395 data-nosnippet>395</a>    <span class="doccomment">/// Every screen is in the sidebar with its icon, the current one is marked, and the
-<a href=#396 id=396 data-nosnippet>396</a>    /// version card says what was last released from the source that knows.
-<a href=#397 id=397 data-nosnippet>397</a>    </span><span class="attr">#[test]
-<a href=#398 id=398 data-nosnippet>398</a>    </span><span class="kw">fn </span>the_sidebar_is_the_screens_and_the_version_card() {
-<a href=#399 id=399 data-nosnippet>399</a>        <span class="kw">let </span>html = render(PREFIX);
-<a href=#400 id=400 data-nosnippet>400</a>        <span class="kw">for </span>s <span class="kw">in </span>SCREENS {
-<a href=#401 id=401 data-nosnippet>401</a>            <span class="macro">assert!</span>(
-<a href=#402 id=402 data-nosnippet>402</a>                html.contains(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"href=\"{}\""</span>, s.route)),
-<a href=#403 id=403 data-nosnippet>403</a>                <span class="string">"{}"</span>,
-<a href=#404 id=404 data-nosnippet>404</a>                s.route
-<a href=#405 id=405 data-nosnippet>405</a>            );
-<a href=#406 id=406 data-nosnippet>406</a>        }
-<a href=#407 id=407 data-nosnippet>407</a>        <span class="macro">assert_eq!</span>(html.matches(<span class="string">"aria-current=\"page\""</span>).count(), <span class="number">1</span>);
-<a href=#408 id=408 data-nosnippet>408</a>        <span class="macro">assert!</span>(html.contains(<span class="string">"Latest release"</span>));
-<a href=#409 id=409 data-nosnippet>409</a>        <span class="macro">assert!</span>(html.contains(<span class="string">"&lt;title&gt;Dashboard · majordomus ui&lt;/title&gt;"</span>));
-<a href=#410 id=410 data-nosnippet>410</a>    }
-<a href=#411 id=411 data-nosnippet>411</a>
-<a href=#412 id=412 data-nosnippet>412</a>    <span class="doccomment">/// The UI is its own product: the Cockpit appears in its frame only as the technical
-<a href=#413 id=413 data-nosnippet>413</a>    /// reference among the other surfaces, never in its navigation.
-<a href=#414 id=414 data-nosnippet>414</a>    </span><span class="attr">#[test]
-<a href=#415 id=415 data-nosnippet>415</a>    </span><span class="kw">fn </span>the_cockpit_is_a_reference_not_a_destination() {
-<a href=#416 id=416 data-nosnippet>416</a>        <span class="kw">let </span>html = render(PREFIX);
-<a href=#417 id=417 data-nosnippet>417</a>        <span class="kw">let </span>nav = html.split(<span class="string">"mj-ui-nav-list"</span>).nth(<span class="number">1</span>).unwrap_or_default();
-<a href=#418 id=418 data-nosnippet>418</a>        <span class="kw">let </span>nav = nav.split(<span class="string">"&lt;/ul&gt;"</span>).next().unwrap_or_default();
-<a href=#419 id=419 data-nosnippet>419</a>        <span class="macro">assert!</span>(
-<a href=#420 id=420 data-nosnippet>420</a>            !nav.contains(<span class="string">"/cockpit"</span>),
-<a href=#421 id=421 data-nosnippet>421</a>            <span class="string">"the navigation leads into the Cockpit: {nav}"
-<a href=#422 id=422 data-nosnippet>422</a>        </span>);
-<a href=#423 id=423 data-nosnippet>423</a>        <span class="macro">assert!</span>(html.contains(<span class="string">"aria-label=\"Other surfaces\""</span>));
+<a href=#68 id=68 data-nosnippet>68</a>    <span class="doccomment">/// The module that wires an issue's moves (the Cockpit's `moves.js`), with its digest:
+<a href=#69 id=69 data-nosnippet>69</a>    /// loaded by the script only on a screen that renders a move form (I2781).
+<a href=#70 id=70 data-nosnippet>70</a>    </span><span class="kw">pub </span>moves_lib: String,
+<a href=#71 id=71 data-nosnippet>71</a>    <span class="doccomment">/// The Cockpit's one WebSocket client (`socket.js`), with its digest: loaded by the script
+<a href=#72 id=72 data-nosnippet>72</a>    /// only on a screen that follows the executions this server runs (I2783).
+<a href=#73 id=73 data-nosnippet>73</a>    </span><span class="kw">pub </span>socket_lib: String,
+<a href=#74 id=74 data-nosnippet>74</a>    <span class="doccomment">/// Whether the distribution has the UI's asset directory at all.
+<a href=#75 id=75 data-nosnippet>75</a>    </span><span class="kw">pub </span>assets_present: bool,
+<a href=#76 id=76 data-nosnippet>76</a>    <span class="doccomment">/// The executable's version.
+<a href=#77 id=77 data-nosnippet>77</a>    </span><span class="kw">pub </span>version: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>str,
+<a href=#78 id=78 data-nosnippet>78</a>}
+<a href=#79 id=79 data-nosnippet>79</a>
+<a href=#80 id=80 data-nosnippet>80</a><span class="doccomment">/// One whole page: the frame around a screen.
+<a href=#81 id=81 data-nosnippet>81</a></span><span class="kw">pub fn </span>page(ctx: <span class="kw-2">&amp;</span>Context, frame: <span class="kw-2">&amp;</span>Frame&lt;<span class="lifetime">'_</span>&gt;, view: <span class="kw-2">&amp;</span>View) -&gt; String {
+<a href=#82 id=82 data-nosnippet>82</a>    <span class="kw">let </span>head: Vec&lt;El&gt; = <span class="macro">vec!</span>[
+<a href=#83 id=83 data-nosnippet>83</a>        el(<span class="string">"link"</span>)
+<a href=#84 id=84 data-nosnippet>84</a>            .attr(<span class="string">"rel"</span>, <span class="string">"stylesheet"</span>)
+<a href=#85 id=85 data-nosnippet>85</a>            .attr(<span class="string">"href"</span>, frame.stylesheet.clone()),
+<a href=#86 id=86 data-nosnippet>86</a>        el(<span class="string">"link"</span>)
+<a href=#87 id=87 data-nosnippet>87</a>            .attr(<span class="string">"rel"</span>, <span class="string">"icon"</span>)
+<a href=#88 id=88 data-nosnippet>88</a>            .attr(<span class="string">"href"</span>, frame.favicon.clone()),
+<a href=#89 id=89 data-nosnippet>89</a>        <span class="comment">// the one inline script, the statement every surface ships for its theme; the policy
+<a href=#90 id=90 data-nosnippet>90</a>        // allows it by its digest (crate::cockpit::csp)
+<a href=#91 id=91 data-nosnippet>91</a>        </span>el(<span class="string">"script"</span>).raw(theme_bootstrap()),
+<a href=#92 id=92 data-nosnippet>92</a>        el(<span class="string">"script"</span>)
+<a href=#93 id=93 data-nosnippet>93</a>            .attr(<span class="string">"type"</span>, <span class="string">"module"</span>)
+<a href=#94 id=94 data-nosnippet>94</a>            .attr(<span class="string">"src"</span>, frame.script.clone())
+<a href=#95 id=95 data-nosnippet>95</a>            .flag(<span class="string">"defer"</span>),
+<a href=#96 id=96 data-nosnippet>96</a>    ]
+<a href=#97 id=97 data-nosnippet>97</a>    .into_iter()
+<a href=#98 id=98 data-nosnippet>98</a>    .chain(
+<a href=#99 id=99 data-nosnippet>99</a>        frame
+<a href=#100 id=100 data-nosnippet>100</a>            .bar_scripts
+<a href=#101 id=101 data-nosnippet>101</a>            .iter()
+<a href=#102 id=102 data-nosnippet>102</a>            .map(|src| el(<span class="string">"script"</span>).attr(<span class="string">"src"</span>, src.clone()).flag(<span class="string">"defer"</span>)),
+<a href=#103 id=103 data-nosnippet>103</a>    )
+<a href=#104 id=104 data-nosnippet>104</a>    .collect();
+<a href=#105 id=105 data-nosnippet>105</a>    <span class="kw">let </span>design = DesignSystem::compiled().ok();
+<a href=#106 id=106 data-nosnippet>106</a>    <span class="comment">// the theme contract on the root too, where the site's theme script reads it
+<a href=#107 id=107 data-nosnippet>107</a>    </span><span class="kw">let </span>root: Vec&lt;(<span class="kw-2">&amp;</span>str, String)&gt; = design
+<a href=#108 id=108 data-nosnippet>108</a>        .map(|d| {
+<a href=#109 id=109 data-nosnippet>109</a>            <span class="macro">vec!</span>[
+<a href=#110 id=110 data-nosnippet>110</a>                (<span class="string">"data-theme-key"</span>, d.theme.storage_key.clone()),
+<a href=#111 id=111 data-nosnippet>111</a>                (<span class="string">"data-theme-class"</span>, d.theme.class.clone()),
+<a href=#112 id=112 data-nosnippet>112</a>            ]
+<a href=#113 id=113 data-nosnippet>113</a>        })
+<a href=#114 id=114 data-nosnippet>114</a>        .unwrap_or_default();
+<a href=#115 id=115 data-nosnippet>115</a>    <span class="kw">let </span>body = el(<span class="string">"body"</span>)
+<a href=#116 id=116 data-nosnippet>116</a>        .class(<span class="string">"mj-body mj-ui"</span>)
+<a href=#117 id=117 data-nosnippet>117</a>        .attr_if(
+<a href=#118 id=118 data-nosnippet>118</a>            <span class="string">"data-theme-key"</span>,
+<a href=#119 id=119 data-nosnippet>119</a>            design.map(|d| d.theme.storage_key.clone()),
+<a href=#120 id=120 data-nosnippet>120</a>        )
+<a href=#121 id=121 data-nosnippet>121</a>        .attr_if(<span class="string">"data-theme-class"</span>, design.map(|d| d.theme.class.clone()))
+<a href=#122 id=122 data-nosnippet>122</a>        .attr_if(<span class="string">"data-design"</span>, design.map(|d| d.short_fingerprint()))
+<a href=#123 id=123 data-nosnippet>123</a>        .attr(<span class="string">"data-graph-lib"</span>, frame.graph_lib.clone())
+<a href=#124 id=124 data-nosnippet>124</a>        .attr(<span class="string">"data-moves-lib"</span>, frame.moves_lib.clone())
+<a href=#125 id=125 data-nosnippet>125</a>        .attr(<span class="string">"data-socket-lib"</span>, frame.socket_lib.clone())
+<a href=#126 id=126 data-nosnippet>126</a>        .attr(<span class="string">"data-events"</span>, <span class="kw">crate</span>::http::events::PATH)
+<a href=#127 id=127 data-nosnippet>127</a>        .child(
+<a href=#128 id=128 data-nosnippet>128</a>            el(<span class="string">"a"</span>)
+<a href=#129 id=129 data-nosnippet>129</a>                .class(<span class="string">"mj-skip"</span>)
+<a href=#130 id=130 data-nosnippet>130</a>                .attr(<span class="string">"href"</span>, <span class="string">"#main"</span>)
+<a href=#131 id=131 data-nosnippet>131</a>                .text(<span class="string">"Skip to content"</span>),
+<a href=#132 id=132 data-nosnippet>132</a>        )
+<a href=#133 id=133 data-nosnippet>133</a>        .raw(navbar::render(frame.version, <span class="kw-2">&amp;</span>[(SURFACE, PREFIX)]))
+<a href=#134 id=134 data-nosnippet>134</a>        .child(
+<a href=#135 id=135 data-nosnippet>135</a>            el(<span class="string">"input"</span>)
+<a href=#136 id=136 data-nosnippet>136</a>                .class(<span class="string">"mj-ui-menu-toggle"</span>)
+<a href=#137 id=137 data-nosnippet>137</a>                .attr(<span class="string">"type"</span>, <span class="string">"checkbox"</span>)
+<a href=#138 id=138 data-nosnippet>138</a>                .attr(<span class="string">"id"</span>, <span class="string">"mj-ui-menu"</span>)
+<a href=#139 id=139 data-nosnippet>139</a>                .attr(<span class="string">"aria-label"</span>, <span class="string">"Show the menu"</span>),
+<a href=#140 id=140 data-nosnippet>140</a>        )
+<a href=#141 id=141 data-nosnippet>141</a>        .child(
+<a href=#142 id=142 data-nosnippet>142</a>            el(<span class="string">"div"</span>)
+<a href=#143 id=143 data-nosnippet>143</a>                .class(<span class="string">"mj-ui-frame"</span>)
+<a href=#144 id=144 data-nosnippet>144</a>                .child(sidebar(ctx, frame))
+<a href=#145 id=145 data-nosnippet>145</a>                .child(
+<a href=#146 id=146 data-nosnippet>146</a>                    el(<span class="string">"div"</span>)
+<a href=#147 id=147 data-nosnippet>147</a>                        .class(<span class="string">"mj-ui-body"</span>)
+<a href=#148 id=148 data-nosnippet>148</a>                        .child(topbar(<span class="kw-2">&amp;</span><span class="kw">crate</span>::peers::rfc3339(std::time::SystemTime::now())))
+<a href=#149 id=149 data-nosnippet>149</a>                        .child(
+<a href=#150 id=150 data-nosnippet>150</a>                            el(<span class="string">"main"</span>)
+<a href=#151 id=151 data-nosnippet>151</a>                                .attr(<span class="string">"id"</span>, <span class="string">"main"</span>)
+<a href=#152 id=152 data-nosnippet>152</a>                                .class(<span class="string">"mj-ui-main"</span>)
+<a href=#153 id=153 data-nosnippet>153</a>                                .when(!frame.assets_present, |m| {
+<a href=#154 id=154 data-nosnippet>154</a>                                    m.child(alert(
+<a href=#155 id=155 data-nosnippet>155</a>                                        <span class="string">"warn"</span>,
+<a href=#156 id=156 data-nosnippet>156</a>                                        <span class="string">"This distribution has no share/ui/ directory, so the UI is unstyled. Run scripts/cockpit-assets."</span>,
+<a href=#157 id=157 data-nosnippet>157</a>                                    ))
+<a href=#158 id=158 data-nosnippet>158</a>                                })
+<a href=#159 id=159 data-nosnippet>159</a>                                .child(view.main.clone()),
+<a href=#160 id=160 data-nosnippet>160</a>                        ),
+<a href=#161 id=161 data-nosnippet>161</a>                ),
+<a href=#162 id=162 data-nosnippet>162</a>        );
+<a href=#163 id=163 data-nosnippet>163</a>    document_on(
+<a href=#164 id=164 data-nosnippet>164</a>        <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"{} · majordomus ui"</span>, view.title),
+<a href=#165 id=165 data-nosnippet>165</a>        <span class="kw-2">&amp;</span>root,
+<a href=#166 id=166 data-nosnippet>166</a>        head,
+<a href=#167 id=167 data-nosnippet>167</a>        body,
+<a href=#168 id=168 data-nosnippet>168</a>    )
+<a href=#169 id=169 data-nosnippet>169</a>}
+<a href=#170 id=170 data-nosnippet>170</a>
+<a href=#171 id=171 data-nosnippet>171</a><span class="doccomment">/// The sidebar: the screens, and the version card.
+<a href=#172 id=172 data-nosnippet>172</a></span><span class="kw">fn </span>sidebar(ctx: <span class="kw-2">&amp;</span>Context, frame: <span class="kw-2">&amp;</span>Frame&lt;<span class="lifetime">'_</span>&gt;) -&gt; El {
+<a href=#173 id=173 data-nosnippet>173</a>    <span class="kw">let </span>screens = el(<span class="string">"ul"</span>)
+<a href=#174 id=174 data-nosnippet>174</a>        .class(<span class="string">"mj-ui-nav-list"</span>)
+<a href=#175 id=175 data-nosnippet>175</a>        .attr(<span class="string">"aria-label"</span>, <span class="string">"Screens"</span>)
+<a href=#176 id=176 data-nosnippet>176</a>        .children(SCREENS.iter().map(|s| {
+<a href=#177 id=177 data-nosnippet>177</a>            el(<span class="string">"li"</span>).child(
+<a href=#178 id=178 data-nosnippet>178</a>                el(<span class="string">"a"</span>)
+<a href=#179 id=179 data-nosnippet>179</a>                    .class(<span class="string">"mj-ui-nav-item"</span>)
+<a href=#180 id=180 data-nosnippet>180</a>                    .attr(<span class="string">"href"</span>, s.route)
+<a href=#181 id=181 data-nosnippet>181</a>                    .attr(<span class="string">"title"</span>, s.answers)
+<a href=#182 id=182 data-nosnippet>182</a>                    .attr_if(<span class="string">"aria-current"</span>, (frame.current == s.route).then_some(<span class="string">"page"</span>))
+<a href=#183 id=183 data-nosnippet>183</a>                    .child(icon(s.icon))
+<a href=#184 id=184 data-nosnippet>184</a>                    .child(el(<span class="string">"span"</span>).class(<span class="string">"mj-ui-label"</span>).text(s.title)),
+<a href=#185 id=185 data-nosnippet>185</a>            )
+<a href=#186 id=186 data-nosnippet>186</a>        }));
+<a href=#187 id=187 data-nosnippet>187</a>    <span class="comment">// no brand of its own: the bar above carries the site's
+<a href=#188 id=188 data-nosnippet>188</a>    </span>el(<span class="string">"aside"</span>)
+<a href=#189 id=189 data-nosnippet>189</a>        .class(<span class="string">"mj-ui-sidebar"</span>)
+<a href=#190 id=190 data-nosnippet>190</a>        .attr(<span class="string">"aria-label"</span>, <span class="string">"majordomus ui"</span>)
+<a href=#191 id=191 data-nosnippet>191</a>        .child(
+<a href=#192 id=192 data-nosnippet>192</a>            el(<span class="string">"nav"</span>)
+<a href=#193 id=193 data-nosnippet>193</a>                .class(<span class="string">"mj-ui-nav"</span>)
+<a href=#194 id=194 data-nosnippet>194</a>                .attr(<span class="string">"aria-label"</span>, <span class="string">"Screens"</span>)
+<a href=#195 id=195 data-nosnippet>195</a>                .child(screens),
+<a href=#196 id=196 data-nosnippet>196</a>        )
+<a href=#197 id=197 data-nosnippet>197</a>        .child(version_card(ctx, frame))
+<a href=#198 id=198 data-nosnippet>198</a>}
+<a href=#199 id=199 data-nosnippet>199</a>
+<a href=#200 id=200 data-nosnippet>200</a><span class="doccomment">/// The version card: what this executable is, and what was last released, as
+<a href=#201 id=201 data-nosnippet>201</a>/// `distribution.releases` answers it.
+<a href=#202 id=202 data-nosnippet>202</a></span><span class="kw">fn </span>version_card(ctx: <span class="kw-2">&amp;</span>Context, frame: <span class="kw-2">&amp;</span>Frame&lt;<span class="lifetime">'_</span>&gt;) -&gt; El {
+<a href=#203 id=203 data-nosnippet>203</a>    <span class="kw">let </span>releases = ask(ctx, Source::of(<span class="string">"distribution.releases"</span>));
+<a href=#204 id=204 data-nosnippet>204</a>    <span class="kw">let </span>latest = releases.read(<span class="string">"/latest/version"</span>);
+<a href=#205 id=205 data-nosnippet>205</a>    <span class="kw">let </span>published = releases.read(<span class="string">"/latest/published_at"</span>);
+<a href=#206 id=206 data-nosnippet>206</a>    <span class="kw">let </span>commit = releases.read(<span class="string">"/latest/commit"</span>);
+<a href=#207 id=207 data-nosnippet>207</a>    el(<span class="string">"div"</span>)
+<a href=#208 id=208 data-nosnippet>208</a>        .class(<span class="string">"mj-ui-version-card"</span>)
+<a href=#209 id=209 data-nosnippet>209</a>        .attr(<span class="string">"title"</span>, <span class="macro">format!</span>(<span class="string">"read from {}"</span>, releases.provenance()))
+<a href=#210 id=210 data-nosnippet>210</a>        .child(
+<a href=#211 id=211 data-nosnippet>211</a>            el(<span class="string">"p"</span>)
+<a href=#212 id=212 data-nosnippet>212</a>                .class(<span class="string">"mj-ui-version-head"</span>)
+<a href=#213 id=213 data-nosnippet>213</a>                .child(
+<a href=#214 id=214 data-nosnippet>214</a>                    el(<span class="string">"span"</span>)
+<a href=#215 id=215 data-nosnippet>215</a>                        .class(<span class="string">"mj-ui-version"</span>)
+<a href=#216 id=216 data-nosnippet>216</a>                        .text(<span class="macro">format!</span>(<span class="string">"v{}"</span>, frame.version)),
+<a href=#217 id=217 data-nosnippet>217</a>                )
+<a href=#218 id=218 data-nosnippet>218</a>                .child(
+<a href=#219 id=219 data-nosnippet>219</a>                    el(<span class="string">"span"</span>)
+<a href=#220 id=220 data-nosnippet>220</a>                        .class(<span class="string">"mj-ui-version-note"</span>)
+<a href=#221 id=221 data-nosnippet>221</a>                        .text(<span class="string">"this executable"</span>),
+<a href=#222 id=222 data-nosnippet>222</a>                ),
+<a href=#223 id=223 data-nosnippet>223</a>        )
+<a href=#224 id=224 data-nosnippet>224</a>        .child(
+<a href=#225 id=225 data-nosnippet>225</a>            el(<span class="string">"p"</span>)
+<a href=#226 id=226 data-nosnippet>226</a>                .class(<span class="string">"mj-ui-version-line"</span>)
+<a href=#227 id=227 data-nosnippet>227</a>                .text(release_line(<span class="kw-2">&amp;</span>latest, <span class="kw-2">&amp;</span>published, <span class="kw-2">&amp;</span>commit)),
+<a href=#228 id=228 data-nosnippet>228</a>        )
+<a href=#229 id=229 data-nosnippet>229</a>}
+<a href=#230 id=230 data-nosnippet>230</a>
+<a href=#231 id=231 data-nosnippet>231</a><span class="doccomment">/// The latest release in one line: its version, the day it was published and its short
+<a href=#232 id=232 data-nosnippet>232</a>/// commit, each one said to be missing in the reading's own words when it is.
+<a href=#233 id=233 data-nosnippet>233</a></span><span class="kw">fn </span>release_line(latest: <span class="kw-2">&amp;</span>Reading, published: <span class="kw-2">&amp;</span>Reading, commit: <span class="kw-2">&amp;</span>Reading) -&gt; String {
+<a href=#234 id=234 data-nosnippet>234</a>    <span class="kw">let </span>day_of = <span class="kw">match </span>published.text() {
+<a href=#235 id=235 data-nosnippet>235</a>        <span class="prelude-val">Some</span>(d) =&gt; day(<span class="kw-2">&amp;</span>d),
+<a href=#236 id=236 data-nosnippet>236</a>        <span class="prelude-val">None </span>=&gt; shown(published),
+<a href=#237 id=237 data-nosnippet>237</a>    };
+<a href=#238 id=238 data-nosnippet>238</a>    <span class="kw">let </span>short = <span class="kw">match </span>commit.text() {
+<a href=#239 id=239 data-nosnippet>239</a>        <span class="prelude-val">Some</span>(c) =&gt; c.chars().take(<span class="number">10</span>).collect::&lt;String&gt;(),
+<a href=#240 id=240 data-nosnippet>240</a>        <span class="prelude-val">None </span>=&gt; shown(commit),
+<a href=#241 id=241 data-nosnippet>241</a>    };
+<a href=#242 id=242 data-nosnippet>242</a>    <span class="macro">format!</span>(<span class="string">"Latest release {} · {day_of} · {short}"</span>, shown(latest))
+<a href=#243 id=243 data-nosnippet>243</a>}
+<a href=#244 id=244 data-nosnippet>244</a>
+<a href=#245 id=245 data-nosnippet>245</a><span class="doccomment">/// The tool bar beneath the site's: the menu button of a narrow screen, the search, the other
+<a href=#246 id=246 data-nosnippet>246</a>/// surfaces. The theme toggle is the site's, in the bar above.
+<a href=#247 id=247 data-nosnippet>247</a></span><span class="kw">fn </span>topbar(read_at: <span class="kw-2">&amp;</span>str) -&gt; El {
+<a href=#248 id=248 data-nosnippet>248</a>    el(<span class="string">"header"</span>)
+<a href=#249 id=249 data-nosnippet>249</a>        .class(<span class="string">"mj-ui-topbar"</span>)
+<a href=#250 id=250 data-nosnippet>250</a>        .child(
+<a href=#251 id=251 data-nosnippet>251</a>            el(<span class="string">"label"</span>)
+<a href=#252 id=252 data-nosnippet>252</a>                .class(<span class="string">"mj-ui-menu-button"</span>)
+<a href=#253 id=253 data-nosnippet>253</a>                .attr(<span class="string">"for"</span>, <span class="string">"mj-ui-menu"</span>)
+<a href=#254 id=254 data-nosnippet>254</a>                .child(icon(<span class="string">"menu"</span>))
+<a href=#255 id=255 data-nosnippet>255</a>                .child(el(<span class="string">"span"</span>).class(<span class="string">"mj-sr-only"</span>).text(<span class="string">"Menu"</span>)),
+<a href=#256 id=256 data-nosnippet>256</a>        )
+<a href=#257 id=257 data-nosnippet>257</a>        .child(
+<a href=#258 id=258 data-nosnippet>258</a>            el(<span class="string">"form"</span>)
+<a href=#259 id=259 data-nosnippet>259</a>                .class(<span class="string">"mj-ui-search"</span>)
+<a href=#260 id=260 data-nosnippet>260</a>                .attr(<span class="string">"role"</span>, <span class="string">"search"</span>)
+<a href=#261 id=261 data-nosnippet>261</a>                .attr(<span class="string">"method"</span>, <span class="string">"get"</span>)
+<a href=#262 id=262 data-nosnippet>262</a>                .attr(<span class="string">"action"</span>, <span class="macro">format!</span>(<span class="string">"{}/search"</span>, <span class="kw">crate</span>::cockpit::PREFIX))
+<a href=#263 id=263 data-nosnippet>263</a>                .child(icon(<span class="string">"search"</span>))
+<a href=#264 id=264 data-nosnippet>264</a>                .child(
+<a href=#265 id=265 data-nosnippet>265</a>                    el(<span class="string">"label"</span>)
+<a href=#266 id=266 data-nosnippet>266</a>                        .class(<span class="string">"mj-sr-only"</span>)
+<a href=#267 id=267 data-nosnippet>267</a>                        .attr(<span class="string">"for"</span>, <span class="string">"mj-ui-q"</span>)
+<a href=#268 id=268 data-nosnippet>268</a>                        .text(<span class="string">"Search capabilities, objects, commands"</span>),
+<a href=#269 id=269 data-nosnippet>269</a>                )
+<a href=#270 id=270 data-nosnippet>270</a>                .child(
+<a href=#271 id=271 data-nosnippet>271</a>                    el(<span class="string">"input"</span>)
+<a href=#272 id=272 data-nosnippet>272</a>                        .attr(<span class="string">"id"</span>, <span class="string">"mj-ui-q"</span>)
+<a href=#273 id=273 data-nosnippet>273</a>                        .attr(<span class="string">"type"</span>, <span class="string">"search"</span>)
+<a href=#274 id=274 data-nosnippet>274</a>                        .attr(<span class="string">"name"</span>, <span class="string">"q"</span>)
+<a href=#275 id=275 data-nosnippet>275</a>                        .attr(<span class="string">"placeholder"</span>, <span class="string">"Search capabilities, objects, commands…"</span>),
+<a href=#276 id=276 data-nosnippet>276</a>                ),
+<a href=#277 id=277 data-nosnippet>277</a>        )
+<a href=#278 id=278 data-nosnippet>278</a>        .child(
+<a href=#279 id=279 data-nosnippet>279</a>            el(<span class="string">"p"</span>)
+<a href=#280 id=280 data-nosnippet>280</a>                .class(<span class="string">"mj-ui-fresh"</span>)
+<a href=#281 id=281 data-nosnippet>281</a>                .attr(<span class="string">"aria-live"</span>, <span class="string">"polite"</span>)
+<a href=#282 id=282 data-nosnippet>282</a>                .attr(<span class="string">"title"</span>, <span class="string">"when this screen read its sources; it reads them again every minute while it is open"</span>)
+<a href=#283 id=283 data-nosnippet>283</a>                .child(el(<span class="string">"span"</span>).class(<span class="string">"mj-ui-fresh-dot"</span>).attr(<span class="string">"aria-hidden"</span>, <span class="string">"true"</span>))
+<a href=#284 id=284 data-nosnippet>284</a>                .child(
+<a href=#285 id=285 data-nosnippet>285</a>                    el(<span class="string">"span"</span>)
+<a href=#286 id=286 data-nosnippet>286</a>                        .text(<span class="string">"Read at "</span>)
+<a href=#287 id=287 data-nosnippet>287</a>                        .child(
+<a href=#288 id=288 data-nosnippet>288</a>                            el(<span class="string">"time"</span>)
+<a href=#289 id=289 data-nosnippet>289</a>                                .attr(<span class="string">"data-read-at"</span>, <span class="string">""</span>)
+<a href=#290 id=290 data-nosnippet>290</a>                                .attr(<span class="string">"datetime"</span>, read_at)
+<a href=#291 id=291 data-nosnippet>291</a>                                .text(read_at.replace(<span class="string">'T'</span>, <span class="string">" "</span>)),
+<a href=#292 id=292 data-nosnippet>292</a>                        ),
+<a href=#293 id=293 data-nosnippet>293</a>                )
+<a href=#294 id=294 data-nosnippet>294</a>                <span class="comment">// what the channel a following screen holds is doing, written by the script
+<a href=#295 id=295 data-nosnippet>295</a>                // from the socket's own state and hidden until it has one (I2783)
+<a href=#296 id=296 data-nosnippet>296</a>                </span>.child(el(<span class="string">"span"</span>).attr(<span class="string">"data-live-state"</span>, <span class="string">""</span>).flag(<span class="string">"hidden"</span>)),
+<a href=#297 id=297 data-nosnippet>297</a>        )
+<a href=#298 id=298 data-nosnippet>298</a>        .child(
+<a href=#299 id=299 data-nosnippet>299</a>            el(<span class="string">"nav"</span>)
+<a href=#300 id=300 data-nosnippet>300</a>                .class(<span class="string">"mj-ui-tools"</span>)
+<a href=#301 id=301 data-nosnippet>301</a>                .attr(<span class="string">"aria-label"</span>, <span class="string">"Other surfaces"</span>)
+<a href=#302 id=302 data-nosnippet>302</a>                .child(tool(<span class="kw">crate</span>::web::discover::DOCS_MOUNT, <span class="string">"book"</span>, <span class="string">"Docs"</span>))
+<a href=#303 id=303 data-nosnippet>303</a>                .child(tool(<span class="kw">crate</span>::http::swagger::SWAGGER_PATH, <span class="string">"code"</span>, <span class="string">"API"</span>))
+<a href=#304 id=304 data-nosnippet>304</a>                .child(tool(<span class="kw">crate</span>::cockpit::PREFIX, <span class="string">"terminal"</span>, <span class="string">"Cockpit"</span>)),
+<a href=#305 id=305 data-nosnippet>305</a>        )
+<a href=#306 id=306 data-nosnippet>306</a>}
+<a href=#307 id=307 data-nosnippet>307</a>
+<a href=#308 id=308 data-nosnippet>308</a><span class="doccomment">/// A link to another surface. Below the medium width its label is hidden and only the icon,
+<a href=#309 id=309 data-nosnippet>309</a>/// which is `aria-hidden`, is drawn, so the link carries its name itself.
+<a href=#310 id=310 data-nosnippet>310</a></span><span class="kw">fn </span>tool(href: <span class="kw-2">&amp;</span>str, glyph: <span class="kw-2">&amp;</span>str, label: <span class="kw-2">&amp;</span>str) -&gt; El {
+<a href=#311 id=311 data-nosnippet>311</a>    el(<span class="string">"a"</span>)
+<a href=#312 id=312 data-nosnippet>312</a>        .class(<span class="string">"mj-ui-tool"</span>)
+<a href=#313 id=313 data-nosnippet>313</a>        .attr(<span class="string">"href"</span>, href)
+<a href=#314 id=314 data-nosnippet>314</a>        .attr(<span class="string">"aria-label"</span>, label)
+<a href=#315 id=315 data-nosnippet>315</a>        .child(icon(glyph))
+<a href=#316 id=316 data-nosnippet>316</a>        .child(el(<span class="string">"span"</span>).class(<span class="string">"mj-ui-label"</span>).text(label))
+<a href=#317 id=317 data-nosnippet>317</a>}
+<a href=#318 id=318 data-nosnippet>318</a>
+<a href=#319 id=319 data-nosnippet>319</a><span class="doccomment">/// A route under the UI that answers nothing.
+<a href=#320 id=320 data-nosnippet>320</a></span><span class="kw">pub fn </span>not_found(path: <span class="kw-2">&amp;</span>str) -&gt; View {
+<a href=#321 id=321 data-nosnippet>321</a>    View {
+<a href=#322 id=322 data-nosnippet>322</a>        title: <span class="string">"Not a screen"</span>.into(),
+<a href=#323 id=323 data-nosnippet>323</a>        main: el(<span class="string">"div"</span>)
+<a href=#324 id=324 data-nosnippet>324</a>            .class(<span class="string">"mj-ui-stack"</span>)
+<a href=#325 id=325 data-nosnippet>325</a>            .child(alert(<span class="string">"fail"</span>, <span class="macro">format!</span>(<span class="string">"The UI serves no screen at {path}."</span>)))
+<a href=#326 id=326 data-nosnippet>326</a>            .child(
+<a href=#327 id=327 data-nosnippet>327</a>                el(<span class="string">"p"</span>).child(
+<a href=#328 id=328 data-nosnippet>328</a>                    el(<span class="string">"a"</span>)
+<a href=#329 id=329 data-nosnippet>329</a>                        .class(<span class="string">"mj-ui-link"</span>)
+<a href=#330 id=330 data-nosnippet>330</a>                        .attr(<span class="string">"href"</span>, PREFIX)
+<a href=#331 id=331 data-nosnippet>331</a>                        .text(<span class="string">"Back to the dashboard"</span>),
+<a href=#332 id=332 data-nosnippet>332</a>                ),
+<a href=#333 id=333 data-nosnippet>333</a>            ),
+<a href=#334 id=334 data-nosnippet>334</a>        status: <span class="number">404</span>,
+<a href=#335 id=335 data-nosnippet>335</a>    }
+<a href=#336 id=336 data-nosnippet>336</a>}
+<a href=#337 id=337 data-nosnippet>337</a>
+<a href=#338 id=338 data-nosnippet>338</a><span class="attr">#[cfg(test)]
+<a href=#339 id=339 data-nosnippet>339</a></span><span class="kw">mod </span>tests {
+<a href=#340 id=340 data-nosnippet>340</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#341 id=341 data-nosnippet>341</a>    <span class="kw">use </span><span class="kw">crate</span>::synthetic::{Shape, SyntheticRepository};
+<a href=#342 id=342 data-nosnippet>342</a>
+<a href=#343 id=343 data-nosnippet>343</a>    <span class="kw">fn </span>frame(current: <span class="kw-2">&amp;</span>str) -&gt; Frame&lt;<span class="lifetime">'_</span>&gt; {
+<a href=#344 id=344 data-nosnippet>344</a>        Frame {
+<a href=#345 id=345 data-nosnippet>345</a>            current,
+<a href=#346 id=346 data-nosnippet>346</a>            stylesheet: <span class="string">"/ui/assets/ui.css?v=1"</span>.into(),
+<a href=#347 id=347 data-nosnippet>347</a>            favicon: <span class="string">"/ui/assets/favicon.svg?v=1"</span>.into(),
+<a href=#348 id=348 data-nosnippet>348</a>            script: <span class="string">"/ui/assets/ui.js?v=1"</span>.into(),
+<a href=#349 id=349 data-nosnippet>349</a>            bar_scripts: <span class="macro">vec!</span>[
+<a href=#350 id=350 data-nosnippet>350</a>                <span class="string">"/ui/assets/nav.js?v=1"</span>.into(),
+<a href=#351 id=351 data-nosnippet>351</a>                <span class="string">"/ui/assets/theme.js?v=1"</span>.into(),
+<a href=#352 id=352 data-nosnippet>352</a>            ],
+<a href=#353 id=353 data-nosnippet>353</a>            graph_lib: <span class="string">"/ui/assets/vendor/cytoscape.min.js?v=1"</span>.into(),
+<a href=#354 id=354 data-nosnippet>354</a>            moves_lib: <span class="string">"/cockpit/assets/moves.js?v=1"</span>.into(),
+<a href=#355 id=355 data-nosnippet>355</a>            socket_lib: <span class="string">"/cockpit/assets/socket.js?v=1"</span>.into(),
+<a href=#356 id=356 data-nosnippet>356</a>            assets_present: <span class="bool-val">true</span>,
+<a href=#357 id=357 data-nosnippet>357</a>            version: <span class="string">"0.0.0"</span>,
+<a href=#358 id=358 data-nosnippet>358</a>        }
+<a href=#359 id=359 data-nosnippet>359</a>    }
+<a href=#360 id=360 data-nosnippet>360</a>
+<a href=#361 id=361 data-nosnippet>361</a>    <span class="doccomment">/// The release line shows the day and the short commit of a release it was given, and
+<a href=#362 id=362 data-nosnippet>362</a>    /// says which reading is missing when it was not.
+<a href=#363 id=363 data-nosnippet>363</a>    </span><span class="attr">#[test]
+<a href=#364 id=364 data-nosnippet>364</a>    </span><span class="kw">fn </span>the_release_line_says_what_it_read_and_what_is_missing() {
+<a href=#365 id=365 data-nosnippet>365</a>        <span class="kw">let </span>releases = <span class="kw">crate</span>::ui::source::Answer {
+<a href=#366 id=366 data-nosnippet>366</a>            source: Source::of(<span class="string">"distribution.releases"</span>),
+<a href=#367 id=367 data-nosnippet>367</a>            route: <span class="prelude-val">None</span>,
+<a href=#368 id=368 data-nosnippet>368</a>            exposure: Default::default(),
+<a href=#369 id=369 data-nosnippet>369</a>            value: <span class="prelude-val">Ok</span>(<span class="macro">serde_json::json!</span>({ <span class="string">"latest"</span>: {
+<a href=#370 id=370 data-nosnippet>370</a>                <span class="string">"version"</span>: <span class="string">"0.20.0"</span>,
+<a href=#371 id=371 data-nosnippet>371</a>                <span class="string">"published_at"</span>: <span class="string">"2026-10-10T16:38:00Z"</span>,
+<a href=#372 id=372 data-nosnippet>372</a>                <span class="string">"commit"</span>: <span class="string">"c8f0e4c50123456789"</span>,
+<a href=#373 id=373 data-nosnippet>373</a>            }})
+<a href=#374 id=374 data-nosnippet>374</a>            .into()),
+<a href=#375 id=375 data-nosnippet>375</a>            took: std::time::Duration::ZERO,
+<a href=#376 id=376 data-nosnippet>376</a>            standing: <span class="kw">crate</span>::ui::source::Standing::NOW,
+<a href=#377 id=377 data-nosnippet>377</a>        };
+<a href=#378 id=378 data-nosnippet>378</a>        <span class="kw">let </span>line = release_line(
+<a href=#379 id=379 data-nosnippet>379</a>            <span class="kw-2">&amp;</span>releases.read(<span class="string">"/latest/version"</span>),
+<a href=#380 id=380 data-nosnippet>380</a>            <span class="kw-2">&amp;</span>releases.read(<span class="string">"/latest/published_at"</span>),
+<a href=#381 id=381 data-nosnippet>381</a>            <span class="kw-2">&amp;</span>releases.read(<span class="string">"/latest/commit"</span>),
+<a href=#382 id=382 data-nosnippet>382</a>        );
+<a href=#383 id=383 data-nosnippet>383</a>        <span class="macro">assert_eq!</span>(line, <span class="string">"Latest release 0.20.0 · 2026-10-10 · c8f0e4c501"</span>);
+<a href=#384 id=384 data-nosnippet>384</a>        <span class="kw">let </span>missing = releases.read(<span class="string">"/latest/nothing"</span>);
+<a href=#385 id=385 data-nosnippet>385</a>        <span class="macro">assert_eq!</span>(
+<a href=#386 id=386 data-nosnippet>386</a>            release_line(<span class="kw-2">&amp;</span>missing, <span class="kw-2">&amp;</span>missing, <span class="kw-2">&amp;</span>missing),
+<a href=#387 id=387 data-nosnippet>387</a>            <span class="string">"Latest release none · none · none"
+<a href=#388 id=388 data-nosnippet>388</a>        </span>);
+<a href=#389 id=389 data-nosnippet>389</a>    }
+<a href=#390 id=390 data-nosnippet>390</a>
+<a href=#391 id=391 data-nosnippet>391</a>    <span class="doccomment">/// A distribution without the UI's files still serves every screen, and says why it
+<a href=#392 id=392 data-nosnippet>392</a>    /// is unstyled.
+<a href=#393 id=393 data-nosnippet>393</a>    </span><span class="attr">#[test]
+<a href=#394 id=394 data-nosnippet>394</a>    </span><span class="kw">fn </span>an_unstyled_distribution_says_so_on_every_page() {
+<a href=#395 id=395 data-nosnippet>395</a>        <span class="kw">let </span>repo = SyntheticRepository::new(Shape::default()).expect(<span class="string">"a synthetic repository"</span>);
+<a href=#396 id=396 data-nosnippet>396</a>        <span class="kw">let </span>ctx = repo.context().expect(<span class="string">"a context"</span>);
+<a href=#397 id=397 data-nosnippet>397</a>        <span class="kw">let </span><span class="kw-2">mut </span>bare = frame(<span class="string">"/ui"</span>);
+<a href=#398 id=398 data-nosnippet>398</a>        bare.assets_present = <span class="bool-val">false</span>;
+<a href=#399 id=399 data-nosnippet>399</a>        <span class="kw">let </span>html = page(<span class="kw-2">&amp;</span>ctx, <span class="kw-2">&amp;</span>bare, <span class="kw-2">&amp;</span>View::new(<span class="string">"Dashboard"</span>, el(<span class="string">"p"</span>)));
+<a href=#400 id=400 data-nosnippet>400</a>        <span class="macro">assert!</span>(html.contains(<span class="string">"the UI is unstyled"</span>), <span class="string">"{html}"</span>);
+<a href=#401 id=401 data-nosnippet>401</a>    }
+<a href=#402 id=402 data-nosnippet>402</a>
+<a href=#403 id=403 data-nosnippet>403</a>    <span class="kw">fn </span>render(current: <span class="kw-2">&amp;</span>str) -&gt; String {
+<a href=#404 id=404 data-nosnippet>404</a>        <span class="kw">let </span>repo = SyntheticRepository::new(Shape::default()).expect(<span class="string">"a synthetic repository"</span>);
+<a href=#405 id=405 data-nosnippet>405</a>        <span class="kw">let </span>ctx = repo.context().expect(<span class="string">"a context"</span>);
+<a href=#406 id=406 data-nosnippet>406</a>        page(<span class="kw-2">&amp;</span>ctx, <span class="kw-2">&amp;</span>frame(current), <span class="kw-2">&amp;</span>View::new(<span class="string">"Dashboard"</span>, el(<span class="string">"p"</span>)))
+<a href=#407 id=407 data-nosnippet>407</a>    }
+<a href=#408 id=408 data-nosnippet>408</a>
+<a href=#409 id=409 data-nosnippet>409</a>    <span class="doccomment">/// Every screen is in the sidebar with its icon, the current one is marked, and the
+<a href=#410 id=410 data-nosnippet>410</a>    /// version card says what was last released from the source that knows.
+<a href=#411 id=411 data-nosnippet>411</a>    </span><span class="attr">#[test]
+<a href=#412 id=412 data-nosnippet>412</a>    </span><span class="kw">fn </span>the_sidebar_is_the_screens_and_the_version_card() {
+<a href=#413 id=413 data-nosnippet>413</a>        <span class="kw">let </span>html = render(PREFIX);
+<a href=#414 id=414 data-nosnippet>414</a>        <span class="kw">for </span>s <span class="kw">in </span>SCREENS {
+<a href=#415 id=415 data-nosnippet>415</a>            <span class="macro">assert!</span>(
+<a href=#416 id=416 data-nosnippet>416</a>                html.contains(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"href=\"{}\""</span>, s.route)),
+<a href=#417 id=417 data-nosnippet>417</a>                <span class="string">"{}"</span>,
+<a href=#418 id=418 data-nosnippet>418</a>                s.route
+<a href=#419 id=419 data-nosnippet>419</a>            );
+<a href=#420 id=420 data-nosnippet>420</a>        }
+<a href=#421 id=421 data-nosnippet>421</a>        <span class="macro">assert_eq!</span>(html.matches(<span class="string">"aria-current=\"page\""</span>).count(), <span class="number">1</span>);
+<a href=#422 id=422 data-nosnippet>422</a>        <span class="macro">assert!</span>(html.contains(<span class="string">"Latest release"</span>));
+<a href=#423 id=423 data-nosnippet>423</a>        <span class="macro">assert!</span>(html.contains(<span class="string">"&lt;title&gt;Dashboard · majordomus ui&lt;/title&gt;"</span>));
 <a href=#424 id=424 data-nosnippet>424</a>    }
 <a href=#425 id=425 data-nosnippet>425</a>
-<a href=#426 id=426 data-nosnippet>426</a>    <span class="doccomment">/// The page carries exactly one inline script, the theme statement the policy allows,
-<a href=#427 id=427 data-nosnippet>427</a>    /// and the menu opens without one.
+<a href=#426 id=426 data-nosnippet>426</a>    <span class="doccomment">/// The UI is its own product: the Cockpit appears in its frame only as the technical
+<a href=#427 id=427 data-nosnippet>427</a>    /// reference among the other surfaces, never in its navigation.
 <a href=#428 id=428 data-nosnippet>428</a>    </span><span class="attr">#[test]
-<a href=#429 id=429 data-nosnippet>429</a>    </span><span class="kw">fn </span>the_only_inline_script_is_the_one_the_policy_allows() {
+<a href=#429 id=429 data-nosnippet>429</a>    </span><span class="kw">fn </span>the_cockpit_is_a_reference_not_a_destination() {
 <a href=#430 id=430 data-nosnippet>430</a>        <span class="kw">let </span>html = render(PREFIX);
-<a href=#431 id=431 data-nosnippet>431</a>        <span class="macro">assert_eq!</span>(html.matches(<span class="string">"&lt;script&gt;"</span>).count(), <span class="number">1</span>, <span class="string">"{html}"</span>);
-<a href=#432 id=432 data-nosnippet>432</a>        <span class="macro">assert!</span>(html.contains(<span class="string">"for=\"mj-ui-menu\""</span>));
-<a href=#433 id=433 data-nosnippet>433</a>        <span class="macro">assert!</span>(<span class="kw">crate</span>::cockpit::csp().contains(<span class="string">"script-src 'self' 'sha256-"</span>));
-<a href=#434 id=434 data-nosnippet>434</a>    }
-<a href=#435 id=435 data-nosnippet>435</a>
-<a href=#436 id=436 data-nosnippet>436</a>    <span class="doccomment">/// Every page wears the site's bar above the UI's own frame: the site's landmark, its
-<a href=#437 id=437 data-nosnippet>437</a>    /// theme toggle and its menus, the executable's version in the badge, the entry for the
-<a href=#438 id=438 data-nosnippet>438</a>    /// product leading to the UI itself, and the theme contract on the root where the site's
-<a href=#439 id=439 data-nosnippet>439</a>    /// script reads it. The UI draws no theme toggle and no brand of its own beside it.
-<a href=#440 id=440 data-nosnippet>440</a>    </span><span class="attr">#[test]
-<a href=#441 id=441 data-nosnippet>441</a>    </span><span class="kw">fn </span>every_page_wears_the_sites_bar() {
-<a href=#442 id=442 data-nosnippet>442</a>        <span class="kw">let </span>html = render(PREFIX);
-<a href=#443 id=443 data-nosnippet>443</a>        <span class="macro">assert_eq!</span>(html.matches(<span class="string">"aria-label=\"Main\""</span>).count(), <span class="number">1</span>, <span class="string">"{html}"</span>);
-<a href=#444 id=444 data-nosnippet>444</a>        <span class="macro">assert!</span>(html.find(<span class="string">"aria-label=\"Main\""</span>) &lt; html.find(<span class="string">"mj-ui-frame"</span>));
-<a href=#445 id=445 data-nosnippet>445</a>        <span class="macro">assert!</span>(html.contains(<span class="string">"id=\"theme-toggle\""</span>));
-<a href=#446 id=446 data-nosnippet>446</a>        <span class="macro">assert!</span>(html.contains(<span class="string">"&gt;v0.0.0&lt;"</span>), <span class="string">"the badge names the executable"</span>);
-<a href=#447 id=447 data-nosnippet>447</a>        <span class="macro">assert!</span>(
-<a href=#448 id=448 data-nosnippet>448</a>            html.contains(<span class="string">"href=\"/ui\" data-nav-primary=\"ui\""</span>),
-<a href=#449 id=449 data-nosnippet>449</a>            <span class="string">"{html}"
-<a href=#450 id=450 data-nosnippet>450</a>        </span>);
-<a href=#451 id=451 data-nosnippet>451</a>        <span class="macro">assert!</span>(!html.contains(<span class="string">"data-theme-toggle"</span>), <span class="string">"a second theme toggle"</span>);
-<a href=#452 id=452 data-nosnippet>452</a>        <span class="macro">assert!</span>(!html.contains(<span class="string">"mj-ui-brand"</span>), <span class="string">"a second brand"</span>);
-<a href=#453 id=453 data-nosnippet>453</a>        <span class="macro">assert!</span>(
-<a href=#454 id=454 data-nosnippet>454</a>            html.contains(<span class="string">"&lt;html lang=\"en\" data-theme-key=\""</span>),
-<a href=#455 id=455 data-nosnippet>455</a>            <span class="string">"{html}"
-<a href=#456 id=456 data-nosnippet>456</a>        </span>);
-<a href=#457 id=457 data-nosnippet>457</a>        <span class="kw">for </span>s <span class="kw">in </span>[<span class="string">"/ui/assets/nav.js?v=1"</span>, <span class="string">"/ui/assets/theme.js?v=1"</span>] {
-<a href=#458 id=458 data-nosnippet>458</a>            <span class="macro">assert!</span>(html.contains(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"&lt;script src=\"{s}\" defer&gt;"</span>)), <span class="string">"{s}"</span>);
-<a href=#459 id=459 data-nosnippet>459</a>        }
-<a href=#460 id=460 data-nosnippet>460</a>    }
-<a href=#461 id=461 data-nosnippet>461</a>
-<a href=#462 id=462 data-nosnippet>462</a>    <span class="doccomment">/// A route nobody answers is a 404 that leads back.
-<a href=#463 id=463 data-nosnippet>463</a>    </span><span class="attr">#[test]
-<a href=#464 id=464 data-nosnippet>464</a>    </span><span class="kw">fn </span>an_unknown_route_is_a_404_that_leads_back() {
-<a href=#465 id=465 data-nosnippet>465</a>        <span class="kw">let </span>v = not_found(<span class="string">"/ui/nowhere"</span>);
-<a href=#466 id=466 data-nosnippet>466</a>        <span class="macro">assert_eq!</span>(v.status, <span class="number">404</span>);
-<a href=#467 id=467 data-nosnippet>467</a>        <span class="macro">assert!</span>(v.main.render().contains(<span class="string">"/ui/nowhere"</span>));
-<a href=#468 id=468 data-nosnippet>468</a>    }
-<a href=#469 id=469 data-nosnippet>469</a>}
+<a href=#431 id=431 data-nosnippet>431</a>        <span class="kw">let </span>nav = html.split(<span class="string">"mj-ui-nav-list"</span>).nth(<span class="number">1</span>).unwrap_or_default();
+<a href=#432 id=432 data-nosnippet>432</a>        <span class="kw">let </span>nav = nav.split(<span class="string">"&lt;/ul&gt;"</span>).next().unwrap_or_default();
+<a href=#433 id=433 data-nosnippet>433</a>        <span class="macro">assert!</span>(
+<a href=#434 id=434 data-nosnippet>434</a>            !nav.contains(<span class="string">"/cockpit"</span>),
+<a href=#435 id=435 data-nosnippet>435</a>            <span class="string">"the navigation leads into the Cockpit: {nav}"
+<a href=#436 id=436 data-nosnippet>436</a>        </span>);
+<a href=#437 id=437 data-nosnippet>437</a>        <span class="macro">assert!</span>(html.contains(<span class="string">"aria-label=\"Other surfaces\""</span>));
+<a href=#438 id=438 data-nosnippet>438</a>    }
+<a href=#439 id=439 data-nosnippet>439</a>
+<a href=#440 id=440 data-nosnippet>440</a>    <span class="doccomment">/// The page carries exactly one inline script, the theme statement the policy allows,
+<a href=#441 id=441 data-nosnippet>441</a>    /// and the menu opens without one.
+<a href=#442 id=442 data-nosnippet>442</a>    </span><span class="attr">#[test]
+<a href=#443 id=443 data-nosnippet>443</a>    </span><span class="kw">fn </span>the_only_inline_script_is_the_one_the_policy_allows() {
+<a href=#444 id=444 data-nosnippet>444</a>        <span class="kw">let </span>html = render(PREFIX);
+<a href=#445 id=445 data-nosnippet>445</a>        <span class="macro">assert_eq!</span>(html.matches(<span class="string">"&lt;script&gt;"</span>).count(), <span class="number">1</span>, <span class="string">"{html}"</span>);
+<a href=#446 id=446 data-nosnippet>446</a>        <span class="macro">assert!</span>(html.contains(<span class="string">"for=\"mj-ui-menu\""</span>));
+<a href=#447 id=447 data-nosnippet>447</a>        <span class="macro">assert!</span>(<span class="kw">crate</span>::cockpit::csp().contains(<span class="string">"script-src 'self' 'sha256-"</span>));
+<a href=#448 id=448 data-nosnippet>448</a>    }
+<a href=#449 id=449 data-nosnippet>449</a>
+<a href=#450 id=450 data-nosnippet>450</a>    <span class="doccomment">/// Every page wears the site's bar above the UI's own frame: the site's landmark, its
+<a href=#451 id=451 data-nosnippet>451</a>    /// theme toggle and its menus, the executable's version in the badge, the entry for the
+<a href=#452 id=452 data-nosnippet>452</a>    /// product leading to the UI itself, and the theme contract on the root where the site's
+<a href=#453 id=453 data-nosnippet>453</a>    /// script reads it. The UI draws no theme toggle and no brand of its own beside it.
+<a href=#454 id=454 data-nosnippet>454</a>    </span><span class="attr">#[test]
+<a href=#455 id=455 data-nosnippet>455</a>    </span><span class="kw">fn </span>every_page_wears_the_sites_bar() {
+<a href=#456 id=456 data-nosnippet>456</a>        <span class="kw">let </span>html = render(PREFIX);
+<a href=#457 id=457 data-nosnippet>457</a>        <span class="macro">assert_eq!</span>(html.matches(<span class="string">"aria-label=\"Main\""</span>).count(), <span class="number">1</span>, <span class="string">"{html}"</span>);
+<a href=#458 id=458 data-nosnippet>458</a>        <span class="macro">assert!</span>(html.find(<span class="string">"aria-label=\"Main\""</span>) &lt; html.find(<span class="string">"mj-ui-frame"</span>));
+<a href=#459 id=459 data-nosnippet>459</a>        <span class="macro">assert!</span>(html.contains(<span class="string">"id=\"theme-toggle\""</span>));
+<a href=#460 id=460 data-nosnippet>460</a>        <span class="macro">assert!</span>(html.contains(<span class="string">"&gt;v0.0.0&lt;"</span>), <span class="string">"the badge names the executable"</span>);
+<a href=#461 id=461 data-nosnippet>461</a>        <span class="macro">assert!</span>(
+<a href=#462 id=462 data-nosnippet>462</a>            html.contains(<span class="string">"href=\"/ui\" data-nav-primary=\"ui\""</span>),
+<a href=#463 id=463 data-nosnippet>463</a>            <span class="string">"{html}"
+<a href=#464 id=464 data-nosnippet>464</a>        </span>);
+<a href=#465 id=465 data-nosnippet>465</a>        <span class="macro">assert!</span>(!html.contains(<span class="string">"data-theme-toggle"</span>), <span class="string">"a second theme toggle"</span>);
+<a href=#466 id=466 data-nosnippet>466</a>        <span class="macro">assert!</span>(!html.contains(<span class="string">"mj-ui-brand"</span>), <span class="string">"a second brand"</span>);
+<a href=#467 id=467 data-nosnippet>467</a>        <span class="macro">assert!</span>(
+<a href=#468 id=468 data-nosnippet>468</a>            html.contains(<span class="string">"&lt;html lang=\"en\" data-theme-key=\""</span>),
+<a href=#469 id=469 data-nosnippet>469</a>            <span class="string">"{html}"
+<a href=#470 id=470 data-nosnippet>470</a>        </span>);
+<a href=#471 id=471 data-nosnippet>471</a>        <span class="kw">for </span>s <span class="kw">in </span>[<span class="string">"/ui/assets/nav.js?v=1"</span>, <span class="string">"/ui/assets/theme.js?v=1"</span>] {
+<a href=#472 id=472 data-nosnippet>472</a>            <span class="macro">assert!</span>(html.contains(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"&lt;script src=\"{s}\" defer&gt;"</span>)), <span class="string">"{s}"</span>);
+<a href=#473 id=473 data-nosnippet>473</a>        }
+<a href=#474 id=474 data-nosnippet>474</a>    }
+<a href=#475 id=475 data-nosnippet>475</a>
+<a href=#476 id=476 data-nosnippet>476</a>    <span class="doccomment">/// A route nobody answers is a 404 that leads back.
+<a href=#477 id=477 data-nosnippet>477</a>    </span><span class="attr">#[test]
+<a href=#478 id=478 data-nosnippet>478</a>    </span><span class="kw">fn </span>an_unknown_route_is_a_404_that_leads_back() {
+<a href=#479 id=479 data-nosnippet>479</a>        <span class="kw">let </span>v = not_found(<span class="string">"/ui/nowhere"</span>);
+<a href=#480 id=480 data-nosnippet>480</a>        <span class="macro">assert_eq!</span>(v.status, <span class="number">404</span>);
+<a href=#481 id=481 data-nosnippet>481</a>        <span class="macro">assert!</span>(v.main.render().contains(<span class="string">"/ui/nowhere"</span>));
+<a href=#482 id=482 data-nosnippet>482</a>    }
+<a href=#483 id=483 data-nosnippet>483</a>}
 </code></pre></div></section></main></body></html>

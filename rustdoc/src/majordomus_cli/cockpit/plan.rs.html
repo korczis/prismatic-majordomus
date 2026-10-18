@@ -714,7 +714,7 @@
 <a href=#714 id=714 data-nosnippet>714</a>/// capability page's "Run as an execution" uses — so it has an identity, a page of its own
 <a href=#715 id=715 data-nosnippet>715</a>/// and events, and the issue page reads the record back once the execution has finished.
 <a href=#716 id=716 data-nosnippet>716</a>/// Both routes come from the registry that declares them; this page names no path.
-<a href=#717 id=717 data-nosnippet>717</a></span><span class="kw">fn </span>moves(ctx: <span class="kw-2">&amp;</span>Context, issue: <span class="kw-2">&amp;</span>str, startable: bool) -&gt; El {
+<a href=#717 id=717 data-nosnippet>717</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>moves(ctx: <span class="kw-2">&amp;</span>Context, issue: <span class="kw-2">&amp;</span>str, startable: bool) -&gt; El {
 <a href=#718 id=718 data-nosnippet>718</a>    <span class="comment">// every fact about a capability is asked of `capabilities.describe`, the way every page
 <a href=#719 id=719 data-nosnippet>719</a>    // learns one, so this page reads no registry of its own (ADR 0089)
 <a href=#720 id=720 data-nosnippet>720</a>    </span><span class="kw">let </span>describe =

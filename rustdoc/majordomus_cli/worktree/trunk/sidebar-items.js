@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["POLICY_KEY"],"enum":["TrunkStanding"],"fn":["distance","judge","measure","measure_checkout","parse_left_right","remote_trunk_of"],"struct":["Distance","TrunkDistance","TrunkThresholds"]};
