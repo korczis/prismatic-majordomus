@@ -1035,8 +1035,17 @@ ok tiles "every profile, claim, status, responsibility, command, doctrine, use c
 # model. Anything deeper than the root must be a file here like every other link.
 snap_roots="$(jq -r '.snapshots[]? | .mount' "$PUB/build.json" 2>/dev/null | sed 's#/*$##' || true)"
 nav_snap=0
-for href in $(awk '{ print } /id="hero"/ { h = 1 } h && /<\/section>/ { exit }' "$PUB/index.html" | grep -oE 'href="[^"]*"' | sed -E "s#href=\"$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$SITE/config.toml" | sed 's#/$##')##; s#\"##g; s#[?].*\$##" | grep -E '^/' | LC_ALL=C sort -u); do t="$PUB$href"
-  if [ -f "$t/index.html" ] || [ -f "$t" ]; then continue; fi
+for href in $(awk '{ print } /id="hero"/ { h = 1 } h && /<\/section>/ { exit }' "$PUB/index.html" | grep -oE 'href="[^"]*"' | sed -E "s#href=\"$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$SITE/config.toml" | sed 's#/$##')##; s#\"##g; s#[?].*\$##" | grep -E '^/' | LC_ALL=C sort -u); do
+  # a fragment names an element of the page, not a file: the page must exist and carry that id
+  frag=""; case "$href" in *'#'*) frag="${href#*#}"; href="${href%%#*}" ;; esac
+  t="$PUB$href"
+  if [ -f "$t/index.html" ] || [ -f "$t" ]; then
+    if [ -n "$frag" ]; then
+      page="$t"; [ -f "$t/index.html" ] && page="$t/index.html"
+      grep -qE "id=\"?$frag\"?[ >]" "$page" || bad nav "navigation/hero link $href#$frag names an element its page does not carry"
+    fi
+    continue
+  fi
   if [ -n "$snap_roots" ] && printf '%s\n' "$snap_roots" | grep -qxF -- "${href%/}"; then nav_snap=$((nav_snap + 1)); continue; fi
   bad nav "navigation/hero link $href does not resolve"
 done
