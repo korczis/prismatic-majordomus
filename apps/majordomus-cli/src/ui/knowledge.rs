@@ -224,15 +224,16 @@ fn no_ledger() -> El {
         .text(" judges it, and this panel shows when the deriver last wrote.")
 }
 
-/// The review, as the commands it is made of.
+/// The review, as the commands it is made of: each step is the command as code, which breaks
+/// anywhere at phone width, and what it does as a sentence at reading size. The command is
+/// what a reviewer copies and the sentence what they read; neither is a headline value.
 fn review() -> El {
-    el("dl")
-        .class("mj-ui-facts")
+    el("ol")
+        .class("mj-ui-prose-list")
         .children(REVIEW.iter().map(|(command, does)| {
-            el("div")
-                .class("mj-ui-fact")
-                .child(el("dt").child(el("code").class("mj-ui-mono").text(*command)))
-                .child(el("dd").text(*does))
+            el("li")
+                .child(el("code").class("mj-ui-code").text(*command))
+                .text(format!(": {does}."))
         }))
 }
 
@@ -385,6 +386,26 @@ mod tests {
                 "the screen carries {control}: {html}"
             );
         }
+    }
+
+    /// The review is an ordered list of steps: each command is code and what it does is a
+    /// sentence beside it, never a fact value drawn as a headline.
+    #[test]
+    fn the_review_is_steps_of_command_and_sentence() {
+        let html = review().render();
+        assert!(
+            html.starts_with("<ol class=\"mj-ui-prose-list\">"),
+            "{html}"
+        );
+        assert_eq!(html.matches("<li>").count(), REVIEW.len(), "{html}");
+        assert!(
+            html.contains(
+                "<li><code class=\"mj-ui-code\">majordomus knowledge check</code>: every \
+                 record is valid, evidenced and resolves what it names.</li>"
+            ),
+            "{html}"
+        );
+        assert!(!html.contains("mj-ui-fact"), "{html}");
     }
 
     /// A queue longer than the bound is drawn newest first, to the bound, and says how many
