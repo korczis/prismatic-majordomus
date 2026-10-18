@@ -39791,6 +39791,40 @@
         }
       },
       {
+        "id": "majordomus://issue/I3023",
+        "kind": "issue",
+        "label": "I3023",
+        "summary": "The Knowledge screen reads in review order, in plain labels, and leads to the knowledge manual",
+        "route": "/cockpit/objects/issue/i3023",
+        "source": ".ai/repo/project/issues/I3023.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Awaiting review precedes How to review, which precedes Is learning up to date?",
+            "No tile or panel is labelled Unattributed, Closed, underived, Newest episode or The deriver",
+            "The review panel links to the knowledge manual under the documentation mount"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "The grid draws The deriver, Review, By subject, Awaiting review in that order, with internal labels and no link to the manual.",
+          "desired_state": "The grid draws the queue first and the deriver's judgement last, under plain labels, and the review panel ends with a link to the knowledge manual; crate tests pin the order, the labels and the link.",
+          "evidence_required": [
+            "knowledge_screen_reads_in_review_order"
+          ],
+          "milestone": "truthful-plan-surfaces",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui/knowledge.rs"
+          ],
+          "slug": "the-knowledge-screen-reads-in-review-order",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "cargo test --lib ui::knowledge",
+            "scripts/ui audit --only /ui/knowledge"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "label": "a-commit-stood-behind-a-build-lock",
@@ -84531,6 +84565,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3023",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3023",
+        "target": "majordomus://milestone/truthful-plan-surfaces",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -94537,8 +94581,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2962,
-      "edges": 6506,
+      "nodes": 2963,
+      "edges": 6508,
       "acyclic": false,
       "truncated": false
     }

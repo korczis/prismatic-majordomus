@@ -13,8 +13,10 @@ use crate::cockpit::html::{el, El};
 use super::shell::View;
 use super::source::{ask_all, Answer, Availability, Reading, Source};
 use super::view::{
-    hero, kpi, kpi_state, list, more, nothing, object, panel, state, table, text, unanswered, wide,
+    hero, kpi, kpi_state, link, list, more, nothing, object, panel, state, table, text, unanswered,
+    wide,
 };
+use crate::web::discover::DOCS_MOUNT;
 
 /// The route of the screen.
 pub const ROUTE: &str = "/ui/knowledge";
@@ -67,42 +69,44 @@ pub fn screen(ctx: &Context) -> View {
         "orange",
         "Knowledge",
         "What the work left behind, awaiting a reviewer.",
-        "Every record the deriver wrote from a closed episode and nobody has promoted or rejected yet, what it is about, and whether the deriver is still writing.",
+        "The records the deriver wrote down from closed sessions that no person has promoted or rejected yet, what each is about, how to review them, and whether learning keeps up with the sessions that close.",
         vec![
             kpi("Awaiting review", &queue.read("/total")),
             kpi("On this branch", &queue.read("/on_this_branch")),
-            kpi("Unattributed", &queue.read("/unattributed")),
+            kpi("From an unknown branch", &queue.read("/unattributed")),
             ledger_kpi(
-                "Closed, underived",
+                "Sessions not yet learned from",
                 status,
                 kpi(
-                    "Closed, underived",
+                    "Sessions not yet learned from",
                     &status.read("/closed_without_derivation"),
                 ),
             ),
             ledger_kpi(
-                "Newest episode",
+                "Newest session",
                 status,
-                kpi_state("Newest episode", &status.read("/freshness")),
+                kpi_state("Newest session", &status.read("/freshness")),
             ),
         ],
     );
 
+    // In the order a reviewer reads: what awaits them, what it is about, how to review it,
+    // and last whether the queue is still being filled.
     let grid = el("div")
         .class("mj-ui-grid")
+        .children(queue_panels(queue))
         .child(panel(
-            "The deriver",
-            "Whether a derivation still follows every closed episode, as the status judges it.",
-            unanswered(status).unwrap_or_else(|| deriver(status)),
-            &[status],
-        ))
-        .child(panel(
-            "Review",
-            "What a reviewer runs. This screen reads the queue; it promotes and rejects nothing.",
-            review(),
+            "How to review",
+            "The commands a reviewer runs, in order. This screen only reads the queue; promoting and rejecting are a person's act.",
+            el("div").class("mj-ui-stack").child(review()).child(manual()),
             &[],
         ))
-        .children(queue_panels(queue));
+        .child(panel(
+            "Is learning up to date?",
+            "Whether the deriver has written down what the newest closed session left behind, as knowledge status judges it.",
+            unanswered(status).unwrap_or_else(|| deriver(status)),
+            &[status],
+        ));
 
     View::new(
         "Knowledge",
@@ -110,7 +114,7 @@ pub fn screen(ctx: &Context) -> View {
     )
 }
 
-/// The queue's panels: what it is about and what awaits review, or, when the queue answered
+/// The queue's panels: what awaits review and what it is about, or, when the queue answered
 /// that nothing does, one sentence in their place. Two empty tables say the same thing twice
 /// and say neither why nor how a record would arrive.
 fn queue_panels(queue: &Answer) -> Vec<El> {
@@ -124,15 +128,15 @@ fn queue_panels(queue: &Answer) -> Vec<El> {
     }
     vec![
         wide(panel(
-            "By subject",
-            "The records derived from observations, grouped by what they are about.",
-            unanswered(queue).unwrap_or_else(|| subjects(queue)),
-            &[queue],
-        )),
-        wide(panel(
             "Awaiting review",
             "The newest candidates, each leading to its record.",
             unanswered(queue).unwrap_or_else(|| candidates(queue)),
+            &[queue],
+        )),
+        wide(panel(
+            "By subject",
+            "The records derived from observations, grouped by what they are about.",
+            unanswered(queue).unwrap_or_else(|| subjects(queue)),
             &[queue],
         )),
     ]
@@ -175,7 +179,7 @@ fn deriver(status: &Answer) -> El {
                 if episode.is_empty() {
                     at
                 } else {
-                    format!("{at}, episode {episode}")
+                    format!("{at}, session {episode}")
                 }
             })
             .filter(|line| !line.is_empty())
@@ -184,8 +188,8 @@ fn deriver(status: &Answer) -> El {
     let judged = answer.get("judged").and_then(Value::as_bool);
     let stopped = answer.get("stopped_writer").and_then(Value::as_bool);
     let verdict = match (judged, stopped) {
-        (Some(true), Some(true)) => "episodes close and no derivation followed the newest one",
-        (Some(true), _) => "a derivation follows the newest closed episode",
+        (Some(true), Some(true)) => "no: sessions close and nothing was learned from the newest",
+        (Some(true), _) => "yes: the newest closed session was learned from",
         (Some(false), _) => "not judged; the findings say why",
         (None, _) => "the status carries no judgement",
     };
@@ -197,9 +201,9 @@ fn deriver(status: &Answer) -> El {
     };
     let facts = el("dl")
         .class("mj-ui-facts")
-        .child(fact("Last derived", mark("last_derived")))
-        .child(fact("Last closed", mark("last_closed")))
-        .child(fact("Judgement", verdict.to_string()))
+        .child(fact("Up to date", verdict.to_string()))
+        .child(fact("Last learned from", mark("last_derived")))
+        .child(fact("Last session closed", mark("last_closed")))
         .child(fact("Why", text(answer, "freshness_reason")));
     let findings = list(status, "/findings");
     let body = el("div").class("mj-ui-stack").child(facts);
@@ -255,7 +259,7 @@ fn ledger_kpi(label: &str, status: &Answer, drawn: El) -> El {
 fn no_ledger() -> El {
     el("p")
         .class("mj-ui-prose")
-        .text("No session ledger is recorded in this checkout, so whether the deriver keeps up is not judged here. The published snapshot and a fresh clone carry none; in a working checkout, ")
+        .text("No session ledger is recorded in this checkout, so whether learning keeps up is not judged here. The published snapshot and a fresh clone carry none; in a working checkout, ")
         .child(el("code").class("mj-ui-code").text("majordomus knowledge status"))
         .text(" judges it, and this panel shows when the deriver last wrote.")
 }
@@ -271,6 +275,20 @@ fn review() -> El {
                 .child(el("code").class("mj-ui-code").text(*command))
                 .text(format!(": {does}."))
         }))
+}
+
+/// The knowledge manual, where each step of the review and every record class is explained.
+/// The documentation is served under [`DOCS_MOUNT`] by the server and by the published site
+/// alike, so the link holds in both.
+fn manual() -> El {
+    el("p")
+        .class("mj-ui-prose")
+        .text("Each step, and every kind of record, is explained in ")
+        .child(link(
+            format!("{DOCS_MOUNT}/knowledge/"),
+            "the knowledge manual",
+        ))
+        .text(".")
 }
 
 /// The subjects, the first [`SHOWN`] of them, each with how many records await review, how
@@ -406,8 +424,8 @@ mod tests {
         assert_eq!(view.title, "Knowledge");
         let html = view.main.render();
         for want in [
-            "The deriver",
-            "Review",
+            "Is learning up to date?",
+            "How to review",
             "Awaiting review",
             "knowledge_base.status",
             "knowledge_base.candidates",
@@ -441,6 +459,43 @@ mod tests {
             "{html}"
         );
         assert!(!html.contains("mj-ui-fact"), "{html}");
+    }
+
+    /// The screen reads in the order a reviewer works: the queue, how to review it, then
+    /// whether it is still being filled; its labels are plain words, and the review leads to
+    /// the knowledge manual.
+    #[test]
+    fn the_screen_reads_in_review_order_with_plain_labels_and_the_manual() {
+        let repo = SyntheticRepository::small().expect("a synthetic repository");
+        let ctx = repo.context().expect("a context");
+        let html = screen(&ctx).main.render();
+        let at = |what: &str| {
+            html.find(what)
+                .unwrap_or_else(|| panic!("no {what}: {html}"))
+        };
+        assert!(at("Awaiting review</h2>") < at("How to review</h2>"));
+        assert!(at("How to review</h2>") < at("Is learning up to date?</h2>"));
+        for label in [
+            "From an unknown branch",
+            "Sessions not yet learned from",
+            "Newest session",
+        ] {
+            at(label);
+        }
+        for gone in [
+            "Unattributed",
+            "Closed, underived",
+            "Newest episode",
+            "The deriver<",
+        ] {
+            assert!(!html.contains(gone), "{gone}: {html}");
+        }
+        assert!(
+            html.contains(&format!(
+                "href=\"{DOCS_MOUNT}/knowledge/\">the knowledge manual</a>"
+            )),
+            "{html}"
+        );
     }
 
     /// A queue longer than the bound is drawn newest first, to the bound, and says how many
@@ -542,11 +597,11 @@ mod tests {
         );
         let html = deriver(&stopped).render();
         assert!(
-            html.contains("episodes close and no derivation followed the newest one"),
+            html.contains("no: sessions close and nothing was learned from the newest"),
             "{html}"
         );
         assert!(html.contains("never, in this checkout"), "{html}");
-        assert!(html.contains("2026-10-13T10:00:00Z, episode s-1"), "{html}");
+        assert!(html.contains("2026-10-13T10:00:00Z, session s-1"), "{html}");
         assert!(html.contains("no derivation names s-1"), "{html}");
         let unjudged = answer(
             STATUS,
