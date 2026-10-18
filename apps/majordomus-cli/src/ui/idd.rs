@@ -245,19 +245,22 @@ fn render(
             } else {
                 Vec::new()
             };
-            grid = grid.child(wide(super::intent::inspector_closing_to(
-                intents, issues, id, ROUTE,
-            )));
+            // the order a person asks in (I2916): what the intent is, what it still misses,
+            // what to do next, the work that serves it, and last what was done here
+            grid = grid
+                .child(wide(super::intent::inspector_closing_to(
+                    intents, issues, id, ROUTE,
+                )))
+                .child(wide(standing_placeholder(id)));
             if let Some(issue) = picked_issue(query) {
                 grid = grid.child(wide(move_panel(ctx, issues, &mine, &issue)));
             }
             grid = grid
-                .child(wide(standing_placeholder(id)))
                 .child(wide(milestones(roadmap, intent)))
                 .child(wide(issue_table(issues, waves, next, &mine, id)))
-                .child(wide(moves_panel(moves, &mine)))
                 .child(wide(wave_panel(waves, &mine, &known(issues, roadmap))))
-                .child(wide(dependency_graph(issues, &mine)));
+                .child(wide(dependency_graph(issues, &mine)))
+                .child(wide(moves_panel(moves, &mine)));
         }
     }
 
@@ -1096,6 +1099,40 @@ mod tests {
             "{html}"
         );
         assert!(texts_of(&html, "mj-ui-eyebrow").is_empty(), "{html}");
+    }
+
+    /// The panels stand in the order a person asks: what the intent is, what it still
+    /// misses, what to do next, the work that serves it, and last what was done (I2916).
+    #[test]
+    fn the_panels_stand_in_the_order_a_person_asks() {
+        let repo = planned_with_an_intent();
+        let ctx = repo.context().expect("a context");
+        let html = screen(&ctx, &q("issue", "I0001")).main.render();
+        let titles = texts_of(&html, "mj-ui-panel-title");
+        let at = |title: &str| {
+            titles
+                .iter()
+                .position(|t| t == title)
+                .unwrap_or_else(|| panic!("{title} is a panel: {titles:?}"))
+        };
+        let order = [
+            "What is this intent for?",
+            STANDING_TITLE,
+            "What does this move do?",
+            "Which milestones carry it?",
+            "What work serves it?",
+            "What can run together?",
+            "What waits for what?",
+            "What was done here?",
+        ];
+        for pair in order.windows(2) {
+            assert!(
+                at(pair[0]) < at(pair[1]),
+                "{} stands before {}: {titles:?}",
+                pair[0],
+                pair[1]
+            );
+        }
     }
 
     /// An issue added to the plan's record appears in the workspace with no other edit.

@@ -7,6 +7,7 @@
 #
 #   pick        the intent is chosen in /ui/idd from the list of intents, and its title is the
 #               page's heading with the screen's name above it (I3001)
+#               and its panels stand in the order a person asks (I2916)
 #   read        its issues with their status, and the dependency: I0002 waits for I0001; every
 #               issue id on the screen is a link, and the issues that share a scope (I0001 and
 #               I0003) are one counted line that opens to the pairs (I2900)
@@ -200,6 +201,11 @@ try {
   if (h1 !== 'The answer is known') fail(`the page's heading reads "${h1}", not the intent's title`);
   const eyebrow = (await a.locator('.mj-ui-eyebrow').innerText()).trim();
   if (eyebrow.toLowerCase() !== 'intent workspace') fail(`the eyebrow reads "${eyebrow}"`);
+  // and it reads in the order a person asks: the intent, what it misses, the work, what was done (I2916)
+  const heads = await a.locator('.mj-ui-panel-title').allInnerTexts();
+  const order = ['What is this intent for?', 'Why does it stand where it stands?', 'Which milestones carry it?',
+    'What work serves it?', 'What waits for what?', 'What was done here?'].map((t) => heads.indexOf(t));
+  if (order.some((i, k) => i < 0 || (k > 0 && i < order[k - 1]))) fail(`the panels stand out of order: ${heads.join(' | ')}`);
 
   // read: the issues and the dependency, as the plan derives them
   if (await status(a, 'I0001') !== 'ready') fail(`I0001 reads ${await status(a, 'I0001')}, not ready`);
