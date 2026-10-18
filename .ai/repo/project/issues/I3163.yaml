@@ -5,7 +5,7 @@ slug: evolve-readiness-is-derived
 priority: p1
 profile: implementation
 objective: "At episode close in lib/session.sh, derive once a readiness verdict from the candidate groups, their recurrence and routes, the last evolve.run, live mesh claims, and a cooldown and budget declared in policy; record it as a ledger event even when it is skip; name it in the SessionStart briefing, with a directive on run, and in brief.session, CLI, HTTP, MCP and /ui/knowledge; 'run' tells the session to run the evolve skill, never promotes."
-why: "Owner, 2026-10-16: wire /evolve in automatically at the right time. The skill lists when to use it; nothing derives it. ADR 0091 keeps promotion a person's act. brief.rs is brief.session (peers, mesh, queues); case 710 exercises the briefing in lib/context.sh. Derives triggered by compaction (lib/capture.sh:1797) would multiply verdicts per episode. Source c274#2 lists the hard conditions: no concurrent evolution on the scope, no conflicting merge or deploy, new evidence since the last run, rollback available. Proposed in ADR 0183 (Evolution is scheduled at the episode boundary and carried out by a session; nothing promotes itself) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c197#8, chatgpt-majordomus:c274#2."
+why: "Owner, 2026-10-16: wire /evolve in automatically at the right time. The skill lists when to use it; nothing derives it. ADR 0091 keeps promotion a person's act. brief.rs is brief.session (peers, mesh, queues); case 710 exercises the briefing in lib/context.sh. Derives triggered by compaction (lib/capture.sh:1797) would multiply verdicts per episode. Source c274#2 lists the hard conditions: no concurrent evolution on the scope, no conflicting merge or deploy, new evidence since the last run, rollback available. On 2026-10-18 f6 settled the overlap on the mesh: what a session does next at entry is proceed.plan's answer (I2972), which this issue reads; the evolve-readiness verdict stays here. It waits on in-flight work not yet on master: I2972. Proposed in ADR 0183 (Evolution is scheduled at the episode boundary and carried out by a session; nothing promotes itself) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c197#8, chatgpt-majordomus:c274#2."
 current_state: "No verdict; evolve runs when someone calls it and leaves no typed event of its own; brief.rs is brief.session and carries no knowledge content."
 desired_state: "Every closed episode carries the verdict and its factors."
 scope:
@@ -49,6 +49,7 @@ acceptance_criteria:
   - "Cooldown and budget are optional policy keys with defaults, declared in the policy schema and skeleton; doctor passes on a policy without them"
   - "ADR 0183 is accepted and ADR 0118 is amended to reference it"
   - "The criterion evolve-readiness-is-derived is rewritten to evidence: test with the allocated case path, and that case runs in this issue's validation"
+  - "The next actions the briefing names at entry are proceed.plan's answer (its selected issue, reason and next step), read and never derived a second time"
 validation:
   - "bash test/run.sh 710_briefing_names_the_candidates 3004_evolve_is_a_procedure_of_existing_commands"
 evidence_required:

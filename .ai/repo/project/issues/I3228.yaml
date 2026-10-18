@@ -5,7 +5,7 @@ slug: search-finds-entities-and-their-moves
 priority: p3
 profile: implementation
 objective: "Give /ui a search of its own (Ctrl/Cmd+K), answered on /ui from objects.search over every addressable kind, each result naming why it matched from SearchHit's new additive `matched` field and, for an issue, the moves its status admits (imported from I2902's status-to-move table), leading to the entity's page or the move's form."
-why: "Asked as a command palette on 2026-09-10, 2026-10-04 and 2026-10-11 (entity search plus actions instead of an 80-item menu); the Cockpit already has a palette over capabilities, graphs and objects. I2902 (2b) is only on branch docs/the-idd-workspace-reads-at-a-glance, not on master or in this tree, so plan validate cannot accept it as a depends_on id; the start gate is an acceptance criterion instead. scripts/lib/cockpit-probe.mjs never visits /ui. It waits on in-flight work not yet on master: I2902. Sources: chatgpt-majordomus:c102#5, chatgpt-majordomus:c186#5, chatgpt-majordomus:c227#2, chatgpt-majordomus:c172#2."
+why: "Asked as a command palette on 2026-09-10, 2026-10-04 and 2026-10-11 (entity search plus actions instead of an 80-item menu); the Cockpit already has a palette over capabilities, graphs and objects. I2902 (2b) is only on branch docs/the-idd-workspace-reads-at-a-glance, not on master or in this tree, so plan validate cannot accept it as a depends_on id; the start gate is an acceptance criterion instead. scripts/lib/cockpit-probe.mjs never visits /ui. Sources: chatgpt-majordomus:c102#5, chatgpt-majordomus:c186#5, chatgpt-majordomus:c227#2, chatgpt-majordomus:c172#2."
 current_state: "The UI's search form submits to /cockpit/search (ui/shell.rs), so /ui has no search of its own; share/ui/ui.js wires '/', Ctrl/Cmd+K to that field; objects.search returns SearchHit {object, snippet?} in URI order with no matched field; share/cockpit/palette.js reads /api/v1/capabilities, /graphs, /objects; scripts/lib/cockpit-probe.mjs never visits /ui."
 desired_state: "One search projection serves both surfaces; no list of entries is kept by a script."
 scope:
@@ -18,6 +18,8 @@ scope:
   - ".ai/repo/project/intents"
 non_scope:
   - "A semantic or LLM search"
+depends_on:
+  - "I2902"
 serves:
   - "the-ui-runs-and-explains-the-work#search-reaches-every-entity"
 acceptance_criteria:

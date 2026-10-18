@@ -5,7 +5,7 @@ slug: the-workspace-follows-every-client
 priority: p1
 profile: implementation
 objective: "Advance the change generation (crate::change, from I2981) on every repository_mutation capability of the plan and intents (intent propose, plan transition, evidence attach), and have /ui/idd read itself again on that frame, whichever client made the change: the CLI, MCP from a Claude Code session, or another tab."
-why: "Owner, 2026-10-12: typing /intent in Claude Code must show in /ui at once over the WebSocket. I2783 (2b) re-reads the workspace when a move ends on its own server; a write by another client is not covered. It waits on in-flight work not yet on master: I2981, I2783. Proposed in ADR 0216 (Every live surface follows one channel with named follow streams, and nothing polls where a stream exists) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c232#6, chatgpt-majordomus:c288#8, chatgpt-majordomus:c208#73."
+why: "Owner, 2026-10-12: typing /intent in Claude Code must show in /ui at once over the WebSocket. I2783 (2b) re-reads the workspace when a move ends on its own server; a write by another client is not covered. It waits on in-flight work not yet on master: I2981. Proposed in ADR 0216 (Every live surface follows one channel with named follow streams, and nothing polls where a stream exists) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c232#6, chatgpt-majordomus:c288#8, chatgpt-majordomus:c208#73."
 current_state: "On master /ui/idd refreshes every 60 s (share/ui/ui.js); I2783 and I2981 are branch-only."
 desired_state: "One frame per plan or intent write, carrying the record ids it touched; the workspace re-reads the panels those ids feed."
 scope:
@@ -17,6 +17,8 @@ scope:
 non_scope:
   - "Writes from the published site"
   - "Merging of concurrent edits"
+depends_on:
+  - "I2783"
 serves:
   - "every-surface-follows-what-changed#a-write-reaches-the-workspace"
 acceptance_criteria:

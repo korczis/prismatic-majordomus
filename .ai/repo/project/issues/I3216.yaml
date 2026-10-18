@@ -5,14 +5,16 @@ slug: the-loop-is-walked-on-a-phone
 priority: p2
 profile: verification
 objective: "Run case 3220's walk (pick an intent, start an issue, verify it from a second tab, mark it done, read its evidence) a second time at the floor width the design declares, with no feature added."
-why: "On 2026-10-10 the mobile UI was judged to be proved by CSS breakpoints only, not by a task completed on a phone; the owner's 2026-10-08 order makes the phone a first-class surface. It waits on in-flight work not yet on master: I2812. Proposed in ADR 0215 (A phone is the baseline width of every first-party surface, and the primary flow is accepted there before a surface grows) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c216#6."
+why: "On 2026-10-10 the mobile UI was judged to be proved by CSS breakpoints only, not by a task completed on a phone; the owner's 2026-10-08 order makes the phone a first-class surface. Proposed in ADR 0215 (A phone is the baseline width of every first-party surface, and the primary flow is accepted there before a surface grows) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c216#6."
 current_state: "Case 3220 is not on master 707a04c7ce8; it exists only on the unpushed branch fix/doctor-reads-unpushed-in-one-pass (I2812, 2b) and runs at one desktop viewport; /ui/idd's server-side test is apps/majordomus-cli/tests/ui_idd.rs."
 desired_state: "The case runs the same steps at the floor width read from tokens.yaml and fails when a step's control is off-screen or covered."
 scope:
+  - "test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh"
   - "scripts/lib"
 non_scope:
   - "New UI behaviour"
 depends_on:
+  - "I2812"
   - "I3214"
 serves:
   - "a-person-runs-majordomus-from-a-phone#the-flow-works-on-a-phone"
