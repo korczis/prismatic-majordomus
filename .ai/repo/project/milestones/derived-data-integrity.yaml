@@ -1,7 +1,6 @@
 id: derived-data-integrity
 title: A committed derivation describes something it can be a projection of
 slug: derived-data-integrity
-version: "0.5"
 order: 95
 priority: p1
 problem: "A derived artifact is committed with a fingerprint of what produced it, and the gates compare that fingerprint with the tree. Two things make the recording unable to stay true. It hashes the whole input set, so an unrelated change landing on the trunk invalidates a derivation that is not wrong - the tree simply moved; and where it hashes HEAD, a file inside a commit cannot describe the commit it is in, which apps/majordomus-cli/src/release/changelog.rs:75 states in its own comment while the gate reaches past it. The costs are paid daily and separately: every branch re-derives after every merge, six to thirty-five minutes each time; a fixture without history cannot evaluate the artifact at all; and the refusal that catches a stale recording lives in a pre-commit hook, which cannot run for a merge the server creates. So the first thing in the pipeline that can say no is the publication."
@@ -34,4 +33,17 @@ risks:
   - "Narrowing what the recording covers is silent in the dangerous direction: too narrow and staleness stops being detectable, which reads as green rather than as noise. Every change here needs a case that proves the gate still refuses something."
   - "The subsystem is touched by every branch, so a change lands into constant contention with whatever else is deriving."
 created_at: 2026-09-10
-updated_at: 2026-09-10
+updated_at: 2026-10-17T07:53:40Z
+evidence:
+  - covers: derivation_survives_an_unrelated_merge
+    type: test
+    command: "bash test/run.sh 3048_a_derivation_survives_an_unrelated_merge"
+    result: "tests: 1 passed, 0 failed, 0 skipped on master 01227a0f74a (2026-10-17, MAJORDOMUS_BIN = a build of that tree); I1409 DONE"
+    commit: 01227a0f74ab9de734edd3672dcc9d8d3a2d666c
+    recorded_at: 2026-10-17T07:53:26Z
+  - covers: fixture_without_history_evaluates
+    type: test
+    command: "bash test/run.sh 3055_a_derivation_needs_no_history"
+    result: "tests: 1 passed, 0 failed, 0 skipped on master 01227a0f74a (2026-10-17, MAJORDOMUS_BIN = a build of that tree)"
+    commit: 01227a0f74ab9de734edd3672dcc9d8d3a2d666c
+    recorded_at: 2026-10-17T07:53:40Z

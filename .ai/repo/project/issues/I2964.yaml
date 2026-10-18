@@ -1,0 +1,24 @@
+id: I2964
+milestone: "development-runtime"
+title: "Every step that reads a surface into the published snapshot can ask the forge"
+slug: the-snapshot-reads-the-forge-with-a-token
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Give every Pages workflow step that reads the UI or the Cockpit into a snapshot (`web report`) the workflow's token, so that a page which asks GitHub through gh while it is rendered publishes what the forge says instead of the failure to ask, and hold that with a case that reads the workflow."
+why: "Truth sweep 2026-10-18 (f6, S3, verified): the published https://majordomus.dev/cockpit/monitor/ read 'Nothing happened in the last six hours.' beside its own source error 'gh pr failed: ... set the GH_TOKEN environment variable', while PR #1340 and #1356 merged and Pages deployed three times in that window. In .github/workflows/pages.yml the steps 'the forge, observed' and 'the evidence CI recorded' carry GH_TOKEN; 'the UI, read once at this commit' and 'the Cockpit, read once at this commit' carry none."
+current_state: "The two snapshot read steps run without GH_TOKEN; every page that asks gh while it is read publishes an empty or failed source."
+desired_state: "Both read steps carry GH_TOKEN; case 3362 refuses a pages.yml in which any step running `web report` lacks it, and proves its own parse by finding a mutated step."
+scope:
+  - ".github/workflows/pages.yml"
+  - "test/cases/3362_every_snapshot_read_can_ask_the_forge.sh"
+depends_on: []
+acceptance_criteria:
+  - "Every pages.yml step that runs web report carries GH_TOKEN"
+  - "Case 3362 fails on a workflow where a snapshot read step lacks it, naming the step"
+validation:
+  - "majordomus plan validate"
+evidence_required:
+  - "case_every_snapshot_read_can_ask_the_forge"
+created_at: 2026-10-18
+updated_at: 2026-10-18

@@ -3,9 +3,9 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the product features of this repository's layer, resolved against the registry, the index, the catalogue and the topology; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.29.1"
+    "version": "0.30.0"
   },
-  "fingerprint": "008286ba972762fc011ecd72184a51cdb1b216e34024606c7ae77485651c3af1",
+  "fingerprint": "84ce921838eed125deec06e9522d3acf8e3abfdfc1a00eea71916987341154ff",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -1162,7 +1162,7 @@
         "use_cases": 6,
         "rules": 13,
         "enforced_rules": 11,
-        "capabilities": 73,
+        "capabilities": 77,
         "moments": 17
       },
       "evidence": {
@@ -3087,7 +3087,7 @@
         },
         {
           "id": "no-network",
-          "claim": "Nothing performs a network call, evaluates generated text, or deletes recursively",
+          "claim": "The shell tool performs no network call, evaluates no generated text and deletes nothing recursively; its one declared request is the loopback peer probe",
           "status": "guaranteed",
           "test": "test/cases/08_no_forbidden_constructs.sh"
         },
@@ -3229,7 +3229,7 @@
         "use_cases": 10,
         "rules": 15,
         "enforced_rules": 14,
-        "capabilities": 134,
+        "capabilities": 137,
         "moments": 38
       },
       "evidence": {
@@ -3509,7 +3509,7 @@
         },
         {
           "name": "claim",
-          "objects": 247
+          "objects": 250
         }
       ],
       "rule_refs": [
@@ -3782,11 +3782,11 @@
       "counts": {
         "capabilities": 12,
         "mcp_tools": 12,
-        "mcp_resources": 320,
+        "mcp_resources": 323,
         "http_routes": 12,
         "cli_paths": 11,
         "commands": 2,
-        "objects": 313,
+        "objects": 316,
         "rules": 5,
         "enforced_rules": 4,
         "docs": 3,
@@ -4811,6 +4811,15 @@
               "cli": "majordomus worktree topology"
             },
             {
+              "id": "worktree.trunk",
+              "title": "How far a checkout is from the remote trunk",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_worktree_trunk",
+              "route": "GET /api/v1/worktrees/trunk",
+              "cli": "majordomus worktree trunk"
+            },
+            {
               "id": "worktree.uncommitted",
               "title": "Uncommitted work in the linked worktrees, and what holds it",
               "kind": "query",
@@ -5184,11 +5193,11 @@
         "worktrees"
       ],
       "counts": {
-        "capabilities": 17,
-        "mcp_tools": 17,
+        "capabilities": 18,
+        "mcp_tools": 18,
         "mcp_resources": 2,
-        "http_routes": 17,
-        "cli_paths": 11,
+        "http_routes": 18,
+        "cli_paths": 12,
         "commands": 3,
         "objects": 0,
         "rules": 5,
@@ -5321,6 +5330,15 @@
               "cli": "majordomus worktree topology"
             },
             {
+              "id": "worktree.trunk",
+              "title": "How far a checkout is from the remote trunk",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_worktree_trunk",
+              "route": "GET /api/v1/worktrees/trunk",
+              "cli": "majordomus worktree trunk"
+            },
+            {
               "id": "worktree.uncommitted",
               "title": "Uncommitted work in the linked worktrees, and what holds it",
               "kind": "query",
@@ -5450,11 +5468,11 @@
         "planning"
       ],
       "counts": {
-        "capabilities": 6,
-        "mcp_tools": 6,
+        "capabilities": 7,
+        "mcp_tools": 7,
         "mcp_resources": 2,
-        "http_routes": 6,
-        "cli_paths": 6,
+        "http_routes": 7,
+        "cli_paths": 7,
         "commands": 0,
         "objects": 0,
         "rules": 2,
@@ -6870,7 +6888,7 @@
         },
         {
           "name": "prompt",
-          "objects": 4
+          "objects": 5
         }
       ],
       "rule_refs": [
@@ -7220,11 +7238,11 @@
       "counts": {
         "capabilities": 20,
         "mcp_tools": 20,
-        "mcp_resources": 99,
+        "mcp_resources": 100,
         "http_routes": 20,
         "cli_paths": 8,
         "commands": 7,
-        "objects": 94,
+        "objects": 95,
         "rules": 8,
         "enforced_rules": 7,
         "docs": 2,
@@ -7442,7 +7460,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 117
+          "objects": 119
         },
         {
           "name": "knowledge",
@@ -7450,7 +7468,7 @@
         },
         {
           "name": "document",
-          "objects": 347
+          "objects": 350
         }
       ],
       "rule_refs": [
@@ -7723,11 +7741,11 @@
       "counts": {
         "capabilities": 5,
         "mcp_tools": 5,
-        "mcp_resources": 471,
+        "mcp_resources": 476,
         "http_routes": 5,
         "cli_paths": 3,
         "commands": 6,
-        "objects": 468,
+        "objects": 473,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -7962,7 +7980,7 @@
       "kind_refs": [
         {
           "name": "rule",
-          "objects": 187
+          "objects": 188
         }
       ],
       "rule_refs": [
@@ -8338,11 +8356,11 @@
       "counts": {
         "capabilities": 7,
         "mcp_tools": 5,
-        "mcp_resources": 189,
+        "mcp_resources": 190,
         "http_routes": 7,
         "cli_paths": 4,
         "commands": 5,
-        "objects": 187,
+        "objects": 188,
         "rules": 7,
         "enforced_rules": 7,
         "docs": 2,
@@ -9745,6 +9763,32 @@
           "source_path": "apps/majordomus-cli/src/capability/builtin/plan.rs",
           "capabilities": [
             {
+              "id": "plan.delivery",
+              "title": "How far each issue's work has travelled",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_plan_delivery",
+              "route": "GET /api/v1/plan/delivery",
+              "cli": "majordomus plan delivery"
+            },
+            {
+              "id": "plan.drift",
+              "title": "Where the plan's stamps contradict the delivered work",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_plan_drift",
+              "route": "GET /api/v1/plan/drift",
+              "cli": "majordomus plan drift"
+            },
+            {
+              "id": "plan.flight",
+              "title": "Where the work is now",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_plan_flight",
+              "route": "GET /api/v1/plan/flight"
+            },
+            {
               "id": "plan.issues",
               "title": "The issues, filtered by what the graph derived",
               "kind": "query",
@@ -10244,11 +10288,11 @@
       ],
       "backlinks": [],
       "counts": {
-        "capabilities": 58,
-        "mcp_tools": 51,
+        "capabilities": 61,
+        "mcp_tools": 54,
         "mcp_resources": 9,
-        "http_routes": 55,
-        "cli_paths": 17,
+        "http_routes": 58,
+        "cli_paths": 19,
         "commands": 0,
         "objects": 1,
         "rules": 2,
@@ -10519,6 +10563,32 @@
           "stability": "behaviorally_verified",
           "source_path": "apps/majordomus-cli/src/capability/builtin/plan.rs",
           "capabilities": [
+            {
+              "id": "plan.delivery",
+              "title": "How far each issue's work has travelled",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_plan_delivery",
+              "route": "GET /api/v1/plan/delivery",
+              "cli": "majordomus plan delivery"
+            },
+            {
+              "id": "plan.drift",
+              "title": "Where the plan's stamps contradict the delivered work",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_plan_drift",
+              "route": "GET /api/v1/plan/drift",
+              "cli": "majordomus plan drift"
+            },
+            {
+              "id": "plan.flight",
+              "title": "Where the work is now",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_plan_flight",
+              "route": "GET /api/v1/plan/flight"
+            },
             {
               "id": "plan.issues",
               "title": "The issues, filtered by what the graph derived",
@@ -11609,11 +11679,11 @@
         "observatory"
       ],
       "counts": {
-        "capabilities": 97,
-        "mcp_tools": 89,
+        "capabilities": 100,
+        "mcp_tools": 92,
         "mcp_resources": 16,
-        "http_routes": 94,
-        "cli_paths": 41,
+        "http_routes": 97,
+        "cli_paths": 43,
         "commands": 0,
         "objects": 0,
         "rules": 3,
@@ -12701,7 +12771,7 @@
         },
         {
           "id": "no-network",
-          "claim": "Nothing performs a network call, evaluates generated text, or deletes recursively",
+          "claim": "The shell tool performs no network call, evaluates no generated text and deletes nothing recursively; its one declared request is the loopback peer probe",
           "status": "guaranteed",
           "test": "test/cases/08_no_forbidden_constructs.sh"
         },
@@ -12914,6 +12984,32 @@
           "stability": "behaviorally_verified",
           "source_path": "apps/majordomus-cli/src/capability/builtin/plan.rs",
           "capabilities": [
+            {
+              "id": "plan.delivery",
+              "title": "How far each issue's work has travelled",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_plan_delivery",
+              "route": "GET /api/v1/plan/delivery",
+              "cli": "majordomus plan delivery"
+            },
+            {
+              "id": "plan.drift",
+              "title": "Where the plan's stamps contradict the delivered work",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_plan_drift",
+              "route": "GET /api/v1/plan/drift",
+              "cli": "majordomus plan drift"
+            },
+            {
+              "id": "plan.flight",
+              "title": "Where the work is now",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_plan_flight",
+              "route": "GET /api/v1/plan/flight"
+            },
             {
               "id": "plan.issues",
               "title": "The issues, filtered by what the graph derived",
@@ -13128,11 +13224,11 @@
       "kind_refs": [
         {
           "name": "milestone",
-          "objects": 41
+          "objects": 42
         },
         {
           "name": "issue",
-          "objects": 428
+          "objects": 474
         },
         {
           "name": "intent",
@@ -13340,13 +13436,13 @@
       ],
       "backlinks": [],
       "counts": {
-        "capabilities": 23,
-        "mcp_tools": 23,
-        "mcp_resources": 485,
-        "http_routes": 23,
-        "cli_paths": 11,
+        "capabilities": 26,
+        "mcp_tools": 26,
+        "mcp_resources": 532,
+        "http_routes": 26,
+        "cli_paths": 13,
         "commands": 1,
-        "objects": 482,
+        "objects": 529,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -17150,7 +17246,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (117)",
+        "title": "adr (119)",
         "features": [
           "knowledge"
         ]
@@ -17178,7 +17274,7 @@
       },
       {
         "id": "claim",
-        "title": "claim (247)",
+        "title": "claim (250)",
         "features": [
           "declare-once"
         ]
@@ -17255,7 +17351,7 @@
       },
       {
         "id": "issue",
-        "title": "issue (428)",
+        "title": "issue (474)",
         "features": [
           "planning"
         ]
@@ -17276,7 +17372,7 @@
       },
       {
         "id": "milestone",
-        "title": "milestone (41)",
+        "title": "milestone (42)",
         "features": [
           "planning"
         ]
@@ -17304,7 +17400,7 @@
       },
       {
         "id": "prompt",
-        "title": "prompt (4)",
+        "title": "prompt (5)",
         "features": [
           "continuity"
         ]
@@ -17318,7 +17414,7 @@
       },
       {
         "id": "rule",
-        "title": "rule (187)",
+        "title": "rule (188)",
         "features": [
           "doctrine"
         ]
@@ -18276,50 +18372,50 @@
     }
   ],
   "telemetry": {
-    "capabilities": 2536,
-    "builtin": 202,
-    "declarative": 2334,
+    "capabilities": 2619,
+    "builtin": 206,
+    "declarative": 2413,
     "modules": 58,
-    "mcp_tools": 192,
-    "mcp_resources": 2389,
-    "http_routes": 197,
-    "cli_commands": 206,
+    "mcp_tools": 196,
+    "mcp_resources": 2468,
+    "http_routes": 201,
+    "cli_commands": 209,
     "shell_commands": 30,
     "kinds": 34,
-    "objects": 2334,
+    "objects": 2413,
     "by_kind": {
-      "adr": 117,
+      "adr": 119,
       "application": 5,
       "area": 9,
       "audience": 8,
-      "claim": 247,
+      "claim": 250,
       "command": 31,
       "context": 39,
       "critique": 4,
       "deployment": 1,
       "derive-offload": 1,
       "distribution-model": 1,
-      "document": 347,
+      "document": 350,
       "domain": 6,
       "feature": 29,
       "gap": 4,
       "implementation": 52,
       "intent": 5,
-      "issue": 428,
+      "issue": 474,
       "knowledge": 4,
       "mesh-declaration": 1,
-      "milestone": 41,
+      "milestone": 42,
       "moment": 38,
       "policy": 1,
       "profile": 4,
-      "prompt": 4,
+      "prompt": 5,
       "release-record": 29,
-      "rule": 187,
+      "rule": 188,
       "scope": 1,
       "session": 90,
       "skill": 8,
       "taxonomy": 10,
-      "test": 532,
+      "test": 554,
       "use-case": 49,
       "workspace": 1
     },
@@ -18334,22 +18430,22 @@
     "complete": true,
     "ledger": {
       "path": ".ai/repo/evidence/ledger.json",
-      "executions": 14,
-      "newest": "2026-09-17T01:14:59Z"
+      "executions": 606,
+      "newest": "2026-10-16T05:11:51Z"
     },
-    "declared": 229,
-    "supported": 0,
+    "declared": 232,
+    "supported": 62,
     "claims": {
       "a-candidate-is-routed-by-what-it-is-about": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "a-diagram-is-named-linked-and-addressable": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "a-finding-names-how-to-see-it-again": {
@@ -18360,81 +18456,81 @@
       },
       "a-session-records-what-it-observed": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "a-skipped-case-is-not-a-proof": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "adr-catalogue": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "adr-propose": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "adr-traceability": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "advertised-install-command-works": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "advice-is-weighed-not-counted": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
-        "supported": false
+        "state": "inputs-unchanged",
+        "label": "inputs unchanged",
+        "supported": true
       },
       "advisor-failure-is-recorded-and-recovers": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
-        "supported": false
+        "state": "inputs-unchanged",
+        "label": "inputs unchanged",
+        "supported": true
       },
       "advisor-transports-share-one-contract": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
-        "supported": false
+        "state": "inputs-unchanged",
+        "label": "inputs unchanged",
+        "supported": true
       },
       "advisors-are-declared-once": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
-        "supported": false
+        "state": "inputs-unchanged",
+        "label": "inputs unchanged",
+        "supported": true
       },
       "ai-layer-manifest": {
-        "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
-        "supported": false
-      },
-      "an-observation-becomes-a-grouped-candidate": {
-        "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
-        "supported": false
-      },
-      "archive-fidelity": {
         "status": "guaranteed",
         "state": "stale",
         "label": "stale",
         "supported": false
+      },
+      "an-observation-becomes-a-grouped-candidate": {
+        "status": "guaranteed",
+        "state": "stale",
+        "label": "stale",
+        "supported": false
+      },
+      "archive-fidelity": {
+        "status": "guaranteed",
+        "state": "inputs-unchanged",
+        "label": "inputs unchanged",
+        "supported": true
       },
       "authored-files-are-english": {
         "status": "guaranteed",
@@ -18444,86 +18540,86 @@
       },
       "benchmark-coverage-derived": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "blocker-store": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "blocker-survives-handover": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "bootstrap-chain": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
-        "supported": false
+        "state": "inputs-unchanged",
+        "label": "inputs unchanged",
+        "supported": true
       },
       "briefing-names-candidates": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "candidates-reviewed-not-accumulated": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "capability-class": {
         "status": "advisory",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "capability-modules": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
-        "supported": false
+        "state": "inputs-unchanged",
+        "label": "inputs unchanged",
+        "supported": true
       },
       "capability-registry": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
-        "supported": false
+        "state": "inputs-unchanged",
+        "label": "inputs unchanged",
+        "supported": true
       },
       "catalogue-resolves": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "checkpoint-interval": {
         "status": "advisory",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "checkpoint-record": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "ci-planned-gates": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "ci-verdict": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "ci-verdict-is-required": {
@@ -18534,104 +18630,104 @@
       },
       "cli-documentation-executable": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "cockpit-is-a-projection-of-the-registry": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "command-coverage": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
-        "supported": false
+        "state": "inputs-unchanged",
+        "label": "inputs unchanged",
+        "supported": true
       },
       "command-surface": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "commit-message-is-judged": {
         "status": "guaranteed",
-        "state": "stale",
-        "label": "stale",
-        "supported": false
+        "state": "inputs-unchanged",
+        "label": "inputs unchanged",
+        "supported": true
       },
       "commit-plan-is-refusable": {
         "status": "guaranteed",
-        "state": "stale",
-        "label": "stale",
-        "supported": false
+        "state": "inputs-unchanged",
+        "label": "inputs unchanged",
+        "supported": true
       },
       "commit-scopes-are-learned": {
         "status": "guaranteed",
-        "state": "stale",
-        "label": "stale",
-        "supported": false
+        "state": "inputs-unchanged",
+        "label": "inputs unchanged",
+        "supported": true
       },
       "connection-episode": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "consistency-check": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "context-assembly": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "context-budget": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
-        "supported": false
+        "state": "inputs-unchanged",
+        "label": "inputs unchanged",
+        "supported": true
       },
       "context-coverage": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "context-documents": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "context-impact": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "context-selection-budget": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "context-selection-counted": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
-        "supported": false
+        "state": "inputs-unchanged",
+        "label": "inputs unchanged",
+        "supported": true
       },
       "continuity-reachable": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "cost-per-outcome": {
@@ -18642,122 +18738,122 @@
       },
       "dag-validation": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "decision-attribution": {
         "status": "advisory",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "decision-record": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "deployment-contract-refuses-by-name": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
-        "supported": false
+        "state": "inputs-unchanged",
+        "label": "inputs unchanged",
+        "supported": true
       },
       "derivation-one-graph": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "derived-data-current": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "derived-not-declared": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "dispatcher-wiring": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "distribution-canonical-model": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "divergence-label": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "doctrine-class-decides": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "doctrine-registry": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "drift-watch": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
-        "supported": false
+        "state": "inputs-unchanged",
+        "label": "inputs unchanged",
+        "supported": true
       },
       "economics-claims-gated": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
-        "supported": false
+        "state": "inputs-unchanged",
+        "label": "inputs unchanged",
+        "supported": true
       },
       "effort-escalation": {
         "status": "advisory",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "event-vocabulary": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "evidence-a-crate-binary-that-ran-nothing-is-not-a-pass": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "evidence-a-failure-outranks-an-absence": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "evidence-a-recording-is-a-typed-run": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "evidence-a-skip-is-not-run": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "evidence-currency-is-not-collapsed": {
@@ -18768,20 +18864,20 @@
       },
       "evidence-gates-done": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "evidence-judged-at-the-presented-revision": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "evidence-local-recording-stays-local": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "evidence-navigates-both-ways": {
@@ -18804,26 +18900,26 @@
       },
       "evidence-recorded-in-ci": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "evidence-subject-commands-agree-with-the-command-pages": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "evidence-subjects-are-derived": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "evidence-tree-is-measured-by-the-run": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "evidence-unsupported-guarantee-is-reported": {
@@ -18834,104 +18930,104 @@
       },
       "executable-reference-derived": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "execution-cache-equivalence": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
-        "supported": false
+        "state": "inputs-unchanged",
+        "label": "inputs unchanged",
+        "supported": true
       },
       "execution-waves": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "exit-code-contract": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "finish-contract": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "finish-refusal-is-recorded": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
-        "supported": false
+        "state": "inputs-unchanged",
+        "label": "inputs unchanged",
+        "supported": true
       },
       "generated-artifacts-typed": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "generated-projections-checked": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "git-identity": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "github-projection": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "github-projection-gated": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "handover-record": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "history-ledger-read": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "hot-path-no-rebuild": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
-        "supported": false
+        "state": "inputs-unchanged",
+        "label": "inputs unchanged",
+        "supported": true
       },
       "init-refuses": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "install-command-is-derived": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "installer-verifies-before-installing": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "intent-closes-github-milestones": {
@@ -18960,8 +19056,8 @@
       },
       "intent-in-session-context": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "intent-links-resolve": {
@@ -18990,8 +19086,8 @@
       },
       "intent-refused-at-plan-start": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "intent-stage-derived": {
@@ -19002,83 +19098,89 @@
       },
       "interfaces-are-projections": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
-        "supported": false
+        "state": "inputs-unchanged",
+        "label": "inputs unchanged",
+        "supported": true
       },
       "knowledge-derivation-is-idempotent": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "knowledge-derived-at-the-boundary": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "knowledge-failure-is-recorded": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "knowledge-integrity": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "knowledge-promotion-is-an-act": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "knowledge-served-on-every-surface": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "knowledge-writer-observed": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "landing-page-is-a-projection": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "ledger-integrity": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "legacy-migration": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "live-scenario-evidence-is-local": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
-        "supported": false
+        "state": "inputs-unchanged",
+        "label": "inputs unchanged",
+        "supported": true
       },
       "live-scenario-is-read-only": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
-        "supported": false
+        "state": "inputs-unchanged",
+        "label": "inputs unchanged",
+        "supported": true
       },
       "local-state-ignored": {
+        "status": "guaranteed",
+        "state": "stale",
+        "label": "stale",
+        "supported": false
+      },
+      "mcp-client-always-served": {
         "status": "guaranteed",
         "state": "not-run",
         "label": "not run",
@@ -19086,395 +19188,401 @@
       },
       "mcp-client-autostart": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "mcp-data-driven": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "mcp-degraded-not-silent": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "mcp-lease-lost": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "mcp-lease-resilience": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "mcp-peers": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "mcp-shared-server": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "mcp-stdio-surface": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "mcp-uri-resolution": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "mesh-claims-cross-runtime": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
-        "supported": false
+        "state": "inputs-unchanged",
+        "label": "inputs unchanged",
+        "supported": true
       },
       "mesh-compaction-keeps-what-is-live": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "mesh-cooperation-links": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "mesh-declared-is-held": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "mesh-firewall-is-derived": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "mesh-liveness-expiry": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "mesh-network-acceptance": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "mesh-observation-not-authority": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
-        "supported": false
+        "state": "inputs-unchanged",
+        "label": "inputs unchanged",
+        "supported": true
       },
       "mesh-off-by-default": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "mesh-one-registry": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "mesh-repository-isolation": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
-        "supported": false
+        "state": "inputs-unchanged",
+        "label": "inputs unchanged",
+        "supported": true
       },
       "mesh-three-runtime-convergence": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "minimum-context": {
         "status": "advisory",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "models-no-secret-fields": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
-        "supported": false
+        "state": "inputs-unchanged",
+        "label": "inputs unchanged",
+        "supported": true
       },
       "models-one-declaration": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
-        "supported": false
+        "state": "inputs-unchanged",
+        "label": "inputs unchanged",
+        "supported": true
       },
       "models-routing-explains-itself": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
-        "supported": false
+        "state": "inputs-unchanged",
+        "label": "inputs unchanged",
+        "supported": true
       },
       "new-code-is-covered": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
-        "supported": false
+        "state": "inputs-unchanged",
+        "label": "inputs unchanged",
+        "supported": true
       },
       "no-counts-in-context": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "no-network": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "no-silent-overwrite": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "no-transcripts": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
-        "supported": false
+        "state": "inputs-unchanged",
+        "label": "inputs unchanged",
+        "supported": true
       },
       "obligation-closure": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "obligation-establishment": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "observatory-draws-nothing-it-did-not-read": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "open-question-gate": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "openapi-inferred": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
-        "supported": false
+        "state": "inputs-unchanged",
+        "label": "inputs unchanged",
+        "supported": true
       },
       "overlap-report": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "personal-layer-changes-nothing-shared": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "pointer-integrity": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "policy-parse": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "product-domains-derived": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
-        "supported": false
+        "state": "inputs-unchanged",
+        "label": "inputs unchanged",
+        "supported": true
       },
       "product-features-discovered": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
-        "supported": false
+        "state": "inputs-unchanged",
+        "label": "inputs unchanged",
+        "supported": true
       },
       "product-projection-public-safe": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
-        "supported": false
+        "state": "inputs-unchanged",
+        "label": "inputs unchanged",
+        "supported": true
       },
       "product-references-resolve": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
-        "supported": false
+        "state": "inputs-unchanged",
+        "label": "inputs unchanged",
+        "supported": true
       },
       "product-surfaces-derived": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
-        "supported": false
+        "state": "inputs-unchanged",
+        "label": "inputs unchanged",
+        "supported": true
       },
       "profile-axes": {
         "status": "advisory",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "profile-validate": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "project-schema": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "project-status-derived": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "projected-record-edit-is-landable": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "projection-fingerprint": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "projection-generation": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
-        "supported": false
+        "state": "inputs-unchanged",
+        "label": "inputs unchanged",
+        "supported": true
       },
       "prompt-asset": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "prompt-assets": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "prompt-capture": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "prompt-continuity": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "provider-capability-evidence": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
-        "supported": false
+        "state": "inputs-unchanged",
+        "label": "inputs unchanged",
+        "supported": true
       },
       "provider-projections-one-renderer": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
-        "supported": false
+        "state": "inputs-unchanged",
+        "label": "inputs unchanged",
+        "supported": true
       },
       "published-translation-is-declared": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
-        "supported": false
+        "state": "inputs-unchanged",
+        "label": "inputs unchanged",
+        "supported": true
       },
       "reasoning-survives-the-session": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
-        "supported": false
+        "state": "inputs-unchanged",
+        "label": "inputs unchanged",
+        "supported": true
       },
       "reasoning-works-with-no-advisor": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
-        "supported": false
+        "state": "inputs-unchanged",
+        "label": "inputs unchanged",
+        "supported": true
       },
       "record-resolution": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "record-retention": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "record-search": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "region-projection": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "release-archive-shape": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "release-is-complete-or-absent": {
+        "status": "guaranteed",
+        "state": "stale",
+        "label": "stale",
+        "supported": false
+      },
+      "release-prerelease-channel": {
         "status": "guaranteed",
         "state": "not-run",
         "label": "not run",
@@ -19482,26 +19590,26 @@
       },
       "reproduce-command": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "retention-caps": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "review-is-never-fabricated": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
-        "supported": false
+        "state": "inputs-unchanged",
+        "label": "inputs unchanged",
+        "supported": true
       },
       "roadmap-derived": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "routing": {
@@ -19524,8 +19632,8 @@
       },
       "rule-resolution": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "rule-state-is-derived-from-what-ran": {
@@ -19542,86 +19650,86 @@
       },
       "rust-binary-artifact": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "rust-coverage-floor": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
-        "supported": false
+        "state": "inputs-unchanged",
+        "label": "inputs unchanged",
+        "supported": true
       },
       "rust-evidence-gates": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
-        "supported": false
+        "state": "inputs-unchanged",
+        "label": "inputs unchanged",
+        "supported": true
       },
       "rust-hot-path-benchmarks": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
-        "supported": false
+        "state": "inputs-unchanged",
+        "label": "inputs unchanged",
+        "supported": true
       },
       "rustdoc-complete": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
-        "supported": false
+        "state": "inputs-unchanged",
+        "label": "inputs unchanged",
+        "supported": true
       },
       "rustdoc-composed-from-the-topology": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "rustdoc-discoverable": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
-        "supported": false
+        "state": "inputs-unchanged",
+        "label": "inputs unchanged",
+        "supported": true
       },
       "rustdoc-published": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "rustdoc-referenced": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
-        "supported": false
+        "state": "inputs-unchanged",
+        "label": "inputs unchanged",
+        "supported": true
       },
       "rustdoc-verified-live": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "schema-driven-kinds": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
-        "supported": false
+        "state": "inputs-unchanged",
+        "label": "inputs unchanged",
+        "supported": true
       },
       "scope-declared": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
-        "supported": false
+        "state": "inputs-unchanged",
+        "label": "inputs unchanged",
+        "supported": true
       },
       "scope-enforcement": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "scoped-task": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "semantic-retrieval": {
@@ -19632,17 +19740,23 @@
       },
       "session-lifecycle": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "session-observability": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
-        "supported": false
+        "state": "inputs-unchanged",
+        "label": "inputs unchanged",
+        "supported": true
       },
       "session-records": {
+        "status": "guaranteed",
+        "state": "stale",
+        "label": "stale",
+        "supported": false
+      },
+      "session-start-prompt": {
         "status": "guaranteed",
         "state": "not-run",
         "label": "not run",
@@ -19656,44 +19770,44 @@
       },
       "site-deploy-one-path": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "site-deploys-from-verified-run": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "site-registry-dataset": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
-        "supported": false
+        "state": "inputs-unchanged",
+        "label": "inputs unchanged",
+        "supported": true
       },
       "skill-catalogue": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "skill-check": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "skill-site-projection": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "suite-parallel": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "task-commit-attribution": {
@@ -19716,8 +19830,8 @@
       },
       "the-closing-question-is-measured": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "token-savings-measured": {
@@ -19728,98 +19842,98 @@
       },
       "tool-location-independent": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "typed-outcome": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "ui-dashboard-cites-its-sources": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "use-case-coverage": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
-        "supported": false
+        "state": "inputs-unchanged",
+        "label": "inputs unchanged",
+        "supported": true
       },
       "use-case-evidence": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
-        "supported": false
+        "state": "inputs-unchanged",
+        "label": "inputs unchanged",
+        "supported": true
       },
       "use-case-impact": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
-        "supported": false
+        "state": "inputs-unchanged",
+        "label": "inputs unchanged",
+        "supported": true
       },
       "vendored-rule-package": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "web-namespaces-reserved": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
-        "supported": false
+        "state": "inputs-unchanged",
+        "label": "inputs unchanged",
+        "supported": true
       },
       "web-surface-declared-once": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
-        "supported": false
+        "state": "inputs-unchanged",
+        "label": "inputs unchanged",
+        "supported": true
       },
       "why-catalogue-discovered": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
-        "supported": false
+        "state": "inputs-unchanged",
+        "label": "inputs unchanged",
+        "supported": true
       },
       "why-diagnosis-explainable": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
-        "supported": false
+        "state": "inputs-unchanged",
+        "label": "inputs unchanged",
+        "supported": true
       },
       "why-references-resolve": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
-        "supported": false
+        "state": "inputs-unchanged",
+        "label": "inputs unchanged",
+        "supported": true
       },
       "wiring-reconciliation": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "worktree-migration-lossless": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "worktree-ownership": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "worktree-topology-derived": {
         "status": "guaranteed",
-        "state": "not-run",
-        "label": "not run",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       }
     }

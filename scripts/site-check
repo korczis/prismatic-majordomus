@@ -9,6 +9,10 @@
 #                                   second generation for the same answer (scripts/pages does,
 #                                   by fingerprint; the site job of validate.yml does, by the
 #                                   `generate-site-data --check` step that precedes the build).
+#   scripts/site-check --roadmap PAGE DATA_DIR [BUILD_JSON]
+#                                   check 13h alone, over one built /roadmap/ page and the data it
+#                                   was built from (BUILD_JSON defaults to DATA_DIR/../build.json):
+#                                   the scan a case runs on a fixture. Exit 0, 10 findings, 12 missing.
 #   scripts/site-check --prose-figures <dir>
 #                                   check 19 alone, over every *.md and *.toml under <dir>, with
 #                                   no built site: the scan a case runs on a fixture. Exit 0 when
@@ -58,6 +62,39 @@ prose_counts() { # file... -> findings
       }
     }' "$@"
 }
+# The check of 13h, "/roadmap/ is the whole plan": every milestone id of plan.json is on the
+# built page, once each and in the order roadmap.json derives from the milestone graph; every
+# issue of plan.json is on it; and the page names, as observed, the commit build.json records.
+# It once kept the eight milestones whose hand-typed version was set and dropped the thirty
+# where the work happened: a page that filters the plan by a field a person writes is the
+# parallel universe ADR 0166 removes. Prints OK or FAIL lines; returns 1 on any FAIL.
+roadmap_complete() { # page data-dir build-json
+  local page="$1" data="$2" build="$3" rbad=0 id seen built ms is
+  [ -f "$page" ] || { echo "FAIL roadmap      no roadmap page at $page"; return 1; }
+  ms="$(grep -o 'data-milestone="[^"]*"' "$page" | sed 's/^data-milestone="//; s/"$//')"
+  is="$(grep -o 'data-issue="[^"]*"' "$page" | sed 's/^data-issue="//; s/"$//')"
+  for id in $(jq -r '.milestones[].id' "$data/plan.json"); do
+    printf '%s\n' "$ms" | grep -qxF "$id" || { echo "FAIL roadmap      milestone $id is in plan.json but not on /roadmap/"; rbad=1; }
+  done
+  for id in $(jq -r '.issues[].id' "$data/plan.json"); do
+    printf '%s\n' "$is" | grep -qxF "$id" || { echo "FAIL roadmap      issue $id is in plan.json but not under its milestone on /roadmap/"; rbad=1; }
+  done
+  [ "$(jq -r '.milestones[].id' "$data/roadmap.json")" = "$ms" ] \
+    || { echo "FAIL roadmap      /roadmap/ does not list the milestones once each in the order roadmap.json derives"; rbad=1; }
+  seen="$(grep -o 'data-observed-commit="[^"]*"' "$page" | sed 's/^data-observed-commit="//; s/"$//' | head -n 1)"
+  built="$(jq -r '.commit // empty' "$build" 2>/dev/null || true)"
+  [ -n "$seen" ] && [ "$seen" = "$built" ] \
+    || { echo "FAIL roadmap      /roadmap/ names ${seen:-no commit} as observed, the build records ${built:-none}"; rbad=1; }
+  [ "$rbad" = 0 ] || return 1
+  echo "OK   roadmap      /roadmap/ draws all $(printf '%s\n' "$ms" | grep -c .) milestone(s) of plan.json in the graph's order, every issue under its milestone, observed at ${seen:0:11}"
+}
+if [ "${1:-}" = --roadmap ]; then
+  [ $# -ge 3 ] || { echo "site-check: --roadmap PAGE DATA_DIR [BUILD_JSON]" >&2; exit 2; }
+  [ -f "$2" ] && [ -f "$3/plan.json" ] && [ -f "$3/roadmap.json" ] \
+    || { echo "site-check: --roadmap needs a built page and a data directory with plan.json and roadmap.json" >&2; exit 12; }
+  roadmap_complete "$2" "$3" "${4:-$(dirname "$3")/build.json}" && exit 0
+  exit 10
+fi
 if [ "${1:-}" = --prose-figures ]; then
   [ -d "${2:-}" ] || { echo "site-check: --prose-figures needs a directory" >&2; exit 12; }
   pfiles=(); while IFS= read -r f; do pfiles+=("$f"); done < <(find "$2" -type f \( -name '*.md' -o -name '*.toml' \) | LC_ALL=C sort)
@@ -1075,6 +1112,13 @@ for mid in $(jq -r '.milestones[] | select((.claims | length) > 0) | .id' "$SITE
   done
 done
 ok roadmap "every claim a milestone names links back to it"
+
+# 13h. /roadmap/ draws every milestone of the plan, in the order the milestone graph derives,
+# every issue under its milestone, and names the commit its data was observed at (ADR 0166
+# decision 4; roadmap_complete above, which a case also runs alone over a fixture).
+rm_out="$(roadmap_complete "$PUB/roadmap/index.html" "$SITE/data/generated" "$SITE/data/build.json" || true)"
+printf '%s\n' "$rm_out"
+fails=$((fails + $(printf '%s\n' "$rm_out" | grep -c '^FAIL' || true)))
 
 # 13f. the contract demonstration is the policy's own list. The page pairs each key in
 # policy.verification.finish_requires with the check name the transcript prints, by position,

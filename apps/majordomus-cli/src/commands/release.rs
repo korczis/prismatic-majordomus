@@ -43,7 +43,7 @@ pub fn run(args: ReleaseArgs) -> Result<u8> {
         }
         Some(ReleaseCommand::Next { ref base, ref head }) => {
             let (base, head) = (base.clone(), head.clone());
-            next(&args, &base, &head)
+            next(&args, base.as_deref(), &head)
         }
         Some(ReleaseCommand::Bump {
             ref level,
@@ -284,25 +284,27 @@ fn analyze(args: &ReleaseArgs, since: Option<&str>, explain: bool) -> Result<u8>
 /// `majordomus release next`: what a landing would allocate, through the capability so
 /// every surface renders one value. Exit 0 when decided, [`EXIT_UNREADABLE`] when an input
 /// could not be read.
-fn next(args: &ReleaseArgs, base: &str, head: &str) -> Result<u8> {
+fn next(args: &ReleaseArgs, base: Option<&str>, head: &str) -> Result<u8> {
     let app = App::load(&args.repo)?;
     let decision = landing_decision(&app.context, base, head)?;
     let stdout = std::io::stdout();
     render_next(&mut stdout.lock(), &decision, args.format).map(|()| 0)
 }
 
-/// The landing decision the capability answers for `head` onto `base`; a refusal is the
-/// command's [`EXIT_UNREADABLE`].
+/// The landing decision the capability answers for `head` onto `base`, or onto the trunk
+/// the repository names when no base is given; a refusal is the command's
+/// [`EXIT_UNREADABLE`].
 fn landing_decision(
     ctx: &crate::capability::Context,
-    base: &str,
+    base: Option<&str>,
     head: &str,
 ) -> Result<release::landing::LandingDecision> {
+    let mut input = serde_json::json!({ "head": head });
+    if let Some(base) = base {
+        input["base"] = serde_json::Value::String(base.to_string());
+    }
     let value = ctx
-        .execute(
-            crate::capability::builtin::release::NEXT_ID,
-            serde_json::json!({ "base": base, "head": head }),
-        )
+        .execute(crate::capability::builtin::release::NEXT_ID, input)
         .map_err(unreadable)?;
     serde_json::from_value(value).map_err(protocol)
 }
@@ -539,7 +541,9 @@ fn bump(args: &ReleaseArgs, level: Option<&str>, exact: Option<&str>, dry_run: b
     let wanted_exact = match exact {
         Some(v) => Some(version::Version::parse(v).ok_or_else(|| Error::Refused {
             code: 2,
-            reason: format!("'{v}' is not a version; it must be three numbers, `1.2.3`"),
+            reason: format!(
+                "'{v}' is not a version; it must be a semantic version, `1.2.3` or `1.0.0-alpha.1`"
+            ),
         })?),
         None => None,
     };
@@ -598,14 +602,15 @@ fn bump(args: &ReleaseArgs, level: Option<&str>, exact: Option<&str>, dry_run: b
         version::Version::parse(&p.baseline.version).map(|base| base.raised_to(p.required))
     });
 
+    let explicit = wanted_exact.is_some() || wanted_level.is_some();
     let (to, source) = match (wanted_exact, wanted_level) {
         (Some(v), _) => (v, "explicit --exact"),
-        (None, Some(impact)) => (current.raised_to(impact), "explicit --level"),
+        (None, Some(impact)) => (current.clone().raised_to(impact), "explicit --level"),
         // The selected version, which is the whole point: with no argument at all, the
         // contract decides — through the one selection `release version` reports, so the
         // writer raises to exactly the `next` the report states. With no measurable contract
         // no one decided, and there is nothing to raise to.
-        (None, None) => match version::default_target(&selection.report, current) {
+        (None, None) => match version::default_target(&selection.report, &current) {
             Ok(to) => (
                 to,
                 match selection.report.decided_by {
@@ -622,11 +627,11 @@ fn bump(args: &ReleaseArgs, level: Option<&str>, exact: Option<&str>, dry_run: b
             }
         },
     };
-    let explicit = wanted_exact.is_some() || wanted_level.is_some();
 
-    // An override may go above the floor and never below it.
-    if let (Some(f), Some(p)) = (floor, plan) {
-        if to < f {
+    // An override may go above the floor and never below it. A pre-release of the floor is
+    // the floor on its way (`Version::reaches`): `1.0.0-alpha.2` meets a floor of `1.0.0`.
+    if let (Some(f), Some(p)) = (&floor, plan) {
+        if !to.reaches(f) {
             writeln!(
                 out,
                 "release: REFUSED {to} is below {f}, which is the smallest version this tree may declare"
@@ -689,7 +694,7 @@ fn bump(args: &ReleaseArgs, level: Option<&str>, exact: Option<&str>, dry_run: b
     }
     .map_err(Error::Transport)?;
     if explicit {
-        if let Some(f) = floor {
+        if let Some(f) = &floor {
             // Provenance: a version larger than the measurement is allowed and never silent.
             writeln!(
                 out,
@@ -859,10 +864,10 @@ mod tests {
         git(&["add", "-A"]);
         git(&["commit", "-qm", "base"]);
         let ctx = repo.context().expect("a context");
-        let d = landing_decision(&ctx, "HEAD", "HEAD").expect("decided");
+        let d = landing_decision(&ctx, Some("HEAD"), "HEAD").expect("decided");
         assert_eq!(d.trunk_version, "0.3.0");
         assert!(matches!(
-            landing_decision(&ctx, "no-such-ref-of-ours", "HEAD"),
+            landing_decision(&ctx, Some("no-such-ref-of-ours"), "HEAD"),
             Err(Error::Refused {
                 code: EXIT_UNREADABLE,
                 ..
@@ -880,10 +885,10 @@ mod tests {
             command: None,
             format: OutputFormat::Json,
         };
-        assert_eq!(next(&args(root), "HEAD", "HEAD").expect("decided"), 0);
-        assert!(next(&args(root), "no-such-ref-of-ours", "HEAD").is_err());
+        assert_eq!(next(&args(root), Some("HEAD"), "HEAD").expect("decided"), 0);
+        assert!(next(&args(root), Some("no-such-ref-of-ours"), "HEAD").is_err());
         let empty = tempfile::tempdir().unwrap();
-        assert!(next(&args(empty.path()), "HEAD", "HEAD").is_err());
+        assert!(next(&args(empty.path()), Some("HEAD"), "HEAD").is_err());
     }
 
     fn report(decided_by: DecidedBy) -> VersionReport {

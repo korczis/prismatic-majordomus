@@ -35,16 +35,36 @@ They stay separate because they answer different questions for different readers
 Collapsing them would make "what should I do this morning" and "what are we building this
 year" the same query.
 
-## Identity is a slug; the version is a field
+## Identity is a slug, and the release is inferred
 
 ```yaml
 id: runtime-adapters
-version: "0.2"
 ```
 
-Versions get renumbered, split and reordered; identity must not. A milestone's page URL, a
-claim's link to it and its GitHub binding all key on the slug, so `0.2` becoming `0.3`
-changes one field and breaks no reference.
+A milestone carries no version. A milestone's page URL, a claim's link to it and its
+GitHub binding all key on the slug, so nothing breaks when the plan is reordered or split.
+A typed `version:` is refused by `plan validate` as an unknown key (ADR 0166): it was typed
+by hand before the project had releases, and it disagreed with the releases it shipped in.
+
+The release that carried a milestone is a fact about the release records, read as
+`released_in` in `plan roadmap` (the `RELEASED` column, the `released_in` field of `--json`):
+
+- a milestone's **last accepted issue** is its DONE issue with the latest `completed_at`;
+- its merge is found through the commit that wrote that stamp, or failing that the latest
+  merge whose message names the issue;
+- `released_in` is the first release record (`.ai/repo/releases/v*.yaml`, the tracked
+  statement of a `vMAJOR.MINOR.PATCH` tag), in version order, whose `commit:` contains it:
+  `git merge-base --is-ancestor <merge> <commit>`. A pre-release or a named tag is not a
+  release, and a tag without a record is not one either.
+
+Records and not tags, because derived data must not depend on refs outside the tree: the
+answer is a function of the commit, and it changes only when a record lands, in the record
+pull request that re-derives anyway. Releases before the first record (v0.3.1) have none, so
+a milestone finished before it reads v0.3.1, the earliest release this layer records.
+
+A milestone that is not DONE, or that no record's commit contains yet, reads `unreleased`. The
+shell engine (`mj_pj_m_released_in` in `lib/project.sh`) and the executable
+(`plan::released_in`) answer it command for command, and case 99 holds them equal.
 
 Nothing may infer a record's kind from the shape of its id. `mj_pj_is_milestone` asks the
 loaded model, because a milestone id is a slug and an issue id is not distinguishable from
@@ -72,7 +92,7 @@ The roadmap sequence is each milestone's topological rank in the dependency grap
 `order:` field only breaks ties *within* a rank; it cannot move a milestone past something
 it requires.
 
-There is no list of versions anywhere — not in the generator, not in the site, not here.
+There is no list of versions anywhere — not in the records, the generator, the site or here.
 Adding a milestone file puts it in the roadmap.
 
 ## What the roadmap graph refuses
@@ -121,7 +141,10 @@ is recorded as reached.
 
 That is how work delivered before the model existed is represented without inventing
 issues for it. It is the one route to `DONE` that does not pass through an issue, and it
-still passes through evidence.
+still passes through evidence. Its `released_in` is read through that evidence: the commit
+that wrote the latest `recorded_at` of it stands where an issue's merge would, so the
+milestone ships in the first release record that contains it (`foundation`, recorded before
+v0.3.1, reads v0.3.1).
 
 ## Superseded, not deleted
 

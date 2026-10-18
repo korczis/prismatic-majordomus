@@ -175,7 +175,7 @@ pub fn inspector_closing_to(intents: &Answer, issues: &Answer, id: &str, close: 
                         nothing("It declares no invariant.")
                     } else {
                         el("ul")
-                            .class("mj-ui-list")
+                            .class("mj-ui-prose-list")
                             .children(inv.into_iter().map(|t| el("li").text(t)))
                     }
                 })

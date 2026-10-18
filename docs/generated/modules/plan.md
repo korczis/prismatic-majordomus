@@ -1,11 +1,82 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the `plan` module of the canonical Majordomus capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.29.1 -->
+     Generator: majordomus-cli 0.30.0 -->
 # Module `plan` — The plan and its derivations
 
 The milestone and issue model of this repository, and everything derived from it that nobody authored: the status of each record, the dependency graphs above and below the milestone boundary, the topological execution waves, the roadmap order, the milestone being executed and the one issue to take next. Status is never stored — a record says what happened to it and the status follows from that and from the state of its dependencies — so no file can contradict the graph. This capability reads; writing a lifecycle marker into a record is `plan.transition`, which declares that it writes the repository.
 
-Stability: behaviorally_verified. Capabilities: 9.
+Stability: behaviorally_verified. Capabilities: 12.
+
+## `plan.delivery` — How far each issue's work has travelled
+
+For every issue (or one), the furthest delivery stage proved — none, branch, pr_open, merged, released, deployed — each with the object that proved it and when it was observed: the branch that names the issue (by id, the I1405 rule, or by its slug), the open pull request in the recorded forge observation, the newest commit in the trunk's history that names it (a merge by its pull-request title or branch, any other commit by its subject, never by its body), the first release record (`.ai/repo/releases/v*.yaml`) whose commit contains that merge, and the published `latest.json` that names that release or a later one. Beside it, the issue's declared status, so a contradiction between the stamps and the work is one comparison away. Live by default: the trunk this clone knows, every branch, the forge observation `majordomus prs refresh` recorded, the release records, and the `latest.json` of the commit the last Pages deployment published. With `at`, the merges of that commit's history and the tree's release records and nothing live — every branch, forge and deployment source is reported unread — so only merged and released can be proved and the answer is a function of the commit alone. A source that was not read is reported unread with its reason, never as none: an issue it could have moved further is not settled and names it. Inferred on every call and stored nowhere; it never writes a stamp.
+
+| | |
+|---|---|
+| kind | query |
+| stability | experimental |
+| MCP tool | `majordomus_plan_delivery` |
+| HTTP | `GET /api/v1/plan/delivery` |
+| CLI | `majordomus plan delivery` |
+| cache | — |
+| benchmark | required |
+| provenance | builtin majordomus_cli::capability::builtin::plan |
+| tags | plan, project, delivery, git, provenance |
+
+| input | type | required | description |
+|---|---|---|---|
+| `issue` | string or null | no | One issue id (`I2740`). Default: every issue of the plan. An id the plan does not
+declare is not found, never answered as `none`. |
+| `at` | string or null | no | Observe as of this commit (`HEAD`, a sha, a ref): its history and the tree's release
+records, and nothing live — no branch, forge, deployment or clock. Default: live. |
+
+Output: `IssueDeliveryReport`.
+
+## `plan.drift` — Where the plan's stamps contradict the delivered work
+
+Every contradiction between an issue's declared status and its delivery (plan.delivery), each with the objects that prove it: `merged_not_recorded` — READY, BLOCKED or ACTIVE, with a merge on the trunk naming it (pull request, merge commit, release) and no open pull request naming it; `active_without_work` — ACTIVE since before the window, with no branch, pull request, merge or live mesh claim naming it; `done_without_trace` — DONE with no merge naming it, advisory because record-only issues exist. Each finding carries its age, whether it is past the window `.ai/repo/ci/plan.yaml` declares (`drift.window`, seconds), the sources that were not read and could have dissolved it, and the command that settles it (`majordomus plan verify|done <id>`). With `gate`, judged as a gate: on a `head` every merged_not_recorded is pending; on the `trunk` one merged longer than the window ago is refused and a younger one pending; the other classes never refuse; a missing or unreadable window refuses (exit 12); refusals fail the gate (exit 10) only under `drift.enforcement: blocking`, and are reported with exit 0 under `advisory`. Observed live, or `at` a commit as plan.delivery is. Inferred on every call; it never writes a stamp.
+
+| | |
+|---|---|
+| kind | query |
+| stability | experimental |
+| MCP tool | `majordomus_plan_drift` |
+| HTTP | `GET /api/v1/plan/drift` |
+| CLI | `majordomus plan drift` |
+| cache | — |
+| benchmark | required |
+| provenance | builtin majordomus_cli::capability::builtin::plan |
+| tags | plan, project, delivery, drift, gate |
+
+| input | type | required | description |
+|---|---|---|---|
+| `issue` | string or null | no | One issue id. Default: every issue of the plan. |
+| `at` | string or null | no | Observe as of this commit, as `plan.delivery` does. Default: live. |
+| `gate` | object | no | Judge as a gate on a `head` or on the `trunk`. Default: report only, exit 0. |
+
+Output: `DriftReport`.
+
+## `plan.flight` — Where the work is now
+
+The milestones with work in flight, the one the graph allows next, and the latest release as the releases themselves say it, read live on every call (ADR 0166, decision 4). Now is every open milestone holding an open issue with an open pull request that names it (`plan.delivery`'s `pr_open`), a live mesh claim made for it, or a declared ACTIVE status, each with those issues, why they are in flight, their declared status beside their inferred stage, and the objects that prove it (branch, pull request, merge commit, release tag, published `latest.json`, claim), linked on the forge where the forge has them. Next is the first open milestone in the plan's order that is not now and whose unfinished prerequisites are all now. The latest release is the highest stable version among the release records, the `v*` tags of this clone and the `latest.json` the last successful Pages deployment published, so a release whose record merged after its tag is not shown older than it is; `executable_tagged` says whether the answering executable's own version is tagged. `milestone` adds that milestone with every one of its issues. A source that was not read (the forge, the publication, the mesh outside a server) is named with its reason, never treated as empty.
+
+| | |
+|---|---|
+| kind | query |
+| stability | experimental |
+| MCP tool | `majordomus_plan_flight` |
+| HTTP | `GET /api/v1/plan/flight` |
+| cache | — |
+| benchmark | required |
+| provenance | builtin majordomus_cli::capability::builtin::plan |
+| tags | plan, project, delivery, release, mesh |
+
+| input | type | required | description |
+|---|---|---|---|
+| `milestone` | string or null | no | A milestone id: the answer then carries it, with every one of its issues, as
+`inspected`. An id the plan does not declare is not found. |
+
+Output: `PlanFlight`.
 
 ## `plan.issues` — The issues, filtered by what the graph derived
 

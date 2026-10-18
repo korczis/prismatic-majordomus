@@ -370,6 +370,20 @@ commit:
   reference_unresolved: error
   breaking_unexplained: error
 
+# ---------------------------------------------------------------- a checkout and its trunk
+# How far a checkout may drift from the remote trunk (project.a-checkout-serves-the-current-trunk).
+# On 2026-10-16 the primary checkout was 779 commits behind origin/master, its shared server
+# answered every session from that tree, and its local master was the base `worktree create`
+# branched from; nothing reported it. The distance is counted for the checkout's HEAD and for
+# the local trunk branch, as of the last fetch, and judged here: lagging warns, stale fails
+# doctor — and so the commit hook — while a merge that brings the checkout current counts
+# what it brings in. Read by worktree status, server.status, the MCP initialize
+# instructions and doctor; nothing reads a default when these are absent.
+checkout:
+  trunk_distance:
+    warn_behind: 100                     # about a day of this trunk's commits
+    fail_behind: 400                     # several days: what it serves is not the trunk
+
 # ---------------------------------------------------------------- the shared server's lease
 # One server serves a checkout, and a lease file decides which process owns it. These four
 # numbers are what a contest between two processes is judged by, and until 2026-09-15 all

@@ -187,6 +187,7 @@ majordomus worktree cleanup --remove           # removes those worktrees, refusi
 | `worktree cleanup` | branches merged into the trunk, or into the remote-tracking branch the trunk follows, whose worktree is clean or absent, with the commands that would remove them. A primary checkout nobody has pulled does not hide what has already landed. | |
 | `worktree cleanup --remove` | removes those worktrees, each re-measured first; refuses a branch ahead of its remote, a worktree something is working in, uncommitted work, or a reading it could not take | |
 | `worktree uncommitted [--older-than D]` | every linked worktree holding uncommitted work: paths, age of the oldest change, what holds it, `abandoned` or not, and the command that would put it on a remote ref; writes nothing | |
+| `worktree trunk` | how far this checkout and the local trunk are from the remote trunk, as of the last fetch, judged against `checkout.trunk_distance`, with the commands that bring it current; fetches nothing | the checkout is stale |
 | `worktree branches [--without-worktree]` | every local branch, one per line | |
 
 `wt` is an alias for `worktree`. `--format json` is available everywhere and is the same
@@ -205,7 +206,7 @@ Shell completion of the branch arguments reads the live set rather than a list:
 ```bash
 # zsh
 _mj_wt_branches() { compadd -- ${(f)"$(majordomus worktree branches 2>/dev/null)"} }
-compdef '_arguments "1:sub:(status list topology root path inspect create ensure migrate validate doctor guard repair remove cleanup uncommitted branches)" "2:branch:_mj_wt_branches"' majordomus-worktree
+compdef '_arguments "1:sub:(status list topology root path inspect create ensure migrate validate doctor guard repair remove cleanup uncommitted trunk branches)" "2:branch:_mj_wt_branches"' majordomus-worktree
 ```
 
 ## Lifecycle
@@ -462,6 +463,58 @@ which stay. It includes the combination the refusals exist for: a branch merged 
 trunk *and* carrying a commit its remote has never seen. What changes *after* the listing — a
 commit, a deleted remote branch, a file written — is planted by the unit tests of the reclaim
 in `apps/majordomus-cli/src/commands/worktree.rs`. A missing `lsof` is not planted anywhere.
+
+## A checkout and its distance from the trunk
+
+On 2026-10-16 the primary checkout was 779 commits behind `origin/master`, with uncommitted
+changes nobody could attribute. Its shared server answered every session's plan questions
+from that tree, and its local `master` was the base new branches were made from. Every
+reading said the server was ready; none said the tree it served was not the trunk.
+`project.a-checkout-serves-the-current-trunk` makes that distance a reading.
+
+`worktree::trunk::measure` counts, for the checkout's `HEAD` and for the local trunk branch,
+the commits of the remote-tracking trunk each lacks (`behind`) and the commits each has that
+the trunk lacks (`ahead`). The remote trunk is the trunk's upstream, else the remote whose
+`HEAD` names the trunk, else the first remote with a branch of that name. Nothing is fetched:
+the answer holds as of the last fetch, and `fetched_at` (the time of `FETCH_HEAD`) says when
+that was. While a merge is in progress its incoming commits count as present, so the merge
+that brings a branch current is never judged by the tree it is replacing.
+
+| standing | when | doctor |
+|---|---|---|
+| `current` | behind by less than `warn_behind`, or not behind | `OK clone trunk` |
+| `lagging` | at or past `checkout.trunk_distance.warn_behind` | `WARN`, with the remedy |
+| `stale` | at or past `checkout.trunk_distance.fail_behind` | `FAIL`, so the commit hook refuses |
+| `unjudged` | behind, and the policy declares no threshold | `INFO` |
+| `unmeasured` | no trunk, or no remote-tracking branch carries it | `INFO` |
+
+The thresholds are the policy's (`.ai/repo/policy.yaml`, `checkout.trunk_distance`), and
+nothing reads a default when they are absent. The standing of the checkout is what its
+server serves; the standing of the local trunk (`local_trunk_standing`) is what a branch
+made from it starts from. In a linked worktree the local trunk is another checkout's to
+move, so doctor reports it as `WARN clone local-trunk` and never fails that worktree's
+commits for it.
+
+The same reading appears wherever a tree is served:
+
+- `majordomus worktree trunk` (`worktree.trunk`, `majordomus_worktree_trunk`,
+  `GET /api/v1/worktrees/trunk`) answers it alone, and exits 10 when the checkout is stale;
+- `majordomus worktree status` prints a `currency` line and returns `trunk_distance`;
+- `server.status` (`majordomus serve status`, `majordomus_server`, `GET /api/v1/server`)
+  carries it as `trunk` for the checkout the server serves;
+- the MCP `initialize` instructions add one sentence — "This server serves a tree N
+  commit(s) behind origin/master" — when the distance is lagging, stale or unjudged;
+- `majordomus doctor` renders it under `clone`.
+
+The remedy each reading names brings the checkout current: a fast-forward of the trunk
+checkout, a merge of the remote trunk into a feature branch (a pushed branch is never
+rewritten), and a fast-forward of the local trunk where it is checked out. Uncommitted work
+is rescued first — `git stash create`, `git update-ref refs/rescue/<checkout>-<timestamp>`
+with that commit, the untracked files copied beside it. A typed `majordomus worktree update`
+that performs exactly that, and refuses while a process stands in the checkout, is the next
+slice of the rule. `test/cases/3176_a_checkout_serves_the_current_trunk.sh` holds the
+distances, the standings, doctor's verdicts and the merge-in-progress case against a fixture
+remote.
 
 ## Uncommitted work nobody holds
 

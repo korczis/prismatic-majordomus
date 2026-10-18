@@ -306,7 +306,7 @@ pub struct ServerView {
 /// let status = ServerStatus { checkout_id: "c".into(), git: None,
 ///     desired: Desired { host: "127.0.0.1".into(), port: 8741, version: "1.0.0".into(), executable: None },
 ///     this_process: None, standing: ServerStanding::Absent, servers: Vec::new(),
-///     connections: None };
+///     connections: None, trunk: None };
 /// let text = serde_json::to_string(&status).unwrap();
 /// assert_eq!(serde_json::from_str::<ServerStatus>(&text).unwrap(), status);
 /// ```
@@ -333,6 +333,12 @@ pub struct ServerStatus {
     /// refused because every handler was busy. Absent when this process serves no HTTP.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub connections: Option<crate::http::deadline::ConnectionCounts>,
+    /// How far the tree this checkout serves is from the remote trunk, judged against the
+    /// policy's `checkout.trunk_distance`: a server of a checkout 779 commits behind answers
+    /// every session from a tree that no longer exists, and this is where that is said.
+    /// Absent only from an answer that predates the field.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub trunk: Option<crate::worktree::TrunkDistance>,
 }
 
 /// Decide where a server stands from what its lease file holds, how old the file is,
@@ -612,6 +618,7 @@ fn server_status(ctx: &Context, input: ServerStatusInput) -> Result<ServerStatus
         standing,
         servers,
         connections: crate::http::deadline::counts(),
+        trunk: Some(crate::worktree::trunk::measure_checkout(&root)),
     })
 }
 
@@ -640,7 +647,7 @@ pub fn module() -> ModuleDescriptor {
             capability! {
                 id: "server.status",
                 title: "The shared server, and every server of the repository",
-                description: "Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; the lease this process holds when it is the server; and, unless `checkouts` narrows it to this one, every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. `checkouts: this` reads one lease and probes one server and enumerates no other checkout, which is what a caller asking only about the checkout it is in should pay. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes.",
+                description: "Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; how far the tree it serves is from the remote trunk (`trunk`: current, lagging, stale, unjudged or unmeasured against the policy's `checkout.trunk_distance`, as of the last fetch); the lease this process holds when it is the server; and, unless `checkouts` narrows it to this one, every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. `checkouts: this` reads one lease and probes one server and enumerates no other checkout, which is what a caller asking only about the checkout it is in should pay. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes.",
                 input: ServerStatusInput,
                 output: ServerStatus,
                 stability: Stability::BehaviorallyVerified,
@@ -664,12 +671,9 @@ pub fn module() -> ModuleDescriptor {
 mod tests {
     use super::*;
 
-    /// A server whose version cannot be ordered against this executable's — a pre-release
-    /// beside its release — is outdated, and the reason names both versions without
-    /// claiming which is older.
-    #[test]
-    fn a_version_that_cannot_be_ordered_is_outdated_naming_both() {
-        let doc = LeaseDocument {
+    /// A lease document of a healthy server that published `version`.
+    fn serving(version: &str) -> LeaseFile {
+        LeaseFile::Document(LeaseDocument {
             schema: lease::SCHEMA.into(),
             pid: 1,
             token: "t".into(),
@@ -677,15 +681,37 @@ mod tests {
             url: Some("http://127.0.0.1:1".into()),
             started_at: "2026-09-10T00:00:00Z".into(),
             executable: None,
-            version: Some("1.0.0-rc.1".into()),
-        };
+            version: Some(version.into()),
+        })
+    }
+
+    /// A server whose version cannot be ordered against this executable's — one that is not
+    /// a semantic version, a local build's tag or a malformed pre-release — is outdated, and
+    /// the reason names both versions without claiming which is older.
+    #[test]
+    fn a_version_that_cannot_be_ordered_is_outdated_naming_both() {
+        for theirs in ["local-build", "1.0.0-rc.01"] {
+            let (standing, reason) =
+                standing_of(&serving(theirs), Duration::ZERO, |_| true, "1.0.0");
+            assert_eq!(standing, ServerStanding::Outdated, "{theirs}");
+            assert_eq!(
+                reason.expect("a reason"),
+                format!("the server is serving version {theirs}; this executable is 1.0.0")
+            );
+        }
+    }
+
+    /// A pre-release is a version, ordered by semantic-version precedence: a server at
+    /// 1.0.0-rc.1 is older than an executable at 1.0.0, and that executable replaces it.
+    #[test]
+    fn a_prerelease_server_is_older_than_its_final_and_replaced() {
         let (standing, reason) =
-            standing_of(&LeaseFile::Document(doc), Duration::ZERO, |_| true, "1.0.0");
+            standing_of(&serving("1.0.0-rc.1"), Duration::ZERO, |_| true, "1.0.0");
         assert_eq!(standing, ServerStanding::Outdated);
-        let reason = reason.expect("a reason");
         assert_eq!(
-            reason,
-            "the server is serving version 1.0.0-rc.1; this executable is 1.0.0"
+            reason.expect("a reason"),
+            "the server is serving version 1.0.0-rc.1, older than this executable (1.0.0); \
+             the next client or `serve ensure` of this executable replaces it"
         );
     }
 }

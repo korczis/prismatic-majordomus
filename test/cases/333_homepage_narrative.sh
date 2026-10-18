@@ -21,7 +21,8 @@
 # unsupported by a recorded run, a declaration naming a claim that does not exist, and a
 # draft feature named in the copy; a sentence of the homepage's template that states how the
 # work stands (case 3105 holds every form of that, and the real files); and a product view
-# whose release changes are not the newest release record's, counted by the changelog's groups.
+# whose release changes are not the newest release record's, counted by the changelog's groups,
+# or whose delivery stages are not the inferred delivery's (I2851), a count inside a link read.
 # Rule: project.homepage-tells-a-declared-story.
 . "$ROOT/test/lib.sh"
 CHECK="$ROOT/scripts/ci/homepage-check"
@@ -218,6 +219,23 @@ fresh; faces; landings; sed -i.bak 's#data-product-landings="2.0.0"#data-product
 expect_finding 10 'counts the changes of v1.0.0, and the newest release record is v2.0.0' "an older release presented as the newest"
 fresh; faces; landings; sed -i.bak 's#<dl data-product-landings="2.0.0">.*</dl></figure>#</figure>#' "$F/site/public/index.html"
 expect_finding 10 'says nothing of what v2.0.0 carried' "a view silent about the release the records hold"
+# how far the work travelled is the inferred delivery's count, stage by stage in its order,
+# a count may be a link into /roadmap/, and `none` is no stage (I2851, ADR 0166)
+delivered() {
+  printf '%s\n' '{"stages":["none","branch","merged","released"],"tallies":{"none":5,"branch":0,"merged":1,"released":3}}' > "$F/site/data/generated/delivery.json"
+  sed -i.bak 's|<figure data-product-view="good"><dl>|<figure data-product-view="good"><dl data-product-delivery><dd data-delivery="merged"><a href="/roadmap/#delivery">1</a></dd><dd data-delivery="released"><a href="/roadmap/#delivery">3</a></dd></dl><dl>|' "$F/site/public/index.html"
+  sed -i.bak 's|data-issues="READY">2|data-issues="READY"><a href="/roadmap/">2</a>|' "$F/site/public/index.html"
+}
+fresh; faces; delivered
+expect_finding 0 '^OK   product .*counts what the plan, the inferred delivery and the newest release record count' "a view counting the inferred delivery, its counts links"
+fresh; faces; delivered; sed -i.bak 's|data-delivery="released"><a href="/roadmap/#delivery">3|data-delivery="released"><a href="/roadmap/#delivery">4|' "$F/site/public/index.html"
+expect_finding 10 'counts the delivery as \[merged 1, released 4\], and the inferred delivery gives \[merged 1, released 3\]' "a stage count the delivery does not give"
+fresh; faces; delivered; sed -i.bak 's|<dl data-product-delivery>.*</dl><dl>|<dl>|' "$F/site/public/index.html"
+expect_finding 10 'counts no delivery stage, and the inferred delivery gives \[merged 1, released 3\]' "a view silent about the delivery the history proves"
+fresh; faces; delivered; sed -i.bak 's|<dl data-product-delivery>|<dl data-product-delivery><dd data-delivery="none">5</dd>|' "$F/site/public/index.html"
+expect_finding 10 'counts the delivery as \[none 5, merged 1, released 3\]' "the absence of a stage drawn as one"
+fresh; faces; delivered; sed -i.bak 's|data-issues="READY"><a href="/roadmap/">2|data-issues="READY"><a href="/roadmap/">7|' "$F/site/public/index.html"
+expect_finding 10 'counts the issues as \[READY 7, DONE 1\]' "a linked figure the plan does not give"
 fresh; sed -i.bak 's#<h1>t</h1>#<h1>t</h1><a href="/x/" data-cta="product" data-product="x">open</a>#' "$F/site/public/index.html"
 expect_finding 10 'the hero opens a product, and the data gives no interface a person opens' "a product where the data gives none"
 # the other way a publication holds a surface: the build names a snapshot of it (ADR 0141),

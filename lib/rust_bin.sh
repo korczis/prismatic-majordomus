@@ -119,6 +119,29 @@ mj_rust_stale() {
   [ -n "$mj_st_newer" ]
 }
 
+# mj_rust_installed <repository-root>
+#
+# The executable of the installed release, for the caller that is a client waiting on a
+# handshake and cannot wait on cargo: the one `bin/majordomus-cli mcp` falls back to when this
+# checkout has none to run (ADR 0172). Empty and false when there is none.
+#
+#   MAJORDOMUS_INSTALLED_BIN  the installed release's launcher (default: majordomus in
+#                             $MJ_INSTALL_DIR, which is ~/.local/bin, where install.sh puts it)
+#
+# Never a file inside the repository asked about: a launcher that found itself would run
+# itself, and a client would wait on a loop. It must also answer --version, because a file
+# that is merely executable (a dangling wrapper, a half-swapped install) is the same
+# silence this function exists to end.
+mj_rust_installed() {
+  mj_ri_root="$1"
+  mj_ri_bin="${MAJORDOMUS_INSTALLED_BIN:-${MJ_INSTALL_DIR:-$HOME/.local/bin}/majordomus}"
+  [ -x "$mj_ri_bin" ] || return 1
+  mj_ri_real="$(cd "$(dirname "$mj_ri_bin")" 2>/dev/null && pwd -P)/$(basename "$mj_ri_bin")"
+  case "$mj_ri_real" in "$(cd "$mj_ri_root" 2>/dev/null && pwd -P)/"*) return 1 ;; esac
+  "$mj_ri_bin" --version >/dev/null 2>&1 || return 1
+  printf '%s\n' "$mj_ri_bin"
+}
+
 # The data directory the executable reads kinds and schemas from at run time, when this
 # tree ships one. Empty when it does not, so a caller can leave MAJORDOMUS_SHARE unset and
 # let the executable find its own.

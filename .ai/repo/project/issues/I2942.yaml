@@ -1,0 +1,42 @@
+id: I2942
+milestone: adopter-upgrades
+title: "An installer dry run changes nothing, and the install guide says only what is true"
+slug: install-dry-run-changes-nothing
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Stop `install.sh --dry-run --init` from initialising the repository when the resolved version is already installed, and correct what the install and distribution documents state by hand that is not true: the clone directory of the build-from-source steps, provenance for releases before attestation existed, the one call to GitHub the installer can make, and the container image the release workflow already publishes."
+why: "Truth sweep before v1.0.0-alpha.1 (2026-10-17, f6 and this session, master 707a04c7ce8). (1) share/install/install.sh.in ran `run_init` in its 'already installed' branch before the dry-run branch, so `--dry-run --init` initialised the repository; docs/INSTALL.md says --dry-run changes nothing; case 85 only dry-runs with nothing installed. Reproduced by case 3342 against the unfixed installer: the stand-in launcher received `init`. (2) INSTALL.md.in wrote `git clone .../{{repository}}` then `cd {{binary}}`, which renders `cd majordomus` after a clone that creates prismatic-majordomus. (3) 'every release archive is attested' while releases v0.3.1-v0.19.1 are listed and the attestation step arrived with v0.20.0 (git show v0.19.1:.github/workflows/release.yml has none). (4) 'never GitHub's API' while the optional provenance check calls it through gh. (5) docs/DISTRIBUTION.md says no container image is implemented, while release.yml's image job pushes one to ghcr.io per release."
+current_state: "A dry run can initialise a repository; four statements in the install and distribution documents are false."
+desired_state: "A dry run changes nothing in every branch; the documents state what the installer and the release workflow do."
+scope:
+  - "share/install/install.sh.in"
+  - "share/install/INSTALL.md.in"
+  - "site/static/install.sh"
+  - "docs/INSTALL.md"
+  - "docs/DISTRIBUTION.md"
+  - "test/cases/3342_a_dry_run_initialises_nothing.sh"
+depends_on: []
+acceptance_criteria:
+  - "With the resolved version installed, install.sh --dry-run --init runs no init and says what it would run; --init alone still runs it"
+  - "The build-from-source steps clone into the directory they then enter"
+  - "The install guide scopes attestation to the releases that have it and names the provenance check as its one GitHub call; DISTRIBUTION.md names the container image"
+validation:
+  - "bash test/run.sh 3342_a_dry_run_initialises_nothing 85_installer 86_installer_platform"
+evidence_required:
+  - "dry_run_case"
+created_at: 2026-10-17
+updated_at: 2026-10-18T03:16:44Z
+started_at: 2026-10-18T03:16:08Z
+started_event: sha256:63047f19377a941b8fb22b17fc142de39f74fc4d685fa4c7ff8c94652fd35799
+verified_at: 2026-10-18T03:16:23Z
+verified_event: sha256:8c87a151bdf2ff4b81b152d5a9459a5dd34cc28f555f7b40d5b0a78ff462252b
+completed_at: 2026-10-18T03:16:44Z
+completed_event: sha256:972939af668e3b8eee0e0430913d7c783dba4269723a9c8aeb5f6bd51a990835
+evidence:
+  - covers: dry_run_case
+    type: test
+    command: "bash test/run.sh 3342_a_dry_run_initialises_nothing 85_installer 86_installer_platform 97_install_gate"
+    result: "tests: 4 passed, 0 failed (2026-10-18 ~03:15Z at 5b4f8ba6a3a). Red before: 3342 against master 707a04c's site/static/install.sh fails ('--dry-run --init ran init')."
+    commit: 5b4f8ba6a3ac9b67a02cbc2556b25b42c0be4cce
+    recorded_at: 2026-10-18T03:16:37Z

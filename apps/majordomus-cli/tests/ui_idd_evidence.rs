@@ -52,6 +52,21 @@ fn moved(s: &Served, issue: &str, transition: &str) -> String {
     }
 }
 
+/// The panel as a reader sees it: its markup set aside, the text kept in order.
+fn visible(html: &str) -> String {
+    let mut out = String::new();
+    let mut inside = false;
+    for c in html.chars() {
+        match c {
+            '<' => inside = true,
+            '>' => inside = false,
+            c if !inside => out.push(c),
+            _ => {}
+        }
+    }
+    out
+}
+
 fn escaped(text: &str) -> String {
     text.replace('&', "&amp;")
         .replace('<', "&lt;")
@@ -104,12 +119,25 @@ fn the_screen_names_the_standing_route_and_the_route_answers_what_the_capability
             );
         }
     }
+    // a sentence reads whole once the markup is set aside: the issue ids in it are links (I2900)
+    let read = visible(&panel);
     for line in explain["because"].as_array().expect("the sentences") {
         let line = line.as_str().expect("a sentence");
         assert!(
-            panel.contains(&escaped(line)),
+            read.contains(&escaped(line)),
             "the panel leaves out: {line}"
         );
+        for id in line
+            .split(|c: char| !c.is_ascii_alphanumeric())
+            .filter(|w| {
+                w.len() > 1 && w.starts_with('I') && w[1..].bytes().all(|b| b.is_ascii_digit())
+            })
+        {
+            assert!(
+                panel.contains(&format!("issue={id}")),
+                "the sentence names {id} and does not lead to it: {line}"
+            );
+        }
     }
 
     // the fragment is the panel alone, which is what the script puts in the placeholder

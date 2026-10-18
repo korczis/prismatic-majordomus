@@ -180,7 +180,11 @@ fn render(
             kpi_count("Intents", &intents.read("/intents")),
             kpi_count("Milestones", &roadmap.read("/milestones")),
             kpi("Roadmap now", &roadmap.read("/now")),
-            kpi("Plan's next issue", &next.read("/issue/id")),
+            // the plan's next issue leads to it, as every other issue on the screen does (I2900)
+            match next.read("/issue/id").text().filter(|n| !n.is_empty()) {
+                Some(n) => super::view::kpi_to(kpi("Plan's next issue", &next.read("/issue/id")), &issue_href(&n)),
+                None => kpi("Plan's next issue", &next.read("/issue/id")),
+            },
         ],
     );
 
@@ -516,9 +520,11 @@ fn wave_panel(waves: &Answer, mine: &[Value]) -> El {
             .iter()
             .filter(|f| ids.contains(&text(f, "subject")))
             .map(|f| {
+                let subject = text(f, "subject");
                 el("li")
-                    .child(el("code").class("mj-ui-mono").text(text(f, "subject")))
-                    .child(el("span").text(format!(" {}", text(f, "message"))))
+                    .child(chip(issue_href(&subject), subject))
+                    .child(el("span").text(" "))
+                    .children(linked_issues(&text(f, "message")))
             })
             .collect();
         let mut body = el("div").class("mj-ui-stack").child(table(
@@ -527,13 +533,16 @@ fn wave_panel(waves: &Answer, mine: &[Value]) -> El {
             "No issue of this intent is in a wave.",
         ));
         if !conflicts.is_empty() {
-            body = body
-                .child(
-                    el("h3")
-                        .class("mj-ui-panel-title")
-                        .text("Shared scope: these may not run at the same time"),
-                )
-                .child(el("ul").class("mj-ui-prose-list").children(conflicts));
+            // one line says how many pairs share a scope; the pairs are one click away, so they
+            // never outweigh the waves they qualify (I2900)
+            let pairs = conflicts.len();
+            body = body.child(
+                el("details")
+                    .child(el("summary").text(format!(
+                        "Shared scope: {pairs} pair(s) of these issues may not run at the same time"
+                    )))
+                    .child(el("ul").class("mj-ui-prose-list").children(conflicts)),
+            );
         }
         body
     });
@@ -543,6 +552,44 @@ fn wave_panel(waves: &Answer, mine: &[Value]) -> El {
         body,
         &[waves],
     )
+}
+
+/// A sentence of the plan's own words with every issue id in it a link to that issue, the
+/// brackets and punctuation around an id kept as they were (I2900). A path segment
+/// (`src/I0001`) is a path, never an issue.
+fn linked_issues(message: &str) -> Vec<El> {
+    // the words between two ids stay one run of text, so a sentence without an id reads
+    // exactly as it was written
+    let mut out = Vec::new();
+    let mut run = String::new();
+    for (n, word) in message.split(' ').enumerate() {
+        if n > 0 {
+            run.push(' ');
+        }
+        let core = word
+            .trim_start_matches(['(', '['])
+            .trim_end_matches([')', ']', ',', ';', '.', ':']);
+        let is_issue = core.len() > 1
+            && core.starts_with('I')
+            && core[1..].bytes().all(|b| b.is_ascii_digit());
+        if !is_issue {
+            run.push_str(word);
+            continue;
+        }
+        // where the id starts: `core` is `word` with its opening brackets trimmed off the front,
+        // so the offset is the length of what was trimmed, and there is nothing to default
+        let at = word.len() - word.trim_start_matches(['(', '[']).len();
+        run.push_str(&word[..at]);
+        if !run.is_empty() {
+            out.push(el("span").text(std::mem::take(&mut run)));
+        }
+        out.push(chip(issue_href(core), core.to_string()));
+        run.push_str(&word[at + core.len()..]);
+    }
+    if !run.is_empty() {
+        out.push(el("span").text(run));
+    }
+    out
 }
 
 /// The dependency graph of the intent's issues: each a node in the tone of its status, each
@@ -705,7 +752,7 @@ fn standing_body(id: &str, explain: &Answer) -> El {
             because
                 .iter()
                 .filter_map(Value::as_str)
-                .map(|line| el("li").text(line)),
+                .map(|line| el("li").children(linked_issues(line))),
         );
         let criteria = table(
             &["Criterion", "Evidence", "State", "Reproduce", "Served by"],
@@ -767,18 +814,23 @@ fn standing_body(id: &str, explain: &Answer) -> El {
                 .collect(),
             "No work this checkout can see realises this intent.",
         );
-        let drift = el("ul")
-            .class("mj-ui-prose-list")
-            .children(findings.iter().map(|f| {
-                el("li").text(match f.get("message").and_then(Value::as_str) {
-                    Some(m) => m.to_string(),
-                    None => f.to_string(),
-                })
-            }));
+        let drift =
+            el("ul")
+                .class("mj-ui-prose-list")
+                .children(findings.iter().map(
+                    |f| match f.get("message").and_then(Value::as_str) {
+                        Some(m) => el("li").children(linked_issues(m)),
+                        None => el("li").text(f.to_string()),
+                    },
+                ));
         let mut stack = el("div")
             .class("mj-ui-stack")
             .child(sentences)
-            .child(el("h3").class("mj-ui-panel-title").text("What is not yet met"))
+            .child(
+                el("h3")
+                    .class("mj-ui-panel-title")
+                    .text("What is not yet met"),
+            )
             .child(criteria)
             .child(
                 el("h3")
@@ -1129,7 +1181,7 @@ mod tests {
                 "realization": {
                     "unmet": [],
                     "findings": [
-                        { "message": "the scope drifted past src/a.rs" },
+                        { "message": "the scope drifted past src/a.rs (I7)" },
                         { "kind": "orphan", "subject": "t-3" },
                     ],
                 },
@@ -1158,8 +1210,8 @@ mod tests {
         );
         assert!(html.contains(">Drift</h3>"), "{html}");
         assert!(
-            html.contains("<li>the scope drifted past src/a.rs</li>"),
-            "{html}"
+            html.contains("<li><span>the scope drifted past src/a.rs (</span><a class=\"mj-ui-chip mj-ui-chip--link\" href=\"/ui/prs?issue=I7#issue\">"),
+            "a drift message reads whole, its issue id a link (I2900): {html}"
         );
         assert!(
             html.contains("&quot;kind&quot;:&quot;orphan&quot;"),

@@ -17,6 +17,7 @@
 #                                       one-time: point GitHub Pages at the gh-pages branch (needs gh)
 #   scripts/site-deploy --release-metadata <tag>
 #                                       publish only releases/<tag>.json and releases/latest.json
+#                                       (for a pre-release tag, releases/<tag>.json alone)
 #                                       from site/static/releases of the working tree, onto what
 #                                       gh-pages serves; the release's publish job, before its
 #                                       record lands (ADR 0131)
@@ -91,26 +92,44 @@ fi
 if [ -n "$RELEASE_TAG" ]; then
   src="site/static/releases"
   [ -f "$src/$RELEASE_TAG.json" ] || refuse "$src/$RELEASE_TAG.json is missing; derive the record first"
-  [ -f "$src/latest.json" ] || refuse "$src/latest.json is missing; derive the record first"
-  t="$(jq -r '.tag // empty' "$src/latest.json")"
-  [ "$t" = "$RELEASE_TAG" ] || refuse "$src/latest.json names ${t:-no tag}, not $RELEASE_TAG"
-  cmp -s "$src/latest.json" "$src/$RELEASE_TAG.json" \
-    || refuse "$src/latest.json and $src/$RELEASE_TAG.json differ; one of them is stale"
-  version="$(jq -r '.version // empty' "$src/latest.json")"
+  # A pre-release (vX.Y.Z-alpha.N, -beta.N or -rc.N, and no other suffix) is published beside
+  # the stable pointer and never as it: its tag file goes out, latest.json stays what the site
+  # serves, and a latest.json naming it is refused (I2829). The same pattern is in
+  # scripts/ci/install-check, scripts/ci/release-check and release.yml; site/static/install.sh
+  # refuses any pre-release suffix it was not asked for by name.
+  if printf '%s\n' "$RELEASE_TAG" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+-(alpha|beta|rc)\.[0-9]+$'; then
+    t="$(jq -r '.tag // empty' "$src/$RELEASE_TAG.json")"
+    [ "$t" = "$RELEASE_TAG" ] || refuse "$src/$RELEASE_TAG.json names ${t:-no tag}, not $RELEASE_TAG"
+    if [ -f "$src/latest.json" ] && [ "$(jq -r '.tag // empty' "$src/latest.json")" = "$RELEASE_TAG" ]; then
+      refuse "$src/latest.json names the pre-release $RELEASE_TAG; a pre-release is never the latest release"
+    fi
+    publish_latest=0
+    msg="release: $RELEASE_TAG pre-release metadata, published beside the latest release"
+  else
+    [ -f "$src/latest.json" ] || refuse "$src/latest.json is missing; derive the record first"
+    t="$(jq -r '.tag // empty' "$src/latest.json")"
+    [ "$t" = "$RELEASE_TAG" ] || refuse "$src/latest.json names ${t:-no tag}, not $RELEASE_TAG"
+    cmp -s "$src/latest.json" "$src/$RELEASE_TAG.json" \
+      || refuse "$src/latest.json and $src/$RELEASE_TAG.json differ; one of them is stale"
+    publish_latest=1
+    msg="release: $RELEASE_TAG metadata, published ahead of its record"
+  fi
   git ls-remote --exit-code --heads "$REMOTE" "$BRANCH" >/dev/null 2>&1 \
     || refuse "$REMOTE has no $BRANCH; the release metadata goes onto a deployed site"
   git fetch -q "$REMOTE" "$BRANCH"
-  served="$(git show "$REMOTE/$BRANCH:releases/latest.json" 2>/dev/null | jq -r '.version // empty' 2>/dev/null || true)"
-  if newer "$served" "$version"; then
-    refuse "$BRANCH serves $served, newer than $version; a site never goes back a release"
+  if [ "$publish_latest" = 1 ]; then
+    version="$(jq -r '.version // empty' "$src/latest.json")"
+    served="$(git show "$REMOTE/$BRANCH:releases/latest.json" 2>/dev/null | jq -r '.version // empty' 2>/dev/null || true)"
+    if newer "$served" "$version"; then
+      refuse "$BRANCH serves $served, newer than $version; a site never goes back a release"
+    fi
   fi
   W="$(mktemp -d "${TMPDIR:-/tmp}/mj-deploy.XXXXXX")"
   trap 'git worktree remove --force "$W" 2>/dev/null || rm -rf "$W"' EXIT
   git worktree add -q --detach "$W" "$REMOTE/$BRANCH"
   mkdir -p "$W/releases"
   cp "$src/$RELEASE_TAG.json" "$W/releases/$RELEASE_TAG.json"
-  cp "$src/latest.json" "$W/releases/latest.json"
-  msg="release: $RELEASE_TAG metadata, published ahead of its record"
+  [ "$publish_latest" = 0 ] || cp "$src/latest.json" "$W/releases/latest.json"
   (
     cd "$W"
     git add -A releases

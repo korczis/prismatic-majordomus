@@ -130,22 +130,42 @@ done
 if [ "$authored" = 0 ]; then ok "no changelog is kept by hand"; fi
 
 # ----------------------------------------------- 4. the tree is not behind what was published
+# A version is X.Y.Z, or a pre-release X.Y.Z-alpha.N, -beta.N or -rc.N and no other suffix
+# (I2829; the same pattern is in scripts/site-deploy, scripts/ci/install-check and release.yml,
+# and site/static/install.sh refuses any pre-release it was not asked for by name). Precedence is semantic versioning's: the numbers
+# first, a pre-release below its own final, alpha < beta < rc, then N as a number. A plain
+# `sort -t.` ties 1.0.0 with 1.0.0-alpha.1 and breaks the tie bytewise, the wrong way round.
+VERSION_ERE='[0-9]+\.[0-9]+\.[0-9]+(-(alpha|beta|rc)\.[0-9]+)?'
+version_newer() {   # <a> <b>: exit 0 when a takes precedence over b
+  awk -v a="$1" -v b="$2" 'function key(v, k,   core, pre, n, c, p) {
+      core = v; pre = ""
+      if (index(v, "-")) { core = substr(v, 1, index(v, "-") - 1); pre = substr(v, index(v, "-") + 1) }
+      n = split(core, c, ".")
+      k[1] = c[1] + 0; k[2] = c[2] + 0; k[3] = c[3] + 0
+      if (pre == "") { k[4] = 3; k[5] = 0; return }
+      split(pre, p, ".")
+      k[4] = (p[1] == "alpha") ? 0 : (p[1] == "beta") ? 1 : 2
+      k[5] = p[2] + 0
+    }
+    BEGIN {
+      key(a, x); key(b, y)
+      for (i = 1; i <= 5; i++) { if (x[i] > y[i]) exit 0; if (x[i] < y[i]) exit 1 }
+      exit 1
+    }'
+}
 newest=""
 for r in .ai/repo/releases/*.yaml; do
   [ -f "$r" ] || continue
-  v="$(sed -n 's/^version: *"\{0,1\}\([0-9][0-9.]*\)"\{0,1\} *$/\1/p' "$r" | head -n 1)"
+  v="$(sed -n -E "s/^version: *\"?($VERSION_ERE)\"? *\$/\\1/p" "$r" | head -n 1)"
   [ -n "$v" ] || continue
-  newest="$(printf '%s\n%s\n' "$newest" "$v" | grep -v '^$' | LC_ALL=C sort -t. -k1,1n -k2,2n -k3,3n | tail -n 1)"
+  if [ -z "$newest" ] || version_newer "$v" "$newest"; then newest="$v"; fi
 done
 if [ -z "$newest" ] || [ -z "$crate" ]; then
   ok "no published release to compare the declared version with"
+elif version_newer "$newest" "$crate"; then
+  fail "the tree declares $crate and $newest is already published; the bump that released it was never made"
 else
-  behind="$(printf '%s\n%s\n' "$crate" "$newest" | LC_ALL=C sort -t. -k1,1n -k2,2n -k3,3n | tail -n 1)"
-  if [ "$behind" = "$crate" ]; then
-    ok "the tree declares $crate and the newest release is $newest"
-  else
-    fail "the tree declares $crate and $newest is already published; the bump that released it was never made"
-  fi
+  ok "the tree declares $crate and the newest release is $newest"
 fi
 
 # ------------------------------------------ 5. every published tag has a record in the layer
@@ -276,10 +296,12 @@ else
   # Local tags, after a fetch: the same list the pipeline tags from, read without a token.
   # `git ls-remote --tags origin` would ask the forge for a fact a fetched clone already
   # holds, and would make this gate fail on a machine with no network.
-  # v<major>.<minor>.<patch> exactly: that is what the release workflow cuts, and it refuses
-  # to publish a tag that does not agree with the crate's version, so a tag with a suffix
-  # (v0.2.0-ai-documents) named something else and never published a release.
-  tags="$(git tag --list 'v[0-9]*' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | LC_ALL=C sort -u || true)"
+  # v<major>.<minor>.<patch>, or a pre-release of it (-alpha.N, -beta.N, -rc.N): that is what
+  # the release workflow cuts, and it refuses to publish a tag that does not agree with the
+  # crate's version, so a tag with any other suffix (v0.2.0-ai-documents) named something
+  # else and never published a release. A published pre-release owes its record as a stable
+  # release does (I2829).
+  tags="$(git tag --list 'v[0-9]*' | grep -E "^v$VERSION_ERE\$" | LC_ALL=C sort -u || true)"
   if [ -z "$tags" ]; then
     # No tags is two different states, and only one of them is fine. A repository that has
     # published nothing has no tags and no records; a checkout whose tags were not fetched

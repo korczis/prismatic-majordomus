@@ -1,0 +1,32 @@
+id: I2851
+milestone: truthful-plan-surfaces
+title: "the homepage's product view counts the delivery the history proves beside the statuses the records declare, each count a link"
+slug: the-homepage-counts-delivery
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "The product view in the homepage's hero counts, first, how far each issue's work travelled as plan.delivery infers it from the history, stage by stage in the projection's order, naming the commit it was inferred at. Then it counts the statuses the issue records declare. Every count is a link into /roadmap/, where each issue carries its stage and the object that proves it, and homepage-check holds the counts to delivery.json and plan.json."
+why: "The owner on 2026-10-18 at v0.29.0 (707a04c7ce8), with a screenshot of the homepage card 'this project's own delivery': 'the same here', following the complaint that /roadmap/ is not derived, inferred, interlinked or interactive. The card counted only the stamps the records declare (ready 86, blocked 159, done 161), linked nothing, and said nothing of what was merged or released. Its title promises delivery."
+current_state: "The card counts issues by declared status, read once from plan.json at the build commit; no count is a link; homepage-check reads a count only when it is the element's first text."
+desired_state: "With delivery.json present the card draws one count per stage the history proves (none is the absence of a stage and is not drawn), names the commit it was inferred at, and links each count to /roadmap/#delivery; each declared status count links to /roadmap/; homepage-check reads a count inside a link, holds the stage counts to delivery.json in its order, and refuses a view that counts no stage when the projection gives some."
+scope:
+  - "site/templates/index.html"
+  - "site/templates/roadmap.html"
+  - "scripts/ci/homepage-check"
+  - "test/cases/333_homepage_narrative.sh"
+non_scope:
+  - "A live reading on the homepage: the site is a publication read at one commit (ADR 0141); the live counts are the UI's."
+  - "The stages the committed projection leaves unread (branches and the forge, by the rule that derived data must not read refs): the published UI and the Pages job's own reading carry those."
+depends_on:
+  - I2740
+acceptance_criteria:
+  - "The built homepage counts the stages delivery.json tallies, in its order, without none, each linked to /roadmap/#delivery"
+  - "A stage count delivery.json does not give, a missing stage row, or none drawn as a stage is refused by homepage-check"
+  - "A declared status count inside a link is still read and held to plan.json"
+validation:
+  - "bin/majordomus plan validate"
+  - "bash test/run.sh 333_homepage_narrative 3105_the_homepage_states_no_present_it_does_not_read"
+evidence_required:
+  - "homepage_counts_delivery_case"
+created_at: 2026-10-18
+updated_at: 2026-10-18

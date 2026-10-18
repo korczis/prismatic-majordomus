@@ -65,7 +65,7 @@ lists it), declared beside the Cockpit in `apps/majordomus-cli/src/web/discover.
 | Roadmap | `/ui/roadmap` | `plan.roadmap`, `plan.status`, `intents.list`; one milestone (`?milestone=`) in the inspector, with `plan.issues`: its issues, what can start, its critical path and its neighbours; one intent (`?intent=`) in its inspector: its statement, invariants and criteria with their evidence, and the milestones and issues that serve it |
 | Issues & PRs | `/ui/work` | `plan.status`, `plan.issues`; the queue on its own route, one pull request (`?pr=`) in its detail |
 | Issues | `/ui/issues` | `plan.issues`, `plan.status`, `plan.roadmap`: every issue, narrowed by `?status=` (the plan's own statuses as tabs), `?milestone=`, `?priority=` and `?q=`, each leading to its inspector |
-| PR Drain | `/ui/prs` | `plan.status`, `plan.issues` (one issue, `?issue=`); `integration.queue` and `integration.events` on its own route (`/ui/panels/drain`), narrowed by `?disposition=`, `?lane=` and `?q=`, one pull request (`?pr=`) in the inspector with what the executor did to it, the lane's recent activity, and its merges per day over the fortnight the trail ends on |
+| PR Drain | `/ui/prs` | `plan.issues` (one issue, `?issue=`); `integration.queue` (one count per lane it counted) and `integration.events` on its own route (`/ui/panels/drain`), narrowed by `?disposition=`, `?lane=` and `?q=`, one pull request (`?pr=`) in the inspector with what the executor did to it, the lane's recent activity, and its merges per day over the fortnight the trail ends on |
 | Capabilities | `/ui/capabilities` | `repository.info`, `capabilities.list` by kind; one capability (`?id=`) from `capabilities.describe` |
 | Mesh | `/ui/mesh` | `mesh.peers`, `mesh.events`, `mesh.state` (live claims); one machine (`?node=`) in the inspector, and who holds each seat of [rule `project.the-cooperation-model-is-the-owners-word`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v1.md) read from the claims |
 | CI/CD & Releases | `/ui/delivery` | `distribution.releases`, `release.version`, `deploy.list`, `gates.model`, `integration.timings` (each check's median, 90th percentile and longest run, and the open heads that waited longest, each leading to its pull request) |
@@ -480,7 +480,7 @@ The UI's files live in `share/ui/`.
 | `ui.css` | compiled from `share/ui/src/ui.css` by `scripts/cockpit-assets`, beside the Cockpit's stylesheet; `--check` fails when either is stale | yes |
 | `nav.js`, `theme.js` | copied byte for byte from `site/nav.js` and `site/theme.js` by `scripts/cockpit-assets`; `--check` fails when either differs | yes |
 | `favicon.svg` | written from the canonical mark by `majordomus generate` | yes |
-| `vendor/cytoscape.min.js` | copied from the pinned npm package by `scripts/cockpit-assets` | no |
+| `vendor/cytoscape.min.js` | copied from the pinned npm package by `scripts/cockpit-assets`; a distribution without it is never asked for it, and each graph's table stands instead (I2900) | no |
 
 </div>
 
@@ -546,7 +546,8 @@ they cost. It renders nothing itself. What it changes is only what a file cannot
 | a link to a page of the Cockpit: the "technical view" of a source or of an object | that page of the Cockpit's own snapshot at `/cockpit/` when it holds it (ADR 0147), and the page about the live UI when it does not |
 | a link to a surface a publication holds (`/rustdoc`, `/openapi.json`) | unchanged |
 | a link into the served documentation (`/docs/…`) | the same page of the published site |
-| the script reads the screen again every minute, pulls in slow panels and follows the executions of its server | it does none of that: the body carries `data-snapshot` |
+| the script reads the screen again every minute and follows the executions of its server | it does neither: the body carries `data-snapshot` |
+| a slow panel is a placeholder (`data-panel-src`) the script fills once the screen has painted | the panel itself, already read: the snapshot asks every page with the `X-Majordomus-Snapshot` header and the UI puts each panel where its placeholder stood |
 | "Read at" in the tool bar | also a notice on every page: the commit, the time, the executable, and a link to the live UI |
 
 </div>
