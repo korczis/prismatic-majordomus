@@ -10,7 +10,7 @@ option, the kind schema) is in the application's own
 ## What it is
 
 A process the client starts, speaking the Model Context Protocol on its stdin and stdout,
-serving the repository's AI layer read-only, and joining the repository's one shared
+serving the repository's AI layer (reads, and the named commands that change state), and joining the repository's one shared
 server: the first such process in a repository binds the loopback HTTP projection beside
 its stdio session (a home page listing every surface, this repository's documentation, Swagger UI, the OpenAPI document, every capability route, MCP over
 HTTP) and says where; every later one attaches to it.
@@ -440,7 +440,7 @@ what it announced, before its first tool call.
 
 An announcement is one line of intent and the repository-relative paths the peer expects
 to touch. The board lives in the server's memory and is gone with the process;
-`peers.announce` is the one capability of kind `command`, because it changes that memory,
+`peers.announce` is of kind `command`, because it changes that memory,
 and it is announced to MCP clients as not read-only. Over plain HTTP there is no caller,
 so `POST /api/v1/peers/announce` is refused (422) and `GET /api/v1/peers` answers without
 a `caller`.

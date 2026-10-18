@@ -577,14 +577,32 @@ mj_report_clone() {
   # Work that exists on one disk. A branch whose commits reach no remote is not backed up,
   # is invisible to every other session, and cannot be folded by whoever is integrating —
   # fifteen commits over sixty-eight files sat in exactly that state for three days.
-  local unpushed="" b n
-  while read -r b; do
-    [ -n "$b" ] || continue
-    n="$(git -C "$MJ_ROOT" rev-list --count "$b" --not --remotes 2>/dev/null || echo 0)"
-    [ "$n" -gt 0 ] 2>/dev/null && unpushed="$unpushed $b($n)"
-  done <<EOF
-$(git -C "$MJ_ROOT" for-each-ref --format='%(refname:short)' refs/heads 2>/dev/null)
-EOF
+  #
+  # One walk, whatever the number of branches (I2993): the commits some branch reaches and no
+  # remote does, each with its parents, then every branch's tip. A branch's count is the
+  # commits of that set its tip reaches, walked inside the set: a commit a remote reaches has
+  # only ancestors a remote reaches, so the walk never has to leave it. The commits a walk has
+  # seen are the branch's, not its tip's: two branches at one commit are counted alike. One `rev-list` per
+  # branch took minutes on a clone of six hundred branches, in every commit hook.
+  local unpushed
+  unpushed="$({
+    git -C "$MJ_ROOT" rev-list --parents --branches --not --remotes 2>/dev/null
+    echo '--'
+    git -C "$MJ_ROOT" for-each-ref --format='%(objectname) %(refname:short)' refs/heads 2>/dev/null
+  } | awk '
+    $0 == "--" { tips = 1; next }
+    !tips { held[$1] = 1; parents[$1] = $0; next }
+    ($1 in held) {
+      count = 0; top = 1; stack[1] = $1
+      while (top > 0) {
+        c = stack[top--]
+        if (!(c in held) || ((NR, c) in seen)) continue
+        seen[NR, c] = 1; count++
+        m = split(parents[c], p, " ")
+        for (j = 2; j <= m; j++) stack[++top] = p[j]
+      }
+      printf " %s(%d)", $2, count
+    }')"
   if [ -n "$unpushed" ]; then
     mj_warn clone "unpushed" \
       "commits on no remote:${unpushed} — work on one disk is invisible to every other session and cannot be integrated" \
@@ -1323,18 +1341,21 @@ mj_validate_roadmap() {
     mj_doctrine_ok roadmap "README.md" "no authored roadmap section; the roadmap is only a projection"
     return 0
   fi
-  # only a DONE milestone can have been released
-  canon="$(for id in $(awk -F'\t' '$1=="M" && $3=="DONE" { print $2 }' "$MJ_PJ/model.tsv"); do
-             mj_pj_m_released_in "$id"; printf '\n'; done | { grep -v '^unreleased$' || :; } | LC_ALL=C sort -u)"
   doc="$(awk '/^## Roadmap/{f=1;next} /^## /{f=0} f' "$readme" \
          | sed -n 's/^| *\**v\{0,1\}\([0-9][0-9.]*\)\** *|.*/v\1/p' | LC_ALL=C sort -u)"
   # A section that lists no releases is prose pointing at the projection, not a second
   # authority. The rule is about an authored release list, not about the heading: a partial
-  # list is the dangerous case, and no list at all is the intended end state.
+  # list is the dangerous case, and no list at all is the intended end state. It is decided
+  # before any milestone's release is looked up, because there is nothing to compare them
+  # with: each lookup walks the history, and all of them took a minute of every doctor in a
+  # repository whose README lists none (I2995).
   if [ -z "$doc" ]; then
     mj_doctrine_ok roadmap "README.md" "the roadmap section lists no releases; it points at the projection rather than restating it"
     return 0
   fi
+  # only a DONE milestone can have been released
+  canon="$(for id in $(awk -F'\t' '$1=="M" && $3=="DONE" { print $2 }' "$MJ_PJ/model.tsv"); do
+             mj_pj_m_released_in "$id"; printf '\n'; done | { grep -v '^unreleased$' || :; } | LC_ALL=C sort -u)"
   missing="$(LC_ALL=C comm -23 <(printf '%s\n' "$canon") <(printf '%s\n' "$doc") | tr '\n' ' ')"
   extra="$(LC_ALL=C comm -13 <(printf '%s\n' "$canon") <(printf '%s\n' "$doc") | tr '\n' ' ')"
   missing="${missing% }"; extra="${extra% }"

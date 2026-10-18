@@ -94,14 +94,17 @@ if [ -n "$RELEASE_TAG" ]; then
   [ -f "$src/$RELEASE_TAG.json" ] || refuse "$src/$RELEASE_TAG.json is missing; derive the record first"
   # A pre-release (vX.Y.Z-alpha.N, -beta.N or -rc.N, and no other suffix) is published beside
   # the stable pointer and never as it: its tag file goes out, latest.json stays what the site
-  # serves, and a latest.json naming it is refused (I2829). The same pattern is in
-  # scripts/ci/install-check, scripts/ci/release-check and release.yml; site/static/install.sh
-  # refuses any pre-release suffix it was not asked for by name.
+  # serves, and a latest.json naming it or any other pre-release is refused (I2829). The same
+  # pattern is in scripts/ci/install-check, scripts/ci/release-check and release.yml;
+  # site/static/install.sh refuses any pre-release suffix it was not asked for by name.
   if printf '%s\n' "$RELEASE_TAG" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+-(alpha|beta|rc)\.[0-9]+$'; then
     t="$(jq -r '.tag // empty' "$src/$RELEASE_TAG.json")"
     [ "$t" = "$RELEASE_TAG" ] || refuse "$src/$RELEASE_TAG.json names ${t:-no tag}, not $RELEASE_TAG"
-    if [ -f "$src/latest.json" ] && [ "$(jq -r '.tag // empty' "$src/latest.json")" = "$RELEASE_TAG" ]; then
-      refuse "$src/latest.json names the pre-release $RELEASE_TAG; a pre-release is never the latest release"
+    if [ -f "$src/latest.json" ]; then
+      latest_tag="$(jq -r '.tag // empty' "$src/latest.json")"
+      case "$latest_tag" in
+        *-alpha.[0-9]*|*-beta.[0-9]*|*-rc.[0-9]*) refuse "$src/latest.json names the pre-release $latest_tag; a pre-release is never the latest release" ;;
+      esac
     fi
     publish_latest=0
     msg="release: $RELEASE_TAG pre-release metadata, published beside the latest release"

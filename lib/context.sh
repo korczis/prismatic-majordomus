@@ -605,16 +605,23 @@ mj_peer_board() {
   bin="$(mj_rust_bin "$MJ_HOME")"
   [ -x "$bin" ] || return 1
   share="$(mj_rust_share "$MJ_HOME")"
-  # a subshell, so that the share this tool would use is the executable's and not exported
-  # into everything `context` runs after it
-  status="$( ( [ -z "$share" ] || export MAJORDOMUS_SHARE="$share"
-               "$bin" serve status --repo "$MJ_ROOT" --format json ) 2>/dev/null )" || return 1
   # this checkout's server if it has one, else the primary's: the order this function asked
-  # for before, now answered rather than guessed
-  url="$(printf '%s' "$status" | jq -r '
-    [ (.servers[]? | select(.this_checkout == true)),
-      (.servers[]? | select(.primary == true)) ]
-    | map(select((.lease.url // "") != "")) | .[0].lease.url // empty' 2>/dev/null)" || return 1
+  # for before, now answered rather than guessed. This checkout is asked alone first
+  # (`--checkouts this`: one lease, one probe), and every checkout only when it has no
+  # address, because the wide question probes every server of the repository and took more
+  # than ten seconds of every `context` and every doctor on a machine of many (I2995).
+  local which
+  for which in this repository; do
+    # a subshell, so that the share this tool would use is the executable's and not
+    # exported into everything `context` runs after it
+    status="$( ( [ -z "$share" ] || export MAJORDOMUS_SHARE="$share"
+                 "$bin" serve status --repo "$MJ_ROOT" --checkouts "$which" --format json ) 2>/dev/null )" || return 1
+    url="$(printf '%s' "$status" | jq -r '
+      [ (.servers[]? | select(.this_checkout == true)),
+        (.servers[]? | select(.primary == true)) ]
+      | map(select((.lease.url // "") != "")) | .[0].lease.url // empty' 2>/dev/null)" || return 1
+    [ -n "$url" ] && break
+  done
   [ -n "$url" ] || return 1
   # Nothing leaves this machine. SECURITY.md's "local only" carries exactly one exception
   # and this request is it, so the exception is only as wide as its guard: a lease naming

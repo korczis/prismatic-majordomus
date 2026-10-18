@@ -588,9 +588,12 @@ jobs:
             if curl -fsSL --max-time 60 "$url" 2>/dev/null | grep -q "\"tag\": \"$tag\""; then
               echo "the site publishes $tag after $attempt attempt(s)"
               echo "site built from  $(curl -fsSL --max-time 60 "$base/build.json" 2>/dev/null | sed -n 's/.*"commit": "\([^"]*\)".*/\1/p' | head -n 1)"
-              if [ "$url" != "$latest" ] && curl -fsSL --max-time 60 "$latest" 2>/dev/null | grep -q "\"tag\": \"$tag\""; then
-                echo "::error::$latest names the pre-release $tag; a pre-release is never the latest release"
-                exit 1
+              if [ "$url" != "$latest" ] && latest_tag="$(curl -fsSL --max-time 60 "$latest" 2>/dev/null | sed -n 's/.*"tag": "\([^" ]*\)".*/\1/p' | head -n 1)"; then
+                case "$latest_tag" in
+                  *-alpha.[0-9]*|*-beta.[0-9]*|*-rc.[0-9]*)
+                    echo "::error::$latest names the pre-release $latest_tag; a pre-release is never the latest release"
+                    exit 1 ;;
+                esac
               fi
               exit 0
             fi

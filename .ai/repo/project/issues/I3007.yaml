@@ -1,0 +1,35 @@
+id: I3007
+milestone: surfaces-never-disagree
+title: "A commit that a record or the site's data names is a commit the history holds"
+slug: a-recorded-commit-link-names-the-history
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "`scripts/ci/link-check --sources` decides, before any site is built, every commit/<sha> link written in a tracked file under .ai/repo/project, site/data or site/content-src, and every commit a data file hands a template to link, the key names read from the commit links the templates build, by the rules the built-page check already uses: a commit outside the history being published is a finding, and a shallow clone defers. lib/common.sh gains mj_commit_in_history (0 in, 1 not, 2 undecidable), the one predicate for the producer side (I3050). Two issue records that cited rebased evidence commits name the commits that landed."
+why: "On 2026-10-18 the 0.30.0 top's derived data named a top that was never pushed and four reworded commits, and the site published links to them; link-check found them only in a built site, in a suite shard, after the push. Reading the sources found two more that no build had reported: I0817 and I0818 cited evidence commits 77f5d79 and c9443ae, which were rebased before landing as e2a00a74bb9 and 3a39694d753 (the same patch)."
+current_state: "Only a built page's commit links are decided (scripts/ci/link-check), and only after a site build; records and data files are not; about ten callers in lib/ inline merge-base --is-ancestor each their own way."
+desired_state: "A record or data file that names a commit outside the history is refused before the build, by the same rules as a page, and one predicate answers whether a commit is in the history."
+scope:
+  - "scripts/ci/link-check"
+  - "lib/common.sh"
+  - "test/cases/3400_a_recorded_commit_link_names_the_history.sh"
+  - ".ai/repo/project"
+  - "docs"
+  - "site"
+non_scope:
+  - "Fetching anything: the check decides offline, against the clone it is given"
+  - "Rewriting prose that tells where work once lived; only a field or link that becomes a commit link is held"
+depends_on: []
+acceptance_criteria:
+  - "A data field or record link naming a commit outside the history fails `link-check --sources`, naming the file and field"
+  - "A field no template links as a commit is not decided"
+  - "A shallow clone defers (exit 12) and reports no finding"
+  - "Removing the data walk, the source scan or the template key filter each turns case 3400 red"
+  - "mj_commit_in_history answers 0, 1 and 2 as stated"
+validation:
+  - "majordomus plan validate"
+  - "bash test/run.sh 3400_a_recorded_commit_link_names_the_history"
+  - "scripts/ci/link-check --sources"
+evidence_required: []
+created_at: 2026-10-18
+updated_at: 2026-10-18

@@ -5,7 +5,7 @@ argument-hint: "[request]"
 ---
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: module:knowledge_base; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.30.0 -->
+     Generator: majordomus-cli 0.30.1 -->
 
 # Majordomus `knowledge_base`
 
