@@ -1786,7 +1786,7 @@ claims:
     note: The ledger is merged per test, not rewritten per run, so `bash test/run.sh 84_distribution_model` followed by a recording updates exactly that one entry. A whole-ledger write would turn a one-case run into a repository that has proven one thing, which is worse than one that has proven nothing because it looks deliberate.
 
   - id: evidence-navigates-both-ways
-    claim: Every claim names the test that proves it and every test names the claims it proves, from one derivation
+    claim: Every claim names the test meant to settle it and every test names the claims it is meant to settle, from one derivation
     source: docs/EVIDENCE.md
     implementation: apps/majordomus-cli/src/capability/builtin/evidence.rs
     test: test/cases/124_evidence.sh
