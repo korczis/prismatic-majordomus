@@ -664,12 +664,9 @@ pub fn module() -> ModuleDescriptor {
 mod tests {
     use super::*;
 
-    /// A server whose version cannot be ordered against this executable's — a pre-release
-    /// beside its release — is outdated, and the reason names both versions without
-    /// claiming which is older.
-    #[test]
-    fn a_version_that_cannot_be_ordered_is_outdated_naming_both() {
-        let doc = LeaseDocument {
+    /// A lease document of a healthy server that published `version`.
+    fn serving(version: &str) -> LeaseFile {
+        LeaseFile::Document(LeaseDocument {
             schema: lease::SCHEMA.into(),
             pid: 1,
             token: "t".into(),
@@ -677,15 +674,37 @@ mod tests {
             url: Some("http://127.0.0.1:1".into()),
             started_at: "2026-09-10T00:00:00Z".into(),
             executable: None,
-            version: Some("1.0.0-rc.1".into()),
-        };
+            version: Some(version.into()),
+        })
+    }
+
+    /// A server whose version cannot be ordered against this executable's — one that is not
+    /// a semantic version, a local build's tag or a malformed pre-release — is outdated, and
+    /// the reason names both versions without claiming which is older.
+    #[test]
+    fn a_version_that_cannot_be_ordered_is_outdated_naming_both() {
+        for theirs in ["local-build", "1.0.0-rc.01"] {
+            let (standing, reason) =
+                standing_of(&serving(theirs), Duration::ZERO, |_| true, "1.0.0");
+            assert_eq!(standing, ServerStanding::Outdated, "{theirs}");
+            assert_eq!(
+                reason.expect("a reason"),
+                format!("the server is serving version {theirs}; this executable is 1.0.0")
+            );
+        }
+    }
+
+    /// A pre-release is a version, ordered by semantic-version precedence: a server at
+    /// 1.0.0-rc.1 is older than an executable at 1.0.0, and that executable replaces it.
+    #[test]
+    fn a_prerelease_server_is_older_than_its_final_and_replaced() {
         let (standing, reason) =
-            standing_of(&LeaseFile::Document(doc), Duration::ZERO, |_| true, "1.0.0");
+            standing_of(&serving("1.0.0-rc.1"), Duration::ZERO, |_| true, "1.0.0");
         assert_eq!(standing, ServerStanding::Outdated);
-        let reason = reason.expect("a reason");
         assert_eq!(
-            reason,
-            "the server is serving version 1.0.0-rc.1; this executable is 1.0.0"
+            reason.expect("a reason"),
+            "the server is serving version 1.0.0-rc.1, older than this executable (1.0.0); \
+             the next client or `serve ensure` of this executable replaces it"
         );
     }
 }
