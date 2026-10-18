@@ -1,11 +1,70 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the layer's release records, the decisions dated in each release's window, and the commits in its range; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.29.0 -->
+     Generator: majordomus-cli 0.29.1 -->
 # Changelog
 
 Every entry below is derived: a section per release the layer records, its decisions the ADRs dated inside that release's window, its changes the conventional commits in its range, its artifacts the record's own evidence. Nothing here is written by hand, and `majordomus generate changelog --check` fails when it stops matching the tree.
 
-Current version: **0.29.0**
+Current version: **0.29.1**
+
+## v0.29.0 — 2026-10-17
+
+### Decisions
+
+- **ADR-0169** What an adoption leaves behind is measured, not remembered _(proposed)_
+- **ADR-0167** Work moves through seats on the mesh, lands in combined tops, and every checkout is kept current _(proposed)_
+
+### Added
+
+- **features**: every capability module and every kind is named by a stable feature (`359f8223f`)
+- **ui**: the intent workspace shows an intent and what serves it (I2780) (`f1cb08bb7`)
+- **http**: a served surface names the checkout serving it (I1031) (`f178d2bfe`)
+- **ui**: the UI and the Cockpit wear the site's navbar (I2770) (`3a8ca8549`)
+
+### Fixed
+
+- **ui**: a monospaced path or id wraps at phone width instead of widening the page (`4a4573690`)
+- **top**: the create under the lock is covered, and a named skill never reads as unnamed (`af5c8efe7`)
+- **top**: the UI wears the bar the site renders, and two milestones no longer share an order (`40f558749`)
+- **top**: batch 71a passes shellcheck and covers the create planned under the lock (`81744db86`)
+- **top**: the navbar heading has an anchor zola and GitHub agree on (`d0de74268`)
+- **top**: batch 71a covers its changed code and meets the structure gates (`bc9132ba0`)
+- **worktree**: StartPoint's reference and fallback carry their examples (`fe9b99405`)
+- **pages**: the published UI reads the evidence CI recorded (I2786) (`302adff89`)
+- **ui**: the intent workspace passes rustfmt and clippy (I2780) (`8def88737`)
+- **test**: case 3110 stops when it cannot enter its temp dir (I1031) (`159db73a4`)
+- **bench**: remove a cold sample's repository by the mktemp path it lives under (`65e961cd8`)
+- **test**: case 3066 reads the mesh state until it answers (`3d90e0920`)
+- **worktree**: a new worktree starts from the remote trunk (`6131bff0f`)
+- **start**: a scope entry is one path, and what context refuses is refused at start (`71474ebac`)
+- **mesh**: a task is claimed on the mesh when it starts (I2288) (`486de96de`)
+- **bench**: a timing verdict names its runner, and one cold sample is not a regression (I2068) (`507e38c80`)
+
+### Documentation
+
+- **plan**: the shared build directory's crate artifacts are bounded (I2787) (`cc5362986`)
+- **adr**: renumber the adoption-footprint ADR to 0169 (I1101) (`b0064423d`)
+- **rules**: the cooperation rule names its enforcement points by their pull requests (`a5f1e0e4a`)
+- **consolidation**: what an adoption leaves behind, measured (I1101) (`e1997844a`)
+- **adr**: the owner's cooperation model is one rule, read by the site and the UI (ADR 0167) (`7adfcc3d1`)
+
+### Housekeeping
+
+- **release**: derive the 0.29.0 bump over batch 71a (`0a19b7fe3`)
+- **release**: bump the version to 0.29.0 (`6e1e527df`)
+- **release**: record v0.28.0 and the metadata it publishes (`0c8016a43`)
+- **plan**: I1101 evidence recorded, issue in VERIFY (I1101) (`e3b0e747a`)
+- **derive**: the plan page of I2760 (`e81e622bd`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v0.29.0-aarch64-apple-darwin.tar.gz (`c0f257a83447`)
+- `macos-x86_64` — majordomus-v0.29.0-x86_64-apple-darwin.tar.gz (`1dfe8ba83f0b`)
+- `linux-x86_64-gnu` — majordomus-v0.29.0-x86_64-unknown-linux-gnu.tar.gz (`6bf87c46d4f7`)
+- `linux-x86_64-musl` — majordomus-v0.29.0-x86_64-unknown-linux-musl.tar.gz (`837304bbecc3`)
+- `linux-aarch64-gnu` — majordomus-v0.29.0-aarch64-unknown-linux-gnu.tar.gz (`869ee0afe991`)
+- `linux-aarch64-musl` — majordomus-v0.29.0-aarch64-unknown-linux-musl.tar.gz (`05734268f0e9`)
+
 
 ## v0.28.0 — 2026-10-17
 

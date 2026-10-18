@@ -9,8 +9,36 @@ observations:
   - id: waves-unscreened
     statement: plan.waves answers the layering and the scope overlaps over HTTP, MCP and the command line; no /ui screen on master reads it, and the open #1184 that would is in conflict with master
     source: file:apps/majordomus-cli/src/capability/builtin/plan.rs
+  - id: moves-only-in-the-cockpit
+    statement: The start, verify and done moves exist as plan.transition run through executions.start, on the Cockpit's issue page only; every /ui screen is GET-only and the workspace's move column links away to the Cockpit
+    source: file:apps/majordomus-cli/src/cockpit/plan.rs
+  - id: refresh-by-the-minute
+    statement: Every /ui screen reads its sources again once a minute while it is visible; the live channel /events, which reports every execution the server runs, has the Cockpit's socket.js as its one client and no /ui screen follows it
+    source: file:share/ui/ui.js
+  - id: standing-read-elsewhere
+    statement: The workspace shows an intent's criteria and its issues but not why the intent stands where it does, the work realising it or the moves made on its issues; intent_realization.explain (seconds per call) and executions.list answer both, and no screen reads them for an intent
+    source: file:apps/majordomus-cli/src/capability/builtin/intent_realization.rs
+  - id: the-loop-is-tested-in-pieces
+    statement: Each step of the loop has its own test — the workspace, the moves, the live channel, the standing — and none walks them together, in a browser, on one commit
+    source: file:apps/majordomus-cli/tests/ui_idd.rs
 conditions:
   - criterion: workspace-is-derived
     state: missing
     because: no screen composes an intent with its milestones, issues, waves and graph
     observations: [pieces-without-a-workspace, waves-unscreened]
+  - criterion: next-move-is-reachable
+    state: missing
+    because: the move is offered on the Cockpit's issue page, a surface away from where the work is read
+    observations: [moves-only-in-the-cockpit]
+  - criterion: the-workspace-follows-moves
+    state: missing
+    because: a move made from another tab, the Cockpit or an agent shows on the workspace only after the next minute's refresh
+    observations: [refresh-by-the-minute]
+  - criterion: the-workspace-shows-why-and-what-moved
+    state: missing
+    because: the evidence and execution steps of the loop are read on the Cockpit, the command line or MCP, away from the workspace
+    observations: [standing-read-elsewhere]
+  - criterion: the-loop-is-walked-end-to-end
+    state: missing
+    because: nothing walks the loop's steps together
+    observations: [the-loop-is-tested-in-pieces]
