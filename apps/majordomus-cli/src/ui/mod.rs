@@ -534,6 +534,50 @@ mod tests {
     /// The Observatory has one screen and three more names: the kiosk is the same screen told
     /// to run unattended, its earlier name redirects to it, and the misspelling to the screen,
     /// each with its query kept.
+    /// The graph library is named to the page only when the distribution holds it: a share
+    /// directory without `vendor/cytoscape.min.js` serves pages that ask for nothing, so no
+    /// 404 and no console error, and one that holds it names it with its digest (I2900).
+    #[test]
+    fn the_graph_library_is_named_only_when_the_distribution_holds_it() {
+        let repo = crate::synthetic::SyntheticRepository::new(crate::synthetic::Shape::default())
+            .expect("a synthetic repository");
+        let share = tempfile::tempdir().expect("a share directory");
+        let ui_dir = share.path().join(ASSETS_DIR);
+        std::fs::create_dir_all(&ui_dir).expect("the ui assets directory");
+        std::fs::write(ui_dir.join(STYLESHEET), "body{}").expect("a stylesheet");
+        let page = |share: &std::path::Path| {
+            let ui = Ui::new(
+                repo.context().expect("a context"),
+                "0.0.0-test",
+                Some(share),
+            );
+            let r = ui.handle(&Request::parse_target("GET", "/ui", Vec::new()));
+            assert_eq!(r.status, 200);
+            r.body.text().into_owned()
+        };
+
+        let without = page(share.path());
+        // an empty attribute is written bare, which ui.js reads as no library
+        assert!(
+            without.contains(" data-graph-lib ") || without.contains(" data-graph-lib>"),
+            "the page does not say there is no library: {without}"
+        );
+        assert!(!without.contains("data-graph-lib=\""), "{without}");
+        assert!(
+            !without.contains(GRAPH_LIB),
+            "the absent library is still named: {without}"
+        );
+
+        std::fs::create_dir_all(ui_dir.join("vendor")).expect("the vendor directory");
+        std::fs::write(ui_dir.join(GRAPH_LIB), "window.cytoscape=function(){};")
+            .expect("a library");
+        let with = page(share.path());
+        assert!(
+            with.contains(&format!("data-graph-lib=\"{ASSETS_PREFIX}{GRAPH_LIB}")),
+            "the library the distribution holds is not named: {with}"
+        );
+    }
+
     #[test]
     fn the_observatory_is_one_screen_under_its_names() {
         let repo = crate::synthetic::SyntheticRepository::new(crate::synthetic::Shape::default())

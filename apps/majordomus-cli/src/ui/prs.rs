@@ -537,34 +537,26 @@ fn number(a: &Value) -> Option<u64> {
 fn tallies(queue: &Answer) -> El {
     let to_lane = |lane: &str| Filter::default().href(ROUTE, "lane", Some(lane));
     // every lane the queue counted, in the queue's own words: a lane it adds is a card
-    // here without a change to this screen, and one it drops is not a card counting nothing
-    let lanes: Vec<String> = queue
-        .ok()
-        .and_then(|v| v.pointer("/queue/tallies/by_lane"))
-        .and_then(Value::as_object)
-        .map(|m| m.keys().cloned().collect())
-        .unwrap_or_default();
-    // each count is read from the one map the queue answers, which its source line names
+    // here without a change to this screen, and one it drops is not a card counting nothing.
+    // Each count is read from the one map the queue answers, which its source line names.
     let by_lane = queue.read("/queue/tallies/by_lane");
-    let count = |lane: &str| Reading {
-        state: match &by_lane.state {
-            Availability::Available(m) => m
-                .get(lane)
-                .cloned()
-                .map_or(Availability::Absent, Availability::Available),
-            other => other.clone(),
-        },
-        ..by_lane.clone()
+    let lanes: Vec<(String, Value)> = match &by_lane.state {
+        Availability::Available(Value::Object(m)) => {
+            m.iter().map(|(k, n)| (k.clone(), n.clone())).collect()
+        }
+        _ => Vec::new(),
     };
     let mut cards = vec![kpi_to(
         kpi("Open", &queue.read("/queue/tallies/open")),
         ROUTE,
     )];
-    cards.extend(
-        lanes
-            .iter()
-            .map(|lane| kpi_to(kpi(&lane_label(lane), &count(lane)), &to_lane(lane))),
-    );
+    cards.extend(lanes.into_iter().map(|(lane, n)| {
+        let count = Reading {
+            state: Availability::Available(n),
+            ..by_lane.clone()
+        };
+        kpi_to(kpi(&lane_label(&lane), &count), &to_lane(&lane))
+    }));
     cards.push(kpi(
         &super::dashboard::merged_label(queue),
         &queue.read("/throughput/merges"),
@@ -1766,6 +1758,15 @@ mod tests {
             "a lane the queue did not count is a card"
         );
         assert_eq!(lane_label("waiting_for_review"), "Waiting for review lane");
+
+        // a queue that counted no lane draws no lane card, and still counts what is open
+        let mut bare = sample();
+        bare["queue"]["tallies"]
+            .as_object_mut()
+            .expect("the tallies")
+            .remove("by_lane");
+        let html = tallies(&queue(bare)).render();
+        assert!(html.contains("Open") && !html.contains(" lane<"), "{html}");
 
         let repo = crate::synthetic::SyntheticRepository::new(crate::synthetic::Shape::default())
             .expect("a synthetic repository");

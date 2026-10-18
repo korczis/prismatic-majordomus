@@ -678,3 +678,32 @@ fn build_metadata_is_not_part_of_precedence() {
         "1.0.0+build.5 is a final release, above its own pre-release"
     );
 }
+
+#[test]
+fn a_record_whose_version_no_reader_can_order_is_a_finding_and_never_the_stable_release() {
+    let model = real_model();
+    // `1.0.0-rc.01` has a leading zero in a numeric identifier: not a semantic version, so
+    // nothing can say whether it is above or below 0.27.0. On the stable channel it is
+    // still a finding of its own, and the stable pointer stays where it can be justified.
+    let unorderable = sample_release(&model, "v1.0.0-rc.01", Channel::Stable);
+    let findings = unorderable.findings(&model);
+    assert!(
+        findings
+            .iter()
+            .any(|f| f.starts_with("v1.0.0-rc.01: version `1.0.0-rc.01` is not a semantic version")),
+        "{findings:?}"
+    );
+    assert!(
+        !findings.iter().any(|f| f.contains("stable channel")),
+        "an unorderable version is reported as unorderable, not as a mislabelled pre-release: \
+         {findings:?}"
+    );
+    let releases = Releases::ordered(vec![
+        sample_release(&model, "v0.27.0", Channel::Stable),
+        unorderable,
+    ]);
+    assert_eq!(
+        releases.latest_stable().map(|r| r.tag.as_str()),
+        Some("v0.27.0")
+    );
+}

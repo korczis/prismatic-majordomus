@@ -1236,6 +1236,60 @@ mod tests {
         assert!(html.contains("Every criterion is met."), "{html}");
     }
 
+    /// A sentence keeps every word between two ids as one run of text, and each id becomes a
+    /// link with the brackets and punctuation around it kept as written; a word that only
+    /// looks like an id (one letter, or letters after the I) stays text (I2900).
+    #[test]
+    fn a_sentence_links_its_ids_and_keeps_its_words() {
+        let html = |m: &str| -> String { linked_issues(m).iter().map(El::render).collect() };
+
+        let plain = html("no issue is named here");
+        assert_eq!(
+            plain, "<span>no issue is named here</span>",
+            "one run: {plain}"
+        );
+
+        let first = html("I7 is ready");
+        assert!(
+            first.starts_with("<a "),
+            "an id first opens with its link: {first}"
+        );
+        assert!(
+            first.contains(&issue_href("I7")) && first.ends_with("<span> is ready</span>"),
+            "{first}"
+        );
+
+        let wrapped = html("waits for (I7), then [I8].");
+        assert!(
+            wrapped.contains("<span>waits for (</span>"),
+            "the text and the bracket before: {wrapped}"
+        );
+        assert!(
+            wrapped.contains("<span>), then [</span>"),
+            "between two ids, one run: {wrapped}"
+        );
+        assert!(
+            wrapped.ends_with("<span>].</span>"),
+            "the punctuation after the last id: {wrapped}"
+        );
+        assert!(
+            wrapped.contains(&issue_href("I7")) && wrapped.contains(&issue_href("I8")),
+            "{wrapped}"
+        );
+
+        let alone = html("I8");
+        assert!(
+            alone.contains(&issue_href("I8")) && !alone.contains("<span>"),
+            "{alone}"
+        );
+
+        let lookalike = html("I and Ix and I7x are words");
+        assert!(
+            !lookalike.contains("<a "),
+            "no lookalike is a link: {lookalike}"
+        );
+    }
+
     fn intent_i() -> Value {
         serde_json::json!({
             "id": "i", "title": "The i intent", "stage": "executing",

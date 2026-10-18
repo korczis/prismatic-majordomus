@@ -2401,4 +2401,72 @@ mod tests {
         assert_eq!(found.len(), 1, "{found:?}");
         assert_eq!(found[0].id, LABEL_IN_PROSE);
     }
+
+    /// A version is three numbers before anything else: a first part that is not a number
+    /// is no version, whatever follows it, so `x.1.2`, `1a.2.3` and an empty string never
+    /// parse into something a reader would order.
+    #[test]
+    fn a_version_whose_major_is_not_a_number_is_no_version() {
+        for text in ["x.1.2", "1a.2.3", "", "-1.0.0", ".1.2", "v1.2.3"] {
+            assert_eq!(Version::parse(text), None, "{text:?}");
+        }
+        assert_eq!(
+            Version::parse("1.2.3").map(|v| v.to_string()),
+            Some("1.2.3".to_string())
+        );
+    }
+
+    /// A version writes itself back exactly as it was read: every pre-release identifier
+    /// after the first is joined with a dot, and the build metadata follows a `+` with its
+    /// own identifiers dotted too, so what is printed parses to the same version.
+    #[test]
+    fn a_version_with_several_prerelease_and_build_identifiers_prints_as_it_was_read() {
+        for text in [
+            "1.0.0-alpha.1",
+            "1.0.0-alpha.beta.10",
+            "1.0.0-rc.1+build.5",
+            "0.30.0+sha.0a19b7f.dirty",
+        ] {
+            let v = Version::parse(text).expect(text);
+            assert_eq!(v.to_string(), text);
+            assert_eq!(Version::parse(&v.to_string()), Some(v), "{text}");
+        }
+    }
+
+    /// A sink that refuses part of the way through a version gets the refusal, never a
+    /// version cut short: whichever piece the sink refuses (a number, a pre-release
+    /// identifier, a build identifier), the write reports the error.
+    #[test]
+    fn a_version_written_to_a_failing_sink_reports_the_failure_at_every_part() {
+        use std::fmt::Write as _;
+
+        /// Accepts `.0` writes and refuses every one after them.
+        struct RefuseAfter(usize);
+        impl std::fmt::Write for RefuseAfter {
+            fn write_str(&mut self, _: &str) -> std::fmt::Result {
+                if self.0 == 0 {
+                    return Err(std::fmt::Error);
+                }
+                self.0 -= 1;
+                Ok(())
+            }
+        }
+
+        let v = Version::parse("1.0.0-alpha.1+build.5").expect("a version");
+        // how many writes the whole version takes, counted by a sink that never refuses
+        let mut writes = 0;
+        while write!(RefuseAfter(writes), "{v}").is_err() {
+            writes += 1;
+        }
+        assert!(
+            writes >= 9,
+            "three numbers, two pre-release and two build identifiers"
+        );
+        for accepted in 0..writes {
+            assert!(
+                write!(RefuseAfter(accepted), "{v}").is_err(),
+                "a sink refusing write {accepted} of {writes} must see the error"
+            );
+        }
+    }
 }
