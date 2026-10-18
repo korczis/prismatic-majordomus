@@ -27,7 +27,7 @@ MAJORDOMUS_DIST_BIN="$MJB" "$ROOT/scripts/release-fixture" --out "$FIX" --base-u
 expect_file "$FIX/releases/latest.json"
 
 # --- a working release serves a repository of its own ----------------------------------
-out="$(env HOME="$T/home-green" "$GATE" --base "$HTTP_BASE" --expect "v$VERSION" 2>&1)" || {
+out="$(env HOME="$T/home-green" MAJORDOMUS_HTTP_HOST=0.0.0.0 "$GATE" --base "$HTTP_BASE" --expect "v$VERSION" 2>&1)" || {
   echo "    the gate failed against a complete release"
   printf '%s\n' "$out" | sed 's/^/      /'
   exit 1

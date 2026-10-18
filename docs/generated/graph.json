@@ -1,7 +1,7 @@
 {
   "schema": "majordomus/capability-graph/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and every object of the index; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.30.0",
+  "generator": "majordomus-cli 0.30.1",
   "graph": {
     "id": "composed",
     "title": "Everything, composed",
@@ -9645,12 +9645,12 @@
         "id": "majordomus://claim/evidence-navigates-both-ways",
         "kind": "claim",
         "label": "evidence-navigates-both-ways",
-        "summary": "Every claim names the test that proves it and every test names the claims it proves, from one derivation",
+        "summary": "Every claim names the test meant to settle it and every test names the claims it is meant to settle, from one derivation",
         "route": "/cockpit/objects/claim/evidence-navigates-both-ways",
         "source": "docs/CLAIMS.yaml",
         "status": "guaranteed",
         "facts": {
-          "claim": "Every claim names the test that proves it and every test names the claims it proves, from one derivation",
+          "claim": "Every claim names the test meant to settle it and every test names the claims it is meant to settle, from one derivation",
           "implementation": "apps/majordomus-cli/src/capability/builtin/evidence.rs",
           "responsibility": "none",
           "source": "docs/EVIDENCE.md",
@@ -10565,12 +10565,12 @@
         "id": "majordomus://claim/mcp-stdio-surface",
         "kind": "claim",
         "label": "mcp-stdio-surface",
-        "summary": "The Rust executable serves the repository's AI layer to an MCP client over stdio, read-only, with protocol frames alone on stdout",
+        "summary": "The Rust executable serves the repository's AI layer to an MCP client over stdio, with protocol frames alone on stdout",
         "route": "/cockpit/objects/claim/mcp-stdio-surface",
         "source": "docs/CLAIMS.yaml",
         "status": "guaranteed",
         "facts": {
-          "claim": "The Rust executable serves the repository's AI layer to an MCP client over stdio, read-only, with protocol frames alone on stdout",
+          "claim": "The Rust executable serves the repository's AI layer to an MCP client over stdio, with protocol frames alone on stdout",
           "implementation": "apps/majordomus-cli/src/mcp/protocol.rs",
           "responsibility": "none",
           "source": "docs/MCP.md",
@@ -10704,12 +10704,11 @@
         "id": "majordomus://claim/mesh-observation-not-authority",
         "kind": "claim",
         "label": "mesh-observation-not-authority",
-        "summary": "A discovered node — trusted or not — gains no execution, no authorization and no write surface; trust labels records under an explicit policy that defaults to deny_unknown",
+        "summary": "A discovered node gains no execution and no authorization from being heard; only signed traffic from a linked node may change mesh state, and trust labels records under an explicit policy that defaults to deny_unknown",
         "route": "/cockpit/objects/claim/mesh-observation-not-authority",
         "source": "docs/CLAIMS.yaml",
         "status": "guaranteed",
         "facts": {
-          "claim": "A discovered node — trusted or not — gains no execution, no authorization and no write surface; trust labels records under an explicit policy that defaults to deny_unknown",
           "implementation": "apps/majordomus-cli/src/mesh/trust.rs",
           "responsibility": "none",
           "source": ".ai/repo/rules/project/mesh-is-observation-not-authority.v1.md",
@@ -15977,7 +15976,7 @@
         "id": "majordomus://document/docs/claims/evidence-navigates-both-ways.md",
         "kind": "document",
         "label": "docs/claims/evidence-navigates-both-ways.md",
-        "summary": "Every claim names the test that proves it and every test names the claims it proves, from one derivation",
+        "summary": "Every claim names the test meant to settle it and every test names the claims it is meant to settle, from one derivation",
         "route": "/cockpit/objects/document/docs-claims-evidence-navigates-both-ways-md",
         "source": "docs/claims/evidence-navigates-both-ways.md"
       },
@@ -16441,7 +16440,7 @@
         "id": "majordomus://document/docs/claims/mcp-stdio-surface.md",
         "kind": "document",
         "label": "docs/claims/mcp-stdio-surface.md",
-        "summary": "The Rust executable serves the repository's AI layer to an MCP client over stdio, read-only, with protocol frames alone on stdout",
+        "summary": "The Rust executable serves the repository's AI layer to an MCP client over stdio, with protocol frames alone on stdout",
         "route": "/cockpit/objects/document/docs-claims-mcp-stdio-surface-md",
         "source": "docs/claims/mcp-stdio-surface.md"
       },
@@ -16513,7 +16512,7 @@
         "id": "majordomus://document/docs/claims/mesh-observation-not-authority.md",
         "kind": "document",
         "label": "docs/claims/mesh-observation-not-authority.md",
-        "summary": "A discovered node — trusted or not — gains no execution, no authorization and no write surface; trust labels records under an explicit policy that defaults to deny_unknown",
+        "summary": "A discovered node gains no execution and no authorization from being heard; only signed traffic from a linked node may change mesh state, and trust labels records under an explicit policy that defaults to deny_unknown",
         "route": "/cockpit/objects/document/docs-claims-mesh-observation-not-authority-md",
         "source": "docs/claims/mesh-observation-not-authority.md"
       },
@@ -40822,6 +40821,40 @@
         }
       },
       {
+        "id": "majordomus://issue/I2882",
+        "kind": "issue",
+        "label": "I2882",
+        "summary": "A remote derive builds only inside its own run directory",
+        "route": "/cockpit/objects/issue/i2882",
+        "source": ".ai/repo/project/issues/I2882.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The remote derive's build and target directories are both the run directory, whatever build directory the caller's environment names",
+            "The run directory is removed after a derive that succeeds and after one that fails (exit 10)",
+            "Nothing is written to the build directory the caller's environment named"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "offload/run.rs DERIVE exports CARGO_TARGET_DIR=$private and removes $private on EXIT/HUP/INT/TERM; CARGO_BUILD_BUILD_DIR is inherited, so the declared shared build-dir receives the intermediates.",
+          "evidence_required": [
+            "offload_run_dir_test"
+          ],
+          "milestone": "development-runtime",
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/offload",
+            "docs/OFFLOAD.md"
+          ],
+          "slug": "an-offload-build-stays-in-its-run-dir",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "cargo test --lib -- offload::run::tests::a_remote_derive_builds_only_inside_its_run_directory_and_removes_it",
+            "majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I2900",
         "kind": "issue",
         "label": "I2900",
@@ -41729,6 +41762,79 @@
         }
       },
       {
+        "id": "majordomus://issue/I2962",
+        "kind": "issue",
+        "label": "I2962",
+        "summary": "What the served surfaces change is said as the registry says it",
+        "route": "/cockpit/objects/issue/i2962",
+        "source": ".ai/repo/project/issues/I2962.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The interfaces feature names exactly the capabilities whose registry effect is repository_mutation, and a page that drops one is refused",
+            "No retired read-only or one-command sentence remains in README, docs or the features",
+            "README's mesh paragraph states exclusivity as the milestone records it"
+          ],
+          "created_at": "2026-10-18",
+          "depends_on": [],
+          "evidence_required": [
+            "case_what_mutates_is_said_as_it_is"
+          ],
+          "milestone": "development-runtime",
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "README.md",
+            ".ai/repo/features/interfaces.md",
+            "docs/MCP.md",
+            "docs/CLAIMS.yaml",
+            "docs/claims/mcp-stdio-surface.md",
+            "docs/claims/mcp-peers.md",
+            "docs/claims/mesh-observation-not-authority.md",
+            "test/cases/3363_what_mutates_is_said_as_it_is.sh"
+          ],
+          "slug": "what-mutates-is-said-as-it-is",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2963",
+        "kind": "issue",
+        "label": "I2963",
+        "summary": "The README's exit codes are the commands' contract",
+        "route": "/cockpit/objects/issue/i2963",
+        "source": ".ai/repo/project/issues/I2963.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every row of the README's command table states the exit codes its command's model declares",
+            "Case 3365 fails on a row whose codes differ from the model"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "Corrected in this change: every row of the README's command table states the model's codes. Generating the table from the model is post-alpha (ledger row derivable-counts-in-prose).",
+          "depends_on": [],
+          "desired_state": "Case 3365 refuses a README whose command table states any command's exit codes otherwise than the model declares them, and proves its comparison on a mutated row.",
+          "evidence_required": [
+            "case_the_readme_exit_codes_are_the_contracts"
+          ],
+          "milestone": "development-runtime",
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "README.md",
+            "test/cases/3365_the_readme_exit_codes_are_the_contracts.sh"
+          ],
+          "slug": "the-readme-exit-codes-are-the-contracts",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I2964",
         "kind": "issue",
         "label": "I2964",
@@ -41756,6 +41862,43 @@
             "test/cases/3362_every_snapshot_read_can_ask_the_forge.sh"
           ],
           "slug": "the-snapshot-reads-the-forge-with-a-token",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2965",
+        "kind": "issue",
+        "label": "I2965",
+        "summary": "The site says a test proves a guarantee only as far as recorded evidence supports it",
+        "route": "/cockpit/objects/issue/i2965",
+        "source": ".ai/repo/project/issues/I2965.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The guarantees index, SITE_CLAIMS and the site's data say a test is to prove a claim while not every claim is supported",
+            "homepage.toml [promises] declares proven and proves, and the homepage copy uses neither"
+          ],
+          "created_at": "2026-10-18",
+          "depends_on": [],
+          "evidence_required": [
+            "case_a_proof_word_is_earned"
+          ],
+          "milestone": "development-runtime",
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "scripts/generate-site-data",
+            "site/data/challenge.toml",
+            "site/data/marketing.toml",
+            "site/data/homepage.toml",
+            "docs/CLAIMS.yaml",
+            "docs/claims/evidence-navigates-both-ways.md",
+            "test/cases/3366_a_proof_word_is_earned.sh"
+          ],
+          "slug": "a-proof-word-is-earned",
           "updated_at": "2026-10-18",
           "validation": [
             "majordomus plan validate"
@@ -41803,6 +41946,148 @@
           "updated_at": "2026-10-18",
           "validation": [
             "majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2967",
+        "kind": "issue",
+        "label": "I2967",
+        "summary": "The site's own pages name the layout in force",
+        "route": "/cockpit/objects/issue/i2967",
+        "source": ".ai/repo/project/issues/I2967.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The policy page names .ai/repo/policy.yaml as the source of truth",
+            "No top-level site page, site data file or template names .majordomus/, and case 3364 refuses one that does"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "Corrected in this change: site/content/policy.md and site/content/roadmap.md name .ai/repo/.",
+          "depends_on": [],
+          "desired_state": "No top-level site page, site data file or template names .majordomus/; case 3364 refuses one that does and holds the policy page to .ai/repo/policy.yaml.",
+          "evidence_required": [
+            "case_a_page_names_the_layout_in_force"
+          ],
+          "milestone": "development-runtime",
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "site/content/policy.md",
+            "site/content/roadmap.md",
+            "test/cases/3364_a_page_names_the_layout_in_force.sh"
+          ],
+          "slug": "a-page-names-the-layout-in-force",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2987",
+        "kind": "issue",
+        "label": "I2987",
+        "summary": "server.status and peers.list ask every checkout at once, a bounded number at a time",
+        "route": "/cockpit/objects/issue/i2987",
+        "source": ".ai/repo/project/issues/I2987.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every checkout is answered in the order given, more than one is asked at once, and never more than ASKED_AT_ONCE (unit test every_checkout_is_asked_at_once_and_answered_in_order)",
+            "The existing server and peers unit tests and their cases pass unchanged"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "server_status and peers_list loop over the checkouts sequentially; the wait is the sum of every probe.",
+          "depends_on": [],
+          "desired_state": "The checkouts are asked sixteen at a time and the answer is the same, in the same order.",
+          "evidence_required": [
+            "unit_checkouts_at_once"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin/server.rs",
+            "apps/majordomus-cli/src/capability/builtin/peers.rs"
+          ],
+          "slug": "every-checkout-is-asked-at-once",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "cargo test --lib -- capability::builtin::server",
+            "cargo test --lib -- capability::builtin::peers"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2993",
+        "kind": "issue",
+        "label": "I2993",
+        "summary": "doctor counts the work no remote holds in one walk, whatever the number of branches",
+        "route": "/cockpit/objects/issue/i2993",
+        "source": ".ai/repo/project/issues/I2993.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A branch on a remote is not named, a branch two commits ahead is named with 2, and a branch that merged another unpushed branch counts each commit it reaches once",
+            "Every count equals the per-branch `git rev-list --count <branch> --not --remotes`",
+            "doctor walks the commits no remote holds once for 156 branches; the per-branch version walks them 156 times and the case fails"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "mj_report_clone runs one rev-list per local branch, so doctor's time grows with the branch count and every commit hook pays it.",
+          "depends_on": [],
+          "desired_state": "One rev-list and one for-each-ref, whatever the number of branches; the same branches named with the same counts.",
+          "evidence_required": [
+            "case_doctor_one_walk"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/doctor.sh",
+            "test/cases/3384_doctor_reads_unpushed_in_one_pass.sh"
+          ],
+          "slug": "doctor-reads-unpushed-in-one-pass",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "bash test/run.sh 3384_doctor_reads_unpushed_in_one_pass 02_doctor_basic 276_disk_is_bounded"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2995",
+        "kind": "issue",
+        "label": "I2995",
+        "summary": "doctor does no work whose answer cannot change a finding: the roadmap lookups and the board's wide status",
+        "route": "/cockpit/objects/issue/i2995",
+        "source": ".ai/repo/project/issues/I2995.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A README whose roadmap lists no releases is judged OK with no pickaxe; with the change undone the case counts the lookups and fails",
+            "A README that lists releases is accepted when it matches the records and refused when it omits one",
+            "context asks only `serve status --checkouts this` when this checkout has a server; with the change undone the case sees the wide question and fails",
+            "doctor's findings on this repository are the same before and after, and validate:roadmap and validate:budget take less time"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "The roadmap doctrine computes every DONE milestone's release before it reads the README; the board lookup asks the wide server status on every context.",
+          "depends_on": [],
+          "desired_state": "A README that lists no releases costs no release lookup; a worktree with a server costs one lease read and one probe for the board's address; the findings are unchanged.",
+          "evidence_required": [
+            "case_doctor_no_needless_work"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/doctor.sh",
+            "lib/context.sh",
+            "test/cases/3385_doctor_fits_its_budget_in_the_commit_hook.sh"
+          ],
+          "slug": "doctor-fits-its-budget-in-the-commit-hook",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "bash test/run.sh 3385_doctor_fits_its_budget_in_the_commit_hook 49_roadmap_doctrine 106_context_peers"
           ]
         }
       },
@@ -42055,6 +42340,90 @@
         }
       },
       {
+        "id": "majordomus://issue/I3007",
+        "kind": "issue",
+        "label": "I3007",
+        "summary": "A commit that a record or the site's data names is a commit the history holds",
+        "route": "/cockpit/objects/issue/i3007",
+        "source": ".ai/repo/project/issues/I3007.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A data field or record link naming a commit outside the history fails `link-check --sources`, naming the file and field",
+            "A field no template links as a commit is not decided",
+            "A shallow clone defers (exit 12) and reports no finding",
+            "Removing the data walk, the source scan or the template key filter each turns case 3400 red",
+            "mj_commit_in_history answers 0, 1 and 2 as stated"
+          ],
+          "created_at": "2026-10-18",
+          "depends_on": [],
+          "desired_state": "A record or data file that names a commit outside the history is refused before the build, by the same rules as a page, and one predicate answers whether a commit is in the history.",
+          "evidence_required": [],
+          "milestone": "surfaces-never-disagree",
+          "non_scope": [
+            "Fetching anything: the check decides offline, against the clone it is given",
+            "Rewriting prose that tells where work once lived; only a field or link that becomes a commit link is held"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "scripts/ci/link-check",
+            "lib/common.sh",
+            "test/cases/3400_a_recorded_commit_link_names_the_history.sh",
+            ".ai/repo/project",
+            "docs",
+            "site"
+          ],
+          "slug": "a-recorded-commit-link-names-the-history",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "majordomus plan validate",
+            "bash test/run.sh 3400_a_recorded_commit_link_names_the_history",
+            "scripts/ci/link-check --sources"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3008",
+        "kind": "issue",
+        "label": "I3008",
+        "summary": "A homepage link with a fragment resolves to an element its page carries",
+        "route": "/cockpit/objects/issue/i3008",
+        "source": ".ai/repo/project/issues/I3008.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A hero link to /roadmap/#delivery passes when /roadmap/ carries id=\\\"delivery\\\", and fails naming the element when it does not",
+            "A hero link to an absent page fails as unresolved",
+            "Removing the fragment split or the id check each turns case 3401 red"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "Rule 13d splits the fragment and requires the id, inline in the full site-check, held by no case.",
+          "depends_on": [],
+          "desired_state": "The rule is a function a case runs on a fixture, and case 3401 fails if the fragment split or the id check is removed.",
+          "evidence_required": [],
+          "milestone": "surfaces-never-disagree",
+          "non_scope": [
+            "Any other site-check rule"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "scripts/site-check",
+            "test/cases/3401_a_hero_link_with_a_fragment_resolves_to_its_id.sh",
+            ".ai/repo/project",
+            "docs",
+            "site"
+          ],
+          "slug": "a-hero-link-with-a-fragment-resolves-to-its-id",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "majordomus plan validate",
+            "bash test/run.sh 3401_a_hero_link_with_a_fragment_resolves_to_its_id"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I3020",
         "kind": "issue",
         "label": "I3020",
@@ -42081,6 +42450,108 @@
             "apps/majordomus-cli/src/ui/knowledge.rs"
           ],
           "slug": "the-knowledge-screen-reads-true",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "cargo test --lib ui::knowledge",
+            "scripts/ui audit --only /ui/knowledge"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3021",
+        "kind": "issue",
+        "label": "I3021",
+        "summary": "The Knowledge screen shows each review command as code with what it does as a sentence",
+        "route": "/cockpit/objects/issue/i3021",
+        "source": ".ai/repo/project/issues/I3021.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The Review panel holds an ol.mj-ui-prose-list with one li per review command, in the order a review takes them",
+            "Each command is inline code (mj-ui-code) and is followed by what it does as a sentence",
+            "The Review panel carries no mj-ui-fact card"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "review() renders a dl.mj-ui-facts with the command in dt and the explanation in dd.",
+          "desired_state": "review() renders an ol.mj-ui-prose-list; each li is code.mj-ui-code with the command, then the explanation as a sentence; a crate test pins it.",
+          "evidence_required": [
+            "knowledge_review_reads_as_steps"
+          ],
+          "milestone": "truthful-plan-surfaces",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui/knowledge.rs"
+          ],
+          "slug": "the-knowledge-review-reads-as-steps",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "cargo test --lib ui::knowledge",
+            "scripts/ui audit --only /ui/knowledge"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3022",
+        "kind": "issue",
+        "label": "I3022",
+        "summary": "An empty knowledge queue is one sentence that says how a record arrives, not two empty tables",
+        "route": "/cockpit/objects/issue/i3022",
+        "source": ".ai/repo/project/issues/I3022.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "An empty queue renders one panel, no table and no By subject panel",
+            "The sentence names majordomus knowledge observe as code and still cites knowledge_base.candidates",
+            "A queue holding a record, and an unanswered queue, keep both panels"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "screen() always draws By subject and Awaiting review; an empty queue renders two empty tables.",
+          "desired_state": "An answered, empty queue renders a single panel with one sentence and its source; a queue that holds records or did not answer keeps both panels; a crate test pins it.",
+          "evidence_required": [
+            "empty_knowledge_queue_is_one_sentence"
+          ],
+          "milestone": "truthful-plan-surfaces",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui/knowledge.rs"
+          ],
+          "slug": "an-empty-knowledge-queue-is-one-sentence",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "cargo test --lib ui::knowledge",
+            "scripts/ui audit --only /ui/knowledge"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3023",
+        "kind": "issue",
+        "label": "I3023",
+        "summary": "The Knowledge screen reads in review order, in plain labels, and leads to the knowledge manual",
+        "route": "/cockpit/objects/issue/i3023",
+        "source": ".ai/repo/project/issues/I3023.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Awaiting review precedes How to review, which precedes Is learning up to date?",
+            "No tile or panel is labelled Unattributed, Closed, underived, Newest episode or The deriver",
+            "The review panel links to the knowledge manual under the documentation mount"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "The grid draws The deriver, Review, By subject, Awaiting review in that order, with internal labels and no link to the manual.",
+          "desired_state": "The grid draws the queue first and the deriver's judgement last, under plain labels, and the review panel ends with a link to the knowledge manual; crate tests pin the order, the labels and the link.",
+          "evidence_required": [
+            "knowledge_screen_reads_in_review_order"
+          ],
+          "milestone": "truthful-plan-surfaces",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui/knowledge.rs"
+          ],
+          "slug": "the-knowledge-screen-reads-in-review-order",
           "updated_at": "2026-10-18",
           "validation": [
             "cargo test --lib ui::knowledge",
@@ -60183,6 +60654,34 @@
         "source": "test/cases/3362_every_snapshot_read_can_ask_the_forge.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3363_what_mutates_is_said_as_it_is.sh",
+        "kind": "test",
+        "label": "test/cases/3363_what_mutates_is_said_as_it_is.sh",
+        "route": "/cockpit/objects/test/test-cases-3363-what-mutates-is-said-as-it-is-sh",
+        "source": "test/cases/3363_what_mutates_is_said_as_it_is.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3364_a_page_names_the_layout_in_force.sh",
+        "kind": "test",
+        "label": "test/cases/3364_a_page_names_the_layout_in_force.sh",
+        "route": "/cockpit/objects/test/test-cases-3364-a-page-names-the-layout-in-force-sh",
+        "source": "test/cases/3364_a_page_names_the_layout_in_force.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3365_the_readme_exit_codes_are_the_contracts.sh",
+        "kind": "test",
+        "label": "test/cases/3365_the_readme_exit_codes_are_the_contracts.sh",
+        "route": "/cockpit/objects/test/test-cases-3365-the-readme-exit-codes-are-the-contracts-sh",
+        "source": "test/cases/3365_the_readme_exit_codes_are_the_contracts.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3366_a_proof_word_is_earned.sh",
+        "kind": "test",
+        "label": "test/cases/3366_a_proof_word_is_earned.sh",
+        "route": "/cockpit/objects/test/test-cases-3366-a-proof-word-is-earned-sh",
+        "source": "test/cases/3366_a_proof_word_is_earned.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/336_every_control_is_claimed.sh",
         "kind": "test",
         "label": "test/cases/336_every_control_is_claimed.sh",
@@ -60197,6 +60696,20 @@
         "source": "test/cases/337_every_control_does_what_it_says.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3384_doctor_reads_unpushed_in_one_pass.sh",
+        "kind": "test",
+        "label": "test/cases/3384_doctor_reads_unpushed_in_one_pass.sh",
+        "route": "/cockpit/objects/test/test-cases-3384-doctor-reads-unpushed-in-one-pass-sh",
+        "source": "test/cases/3384_doctor_reads_unpushed_in_one_pass.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3385_doctor_fits_its_budget_in_the_commit_hook.sh",
+        "kind": "test",
+        "label": "test/cases/3385_doctor_fits_its_budget_in_the_commit_hook.sh",
+        "route": "/cockpit/objects/test/test-cases-3385-doctor-fits-its-budget-in-the-commit-hook-sh",
+        "source": "test/cases/3385_doctor_fits_its_budget_in_the_commit_hook.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/33_event_registry.sh",
         "kind": "test",
         "label": "test/cases/33_event_registry.sh",
@@ -60209,6 +60722,20 @@
         "label": "test/cases/33_stale_executable.sh",
         "route": "/cockpit/objects/test/test-cases-33-stale-executable-sh",
         "source": "test/cases/33_stale_executable.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3400_a_recorded_commit_link_names_the_history.sh",
+        "kind": "test",
+        "label": "test/cases/3400_a_recorded_commit_link_names_the_history.sh",
+        "route": "/cockpit/objects/test/test-cases-3400-a-recorded-commit-link-names-the-history-sh",
+        "source": "test/cases/3400_a_recorded_commit_link_names_the_history.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3401_a_hero_link_with_a_fragment_resolves_to_its_id.sh",
+        "kind": "test",
+        "label": "test/cases/3401_a_hero_link_with_a_fragment_resolves_to_its_id.sh",
+        "route": "/cockpit/objects/test/test-cases-3401-a-hero-link-with-a-fragment-resolves-to-its-id-sh",
+        "source": "test/cases/3401_a_hero_link_with_a_fragment_resolves_to_its_id.sh"
       },
       {
         "id": "majordomus://test/test/cases/340_a_brief_is_kept_as_received.sh",
@@ -87546,6 +88073,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2882",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2882",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I2900",
         "target": "kind:issue",
         "kind": "is_a"
@@ -87781,12 +88318,42 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2962",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2962",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2963",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2963",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I2964",
         "target": "kind:issue",
         "kind": "is_a"
       },
       {
         "source": "majordomus://issue/I2964",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2965",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2965",
         "target": "majordomus://milestone/development-runtime",
         "kind": "belongs_to"
       },
@@ -87798,6 +88365,46 @@
       {
         "source": "majordomus://issue/I2966",
         "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2967",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2967",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2987",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2987",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2993",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2993",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2995",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2995",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
         "kind": "belongs_to"
       },
       {
@@ -87861,12 +88468,62 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3007",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3007",
+        "target": "majordomus://milestone/surfaces-never-disagree",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3008",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3008",
+        "target": "majordomus://milestone/surfaces-never-disagree",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I3020",
         "target": "kind:issue",
         "kind": "is_a"
       },
       {
         "source": "majordomus://issue/I3020",
+        "target": "majordomus://milestone/truthful-plan-surfaces",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3021",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3021",
+        "target": "majordomus://milestone/truthful-plan-surfaces",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3022",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3022",
+        "target": "majordomus://milestone/truthful-plan-surfaces",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3023",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3023",
         "target": "majordomus://milestone/truthful-plan-surfaces",
         "kind": "belongs_to"
       },
@@ -92796,6 +93453,26 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3363_what_mutates_is_said_as_it_is.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3364_a_page_names_the_layout_in_force.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3365_the_readme_exit_codes_are_the_contracts.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3366_a_proof_word_is_earned.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/336_every_control_is_claimed.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -92806,12 +93483,32 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3384_doctor_reads_unpushed_in_one_pass.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3385_doctor_fits_its_budget_in_the_commit_hook.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/33_event_registry.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
       {
         "source": "majordomus://test/test/cases/33_stale_executable.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3400_a_recorded_commit_link_names_the_history.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3401_a_hero_link_with_a_fragment_resolves_to_its_id.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -98062,8 +98759,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3052,
-      "edges": 6697,
+      "nodes": 3073,
+      "edges": 6731,
       "acyclic": false,
       "truncated": false
     }

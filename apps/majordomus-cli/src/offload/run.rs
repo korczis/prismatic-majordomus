@@ -237,7 +237,14 @@ git checkout -q -f --detach "refs/offload/$tag"
 git clean -fdq"#;
 
 /// Derive on the host, under a lock the caller holds. Its own pid joins the lock's holders,
-/// so the lock stays held exactly as long as this derive runs. Arguments: lock, worktrees
+/// so the lock stays held exactly as long as this derive runs.
+///
+/// Everything the derive compiles stays in its own run directory, `<shared>-<tag>`, which
+/// the traps remove however the derive ends. Pinning the target directory alone is not
+/// that: the checkout declares a shared `build-dir`, so cargo kept every intermediate in the
+/// host's `build-shared/majordomus`, outside what the traps remove, and on 2026-10-18 that
+/// directory held 87 GB on lundra and the volume reached 0 bytes. The build directory is
+/// pinned to the run directory too. Arguments: lock, worktrees
 /// directory, tag, shared build directory, derive command, spool, PATH prefix
 /// (colon-separated), then the files to touch. Prints `target <dir>`, then `nothing` or
 /// `derived <sha>`; exit 10 when the derive fails, 13 when the lock is not there.
@@ -259,6 +266,7 @@ trap 'rm -rf "$private"; exit 129' HUP
 trap 'rm -rf "$private"; exit 130' INT
 trap 'rm -rf "$private"; exit 143' TERM
 export CARGO_TARGET_DIR="$private"
+export CARGO_BUILD_BUILD_DIR="$private"
 echo "target $private"
 for f in "$@"; do [ -e "$f" ] && touch "$f"; done
 if ! env -u MAJORDOMUS_SHARE -u MAJORDOMUS_BIN "$derive" > "$log" 2>&1; then
@@ -761,5 +769,94 @@ mod tests {
             e.reason
         );
         assert!(r.staged.is_empty());
+    }
+
+    /// The remote derive, run here exactly as a host runs it: whatever build directory the
+    /// caller's environment names, the derive compiles inside its own run directory, and
+    /// that directory is gone afterwards, whether the derive succeeds or fails. The shared
+    /// directory it was seeded from is left as it was.
+    #[test]
+    fn a_remote_derive_builds_only_inside_its_run_directory_and_removes_it() {
+        let root = tempfile::tempdir().expect("a temporary directory");
+        let at = |p: &str| root.path().join(p);
+        let decoy = at("build-shared");
+        std::fs::create_dir_all(&decoy).unwrap();
+        for (tag, outcome) in [("ok1", 0), ("bad1", 1)] {
+            let lock = at(&format!("lock-{tag}"));
+            std::fs::create_dir_all(&lock).unwrap();
+            let tree = at(&format!("wt/offload-{tag}"));
+            std::fs::create_dir_all(&tree).unwrap();
+            let git = |args: &[&str]| {
+                let out = std::process::Command::new("git")
+                    .current_dir(&tree)
+                    .args(["-c", "user.name=t", "-c", "user.email=t@t"])
+                    .args(args)
+                    .output()
+                    .expect("git runs");
+                assert!(out.status.success(), "git {args:?}: {out:?}");
+            };
+            git(&["init", "-q"]);
+            std::fs::write(tree.join("a"), "a").unwrap();
+            git(&["add", "-A"]);
+            git(&["commit", "-q", "-m", "a"]);
+            git(&["update-ref", &format!("refs/offload/{tag}"), "HEAD"]);
+            // the derive: says where it was told to build, compiles something there, and
+            // succeeds or fails as the case asks
+            let derive = at(&format!("derive-{tag}"));
+            std::fs::write(
+                &derive,
+                format!(
+                    "#!/bin/sh\nprintf '%s\\n%s\\n' \"$CARGO_BUILD_BUILD_DIR\" \"$CARGO_TARGET_DIR\" > {seen}\n\
+                     mkdir -p \"$CARGO_BUILD_BUILD_DIR/debug/deps\" && : > \"$CARGO_BUILD_BUILD_DIR/debug/deps/x\"\n\
+                     exit {outcome}\n",
+                    seen = at(&format!("seen-{tag}")).display()
+                ),
+            )
+            .unwrap();
+            use std::os::unix::fs::PermissionsExt;
+            std::fs::set_permissions(&derive, std::fs::Permissions::from_mode(0o755)).unwrap();
+            let shared = at("target");
+            let (worktrees, spool) = (at("wt"), at("spool"));
+            let args = [
+                lock.to_str().unwrap(),
+                worktrees.to_str().unwrap(),
+                tag,
+                shared.to_str().unwrap(),
+                derive.to_str().unwrap(),
+                spool.to_str().unwrap(),
+                "",
+            ];
+            let out = std::process::Command::new("sh")
+                .arg("-c")
+                .arg(DERIVE)
+                .arg("sh")
+                .args(args)
+                .env("CARGO_BUILD_BUILD_DIR", &decoy)
+                .output()
+                .expect("sh runs");
+            let private = format!("{}-{tag}", shared.display());
+            let seen = std::fs::read_to_string(at(&format!("seen-{tag}"))).expect("the derive ran");
+            assert_eq!(
+                seen,
+                format!("{private}\n{private}\n"),
+                "{tag}: the build and target directories are the run's own"
+            );
+            assert!(
+                !std::path::Path::new(&private).exists(),
+                "{tag}: the run directory is removed: {out:?}"
+            );
+            assert_eq!(
+                std::fs::read_dir(&decoy).unwrap().count(),
+                0,
+                "{tag}: nothing lands in the caller's build directory"
+            );
+            assert!(shared.is_dir(), "{tag}: the shared seed stays");
+            let code = out.status.code();
+            if outcome == 0 {
+                assert_eq!(code, Some(0), "{out:?}");
+            } else {
+                assert_eq!(code, Some(i32::from(EXIT_DERIVE_FAILED)), "{out:?}");
+            }
+        }
     }
 }
