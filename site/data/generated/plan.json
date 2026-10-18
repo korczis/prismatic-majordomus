@@ -28033,7 +28033,7 @@
       ],
       "objective": "Make scripts/derive skip stage B (scripts/generate-site-data) when the committed site data was generated from exactly the inputs and the generator the tree now holds, and run it as before otherwise, so that a derive whose only change touched nothing the site data reads stops paying a full generation under the machine's derive lock.",
       "why": "Measured on 2026-10-17 from 111 derive logs of the release seat's sessions: a derive's work (stages A-D) had a median of 4.5 min, of which stage B (generate-site-data) was 3.9 min, and the derives waited on the machine's derive lock for 15.3 h in total against 9.5 h of work (median wait 4.0 min, p90 19.8, max 70). scripts/derive runs stage B on every call. generate-site-data --fingerprint already answers in about 0.2 s whether the committed data was generated from the current canonical inputs (the value source.json records as source_hash), but scripts/derive never asks it; only scripts/ci/local-never-published does. The fingerprint alone does not prove equivalence: its input list (generate-site-data --inputs, 1613 paths at 4a4573690f8) contains neither scripts/generate-site-data nor the lib/*.sh it sources nor the executable it calls, so a changed generator with unchanged inputs would be wrongly skipped.",
-      "current_state": "scripts/derive runs stages A-D unconditionally under the lock; stage B regenerates every dataset whatever changed.",
+      "current_state": "Implemented at 0c064fa614f (local, lands after the alpha): generate-site-data --derive-key, derive_key in source.json, and the skip in scripts/derive; case 3280. Interim timing on 2026-10-18 at load 20-68, each number with its source. After: one no-op derive on the committed tree skipped stage B in 2 s; its stages A-D took 114 s of work, 1192 s in total with the lock wait (scratchpad timing-1-after.log). Before: stage B of the same machine on 2026-10-17, n=111 derive logs, median 3.9 min (phase 3 baseline), and one forced full derive of this tree at 384 s (i2880-impl-derive.log). The controlled A/B is still owed: 5 skipped and 5 forced (MAJORDOMUS_DERIVE_FULL=1) no-op derives, alternating, after the alpha tag and only while the load stays under 30, with the load stated per run. It was stopped after one run because five forced derives would have held the derive lock for about 40 min on the release path.",
       "desired_state": "Stage B is skipped, and says so in the derive's output with both fingerprints, when the fingerprint of the canonical inputs and the generator (the script, every library it sources, and the identity of the executable it calls) equals the one the committed site data records. Any difference, or a committed record that names none, runs stage B exactly as before. The committed data and generate-site-data --check are unchanged in either case.",
       "acceptance_criteria": [
         "A derive on a tree whose site inputs and generator are unchanged since the committed site data skips stage B and prints the fingerprint it matched",
@@ -28051,7 +28051,17 @@
         "derive_skip_case",
         "derive_noop_timing"
       ],
-      "evidence": [],
+      "evidence": [
+        {
+          "covers": "derive_skip_case",
+          "type": "test",
+          "command": "bash test/run.sh --no-skips 3280_a_derive_with_current_site_data_skips_generation 400_derivation_is_one_graph",
+          "result": "3280 ok and 400 ok, 0 skipped, at 0c064fa614f; four mutations each fail 3280: never skip, skip whenever a record exists, an empty key matches, key on the input fingerprint alone",
+          "artifact": "",
+          "commit": "0c064fa614f2cc3bcfeb7be7daf8a42efd85969c",
+          "recorded_at": "2026-10-17T23:14:45Z"
+        }
+      ],
       "risk": "",
       "completion": "",
       "started_at": "2026-10-17T19:54:47Z",
