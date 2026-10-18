@@ -9,9 +9,8 @@ why: "Coverage already refuses a criterion nothing serves (criterion_uncovered, 
 current_state: "No draft of work exists; criterion_uncovered names the criterion and stops; intents.propose writes only an intent with no milestone or criterion (ADR 0144)."
 desired_state: "draft_plan is pure over the intent, the plan, the gap and the critique; the draft key is stable across runs and is how a later reconcile recognises the item."
 scope:
-  - "apps/majordomus-cli/src/intent_draft.rs"
+  - "apps/majordomus-cli/src"
   - "apps/majordomus-cli/src/capability/builtin/intents.rs"
-  - "apps/majordomus-cli/tests/intent_draft.rs"
 depends_on:
   - "I3246"
 acceptance_criteria:

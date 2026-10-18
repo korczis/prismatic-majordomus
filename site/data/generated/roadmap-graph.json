@@ -330,6 +330,15 @@
       "summary": "What finish caught is counted from the ledger and compared on the benchmark, never asserted"
     },
     {
+      "id": "prismatic-lumen",
+      "kind": "milestone",
+      "label": "prismatic-lumen",
+      "status": "PLANNED",
+      "route": "/plan/prismatic-lumen/",
+      "external": false,
+      "summary": "Prismatic Lumen: the owner oversees and moves the whole mesh from one page, which owns nothing"
+    },
+    {
       "id": "the-session-domain-is-written-once",
       "kind": "milestone",
       "label": "the-session-domain-is-written-once",
@@ -337,6 +346,15 @@
       "route": "/plan/the-session-domain-is-written-once/",
       "external": false,
       "summary": "The session lifecycle is written by the typed domain, and the shell only parses and renders"
+    },
+    {
+      "id": "knowledge-acts-on-what-it-learns",
+      "kind": "milestone",
+      "label": "knowledge-acts-on-what-it-learns",
+      "status": "PLANNED",
+      "route": "/plan/knowledge-acts-on-what-it-learns/",
+      "external": false,
+      "summary": "The repository decides when to evolve its layer, and a session carries it out"
     },
     {
       "id": "campaigns-are-read-as-provenance",
@@ -564,15 +582,6 @@
       "summary": "A stranger installs Majordomus and is stopped from a false done in ten minutes, and every outside first run teaches the tool"
     },
     {
-      "id": "prismatic-lumen",
-      "kind": "milestone",
-      "label": "prismatic-lumen",
-      "status": "BLOCKED",
-      "route": "/plan/prismatic-lumen/",
-      "external": false,
-      "summary": "Prismatic Lumen: the owner oversees and moves the whole mesh from one page, which owns nothing"
-    },
-    {
       "id": "entry-proves-what-it-handed",
       "kind": "milestone",
       "label": "entry-proves-what-it-handed",
@@ -580,15 +589,6 @@
       "route": "/plan/entry-proves-what-it-handed/",
       "external": false,
       "summary": "An episode records the governance and briefing it was handed, and a change is told"
-    },
-    {
-      "id": "knowledge-acts-on-what-it-learns",
-      "kind": "milestone",
-      "label": "knowledge-acts-on-what-it-learns",
-      "status": "PLANNED",
-      "route": "/plan/knowledge-acts-on-what-it-learns/",
-      "external": false,
-      "summary": "The repository decides when to evolve its layer, and a session carries it out"
     },
     {
       "id": "the-runtime-supervises-itself",
@@ -616,6 +616,15 @@
       "route": "/plan/mesh-connectivity/",
       "external": false,
       "summary": "Trusted nodes connect across NAT through proven transports, and every surface says which path"
+    },
+    {
+      "id": "the-mesh-is-operated-from-one-page",
+      "kind": "milestone",
+      "label": "the-mesh-is-operated-from-one-page",
+      "status": "BLOCKED",
+      "route": "/plan/the-mesh-is-operated-from-one-page/",
+      "external": false,
+      "summary": "The owner operates the mesh from one page: every runtime readable, one action authorised end to end"
     },
     {
       "id": "the-hub-is-reached-from-any-device",
@@ -699,15 +708,6 @@
       "summary": "A task is bound to the intent it serves"
     },
     {
-      "id": "the-mesh-is-operated-from-one-page",
-      "kind": "milestone",
-      "label": "the-mesh-is-operated-from-one-page",
-      "status": "BLOCKED",
-      "route": "/plan/the-mesh-is-operated-from-one-page/",
-      "external": false,
-      "summary": "The owner operates the mesh from one page: every runtime readable, one action authorised end to end"
-    },
-    {
       "id": "mesh-peers-execute-assigned-work",
       "kind": "milestone",
       "label": "mesh-peers-execute-assigned-work",
@@ -779,18 +779,8 @@
       "kind": "requires"
     },
     {
-      "source": "everything-is-followed-in-one-stream",
-      "target": "prismatic-lumen",
-      "kind": "requires"
-    },
-    {
       "source": "the-session-domain-is-written-once",
       "target": "entry-proves-what-it-handed",
-      "kind": "requires"
-    },
-    {
-      "source": "a-session-leaves-what-it-observed",
-      "target": "knowledge-acts-on-what-it-learns",
       "kind": "requires"
     },
     {
@@ -814,11 +804,6 @@
       "kind": "requires"
     },
     {
-      "source": "the-mesh-works-out-of-the-box",
-      "target": "mesh-connectivity",
-      "kind": "requires"
-    },
-    {
       "source": "runtime-trust",
       "target": "mesh-connectivity",
       "kind": "requires"
@@ -826,6 +811,16 @@
     {
       "source": "mesh-journal-converges",
       "target": "mesh-connectivity",
+      "kind": "requires"
+    },
+    {
+      "source": "web-sign-in",
+      "target": "the-mesh-is-operated-from-one-page",
+      "kind": "requires"
+    },
+    {
+      "source": "prismatic-lumen",
+      "target": "the-mesh-is-operated-from-one-page",
       "kind": "requires"
     },
     {
@@ -881,21 +876,6 @@
     {
       "source": "intent-planning",
       "target": "intent-bound-work",
-      "kind": "requires"
-    },
-    {
-      "source": "web-sign-in",
-      "target": "the-mesh-is-operated-from-one-page",
-      "kind": "requires"
-    },
-    {
-      "source": "everything-is-followed-in-one-stream",
-      "target": "the-mesh-is-operated-from-one-page",
-      "kind": "requires"
-    },
-    {
-      "source": "prismatic-lumen",
-      "target": "the-mesh-is-operated-from-one-page",
       "kind": "requires"
     },
     {

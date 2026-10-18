@@ -8,11 +8,10 @@ outcome: "Derive scenarios (no-op, one input, batch, plus the ten of c255#7) are
 current_state: "Verified on master: the benchmark harness (I0823-I0827, rule rust-benchmark-coverage, test/cases/82_bench_check.sh) has no derive target, and .ai/repo/benchmarks/ holds economics, observatory, pages and rust only. MJ_TIMING phase timers exist in lib/common.sh. generate::write is atomic per file, not per set. Off master: I2349 (rescue ref) plans the derive and CI budgets."
 desired_state: "I2349 revived and amended; I3236 parallel nodes; I3237 transactional publication. Order follows c292#2: baseline, then no-op and invalidation, then graph and cache, then parallelism, then transactional publish, so each regression can be attributed."
 scope:
-  - "apps/majordomus-cli/src/derivation"
+  - "apps/majordomus-cli/src"
   - "apps/majordomus-cli/src/bench"
   - ".ai/repo/benchmarks"
   - "scripts/derive"
-  - "test/cases"
   - "docs/PERFORMANCE.md"
 non_scope:
   - "Cold rebuild budgets (separate contract)"

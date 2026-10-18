@@ -12,7 +12,6 @@ scope:
   - "test/mesh-lab"
   - "scripts/pages"
   - "docs/MESH.md"
-  - "test/cases"
 non_scope:
   - "WebRTC data channels for browsers: after the browser-authentication question (proposed on an unlanded branch, no ADR on master) is decided"
   - "Route learning from telemetry: only after the relay is measured"
@@ -24,11 +23,11 @@ validation:
   - "majordomus plan validate"
 evidence_required: []
 depends_on:
-  - "the-mesh-works-out-of-the-box"
   - "runtime-trust"
   - "mesh-journal-converges"
 risks:
   - "A relay is a hub that carries traffic: bandwidth and trust both grow; relayed frames stay authenticated by the existing link signatures but are not encrypted, so a relay hub is private, overlay or behind an encrypted ingress (case 491)"
   - "Tailnet users may never need it (open question)"
+  - "It follows the-mesh-works-out-of-the-box in practice; the edge is kept off the milestone so two milestones of one order are not reordered."
 created_at: 2026-10-18
 updated_at: 2026-10-18

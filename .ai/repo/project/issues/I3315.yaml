@@ -10,7 +10,6 @@ current_state: "Verified on master 707a04c7ce8: .github/actions/image-smoke/acti
 desired_state: "The image smoke sends an MCP initialize and one read (tools/list) and asserts a protocol answer with the image's server info, opens a WebSocket on /events, reads the first frame the protocol promises and closes cleanly; any failure names the step. Whether the probe goes through the published port or from inside the container is decided by what ADR 0126 (proposed) admits for an unauthenticated caller, read from the deployment object, not assumed."
 scope:
   - ".github/actions/image-smoke"
-  - "test/cases"
   - "docs/DISTRIBUTION.md"
 non_scope:
   - "Deploying to a hosting provider"

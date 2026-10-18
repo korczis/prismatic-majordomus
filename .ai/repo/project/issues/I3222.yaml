@@ -9,8 +9,8 @@ why: "The 2026-10-18 live-fabric design asked for chaos tests for replay, resync
 current_state: "Verified on master 707a04c7ce8: apps/majordomus-cli/src/http/events.rs has replay and heartbeat tests for executions; nothing in test/, scripts/ or apps/majordomus-cli/tests injects faults. In flight, not on master: PR #1178's case 3046 and 5a's blackboard branch with stream.resync and cases 3381 and 3382, which cover stopping and restarting the server."
 desired_state: "One case holds convergence for every follow stream the server serves."
 scope:
-  - "test/cases"
-  - "apps/majordomus-cli/tests"
+  - "apps/majordomus-cli/src/http/events.rs"
+  - "apps/majordomus-cli/src/http/ws.rs"
 non_scope:
   - "Changing the protocol"
 serves:

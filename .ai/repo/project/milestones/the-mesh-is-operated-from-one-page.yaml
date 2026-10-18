@@ -12,7 +12,6 @@ scope:
   - "apps/majordomus-cli/src/capability/builtin/executions.rs"
   - "apps/majordomus-cli/src/execution"
   - "docs/MAJORDOMUS_UI.md"
-  - "test/cases"
 non_scope:
   - "A Lumen backend or repository (open question)"
   - "Federation with a second project"
@@ -25,9 +24,9 @@ validation:
 evidence_required: []
 depends_on:
   - "web-sign-in"
-  - "everything-is-followed-in-one-stream"
   - "prismatic-lumen"
 risks:
   - "False authority: the page must never say healthy without evidence (10-18 critique)"
+  - "It follows everything-is-followed-in-one-stream in practice; the edge is kept off the milestone so two milestones of one order are not reordered."
 created_at: 2026-10-18
 updated_at: 2026-10-18

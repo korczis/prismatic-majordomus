@@ -9,9 +9,8 @@ why: "The owner asked from 2026-09-15 to 2026-10-16 that Majordomus find what is
 current_state: "apps/majordomus-cli/src/intent_review.rs judges gap records under .ai/repo/project/gaps/; capability/builtin/intents.rs declares list, record, validate, coverage, preflight, binding and propose; nothing drafts a gap."
 desired_state: "intents.draft_gap is pure over IntentView, the evidence index and the ledger; its output passes intent validate's gap checks unchanged; nothing is written."
 scope:
-  - "apps/majordomus-cli/src/intent_draft.rs"
+  - "apps/majordomus-cli/src"
   - "apps/majordomus-cli/src/capability/builtin/intents.rs"
-  - "apps/majordomus-cli/tests/intent_draft.rs"
   - "docs/PLANNING.md"
   - ".ai/repo/project/issues"
 acceptance_criteria:

@@ -9,10 +9,9 @@ why: "Owner standing orders 2026-10-10 and 2026-10-13; ADR 0124 asks for the nou
 current_state: "campaigns/ on master keeps packs as received under MANIFEST.sha256 (scripts/ci/campaigns-check, case 340, rule project.a-brief-is-kept-as-received); proposed ADRs 0180 (campaign) and 0194 (intake) pick opposite nouns on this branch; I3167 and I3169 are staged, not landed."
 desired_state: "One noun (campaign), one store (campaigns/), one writer (campaign add); no record kind, schema or capability is added."
 scope:
-  - "apps/majordomus-cli/tests/intake.rs"
   - ".ai/repo/adrs/0194-an-ingested-brief-is-an-intake-revision-and-its-requirements-are.md"
   - ".ai/repo/adrs/0180-a-prompt-pack-is-a-campaign-kept-as-received-indexed-as-a-kind-a.md"
-  - ".ai/repo/project/intents/a-brief-is-reconciled-into-the-plan.yaml"
+  - ".ai/repo/project/intents"
   - "campaigns/README.md"
 non_scope:
   - "A majordomus.intake/v1 schema, an intake store, or the noun 'intake' in any kind, command or capability name (ADR 0180, project.no-new-nouns)"

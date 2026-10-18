@@ -10,7 +10,6 @@ current_state: "scripts/site-deploy refuses a HEAD not on origin/master and a bu
 desired_state: "site-deploy reads the served commit from gh-pages:build.json and refuses a build when HEAD is its strict ancestor, with --any-ref the only override; --release-metadata keeps only its release-version guard; scripts/pages reports the publication's freshness with the same predicate."
 scope:
   - "scripts/site-deploy"
-  - "test/cases"
   - "docs/GITHUB_PAGES_ARCHITECTURE.md"
   - "scripts/pages"
   - "test/cases/1041_a_release_publishes_its_metadata.sh"
