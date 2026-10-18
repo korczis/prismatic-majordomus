@@ -1,0 +1,94 @@
+---
+schema: adr/v1
+id: adr-0173
+kind: adr
+title: A screen behind the repository says why it is behind, and a page follows the repository by a pulse instead of by the minute
+status: proposed
+date: 2026-10-17
+tags:
+  - ui
+  - observatory
+  - freshness
+related:
+  - file:.ai/repo/adrs/0142-no-screen-waits-for-a-source.md
+  - file:.ai/repo/adrs/0158-the-observatory-draws-only-what-was-observed.md
+  - file:.ai/repo/adrs/0135-majordomus-ui-is-the-primary-surface.md
+  - file:.ai/repo/rules/project/ui-derived-state.v1.md
+  - test:test/cases/3095_a_display_behind_the_repository_says_why.sh
+  - file:apps/majordomus-cli/src/live.rs
+  - file:apps/majordomus-cli/src/ui/mod.rs
+  - file:share/ui/ui.js
+  - file:share/ui/observatory.js
+provenance:
+  origin: authored
+---
+
+# 173. A screen behind the repository says why it is behind, and a page follows the repository by a pulse instead of by the minute
+
+## Context
+
+On 2026-10-16 the UI and the kiosk of one machine looked static, outdated and not dynamic: the
+Dashboard showed release 0.26.0 and "next 0.27.0" while the repository was at 0.27.0, the kiosk
+showed eight scenes where the build has fifteen, and the kiosk's status read `LIVE · READ ...`.
+The server answered from the generation it had, and said "The repository changed: this screen
+shows it as it was, and is being read again" (ADR 0142), for as long as the page was open.
+
+Two things were false at once:
+
+1. A reload that **fails** (the layer would not load: a manifest mid-edit, a checkout half
+   written) was recorded and retried every `RETRY_AFTER`, but the page said it was "being read
+   again", which is true of a reload that is running and not of one that fails every five
+   seconds. The reason was in the server's log and nowhere a reader looks.
+2. The kiosk's `LIVE` meant "its last asking was less than 90 seconds ago". It was: the server
+   answered every asking, from the generation it last loaded. A display that says LIVE over a
+   picture the server knows to be old is the failure ADR 0158 exists to prevent.
+
+And the page, as built, learned of a moved repository once a minute (`REFRESH_MS`), which is
+the other half of "not dynamic".
+
+## Decision
+
+1. **The server says how a generation stands.** `Live::lag()` is `Current`, `Reloading`, or
+   `Failed { error, retry_in }` where `error` is the first line of what the load said and
+   `retry_in` the time to the next attempt. It reads the stamp, and nothing else, so it costs
+   what a request already costs.
+2. **A screen behind a failing reload says so.** The note a page opens with names the failure,
+   the generation it shows and the seconds to the next attempt, and carries `data-reload-failed`
+   beside `data-catching-up`. A reload in progress says what it always said.
+3. **`GET /ui/pulse` is the page's question.** It answers `ui-pulse/v1` (generation, head,
+   version, lag, error, retry_in_s), is never cached, and starts the reload a moved repository
+   is owed (the same non-waiting call a page makes), so a UI left open follows the repository
+   with nobody navigating. It is not a screen, and it reads no source.
+4. **A page asks the pulse every few seconds while it is seen.** `ui.js` every 3 s and the
+   kiosk every 4 s; when the generation changed, or the server caught up, the page is read
+   again at once. The minute stays as the floor. A snapshot asks nothing (ADR 0141).
+5. **The kiosk says `BEHIND`, with the reason, whenever the pulse says the server is not
+   current.** `LIVE` is a claim about the server's standing as well as the age of the reading.
+
+## Consequences
+
+- A server that cannot read its repository says so on every surface that reads it, with the
+  reason and the clock, instead of holding a reassuring sentence.
+- A page follows the repository within seconds, for the price of a response of a few bytes
+  per open page per interval, answered from memory.
+- The pulse is a poll. The push of ADR 0162 replaces it when it lands; the page's reaction (read
+  itself again) does not change, and the pulse stays as the fallback for a client without it.
+- The published site is a snapshot and says so; it never asks a pulse.
+
+## Alternatives rejected
+
+**Server-sent events now.** The server is a thread-per-request `tiny-http`; a held connection
+per open page is the design ADR 0162 makes on purpose, with its own limits. Doing it here would
+build it twice.
+
+**Showing the error text on the kiosk's canvas only.** The Dashboard, the Roadmap and every
+other screen carry the same note; the cause is in the server, not in one display.
+
+## Verification
+
+`live::tests::a_generation_behind_a_failing_load_says_why_and_when_it_is_tried_again` holds the
+three states and the countdown. `ui::tests::a_screen_behind_a_failing_reload_says_why_and_a_reload_in_progress_says_so`
+and `ui::tests::the_pulse_names_the_generation_and_how_it_stands` hold the note and the answer.
+Case 3095 drives the real `share/ui/observatory.js` in a browser against a fixture server:
+LIVE when current, `BEHIND` with the server's reason when its load fails, a page read again at
+once when the generation moves, and LIVE again once it catches up, with no console error.
