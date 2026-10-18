@@ -39881,6 +39881,51 @@
         }
       },
       {
+        "id": "majordomus://issue/I2900",
+        "kind": "issue",
+        "label": "I2900",
+        "summary": "Every issue id on the intent workspace is a link, the shared-scope pairs are one folded line, and no missing library is asked for",
+        "route": "/cockpit/objects/issue/i2900",
+        "source": ".ai/repo/project/issues/I2900.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "No issue id in the workspace's main is bare text",
+            "The shared-scope pairs are one closed disclosure whose summary gives their count, and open to links to both issues of each pair",
+            "A distribution without the vendored graph library is never asked for it: no request, no failed response, no console error"
+          ],
+          "created_at": "2026-10-17",
+          "current_state": "The next-issue tile and the shared-scope lines show issue ids as text; the pairs are listed in full under a heading.",
+          "depends_on": [
+            "I2812"
+          ],
+          "desired_state": "Every issue id the workspace shows is a link, and the pairs are one counted, folded line.",
+          "evidence_required": [
+            "idd_loop_case"
+          ],
+          "milestone": "idd-workspace",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui/idd.rs",
+            "test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh",
+            ".ai/repo/project",
+            "docs",
+            "site",
+            ".gitattributes"
+          ],
+          "serves": [
+            "the-owner-directs-work-from-the-ui#the-loop-is-walked-end-to-end"
+          ],
+          "slug": "every-issue-on-the-workspace-is-a-link",
+          "updated_at": "2026-10-17",
+          "validation": [
+            "bash test/run.sh --runs-in ui",
+            "cargo test --test ui_idd"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "label": "a-commit-stood-behind-a-build-lock",
@@ -84686,6 +84731,21 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2900",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2900",
+        "target": "majordomus://issue/I2812",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2900",
+        "target": "majordomus://milestone/idd-workspace",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -94717,8 +94777,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2968,
-      "edges": 6517,
+      "nodes": 2969,
+      "edges": 6520,
       "acyclic": false,
       "truncated": false
     }
