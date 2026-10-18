@@ -1,0 +1,26 @@
+id: I2990
+milestone: a-second-adopter-is-served
+title: "The worktree topology the host templates describe is a policy key, not this repository's -wt convention"
+slug: the-worktree-topology-is-declared
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Add a policy key (worktree.topology: majordomus|external, with an external instructions string) that the default claude-code and agents templates read, so an adopter with its own worktree convention gets correct bootstrap text without forking the templates, and add the server and mesh start sequence for clients without a session-start hook."
+why: "An adopter's 0.29.0 field report (prismatic-platform, 2026-10-18, item 8): the default templates hardcode this repository's `-wt` topology with no policy key, and omit the start sequence Codex and Gemini need. Every such adopter forks both templates and re-diffs them on each upgrade."
+current_state: "The templates carry the -wt topology as text."
+desired_state: "The topology is declared in policy and rendered from it."
+scope:
+  - "share/skeleton/policy.yaml"
+  - "share/templates"
+  - "lib/update.sh"
+  - "test/cases"
+depends_on: []
+acceptance_criteria:
+  - "worktree.topology: external renders the adopter's instructions and no -wt text"
+  - "The default renders what the templates render today, byte for byte"
+validation:
+  - "majordomus plan validate"
+evidence_required:
+  - "case_worktree_topology_policy"
+created_at: 2026-10-18
+updated_at: 2026-10-18

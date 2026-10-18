@@ -41807,6 +41807,288 @@
         }
       },
       {
+        "id": "majordomus://issue/I2988",
+        "kind": "issue",
+        "label": "I2988",
+        "summary": "majordomus update rewrites a host file's policy stamp only when the policy that region reads changed",
+        "route": "/cockpit/objects/issue/i2988",
+        "source": ".ai/repo/project/issues/I2988.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "An edit to a policy key no template reads leaves every projected host file byte-identical",
+            "An edit to a key a template reads changes the stamp and the region of exactly the host files that read it"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "The stamp is the digest of the whole policy.",
+          "depends_on": [],
+          "desired_state": "The stamp names the policy inputs the template reads; an unrelated policy edit changes no host file.",
+          "evidence_required": [
+            "case_policy_stamp"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "lib/update.sh",
+            "test/cases"
+          ],
+          "slug": "the-policy-stamp-follows-what-the-region-reads",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2989",
+        "kind": "issue",
+        "label": "I2989",
+        "summary": "doctor's bootstrap check judges the generated region of a host file, not the adopter's text around it",
+        "route": "/cockpit/objects/issue/i2989",
+        "source": ".ai/repo/project/issues/I2989.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A region-mode AGENTS.md with headings and bold bullets outside the region passes the bootstrap check",
+            "A rule bullet inside the region still fails it"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "The regex runs over the whole host file.",
+          "depends_on": [],
+          "desired_state": "Only the region is judged; text outside it is the adopter's.",
+          "evidence_required": [
+            "case_bootstrap_region"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "objective": "Make the bootstrap-integrity check that refuses a rule corpus in AGENTS.md read only the generated region of a region-mode projection, and report text outside the region at WARN at most.",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "lib/doctor.sh",
+            "test/cases"
+          ],
+          "slug": "the-bootstrap-check-judges-only-the-region",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2990",
+        "kind": "issue",
+        "label": "I2990",
+        "summary": "The worktree topology the host templates describe is a policy key, not this repository's -wt convention",
+        "route": "/cockpit/objects/issue/i2990",
+        "source": ".ai/repo/project/issues/I2990.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "worktree.topology: external renders the adopter's instructions and no -wt text",
+            "The default renders what the templates render today, byte for byte"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "The templates carry the -wt topology as text.",
+          "depends_on": [],
+          "desired_state": "The topology is declared in policy and rendered from it.",
+          "evidence_required": [
+            "case_worktree_topology_policy"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "share/skeleton/policy.yaml",
+            "share/templates",
+            "lib/update.sh",
+            "test/cases"
+          ],
+          "slug": "the-worktree-topology-is-declared",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2991",
+        "kind": "issue",
+        "label": "I2991",
+        "summary": "majordomus help lists every command, and --help works on every subcommand",
+        "route": "/cockpit/objects/issue/i2991",
+        "source": ".ai/repo/project/issues/I2991.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "majordomus help names every command of the registry",
+            "--help exits 0 with usage on every subcommand path the registry declares"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "help lists the shell commands; --help is missing on some subcommands.",
+          "depends_on": [],
+          "desired_state": "One derived list; --help answers everywhere.",
+          "evidence_required": [
+            "case_help_everywhere"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "lib",
+            "bin/majordomus",
+            "apps/majordomus-cli/src/cli.rs",
+            "test/cases"
+          ],
+          "slug": "help-covers-every-command",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2992",
+        "kind": "issue",
+        "label": "I2992",
+        "summary": "A command reports one WARN line per discovery class, and example and template files are not secrets",
+        "route": "/cockpit/objects/issue/i2992",
+        "source": ".ai/repo/project/issues/I2992.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A repository with ten tracked .env.example files logs at most one tracked_secret line per call, and none for templates",
+            "doctor still lists every file"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "One WARN per file, on every call.",
+          "depends_on": [],
+          "desired_state": "One line per class; templates are not secrets.",
+          "evidence_required": [
+            "case_one_warning_per_class"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src",
+            "test/cases"
+          ],
+          "slug": "one-warning-per-discovery-class",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2994",
+        "kind": "issue",
+        "label": "I2994",
+        "summary": "A source class can index provider-native documents whose front matter is not the document kind's",
+        "route": "/cockpit/objects/issue/i2994",
+        "source": ".ai/repo/project/issues/I2994.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A SKILL.md with its own front matter is indexed under a class with front_matter: ignore",
+            "Without the option the document kind still refuses unknown front matter"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "Foreign front matter makes a document unindexable.",
+          "depends_on": [],
+          "desired_state": "A class can say the front matter is not ours.",
+          "evidence_required": [
+            "case_front_matter_ignore"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "parallel_safe": true,
+          "priority": "p3",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src",
+            "share/schemas",
+            "test/cases"
+          ],
+          "slug": "a-source-class-ignores-foreign-front-matter",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "majordomus plan validate"
+          ],
+          "why": "An adopter's 0.29.0 field report (prismatic-platform, 2026-10-18, item 16): provider-native files with their own front matter cannot be indexed, and a source class is all or nothing."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2996",
+        "kind": "issue",
+        "label": "I2996",
+        "summary": "A hook-opened client session on the mesh closes with its task, idles out, and stale ones can be closed at once",
+        "route": "/cockpit/objects/issue/i2996",
+        "source": ".ai/repo/project/issues/I2996.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "finish closes the hook-opened sessions bound to the finished task",
+            "An idle hook-opened session past its TTL is closed and its claims released",
+            "mesh session close --all-stale closes exactly the stale ones in one call"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "Nothing closes a hook-opened session.",
+          "depends_on": [],
+          "desired_state": "A session ends with its work, or idles out, or is closed in one call.",
+          "evidence_required": [
+            "case_sessions_close_with_work"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh",
+            "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+            "lib/session.sh",
+            "test/cases"
+          ],
+          "slug": "client-sessions-close-with-their-work",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2997",
+        "kind": "issue",
+        "label": "I2997",
+        "summary": "A tracked document that is not UTF-8 is a diagnostic, not an ERROR on every command",
+        "route": "/cockpit/objects/issue/i2997",
+        "source": ".ai/repo/project/issues/I2997.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A tracked Latin-1 markdown file yields one WARN diagnostic and no ERROR line on mesh review request"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "An ERROR on every call.",
+          "depends_on": [],
+          "desired_state": "One diagnostic in the index, readable through doctor.",
+          "evidence_required": [
+            "case_non_utf8_document"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "parallel_safe": true,
+          "priority": "p3",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src",
+            "test/cases"
+          ],
+          "slug": "a-non-utf8-document-is-a-diagnostic",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "majordomus plan validate"
+          ],
+          "why": "An adopter's report (prismatic-platform, 2026-10-18, item 22): `mesh review request` logged an ERROR for docs/development/BATCH_TEMPLATE.md, a non-UTF-8 tracked document, on every call."
+        }
+      },
+      {
         "id": "majordomus://issue/I3000",
         "kind": "issue",
         "label": "I3000",
@@ -87801,6 +88083,86 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2988",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2988",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2989",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2989",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2990",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2990",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2991",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2991",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2992",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2992",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2994",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2994",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2996",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2996",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2997",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2997",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I3000",
         "target": "kind:issue",
         "kind": "is_a"
@@ -98062,8 +98424,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3052,
-      "edges": 6697,
+      "nodes": 3060,
+      "edges": 6713,
       "acyclic": false,
       "truncated": false
     }

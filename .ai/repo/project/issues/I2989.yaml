@@ -1,0 +1,24 @@
+id: I2989
+milestone: a-second-adopter-is-served
+title: "doctor's bootstrap check judges the generated region of a host file, not the adopter's text around it"
+slug: the-bootstrap-check-judges-only-the-region
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Make the bootstrap-integrity check that refuses a rule corpus in AGENTS.md read only the generated region of a region-mode projection, and report text outside the region at WARN at most."
+why: "An adopter's 0.29.0 field report (prismatic-platform, 2026-10-18, item 7): the doctor FAIL 'AGENTS.md carries a rule corpus' matched `^- \\*\\*|^### ` over the whole host file, so a hand-written agent catalogue around the region (link lists, a model-tier list, headings) failed doctor."
+current_state: "The regex runs over the whole host file."
+desired_state: "Only the region is judged; text outside it is the adopter's."
+scope:
+  - "lib/doctor.sh"
+  - "test/cases"
+depends_on: []
+acceptance_criteria:
+  - "A region-mode AGENTS.md with headings and bold bullets outside the region passes the bootstrap check"
+  - "A rule bullet inside the region still fails it"
+validation:
+  - "majordomus plan validate"
+evidence_required:
+  - "case_bootstrap_region"
+created_at: 2026-10-18
+updated_at: 2026-10-18

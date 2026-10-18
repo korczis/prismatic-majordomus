@@ -1,0 +1,24 @@
+id: I2992
+milestone: a-second-adopter-is-served
+title: "A command reports one WARN line per discovery class, and example and template files are not secrets"
+slug: one-warning-per-discovery-class
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Fold the per-file tracked_secret and out_of_scope warnings a CLI call logs into one summary line per class per process, with the details under doctor, and treat *.example and *.template files as non-secret by default."
+why: "An adopter's 0.29.0 field report (prismatic-platform, 2026-10-18, item 14): every CLI call logs about 37 WARN lines to stderr (tracked_secret for .env.example and .env.*.template, out_of_scope for each root *.md), undeduplicated and unsuppressible, and agents ingest them on every call."
+current_state: "One WARN per file, on every call."
+desired_state: "One line per class; templates are not secrets."
+scope:
+  - "apps/majordomus-cli/src"
+  - "test/cases"
+depends_on: []
+acceptance_criteria:
+  - "A repository with ten tracked .env.example files logs at most one tracked_secret line per call, and none for templates"
+  - "doctor still lists every file"
+validation:
+  - "majordomus plan validate"
+evidence_required:
+  - "case_one_warning_per_class"
+created_at: 2026-10-18
+updated_at: 2026-10-18

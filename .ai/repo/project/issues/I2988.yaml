@@ -1,0 +1,24 @@
+id: I2988
+milestone: a-second-adopter-is-served
+title: "majordomus update rewrites a host file's policy stamp only when the policy that region reads changed"
+slug: the-policy-stamp-follows-what-the-region-reads
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Make the policy stamp in each projected host file a digest of the policy inputs its template reads, not of the whole policy, so that an edit to a key no region reads leaves CLAUDE.md, AGENTS.md and the other projections byte-identical."
+why: "An adopter's 0.29.0 field report (prismatic-platform, 2026-10-18, item 6): every policy edit changed the stamp in every projected host file (64fcb0352b31 -> 709066fd50de) while the region digest stayed a2b32b240299613d, so CLAUDE.md and AGENTS.md changed in every policy diff."
+current_state: "The stamp is the digest of the whole policy."
+desired_state: "The stamp names the policy inputs the template reads; an unrelated policy edit changes no host file."
+scope:
+  - "lib/update.sh"
+  - "test/cases"
+depends_on: []
+acceptance_criteria:
+  - "An edit to a policy key no template reads leaves every projected host file byte-identical"
+  - "An edit to a key a template reads changes the stamp and the region of exactly the host files that read it"
+validation:
+  - "majordomus plan validate"
+evidence_required:
+  - "case_policy_stamp"
+created_at: 2026-10-18
+updated_at: 2026-10-18

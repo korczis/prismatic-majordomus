@@ -1,0 +1,25 @@
+id: I2994
+milestone: a-second-adopter-is-served
+title: "A source class can index provider-native documents whose front matter is not the document kind's"
+slug: a-source-class-ignores-foreign-front-matter
+priority: p3
+profile: implementation
+parallel_safe: true
+objective: "Add a source-class option `front_matter: ignore` that indexes the body and first heading of a document whose front matter belongs to another tool (.claude/skills/*/SKILL.md, an app README with `version:`), instead of refusing it under the document kind's additionalProperties: false."
+why: "An adopter's 0.29.0 field report (prismatic-platform, 2026-10-18, item 16): provider-native files with their own front matter cannot be indexed, and a source class is all or nothing."
+current_state: "Foreign front matter makes a document unindexable."
+desired_state: "A class can say the front matter is not ours."
+scope:
+  - "apps/majordomus-cli/src"
+  - "share/schemas"
+  - "test/cases"
+depends_on: []
+acceptance_criteria:
+  - "A SKILL.md with its own front matter is indexed under a class with front_matter: ignore"
+  - "Without the option the document kind still refuses unknown front matter"
+validation:
+  - "majordomus plan validate"
+evidence_required:
+  - "case_front_matter_ignore"
+created_at: 2026-10-18
+updated_at: 2026-10-18

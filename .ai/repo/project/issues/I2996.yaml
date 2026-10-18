@@ -1,0 +1,27 @@
+id: I2996
+milestone: a-second-adopter-is-served
+title: "A hook-opened client session on the mesh closes with its task, idles out, and stale ones can be closed at once"
+slug: client-sessions-close-with-their-work
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Close the claude-code (and other hook-opened) mesh sessions bound to a task or branch head when `finish` or `handover --close` ends it, give hook-opened sessions an idle TTL, and add `mesh session close --all-stale` for sessions whose task is closed or whose branch has merged."
+why: "An adopter's report (prismatic-platform, 2026-10-18, item 21): `mesh peers` showed dozens of claude-code sessions still active on worktree runtimes whose task sessions had closed and whose branches had merged (4 on one runtime, 7 on another). Their stale intents flooded the peers and brief views, their claims outlive the work, and closing them one by one took more than 30 s per call at load 60."
+current_state: "Nothing closes a hook-opened session."
+desired_state: "A session ends with its work, or idles out, or is closed in one call."
+scope:
+  - "apps/majordomus-cli/src/mesh"
+  - "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+  - "lib/session.sh"
+  - "test/cases"
+depends_on: []
+acceptance_criteria:
+  - "finish closes the hook-opened sessions bound to the finished task"
+  - "An idle hook-opened session past its TTL is closed and its claims released"
+  - "mesh session close --all-stale closes exactly the stale ones in one call"
+validation:
+  - "majordomus plan validate"
+evidence_required:
+  - "case_sessions_close_with_work"
+created_at: 2026-10-18
+updated_at: 2026-10-18

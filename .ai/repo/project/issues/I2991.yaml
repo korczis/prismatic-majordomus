@@ -1,0 +1,26 @@
+id: I2991
+milestone: a-second-adopter-is-served
+title: "majordomus help lists every command, and --help works on every subcommand"
+slug: help-covers-every-command
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Make `majordomus help` list every command the executable and the shell layer serve (mesh, reasoning, monitor, brief, serve among them), derived from the command registry, and make `--help` answer on every subcommand path, `rules vendor` and `knowledge observe` included."
+why: "An adopter's 0.29.0 field report (prismatic-platform, 2026-10-18, item 11): `majordomus help` lists only shell-dispatched commands; `majordomus rules vendor --help` says `unknown command: rules vendor`; `majordomus knowledge observe --help` says `unknown option --help`."
+current_state: "help lists the shell commands; --help is missing on some subcommands."
+desired_state: "One derived list; --help answers everywhere."
+scope:
+  - "lib"
+  - "bin/majordomus"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "test/cases"
+depends_on: []
+acceptance_criteria:
+  - "majordomus help names every command of the registry"
+  - "--help exits 0 with usage on every subcommand path the registry declares"
+validation:
+  - "majordomus plan validate"
+evidence_required:
+  - "case_help_everywhere"
+created_at: 2026-10-18
+updated_at: 2026-10-18

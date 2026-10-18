@@ -1,0 +1,23 @@
+id: I2997
+milestone: a-second-adopter-is-served
+title: "A tracked document that is not UTF-8 is a diagnostic, not an ERROR on every command"
+slug: a-non-utf8-document-is-a-diagnostic
+priority: p3
+profile: implementation
+parallel_safe: true
+objective: "Report a tracked document that cannot be read as UTF-8 once, as a WARN-class index diagnostic naming the file, instead of an ERROR logged by every command that builds the index (mesh review request among them)."
+why: "An adopter's report (prismatic-platform, 2026-10-18, item 22): `mesh review request` logged an ERROR for docs/development/BATCH_TEMPLATE.md, a non-UTF-8 tracked document, on every call."
+current_state: "An ERROR on every call."
+desired_state: "One diagnostic in the index, readable through doctor."
+scope:
+  - "apps/majordomus-cli/src"
+  - "test/cases"
+depends_on: []
+acceptance_criteria:
+  - "A tracked Latin-1 markdown file yields one WARN diagnostic and no ERROR line on mesh review request"
+validation:
+  - "majordomus plan validate"
+evidence_required:
+  - "case_non_utf8_document"
+created_at: 2026-10-18
+updated_at: 2026-10-18

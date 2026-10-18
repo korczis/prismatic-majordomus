@@ -6,23 +6,23 @@
     "version": "0.30.0"
   },
   "registry": {
-    "fingerprint": "2450cb695929a4de209be81e50d934fdac8163f8ce3c057cb4f8d0b6ce721ed0",
+    "fingerprint": "11a946406f9434230f4e5242b23337285f1726deabbd2b0a6aee742b785137cc",
     "summary": {
-      "total": 2619,
+      "total": 2627,
       "builtin": 206,
-      "declarative": 2413,
+      "declarative": 2421,
       "by_kind": {
         "command": 31,
         "query": 175,
-        "resource": 2413
+        "resource": 2421
       },
       "by_stability": {
         "behaviorally_verified": 142,
         "experimental": 55,
-        "implemented": 2422
+        "implemented": 2430
       },
       "mcp_tools": 196,
-      "mcp_resources": 2468,
+      "mcp_resources": 2476,
       "http_routes": 201,
       "cli_commands": 111,
       "modules": 92,
@@ -85404,7 +85404,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 474,
+        "capabilities": 482,
         "capability_ids": []
       },
       {
@@ -86070,7 +86070,7 @@
     ]
   },
   "index": {
-    "fingerprint": "c8eec342bfd03f58e456cca432a520693d4c07f8190b76f353858e735dc1c9bf",
+    "fingerprint": "cf89d4a716f0c9f2c411bf6ea7d9b608bf97546ce35edbc762963446665be427",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -86110,7 +86110,7 @@
       "gap": 4,
       "implementation": 52,
       "intent": 5,
-      "issue": 474,
+      "issue": 482,
       "knowledge": 4,
       "mesh-declaration": 1,
       "milestone": 42,
@@ -92447,7 +92447,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 169709
+        "bytes": 203721
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -101082,6 +101082,94 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 3039
+      },
+      {
+        "uri": "majordomus://issue/I2988",
+        "kind": "issue",
+        "identity": "I2988",
+        "title": "majordomus update rewrites a host file's policy stamp only when the policy that region reads changed",
+        "description": "Make the policy stamp in each projected host file a digest of the policy inputs its template reads, not of the whole policy, so that an edit to a key no region reads leaves CLAUDE.md, AGENTS.md and the other projections byte-identical.",
+        "path": ".ai/repo/project/issues/I2988.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1401
+      },
+      {
+        "uri": "majordomus://issue/I2989",
+        "kind": "issue",
+        "identity": "I2989",
+        "title": "doctor's bootstrap check judges the generated region of a host file, not the adopter's text around it",
+        "description": "Make the bootstrap-integrity check that refuses a rule corpus in AGENTS.md read only the generated region of a region-mode projection, and report text outside the region at WARN at most.",
+        "path": ".ai/repo/project/issues/I2989.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1270
+      },
+      {
+        "uri": "majordomus://issue/I2990",
+        "kind": "issue",
+        "identity": "I2990",
+        "title": "The worktree topology the host templates describe is a policy key, not this repository's -wt convention",
+        "description": "Add a policy key (worktree.topology: majordomus|external, with an external instructions string) that the default claude-code and agents templates read, so an adopter with its own worktree convention gets correct bootstrap text without forking the templates, and add the server and mesh start sequence for clients without a session-start hook.",
+        "path": ".ai/repo/project/issues/I2990.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1480
+      },
+      {
+        "uri": "majordomus://issue/I2991",
+        "kind": "issue",
+        "identity": "I2991",
+        "title": "majordomus help lists every command, and --help works on every subcommand",
+        "description": "Make `majordomus help` list every command the executable and the shell layer serve (mesh, reasoning, monitor, brief, serve among them), derived from the command registry, and make `--help` answer on every subcommand path, `rules vendor` and `knowledge observe` included.",
+        "path": ".ai/repo/project/issues/I2991.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1331
+      },
+      {
+        "uri": "majordomus://issue/I2992",
+        "kind": "issue",
+        "identity": "I2992",
+        "title": "A command reports one WARN line per discovery class, and example and template files are not secrets",
+        "description": "Fold the per-file tracked_secret and out_of_scope warnings a CLI call logs into one summary line per class per process, with the details under doctor, and treat *.example and *.template files as non-secret by default.",
+        "path": ".ai/repo/project/issues/I2992.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1284
+      },
+      {
+        "uri": "majordomus://issue/I2994",
+        "kind": "issue",
+        "identity": "I2994",
+        "title": "A source class can index provider-native documents whose front matter is not the document kind's",
+        "description": "Add a source-class option `front_matter: ignore` that indexes the body and first heading of a document whose front matter belongs to another tool (.claude/skills/*/SKILL.md, an app README with `version:`), instead of refusing it under the document kind's additionalProperties: false.",
+        "path": ".ai/repo/project/issues/I2994.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1300
+      },
+      {
+        "uri": "majordomus://issue/I2996",
+        "kind": "issue",
+        "identity": "I2996",
+        "title": "A hook-opened client session on the mesh closes with its task, idles out, and stale ones can be closed at once",
+        "description": "Close the claude-code (and other hook-opened) mesh sessions bound to a task or branch head when `finish` or `handover --close` ends it, give hook-opened sessions an idle TTL, and add `mesh session close --all-stale` for sessions whose task is closed or whose branch has merged.",
+        "path": ".ai/repo/project/issues/I2996.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1656
+      },
+      {
+        "uri": "majordomus://issue/I2997",
+        "kind": "issue",
+        "identity": "I2997",
+        "title": "A tracked document that is not UTF-8 is a diagnostic, not an ERROR on every command",
+        "description": "Report a tracked document that cannot be read as UTF-8 once, as a WARN-class index diagnostic naming the file, instead of an ERROR logged by every command that builds the index (mesh review request among them).",
+        "path": ".ai/repo/project/issues/I2997.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1102
       },
       {
         "uri": "majordomus://issue/I3000",
@@ -112133,7 +112221,7 @@
       "identity": [
         "id"
       ],
-      "objects": 474
+      "objects": 482
     },
     {
       "name": "knowledge",
