@@ -11,7 +11,6 @@ current_state: "The stamp is the digest of the whole policy."
 desired_state: "The stamp names the policy inputs the template reads; an unrelated policy edit changes no host file."
 scope:
   - "lib/update.sh"
-  - "test/cases"
 depends_on: []
 acceptance_criteria:
   - "An edit to a policy key no template reads leaves every projected host file byte-identical"
