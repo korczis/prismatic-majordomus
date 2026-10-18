@@ -1,0 +1,30 @@
+id: a-person-runs-majordomus-from-a-phone
+title: "A person runs Majordomus from a phone with nothing missing that the desktop offers"
+statement: "Opening /ui, /cockpit or majordomus.dev on a phone, a person reads the state, finds what blocks the work, opens an intent, an issue or a peer, makes the move it admits and reads the evidence, with menus that open and close as a phone expects, controls a thumb can hit, and dense tables and graphs drawn for the width."
+invariants:
+  - "One component, one route set and one design declaration serve every width; a narrow width is a projection, never a second UI"
+  - "The widths a surface is held at are the ones the design declares, never a list kept by a test"
+non_goals:
+  - "A native or separate mobile application"
+  - "Hiding a function below a width"
+milestones:
+  - "the-ui-works-on-a-phone"
+satisfaction:
+  - id: the-menu-behaves
+    criterion: "The narrow-screen drawer of /ui and /cockpit opens with and without scripts, closes on Escape, on a choice and on its backdrop, returns focus to its toggle, and is the only menu toggle, at every width the design declares (planned proof: scripts/lib/cockpit-probe.mjs, driving the drawer at every width /api/v1/design declares (to be extended))"
+    evidence: command
+    ref: "majordomus intent explain a-person-runs-majordomus-from-a-phone"
+  - id: targets-are-reachable
+    criterion: "The ui audit, through axe's target-size check raised to the touch target share/design/tokens.yaml declares, refuses a control smaller than that target at the floor width on every discovered page, outside a baseline that only shrinks (planned proof: scripts/lib/ui-audit.mjs with a case that plants a small standalone target (to be written))"
+    evidence: command
+    ref: "majordomus intent explain a-person-runs-majordomus-from-a-phone"
+  - id: the-flow-works-on-a-phone
+    criterion: "The IDD loop, including opening a peer on /ui/mesh and reading its detail, is walked in a real browser at the floor width (planned proof: test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh (branch-only, I2812), extended)"
+    evidence: command
+    ref: "majordomus intent explain a-person-runs-majordomus-from-a-phone"
+  - id: dense-screens-fit-a-phone
+    criterion: "No listed table or graph of /ui or /cockpit scrolls the page at the floor width, every table cell keeps its column label, and a graph shows its table fallback first (planned proof: a ui-audit rule or case at the floor width (to be written by I3217))"
+    evidence: command
+    ref: "majordomus intent explain a-person-runs-majordomus-from-a-phone"
+created_at: 2026-10-18
+updated_at: 2026-10-18

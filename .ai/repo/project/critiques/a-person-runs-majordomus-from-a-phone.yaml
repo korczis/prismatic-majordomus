@@ -1,0 +1,85 @@
+intent: a-person-runs-majordomus-from-a-phone
+reviewed_at: 707a04c7ce8
+reviewed_by: "claude-code subagent (read-only, fresh context, Plan type, same model family as the author) dispatched by session 82f2734c over the staged records of branch docs/the-chatgpt-project-is-promoted and the ChatGPT-conversation sources they were promoted from; resolved by a second fresh subagent acting as the plan author. Read only: nothing was run. Disposition: Accept with required changes: all 6 blocking findings and all 3 non-blocking ones are planned on I3214-I3217; only I3216's dependency on branch-only issues waits on their records reaching master, and an entry criterion holds that wait."
+findings:
+  - id: the-cockpit-has-no-narrow-menu
+    class: unproven_assumption
+    subject: "I3214"
+    finding: "The plan treats /ui and /cockpit as both having a narrow-screen menu that only needs Escape, backdrop and focus behaviour added. Only /ui has one: the checkbox at apps/majordomus-cli/src/ui/shell.rs:126-131, styled at share/ui/src/ui.css:89-112. The Cockpit's sidebar is `.mj-sidebar { @apply sticky hidden ... lg:block }` (share/cockpit/src/cockpit.css:127), so below 1024 px it has no navigation at all. The only way to reach its sections is the Ctrl-K palette (cockpit/view.rs:183-189), and that needs JavaScript (Alpine `x-on:click`). That is the 'hidden md:block' pattern the source message rejects, and it breaks this intent's non-goal 'Hiding a function below a width'. So the acceptance criterion 'with scripts off the menu still opens' is new work for the Cockpit, not a fix. Its files are missing from the scope: share/cockpit/src/cockpit.css, share/cockpit/cockpit.js and docs/COCKPIT.md. Restate current_state and scope before work starts."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3214
+      because: "Verified on 707a04c7ce8: cockpit.css:127 is `sticky hidden ... lg:block` and only /ui carries the mj-ui-menu checkbox (shell.rs:126-131). I3214 now states, through why_add, that the Cockpit's narrow menu is new work, takes the Cockpit's stylesheet, script, nav.js and docs/COCKPIT.md into scope, and gains a criterion that the Cockpit's sections are in the served HTML and open without JavaScript below 1024 px."
+  - id: one-sidebar-is-i1009
+    class: unnecessary_work
+    subject: "I3214"
+    finding: "I3214's desired state is one sidebar component used by both surfaces. Today the two sidebars come from different sources: the UI's is ui/shell.rs:163 over super::SCREENS, the Cockpit's is cockpit/view.rs:201 over shell.navigation, the catalogues derived in cockpit/nav.rs, which fold at view.rs:284. Merging them is the objective of I1009 ('Derive the desktop navigation, the mobile navigation, the Cockpit sections... from one projection'). I1009 blocks I1016 ('The Cockpit works on a phone'), and I1016's criteria (narrow navigation, touch targets, tables at phone width) are the same outcome as I3214, I3215 and I3217. ADR 0215 only says I1016 'is either absorbed or unblocked by ui-01'. Two open issues for one outcome, and a third whose scope collides with them, will diverge. Before work starts: either supersede I1016 and make I3214 depend on I1009, or narrow I3214 to a shared drawer shell whose entries each surface keeps supplying."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3214
+      because: "The second option is chosen. I3214 becomes a shared drawer shell (toggle, panel, backdrop), and each surface keeps supplying its own entries. Merging the navigation catalogues goes into non_scope as I1009's objective. ADR 0215 lets ui-01 unblock I1016 rather than absorb it, so I3214 also records in I1016.yaml which I1016 criteria it delivered (narrow navigation, navigation without JavaScript). I1016 keeps the rest of its criteria and its dependency on I1009. The touch-target and table halves of I1016 stay with I3215 and I3217, and those cite I1016 in why."
+  - id: interaction-specs-do-not-reach-served-surfaces
+    class: unproven_assumption
+    subject: "a-person-runs-majordomus-from-a-phone#the-menu-behaves"
+    finding: "The planned proof, scripts/lib/interaction-specs/ui-sidebar.mjs 'at every declared width on /ui and /cockpit' and validated by scripts/ci/interaction-check, cannot work in the existing harness. interaction-check and interaction-probe classify and drive only the built site, site/public (scripts/ci/interaction-check:14, 'The controls judged are the site's own'). /ui and /cockpit are served by the executable and are not in site/public. Each spec also declares a single `width` (nav-collapse.mjs:5; interaction-probe:110-121 sets one viewport per spec), so 'every declared width' is not expressible. Worse, interaction-check requires every spec to claim something, so a spec whose controls never appear in site/public fails the gate. The served surfaces' interactions are held by scripts/lib/cockpit-probe.mjs (interactions(), line 199). The issue must either name the harness change (served origin plus widths read from tokens.yaml viewports) as work, or move the proof into cockpit-probe or the ui audit, and the criterion's proof path must follow."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3214
+      because: "Verified: interaction-check exits without site/public and judges only the site's controls. cockpit-probe already reads its widths from /api/v1/design, but its interactions() runs at 1600 px only. The proof moves into scripts/lib/cockpit-probe.mjs and drives the drawer on /ui and /cockpit at every width that /api/v1/design declares. A spec under interaction-specs is now non_scope, and the criterion's ref follows the probe (see criteria-can-never-be-met). Applied in the plan of 2026-10-18: the criterion the-menu-behaves now names cockpit-probe as its planned proof, and I3214's objective, desired_state, scope and validation no longer name an interaction spec or scripts/ci/interaction-check."
+  - id: axe-already-sizes-targets
+    class: unproven_assumption
+    subject: "I3215"
+    finding: "The milestone and I3215 say 'no rule sizes a touch target'. In fact scripts/lib/ui-audit.mjs:252 runs axe with runOnly tags that include 'wcag22aa'. In the installed axe-core 4.13.0, that tag runs the default-disabled `target-size` rule (minSize 24, WCAG 2.5.8): axe's ruleShouldRun matches by tag regardless of `enabled:false`. So every discovered page at every width is already held to 24 px, with axe's inline-link and spacing exceptions. A second rule, component.target-size at about 44 px, would double-report every control under 24 px and judge inline links that WCAG exempts. Before writing it, the issue must decide whether the declared token is fed to axe's target-size option or is a stricter AAA (2.5.5) rule that leaves to axe what axe already covers. The 44 figure is ChatGPT's suggestion (c197#1), not the owner's."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3215
+      because: "Verified: ui-audit.mjs:252 passes runOnly tags that include wcag22aa. The decision is to feed the declared token to axe's target-size check (its minSize option). There is then one measurement, with axe's inline-link and spacing exceptions, and its violations are reported once as component.target-size, never again as accessibility.target-size. tokens.yaml records the default of 44 CSS px with WCAG 2.5.5 as its source, not ChatGPT's message, and the owner can change it there. The planted 16 px link in the existing criterion is pinned as a standalone link, so axe's inline exception cannot hide it. Applied in the plan of 2026-10-18: I3215's objective, current_state and desired_state state the axe design, and the criterion targets-are-reachable is re-recorded to it."
+  - id: no-ui-audit-baseline-exists
+    class: insufficient_work
+    subject: "I3215"
+    finding: "I3215 relies on 'the existing baseline mechanism for findings already on the trunk' so the rule can be a ratchet, with 'Fixing every finding in the same PR' as non_scope. The ui audit has no baseline: nothing in scripts/ui, scripts/lib/ui-*.mjs or the ui-audit gate (.ai/repo/ci/gates.yaml:604-608) admits a known finding, and the gate fails on any finding. A 44 px rule over 'every link, button and form control' would flag Cockpit nav links (`.mj-nav-link` is px-2 py-1, well under 44 px) and the prose links on every docs page. The ui and design gate classes (gates.yaml:997, 1005, 1012) would go red the day it lands. Either the baseline mechanism is named work in this issue (file, format, a check that it only shrinks), or the issue fixes or exempts what it flags."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3215
+      because: "Verified: no ui-*.mjs file or scripts/ui mentions a baseline. The baseline is now named work in I3215. It is a committed file, .ai/repo/ui-target-size-baseline.txt, in the repository's *-baseline.txt convention, with one route|width|selector per line. The audit fails on a finding missing from the file and on an entry that no longer occurs, so the file can only shrink. The ui-audit gate and the ui and design gate classes must stay green on the landing PR. Prose links are already exempt through axe's inline exception (see axe-already-sizes-targets)."
+  - id: i3216-depends-on-a-branch-file
+    class: regression_risk
+    subject: "I3216"
+    finding: "test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh is not on master 707a04c7ce8. It exists only on the unpushed branches fix/doctor-reads-unpushed-in-one-pass (I2812) and fix/the-live-step-holds-every-other-refresh, frozen until the release (board.md:13-14). I2900, I2906-I2919 and I3000-I3005 all edit it and idd.rs too (board.md:15-21). I3216's depends_on lists only I3214, so the derived plan will offer it as ready against a file master does not have. Add I2812, plus I2911 and I2919, which the milestone's own risks say must land first, to depends_on. Separately, the ui job is already at its bound (I3006: about 7850 visits at 3600 s, raised to 5400 s, board.md:22). Ten more phone walks and a per-control size measurement in that job need a time estimate or a job of their own."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3216
+      because: "Neither this worktree nor origin/master has issue records for I2812, I2911 or I2919: they exist only on branches. Naming them in depends_on now would point at ids the plan validator cannot resolve. Meanwhile I3216 depends on I3214, which is open, so the derived plan does not offer I3216 as ready. I3216 gains an entry gate as an acceptance criterion: case 3220 must be on master with I2812, I2911 and I2919 landed, and their ids join depends_on once their records reach master. It also gains a criterion to measure the walk's time in the ui job before adding it there, and to give it a job of its own in gates.yaml if the 5400 s bound leaves no room."
+  - id: criteria-can-never-be-met
+    class: delivery_verification
+    subject: "a-person-runs-majordomus-from-a-phone"
+    finding: "All three criteria declare `evidence: command` with `ref: majordomus intent explain a-person-runs-majordomus-from-a-phone`. intent.v1.schema.json:109 says a `command` criterion 'is never counted as met', and the ref is the intent's own explain command, not the proof; the real proofs survive only as '(planned proof: ...)' prose. Intents on master use `evidence: test` with the test path (the-owner-directs-work-from-the-ui -> apps/majordomus-cli/tests/ui_idd.rs). No issue's acceptance criteria include re-pointing its criterion to the case or spec it writes, so finishing I3214-I3217 leaves the intent permanently unmet. Add that step to each issue, or record test refs now once the proof locations are settled (see interaction-specs-do-not-reach-served-surfaces)."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3214
+      because: "Each issue now re-points the criterion it serves to evidence: test, with the path of the proof it writes as ref, and takes the intent file into scope. The issues are I3214 (cockpit-probe), I3215 (the target-size case), I3216 (case 3220) and I3217 (the new dense-screens criterion). Refs are not recorded now because the proof files do not exist yet, and a test ref to a missing file would be false evidence."
+  - id: dense-screens-have-no-criterion
+    class: missed_requirement
+    subject: "I3217"
+    finding: "The intent statement promises 'dense tables and graphs drawn for the width', but no criterion says so. I3217 serves `the-flow-works-on-a-phone` (case 3220's IDD walk), and stacking the Issues, PR Drain and workspace tables does not make that criterion true or false. Its graph half ('a graph's table fallback is shown first at that width') touches no graph code: share/ui/ui.js draws the UI's graphs and share/cockpit/graph.js the Cockpit's, and neither is in scope. The Cockpit's tables, the main subject of the owner's complaint, are not covered. Add a criterion such as 'no listed table or graph scrolls the page at the floor width and every cell keeps its label', backed by a ui-audit rule or case, and point I3217 at it with the graph files in scope."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3217
+      because: "I3217 now adds the intent criterion dense-screens-fit-a-phone (evidence: test) and serves it in place of the-flow-works-on-a-phone. Behind the criterion is a ui-audit rule or case at the floor width. share/ui/ui.js, share/cockpit/graph.js, the Cockpit's stylesheet and cockpit/view.rs come into scope, so the graph fallback and the Cockpit's tables are covered. Applied in the plan of 2026-10-18: the criterion is recorded on the intent (evidence: command until its proof exists) and I3217 serves it."
+  - id: the-site-drawer-and-the-peer-step-are-uncovered
+    class: surface_missing
+    subject: "a-person-runs-majordomus-from-a-phone#the-flow-works-on-a-phone"
+    finding: "The statement names majordomus.dev and 'opens an intent, an issue or a peer', and the source message names the flow overview -> intent/task -> peer/session -> detail -> action -> evidence. Case 3220 walks only intent -> issue -> verify -> done -> evidence on /ui. No issue walks a peer (/ui/mesh) or anything on the Cockpit or the site at the floor width. The milestone excludes the site's navbar collapse as 'already held by nav-collapse', but nav-collapse.mjs only clicks the toggle twice at 390 px. The Escape and focus-return behaviour in nav.js:53-66 is untested, and that same collapse is inside every /ui and /cockpit page (ui/navbar.html carries data-collapse-toggle, I2770). At a narrow width /ui will show two menu toggles, the bar's collapse and the mj-ui-menu checkbox, against the source's 'one canonical drawer'. ADR 0215 also says rule ui-conformance gains target-size and phone-flow checks and that 'a new screen is not accepted until it passes there', but no issue edits .ai/repo/rules/project/ui-conformance.v1.md or adds that gate."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3216
+      because: "Verified: ui/navbar.html:39 carries data-collapse-toggle, and ui-conformance.v1.md has no target-size or phone-flow clause. The work is split. I3216's walk adds the peer step on /ui/mesh and adds the phone-flow clause to ui-conformance. I3215 adds the target-size clause. I3214 requires exactly one menu toggle on /ui and /cockpit at narrow widths, and extends nav-collapse.mjs to press Escape and check that focus returns to the toggle, which tests the collapse without changing it, so I3214's non_scope stands. The site's pages are already swept at every width by the ui audit, and on majordomus.dev the flow only reads, so no move is walked there."

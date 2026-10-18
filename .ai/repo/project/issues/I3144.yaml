@@ -1,0 +1,31 @@
+id: I3144
+milestone: the-session-domain-is-written-once
+title: "Checkpoints and handovers are recorded against the episode, and the shell only parses and renders them"
+slug: checkpoints-and-handovers-belong-to-the-episode
+priority: p2
+profile: implementation
+objective: "ADR 0047 step 4: lib/checkpoint.sh and lib/handover.sh become argument parsing and rendering over the domain, which writes checkpoints and handovers against the episode."
+why: "ADR 0052 found that tying checkpoints to the task disabled them for six days; ADR 0047 lists this as the fourth cutover step. Sources: chatgpt-majordomus:c109#3."
+current_state: "lib/checkpoint.sh (100 lines) and lib/handover.sh (174 lines; wc -l at 707a04c) write .ai/local/state/{checkpoints,handovers}; their front matter carries task_id and no session_id; cases 05_handover and 50_blocker_across_handover hold the behaviour."
+desired_state: "The domain writes both; the shell files are thin."
+scope:
+  - "lib/checkpoint.sh"
+  - "lib/handover.sh"
+  - "apps/majordomus-cli/src/session"
+  - "apps/majordomus-cli/src/continuity"
+  - "test/cases"
+non_scope:
+  - "The handover body format (Objective, Current State, Next Action)"
+depends_on:
+  - "I3142"
+serves:
+  - "a-session-record-says-what-it-served#checkpoints-name-their-episode"
+acceptance_criteria:
+  - "cases 05, 50, 130_lifecycle_survives_a_stale_task and 822 pass unchanged"
+  - "A checkpoint is still written with no active task (regression check; it holds on master)"
+validation:
+  - "bash test/run.sh --no-skips 05_handover 50_blocker_across_handover 130_lifecycle_survives_a_stale_task 822_a_dirty_handover_restores_context_not_source"
+evidence_required:
+  - "case_handover_written_by_the_domain"
+created_at: 2026-10-18
+updated_at: 2026-10-18

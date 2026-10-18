@@ -1,0 +1,26 @@
+id: I3270
+milestone: the-plan-says-what-a-fix-unblocks
+title: "A blocked issue says which kind of block holds it: a dependency, contention, or a stale record"
+slug: a-block-says-its-kind
+priority: p2
+profile: implementation
+objective: "plan.issues and plan.status classify each blocked issue: open dependency (named), environment or CI contention (a recorded refusal), or a stale planning record (a dependency done in fact but not recorded, from delivery inference)."
+why: "Each block class has a different remedy, and the share is large: majordomus plan status at v0.29.0 (2026-10-17) reported 159 of 414 issues blocked. The owner's order of 2026-10-17 (the-plan-flows) asks for the class. Sources: chatgpt-majordomus:c259#6."
+current_state: "plan.rs reports blocked with its dependencies; no class."
+desired_state: "The class is derived on read, shown on /ui and in plan status."
+scope:
+  - "apps/majordomus-cli/src/plan.rs"
+  - "apps/majordomus-cli/tests/plan.rs"
+  - "apps/majordomus-cli/src/ui/issues.rs"
+depends_on:
+  - "I2740"
+acceptance_criteria:
+  - "A fixture with each class reports it"
+  - "plan status totals blocked by class"
+validation:
+  - "majordomus plan validate"
+  - "majordomus intent validate"
+evidence_required:
+  - "test_a_block_says_its_kind"
+created_at: 2026-10-18
+updated_at: 2026-10-18

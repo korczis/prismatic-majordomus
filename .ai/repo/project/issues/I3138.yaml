@@ -1,0 +1,55 @@
+id: I3138
+milestone: prismatic-lumen
+title: "One page shows the whole mesh from the blackboard, peers and monitor with each figure's freshness, and recovers after a reconnect"
+slug: the-mesh-page-recovers-after-a-reconnect
+priority: p2
+profile: implementation
+objective: "Make /ui/mesh the owner's one mesh page by adding to 5a's blackboard rendering only the delta: the source capability and age of every figure, the runtime's liveness words (expired, and the link state mesh.peers reports) and blockers with their source, read through the blackboard's shared read and followed over its live channel, so that after a gap the page says reconnecting and then shows the current state."
+why: "The owner's 2026-10-18 request was to control the whole mesh from one page on PC and phone; the critique set v0.1 as real peers, sessions, tasks and blockers with reconnect recovery and nothing invented. Critique of 2026-10-18: 5a's I2983 already renders and follows the blackboard on /ui/peers. This issue is the delta on the one page ADR 0209 names, written in the runtime's own words (expired, reconnecting) with a named blocker source. Proposed in ADR 0201 (The persistent runtime is the authority; every operator surface, Lumen included, is a client of it); ADR 0209 (Prismatic Lumen names the owner's mesh-wide view, and it owns no scheduler, event bus, store or API) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c296#0, chatgpt-majordomus:c296#12, chatgpt-majordomus:c296#18, chatgpt-majordomus:c082#10."
+current_state: "apps/majordomus-cli/src/ui/mesh.rs renders mesh state; 5a's live push, socket.js and /ui/peers (I2981-I2983) are on 5a's unlanded branch, not on master, and no record of them is in this tree; this issue starts after they land."
+desired_state: "One page answers who is working on what and what is blocked across the mesh, live, with source and age; an expired peer reads expired and a link reads the state mesh.peers reports."
+scope:
+  - "apps/majordomus-cli/src/ui/mesh.rs"
+  - "share/ui"
+  - "docs/MAJORDOMUS_UI.md"
+  - "test/cases"
+  - "apps/majordomus-cli/src/ui/mod.rs"
+  - "apps/majordomus-cli/src/ui/source.rs"
+  - ".ai/repo/project/intents/the-owner-oversees-the-mesh-from-one-page.yaml"
+non_scope:
+  - "Mutation"
+  - "Federation"
+  - "A Pages gateway"
+  - "A second composition of blackboard, mesh.peers and mesh.state beside the blackboard's own"
+  - "Changing /cockpit/mesh or /cockpit/peers (ADR 0135: /ui is the primary surface)"
+  - "Cross-node gap recovery and follower fault injection (I3181, I3222)"
+  - "Reach from a phone or another machine (I3191, I3196)"
+  - "The landing page and the Pages snapshot of this page until its public-safe form exists (I2984)"
+  - "A skill, CLI command or route named lumen before the owner decides it (ADR 0209)"
+  - "A new liveness word in the runtime"
+depends_on:
+  - "I3137"
+  - "I3182"
+serves:
+  - "the-owner-oversees-the-mesh-from-one-page#the-mesh-is-overseen-from-one-page"
+acceptance_criteria:
+  - "Every figure names its source capability and age"
+  - "The reconnect case is numbered by `scripts/case-numbers next` and announced on the board at start"
+  - "Starts only after 5a's I2983 (blackboard.snapshot, http::follow::blackboard, share/ui/live.js, share/ui/socket.js) is on master; depends_on I2983 is recorded on this issue when that record lands"
+  - "/ui/mesh is the owner's one page (ADR 0209 interim); it renders the blackboard through the same shared read and renderer /ui/peers takes, and composes no second join of blackboard.snapshot, mesh.peers and mesh.state"
+  - "The change adds to I2983 only the delta: source capability and age on every figure, the runtime's liveness words, and blockers; /ui/peers stays the blackboard's own screen and is linked from /ui/mesh, not re-rendered there"
+  - "A peer whose stream is expired reads expired, in a tone distinct from gone and dead; its link state is the one mesh.peers reports; the page invents no verdict (ADR 0089)"
+  - "After the server drops the connection the page says reconnecting, live.js's own word, and then shows the current state without a reload"
+  - "Every blocker shown names its source: I3182's classification or the blackboard's waiting reviews and handovers"
+  - "The criterion the-mesh-is-overseen-from-one-page is restated in these words and rebound in .ai/repo/project/intents/the-owner-oversees-the-mesh-from-one-page.yaml to evidence: test with the reconnect case's path"
+  - "The reconnect case runs as bash test/run.sh <case>, and the full scripts/ui audit (not --only) passes"
+  - "docs/MAJORDOMUS_UI.md says which page is the owner's mesh page and what /ui/peers, /cockpit/mesh and /cockpit/peers are beside it"
+validation:
+  - "scripts/ui audit"
+  - "bash test/run.sh 1092_the_ui_snapshot_holds_every_screen"
+  - "bash test/run.sh 1093_the_ui_snapshot_links_nothing_absent"
+  - "majordomus plan validate"
+evidence_required:
+  - "case_mesh_page_recovers"
+created_at: 2026-10-18
+updated_at: 2026-10-18

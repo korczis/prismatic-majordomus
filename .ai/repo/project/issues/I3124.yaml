@@ -1,0 +1,32 @@
+id: I3124
+milestone: a-claim-stands-only-on-its-evidence
+title: "A JUnit XML report a repository already produces is imported into the evidence ledger, and nothing in that repository changes"
+slug: junit-reports-reach-the-ledger
+priority: p2
+profile: implementation
+objective: "Add an importer (majordomus evidence import --junit <file>) that normalises test cases into ledger executions with suite, case, outcome, duration, commit and tree state. Malformed XML, duplicate imports, missing artifacts and a stale revision are typed refusals. For a foreign repository this is the default Observe mode: discover and import, never instrument."
+why: "On 2026-10-13 (c246#0, #3) the owner asked for derived JUnit/Cobertura and for non-invasive integration. A second adopter (TypeScript, Vitest) cannot bring its results today. ADR 0041 rejected JUnit as the store; as an import format it does not contradict that decision (see the ADR proposal). It extends milestone test-evidence. Proposed in ADR 0189 (JUnit and Cobertura are formats evidence is imported from and exported to; the tracked ledger stays the only store) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c246#0, chatgpt-majordomus:c246#3, chatgpt-majordomus:c246#4, chatgpt-majordomus:c246#7."
+current_state: "Only this repository's runners reach the ledger (I1954 BLOCKED, I2786 READY). No importer exists."
+desired_state: "A Vitest or cargo-nextest JUnit file from a fixture repository becomes ledger executions that claims can cite."
+scope:
+  - "apps/majordomus-cli/src/evidence"
+  - "apps/majordomus-cli/src/commands/evidence.rs"
+  - "apps/majordomus-cli/tests"
+  - "docs/EVIDENCE.md"
+non_scope:
+  - "Cucumber, LCOV and Cobertura (I3125)"
+  - "Running tests"
+depends_on:
+  - "I2786"
+serves:
+  - "a-claim-stands-only-on-its-evidence#proof-from-ci-runs"
+acceptance_criteria:
+  - "A valid report imports deterministically and a second import is a no-op"
+  - "Malformed, stale and duplicate imports are refused with distinct codes"
+  - "A fixture foreign repository is byte-identical after import, outside .ai/local"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib evidence"
+evidence_required:
+  - "case_junit_import"
+created_at: 2026-10-18
+updated_at: 2026-10-18

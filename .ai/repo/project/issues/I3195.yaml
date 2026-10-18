@@ -1,0 +1,52 @@
+id: I3195
+milestone: the-hub-is-reached-from-any-device
+title: "The lundra hub is a declared deployment target served over its tailnet name, and a second device reaches it"
+slug: the-hub-is-a-tailnet-target
+priority: p2
+profile: implementation
+objective: "Declare the hub as a deployment target whose listeners are declared separately (the mesh rendezvous port answering only the signed link and register routes; the UI/API/MCP origin on loopback behind a tailnet HTTPS ingress set up through the installed Tailscale CLI), run it as the user-scoped unit I2722 writes, prove reachability from a second authorised device with served observe extended to a named deployment target plus an off-tailnet negative probe, and commit each run as the target's evidence."
+why: "Owner 2026-09-11: Tailscale domain now, majordomus.dev later, fully functional; 09-15: the default backend is lundra over Tailscale. Public CI must not join the tailnet, so the acceptance is a canonical command whose evidence is recorded. Critique 10-18: lundra is the mesh rendezvous hub on 0.0.0.0:8791 (docs/MESH.md). Moving the origin to loopback without splitting listeners would cut every peer off, and leaving it on 0.0.0.0 means the UI/API/MCP are already served in plain HTTP beyond the tailnet. deploy.check takes no input and contacts nothing (deploy.rs), so the network-reaching proof is served.observe, which is already CLI-only and records what it saw. It absorbs I3186, which once narrowed to ADR 0199 was this target's service; I3197 (a tunnel hostname) is dropped from this plan as a later public phase. Proposed in ADR 0204 (The hub is reached privately over the tailnet first; a public ingress is a deployment target, never an application change) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c118#9, chatgpt-majordomus:c240#2."
+current_state: "Verified: the hub runs `serve --host 0.0.0.0 --port 8791 --idle 0` under a hand-made systemd user unit (docs/MESH.md), so its UI, API and MCP answer in plain HTTP on every interface; no deployment object describes it; deploy.check takes no input and contacts nothing (capability/builtin/deploy.rs), and served observe is the CLI-only probe that reaches the network."
+desired_state: "A deployment object for the hub with its listeners; served observe probes the named target positively from a tailnet device and negatively from outside it; deploy.check stays a read."
+scope:
+  - ".ai/repo/deployments"
+  - "apps/majordomus-cli/src/deploy"
+  - "apps/majordomus-cli/src/capability/builtin/deploy.rs"
+  - "docs/MESH.md"
+  - "apps/majordomus-cli/src/capability/builtin/served.rs"
+  - "apps/majordomus-cli/src/served.rs"
+  - "apps/majordomus-cli/src/commands/serve.rs"
+  - "apps/majordomus-cli/src/http"
+  - ".ai/repo/evidence"
+non_scope:
+  - "Tailscale Funnel (public)"
+  - "Any write through the ingress before web-sign-in"
+  - "Widening deploy.check to reach the network; it stays a read over the local index"
+  - "A host-level resident or a mesh presence beside the repository's server"
+  - "A public ingress (a tunnel hostname): a later phase, outside this intent"
+depends_on:
+  - "I2722"
+  - "I3196"
+serves:
+  - "the-mesh-is-operated-from-any-device#reachable-privately"
+acceptance_criteria:
+  - "A second device reaches /ui and MCP over the tailnet name"
+  - "A second deploy of the same configuration changes nothing"
+  - "The hub target declares its listeners separately: the mesh rendezvous port, which answers only the signed link hello/sync and register routes, and the UI/API/MCP origin on loopback behind the tailnet ingress"
+  - "After the change, a mesh round between lundra and another runtime succeeds (a link sync round with lundra completes, and mesh doctor passes on both)"
+  - "The hub's UI, API and MCP no longer answer on its LAN or tailnet address directly, only through the ingress"
+  - "Reachability is proven by the CLI-only served.observe extended to a named deployment target, not by deploy.check, which stays a read"
+  - "An off-tailnet probe of the hub's ingress name, UI, API and MCP gets no answer, and that negative result is recorded"
+  - "Each probe run is committed as evidence under .ai/repo/evidence with the probing device's identity, the time and the commit served; public CI does not join the tailnet"
+  - "A write sent through the tailnet ingress without authentication is refused"
+  - "The hub runs as the user-scoped unit I2722 writes, one per repository, running that repository's serve --idle 0 as ADR 0199 decides; a host the mesh declaration does not name as a hub runs none"
+  - "Installing and uninstalling the unit twice changes nothing"
+validation:
+  - "majordomus plan validate"
+  - "bash test/run.sh 85_deployment_bind"
+  - "cargo test --lib capability::builtin::served"
+evidence_required:
+  - "deployment_hub_tailnet"
+  - "case_a_host_service_is_declared"
+created_at: 2026-10-18
+updated_at: 2026-10-18

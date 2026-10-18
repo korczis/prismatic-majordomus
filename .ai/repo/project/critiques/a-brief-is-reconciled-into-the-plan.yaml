@@ -1,0 +1,94 @@
+intent: a-brief-is-reconciled-into-the-plan
+reviewed_at: 707a04c7ce8
+reviewed_by: "claude-code subagent (read-only, fresh context, Plan type, same model family as the author) dispatched by session 82f2734c over the staged records of branch docs/the-chatgpt-project-is-promoted and the ChatGPT-conversation sources they were promoted from; resolved by a second fresh subagent acting as the plan author. Read only: nothing was run. Disposition: Accept with required changes: all 10 findings planned, 6 of them blocking. The noun is 'campaign' (ADR 0180, project.no-new-nouns): ADR 0194 is reconciled onto it, and I3272 is folded into I3167 and I3169. Classification, segment identity and sources are reworked onto I3251, I3254, I3280, I3281 and I3283, and held to a committed fixture. ADR 0180's acceptance remains the owner's act."
+findings:
+  - id: two-adrs-pick-opposite-nouns
+    class: unproven_assumption
+    subject: "intent-intake"
+    finding: "The same staged branch holds two proposed ADRs that settle ADR 0124's point 3 in opposite ways. ADR 0180 (.ai/repo/adrs/0180-a-prompt-pack-is-a-campaign-...md, Decision and Alternatives) picks 'campaign' and rejects 'intake' by name under the blocking rule project.no-new-nouns. ADR 0194 (.ai/repo/adrs/0194-an-ingested-brief-is-an-intake-revision-...md) picks 'intake' and never mentions 'campaign' or campaigns/. Every issue here is named and scoped by the intake noun (apps/majordomus-cli/src/intake.rs, share/schemas/majordomus/intake, majordomus.intake/v1), and I3272 is explicitly gated on 'the ADR naming the noun'. If the owner accepts 0180, the whole milestone is wasted. The noun must be decided before any of it is numbered or started: one ADR is withdrawn, and the other cites and supersedes it."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3272
+      because: "Confirmed: 0180 and 0194 are both status: proposed on this branch with opposite nouns. The noun is 'campaign'. ADR 0180 is the one that conforms to the blocking rule project.no-new-nouns (.ai/repo/rules/project/no-new-nouns.v1.md), and campaigns/ already exists on master with 55 packs under MANIFEST.sha256. I3272 now carries the reconciliation. ADR 0194 gives up its noun decision and cites ADR 0180, keeping only the reconciliation decision, or else it is withdrawn. No record kind, schema, command or capability is named 'intake': the intent's invariants, the milestone's title and scope and the titles of I3272-I3275 now say campaign, and the reconciliation module is reconcile.rs. Accepting ADR 0180 is still the owner's act, and I3272 stays gated on that acceptance."
+  - id: revision-record-duplicates-campaigns
+    class: unnecessary_work
+    subject: "I3272"
+    finding: "A digest-pinned, kept-as-received brief already exists on master: campaigns/ holds 55 packs, each file is recorded in campaigns/MANIFEST.sha256, and this is enforced by scripts/ci/campaigns-check, case 340 and the blocking rule project.a-brief-is-kept-as-received. In-flight I3167 (campaign kind with manifest digest) and I3169 (one add command with ZIP limits on member count, size, ratio, traversal and symlinks, refused before any write) already cover I3272's whole objective and both of its acceptance criteria. I3272 instead adds a new record 'under .ai/repo/', which is a second store beside campaigns/ and contradicts its own desired_state 'no new store'. It also says the record is 'linked to the prompt kind'. That kind (share/kinds.yaml:64-70, majordomus.prompt/v1: name, description, profile) is a reusable outgoing prompt asset, and ADR 0180 says an outgoing prompt is never a received brief. I3272 should be dropped in favour of I3167 and I3169, or merged into them, and criterion a-revision-is-pinned should be served by those issues."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3272
+      because: "Confirmed: I3167 (campaign kind with MANIFEST digest) and I3169 (campaign add, which checks the archive before any write) cover the revision record and the ZIP limits. I3272 is folded into them and now depends on both. A revision is a campaign under campaigns/ with its manifest digest. There is no new record under .ai/repo/ and no link to majordomus.prompt/v1. What is left in I3272 is the ADR reconciliation and the proof for a-revision-is-pinned, given through campaign add."
+  - id: conversation-export-is-a-transcript
+    class: regression_risk
+    subject: "a-brief-is-reconciled-into-the-plan#a-revision-is-pinned"
+    finding: "The intent's statement lists 'a conversation export' as a brief kept as an immutable revision, and the milestone's acceptance is that 'this ChatGPT import could be re-run through intake'. Keeping a conversation export's bytes in a tracked record breaks the blocking rule project.never-store-transcripts (.ai/repo/rules/project/never-store-transcripts.v1.md). It also breaks the sibling intent what-a-workspace-decides-reaches-the-repository-with-its-source, whose criterion nothing-synced-is-published requires that no message text reach the snapshot or the site. That intent already gives conversations their transport: a store under .ai/local/workspaces (I3278, I3279) and typed workspace: references (ADR 0211, I3281). A conversation should enter reconciliation as workspace references read from the local store, never as a revision under .ai/repo. As written, the statement makes the first intake the repository builds a rule violation."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3273
+      because: "Accepted. A conversation is never a revision. I3272 now excludes keeping any conversation bytes in a tracked location. I3273 reads a conversation from the local workspace store (I3278) as workspace: references (I3281, ADR 0211), and no message text reaches a tracked file or the published snapshot. The intent statement no longer names a conversation export as a brief: it says a conversation enters only as workspace references read from the local store, and a non_goal names project.never-store-transcripts."
+  - id: classification-duplicates-i3254-and-judges-satisfaction
+    class: unnecessary_work
+    subject: "I3273"
+    finding: "I3273 classifies each requirement as new, existing, satisfied, partial, conflicting or superseded 'using the brief of idd-06'. idd-06 is I3251, but I3273 lists I3252 (idd-07, the draft writer) and not I3251. More importantly, in-flight I3254 already compares a proposal against existing intents and issues and returns its duplicates, using the object search with no similarity model. That covers 'existing', and I3273 does not depend on it, so a second duplicate detector would be built. 'satisfied' and 'partial' cannot be decided by intake: ADR 0124 point 4 says only the evidence machinery marks a criterion satisfied, so these classes must be read from the existing verdict (intent.rs verdict / intent_realization), not judged. No mechanism is named for 'conflicting' or 'superseded'. The criterion's test ('a rerun classifies identically') is true of any pure function and proves nothing about whether the classification is right. I3273 should depend on I3251 and I3254, read satisfied/partial from the realization, and be held to a fixture with an expected class for each requirement."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3273
+      because: "Accepted in full. I3273 now depends on I3251 (brief) and I3254 (duplicates). 'existing' is I3254's result. 'satisfied' and 'partial' are read from the derived verdict (intent.rs verdict, intent_realization.rs). 'superseded' is read from the record's stage or superseded_by (intent.rs IntentStage::Superseded, plan.rs superseded_by). 'conflicting' is a match that negates the matched record's invariant or non_goal, and it is reported with both texts for a person to decide. Correctness is held to a committed fixture that gives an expected class for each requirement."
+  - id: segment-identity-contradicts-rename-rule
+    class: insufficient_work
+    subject: "a-brief-is-reconciled-into-the-plan#a-revision-reopens-only-its-change"
+    finding: "I3273 addresses a requirement by its position (document, heading path, item). I3274 says a rename or reorder reopens nothing. With a positional address, renaming a heading changes the address of every item under it, which reads as remove-plus-add. Only identity by content digest (or digest plus best match) can deliver the criterion, and that choice belongs in I3273, which I3274 builds on. 'Reopens only the criteria derived from it' also needs a link from each criterion to its source. The intent schema's satisfaction items carry none, and I3280 adds provenance only to whole records. 'Reopen' is not a state either: a criterion's state is derived from evidence (intent.rs IntentEvidenceState). The plan must say what reopening changes (a report only, or a gap or plan transition) and which issue adds per-criterion source addresses."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3273
+      because: "Accepted. I3273 makes a segment's identity the digest of its normalised text, and heading path and position become its location only. I3273 also adds the per-criterion source: an optional derived_from on intent satisfaction items, using the one Provenance reference grammar (I3280, I3281). I3274 defines reopening as a report only. It lists the criteria whose source digest was removed or replaced and changes no state, because evidence still decides IntentEvidenceState. A modified segment is a removed digest paired with an added one at the same location."
+  - id: sources-ui-duplicates-workspace-provenance
+    class: unnecessary_work
+    subject: "I3275"
+    finding: "In-flight I3280 gives intent, milestone and issue records the one Provenance definition (ADR 0211), I3283 makes /ui open what a record cites, and I3168 adds a campaigns: citation with the reverse relation. I3275 would add a third way to show a record's source, derived from 'the drafts' recorded segment addresses'. But no issue here adds a field for those addresses to share/schemas/majordomus/intent or issue, or to the draft that I3252 writes. I3275's scope also omits where intent explain is actually computed: apps/majordomus-cli/src/intent_realization.rs:1015 and the intents capability, behind commands/intent.rs:106. The segment address should be one more Provenance form under ADR 0211, and I3275 should depend on I3280 and I3283 (or be merged into I3283) rather than build its own link."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3275
+      because: "Accepted. The segment address is one more reference form in the shared Provenance grammar, and I3273 adds it to record and criterion provenance. I3275 now depends on I3280, I3283 and I3168. It draws sources through I3283's link rather than its own field or view. Its scope now includes the places where intent explain is computed (intent_realization.rs, capability/builtin/intents.rs, commands/intent.rs) and the intent and issue schemas."
+  - id: command-evidence-never-settles
+    class: delivery_verification
+    subject: "a-brief-is-reconciled-into-the-plan#requirements-are-reconciled"
+    finding: "All four criteria declare evidence: command with ref 'majordomus intent explain a-brief-is-reconciled-into-the-plan', so each criterion's proof is the intent explaining itself. intent.rs:301-303 ledger_settles accepts only 'test' and 'claim', so a command criterion stays NotDerivable and verdict() stays Unknown. The intent can therefore never be judged satisfied, whatever lands. Master intents use evidence: test with ref set to the test file (for example apps/majordomus-cli/tests/intent_plan.rs). Each criterion should be evidence: test with ref apps/majordomus-cli/tests/intake.rs or tests/ui_intent.rs, and the named test functions should match the issues' evidence_required."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3272
+      because: "Confirmed: ledger_settles in intent.rs matches only 'test' or 'claim'. I3272 has the intent record added to its scope. Its acceptance now requires each of the four criteria to be evidence: test, with ref set to the test file that proves it (apps/majordomus-cli/tests/intake.rs for the first three, apps/majordomus-cli/tests/ui_intent.rs for the fourth). The named test functions must equal the serving issues' evidence_required."
+  - id: no-writer-for-a-revision
+    class: insufficient_work
+    subject: "I3272"
+    finding: "I3272 adds 'a read-only capability listing revisions', but nothing in the plan writes a revision. There is no ingest command, and share/commands.yaml, cli.rs and commands/ are all outside the milestone's scope. Writing a tracked record from a capability is a repository_mutation, and that set is pinned by capability/builtin/mod.rs:315-340 (the_capabilities_that_write_the_repository_are_these), which today allows only intents.propose and plan.transition among planning writers. Whichever ADR wins must name the new writer and change the pin deliberately; otherwise the criterion 'the same bytes again are the same revision' has no entry point to test through. If campaigns win, I3169's 'campaign add' is that writer."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3272
+      because: "Campaigns win, so the writer is I3169's 'campaign add', and I3272 depends on it. I3272 adds no writing capability, and the pinned writer set in capability/builtin/mod.rs is left unchanged. The dedup proof goes through campaign add: re-adding an identical pack changes no byte."
+  - id: owner-surfaces-not-covered
+    class: surface_missing
+    subject: "intent-intake"
+    finding: "The owner's acceptance (c245#9) asks for intent <=> prompt pack <=> milestones and issues 'reflected in ui / docs / streamed / realtime / tested', with a graph, click-through, live updates and WebSockets. The plan reaches only /ui/intent, /ui/idd and intent explain. No issue covers: /cockpit (cockpit/intents.rs), the intent and plan graph edge brief -> intent/issue (graph.rs; I3168 does this for campaigns), live follow over the one channel (ADR 0216), docs (docs/PLANNING.md still says nothing derives a plan from an intent, and no page documents intake), or the published snapshot, which must show only references. Either name these as non_goals or give them issues."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3275
+      because: "I3275 now covers /cockpit (cockpit/intents.rs), docs/PLANNING.md and the published snapshot, which shows references only through I3283. The graph edge comes from I3168, which I3275 now depends on. A separate live stream for reconciliation is a stated non-scope: sources are re-derived from the records, which the existing channel of ADR 0216 already follows."
+  - id: import-rerun-acceptance-untestable
+    class: delivery_verification
+    subject: "intent-intake"
+    finding: "The milestone's only acceptance criterion, 'This ChatGPT import could be re-run through intake and classify the same items', has nothing to compare against. The hand classification lives only in this session's scratchpad (merged.json, items.jsonl), not in the repository, and under project.never-store-transcripts the conversations cannot be committed as a fixture. No issue records the expected classes or a test that runs over them. A committed synthetic brief should replace this, with its two revisions and an expected class for each requirement under test/fixtures, run by apps/majordomus-cli/tests/intake.rs. Delivery should then be checked by a case through the built executable, not only by plan validate and intent validate, which every issue lists as its sole validation."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3273
+      because: "Accepted. I3273 now carries a committed synthetic brief under test/fixtures, with two revisions and an expected class for each requirement. tests/intake.rs runs over it, and a test/cases case runs the built executable. I3274 reuses the fixture's two revisions. The milestone's import criterion is replaced by this fixture in its acceptance criteria, because the import cannot be committed under project.never-store-transcripts."

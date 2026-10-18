@@ -1,0 +1,29 @@
+id: I3152
+milestone: entry-proves-what-it-handed
+title: "Every known route around the preflight and the edit guard is a case or a stated limit"
+slug: every-bypass-is-a-case-or-a-limit
+priority: p3
+profile: verification
+objective: "Enumerate the routes around entry and the edit guard (hooks disabled, a client without hooks, raw git, MAJORDOMUS_NO_BUILD, a missing executable, another machine) and give each a case that proves the refusal or a line in SECURITY.md's limits, held together by a structure check."
+why: "The 2026-09-10 governance pack asked for a red-team bypass hunt. SECURITY.md lists three limits; the inventory records the edit-guard shim fails open on a missing executable and on MAJORDOMUS_NO_BUILD=1, which SECURITY.md does not list. Sources: chatgpt-majordomus:c103#5."
+current_state: "Cases exist for some refusals (I2735 edit guard, I2289 off-mesh task); the list is not joined to SECURITY.md."
+desired_state: "A declared route list where each route names its case or its limit line."
+scope:
+  - "SECURITY.md"
+  - "test/cases"
+  - "scripts/ci"
+non_scope:
+  - "Closing a limit that a local tool cannot close"
+serves:
+  - "entry-proves-what-it-handed#every-bypass-is-declared"
+acceptance_criteria:
+  - "Each route names a case or a SECURITY.md line"
+  - "A route with neither fails the check"
+  - "Each new case named here takes its number from `scripts/case-numbers next` and is announced on the board before the file is written (ADR 0053); a case number written in this record before that is provisional"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test guard_hook"
+  - "bash test/run.sh 365_new_shell_is_refused"
+evidence_required:
+  - "case_bypass_routes_are_declared"
+created_at: 2026-10-18
+updated_at: 2026-10-18

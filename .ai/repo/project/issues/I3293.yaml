@@ -1,0 +1,31 @@
+id: I3293
+milestone: every-sessions-usage-is-observed
+title: "Usage is attributed to the session, task and issue it was spent on, from records the repository already keeps"
+slug: usage-is-attributed
+priority: p2
+profile: implementation
+objective: "Join a usage record's provider session id to the session record (ADR 0164), its active task and the task's issue and intent at read time, storing no join, and report unattributed usage as such."
+why: "Cost per accepted outcome (I0401) needs usage against work, and the owner asked for attribution to intent and issue; the session, task and plan records already carry every key. Events dropped while the receiver was down otherwise leave no record; the new capability owes its generated projections. It extends milestone execution-telemetry. Proposed in ADR 0213 (Usage is observed through each provider's official telemetry into one provider-neutral record, and reported, estimated and billed amounts are never merged) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c234#0, chatgpt-majordomus:c236#0, chatgpt-majordomus:c093#6."
+current_state: "Session records name their provider session; nothing reads usage against them."
+desired_state: "economics usage --by issue answers from the join, with an unattributed bucket."
+scope:
+  - "apps/majordomus-cli/src/economics"
+  - "apps/majordomus-cli/src/capability/builtin/economics.rs"
+  - "share/commands.yaml"
+  - "test/cases"
+depends_on:
+  - "I3288"
+serves:
+  - "every-sessions-usage-is-observed#usage-drills-to-its-event"
+acceptance_criteria:
+  - "A fixture session with an active task attributes its usage to the task's issue"
+  - "Usage outside any task is reported unattributed, never dropped"
+  - "A session span with episode records but no received usage events is recorded absent with reason receiver_unavailable (case)"
+  - "The economics usage capability is declared canonically and its share/commands.yaml and MCP/HTTP/OpenAPI projections are generated (majordomus generate --check)"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test economics"
+  - "majordomus generate --check"
+evidence_required:
+  - "case_usage_is_attributed"
+created_at: 2026-10-18
+updated_at: 2026-10-18

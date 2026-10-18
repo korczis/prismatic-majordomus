@@ -1,0 +1,26 @@
+id: I3254
+milestone: an-outcome-becomes-a-reviewed-plan
+title: "A proposal names the existing intents and issues it duplicates or overlaps, and is merged into one rather than added beside it"
+slug: a-proposal-names-its-duplicates
+priority: p2
+profile: implementation
+objective: "intents.propose and draft_check compare a new statement and its drafted issues with existing intents and issues (the brief of I3251) and return each likely duplicate with the shared terms; the proposal is refused as a duplicate unless the caller names the existing intent to amend or confirms novelty."
+why: "The owner repeated the same demands for weeks: the conversations promoted on 2026-10-18 restated single themes in many conversations; 2026-10-12 asked that a conversation not turn one sentence into one issue. Proposed in ADR 0191 (A plan drafted from an intent is a proposal, checked by the plan's own validators before any record is written) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c122#1, chatgpt-majordomus:c239#7, chatgpt-majordomus:c270#4, chatgpt-majordomus:c294#2."
+current_state: "ProposeError has Invalid, Exists (same id) and Write; a different id with the same meaning is accepted."
+desired_state: "Duplicate detection reuses the object search and the brief; no similarity model is required."
+scope:
+  - "apps/majordomus-cli/src/intent.rs"
+  - "apps/majordomus-cli/src/intent_draft.rs"
+  - "apps/majordomus-cli/tests/intent_draft.rs"
+depends_on:
+  - "I3251"
+acceptance_criteria:
+  - "A proposal restating an existing intent's statement with a new id is refused naming it"
+  - "Confirming novelty records the reason in the proposal"
+validation:
+  - "majordomus plan validate"
+  - "majordomus intent validate"
+evidence_required:
+  - "test_a_proposal_names_its_duplicates"
+created_at: 2026-10-18
+updated_at: 2026-10-18

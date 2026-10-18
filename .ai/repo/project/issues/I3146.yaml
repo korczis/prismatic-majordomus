@@ -1,0 +1,38 @@
+id: I3146
+milestone: the-session-domain-is-written-once
+title: "A closed session record says whether it is complete, and one that changed the tree without saying what it served is not"
+slug: a-record-says-whether-it-is-complete
+priority: p1
+profile: implementation
+objective: "Derive a completeness verdict for every closed record (complete, incomplete with named reasons, legacy-unverifiable) and for the calling provider session's open episode; report it on doctor, check and finish; keep episode_closed, task_completed, verified and accepted as four distinct facts."
+why: "On 2026-09-11 the owner asked why a record had no progress or description and why that was not enforced. The body is now composed (sessions/README.md), but the validator still checks shape only, and session/v1 leaves tasks, issues and milestones as arrays with no constraint (share/schemas/majordomus/session-record/session-record.v1.schema.json). Proposed in ADR 0182 (A closed session record is judged by what it can attribute, not only by its schema) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c116#0, chatgpt-majordomus:c116#3."
+current_state: "Records with changed_files or commits and empty tasks/issues validate clean; an interrupted record with no handover validates clean."
+desired_state: "The verdict is derived, never stored as authored text; a record from before the verdict existed is legacy-unverifiable, not invalid."
+scope:
+  - "apps/majordomus-cli/src/session"
+  - "lib/session.sh"
+  - "lib/doctor.sh"
+  - "lib/finish.sh"
+  - "docs/CONTINUITY.md"
+  - "test/cases"
+non_scope:
+  - "Rewriting existing records"
+  - "A session/v2 schema"
+  - "Changing session-record.v1 (a declared reason lives in the ledger)"
+depends_on:
+  - "I3142"
+serves:
+  - "a-session-record-says-what-it-served#record-states-completeness"
+acceptance_criteria:
+  - "Changed files plus empty attribution and no declared reason is incomplete"
+  - "Interrupted with neither handover nor continuation reason is incomplete"
+  - "doctor, check and finish name the verdict and its reasons"
+  - "The verdict distinguishes closed, completed, verified and accepted"
+  - "Each new case named here takes its number from `scripts/case-numbers next` and is announced on the board before the file is written (ADR 0053); a case number written in this record before that is provisional"
+validation:
+  - "bash test/run.sh --no-skips 63_session_records 61_session_envelope"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test session_domain"
+evidence_required:
+  - "case_record_states_completeness"
+created_at: 2026-10-18
+updated_at: 2026-10-18

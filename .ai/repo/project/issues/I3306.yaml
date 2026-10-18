@@ -1,0 +1,33 @@
+id: I3306
+milestone: repository-automation-is-typed
+title: "An external scripted capability runs under default-deny grants, bounded, and leaves an audit record"
+slug: external-capabilities-are-default-deny
+priority: p3
+profile: implementation
+objective: "Give external packages explicit grants for file, environment, network and process access on top of I1800's sandbox and time bound, quarantine a package after repeated severe failures, and record each privileged action."
+why: "A plugin from outside the tree is untrusted code; the grant model has to exist before the first one is installed. Critique 2026-10-18: this issue overlaps I3157 (refusal) and I1800 (sandbox, time bound). It moves to repository-automation-is-typed#scripted-capability-runs, reduced to explicit grants, quarantine after repeated severe failures and the audit record. It extends milestone automation. Sources: chatgpt-majordomus:c244#8."
+current_state: "I1800 sandboxes the engine; no grant model exists."
+desired_state: "Negative tests prove escalation fails through every transport."
+scope:
+  - "apps/majordomus-cli/src/capability"
+  - "test/cases"
+non_scope:
+  - "The sandboxed engine and its time bound, which I1800 delivers"
+  - "The exposure-ceiling refusal, which I3157 delivers"
+depends_on:
+  - "I3305"
+  - "I3157"
+  - "I1800"
+serves:
+  - "repository-automation-is-typed#scripted-capability-runs"
+acceptance_criteria:
+  - "A package without a grant cannot read a file or spawn a process"
+  - "A package's privileged actions, and its stop when I1800's time bound ends it, are written to an audit record"
+  - "A package that fails severely the declared number of times is quarantined and named"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test engine"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test external_extension"
+evidence_required:
+  - "case_external_capabilities_are_default_deny"
+created_at: 2026-10-18
+updated_at: 2026-10-18

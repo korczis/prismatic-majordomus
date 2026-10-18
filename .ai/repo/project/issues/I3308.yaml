@@ -1,0 +1,25 @@
+id: I3308
+milestone: a-provider-carries-the-contract-natively
+title: "Zed validates and completes .ai files against the repository's own schemas"
+slug: zed-reads-the-layer-schemas
+priority: p3
+profile: implementation
+objective: "Project YAML and JSON schema associations from share/schemas onto .zed/settings.json through the existing Zed adapter, so .ai records get validation and hover in the editor."
+why: "The Zed adapter projects skills and workflows (ADR 0140) but not the schema associations the owner's design asked for (10-11). Rebound to the new intent criterion #editor-validates-the-layer (Zed validates .ai records against the layer's schemas through generated associations). It does not serve #one-plugin, which it cannot make true. Proposed in ADR 0214 (A provider's native extension points carry the contract as generated projections; Majordomus neither embeds nor patches the worker's runtime) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c222#2."
+current_state: "apps/majordomus-cli/src/editors/zed.rs has no schema association."
+desired_state: "Associations derived from share/kinds.yaml; generate --check holds them."
+scope:
+  - "apps/majordomus-cli/src/editors/zed.rs"
+  - "test/cases"
+serves:
+  - "a-provider-carries-the-contract-natively#editor-validates-the-layer"
+acceptance_criteria:
+  - "Every kind with a schema has an association"
+  - "A new kind gains one with no edit to the adapter"
+validation:
+  - "majordomus generate --check"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib editors::zed"
+evidence_required:
+  - "test_zed_schema_associations"
+created_at: 2026-10-18
+updated_at: 2026-10-18

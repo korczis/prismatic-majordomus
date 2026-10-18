@@ -1,0 +1,38 @@
+id: I3113
+milestone: a-claim-stands-only-on-its-evidence
+title: "github-check refuses when master's protection no longer requires the verdict check gates.yaml names"
+slug: protection-drift-is-refused
+priority: p1
+profile: implementation
+objective: "Teach scripts/ci/github-check to read the default branch's requirement from repos/{repo}/rules/branches/{base}, which the Actions token can read, and classic branch protection only where the credential allows, and to compare the required contexts with the verdict job .ai/repo/ci/gates.yaml declares. Drift is a refusal with the exact idempotent gh api command as remedy. A 403, a 404 'Branch not protected' and an absent requirement are distinct typed readings, none of them pass."
+why: "The claim \"master cannot regress\" rests on protection that was set by hand on 2026-09-12 and has not been re-verified since. On 2026-10-17 the owner's audit asked again whether a red ci blocks a merge (c293#2). The 2026-10-08 audit called for a cross-vendor union check that nobody else does. GitHub serves classic branch protection only to callers with administration rights, which a GITHUB_TOKEN cannot have, while rulesets are readable with read access. I2966 (in flight on another branch and not on master: an unreadable forge setting renders unknown) also edits forge.rs, so coordinate on the board before touching it. It extends milestone architecture-is-enforced. Sources: chatgpt-majordomus:c109#3, chatgpt-majordomus:c109#7, chatgpt-majordomus:c112#3, chatgpt-majordomus:c130#10, chatgpt-majordomus:c193#1, chatgpt-majordomus:c293#2."
+current_state: "apps/majordomus-cli/src/integration/forge.rs:60-72 and protection_binds_readably read required checks for the executor; forge.rs:1500 reads repos/{repo}/branches/{base}/protection, the endpoint that needs administration rights. .github/workflows/github.yml:145-152 runs scripts/ci/github-check with github.token, and github-check checks only the issue projection. No gate reads protection."
+desired_state: "Every CI run reads the ruleset requirement and says whether classic protection was read. The landing seat's credentialed run of github-check records the classic reading with its revision. Drift is refused; an unread protection is printed as not read, never as pass."
+scope:
+  - "scripts/ci/github-check"
+  - ".ai/repo/ci/github.yaml"
+  - "apps/majordomus-cli/src/integration/forge.rs"
+  - "test/cases"
+  - "docs/INTEGRATION.md"
+  - ".github/workflows/github.yml"
+  - "docs/CLAIMS.yaml"
+  - ".ai/repo/project/intents/a-claim-stands-only-on-its-evidence.yaml"
+non_scope:
+  - "Changing protection automatically"
+  - "Vendor hook configs (separate follow-up)"
+  - "Creating a repository secret or migrating master's protection to a ruleset (the owner's act; either makes the CI reading direct)"
+serves:
+  - "a-claim-stands-only-on-its-evidence#bypass-observed"
+acceptance_criteria:
+  - "A fixture protection lacking ci is refused with the gh api remedy"
+  - "A matching fixture passes; an unreadable one reads UNKNOWN with exit 13"
+  - "github-check reads the default branch's requirement from repos/{repo}/rules/branches/{base} (readable with the Actions token) and the classic repos/{repo}/branches/{base}/protection only where the credential allows; a 403, a 404 'Branch not protected' and a requirement absent from both are distinct typed readings, each UNKNOWN or refused, never pass"
+  - "Under github.token in .github/workflows/github.yml, an unread classic protection is printed as not read and exit 13 is tolerated for that check only; the credentialed reading comes from the landing seat's run of github-check under the owner's gh credential, recorded as an execution with its revision"
+  - "A new case carrying evidence case_protection_drift_refused (its number from scripts/case-numbers next, announced on the board when the issue starts) covers the ruleset, classic, 403 and 404 readings with a fixture forge; docs/CLAIMS.yaml gains claim a-bypass-is-observed citing it, and intent criterion bypass-observed is rebound to that claim"
+validation:
+  - "MJ_TEST_JOBS=4 bash test/run.sh 97_github_gate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib integration::forge"
+evidence_required:
+  - "case_protection_drift_refused"
+created_at: 2026-10-18
+updated_at: 2026-10-18

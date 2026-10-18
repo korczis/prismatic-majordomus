@@ -1,0 +1,35 @@
+id: I3119
+milestone: a-claim-stands-only-on-its-evidence
+title: "The delivery report computes required_tests_current, test_evidence_published and ui_linked instead of citing a merged pull request"
+slug: delivery-reads-its-evidence-dimensions
+priority: p1
+profile: implementation
+objective: "Fill the three phase-1 dimensions of apps/majordomus-cli/src/delivery/mod.rs: required_tests_current from the subject verdict of the feature at the trunk revision, test_evidence_published from the site's publication of that verdict, and ui_linked from the routes /ui and the site serve for the subject. Then remove EVIDENCE_PENDING."
+why: "The owner's hard delivery law of 2026-09-15 (c143#13) says a feature that is not on master, deployed, publicly verified, tested and linked from the UI does not exist. On 2026-10-17 (c288#8) the delivery dimensions were found still unknown \"although PR #577 merged\". Measured on master 707a04c: EVIDENCE_PENDING = \"evidence model lands with PR #577\" still decides three of six dimensions, so no feature can ever read delivered. It extends milestone test-evidence. Sources: chatgpt-majordomus:c120#1, chatgpt-majordomus:c143#14, chatgpt-majordomus:c147#8, chatgpt-majordomus:c198#11, chatgpt-majordomus:c210#4, chatgpt-majordomus:c288#8, chatgpt-majordomus:c297#9, chatgpt-majordomus:c084#0, chatgpt-majordomus:c084#2, chatgpt-majordomus:c086#3."
+current_state: "delivery/mod.rs:32-50. I1960 (BLOCKED) bundles these dimensions with the widget badge, which is far larger work."
+desired_state: "Split the dimensions out of I1960 into this issue. A feature with a proven subject at the trunk, published evidence and a UI route reads pass on all three; each failure names its remedy."
+scope:
+  - "apps/majordomus-cli/src/delivery"
+  - "apps/majordomus-cli/src/evidence"
+  - "apps/majordomus-cli/tests"
+  - ".ai/repo/project/issues/I1960.yaml"
+  - ".ai/repo/project/intents/a-claim-stands-only-on-its-evidence.yaml"
+non_scope:
+  - "The widget evidence badge (stays in I1960)"
+depends_on:
+  - "I2786"
+  - "I2740"
+serves:
+  - "a-claim-stands-only-on-its-evidence#delivery-dimensions-computed"
+acceptance_criteria:
+  - "No delivery dimension reads unknown because of EVIDENCE_PENDING"
+  - "A fixture feature reaches delivered only when all six dimensions pass"
+  - "I1960 is narrowed to the badge"
+  - "The same commit rebinds intent criterion delivery-dimensions-computed from the command ref to the test that carries delivery_test_dimensions_computed"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib delivery"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 373_delivery_is_computed 374_delivery_unknown_is_not_delivered"
+evidence_required:
+  - "delivery_test_dimensions_computed"
+created_at: 2026-10-18
+updated_at: 2026-10-18

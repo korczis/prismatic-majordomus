@@ -1,0 +1,31 @@
+id: I3180
+milestone: runtime-lifecycle
+title: "Entering a checkout whose executable is missing or stale starts one background build and says building"
+slug: entry-builds-once-in-the-background
+priority: p2
+profile: implementation
+objective: "When the entry hook finds no executable or a stale one, start one deduplicated, detached build under the shared build lock, report 'building' in the banner and the runtime state, and let the next entry or client start the server once it finishes; never compile synchronously in the shell."
+why: "Owner standing order 2026-10-12: entering a repository must always end with the server, the mesh and the UI up, building automatically. bin/majordomus-env deliberately never builds and disables auto-start when stale (comment lines 3-7, 56-66), so a fresh clone with direnv allow has no server until a person runs just build. Sources: chatgpt-majordomus:c233#0, chatgpt-majordomus:c233#2."
+current_state: "Verified: bin/majordomus-env never builds; bin/majordomus-mcp's launcher can; lib/rust_bin.sh holds the build lock and free-space floor; PR #1312 (in flight; its ADR is not on master yet) makes an MCP client always get a server."
+desired_state: "One background build per stale generation, visible as state 'building', refused below the disk floor with the reason."
+scope:
+  - "bin/majordomus-env"
+  - "lib/rust_bin.sh"
+  - "test/cases/191_entry_races.sh"
+  - "docs/WORKTREES.md"
+non_scope:
+  - "Building inside the prompt's critical path"
+  - "Building in a repository that only adopts the layer"
+depends_on:
+  - "I3179"
+acceptance_criteria:
+  - "Ten shells entering a cold clone start one build"
+  - "The shell returns in its banner budget while the build runs"
+  - "A build below the disk floor is refused and named"
+validation:
+  - "majordomus plan validate"
+  - "bash test/run.sh 191_entry_races"
+evidence_required:
+  - "case_entry_builds_once"
+created_at: 2026-10-18
+updated_at: 2026-10-18

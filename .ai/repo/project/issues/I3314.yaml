@@ -1,0 +1,29 @@
+id: I3314
+milestone: capability-graph
+title: "An object's read names the commit that last changed its file, and its page lists the commits that changed it"
+slug: an-object-says-when-it-last-changed
+priority: p3
+profile: implementation
+objective: "Add a read-only history projection to an object of the layer: the last commit, its date and the commits that touched the object's file (git log --follow, bounded), served on the entity read and its detail page, and computed from git rather than stored."
+why: "The 2026-09-04 data-driven MCP design asked for an entry's git history beside its document. At 707a04c majordomus history reads the task ledger (lib/history.sh) and commit.history judges commit messages (capability/builtin/commit.rs), but an ADR, rule or knowledge record answers nothing about when or by which commit it last changed, so a reader judging whether a record is current has to leave the surface. I1012 assembles a node's detail view from what it has; history is one more thing it can have. Sources: chatgpt-majordomus:c008#2."
+current_state: "At 707a04c no entity read or page carries a last-changed commit."
+desired_state: "Every object with a file names its last commit and opens its history, bounded, with no tracked copy of either."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/entity.rs"
+  - "apps/majordomus-cli/src/cockpit"
+  - "apps/majordomus-cli/src/ui"
+  - "test/cases"
+non_scope:
+  - "Storing history in the index"
+  - "Diffs of the object"
+acceptance_criteria:
+  - "The entity read of an ADR carries the commit and date that last changed its file"
+  - "The history is bounded and says when it was cut"
+  - "An object with no file says history not applicable, never empty"
+  - "The projection is read-only on every transport"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test objects"
+evidence_required:
+  - "test_entity_history"
+created_at: 2026-10-18
+updated_at: 2026-10-18

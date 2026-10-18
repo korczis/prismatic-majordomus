@@ -1,0 +1,34 @@
+id: I3206
+milestone: delivery-flow-is-measured
+title: "The delivery phases have budgets in benchmark policy, and a phase over its budget is a finding with its trend"
+slug: delivery-phases-have-budgets
+priority: p2
+profile: implementation
+objective: "Once I3202 and I3203 measure the phases, declare each phase's budget beside the UI budgets bench --check already holds, report a phase over budget as a finding with its last window's trend, and keep wall time a report rather than a correctness gate where the runner is not ours."
+why: "The owner set speed goals repeatedly: CI under a minute (c195#0), pull requests under five minutes (c208#24), deploy in minutes (c204#0). PR descriptions of 2026-10-16/17 recorded pre-push checks of 305-455 s against a 180 s budget (c287#2). A goal with no budget in policy is not enforced; a budget on a shared runner pool cannot be a red gate without becoming flaky. Proposed in ADR 0196 (Delivery latency targets are budgets of benchmark policy, measured per phase, and never a correctness gate on runners the repository does not own) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c204#2, chatgpt-majordomus:c287#2."
+current_state: "I2489 (DONE) made the UI's latency budgets benchmark policy held by bench --check; .ai/repo/ci/suite.yaml and structure-durations.tsv bound the suite; no delivery phase has a declared budget."
+desired_state: "Benchmark policy carries a budget per delivery phase with its source (owner goal or measured baseline); the reading marks each phase within or over; over-budget phases surface on the drain screen and in the brief; nothing turns the ci verdict red on GitHub wall time."
+scope:
+  - "apps/majordomus-cli/src/bench"
+  - "apps/majordomus-cli/src/integration/metrics.rs"
+  - ".ai/repo/ci"
+  - "docs/CI.md"
+non_scope:
+  - "Weakening any gate to meet a budget"
+  - "Choosing the numbers (ADR proposed: delivery latency targets are budgets)"
+depends_on:
+  - "I3202"
+  - "I3203"
+serves:
+  - "finished-work-reaches-a-verified-release#delivery-is-measured-per-phase"
+acceptance_criteria:
+  - "Each phase budget names where its number came from"
+  - "A phase over budget is a finding with the window and sample it was read from"
+  - "No required check depends on runner wall time"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib bench::"
+  - "majordomus plan validate"
+evidence_required:
+  - "test_delivery_phase_budgets"
+created_at: 2026-10-18
+updated_at: 2026-10-18

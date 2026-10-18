@@ -1,0 +1,28 @@
+id: I3307
+milestone: a-provider-carries-the-contract-natively
+title: "The default MCP tools/list stays within a declared byte budget, and a full schema is fetched per tool"
+slug: tools-list-is-bounded
+priority: p2
+profile: implementation
+objective: "Declare a byte budget for the default tools/list, carry compact descriptions and no output schemas in it, serve the full schema per tool on demand, and fail a gate when the listing exceeds the budget."
+why: "An audit on 2026-10-08 measured 166 tools and 1.79 MB in tools/list; on 2026-10-18 the shared server's MCP instructions announced 192 tools. Every client pays the listing in context on connect. Rebound to the new intent criterion #mcp-listing-bounded, because the plugin carries the MCP server and every client pays its tools/list on connect. Milestone mcp-transports-are-reliable belongs to no intent, so moving this issue there would leave it unbound. It extends milestone mcp-transports-are-reliable. Sources: chatgpt-majordomus:c193#1."
+current_state: "mcp/protocol.rs prepares the listing once and includes outputSchema per tool; no budget exists."
+desired_state: "A budget in policy, a gate, and a measured listing size in the MCP projection."
+scope:
+  - "apps/majordomus-cli/src/mcp"
+  - ".ai/repo/benchmarks"
+  - "docs/MCP.md"
+  - "test/cases"
+serves:
+  - "a-provider-carries-the-contract-natively#mcp-listing-bounded"
+acceptance_criteria:
+  - "The default listing is measured and under budget"
+  - "Every tool's full schema is retrievable on demand"
+  - "Adding a tool that breaks the budget fails the gate"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test mcp_conformance"
+  - "bash test/run.sh 940_mcp_says_nothing_its_capability_does_not"
+evidence_required:
+  - "case_tools_list_is_bounded"
+created_at: 2026-10-18
+updated_at: 2026-10-18

@@ -1,0 +1,58 @@
+id: I3163
+milestone: knowledge-acts-on-what-it-learns
+title: "Each episode boundary derives whether evolve is due — skip, defer or run — and the next session is told why"
+slug: evolve-readiness-is-derived
+priority: p1
+profile: implementation
+objective: "At episode close in lib/session.sh, derive once a readiness verdict from the candidate groups, their recurrence and routes, the last evolve.run, live mesh claims, and a cooldown and budget declared in policy; record it as a ledger event even when it is skip; name it in the SessionStart briefing, with a directive on run, and in brief.session, CLI, HTTP, MCP and /ui/knowledge; 'run' tells the session to run the evolve skill, never promotes."
+why: "Owner, 2026-10-16: wire /evolve in automatically at the right time. The skill lists when to use it; nothing derives it. ADR 0091 keeps promotion a person's act. brief.rs is brief.session (peers, mesh, queues); case 710 exercises the briefing in lib/context.sh. Derives triggered by compaction (lib/capture.sh:1797) would multiply verdicts per episode. Source c274#2 lists the hard conditions: no concurrent evolution on the scope, no conflicting merge or deploy, new evidence since the last run, rollback available. Proposed in ADR 0183 (Evolution is scheduled at the episode boundary and carried out by a session; nothing promotes itself) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c197#8, chatgpt-majordomus:c274#2."
+current_state: "No verdict; evolve runs when someone calls it and leaves no typed event of its own; brief.rs is brief.session and carries no knowledge content."
+desired_state: "Every closed episode carries the verdict and its factors."
+scope:
+  - "lib/knowledge.sh"
+  - "apps/majordomus-cli/src/capability/builtin/knowledge_base.rs"
+  - "apps/majordomus-cli/src/capability/builtin/brief.rs"
+  - "share/events.yaml"
+  - ".ai/repo/policy.yaml"
+  - ".ai/repo/skills/evolve/SKILL.md"
+  - "test/cases"
+  - "lib/context.sh"
+  - "lib/session.sh"
+  - "apps/majordomus-cli/src/ui/knowledge.rs"
+  - "apps/majordomus-cli/src/cockpit"
+  - "site/content/guarantees"
+  - "share/schemas/majordomus/policy/policy.v1.schema.json"
+  - "share/skeleton/policy.yaml"
+  - "share/allow/policy.txt"
+  - ".ai/repo/adrs/0183-evolution-is-scheduled-at-the-episode-boundary-and-carried-out-b.md"
+  - ".ai/repo/adrs/0118-a-session-leaves-what-it-observed-and-one-candidate-per-defect-is-routed.md"
+  - ".ai/repo/project/intents/the-layer-evolves-when-it-is-due.yaml"
+non_scope:
+  - "Running evolve from the hook"
+  - "Promoting a candidate"
+  - "Starting evolve from a hook or without a session"
+  - "Writing a verdict from knowledge derive"
+serves:
+  - "the-layer-evolves-when-it-is-due#evolve-readiness-is-derived"
+acceptance_criteria:
+  - "Every closed episode records a verdict with its factors"
+  - "The next brief names a 'run' verdict"
+  - "Cooldown and budget are respected"
+  - "Each new case named here takes its number from `scripts/case-numbers next` and is announced on the board before the file is written (ADR 0053); a case number written in this record before that is provisional"
+  - "The verdict is written exactly once per episode, at episode close in lib/session.sh, and never by knowledge derive run from compaction, by hand or from the evolve skill"
+  - "The SessionStart briefing (lib/context.sh via mj_knowledge_briefing_section) names the verdict and its factors, and on 'run' gives the directive to run the evolve skill now with its reasons; the case asserts the directive"
+  - "brief.session reads the latest verdict from the ledger, so the CLI and MCP brief carry it to Codex and Gemini sessions without their hooks"
+  - "One evolve.run event, declared in share/events.yaml and written by the evolve skill at its start and end with the commit range, marks each run; the cooldown and the new-evidence condition read it, and no other issue adds a second marker"
+  - "'run' is given only when no live mesh claim covers the evolve scope (else defer), no landing or release claim is in progress (else defer), and evidence newer than the last evolve.run exists (else skip); each factor is listed with the verdict"
+  - "The evolve skill takes an exclusive mesh claim on its scope before acting on 'run', reports a refused claim and does not retry it, and lands its change through a pull request so that a revert rolls it back"
+  - "An episode whose ledger holds an evolve.run closes with skip and the factor 'this episode evolved'"
+  - "The verdict, its factors and the last evolve.run are shown on CLI, HTTP, MCP and /ui/knowledge, with a guarantee page under site/content/guarantees"
+  - "Cooldown and budget are optional policy keys with defaults, declared in the policy schema and skeleton; doctor passes on a policy without them"
+  - "ADR 0183 is accepted and ADR 0118 is amended to reference it"
+  - "The criterion evolve-readiness-is-derived is rewritten to evidence: test with the allocated case path, and that case runs in this issue's validation"
+validation:
+  - "bash test/run.sh 710_briefing_names_the_candidates 3004_evolve_is_a_procedure_of_existing_commands"
+evidence_required:
+  - "case_evolve_readiness_is_derived"
+created_at: 2026-10-18
+updated_at: 2026-10-18

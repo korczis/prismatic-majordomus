@@ -1,0 +1,32 @@
+id: the-host-knows-its-runtimes
+title: "A host knows every Majordomus runtime it runs, with no project open"
+slug: the-host-knows-its-runtimes
+order: 171
+priority: p3
+problem: "On 2026-10-12 the owner asked for a tiny host-level service that coordinates several Majordomus versions on one machine, keeps the mesh healthy and self-updates. Every server today is one checkout's (ADR 0035); nothing answers for the host, and two versions on one machine are found only by knowing their checkouts. Proposed in ADR 0199 (A hub is a declared host service; a working checkout's server stays a client's child) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c240#0, chatgpt-majordomus:c240#2, chatgpt-majordomus:c240#5."
+outcome: "A read-only host inventory first, derived from the leases every checkout already writes; a routing answer second. A hub's service is the declared deployment target of the-hub-is-reached-from-any-device, and no host-level resident is built."
+current_state: "Verified: per-repository server listing exists (majordomus server); leases live under each checkout's .ai/local/state; README and ADR 0003 say Majordomus is not a daemon; hubs nevertheless run as a systemd user unit on lundra (docs/MESH.md 'The hubs as services')."
+desired_state: "majordomus runtimes (host scope) answers with no checkout open; side-by-side versions are routed by negotiated capability; a resident exists only by decision."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/server.rs"
+  - "apps/majordomus-cli/src/lease.rs"
+  - "apps/majordomus-cli/src/mesh/identity.rs"
+  - "docs/MCP.md"
+  - "test/cases"
+non_scope:
+  - "A second discovery, registry or update system (ADR 0050, ADR 0161)"
+  - "NAT and relays: mesh-connectivity"
+  - "Packaging as brew services"
+acceptance_criteria:
+  - "Host inventory needs no running daemon"
+  - "Two versions on one host are both listed and an incompatible request is refused with a typed reason"
+validation:
+  - "majordomus plan validate"
+evidence_required: []
+depends_on:
+  - "runtime-lifecycle"
+  - "safe-self-update"
+risks:
+  - "Scope creep the 10-07 audit warned about: every slice must be vertically complete and small"
+created_at: 2026-10-18
+updated_at: 2026-10-18

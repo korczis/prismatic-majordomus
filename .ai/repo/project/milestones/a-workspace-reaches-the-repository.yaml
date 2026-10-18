@@ -1,0 +1,33 @@
+id: a-workspace-reaches-the-repository
+title: "A vendor workspace reads the repository, and proposes to it only where the owner has decided it may"
+slug: a-workspace-reaches-the-repository
+order: 189
+priority: p3
+problem: "The pull path brings decisions in after the fact; the owner asked twice for ChatGPT to act on the repository directly, and the only legitimate shape (a custom MCP connector) runs into ADR 0126 for any mutation and into a tunnel that makes remote callers look local. Sources: chatgpt-majordomus:c239#7, chatgpt-majordomus:c267#2, chatgpt-majordomus:c239#4."
+outcome: "Read-only connector first; a proposal path only after an ADR amends ADR 0126."
+current_state: "MCP over HTTP on the shared server; ADR 0126 admits only reads and signed-input capabilities beyond loopback; intent.propose is repository_mutation."
+desired_state: "A vendor caller reads the plan; with the owner's decision, proposes intents carrying their workspace reference."
+scope:
+  - "apps/majordomus-cli/src/http"
+  - "apps/majordomus-cli/src/mcp"
+  - ".ai/repo/adrs"
+  - "docs/MCP.md"
+  - "test/cases"
+non_scope:
+  - "Public hosting"
+  - "Writes without a person accepting them"
+acceptance_criteria:
+  - "A vendor caller is refused every mutation until the ADR exists"
+  - "A tunnel cannot grant loopback authority"
+  - "Intent criteria a-vendor-reads-and-never-writes and a-proposal-names-its-source"
+validation:
+  - "majordomus plan validate"
+evidence_required: []
+depends_on:
+  - "runtime-trust"
+  - "a-promoted-record-opens-its-message"
+risks:
+  - "Vendor plan limits on write tools are unverified"
+  - "Generalising this into a platform before the pull path is proven (lesson)"
+created_at: 2026-10-18
+updated_at: 2026-10-18

@@ -1,0 +1,29 @@
+id: I3296
+milestone: every-sessions-usage-is-observed
+title: "Each compaction is measured: the context before and after, from the provider's report"
+slug: compaction-is-measured
+priority: p3
+profile: implementation
+objective: "Record pre- and post-compaction token counts from the provider's own events (PreCompact/PostCompact and the compaction telemetry) against the episode, and derive the ratio and the time to the next compaction."
+why: "Compression strategies are argued about and never measured; the episode boundary already sees every compaction (ADR 0015). The PreCompact hook carries no token counts and the compaction event is an unverified vendor claim; transcript parsing is rejected by ADR 0213. It extends milestone execution-telemetry. Proposed in ADR 0213 (Usage is observed through each provider's official telemetry into one provider-neutral record, and reported, estimated and billed amounts are never merged) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c236#4."
+current_state: "PreCompact is captured as an episode event; no token counts are kept."
+desired_state: "Compaction ratio per episode is a derived metric with its sample size."
+scope:
+  - "apps/majordomus-cli/src/economics"
+  - "lib/capture.sh"
+  - "test/cases"
+depends_on:
+  - "I3288"
+serves:
+  - "every-sessions-usage-is-observed#compaction-is-measured"
+acceptance_criteria:
+  - "A fixture compaction yields a ratio and both counts"
+  - "A compaction without reported counts is recorded absent"
+  - "Work starts only once a captured compaction event with pre- and post-token counts, from a dated client version, is a fixture; without it compaction counts are recorded absent and no transcript is parsed"
+validation:
+  - "bash test/run.sh 54_session_lifecycle_hooks"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test economics"
+evidence_required:
+  - "case_compaction_is_measured"
+created_at: 2026-10-18
+updated_at: 2026-10-18

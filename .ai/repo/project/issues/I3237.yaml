@@ -1,0 +1,33 @@
+id: I3237
+milestone: a-derive-answers-within-a-second
+title: "A derive publishes its whole output set at once after validating it, and a killed derive leaves the previous set"
+slug: a-derive-publishes-its-outputs-as-one-set
+priority: p1
+profile: deep-work
+objective: "Compute every node into staging, validate the affected set as a whole, then publish. Detect inputs that changed during the run and refuse or retry. A run that dies mid-way leaves the tree as it was."
+why: "c208#4 and c292#2 ask for atomic publication. Today each file is atomic but the set is not, so a derive stopped during stage B leaves A's new outputs beside B's old ones. Sources: chatgpt-majordomus:c208#4, chatgpt-majordomus:c292#2."
+current_state: "generate::write stages each file as a temporary sibling and renames it; stages A-D publish separately."
+desired_state: "One publish step per derive, with a recovery path where a multi-file atomic replace is unavailable."
+scope:
+  - "apps/majordomus-cli/src/generate.rs"
+  - "apps/majordomus-cli/src/derivation"
+  - "scripts/derive"
+  - "test/cases"
+non_scope:
+  - "Changing what the derive lock serialises"
+depends_on:
+  - "I2522"
+  - "I2521"
+serves:
+  - "a-change-is-judged-in-minutes#incremental-equals-full"
+acceptance_criteria:
+  - "A derive killed at each stage leaves a tree derive-check judges as before the run"
+  - "An input changed during the run is refused by name"
+  - "Published bytes equal today's full derive"
+validation:
+  - "scripts/derive-check"
+  - "bash test/run.sh 400_derivation_is_one_graph"
+evidence_required:
+  - "killed_derive_leaves_prior_set_case"
+created_at: 2026-10-18
+updated_at: 2026-10-18

@@ -1,0 +1,48 @@
+id: I3183
+milestone: the-runtime-supervises-itself
+title: "A safe repair runs once per cause through ensure, recovery, leases and the reaper, and a repeated failure escalates"
+slug: a-repair-is-bounded
+priority: p2
+profile: deep-work
+objective: "Act on supervision findings of the idempotent classes only (reconnect a valid mesh link, ensure a required server, resubscribe events, refresh a derived projection, free a resource whose owner is provably gone), each with reason, owner, one verification and a circuit breaker that stops after repeated failure and puts the finding on the board."
+why: "The 10-17 design separated automatic, verified-first and never-blind repairs; serve ensure's idle exit after 900 s, heartbeat expiry and leases are guarantees a restart-always supervisor would break. A zombie is reaped by its parent; SIGKILL fixes nothing. Critique 10-18: the board and the server's memory end with the process (peers.rs), and the server exits after 900 s idle, so a breaker kept in memory would reset on every restart and become the restart loop the 10-17 design warned against. ADR 0200 is still proposed, and the issue's narrowed scope rests on it. Proposed in ADR 0200 (Supervision repairs only what is idempotent, owned and verified, and never restarts blindly) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c288#16."
+current_state: "Verified: scripts/reap-orphans never removes a server for age alone; rules project.recovery-is-idempotent and project.reclaim-only-what-you-own exist; nothing runs repairs from a classification."
+desired_state: "supervision repair (a declared host-process effect) inside the shared server; breaker state persisted per cause under .ai/local/state/supervision/, the board only re-announcing an open breaker."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/health.rs"
+  - "apps/majordomus-cli/src/lease.rs"
+  - "scripts/reap-orphans"
+  - "test/cases"
+  - "apps/majordomus-cli/src/capability/model.rs"
+  - "apps/majordomus-cli/src/cockpit"
+  - "docs/MONITOR.md"
+  - ".ai/repo/adrs/0039-liveness-is-four-rules-advisory-until-a-scan-can-decide-them.md"
+  - ".ai/repo/adrs/0200-supervision-repairs-only-what-is-idempotent-owned-and-verified-a.md"
+non_scope:
+  - "Resuming executions or requeueing work without verification"
+  - "Killing by name, deleting worktrees, retrying merges"
+  - "Killing by age alone"
+  - "Holding breaker state only on the peer board"
+depends_on:
+  - "I3182"
+serves:
+  - "nothing-in-the-mesh-waits-on-something-dead#repair-is-bounded"
+acceptance_criteria:
+  - "A repair acts only after asking ownership again"
+  - "The third failure of one cause opens the breaker and escalates"
+  - "serve ensure's idle exit still happens"
+  - "Precondition: work starts only after ADR 0200 has status accepted, or after the owner's agreement to the narrowed scope (no forced cooperation, no session restarts) is recorded. Until then the issue stays blocked."
+  - "Breaker state (cause digest, failure count, opened_at, escalation) is persisted per cause under .ai/local/state/supervision/ and read before every repair. A server restart neither resets the count nor closes an open breaker."
+  - "The case restarts the server between the second and third failure of one cause and proves that the third failure still opens the breaker, and that the breaker stays open across a further restart."
+  - "A test proves that serve ensure's idle exit after server.idle_seconds still happens with supervision active."
+  - "Repair declares a host-process effect variant on Effect (capability/model.rs) for signalling a process, freeing a lease or ensuring a server, so the Cockpit derives a confirmation from the effect."
+  - "ADR 0039 links ADR 0200 so the derived ADR pages show the narrowing, and docs/MONITOR.md documents the repair classes and the breaker."
+  - "In the same change, the intent criterion repair-is-bounded records evidence: test with a ref to the case allocated with scripts/case-numbers (announced before it is written)."
+validation:
+  - "majordomus plan validate"
+  - "cargo test --lib lease"
+  - "bash test/run.sh 110_lease_reader"
+evidence_required:
+  - "case_a_repair_opens_its_breaker"
+created_at: 2026-10-18
+updated_at: 2026-10-18

@@ -1,0 +1,29 @@
+id: I3178
+milestone: safe-self-update
+title: "A self update killed at any stage leaves a usable installation"
+slug: an-interrupted-update-recovers
+priority: p2
+profile: verification
+objective: "Drive the installer that self update runs through an interrupted download, a kill at each stage (download, verify, stage, swap, health check), a failed post-update readiness and two concurrent updates, and hold that each ends with the previous or the new version runnable and saying which."
+why: "ADR 0161 makes the installer the single implementation of the risky part; I2720 wraps it and I2722 rolls a hub back. The 10-08 pack required stage-by-stage fault injection (U04-U14); nothing exercises those paths today. Sources: chatgpt-majordomus:c200#2."
+current_state: "Verified: case 85_installer tests the installer's happy path; I2720 READY and I2722 BLOCKED on it (majordomus plan show, 2026-10-18); no case kills install.sh mid-stage."
+desired_state: "One case per stage under a disposable prefix, run by the rust or structure job."
+scope:
+  - "share/install/install.sh.in"
+  - "scripts/ci/install-check"
+  - "test/cases"
+non_scope:
+  - "Rewriting the installer in Rust (refused by ADR 0161)"
+depends_on:
+  - "I2720"
+  - "I2722"
+acceptance_criteria:
+  - "Every stage kill leaves a launcher that runs and names its version"
+  - "Two concurrent updates end with one winner and no torn prefix"
+validation:
+  - "majordomus plan validate"
+  - "bash test/run.sh 85_installer"
+evidence_required:
+  - "case_an_interrupted_update_recovers"
+created_at: 2026-10-18
+updated_at: 2026-10-18

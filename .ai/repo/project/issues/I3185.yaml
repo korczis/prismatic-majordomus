@@ -1,0 +1,33 @@
+id: I3185
+milestone: the-host-knows-its-runtimes
+title: "A request on a host with two Majordomus versions reaches the one whose protocol satisfies it, or is refused with a reason"
+slug: a-request-reaches-a-compatible-runtime
+priority: p3
+profile: implementation
+objective: "From the host inventory and each runtime's negotiated protocol range and capability set, answer which runtime a client should attach to for a given repository and request, deterministically, and refuse an incompatible pair with a typed reason."
+why: "Slice 02 of the 10-12 resident design; I2163 already refuses a silent attach across versions for one checkout, this extends the judgement to the host. Proposed in ADR 0205 (What a runtime can do is a set of separately evidenced facts, and detection never authorises) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c240#5."
+current_state: "Verified: I2163 DONE (one checkout); no host-level routing answer."
+desired_state: "runtimes route answers runtime + reason; the UI shows it as a compatibility table."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/server.rs"
+  - "test/cases"
+  - "apps/majordomus-cli/src/ui"
+non_scope:
+  - "Proxying traffic between runtimes"
+depends_on:
+  - "I3184"
+  - "I3177"
+serves:
+  - "nothing-in-the-mesh-waits-on-something-dead#host-lists-its-runtimes"
+acceptance_criteria:
+  - "Same registry state, same answer"
+  - "An incompatible pair is refused, never downgraded"
+  - "The change writes test_host_route_is_deterministic, and its validation then runs it, not only majordomus plan validate."
+  - "/ui shows the routing answer as a compatibility table derived from the same capability."
+validation:
+  - "majordomus plan validate"
+  - "cargo test --lib capability::builtin::server"
+evidence_required:
+  - "test_host_route_is_deterministic"
+created_at: 2026-10-18
+updated_at: 2026-10-18

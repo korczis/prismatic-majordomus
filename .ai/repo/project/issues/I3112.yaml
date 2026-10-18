@@ -1,0 +1,51 @@
+id: I3112
+milestone: a-claim-stands-only-on-its-evidence
+title: "rule-proof-check prints the blocking rules no recorded run proves, and that count only falls"
+slug: unproven-blocking-rules-are-counted
+priority: p1
+profile: implementation
+objective: "Deliver the milestone criterion that has no issue: majordomus-cli rules report and rule-proof-check print, per class, the rules whose state is not_run, gated, stale or unproven. The blocking not_run ratchet runs in the validate job after scripts/ci/evidence-collect, over that run's own executions for its own head. /ui/rule, /ui/governance, the published snapshot and site/content/rules render each rule's state and refusal_shown, so no not_run, stale or unknown rule is drawn as pass."
+why: "architecture-is-enforced lists \"rule-proof reports each rule from recorded runs, and the not-run count of blocking rules is printed\", and no issue carries it. Read on master 707a04c on 2026-10-18 with majordomus-cli rules report --format json: 156 of 187 rules not run, 3 recorded. The owner asked for a governance scorecard computed from evidence, never typed (c139#3). rule-proof-check runs in the structure job (.ai/repo/ci/gates.yaml:301-303), which runs no suite, and the tracked ledger's newest run is from 2026-09-17, so a ratchet there would measure stale runs forever. The only executions recorded for a revision are the ones its own validate run produces (.github/workflows/validate.yml:834). It extends milestone architecture-is-enforced. Proposed in ADR 0188 (A rule's proof of effect is a recorded refusal of its violation, not the presence of its wiring) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c103#2, chatgpt-majordomus:c115#1, chatgpt-majordomus:c139#3."
+current_state: "majordomus_rules returns states and coverage tallies. scripts/ci/rule-proof-check refuses dangling and unproven paths only. The tracked ledger holds 14 executions, the newest 2026-09-17."
+desired_state: "The validate run's gate output, majordomus-cli rules report and the published evidence view carry one per-state table. A rise in blocking not_run on a full-suite run (master or an integration top) fails the validate job; a run without its own ledger reports the ratchet as not read."
+scope:
+  - "scripts/ci/rule-proof-check"
+  - "apps/majordomus-cli/src/rules"
+  - ".ai/repo/rule-proof-baseline.txt"
+  - "test/cases/125_rule_proof.sh"
+  - ".github/workflows/validate.yml"
+  - "scripts/ci/evidence-collect"
+  - ".ai/repo/ci/gates.yaml"
+  - "apps/majordomus-cli/src/ui/rule.rs"
+  - "apps/majordomus-cli/src/ui/governance.rs"
+  - "scripts/generate-site-data"
+  - "site/content/rules"
+  - ".ai/repo/project/intents/a-claim-stands-only-on-its-evidence.yaml"
+non_scope:
+  - "Importing CI runs into the published UI (I2786)"
+  - "Bringing CI executions into the tracked tree (I2968, in flight on another branch and not on master, keeps them out; the recording branch I1954 is BLOCKED)"
+  - "Retitling the governance and evidence counts (I2970, in flight on another branch and not on master)"
+depends_on:
+  - "I2786"
+  - "I3110"
+serves:
+  - "a-claim-stands-only-on-its-evidence#proof-from-ci-runs"
+  - "a-claim-stands-only-on-its-evidence#unproven-never-reads-pass"
+acceptance_criteria:
+  - "rule-proof-check and majordomus-cli rules report print the per-class state table"
+  - "A fixture ledger for one revision in which a blocking rule loses its run makes the ratchet fail"
+  - "The table on CLI, MCP and the published evidence view is one projection"
+  - "The blocking not_run ratchet runs in the validate job after scripts/ci/evidence-collect, over that run's own recorded executions for its own head revision; it ratchets only on a full-suite run (master or an integration top), and a selected run prints the count without ratcheting"
+  - "A run whose own ledger is absent reports the ratchet as not read, never as pass and never as a failure of an unrelated pull request; a run in the tracked ledger never counts for a newer revision; the structure-job rule-proof-check keeps only its static checks"
+  - "/ui/rule, /ui/governance, the published snapshot and site/content/rules render each rule's state and refusal_shown; a case fails when a not_run, stale or unknown rule is drawn as pass or as satisfied without its state"
+  - "New cases carrying evidence case_blocking_not_run_ratchet and case_unproven_never_reads_pass (its number from scripts/case-numbers next, announced on the board when the issue starts) fail on master 707a04c; the same commit rebinds intent criteria proof-from-ci-runs and unproven-never-reads-pass to them"
+  - "This issue lands after I3110 and adds its ratchet onto I3110's refusal ratchet in rule-proof-check, rules/mod.rs and case 125, not beside it"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test rules"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 125_rule_proof 357_ci_records_evidence"
+  - "scripts/ci/rule-proof-check"
+evidence_required:
+  - "case_blocking_not_run_ratchet"
+  - "case_unproven_never_reads_pass"
+created_at: 2026-10-18
+updated_at: 2026-10-18

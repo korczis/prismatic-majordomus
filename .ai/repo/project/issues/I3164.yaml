@@ -1,0 +1,34 @@
+id: I3164
+milestone: knowledge-acts-on-what-it-learns
+title: "A change an evolve run makes yields no candidate about itself, and a rejected subject is not proposed again without new evidence"
+slug: evolution-does-not-feed-itself
+priority: p2
+profile: implementation
+objective: "Have the deriver skip, as sources, the task.finished and decision.recorded lines of an episode that holds I3163's evolve.run, cite none of that episode's commits, and keep its observation.recorded lines; prove with a test that a rejected subject returns only beside a later observation."
+why: "2026-10-08 conversation: negative learning and loop prevention are required, and platform maintenance has its own state separate from the session that triggered it. mj_knowledge_evidence reads decision.recorded, question.resolved, task.finished and observation.recorded only (lib/knowledge.sh). An evolve episode feeds itself through its task.finished line and the decisions its step 3 records, not through commits. The loop at the evolve episode's own close is closed in I3163. Proposed in ADR 0183 (Evolution is scheduled at the episode boundary and carried out by a session; nothing promotes itself) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c197#8."
+current_state: "knowledge reject exists and superseded records are skipped (lib/knowledge.sh); the deriver does not know which episodes evolved."
+desired_state: "No self-referential candidate; rejected subjects stay quiet."
+scope:
+  - "lib/knowledge.sh"
+  - "share/events.yaml"
+  - "test/cases"
+  - ".ai/repo/project/intents/the-layer-evolves-when-it-is-due.yaml"
+depends_on:
+  - "I3163"
+  - "I3162"
+serves:
+  - "the-layer-evolves-when-it-is-due#evolution-does-not-feed-itself"
+acceptance_criteria:
+  - "An evolve commit produces no candidate"
+  - "A rejected subject without newer evidence is not re-proposed"
+  - "Each new case named here takes its number from `scripts/case-numbers next` and is announced on the board before the file is written (ADR 0053); a case number written in this record before that is provisional"
+  - "The deriver skips, as sources, the task.finished and decision.recorded lines of an episode whose ledger holds an evolve.run (I3163's marker), and keeps that episode's observation.recorded lines"
+  - "Records derived from an evolve episode do not cite that episode's commits as commit: or file: references; 'an evolve commit produces no candidate' is proven in those terms, because commits are not deriver sources"
+  - "The rejected-subject half is a test of existing behaviour (superseded records are skipped; a later observation is listed beside the rejected record as case 981 requires), applied to I3162's cross-episode friction candidates, and it changes no criterion of a-session-leaves-what-it-observed"
+  - "The criterion evolution-does-not-feed-itself is rewritten to evidence: test with the allocated case path, and that case runs in this issue's validation"
+validation:
+  - "bash test/run.sh 711_candidates_are_reviewed_not_accumulated"
+evidence_required:
+  - "case_evolution_does_not_feed_itself"
+created_at: 2026-10-18
+updated_at: 2026-10-18

@@ -1,0 +1,43 @@
+id: I3281
+milestone: a-promoted-record-opens-its-message
+title: "A workspace message is a typed provenance reference that validates in every checkout without the store"
+slug: a-workspace-message-is-a-reference
+priority: p1
+profile: implementation
+objective: "Add workspace:<workspace-id>/<conversation-id>#<message> to the shared Provenance reference grammar; validate it structurally against the tracked workspace declaration everywhere, accept a digits-only <message> as a positional reference flagged for pinning, and never consult .ai/local/ to decide validity."
+why: "A reference that resolves only against checkout-local state fails in every other checkout: the 2026-10-18 adopter report (board p11, item 20) found committed candidates citing task:<id> from one checkout's ledger failing doctor 16 times elsewhere. The 2026-10-18 import's sources are positional (`conv#n`), so the grammar has to admit them while saying they are not yet pinned. Critique 2026-10-18: the import wrote prose references only, so validators reading structured fields would pass vacuously; the migration to typed positional entries belongs here because it needs only I3280 and I1301, not the vendor pipeline. The conversation component of the grammar waits on the owner's decision whether raw conversation ids may be public (finding conversation-ids-already-published); a refusal means an opaque alias resolved through the local store. The non-goal deferring a Claude Project contradicts owner source c239#9 and awaits the owner's confirmation. Proposed in ADR 0211 (A record promoted from a workspace cites the message it came from by a typed reference that validates in every checkout and resolves only where the store is held) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c267#2."
+current_state: "Neither provenance pattern (adr.v1, knowledge.v1) names a workspace message; the 2026-10-18 import wrote its sources only as prose chatgpt-majordomus:<conversation>#<n> in why, problem and record bodies."
+desired_state: "workspace: references validate (workspace declared, conversation id well-formed), a positional one warns 'not pinned', an undeclared workspace is refused."
+scope:
+  - "share/schemas/majordomus"
+  - "apps/majordomus-cli/src/plan.rs"
+  - "apps/majordomus-cli/src/capability/builtin/knowledge_base.rs"
+  - "docs/WORKSPACES.md"
+  - "test/cases"
+  - ".ai/repo/project"
+  - ".ai/repo/adrs"
+  - ".ai/repo/knowledge"
+  - ".ai/repo/rules/project"
+  - ".ai/repo/skills"
+non_scope:
+  - "Reading the store (I3282)"
+depends_on:
+  - "I3280"
+  - "I1301"
+serves:
+  - "what-a-workspace-decides-reaches-the-repository-with-its-source#a-reference-validates-everywhere"
+acceptance_criteria:
+  - "A clone with no .ai/local/ validates a record citing a declared workspace"
+  - "An undeclared workspace id is refused with the declarations that exist"
+  - "A digits-only message is reported as positional, not as an error"
+  - "The typed form is workspace:chatgpt-majordomus/<conversation>#<message> in provenance.derived_from; the prose form chatgpt-majordomus:<conversation>#<n> written by the 2026-10-18 import is recognised by a detector"
+  - "plan validate and knowledge check scan why, problem and record bodies for chatgpt-majordomus: and fail on any reference not also present as a typed provenance.derived_from entry of the same record"
+  - "Every prose workspace reference the 2026-10-18 import wrote is migrated into typed positional derived_from entries before the import commits"
+  - "A project rule under .ai/repo/rules/project and the promotion guidance in .ai/repo/skills state that a promoted record cites its workspace source as typed provenance, and the rule's proof is the detector's refusal"
+validation:
+  - "majordomus plan validate"
+  - "bin/majordomus knowledge check"
+evidence_required:
+  - "case_a_workspace_reference_validates_without_the_store"
+created_at: 2026-10-18
+updated_at: 2026-10-18

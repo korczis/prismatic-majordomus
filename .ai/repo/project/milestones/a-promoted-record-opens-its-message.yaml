@@ -1,0 +1,32 @@
+id: a-promoted-record-opens-its-message
+title: "Every record promoted from a workspace cites the message it came from, and the UI opens it for the operator who holds it"
+slug: a-promoted-record-opens-its-message
+order: 188
+priority: p1
+problem: "The ChatGPT import promotes intents, ADRs, milestones, issues and knowledge with `conversation#message` sources, but the plan schemas carry no provenance at all and the shared Provenance grammar has no reference type for a workspace message, so the drill-back exists only in the writer's scratch files. Proposed in ADR 0211 (A record promoted from a workspace cites the message it came from by a typed reference that validates in every checkout and resolves only where the store is held) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c267#2, chatgpt-majordomus:c267#0, chatgpt-majordomus:c239#0."
+outcome: "A typed workspace: reference on every record kind, valid in every checkout, resolvable where the store is held, drawn as a link on /ui and as text on the published site."
+current_state: "Verified on master 707a04c: adr.v1 admits provenance derived_from ^(decision|session|commit|issue|file|test):.+$, knowledge.v1 adds task: and resolves decision, session and task references against the ledger, and the two origin semantics differ; intent, milestone and issue schemas have no provenance field; no schema under share/schemas uses a cross-file $ref; ui/prose.rs links known record ids only. The 2026-10-18 import wrote its sources only as prose chatgpt-majordomus:<conversation>#<n> references."
+desired_state: "workspace:chatgpt-majordomus/<conversation>#<message> validates everywhere, resolves locally, opens the message from /ui, and the 2026-10-18 positional references are pinned to message ids."
+scope:
+  - "share/schemas/majordomus"
+  - "apps/majordomus-cli/src/plan.rs"
+  - "apps/majordomus-cli/src/capability/builtin"
+  - "apps/majordomus-cli/src/ui"
+  - "docs/WORKSPACES.md"
+  - "test/cases"
+non_scope:
+  - "Storing or summarising conversation text in any tracked record"
+  - "Publishing message text"
+acceptance_criteria:
+  - "Five record kinds carry provenance from one reference grammar, inlined per kind at generate time"
+  - "A workspace reference validates in a clone with no store"
+  - "/ui opens the cited message where the store exists, for a loopback caller only"
+  - "Zero positional references remain, typed or in prose"
+validation:
+  - "majordomus plan validate"
+evidence_required: []
+risks:
+  - "A reference that resolves only against local state fails every other checkout (adopter report 2026-10-18, task: references); validity must be structural"
+  - "Decided by the owner on 2026-10-18: a public record cites a local alias (chatgpt-majordomus:cNNN#n) and the alias-to-conversation map stays in the operator's own store; a typed reference must keep that property."
+created_at: 2026-10-18
+updated_at: 2026-10-18

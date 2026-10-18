@@ -1,0 +1,31 @@
+id: I3274
+milestone: intent-intake
+title: "A new campaign revision reports only the criteria whose source requirement changed"
+slug: a-revision-reopens-only-its-change
+priority: p3
+profile: implementation
+objective: "Diff two revisions by segment digest (added, removed, modified as a removed digest paired with an added one at the same location) and report the criteria citing a removed or replaced digest; a rename or reorder moves no digest and reports nothing. The report changes no stored or derived state."
+why: "2026-10-10: preserve completed history and avoid duplicate work on a revised pack. Proposed in ADR 0194 (An ingested brief is an intake revision, and its requirements are reconciled into the existing plan) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c210#4."
+current_state: "No revisions exist."
+desired_state: "The diff is derived; nothing reopens on wording-only change."
+scope:
+  - "apps/majordomus-cli/src/reconcile.rs"
+  - "apps/majordomus-cli/tests/intake.rs"
+  - "test/fixtures"
+depends_on:
+  - "I3273"
+serves:
+  - "a-brief-is-reconciled-into-the-plan#a-revision-reopens-only-its-change"
+acceptance_criteria:
+  - "A modified requirement reports exactly its derived criteria"
+  - "A reordered document reports none"
+  - "Reopening is a report only: it lists the criteria whose source segment digest was removed or replaced and changes no stored or derived state. A criterion's state stays derived from evidence (IntentEvidenceState)"
+  - "A modified segment is a removed digest paired with an added one at the same location, and the report names the criteria citing the removed digest"
+  - "Renaming a heading or reordering items moves no segment digest, and the report is empty for the fixture's renamed revision"
+validation:
+  - "majordomus plan validate"
+  - "majordomus intent validate"
+evidence_required:
+  - "test_a_revision_reopens_only_its_change"
+created_at: 2026-10-18
+updated_at: 2026-10-18

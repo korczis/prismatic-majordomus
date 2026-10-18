@@ -1,0 +1,45 @@
+id: I3139
+milestone: prismatic-lumen
+title: "The mesh page offers one authorised action through an existing capability, and shows its result from the journal"
+slug: the-mesh-page-offers-one-authorised-action
+priority: p3
+profile: implementation
+objective: "Offer one mesh action on the live /ui/mesh page, mesh.review.request, written only under the identity the router resolves and refused by the capability without one, once the ADR amending ADR 0126 that decides how a mesh event names its human author is accepted; render its outcome from the journal event it produced rather than from the click."
+why: "The 2026-10-18 scope cut ends v0.1 with one authorised action and its live result with evidence; operations are classified by effect so that a browser never mutates by accident. Critique of 2026-10-18 (the-page-chooses-the-actions-author): over plain HTTP, session_of in capability/builtin/mesh.rs has no calling session, and the node signs with its own key. The action therefore waits for a resolved identity and for the ADR that names a mesh event's human author. Proposed in ADR 0201 (The persistent runtime is the authority; every operator surface, Lumen included, is a client of it); ADR 0209 (Prismatic Lumen names the owner's mesh-wide view, and it owns no scheduler, event bus, store or API) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c296#18."
+current_state: "majordomus_mesh_review_request and majordomus_mesh_handover_publish exist as tools; the UI offers plan moves on /ui/idd only; web-sign-in owns browser identity."
+desired_state: "One action, mesh.review.request under a resolved identity, live only (disabled with a link in the snapshot), result read back from the journal."
+scope:
+  - "apps/majordomus-cli/src/ui/mesh.rs"
+  - "share/ui"
+  - "test/cases"
+  - ".ai/repo/adrs"
+  - "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+  - ".ai/repo/project/intents/the-owner-oversees-the-mesh-from-one-page.yaml"
+non_scope:
+  - "Destructive or deploy actions"
+  - "Actions from the published snapshot"
+  - "Publishing a handover from the page"
+  - "Authorising remote callers beyond loopback (I3192, intent the-mesh-is-operated-from-any-device)"
+depends_on:
+  - "I3138"
+  - "I1205"
+serves:
+  - "the-owner-oversees-the-mesh-from-one-page#one-action-reads-its-result-from-the-journal"
+acceptance_criteria:
+  - "The result shown is the journal's event, not the request's echo"
+  - "The snapshot renders the action disabled with the live link"
+  - "The one action is mesh.review.request; mesh.handover.publish is not offered"
+  - "The action is written only under the identity the router resolves (I1205); with no resolved identity the capability refuses it, and the page never supplies a session or author string"
+  - "Before any code, the ADR amending ADR 0126 that decides how a mesh event names its human author is proposed in this issue and accepted by the owner; I3192 builds on that ADR"
+  - "A named test proves that a request with no resolved identity is refused by the capability, which case 1086's beyond-loopback refusal does not already prove"
+  - "The snapshot renders the action disabled with the live link, checked by test/cases/1092_the_ui_snapshot_holds_every_screen.sh and test/cases/1093_the_ui_snapshot_links_nothing_absent.sh"
+  - "The criterion one-action-reads-its-result-from-the-journal is rebound in .ai/repo/project/intents/the-owner-oversees-the-mesh-from-one-page.yaml to evidence: test with the named test's path"
+validation:
+  - "cargo test --lib"
+  - "scripts/ui audit"
+  - "bash test/run.sh 1092_the_ui_snapshot_holds_every_screen"
+  - "bash test/run.sh 1093_the_ui_snapshot_links_nothing_absent"
+evidence_required:
+  - "test_mesh_action"
+created_at: 2026-10-18
+updated_at: 2026-10-18

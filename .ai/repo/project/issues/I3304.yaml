@@ -1,0 +1,31 @@
+id: I3304
+milestone: a-provider-carries-the-contract-natively
+title: "A prompt reaches the model within a declared capture budget, and no captured record is lost"
+slug: prompt-capture-is-bounded
+priority: p2
+profile: implementation
+objective: "Declare a latency budget for the UserPromptSubmit and SessionStart hooks in benchmark policy, meet it by handing the capture to the running shared server (or a durable outbox) instead of a cold executable start, and prove no record is lost."
+why: "Measured 2026-09-10: the capture hook cost about 4 s per prompt, all cold start, and backgrounding it lost every record (lib/capture.sh:2244). The owner's standing order since then is that hooks never slow him down. Rebound to the new intent criterion #hooks-within-budget, because the hooks this intent generates (Stop per turn, edit guard per edit) carry the same cold-start cost. Milestone development-runtime belongs to no intent, so moving this issue there would leave it unbound. It extends milestone development-runtime. Sources: chatgpt-majordomus:c099#0, chatgpt-majordomus:c099#3, chatgpt-majordomus:c099#9."
+current_state: "Every lifecycle event is inline (mj_lifecycle_latency prints inline); policy.yaml declares prompt-capture with no budget."
+desired_state: "bench --check holds the budget; a case proves every prompt of a burst is recorded."
+scope:
+  - "lib/capture.sh"
+  - ".claude/hooks"
+  - ".ai/repo/benchmarks"
+  - "apps/majordomus-cli/src/capability/builtin/lifecycle.rs"
+  - "test/cases"
+serves:
+  - "a-provider-carries-the-contract-natively#hooks-within-budget"
+acceptance_criteria:
+  - "The hook's p95 is under the declared budget with the server running"
+  - "A burst of prompts yields one record each"
+  - "With no server the hook degrades to inline capture, never to loss"
+  - "The declared budget covers every generated hook that runs per prompt, per turn or per edit (capture, Stop report, edit guard), not only prompt capture"
+validation:
+  - "majordomus bench --check"
+  - "bash test/run.sh 29_prompt_capture"
+evidence_required:
+  - "bench_prompt_capture"
+  - "case_no_prompt_record_is_lost"
+created_at: 2026-10-18
+updated_at: 2026-10-18

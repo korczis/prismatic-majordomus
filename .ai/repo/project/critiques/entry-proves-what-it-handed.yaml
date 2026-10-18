@@ -1,0 +1,94 @@
+intent: entry-proves-what-it-handed
+reviewed_at: 707a04c7ce8
+reviewed_by: "claude-code subagent (read-only, fresh context, Plan type, same model family as the author) dispatched by session 82f2734c over the staged records of branch docs/the-chatgpt-project-is-promoted and the ChatGPT-conversation sources they were promoted from; resolved by a second fresh subagent acting as the plan author. Read only: nothing was run. Disposition: Accept with required changes: all 5 blocking findings are planned (I3148, I3147 x3, I3153) and so are all 5 non-blocking ones; none is rejected or open."
+findings:
+  - id: briefing-digest-cannot-ride-session-started
+    class: unproven_assumption
+    subject: "I3148"
+    finding: "session.started is written inside mj_session_start (lib/session.sh:426), and lib/capture.sh:1576 calls it before anything else. The briefing is only assembled later, at lib/capture.sh:1615 (mj_derive_briefing). That step is best-effort: it is skipped when session.briefing_on_start=false (:1598) and can fail without failing the event. So no briefing digest exists when session.started is written. The briefing also embeds live lines (server, mesh join, monitor), so its digest is a receipt for one delivery and cannot be recomputed for comparison. Fix before coding: put only governance_digest into session.started, and add a separate event appended after mj_derive_briefing succeeds (for example session.briefed carrying briefing_digest). Raise 'edits with no receipt' only when the policy enables the briefing and the provider has a start hook. Otherwise every direnv-only session, every hookless client and every policy-off checkout gets flagged. Note too that session.started is written in lib/session.sh, which is not in I3148's scope, and I3142 moves the opener into the Rust domain."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3148
+      because: "Verified: lib/session.sh:426 appends session.started, and capture.sh calls mj_session_start before the policy gate (session.briefing_on_start, policy.yaml:112) and the best-effort mj_derive_briefing. ctx-11 now writes only governance_digest into session.started. A new session.briefed event, appended only after mj_derive_briefing succeeds, carries briefing_digest, which is a delivery receipt and never recomputed. The missing-receipt finding applies only when briefing_on_start is true and the provider declares a start hook. lib/session.sh, lib/derive.sh and the proposed ADR 0181 (which still says session.started carries both digests) are added to scope. The existing dependency on I3142 means the field lands wherever the opener lives once I3142 has moved it. Plan reconciled on 2026-10-18 after verification: I3148's objective and the criterion episode-pins-what-it-was-handed now name session.briefed for the briefing digest."
+  - id: one-hash-cannot-name-what-moved
+    class: insufficient_work
+    subject: "I3147"
+    finding: "I3149's desired_state ('names the changed rules or policy keys') and I3150's ('with the rules that moved') both need to know which inputs changed. I3147 only produces one hash. Mid-session edits are usually uncommitted, so the old inputs cannot be rebuilt from git at the recorded HEAD. I3147 should define the digest as the hash of a canonical manifest of (input id, content hash), and I3148/I3150 should persist that manifest per episode and per handover. The digest must hash working-tree content. It cannot use rules.report's 'counted at HEAD' (docs/PREFLIGHT.md:87), or an uncommitted rule edit is never told. It also cannot reuse environment/cache.rs fingerprint_of (cache.rs:200, which uses paths, sizes and modification times): the issue's current_state points there, and that function breaks the criterion that touching a timestamp must not change the digest."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3147
+      because: "ctx-10 now defines the digest as sha256 over a canonical, sorted manifest of (input id, content hash) built from working-tree bytes. It explicitly excludes fingerprint_of (cache.rs:217 on this tree) and rules.report's HEAD counting. ctx-11 persists the manifest per episode and ctx-13 persists it per handover. ctx-12 and ctx-13 diff manifests to name the inputs that moved, so nothing has to be rebuilt from git."
+  - id: digest-input-set-double-counts-and-omits
+    class: unproven_assumption
+    subject: "I3147"
+    finding: "The input set includes 'the generated regions of AGENTS.md and CLAUDE.md'. Their stamp carries the sha of the whole policy (lib/common.sh:939, providers.rs:143, AGENTS.md:1 'policy b1033a34da0f'), so policy is counted twice. It also ties the digest to I2988 (board 5a), which is changing exactly when that stamp moves. Hashing all of policy.yaml makes edits to benchmark:, release: or server: (policy.yaml:177/61/390) count as governance changes, the same noise I2988 is removing from the stamp. The set also leaves out inputs that do govern a session: .ai/repo/skills, .ai/repo/prompts, .ai/repo/scope.yaml, the schemas the owner listed ('relevant schemas', 6aa323e0 [2] section 7), and the hook wiring in .claude/settings.json that the edit guard depends on. Proposed fix: hash sources only, with the policy keys chosen by a declared list, and leave projection currency to the existing verification.projections check."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3147
+      because: "ctx-10 now hashes sources only. The input set is declared once in policy.yaml: rules (project and vendored, at their versions), profiles, workflows, skills, prompts, scope.yaml, the declared share/schemas entries, the hook wiring in .claude/settings.json, and an explicit list of governing policy keys. Benchmark, release and server keys are left out. The generated regions of AGENTS.md and CLAUDE.md are moved to non_scope, so projection currency stays with verification.projections. That removes both the double count and the coupling to I2988's stamp. Plan reconciled on 2026-10-18 after verification: I3147's objective now lists sources only; the generated regions are out of its objective as well as in its non_scope."
+  - id: no-issue-projects-the-digest-to-entry-surfaces
+    class: surface_missing
+    subject: "I3151"
+    finding: "I3151 is verification-only (scope test/cases, bin/majordomus-env). I3147 adds the digest only to environment.preflight. No issue makes the other surfaces print it: the SessionStart/Codex/Gemini briefing (lib/derive.sh:516 mj_derive_briefing has no governance or preflight line), the MCP initialize instructions (apps/majordomus-cli/src/mcp/protocol.rs:350 builds them with no environment input), and brief.session (brief.rs is touched only by I3148/I3149 for recorded values). As planned, I3151's parity case cannot pass, and the owner's request ('chci to videt pri spusteni claude code ci cehokoliv', 6aa323e0 [0]) is not visible at start. Add an implementation issue, or widen I3147, with lib/derive.sh, src/mcp and the HTTP/OpenAPI projection in scope."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3147
+      because: "ctx-10 is widened to project the digest onto every entry surface: the briefing line in lib/derive.sh mj_derive_briefing, the MCP initialize instructions in src/mcp, and brief.session in brief.rs. The HTTP and OpenAPI projection follows from the environment capability declaration through majordomus generate, never from a hand edit (ADR 0004). I3151's parity case, which already depends on I3147, can therefore pass."
+  - id: base-divergence-is-undefined-and-misplaced
+    class: regression_risk
+    subject: "I3153"
+    finding: "environment/vcs.rs reports ahead/behind against the branch's own upstream (vcs.rs:1-2, :188), not against origin/master. 'Base' is never defined. If it means HEAD against origin/master, then any feature branch that has its own commits while master moved on is diverged, and start would refuse every resumed task. lib/start.sh never checks dirtiness today; it only records mj_git_dirty at :156. Refusing a dirty tree changes the behaviour of every case that starts over uncommitted files. 'The fetch's age' has no source: FETCH_HEAD is per-worktree, so use the reflog of refs/remotes/origin/master. The incident cited (2026-10-14: worktree create from a stale local master) happens at worktree create, before start, and no criterion covers worktree create. In-flight I2974 (docs/a-session-proceeds) also creates worktrees and starts tasks. Finally, the owner asked that local master be updated at session/worktree start (6aa5290c [0]), and the issue's own 'why' says to fetch, yet its objective forbids fetching even at start. Define base as local master or merge-base against refs/remotes/origin/master, decide dirty as warn or refuse with the cases it breaks listed, and decide whether start or worktree create fetches."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3153
+      because: "Base is now merge-base(HEAD, refs/remotes/origin/master). A feature branch's own commits never count as divergence; start reports how far that merge-base is behind. Start refuses only when local master itself is both ahead of and behind refs/remotes/origin/master. A dirty tree is a warning, not a refusal, so current behaviour and existing cases keep passing. The fetch age is read from the reflog of refs/remotes/origin/master. Start never fetches, and entry stays socket-free (ENTRY.md). worktree create, an explicit command, fetches origin/master and starts from the remote ref when local master is behind; a new criterion covers it. I2974 is not in this tree's issue records, so coordination is recorded in why rather than depends_on."
+  - id: criteria-evidence-cannot-settle-or-is-already-met
+    class: delivery_verification
+    subject: "entry-proves-what-it-handed#entry-surfaces-agree"
+    finding: "Three criteria use evidence 'command' with ref 'majordomus intent explain entry-proves-what-it-handed', so they point back at the intent itself. ledger_settles only accepts test or claim (apps/majordomus-cli/src/intent.rs:302), so those three stay Unknown forever. Their real proofs exist only as '(to be written)' prose, and no issue owns re-pointing the refs. entry-surfaces-agree points at test/cases/192, which exists, proves server convergence rather than digest parity, and already passes. intent.rs:1093-1100 reads that test's ledger standing, so the criterion reads as met before any work starts. 192 is also majordomus-exclusive with a 900 s timeout, so extending it makes the slowest exclusive case slower. Give parity its own new case and point every criterion at its planned case or crate test now. The one-governance-digest proof is I3147's crate test, which cannot show that the brief and the episode record agree; that needs a case after I3148."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3151
+      because: "Verified: intent.rs:302 settles only test or claim. ctx-14 now writes a new parity case instead of extending 192, and as its first commit re-points every intent criterion's evidence to test with the planned case or crate test. entry-surfaces-agree moves off 192 so it stops reading as met. ctx-14 depends on I3148 so the parity case also compares the brief with the episode record. Each implementation issue owns the ref of the criterion it serves. Plan reconciled on 2026-10-18 after verification: entry-surfaces-agree no longer names case 192; every criterion names the planned proof of the issue that serves it and stays evidence: command until that proof lands."
+  - id: bypass-and-base-work-serve-wrong-criteria
+    class: missed_requirement
+    subject: "entry-proves-what-it-handed"
+    finding: "The intent statement says 'every way around the preflight is either refused or a stated limit', but no criterion covers it. I3152 is filed as serving entry-surfaces-agree, which it does not prove. I3153 (base divergence) is filed as serving episode-pins-what-it-was-handed, and nothing in the intent's statement or criteria is about base divergence. Only the milestone outcome mentions it. Add a criterion for the bypass inventory (each route in SECURITY.md:127-128 and the guard's fail-open cases, MAJORDOMUS_NO_BUILD as in bin/majordomus-cli:41 and a missing executable, names a case or a limit line). Either add a base-freshness criterion or move I3153 under the worktree-topology work and coordinate it with I2974. The invariant 'advisory and unenforceable rules are labelled, never counted as enforced' also has no test."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3152
+      because: "ctx-15 adds to the intent record a criterion every-bypass-is-declared (evidence: test, ref: its case), switches its own serves to that criterion, and adds a test for the advisory-labelling invariant. ctx-16 adds a base-freshness criterion and switches its serves to it. Both changes go to .ai/repo/project/intents/entry-proves-what-it-handed.yaml, which is added to their scopes. Plan reconciled on 2026-10-18 after verification: the intent now carries every-bypass-is-declared (served by I3152) and start-names-its-base (served by I3153), and a handover clause criterion handover-names-governance-drift (served by I3150), so no two issues serve one criterion over overlapping scope. worktree create already starts from the remote's trunk on master (case 3131_a_new_worktree_starts_from_the_remote_trunk), so I3153 is the start half."
+  - id: owner-asked-cockpit-governance-view
+    class: surface_missing
+    subject: "entry-proves-what-it-handed"
+    finding: "The source the intent was promoted from (6aa323e0 [2], sections 25-26) asks for the same governance state over API/MCP. It also asks for a Cockpit governance view: 'READY · fingerprint', per agent 'Gemini ! stale fingerprint', and 'What changed since the previous fingerprint?' through explain. No issue renders, on /ui or /cockpit, each open episode's recorded digest against the current one. cockpit/pages.rs shows the preflight generically and nothing more. The site docs that mirror the changed contracts are not in any scope either: site/content/docs/entry.md, and site/content/docs/schemas.md:1536, which lists session.started fields. Add an issue or name these as non_goals."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3149
+      because: "ctx-12 already compares each episode's recorded manifest with the current one, so it also renders that comparison per open episode on /cockpit and /ui: the digest, stale episodes, and what changed via explain. src/cockpit and src/ui are added to its scope. API and MCP come from the capability projection. ctx-11 takes the site doc for session.started fields (schemas.md) and ctx-10 takes site/content/docs/entry.md."
+  - id: digest-at-entry-must-fit-the-entry-budget
+    class: regression_risk
+    subject: "I3147"
+    finding: "The preflight runs on every cd. Content-hashing the governance inputs (about 200 files under .ai/repo/rules, workflows and profiles, more once skills and prompts are added) at each entry risks the benchmark.budget.enter_ms and enter_cold_ms budgets that case 190 measures (docs/ENTRY.md:96-98). I3147's validation runs only its crate test. Cache the digest in its own tier, keyed by the cheap mtime fingerprint, recompute the content hash only when that fingerprint moves, and add 190_entry_is_automatic to I3147's validation."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3147
+      because: "ctx-10 caches the manifest in its own environment cache tier. The tier is keyed by the cheap fingerprint_of over the declared inputs and used only as an invalidation key; content is rehashed only when that key moves, so a timestamp-only touch reproduces the same digest. 190_entry_is_automatic is added to the issue's acceptance criteria and must stay within the enter budgets."
+  - id: change-told-only-where-a-brief-runs
+    class: insufficient_work
+    subject: "I3149"
+    finding: "The intent promises this in every supported client. Of the two triggers I3149 relies on, the interval brief is a Claude Code provider mod (I2399's objective: majordomus-brief rendered as the status line and injected on an interval). The other trigger is an explicit check. Codex and Gemini sessions, and Claude sessions with brief_on_interval off, are told only if they happen to run brief or check, which is the 'remembers to ask' failure capture.sh:1570 warns about. I3149 should name which lifecycle event tells each provider (for example the next start, compact or pre-tool hook that capture.sh already wires for Codex and Gemini), or state it as a limit. Its validation should cover a non-Claude provider, not only case 1065."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3149
+      because: "ctx-12 now names the telling event for each provider. Claude Code uses the interval brief, with the pre-tool hook as a fallback when brief_on_interval is off. Codex and Gemini use the next lifecycle event lib/capture.sh already wires for them. A provider with no hook gets a stated limit. lib/capture.sh is added to its scope, and its acceptance criteria require a case on a non-Claude provider."

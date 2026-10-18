@@ -1,0 +1,45 @@
+id: I3273
+milestone: intent-intake
+title: "Each requirement of a campaign revision has a content-derived identity and is reconciled into the existing intents and issues"
+slug: requirements-are-reconciled
+priority: p3
+profile: implementation
+objective: "Split a campaign revision into segments whose identity is the digest of their normalised text (document, heading path and position are only their location) and classify each against the existing intents and issues: existing from I3254's duplicates, satisfied or partial from the derived verdict, superseded from the matched record's stage or superseded_by, conflicting where it negates a matched invariant or non_goal (reported with both texts for a person), new otherwise. A conversation enters only as workspace references read from the local store. Output is a draft for I3252's check, never records."
+why: "2026-09-12 accepted: requirements become outcome-shaped records after discovery classifies each, not one issue per bullet; 2026-10-18: one revision may update several intents. Proposed in ADR 0194 (An ingested brief is an intake revision, and its requirements are reconciled into the existing plan) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c174#19, chatgpt-majordomus:c210#4, chatgpt-majordomus:c297#9, chatgpt-majordomus:c033#3, chatgpt-majordomus:c054#8, chatgpt-majordomus:c088#3."
+current_state: "No segment identity; the promotion of 2026-10-18 reconciled conversations by hand with conv#msg sources; I3254 (duplicates) is planned, and the derived verdict is on master in intent.rs."
+desired_state: "Classification is reproducible from the revision and the plan at a commit and matches a committed fixture."
+scope:
+  - "apps/majordomus-cli/src/reconcile.rs"
+  - "apps/majordomus-cli/tests/intake.rs"
+  - "apps/majordomus-cli/src/intent_realization.rs"
+  - "apps/majordomus-cli/src/intent.rs"
+  - "share/schemas/majordomus/intent"
+  - "test/fixtures"
+  - "test/cases"
+depends_on:
+  - "I3272"
+  - "I3252"
+  - "I3251"
+  - "I3254"
+  - "I3280"
+  - "I3281"
+  - "I3278"
+serves:
+  - "a-brief-is-reconciled-into-the-plan#requirements-are-reconciled"
+acceptance_criteria:
+  - "Each derived draft item names its source segment by digest and location"
+  - "'existing' is the duplicate result of I3254. No second duplicate detector is built"
+  - "'satisfied' and 'partial' are read from the derived intent verdict (intent.rs verdict, intent_realization.rs) and are never judged by the classifier"
+  - "'superseded' is read from the matched record's stage or superseded_by. 'conflicting' is a requirement that negates the matched record's invariant or non_goal, and it is reported with both texts for a person and never resolved automatically"
+  - "A segment's identity is the digest of its normalised text. Document, heading path and item position are its location, not its identity"
+  - "Each derived draft criterion carries its source segment as a reference in the shared Provenance grammar (an optional derived_from on intent satisfaction items)"
+  - "A conversation enters as workspace: references read from .ai/local/workspaces, and no message text reaches a tracked file or the published snapshot"
+  - "A committed synthetic brief under test/fixtures, with two revisions and an expected class per requirement, is classified to exactly those classes by tests/intake.rs"
+  - "A test/cases case runs the built executable over the fixture"
+validation:
+  - "majordomus plan validate"
+  - "majordomus intent validate"
+evidence_required:
+  - "test_requirements_are_reconciled"
+created_at: 2026-10-18
+updated_at: 2026-10-18

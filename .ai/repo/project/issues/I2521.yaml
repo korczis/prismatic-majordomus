@@ -8,7 +8,7 @@ parallel_safe: false
 objective: "Measure the present derive on a named commit, stage by stage, for the kinds of change the incremental design is meant to make cheap, and establish which files each stage reads, so that every later issue of this milestone is judged against a recorded baseline and a known input set."
 why: "campaigns/majordomus-incremental-derive-prompt-pack/01_01_AUDIT_BASELINE.md asks for a read-only audit of the producers and a reproducible baseline before anything is built, and 00_00_MASTER_ORCHESTRATOR.md forbids a claim of time saved without measurements. The repository holds no such record: scripts/derive prints whole seconds per stage on stderr and keeps none of them, docs/OFFLOAD.md states about ten minutes idle and up to an hour under load without a commit or a sample count, and I1409 notes that two timings taken twenty minutes apart on one machine disagreed sixfold. scripts/generate-site-data declares its inputs as one list (--inputs), and nothing verifies that the list is everything the script reads."
 current_state: "No committed record states what the build, stage A, stage B, stage C and stage D cost at a given commit, nor what a no-op derive costs. The input list of stage B is declared by the script and unverified; the inputs of each target of majordomus generate are stated in prose in doc comments of apps/majordomus-cli/src/generate.rs."
-desired_state: "docs/PERFORMANCE.md carries a derive section with, for one named commit and machine, the duration of the build and of each stage for a cold run, a no-op run, one rule edited, one Rust source edited, one site source edited, one generated output deleted, one staged new file and one unstaged tracked edit, with sample counts, and separately the lock wait. The same section lists, per stage, the files observed to be read that the stage's declared inputs do not contain, each either added to the declaration or explained."
+desired_state: "docs/PERFORMANCE.md carries a derive section with, for one named commit and machine, the duration of the build and of each stage for a cold run, a no-op run, one rule edited, one Rust source edited, one site source edited, one generated output deleted, one staged new file and one unstaged tracked edit, with sample counts, and separately the lock wait. The same section lists, per stage, the files observed to be read that the stage's declared inputs do not contain, each either added to the declaration or explained. Amended on 2026-10-18 by the derive-performance plan: each node is timed at monotonic millisecond resolution and reports its input fingerprint, cache status, run and queue time, outputs and changed-output count; the totals report wall time, CPU time, the critical path, the subprocess count and peak memory; cargo overhead is reported apart from the derivation; and the section answers which target dominates a no-op derive."
 scope:
   - "docs/PERFORMANCE.md"
   - "scripts/generate-site-data"
@@ -24,6 +24,7 @@ acceptance_criteria:
   - "Every file scripts/generate-site-data was observed to read is in the output of scripts/generate-site-data --inputs or is named in the document with the reason it is not an input"
   - "The document states which stage is the largest share of a no-op derive, from the measurements and not from an estimate"
   - "No tracked generated file differs before and after the measurements"
+  - "Each node of a measured run reports its input fingerprint, cache status, run and queue time in milliseconds, outputs and changed-output count, and each run reports wall, CPU, critical path, subprocess count and peak memory, with cargo overhead apart from the derivation"
 validation:
   - "bin/majordomus plan validate"
   - "MJ_TEST_JOBS=2 bash test/run.sh 10_site_data 51_derived_artifacts_committed"
@@ -32,4 +33,4 @@ evidence_required:
   - "derive_baseline_measurements"
   - "stage_b_observed_reads"
 created_at: 2026-10-13
-updated_at: 2026-10-13
+updated_at: 2026-10-18

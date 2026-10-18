@@ -1,0 +1,93 @@
+intent: nothing-in-the-mesh-waits-on-something-dead
+reviewed_at: 707a04c7ce8
+reviewed_by: "claude-code subagent (read-only, fresh context, Plan type, same model family as the author) dispatched by session 82f2734c over the staged records of branch docs/the-chatgpt-project-is-promoted and the ChatGPT-conversation sources they were promoted from; resolved by a second fresh subagent acting as the plan author. Read only: nothing was run. Disposition: Accept with required changes: 5 of the 6 blocking findings are planned under this intent (I3182, two on I3184, two on I3183) and the sixth is carried by I3179, which now sits in runtime-lifecycle outside this intent; all 4 non-blocking findings are planned."
+findings:
+  - id: execution-state-dies-with-its-process
+    class: unproven_assumption
+    subject: "I3182"
+    finding: "The classification assumes data about executions that does not exist. The execution store is in memory and lives only while its process does (apps/majordomus-cli/src/execution/store.rs:1, 'Where executions live while this process does'). ExecutionState has no orphaned or unknown-outcome state (execution/model.rs:117-130), and the Execution struct carries no declared bound (execution/model.rs:381-440). So 'An execution with no event past its declared bound is suspected stall with that bound named' has no bound to name, and an execution whose server died cannot be classified as orphaned or unknown outcome: it is simply gone. The issue has to say where the bound is declared (capability/model.rs ExecutionPolicy), and what is known about an execution after its server dies (a persisted tombstone, or the criterion narrowed to live servers). Neither apps/majordomus-cli/src/execution nor capability/model.rs is in I3182's scope. The criterion also says 'in the mesh' without saying whether a peer's executions are included, and no read of a remote execution exists."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3182
+      because: "Verified: ExecutionPolicy (capability/model.rs:581) carries effect, cancellable, concurrency and signed_input, with no bound, and the store's header confirms executions die with the process. I3182 now declares a progress bound on ExecutionPolicy, which brings capability/model.rs and execution/ into scope. A capability that declares no bound is classified unbounded, never stalled. The criterion is narrowed to executions held by a live server of this host. A server whose lease reads stale is one orphaned item with outcome unknown, and the lease is its evidence; no tombstone store is built. A peer's executions are out of scope because no remote execution read exists."
+  - id: runtime-state-duplicates-server-standing
+    class: regression_risk
+    subject: "I3179"
+    finding: "server.status already serves one typed state derived from the lease: ServerStanding {absent, starting, ready, outdated, stale} (apps/majordomus-cli/src/capability/builtin/server.rs:163-176). Its as_str words are compared by shells (server.rs:179-186). I3179's current_state says a client 'assembles the state from three reads', which ignores this. Its new ten-state list drops outdated and stale, so it would break those consumers or produce a second, competing state. The 'time and reason of the last transition' and 'an unchanged state writes nothing' also need a writer. The module is read on every call and never cached (server.rs:31), and a stopped or failed server has no process left to record its own transition. Writing the state into the lease would make direnv reload, because .envrc:29 watches .ai/local/state/mcp/server.json. The issue must extend ServerStanding rather than replace it, and name where transitions are persisted and who writes them."
+    blocking: true
+    resolution:
+      state: rejected
+      because: "Not planned under this intent: the work is carried by I3179, which now sits in milestone runtime-lifecycle and serves no criterion here (see runtime-state-belongs-to-runtime-lifecycle). The finding itself is accepted there. Verified ServerStanding at server.rs:163-186 and watch_file .ai/local/state/mcp/server.json at .envrc:29. I3179 now extends ServerStanding with added variants and keeps the five existing words and JSON values, pinned by a test. Transitions go to a separate record under .ai/local/state/runtime/, never into server.json. Each writer is named: the serving process records its own transitions while it lives, and the reader that finds a stale lease (serve ensure, the reaper or status) records stopped or failed for a process that is gone."
+  - id: runtime-state-belongs-to-runtime-lifecycle
+    class: unnecessary_work
+    subject: "I3179"
+    finding: "I3179's own why says it 'extends milestone runtime-lifecycle', and its 'building' state is produced only by I3180 (milestone runtime-lifecycle, depends_on I3179, serves nothing). Yet I3179 sits in this intent's catch-all milestone and is the only dependency of I3182. That puts the p1 supervision read behind a p2 issue whose design is contested (see runtime-state-duplicates-server-standing). Supervision can classify servers straight from ServerStanding. Move I3179 to runtime-lifecycle, beside I3180, and remove it from I3182's depends_on."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3182
+      because: "Done in the plan: I3179 no longer serves states-are-classified and stays in runtime-lifecycle beside I3180, and I3182's depends_on no longer names it. I3182 classifies servers from ServerStanding as server.status serves it."
+  - id: host-index-is-a-new-registry
+    class: unproven_assumption
+    subject: "I3184"
+    finding: "'A per-user index each server registers in' is a new registry. That runs into rule project.no-new-nouns ('no ... registries beyond the vocabulary it has'), the mesh registry's 'nothing else may hold peers' (apps/majordomus-cli/src/mesh/registry.rs header), the milestone's non_scope 'A second discovery, registry or update system', and ADR 0199 ('never a second server, registry, discovery'). It also misses the case the milestone exists for. Runtimes of already-released versions (hosts run 0.29.0 per the board) never register, so 'lists every Majordomus runtime' fails on exactly the mixed-version host I3185 assumes. The issue must define the index as a derived cache of checkout roots, kept beside node.json under $XDG_STATE_HOME/majordomus (mesh/identity.rs:137-153), with leases staying the truth. It must also say how runtimes that predate the index are found, for example by process table and executable path the way scripts/reap-orphans does, or narrow the criterion to versions that register."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3184
+      because: "Verified: default_identity_path is in mesh/identity.rs, and mesh/registry.rs says 'nothing else may hold peers'. I3184 now defines the index as a disposable cache of checkout roots in the directory beside node.json. The leases stay the truth: every row is re-read from its lease, and deleting the cache loses only speed. Runtimes that predate the index are found from the process table by executable path, the way scripts/reap-orphans identifies serve and mcp processes. The case proves that a server started without registering is still listed."
+  - id: host-service-is-not-this-criterion
+    class: unnecessary_work
+    subject: "I3186"
+    finding: "host-lists-its-runtimes is made true by I3184 alone; the milestone's own acceptance criterion says 'Host inventory needs no running daemon'. I3186 adds a resident that runs host inventory and mesh presence on every host. ADR 0199 (status proposed) decides only that 'a machine the mesh declaration names as a hub may run one user-scoped service per repository', and leaves a host-level resident as 'if ever built'. A host service with its own mesh presence beside the checkout servers is also this intent's non-goal 'A second Majordomus server per host'. I3193 (the-mesh-is-operated-from-any-device) depends on I3186, so the issue really serves that intent's survives-the-client criterion. Move it there or drop it here, and narrow it to what ADR 0199 actually decides."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3184
+      because: "I3186 is dropped from the plan (skip). Narrowed to exactly what ADR 0199 decides: on a machine the mesh declaration names as a hub, one user-scoped unit per repository runs that repository's serve --idle 0. It is that repository's server, not a second one beside it, and it has no mesh presence of its own. A non-hub host runs none, and there is no host-level resident. That is the unit I2722 writes plus the declared hub target of I3195, which now carries its acceptance, so nothing of it is left for this intent. host-lists-its-runtimes is carried by I3184 alone, whose acceptance keeps README's 'not a daemon' true and says the inventory needs no process of its own."
+  - id: breaker-forgets-with-the-server
+    class: insufficient_work
+    subject: "I3183"
+    finding: "Repairs run 'inside the shared server' with 'breaker state on the board'. The board lives in server memory and ends with the process (apps/majordomus-cli/src/peers.rs:4-5), and that server exits after 900 s idle (.ai/repo/policy.yaml:396) and is brought back by serve ensure. Each restart resets the failure count, so 'the third failure of one cause opens the breaker' becomes an endless loop across restarts. That is the restart loop the 10-17 design warned against ([16]: 'restartuje vlastní problémy', it restarts its own problems). Breaker state and the escalation must be persisted per cause under .ai/local/state and survive the process. The case must also prove the breaker stays open across a server restart."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3183
+      because: "Verified: peers.rs:4-5 says the board ends with the process, and policy.yaml:396 sets idle_seconds to 900. I3183 now persists breaker state and escalation per cause under .ai/local/state/supervision/ and reads it before every repair. The board only re-announces an open breaker after a restart and never holds it. The case restarts the server between the second and third failure, and again after the breaker opens."
+  - id: repair-starts-under-an-unaccepted-adr
+    class: missed_requirement
+    subject: "I3183"
+    finding: "The owner's request (c288#13) asked for a watchdog that restarts sessions, forces nodes to cooperate and leaves no leaks. The plan rejects forced cooperation (intent non_goals) and restarting sessions (I3183 non_scope) on the strength of ADR 0200, which is status proposed and says 'The owner has not accepted it'. The conversation has no owner message after [13], so owner_acceptance cites the request, not acceptance of the narrowed scope. I3186 waits for its ADR; I3183 does not. Add owner acceptance of ADR 0200 to I3183's preconditions, or record the owner's agreement to the narrowing."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3183
+      because: "Verified: ADR 0200's status is proposed. I3183 now has an explicit precondition, as I3186 already does: work starts only after ADR 0200 is accepted, or after the owner's agreement to the narrowing (no forced cooperation, no session restarts) is recorded. The issue only waits on the owner's act; the plan is complete. I3182 is read-only and is not held."
+  - id: leaks-and-blocked-queues-unclassified
+    class: missed_requirement
+    subject: "nothing-in-the-mesh-waits-on-something-dead#states-are-classified"
+    finding: "The owner asked that 'nevznikaji leaks' (no leaks arise), and the 10-17 design's S1, ranked P0 ([16] line 103), is detection of 'stallů, resource leaks, zablokovaných front' (stalls, resource leaks, blocked queues). No criterion and none of I3182's categories cover a leak: orphaned servers holding ports and memory, which scripts/reap-orphans:11-16 measured at fourteen servers and ~150 MB, or file descriptors, or a queue that is not draining. The classification covers items, not resources. Add a leak or accumulation class with its evidence, or state it as a non-goal the owner accepts."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3182
+      because: "I3182 gains two classes. 'leaked' covers servers that match the reaper's five-conjunct predicate, with count, resident memory and ports as evidence. 'not draining' covers a queue of executions with none running past the declared bound. File-descriptor accounting is stated as non-scope."
+  - id: criteria-evidence-never-derivable
+    class: delivery_verification
+    subject: "nothing-in-the-mesh-waits-on-something-dead#repair-is-bounded"
+    finding: "All three criteria are recorded as evidence: command with ref 'majordomus intent explain nothing-in-the-mesh-waits-on-something-dead'. The ledger settles only test and claim evidence (apps/majordomus-cli/src/intent.rs:301-303), and a command criterion stays NotDerivable (intent.rs:319). So the intent's verdict reads unknown forever, even after every test passes, and the referenced command proves nothing about the criterion. Each criterion must become evidence: test with a ref to an allocated case or test file. The '<n>' case numbers are still unallocated. I3185 and I3186 list only 'majordomus plan validate' as validation, so their evidence_required (test_host_route_is_deterministic, case_a_host_service_is_declared) is never run. I3183's 'serve ensure's idle exit still happens' has no test either."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3183
+      because: "Verified: ledger_settles matches only test and claim. Each carrying issue now has to switch its criterion's evidence to test, with the real case or test path, in the same change that lands it: I3182 for states-are-classified, I3183 for repair-is-bounded, I3184 for host-lists-its-runtimes. Each also allocates its case number with scripts/case-numbers and announces it before writing. I3185 must run test_host_route_is_deterministic once it writes it (I3186 is dropped). I3183 gets a test that the idle exit still happens. The intent's criteria records are rewritten as each issue lands."
+  - id: surfaces-and-effect-class-unscoped
+    class: surface_missing
+    subject: "I3183"
+    finding: "A repair that signals a process, frees a lease or ensures a server fits none of the existing effect classes: the Effect enum has only Read, ProcessState and RepositoryMutation (apps/majordomus-cli/src/capability/model.rs:527-549). The Cockpit's confirmation is derived from the effect, so a repair would be offered without one. capability/model.rs is in no issue's scope. Other surface gaps: I3179 promises /ui and the briefing, but its scope has no ui path. I3185 promises a UI compatibility table with no ui scope. I3183 and I3184 touch no doc (docs/MONITOR.md, docs/MESH.md, README's 'not a daemon'). ADR 0200's narrowing of ADR 0039 reaches no site page. One small wording fix as well: the invariant 'No process is killed by name or age' conflicts with the reaper I3183 acts through, which uses age as one of five conjuncts (scripts/reap-orphans:25), so it should read 'by age alone'."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3183
+      because: "Verified: Effect has only Read, ProcessState and RepositoryMutation. I3183 now declares a host-process effect variant in capability/model.rs, so the Cockpit derives a confirmation for every repair. It also scopes docs/MONITOR.md, the Cockpit and ADR 0039 (linking ADR 0200, so the derived ADR page shows the narrowing), and the intent's invariant now reads 'by name or by age alone'. The surface gaps in other issues are covered too: I3179 scopes apps/majordomus-cli/src/ui and brief.rs, I3185 scopes apps/majordomus-cli/src/ui, and I3184 scopes docs/MCP.md, docs/MESH.md and README.md."

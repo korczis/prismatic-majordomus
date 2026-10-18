@@ -1,0 +1,46 @@
+id: I3288
+milestone: every-sessions-usage-is-observed
+title: "The shared server receives Claude Code's OpenTelemetry usage events over loopback and records them as reported"
+slug: claude-code-usage-is-received
+priority: p2
+profile: implementation
+objective: "Accept OTLP over HTTP with JSON encoding (no protobuf, no new dependency) on the shared server's loopback listener, and map claude_code.api_request events into a new economics usage record (an optional value per token category plus an absence reason, distinct from execution::Execution) through a lossless adapter over the existing economics::usage normalisers, keeping input, output, cache-read and cache-write tokens separate and storing numbers and names only."
+why: "I0302's own reasoning stands: the tool never invokes a model, so the numbers must be handed to it at a boundary where their provenance can be checked. Claude Code's OpenTelemetry export is that boundary (dated vendor claim, 2026-10-12/13); economics::usage already normalises Anthropic and OpenAI usage for the benchmark and must not be duplicated. Critique: economics::usage::u defaults a missing key to 0 and the name 'execution record' collides with apps/majordomus-cli/src/execution/; the absence invariant needs its own type, and I0302's criteria move here. It extends milestone execution-telemetry. Proposed in ADR 0213 (Usage is observed through each provider's official telemetry into one provider-neutral record, and reported, estimated and billed amounts are never merged) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c236#7, chatgpt-majordomus:c253#2."
+current_state: "No OTLP receiver anywhere (git grep opentelemetry|otlp finds nothing); economics/usage.rs reads stream-json for benchmark runs only; I0301-I0304 are scoped to lib/ and bin/ from the shell era."
+desired_state: "Usage records under the server's state directory with session id, model, token categories, the request id where a captured fixture shows it, and the reporter; bounded input; absent fields recorded as absent."
+scope:
+  - "apps/majordomus-cli/src/http"
+  - "apps/majordomus-cli/src/economics/usage.rs"
+  - "apps/majordomus-cli/src/capability/builtin/economics.rs"
+  - "test/fixtures/telemetry"
+  - "test/cases"
+non_scope:
+  - "Protobuf OTLP"
+  - "Prompt or response bodies"
+  - "Any listener beyond loopback"
+depends_on:
+  - "I0301"
+  - "I3287"
+serves:
+  - "every-sessions-usage-is-observed#claude-code-usage-recorded"
+  - "every-sessions-usage-is-observed#a-silent-provider-is-absent"
+acceptance_criteria:
+  - "Recorded OTLP JSON fixtures produce records whose totals equal the fixture's"
+  - "A body over the declared bound is refused before parsing"
+  - "A record carries no prompt text even when the fixture does"
+  - "Cargo.toml gains no dependency"
+  - "The usage record is a new economics type, distinct from execution::Execution and ExecutionStore, fed by a lossless adapter over the existing normalisers; a missing cache-write field reads absent, not 0 (unit test)"
+  - "EconomicsRequest, the benchmark run files under .ai/repo/benchmarks/economics/runs and the report/stats calculators are unchanged (existing economics tests and generate --check pass)"
+  - "A declared `usage: none` provider and an OTLP event missing a token category both produce absent with a reason, and no surface prints 0 (case)"
+  - "An event whose resource attributes name no known repository or checkout of this repository is not stored (case)"
+  - "Every fixture names its client, version and capture date; the request id is optional until a captured fixture shows it"
+  - "A field without a named reporter is refused and no code path fabricates, interpolates or defaults a measured value (carried from I0302)"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test economics"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib economics::usage"
+evidence_required:
+  - "case_claude_code_usage_is_received"
+  - "test_a_missing_cache_write_reads_absent"
+  - "case_a_silent_provider_is_absent"
+created_at: 2026-10-18
+updated_at: 2026-10-18

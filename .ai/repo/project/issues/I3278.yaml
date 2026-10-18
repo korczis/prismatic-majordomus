@@ -1,0 +1,40 @@
+id: I3278
+milestone: what-a-workspace-decides-reaches-the-repository-with-its-source
+title: "The 2026-10-18 import is the workspace store's first sync, not a scratchpad"
+slug: the-import-is-the-first-sync
+priority: p1
+profile: implementation
+objective: "Move the conversations captured on 2026-10-18 into .ai/local/workspaces/chatgpt-majordomus/ in the layout I1303 declares, as workspace-record/v1 records with transport, acquisition and support stated, and write the checkpoint a later sync resumes from."
+why: "On 2026-10-18 the coordinator imported the project through the owner's own signed-in browser tab: an in-page read handed each conversation to an unverified local transport, which flattened it to role/time/text. The capture's own index (2026-10-18) lists 297 conversations, of which 234 were stored with 2001 messages; no upstream message id, parent or branch is kept, so every `conv#n` source is a position in that flattening, and the store is the session's scratch space, not .ai/local/workspaces/. A corpus outside the declared store is invisible to doctor's retention check, to the capability I1308 serves and to every later sync, and disappears with the session. Critique 2026-10-18: the criterion this issue serves is made true by I1305, I1306 and I1308, so it depends on them; and its tooling overlaps an unmerged branch owned by I1302/I1304, so it is narrowed to migrating the captured corpus into the store they define. It extends milestone external-workspaces. Proposed in ADR 0212 (A workspace is read in the operator's own signed-in browser or from the vendor's export, never through a launched automation profile or another tool's credential) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c267#0, chatgpt-majordomus:c267#2."
+current_state: "I1301 done (.ai/repo/workspaces/chatgpt-majordomus.yaml, share/schemas/majordomus/workspace/workspace.v1.schema.json, kind in share/kinds.yaml). workspace-record/v1 and scripts/workspace exist only on feature/workspace-browser-transport (0c5419192f2, 2026-09-10). The corpus is session scratch."
+desired_state: "The store holds every captured conversation as a record whose identity comes from vendor and upstream id, the conversations the capture's index lists but did not store (63 of 297 on 2026-10-18) are recorded as listed-not-fetched, and I1306's replay over the same input leaves the store byte-identical."
+scope:
+  - "test/cases"
+  - "docs/WORKSPACES.md"
+non_scope:
+  - "Re-reading the vendor"
+  - "Committing anything under .ai/local/"
+  - "Writing the store or transport tooling (scripts/workspace, scripts/lib/workspace.mjs, the workspace-record schema) that I1302/I1304 and branch feature/workspace-browser-transport own; this issue is a data migration onto them"
+depends_on:
+  - "I1302"
+  - "I1303"
+  - "I1305"
+  - "I1306"
+  - "I1308"
+serves:
+  - "what-a-workspace-decides-reaches-the-repository-with-its-source#the-store-holds-the-workspace"
+acceptance_criteria:
+  - "Every stored record validates against workspace-record/v1"
+  - "A conversation listed upstream but not fetched is recorded as such, not omitted"
+  - "doctor's retention check (I1303) reports the imported store against its cap"
+  - "majordomus workspaces (I1308) reports chatgpt-majordomus as synced with checkpoint age, conversation and message counts and I1305's support level from .ai/local/workspaces/chatgpt-majordomus/"
+  - "I1306's resume-and-repeat case runs green against the imported store"
+  - "The store records the 2026-10-18 acquisition as made through an unverified local transport, so no record claims an integrity check it did not have"
+validation:
+  - "bin/majordomus doctor"
+  - "bash test/run.sh 93_workspace_kind"
+  - "majordomus plan validate"
+evidence_required:
+  - "case_the_import_is_the_first_sync"
+created_at: 2026-10-18
+updated_at: 2026-10-18

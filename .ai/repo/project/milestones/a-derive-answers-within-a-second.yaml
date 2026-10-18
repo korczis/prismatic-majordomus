@@ -1,0 +1,35 @@
+id: a-derive-answers-within-a-second
+title: "An ordinary derive answers in under a second, runs independent nodes in parallel, and a budget gate holds it"
+slug: a-derive-answers-within-a-second
+order: 185
+priority: p1
+problem: "The 10-13 graph plan makes a derive do less, but it sets no time budget, runs nodes one at a time and publishes file by file. The owner's 10-17 order asks for 'sub second, in parallel' with every algorithm, cache and architectural choice reviewed. ChatGPT's own reply (c292#1) called sub-second without benchmarks 'marketing'. Proposed in ADR 0185 (A derivation is a typed graph of the generators the executable already plans, keyed by the content of what each node reads, and the full derive stays its oracle) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c292#0, chatgpt-majordomus:c292#2."
+outcome: "Derive scenarios (no-op, one input, batch, plus the ten of c255#7) are bench targets under the existing benchmark policy. bench --check refuses a regression. Independent nodes run in bounded parallel against one immutable snapshot, with output identical under any order, and a derive's whole output set is published atomically."
+current_state: "Verified on master: the benchmark harness (I0823-I0827, rule rust-benchmark-coverage, test/cases/82_bench_check.sh) has no derive target, and .ai/repo/benchmarks/ holds economics, observatory, pages and rust only. MJ_TIMING phase timers exist in lib/common.sh. generate::write is atomic per file, not per set. Off master: I2349 (rescue ref) plans the derive and CI budgets."
+desired_state: "I2349 revived and amended; I3236 parallel nodes; I3237 transactional publication. Order follows c292#2: baseline, then no-op and invalidation, then graph and cache, then parallelism, then transactional publish, so each regression can be attributed."
+scope:
+  - "apps/majordomus-cli/src/derivation"
+  - "apps/majordomus-cli/src/bench"
+  - ".ai/repo/benchmarks"
+  - "scripts/derive"
+  - "test/cases"
+  - "docs/PERFORMANCE.md"
+non_scope:
+  - "Cold rebuild budgets (separate contract)"
+  - "Removing or narrowing the machine derive lock (rule project.one-derive-at-a-time; see open question)"
+  - "Mesh-shared derive cache"
+acceptance_criteria:
+  - "Derive scenarios are bench targets with a committed baseline and a declared reference machine"
+  - "bench --check fails a derive regression beyond its noise-aware threshold and names the stage"
+  - "Output bytes are identical across randomized node order and worker counts"
+  - "A derive killed mid-run leaves the previous consistent set on disk"
+validation:
+  - "majordomus plan validate"
+evidence_required: []
+depends_on:
+  - "a-derive-does-only-the-work-its-inputs-changed"
+risks:
+  - "Parallel nodes raise peak load on the shared machine that the lock exists to bound (2026-10-09: nine sessions at load 57)"
+  - "Budgets measured at load 20-68 (I2880, 10-18) are noise; I2068 already says one cold sample is not a regression"
+created_at: 2026-10-18
+updated_at: 2026-10-18

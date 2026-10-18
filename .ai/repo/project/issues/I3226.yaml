@@ -1,0 +1,41 @@
+id: I3226
+milestone: the-ui-runs-and-explains
+title: "Every UI and Cockpit response says where its time went"
+slug: a-response-says-where-its-time-went
+priority: p2
+profile: implementation
+objective: "Write a Server-Timing header on every /ui, /cockpit and /api response from a request-scoped recorder installed in Router::handle and fed by ui/source.rs's capability reads (with cache hit or miss) and by the executor, named in the perf::Phase vocabulary plus the route, render and bytes stages this issue adds, and let the bench record it per route so a budget miss names its stage."
+why: "Owner, 2026-10-11: majordomus ui must be blazing fast; the 2026-10-11 and 2026-10-13 plans both put per-stage measurement before optimisation. No response carries a timing today. perf.rs holds process-global AtomicU64 totals over eight phases and has no per-request record, and the server is multi-threaded, so the header needs its own recorder. Sources: chatgpt-majordomus:c223#0, chatgpt-majordomus:c223#2, chatgpt-majordomus:c255#7."
+current_state: "crate::perf::COUNTERS (perf.rs) is one process-global set of AtomicU64 totals over eight phases (repository_discovery, index_build, registry_build, open_api_build, mcp_projection_build, graph_build, handler_execution, cache_lookup), with no route, render or bytes phase and no per-request record; the HTTP server runs several worker threads; capability/builtin/perf.rs reports those totals; no Server-Timing in apps/ or share/; I2489 holds budgets; I2828 (branch) caches the Cockpit overview."
+desired_state: "The header is recorded per request in the same Phase vocabulary perf.counters reports, written by the router, partial for streamed and upgraded responses, absent from published snapshots, and explained to a reader in docs/MAJORDOMUS_UI.md."
+scope:
+  - "apps/majordomus-cli/src/http/router.rs"
+  - "apps/majordomus-cli/src/http/server.rs"
+  - "apps/majordomus-cli/src/capability/builtin/perf.rs"
+  - "docs/MAJORDOMUS_UI.md"
+  - "apps/majordomus-cli/src/perf.rs"
+  - "apps/majordomus-cli/src/ui/source.rs"
+  - "apps/majordomus-cli/src/capability/executor.rs"
+  - "apps/majordomus-cli/tests"
+  - ".ai/repo/project/intents/the-ui-runs-and-explains-the-work.yaml"
+non_scope:
+  - "Browser paint timing"
+  - "Optimising any route"
+serves:
+  - "the-ui-runs-and-explains-the-work#a-response-says-where-its-time-went"
+acceptance_criteria:
+  - "A served /ui response carries Server-Timing entries whose sum is within the measured total"
+  - "A repeated capability read on one request is visible as two entries"
+  - "docs/MAJORDOMUS_UI.md explains to a reader what each Server-Timing entry names and how to read it in a browser's network panel"
+  - "A request-scoped recorder is installed in Router::handle and fed by ui/source.rs's reads and by the executor; global perf::COUNTERS are not subtracted around a request; two concurrent requests in the test do not see each other's entries"
+  - "Entry names use the perf::Phase vocabulary, plus the route, render and bytes stages this issue adds to it"
+  - "A WebSocket upgrade (/events) or a streamed response carries only the stages completed before its headers, marked partial and without a total; documented in docs/MAJORDOMUS_UI.md"
+  - "The first commit adds apps/majordomus-cli/tests/http_server_timing.rs and rewrites criterion a-response-says-where-its-time-went to `evidence: test` with that ref, worded 'in the same Phase vocabulary perf.counters reports'; `cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test http_server_timing` passes"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib http::"
+  - "majordomus bench --check"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test http_server_timing"
+evidence_required:
+  - "apps/majordomus-cli/tests/http_server_timing.rs"
+created_at: 2026-10-18
+updated_at: 2026-10-18

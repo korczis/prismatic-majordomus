@@ -1,0 +1,33 @@
+id: I3302
+milestone: a-provider-carries-the-contract-natively
+title: "An installed plugin or mod that differs from what the repository generated is a doctor finding"
+slug: extension-provenance-is-checked
+priority: p3
+profile: implementation
+objective: "Extend the existing installed-versus-source comparisons with each generated extension's digest, version and declared permissions, and report an unknown or drifted active extension in doctor and /ui."
+why: "Mods run unsandboxed (dated vendor claim 2026-10-02), so provenance and trust are the value; federating discovery is preferred to owning a marketplace. current_state is corrected: installed mods and shims are already compared with their sources (lib/capture.sh mj_capture_mod_same, mj_capture_shim_body) and the hooks' wiring is reported (mj_lifecycle_state); this issue extends those checks. Proposed in ADR 0214 (A provider's native extension points carry the contract as generated projections; Majordomus neither embeds nor patches the worker's runtime) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c174#18."
+current_state: "Installed mods and shims are compared with their sources (lib/capture.sh mj_capture_mod_same, mj_capture_shim_body) and capture install rewrites a drifted copy; mj_lifecycle_state reports each provider's hook wiring; doctor fails a hand-edited projection. Nothing records digests, versions or declared permissions, and an unknown active mod is not reported."
+desired_state: "doctor names each drifted or unknown extension with the remedy."
+scope:
+  - "apps/majordomus-cli/src/editors"
+  - "lib/doctor.sh"
+  - "test/cases"
+  - "lib/capture.sh"
+  - "apps/majordomus-cli/src/ui"
+depends_on:
+  - "I3300"
+serves:
+  - "a-provider-carries-the-contract-natively#installed-extension-drift-reported"
+acceptance_criteria:
+  - "A modified installed mod is reported with both digests"
+  - "An unknown active mod is a finding, not an error"
+  - "The comparison extends mj_capture_mod_same, mj_capture_shim_body, mj_lifecycle_state and doctor's projection check with digests, versions and declared permissions; no second comparison is built"
+  - "The edit-guard shim and any unknown active mod are reported"
+  - "The provenance report is shown on /ui and proven by a case"
+validation:
+  - "bin/majordomus doctor"
+  - "majordomus generate --check"
+evidence_required:
+  - "case_extension_drift_is_reported"
+created_at: 2026-10-18
+updated_at: 2026-10-18

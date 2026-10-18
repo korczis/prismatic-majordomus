@@ -1,0 +1,45 @@
+id: I3110
+milestone: a-claim-stands-only-on-its-evidence
+title: "A blocking rule reads proven only when one of its cases shows its violation refused"
+slug: a-rule-is-proven-by-a-refusal
+priority: p1
+profile: implementation
+objective: "Extend the rule proof so that a blocking rule is satisfied only when one of its named cases declares the rule whose violation it refuses with a '# majordomus-refutes: <rule-id>' header and has a passing recorded run. '# majordomus-negative:' keeps its command vocabulary and is never read as rule proof. majordomus-cli rules report prints the blocking rules that lack such a case, and scripts/ci/rule-proof-check ratchets that list."
+why: "The owner asked eleven times between 2026-09-11 and 2026-10-14 for rules to be enforced \"positive, negative and wiring tested\" (c139#1, c259#6). On 2026-10-08 the independent audit showed Majordomus treating wired as enforced. Rule proof today accepts any named, present, passing case, so a rule backed only by a happy-path case reads proven. The refusal gets its own header because '# majordomus-negative:' already names a failure mode of a command, gate, script, workflow or capability (lib/commands.sh:216-229, scripts/ci/command-furnished:71), mj_covers_resolve refuses any other prefix (lib/commands.sh:186-188), and only the first such line of a file is read. It extends milestone architecture-is-enforced. Proposed in ADR 0188 (A rule's proof of effect is a recorded refusal of its violation, not the presence of its wiring) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c115#1, chatgpt-majordomus:c115#4, chatgpt-majordomus:c129#3, chatgpt-majordomus:c139#1, chatgpt-majordomus:c193#1, chatgpt-majordomus:c207#6, chatgpt-majordomus:c214#2, chatgpt-majordomus:c259#6."
+current_state: "apps/majordomus-cli/src/evidence/subject.rs reads the first '# majordomus-covers:' and the first '# majordomus-negative:' line of every case (module doc at :21, NEGATIVE const at :126). apps/majordomus-cli/src/rules/mod.rs builds rule proof from named, present, recorded cases, and RuleState has no notion of a refusal. No case carries a refutes header. .ai/repo/rule-proof-baseline.txt holds only its header. The number of blocking rules is read with majordomus-cli rules report --format json, not quoted here."
+desired_state: "RuleProof carries refusal_shown: bool for a blocking rule. The report and its MCP and HTTP projections name the rules without a refusal case. A new baseline, written by --write-baseline, freezes today's list and may only shrink."
+scope:
+  - "apps/majordomus-cli/src/rules"
+  - "scripts/ci/rule-proof-check"
+  - ".ai/repo/rule-refusal-baseline.txt"
+  - "test/cases/125_rule_proof.sh"
+  - ".ai/repo/rules/project/rule-is-a-doctrine.v1.md"
+  - "apps/majordomus-cli/src/evidence/subject.rs"
+  - "lib/commands.sh"
+  - "scripts/ci/command-furnished"
+  - "scripts/generate-site-data"
+  - "test/cases/31_command_coverage.sh"
+  - ".ai/repo/project/intents/a-claim-stands-only-on-its-evidence.yaml"
+non_scope:
+  - "Writing the missing negative cases themselves (follow-up issues per rule family)"
+  - "Advisory rules"
+  - "Adding a rule: vocabulary to '# majordomus-negative:' or to mj_covers_resolve"
+serves:
+  - "a-claim-stands-only-on-its-evidence#blocking-rule-shows-refusal"
+acceptance_criteria:
+  - "A blocking rule none of whose named cases carries a '# majordomus-refutes:' header naming it is listed by majordomus-cli rules report as refusal_not_shown"
+  - "Adding a blocking rule with no refusal case fails rule-proof-check; removing one from the baseline after adding a case passes"
+  - "majordomus-cli rules report --format json carries refusal_shown per rule, and the MCP and HTTP projections carry the same field"
+  - "A case declares the rule whose violation it refuses with its own header line '# majordomus-refutes: <rule-id>' (one or more per file, every line read); '# majordomus-negative:' keeps its command vocabulary and is never read as rule proof"
+  - "refusal_shown is true for a blocking rule only when a named case carries a refutes header naming that rule id and has a passing recorded run; case 125 ('negative: rules') and case 99 ('negative: adr doctor') show no rule refused"
+  - "doctor, test/cases/31_command_coverage.sh and scripts/ci/command-furnished pass unchanged over a tree that carries refutes headers"
+  - "A new case carrying evidence case_rule_refusal_ratchet (its number from scripts/case-numbers next, announced on the board when the issue starts) fails on master 707a04c and passes with this issue; the same commit rebinds intent criterion blocking-rule-shows-refusal to it"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib rules"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test rules"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 125_rule_proof 31_command_coverage"
+  - "scripts/ci/rule-proof-check"
+evidence_required:
+  - "case_rule_refusal_ratchet"
+created_at: 2026-10-18
+updated_at: 2026-10-18

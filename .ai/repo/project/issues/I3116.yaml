@@ -1,0 +1,33 @@
+id: I3116
+milestone: a-claim-stands-only-on-its-evidence
+title: "The debt every ratchet baseline holds is one derived table, with its rule and its trend"
+slug: baseline-debt-is-one-table
+priority: p2
+profile: implementation
+objective: "Derive one table from every ratchet baseline file under .ai/repo: the top-level *-baseline.txt files and .ai/repo/ci/case-numbers-baseline.txt, .ai/repo/ci/github-drift-baseline.txt and .ai/repo/evidence/published-not-run.txt. Each row names the gate that writes it, the rule it serves, and its entry count now and at the previous release. Show the table in the evidence view and in doctor --json. A baseline with no owning gate is a finding."
+why: "The audit of 2026-10-08 (c193#1) found README claiming \"no baseline\" while 17 baseline files existed. Point Zero, discussed on 2026-10-16 (c269#0), lists \"known debt\" as an invariant. Counted on master 707a04c on 2026-10-18 with ls .ai/repo/*-baseline.txt: 16 top-level files, from 0 entries (rule-proof, claim-proof) to 1853 (rust-quality), plus the three under .ai/repo/ci and .ai/repo/evidence that the glob misses. It extends milestone architecture-is-enforced. Sources: chatgpt-majordomus:c193#1, chatgpt-majordomus:c269#0, chatgpt-majordomus:c062#3."
+current_state: "Each gate writes and reads its own baseline. No surface lists them together."
+desired_state: "One projection, derived from the files and their headers, read by the evidence view and the release notes."
+scope:
+  - "scripts/generate-site-data"
+  - "apps/majordomus-cli/src/capability/builtin/quality.rs"
+  - ".ai/repo/*-baseline.txt"
+  - "docs/EVIDENCE.md"
+  - ".ai/repo/ci/case-numbers-baseline.txt"
+  - ".ai/repo/ci/github-drift-baseline.txt"
+  - ".ai/repo/evidence/published-not-run.txt"
+non_scope:
+  - "Paying down any baseline"
+serves:
+  - "a-claim-stands-only-on-its-evidence#public-text-true"
+acceptance_criteria:
+  - "Every baseline file appears with its gate, rule and count"
+  - "A baseline file no gate names is reported"
+  - "Every ratchet baseline file under .ai/repo appears, including .ai/repo/ci/case-numbers-baseline.txt, .ai/repo/ci/github-drift-baseline.txt and .ai/repo/evidence/published-not-run.txt, not only the top-level *-baseline.txt glob"
+validation:
+  - "scripts/generate-site-data --check"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 10_site_data"
+evidence_required:
+  - "case_baselines_are_one_table"
+created_at: 2026-10-18
+updated_at: 2026-10-18

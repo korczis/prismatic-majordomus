@@ -1,0 +1,33 @@
+id: I3312
+milestone: development-runtime
+title: "An ADR may name the paths it governs, and the compiled context for those paths includes it"
+slug: an-adr-names-the-paths-it-governs
+priority: p2
+profile: implementation
+objective: "Let an ADR header carry tracks: the pathspecs it decides about, with the same meaning a context document's tracks has (docs/CONTEXT.md); devcontext selects an accepted or proposed ADR whose tracks match the request's path, and says that tracks is why it is in."
+why: "An agent that sees only a function cannot tell it exists because of a decision with a rejected alternative (2026-09-10); the owner asked that an accepted ADR become an applicable constraint for the work in front of it (2026-09-09). At 707a04c an ADR's header has schema, id, kind, title, status, date, tags, supersedes, superseded_by, related and provenance (share/schemas/majordomus/adr/adr.v1.schema.json, derived from adr.v1.proto beside it) and nothing that names paths, and devcontext reaches an ADR only by following graph edges from what the request already selected (apps/majordomus-cli/src/devcontext/select.rs). A context document already uses tracks to bind code it describes, so the vocabulary exists and no new noun is needed. The enforceable half of a decision stays with the rule that cites it (proposed in ADR 0048, which carries no authority until accepted; I3115). Sources: chatgpt-majordomus:c088#3, chatgpt-majordomus:c093#4."
+current_state: "An ADR whose decision governs lib/start.sh is not in the compiled context of a request for lib/start.sh unless an edge happens to reach it."
+desired_state: "An ADR that declares tracks is selected for the paths it governs, with the reason printed, and a tracks pathspec that matches no tracked path is a validation finding."
+scope:
+  - "share/schemas/majordomus/adr"
+  - "apps/majordomus-cli/src/devcontext"
+  - "apps/majordomus-cli/src/metadata"
+  - ".ai/repo/adrs/README.md"
+  - "docs/CONTEXT.md"
+  - "test/cases"
+  - "lib/adr.sh"
+non_scope:
+  - "Back-filling tracks into every existing ADR"
+  - "Turning an ADR into a gate"
+acceptance_criteria:
+  - "A fixture ADR with tracks: [lib/start.sh] is selected by majordomus devcontext compile --path lib/start.sh and not by --path lib/plan.sh"
+  - "The selection report names tracks as the reason"
+  - "A tracks pathspec that matches no tracked file is refused by majordomus adr check as a broken reference, as lib/context_docs.sh already reports it for a context document"
+  - "A superseded ADR is not selected through its tracks"
+validation:
+  - "bash test/run.sh 130_context_compiler 69_context_documents 99_adr"
+  - "majordomus adr check"
+evidence_required:
+  - "case_adr_tracks_reach_the_context"
+created_at: 2026-10-18
+updated_at: 2026-10-18

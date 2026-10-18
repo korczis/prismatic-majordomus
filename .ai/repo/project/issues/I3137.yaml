@@ -1,0 +1,33 @@
+id: I3137
+milestone: prismatic-lumen
+title: "Lumen is a declared term of the vocabulary, defined by the capabilities it composes"
+slug: lumen-is-a-declared-term
+priority: p2
+profile: implementation
+objective: "Once the owner accepts ADR 0209, add lumen to docs/CONCEPTS.md as a lowercase row naming the owner's mesh-wide view, listing the capabilities it reads (blackboard, peers, mesh, monitor) and the surfaces it appears on, in the same change as the first surface that says the word (docs/MAJORDOMUS_UI.md), so that case 28 reads the row and finds the term in use."
+why: "The owner named it on 2026-10-18; rule project.no-new-nouns refuses any noun beyond docs/CONCEPTS.md, and the critique in the same thread warned that Lumen and Majordomus would otherwise compete module by module. Critique of 2026-10-18 (case-28-cannot-hold-the-term): case 28 reads only lowercase bold rows, and only outside CONCEPTS.md in docs/, lib/, bin/majordomus and share/. The term must therefore arrive with the first surface that says it, and only after the owner accepts ADR 0209. Proposed in ADR 0201 (The persistent runtime is the authority; every operator surface, Lumen included, is a client of it); ADR 0209 (Prismatic Lumen names the owner's mesh-wide view, and it owns no scheduler, event bus, store or API) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c296#8, chatgpt-majordomus:c296#9."
+current_state: "git grep -i lumen returns nothing on master."
+desired_state: "One lowercase lumen row in docs/CONCEPTS.md, held by its mention in docs/MAJORDOMUS_UI.md and added after ADR 0209 is accepted; nothing else."
+scope:
+  - "docs/CONCEPTS.md"
+  - ".ai/repo/adrs"
+  - "docs/MAJORDOMUS_UI.md"
+non_scope:
+  - "A CLI command, MCP namespace or route named lumen before the owner decides it"
+  - "A capitalised or multi-word CONCEPTS row that case 28 does not read"
+serves:
+  - "the-owner-oversees-the-mesh-from-one-page#the-mesh-is-overseen-from-one-page"
+acceptance_criteria:
+  - "test/cases/28_no_hardcoded_values.sh passes with the term"
+  - "The entry names only capabilities that exist"
+  - "The row is written lowercase as | **lumen** | so that case 28's vocabulary regex (^\\| \\*\\*[a-z ]+\\*\\*) reads it, and the same change names lumen in docs/MAJORDOMUS_UI.md so the check is neither failing nor vacuous"
+  - "The row is added only after .ai/repo/adrs/0209-prismatic-lumen-names-the-owner-s-mesh-wide-view-and-it-owns-no.md carries status: accepted"
+  - "The entry names blackboard.snapshot only once 5a's I2983 is on master, and depends_on I2983 is recorded on this issue when that record lands"
+  - "The objective's claim that case 28 refuses a lumen.* registry is not relied on: rule project.no-new-nouns and ADR 0209 hold that line"
+validation:
+  - "bash test/run.sh 28_no_hardcoded_values"
+  - "majordomus rules"
+evidence_required:
+  - "concepts_declares_lumen"
+created_at: 2026-10-18
+updated_at: 2026-10-18

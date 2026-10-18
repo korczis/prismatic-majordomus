@@ -1,0 +1,41 @@
+id: I3283
+milestone: a-promoted-record-opens-its-message
+title: "The UI opens the message a record cites, and the published snapshot shows only the reference"
+slug: the-ui-opens-the-cited-message
+priority: p2
+profile: implementation
+objective: "Draw every workspace: reference in a record's provenance as a link in /ui (through ui::prose) to a served, local-only message view, list on a conversation's view the records promoted from it, and render the reference as plain text in the published snapshot."
+why: "The owner's demand is that every promoted record drills back to conversation#message from the UI; ADR 0032 allows served, never published, so the asymmetry must be a tested property of the snapshot. Critique 2026-10-18: CI holds no store, so a leak check that never holds one proves nothing; and the owner asked for the drill-back across UI, cockpit, docs and a deployed release. Proposed in ADR 0211 (A record promoted from a workspace cites the message it came from by a typed reference that validates in every checkout and resolves only where the store is held) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c239#0."
+current_state: "apps/majordomus-cli/src/ui/prose.rs links known record ids; no workspace view exists."
+desired_state: "An intent, ADR or issue inspector shows its sources; one click opens the message; the snapshot build contains no message text."
+scope:
+  - "apps/majordomus-cli/src/ui"
+  - "apps/majordomus-cli/tests"
+  - "docs/MAJORDOMUS_UI.md"
+  - "test/cases"
+  - "apps/majordomus-cli/src/cockpit"
+  - "site/content-src"
+non_scope:
+  - "Showing message text on the published site"
+depends_on:
+  - "I3282"
+  - "I1309"
+serves:
+  - "what-a-workspace-decides-reaches-the-repository-with-its-source#a-reference-opens-its-message"
+  - "what-a-workspace-decides-reaches-the-repository-with-its-source#nothing-synced-is-published"
+acceptance_criteria:
+  - "A record's workspace source is a link on /ui that opens the message"
+  - "A conversation view lists the records citing it, derived from the records alone"
+  - "The published snapshot of the same record contains the reference and no message text"
+  - "A test case builds the UI snapshot and the site inside a fixture checkout whose .ai/local/workspaces store holds a canary message and title, and fails when either canary appears in the output"
+  - "After a deploy, majordomus.dev shows a promoted record's workspace reference as text with no message content"
+  - "/cockpit draws a record's workspace reference the way /ui does"
+  - "A site docs page explains workspace references and ships in a released version"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test ui_links"
+  - "majordomus generate --check"
+evidence_required:
+  - "test_ui_workspace_reference"
+  - "case_nothing_synced_is_published"
+created_at: 2026-10-18
+updated_at: 2026-10-18

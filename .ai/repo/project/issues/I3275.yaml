@@ -1,0 +1,44 @@
+id: I3275
+milestone: intent-intake
+title: "An intent's inspector shows the campaign segments it was derived from"
+slug: an-intent-shows-its-sources
+priority: p3
+profile: implementation
+objective: "/ui/intent, /ui/idd, /cockpit's intents panel and intent explain show, for an intent and each issue, the campaign revision and segment references that produced it, drawn through I3283's provenance link as one more reference form of the shared Provenance definition (proposed ADR 0211); the published snapshot shows the references only."
+why: "Owner standing order 2026-10-10: track prompt packs and uploads in the UI and milestones. Proposed in ADR 0194 (An ingested brief is an intake revision, and its requirements are reconciled into the existing plan) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c210#2."
+current_state: "No link from intent to source material beyond prose."
+desired_state: "The link is the record's own provenance; no separate source field, view or link exists."
+scope:
+  - "apps/majordomus-cli/src/ui/intent.rs"
+  - "apps/majordomus-cli/src/ui/idd.rs"
+  - "apps/majordomus-cli/tests/ui_intent.rs"
+  - "apps/majordomus-cli/src/intent_realization.rs"
+  - "apps/majordomus-cli/src/capability/builtin/intents.rs"
+  - "apps/majordomus-cli/src/commands/intent.rs"
+  - "apps/majordomus-cli/src/cockpit/intents.rs"
+  - "share/schemas/majordomus/intent"
+  - "share/schemas/majordomus/issue"
+  - "docs/PLANNING.md"
+non_scope:
+  - "A separate live stream for reconciliation: sources are re-derived from the records, which the existing channel of ADR 0216 already follows"
+  - "The campaign -> record graph edge, which I3168 derives in graph.rs"
+depends_on:
+  - "I3273"
+  - "I3280"
+  - "I3283"
+  - "I3168"
+serves:
+  - "a-brief-is-reconciled-into-the-plan#an-intent-shows-its-sources"
+acceptance_criteria:
+  - "An intent written from a draft shows its segments; one with none says none"
+  - "A segment source is drawn through I3283's provenance link as one more reference form of the ADR 0211 Provenance definition. No separate source field, view or link is added"
+  - "/cockpit's intents panel shows the same sources as /ui/intent and intent explain"
+  - "The published snapshot of an intent shows the source references and no brief or message text"
+  - "docs/PLANNING.md documents how a campaign's requirements are reconciled into intents and issues"
+validation:
+  - "majordomus plan validate"
+  - "majordomus intent validate"
+evidence_required:
+  - "test_an_intent_shows_its_sources"
+created_at: 2026-10-18
+updated_at: 2026-10-18

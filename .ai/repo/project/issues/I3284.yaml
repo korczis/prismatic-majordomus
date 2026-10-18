@@ -1,0 +1,37 @@
+id: I3284
+milestone: a-promoted-record-opens-its-message
+title: "Every reference the 2026-10-18 import wrote is pinned to the upstream message it meant"
+slug: the-import-references-are-pinned
+priority: p2
+profile: implementation
+objective: "Rewrite each positional workspace reference in tracked records to the upstream message id, matching position in the 2026-10-18 flattening together with the message's time and a hash of its text, and refuse to pin any reference that matches zero or more than one message."
+why: "Positions in a flattened conversation move when a message is edited or regenerated upstream; a pin by time and text hash keeps every source the import wrote pointing at what was read. Critique 2026-10-18: the zero-positional criterion must count typed entries and the prose detector, or it passes vacuously; and the export premise is unverified, so the browser re-read is the planned fallback route. Proposed in ADR 0211 (A record promoted from a workspace cites the message it came from by a typed reference that validates in every checkout and resolves only where the store is held) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c267#0."
+current_state: "The corpus keeps no message id (role, time, text only)."
+desired_state: "No positional reference remains; an ambiguous one is listed for a person."
+scope:
+  - ".ai/repo/project"
+  - ".ai/repo/adrs"
+  - ".ai/repo/knowledge"
+  - "scripts/workspace"
+  - "apps/majordomus-cli/src/plan.rs"
+  - "test/cases"
+depends_on:
+  - "I3278"
+  - "I3279"
+  - "I3281"
+  - "I1304"
+serves:
+  - "what-a-workspace-decides-reaches-the-repository-with-its-source#the-import-is-pinned"
+acceptance_criteria:
+  - "After the run plan validate reports zero positional workspace references"
+  - "An ambiguous match is refused and named, never guessed"
+  - "Where the export lacks Project conversations, pins come from an I1304 re-read that keeps upstream message ids"
+  - "Zero positional workspace references remain in provenance.derived_from, and the prose detector of I3281 reports zero untyped references"
+  - "The promotion script writes typed provenance.derived_from entries, never prose-only sources"
+validation:
+  - "majordomus plan validate"
+  - "bin/majordomus knowledge check"
+evidence_required:
+  - "case_positional_references_are_pinned"
+created_at: 2026-10-18
+updated_at: 2026-10-18

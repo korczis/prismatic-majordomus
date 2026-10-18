@@ -1,0 +1,30 @@
+id: I3316
+milestone: development-runtime
+title: "The rescue command a stranded worktree is offered is proved by a drill that restores its work byte-identical"
+slug: the-rescue-command-is-proved-by-a-drill
+priority: p2
+profile: implementation
+objective: "Add a drill that builds a fixture worktree with staged, unstaged, untracked, stashed and detached-HEAD work, runs the rescue command worktree uncommitted suggests, removes the worktree, restores from the rescue ref and compares the result, and fix the command where the drill shows it loses or moves work."
+why: "The owner asked on 2026-09-09 that the safety boundary of pruning be proved rather than asserted (c077#3). Finished work has twice existed only on one disk and was saved by rescue refs (I1995), the cooperation rule tells every session to preserve stale work in a rescue ref before bringing it current, and nothing proves that the command the tool prints does so. Sources: chatgpt-majordomus:c077#3."
+current_state: "Verified on master 707a04c7ce8: apps/majordomus-cli/src/worktree/uncommitted.rs rescue_command prints `git -C <path> add -A && git -C <path> commit -m 'wip: rescue uncommitted work' && git -C <path> push origin HEAD:refs/heads/rescue/<label>-<YYYYMMDD>`; the capability description says it is suggested, never run. It does not mention stashes; the commit lands on the branch the worktree holds and runs the repository's commit hook. Case 3025 asserts that doctor names the command, not that the command restores anything."
+desired_state: "One case proves, on a disposable repository with a bare remote, that every kind of uncommitted work the reading counts survives rescue, worktree removal and restore byte-identical, or that the reading names the kind the command cannot carry; the suggested command is changed only as far as the drill requires, and still never runs by itself."
+scope:
+  - "apps/majordomus-cli/src/worktree/uncommitted.rs"
+  - "test/cases"
+  - "docs/WORKTREES.md"
+non_scope:
+  - "Running the rescue automatically"
+  - "Deleting worktrees"
+  - "A new rescue capability"
+acceptance_criteria:
+  - "A fixture with staged, unstaged and untracked files is rescued, its worktree removed, and a checkout of the rescue ref reproduces every file byte-identical"
+  - "A stash and a detached HEAD in the fixture are either carried to the remote by the suggested command or named by the reading as not carried"
+  - "The branch the worktree held is not moved on the remote by the rescue"
+  - "The case runs in a disposable repository (rule tests-run-in-disposable-repos) and fails on master before the fix if the command loses any counted work"
+validation:
+  - "bash test/run.sh 3025_abandoned_work_in_a_worktree_is_named"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib worktree::uncommitted"
+evidence_required:
+  - "rescue_drill_restores_work_case"
+created_at: 2026-10-18
+updated_at: 2026-10-18

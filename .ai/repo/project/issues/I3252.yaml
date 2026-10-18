@@ -1,0 +1,31 @@
+id: I3252
+milestone: an-outcome-becomes-a-reviewed-plan
+title: "A draft plan is judged as if it were written, and only a checked draft is written, through one capability"
+slug: a-checked-draft-is-written
+priority: p1
+profile: implementation
+objective: "Revive I2205 and I2207 from origin/chore/the-owner-packs-are-planned (ec37317fe7c, 2026-10-10, never landed): intents.draft_check runs the plan and intent validators over a draft (intent, criteria, milestones, issues) in memory; intents.draft_write writes it as records only when the check passes, as one execution with a declared repository_mutation effect."
+why: "Owner orders of 2026-10-04, 2026-10-11 and 2026-10-13: an intent entered in the UI is planned and materialised into milestones and issues with the same result on every surface. A proposed plan must not be execution authority before it is checked. Proposed in ADR 0191 (A plan drafted from an intent is a proposal, checked by the plan's own validators before any record is written) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c185#4, chatgpt-majordomus:c226#3, chatgpt-majordomus:c245#2."
+current_state: "Only intents.propose writes (ADR 0144); milestones and issues are hand-written YAML; plan validate and intent validate read only written records."
+desired_state: "Check and write share one validator path, so a draft that passes the check is exactly what the written tree validates to."
+scope:
+  - "apps/majordomus-cli/src/intent_draft.rs"
+  - "apps/majordomus-cli/src/capability/builtin/intents.rs"
+  - "apps/majordomus-cli/tests/intent_draft.rs"
+  - "test/cases"
+  - "docs/PLANNING.md"
+depends_on:
+  - "I3251"
+  - "I3247"
+acceptance_criteria:
+  - "A draft with a dangling dependency or an uncovered criterion is refused by check and by write, writing nothing"
+  - "A passing draft written then validated produces no finding"
+  - "CLI, HTTP and MCP return the same check result"
+validation:
+  - "majordomus plan validate"
+  - "majordomus intent validate"
+evidence_required:
+  - "test_a_checked_draft_is_written"
+  - "case_a_draft_is_written_only_when_checked"
+created_at: 2026-10-18
+updated_at: 2026-10-18

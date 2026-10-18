@@ -1,0 +1,42 @@
+id: I3187
+milestone: mesh-connectivity
+title: "A link names the endpoint candidates it tried, the one it chose and why"
+slug: a-link-names-its-path
+priority: p3
+profile: implementation
+objective: "Record, per link, the endpoint candidates each discovery provider produced (source, observed_at, expires_at), the dial attempts with their outcome and latency, the path chosen and the rule that chose it, with hysteresis against flapping; serve it in mesh peers and /ui/mesh."
+why: "Every 10-12..10-18 connectivity design starts with one typed decision record so that transports can be added without a scheduler change and nobody keeps a parallel endpoint list; 'peer.address' as a property of the peer was rejected. Every surface that shows peers derives from mesh.peers. The cockpit view (I2983, 5a, in flight with no record yet) takes this block from that capability when it lands and writes no second derivation. ui/mesh.rs is also changed by I2943 (in flight for 0.30.0, no record on master), so this issue lands after it. Proposed in ADR 0202 (The mesh routes work to an identity, never an address, and selects among proven transports instead of implementing NAT traversal) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c279#7, chatgpt-majordomus:c282#5, chatgpt-majordomus:c237#4."
+current_state: "Verified: mesh/address.rs ranks local interfaces; rendezvous and multicast produce addresses; no record says why a link used one."
+desired_state: "A connectivity block per peer in mesh.peers; candidates expire."
+scope:
+  - "apps/majordomus-cli/src/mesh/link.rs"
+  - "apps/majordomus-cli/src/mesh/address.rs"
+  - "apps/majordomus-cli/src/mesh/provider.rs"
+  - "apps/majordomus-cli/src/ui/mesh.rs"
+  - "apps/majordomus-cli/tests/mesh_connectivity.rs"
+  - "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+  - "apps/majordomus-cli/src/commands/mesh.rs"
+  - "docs/MESH.md"
+  - "site/content/docs/mesh.md"
+non_scope:
+  - "New transports"
+  - "Recording candidates, dial attempts or the chosen path as journal events or in the folded mesh state: they are local observations"
+depends_on:
+  - "I2410"
+serves:
+  - "an-authorised-node-connects-from-anywhere#path-is-explained"
+acceptance_criteria:
+  - "mesh peers shows candidates, choice and reason for every link"
+  - "An expired candidate is never dialled"
+  - "This issue writes apps/majordomus-cli/tests/mesh_connectivity.rs and, in the same change, records it as the test ref of criterion path-is-explained (evidence: test)"
+  - "The PeerTree output of mesh.peers carries the connectivity block, so the CLI text, JSON, HTTP and MCP answers all show it from one declaration (majordomus generate)"
+  - "Adding path records leaves the mesh state digest unchanged and the lab's three_node_convergence scenario green"
+  - "docs/MESH.md explains the path record and the site page is regenerated from it"
+validation:
+  - "majordomus plan validate"
+  - "cargo test --lib mesh::link"
+evidence_required:
+  - "test_a_link_names_its_path"
+  - "test_mesh_connectivity_names_the_path"
+created_at: 2026-10-18
+updated_at: 2026-10-18

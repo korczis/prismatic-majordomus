@@ -1,0 +1,38 @@
+id: I3303
+milestone: a-provider-carries-the-contract-natively
+title: "Codex's hooks draw its episodes and refuse an edit no claim covers, as Claude Code's do"
+slug: codex-hooks-carry-the-contract
+priority: p2
+profile: implementation
+objective: "Write the Codex adapter share/providers.yaml calls `unadapted`: session events to capture session and, where Codex offers a pre-tool event, that event to guard hook --provider codex, generated like the Claude shims, with its offers evidence verified against the installed Codex."
+why: "Codex sessions work this repository daily (board p1-p3) and today join only by MCP connection (ADR 0103), so they draw no episode boundary of their own and no edit of theirs meets the claim guard. guard.rs reads only Claude Code's tool_input.file_path and notebook_path, so a Codex apply_patch would be let through as a tool that writes no file, and the recorded Codex evidence names no pre-tool event. If no such event exists, #codex-parity is narrowed to episodes. Proposed in ADR 0214 (A provider's native extension points carry the contract as generated projections; Majordomus neither embeds nor patches the worker's runtime) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c109#3."
+current_state: "share/providers.yaml codex: 'Codex shipped a hook system, and this distribution has no adapter for it'."
+desired_state: "codex lifecycle declared; case proves an unclaimed Codex edit is refused."
+scope:
+  - "lib/capture.sh"
+  - "share/providers.yaml"
+  - ".ai/repo/providers"
+  - "test/cases"
+  - "apps/majordomus-cli/src/guard.rs"
+  - "apps/majordomus-cli/src/capability/builtin/guard.rs"
+non_scope:
+  - "A Gemini adapter: deferred to a later intent until this adapter settles the shape; the verified Gemini evidence and its SessionEnd/PreCompress caveats in share/providers.yaml stay"
+depends_on:
+  - "I2734"
+serves:
+  - "a-provider-carries-the-contract-natively#codex-parity"
+acceptance_criteria:
+  - "A Codex session start and end produce episode events"
+  - "Where a Codex pre-tool hook is evidenced, a Codex edit outside every claim is refused with the guard's message"
+  - "providers.yaml codex lifecycle cites verified evidence"
+  - "Before building, share/providers.yaml records dated vendor evidence of a Codex pre-tool hook and its payload shape, or records that none exists and the issue delivers episodes only"
+  - "If a pre-tool hook exists, guard.rs parses the Codex payload and judges every path an apply_patch names, refusing the whole patch when any path is unclaimed, with a unit test on a multi-path patch"
+  - "Proof is split into a CI-runnable structural case and an opt-in end-to-end case against a dated Codex version, each with an allocated case number"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test guard_hook"
+  - "majordomus product validate"
+  - "bash test/run.sh 170_provider_lifecycle_declared"
+evidence_required:
+  - "case_codex_hooks_carry_the_contract"
+created_at: 2026-10-18
+updated_at: 2026-10-18

@@ -1,0 +1,31 @@
+id: I3167
+milestone: campaigns-are-read-as-provenance
+title: "A campaign is a kind of the index: every pack under campaigns/ is an object with its manifest digest, served read-only"
+slug: a-campaign-is-a-kind
+priority: p2
+profile: implementation
+objective: "Make campaign a kind of the index through a tracked YAML index outside campaigns/ (one member per pack: id, path, date, origin, revision digest) read by the existing members mechanism of share/kinds.yaml, so every pack rides the index onto CLI, MCP, HTTP and OpenAPI; the revision digest is defined from campaigns/MANIFEST.sha256; the site keeps not publishing pack bodies."
+why: "campaigns/README.md: 'Nothing here is loaded by the tool'. Owner, 2026-10-10: better integrate tracking of prompt packs and uploads. Proposed in ADR 0180 (A prompt pack is a campaign: kept as received, indexed as a kind, and cited by the records it drove) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c297#9."
+current_state: "52 packs (ls -d campaigns/*/ | wc -l at 707a04c), one campaigns/MANIFEST.sha256 for all of them, scripts/ci/campaigns-check and case 340; no kind; share/kinds.yaml reads one file per object or the members of one YAML list."
+desired_state: "majordomus://campaign/<id> for every pack."
+scope:
+  - "share/kinds.yaml"
+  - "share/schemas/majordomus/campaign"
+  - "share/allow"
+  - "apps/majordomus-cli/src"
+  - "campaigns/README.md"
+  - "test/cases"
+non_scope:
+  - "Publishing pack bodies"
+serves:
+  - "campaigns-are-provenance-the-plan-reads#campaign-is-indexed"
+acceptance_criteria:
+  - "Every pack resolves by id with its digest"
+  - "A pack missing from the manifest is a finding, as campaigns-check already holds"
+validation:
+  - "bin/majordomus-cli generate --check"
+  - "bash test/run.sh 340_a_brief_is_kept_as_received"
+evidence_required:
+  - "test_campaign_kind"
+created_at: 2026-10-18
+updated_at: 2026-10-18

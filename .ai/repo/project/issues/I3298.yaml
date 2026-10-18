@@ -1,0 +1,28 @@
+id: I3298
+milestone: every-sessions-usage-is-observed
+title: "The benchmark declares one arm per mechanism and per agent topology, and a short-task hypothesis beside the long-work one"
+slug: the-benchmark-attributes-mechanisms
+priority: p3
+profile: implementation
+objective: "Extend .ai/repo/benchmarks/economics/methodology.yaml with treatment arms that isolate context compilation, handover, skills and single-agent versus architect-plus-workers, and record the hypothesis that a short isolated task gains little or loses, so a later total can be explained by parts."
+why: "The only declared hypothesis is long-running-work (30-70 percent, untested); the owner asked whether one agent or fan-out is cheaper, and the repository's answer is measurement through ADR 0082, not a second economics subsystem. On 2026-10-18 `majordomus economics summary` (master 707a04c) reports 0 valid pairs of the 30 the rule asks for. It is ADR 0082 benchmark design, so it serves the intent's savings-are-measured-by-arm, the proof of the statement's 'saves', rather than no-estimate-shown-as-spend-or-saving; it stays bound to this intent because milestone cost-per-accepted-outcome belongs to no intent. It extends milestone cost-per-accepted-outcome. Sources: chatgpt-majordomus:c162#2, chatgpt-majordomus:c162#4, chatgpt-majordomus:c213#2, chatgpt-majordomus:c252#5, chatgpt-majordomus:c162#3, chatgpt-majordomus:c231#3, chatgpt-majordomus:c046#5, chatgpt-majordomus:c286#12, chatgpt-majordomus:c278#4."
+current_state: "`majordomus economics summary` on master 707a04c (2026-10-18): suite context 9 runs, suite pilot 0 runs with 14 pairs declared; one hypothesis."
+desired_state: "Arms and hypotheses declared as data, validated, and listed by economics summary as unmeasured until run."
+scope:
+  - ".ai/repo/benchmarks/economics"
+  - "apps/majordomus-cli/src/economics"
+  - "docs/ECONOMICS.md"
+non_scope:
+  - "Running the live suite (spends provider usage; owner decision)"
+serves:
+  - "every-sessions-usage-is-observed#savings-are-measured-by-arm"
+acceptance_criteria:
+  - "economics summary lists every arm and hypothesis with status untested"
+  - "An arm without a declared baseline is refused"
+validation:
+  - "majordomus economics summary"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test economics"
+evidence_required:
+  - "case_mechanism_arms_are_declared"
+created_at: 2026-10-18
+updated_at: 2026-10-18

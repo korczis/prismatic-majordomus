@@ -1,0 +1,51 @@
+id: I3238
+milestone: a-change-is-judged-in-minutes
+title: "A pull request runs the cases its change can affect, chosen from what each case declares it reads, and a change of unknown impact runs them all"
+slug: cases-are-selected-by-impact
+priority: p1
+profile: deep-work
+objective: "Extend the existing `# majordomus-covers:` header with the paths a case reads (or derive them from the commands it covers and the feature-to-module map), and make scripts/ci-plan select suite cases from the changed paths' closure. A case that declares nothing runs on every pull request. The full suite runs on the combined top, on release and on demand."
+why: "c228#3 (2026-10-11) named impact selection the largest order-of-magnitude gain. The rescued ci-critical-path milestone (2026-10-08 measurement) found 0 of 409 cases declaring the paths they read. Gates are already selected by path class, cases are not. It extends milestone ci-critical-path. Proposed in ADR 0187 (Tests are selected by the impact of a change, derived from what each case declares it reads, and a change of unknown impact runs every case) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c130#3, chatgpt-majordomus:c195#2, chatgpt-majordomus:c228#3, chatgpt-majordomus:c017#3, chatgpt-majordomus:c017#12, chatgpt-majordomus:c037#10, chatgpt-majordomus:c087#1, chatgpt-majordomus:c089#1."
+current_state: "Measured on master 707a04c, 2026-10-18: 431 of 527 cases carry `# majordomus-covers:` and 282 of those say 'none' (grep over test/cases/*.sh). test/run.sh shards by suite-durations.tsv; scripts/ci-plan has no case selection. The pre-push hook already runs scripts/ci/run-plan --before-push, which calls scripts/ci-plan, prints each gate it leaves out and why, and times itself against MJ_PUSH_BOUND (default 180 s), but picks its cases by recorded duration, not by impact."
+desired_state: "plan.json lists the selected cases with the reason for each. A mutation that drops a dependency from a case's declaration is caught by a case."
+scope:
+  - "scripts/ci-plan"
+  - "test/run.sh"
+  - "test/lib.sh"
+  - ".ai/repo/ci/suite.yaml"
+  - ".github/workflows/validate.yml"
+  - "test/cases"
+  - "scripts/ci/run-plan"
+  - "scripts/ci/verdict"
+  - "test/cases/1021_a_push_runs_what_ci_would_find_first.sh"
+  - ".ai/repo/project/intents/a-change-is-judged-in-minutes.yaml"
+non_scope:
+  - "Dropping the full suite from the proof of a combined top or a release"
+depends_on:
+  - "I2350"
+  - "I2348"
+  - "I2527"
+  - "I3242"
+serves:
+  - "a-change-is-judged-in-minutes#pr-verdict-within-five-minutes"
+  - "a-change-is-judged-in-minutes#no-required-check-is-dropped"
+acceptance_criteria:
+  - "A documentation-only change selects only the cases that read documentation"
+  - "A path no case declares selects every case"
+  - "A case whose declared input changed is never skipped (mutation case)"
+  - "The selection and its reasons appear in the run summary"
+  - "Every gate or case the plan does not run has a verdict row naming the unchanged digest of what it reads (I2348's gate_result_reuse_case passes in this issue's validation)"
+  - "I2527's omitted_edge_turns_the_gate_red passes, and removing one declared input from a case's declaration turns a gate red (mutation case)"
+  - "scripts/ci/run-plan --before-push uses the same case selection as CI for the same diff (case 1021)"
+  - "Case inputs are derived from the commands each case covers through the feature-to-module map; the cases left undeclared and their case-seconds are counted in the plan, and no hand declaration of every case is required"
+  - "Criterion no-required-check-is-dropped of intent a-change-is-judged-in-minutes becomes evidence: test with a ref to impact_selection_never_skips_an_affected_case, and the intent lists milestone ci-critical-path"
+  - "With this selection, a leaf edit's scripts/ci/run-plan --before-push completes within 60 s on the shared development machine, by the step's own time report (folded from I3243)"
+validation:
+  - "bash test/run.sh 94_ci_plan 1021_a_push_runs_what_ci_would_find_first"
+  - "scripts/ci-plan --check"
+evidence_required:
+  - "impact_selection_never_skips_an_affected_case"
+  - "doc_only_pr_suite_time"
+  - "local_plan_equals_ci_plan_case"
+created_at: 2026-10-18
+updated_at: 2026-10-18

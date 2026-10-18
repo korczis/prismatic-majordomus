@@ -1,0 +1,45 @@
+id: I3230
+milestone: the-ui-runs-and-explains
+title: "The Dashboard opens on what needs the owner: what runs, what is blocked and why, what was verified, and the next safe move"
+slug: the-dashboard-leads-with-what-needs-the-owner
+priority: p2
+profile: implementation
+objective: "Add a first panel to /ui (the Dashboard), served as a /ui/panels fragment (ADR 0142), that answers in plain words: the intent being served, the issues active and who works on them (from the blackboard source I3138 composes), what is blocked and on what (plan.status), evidence.report's verdict at the presented revision, and plan.next's one next move, the same derivation /ui/idd renders; each sentence a link to its record; mechanism figures stay below."
+why: "The owner called the Cockpit landing 'dreadful and very poor' (2026-09-10) and asked for one clear overview dashboard (2026-09-29); the 2026-10-13 product test was that a newcomer must not need each graph explained. I2917, I2915 and I2907 (2b) and I2980 (5a) are not in this tree. The dependency on I3138, which is gated behind 5a's landing, keeps plan.next from offering this issue early. Sources: chatgpt-majordomus:c102#4, chatgpt-majordomus:c168#0, chatgpt-majordomus:c191#4, chatgpt-majordomus:c250#1, chatgpt-majordomus:c235#2."
+current_state: "apps/majordomus-cli/src/ui/dashboard.rs leads with delivery figures from repository.info, health.report, release.version, distribution.releases, plan.status, plan.roadmap and mesh.peers."
+desired_state: "The first panel is a fragment projecting existing capabilities with no number or next move of its own; an unread source makes its sentence unknown; FIRST_PAINT and the 100 ms budget are unchanged."
+scope:
+  - "apps/majordomus-cli/src/ui/dashboard.rs"
+  - "docs/MAJORDOMUS_UI.md"
+  - "test/cases"
+  - "apps/majordomus-cli/src/ui/mod.rs"
+  - "apps/majordomus-cli/tests"
+  - ".ai/repo/project/intents/the-ui-runs-and-explains-the-work.yaml"
+non_scope:
+  - "A separate manager view or persona"
+  - "New capabilities"
+  - "A date or range filter on evidence: the verified sentence states evidence.report at the presented revision, not 'since the last release'"
+depends_on:
+  - "I3138"
+serves:
+  - "the-ui-runs-and-explains-the-work#the-dashboard-leads-with-what-needs-the-owner"
+acceptance_criteria:
+  - "Every sentence of the panel links to the record it states"
+  - "With the mesh not observed the 'who' sentence says not observed, never nobody"
+  - "The snapshot's first screen still passes case 1092"
+  - "docs/MAJORDOMUS_UI.md describes the panel and the source of each sentence"
+  - "The panel is a /ui/panels fragment (ADR 0142); dashboard.rs FIRST_PAINT is unchanged and the Dashboard keeps its 100 ms warm p95 budget"
+  - "The 'who' sentence reads the blackboard source I3138 composes, and does not read the blackboard a second way"
+  - "The next move is plan.next's single answer and the same derivation /ui/idd renders (2b's I2917); the panel derives no next move of its own"
+  - "The verified sentence states evidence.report's verdict at the presented revision; the PR rewords the criterion to drop 'since the last release'"
+  - "The panel fits 390 px with no horizontal scroll"
+  - "The PR adds apps/majordomus-cli/tests/ui_dashboard_needs_the_owner.rs and rewrites criterion the-dashboard-leads-with-what-needs-the-owner to `evidence: test` with that ref"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::dashboard"
+  - "bash test/run.sh 1092_the_ui_snapshot_holds_every_screen"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test ui_dashboard_needs_the_owner"
+  - "majordomus bench --check"
+evidence_required:
+  - "apps/majordomus-cli/tests/ui_dashboard_needs_the_owner.rs"
+created_at: 2026-10-18
+updated_at: 2026-10-18
