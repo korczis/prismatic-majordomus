@@ -1297,9 +1297,12 @@ capabilities:                   # expectation, not permission
 
 **The content is not here and never will be.** A workspace's conversations, messages and
 attachments are synced into `.ai/local/workspaces/<id>/`, which is this checkout's state
-and never a source (ADR 0005, ADR 0025). Nothing under it is indexed, generated from,
+and never a source (ADR 0005, ADR 0032). Nothing under it is indexed, generated from,
 published or carried by a branch. A piece of it becomes the repository's own statement only
-when a person promotes it into `.ai/repo/`, deliberately, one piece at a time.
+when a person promotes it into `.ai/repo/`, deliberately, one piece at a time. A whole
+workspace is promoted through `majordomus://skill/promote-a-workspace`, in which that act is
+the operator's acceptance of the proposal before any record is written
+(`.ai/repo/workspaces/README.md`).
 
 **No credential belongs here either.** `access.browser_profile` is constrained by the
 schema to `^[a-z][a-z0-9-]*$` so that a filesystem path, an environment variable or a token

@@ -67,6 +67,10 @@ report and every handover body follow `majordomus://skill/report-verification-st
 What a task learned does not end as a note: before the episode closes, or whenever the
 briefing names candidates awaiting review, follow `majordomus://skill/evolve` — decide each
 candidate, put each lesson where it changes behaviour, deliver, and tell the peers.
+A whole declared external workspace is promoted through
+`majordomus://skill/promote-a-workspace`: every conversation accounted for, the proposal
+accepted by the operator, every promoted record citing the message it came from, and nothing
+of the content committed.
 
 ## Answering "is it done?"
 

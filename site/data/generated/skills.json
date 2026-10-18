@@ -244,6 +244,49 @@
       "route": "/skills/pack-for-review/"
     },
     {
+      "id": "promote-a-workspace",
+      "uri": "majordomus://skill/promote-a-workspace",
+      "title": "Promote a workspace into the layer",
+      "description": "Read every conversation of a declared external workspace into a working set outside the tracked tree, account for each one, and, once the operator has accepted the proposal, promote what it decided into intents, milestones, issues, proposed decisions and knowledge that cite the conversation and message they came from.",
+      "status": "active",
+      "version": 1,
+      "tags": [
+        "workspace",
+        "knowledge",
+        "planning",
+        "privacy",
+        "provenance"
+      ],
+      "related": [
+        "evolve",
+        "implement",
+        "report-verification-state",
+        "pack-for-chatgpt",
+        "assess-before-deleting"
+      ],
+      "inputs": [
+        "a workspace declared under .ai/repo/workspaces/ whose authorisation covers reading it",
+        "the operator's own data export of the vendor account, which the operator requests and hands over",
+        "a branch and worktree of its own for the records, and an issue the import runs under"
+      ],
+      "outputs": [
+        "a working set outside every checkout holding the export, its addressed view, the extractions and a coverage ledger, which moves into the store .ai/local/workspaces/<workspace>/ once a command owns that store",
+        "promoted records, accepted by the operator before they are written and again before they land, each citing <workspace>:<conversation>#<n>, that every plan, intent, decision and knowledge check passes",
+        "a delivered change whose every reached surface was looked at, and an announcement and a handover that name it and the run's high-water mark"
+      ],
+      "path": ".ai/repo/skills/promote-a-workspace/SKILL.md",
+      "sha256": "6f022b64ae1286060f56788a5283d5c16651a5b8ddf97a45e4dc38cc32d757ed",
+      "examples": [
+        {
+          "path": ".ai/repo/skills/promote-a-workspace/examples/import-a-chatgpt-project.md",
+          "title": "Import a ChatGPT project",
+          "body": "\nThe operator wants everything the operator's ChatGPT project decided about this repository carried\ninto the plan, so that the work can be run from the product UI, with every record leading\nback to the conversation it came from.\n\n```text\nApply the promote-a-workspace skill to the declared workspace: confirm the authorisation,\ntake my data export into the working set, address each message, extract every conversation\nwith a read-fully line, consolidate by domain against the trunk and the board, show me the\nproposal before writing anything, write the records I accept with their sources, look at\nevery surface they reach, deliver one pull request with the receipt for my acceptance, and\ntell the peers.\n```\n"
+        }
+      ],
+      "valid": true,
+      "route": "/skills/promote-a-workspace/"
+    },
+    {
       "id": "repo-review",
       "uri": "majordomus://skill/repo-review",
       "title": "Repository review",
@@ -335,7 +378,7 @@
       "route": "/skills/report-verification-state/"
     }
   ],
-  "count": 8,
+  "count": 9,
   "by_tag": {
     "cleanup": [
       "assess-before-deleting"
@@ -360,7 +403,8 @@
       "deploy-site"
     ],
     "knowledge": [
-      "evolve"
+      "evolve",
+      "promote-a-workspace"
     ],
     "review": [
       "evolve",
@@ -391,10 +435,20 @@
     ],
     "privacy": [
       "pack-for-chatgpt",
-      "pack-for-review"
+      "pack-for-review",
+      "promote-a-workspace"
     ],
     "chatgpt": [
       "pack-for-chatgpt"
+    ],
+    "workspace": [
+      "promote-a-workspace"
+    ],
+    "planning": [
+      "promote-a-workspace"
+    ],
+    "provenance": [
+      "promote-a-workspace"
     ],
     "reporting": [
       "report-verification-state"
@@ -860,6 +914,13 @@
       "description": "Prepare a bounded, reproducible snapshot of the tracked tree for a reviewer who cannot read the repository directly, with the local half and anything secret left out and the questions the review must answer written down."
     },
     {
+      "name": "promote-a-workspace",
+      "path": ".claude/skills/promote-a-workspace/SKILL.md",
+      "kind": "skill",
+      "source": ".ai/repo/skills/promote-a-workspace/SKILL.md",
+      "description": "Read every conversation of a declared external workspace into a working set outside the tracked tree, account for each one, and, once the operator has accepted the proposal, promote what it decided into intents, milestones, issues, proposed decisions and knowledge that cite the conversation and message they came from."
+    },
+    {
       "name": "repo-review",
       "path": ".claude/skills/repo-review/SKILL.md",
       "kind": "skill",
@@ -877,6 +938,6 @@
   "claude_by_kind": {
     "command": 1,
     "domain": 58,
-    "skill": 8
+    "skill": 9
   }
 }

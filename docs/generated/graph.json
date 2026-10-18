@@ -14508,6 +14508,14 @@
         "source": ".ai/repo/skills/pack-for-review/examples/second-opinion-from-another-model.md"
       },
       {
+        "id": "majordomus://document/.ai/repo/skills/promote-a-workspace/examples/import-a-chatgpt-project.md",
+        "kind": "document",
+        "label": ".ai/repo/skills/promote-a-workspace/examples/import-a-chatgpt-project.md",
+        "summary": "Import a ChatGPT project",
+        "route": "/cockpit/objects/document/ai-repo-skills-promote-a-workspace-examples-import-a-chatgpt-project-md",
+        "source": ".ai/repo/skills/promote-a-workspace/examples/import-a-chatgpt-project.md"
+      },
+      {
         "id": "majordomus://document/.ai/repo/skills/repo-review/examples/review-a-subsystem.md",
         "kind": "document",
         "label": ".ai/repo/skills/repo-review/examples/review-a-subsystem.md",
@@ -39689,6 +39697,55 @@
         }
       },
       {
+        "id": "majordomus://issue/I3101",
+        "kind": "issue",
+        "label": "I3101",
+        "summary": "A workspace is promoted into the layer by a skill that accounts for every conversation and leaves the content in its store",
+        "route": "/cockpit/objects/issue/i3101",
+        "source": ".ai/repo/project/issues/I3101.yaml",
+        "facts": {
+          "created_at": "2026-10-18",
+          "evidence_required": [
+            "case_3500"
+          ],
+          "milestone": "external-workspaces",
+          "non_scope": [
+            "Any script, tool or capability that performs the export, the conversion or the ledger: that is I1303-I1308",
+            "The records the import itself promotes: that is I3100",
+            "Raw conversation content, a credential or third-party data in any tracked file",
+            "A validator that refuses an advisor's score, forecast or dated count as a knowledge record, and the check that refuses a staged record repeating a conversation (I1309): follow-ups",
+            "The stale ADR 0025 citations of milestone external-workspaces and of I1301, I1303, I1304, I1308, I1309 and I1310, which mean ADR 0032: a follow-up"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/skills/promote-a-workspace",
+            ".ai/repo/prompts/workspace-extract.md",
+            ".ai/repo/prompts/workspace-consolidate.md",
+            ".ai/repo/workflows/task-lifecycle.md",
+            ".ai/repo/workspaces/README.md",
+            ".ai/repo/project/issues/I3101.yaml",
+            "docs/KNOWLEDGE.md",
+            "docs/SCHEMAS.md",
+            "apps/majordomus-cli/tests/skills.rs",
+            "test/cases/391_skills_are_proven_capabilities.sh",
+            "test/cases/3500_a_workspace_is_promoted_by_a_procedure_of_existing_commands.sh"
+          ],
+          "slug": "a-workspace-is-promoted-by-a-skill",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "majordomus skills check",
+            "majordomus plan validate",
+            "bash test/run.sh 3500_a_workspace_is_promoted_by_a_procedure_of_existing_commands",
+            "bash test/run.sh 391_skills_are_proven_capabilities",
+            "scripts/ci/skill-naming-check",
+            "scripts/ci/no-machine-paths",
+            "scripts/ci/local-never-published"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "label": "a-commit-stood-behind-a-build-lock",
@@ -44914,6 +44971,28 @@
         "source": ".ai/repo/prompts/review.md",
         "facts": {
           "name": "review"
+        }
+      },
+      {
+        "id": "majordomus://prompt/workspace-consolidate",
+        "kind": "prompt",
+        "label": "workspace-consolidate",
+        "summary": "workspace-consolidate",
+        "route": "/cockpit/objects/prompt/workspace-consolidate",
+        "source": ".ai/repo/prompts/workspace-consolidate.md",
+        "facts": {
+          "name": "workspace-consolidate"
+        }
+      },
+      {
+        "id": "majordomus://prompt/workspace-extract",
+        "kind": "prompt",
+        "label": "workspace-extract",
+        "summary": "workspace-extract",
+        "route": "/cockpit/objects/prompt/workspace-extract",
+        "source": ".ai/repo/prompts/workspace-extract.md",
+        "facts": {
+          "name": "workspace-extract"
         }
       },
       {
@@ -55594,6 +55673,36 @@
         }
       },
       {
+        "id": "majordomus://skill/promote-a-workspace",
+        "kind": "skill",
+        "label": "promote-a-workspace",
+        "summary": "Promote a workspace into the layer",
+        "route": "/cockpit/objects/skill/promote-a-workspace",
+        "source": ".ai/repo/skills/promote-a-workspace/SKILL.md",
+        "status": "active",
+        "facts": {
+          "inputs": [
+            "a workspace declared under .ai/repo/workspaces/ whose authorisation covers reading it",
+            "the operator's own data export of the vendor account, which the operator requests and hands over",
+            "a branch and worktree of its own for the records, and an issue the import runs under"
+          ],
+          "related": [
+            "evolve",
+            "implement",
+            "report-verification-state",
+            "pack-for-chatgpt",
+            "assess-before-deleting"
+          ],
+          "tags": [
+            "workspace",
+            "knowledge",
+            "planning",
+            "privacy",
+            "provenance"
+          ]
+        }
+      },
+      {
         "id": "majordomus://skill/repo-review",
         "kind": "skill",
         "label": "repo-review",
@@ -57572,6 +57681,13 @@
         "label": "test/cases/34_command_fixtures.sh",
         "route": "/cockpit/objects/test/test-cases-34-command-fixtures-sh",
         "source": "test/cases/34_command_fixtures.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3500_a_workspace_is_promoted_by_a_procedure_of_existing_commands.sh",
+        "kind": "test",
+        "label": "test/cases/3500_a_workspace_is_promoted_by_a_procedure_of_existing_commands.sh",
+        "route": "/cockpit/objects/test/test-cases-3500-a-workspace-is-promoted-by-a-procedure-of-existing-commands-sh",
+        "source": "test/cases/3500_a_workspace_is_promoted_by_a_procedure_of_existing_commands.sh"
       },
       {
         "id": "majordomus://test/test/cases/350_the_queue_measures_itself.sh",
@@ -75994,6 +76110,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/.ai/repo/skills/promote-a-workspace/examples/import-a-chatgpt-project.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/.ai/repo/skills/repo-review/examples/review-a-subsystem.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -84399,6 +84520,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3101",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3101",
+        "target": "majordomus://milestone/external-workspaces",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -84920,6 +85051,16 @@
       },
       {
         "source": "majordomus://prompt/review",
+        "target": "kind:prompt",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://prompt/workspace-consolidate",
+        "target": "kind:prompt",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://prompt/workspace-extract",
         "target": "kind:prompt",
         "kind": "is_a"
       },
@@ -87844,6 +87985,36 @@
         "kind": "related_to"
       },
       {
+        "source": "majordomus://skill/promote-a-workspace",
+        "target": "kind:skill",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://skill/promote-a-workspace",
+        "target": "majordomus://skill/assess-before-deleting",
+        "kind": "related_to"
+      },
+      {
+        "source": "majordomus://skill/promote-a-workspace",
+        "target": "majordomus://skill/evolve",
+        "kind": "related_to"
+      },
+      {
+        "source": "majordomus://skill/promote-a-workspace",
+        "target": "majordomus://skill/implement",
+        "kind": "related_to"
+      },
+      {
+        "source": "majordomus://skill/promote-a-workspace",
+        "target": "majordomus://skill/pack-for-chatgpt",
+        "kind": "related_to"
+      },
+      {
+        "source": "majordomus://skill/promote-a-workspace",
+        "target": "majordomus://skill/report-verification-state",
+        "kind": "related_to"
+      },
+      {
         "source": "majordomus://skill/repo-review",
         "target": "kind:skill",
         "kind": "is_a"
@@ -89200,6 +89371,11 @@
       },
       {
         "source": "majordomus://test/test/cases/34_command_fixtures.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3500_a_workspace_is_promoted_by_a_procedure_of_existing_commands.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -94405,8 +94581,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2959,
-      "edges": 6500,
+      "nodes": 2965,
+      "edges": 6512,
       "acyclic": false,
       "truncated": false
     }

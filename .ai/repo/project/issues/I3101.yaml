@@ -1,0 +1,46 @@
+id: I3101
+milestone: external-workspaces
+title: "A workspace is promoted into the layer by a skill that accounts for every conversation and leaves the content in its store"
+slug: a-workspace-is-promoted-by-a-skill
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Write the skill promote-a-workspace and its two worker briefs (prompts workspace-extract and workspace-consolidate) from the first whole import of a ChatGPT project: read the declaration first, open the run under an issue of its own, start from the operator's own data export into a working set outside the tracked tree (the store .ai/local/workspaces/<workspace>/ once a command owns it), address every message as <workspace>:<conversation>#<n>, extract with a read-fully line per conversation and relevance triage, route by the catalogue's vocabulary, consolidate against the trunk and the board, have the operator accept the proposal, write records the repository's way, look at every surface the records reach, deliver and tell the peers. The mechanical steps are named as what I1303-I1308 automate; no script is added."
+why: "On 2026-10-18 the owner asked for every conversation of the ChatGPT project Majordomus to be read into the layer and for the process to become a skill. The import that followed met a content security policy that refused a local receiver, rate limits after a burst, timers throttled in a hidden tab, extraction workers that skimmed long conversations and said so only in their reports, off-topic conversations holding third-party personal data, and records written with escapes the subset readers keep literally. None of that was written down anywhere a worker reads, and the workspace contract said only that promotion is a person's act, one piece at a time."
+current_state: "The workspace is declared (I1301) and the contract is in .ai/repo/workspaces/README.md and ADR 0032. The evolve skill covers lessons one at a time; no skill, workflow or prompt says how a corpus of conversations is read, accounted for and promoted."
+desired_state: "The task lifecycle invokes majordomus://skill/promote-a-workspace; the skill names only commands, scripts and prompts that exist; both briefs render with every token substituted and keep their privacy rules; case 3500 proves each of these, that every Cockpit route the skill names uses a declared kind, that the store is git-ignored, and that a decision proposed the way the skill says is refused as accepted while it stays extracted; tests/skills.rs and case 391 name the skill."
+scope:
+  - ".ai/repo/skills/promote-a-workspace"
+  - ".ai/repo/prompts/workspace-extract.md"
+  - ".ai/repo/prompts/workspace-consolidate.md"
+  - ".ai/repo/workflows/task-lifecycle.md"
+  - ".ai/repo/workspaces/README.md"
+  - ".ai/repo/project/issues/I3101.yaml"
+  - "docs/KNOWLEDGE.md"
+  - "docs/SCHEMAS.md"
+  - "apps/majordomus-cli/tests/skills.rs"
+  - "test/cases/391_skills_are_proven_capabilities.sh"
+  - "test/cases/3500_a_workspace_is_promoted_by_a_procedure_of_existing_commands.sh"
+non_scope:
+  - "Any script, tool or capability that performs the export, the conversion or the ledger: that is I1303-I1308"
+  - "The records the import itself promotes: that is I3100"
+  - "Raw conversation content, a credential or third-party data in any tracked file"
+  - "A validator that refuses an advisor's score, forecast or dated count as a knowledge record, and the check that refuses a staged record repeating a conversation (I1309): follow-ups"
+  - "The stale ADR 0025 citations of milestone external-workspaces and of I1301, I1303, I1304, I1308, I1309 and I1310, which mean ADR 0032: a follow-up"
+acceptance_criteria:
+  - "majordomus skills check and skills verify report promote-a-workspace valid, tested and used, with no finding"
+  - "Case 3500 passes: the skill is invoked, every command, script and prompt it names exists, both prompts render, and a decision proposed from a reference is refused by adr check once it claims to be accepted"
+  - "Case 391 and cargo test --test skills pass with the skill named in both lists"
+  - "No tracked file of the change carries a machine path, a conversation's text or a credential"
+validation:
+  - "majordomus skills check"
+  - "majordomus plan validate"
+  - "bash test/run.sh 3500_a_workspace_is_promoted_by_a_procedure_of_existing_commands"
+  - "bash test/run.sh 391_skills_are_proven_capabilities"
+  - "scripts/ci/skill-naming-check"
+  - "scripts/ci/no-machine-paths"
+  - "scripts/ci/local-never-published"
+evidence_required:
+  - "case_3500"
+created_at: 2026-10-18
+updated_at: 2026-10-18

@@ -35,9 +35,20 @@ to negotiate.
 
 **Not here at all:** the content. A workspace's conversations, messages and attachments are
 synced into `.ai/local/workspaces/<workspace>/`, which is this checkout's state and never a
-source (ADR 0005, ADR 0025). Nothing under it is indexed, generated from, published, or
+source (ADR 0005, ADR 0032). Nothing under it is indexed, generated from, published, or
 carried by a branch. It becomes the repository's own statement only when a person promotes
 a piece of it into `.ai/repo/`, deliberately, one piece at a time.
+
+**Promoting a whole workspace** is the same act at a larger size, with an account kept:
+`majordomus://skill/promote-a-workspace` reads the declaration first, starts from the
+operator's own data export, gives every message an address `<workspace>:<alias>#<n>` (a local
+alias of the conversation; the map to the vendor's id never enters the tracked tree),
+accounts for every conversation in a ledger kept beside the content and outside the tracked
+tree — relevance, whether it was read fully, and what became of each item — and proposes
+records, each citing the messages it came from. The person's act is the operator's
+acceptance of that proposal before any record is written, and of the staged records before
+they land; no record enters `.ai/repo/` without it. An off-topic conversation is counted in
+the ledger and never copied, and its title appears in no projection.
 
 **Not here either:** any credential. `access.browser_profile` is a label the operator's own
 configuration resolves, outside this repository. No cookie, token, authorisation header, or

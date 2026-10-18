@@ -48,6 +48,18 @@ that keeps `project.never-store-transcripts` applies to its title, its descripti
 body. An ADR, a rule and a document are sources of their own: a record relates to them and
 never restates them. `SCHEMAS.md` has the file format with an example.
 
+A record promoted from an external workspace (`.ai/repo/workspaces/`) holds to the same
+line, and to two more. An advisor's score, percentage, forecast or dated count is none of
+`observed`, `inferred` or `decided`: it is an opinion or a snapshot, never a record, and at
+most a reasoning step cites it (ADR 0098). And because `derived_from` admits none of the
+workspace's own identities yet, the record names its root in its body as
+`<workspace>:<alias>#<n>`, a stable local alias of the conversation whose map to the vendor's
+id stays outside the tracked tree with the conversation itself; no vendor id or URL is
+committed. This paragraph is the one statement of both lines; the
+procedure `majordomus://skill/promote-a-workspace` and its two briefs cite it. No validator
+decides the first line yet: `knowledge check` does not read a record for an advisor's
+numbers, so review holds it until a check does.
+
 `curated/` and `candidates/` hold records, one status apart. `curated/` is what this repository chose to
 write about itself, `status: verified`. `candidates/` is what the tool derived and nobody has
 reviewed, `status: candidate`; it is tracked, for the reason every closed session record is
