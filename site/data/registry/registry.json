@@ -6,7 +6,7 @@
     "version": "0.29.0"
   },
   "registry": {
-    "fingerprint": "ce0c62d6172a2b7b441b28f8cac81850910e5b1fa162db82c5d2e7c0a8a9c160",
+    "fingerprint": "d69a51c83f99d1cb99888bc529dc151013f86dd4c82d74f68d8d64f1e628cdad",
     "summary": {
       "total": 2539,
       "builtin": 203,
@@ -501,7 +501,7 @@
               },
               "complete": {
                 "type": "boolean",
-                "description": "Whether every source was read whole: every board, the mesh, and every monitor source\nasked for. `false` names its reason in `sources`, so that \"nobody is here\" is never what\n\"I could not ask\" reads as."
+                "description": "Whether every board was read and the mesh, when the repository declares one, could be\nasked. `false` names its reason in `sources`, so that \"nobody is here\" is never what\n\"I could not ask\" reads as. The monitor's sources are reported in `sources` with their\nstate and do not decide it: an empty executor trail or an absent `gh` is no board that\ncould not be read."
               },
               "sources": {
                 "type": "array",
@@ -84919,7 +84919,7 @@
     ]
   },
   "index": {
-    "fingerprint": "745d6b6482b3463faeda76aa6fedfdcd4d0887a9f5f2808150093ff5a9a4012b",
+    "fingerprint": "8bdebf672b7d49e17dae76391d9746b50498d89243744b8379a31897b14aefd6",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -90811,7 +90811,7 @@
         "title": "The peer blackboard",
         "path": "docs/BLACKBOARD.md",
         "source_class": "document",
-        "bytes": 9943
+        "bytes": 10754
       },
       {
         "uri": "majordomus://document/docs/BRIEF.md",
@@ -107260,7 +107260,7 @@
         "identity": "test/cases/3381_the_blackboard_is_pushed.sh",
         "path": "test/cases/3381_the_blackboard_is_pushed.sh",
         "source_class": "case",
-        "bytes": 10515
+        "bytes": 12189
       },
       {
         "uri": "majordomus://test/test/cases/3382_the_monitor_is_pushed.sh",

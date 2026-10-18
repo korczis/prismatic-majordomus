@@ -141,7 +141,7 @@ pub struct PeerList {
     pub complete: bool,
     /// The mesh stream of the server that answered, when its mesh runs: the stream its own
     /// board's peers are projected into. A sibling's answer carries it so that the gatherer
-    /// can name it on that sibling's [`BoardView`].
+    /// can name it on that sibling's `BoardView`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub stream: Option<String>,
 }

@@ -161,6 +161,24 @@ again="$(grep -v '"status"' "$T/resumed.jsonl" | jq -s '[.[] | select(.type == "
 [ "$again" = 0 ] || { echo "    the resumed follower was told the review again"; exit 1; }
 echo "    a follower that resumes from its cursor and epoch is told nothing twice"
 
+# ---------------------------------------------------------------- 3b. a snapshot is a point to resume from
+# a follower that connects after the review is sent no signal at all: the snapshot's cursor is
+# what it resumes from, and it is told nothing it was not sent
+python3 "$T/follow.py" "$url" "$F" 3 > "$T/quiet.jsonl" 2>/dev/null &
+P=$!; PIDS="$PIDS $P"
+wait_for "$T/quiet.jsonl" '.type == "blackboard.snapshot"' 60 || { echo "    the quiet follower got no snapshot"; cat "$T/quiet.jsonl"; exit 1; }
+kill "$P" 2>/dev/null || true
+QUIET="$(grep -v '"status"' "$T/quiet.jsonl" | jq -rs 'map(select(.type == "blackboard.snapshot")) | first | .data.cursor // "absent"')"
+[ "$QUIET" != absent ] && [ -n "$QUIET" ] || { echo "    the snapshot carries no cursor to resume from"; head -3 "$T/quiet.jsonl"; exit 1; }
+python3 "$T/follow.py" "$url" "$F&after=$QUIET&epoch=$EPOCH" 3 > "$T/quiet-resumed.jsonl" 2>/dev/null &
+P=$!; PIDS="$PIDS $P"
+wait_for "$T/quiet-resumed.jsonl" '.type == "blackboard.snapshot"' 60 || { echo "    the quiet follower could not resume"; cat "$T/quiet-resumed.jsonl"; exit 1; }
+kill "$P" 2>/dev/null || true
+grep -q '"stream.resync"' "$T/quiet-resumed.jsonl" && { echo "    the snapshot's cursor was refused"; cat "$T/quiet-resumed.jsonl"; exit 1; }
+again="$(grep -v '"status"' "$T/quiet-resumed.jsonl" | jq -s '[.[] | select(.type == "blackboard.signals") | .data.signals[] | select(.kind == "review_requested")] | length')"
+[ "$again" = 0 ] || { echo "    a follower resumed from a snapshot's cursor was told the review it was never sent"; exit 1; }
+echo "    a follower sent no signal resumes from its snapshot's cursor and is told nothing twice"
+
 # ---------------------------------------------------------------- 4. another process's cursor
 python3 "$T/follow.py" "$url" "$F&after=$CURSOR&epoch=another-process" 3 > "$T/foreign.jsonl" 2>/dev/null &
 P=$!; PIDS="$PIDS $P"
