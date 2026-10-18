@@ -211,7 +211,7 @@ impl std::fmt::Display for Identifier {
 ///
 /// `Ord` is semantic-version precedence and nothing else, the one rule every reader of a
 /// version in this crate uses — the release writer, the compatibility gate, the landing
-/// allocator and the stable pointer of [`crate::distribution`] — so no two of them can rank
+/// allocator and the stable pointer of the `distribution` module — so no two of them can rank
 /// the same pair of versions differently (ADR 0004):
 ///
 /// - the three numbers, as numbers;
