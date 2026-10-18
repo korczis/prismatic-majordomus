@@ -1,0 +1,35 @@
+id: a-session-proceeds
+title: "A session proceeds: one entrypoint resolves, reconciles, chooses, claims, executes, proves and hands on"
+slug: a-session-proceeds
+order: 155
+priority: p1
+problem: "Every step of a worker's start exists as a capability (brief.session, peers.list, mesh.state, plan.next, plan.waves, devtask, mesh.claim, worktree create, start, check, finish, the landing seat), and each session composes them by hand from bootstrap prose. plan.next ranks the lowest-wave READY issue by priority then id and knows nothing of a live claim, a held scope or what an issue unblocks; on 2026-10-17 sessions chose issues by grepping the board and two sessions took the same id three times in one day."
+outcome: "`/proceed` in any session runs `majordomus proceed`: one explained decision from the existing capabilities, an exclusive claim, a worktree and a task bound to the chosen issue, the implement skill, finish, and a receipt handed to the landing seat; said again with nothing changed it creates nothing."
+current_state: "No entrypoint composes the capabilities; plan.next is not claim-aware and gives no reason; a second start in a session opens a second task."
+desired_state: "proceed.plan (query) decides and explains; proceed (command) claims and starts idempotently; the /proceed skill is generated and names only the command; the six acceptance scenarios of ADR 0177 are cases."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin"
+  - "apps/majordomus-cli/src/plan.rs"
+  - ".ai/repo/skills/proceed"
+  - "docs/PROCEED.md"
+non_scope:
+  - "Mesh fencing and claim convergence (milestone mesh-journal-converges)"
+  - "Landing and releasing (the landing and release seats, ADR 0167)"
+acceptance_criteria:
+  - "A fresh session in any directory of the repository runs /proceed and is told its context, the board, the chosen issue and why, without any other instruction"
+  - "Two sessions proceeding at once never hold the same issue or overlapping scope"
+  - "A session whose work stopped is resumed or its claim released, never duplicated"
+  - "Adding a dependency to the plan changes the ranking and its reason with no list edited"
+  - "A finished task's head and receipt reach the landing seat; proceed merges nothing"
+  - "Proceeding again with nothing changed creates no claim, worktree, task, commit or build"
+validation:
+  - "bin/majordomus plan validate"
+  - "bin/majordomus intent validate a-session-proceeds"
+  - "bash test/run.sh 3367_a_session_is_told_what_to_proceed_with_and_why"
+evidence_required:
+  - "case_a_session_is_told_what_to_proceed_with_and_why"
+risks:
+  - "Without mesh fencing two machines can admit one claim; the loser must stop on the fold's verdict"
+  - "A ranking that hides its terms becomes a second opinion nobody can check; every term is shown"
+created_at: 2026-10-18
+updated_at: 2026-10-18

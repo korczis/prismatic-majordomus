@@ -1,0 +1,89 @@
+intent: a-session-proceeds
+reviewed_at: 707a04c7ce8
+reviewed_by: "claude-code Plan subagent (read-only, fresh context) dispatched by session f6 with the plan records, the I2972 implementation and a summary of the owner's /proceed proposal, and none of the author's reasoning; independent of the authoring context, not of the model's blind spots. Read only: nothing was run. Disposition: accept the I2972 slice's shape with required changes; 5 of 10 findings blocking. In answer the slice tells a claim from a mention (named), runs a real mesh in its case, recognises the caller's own session on any runtime and on the command line, and calls a decision over an unread source provisional."
+findings:
+  - id: one-criterion-carries-a-whole-intent
+    class: missed_requirement
+    subject: a-session-proceeds
+    finding: "The intent has one criterion while its statement and invariants promise claiming, executing, proving, handing off, idempotence and refusing a candidate whose binding is refused; ADR 0177 decision 1 names five constraints and I2972 implements two."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2972
+      because: "An intent carries a criterion only once its test is in the tree (ADR 0073 as this repository practises it): each later issue (claim-aware ranking, the acting command, the generated skill, concurrency, resume, hand-off) enters the plan with its criterion and case. ADR 0177 decision 1 now says which constraint belongs to which step: claimed, named and scope_held are proceed.plan's; an issue that is not READY is never a candidate, so blocked is the plan's own filter; binding refused and executor unavailable belong to the acting command, where `start --issue` already refuses an unbound or uncritiqued issue."
+  - id: criterion-ref-never-exercises-the-mesh
+    class: delivery_verification
+    subject: a-session-proceeds#a-session-is-told-what-to-take
+    finding: "Case 3367 used only board announcements; no mesh claim, no scope_held, no own mesh claim was exercised over real processes, and git status cannot see .ai/local; I2972's validation omits the case."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2972
+      because: "Case 3367 now declares and runs a mesh (serve --discovery filesystem), takes an exclusive claim on an issue, an exclusive claim inside another issue's scope and an advisory one with `majordomus mesh claim`, and asserts claimed, named, scope_held and shared_with over MCP, HTTP and the command line, `--session` leaving out that session's own claims, and that no task record is written. I2972's validation names the case."
+  - id: an-id-in-prose-is-not-a-claim
+    class: regression_risk
+    subject: I2972
+    finding: "Any announcement whose words name an id refuses that issue as `claimed`, so a hand-off note or 'stacked on I2783' takes a free issue out of every decision, under the same word as a mesh claim."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2972
+      because: "Words now refuse under their own constraint, `named`, with the words quoted in the refusal, apart from `claimed` (a mesh claim's issue field or a claim on the record). It still refuses: today the board is where work is taken ('I2972 TAKEN'), and two workers on one issue cost more than one issue left for the next decision. A range ('I2798-I2806') names its two ends only; expanding ranges is left to the acting command's step that reads the board's typed claims, when the board carries them."
+  - id: own-holds-unrecognised-off-mcp-and-across-runtimes
+    class: regression_risk
+    subject: I2972
+    finding: "Off MCP the caller's own board announcement cannot be left out, and the own-claim test also requires the claim's runtime to be this one, while mesh admission matches the holder by session alone."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2972
+      because: "A mesh claim is the caller's when its session is the caller's, on any runtime, as mesh.claim admits it. `--session board-<peer>` (or the calling MCP peer) also leaves out that peer's board announcements on this checkout, and case 3367 asserts `--session` on the command line."
+  - id: selection-over-an-unread-mesh
+    class: unproven_assumption
+    subject: I2972
+    finding: "With the mesh unread or the board partial, `selected` and `next` are still given and the command exits 0; only a suffix of `reason` says so."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2972
+      because: "The decision carries `provisional: true` when the board or a declared mesh could not be read; `next` is then empty and the command line exits 11. A repository that declares no enabled mesh reads its mesh as `undeclared`, which is not a gap. Case 3367 asserts the provisional decision before the server starts."
+  - id: stopped-work-vanishes-from-the-decision
+    class: missed_requirement
+    subject: a-session-proceeds
+    finding: "Board holds count only attached peers, so a crashed session's board-only work is handed out again."
+    blocking: false
+    resolution:
+      state: open
+      because: "Stopped work is the resume issue's (staged with the milestone): it must read a detached peer's announcement, a worktree or branch named for the issue and an open task record before new work, and say so in the decision. Until then a live mesh claim, which `majordomus start` takes for every task (I2288), outlives a detached board peer only while its runtime beats, and this is the documented limit."
+  - id: never-hold-the-same-issue-contradicts-adr
+    class: unproven_assumption
+    subject: a-session-proceeds
+    finding: "'Two sessions proceeding at once never hold the same issue' contradicts ADR 0177 decision 6 and the milestone's own risk across machines; 'any directory', 'without any other instruction' and 'most valuable' are not settled by a test."
+    blocking: false
+    resolution:
+      state: open
+      because: "The concurrency issue's criterion will say 'on one runtime never, and across linked runtimes the fold names one winner and the loser stops', which is what decision 6 says; the milestone's wording is corrected when that issue enters the tree with its case."
+  - id: ordering-step-is-contradictory-and-skips-the-shell-engine
+    class: regression_risk
+    subject: adr-0177
+    finding: "Decision 2 placed the unblock count 'after priority and before wave', which no order allows; changing plan.rs changes plan.next, which lib/project.sh must match (case 99), and ready_in_order breaks ties with natural_cmp where the shell sorts by byte."
+    blocking: false
+    resolution:
+      state: open
+      because: "Decision 2 now leaves where the count enters the order to that step, to be made in plan.rs and lib/project.sh together with case 99 run. Plan ids are I plus four digits, for which natural and byte order agree; the step that changes the order makes the tie-break explicit in both engines."
+  - id: generated-projections-and-docs-outside-scope
+    class: surface_missing
+    subject: I2972
+    finding: "A new module adds a generated per-module skill and changes capability counts in generated documents; docs/PROCEED.md and the new terms are in no issue; a generated mj-proceed skill would sit beside the ADR's .ai/repo/skills/proceed."
+    blocking: false
+    resolution:
+      state: open
+      because: "The generated projections are written by `majordomus generate` and the derive at commit, and the task scope names them. The `/proceed` skill is the generated skill's issue, which decides whether it is the module's generated skill or a separate one; docs/PROCEED.md is written by the issue that adds the acting command, when there is a procedure to document."
+  - id: proceed-group-versus-acting-command
+    class: unproven_assumption
+    subject: I2972
+    finding: "`majordomus proceed` is a group that requires a subcommand while the ADR makes bare `proceed` the acting command; `next` mixed MCP and CLI syntax and held a placeholder."
+    blocking: false
+    resolution:
+      state: open
+      because: "`next` is now three command lines (mesh claim under the session, worktree create, start --issue --scope); only the branch is left to the worker, as the worktree topology leaves it. Whether the acting command is bare `proceed` or `proceed start` is the acting command's decision, recorded in ADR 0177 when it is taken."

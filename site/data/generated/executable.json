@@ -2755,6 +2755,23 @@
       "tool": "majordomus_plan_waves"
     },
     {
+      "api_anchor": "/docs/api/proceed/#op-proceed-plan",
+      "claims": [],
+      "cli": "majordomus proceed plan",
+      "id": "proceed.plan",
+      "kind": "query",
+      "module": "proceed",
+      "module_route": "/registry/modules/proceed/",
+      "resource": null,
+      "route": "/registry/capabilities/proceed-plan/",
+      "slug": "proceed-plan",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/proceed.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/proceed.rs",
+      "tests": [],
+      "title": "What to proceed with, and why",
+      "tool": "majordomus_proceed_plan"
+    },
+    {
       "api_anchor": "/docs/api/product/#op-product-domains",
       "claims": [],
       "cli": "majordomus product domains",
@@ -4241,9 +4258,9 @@
     ]
   },
   "counts": {
-    "capabilities": 202,
+    "capabilities": 203,
     "claims": 93,
-    "modules": 58
+    "modules": 59
   },
   "generator": "majordomus-cli 0.29.0",
   "modules": [
@@ -5500,6 +5517,22 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/plan.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/plan.rs",
       "title": "The plan and its derivations"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "proceed.plan",
+          "route": "/registry/capabilities/proceed-plan/",
+          "slug": "proceed-plan"
+        }
+      ],
+      "claims": [],
+      "id": "proceed",
+      "route": "/registry/modules/proceed/",
+      "slug": "proceed",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/proceed.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/proceed.rs",
+      "title": "What a session proceeds with"
     },
     {
       "capabilities": [

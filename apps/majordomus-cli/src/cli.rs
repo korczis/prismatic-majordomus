@@ -117,6 +117,8 @@ pub enum Command {
     Dashboard(DashboardArgs),
     /// What surrounds this session, in one line and in a few: its episode and task, the peers of every board, the mesh, the integration queue and the derive queue, asked of the server holding this checkout's lease
     Brief(BriefArgs),
+    /// What this session proceeds with, and why: the READY issue nothing refuses, every one passed over with the claim or exclusive scope that refused it, and the terms of the order, from the plan, every checkout's board and every linked machine's live claims (ADR 0177)
+    Proceed(ProceedArgs),
     /// Every skill as a proven capability: the tests that name it and the evidence behind them, its page, the doctrine and gates that hold it, what invokes it, and the orphans
     Skills(SkillsArgs),
     /// What the knowledge deriver left for review and whether it is still writing: the candidate records awaiting promotion, one record by id with every reference it names resolved, and the derivation status of this checkout judged against the policy's freshness thresholds
@@ -301,6 +303,61 @@ pub struct BriefArgs {
     #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
     /// Output shape
     pub format: OutputFormat,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus proceed`: the `proceed` module on the command line (ADR 0177). The output
+/// shape is global, so it reads where a person writes it.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, OutputFormat, ProceedArgs, ProceedCommand};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from([
+///     "majordomus", "proceed", "plan", "--milestone", "m", "--session", "s", "--format", "json",
+/// ])
+/// .unwrap();
+/// let Command::Proceed(args) = cli.command else { panic!("not the proceed command") };
+/// let args: ProceedArgs = args;
+/// let ProceedCommand::Plan { milestone, session } = args.command;
+/// assert_eq!((milestone.as_deref(), session.as_deref()), (Some("m"), Some("s")));
+/// assert!(matches!(args.format, OutputFormat::Json));
+/// ```
+pub struct ProceedArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `plan`. Required: the group runs nothing of its own.
+    pub command: ProceedCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus proceed`.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, ProceedCommand};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "proceed", "plan"]).unwrap();
+/// let Command::Proceed(args) = cli.command else { panic!("not the proceed command") };
+/// assert!(matches!(args.command, ProceedCommand::Plan { milestone: None, session: None }));
+/// ```
+pub enum ProceedCommand {
+    /// The decision, read only: the selected issue and why, the READY issues passed over with what refused each, what the selection unblocks and the commands that take it; asked of the server holding this checkout's lease. Exit 10 when nothing can be selected, 11 when the selection is provisional because the board or a declared mesh could not be read
+    Plan {
+        /// The milestone whose READY issues come first; the active one when absent
+        #[arg(long, value_name = "ID")]
+        milestone: Option<String>,
+        /// The mesh session the decision is for, whose own claims are not held against it
+        #[arg(long, value_name = "ID")]
+        session: Option<String>,
+    },
 }
 
 #[derive(Debug, Subcommand)]
@@ -5267,6 +5324,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["brief", "--line", "--this-checkout"],
             setup: &[],
             expect: Expect::Success,
+        }],
+    },
+    CommandExamples {
+        command: "proceed plan",
+        examples: &[ExampleDoc {
+            id: "proceed-plan-json",
+            title: "What to proceed with, and why, when there is nothing to take",
+            description: "The same answer `GET /api/v1/proceed/plan` and the MCP tool `majordomus_proceed_plan` return: the READY issues in the plan's hand-out order, each with the claims that refuse it, the selected one with what it unblocks and the commands that take it, the unfinished issues that wait by status, and whether the board and the mesh could be read. The command line asks the server holding this checkout's lease; this fixture has no server, declares no mesh and no plan, so the decision is composed here, reads the mesh as undeclared rather than unread, selects nothing and exits 10.",
+            argv: &["proceed", "plan", "--format", "json"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
         }],
     },
     CommandExamples {

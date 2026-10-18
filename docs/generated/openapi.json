@@ -195,6 +195,10 @@
       "description": "The milestone and issue model of this repository, and everything derived from it that nobody authored: the status of each record, the dependency graphs above and below the milestone boundary, the topological execution waves, the roadmap order, the milestone being executed and the one issue to take next. Status is never stored — a record says what happened to it and the status follows from that and from the state of its dependencies — so no file can contradict the graph. This capability reads; writing a lifecycle marker into a record is `plan.transition`, which declares that it writes the repository."
     },
     {
+      "name": "proceed",
+      "description": "The decision a session starts from (ADR 0177): the issue to take, every READY issue it passed over with the constraint that issue failed and the hold that failed it, and the terms of the order, composed from the plan, every checkout's board and every linked machine's live claims. Writes nothing."
+    },
+    {
       "name": "product",
       "description": "What this repository's product does for a person, as the features under the layer's features section declare it: each feature made of modules, commands, kinds, rules, documents, decisions, claims, use cases, Cockpit areas and web surfaces it names, with the interfaces it is exposed through, every count, the moments it answers and what is guaranteed derived from those references. The matrix of features against interfaces, the providers the tool has an adapter for, and the model's own validation. The homepage is a reader of this module and holds no inventory of its own."
     },
@@ -14592,6 +14596,134 @@
         "x-majordomus-mcp": {
           "tool": "majordomus_plan_waves"
         }
+      }
+    },
+    "/api/v1/proceed/plan": {
+      "get": {
+        "operationId": "proceed.plan",
+        "summary": "What to proceed with, and why",
+        "description": "The READY issues in the plan's hand-out order (the asked milestone first, then wave, priority and id, as `plan.next`), each refused when another worker holds it: a live mesh claim names it as its issue or a hold claims its record (`claimed`), a board or mesh announcement names its id as a word of its own (`named`, quoted beside it), or a live exclusive mesh claim of another session meets its scope (`scope_held`); advisory holds over its scope are listed as `shared_with` and refuse nothing. The first issue nothing refuses is `selected`, with what it unblocks, what finishes it and the commands that take it; `reason` says why in one sentence, and `sources` whether the board and the mesh could be read. A decision that could not read the board, or a declared mesh, is `provisional` and gives no commands. The caller's own session (its mesh claims on any runtime, and its board announcements) is never held against it. Composed by the server holding this checkout's lease, which holds the board and the mesh; the command line asks it. Writes nothing.",
+        "tags": [
+          "proceed"
+        ],
+        "parameters": [
+          {
+            "name": "milestone",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The milestone whose READY issues come first; the active milestone when absent. The rest of the plan follows it, as for `plan.next`.",
+            "examples": {
+              "milestone_and_session": {
+                "value": "a-session-proceeds"
+              }
+            }
+          },
+          {
+            "name": "session",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The mesh session the decision is for, whose own claims are not held against it. Absent, the calling MCP session's board session (`board-<peer>`); over the command line, none.",
+            "examples": {
+              "milestone_and_session": {
+                "value": "board-p1"
+              }
+            }
+          },
+          {
+            "name": "local",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "description": "Compose in the process that answers and never ask the checkout's leaseholder: what a forwarded request says, so that it is never forwarded again.",
+            "examples": {
+              "default": {
+                "value": false
+              },
+              "milestone_and_session": {
+                "value": true
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "What to proceed with, and why: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProceedDecision"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "proceed.plan",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::proceed"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-effect": "read",
+        "x-majordomus-mcp": {
+          "tool": "majordomus_proceed_plan"
+        },
+        "x-majordomus-cli": "proceed plan"
       }
     },
     "/api/v1/product/domains": {
@@ -47505,6 +47637,294 @@
           }
         ],
         "description": "Whether the node is answering now, by its own announcements."
+      },
+      "ProceedCandidate": {
+        "type": "object",
+        "properties": {
+          "issue": {
+            "type": "string",
+            "description": "The issue's id."
+          },
+          "title": {
+            "type": "string",
+            "description": "Its title."
+          },
+          "milestone": {
+            "type": "string",
+            "description": "Its milestone."
+          },
+          "terms": {
+            "$ref": "#/components/schemas/ProceedTerms",
+            "description": "The terms its place in the order was decided by."
+          },
+          "refused": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProceedRefusal"
+            },
+            "description": "The constraints it failed, each with the hold that failed it; empty for an eligible issue."
+          },
+          "shared_with": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Advisory holds that meet its scope: refused by none of them, shared with each."
+          },
+          "scope": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The paths it touches."
+          },
+          "finishes_with": {
+            "$ref": "#/components/schemas/ProceedEvidence",
+            "description": "What finishes it: the objective and its evidence tally."
+          }
+        },
+        "required": [
+          "issue",
+          "title",
+          "milestone",
+          "terms",
+          "refused",
+          "shared_with",
+          "scope",
+          "finishes_with"
+        ],
+        "description": "One READY issue as the decision saw it."
+      },
+      "ProceedConstraint": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "claimed",
+            "description": "Another worker holds the issue itself: a live mesh claim names it as its issue, or a hold claims its record."
+          },
+          {
+            "type": "string",
+            "const": "named",
+            "description": "A hold's words name the issue's id as a word of their own: how the board takes work, and how a mention reads."
+          },
+          {
+            "type": "string",
+            "const": "scope_held",
+            "description": "A live exclusive mesh claim of another session meets the issue's scope, so claiming it would be refused."
+          }
+        ],
+        "description": "A constraint an issue must meet before a session may take it."
+      },
+      "ProceedDecision": {
+        "type": "object",
+        "properties": {
+          "selected": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProceedCandidate"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The first READY issue nothing refuses; absent when there is none, and `reason` says why."
+          },
+          "reason": {
+            "type": "string",
+            "description": "One sentence a reader can check against `candidates` and `sources`."
+          },
+          "provisional": {
+            "type": "boolean",
+            "description": "Whether a source the decision needs could not be read (see `sources`): the selection is then what this reading would choose, and another worker's unread claim may hold it."
+          },
+          "next": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "What to do with the selection, as the commands that do it; empty when nothing is selected or the decision is provisional."
+          },
+          "milestone": {
+            "type": "string",
+            "description": "The milestone whose issues were looked at first."
+          },
+          "candidates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProceedCandidate"
+            },
+            "description": "Every READY issue in hand-out order (the plan's: asked milestone first, then wave, priority and id), each with the constraints it failed."
+          },
+          "waiting": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0
+            },
+            "description": "How many unfinished issues are not READY, by their derived status: the work that waits on a dependency, a gate or a worker."
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProceedSource"
+            },
+            "description": "What the decision was read from, and whether each source could be read."
+          }
+        },
+        "required": [
+          "reason",
+          "provisional",
+          "next",
+          "milestone",
+          "candidates",
+          "waiting",
+          "sources"
+        ],
+        "description": "What a session proceeds with: the selected issue, every READY issue in the order work is handed out with what refused it, and the sources the decision was read from."
+      },
+      "ProceedEvidence": {
+        "type": "object",
+        "properties": {
+          "objective": {
+            "type": "string",
+            "description": "The issue's objective."
+          },
+          "have": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0,
+            "description": "The evidence it has."
+          },
+          "need": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0,
+            "description": "The evidence it needs."
+          }
+        },
+        "required": [
+          "objective",
+          "have",
+          "need"
+        ],
+        "description": "What finishes an issue."
+      },
+      "ProceedRefusal": {
+        "type": "object",
+        "properties": {
+          "constraint": {
+            "$ref": "#/components/schemas/ProceedConstraint",
+            "description": "Which constraint."
+          },
+          "hold": {
+            "type": "string",
+            "description": "The hold that failed it: a mesh claim's key, or `board:<checkout>:<peer>[:<claim>]`."
+          },
+          "holder": {
+            "type": "string",
+            "description": "Who holds it, in words."
+          },
+          "detail": {
+            "type": "string",
+            "description": "What about the hold fails the constraint."
+          }
+        },
+        "required": [
+          "constraint",
+          "hold",
+          "holder",
+          "detail"
+        ],
+        "description": "One constraint a candidate failed."
+      },
+      "ProceedSource": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string",
+            "description": "`board` (every checkout's peers) or `mesh` (every linked machine's live claims)."
+          },
+          "state": {
+            "$ref": "#/components/schemas/ProceedSourceState",
+            "description": "Whether it was read whole, in part, or not at all."
+          },
+          "holds": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many holds of others it contributed."
+          },
+          "summary": {
+            "type": "string",
+            "description": "What was read, or why not."
+          }
+        },
+        "required": [
+          "source",
+          "state",
+          "holds",
+          "summary"
+        ],
+        "description": "One source of holds and whether it could be read."
+      },
+      "ProceedSourceState": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "read",
+            "description": "Read whole."
+          },
+          {
+            "type": "string",
+            "const": "partial",
+            "description": "Read, with parts that could not be (a board that did not answer)."
+          },
+          {
+            "type": "string",
+            "const": "unread",
+            "description": "Not read: the decision holds nothing of it."
+          },
+          {
+            "type": "string",
+            "const": "undeclared",
+            "description": "Nothing to read: the repository declares no enabled mesh."
+          }
+        ],
+        "description": "How much of a source a decision could read."
+      },
+      "ProceedTerms": {
+        "type": "object",
+        "properties": {
+          "in_milestone": {
+            "type": "boolean",
+            "description": "Whether it belongs to the milestone looked at first."
+          },
+          "wave": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0,
+            "description": "Its wave: one past the longest dependency path to it."
+          },
+          "priority": {
+            "type": "string",
+            "description": "Its priority, `p0` first."
+          },
+          "unblocks": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The unfinished issues that depend on it, directly or through others, each counted once. Shown, not ranked by: the order is the plan's."
+          }
+        },
+        "required": [
+          "in_milestone",
+          "wave",
+          "priority",
+          "unblocks"
+        ],
+        "description": "The terms of a candidate's place in the hand-out order, most significant first, and what taking it unblocks."
       },
       "ProductCounts": {
         "type": "object",

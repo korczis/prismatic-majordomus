@@ -529,17 +529,33 @@ impl Plan {
     /// whole plan rather than answering "none" and sending a worker away from executable
     /// work. `mj_pj_next_ready` in `lib/project.sh` does exactly this.
     pub fn next_ready(&self, milestone: Option<&str>) -> Option<&PlanIssue> {
-        let scope = milestone.unwrap_or(self.project.active_milestone.as_str());
-        self.ready_ranked(Some(scope))
-            .or_else(|| self.ready_ranked(None))
+        self.ready_in_order(milestone).into_iter().next()
     }
 
-    fn ready_ranked(&self, milestone: Option<&str>) -> Option<&PlanIssue> {
-        self.issues
+    /// Every READY issue in the order work is handed out: those of `milestone` (the active
+    /// one when absent; every milestone when that is empty) first, then the rest of the
+    /// plan, each part by wave, then priority, then id. [`Plan::next_ready`] is its head,
+    /// and `proceed.plan` walks it past the issues another worker holds: one order, read by
+    /// both, so the issue a session is told to take and the one `plan.next` names cannot
+    /// differ for any reason but a claim.
+    pub(crate) fn ready_in_order(&self, milestone: Option<&str>) -> Vec<&PlanIssue> {
+        let scope = milestone.unwrap_or(self.project.active_milestone.as_str());
+        let mut ready: Vec<Ready<'_>> = self
+            .issues
             .iter()
             .filter(|i| i.status == "READY")
-            .filter(|i| milestone.is_none_or(|m| m.is_empty() || i.milestone == m))
-            .min_by_key(|i| (i.wave, priority_rank(&i.priority), i.id.clone()))
+            .map(|issue| {
+                let outside = !(scope.is_empty() || issue.milestone == scope);
+                Ready {
+                    issue,
+                    rank: i64::from(outside) * 1_000_000_000
+                        + i64::from(issue.wave) * 10
+                        + i64::from(priority_rank(&issue.priority)),
+                }
+            })
+            .collect();
+        crate::order::canonical(&mut ready);
+        ready.into_iter().map(|r| r.issue).collect()
     }
 
     /// Build the plan from an index. A walk of values already in memory: no file is opened,
@@ -612,7 +628,20 @@ fn raws(index: &Index) -> (PlanProject, Vec<PlanMilestoneRaw>, Vec<PlanIssueRaw>
     (header, milestones, issues)
 }
 
-fn priority_rank(p: &str) -> u8 {
+/// A READY issue with its place in the hand-out order: in or outside the asked milestone,
+/// then wave, then priority, folded into one rank; the id breaks every tie.
+struct Ready<'a> {
+    issue: &'a PlanIssue,
+    rank: i64,
+}
+
+impl crate::order::Ordered for Ready<'_> {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::plain(&self.issue.id, &self.issue.id).ranked(self.rank)
+    }
+}
+
+pub(crate) fn priority_rank(p: &str) -> u8 {
     match p {
         "p0" => 0,
         "p1" => 1,

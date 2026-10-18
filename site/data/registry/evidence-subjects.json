@@ -804,6 +804,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:proceed.plan",
+      "path": "/evidence/capabilities/proceed-plan/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:product.domains",
       "path": "/evidence/capabilities/product-domains/"
     },
@@ -2976,6 +2981,11 @@
       "kind": "command",
       "subject": "command:plan",
       "path": "/evidence/commands/plan/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:proceed plan",
+      "path": "/evidence/commands/proceed-plan/"
     },
     {
       "kind": "command",
@@ -5564,6 +5574,18 @@
       "page": "/evidence/capabilities/plan-waves/",
       "programs": [],
       "members": [],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:proceed.plan": {
+      "kind": "capability",
+      "id": "proceed.plan",
+      "page": "/evidence/capabilities/proceed-plan/",
+      "programs": [],
+      "members": [
+        "command:proceed plan"
+      ],
       "routes": [],
       "mechanisms": [],
       "findings": []
@@ -15959,6 +15981,25 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:proceed plan": {
+      "kind": "command",
+      "id": "proceed plan",
+      "page": "/evidence/commands/proceed-plan/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:product": {
       "kind": "command",
       "id": "product",
@@ -20828,6 +20869,18 @@
       "programs": [],
       "members": [
         "capability:environment.preflight"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_proceed_plan": {
+      "kind": "mcp",
+      "id": "majordomus_proceed_plan",
+      "alias_of": "capability:proceed.plan",
+      "programs": [],
+      "members": [
+        "capability:proceed.plan"
       ],
       "routes": [],
       "mechanisms": [],
@@ -28088,6 +28141,7 @@
     "suite:318_a_partial_sweep_says_so",
     "suite:330_a_contract_is_the_kind_it_declares",
     "suite:331_knowledge_nodes_is_gated",
+    "suite:3367_a_session_is_told_what_to_proceed_with_and_why",
     "suite:343_the_cockpit_shows_who_else_is_here",
     "suite:349_a_step_reports_its_own_time",
     "suite:34_command_fixtures",
