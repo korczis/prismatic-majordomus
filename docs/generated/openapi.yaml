@@ -23,6 +23,8 @@ servers:
 tags:
   - name: artifacts
     description: "What `majordomus generate` writes: every document with the encodings it is committed in — JSON for a program, YAML beside it, Markdown for a reader — each with its schema, its source and its hash, reconciled with the working tree. The declaration is the generator's own manifest; nothing here keeps a list."
+  - name: blackboard
+    description: "Who works on what in this repository, as one projection of the records that already know it: every checkout's board, the mesh journal's sessions, claims, reviews and handovers on every linked machine, and the monitor's newest signals, joined once so that no surface joins them again (ADR 0176). A board peer and a mesh session are one worker only when an explicit identifier joins them; a source that could not be read makes the answer incomplete and says why."
   - name: brief
     description: "What surrounds one working session, in one line and in a few: its episode and task, the peers of every board, the mesh, the integration queue and the derive queue, each section asked of its owner once and saying whether it could be read. The answer a session reports on itself from without being asked, and the one a provider mod shows as its status line (ADR 0136). Writes nothing."
   - name: capabilities
@@ -212,6 +214,102 @@ paths:
         resource:
           uri: majordomus://artifacts
           name: artifacts
+  "/api/v1/blackboard":
+    get:
+      operationId: blackboard.snapshot
+      summary: "Who works on what, now"
+      description: "Every worker of this repository — attached to a checkout's board or in an active mesh session on any linked machine — with the client it is, what it announced, its checkout, branch, machine and claims (advisory or exclusive); the claims that meet (potential, or confirmed when both are exclusive or the mesh marked one conflicted); the open reviews and untaken handovers; typed relations between workers, verified only when an explicit identifier joins them; the newest signals with the monitor's cursor a follower resumes from; each source with how it was read, and whether the answer is complete. Reads only."
+      tags:
+        - blackboard
+      parameters:
+        - name: checkouts
+          in: query
+          required: false
+          schema:
+            "$ref": "#/components/schemas/Checkouts"
+            default: repository
+          description: "Which checkouts' boards it covers: `repository` (every one, the default) or `this`."
+          examples:
+            addressed:
+              value: this
+            this-checkout:
+              value: this
+        - name: for
+          in: query
+          required: false
+          schema:
+            type: string
+          description: "Comma-separated names of the reader — a worker (`1b`), a role, a login — so that the signals addressed to it are marked `for_you`. An MCP caller is also its own board session."
+          examples:
+            addressed:
+              value: 1b
+        - name: signals
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: uint64
+            minimum: 0
+          description: "How many of the newest signals of the last hour it carries (default 30, at most 200)."
+          examples:
+            addressed:
+              value: 10
+        - name: sources
+          in: query
+          required: false
+          schema:
+            type: string
+          description: "A comma-separated subset of the monitor's sources, `mesh`, `executor` and `github` (default: `mesh,executor`)."
+          examples:
+            addressed:
+              value: mesh
+            this-checkout:
+              value: "mesh,executor"
+      responses:
+        "200":
+          description: "Who works on what, now: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Blackboard"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: blackboard.snapshot
+      x-majordomus-kind: query
+      x-majordomus-stability: experimental
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::blackboard
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: read
+      x-majordomus-mcp:
+        tool: majordomus_blackboard
+      x-majordomus-cli: blackboard
   "/api/v1/brief":
     get:
       operationId: brief.session
@@ -14310,6 +14408,454 @@ components:
           const: refused
           description: "The work may not start as bound work; every reason is in `refusals`."
       description: "Where a piece of work stands against the intents: the one word a start decides on.\n\n```\nuse majordomus_cli::intent_binding::BindingStanding;\nassert_eq!(serde_json::to_string(&BindingStanding::Bound).unwrap(), \"\\\"bound\\\"\");\nassert!(BindingStanding::Refused.refuses());\nassert!(!BindingStanding::Maintenance.refuses());\n```"
+    Blackboard:
+      type: object
+      properties:
+        at:
+          type: string
+          description: When it was read (RFC 3339).
+        checkout:
+          type: string
+          description: The identity of the checkout whose server answered.
+        head:
+          type:
+            - string
+            - "null"
+          description: "That checkout's HEAD, when it has one."
+        complete:
+          type: boolean
+          description: "Whether every source was read whole: every board, the mesh, and every monitor source\nasked for. `false` names its reason in `sources`, so that \"nobody is here\" is never what\n\"I could not ask\" reads as."
+        sources:
+          type: array
+          items:
+            "$ref": "#/components/schemas/BlackboardSource"
+          description: Each source and how it was read.
+        boards:
+          type: array
+          items:
+            "$ref": "#/components/schemas/BoardView"
+          description: "Each checkout's board, reached or not."
+        present:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "How many workers are here now: attached to a board or in an active mesh session."
+        workers:
+          type: array
+          items:
+            "$ref": "#/components/schemas/BlackboardWorker"
+          description: "Every worker, this checkout's board first, then the other boards, then the mesh."
+        conflicts:
+          type: array
+          items:
+            "$ref": "#/components/schemas/BlackboardConflict"
+          description: "The claims that meet, at most a hundred, confirmed first."
+        conflicts_total:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many conflicts there are in all.
+        reviews:
+          type: array
+          items:
+            "$ref": "#/components/schemas/BlackboardReview"
+          description: "The review requests nobody has answered, at most fifty."
+        handovers:
+          type: array
+          items:
+            "$ref": "#/components/schemas/BlackboardHandover"
+          description: "The handovers nobody has taken, at most fifty."
+        relations:
+          type: array
+          items:
+            "$ref": "#/components/schemas/BlackboardRelation"
+          description: The typed relations between workers.
+        signals:
+          type: array
+          items:
+            "$ref": "#/components/schemas/MonitorSignal"
+          description: "The newest signals of the last hour, oldest first."
+        for_you:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many of them are for the reader.
+        cursor:
+          type: string
+          description: "The monitor's cursor after these signals: where a follower resumes."
+      required:
+        - at
+        - checkout
+        - complete
+        - sources
+        - boards
+        - present
+        - workers
+        - conflicts
+        - conflicts_total
+        - reviews
+        - handovers
+        - relations
+        - signals
+        - for_you
+        - cursor
+      description: "The answer of `blackboard.snapshot`: who works on what in this repository, on every board\nand every linked machine, with what meets and what waits, read once from the records that\nknow it."
+    BlackboardCertainty:
+      oneOf:
+        - type: string
+          const: potential
+          description: "Two claims meet and at least one of them is advisory: two workers about to touch the\nsame paths, told and not stopped."
+        - type: string
+          const: confirmed
+          description: "Two exclusive claims meet, or the mesh marked one conflicted: what an exclusive claim\nexists to prevent has happened."
+      description: How sure a conflict is.
+    BlackboardClaim:
+      type: object
+      properties:
+        name:
+          type:
+            - string
+            - "null"
+          description: "The claim's name, when its worker holds several."
+        intent:
+          type:
+            - string
+            - "null"
+          description: "What it is for, in the worker's words."
+        scope:
+          type: array
+          items:
+            type: string
+          description: The repository paths it names.
+        mode:
+          "$ref": "#/components/schemas/ClaimMode"
+          description: "`advisory` (an announcement: overlaps are reported) or `exclusive` (a second exclusive\nclaim meeting it is refused while it lives). A board announcement is advisory."
+        issue:
+          type:
+            - string
+            - "null"
+          description: "The issue it is for, when the claim names one."
+        record:
+          type:
+            - string
+            - "null"
+          description: "The mesh claim's key, when it is a journal record; a board announcement has none."
+        conflicted:
+          type: boolean
+          description: Whether the mesh found it conflicting with another live claim.
+      required:
+        - scope
+        - mode
+      description: One claim a worker holds.
+    BlackboardClaimRef:
+      type: object
+      properties:
+        worker:
+          type: string
+          description: "The worker's key."
+        claim:
+          type:
+            - string
+            - "null"
+          description: "The claim's name, when it has one."
+        record:
+          type:
+            - string
+            - "null"
+          description: "The mesh claim's key, when it is a journal record."
+      required:
+        - worker
+      description: "One side of a conflict: a worker and which of its claims."
+    BlackboardConflict:
+      type: object
+      properties:
+        certainty:
+          "$ref": "#/components/schemas/BlackboardCertainty"
+          description: Potential or confirmed.
+        first:
+          "$ref": "#/components/schemas/BlackboardClaimRef"
+          description: "The claim that came first in the answer's order."
+        second:
+          "$ref": "#/components/schemas/BlackboardClaimRef"
+          description: The claim that meets it.
+        paths:
+          type: array
+          items:
+            "$ref": "#/components/schemas/OverlapPath"
+          description: "The paths that meet, `yours` the first's and `theirs` the second's."
+      required:
+        - certainty
+        - first
+        - second
+        - paths
+      description: Two claims of two different workers whose scopes meet.
+    BlackboardEvidence:
+      oneOf:
+        - type: string
+          const: verified
+          description: An explicit identifier or a journal record joins the two ends.
+        - type: string
+          const: candidate
+          description: "The ends could be joined and nothing proves it: more than one record fits."
+      description: What a relation rests on.
+    BlackboardHandover:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "The handover's id."
+        runtime:
+          type: string
+          description: The runtime that published it.
+        name:
+          type:
+            - string
+            - "null"
+          description: "Its name, when it has one."
+        branch:
+          type:
+            - string
+            - "null"
+          description: The branch it continues.
+        issue:
+          type:
+            - string
+            - "null"
+          description: The issue it continues.
+        task:
+          type:
+            - string
+            - "null"
+          description: The task it continues.
+        created_at:
+          type:
+            - string
+            - "null"
+          description: When it was written.
+      required:
+        - id
+        - runtime
+      description: "A handover published to the mesh that nobody has taken. Its body is not repeated here:\n`mesh.state` holds it. The journal names no recipient for a handover — whoever takes it\nis its addressee — so none is inferred here."
+    BlackboardOrigin:
+      oneOf:
+        - type: string
+          const: board
+          description: "On a checkout's board: an MCP client attached to that checkout's server."
+        - type: string
+          const: mesh
+          description: "In the mesh journal only: a session no board of this repository holds — another\nmachine's, a task's, or a client's own."
+      description: Where a worker of the blackboard was found.
+    BlackboardPresence:
+      oneOf:
+        - type: string
+          const: attached
+          description: Attached to its board now.
+        - type: string
+          const: departed
+          description: "Gone from its board, kept because it still holds an announcement."
+        - type: string
+          const: active
+          description: An open mesh session whose runtime still beats.
+      description: Whether a worker is here now.
+    BlackboardRelation:
+      type: object
+      properties:
+        kind:
+          "$ref": "#/components/schemas/BlackboardRelationKind"
+          description: What it is.
+        evidence:
+          "$ref": "#/components/schemas/BlackboardEvidence"
+          description: What it rests on.
+        from:
+          type: string
+          description: "A worker's key."
+        to:
+          type: string
+          description: "A worker's key, or the addressee as the record names it when no worker is it."
+        record:
+          type: string
+          description: "The record it rests on: a session or a review key."
+      required:
+        - kind
+        - evidence
+        - from
+        - to
+        - record
+      description: "A typed relation between two workers, or a worker and the addressee a record names."
+    BlackboardRelationKind:
+      oneOf:
+        - type: string
+          const: same_worker
+          description: A board peer and a mesh session that may be one worker.
+        - type: string
+          const: review
+          description: One worker asked another for a review.
+      description: What a relation between two workers is.
+    BlackboardReview:
+      type: object
+      properties:
+        key:
+          type: string
+          description: "The review's key in the journal."
+        from:
+          type: string
+          description: "The requesting worker's key, or its session key when no worker holds it."
+        subject:
+          type: string
+          description: What it asks about.
+        reviewer:
+          type:
+            - string
+            - "null"
+          description: "Whom it asks, as the request names it; absent means anyone."
+        issue:
+          type:
+            - string
+            - "null"
+          description: The issue it names.
+      required:
+        - key
+        - from
+        - subject
+      description: A review request nobody has answered.
+    BlackboardSource:
+      type: object
+      properties:
+        source:
+          type: string
+          description: "`board`, `mesh`, or a monitor source as `monitor.<name>`."
+        state:
+          "$ref": "#/components/schemas/BlackboardSourceState"
+          description: How it was read.
+        reason:
+          type:
+            - string
+            - "null"
+          description: "Why it is not `ok`."
+      required:
+        - source
+        - state
+      description: One source of the blackboard and how it was read.
+    BlackboardSourceState:
+      oneOf:
+        - type: string
+          const: ok
+          description: Read whole.
+        - type: string
+          const: partial
+          description: "Read, and some of what it covers could not be asked."
+        - type: string
+          const: absent
+          description: Not read; the reason says why.
+        - type: string
+          const: skipped
+          description: Not asked for.
+      description: How one source of the blackboard was read.
+    BlackboardWorker:
+      type: object
+      properties:
+        key:
+          type: string
+          description: "Stable for as long as the worker is here: `board:<checkout>/<peer>` or\n`mesh:<stream>/<session>`. Never a bare peer id."
+        origin:
+          "$ref": "#/components/schemas/BlackboardOrigin"
+          description: Where it was found.
+        presence:
+          "$ref": "#/components/schemas/BlackboardPresence"
+          description: Whether it is here now.
+        client:
+          type: string
+          description: "The client's own name, from its MCP initialize or its mesh session."
+        title:
+          type:
+            - string
+            - "null"
+          description: "The client's display title or the worker it says it is, when it gave one."
+        version:
+          type:
+            - string
+            - "null"
+          description: "The client's version, from its initialize."
+        intent:
+          type:
+            - string
+            - "null"
+          description: What it said it is doing; absent means it announced nothing.
+        checkout:
+          type:
+            - string
+            - "null"
+          description: "The checkout's identity."
+        worktree:
+          type:
+            - string
+            - "null"
+          description: "The checkout's path on its machine."
+        branch:
+          type:
+            - string
+            - "null"
+          description: The branch it works on.
+        board_peer:
+          type:
+            - string
+            - "null"
+          description: "Its position on its board (`p3`): meaningful on that board only."
+        session:
+          type:
+            - string
+            - "null"
+          description: "Its mesh session's key, when it has one."
+        machine:
+          type:
+            - string
+            - "null"
+          description: "The machine's display name."
+        runtime:
+          type:
+            - string
+            - "null"
+          description: "The runtime (`<node>-<runtime>`) its mesh session belongs to."
+        task:
+          type:
+            - string
+            - "null"
+          description: The task its mesh session names.
+        issue:
+          type:
+            - string
+            - "null"
+          description: The issue its mesh session names.
+        connected_at:
+          type:
+            - string
+            - "null"
+          description: When it attached to its board.
+        last_seen_seconds_ago:
+          type:
+            - integer
+            - "null"
+          format: uint64
+          minimum: 0
+          description: Seconds since its board last heard from it.
+        last_beat_ms:
+          type:
+            - integer
+            - "null"
+          format: uint64
+          minimum: 0
+          description: "Milliseconds since its runtime last beat. A beat is liveness, not work done."
+        claims:
+          type: array
+          items:
+            "$ref": "#/components/schemas/BlackboardClaim"
+          description: "Its claims, board announcements and live mesh claims alike."
+      required:
+        - key
+        - origin
+        - presence
+        - client
+      description: "One worker of the repository: a board peer, a mesh session, or one of each that an\nexplicit identifier joins."
     Blocker:
       type: object
       properties:
@@ -14380,6 +14926,11 @@ components:
             - string
             - "null"
           description: "Why this board is not in the answer. `None` when it is."
+        stream:
+          type:
+            - string
+            - "null"
+          description: "The mesh stream of the server whose memory holds this board, when its mesh runs: the\nstream it projects the board's peers into as `board-pN` sessions. A position such as\n`p1` is that server's alone, so only this stream ties a board peer to its session."
       required:
         - id
         - worktree
@@ -31516,6 +32067,11 @@ components:
         complete:
           type: boolean
           description: "Whether every board the answer covers was read. `false` when a checkout's server\ncould not be asked, and `BoardView::reason` says which and why — so that \"nobody\nelse is here\" is never reported when the truth is \"I could not ask\"."
+        stream:
+          type:
+            - string
+            - "null"
+          description: "The mesh stream of the server that answered, when its mesh runs: the stream its own\nboard's peers are projected into. A sibling's answer carries it so that the gatherer\ncan name it on that sibling's `BoardView`."
       required:
         - count
         - peers

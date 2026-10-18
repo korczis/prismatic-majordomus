@@ -117,6 +117,8 @@ pub enum Command {
     Dashboard(DashboardArgs),
     /// What surrounds this session, in one line and in a few: its episode and task, the peers of every board, the mesh, the integration queue and the derive queue, asked of the server holding this checkout's lease
     Brief(BriefArgs),
+    /// Who works on what in this repository, on every board and every linked machine: each worker with its client, intent, checkout, branch and claims, the claims that meet, the reviews and handovers that wait, typed relations verified only by an explicit identifier, and whether every source could be read — asked of the server holding this checkout's lease
+    Blackboard(BlackboardArgs),
     /// Every skill as a proven capability: the tests that name it and the evidence behind them, its page, the doctrine and gates that hold it, what invokes it, and the orphans
     Skills(SkillsArgs),
     /// What the knowledge deriver left for review and whether it is still writing: the candidate records awaiting promotion, one record by id with every reference it names resolved, and the derivation status of this checkout judged against the policy's freshness thresholds
@@ -259,6 +261,42 @@ pub struct DashboardArgs {
     pub command: DashboardCommand,
 
     #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus blackboard`: the `blackboard.snapshot` capability on the command line (ADR 0176).
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{BlackboardArgs, Cli, Command, OutputFormat};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "blackboard", "--this-checkout", "--for", "1b"]).unwrap();
+/// let Command::Blackboard(args) = cli.command else { panic!("not the blackboard command") };
+/// let args: BlackboardArgs = args;
+/// assert!(args.this_checkout);
+/// assert_eq!(args.reader.as_deref(), Some("1b"));
+/// assert!(matches!(args.format, OutputFormat::Text));
+/// ```
+pub struct BlackboardArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[arg(long = "this-checkout")]
+    /// Read this checkout's board alone instead of every checkout's
+    pub this_checkout: bool,
+
+    #[arg(long = "for", value_name = "NAMES")]
+    /// Comma-separated names of the reader, so that the signals addressed to it are marked for it
+    pub reader: Option<String>,
+
+    #[arg(long, value_name = "LIST")]
+    /// The monitor sources the signals are read from, a comma-separated subset of mesh, executor and github (default: mesh,executor)
+    pub sources: Option<String>,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
     /// Output shape
     pub format: OutputFormat,
 }
@@ -5256,6 +5294,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["rules", "report", "--format", "json"],
             setup: &[],
             expect: Expect::Json(&["/rules", "/states", "/coverage/rules", "/findings"]),
+        }],
+    },
+    CommandExamples {
+        command: "blackboard",
+        examples: &[ExampleDoc {
+            id: "blackboard-json",
+            title: "Who works on what, with what could not be read",
+            description: "The same answer `GET /api/v1/blackboard` and the MCP tool `majordomus_blackboard` return: every worker of the boards read and of the mesh, the claims that meet, the reviews and handovers that wait, the typed relations and the newest signals, with each source and how it was read. The command line asks the server holding this checkout's lease, which holds the board and the mesh; this fixture has no server, so the answer is composed here and its sources say what that left unread.",
+            argv: &["blackboard", "--this-checkout", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/complete", "/sources", "/workers", "/conflicts", "/cursor"]),
         }],
     },
     CommandExamples {

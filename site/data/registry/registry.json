@@ -6,27 +6,27 @@
     "version": "0.29.0"
   },
   "registry": {
-    "fingerprint": "cfc64482a6796b12eb023f81f50b88a5ee38b5494bb09da51600c6a17806b6c0",
+    "fingerprint": "b6472d46985653da5ca19695f0a38622e09fa8e558f00cb51ea4462bcf59c204",
     "summary": {
-      "total": 2527,
-      "builtin": 202,
-      "declarative": 2325,
+      "total": 2535,
+      "builtin": 203,
+      "declarative": 2332,
       "by_kind": {
         "command": 31,
-        "query": 171,
-        "resource": 2325
+        "query": 172,
+        "resource": 2332
       },
       "by_stability": {
         "behaviorally_verified": 141,
-        "experimental": 52,
-        "implemented": 2334
+        "experimental": 53,
+        "implemented": 2341
       },
-      "mcp_tools": 192,
-      "mcp_resources": 2380,
-      "http_routes": 197,
-      "cli_commands": 108,
-      "modules": 92,
-      "benchmark_required": 171,
+      "mcp_tools": 193,
+      "mcp_resources": 2387,
+      "http_routes": 198,
+      "cli_commands": 109,
+      "modules": 93,
+      "benchmark_required": 172,
       "benchmark_waived": 31,
       "cached": 54
     },
@@ -416,6 +416,1006 @@
           "concurrency": "unrestricted"
         },
         "source_path": "apps/majordomus-cli/src/capability/builtin/artifacts.rs"
+      },
+      {
+        "id": "blackboard.snapshot",
+        "module": "blackboard",
+        "kind": "query",
+        "title": "Who works on what, now",
+        "description": "Every worker of this repository — attached to a checkout's board or in an active mesh session on any linked machine — with the client it is, what it announced, its checkout, branch, machine and claims (advisory or exclusive); the claims that meet (potential, or confirmed when both are exclusive or the mesh marked one conflicted); the open reviews and untaken handovers; typed relations between workers, verified only when an explicit identifier joins them; the newest signals with the monitor's cursor a follower resumes from; each source with how it was read, and whether the answer is complete. Reads only.",
+        "input": {
+          "name": "BlackboardInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "checkouts": {
+                "$ref": "#/$defs/Checkouts",
+                "description": "Which checkouts' boards it covers: `repository` (every one, the default) or `this`.",
+                "default": "repository"
+              },
+              "for": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Comma-separated names of the reader — a worker (`1b`), a role, a login — so that the signals addressed to it are marked `for_you`. An MCP caller is also its own board session."
+              },
+              "signals": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "format": "uint64",
+                "minimum": 0,
+                "description": "How many of the newest signals of the last hour it carries (default 30, at most 200)."
+              },
+              "sources": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "A comma-separated subset of the monitor's sources, `mesh`, `executor` and `github` (default: `mesh,executor`)."
+              }
+            },
+            "description": "The input of `blackboard.snapshot`: how wide the board is, who reads it, and how much of\nwhat happened it carries.",
+            "title": "BlackboardInput",
+            "$defs": {
+              "Checkouts": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "repository",
+                    "description": "Every checkout git registers for the repository, the primary first — a lease read\nand a probe each. The default, because it is the answer this capability gave before\nthere was anything to ask."
+                  },
+                  {
+                    "type": "string",
+                    "const": "this",
+                    "description": "This checkout alone. No other checkout is enumerated, no other lease is read and no\nother server is probed; `servers` holds the one entry, and it is this one."
+                  }
+                ],
+                "description": "Which checkouts a reading of the server status covers.\n\nThe two answers cost differently and that is the whole reason the choice exists: the\nrepository's checkouts are read from git's registry of them and each one costs a lease\nread and a probe, while this checkout alone costs one of each and enumerates nothing.\nThe word each variant serialises to is the word the query parameter, the tool input and\nthe command-line flag all take.\n\n```\nuse majordomus_cli::capability::builtin::server::Checkouts;\nassert_eq!(serde_json::to_value(Checkouts::This).unwrap(), \"this\");\nassert_eq!(serde_json::to_value(Checkouts::Repository).unwrap(), \"repository\");\nassert_eq!(Checkouts::default(), Checkouts::Repository, \"the wide answer is what a caller who says nothing has always got\");\n```"
+              }
+            }
+          }
+        },
+        "output": {
+          "name": "Blackboard",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "at": {
+                "type": "string",
+                "description": "When it was read (RFC 3339)."
+              },
+              "checkout": {
+                "type": "string",
+                "description": "The identity of the checkout whose server answered."
+              },
+              "head": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "That checkout's HEAD, when it has one."
+              },
+              "complete": {
+                "type": "boolean",
+                "description": "Whether every source was read whole: every board, the mesh, and every monitor source\nasked for. `false` names its reason in `sources`, so that \"nobody is here\" is never what\n\"I could not ask\" reads as."
+              },
+              "sources": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/BlackboardSource"
+                },
+                "description": "Each source and how it was read."
+              },
+              "boards": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/BoardView"
+                },
+                "description": "Each checkout's board, reached or not."
+              },
+              "present": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many workers are here now: attached to a board or in an active mesh session."
+              },
+              "workers": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/BlackboardWorker"
+                },
+                "description": "Every worker, this checkout's board first, then the other boards, then the mesh."
+              },
+              "conflicts": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/BlackboardConflict"
+                },
+                "description": "The claims that meet, at most a hundred, confirmed first."
+              },
+              "conflicts_total": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many conflicts there are in all."
+              },
+              "reviews": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/BlackboardReview"
+                },
+                "description": "The review requests nobody has answered, at most fifty."
+              },
+              "handovers": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/BlackboardHandover"
+                },
+                "description": "The handovers nobody has taken, at most fifty."
+              },
+              "relations": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/BlackboardRelation"
+                },
+                "description": "The typed relations between workers."
+              },
+              "signals": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/MonitorSignal"
+                },
+                "description": "The newest signals of the last hour, oldest first."
+              },
+              "for_you": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many of them are for the reader."
+              },
+              "cursor": {
+                "type": "string",
+                "description": "The monitor's cursor after these signals: where a follower resumes."
+              }
+            },
+            "required": [
+              "at",
+              "checkout",
+              "complete",
+              "sources",
+              "boards",
+              "present",
+              "workers",
+              "conflicts",
+              "conflicts_total",
+              "reviews",
+              "handovers",
+              "relations",
+              "signals",
+              "for_you",
+              "cursor"
+            ],
+            "description": "The answer of `blackboard.snapshot`: who works on what in this repository, on every board\nand every linked machine, with what meets and what waits, read once from the records that\nknow it.",
+            "title": "Blackboard",
+            "$defs": {
+              "BlackboardSource": {
+                "type": "object",
+                "properties": {
+                  "source": {
+                    "type": "string",
+                    "description": "`board`, `mesh`, or a monitor source as `monitor.<name>`."
+                  },
+                  "state": {
+                    "$ref": "#/$defs/BlackboardSourceState",
+                    "description": "How it was read."
+                  },
+                  "reason": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Why it is not `ok`."
+                  }
+                },
+                "required": [
+                  "source",
+                  "state"
+                ],
+                "description": "One source of the blackboard and how it was read."
+              },
+              "BlackboardSourceState": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "ok",
+                    "description": "Read whole."
+                  },
+                  {
+                    "type": "string",
+                    "const": "partial",
+                    "description": "Read, and some of what it covers could not be asked."
+                  },
+                  {
+                    "type": "string",
+                    "const": "absent",
+                    "description": "Not read; the reason says why."
+                  },
+                  {
+                    "type": "string",
+                    "const": "skipped",
+                    "description": "Not asked for."
+                  }
+                ],
+                "description": "How one source of the blackboard was read."
+              },
+              "BoardView": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The checkout's identity digest, the same value `server.status` reports as\n`checkout_id`. One per checkout, never a path, and stable across a restart."
+                  },
+                  "worktree": {
+                    "type": "string",
+                    "description": "Where the checkout is. The one thing on this board that a human can act on\ndirectly, and the one thing that survives a reconnect."
+                  },
+                  "branch": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The branch checked out there, when it could be read."
+                  },
+                  "this_checkout": {
+                    "type": "boolean",
+                    "description": "Whether this is the checkout of the server answering the call."
+                  },
+                  "standing": {
+                    "$ref": "#/$defs/ServerStanding",
+                    "description": "Where its server stands, by the same reading `server.status` reports."
+                  },
+                  "url": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The address its lease names, when it has one."
+                  },
+                  "attached": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "How many of this board's peers are attached."
+                  },
+                  "reason": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Why this board is not in the answer. `None` when it is."
+                  },
+                  "stream": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The mesh stream of the server whose memory holds this board, when its mesh runs: the\nstream it projects the board's peers into as `board-pN` sessions. A position such as\n`p1` is that server's alone, so only this stream ties a board peer to its session."
+                  }
+                },
+                "required": [
+                  "id",
+                  "worktree",
+                  "this_checkout",
+                  "standing",
+                  "attached"
+                ],
+                "description": "One checkout's board, as the gather found it.\n\nPresent for every checkout the answer covers, whether or not its board could be read,\nbecause a listing that silently drops the checkouts it could not reach is the shape of\nanswer that made this capability wrong in the first place: a reader would see a short\nboard and conclude nobody else is working here."
+              },
+              "ServerStanding": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "absent",
+                    "description": "No lease: nothing serves this checkout."
+                  },
+                  {
+                    "type": "string",
+                    "const": "starting",
+                    "description": "A lease without an address, young enough that its owner is still binding."
+                  },
+                  {
+                    "type": "string",
+                    "const": "ready",
+                    "description": "The server the lease names answers for this checkout, from the code on disk, at\nthis executable's version."
+                  },
+                  {
+                    "type": "string",
+                    "const": "outdated",
+                    "description": "The server answers, but from older code than this executable, or from a file that\nhas been replaced since it started: everything it says is yesterday's."
+                  },
+                  {
+                    "type": "string",
+                    "const": "stale",
+                    "description": "The lease names a server that does not answer, or is not a lease at all."
+                  }
+                ],
+                "description": "Where a checkout's server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable's code.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Stale];\nlet words: Vec<&str> = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\"absent\", \"starting\", \"ready\", \"outdated\", \"stale\"]);\nassert_eq!(serde_json::from_str::<ServerStanding>(\"\\\"stale\\\"\").unwrap(), ServerStanding::Stale);\n```"
+              },
+              "BlackboardWorker": {
+                "type": "object",
+                "properties": {
+                  "key": {
+                    "type": "string",
+                    "description": "Stable for as long as the worker is here: `board:<checkout>/<peer>` or\n`mesh:<stream>/<session>`. Never a bare peer id."
+                  },
+                  "origin": {
+                    "$ref": "#/$defs/BlackboardOrigin",
+                    "description": "Where it was found."
+                  },
+                  "presence": {
+                    "$ref": "#/$defs/BlackboardPresence",
+                    "description": "Whether it is here now."
+                  },
+                  "client": {
+                    "type": "string",
+                    "description": "The client's own name, from its MCP initialize or its mesh session."
+                  },
+                  "title": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The client's display title or the worker it says it is, when it gave one."
+                  },
+                  "version": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The client's version, from its initialize."
+                  },
+                  "intent": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "What it said it is doing; absent means it announced nothing."
+                  },
+                  "checkout": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The checkout's identity."
+                  },
+                  "worktree": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The checkout's path on its machine."
+                  },
+                  "branch": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The branch it works on."
+                  },
+                  "board_peer": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Its position on its board (`p3`): meaningful on that board only."
+                  },
+                  "session": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Its mesh session's key, when it has one."
+                  },
+                  "machine": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The machine's display name."
+                  },
+                  "runtime": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The runtime (`<node>-<runtime>`) its mesh session belongs to."
+                  },
+                  "task": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The task its mesh session names."
+                  },
+                  "issue": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The issue its mesh session names."
+                  },
+                  "connected_at": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "When it attached to its board."
+                  },
+                  "last_seen_seconds_ago": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Seconds since its board last heard from it."
+                  },
+                  "last_beat_ms": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Milliseconds since its runtime last beat. A beat is liveness, not work done."
+                  },
+                  "claims": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/BlackboardClaim"
+                    },
+                    "description": "Its claims, board announcements and live mesh claims alike."
+                  }
+                },
+                "required": [
+                  "key",
+                  "origin",
+                  "presence",
+                  "client"
+                ],
+                "description": "One worker of the repository: a board peer, a mesh session, or one of each that an\nexplicit identifier joins."
+              },
+              "BlackboardOrigin": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "board",
+                    "description": "On a checkout's board: an MCP client attached to that checkout's server."
+                  },
+                  {
+                    "type": "string",
+                    "const": "mesh",
+                    "description": "In the mesh journal only: a session no board of this repository holds — another\nmachine's, a task's, or a client's own."
+                  }
+                ],
+                "description": "Where a worker of the blackboard was found."
+              },
+              "BlackboardPresence": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "attached",
+                    "description": "Attached to its board now."
+                  },
+                  {
+                    "type": "string",
+                    "const": "departed",
+                    "description": "Gone from its board, kept because it still holds an announcement."
+                  },
+                  {
+                    "type": "string",
+                    "const": "active",
+                    "description": "An open mesh session whose runtime still beats."
+                  }
+                ],
+                "description": "Whether a worker is here now."
+              },
+              "BlackboardClaim": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The claim's name, when its worker holds several."
+                  },
+                  "intent": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "What it is for, in the worker's words."
+                  },
+                  "scope": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The repository paths it names."
+                  },
+                  "mode": {
+                    "$ref": "#/$defs/ClaimMode",
+                    "description": "`advisory` (an announcement: overlaps are reported) or `exclusive` (a second exclusive\nclaim meeting it is refused while it lives). A board announcement is advisory."
+                  },
+                  "issue": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The issue it is for, when the claim names one."
+                  },
+                  "record": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The mesh claim's key, when it is a journal record; a board announcement has none."
+                  },
+                  "conflicted": {
+                    "type": "boolean",
+                    "description": "Whether the mesh found it conflicting with another live claim."
+                  }
+                },
+                "required": [
+                  "scope",
+                  "mode"
+                ],
+                "description": "One claim a worker holds."
+              },
+              "ClaimMode": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "exclusive",
+                    "description": "Exclusive: a second exclusive claim meeting this scope is refused while this one\nlives, on every runtime that knows of it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "advisory",
+                    "description": "Advisory: an announcement, like the peer board's. Overlaps are reported, never\nrefused."
+                  }
+                ],
+                "description": "Whether a claim excludes others or only tells them. Both are useful and they answer\ndifferent questions: an exclusive claim is a worker saying \"do not edit this while I\nam\", an advisory one is saying \"I am here\". Exclusive is the default because a claim\ntaken without a thought about the mode is a claim somebody expects to be respected.\n\n```\nuse majordomus_cli::mesh::journal::ClaimMode;\n\nassert_eq!(ClaimMode::default(), ClaimMode::Exclusive);\nassert_eq!(serde_json::to_value(ClaimMode::Advisory).unwrap(), serde_json::json!(\"advisory\"));\n```"
+              },
+              "BlackboardConflict": {
+                "type": "object",
+                "properties": {
+                  "certainty": {
+                    "$ref": "#/$defs/BlackboardCertainty",
+                    "description": "Potential or confirmed."
+                  },
+                  "first": {
+                    "$ref": "#/$defs/BlackboardClaimRef",
+                    "description": "The claim that came first in the answer's order."
+                  },
+                  "second": {
+                    "$ref": "#/$defs/BlackboardClaimRef",
+                    "description": "The claim that meets it."
+                  },
+                  "paths": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/OverlapPath"
+                    },
+                    "description": "The paths that meet, `yours` the first's and `theirs` the second's."
+                  }
+                },
+                "required": [
+                  "certainty",
+                  "first",
+                  "second",
+                  "paths"
+                ],
+                "description": "Two claims of two different workers whose scopes meet."
+              },
+              "BlackboardCertainty": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "potential",
+                    "description": "Two claims meet and at least one of them is advisory: two workers about to touch the\nsame paths, told and not stopped."
+                  },
+                  {
+                    "type": "string",
+                    "const": "confirmed",
+                    "description": "Two exclusive claims meet, or the mesh marked one conflicted: what an exclusive claim\nexists to prevent has happened."
+                  }
+                ],
+                "description": "How sure a conflict is."
+              },
+              "BlackboardClaimRef": {
+                "type": "object",
+                "properties": {
+                  "worker": {
+                    "type": "string",
+                    "description": "The worker's key."
+                  },
+                  "claim": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The claim's name, when it has one."
+                  },
+                  "record": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The mesh claim's key, when it is a journal record."
+                  }
+                },
+                "required": [
+                  "worker"
+                ],
+                "description": "One side of a conflict: a worker and which of its claims."
+              },
+              "OverlapPath": {
+                "type": "object",
+                "properties": {
+                  "yours": {
+                    "type": "string",
+                    "description": "The path the announcing peer claimed."
+                  },
+                  "theirs": {
+                    "type": "string",
+                    "description": "The path the other peer claimed."
+                  }
+                },
+                "required": [
+                  "yours",
+                  "theirs"
+                ],
+                "description": "One pair of claims that contain one another."
+              },
+              "BlackboardReview": {
+                "type": "object",
+                "properties": {
+                  "key": {
+                    "type": "string",
+                    "description": "The review's key in the journal."
+                  },
+                  "from": {
+                    "type": "string",
+                    "description": "The requesting worker's key, or its session key when no worker holds it."
+                  },
+                  "subject": {
+                    "type": "string",
+                    "description": "What it asks about."
+                  },
+                  "reviewer": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Whom it asks, as the request names it; absent means anyone."
+                  },
+                  "issue": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The issue it names."
+                  }
+                },
+                "required": [
+                  "key",
+                  "from",
+                  "subject"
+                ],
+                "description": "A review request nobody has answered."
+              },
+              "BlackboardHandover": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The handover's id."
+                  },
+                  "runtime": {
+                    "type": "string",
+                    "description": "The runtime that published it."
+                  },
+                  "name": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Its name, when it has one."
+                  },
+                  "branch": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The branch it continues."
+                  },
+                  "issue": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The issue it continues."
+                  },
+                  "task": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The task it continues."
+                  },
+                  "created_at": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "When it was written."
+                  }
+                },
+                "required": [
+                  "id",
+                  "runtime"
+                ],
+                "description": "A handover published to the mesh that nobody has taken. Its body is not repeated here:\n`mesh.state` holds it. The journal names no recipient for a handover — whoever takes it\nis its addressee — so none is inferred here."
+              },
+              "BlackboardRelation": {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "$ref": "#/$defs/BlackboardRelationKind",
+                    "description": "What it is."
+                  },
+                  "evidence": {
+                    "$ref": "#/$defs/BlackboardEvidence",
+                    "description": "What it rests on."
+                  },
+                  "from": {
+                    "type": "string",
+                    "description": "A worker's key."
+                  },
+                  "to": {
+                    "type": "string",
+                    "description": "A worker's key, or the addressee as the record names it when no worker is it."
+                  },
+                  "record": {
+                    "type": "string",
+                    "description": "The record it rests on: a session or a review key."
+                  }
+                },
+                "required": [
+                  "kind",
+                  "evidence",
+                  "from",
+                  "to",
+                  "record"
+                ],
+                "description": "A typed relation between two workers, or a worker and the addressee a record names."
+              },
+              "BlackboardRelationKind": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "same_worker",
+                    "description": "A board peer and a mesh session that may be one worker."
+                  },
+                  {
+                    "type": "string",
+                    "const": "review",
+                    "description": "One worker asked another for a review."
+                  }
+                ],
+                "description": "What a relation between two workers is."
+              },
+              "BlackboardEvidence": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "verified",
+                    "description": "An explicit identifier or a journal record joins the two ends."
+                  },
+                  {
+                    "type": "string",
+                    "const": "candidate",
+                    "description": "The ends could be joined and nothing proves it: more than one record fits."
+                  }
+                ],
+                "description": "What a relation rests on."
+              },
+              "MonitorSignal": {
+                "type": "object",
+                "properties": {
+                  "at": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "When it happened, in Unix seconds, on the clock of whoever recorded it."
+                  },
+                  "source": {
+                    "$ref": "#/$defs/MonitorSource",
+                    "description": "Which record it comes from."
+                  },
+                  "kind": {
+                    "type": "string",
+                    "description": "What happened, e.g. `session_joined`, `review_requested`, `merged`, `run_failed`."
+                  },
+                  "severity": {
+                    "$ref": "#/$defs/MonitorSeverity",
+                    "description": "How much it asks of the reader."
+                  },
+                  "machine": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The machine it happened on, by its display name when the mesh knows it."
+                  },
+                  "session": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The session that did it."
+                  },
+                  "actor": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Who did it: a session's worker or client, the executor's actor, a GitHub login."
+                  },
+                  "pr": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "The pull request it is about."
+                  },
+                  "branch": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The branch it is about."
+                  },
+                  "issue": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The issue it is about."
+                  },
+                  "paths": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The repository paths it is about."
+                  },
+                  "summary": {
+                    "type": "string",
+                    "description": "What happened, in one line of at most 200 characters."
+                  },
+                  "for_you": {
+                    "type": "boolean",
+                    "description": "Whether it names the reader: a review asked of them, an answer to their request, a\nhandover or a text that names them.",
+                    "default": false
+                  },
+                  "link": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Where to read more, when there is a page for it."
+                  }
+                },
+                "required": [
+                  "at",
+                  "source",
+                  "kind",
+                  "severity",
+                  "summary"
+                ],
+                "description": "One thing that happened, as one line a person or an agent can act on."
+              },
+              "MonitorSource": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "mesh",
+                    "description": "The mesh journal: sessions on every linked machine (this checkout's board among\nthem), their claims, handovers and reviews."
+                  },
+                  {
+                    "type": "string",
+                    "const": "executor",
+                    "description": "The executor's trail: the pull-request lane's merges, refreshes, repairs, closures\nand failures."
+                  },
+                  {
+                    "type": "string",
+                    "const": "github",
+                    "description": "GitHub: pull requests opened, merged and closed, and finished workflow runs."
+                  }
+                ],
+                "description": "Where a signal comes from."
+              },
+              "MonitorSeverity": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "info",
+                    "description": "Something happened; nothing is asked."
+                  },
+                  {
+                    "type": "string",
+                    "const": "attention",
+                    "description": "Something failed or waits for someone: worth a look."
+                  },
+                  {
+                    "type": "string",
+                    "const": "action",
+                    "description": "Something waits for the reader: a review asked of them, a handover for them."
+                  }
+                ],
+                "description": "How much a signal asks of its reader."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::blackboard"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_blackboard"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/blackboard"
+          },
+          "cli": {
+            "path": [
+              "blackboard"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "experimental",
+        "tags": [
+          "peers",
+          "mesh",
+          "monitor",
+          "coordination"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/blackboard.rs"
       },
       {
         "id": "brief.session",
@@ -56785,6 +57785,13 @@
               "complete": {
                 "type": "boolean",
                 "description": "Whether every board the answer covers was read. `false` when a checkout's server\ncould not be asked, and `BoardView::reason` says which and why — so that \"nobody\nelse is here\" is never reported when the truth is \"I could not ask\"."
+              },
+              "stream": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The mesh stream of the server that answered, when its mesh runs: the stream its own\nboard's peers are projected into. A sibling's answer carries it so that the gatherer\ncan name it on that sibling's `BoardView`."
               }
             },
             "required": [
@@ -57077,6 +58084,13 @@
                       "null"
                     ],
                     "description": "Why this board is not in the answer. `None` when it is."
+                  },
+                  "stream": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The mesh stream of the server whose memory holds this board, when its mesh runs: the\nstream it projects the board's peers into as `board-pN` sessions. A position such as\n`p1` is that server's alone, so only this stream ties a board peer to its session."
                   }
                 },
                 "required": [
@@ -82608,7 +83622,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 117,
+        "capabilities": 118,
         "capability_ids": []
       },
       {
@@ -82651,6 +83665,18 @@
         "source": "declarative",
         "capabilities": 8,
         "capability_ids": []
+      },
+      {
+        "id": "blackboard",
+        "title": "The peer blackboard",
+        "description": "Who works on what in this repository, as one projection of the records that already know it: every checkout's board, the mesh journal's sessions, claims, reviews and handovers on every linked machine, and the monitor's newest signals, joined once so that no surface joins them again (ADR 0176). A board peer and a mesh session are one worker only when an explicit identifier joins them; a source that could not be read makes the answer incomplete and says why.",
+        "stability": "experimental",
+        "source": "builtin",
+        "capabilities": 1,
+        "capability_ids": [
+          "blackboard.snapshot"
+        ],
+        "source_path": "apps/majordomus-cli/src/capability/builtin/blackboard.rs"
       },
       {
         "id": "brief",
@@ -82782,7 +83808,7 @@
         "title": "critique",
         "description": "Declarative objects of kind 'critique' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 4,
+        "capabilities": 5,
         "capability_ids": []
       },
       {
@@ -82934,7 +83960,7 @@
         "title": "document",
         "description": "Declarative objects of kind 'document' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 347,
+        "capabilities": 348,
         "capability_ids": []
       },
       {
@@ -83182,7 +84208,7 @@
         "title": "intent",
         "description": "Declarative objects of kind 'intent' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 5,
+        "capabilities": 6,
         "capability_ids": []
       },
       {
@@ -83231,7 +84257,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 424,
+        "capabilities": 425,
         "capability_ids": []
       },
       {
@@ -83347,7 +84373,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 41,
+        "capabilities": 42,
         "capability_ids": []
       },
       {
@@ -83802,7 +84828,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 527,
+        "capabilities": 528,
         "capability_ids": []
       },
       {
@@ -83893,7 +84919,7 @@
     ]
   },
   "index": {
-    "fingerprint": "ebbdaff489cce67fe99b529aa57475e97fbadbd238fabae0d224eb928298d8a1",
+    "fingerprint": "b9366fb4069f0ff73442bc44b9989f2e74c4f8aaac55d168a5f4b4b2ae976759",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -83916,27 +84942,27 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 117,
+      "adr": 118,
       "application": 5,
       "area": 9,
       "audience": 8,
       "claim": 247,
       "command": 31,
       "context": 39,
-      "critique": 4,
+      "critique": 5,
       "deployment": 1,
       "derive-offload": 1,
       "distribution-model": 1,
-      "document": 347,
+      "document": 348,
       "domain": 6,
       "feature": 29,
       "gap": 4,
       "implementation": 52,
-      "intent": 5,
-      "issue": 424,
+      "intent": 6,
+      "issue": 425,
       "knowledge": 4,
       "mesh-declaration": 1,
-      "milestone": 41,
+      "milestone": 42,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -83947,7 +84973,7 @@
       "session": 90,
       "skill": 8,
       "taxonomy": 10,
-      "test": 527,
+      "test": 528,
       "use-case": 49,
       "workspace": 1
     },
@@ -85893,6 +86919,24 @@
           "two-folder",
           "ownership",
           "footprint"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0176",
+        "kind": "adr",
+        "identity": "adr-0176",
+        "title": "The peer blackboard is one projection of the board, the journal and the monitor, pushed over one socket",
+        "description": "The peer blackboard is one projection of the board, the journal and the monitor, pushed over one socket",
+        "path": ".ai/repo/adrs/0176-the-blackboard-is-one-projection-pushed-over-one-socket.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 5655,
+        "tags": [
+          "peers",
+          "mesh",
+          "monitor",
+          "websocket",
+          "ui"
         ]
       },
       {
@@ -89442,6 +90486,17 @@
         "bytes": 1369
       },
       {
+        "uri": "majordomus://critique/the-peer-blackboard-is-one-reality",
+        "kind": "critique",
+        "identity": "the-peer-blackboard-is-one-reality",
+        "title": "the-peer-blackboard-is-one-reality",
+        "description": "707a04c7ce",
+        "path": ".ai/repo/project/critiques/the-peer-blackboard-is-one-reality.yaml",
+        "section": "project",
+        "source_class": "critique",
+        "bytes": 8467
+      },
+      {
         "uri": "majordomus://deployment/majordomus",
         "kind": "deployment",
         "identity": "majordomus",
@@ -89748,6 +90803,15 @@
         "path": "docs/BACKLOG.md",
         "source_class": "document",
         "bytes": 13475
+      },
+      {
+        "uri": "majordomus://document/docs/BLACKBOARD.md",
+        "kind": "document",
+        "identity": "docs/BLACKBOARD.md",
+        "title": "The peer blackboard",
+        "path": "docs/BLACKBOARD.md",
+        "source_class": "document",
+        "bytes": 5515
       },
       {
         "uri": "majordomus://document/docs/BRIEF.md",
@@ -90206,7 +91270,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 170002
+        "bytes": 173076
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -90242,7 +91306,7 @@
         "title": "Documentation index",
         "path": "docs/README.md",
         "source_class": "document",
-        "bytes": 25645
+        "bytes": 26000
       },
       {
         "uri": "majordomus://document/docs/REASONING.md",
@@ -93677,6 +94741,17 @@
         "section": "project",
         "source_class": "intent",
         "bytes": 1727
+      },
+      {
+        "uri": "majordomus://intent/the-peer-blackboard-is-one-reality",
+        "kind": "intent",
+        "identity": "the-peer-blackboard-is-one-reality",
+        "title": "Who works on what, holding which claim and talking to whom, is one projection every surface follows live",
+        "description": "A person opening /ui, /cockpit or the local home page sees, without reloading, which workers of this repository are attached on every board and every linked machine, what each announced and claims, which claims meet, which reviews and handovers wait and for whom, and whether every source could be read; each fact carries the record it came from, a relation between two workers says whether it is verified or only a candidate, and the published site shows the same picture as a snapshot it labels as one.",
+        "path": ".ai/repo/project/intents/the-peer-blackboard-is-one-reality.yaml",
+        "section": "project",
+        "source_class": "intent",
+        "bytes": 2035
       },
       {
         "uri": "majordomus://issue/I0001",
@@ -98343,6 +99418,17 @@
         "bytes": 2258
       },
       {
+        "uri": "majordomus://issue/I2980",
+        "kind": "issue",
+        "identity": "I2980",
+        "title": "The blackboard is one projection answered on every interface",
+        "description": "Add blackboard.snapshot: one read capability that composes the repository-wide board (peers.list), the live mesh state (sessions, claims, reviews, handovers) and the newest monitor signals into one typed snapshot with the sources it read and their health, whether it is complete, every worker with its claims (advisory or exclusive), the conflicts (potential overlaps and confirmed conflicted claims), open reviews, untaken handovers, typed relations (verified or candidate) and the monitor cursor a stream resumes from.",
+        "path": ".ai/repo/project/issues/I2980.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2411
+      },
+      {
         "uri": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "identity": "a-commit-stood-behind-a-build-lock",
@@ -98711,6 +99797,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 5484
+      },
+      {
+        "uri": "majordomus://milestone/peer-blackboard",
+        "kind": "milestone",
+        "identity": "peer-blackboard",
+        "title": "The peer blackboard is one projection, pushed live to every surface",
+        "description": "One capability computes the blackboard from the records that exist; a change of the board or the journal is pushed over one WebSocket to every page that follows it, with the monitor's cursor for resume; /ui, /cockpit and the home page read the same frames; the published site carries a public-safe snapshot labelled as one.",
+        "path": ".ai/repo/project/milestones/peer-blackboard.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 3402
       },
       {
         "uri": "majordomus://milestone/public-proof",
@@ -106128,6 +107225,14 @@
         "bytes": 6725
       },
       {
+        "uri": "majordomus://test/test/cases/3380_the_blackboard_is_one_projection.sh",
+        "kind": "test",
+        "identity": "test/cases/3380_the_blackboard_is_one_projection.sh",
+        "path": "test/cases/3380_the_blackboard_is_one_projection.sh",
+        "source_class": "case",
+        "bytes": 8379
+      },
+      {
         "uri": "majordomus://test/test/cases/33_event_registry.sh",
         "kind": "test",
         "identity": "test/cases/33_event_registry.sh",
@@ -108895,7 +110000,7 @@
       "identity": [
         "id"
       ],
-      "objects": 117
+      "objects": 118
     },
     {
       "name": "application",
@@ -108965,7 +110070,7 @@
       "identity": [
         "intent"
       ],
-      "objects": 4
+      "objects": 5
     },
     {
       "name": "deployment",
@@ -109001,7 +110106,7 @@
       "front_matter": "optional",
       "schema": "majordomus.document/v1",
       "identity": [],
-      "objects": 347
+      "objects": 348
     },
     {
       "name": "domain",
@@ -109048,7 +110153,7 @@
       "identity": [
         "id"
       ],
-      "objects": 5
+      "objects": 6
     },
     {
       "name": "issue",
@@ -109058,7 +110163,7 @@
       "identity": [
         "id"
       ],
-      "objects": 424
+      "objects": 425
     },
     {
       "name": "knowledge",
@@ -109088,7 +110193,7 @@
       "identity": [
         "id"
       ],
-      "objects": 41
+      "objects": 42
     },
     {
       "name": "moment",
@@ -109210,7 +110315,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 527
+      "objects": 528
     },
     {
       "name": "use-case",
@@ -139364,6 +140469,157 @@
       {
         "path": [
           "majordomus",
+          "blackboard"
+        ],
+        "route": "/docs/cli/blackboard/",
+        "executable": true,
+        "usage": "majordomus blackboard [OPTIONS]",
+        "about": "Who works on what in this repository, on every board and every linked machine: each worker with its client, intent, checkout, branch and claims, the claims that meet, the reviews and handovers that wait, typed relations verified only by an explicit identifier, and whether every source could be read — asked of the server holding this checkout's lease",
+        "args": [
+          {
+            "name": "repo",
+            "long": "repo",
+            "positional": false,
+            "help": "Start the search for the repository root here (default: the current directory)",
+            "value_name": "PATH",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "discovery",
+            "long": "discovery",
+            "positional": false,
+            "help": "How declarative files are enumerated",
+            "value_name": "DISCOVERY",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "vcs",
+                "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+              },
+              {
+                "name": "filesystem",
+                "help": "A walk of the work tree with the same glob semantics; untracked files included"
+              }
+            ],
+            "defaults": [
+              "vcs"
+            ]
+          },
+          {
+            "name": "strict",
+            "long": "strict",
+            "positional": false,
+            "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+            "value_name": "STRICT",
+            "takes_value": false,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": [
+              "false"
+            ]
+          },
+          {
+            "name": "share",
+            "long": "share",
+            "positional": false,
+            "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+            "value_name": "DIR",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "this_checkout",
+            "long": "this-checkout",
+            "positional": false,
+            "help": "Read this checkout's board alone instead of every checkout's",
+            "value_name": "THIS_CHECKOUT",
+            "takes_value": false,
+            "required": false,
+            "global": false,
+            "possible_values": [],
+            "defaults": [
+              "false"
+            ]
+          },
+          {
+            "name": "reader",
+            "long": "for",
+            "positional": false,
+            "help": "Comma-separated names of the reader, so that the signals addressed to it are marked for it",
+            "value_name": "NAMES",
+            "takes_value": true,
+            "required": false,
+            "global": false,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "sources",
+            "long": "sources",
+            "positional": false,
+            "help": "The monitor sources the signals are read from, a comma-separated subset of mesh, executor and github (default: mesh,executor)",
+            "value_name": "LIST",
+            "takes_value": true,
+            "required": false,
+            "global": false,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "format",
+            "long": "format",
+            "positional": false,
+            "help": "Output shape",
+            "value_name": "FORMAT",
+            "takes_value": true,
+            "required": false,
+            "global": false,
+            "possible_values": [
+              {
+                "name": "text",
+                "help": "Lines for a person"
+              },
+              {
+                "name": "json",
+                "help": "One JSON document, deterministic"
+              }
+            ],
+            "defaults": [
+              "text"
+            ]
+          }
+        ],
+        "examples": [
+          {
+            "id": "blackboard-json",
+            "title": "Who works on what, with what could not be read",
+            "description": "The same answer `GET /api/v1/blackboard` and the MCP tool `majordomus_blackboard` return: every worker of the boards read and of the mesh, the claims that meet, the reviews and handovers that wait, the typed relations and the newest signals, with each source and how it was read. The command line asks the server holding this checkout's lease, which holds the board and the mesh; this fixture has no server, so the answer is composed here and its sources say what that left unread.",
+            "argv": [
+              "blackboard",
+              "--this-checkout",
+              "--format",
+              "json"
+            ],
+            "command": "majordomus blackboard --this-checkout --format json",
+            "setup": [],
+            "expectation": "exits 0; prints one JSON document carrying /complete, /sources, /workers, /conflicts, /cursor"
+          }
+        ],
+        "subcommands": []
+      },
+      {
+        "path": [
+          "majordomus",
           "skills"
         ],
         "route": "/docs/cli/skills/",
@@ -141276,6 +142532,23 @@
         },
         "input": "ArtifactsInput",
         "output": "ArtifactReport"
+      },
+      {
+        "name": "majordomus_blackboard",
+        "id": "blackboard.snapshot",
+        "title": "Who works on what, now",
+        "description": "Every worker of this repository — attached to a checkout's board or in an active mesh session on any linked machine — with the client it is, what it announced, its checkout, branch, machine and claims (advisory or exclusive); the claims that meet (potential, or confirmed when both are exclusive or the mesh marked one conflicted); the open reviews and untaken handovers; typed relations between workers, verified only when an explicit identifier joins them; the newest signals with the monitor's cursor a follower resumes from; each source with how it was read, and whether the answer is complete. Reads only.",
+        "kind": "query",
+        "read_only": true,
+        "effect": "read",
+        "hints": {
+          "read_only": true,
+          "destructive": false,
+          "idempotent": true,
+          "open_world": false
+        },
+        "input": "BlackboardInput",
+        "output": "Blackboard"
       },
       {
         "name": "majordomus_brief",
@@ -144924,6 +146197,12 @@
       },
       {
         "method": "GET",
+        "path": "/api/v1/blackboard",
+        "id": "blackboard.snapshot",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
         "path": "/api/v1/brief",
         "id": "brief.session",
         "kind": "query"
@@ -146210,6 +147489,64 @@
         "case": "one-encoding",
         "cached": true,
         "route": "GET /api/v1/artifacts"
+      },
+      {
+        "key": "blackboard.snapshot|direct|this-checkout",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "blackboard.snapshot",
+        "module": "blackboard",
+        "case": "this-checkout",
+        "cached": false
+      },
+      {
+        "key": "blackboard.snapshot|direct|addressed",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "blackboard.snapshot",
+        "module": "blackboard",
+        "case": "addressed",
+        "cached": false
+      },
+      {
+        "key": "blackboard.snapshot|mcp|this-checkout",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "blackboard.snapshot",
+        "module": "blackboard",
+        "case": "this-checkout",
+        "cached": false,
+        "tool": "majordomus_blackboard"
+      },
+      {
+        "key": "blackboard.snapshot|mcp|addressed",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "blackboard.snapshot",
+        "module": "blackboard",
+        "case": "addressed",
+        "cached": false,
+        "tool": "majordomus_blackboard"
+      },
+      {
+        "key": "blackboard.snapshot|http|this-checkout",
+        "kind": "capability",
+        "transport": "http",
+        "id": "blackboard.snapshot",
+        "module": "blackboard",
+        "case": "this-checkout",
+        "cached": false,
+        "route": "GET /api/v1/blackboard"
+      },
+      {
+        "key": "blackboard.snapshot|http|addressed",
+        "kind": "capability",
+        "transport": "http",
+        "id": "blackboard.snapshot",
+        "module": "blackboard",
+        "case": "addressed",
+        "cached": false,
+        "route": "GET /api/v1/blackboard"
       },
       {
         "key": "brief.session|direct|default",
@@ -153551,6 +154888,27 @@
           "cases": 2
         },
         {
+          "subject": "blackboard.snapshot",
+          "module": "blackboard",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "blackboard.snapshot",
+          "module": "blackboard",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "blackboard.snapshot",
+          "module": "blackboard",
+          "transport": "http",
+          "state": "covered",
+          "cases": 2
+        },
+        {
           "subject": "brief.session",
           "module": "brief",
           "transport": "direct",
@@ -157849,22 +159207,22 @@
       ],
       "tallies": {
         "direct": {
-          "required": 202,
-          "covered": 171,
+          "required": 203,
+          "covered": 172,
           "missing": 0,
           "waived": 31,
           "inapplicable": 0
         },
         "http": {
-          "required": 197,
-          "covered": 171,
+          "required": 198,
+          "covered": 172,
           "missing": 0,
           "waived": 26,
           "inapplicable": 0
         },
         "mcp": {
-          "required": 192,
-          "covered": 167,
+          "required": 193,
+          "covered": 168,
           "missing": 0,
           "waived": 25,
           "inapplicable": 0
@@ -157877,8 +159235,8 @@
           "inapplicable": 0
         },
         "total": {
-          "required": 605,
-          "covered": 523,
+          "required": 608,
+          "covered": 526,
           "missing": 0,
           "waived": 82,
           "inapplicable": 0

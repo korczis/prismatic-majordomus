@@ -1,0 +1,25 @@
+id: the-peer-blackboard-is-one-reality
+title: Who works on what, holding which claim and talking to whom, is one projection every surface follows live
+statement: "A person opening /ui, /cockpit or the local home page sees, without reloading, which workers of this repository are attached on every board and every linked machine, what each announced and claims, which claims meet, which reviews and handovers wait and for whom, and whether every source could be read; each fact carries the record it came from, a relation between two workers says whether it is verified or only a candidate, and the published site shows the same picture as a snapshot it labels as one."
+invariants:
+  - The blackboard is a projection of the board, the mesh journal and the monitor, computed in one capability; it stores nothing and no surface computes a fact of it again
+  - A board that could not be read or a source that is absent is reported with its reason, never as an empty board
+  - A relation between two workers is verified only when an explicit identifier joins them; anything weaker is a candidate, and a position such as p1 is never an identity across boards
+  - A page that says live is fed by a socket the server pushes on; a page that reads a published snapshot or polls says so
+milestones:
+  - peer-blackboard
+satisfaction:
+  - id: one-projection
+    criterion: The command line, HTTP and MCP answer the same blackboard, with the boards and sources it covers, whether it is complete, every worker with its claims, the conflicts, the open reviews and untaken handovers, the typed relations and the recent signals
+    evidence: test
+    ref: test/cases/3380_the_blackboard_is_one_projection.sh
+governance:
+  - rule:project.derived-once
+  - adr:adr-0044
+  - adr:adr-0133
+  - adr:adr-0176
+non_goals:
+  - A second board, registry or message store; the blackboard reads the records that already exist
+  - Presence of a provider that cannot be observed through a supported, authenticated interface
+created_at: 2026-10-18
+updated_at: 2026-10-18

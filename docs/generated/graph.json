@@ -79,6 +79,15 @@
         "status": "query"
       },
       {
+        "id": "capability:blackboard.snapshot",
+        "kind": "capability",
+        "label": "blackboard.snapshot",
+        "summary": "Who works on what, now",
+        "route": "/cockpit/capabilities/blackboard.snapshot",
+        "source": "apps/majordomus-cli/src/capability/builtin/blackboard.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:brief.session",
         "kind": "capability",
         "label": "brief.session",
@@ -2231,6 +2240,14 @@
         "label": "coverage.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/bench/coverage.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/capability/builtin/blackboard.rs",
+        "kind": "file",
+        "label": "blackboard.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/capability/builtin/blackboard.rs",
         "external": true
       },
       {
@@ -7791,6 +7808,34 @@
             "two-folder",
             "ownership",
             "footprint"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0176",
+        "kind": "adr",
+        "label": "adr-0176",
+        "summary": "The peer blackboard is one projection of the board, the journal and the monitor, pushed over one socket",
+        "route": "/cockpit/objects/adr/adr-0176",
+        "source": ".ai/repo/adrs/0176-the-blackboard-is-one-projection-pushed-over-one-socket.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-18",
+          "related": [
+            "file:.ai/repo/adrs/0044-cooperation-is-repository-wide-the-board-is-gathered-not-shared.md",
+            "file:.ai/repo/adrs/0067-mesh-cooperation-is-authenticated-links-and-one-replicated-journal.md",
+            "file:.ai/repo/adrs/0133-everything-is-followed-in-one-stream.md",
+            "file:.ai/repo/adrs/0141-the-ui-is-published-as-a-snapshot-read-at-one-commit.md",
+            "file:.ai/repo/adrs/0158-the-observatory-draws-only-what-was-observed.md",
+            "file:.ai/repo/project/milestones/peer-blackboard.yaml",
+            "file:apps/majordomus-cli/src/capability/builtin/blackboard.rs"
+          ],
+          "tags": [
+            "peers",
+            "mesh",
+            "monitor",
+            "websocket",
+            "ui"
           ]
         }
       },
@@ -14402,6 +14447,18 @@
         }
       },
       {
+        "id": "majordomus://critique/the-peer-blackboard-is-one-reality",
+        "kind": "critique",
+        "label": "the-peer-blackboard-is-one-reality",
+        "summary": "the-peer-blackboard-is-one-reality",
+        "route": "/cockpit/objects/critique/the-peer-blackboard-is-one-reality",
+        "source": ".ai/repo/project/critiques/the-peer-blackboard-is-one-reality.yaml",
+        "facts": {
+          "intent": "the-peer-blackboard-is-one-reality",
+          "reviewed_at": "707a04c7ce"
+        }
+      },
+      {
         "id": "majordomus://deployment/majordomus",
         "kind": "deployment",
         "label": "majordomus",
@@ -14666,6 +14723,14 @@
         "summary": "Backlog",
         "route": "/cockpit/objects/document/docs-backlog-md",
         "source": "docs/BACKLOG.md"
+      },
+      {
+        "id": "majordomus://document/docs/BLACKBOARD.md",
+        "kind": "document",
+        "label": "docs/BLACKBOARD.md",
+        "summary": "The peer blackboard",
+        "route": "/cockpit/objects/document/docs-blackboard-md",
+        "source": "docs/BLACKBOARD.md"
       },
       {
         "id": "majordomus://document/docs/BRIEF.md",
@@ -19763,6 +19828,37 @@
             "A second planning engine, wave allocator or status vocabulary in the UI",
             "Mutation from the published site, which serves no runtime"
           ]
+        }
+      },
+      {
+        "id": "majordomus://intent/the-peer-blackboard-is-one-reality",
+        "kind": "intent",
+        "label": "the-peer-blackboard-is-one-reality",
+        "summary": "Who works on what, holding which claim and talking to whom, is one projection every surface follows live",
+        "route": "/cockpit/objects/intent/the-peer-blackboard-is-one-reality",
+        "source": ".ai/repo/project/intents/the-peer-blackboard-is-one-reality.yaml",
+        "facts": {
+          "created_at": "2026-10-18",
+          "governance": [
+            "rule:project.derived-once",
+            "adr:adr-0044",
+            "adr:adr-0133",
+            "adr:adr-0176"
+          ],
+          "invariants": [
+            "The blackboard is a projection of the board, the mesh journal and the monitor, computed in one capability; it stores nothing and no surface computes a fact of it again",
+            "A board that could not be read or a source that is absent is reported with its reason, never as an empty board",
+            "A relation between two workers is verified only when an explicit identifier joins them; anything weaker is a candidate, and a position such as p1 is never an identity across boards",
+            "A page that says live is fed by a socket the server pushes on; a page that reads a published snapshot or polls says so"
+          ],
+          "milestones": [
+            "peer-blackboard"
+          ],
+          "non_goals": [
+            "A second board, registry or message store; the blackboard reads the records that already exist",
+            "Presence of a provider that cannot be observed through a supported, authenticated interface"
+          ],
+          "updated_at": "2026-10-18"
         }
       },
       {
@@ -39689,6 +39785,51 @@
         }
       },
       {
+        "id": "majordomus://issue/I2980",
+        "kind": "issue",
+        "label": "I2980",
+        "summary": "The blackboard is one projection answered on every interface",
+        "route": "/cockpit/objects/issue/i2980",
+        "source": ".ai/repo/project/issues/I2980.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The three interfaces answer the same projection",
+            "An unread board or absent source makes complete false and names the reason",
+            "A board peer joins the mesh session its own server projected only through the stream that server names, with the same board session id, checkout and client; two matches make candidates and no join"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "peers.list, mesh.state and monitor.stream answer separately; /cockpit/peers renders peers.list alone.",
+          "depends_on": [],
+          "evidence_required": [
+            "case_blackboard_projection"
+          ],
+          "milestone": "peer-blackboard",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin/blackboard.rs",
+            "apps/majordomus-cli/src/capability/builtin/mod.rs",
+            "apps/majordomus-cli/src/capability/builtin/peers.rs",
+            "apps/majordomus-cli/src/capability/builtin/monitor.rs",
+            "apps/majordomus-cli/src/commands/blackboard.rs",
+            "apps/majordomus-cli/src/commands/mod.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "docs/BLACKBOARD.md",
+            "test/cases/3380_the_blackboard_is_one_projection.sh"
+          ],
+          "serves": [
+            "the-peer-blackboard-is-one-reality#one-projection"
+          ],
+          "slug": "the-blackboard-is-one-projection",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "majordomus plan validate",
+            "bash test/run.sh 3380_the_blackboard_is_one_projection"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "label": "a-commit-stood-behind-a-build-lock",
@@ -41204,6 +41345,55 @@
             "cargo test --lib mesh",
             "cargo test --test mesh_cooperation --test mesh_compaction --test mesh",
             "MJ_TEST_JOBS=4 bash test/run.sh 368_mesh_handover_resolves 493_mesh_compaction_keeps_what_is_live"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/peer-blackboard",
+        "kind": "milestone",
+        "label": "peer-blackboard",
+        "summary": "The peer blackboard is one projection, pushed live to every surface",
+        "route": "/cockpit/objects/milestone/peer-blackboard",
+        "source": ".ai/repo/project/milestones/peer-blackboard.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "blackboard.snapshot answers the same projection over the command line, HTTP and MCP, with completeness, sources, workers, conflicts, reviews, handovers, typed relations and signals",
+            "A board or journal change is pushed to a connected page over one WebSocket that resumes from the monitor's cursor and resynchronises when the cursor cannot be served",
+            "/ui/peers, the /ui home panel, /cockpit/peers and the home page read the same frames, and say live, reconnecting, offline or snapshot truthfully",
+            "The published site shows a public-safe snapshot of the blackboard with its revision, and no private path, message body or scope"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "peers.list, mesh.state and monitor.stream answer separately; /cockpit/peers is static; /cockpit/monitor polls; socket.js follows executions only.",
+          "depends_on": [],
+          "desired_state": "blackboard.snapshot answers on every interface; a board or journal change reaches a connected page in under a second on this machine; every surface that shows peers reads that one projection.",
+          "evidence_required": [],
+          "non_scope": [
+            "A second peer registry, a message store or a broker; a peer message kind is added to the journal only when reviews and handovers are shown not to carry what peers send each other",
+            "A public WebSocket into a private mesh, or credentials in a published bundle",
+            "Presence for a provider (OpenAI Dots included) that exposes no supported, authenticated event source"
+          ],
+          "order": 341,
+          "priority": "p1",
+          "risks": [
+            "The monitor rereads the whole journal on every page; pushing it on every change multiplies that cost by the subscribers unless one computation is shared by all of them.",
+            "A worker's board session and its own mesh session are two records; joining them by anything weaker than an identifier invents a person."
+          ],
+          "scope": [
+            "apps/majordomus-cli/src/commands/blackboard.rs",
+            "apps/majordomus-cli/src/capability/builtin/blackboard.rs",
+            "apps/majordomus-cli/src/http",
+            "apps/majordomus-cli/src/ui",
+            "apps/majordomus-cli/src/cockpit",
+            "share/cockpit",
+            "share/ui",
+            "docs/BLACKBOARD.md",
+            "test/cases"
+          ],
+          "slug": "peer-blackboard",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "majordomus plan validate",
+            "bash test/run.sh 3380_the_blackboard_is_one_projection"
           ]
         }
       },
@@ -57525,6 +57715,13 @@
         "source": "test/cases/337_every_control_does_what_it_says.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3380_the_blackboard_is_one_projection.sh",
+        "kind": "test",
+        "label": "test/cases/3380_the_blackboard_is_one_projection.sh",
+        "route": "/cockpit/objects/test/test-cases-3380-the-blackboard-is-one-projection-sh",
+        "source": "test/cases/3380_the_blackboard_is_one_projection.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/33_event_registry.sh",
         "kind": "test",
         "label": "test/cases/33_event_registry.sh",
@@ -61537,6 +61734,11 @@
         "label": "artifacts"
       },
       {
+        "id": "module:blackboard",
+        "kind": "module",
+        "label": "blackboard"
+      },
+      {
         "id": "module:brief",
         "kind": "module",
         "label": "brief"
@@ -61915,6 +62117,26 @@
       },
       {
         "source": "capability:artifacts.list",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:blackboard.snapshot",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:blackboard.snapshot",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:blackboard.snapshot",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:blackboard.snapshot",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -70274,6 +70496,46 @@
         "kind": "put_in_force"
       },
       {
+        "source": "majordomus://adr/adr-0176",
+        "target": "file:apps/majordomus-cli/src/capability/builtin/blackboard.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0176",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0176",
+        "target": "majordomus://adr/adr-0044",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0176",
+        "target": "majordomus://adr/adr-0067",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0176",
+        "target": "majordomus://adr/adr-0133",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0176",
+        "target": "majordomus://adr/adr-0141",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0176",
+        "target": "majordomus://adr/adr-0158",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0176",
+        "target": "majordomus://milestone/peer-blackboard",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://application/ci-gated-project",
         "target": "kind:application",
         "kind": "is_a"
@@ -75934,6 +76196,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://critique/the-peer-blackboard-is-one-reality",
+        "target": "kind:critique",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://deployment/majordomus",
         "target": "kind:deployment",
         "kind": "is_a"
@@ -76090,6 +76357,11 @@
       },
       {
         "source": "majordomus://document/docs/BACKLOG.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/BLACKBOARD.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -78160,6 +78432,11 @@
       },
       {
         "source": "majordomus://intent/the-owner-directs-work-from-the-ui",
+        "target": "kind:intent",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://intent/the-peer-blackboard-is-one-reality",
         "target": "kind:intent",
         "kind": "is_a"
       },
@@ -84399,6 +84676,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2980",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2980",
+        "target": "majordomus://milestone/peer-blackboard",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -84585,6 +84872,11 @@
       },
       {
         "source": "majordomus://milestone/mesh-journal-converges",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/peer-blackboard",
         "target": "kind:milestone",
         "kind": "is_a"
       },
@@ -89169,6 +89461,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3380_the_blackboard_is_one_projection.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/33_event_registry.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -93399,6 +93696,11 @@
         "kind": "composes"
       },
       {
+        "source": "module:blackboard",
+        "target": "capability:blackboard.snapshot",
+        "kind": "composes"
+      },
+      {
         "source": "module:brief",
         "target": "capability:brief.session",
         "kind": "composes"
@@ -94405,8 +94707,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2959,
-      "edges": 6500,
+      "nodes": 2969,
+      "edges": 6520,
       "acyclic": false,
       "truncated": false
     }

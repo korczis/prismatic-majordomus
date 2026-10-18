@@ -30110,6 +30110,157 @@
       {
         "path": [
           "majordomus",
+          "blackboard"
+        ],
+        "route": "/docs/cli/blackboard/",
+        "executable": true,
+        "usage": "majordomus blackboard [OPTIONS]",
+        "about": "Who works on what in this repository, on every board and every linked machine: each worker with its client, intent, checkout, branch and claims, the claims that meet, the reviews and handovers that wait, typed relations verified only by an explicit identifier, and whether every source could be read — asked of the server holding this checkout's lease",
+        "args": [
+          {
+            "name": "repo",
+            "long": "repo",
+            "positional": false,
+            "help": "Start the search for the repository root here (default: the current directory)",
+            "value_name": "PATH",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "discovery",
+            "long": "discovery",
+            "positional": false,
+            "help": "How declarative files are enumerated",
+            "value_name": "DISCOVERY",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "vcs",
+                "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+              },
+              {
+                "name": "filesystem",
+                "help": "A walk of the work tree with the same glob semantics; untracked files included"
+              }
+            ],
+            "defaults": [
+              "vcs"
+            ]
+          },
+          {
+            "name": "strict",
+            "long": "strict",
+            "positional": false,
+            "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+            "value_name": "STRICT",
+            "takes_value": false,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": [
+              "false"
+            ]
+          },
+          {
+            "name": "share",
+            "long": "share",
+            "positional": false,
+            "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+            "value_name": "DIR",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "this_checkout",
+            "long": "this-checkout",
+            "positional": false,
+            "help": "Read this checkout's board alone instead of every checkout's",
+            "value_name": "THIS_CHECKOUT",
+            "takes_value": false,
+            "required": false,
+            "global": false,
+            "possible_values": [],
+            "defaults": [
+              "false"
+            ]
+          },
+          {
+            "name": "reader",
+            "long": "for",
+            "positional": false,
+            "help": "Comma-separated names of the reader, so that the signals addressed to it are marked for it",
+            "value_name": "NAMES",
+            "takes_value": true,
+            "required": false,
+            "global": false,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "sources",
+            "long": "sources",
+            "positional": false,
+            "help": "The monitor sources the signals are read from, a comma-separated subset of mesh, executor and github (default: mesh,executor)",
+            "value_name": "LIST",
+            "takes_value": true,
+            "required": false,
+            "global": false,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "format",
+            "long": "format",
+            "positional": false,
+            "help": "Output shape",
+            "value_name": "FORMAT",
+            "takes_value": true,
+            "required": false,
+            "global": false,
+            "possible_values": [
+              {
+                "name": "text",
+                "help": "Lines for a person"
+              },
+              {
+                "name": "json",
+                "help": "One JSON document, deterministic"
+              }
+            ],
+            "defaults": [
+              "text"
+            ]
+          }
+        ],
+        "examples": [
+          {
+            "id": "blackboard-json",
+            "title": "Who works on what, with what could not be read",
+            "description": "The same answer `GET /api/v1/blackboard` and the MCP tool `majordomus_blackboard` return: every worker of the boards read and of the mesh, the claims that meet, the reviews and handovers that wait, the typed relations and the newest signals, with each source and how it was read. The command line asks the server holding this checkout's lease, which holds the board and the mesh; this fixture has no server, so the answer is composed here and its sources say what that left unread.",
+            "argv": [
+              "blackboard",
+              "--this-checkout",
+              "--format",
+              "json"
+            ],
+            "command": "majordomus blackboard --this-checkout --format json",
+            "setup": [],
+            "expectation": "exits 0; prints one JSON document carrying /complete, /sources, /workers, /conflicts, /cursor"
+          }
+        ],
+        "subcommands": []
+      },
+      {
+        "path": [
+          "majordomus",
           "skills"
         ],
         "route": "/docs/cli/skills/",

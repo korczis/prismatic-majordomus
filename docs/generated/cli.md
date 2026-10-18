@@ -232,6 +232,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus dashboard`](#majordomus-dashboard) | `/docs/cli/dashboard/` | The Dashboard Suite: each page a projection of the capabilities that hold its facts, every card carrying its source capability, the JSON pointer its value was read from, the Cockpit page with the evidence and the command that acts on it |
 | [`majordomus dashboard overview`](#majordomus-dashboard-overview) | `/docs/cli/dashboard/overview/` | Is it healthy, what changed, what is broken, what needs action: every card with its value, the source's verdict, and the capability and pointer it was read from; exit 10 when the overview is fail or unknown |
 | [`majordomus brief`](#majordomus-brief) | `/docs/cli/brief/` | What surrounds this session, in one line and in a few: its episode and task, the peers of every board, the mesh, the integration queue and the derive queue, asked of the server holding this checkout's lease |
+| [`majordomus blackboard`](#majordomus-blackboard) | `/docs/cli/blackboard/` | Who works on what in this repository, on every board and every linked machine: each worker with its client, intent, checkout, branch and claims, the claims that meet, the reviews and handovers that wait, typed relations verified only by an explicit identifier, and whether every source could be read — asked of the server holding this checkout's lease |
 | [`majordomus skills`](#majordomus-skills) | `/docs/cli/skills/` | Every skill as a proven capability: the tests that name it and the evidence behind them, its page, the doctrine and gates that hold it, what invokes it, and the orphans |
 | [`majordomus skills status`](#majordomus-skills-status) | `/docs/cli/skills/status/` | Every skill with its derived standing: tested, documented, enforced, used |
 | [`majordomus skills explain`](#majordomus-skills-explain) | `/docs/cli/skills/explain/` | One skill in full: each naming test and its evidence, its page, its gates, every invocation |
@@ -254,7 +255,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 
 Majordomus control plane: a data-driven MCP server over the repository's .ai/ layer
 
-Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus devtask`](#majordomus-devtask), [`majordomus distribution`](#majordomus-distribution), [`majordomus env`](#majordomus-env), [`majordomus commands`](#majordomus-commands), [`majordomus completion`](#majordomus-completion), [`majordomus worktree`](#majordomus-worktree), [`majordomus prs`](#majordomus-prs), [`majordomus offload`](#majordomus-offload), [`majordomus convergence`](#majordomus-convergence), [`majordomus commit`](#majordomus-commit), [`majordomus product`](#majordomus-product), [`majordomus release`](#majordomus-release), [`majordomus quality`](#majordomus-quality), [`majordomus run`](#majordomus-run), [`majordomus executions`](#majordomus-executions), [`majordomus devcontext`](#majordomus-devcontext), [`majordomus guard`](#majordomus-guard), [`majordomus mesh`](#majordomus-mesh), [`majordomus monitor`](#majordomus-monitor), [`majordomus models`](#majordomus-models), [`majordomus reasoning`](#majordomus-reasoning), [`majordomus evidence`](#majordomus-evidence), [`majordomus served`](#majordomus-served), [`majordomus rules`](#majordomus-rules), [`majordomus intent`](#majordomus-intent), [`majordomus delivery`](#majordomus-delivery), [`majordomus economics`](#majordomus-economics), [`majordomus entity`](#majordomus-entity), [`majordomus shell`](#majordomus-shell), [`majordomus pack`](#majordomus-pack), [`majordomus dashboard`](#majordomus-dashboard), [`majordomus brief`](#majordomus-brief), [`majordomus skills`](#majordomus-skills), [`majordomus knowledge`](#majordomus-knowledge), [`majordomus continuity`](#majordomus-continuity).
+Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus devtask`](#majordomus-devtask), [`majordomus distribution`](#majordomus-distribution), [`majordomus env`](#majordomus-env), [`majordomus commands`](#majordomus-commands), [`majordomus completion`](#majordomus-completion), [`majordomus worktree`](#majordomus-worktree), [`majordomus prs`](#majordomus-prs), [`majordomus offload`](#majordomus-offload), [`majordomus convergence`](#majordomus-convergence), [`majordomus commit`](#majordomus-commit), [`majordomus product`](#majordomus-product), [`majordomus release`](#majordomus-release), [`majordomus quality`](#majordomus-quality), [`majordomus run`](#majordomus-run), [`majordomus executions`](#majordomus-executions), [`majordomus devcontext`](#majordomus-devcontext), [`majordomus guard`](#majordomus-guard), [`majordomus mesh`](#majordomus-mesh), [`majordomus monitor`](#majordomus-monitor), [`majordomus models`](#majordomus-models), [`majordomus reasoning`](#majordomus-reasoning), [`majordomus evidence`](#majordomus-evidence), [`majordomus served`](#majordomus-served), [`majordomus rules`](#majordomus-rules), [`majordomus intent`](#majordomus-intent), [`majordomus delivery`](#majordomus-delivery), [`majordomus economics`](#majordomus-economics), [`majordomus entity`](#majordomus-entity), [`majordomus shell`](#majordomus-shell), [`majordomus pack`](#majordomus-pack), [`majordomus dashboard`](#majordomus-dashboard), [`majordomus brief`](#majordomus-brief), [`majordomus blackboard`](#majordomus-blackboard), [`majordomus skills`](#majordomus-skills), [`majordomus knowledge`](#majordomus-knowledge), [`majordomus continuity`](#majordomus-continuity).
 
 ```text
 majordomus <COMMAND>
@@ -6634,6 +6635,36 @@ Examples:
   ```
 
   Verified: exits 0.
+
+<a id="majordomus-blackboard"></a>
+## `majordomus blackboard`
+
+Who works on what in this repository, on every board and every linked machine: each worker with its client, intent, checkout, branch and claims, the claims that meet, the reviews and handovers that wait, typed relations verified only by an explicit identifier, and whether every source could be read — asked of the server holding this checkout's lease
+
+```text
+majordomus blackboard [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--this-checkout` | flag | — | Read this checkout's board alone instead of every checkout's |
+| `--for` | `<NAMES>` | — | Comma-separated names of the reader, so that the signals addressed to it are marked for it |
+| `--sources` | `<LIST>` | — | The monitor sources the signals are read from, a comma-separated subset of mesh, executor and github (default: mesh,executor) |
+| `--format` | `text` \| `json` | `text` | Output shape — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Who works on what, with what could not be read** — The same answer `GET /api/v1/blackboard` and the MCP tool `majordomus_blackboard` return: every worker of the boards read and of the mesh, the claims that meet, the reviews and handovers that wait, the typed relations and the newest signals, with each source and how it was read. The command line asks the server holding this checkout's lease, which holds the board and the mesh; this fixture has no server, so the answer is composed here and its sources say what that left unread.
+
+  ```console
+  $ majordomus blackboard --this-checkout --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /complete, /sources, /workers, /conflicts, /cursor.
 
 <a id="majordomus-skills"></a>
 ## `majordomus skills`
