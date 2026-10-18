@@ -6,23 +6,23 @@
     "version": "0.29.1"
   },
   "registry": {
-    "fingerprint": "93bc4bf52083e4acc16e054270a34902fe81a38d7e269b27481c95b30a5584f4",
+    "fingerprint": "d39e675ee623678bf265f2b3e38927106818f8da51b948e51220900904ceb9ff",
     "summary": {
-      "total": 2536,
+      "total": 2561,
       "builtin": 202,
-      "declarative": 2334,
+      "declarative": 2359,
       "by_kind": {
         "command": 31,
         "query": 171,
-        "resource": 2334
+        "resource": 2359
       },
       "by_stability": {
         "behaviorally_verified": 141,
         "experimental": 52,
-        "implemented": 2343
+        "implemented": 2368
       },
       "mcp_tools": 192,
-      "mcp_resources": 2389,
+      "mcp_resources": 2414,
       "http_routes": 197,
       "cli_commands": 108,
       "modules": 92,
@@ -83231,7 +83231,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 428,
+        "capabilities": 452,
         "capability_ids": []
       },
       {
@@ -83347,7 +83347,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 41,
+        "capabilities": 42,
         "capability_ids": []
       },
       {
@@ -83893,7 +83893,7 @@
     ]
   },
   "index": {
-    "fingerprint": "eff2d3860ee681045ce9b99479d758ce73b0d7a0d02ad116175128ccc8d7aa57",
+    "fingerprint": "28c2dd2654c491fc69e0fa41ca4c0565d2d14c8e598596322db021ee40418a1a",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -83933,10 +83933,10 @@
       "gap": 4,
       "implementation": 52,
       "intent": 5,
-      "issue": 428,
+      "issue": 452,
       "knowledge": 4,
       "mesh-declaration": 1,
-      "milestone": 41,
+      "milestone": 42,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -90206,7 +90206,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 167679
+        "bytes": 174117
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -93205,7 +93205,7 @@
         "path": ".ai/repo/project/gaps/the-owner-directs-work-from-the-ui.yaml",
         "section": "project",
         "source_class": "gap",
-        "bytes": 3287
+        "bytes": 4045
       },
       {
         "uri": "majordomus://implementation/bin/majordomus",
@@ -93676,7 +93676,7 @@
         "path": ".ai/repo/project/intents/the-owner-directs-work-from-the-ui.yaml",
         "section": "project",
         "source_class": "intent",
-        "bytes": 3644
+        "bytes": 4105
       },
       {
         "uri": "majordomus://issue/I0001",
@@ -98387,6 +98387,270 @@
         "bytes": 2021
       },
       {
+        "uri": "majordomus://issue/I2901",
+        "kind": "issue",
+        "identity": "I2901",
+        "title": "One grammar names an issue id, and every surface reads it",
+        "description": "Declare the issue id grammar once: a pattern in the issue schema (or generated from one Rust const) and one plan::is_issue_id, read by ui/prs.rs, ui/idd.rs, case 3220 and share/ui JS, so no surface spells it its own way.",
+        "path": ".ai/repo/project/issues/I2901.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1583
+      },
+      {
+        "uri": "majordomus://issue/I2902",
+        "kind": "issue",
+        "identity": "I2902",
+        "title": "A status names the moves it admits, and every surface reads that",
+        "description": "Give plan::Transition the rule of which status admits which move (READY start, ACTIVE verify, VERIFY done), used by plan::transition's refusal, ui/idd.rs and cockpit::plan::moves, with a test that they agree.",
+        "path": ".ai/repo/project/issues/I2902.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1342
+      },
+      {
+        "uri": "majordomus://issue/I2903",
+        "kind": "issue",
+        "identity": "I2903",
+        "title": "The workspace prefers stages by IntentStage, not by strings",
+        "description": "Make idd::PREFERRED_STAGES a list of IntentStage, printed through IntentStage::as_str, so a renamed stage cannot leave the workspace behind.",
+        "path": ".ai/repo/project/issues/I2903.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 977
+      },
+      {
+        "uri": "majordomus://issue/I2904",
+        "kind": "issue",
+        "identity": "I2904",
+        "title": "An intent whose criteria are met while its milestones hold open issues says so",
+        "description": "When an intent's criteria are all met but its milestones still hold issues that are not DONE, every surface (/ui, /cockpit/intents, the snapshot) says \\\"criteria met; N issue(s) still open\\\", derived from plan.roadmap.",
+        "path": ".ai/repo/project/issues/I2904.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1369
+      },
+      {
+        "uri": "majordomus://issue/I2906",
+        "kind": "issue",
+        "identity": "I2906",
+        "title": "Every id and chip on the workspace leads to its record",
+        "description": "Make every milestone chip, the roadmap's current milestone and the issues that serve a criterion links: a milestone to /ui/roadmap?milestone=<id>, an issue to its inspector; one href per kind in ui/view.rs that /ui/mesh can reuse.",
+        "path": ".ai/repo/project/issues/I2906.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1484
+      },
+      {
+        "uri": "majordomus://issue/I2907",
+        "kind": "issue",
+        "identity": "I2907",
+        "title": "The workspace's headline numbers are the chosen intent's",
+        "description": "Replace the hero's global counts with the chosen intent's: criteria met of all, its milestones done of all, its issues by status, each derived from intents.explain and the issues the screen already filters; the global counts stay on /ui/roadmap.",
+        "path": ".ai/repo/project/issues/I2907.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1379
+      },
+      {
+        "uri": "majordomus://issue/I2908",
+        "kind": "issue",
+        "identity": "I2908",
+        "title": "Stage and verdict wear the kit's one badge",
+        "description": "Draw an intent's stage and verdict through the same state badge every status uses, retiring the boxed uppercase variant on the workspace.",
+        "path": ".ai/repo/project/issues/I2908.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1081
+      },
+      {
+        "uri": "majordomus://issue/I2909",
+        "kind": "issue",
+        "identity": "I2909",
+        "title": "A panel with nothing to show is one sentence",
+        "description": "Draw a workspace panel that has nothing, or one trivial row (no dependency, one wave), as one sentence instead of a full panel.",
+        "path": ".ai/repo/project/issues/I2909.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1058
+      },
+      {
+        "uri": "majordomus://issue/I2910",
+        "kind": "issue",
+        "identity": "I2910",
+        "title": "A move on the published workspace reads \\\"live only\\\"",
+        "description": "On the snapshot, render each move control disabled and labelled \\\"live only\\\", with a link to the live route, instead of a control that looks actionable and is not.",
+        "path": ".ai/repo/project/issues/I2910.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1146
+      },
+      {
+        "uri": "majordomus://issue/I2911",
+        "kind": "issue",
+        "identity": "I2911",
+        "title": "The workspace is a list and its chosen intent side by side",
+        "description": "Lay the workspace out as master and detail at 1024 px and wider: the intent list on the left, the chosen intent on the right and sticky; stacked below that width.",
+        "path": ".ai/repo/project/issues/I2911.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1136
+      },
+      {
+        "uri": "majordomus://issue/I2912",
+        "kind": "issue",
+        "identity": "I2912",
+        "title": "A screen's sources are one disclosure, not a footer per panel",
+        "description": "Fold every panel's source line into one \\\"Sources\\\" disclosure per screen, keeping each capability, its time and its technical-view link.",
+        "path": ".ai/repo/project/issues/I2912.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1092
+      },
+      {
+        "uri": "majordomus://issue/I2913",
+        "kind": "issue",
+        "identity": "I2913",
+        "title": "Each intent in the list shows its progress",
+        "description": "Give each intent in the list a compact progress row: criteria met of all and issues done of all, derived.",
+        "path": ".ai/repo/project/issues/I2913.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 944
+      },
+      {
+        "uri": "majordomus://issue/I2914",
+        "kind": "issue",
+        "identity": "I2914",
+        "title": "No /ui page shows an issue id that leads nowhere",
+        "description": "Add a ui-audit rule links.bare-issue-id that fails any /ui page showing an issue id outside a link or a code block, at every width.",
+        "path": ".ai/repo/project/issues/I2914.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1052
+      },
+      {
+        "uri": "majordomus://issue/I2915",
+        "kind": "issue",
+        "identity": "I2915",
+        "title": "The workspace speaks in plain words",
+        "description": "Rename the workspace's labels to plain words (\\\"Next issue to start\\\", \\\"What is missing\\\", \\\"Work serving it\\\") and keep capability ids only in the source lines.",
+        "path": ".ai/repo/project/issues/I2915.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1111
+      },
+      {
+        "uri": "majordomus://issue/I2916",
+        "kind": "issue",
+        "identity": "I2916",
+        "title": "The workspace reads in the order a person asks",
+        "description": "Order the panels: what the intent is, what is missing, what to do next, the work (milestones, issues, waves, graph), then evidence and moves.",
+        "path": ".ai/repo/project/issues/I2916.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1084
+      },
+      {
+        "uri": "majordomus://issue/I2917",
+        "kind": "issue",
+        "identity": "I2917",
+        "title": "Each intent has one primary action",
+        "description": "Show one primary action per intent (\\\"Start I0702\\\", \\\"Verify …\\\"), derived from plan.next restricted to the intent's issues and the move that issue's status admits; every other move is secondary.",
+        "path": ".ai/repo/project/issues/I2917.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1204
+      },
+      {
+        "uri": "majordomus://issue/I2918",
+        "kind": "issue",
+        "identity": "I2918",
+        "title": "The issue list filters by status",
+        "description": "Let the issue list be filtered by status, the statuses read from the plan and the filter kept in the URL so the snapshot can carry it.",
+        "path": ".ai/repo/project/issues/I2918.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 955
+      },
+      {
+        "uri": "majordomus://issue/I2919",
+        "kind": "issue",
+        "identity": "I2919",
+        "title": "The graph and the intent list respond to a hand and a keyboard",
+        "description": "A dependency graph node opens its issue when the vendored library is present (the table stays the fallback), and the intent list is navigable with the arrow keys and Enter, with an axe-clean focus order.",
+        "path": ".ai/repo/project/issues/I2919.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1144
+      },
+      {
+        "uri": "majordomus://issue/I3000",
+        "kind": "issue",
+        "identity": "I3000",
+        "title": "The workspace's record texts are drawn as prose",
+        "description": "Draw every record text on the workspace (statement, why, criteria, standing sentences, drift) through ui::prose, so code spans, strong words and links render and an id is linked only when the plan holds it; ui/idd.rs's own id linking goes.",
+        "path": ".ai/repo/project/issues/I3000.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1371
+      },
+      {
+        "uri": "majordomus://issue/I3001",
+        "kind": "issue",
+        "identity": "I3001",
+        "title": "The intent is the page's title, and panels ask questions",
+        "description": "Make the chosen intent's title the page's h1 with \\\"Intent workspace\\\" as the eyebrow, and title the panels as plain questions.",
+        "path": ".ai/repo/project/issues/I3001.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1060
+      },
+      {
+        "uri": "majordomus://issue/I3002",
+        "kind": "issue",
+        "identity": "I3002",
+        "title": "A command to reproduce is a code block a reader can copy",
+        "description": "Render each reproduce command as a code block with a keyboard-reachable copy control, in the snapshot too.",
+        "path": ".ai/repo/project/issues/I3002.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1044
+      },
+      {
+        "uri": "majordomus://issue/I3003",
+        "kind": "issue",
+        "identity": "I3003",
+        "title": "The workspace's prose is set for reading",
+        "description": "Set the workspace's prose at about 70 characters a line with the kit's body size and contrast, keeping muted grey for secondary text only; the design contrast check passes.",
+        "path": ".ai/repo/project/issues/I3003.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1090
+      },
+      {
+        "uri": "majordomus://issue/I3004",
+        "kind": "issue",
+        "identity": "I3004",
+        "title": "No raw markdown reaches a /ui page",
+        "description": "Add a ui-audit rule text.raw-markdown that fails any /ui page whose rendered text carries ```, ** or a backticked span, and a case 3220 step reading a rendered criterion's code span.",
+        "path": ".ai/repo/project/issues/I3004.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1113
+      },
+      {
+        "uri": "majordomus://issue/I3005",
+        "kind": "issue",
+        "identity": "I3005",
+        "title": "Code on the UI has one highlighter",
+        "description": "Highlight code blocks on the UI with one shared highlighter, the same one the site uses or a vendored one, not a second.",
+        "path": ".ai/repo/project/issues/I3005.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 890
+      },
+      {
         "uri": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "identity": "a-commit-stood-behind-a-build-lock",
@@ -98689,6 +98953,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 2026
+      },
+      {
+        "uri": "majordomus://milestone/idd-reads-at-a-glance",
+        "kind": "milestone",
+        "identity": "idd-reads-at-a-glance",
+        "title": "The intent workspace reads at a glance and leads everywhere it names",
+        "description": "The workspace reads in the order a person asks (what the intent is, what is missing, what to do next, the work, the evidence), every id on it is a link, its numbers are the intent's, its texts render through the UI's one prose renderer, it offers one primary action, and audit rules keep bare ids and raw markdown off every /ui page from now on.",
+        "path": ".ai/repo/project/milestones/idd-reads-at-a-glance.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 2268
       },
       {
         "uri": "majordomus://milestone/idd-workspace",
@@ -109142,7 +109417,7 @@
       "identity": [
         "id"
       ],
-      "objects": 428
+      "objects": 452
     },
     {
       "name": "knowledge",
@@ -109172,7 +109447,7 @@
       "identity": [
         "id"
       ],
-      "objects": 41
+      "objects": 42
     },
     {
       "name": "moment",

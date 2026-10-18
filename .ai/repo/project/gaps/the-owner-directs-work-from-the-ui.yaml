@@ -21,6 +21,9 @@ observations:
   - id: the-loop-is-tested-in-pieces
     statement: Each step of the loop has its own test — the workspace, the moves, the live channel, the standing — and none walks them together, in a browser, on one commit
     source: file:apps/majordomus-cli/tests/ui_idd.rs
+  - id: the-workspace-is-hard-to-read
+    statement: "The owner read the published /ui/idd three times on 2026-10-18 and called it unergonomic: one stacked column 2875 px tall on a desktop, a source footer under each of 13 panels, milestone ids and served-by issues that lead nowhere, global counts in the hero, two badge styles, full panels for empty answers, raw markdown and internal names, no primary action, and a snapshot move that looks live"
+    source: file:apps/majordomus-cli/src/ui/idd.rs
 conditions:
   - criterion: workspace-is-derived
     state: missing
@@ -42,3 +45,7 @@ conditions:
     state: missing
     because: nothing walks the loop's steps together
     observations: [the-loop-is-tested-in-pieces]
+  - criterion: the-workspace-reads-at-a-glance
+    state: missing
+    because: the workspace presents the plan's answers in capability order, with bare ids, global counts, raw markdown and no primary action
+    observations: [the-workspace-is-hard-to-read]

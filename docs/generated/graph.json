@@ -19757,7 +19757,8 @@
             "A reading that is not of the repository as it is now says so on the panel it fed"
           ],
           "milestones": [
-            "idd-workspace"
+            "idd-workspace",
+            "idd-reads-at-a-glance"
           ],
           "non_goals": [
             "A second planning engine, wave allocator or status vocabulary in the UI",
@@ -39881,6 +39882,985 @@
         }
       },
       {
+        "id": "majordomus://issue/I2901",
+        "kind": "issue",
+        "label": "I2901",
+        "summary": "One grammar names an issue id, and every surface reads it",
+        "route": "/cockpit/objects/issue/i2901",
+        "source": ".ai/repo/project/issues/I2901.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The issue schema refuses an id that is not I and four digits",
+            "ui/prs.rs and ui/idd.rs call one plan::is_issue_id"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "issue.v1.schema.json types id as a bare string; four surfaces carry their own predicate.",
+          "depends_on": [],
+          "desired_state": "The schema states the pattern; one predicate exists and every surface calls it; a test fails if a second one appears.",
+          "evidence_required": [],
+          "milestone": "idd-reads-at-a-glance",
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "share/schemas/majordomus/issue/issue.v1.schema.json",
+            "apps/majordomus-cli/src/plan.rs",
+            "apps/majordomus-cli/src/ui/prs.rs",
+            "apps/majordomus-cli/src/ui/idd.rs",
+            "test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh",
+            ".ai/repo/project",
+            "docs",
+            "site"
+          ],
+          "serves": [
+            "the-owner-directs-work-from-the-ui#workspace-is-derived"
+          ],
+          "slug": "one-grammar-names-an-issue-id",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "majordomus plan validate",
+            "majordomus plan validate",
+            "cargo test --lib plan::"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2902",
+        "kind": "issue",
+        "label": "I2902",
+        "summary": "A status names the moves it admits, and every surface reads that",
+        "route": "/cockpit/objects/issue/i2902",
+        "source": ".ai/repo/project/issues/I2902.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The workspace offers exactly the move plan.transition would accept for each status",
+            "No status string is compared in ui/idd.rs"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "The status-to-move map is written in three places.",
+          "depends_on": [],
+          "desired_state": "One function answers it; the UI, the Cockpit and the refusal read it.",
+          "evidence_required": [],
+          "milestone": "idd-reads-at-a-glance",
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/plan.rs",
+            "apps/majordomus-cli/src/ui/idd.rs",
+            "apps/majordomus-cli/src/cockpit/plan.rs",
+            ".ai/repo/project",
+            "docs",
+            "site"
+          ],
+          "serves": [
+            "the-owner-directs-work-from-the-ui#workspace-is-derived"
+          ],
+          "slug": "a-status-names-its-moves",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "majordomus plan validate",
+            "cargo test --lib plan::",
+            "cargo test --test ui_idd_moves"
+          ],
+          "why": "idd.rs maps READY, ACTIVE and VERIFY to moves on its own (idd.rs:383, :470); plan.rs owns the moves but keeps the admitting status only inside its refusals."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2903",
+        "kind": "issue",
+        "label": "I2903",
+        "summary": "The workspace prefers stages by IntentStage, not by strings",
+        "route": "/cockpit/objects/issue/i2903",
+        "source": ".ai/repo/project/issues/I2903.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "PREFERRED_STAGES holds IntentStage values"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "A string list in idd.rs.",
+          "depends_on": [],
+          "desired_state": "A typed list of IntentStage.",
+          "evidence_required": [],
+          "milestone": "idd-reads-at-a-glance",
+          "objective": "Make idd::PREFERRED_STAGES a list of IntentStage, printed through IntentStage::as_str, so a renamed stage cannot leave the workspace behind.",
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui/idd.rs",
+            ".ai/repo/project",
+            "docs",
+            "site"
+          ],
+          "serves": [
+            "the-owner-directs-work-from-the-ui#workspace-is-derived"
+          ],
+          "slug": "the-workspace-prefers-stages-by-intentstage",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "majordomus plan validate",
+            "cargo test --lib ui::idd::"
+          ],
+          "why": "PREFERRED_STAGES spells executing, verifying, planned and declared as strings while intent.rs owns IntentStage::as_str."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2904",
+        "kind": "issue",
+        "label": "I2904",
+        "summary": "An intent whose criteria are met while its milestones hold open issues says so",
+        "route": "/cockpit/objects/issue/i2904",
+        "source": ".ai/repo/project/issues/I2904.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "An intent with met criteria and an open issue in its milestones reads \\\"criteria met; 1 issue(s) still open\\\" on /ui/idd and /cockpit/intents"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "A verdict of satisfied says nothing about open work.",
+          "depends_on": [],
+          "desired_state": "The verdict is qualified by the open issues it does not cover.",
+          "evidence_required": [],
+          "milestone": "idd-reads-at-a-glance",
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui/intent.rs",
+            "apps/majordomus-cli/src/ui/idd.rs",
+            "apps/majordomus-cli/src/cockpit/intents.rs",
+            ".ai/repo/project",
+            "docs",
+            "site"
+          ],
+          "serves": [
+            "the-owner-directs-work-from-the-ui#workspace-is-derived"
+          ],
+          "slug": "met-criteria-with-open-issues-are-said",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "majordomus plan validate",
+            "cargo test --test ui_idd"
+          ],
+          "why": "The published workspace showed the-owner-directs-work-from-the-ui as satisfied while its milestone idd-workspace still had an open pull request (f6's S17, 2026-10-18)."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2906",
+        "kind": "issue",
+        "label": "I2906",
+        "summary": "Every id and chip on the workspace leads to its record",
+        "route": "/cockpit/objects/issue/i2906",
+        "source": ".ai/repo/project/issues/I2906.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "No milestone or issue id on /ui/idd is bare text",
+            "Case 3220 asserts it for milestones as it does for issues"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "Milestone ids and served-by issues are text.",
+          "depends_on": [
+            "I2812"
+          ],
+          "desired_state": "Every id the workspace shows is a link.",
+          "evidence_required": [],
+          "milestone": "idd-reads-at-a-glance",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui/idd.rs",
+            "apps/majordomus-cli/src/ui/intent.rs",
+            "apps/majordomus-cli/src/ui/view.rs",
+            "test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh",
+            ".ai/repo/project",
+            "docs",
+            "site"
+          ],
+          "serves": [
+            "the-owner-directs-work-from-the-ui#the-workspace-reads-at-a-glance"
+          ],
+          "slug": "every-chip-on-the-workspace-is-a-link",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "majordomus plan validate",
+            "bash test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh",
+            "scripts/ui audit --only /ui/idd"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2907",
+        "kind": "issue",
+        "label": "I2907",
+        "summary": "The workspace's headline numbers are the chosen intent's",
+        "route": "/cockpit/objects/issue/i2907",
+        "source": ".ai/repo/project/issues/I2907.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The hero's numbers change when another intent is chosen",
+            "No hero number counts outside the chosen intent"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "The hero counts every intent and milestone in the repository.",
+          "depends_on": [
+            "I2812"
+          ],
+          "desired_state": "The hero counts what the chosen intent holds.",
+          "evidence_required": [],
+          "milestone": "idd-reads-at-a-glance",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui/idd.rs",
+            "test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh",
+            ".ai/repo/project",
+            "docs",
+            "site"
+          ],
+          "serves": [
+            "the-owner-directs-work-from-the-ui#the-workspace-reads-at-a-glance"
+          ],
+          "slug": "the-headline-numbers-are-the-intents",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "majordomus plan validate",
+            "cargo test --test ui_idd",
+            "bash test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh"
+          ],
+          "why": "On 2026-10-18 the owner read the published /ui/idd three times and found it unergonomic: \\\"Milestones 41\\\" counts the whole plan, not the intent on the screen."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2908",
+        "kind": "issue",
+        "label": "I2908",
+        "summary": "Stage and verdict wear the kit's one badge",
+        "route": "/cockpit/objects/issue/i2908",
+        "source": ".ai/repo/project/issues/I2908.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every stage, verdict and status on /ui/idd renders as the kit's state badge"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "Two badge styles on one screen.",
+          "depends_on": [],
+          "desired_state": "One.",
+          "evidence_required": [],
+          "milestone": "idd-reads-at-a-glance",
+          "objective": "Draw an intent's stage and verdict through the same state badge every status uses, retiring the boxed uppercase variant on the workspace.",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui/idd.rs",
+            "apps/majordomus-cli/src/ui/view.rs",
+            ".ai/repo/project",
+            "docs",
+            "site"
+          ],
+          "serves": [
+            "the-owner-directs-work-from-the-ui#the-workspace-reads-at-a-glance"
+          ],
+          "slug": "stage-and-verdict-wear-one-badge",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "majordomus plan validate",
+            "cargo test --lib ui::idd::",
+            "scripts/ui audit --only /ui/idd"
+          ],
+          "why": "On 2026-10-18 the owner read the published /ui/idd three times and found it unergonomic: stage and verdict mix boxed uppercase tags with dot pills."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2909",
+        "kind": "issue",
+        "label": "I2909",
+        "summary": "A panel with nothing to show is one sentence",
+        "route": "/cockpit/objects/issue/i2909",
+        "source": ".ai/repo/project/issues/I2909.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "An intent with no dependency shows one sentence where the graph was"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "Full panels for empty answers.",
+          "depends_on": [],
+          "desired_state": "One line for them.",
+          "evidence_required": [],
+          "milestone": "idd-reads-at-a-glance",
+          "objective": "Draw a workspace panel that has nothing, or one trivial row (no dependency, one wave), as one sentence instead of a full panel.",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui/idd.rs",
+            ".ai/repo/project",
+            "docs",
+            "site"
+          ],
+          "serves": [
+            "the-owner-directs-work-from-the-ui#the-workspace-reads-at-a-glance"
+          ],
+          "slug": "an-empty-panel-is-one-sentence",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "majordomus plan validate",
+            "cargo test --lib ui::idd::",
+            "scripts/ui audit --only /ui/idd"
+          ],
+          "why": "On 2026-10-18 the owner read the published /ui/idd three times and found it unergonomic: \\\"no issue depends on another\\\" and a one-row Waves panel each take a full panel."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2910",
+        "kind": "issue",
+        "label": "I2910",
+        "summary": "A move on the published workspace reads \\\"live only\\\"",
+        "route": "/cockpit/objects/issue/i2910",
+        "source": ".ai/repo/project/issues/I2910.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every move on a published /ui/idd page is disabled and says \\\"live only\\\""
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "An inert control that looks live.",
+          "depends_on": [],
+          "desired_state": "A disabled control that says why and where it works.",
+          "evidence_required": [],
+          "milestone": "idd-reads-at-a-glance",
+          "objective": "On the snapshot, render each move control disabled and labelled \\\"live only\\\", with a link to the live route, instead of a control that looks actionable and is not.",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui/idd.rs",
+            "apps/majordomus-cli/src/web/report/snapshot.rs",
+            ".ai/repo/project",
+            "docs",
+            "site"
+          ],
+          "serves": [
+            "the-owner-directs-work-from-the-ui#the-workspace-reads-at-a-glance"
+          ],
+          "slug": "a-published-move-reads-live-only",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "majordomus plan validate",
+            "cargo test --test ui_idd"
+          ],
+          "why": "On 2026-10-18 the owner read the published /ui/idd three times and found it unergonomic: in the snapshot the only action looks clickable and does nothing."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2911",
+        "kind": "issue",
+        "label": "I2911",
+        "summary": "The workspace is a list and its chosen intent side by side",
+        "route": "/cockpit/objects/issue/i2911",
+        "source": ".ai/repo/project/issues/I2911.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "At 1280 px the intent list and the chosen intent are both in the first viewport"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "One stacked column.",
+          "depends_on": [],
+          "desired_state": "Master and detail.",
+          "evidence_required": [],
+          "milestone": "idd-reads-at-a-glance",
+          "objective": "Lay the workspace out as master and detail at 1024 px and wider: the intent list on the left, the chosen intent on the right and sticky; stacked below that width.",
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui/idd.rs",
+            "share/ui/src/ui.css",
+            ".ai/repo/project",
+            "docs",
+            "site"
+          ],
+          "serves": [
+            "the-owner-directs-work-from-the-ui#the-workspace-reads-at-a-glance"
+          ],
+          "slug": "the-workspace-is-master-and-detail",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "majordomus plan validate",
+            "scripts/ui audit --only /ui/idd"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2912",
+        "kind": "issue",
+        "label": "I2912",
+        "summary": "A screen's sources are one disclosure, not a footer per panel",
+        "route": "/cockpit/objects/issue/i2912",
+        "source": ".ai/repo/project/issues/I2912.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "/ui/idd carries one Sources disclosure and no per-panel source footer"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "A source footer per panel.",
+          "depends_on": [],
+          "desired_state": "One disclosure per screen.",
+          "evidence_required": [],
+          "milestone": "idd-reads-at-a-glance",
+          "objective": "Fold every panel's source line into one \\\"Sources\\\" disclosure per screen, keeping each capability, its time and its technical-view link.",
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui/shell.rs",
+            "apps/majordomus-cli/src/ui/view.rs",
+            ".ai/repo/project",
+            "docs",
+            "site"
+          ],
+          "serves": [
+            "the-owner-directs-work-from-the-ui#the-workspace-reads-at-a-glance"
+          ],
+          "slug": "sources-are-one-disclosure",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "majordomus plan validate",
+            "scripts/ui audit --only /ui/idd"
+          ],
+          "why": "On 2026-10-18 the owner read the published /ui/idd three times and found it unergonomic: thirteen source footers repeat capability ids and timings under every panel."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2913",
+        "kind": "issue",
+        "label": "I2913",
+        "summary": "Each intent in the list shows its progress",
+        "route": "/cockpit/objects/issue/i2913",
+        "source": ".ai/repo/project/issues/I2913.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every intent in the list shows criteria met and issues done"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "Names and stages only.",
+          "depends_on": [],
+          "desired_state": "A progress row per intent.",
+          "evidence_required": [],
+          "milestone": "idd-reads-at-a-glance",
+          "objective": "Give each intent in the list a compact progress row: criteria met of all and issues done of all, derived.",
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui/idd.rs",
+            ".ai/repo/project",
+            "docs",
+            "site"
+          ],
+          "serves": [
+            "the-owner-directs-work-from-the-ui#the-workspace-reads-at-a-glance"
+          ],
+          "slug": "each-intent-shows-its-progress",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "majordomus plan validate",
+            "cargo test --test ui_idd"
+          ],
+          "why": "On 2026-10-18 the owner read the published /ui/idd three times and found it unergonomic: the list gives no at-a-glance progress."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2914",
+        "kind": "issue",
+        "label": "I2914",
+        "summary": "No /ui page shows an issue id that leads nowhere",
+        "route": "/cockpit/objects/issue/i2914",
+        "source": ".ai/repo/project/issues/I2914.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A page with a bare issue id fails the audit",
+            "The rule passes on every current /ui page"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "One case on one fixture.",
+          "depends_on": [],
+          "desired_state": "A rule over every audited page.",
+          "evidence_required": [],
+          "milestone": "idd-reads-at-a-glance",
+          "objective": "Add a ui-audit rule links.bare-issue-id that fails any /ui page showing an issue id outside a link or a code block, at every width.",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "scripts/lib/ui-audit.mjs",
+            "scripts/lib/ui.test.mjs",
+            ".ai/repo/project",
+            "docs",
+            "site"
+          ],
+          "serves": [
+            "the-owner-directs-work-from-the-ui#the-workspace-reads-at-a-glance"
+          ],
+          "slug": "no-ui-page-shows-a-bare-issue-id",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "majordomus plan validate",
+            "scripts/ui test",
+            "scripts/ui audit --only /ui/idd"
+          ],
+          "why": "Case 3220 holds the rule on its fixture only; the owner asked for it to be enforced for the future on every page."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2915",
+        "kind": "issue",
+        "label": "I2915",
+        "summary": "The workspace speaks in plain words",
+        "route": "/cockpit/objects/issue/i2915",
+        "source": ".ai/repo/project/issues/I2915.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "No panel heading on /ui/idd names a capability id"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "Internal names.",
+          "depends_on": [],
+          "desired_state": "Plain words.",
+          "evidence_required": [],
+          "milestone": "idd-reads-at-a-glance",
+          "objective": "Rename the workspace's labels to plain words (\\\"Next issue to start\\\", \\\"What is missing\\\", \\\"Work serving it\\\") and keep capability ids only in the source lines.",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui/idd.rs",
+            "test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh",
+            ".ai/repo/project",
+            "docs",
+            "site"
+          ],
+          "serves": [
+            "the-owner-directs-work-from-the-ui#the-workspace-reads-at-a-glance"
+          ],
+          "slug": "the-workspace-speaks-plainly",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "majordomus plan validate",
+            "bash test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh"
+          ],
+          "why": "On 2026-10-18 the owner read the published /ui/idd three times and found it unergonomic: labels are internal names such as \\\"Plan's next issue\\\" and capability ids in panel headings."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2916",
+        "kind": "issue",
+        "label": "I2916",
+        "summary": "The workspace reads in the order a person asks",
+        "route": "/cockpit/objects/issue/i2916",
+        "source": ".ai/repo/project/issues/I2916.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The panels of /ui/idd appear in the reading order the record states"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "Capability order.",
+          "depends_on": [],
+          "desired_state": "Reading order.",
+          "evidence_required": [],
+          "milestone": "idd-reads-at-a-glance",
+          "objective": "Order the panels: what the intent is, what is missing, what to do next, the work (milestones, issues, waves, graph), then evidence and moves.",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui/idd.rs",
+            "test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh",
+            ".ai/repo/project",
+            "docs",
+            "site"
+          ],
+          "serves": [
+            "the-owner-directs-work-from-the-ui#the-workspace-reads-at-a-glance"
+          ],
+          "slug": "the-workspace-reads-in-order",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "majordomus plan validate",
+            "bash test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh"
+          ],
+          "why": "On 2026-10-18 the owner read the published /ui/idd three times and found it unergonomic: the panels follow the capabilities, not the questions."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2917",
+        "kind": "issue",
+        "label": "I2917",
+        "summary": "Each intent has one primary action",
+        "route": "/cockpit/objects/issue/i2917",
+        "source": ".ai/repo/project/issues/I2917.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The primary action names the plan's next issue of the intent and the move its status admits"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "Every move looks alike.",
+          "depends_on": [],
+          "desired_state": "One primary action, the rest secondary.",
+          "evidence_required": [],
+          "milestone": "idd-reads-at-a-glance",
+          "objective": "Show one primary action per intent (\\\"Start I0702\\\", \\\"Verify …\\\"), derived from plan.next restricted to the intent's issues and the move that issue's status admits; every other move is secondary.",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui/idd.rs",
+            "test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh",
+            ".ai/repo/project",
+            "docs",
+            "site"
+          ],
+          "serves": [
+            "the-owner-directs-work-from-the-ui#the-workspace-reads-at-a-glance"
+          ],
+          "slug": "each-intent-has-one-primary-action",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "majordomus plan validate",
+            "bash test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh"
+          ],
+          "why": "On 2026-10-18 the owner read the published /ui/idd three times and found it unergonomic: the only action is a small \\\"done\\\" in the far column, easy to miss."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2918",
+        "kind": "issue",
+        "label": "I2918",
+        "summary": "The issue list filters by status",
+        "route": "/cockpit/objects/issue/i2918",
+        "source": ".ai/repo/project/issues/I2918.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "?status=READY shows only the intent's ready issues"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "No filter.",
+          "depends_on": [],
+          "desired_state": "A status filter in the URL.",
+          "evidence_required": [],
+          "milestone": "idd-reads-at-a-glance",
+          "objective": "Let the issue list be filtered by status, the statuses read from the plan and the filter kept in the URL so the snapshot can carry it.",
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui/idd.rs",
+            ".ai/repo/project",
+            "docs",
+            "site"
+          ],
+          "serves": [
+            "the-owner-directs-work-from-the-ui#the-workspace-reads-at-a-glance"
+          ],
+          "slug": "the-issue-list-filters-by-status",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "majordomus plan validate",
+            "cargo test --test ui_idd"
+          ],
+          "why": "On 2026-10-18 the owner read the published /ui/idd three times and found it unergonomic: a long intent offers no way to narrow its issues."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2919",
+        "kind": "issue",
+        "label": "I2919",
+        "summary": "The graph and the intent list respond to a hand and a keyboard",
+        "route": "/cockpit/objects/issue/i2919",
+        "source": ".ai/repo/project/issues/I2919.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Clicking a node opens its issue",
+            "The intent list is reachable and operable by keyboard"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "A static graph.",
+          "depends_on": [],
+          "desired_state": "An interactive one, and a keyboard path.",
+          "evidence_required": [],
+          "milestone": "idd-reads-at-a-glance",
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "share/ui/ui.js",
+            "apps/majordomus-cli/src/ui/idd.rs",
+            ".ai/repo/project",
+            "docs",
+            "site"
+          ],
+          "serves": [
+            "the-owner-directs-work-from-the-ui#the-workspace-reads-at-a-glance"
+          ],
+          "slug": "the-graph-and-list-are-interactive",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "majordomus plan validate",
+            "scripts/ui audit --only /ui/idd"
+          ],
+          "why": "On 2026-10-18 the owner read the published /ui/idd three times and found it unergonomic: the graph is a picture and the list needs a mouse."
+        }
+      },
+      {
+        "id": "majordomus://issue/I3000",
+        "kind": "issue",
+        "label": "I3000",
+        "summary": "The workspace's record texts are drawn as prose",
+        "route": "/cockpit/objects/issue/i3000",
+        "source": ".ai/repo/project/issues/I3000.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A backticked path in a criterion renders as code",
+            "ui/idd.rs carries no id linker of its own"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "Raw text and a second id linker.",
+          "depends_on": [],
+          "desired_state": "One renderer for every record text.",
+          "evidence_required": [],
+          "milestone": "idd-reads-at-a-glance",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui/idd.rs",
+            "apps/majordomus-cli/src/ui/prose.rs",
+            "test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh",
+            ".ai/repo/project",
+            "docs",
+            "site"
+          ],
+          "serves": [
+            "the-owner-directs-work-from-the-ui#the-workspace-reads-at-a-glance"
+          ],
+          "slug": "the-record-texts-are-drawn-as-prose",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "majordomus plan validate",
+            "cargo test --lib ui::",
+            "bash test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh"
+          ],
+          "why": "On 2026-10-18 the owner read the published /ui/idd three times and found it unergonomic: texts show raw backticks and markdown; ui::prose already renders them and only milestone.rs uses it."
+        }
+      },
+      {
+        "id": "majordomus://issue/I3001",
+        "kind": "issue",
+        "label": "I3001",
+        "summary": "The intent is the page's title, and panels ask questions",
+        "route": "/cockpit/objects/issue/i3001",
+        "source": ".ai/repo/project/issues/I3001.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The h1 of /ui/idd?intent=<id> is that intent's title"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "A generic title.",
+          "depends_on": [],
+          "desired_state": "The intent's own.",
+          "evidence_required": [],
+          "milestone": "idd-reads-at-a-glance",
+          "objective": "Make the chosen intent's title the page's h1 with \\\"Intent workspace\\\" as the eyebrow, and title the panels as plain questions.",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui/idd.rs",
+            "test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh",
+            ".ai/repo/project",
+            "docs",
+            "site"
+          ],
+          "serves": [
+            "the-owner-directs-work-from-the-ui#the-workspace-reads-at-a-glance"
+          ],
+          "slug": "the-intent-is-the-title",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "majordomus plan validate",
+            "bash test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh"
+          ],
+          "why": "On 2026-10-18 the owner read the published /ui/idd three times and found it unergonomic: \\\"Intent workspace\\\" is the heading of every intent."
+        }
+      },
+      {
+        "id": "majordomus://issue/I3002",
+        "kind": "issue",
+        "label": "I3002",
+        "summary": "A command to reproduce is a code block a reader can copy",
+        "route": "/cockpit/objects/issue/i3002",
+        "source": ".ai/repo/project/issues/I3002.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Each reproduce command has a copy control that copies exactly the command"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "Inline commands.",
+          "depends_on": [],
+          "desired_state": "Copyable code blocks.",
+          "evidence_required": [],
+          "milestone": "idd-reads-at-a-glance",
+          "objective": "Render each reproduce command as a code block with a keyboard-reachable copy control, in the snapshot too.",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui/idd.rs",
+            "share/ui/ui.js",
+            ".ai/repo/project",
+            "docs",
+            "site"
+          ],
+          "serves": [
+            "the-owner-directs-work-from-the-ui#the-workspace-reads-at-a-glance"
+          ],
+          "slug": "a-reproduce-command-can-be-copied",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "majordomus plan validate",
+            "cargo test --lib ui::idd::",
+            "scripts/ui audit --only /ui/idd"
+          ],
+          "why": "On 2026-10-18 the owner read the published /ui/idd three times and found it unergonomic: commands are inline text that has to be selected by hand."
+        }
+      },
+      {
+        "id": "majordomus://issue/I3003",
+        "kind": "issue",
+        "label": "I3003",
+        "summary": "The workspace's prose is set for reading",
+        "route": "/cockpit/objects/issue/i3003",
+        "source": ".ai/repo/project/issues/I3003.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Prose on /ui/idd is at most about 70ch wide",
+            "majordomus design contrast passes"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "Wide grey prose.",
+          "depends_on": [],
+          "desired_state": "Readable prose.",
+          "evidence_required": [],
+          "milestone": "idd-reads-at-a-glance",
+          "objective": "Set the workspace's prose at about 70 characters a line with the kit's body size and contrast, keeping muted grey for secondary text only; the design contrast check passes.",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui/idd.rs",
+            "share/ui/src/ui.css",
+            ".ai/repo/project",
+            "docs",
+            "site"
+          ],
+          "serves": [
+            "the-owner-directs-work-from-the-ui#the-workspace-reads-at-a-glance"
+          ],
+          "slug": "the-prose-is-set-for-reading",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "majordomus plan validate",
+            "majordomus design contrast",
+            "scripts/ui audit --only /ui/idd"
+          ],
+          "why": "On 2026-10-18 the owner read the published /ui/idd three times and found it unergonomic: long lines and grey on grey make it hard to read."
+        }
+      },
+      {
+        "id": "majordomus://issue/I3004",
+        "kind": "issue",
+        "label": "I3004",
+        "summary": "No raw markdown reaches a /ui page",
+        "route": "/cockpit/objects/issue/i3004",
+        "source": ".ai/repo/project/issues/I3004.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A page with raw markdown fails the audit",
+            "Case 3220 reads a rendered code span"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "Nothing stops raw markdown.",
+          "depends_on": [],
+          "desired_state": "A rule on every audited page.",
+          "evidence_required": [],
+          "milestone": "idd-reads-at-a-glance",
+          "objective": "Add a ui-audit rule text.raw-markdown that fails any /ui page whose rendered text carries ```, ** or a backticked span, and a case 3220 step reading a rendered criterion's code span.",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "scripts/lib/ui-audit.mjs",
+            "scripts/lib/ui.test.mjs",
+            "test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh",
+            ".ai/repo/project",
+            "docs",
+            "site"
+          ],
+          "serves": [
+            "the-owner-directs-work-from-the-ui#the-workspace-reads-at-a-glance"
+          ],
+          "slug": "no-raw-markdown-reaches-a-page",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "majordomus plan validate",
+            "scripts/ui test",
+            "scripts/ui audit --only /ui/idd"
+          ],
+          "why": "The owner asked for markdown rendering to be enforced for the future, not fixed once."
+        }
+      },
+      {
+        "id": "majordomus://issue/I3005",
+        "kind": "issue",
+        "label": "I3005",
+        "summary": "Code on the UI has one highlighter",
+        "route": "/cockpit/objects/issue/i3005",
+        "source": ".ai/repo/project/issues/I3005.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A code block on /ui/idd is highlighted"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "No highlighting.",
+          "depends_on": [],
+          "desired_state": "One highlighter for every code block.",
+          "evidence_required": [],
+          "milestone": "idd-reads-at-a-glance",
+          "objective": "Highlight code blocks on the UI with one shared highlighter, the same one the site uses or a vendored one, not a second.",
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "share/ui/ui.js",
+            "share/ui/src/ui.css",
+            ".ai/repo/project",
+            "docs",
+            "site"
+          ],
+          "serves": [
+            "the-owner-directs-work-from-the-ui#the-workspace-reads-at-a-glance"
+          ],
+          "slug": "code-has-one-highlighter",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "majordomus plan validate",
+            "scripts/ui audit --only /ui/idd"
+          ],
+          "why": "The owner asked for embedded code with highlighting; the UI has none today."
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "label": "a-commit-stood-behind-a-build-lock",
@@ -41096,6 +42076,50 @@
           "validation": [
             "bash test/run.sh",
             "bin/majordomus doctor"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/idd-reads-at-a-glance",
+        "kind": "milestone",
+        "label": "idd-reads-at-a-glance",
+        "summary": "The intent workspace reads at a glance and leads everywhere it names",
+        "route": "/cockpit/objects/milestone/idd-reads-at-a-glance",
+        "source": ".ai/repo/project/milestones/idd-reads-at-a-glance.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "scripts/ui audit --only /ui/idd finds nothing at any width, with the bare-issue-id and raw-markdown rules on",
+            "Case 3220 walks the loop through the new labels, order and primary action"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "/ui/idd composes the plan's capabilities correctly (milestone idd-workspace) but presents them as a stacked list of panels in capability order, with the gaps the owner named.",
+          "depends_on": [
+            "idd-workspace"
+          ],
+          "desired_state": "Each gap is closed by its own issue (I2901-I2919, I3000-I3005), each held by case 3220, the ui audit of /ui/idd at every width, or a rule that holds every /ui page.",
+          "evidence_required": [],
+          "non_scope": [
+            "A second plan engine, status vocabulary or markdown implementation",
+            "Mutation from the published site"
+          ],
+          "order": 152,
+          "priority": "p1",
+          "risks": [
+            "Every issue edits apps/majordomus-cli/src/ui/idd.rs; they land one at a time in the order recorded, each rebased on the last."
+          ],
+          "scope": [
+            "apps/majordomus-cli/src/ui",
+            "share/ui",
+            "scripts/lib",
+            "test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh",
+            ".ai/repo/project"
+          ],
+          "slug": "idd-reads-at-a-glance",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "majordomus plan validate",
+            "majordomus intent validate",
+            "scripts/ui audit --only /ui/idd"
           ]
         }
       },
@@ -84686,6 +85710,256 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2901",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2901",
+        "target": "majordomus://milestone/idd-reads-at-a-glance",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2902",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2902",
+        "target": "majordomus://milestone/idd-reads-at-a-glance",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2903",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2903",
+        "target": "majordomus://milestone/idd-reads-at-a-glance",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2904",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2904",
+        "target": "majordomus://milestone/idd-reads-at-a-glance",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2906",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2906",
+        "target": "majordomus://issue/I2812",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2906",
+        "target": "majordomus://milestone/idd-reads-at-a-glance",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2907",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2907",
+        "target": "majordomus://issue/I2812",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2907",
+        "target": "majordomus://milestone/idd-reads-at-a-glance",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2908",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2908",
+        "target": "majordomus://milestone/idd-reads-at-a-glance",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2909",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2909",
+        "target": "majordomus://milestone/idd-reads-at-a-glance",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2910",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2910",
+        "target": "majordomus://milestone/idd-reads-at-a-glance",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2911",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2911",
+        "target": "majordomus://milestone/idd-reads-at-a-glance",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2912",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2912",
+        "target": "majordomus://milestone/idd-reads-at-a-glance",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2913",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2913",
+        "target": "majordomus://milestone/idd-reads-at-a-glance",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2914",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2914",
+        "target": "majordomus://milestone/idd-reads-at-a-glance",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2915",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2915",
+        "target": "majordomus://milestone/idd-reads-at-a-glance",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2916",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2916",
+        "target": "majordomus://milestone/idd-reads-at-a-glance",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2917",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2917",
+        "target": "majordomus://milestone/idd-reads-at-a-glance",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2918",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2918",
+        "target": "majordomus://milestone/idd-reads-at-a-glance",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2919",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2919",
+        "target": "majordomus://milestone/idd-reads-at-a-glance",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3000",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3000",
+        "target": "majordomus://milestone/idd-reads-at-a-glance",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3001",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3001",
+        "target": "majordomus://milestone/idd-reads-at-a-glance",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3002",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3002",
+        "target": "majordomus://milestone/idd-reads-at-a-glance",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3003",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3003",
+        "target": "majordomus://milestone/idd-reads-at-a-glance",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3004",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3004",
+        "target": "majordomus://milestone/idd-reads-at-a-glance",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3005",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3005",
+        "target": "majordomus://milestone/idd-reads-at-a-glance",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -84834,6 +86108,16 @@
         "source": "majordomus://milestone/foundation",
         "target": "kind:milestone",
         "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/idd-reads-at-a-glance",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/idd-reads-at-a-glance",
+        "target": "majordomus://milestone/idd-workspace",
+        "kind": "depends_on"
       },
       {
         "source": "majordomus://milestone/idd-workspace",
@@ -94717,8 +96001,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2968,
-      "edges": 6517,
+      "nodes": 2993,
+      "edges": 6569,
       "acyclic": false,
       "truncated": false
     }

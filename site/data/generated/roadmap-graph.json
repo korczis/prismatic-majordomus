@@ -330,6 +330,15 @@
       "summary": "The plan of an intent is held to it before execution"
     },
     {
+      "id": "idd-reads-at-a-glance",
+      "kind": "milestone",
+      "label": "idd-reads-at-a-glance",
+      "status": "BLOCKED",
+      "route": "/plan/idd-reads-at-a-glance/",
+      "external": false,
+      "summary": "The intent workspace reads at a glance and leads everywhere it names"
+    },
+    {
       "id": "execution-telemetry",
       "kind": "milestone",
       "label": "0.3  execution-telemetry",
@@ -384,6 +393,11 @@
     {
       "source": "intent-lifecycle",
       "target": "intent-planning",
+      "kind": "requires"
+    },
+    {
+      "source": "idd-workspace",
+      "target": "idd-reads-at-a-glance",
       "kind": "requires"
     },
     {
