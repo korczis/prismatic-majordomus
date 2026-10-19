@@ -127,6 +127,7 @@ jobs:
       cockpit_probe: ${{ steps.plan.outputs.cockpit_probe }}
       site_build: ${{ steps.plan.outputs.site_build }}
       site_probe: ${{ steps.plan.outputs.site_probe }}
+      site_languages: ${{ steps.plan.outputs.site_languages }}
       ui_audit: ${{ steps.plan.outputs.ui_audit }}
       interaction_probe: ${{ steps.plan.outputs.interaction_probe }}
       macos: ${{ steps.plan.outputs.macos }}
@@ -894,10 +895,12 @@ jobs:
     # probe, so a plan that asks for the probe or the Cockpit stylesheet and not for
     # site-build must still open the job — otherwise the gate is planned and the job that
     # would run it never starts. The UI audit is the ui job's, not this one's.
-    if: needs.plan.outputs.site_build == 'true' || needs.plan.outputs.cockpit_assets == 'true' || needs.plan.outputs.site_probe == 'true'
+    if: needs.plan.outputs.site_build == 'true' || needs.plan.outputs.cockpit_assets == 'true' || needs.plan.outputs.site_probe == 'true' || needs.plan.outputs.site_languages == 'true'
     # measured 2026-10-17 on batch 71a: 46, 47.5 and 50.4 min (the last one cancelled at 50);
-    # the browser probe grows with the site, so the bound keeps a quarter's headroom
-    timeout-minutes: 65
+    # the browser probe grows with the site, so the bound keeps a quarter's headroom. The
+    # site-languages probe (ADR 0218) adds every page of every language copy: 5090 pages and
+    # 967900 links in 4 min 42 s at 4 jobs on 2026-10-19, so ten minutes are added for it
+    timeout-minutes: 75
     runs-on: ubuntu-latest
     env:
       # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
@@ -955,6 +958,11 @@ jobs:
       - name: probe the site in a browser
         if: needs.plan.outputs.site_probe == 'true'
         run: CHROME_BIN=google-chrome SITE_PROBE_JOBS=4 scripts/ci/timed --bound 2700 site-probe site-probe timings.tsv scripts/site-probe
+      # Every link of every page in every language the site declares lands, stays in its copy's
+      # language, and the switch and the alternates lead to every copy (ADR 0218)
+      - name: every language of the site
+        if: needs.plan.outputs.site_languages == 'true'
+        run: node scripts/lib/site-i18n-probe.mjs site/public "$(sed -n 's/^base_url = "\(.*\)"/\1/p' site/config.toml)" --jobs 4
       - name: manifest
         run: cat site/data/generated/source.json
       - if: always()

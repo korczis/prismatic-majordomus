@@ -43,6 +43,8 @@ export MJ_PROBE_ROOT="$ROOT" MJ_PROBE_LIB="$LIB" MJ_PROBE_ONLY="$ONLY" MJ_PROBE_
 export MJ_PROBE_SPECS="${MJ_INTERACTION_SPECS:-$LIB/interaction-specs}"
 cd "$ROOT" && exec node --input-type=module - <<'JS'
 const env = process.env;
+const { readFileSync } = await import('node:fs');
+const { join } = await import('node:path');
 const { classify, loadSpecs, isControl, markControls, signature } = await import(`${env.MJ_PROBE_LIB}/interactions.mjs`);
 const { launch, serveSite, siteOrigin } = await import(`${env.MJ_PROBE_LIB}/browser.mjs`);
 const pub = `${env.MJ_PROBE_ROOT}/site/public`;
@@ -51,11 +53,32 @@ let specs = await loadSpecs(env.MJ_PROBE_SPECS);
 if (env.MJ_PROBE_SPEC) specs = specs.filter((s) => s.id === env.MJ_PROBE_SPEC);
 const only = env.MJ_PROBE_ONLY ? new Set(env.MJ_PROBE_ONLY.split(/\s+/).filter(Boolean)) : null;
 
+// A language's copy of the site (ADR 0218) is the English build with its text translated: the same
+// templates and the same controls, which the English walk drives page by page. Each copy is driven at
+// one page per section (its root, then the first page of each top-level section), so a control the
+// translation broke is still met, and the walk does not double with every language the site declares.
+const langs = (() => {
+  try {
+    const l = JSON.parse(readFileSync(join(env.MJ_PROBE_ROOT, 'site', 'i18n', 'languages.json'), 'utf8'));
+    return l.languages.filter((x) => x !== l.source);
+  } catch { return []; }
+})();
+const sampled = new Set();
+const copyKeep = (route) => {
+  const parts = route.split('/').filter(Boolean);
+  if (!langs.includes(parts[0])) return true;
+  const key = `${parts[0]}/${parts[1] || ''}`;
+  if (sampled.has(key)) return false;
+  sampled.add(key);
+  return true;
+};
+
 // what the markup declares, per page and spec: the live counts must agree with it
 const plan = new Map();
 for (const r of classify(pub, specs, (env.MJ_PROBE_COMPOSED || '').split(/\s+/).filter(Boolean))) {
   if (r.specs.length !== 1) continue;              // interaction-check owns unclaimed and doubly claimed controls
   if (only && !only.has(r.route)) continue;
+  if (!only && !plan.has(r.route) && !copyKeep(r.route)) continue;
   const byspec = plan.get(r.route) || new Map();
   const c = byspec.get(r.specs[0]) || { live: 0, conditional: 0, sigs: new Set() };
   if (r.el.conditional) c.conditional++; else c.live++;

@@ -96,7 +96,9 @@ try {
   process.stderr.write('site-i18n-probe: playwright is not installed (npm ci)\n');
   process.exit(12);
 }
-const browser = await chromium.launch();
+// the installed Chrome first, which is what CI's runners carry (as scripts/lib/browser.mjs
+// decides), then Playwright's own Chromium where one is installed
+const browser = await chromium.launch({ channel: 'chrome' }).catch(() => chromium.launch());
 const findings = [];
 let links = 0;
 const finding = (page, kind, detail) => findings.push(`${kind.padEnd(10)} ${page}  ${detail}`);

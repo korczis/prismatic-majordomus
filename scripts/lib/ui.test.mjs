@@ -351,11 +351,13 @@ const builtPage = (origin) => `<html><body><a href="#main">skip</a>
 <!-- a comment of the build -->
 <a href="#site-map-1">All 9 pages</a></nav><main><nav aria-label="Other">x</nav></main></body></html>`;
 
-test('the bar is cut out of a built page as the one Main landmark, and nothing after it', () => {
+test('the bar is cut out of a built page as its first nav, by its place, and nothing after it', () => {
   const bar = cut(builtPage('https://example.test'));
   assert.ok(bar.startsWith('<nav class="sticky" aria-label="Main">') && bar.endsWith('</nav>'));
   assert.ok(!bar.includes('Other'));
-  assert.equal(cut('<html><nav aria-label="Other"></nav></html>'), null);
+  // found by its place, not its label: a translated page renames the landmark
+  assert.ok(cut('<html><body><nav aria-label="Primary">x</nav><nav aria-label="Other"></nav></body></html>').includes('Primary'));
+  assert.equal(cut('<html><body><p>no bar</p></body></html>'), null);
 });
 
 test('the copy leaves the version to the executable, drops the build\'s comments and leads the site map to the site', () => {

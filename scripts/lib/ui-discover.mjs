@@ -103,6 +103,33 @@ export function commonPrefix(paths) {
 }
 
 /**
+ * A language's copy of the site (ADR 0218) is the English build with its text translated:
+ * the same templates, laid out at the same widths, which the audit measures on every English
+ * page. Each copy is audited at its root and the first page of each top-level section, so a
+ * layout the translation broke is still met, and the sweep does not double with every
+ * language the site declares. site/i18n/languages.json names the copies; a site that
+ * declares none keeps every route.
+ */
+export function languageSample(publicDir) {
+  let langs = [];
+  try {
+    const l = JSON.parse(readFileSync(join(publicDir, '..', 'i18n', 'languages.json'), 'utf8'));
+    langs = l.languages.filter((x) => x !== l.source);
+  } catch {
+    langs = [];
+  }
+  const seen = new Set();
+  return (route) => {
+    const parts = route.split('/').filter(Boolean);
+    if (!langs.includes(parts[0])) return true;
+    const key = `${parts[0]}/${parts[1] || ''}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  };
+}
+
+/**
  * The audit's target set: every route either mechanism found, sorted, with where it came
  * from. A route only the sitemap knows is a rendering failure; a route only the filesystem
  * knows is an orphan. Both are reported rather than silently dropped.
@@ -110,7 +137,7 @@ export function commonPrefix(paths) {
 export function discoverPages(publicDir, composed = []) {
   const fromFiles = routesFromFilesystem(publicDir, composed);
   const fromSitemap = routesFromSitemap(publicDir);
-  const all = [...new Set([...fromFiles, ...fromSitemap])].sort();
+  const all = [...new Set([...fromFiles, ...fromSitemap])].sort().filter(languageSample(publicDir));
   return all.map((route) => ({
     route,
     rendered: fromFiles.has(route),
