@@ -7,6 +7,31 @@ Every entry below is derived: a section per release the layer records, its decis
 
 Current version: **0.30.2**
 
+## v0.30.2 — 2026-10-19
+
+### Fixed
+
+- **top**: I2917's nothing-to-move arm of the intent's primary action has a test (`dd4c0a87c`)
+- **ui**: each intent has one primary action (I2917) (`d93b93ad1`)
+- **ui**: the intent workspace's panels stand in the order a person asks (I2916) (`069970820`)
+- **ui**: the intent is the workspace's title and every panel asks a plain question (I3001) (`d65aee8a7`)
+- **pages**: a claim newer than the ledger is not yet recorded, not a refusal (I2853) (`29acb77dd`)
+- **ui**: every record text on the workspace is drawn as prose (I3000) (`d09232416`)
+
+### Housekeeping
+
+- **release**: record v0.30.1 and the metadata it publishes (`e6268966b`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v0.30.2-aarch64-apple-darwin.tar.gz (`b44b8da00054`)
+- `macos-x86_64` — majordomus-v0.30.2-x86_64-apple-darwin.tar.gz (`60735a8fdad4`)
+- `linux-x86_64-gnu` — majordomus-v0.30.2-x86_64-unknown-linux-gnu.tar.gz (`eed5fce0af6b`)
+- `linux-x86_64-musl` — majordomus-v0.30.2-x86_64-unknown-linux-musl.tar.gz (`2b404e30a78f`)
+- `linux-aarch64-gnu` — majordomus-v0.30.2-aarch64-unknown-linux-gnu.tar.gz (`6292503a7ab1`)
+- `linux-aarch64-musl` — majordomus-v0.30.2-aarch64-unknown-linux-musl.tar.gz (`05777434fd01`)
+
+
 ## v0.30.1 — 2026-10-19
 
 ### Fixed

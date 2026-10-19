@@ -6,6 +6,119 @@ generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the layer's release
 generator: majordomus-cli 0.30.2
 current: "0.30.2"
 sections:
+  - version: "0.30.2"
+    tag: v0.30.2
+    date: "2026-10-19T07:24:08Z"
+    commit: dd4c0a87cba408222033c89f002ab2d63f48574c
+    unreleased: false
+    notes_url: https://github.com/korczis/prismatic-majordomus/releases/tag/v0.30.2
+    compare_url: https://github.com/korczis/prismatic-majordomus/compare/v0.30.1...v0.30.2
+    tree_url: https://github.com/korczis/prismatic-majordomus/tree/v0.30.2
+    decisions: []
+    groups:
+      - kind: fix
+        heading: Fixed
+        rank: 1
+        changes:
+          - kind: fix
+            scope: top
+            subject: "I2917's nothing-to-move arm of the intent's primary action has a test"
+            breaking: false
+            commit: dd4c0a87c
+            url: https://github.com/korczis/prismatic-majordomus/commit/dd4c0a87c
+            references:
+              - kind: issue
+                id: I2917
+                title: Each intent has one primary action
+                route: /plan/i2917/
+          - kind: fix
+            scope: ui
+            subject: each intent has one primary action (I2917)
+            breaking: false
+            commit: d93b93ad1
+            url: https://github.com/korczis/prismatic-majordomus/commit/d93b93ad1
+            references:
+              - kind: issue
+                id: I2917
+                title: Each intent has one primary action
+                route: /plan/i2917/
+          - kind: fix
+            scope: ui
+            subject: "the intent workspace's panels stand in the order a person asks (I2916)"
+            breaking: false
+            commit: "069970820"
+            url: https://github.com/korczis/prismatic-majordomus/commit/069970820
+            references:
+              - kind: issue
+                id: I2916
+                title: The workspace reads in the order a person asks
+                route: /plan/i2916/
+          - kind: fix
+            scope: ui
+            subject: "the intent is the workspace's title and every panel asks a plain question (I3001)"
+            breaking: false
+            commit: d65aee8a7
+            url: https://github.com/korczis/prismatic-majordomus/commit/d65aee8a7
+            references:
+              - kind: issue
+                id: I3001
+                title: "The intent is the page's title, and panels ask questions"
+                route: /plan/i3001/
+              - kind: issue
+                id: I2915
+                title: The workspace speaks in plain words
+                route: /plan/i2915/
+          - kind: fix
+            scope: pages
+            subject: "a claim newer than the ledger is not yet recorded, not a refusal (I2853)"
+            breaking: false
+            commit: 29acb77dd
+            url: https://github.com/korczis/prismatic-majordomus/commit/29acb77dd
+            references:
+              - kind: issue
+                id: I2853
+                title: a Pages deploy on a fresh master is not refused for claims newer than the ledger it reads
+                route: /plan/i2853/
+          - kind: fix
+            scope: ui
+            subject: every record text on the workspace is drawn as prose (I3000)
+            breaking: false
+            commit: d09232416
+            url: https://github.com/korczis/prismatic-majordomus/commit/d09232416
+            references:
+              - kind: issue
+                id: I3000
+                title: "The workspace's record texts are drawn as prose"
+                route: /plan/i3000/
+      - kind: chore
+        heading: Housekeeping
+        rank: 7
+        changes:
+          - kind: chore
+            scope: release
+            subject: record v0.30.1 and the metadata it publishes
+            breaking: false
+            commit: e6268966b
+            url: https://github.com/korczis/prismatic-majordomus/commit/e6268966b
+    artifacts:
+      - target: macos-aarch64
+        name: majordomus-v0.30.2-aarch64-apple-darwin.tar.gz
+        sha256: b44b8da000546c85af6ad3d0a28d693bcf2560bf8e9c6120dfe24946811efa57
+      - target: macos-x86_64
+        name: majordomus-v0.30.2-x86_64-apple-darwin.tar.gz
+        sha256: 60735a8fdad48839bf424c3949565f3c0c4524101f7266c459a0ef953483c9dc
+      - target: linux-x86_64-gnu
+        name: majordomus-v0.30.2-x86_64-unknown-linux-gnu.tar.gz
+        sha256: eed5fce0af6b5c01bf8409043c6ec0b4bb830652a215864eabed4ad4c6c8768b
+      - target: linux-x86_64-musl
+        name: majordomus-v0.30.2-x86_64-unknown-linux-musl.tar.gz
+        sha256: 2b404e30a78fc2335044b268cfc8c8386ef40c2d12fcd619045971c0c58f18f5
+      - target: linux-aarch64-gnu
+        name: majordomus-v0.30.2-aarch64-unknown-linux-gnu.tar.gz
+        sha256: 6292503a7ab1862eb9124e60b053c0dafbfb67fe0a3a196fe7dabadaa9a8d2ba
+      - target: linux-aarch64-musl
+        name: majordomus-v0.30.2-aarch64-unknown-linux-musl.tar.gz
+        sha256: 05777434fd01413eefc422475a7f225c3c4841faf0583f85fe0e652b0b7bfb2a
   - version: "0.30.1"
     tag: v0.30.1
     date: "2026-10-19T00:13:46Z"
