@@ -52204,6 +52204,30 @@
         }
       },
       {
+        "id": "majordomus://rule/project.the-site-is-offered-in-every-language@1",
+        "kind": "rule",
+        "label": "project.the-site-is-offered-in-every-language@1",
+        "summary": "Every page of the site is offered in every declared language, derived from the English and held to it in a browser",
+        "route": "/cockpit/objects/rule/project-the-site-is-offered-in-every-language-1",
+        "source": ".ai/repo/rules/project/the-site-is-offered-in-every-language.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.english-only@4",
+            "project.every-link-and-control-is-tested@1",
+            "project.derived-once@1"
+          ],
+          "tags": [
+            "site",
+            "language",
+            "links",
+            "layout",
+            "testing"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.the-site-offers-the-release-it-published@1",
         "kind": "rule",
         "label": "project.the-site-offers-the-release-it-published@1",
@@ -91460,6 +91484,26 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/project.the-site-is-offered-in-every-language@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.the-site-is-offered-in-every-language@1",
+        "target": "majordomus://rule/project.derived-once@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.the-site-is-offered-in-every-language@1",
+        "target": "majordomus://rule/project.english-only@4",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.the-site-is-offered-in-every-language@1",
+        "target": "majordomus://rule/project.every-link-and-control-is-tested@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.the-site-offers-the-release-it-published@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -99001,8 +99045,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3084,
-      "edges": 6747,
+      "nodes": 3085,
+      "edges": 6751,
       "acyclic": false,
       "truncated": false
     }

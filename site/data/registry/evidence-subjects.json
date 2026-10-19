@@ -26589,6 +26589,29 @@
       "mechanisms": [],
       "findings": []
     },
+    "rule:project.the-site-is-offered-in-every-language": {
+      "kind": "rule",
+      "id": "project.the-site-is-offered-in-every-language",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:3590_the_site_is_derived_in_every_language",
+          "path": "test/cases/3590_the_site_is_derived_in_every_language.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/3590_the_site_is_derived_in_every_language.sh",
+            ".ai/repo/rules/project/the-site-is-offered-in-every-language.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [
+        "scripts/lib/site-i18n-probe.mjs"
+      ],
+      "findings": []
+    },
     "rule:project.the-site-offers-the-release-it-published": {
       "kind": "rule",
       "id": "project.the-site-offers-the-release-it-published",

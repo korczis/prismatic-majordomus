@@ -426,6 +426,7 @@ pages and the memory.
 
 **Translating.** A changed English segment has a new key, so its old translation is never served.
 
+<!-- majordomus:unrun it builds the whole site and carries segments to a model or a translator outside the process; case 3590 runs the pass, the memory and the refusal of a translation that breaks its placeholders against a fixture -->
 ```bash
 scripts/site-build                                   # lists what the memory lacks
 scripts/site-translate status                        # how much is open

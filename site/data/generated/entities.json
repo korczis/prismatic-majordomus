@@ -23,7 +23,7 @@
       "title": "Rules",
       "description": "Every rule in force here — the vendored doctrine package and this repository's own — with the class it declares, the artefacts it names as its enforcement, whether the tree holds them, and the rules either side of it in the dependency graph.",
       "weight": 46,
-      "count": 188,
+      "count": 189,
       "dir": "rules",
       "statuses": [
         "active"
@@ -245,7 +245,7 @@
       "route": "/rules/",
       "title": "Rules",
       "reason": null,
-      "count": 188
+      "count": 189
     },
     {
       "kind": "scope",
@@ -14012,6 +14012,13 @@
         },
         {
           "edge": "depends_on",
+          "label": "project.the-site-is-offered-in-every-language@1",
+          "kind": "rule",
+          "route": "/rules/project-the-site-is-offered-in-every-language-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
           "label": "project.ui-conformance@1",
           "kind": "rule",
           "route": "/rules/project-ui-conformance-1/",
@@ -14454,6 +14461,13 @@
           "kind": "rule",
           "route": "/rules/project-the-handbook-is-built-from-the-tree-1/",
           "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.the-site-is-offered-in-every-language@1",
+          "kind": "rule",
+          "route": "/rules/project-the-site-is-offered-in-every-language-1/",
+          "external": false
         }
       ]
     },
@@ -14810,6 +14824,13 @@
           "label": "project.the-crate-reference-is-published@1",
           "kind": "rule",
           "route": "/rules/project-the-crate-reference-is-published-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.the-site-is-offered-in-every-language@1",
+          "kind": "rule",
+          "route": "/rules/project-the-site-is-offered-in-every-language-1/",
           "external": false
         }
       ]
@@ -18290,6 +18311,47 @@
           "external": false
         }
       ]
+    },
+    {
+      "kind": "rule",
+      "id": "majordomus://rule/project.the-site-is-offered-in-every-language@1",
+      "identity": "project.the-site-is-offered-in-every-language@1",
+      "slug": "project-the-site-is-offered-in-every-language-1",
+      "cockpit": "/cockpit/objects/rule/project-the-site-is-offered-in-every-language-1",
+      "title": "Every page of the site is offered in every declared language, derived from the English and held to it in a browser",
+      "status": "active",
+      "tags": [
+        "site",
+        "language",
+        "links",
+        "layout",
+        "testing"
+      ],
+      "source": ".ai/repo/rules/project/the-site-is-offered-in-every-language.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.derived-once@1",
+          "kind": "rule",
+          "route": "/rules/project-derived-once-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.english-only@4",
+          "kind": "rule",
+          "route": "/rules/project-english-only-4/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.every-link-and-control-is-tested@1",
+          "kind": "rule",
+          "route": "/rules/project-every-link-and-control-is-tested-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
     },
     {
       "kind": "rule",
