@@ -1296,6 +1296,17 @@ mod tests {
         );
     }
 
+    /// An intent with nothing ready, under way or awaiting verification says so, and offers no
+    /// primary button (I2917).
+    #[test]
+    fn an_intent_with_nothing_to_move_says_so() {
+        let issues = answer(ISSUES, Ok(serde_json::json!({ "issues": [] })));
+        let next = answer(NEXT, Ok(serde_json::json!({})));
+        let html = primary_action(&issues, &next, &[], "i").render();
+        assert!(html.contains("there is nothing to move"), "{html}");
+        assert!(!html.contains("mj-btn--primary"), "{html}");
+    }
+
     /// An issue added to the plan's record appears in the workspace with no other edit.
     #[test]
     fn an_issue_added_to_the_plan_appears_with_no_registration() {
