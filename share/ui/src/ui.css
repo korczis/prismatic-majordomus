@@ -415,6 +415,18 @@
     color: var(--mj-body);
     overflow-wrap: anywhere;
   }
+  /* a command to reproduce: the code whole, wrapped rather than scrolled, its copy button beside it (I3002) */
+  .mj-ui-command {
+    @apply flex min-w-0 items-start gap-2;
+  }
+  .mj-ui-command-text {
+    @apply m-0 min-w-0 flex-1 rounded-lg px-3 py-2 font-mono text-xs;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    color: var(--mj-fg);
+    background: var(--mj-sunken);
+    border: 1px solid var(--mj-line);
+  }
   .mj-ui-code {
     @apply rounded px-1 py-0.5 font-mono text-small;
     background: var(--mj-sunken);

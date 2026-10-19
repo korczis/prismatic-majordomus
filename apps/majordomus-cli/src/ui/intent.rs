@@ -12,7 +12,7 @@ use crate::cockpit::html::{el, El};
 use crate::cockpit::view::word_badge;
 
 use super::source::Answer;
-use super::view::{list, nothing, panel, state, table, text, unanswered};
+use super::view::{command, list, nothing, panel, state, table, text, unanswered};
 
 /// An intent id, as the repository writes them (`intent-bound-work`): letters, digits, `-`
 /// and `_`, and nothing a link could carry anything else in.
@@ -145,7 +145,7 @@ pub fn inspector_closing_to(intents: &Answer, issues: &Answer, id: &str, close: 
                         .child(el("td").child(if reproduce.is_empty() {
                             el("span").class("mj-ui-dim").text("none")
                         } else {
-                            el("code").class("mj-ui-mono").text(reproduce)
+                            command(&reproduce)
                         }))
                 })
                 .collect::<Vec<_>>();
@@ -287,7 +287,7 @@ mod tests {
         for want in [
             "id=\"intent\"",
             "1 of 2 criteria met",
-            "cargo test --test x",
+            "<pre class=\"mj-ui-command-text\"><code>cargo test --test x</code></pre>",
             "/ui/roadmap?milestone=M7#milestone",
             "/ui/prs?issue=I0009#issue",
             "one rule",

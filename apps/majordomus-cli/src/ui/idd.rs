@@ -27,8 +27,8 @@ use super::dashboard::milestone_row;
 use super::shell::View;
 use super::source::{ask_all, Answer, Source};
 use super::view::{
-    graph, hero, hero_under, kpi, kpi_count, list, nothing, panel, panel_to, state, status_tone,
-    table, text, unanswered, wide, GraphNode, Layout,
+    command, graph, hero, hero_under, kpi, kpi_count, list, nothing, panel, panel_to, state,
+    status_tone, table, text, unanswered, wide, GraphNode, Layout,
 };
 
 /// The route of the screen.
@@ -863,10 +863,7 @@ fn standing_body(id: &str, explain: &Answer, known: &super::prose::Known) -> El 
                         .child(el("td").child(el("code").text(text(c, "id"))))
                         .child(el("td").text(text(c, "evidence")))
                         .child(el("td").child(state(c, "state")))
-                        .child(
-                            el("td")
-                                .child(el("code").class("mj-ui-mono").text(text(c, "reproduce"))),
-                        )
+                        .child(el("td").child(command(&text(c, "reproduce"))))
                         .child(
                             el("td").child(
                                 el("p").class("mj-ui-badges").children(

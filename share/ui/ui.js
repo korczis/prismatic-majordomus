@@ -23,6 +23,11 @@
 // script, or without the library, reads instead. Colours are the design system's tones, read
 // from the stylesheet, so nothing here names a colour.
 //
+// A command to reproduce (`data-mj-copy`) has a copy button, in a snapshot too (I3002): the
+// page carries it hidden, and it is shown only where a clipboard can be written, so a button
+// that cannot copy is never offered. It copies exactly the text of the command beside it, and
+// says what happened on itself and in the status beside it, which a screen reader announces.
+//
 // An issue's move form is wired by the Cockpit's `moves.js`, and a screen that follows the
 // executions this server runs holds one channel through the Cockpit's `socket.js`: both are
 // loaded only where the screen needs them, from the URLs the page names, never in a snapshot.
@@ -382,7 +387,37 @@ async function followExecutions() {
   window.addEventListener('pagehide', () => channel.close());
 }
 
+const COPY_SAID_MS = 1600;
+function showCopyButtons() {
+  if (!(navigator.clipboard && window.isSecureContext)) return;
+  for (const button of document.querySelectorAll('button[data-mj-copy][hidden]')) button.hidden = false;
+}
+// one listener for every copy button, so a screen read again keeps its buttons working
+document.addEventListener('click', async (event) => {
+  const button = event.target.closest && event.target.closest('button[data-mj-copy]');
+  const block = button && button.closest('.mj-ui-command');
+  const code = block && block.querySelector('code');
+  if (!code) return;
+  const status = block.querySelector('[role="status"]');
+  const say = (words) => {
+    button.textContent = words;
+    if (status) status.textContent = words;
+  };
+  try {
+    await navigator.clipboard.writeText(code.textContent);
+    say('Copied');
+  } catch (e) {
+    say('Copy failed — select the text');
+  }
+  clearTimeout(button.copySaid);
+  button.copySaid = setTimeout(() => {
+    button.textContent = 'Copy';
+    if (status) status.textContent = '';
+  }, COPY_SAID_MS);
+});
+
 function enhance() {
+  showCopyButtons();
   if (!SNAPSHOT) {
     for (const placeholder of document.querySelectorAll('[data-panel-src]')) {
       fillPanel(placeholder);

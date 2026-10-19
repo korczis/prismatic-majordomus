@@ -41903,7 +41903,8 @@
         "source": ".ai/repo/project/issues/I3002.yaml",
         "facts": {
           "acceptance_criteria": [
-            "Each reproduce command has a copy control that copies exactly the command"
+            "Each reproduce command has a copy control that copies exactly the command",
+            "The control is reached by the keyboard, says what the copy did, and is offered only where a clipboard can be written"
           ],
           "created_at": "2026-10-18",
           "current_state": "Inline commands.",
@@ -41918,6 +41919,12 @@
           "scope": [
             "apps/majordomus-cli/src/ui/idd.rs",
             "share/ui/ui.js",
+            "apps/majordomus-cli/src/ui/view.rs",
+            "apps/majordomus-cli/src/ui/intent.rs",
+            "apps/majordomus-cli/src/ui/claim.rs",
+            "share/ui/src/ui.css",
+            "share/ui/ui.css",
+            "test/cases/3402_a_reproduce_command_is_copied_exactly.sh",
             ".ai/repo/project",
             "docs",
             "site"
@@ -41930,7 +41937,8 @@
           "validation": [
             "majordomus plan validate",
             "cargo test --lib ui::idd::",
-            "scripts/ui audit --only /ui/idd"
+            "scripts/ui audit --only /ui/idd",
+            "bash test/run.sh --no-skips 3402_a_reproduce_command_is_copied_exactly"
           ],
           "why": "On 2026-10-18 the owner read the published /ui/idd three times and found it unergonomic: commands are inline text that has to be selected by hand."
         }
@@ -60215,6 +60223,13 @@
         "label": "test/cases/33_stale_executable.sh",
         "route": "/cockpit/objects/test/test-cases-33-stale-executable-sh",
         "source": "test/cases/33_stale_executable.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3402_a_reproduce_command_is_copied_exactly.sh",
+        "kind": "test",
+        "label": "test/cases/3402_a_reproduce_command_is_copied_exactly.sh",
+        "route": "/cockpit/objects/test/test-cases-3402-a-reproduce-command-is-copied-exactly-sh",
+        "source": "test/cases/3402_a_reproduce_command_is_copied_exactly.sh"
       },
       {
         "id": "majordomus://test/test/cases/340_a_brief_is_kept_as_received.sh",
@@ -92822,6 +92837,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3402_a_reproduce_command_is_copied_exactly.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/340_a_brief_is_kept_as_received.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -98068,8 +98088,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3052,
-      "edges": 6697,
+      "nodes": 3053,
+      "edges": 6698,
       "acyclic": false,
       "truncated": false
     }

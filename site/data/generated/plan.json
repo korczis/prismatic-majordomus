@@ -30753,6 +30753,12 @@
       "scope": [
         "apps/majordomus-cli/src/ui/idd.rs",
         "share/ui/ui.js",
+        "apps/majordomus-cli/src/ui/view.rs",
+        "apps/majordomus-cli/src/ui/intent.rs",
+        "apps/majordomus-cli/src/ui/claim.rs",
+        "share/ui/src/ui.css",
+        "share/ui/ui.css",
+        "test/cases/3402_a_reproduce_command_is_copied_exactly.sh",
         ".ai/repo/project",
         "docs",
         "site"
@@ -30763,12 +30769,14 @@
       "current_state": "Inline commands.",
       "desired_state": "Copyable code blocks.",
       "acceptance_criteria": [
-        "Each reproduce command has a copy control that copies exactly the command"
+        "Each reproduce command has a copy control that copies exactly the command",
+        "The control is reached by the keyboard, says what the copy did, and is offered only where a clipboard can be written"
       ],
       "validation": [
         "majordomus plan validate",
         "cargo test --lib ui::idd::",
-        "scripts/ui audit --only /ui/idd"
+        "scripts/ui audit --only /ui/idd",
+        "bash test/run.sh --no-skips 3402_a_reproduce_command_is_copied_exactly"
       ],
       "evidence_required": [],
       "evidence": [],
