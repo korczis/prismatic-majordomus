@@ -26787,6 +26787,8 @@
             "A negative test plants a synthetic marker and proves the check finds it",
             "The check runs in CI on every change"
           ],
+          "completed_at": "2026-10-19T13:52:54Z",
+          "completed_event": "sha256:64ac9b1dacb0256e99d1bf3a471301c111ce01173abd32e2c0c20558f7bc55bd",
           "created_at": "2026-09-06",
           "depends_on": [
             "I1005"
@@ -26810,7 +26812,9 @@
             "test/cases"
           ],
           "slug": "public-metadata-safety",
-          "updated_at": "2026-10-15",
+          "started_at": "2026-10-19T13:52:20Z",
+          "started_event": "sha256:28f02787a603e2bddee2c26468ce15f07d0e09508058384054570cf121c2bad6",
+          "updated_at": "2026-10-19T13:52:54Z",
           "validation": [
             "bash test/run.sh"
           ],
@@ -34410,6 +34414,8 @@
             "After finish the claim is released",
             "Without a server start records no claim and does not fail"
           ],
+          "completed_at": "2026-10-19T13:53:27Z",
+          "completed_event": "sha256:0c35678ba8ff84c9da1ddb797b4860aed2c0cfa15c8b02abc515bf146297865a",
           "created_at": "2026-10-10",
           "current_state": "majordomus start reports overlaps with the local board and claims nothing on the mesh.",
           "depends_on": [
@@ -34430,7 +34436,9 @@
             "docs/MESH.md"
           ],
           "slug": "session-on-the-mesh",
-          "updated_at": "2026-10-15",
+          "started_at": "2026-10-19T13:53:11Z",
+          "started_event": "sha256:931aff73aefb5151f108150b5f196339ff5ea15a113420012887c768663a5a23",
+          "updated_at": "2026-10-19T13:53:27Z",
           "validation": [
             "bin/majordomus plan validate",
             "bash test/run.sh 3067_a_task_is_claimed_on_the_mesh 04_start_check 06_finish"
@@ -40024,6 +40032,8 @@
             "A double click starts one execution",
             "A request from another origin is refused by the server, not by the page"
           ],
+          "completed_at": "2026-10-19T13:54:24Z",
+          "completed_event": "sha256:c03720d3d13021950fa9b8f36a6a0752e0467d84a7d07ddfd69938e7942ae143",
           "created_at": "2026-10-16",
           "current_state": "Moves are offered on /cockpit/plan/issues/<id> only.",
           "depends_on": [
@@ -40052,7 +40062,9 @@
             "the-owner-directs-work-from-the-ui#next-move-is-reachable"
           ],
           "slug": "an-issue-moves-from-the-workspace",
-          "updated_at": "2026-10-16",
+          "started_at": "2026-10-19T13:54:02Z",
+          "started_event": "sha256:46a2508c559395b2107b3b9ab77fa85a1a36002a4d1c89789824b78bd94a1edf",
+          "updated_at": "2026-10-19T13:54:24Z",
           "validation": [
             "majordomus plan validate",
             "cargo test --lib ui::idd",
@@ -40075,6 +40087,8 @@
             "No other screen declares that it follows executions",
             "A snapshot opens no channel"
           ],
+          "completed_at": "2026-10-19T13:54:54Z",
+          "completed_event": "sha256:2fa89d5e96691994eef35a8a09831dcc065bff5296286afdb79878ea23385731",
           "created_at": "2026-10-17",
           "current_state": "/ui screens read again every minute; only the Cockpit follows /events.",
           "depends_on": [
@@ -40100,7 +40114,9 @@
             "the-owner-directs-work-from-the-ui#the-workspace-follows-moves"
           ],
           "slug": "the-workspace-follows-the-plan-live",
-          "updated_at": "2026-10-17",
+          "started_at": "2026-10-19T13:54:38Z",
+          "started_event": "sha256:0729497f8e8923e7c41d393c0f4418582ee98dc69d5bd2bbc9facf3c32095e19",
+          "updated_at": "2026-10-19T13:54:54Z",
           "validation": [
             "majordomus plan validate",
             "cargo test --test ui_idd_live",
@@ -40211,6 +40227,8 @@
             "Each unmet criterion is shown with its evidence state, its reproduce command and the issues serving it, exactly as the capability answers",
             "A plan.transition started on one of the intent's issues is listed on the workspace, leading to its execution, and one on another intent's issue is not"
           ],
+          "completed_at": "2026-10-19T13:55:16Z",
+          "completed_event": "sha256:dd0eb298f003e2ab44b28a6f67abcc4a52b3e11f4254217c33d5e686b11a603b",
           "created_at": "2026-10-17",
           "current_state": "intent_realization.explain and executions.list answer both questions; no screen reads them for an intent.",
           "depends_on": [
@@ -40236,7 +40254,9 @@
             "the-owner-directs-work-from-the-ui#the-workspace-shows-why-and-what-moved"
           ],
           "slug": "the-workspace-shows-its-evidence",
-          "updated_at": "2026-10-17",
+          "started_at": "2026-10-19T13:55:03Z",
+          "started_event": "sha256:93983850cf1a73b60a60b30480152d6c92804d867a0ed12797a6f375b71ea23a",
+          "updated_at": "2026-10-19T13:55:16Z",
           "validation": [
             "majordomus plan validate",
             "cargo test --test ui_idd_evidence"
@@ -40295,6 +40315,8 @@
             "The case walks pick, read, move, test, live, done, explained, evidence and reproduced, each step printed, and fails naming the step that did not happen",
             "Under CI=true a missing browser fails the case"
           ],
+          "completed_at": "2026-10-19T13:55:38Z",
+          "completed_event": "sha256:4539474814521ea18d93f406b1606c0fec18a704f7af97467b3ab1041cd18798",
           "created_at": "2026-10-17",
           "current_state": "Each step of the loop is tested on its own (ui_idd, ui_idd_moves, ui_idd_live, ui_idd_evidence); none walks them together in a browser.",
           "depends_on": [
@@ -40320,7 +40342,9 @@
             "the-owner-directs-work-from-the-ui#the-loop-is-walked-end-to-end"
           ],
           "slug": "the-idd-loop-is-accepted-end-to-end",
-          "updated_at": "2026-10-17",
+          "started_at": "2026-10-19T13:55:25Z",
+          "started_event": "sha256:ef74fcc0b35f19857b64e974bf340e28dd2bbaf233de7bb9754b42c94e7f15e4",
+          "updated_at": "2026-10-19T13:55:38Z",
           "validation": [
             "majordomus plan validate",
             "bash test/run.sh 3220_the_idd_loop_is_walked_in_a_browser"
@@ -40343,6 +40367,8 @@
             "A listed page that answers 404 fails at once and is never retried",
             "Removing the retry, retrying every status, removing its bound, or leaving 000 out of it each turns case 3226 red"
           ],
+          "completed_at": "2026-10-19T13:56:06Z",
+          "completed_event": "sha256:9468e3f567ae2774ff97d3619ced485553d39358c82384fc8f7a2c76d423464a",
           "created_at": "2026-10-17",
           "current_state": "verify-ui asks each listed page once, in one parallel curl, and a 503 is a missing page; with --timeout 0 nothing asks again.",
           "depends_on": [],
@@ -40363,7 +40389,9 @@
           ],
           "serves": [],
           "slug": "a-pages-503-is-retried-before-a-page-is-called-missing",
-          "updated_at": "2026-10-17",
+          "started_at": "2026-10-19T13:55:47Z",
+          "started_event": "sha256:1d4ccff5302b0c37e478638992808d4f1f28e4f596eb4377e2b0f830de2a90ef",
+          "updated_at": "2026-10-19T13:56:06Z",
           "validation": [
             "bash test/run.sh 3226_a_pages_503_is_retried_before_a_page_is_called_missing",
             "bash test/run.sh 2983_the_published_ui_is_the_trunks"
@@ -40920,6 +40948,8 @@
             "The shared-scope pairs are one closed disclosure whose summary gives their count, and open to links to both issues of each pair",
             "A distribution without the vendored graph library is never asked for it: no request, no failed response, no console error"
           ],
+          "completed_at": "2026-10-19T13:57:06Z",
+          "completed_event": "sha256:2c4b894a46fe82b7bc489320db478836797d9cfc36c2153792326391b56d39bc",
           "created_at": "2026-10-17",
           "current_state": "The next-issue tile and the shared-scope lines show issue ids as text; the pairs are listed in full under a heading.",
           "depends_on": [
@@ -40945,7 +40975,9 @@
             "the-owner-directs-work-from-the-ui#the-loop-is-walked-end-to-end"
           ],
           "slug": "every-issue-on-the-workspace-is-a-link",
-          "updated_at": "2026-10-17",
+          "started_at": "2026-10-19T13:56:32Z",
+          "started_event": "sha256:9ce34c7f3c6c10a15ae27e73a686d475a97db8d5ebe616c3ab7368ef66105281",
+          "updated_at": "2026-10-19T13:57:06Z",
           "validation": [
             "bash test/run.sh --runs-in ui",
             "cargo test --test ui_idd"
@@ -41172,6 +41204,8 @@
             "The hero's numbers change when another intent is chosen",
             "No hero number counts outside the chosen intent"
           ],
+          "completed_at": "2026-10-19T14:00:44Z",
+          "completed_event": "sha256:8026fe5d064555f7bac283b1e2d378980e5ede4c1e30b9d7436a83d52e49635b",
           "created_at": "2026-10-18",
           "current_state": "The hero counts every intent and milestone in the repository.",
           "depends_on": [
@@ -41194,7 +41228,9 @@
             "the-owner-directs-work-from-the-ui#the-workspace-reads-at-a-glance"
           ],
           "slug": "the-headline-numbers-are-the-intents",
-          "updated_at": "2026-10-18",
+          "started_at": "2026-10-19T14:00:26Z",
+          "started_event": "sha256:6b26d4a15983a4874dc15ec3d22218fabd05fc91acdf50520e71dc68795e9322",
+          "updated_at": "2026-10-19T14:00:44Z",
           "validation": [
             "majordomus plan validate",
             "cargo test --test ui_idd",
@@ -41454,6 +41490,8 @@
             "A page with a bare issue id fails the audit",
             "The rule passes on every current /ui page"
           ],
+          "completed_at": "2026-10-19T14:01:23Z",
+          "completed_event": "sha256:24005f700eb064bdc9c31323dca8340385bd9f96b292f4f9f6a1d996853cb9d0",
           "created_at": "2026-10-18",
           "current_state": "One case on one fixture.",
           "depends_on": [],
@@ -41475,7 +41513,9 @@
             "the-owner-directs-work-from-the-ui#the-workspace-reads-at-a-glance"
           ],
           "slug": "no-ui-page-shows-a-bare-issue-id",
-          "updated_at": "2026-10-18",
+          "started_at": "2026-10-19T14:01:03Z",
+          "started_event": "sha256:40db5b5b6b278f06c2f8471fa069e9e8714d15a894b35c3e261a6e9ca4e5ef88",
+          "updated_at": "2026-10-19T14:01:23Z",
           "validation": [
             "majordomus plan validate",
             "scripts/ui test",
@@ -41535,6 +41575,8 @@
           "acceptance_criteria": [
             "The panels of /ui/idd appear in the reading order the record states"
           ],
+          "completed_at": "2026-10-19T14:01:57Z",
+          "completed_event": "sha256:5b66a7498a8f8f674307849c465bb81c856e4bdee45b287fac5b84542d768be9",
           "created_at": "2026-10-18",
           "current_state": "Capability order.",
           "depends_on": [],
@@ -41556,7 +41598,9 @@
             "the-owner-directs-work-from-the-ui#the-workspace-reads-at-a-glance"
           ],
           "slug": "the-workspace-reads-in-order",
-          "updated_at": "2026-10-18",
+          "started_at": "2026-10-19T14:01:43Z",
+          "started_event": "sha256:b07e681a77fc1aaefc542daeac0d4851825ac2c7b411a20794100154e800daa1",
+          "updated_at": "2026-10-19T14:01:57Z",
           "validation": [
             "majordomus plan validate",
             "bash test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh"
@@ -41576,6 +41620,8 @@
             "The primary action names the plan's next issue of the intent and the move its status admits",
             "Exactly one primary action is drawn, and the walk in case 3220 makes its move through it"
           ],
+          "completed_at": "2026-10-19T14:02:26Z",
+          "completed_event": "sha256:2a49765273b800e3bb0e71bacbed8871c99be75c7e65f73c782a3ce8b4d0ec5d",
           "created_at": "2026-10-18",
           "current_state": "Every move looks alike.",
           "depends_on": [],
@@ -41598,7 +41644,9 @@
             "the-owner-directs-work-from-the-ui#the-workspace-reads-at-a-glance"
           ],
           "slug": "each-intent-has-one-primary-action",
-          "updated_at": "2026-10-18",
+          "started_at": "2026-10-19T14:02:10Z",
+          "started_event": "sha256:6b349a17db45fcc6be85386f2053ae0a364d4ab0b3123e076dd62b8acb9f3900",
+          "updated_at": "2026-10-19T14:02:26Z",
           "validation": [
             "majordomus plan validate",
             "bash test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh"
@@ -41829,6 +41877,8 @@
             "No retired read-only or one-command sentence remains in README, docs or the features",
             "README's mesh paragraph states exclusivity as the milestone records it"
           ],
+          "completed_at": "2026-10-19T13:57:45Z",
+          "completed_event": "sha256:d7c9be6065fd07010f5f4f356ada95fe787cc82c81aa4aa3b9be14c25d26b5aa",
           "created_at": "2026-10-18",
           "depends_on": [],
           "evidence_required": [
@@ -41849,7 +41899,9 @@
             "test/cases/3363_what_mutates_is_said_as_it_is.sh"
           ],
           "slug": "what-mutates-is-said-as-it-is",
-          "updated_at": "2026-10-18",
+          "started_at": "2026-10-19T13:57:27Z",
+          "started_event": "sha256:b94b46ee1132d3a129dd841ac0d52c390eb958717c1f8a8fa92ad04a292ea021",
+          "updated_at": "2026-10-19T13:57:45Z",
           "validation": [
             "majordomus plan validate"
           ]
@@ -41867,6 +41919,8 @@
             "Every row of the README's command table states the exit codes its command's model declares",
             "Case 3365 fails on a row whose codes differ from the model"
           ],
+          "completed_at": "2026-10-19T13:58:32Z",
+          "completed_event": "sha256:2c36bb7472825744ce6c8589d5f09c0bf1955b02c276325e0eb89080e90d89ad",
           "created_at": "2026-10-18",
           "current_state": "Corrected in this change: every row of the README's command table states the model's codes. Generating the table from the model is post-alpha (ledger row derivable-counts-in-prose).",
           "depends_on": [],
@@ -41883,7 +41937,9 @@
             "test/cases/3365_the_readme_exit_codes_are_the_contracts.sh"
           ],
           "slug": "the-readme-exit-codes-are-the-contracts",
-          "updated_at": "2026-10-18",
+          "started_at": "2026-10-19T13:57:59Z",
+          "started_event": "sha256:6912c4e761986b1af302813ed5ff93212720aed7df54c02db601444db46ffd37",
+          "updated_at": "2026-10-19T13:58:32Z",
           "validation": [
             "majordomus plan validate"
           ]
@@ -41935,6 +41991,8 @@
             "The guarantees index, SITE_CLAIMS and the site's data say a test is to prove a claim while not every claim is supported",
             "homepage.toml [promises] declares proven and proves, and the homepage copy uses neither"
           ],
+          "completed_at": "2026-10-19T13:59:33Z",
+          "completed_event": "sha256:d4dfa3a9930b53296756fe0af4c990911d20b942a27009cbc0b38cc01e82dbc4",
           "created_at": "2026-10-18",
           "depends_on": [],
           "evidence_required": [
@@ -41954,7 +42012,9 @@
             "test/cases/3366_a_proof_word_is_earned.sh"
           ],
           "slug": "a-proof-word-is-earned",
-          "updated_at": "2026-10-18",
+          "started_at": "2026-10-19T13:59:08Z",
+          "started_event": "sha256:1208a527e5184577ecae28d6be3ad698bc36f36cbbcc7ff19f3733fdf4becbb7",
+          "updated_at": "2026-10-19T13:59:33Z",
           "validation": [
             "majordomus plan validate"
           ]
@@ -42016,6 +42076,8 @@
             "The policy page names .ai/repo/policy.yaml as the source of truth",
             "No top-level site page, site data file or template names .majordomus/, and case 3364 refuses one that does"
           ],
+          "completed_at": "2026-10-19T14:00:10Z",
+          "completed_event": "sha256:c3fea039443081c047d7fe19666d61cd716adca52b0e8c3aed41d569271ad881",
           "created_at": "2026-10-18",
           "current_state": "Corrected in this change: site/content/policy.md and site/content/roadmap.md name .ai/repo/.",
           "depends_on": [],
@@ -42033,7 +42095,9 @@
             "test/cases/3364_a_page_names_the_layout_in_force.sh"
           ],
           "slug": "a-page-names-the-layout-in-force",
-          "updated_at": "2026-10-18",
+          "started_at": "2026-10-19T13:59:49Z",
+          "started_event": "sha256:0ba9613adae86b6853f8d883b2bb167dd12a68eb4162da2b45b5d2cce8e32f6b",
+          "updated_at": "2026-10-19T14:00:10Z",
           "validation": [
             "majordomus plan validate"
           ]
@@ -42158,6 +42222,8 @@
             "A backticked path in a criterion renders as code",
             "ui/idd.rs carries no id linker of its own"
           ],
+          "completed_at": "2026-10-19T14:02:56Z",
+          "completed_event": "sha256:74029920d1f98c417c265def11c320e7629ca2d0ab2bc2de28f81c61c324a33d",
           "created_at": "2026-10-18",
           "current_state": "Raw text and a second id linker.",
           "depends_on": [],
@@ -42179,7 +42245,9 @@
             "the-owner-directs-work-from-the-ui#the-workspace-reads-at-a-glance"
           ],
           "slug": "the-record-texts-are-drawn-as-prose",
-          "updated_at": "2026-10-18",
+          "started_at": "2026-10-19T14:02:42Z",
+          "started_event": "sha256:edc647332c74f1fbaf49b282aeab51b636043e1bc2d86fed82993fe8bc1c93e8",
+          "updated_at": "2026-10-19T14:02:56Z",
           "validation": [
             "majordomus plan validate",
             "cargo test --lib ui::",
@@ -42199,6 +42267,8 @@
           "acceptance_criteria": [
             "The h1 of /ui/idd?intent=<id> is that intent's title"
           ],
+          "completed_at": "2026-10-19T14:03:23Z",
+          "completed_event": "sha256:5ed702711bd7d44ec60b13698d45ef305d0dacac85996089645d305e837d44b4",
           "created_at": "2026-10-18",
           "current_state": "A generic title.",
           "depends_on": [],
@@ -42224,7 +42294,9 @@
             "the-owner-directs-work-from-the-ui#the-workspace-reads-at-a-glance"
           ],
           "slug": "the-intent-is-the-title",
-          "updated_at": "2026-10-18",
+          "started_at": "2026-10-19T14:03:09Z",
+          "started_event": "sha256:34f49fce2fd87e9925933e9bea2deb672a9ffb1019899f54480726d9704d5b86",
+          "updated_at": "2026-10-19T14:03:23Z",
           "validation": [
             "majordomus plan validate",
             "bash test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh"
