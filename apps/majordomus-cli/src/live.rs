@@ -582,7 +582,17 @@ impl Live {
         }
     }
 
-    /// The head of the generation there is, as the pulse names it.
+    /// The head of the generation there is, as the pulse names it: the commit it read, or
+    /// `-` when the repository is not a git one.
+    ///
+    /// ```
+    /// use majordomus_cli::live::Live;
+    /// use majordomus_cli::synthetic::SyntheticRepository;
+    ///
+    /// let repo = SyntheticRepository::small().unwrap();
+    /// let live = Live::pinned(repo.context().unwrap());
+    /// assert!(!live.head().is_empty());
+    /// ```
     pub fn head(&self) -> String {
         head_of(&read(&self.state).ctx)
     }
@@ -666,6 +676,15 @@ impl Live {
 }
 
 /// How a generation stands against the repository as it is now.
+///
+/// ```
+/// use majordomus_cli::live::Lag;
+/// use std::time::Duration;
+///
+/// let failed = Lag::Failed { error: "manifest: duplicate key".into(), retry_in: Duration::from_secs(3) };
+/// assert_ne!(failed, Lag::Current);
+/// assert_ne!(Lag::Reloading, Lag::Current);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Lag {
     /// The repository is as the generation read it.
