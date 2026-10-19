@@ -50,7 +50,8 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `pack` | Source pack | behaviorally_verified | 2 | [`modules/pack.md`](modules/pack.md) |
 | `peers` | Peers | behaviorally_verified | 2 | [`modules/peers.md`](modules/peers.md) |
 | `perf` | Performance | behaviorally_verified | 1 | [`modules/perf.md`](modules/perf.md) |
-| `plan` | The plan and its derivations | behaviorally_verified | 12 | [`modules/plan.md`](modules/plan.md) |
+| `plan` | The plan and its derivations | behaviorally_verified | 13 | [`modules/plan.md`](modules/plan.md) |
+| `proceed` | What a session proceeds with | behaviorally_verified | 1 | [`modules/proceed.md`](modules/proceed.md) |
 | `product` | Product | behaviorally_verified | 6 | [`modules/product.md`](modules/product.md) |
 | `quality` | Public API quality | behaviorally_verified | 2 | [`modules/quality.md`](modules/quality.md) |
 | `reasoning` | Reasoning | experimental | 6 | [`modules/reasoning.md`](modules/reasoning.md) |
@@ -215,6 +216,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `peers.announce` | `peers` | command | behaviorally_verified | `majordomus_announce` | — | `POST /api/v1/peers/announce` | — | — | required |
 | `peers.list` | `peers` | query | behaviorally_verified | `majordomus_peers` | — | `GET /api/v1/peers` | — | — | required |
 | `perf.counters` | `perf` | query | behaviorally_verified | `majordomus_perf` | — | `GET /api/v1/perf` | — | — | required |
+| `plan.allocate` | `plan` | command | behaviorally_verified | `majordomus_plan_allocate` | — | `POST /api/v1/plan/allocate` | — | — | waived (transient_state) |
 | `plan.delivery` | `plan` | query | experimental | `majordomus_plan_delivery` | — | `GET /api/v1/plan/delivery` | `majordomus plan delivery` | — | required |
 | `plan.drift` | `plan` | query | experimental | `majordomus_plan_drift` | — | `GET /api/v1/plan/drift` | `majordomus plan drift` | — | required |
 | `plan.flight` | `plan` | query | experimental | `majordomus_plan_flight` | — | `GET /api/v1/plan/flight` | — | — | required |
@@ -227,6 +229,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `plan.transition` | `plan` | command | behaviorally_verified | `majordomus_plan_transition` | — | `POST /api/v1/plan/transition` | — | — | required when plan_holds_an_issue |
 | `plan.validate` | `plan` | query | behaviorally_verified | `majordomus_plan_validate` | — | `GET /api/v1/plan/validate` | — | — | required |
 | `plan.waves` | `plan` | query | behaviorally_verified | `majordomus_plan_waves` | — | `GET /api/v1/plan/waves` | — | — | required |
+| `proceed.plan` | `proceed` | query | behaviorally_verified | `majordomus_proceed_plan` | — | `GET /api/v1/proceed/plan` | `majordomus proceed plan` | — | required |
 | `product.domains` | `product` | query | behaviorally_verified | `majordomus_product_domains` | `majordomus://product/domains` | `GET /api/v1/product/domains` | `majordomus product domains` | process, 4 entries | required |
 | `product.feature` | `product` | query | behaviorally_verified | `majordomus_feature` | — | `GET /api/v1/product/feature` | `majordomus product show` | process, 64 entries | required |
 | `product.features` | `product` | query | behaviorally_verified | `majordomus_features` | `majordomus://product` | `GET /api/v1/product/features` | `majordomus product list` | process, 32 entries | required |

@@ -5,7 +5,30 @@
 
 The milestone and issue model of this repository, and everything derived from it that nobody authored: the status of each record, the dependency graphs above and below the milestone boundary, the topological execution waves, the roadmap order, the milestone being executed and the one issue to take next. Status is never stored — a record says what happened to it and the status follows from that and from the state of its dependencies — so no file can contradict the graph. This capability reads; writing a lifecycle marker into a record is `plan.transition`, which declares that it writes the repository.
 
-Stability: behaviorally_verified. Capabilities: 12.
+Stability: behaviorally_verified. Capabilities: 13.
+
+## `plan.allocate` — Reserve the next issue, case or ADR number
+
+One number of the kind asked (`issue`, `case`, `adr`), reserved for one mesh session by one exclusive claim on the identifier's own key, `id:<kind>/<number>`. The candidate is one past the highest number this tree, the sibling worktrees, every ref and every reservation the mesh journal remembers hold, or the caller's `at_least` when that is higher; a number another session's claim already holds is skipped and its holder named. On one runtime the claim is admitted under the admission lock, so two allocations at once answer two numbers; across linked runtimes two claims made before they sync are both admitted and the fold names one winner, whose loser allocates again (fencing is mesh-journal-converges' work). Writes this runtime's mesh journal only, never the repository; the reservation ends with its session or `mesh release`.
+
+| | |
+|---|---|
+| kind | command |
+| stability | behaviorally_verified |
+| MCP tool | `majordomus_plan_allocate` |
+| HTTP | `POST /api/v1/plan/allocate` |
+| cache | — |
+| benchmark | waived (transient_state) |
+| provenance | builtin majordomus_cli::capability::builtin::plan |
+| tags | plan, mesh, identity, allocation |
+
+| input | type | required | description |
+|---|---|---|---|
+| `kind` | IdKind | yes | `issue`, `case` or `adr`. |
+| `session` | string or null | no | The mesh session the number is reserved for; the calling MCP session's own when omitted. |
+| `at_least` | integer or null | no | The lowest number the caller will take: a survey it ran itself, or a block it was given. The candidate is the higher of this and one past every source. |
+
+Output: `Allocation`.
 
 ## `plan.delivery` — How far each issue's work has travelled
 

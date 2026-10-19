@@ -560,17 +560,57 @@ impl Plan {
     /// whole plan rather than answering "none" and sending a worker away from executable
     /// work. `mj_pj_next_ready` in `lib/project.sh` does exactly this.
     pub fn next_ready(&self, milestone: Option<&str>) -> Option<&PlanIssue> {
-        let scope = milestone.unwrap_or(self.project.active_milestone.as_str());
-        self.ready_ranked(Some(scope))
-            .or_else(|| self.ready_ranked(None))
+        self.ready_in_order(milestone).into_iter().next()
     }
 
-    fn ready_ranked(&self, milestone: Option<&str>) -> Option<&PlanIssue> {
-        self.issues
+    /// The unfinished issues that depend on `id`, directly or through other unfinished ones,
+    /// each counted once, in canonical order: what taking `id` unblocks. A finished issue is
+    /// neither counted nor walked through, because nothing waits on it any more.
+    pub(crate) fn unblocks(&self, id: &str) -> Vec<String> {
+        let mut seen = BTreeSet::new();
+        let mut todo: Vec<&str> = self
+            .issue(id)
+            .map(|i| i.dependents.iter().map(String::as_str).collect())
+            .unwrap_or_default();
+        while let Some(d) = todo.pop() {
+            let Some(i) = self.issue(d) else { continue };
+            if matches!(i.status.as_str(), "DONE" | "CANCELLED") || !seen.insert(i.id.clone()) {
+                continue;
+            }
+            todo.extend(i.dependents.iter().map(String::as_str));
+        }
+        let mut out: Vec<String> = seen.into_iter().collect();
+        crate::order::canonical_strings(&mut out);
+        out
+    }
+
+    /// Every READY issue in the order work is handed out: those of `milestone` (the active
+    /// one when absent; every milestone when that is empty) first, then the rest of the
+    /// plan, each part by wave, then priority, then the number of unfinished issues it
+    /// unblocks (more first, [`Plan::unblocks`]), then id. [`Plan::next_ready`] is its head,
+    /// and `proceed.plan` walks it past the issues another worker holds: one order, read by
+    /// both, so the issue a session is told to take and the one `plan.next` names cannot
+    /// differ for any reason but a claim.
+    pub(crate) fn ready_in_order(&self, milestone: Option<&str>) -> Vec<&PlanIssue> {
+        let scope = milestone.unwrap_or(self.project.active_milestone.as_str());
+        let mut ready: Vec<Ready<'_>> = self
+            .issues
             .iter()
             .filter(|i| i.status == "READY")
-            .filter(|i| milestone.is_none_or(|m| m.is_empty() || i.milestone == m))
-            .min_by_key(|i| (i.wave, priority_rank(&i.priority), i.id.clone()))
+            .map(|issue| {
+                let outside = !(scope.is_empty() || issue.milestone == scope);
+                let unblocks = i64::try_from(self.unblocks(&issue.id).len()).unwrap_or(999_999);
+                Ready {
+                    issue,
+                    rank: i64::from(outside) * 1_000_000_000_000
+                        + i64::from(issue.wave) * 100_000_000
+                        + i64::from(priority_rank(&issue.priority)) * 1_000_000
+                        + (999_999 - unblocks.min(999_999)),
+                }
+            })
+            .collect();
+        crate::order::canonical(&mut ready);
+        ready.into_iter().map(|r| r.issue).collect()
     }
 
     /// Build the plan from an index. A walk of values already in memory: no file is opened,
@@ -641,6 +681,20 @@ fn raws(index: &Index) -> (PlanProject, Vec<PlanMilestoneRaw>, Vec<PlanIssueRaw>
     milestones.sort_by(|a, b| a.id.cmp(&b.id));
     issues.sort_by(|a, b| a.id.cmp(&b.id));
     (header, milestones, issues)
+}
+
+/// A READY issue with its place in the hand-out order: in or outside the asked milestone,
+/// then wave, then priority, then what it unblocks (more first), folded into one rank; the
+/// id breaks every tie.
+struct Ready<'a> {
+    issue: &'a PlanIssue,
+    rank: i64,
+}
+
+impl crate::order::Ordered for Ready<'_> {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::plain(&self.issue.id, &self.issue.id).ranked(self.rank)
+    }
 }
 
 /// A priority's rank, lowest first: the order [`Plan::next_ready`] takes issues in, and the
@@ -1544,6 +1598,58 @@ mod tests {
             default_branch: "master".into(),
             active_milestone: String::new(),
         }
+    }
+
+    /// Of two READY issues equal in milestone, wave and priority, the one that unblocks more
+    /// is handed out first; a shared downstream issue is counted once, a finished one not at
+    /// all, and adding dependencies to the other one changes the order with no list edited.
+    #[test]
+    fn the_issue_that_unblocks_more_is_handed_out_first() {
+        let plan = |extra: &[PlanIssueRaw]| {
+            let mut issues = vec![
+                issue("I0001", "M000", &[]),
+                issue("I0002", "M000", &[]),
+                issue("I0003", "M000", &["I0002"]),
+                issue("I0004", "M000", &["I0002"]),
+                issue("I0008", "M000", &["I0003", "I0004"]),
+            ];
+            issues.extend(extra.iter().cloned());
+            derive(header(), vec![milestone("M000", &[])], issues)
+        };
+        let p = plan(&[]);
+        assert_eq!(
+            p.unblocks("I0002"),
+            ["I0003", "I0004", "I0008"],
+            "the diamond's tip once"
+        );
+        assert!(p.unblocks("I0001").is_empty());
+        assert!(
+            p.unblocks("I9999").is_empty(),
+            "an unknown issue unblocks nothing"
+        );
+        assert_eq!(
+            p.next_ready(None).unwrap().id,
+            "I0002",
+            "three before none, id aside"
+        );
+        let order: Vec<&str> = p
+            .ready_in_order(None)
+            .iter()
+            .map(|i| i.id.as_str())
+            .collect();
+        assert_eq!(order, ["I0002", "I0001"]);
+
+        let p = plan(&[
+            issue("I0005", "M000", &["I0001"]),
+            issue("I0006", "M000", &["I0001"]),
+            issue("I0007", "M000", &["I0001"]),
+            issue("I0009", "M000", &["I0001"]),
+        ]);
+        assert_eq!(
+            p.next_ready(None).unwrap().id,
+            "I0001",
+            "four now before three"
+        );
     }
 
     /// A diamond places each issue one layer past its deepest dependency, and the tip waits

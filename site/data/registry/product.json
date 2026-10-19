@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "0.30.2"
   },
-  "fingerprint": "dd98731edacd876dc9e4767fdc7a1475ac6afb96ed9b95fafb55af6e3ad454f7",
+  "fingerprint": "51f81f72619e6bd6b38c21f2c55a4f03538d0a26a88e7943e3d67795f5a91ce2",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -13,7 +13,7 @@
     "features_all": 29,
     "featured": 16,
     "providers": 6,
-    "modules": 58,
+    "modules": 59,
     "modules_covered": 58,
     "commands": 30,
     "commands_covered": 30,
@@ -1162,7 +1162,7 @@
         "use_cases": 6,
         "rules": 13,
         "enforced_rules": 11,
-        "capabilities": 77,
+        "capabilities": 78,
         "moments": 17
       },
       "evidence": {
@@ -3229,7 +3229,7 @@
         "use_cases": 10,
         "rules": 15,
         "enforced_rules": 14,
-        "capabilities": 137,
+        "capabilities": 138,
         "moments": 38
       },
       "evidence": {
@@ -7460,7 +7460,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 119
+          "objects": 120
         },
         {
           "name": "knowledge",
@@ -7741,11 +7741,11 @@
       "counts": {
         "capabilities": 5,
         "mcp_tools": 5,
-        "mcp_resources": 476,
+        "mcp_resources": 477,
         "http_routes": 5,
         "cli_paths": 3,
         "commands": 6,
-        "objects": 473,
+        "objects": 474,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -9763,6 +9763,14 @@
           "source_path": "apps/majordomus-cli/src/capability/builtin/plan.rs",
           "capabilities": [
             {
+              "id": "plan.allocate",
+              "title": "Reserve the next issue, case or ADR number",
+              "kind": "command",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_plan_allocate",
+              "route": "POST /api/v1/plan/allocate"
+            },
+            {
               "id": "plan.delivery",
               "title": "How far each issue's work has travelled",
               "kind": "query",
@@ -10288,10 +10296,10 @@
       ],
       "backlinks": [],
       "counts": {
-        "capabilities": 61,
-        "mcp_tools": 54,
+        "capabilities": 62,
+        "mcp_tools": 55,
         "mcp_resources": 9,
-        "http_routes": 58,
+        "http_routes": 59,
         "cli_paths": 19,
         "commands": 0,
         "objects": 1,
@@ -10563,6 +10571,14 @@
           "stability": "behaviorally_verified",
           "source_path": "apps/majordomus-cli/src/capability/builtin/plan.rs",
           "capabilities": [
+            {
+              "id": "plan.allocate",
+              "title": "Reserve the next issue, case or ADR number",
+              "kind": "command",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_plan_allocate",
+              "route": "POST /api/v1/plan/allocate"
+            },
             {
               "id": "plan.delivery",
               "title": "How far each issue's work has travelled",
@@ -11679,10 +11695,10 @@
         "observatory"
       ],
       "counts": {
-        "capabilities": 100,
-        "mcp_tools": 92,
+        "capabilities": 101,
+        "mcp_tools": 93,
         "mcp_resources": 16,
-        "http_routes": 97,
+        "http_routes": 98,
         "cli_paths": 43,
         "commands": 0,
         "objects": 0,
@@ -12985,6 +13001,14 @@
           "source_path": "apps/majordomus-cli/src/capability/builtin/plan.rs",
           "capabilities": [
             {
+              "id": "plan.allocate",
+              "title": "Reserve the next issue, case or ADR number",
+              "kind": "command",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_plan_allocate",
+              "route": "POST /api/v1/plan/allocate"
+            },
+            {
               "id": "plan.delivery",
               "title": "How far each issue's work has travelled",
               "kind": "query",
@@ -13224,15 +13248,15 @@
       "kind_refs": [
         {
           "name": "milestone",
-          "objects": 42
+          "objects": 43
         },
         {
           "name": "issue",
-          "objects": 489
+          "objects": 492
         },
         {
           "name": "intent",
-          "objects": 5
+          "objects": 6
         },
         {
           "name": "gap",
@@ -13240,7 +13264,7 @@
         },
         {
           "name": "critique",
-          "objects": 4
+          "objects": 5
         }
       ],
       "rule_refs": [
@@ -13436,13 +13460,13 @@
       ],
       "backlinks": [],
       "counts": {
-        "capabilities": 26,
-        "mcp_tools": 26,
-        "mcp_resources": 547,
-        "http_routes": 26,
+        "capabilities": 27,
+        "mcp_tools": 27,
+        "mcp_resources": 553,
+        "http_routes": 27,
         "cli_paths": 13,
         "commands": 1,
-        "objects": 544,
+        "objects": 550,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -16895,6 +16919,11 @@
         ]
       },
       {
+        "id": "proceed",
+        "title": "What a session proceeds with",
+        "features": []
+      },
+      {
         "id": "product",
         "title": "Product",
         "features": [
@@ -17246,7 +17275,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (119)",
+        "title": "adr (120)",
         "features": [
           "knowledge"
         ]
@@ -17295,7 +17324,7 @@
       },
       {
         "id": "critique",
-        "title": "critique (4)",
+        "title": "critique (5)",
         "features": [
           "planning"
         ]
@@ -17344,14 +17373,14 @@
       },
       {
         "id": "intent",
-        "title": "intent (5)",
+        "title": "intent (6)",
         "features": [
           "planning"
         ]
       },
       {
         "id": "issue",
-        "title": "issue (489)",
+        "title": "issue (492)",
         "features": [
           "planning"
         ]
@@ -17372,7 +17401,7 @@
       },
       {
         "id": "milestone",
-        "title": "milestone (42)",
+        "title": "milestone (43)",
         "features": [
           "planning"
         ]
@@ -18372,26 +18401,26 @@
     }
   ],
   "telemetry": {
-    "capabilities": 2645,
-    "builtin": 206,
-    "declarative": 2439,
-    "modules": 58,
-    "mcp_tools": 196,
-    "mcp_resources": 2494,
-    "http_routes": 201,
-    "cli_commands": 209,
+    "capabilities": 2657,
+    "builtin": 208,
+    "declarative": 2449,
+    "modules": 59,
+    "mcp_tools": 198,
+    "mcp_resources": 2504,
+    "http_routes": 203,
+    "cli_commands": 211,
     "shell_commands": 30,
     "kinds": 34,
-    "objects": 2439,
+    "objects": 2449,
     "by_kind": {
-      "adr": 119,
+      "adr": 120,
       "application": 5,
       "area": 9,
       "audience": 8,
       "claim": 250,
       "command": 31,
       "context": 39,
-      "critique": 4,
+      "critique": 5,
       "deployment": 1,
       "derive-offload": 1,
       "distribution-model": 1,
@@ -18400,11 +18429,11 @@
       "feature": 29,
       "gap": 4,
       "implementation": 52,
-      "intent": 5,
-      "issue": 489,
+      "intent": 6,
+      "issue": 492,
       "knowledge": 4,
       "mesh-declaration": 1,
-      "milestone": 42,
+      "milestone": 43,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -18415,7 +18444,7 @@
       "session": 90,
       "skill": 8,
       "taxonomy": 10,
-      "test": 563,
+      "test": 566,
       "use-case": 49,
       "workspace": 1
     },

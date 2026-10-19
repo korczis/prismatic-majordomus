@@ -6,28 +6,28 @@
     "version": "0.30.2"
   },
   "registry": {
-    "fingerprint": "4f4f3e45ea7fd432a0563499cb825f43b4227d279fe4a9262f4a14fb02b49e82",
+    "fingerprint": "2153bbc7a387146c0c2e10bd80093611333c4646dbeef396b615ba701c3aba4f",
     "summary": {
-      "total": 2645,
-      "builtin": 206,
-      "declarative": 2439,
+      "total": 2657,
+      "builtin": 208,
+      "declarative": 2449,
       "by_kind": {
-        "command": 31,
-        "query": 175,
-        "resource": 2439
+        "command": 32,
+        "query": 176,
+        "resource": 2449
       },
       "by_stability": {
-        "behaviorally_verified": 142,
+        "behaviorally_verified": 144,
         "experimental": 55,
-        "implemented": 2448
+        "implemented": 2458
       },
-      "mcp_tools": 196,
-      "mcp_resources": 2494,
-      "http_routes": 201,
-      "cli_commands": 111,
-      "modules": 92,
-      "benchmark_required": 175,
-      "benchmark_waived": 31,
+      "mcp_tools": 198,
+      "mcp_resources": 2504,
+      "http_routes": 203,
+      "cli_commands": 112,
+      "modules": 93,
+      "benchmark_required": 176,
+      "benchmark_waived": 32,
       "cached": 54
     },
     "builtin": [
@@ -57343,6 +57343,238 @@
         "source_path": "apps/majordomus-cli/src/capability/builtin/perf.rs"
       },
       {
+        "id": "plan.allocate",
+        "module": "plan",
+        "kind": "command",
+        "title": "Reserve the next issue, case or ADR number",
+        "description": "One number of the kind asked (`issue`, `case`, `adr`), reserved for one mesh session by one exclusive claim on the identifier's own key, `id:<kind>/<number>`. The candidate is one past the highest number this tree, the sibling worktrees, every ref and every reservation the mesh journal remembers hold, or the caller's `at_least` when that is higher; a number another session's claim already holds is skipped and its holder named. On one runtime the claim is admitted under the admission lock, so two allocations at once answer two numbers; across linked runtimes two claims made before they sync are both admitted and the fold names one winner, whose loser allocates again (fencing is mesh-journal-converges' work). Writes this runtime's mesh journal only, never the repository; the reservation ends with its session or `mesh release`.",
+        "input": {
+          "name": "AllocateInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "$ref": "#/$defs/IdKind",
+                "description": "`issue`, `case` or `adr`."
+              },
+              "session": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The mesh session the number is reserved for; the calling MCP session's own when omitted."
+              },
+              "at_least": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "format": "uint32",
+                "minimum": 0,
+                "description": "The lowest number the caller will take: a survey it ran itself, or a block it was given. The candidate is the higher of this and one past every source."
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "description": "The input of `plan.allocate`.",
+            "title": "AllocateInput",
+            "$defs": {
+              "IdKind": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "issue",
+                    "description": "An issue id, `I<nnnn>`, the name of `.ai/repo/project/issues/<id>.yaml`."
+                  },
+                  {
+                    "type": "string",
+                    "const": "case",
+                    "description": "A case number, the identity before the first underscore of `test/cases/<n>_*.sh`."
+                  },
+                  {
+                    "type": "string",
+                    "const": "adr",
+                    "description": "An ADR number, the four digits that open `.ai/repo/adrs/<nnnn>-*.md`."
+                  }
+                ],
+                "description": "The kind of identifier allocated: what `majordomus mesh allocate <kind>` and\n`plan.allocate` take.\n\n```\nuse majordomus_cli::capability::builtin::allocate::IdKind;\n\nlet kind: IdKind = serde_json::from_value(serde_json::json!(\"adr\")).unwrap();\nassert_eq!(kind, IdKind::Adr);\nassert!(serde_json::from_value::<IdKind>(serde_json::json!(\"ticket\")).is_err());\n```"
+              }
+            }
+          }
+        },
+        "output": {
+          "name": "Allocation",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "$ref": "#/$defs/IdKind",
+                "description": "The kind."
+              },
+              "value": {
+                "type": "string",
+                "description": "The identifier as it is written: `I3041`, `3441`, `0178`."
+              },
+              "number": {
+                "type": "integer",
+                "format": "uint32",
+                "minimum": 0,
+                "description": "The number."
+              },
+              "reservation": {
+                "type": "string",
+                "description": "The mesh key it is reserved under, `id:<kind>/<number>`."
+              },
+              "claim": {
+                "type": "string",
+                "description": "The key of the exclusive claim that holds it, for `majordomus mesh release`."
+              },
+              "sources": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/IdSource"
+                },
+                "description": "What each source held."
+              },
+              "skipped": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/IdSkip"
+                },
+                "description": "Numbers tried before this one and held by another session's claim, with the holder."
+              }
+            },
+            "required": [
+              "kind",
+              "value",
+              "number",
+              "reservation",
+              "claim",
+              "sources",
+              "skipped"
+            ],
+            "description": "A number reserved for one session, with the survey it was chosen from.",
+            "title": "Allocation",
+            "$defs": {
+              "IdKind": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "issue",
+                    "description": "An issue id, `I<nnnn>`, the name of `.ai/repo/project/issues/<id>.yaml`."
+                  },
+                  {
+                    "type": "string",
+                    "const": "case",
+                    "description": "A case number, the identity before the first underscore of `test/cases/<n>_*.sh`."
+                  },
+                  {
+                    "type": "string",
+                    "const": "adr",
+                    "description": "An ADR number, the four digits that open `.ai/repo/adrs/<nnnn>-*.md`."
+                  }
+                ],
+                "description": "The kind of identifier allocated: what `majordomus mesh allocate <kind>` and\n`plan.allocate` take.\n\n```\nuse majordomus_cli::capability::builtin::allocate::IdKind;\n\nlet kind: IdKind = serde_json::from_value(serde_json::json!(\"adr\")).unwrap();\nassert_eq!(kind, IdKind::Adr);\nassert!(serde_json::from_value::<IdKind>(serde_json::json!(\"ticket\")).is_err());\n```"
+              },
+              "IdSource": {
+                "type": "object",
+                "properties": {
+                  "source": {
+                    "type": "string",
+                    "description": "`tree`, `worktrees`, `refs`, `mesh` or `at_least`."
+                  },
+                  "highest": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "The highest number it holds; absent when it holds none."
+                  },
+                  "read": {
+                    "type": "boolean",
+                    "description": "Whether it could be read."
+                  },
+                  "detail": {
+                    "type": "string",
+                    "description": "What was read, or why not."
+                  }
+                },
+                "required": [
+                  "source",
+                  "read",
+                  "detail"
+                ],
+                "description": "One source of an allocation's survey."
+              },
+              "IdSkip": {
+                "type": "object",
+                "properties": {
+                  "number": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "The number."
+                  },
+                  "holder": {
+                    "type": "string",
+                    "description": "Its claim's holding session."
+                  },
+                  "claim": {
+                    "type": "string",
+                    "description": "Its claim's key."
+                  }
+                },
+                "required": [
+                  "number",
+                  "holder",
+                  "claim"
+                ],
+                "description": "A number another session holds."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::plan"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_plan_allocate"
+          },
+          "http": {
+            "method": "POST",
+            "path": "/api/v1/plan/allocate"
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "plan",
+          "mesh",
+          "identity",
+          "allocation"
+        ],
+        "benchmark": {
+          "policy": "waived",
+          "reason": "transient_state"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "process_state",
+          "cancellable": false,
+          "concurrency": "serial"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/plan.rs"
+      },
+      {
         "id": "plan.delivery",
         "module": "plan",
         "kind": "query",
@@ -61410,6 +61642,376 @@
           "concurrency": "unrestricted"
         },
         "source_path": "apps/majordomus-cli/src/capability/builtin/plan.rs"
+      },
+      {
+        "id": "proceed.plan",
+        "module": "proceed",
+        "kind": "query",
+        "title": "What to proceed with, and why",
+        "description": "The READY issues in the plan's hand-out order (the asked milestone first, then wave, priority and id, as `plan.next`), each refused when another worker holds it: a live mesh claim names it as its issue or a hold claims its record (`claimed`), a board or mesh announcement names its id as a word of its own (`named`, quoted beside it), or a live exclusive mesh claim of another session meets its scope (`scope_held`); advisory holds over its scope are listed as `shared_with` and refuse nothing. The first issue nothing refuses is `selected`, with what it unblocks, what finishes it and the commands that take it; `reason` says why in one sentence, and `sources` whether the board and the mesh could be read. A decision that could not read the board, or a declared mesh, is `provisional` and gives no commands. The caller's own session (its mesh claims on this runtime, and its board announcements) is never held against it; a session of the same name on another runtime is another worker. Composed by the server holding this checkout's lease, which holds the board and the mesh; the command line asks it. Writes nothing.",
+        "input": {
+          "name": "ProceedPlanInput",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "milestone": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The milestone whose READY issues come first; the active milestone when absent. The rest of the plan follows it, as for `plan.next`."
+              },
+              "session": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The mesh session the decision is for, whose own claims are not held against it. Absent, the calling MCP session's board session (`board-<peer>`); over the command line, none."
+              },
+              "local": {
+                "type": "boolean",
+                "description": "Compose in the process that answers and never ask the checkout's leaseholder: what a forwarded request says, so that it is never forwarded again.",
+                "default": false
+              }
+            },
+            "description": "What to ask of `proceed.plan`.",
+            "title": "ProceedPlanInput"
+          }
+        },
+        "output": {
+          "name": "ProceedDecision",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "selected": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/ProceedCandidate"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "The first READY issue nothing refuses; absent when there is none, and `reason` says why."
+              },
+              "reason": {
+                "type": "string",
+                "description": "One sentence a reader can check against `candidates` and `sources`."
+              },
+              "provisional": {
+                "type": "boolean",
+                "description": "Whether a source the decision needs could not be read (see `sources`): the selection is then what this reading would choose, and another worker's unread claim may hold it."
+              },
+              "next": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "What to do with the selection, as the commands that do it; empty when nothing is selected or the decision is provisional."
+              },
+              "milestone": {
+                "type": "string",
+                "description": "The milestone whose issues were looked at first."
+              },
+              "candidates": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/ProceedCandidate"
+                },
+                "description": "Every READY issue in hand-out order (the plan's: asked milestone first, then wave, priority and id), each with the constraints it failed."
+              },
+              "waiting": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0
+                },
+                "description": "How many unfinished issues are not READY, by their derived status: the work that waits on a dependency, a gate or a worker."
+              },
+              "sources": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/ProceedSource"
+                },
+                "description": "What the decision was read from, and whether each source could be read."
+              }
+            },
+            "required": [
+              "reason",
+              "provisional",
+              "next",
+              "milestone",
+              "candidates",
+              "waiting",
+              "sources"
+            ],
+            "description": "What a session proceeds with: the selected issue, every READY issue in the order work is handed out with what refused it, and the sources the decision was read from.",
+            "title": "ProceedDecision",
+            "$defs": {
+              "ProceedCandidate": {
+                "type": "object",
+                "properties": {
+                  "issue": {
+                    "type": "string",
+                    "description": "The issue's id."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "Its title."
+                  },
+                  "milestone": {
+                    "type": "string",
+                    "description": "Its milestone."
+                  },
+                  "terms": {
+                    "$ref": "#/$defs/ProceedTerms",
+                    "description": "The terms its place in the order was decided by."
+                  },
+                  "refused": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/ProceedRefusal"
+                    },
+                    "description": "The constraints it failed, each with the hold that failed it; empty for an eligible issue."
+                  },
+                  "shared_with": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Advisory holds that meet its scope: refused by none of them, shared with each."
+                  },
+                  "scope": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The paths it touches."
+                  },
+                  "finishes_with": {
+                    "$ref": "#/$defs/ProceedEvidence",
+                    "description": "What finishes it: the objective and its evidence tally."
+                  }
+                },
+                "required": [
+                  "issue",
+                  "title",
+                  "milestone",
+                  "terms",
+                  "refused",
+                  "shared_with",
+                  "scope",
+                  "finishes_with"
+                ],
+                "description": "One READY issue as the decision saw it."
+              },
+              "ProceedTerms": {
+                "type": "object",
+                "properties": {
+                  "in_milestone": {
+                    "type": "boolean",
+                    "description": "Whether it belongs to the milestone looked at first."
+                  },
+                  "wave": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "Its wave: one past the longest dependency path to it."
+                  },
+                  "priority": {
+                    "type": "string",
+                    "description": "Its priority, `p0` first."
+                  },
+                  "unblocks": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The unfinished issues that depend on it, directly or through others, each counted once. Shown, not ranked by: the order is the plan's."
+                  }
+                },
+                "required": [
+                  "in_milestone",
+                  "wave",
+                  "priority",
+                  "unblocks"
+                ],
+                "description": "The terms of a candidate's place in the hand-out order, most significant first, and what taking it unblocks."
+              },
+              "ProceedRefusal": {
+                "type": "object",
+                "properties": {
+                  "constraint": {
+                    "$ref": "#/$defs/ProceedConstraint",
+                    "description": "Which constraint."
+                  },
+                  "hold": {
+                    "type": "string",
+                    "description": "The hold that failed it: a mesh claim's key, or `board:<checkout>:<peer>[:<claim>]`."
+                  },
+                  "holder": {
+                    "type": "string",
+                    "description": "Who holds it, in words."
+                  },
+                  "detail": {
+                    "type": "string",
+                    "description": "What about the hold fails the constraint."
+                  }
+                },
+                "required": [
+                  "constraint",
+                  "hold",
+                  "holder",
+                  "detail"
+                ],
+                "description": "One constraint a candidate failed."
+              },
+              "ProceedConstraint": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "claimed",
+                    "description": "Another worker holds the issue itself: a live mesh claim names it as its issue, or a hold claims its record."
+                  },
+                  {
+                    "type": "string",
+                    "const": "named",
+                    "description": "A hold's words name the issue's id as a word of their own: how the board takes work, and how a mention reads."
+                  },
+                  {
+                    "type": "string",
+                    "const": "scope_held",
+                    "description": "A live exclusive mesh claim of another session meets the issue's scope, so claiming it would be refused."
+                  }
+                ],
+                "description": "A constraint an issue must meet before a session may take it."
+              },
+              "ProceedEvidence": {
+                "type": "object",
+                "properties": {
+                  "objective": {
+                    "type": "string",
+                    "description": "The issue's objective."
+                  },
+                  "have": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "The evidence it has."
+                  },
+                  "need": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "The evidence it needs."
+                  }
+                },
+                "required": [
+                  "objective",
+                  "have",
+                  "need"
+                ],
+                "description": "What finishes an issue."
+              },
+              "ProceedSource": {
+                "type": "object",
+                "properties": {
+                  "source": {
+                    "type": "string",
+                    "description": "`board` (every checkout's peers) or `mesh` (every linked machine's live claims)."
+                  },
+                  "state": {
+                    "$ref": "#/$defs/ProceedSourceState",
+                    "description": "Whether it was read whole, in part, or not at all."
+                  },
+                  "holds": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "How many holds of others it contributed."
+                  },
+                  "summary": {
+                    "type": "string",
+                    "description": "What was read, or why not."
+                  }
+                },
+                "required": [
+                  "source",
+                  "state",
+                  "holds",
+                  "summary"
+                ],
+                "description": "One source of holds and whether it could be read."
+              },
+              "ProceedSourceState": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "read",
+                    "description": "Read whole."
+                  },
+                  {
+                    "type": "string",
+                    "const": "partial",
+                    "description": "Read, with parts that could not be (a board that did not answer)."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unread",
+                    "description": "Not read: the decision holds nothing of it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "undeclared",
+                    "description": "Nothing to read: the repository declares no enabled mesh."
+                  }
+                ],
+                "description": "How much of a source a decision could read."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::proceed"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_proceed_plan"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/proceed/plan"
+          },
+          "cli": {
+            "path": [
+              "proceed",
+              "plan"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "proceed",
+          "plan",
+          "coordination",
+          "session"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/proceed.rs"
       },
       {
         "id": "product.domains",
@@ -84781,7 +85383,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 119,
+        "capabilities": 120,
         "capability_ids": []
       },
       {
@@ -84955,7 +85557,7 @@
         "title": "critique",
         "description": "Declarative objects of kind 'critique' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 4,
+        "capabilities": 5,
         "capability_ids": []
       },
       {
@@ -85355,7 +85957,7 @@
         "title": "intent",
         "description": "Declarative objects of kind 'intent' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 5,
+        "capabilities": 6,
         "capability_ids": []
       },
       {
@@ -85404,7 +86006,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 489,
+        "capabilities": 492,
         "capability_ids": []
       },
       {
@@ -85520,7 +86122,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 42,
+        "capabilities": 43,
         "capability_ids": []
       },
       {
@@ -85662,8 +86264,9 @@
         "description": "The milestone and issue model of this repository, and everything derived from it that nobody authored: the status of each record, the dependency graphs above and below the milestone boundary, the topological execution waves, the roadmap order, the milestone being executed and the one issue to take next. Status is never stored — a record says what happened to it and the status follows from that and from the state of its dependencies — so no file can contradict the graph. This capability reads; writing a lifecycle marker into a record is `plan.transition`, which declares that it writes the repository.",
         "stability": "behaviorally_verified",
         "source": "builtin",
-        "capabilities": 12,
+        "capabilities": 13,
         "capability_ids": [
+          "plan.allocate",
           "plan.delivery",
           "plan.drift",
           "plan.flight",
@@ -85691,6 +86294,18 @@
         "source": "declarative",
         "capabilities": 1,
         "capability_ids": []
+      },
+      {
+        "id": "proceed",
+        "title": "What a session proceeds with",
+        "description": "The decision a session starts from (ADR 0177): the issue to take, every READY issue it passed over with the constraint that issue failed and the hold that failed it, and the terms of the order, composed from the plan, every checkout's board and every linked machine's live claims. Writes nothing.",
+        "stability": "behaviorally_verified",
+        "source": "builtin",
+        "capabilities": 1,
+        "capability_ids": [
+          "proceed.plan"
+        ],
+        "source_path": "apps/majordomus-cli/src/capability/builtin/proceed.rs"
       },
       {
         "id": "product",
@@ -85978,7 +86593,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 563,
+        "capabilities": 566,
         "capability_ids": []
       },
       {
@@ -86070,7 +86685,7 @@
     ]
   },
   "index": {
-    "fingerprint": "b72d65717c546ac11ad57e1c1aff27061d33c8a6afffcabef6b3190cabe9142b",
+    "fingerprint": "45f8641540fbc4f679a03555d2ce9e9935c7d0fcb3a4503b1fa955ac6924007a",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -86093,14 +86708,14 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 119,
+      "adr": 120,
       "application": 5,
       "area": 9,
       "audience": 8,
       "claim": 250,
       "command": 31,
       "context": 39,
-      "critique": 4,
+      "critique": 5,
       "deployment": 1,
       "derive-offload": 1,
       "distribution-model": 1,
@@ -86109,11 +86724,11 @@
       "feature": 29,
       "gap": 4,
       "implementation": 52,
-      "intent": 5,
-      "issue": 489,
+      "intent": 6,
+      "issue": 492,
       "knowledge": 4,
       "mesh-declaration": 1,
-      "milestone": 42,
+      "milestone": 43,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -86124,7 +86739,7 @@
       "session": 90,
       "skill": 8,
       "taxonomy": 10,
-      "test": 563,
+      "test": 566,
       "use-case": 49,
       "workspace": 1
     },
@@ -88104,6 +88719,24 @@
           "alpha",
           "claims",
           "distribution"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0177",
+        "kind": "adr",
+        "identity": "adr-0177",
+        "title": "A session proceeds through one entrypoint that composes the capabilities the repository already has",
+        "description": "A session proceeds through one entrypoint that composes the capabilities the repository already has",
+        "path": ".ai/repo/adrs/0177-a-session-proceeds-through-one-entrypoint-that-composes-the-capabilities.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 6807,
+        "tags": [
+          "proceed",
+          "orchestration",
+          "planning",
+          "mesh",
+          "session"
         ]
       },
       {
@@ -91650,6 +92283,17 @@
         "bytes": 10506
       },
       {
+        "uri": "majordomus://critique/a-session-proceeds",
+        "kind": "critique",
+        "identity": "a-session-proceeds",
+        "title": "a-session-proceeds",
+        "description": "707a04c7ce8",
+        "path": ".ai/repo/project/critiques/a-session-proceeds.yaml",
+        "section": "project",
+        "source_class": "critique",
+        "bytes": 8540
+      },
+      {
         "uri": "majordomus://critique/intent-bound-work",
         "kind": "critique",
         "identity": "intent-bound-work",
@@ -92447,7 +93091,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 200488
+        "bytes": 208219
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -95777,7 +96421,7 @@
         "identity": "lib/project.sh",
         "path": "lib/project.sh",
         "source_class": "library",
-        "bytes": 19492
+        "bytes": 20866
       },
       {
         "uri": "majordomus://implementation/lib/prompt.sh",
@@ -95901,6 +96545,17 @@
         "section": "project",
         "source_class": "intent",
         "bytes": 4446
+      },
+      {
+        "uri": "majordomus://intent/a-session-proceeds",
+        "kind": "intent",
+        "identity": "a-session-proceeds",
+        "title": "Any session becomes a productive worker of the repository with one word",
+        "description": "A person who opens any session on any machine and says /proceed gets a worker that has resolved the repository's context, read every board and the mesh, chosen the most valuable work no one else holds and that it may take, explained that choice, claimed it, executed it under the task lifecycle, proved it, and handed it to the landing seat — and the same word said again, with nothing changed, creates nothing.",
+        "path": ".ai/repo/project/intents/a-session-proceeds.yaml",
+        "section": "project",
+        "source_class": "intent",
+        "bytes": 2783
       },
       {
         "uri": "majordomus://intent/intent-bound-work",
@@ -101150,6 +101805,28 @@
         "bytes": 1706
       },
       {
+        "uri": "majordomus://issue/I2972",
+        "kind": "issue",
+        "identity": "I2972",
+        "title": "One query decides what a session proceeds with, and says why",
+        "description": "Declare proceed.plan (a query, capability!) that composes the plan's hand-out order, the repository's board (peers.list) and the live mesh claims (mesh.state) into one decision: the selected issue, every READY candidate with the hard constraint it failed (claimed, named, scope_held) and the hold that failed it, provisional when the board or a declared mesh could not be read, each term of the order, what the selection unblocks, the evidence that finishes it and the commands that take it; projected as `majordomus proceed plan`, MCP majordomus_proceed_plan and GET /api/v1/proceed/plan.",
+        "path": ".ai/repo/project/issues/I2972.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2001
+      },
+      {
+        "uri": "majordomus://issue/I2973",
+        "kind": "issue",
+        "identity": "I2973",
+        "title": "The choice ranks by what it unblocks",
+        "description": "Move the transitive-unblock count from proceed.rs into Plan::unblocks (distinct unfinished issues that depend on an issue, walked only through unfinished ones, each counted once), and order READY issues by it after milestone membership, wave and priority and before id, in plan.rs (ready_in_order, so plan.next and proceed.plan) and lib/project.sh (mj_pj_ready_ranked) together, held to one answer by case 99.",
+        "path": ".ai/repo/project/issues/I2973.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2299
+      },
+      {
         "uri": "majordomus://issue/I2987",
         "kind": "issue",
         "identity": "I2987",
@@ -101326,6 +102003,17 @@
         "bytes": 1840
       },
       {
+        "uri": "majordomus://issue/I3040",
+        "kind": "issue",
+        "identity": "I3040",
+        "title": "An id is taken by one atomic claim",
+        "description": "Add plan.allocate (a command that writes only the mesh journal; MCP majordomus_plan_allocate, POST /api/v1/plan/allocate, `majordomus mesh allocate <issue|case|adr> --session S [--at-least N]`): survey this tree, the sibling worktrees, every ref (git log --all --diff-filter=A) and every reservation the mesh journal remembers, take one past the highest (or --at-least), and reserve it with one exclusive mesh claim on the identifier's own key `id:<kind>/<n>`, moving to the next number on a claim_conflict and naming its holder.",
+        "path": ".ai/repo/project/issues/I3040.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2891
+      },
+      {
         "uri": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "identity": "a-commit-stood-behind-a-build-lock",
@@ -101474,6 +102162,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 3287
+      },
+      {
+        "uri": "majordomus://milestone/a-session-proceeds",
+        "kind": "milestone",
+        "identity": "a-session-proceeds",
+        "title": "A session proceeds: one entrypoint resolves, reconciles, chooses, claims, executes, proves and hands on",
+        "description": "`/proceed` in any session runs `majordomus proceed`: one explained decision from the existing capabilities, an exclusive claim, a worktree and a task bound to the chosen issue, the implement skill, finish, and a receipt handed to the landing seat; said again with nothing changed it creates nothing.",
+        "path": ".ai/repo/project/milestones/a-session-proceeds.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 3064
       },
       {
         "uri": "majordomus://milestone/adopter-upgrades",
@@ -109412,6 +110111,14 @@
         "bytes": 2771
       },
       {
+        "uri": "majordomus://test/test/cases/3367_a_session_is_told_what_to_proceed_with_and_why.sh",
+        "kind": "test",
+        "identity": "test/cases/3367_a_session_is_told_what_to_proceed_with_and_why.sh",
+        "path": "test/cases/3367_a_session_is_told_what_to_proceed_with_and_why.sh",
+        "source_class": "case",
+        "bytes": 10197
+      },
+      {
         "uri": "majordomus://test/test/cases/336_every_control_is_claimed.sh",
         "kind": "test",
         "identity": "test/cases/336_every_control_is_claimed.sh",
@@ -109498,6 +110205,22 @@
         "path": "test/cases/343_the_cockpit_shows_who_else_is_here.sh",
         "source_class": "case",
         "bytes": 5880
+      },
+      {
+        "uri": "majordomus://test/test/cases/3440_an_id_is_taken_by_one_atomic_claim.sh",
+        "kind": "test",
+        "identity": "test/cases/3440_an_id_is_taken_by_one_atomic_claim.sh",
+        "path": "test/cases/3440_an_id_is_taken_by_one_atomic_claim.sh",
+        "source_class": "case",
+        "bytes": 5995
+      },
+      {
+        "uri": "majordomus://test/test/cases/3441_the_choice_ranks_by_what_it_unblocks.sh",
+        "kind": "test",
+        "identity": "test/cases/3441_the_choice_ranks_by_what_it_unblocks.sh",
+        "path": "test/cases/3441_the_choice_ranks_by_what_it_unblocks.sh",
+        "source_class": "case",
+        "bytes": 3094
       },
       {
         "uri": "majordomus://test/test/cases/349_a_step_reports_its_own_time.sh",
@@ -112227,7 +112950,7 @@
       "identity": [
         "id"
       ],
-      "objects": 119
+      "objects": 120
     },
     {
       "name": "application",
@@ -112297,7 +113020,7 @@
       "identity": [
         "intent"
       ],
-      "objects": 4
+      "objects": 5
     },
     {
       "name": "deployment",
@@ -112380,7 +113103,7 @@
       "identity": [
         "id"
       ],
-      "objects": 5
+      "objects": 6
     },
     {
       "name": "issue",
@@ -112390,7 +113113,7 @@
       "identity": [
         "id"
       ],
-      "objects": 489
+      "objects": 492
     },
     {
       "name": "knowledge",
@@ -112420,7 +113143,7 @@
       "identity": [
         "id"
       ],
-      "objects": 42
+      "objects": 43
     },
     {
       "name": "moment",
@@ -112542,7 +113265,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 563
+      "objects": 566
     },
     {
       "name": "use-case",
@@ -133817,6 +134540,169 @@
             "path": [
               "majordomus",
               "mesh",
+              "allocate"
+            ],
+            "route": "/docs/cli/mesh/allocate/",
+            "executable": true,
+            "usage": "majordomus mesh allocate [OPTIONS] <KIND>",
+            "about": "Reserve the next issue, case or ADR number for a session with one exclusive mesh claim on its id key, after surveying the tree, the worktrees, every ref and the journal; exits 10 when no server runs the mesh",
+            "args": [
+              {
+                "name": "kind",
+                "positional": true,
+                "help": "The kind of identifier",
+                "value_name": "KIND",
+                "takes_value": true,
+                "required": true,
+                "global": false,
+                "possible_values": [
+                  {
+                    "name": "issue",
+                    "help": "An issue id, `I<nnnn>`, the name of `.ai/repo/project/issues/<id>.yaml`"
+                  },
+                  {
+                    "name": "case",
+                    "help": "A case number, the identity before the first underscore of `test/cases/<n>_*.sh`"
+                  },
+                  {
+                    "name": "adr",
+                    "help": "An ADR number, the four digits that open `.ai/repo/adrs/<nnnn>-*.md`"
+                  }
+                ],
+                "defaults": []
+              },
+              {
+                "name": "session",
+                "long": "session",
+                "positional": false,
+                "help": "The mesh session the number is reserved for",
+                "value_name": "SESSION",
+                "takes_value": true,
+                "required": true,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "at_least",
+                "long": "at-least",
+                "positional": false,
+                "help": "The lowest number to take: a survey run elsewhere, or a block a seat was given",
+                "value_name": "N",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "`text` for a person, `json` for a machine; both render the same answer",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "mesh-allocate",
+                "title": "Reserve the next case number for a session",
+                "description": "The number is reserved by one exclusive claim on `id:case/<n>` in the mesh of the server holding this checkout's lease, after surveying the tree, the sibling worktrees, every ref and every reservation the journal remembers. A reservation needs the running server that makes it atomic; without one the command exits 10 and says so.",
+                "argv": [
+                  "mesh",
+                  "allocate",
+                  "case",
+                  "--session",
+                  "s1"
+                ],
+                "command": "majordomus mesh allocate case --session s1",
+                "setup": [],
+                "expectation": "exits 10"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "mesh",
               "release"
             ],
             "route": "/docs/cli/mesh/release/",
@@ -143229,6 +144115,243 @@
       {
         "path": [
           "majordomus",
+          "proceed"
+        ],
+        "route": "/docs/cli/proceed/",
+        "executable": false,
+        "usage": "majordomus proceed [OPTIONS] <COMMAND>",
+        "about": "What this session proceeds with, and why: the READY issue nothing refuses, every one passed over with the claim or exclusive scope that refused it, and the terms of the order, from the plan, every checkout's board and every linked machine's live claims (ADR 0177)",
+        "args": [
+          {
+            "name": "repo",
+            "long": "repo",
+            "positional": false,
+            "help": "Start the search for the repository root here (default: the current directory)",
+            "value_name": "PATH",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "discovery",
+            "long": "discovery",
+            "positional": false,
+            "help": "How declarative files are enumerated",
+            "value_name": "DISCOVERY",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "vcs",
+                "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+              },
+              {
+                "name": "filesystem",
+                "help": "A walk of the work tree with the same glob semantics; untracked files included"
+              }
+            ],
+            "defaults": [
+              "vcs"
+            ]
+          },
+          {
+            "name": "strict",
+            "long": "strict",
+            "positional": false,
+            "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+            "value_name": "STRICT",
+            "takes_value": false,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": [
+              "false"
+            ]
+          },
+          {
+            "name": "share",
+            "long": "share",
+            "positional": false,
+            "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+            "value_name": "DIR",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "format",
+            "long": "format",
+            "positional": false,
+            "help": "Output shape",
+            "value_name": "FORMAT",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "text",
+                "help": "Lines for a person"
+              },
+              {
+                "name": "json",
+                "help": "One JSON document, deterministic"
+              }
+            ],
+            "defaults": [
+              "text"
+            ]
+          }
+        ],
+        "examples": [],
+        "subcommands": [
+          {
+            "path": [
+              "majordomus",
+              "proceed",
+              "plan"
+            ],
+            "route": "/docs/cli/proceed/plan/",
+            "executable": true,
+            "usage": "majordomus proceed plan [OPTIONS]",
+            "about": "The decision, read only: the selected issue and why, the READY issues passed over with what refused each, what the selection unblocks and the commands that take it; asked of the server holding this checkout's lease. Exit 10 when nothing can be selected, 11 when the selection is provisional because the board or a declared mesh could not be read",
+            "args": [
+              {
+                "name": "milestone",
+                "long": "milestone",
+                "positional": false,
+                "help": "The milestone whose READY issues come first; the active one when absent",
+                "value_name": "ID",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "session",
+                "long": "session",
+                "positional": false,
+                "help": "The mesh session the decision is for, whose own claims are not held against it",
+                "value_name": "ID",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "proceed-plan-json",
+                "title": "What to proceed with, and why, when there is nothing to take",
+                "description": "The same answer `GET /api/v1/proceed/plan` and the MCP tool `majordomus_proceed_plan` return: the READY issues in the plan's hand-out order, each with the claims that refuse it, the selected one with what it unblocks and the commands that take it, the unfinished issues that wait by status, and whether the board and the mesh could be read. The command line asks the server holding this checkout's lease; this fixture has no server, declares no mesh and no plan, so the decision is composed here, reads the mesh as undeclared rather than unread, selects nothing and exits 10.",
+                "argv": [
+                  "proceed",
+                  "plan",
+                  "--format",
+                  "json"
+                ],
+                "command": "majordomus proceed plan --format json",
+                "setup": [],
+                "expectation": "exits 10"
+              }
+            ],
+            "subcommands": []
+          }
+        ]
+      },
+      {
+        "path": [
+          "majordomus",
           "skills"
         ],
         "route": "/docs/cli/skills/",
@@ -147421,6 +148544,23 @@
         "output": "CounterSnapshot"
       },
       {
+        "name": "majordomus_plan_allocate",
+        "id": "plan.allocate",
+        "title": "Reserve the next issue, case or ADR number",
+        "description": "One number of the kind asked (`issue`, `case`, `adr`), reserved for one mesh session by one exclusive claim on the identifier's own key, `id:<kind>/<number>`. The candidate is one past the highest number this tree, the sibling worktrees, every ref and every reservation the mesh journal remembers hold, or the caller's `at_least` when that is higher; a number another session's claim already holds is skipped and its holder named. On one runtime the claim is admitted under the admission lock, so two allocations at once answer two numbers; across linked runtimes two claims made before they sync are both admitted and the fold names one winner, whose loser allocates again (fencing is mesh-journal-converges' work). Writes this runtime's mesh journal only, never the repository; the reservation ends with its session or `mesh release`.",
+        "kind": "command",
+        "read_only": false,
+        "effect": "process_state",
+        "hints": {
+          "read_only": false,
+          "destructive": false,
+          "idempotent": false,
+          "open_world": false
+        },
+        "input": "AllocateInput",
+        "output": "Allocation"
+      },
+      {
         "name": "majordomus_plan_delivery",
         "id": "plan.delivery",
         "title": "How far each issue's work has travelled",
@@ -147623,6 +148763,23 @@
         },
         "input": "PlanMilestoneFilter",
         "output": "PlanWaveReport"
+      },
+      {
+        "name": "majordomus_proceed_plan",
+        "id": "proceed.plan",
+        "title": "What to proceed with, and why",
+        "description": "The READY issues in the plan's hand-out order (the asked milestone first, then wave, priority and id, as `plan.next`), each refused when another worker holds it: a live mesh claim names it as its issue or a hold claims its record (`claimed`), a board or mesh announcement names its id as a word of its own (`named`, quoted beside it), or a live exclusive mesh claim of another session meets its scope (`scope_held`); advisory holds over its scope are listed as `shared_with` and refuse nothing. The first issue nothing refuses is `selected`, with what it unblocks, what finishes it and the commands that take it; `reason` says why in one sentence, and `sources` whether the board and the mesh could be read. A decision that could not read the board, or a declared mesh, is `provisional` and gives no commands. The caller's own session (its mesh claims on this runtime, and its board announcements) is never held against it; a session of the same name on another runtime is another worker. Composed by the server holding this checkout's lease, which holds the board and the mesh; the command line asks it. Writes nothing.",
+        "kind": "query",
+        "read_only": true,
+        "effect": "read",
+        "hints": {
+          "read_only": true,
+          "destructive": false,
+          "idempotent": true,
+          "open_world": false
+        },
+        "input": "ProceedPlanInput",
+        "output": "ProceedDecision"
       },
       {
         "name": "majordomus_product_domains",
@@ -149690,6 +150847,12 @@
         "kind": "query"
       },
       {
+        "method": "POST",
+        "path": "/api/v1/plan/allocate",
+        "id": "plan.allocate",
+        "kind": "command"
+      },
+      {
         "method": "GET",
         "path": "/api/v1/plan/delivery",
         "id": "plan.delivery",
@@ -149759,6 +150922,12 @@
         "method": "GET",
         "path": "/api/v1/plan/waves",
         "id": "plan.waves",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/proceed/plan",
+        "id": "proceed.plan",
         "kind": "query"
       },
       {
@@ -155349,6 +156518,64 @@
         "route": "GET /api/v1/plan/waves"
       },
       {
+        "key": "proceed.plan|direct|default",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "proceed.plan",
+        "module": "proceed",
+        "case": "default",
+        "cached": false
+      },
+      {
+        "key": "proceed.plan|direct|milestone_and_session",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "proceed.plan",
+        "module": "proceed",
+        "case": "milestone_and_session",
+        "cached": false
+      },
+      {
+        "key": "proceed.plan|mcp|default",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "proceed.plan",
+        "module": "proceed",
+        "case": "default",
+        "cached": false,
+        "tool": "majordomus_proceed_plan"
+      },
+      {
+        "key": "proceed.plan|mcp|milestone_and_session",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "proceed.plan",
+        "module": "proceed",
+        "case": "milestone_and_session",
+        "cached": false,
+        "tool": "majordomus_proceed_plan"
+      },
+      {
+        "key": "proceed.plan|http|default",
+        "kind": "capability",
+        "transport": "http",
+        "id": "proceed.plan",
+        "module": "proceed",
+        "case": "default",
+        "cached": false,
+        "route": "GET /api/v1/proceed/plan"
+      },
+      {
+        "key": "proceed.plan|http|milestone_and_session",
+        "kind": "capability",
+        "transport": "http",
+        "id": "proceed.plan",
+        "module": "proceed",
+        "case": "milestone_and_session",
+        "cached": false,
+        "route": "GET /api/v1/proceed/plan"
+      },
+      {
         "key": "product.domains|direct|stable",
         "kind": "capability",
         "transport": "direct",
@@ -160724,6 +161951,30 @@
           "cases": 1
         },
         {
+          "subject": "plan.allocate",
+          "module": "plan",
+          "transport": "direct",
+          "state": "waived",
+          "cases": 0,
+          "reason": "transient_state"
+        },
+        {
+          "subject": "plan.allocate",
+          "module": "plan",
+          "transport": "mcp",
+          "state": "waived",
+          "cases": 0,
+          "reason": "transient_state"
+        },
+        {
+          "subject": "plan.allocate",
+          "module": "plan",
+          "transport": "http",
+          "state": "waived",
+          "cases": 0,
+          "reason": "transient_state"
+        },
+        {
           "subject": "plan.delivery",
           "module": "plan",
           "transport": "direct",
@@ -160971,6 +162222,27 @@
         {
           "subject": "plan.waves",
           "module": "plan",
+          "transport": "http",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "proceed.plan",
+          "module": "proceed",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "proceed.plan",
+          "module": "proceed",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "proceed.plan",
+          "module": "proceed",
           "transport": "http",
           "state": "covered",
           "cases": 2
@@ -162130,24 +163402,24 @@
       ],
       "tallies": {
         "direct": {
-          "required": 206,
-          "covered": 175,
+          "required": 208,
+          "covered": 176,
           "missing": 0,
-          "waived": 31,
+          "waived": 32,
           "inapplicable": 0
         },
         "http": {
-          "required": 201,
-          "covered": 175,
+          "required": 203,
+          "covered": 176,
           "missing": 0,
-          "waived": 26,
+          "waived": 27,
           "inapplicable": 0
         },
         "mcp": {
-          "required": 196,
-          "covered": 171,
+          "required": 198,
+          "covered": 172,
           "missing": 0,
-          "waived": 25,
+          "waived": 26,
           "inapplicable": 0
         },
         "system": {
@@ -162158,10 +163430,10 @@
           "inapplicable": 0
         },
         "total": {
-          "required": 617,
-          "covered": 535,
+          "required": 623,
+          "covered": 538,
           "missing": 0,
-          "waived": 82,
+          "waived": 85,
           "inapplicable": 0
         }
       }

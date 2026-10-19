@@ -1357,6 +1357,15 @@
         "status": "query"
       },
       {
+        "id": "capability:plan.allocate",
+        "kind": "capability",
+        "label": "plan.allocate",
+        "summary": "Reserve the next issue, case or ADR number",
+        "route": "/cockpit/capabilities/plan.allocate",
+        "source": "apps/majordomus-cli/src/capability/builtin/plan.rs",
+        "status": "command"
+      },
+      {
         "id": "capability:plan.delivery",
         "kind": "capability",
         "label": "plan.delivery",
@@ -1462,6 +1471,15 @@
         "summary": "What may run at the same time",
         "route": "/cockpit/capabilities/plan.waves",
         "source": "apps/majordomus-cli/src/capability/builtin/plan.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:proceed.plan",
+        "kind": "capability",
+        "label": "proceed.plan",
+        "summary": "What to proceed with, and why",
+        "route": "/cockpit/capabilities/proceed.plan",
+        "source": "apps/majordomus-cli/src/capability/builtin/proceed.rs",
         "status": "query"
       },
       {
@@ -2403,6 +2421,14 @@
         "label": "peers.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/capability/builtin/peers.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/capability/builtin/plan.rs",
+        "kind": "file",
+        "label": "plan.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/capability/builtin/plan.rs",
         "external": true
       },
       {
@@ -7891,6 +7917,39 @@
             "alpha",
             "claims",
             "distribution"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0177",
+        "kind": "adr",
+        "label": "adr-0177",
+        "summary": "A session proceeds through one entrypoint that composes the capabilities the repository already has",
+        "route": "/cockpit/objects/adr/adr-0177",
+        "source": ".ai/repo/adrs/0177-a-session-proceeds-through-one-entrypoint-that-composes-the-capabilities.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-18",
+          "related": [
+            "file:.ai/repo/project/milestones/a-session-proceeds.yaml",
+            "file:.ai/repo/project/intents/a-session-proceeds.yaml",
+            "file:apps/majordomus-cli/src/plan.rs",
+            "file:apps/majordomus-cli/src/capability/builtin/plan.rs",
+            "file:apps/majordomus-cli/src/capability/builtin/brief.rs",
+            "file:apps/majordomus-cli/src/peers.rs",
+            "file:apps/majordomus-cli/src/mesh/state.rs",
+            "file:.ai/repo/workflows/task-lifecycle.md",
+            "file:.ai/repo/adrs/0004-canonical-architecture-and-performance-truth.md",
+            "file:.ai/repo/adrs/0070-intent-is-a-typed-record-and-satisfaction-is-derived-from-evidence.md",
+            "file:.ai/repo/adrs/0144-an-intent-is-proposed-by-a-capability-and-its-stage-stays-derived.md",
+            "file:.ai/repo/adrs/0167-work-moves-through-seats-on-the-mesh-and-lands-in-combined-tops.md"
+          ],
+          "tags": [
+            "proceed",
+            "orchestration",
+            "planning",
+            "mesh",
+            "session"
           ]
         }
       },
@@ -14511,6 +14570,18 @@
         }
       },
       {
+        "id": "majordomus://critique/a-session-proceeds",
+        "kind": "critique",
+        "label": "a-session-proceeds",
+        "summary": "a-session-proceeds",
+        "route": "/cockpit/objects/critique/a-session-proceeds",
+        "source": ".ai/repo/project/critiques/a-session-proceeds.yaml",
+        "facts": {
+          "intent": "a-session-proceeds",
+          "reviewed_at": "707a04c7ce8"
+        }
+      },
+      {
         "id": "majordomus://critique/intent-bound-work",
         "kind": "critique",
         "label": "intent-bound-work",
@@ -19820,6 +19891,38 @@
             "Where candidates are written on a trunk that accepts only pull requests (I1984); grouping on read holds wherever they are"
           ],
           "updated_at": "2026-10-09"
+        }
+      },
+      {
+        "id": "majordomus://intent/a-session-proceeds",
+        "kind": "intent",
+        "label": "a-session-proceeds",
+        "summary": "Any session becomes a productive worker of the repository with one word",
+        "route": "/cockpit/objects/intent/a-session-proceeds",
+        "source": ".ai/repo/project/intents/a-session-proceeds.yaml",
+        "facts": {
+          "created_at": "2026-10-18",
+          "governance": [
+            "adr:adr-0177",
+            "adr:adr-0167",
+            "adr:adr-0004",
+            "rule:project.work-is-claimed-before-it-is-built"
+          ],
+          "invariants": [
+            "The decision is one capability answered from the existing capabilities; the skill, the command line, MCP and the UI are its projections and hold no rule, workflow step or issue list of their own",
+            "A choice is explained term by term and refuses a candidate another worker claims, whose scope another worker holds, or whose binding is refused",
+            "Proceeding never merges, tags or releases; delivery stays with the landing and release seats",
+            "Exclusivity across machines is the mesh's claim, not a lock of this feature's own"
+          ],
+          "milestones": [
+            "a-session-proceeds"
+          ],
+          "non_goals": [
+            "Proceeding without a person's word (event-driven reassignment); a later decision once this is measured",
+            "A weighted portfolio optimiser over several workers at once",
+            "Releasing on every landing"
+          ],
+          "updated_at": "2026-10-18"
         }
       },
       {
@@ -42026,6 +42129,91 @@
         }
       },
       {
+        "id": "majordomus://issue/I2972",
+        "kind": "issue",
+        "label": "I2972",
+        "summary": "One query decides what a session proceeds with, and says why",
+        "route": "/cockpit/objects/issue/i2972",
+        "source": ".ai/repo/project/issues/I2972.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The decision names the selected issue, each rejected candidate with its failed constraint, and each ranking term",
+            "It is one capability projected on the command line, MCP and HTTP, and writes nothing"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "No capability composes the start; plan.next is the nearest and answers one id.",
+          "depends_on": [],
+          "desired_state": "proceed.plan answers the decision on every projection, writes nothing, and a case holds its shape on a fixture repository with a board and claims.",
+          "evidence_required": [
+            "case_a_session_is_told_what_to_proceed_with_and_why"
+          ],
+          "milestone": "a-session-proceeds",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin",
+            "apps/majordomus-cli/src/plan.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/commands",
+            "test/cases/3367_a_session_is_told_what_to_proceed_with_and_why.sh"
+          ],
+          "serves": [
+            "a-session-proceeds#a-session-is-told-what-to-take"
+          ],
+          "slug": "proceed-plan-decides-and-explains",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "majordomus plan validate",
+            "bash test/run.sh 3367_a_session_is_told_what_to_proceed_with_and_why"
+          ],
+          "why": "ADR 0177. A worker's start is composed by hand today; plan.next gives one id with no reason and no view of the board or the mesh."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2973",
+        "kind": "issue",
+        "label": "I2973",
+        "summary": "The choice ranks by what it unblocks",
+        "route": "/cockpit/objects/issue/i2973",
+        "source": ".ai/repo/project/issues/I2973.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Of two READY issues equal in milestone, wave and priority, the one that unblocks more comes first in plan.next, majordomus plan next and proceed.plan",
+            "Adding a dependency to the plan changes the order and the reason, and a shared downstream issue is counted once",
+            "The shell and Rust engines answer the same next issue on every plan case 99 compares"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "READY issues are ordered by milestone membership, wave, priority and id; proceed.plan reports unblocks without ranking by it.",
+          "depends_on": [
+            "I2972"
+          ],
+          "evidence_required": [
+            "case_the_choice_ranks_by_what_it_unblocks"
+          ],
+          "milestone": "a-session-proceeds",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/plan.rs",
+            "apps/majordomus-cli/src/capability/builtin/proceed.rs",
+            "lib/project.sh",
+            "test/cases/99_plan_capabilities.sh",
+            "test/cases/3441_the_choice_ranks_by_what_it_unblocks.sh"
+          ],
+          "serves": [
+            "a-session-proceeds#the-choice-ranks-by-what-it-unblocks"
+          ],
+          "slug": "the-choice-ranks-by-what-it-unblocks",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "majordomus plan validate",
+            "bash test/run.sh 99_plan_capabilities 3441_the_choice_ranks_by_what_it_unblocks"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I2987",
         "kind": "issue",
         "label": "I2987",
@@ -42642,6 +42830,46 @@
         }
       },
       {
+        "id": "majordomus://issue/I3040",
+        "kind": "issue",
+        "label": "I3040",
+        "summary": "An id is taken by one atomic claim",
+        "route": "/cockpit/objects/issue/i3040",
+        "source": ".ai/repo/project/issues/I3040.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Allocations of one kind at once on one runtime answer different numbers, and a number another session holds is skipped with its holder named",
+            "A number on any ref, in any sibling worktree or reserved in the mesh journal is never handed out again",
+            "Across linked runtimes two claims made before they sync are both admitted and the fold names one winner; the loser allocates again (fencing is mesh-journal-converges')"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "A number is surveyed (scripts/case-numbers next, majordomus adr next) and then announced in prose on the board; nothing reserves it, and the seats hold hand-assigned blocks.",
+          "depends_on": [],
+          "evidence_required": [
+            "case_an_id_is_taken_by_one_atomic_claim"
+          ],
+          "milestone": "a-session-proceeds",
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/commands/mesh.rs",
+            "test/cases/3440_an_id_is_taken_by_one_atomic_claim.sh"
+          ],
+          "serves": [
+            "a-session-proceeds#an-id-is-reserved-once"
+          ],
+          "slug": "an-id-is-taken-by-one-atomic-claim",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "majordomus plan validate",
+            "bash test/run.sh 3440_an_id_is_taken_by_one_atomic_claim"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "label": "a-commit-stood-behind-a-build-lock",
@@ -43108,6 +43336,56 @@
             "bash test/run.sh 981_an_observation_becomes_a_grouped_candidate",
             "bash test/run.sh 982_a_candidate_is_routed_by_what_it_is_about",
             "bash test/run.sh 564_knowledge_derivation_is_idempotent"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/a-session-proceeds",
+        "kind": "milestone",
+        "label": "a-session-proceeds",
+        "summary": "A session proceeds: one entrypoint resolves, reconciles, chooses, claims, executes, proves and hands on",
+        "route": "/cockpit/objects/milestone/a-session-proceeds",
+        "source": ".ai/repo/project/milestones/a-session-proceeds.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A fresh session in any directory of the repository runs /proceed and is told its context, the board, the chosen issue and why, without any other instruction",
+            "Two sessions proceeding at once never hold the same issue or overlapping scope",
+            "A session whose work stopped is resumed or its claim released, never duplicated",
+            "Adding a dependency to the plan changes the ranking and its reason with no list edited",
+            "A finished task's head and receipt reach the landing seat; proceed merges nothing",
+            "Proceeding again with nothing changed creates no claim, worktree, task, commit or build"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "No entrypoint composes the capabilities; plan.next is not claim-aware and gives no reason; a second start in a session opens a second task.",
+          "evidence_required": [
+            "case_a_session_is_told_what_to_proceed_with_and_why",
+            "case_an_id_is_taken_by_one_atomic_claim",
+            "case_the_choice_ranks_by_what_it_unblocks"
+          ],
+          "non_scope": [
+            "Mesh fencing and claim convergence (milestone mesh-journal-converges)",
+            "Landing and releasing (the landing and release seats, ADR 0167)"
+          ],
+          "order": 155,
+          "priority": "p1",
+          "risks": [
+            "Without mesh fencing two machines can admit one claim; the loser must stop on the fold's verdict",
+            "A ranking that hides its terms becomes a second opinion nobody can check; every term is shown"
+          ],
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin",
+            "apps/majordomus-cli/src/plan.rs",
+            ".ai/repo/skills/proceed",
+            "docs/PROCEED.md"
+          ],
+          "slug": "a-session-proceeds",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "bin/majordomus plan validate",
+            "bin/majordomus intent validate a-session-proceeds",
+            "bash test/run.sh 3367_a_session_is_told_what_to_proceed_with_and_why",
+            "bash test/run.sh 3440_an_id_is_taken_by_one_atomic_claim",
+            "bash test/run.sh 3441_the_choice_ranks_by_what_it_unblocks"
           ]
         }
       },
@@ -60817,6 +61095,13 @@
         "source": "test/cases/3366_a_proof_word_is_earned.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3367_a_session_is_told_what_to_proceed_with_and_why.sh",
+        "kind": "test",
+        "label": "test/cases/3367_a_session_is_told_what_to_proceed_with_and_why.sh",
+        "route": "/cockpit/objects/test/test-cases-3367-a-session-is-told-what-to-proceed-with-and-why-sh",
+        "source": "test/cases/3367_a_session_is_told_what_to_proceed_with_and_why.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/336_every_control_is_claimed.sh",
         "kind": "test",
         "label": "test/cases/336_every_control_is_claimed.sh",
@@ -60892,6 +61177,20 @@
         "label": "test/cases/343_the_cockpit_shows_who_else_is_here.sh",
         "route": "/cockpit/objects/test/test-cases-343-the-cockpit-shows-who-else-is-here-sh",
         "source": "test/cases/343_the_cockpit_shows_who_else_is_here.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3440_an_id_is_taken_by_one_atomic_claim.sh",
+        "kind": "test",
+        "label": "test/cases/3440_an_id_is_taken_by_one_atomic_claim.sh",
+        "route": "/cockpit/objects/test/test-cases-3440-an-id-is-taken-by-one-atomic-claim-sh",
+        "source": "test/cases/3440_an_id_is_taken_by_one_atomic_claim.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3441_the_choice_ranks_by_what_it_unblocks.sh",
+        "kind": "test",
+        "label": "test/cases/3441_the_choice_ranks_by_what_it_unblocks.sh",
+        "route": "/cockpit/objects/test/test-cases-3441-the-choice-ranks-by-what-it-unblocks-sh",
+        "source": "test/cases/3441_the_choice_ranks_by_what_it_unblocks.sh"
       },
       {
         "id": "majordomus://test/test/cases/349_a_step_reports_its_own_time.sh",
@@ -65076,6 +65375,11 @@
         "label": "plan"
       },
       {
+        "id": "module:proceed",
+        "kind": "module",
+        "label": "proceed"
+      },
+      {
         "id": "module:product",
         "kind": "module",
         "label": "product"
@@ -67683,6 +67987,21 @@
         "kind": "projects"
       },
       {
+        "source": "capability:plan.allocate",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:plan.allocate",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:plan.allocate",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
         "source": "capability:plan.delivery",
         "target": "projection:cli",
         "kind": "projects"
@@ -67869,6 +68188,26 @@
       },
       {
         "source": "capability:plan.waves",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:proceed.plan",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:proceed.plan",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:proceed.plan",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:proceed.plan",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -73773,6 +74112,71 @@
         "kind": "put_in_force"
       },
       {
+        "source": "majordomus://adr/adr-0177",
+        "target": "file:apps/majordomus-cli/src/capability/builtin/brief.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0177",
+        "target": "file:apps/majordomus-cli/src/capability/builtin/plan.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0177",
+        "target": "file:apps/majordomus-cli/src/mesh/state.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0177",
+        "target": "file:apps/majordomus-cli/src/peers.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0177",
+        "target": "file:apps/majordomus-cli/src/plan.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0177",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0177",
+        "target": "majordomus://adr/adr-0004",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0177",
+        "target": "majordomus://adr/adr-0070",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0177",
+        "target": "majordomus://adr/adr-0144",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0177",
+        "target": "majordomus://adr/adr-0167",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0177",
+        "target": "majordomus://document/.ai/repo/workflows/task-lifecycle.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0177",
+        "target": "majordomus://intent/a-session-proceeds",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0177",
+        "target": "majordomus://milestone/a-session-proceeds",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://application/ci-gated-project",
         "target": "kind:application",
         "kind": "is_a"
@@ -79478,6 +79882,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://critique/a-session-proceeds",
+        "target": "kind:critique",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://critique/intent-bound-work",
         "target": "kind:critique",
         "kind": "is_a"
@@ -81714,6 +82123,11 @@
       },
       {
         "source": "majordomus://intent/a-session-leaves-what-it-observed",
+        "target": "kind:intent",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://intent/a-session-proceeds",
         "target": "kind:intent",
         "kind": "is_a"
       },
@@ -88523,6 +88937,31 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2972",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2972",
+        "target": "majordomus://milestone/a-session-proceeds",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2973",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2973",
+        "target": "majordomus://issue/I2972",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2973",
+        "target": "majordomus://milestone/a-session-proceeds",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I2987",
         "target": "kind:issue",
         "kind": "is_a"
@@ -88680,6 +89119,16 @@
       {
         "source": "majordomus://issue/I3023",
         "target": "majordomus://milestone/truthful-plan-surfaces",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3040",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3040",
+        "target": "majordomus://milestone/a-session-proceeds",
         "kind": "belongs_to"
       },
       {
@@ -88739,6 +89188,11 @@
       },
       {
         "source": "majordomus://milestone/a-session-leaves-what-it-observed",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/a-session-proceeds",
         "target": "kind:milestone",
         "kind": "is_a"
       },
@@ -93643,6 +94097,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3367_a_session_is_told_what_to_proceed_with_and_why.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/336_every_control_is_claimed.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -93694,6 +94153,16 @@
       },
       {
         "source": "majordomus://test/test/cases/343_the_cockpit_shows_who_else_is_here.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3440_an_id_is_taken_by_one_atomic_claim.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3441_the_choice_ranks_by_what_it_unblocks.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -98614,6 +99083,11 @@
       },
       {
         "source": "module:plan",
+        "target": "capability:plan.allocate",
+        "kind": "composes"
+      },
+      {
+        "source": "module:plan",
         "target": "capability:plan.delivery",
         "kind": "composes"
       },
@@ -98670,6 +99144,11 @@
       {
         "source": "module:plan",
         "target": "capability:plan.waves",
+        "kind": "composes"
+      },
+      {
+        "source": "module:proceed",
+        "target": "capability:proceed.plan",
         "kind": "composes"
       },
       {
@@ -98929,8 +99408,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3078,
-      "edges": 6738,
+      "nodes": 3092,
+      "edges": 6773,
       "acyclic": false,
       "truncated": false
     }

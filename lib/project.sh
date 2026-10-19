@@ -265,12 +265,41 @@ mj_pj_next_ready() {
   [ -n "$pick" ] || pick="$(mj_pj_ready_ranked "")"
   printf '%s' "$pick"
 }
-# lowest wave, then priority, then id, among the READY issues of one milestone ("" = any)
+# lowest wave, then priority, then the most unfinished issues unblocked, then id, among the
+# READY issues of one milestone ("" = any). "Unblocked" is every unfinished issue that depends
+# on the candidate directly or through other unfinished ones, each counted once: column 13 of
+# an issue row is its direct dependents. plan.rs Plan::ready_in_order and Plan::unblocks are
+# the same order and the same count, and case 99 holds the two engines to one answer. The id
+# is compared as order.rs natural_cmp compares it, a digit run by its value (I9999 before
+# I10000): its letters folded, then its number, then the id itself.
 mj_pj_ready_ranked() {
-  awk -F'\t' -v m="$1" '$1=="I" && $4=="READY" && ($3==m || m=="") {
-      p = $6; rank = (p=="p0"?0:(p=="p1"?1:(p=="p2"?2:3)))
-      printf "%d\t%d\t%s\n", $5, rank, $2 }' "$MJ_PJ/model.tsv" \
-    | LC_ALL=C sort -k1,1n -k2,2n -k3,3 | head -n 1 | cut -f3
+  awk -F'\t' -v m="$1" '
+    $1 == "I" {
+      st[$2] = $4; rd[$2] = $13
+      if ($4 == "READY" && ($3 == m || m == "")) {
+        n++; cid[n] = $2; cw[n] = $5; p = $6
+        cr[n] = (p == "p0" ? 0 : (p == "p1" ? 1 : (p == "p2" ? 2 : 3)))
+      }
+    }
+    function unblocked(id,   seen, q, head, tail, cur, parts, c, k, d, total) {
+      split("", seen); total = 0; head = 1; tail = 1; q[1] = id
+      while (head <= tail) {
+        cur = q[head++]; c = split(rd[cur], parts, ",")
+        for (k = 1; k <= c; k++) {
+          d = parts[k]
+          if (d == "" || (d in seen) || !(d in st) || st[d] == "DONE" || st[d] == "CANCELLED") continue
+          seen[d] = 1; total++; q[++tail] = d
+        }
+      }
+      return total
+    }
+    END {
+      for (i = 1; i <= n; i++) {
+        pre = cid[i]; sub(/[0-9]+$/, "", pre); num = substr(cid[i], length(pre) + 1)
+        printf "%d\t%d\t%06d\t%s\t%d\t%s\n", cw[i], cr[i], 999999 - unblocked(cid[i]), tolower(pre), num + 0, cid[i]
+      }
+    }
+  ' "$MJ_PJ/model.tsv" | LC_ALL=C sort -k1,1n -k2,2n -k3,3n -k4,4 -k5,5n -k6,6 | head -n 1 | cut -f6
 }
 
 # ---------------------------------------------------------------- unknown keys

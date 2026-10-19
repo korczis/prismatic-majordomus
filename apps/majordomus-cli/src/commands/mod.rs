@@ -58,6 +58,7 @@ pub(crate) mod monitor;
 pub(crate) mod offload;
 pub(crate) mod pack;
 pub(crate) mod plan;
+pub(crate) mod proceed;
 pub(crate) mod product;
 pub(crate) mod prs;
 pub(crate) mod quality;
@@ -120,6 +121,7 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Pack(args) => pack::run(args),
         Command::Dashboard(args) => dashboard::run(args),
         Command::Brief(args) => brief::run(args),
+        Command::Proceed(args) => proceed::run(args),
         Command::Skills(args) => skills::run(args),
         Command::Knowledge(args) => knowledge::run(args),
         Command::Continuity(args) => continuity::run(args),
@@ -192,6 +194,9 @@ mod tests {
             }),
             (&["majordomus", "brief", "--line"], |c| {
                 matches!(c, Command::Brief(_))
+            }),
+            (&["majordomus", "proceed", "plan"], |c| {
+                matches!(c, Command::Proceed(_))
             }),
             (
                 &["majordomus", "devcontext", "compile", "--issue", "I1"],

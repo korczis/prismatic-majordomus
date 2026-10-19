@@ -40,7 +40,7 @@ use crate::capability::handler::{CapabilityError, Context};
 use crate::capability::model::CapabilityKind;
 use crate::capability::model::{
     BenchmarkPolicy, BenchmarkPrecondition, CachePolicy, CliExposure, Exposure, McpExposure,
-    McpResource, Stability,
+    McpResource, Stability, WaiverReason,
 };
 use crate::capability::module::ModuleDescriptor;
 use crate::plan::delivery::{self, DeliveryReading, DeliverySource, IssueDeliveryReport};
@@ -741,6 +741,24 @@ pub fn module() -> ModuleDescriptor {
                 cache: CachePolicy::Disabled,
                 handler: plan_drift,
             },
+            capability! {
+                id: "plan.allocate",
+                kind: CapabilityKind::Command,
+                title: "Reserve the next issue, case or ADR number",
+                description: "One number of the kind asked (`issue`, `case`, `adr`), reserved for one mesh session by one exclusive claim on the identifier's own key, `id:<kind>/<number>`. The candidate is one past the highest number this tree, the sibling worktrees, every ref and every reservation the mesh journal remembers hold, or the caller's `at_least` when that is higher; a number another session's claim already holds is skipped and its holder named. On one runtime the claim is admitted under the admission lock, so two allocations at once answer two numbers; across linked runtimes two claims made before they sync are both admitted and the fold names one winner, whose loser allocates again (fencing is mesh-journal-converges' work). Writes this runtime's mesh journal only, never the repository; the reservation ends with its session or `mesh release`.",
+                input: super::allocate::AllocateInput,
+                output: super::allocate::Allocation,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_plan_allocate"),
+                    http: post("/api/v1/plan/allocate"),
+                    cli: None,
+                },
+                tags: ["plan", "mesh", "identity", "allocation"],
+                cache: CachePolicy::Disabled,
+                benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::TransientState },
+                handler: super::allocate::allocate,
+            },
         ],
     }
 }
@@ -1303,6 +1321,11 @@ mod tests {
                 "/api/v1/plan/flight",
             ),
             ("plan.drift", "majordomus_plan_drift", "/api/v1/plan/drift"),
+            (
+                "plan.allocate",
+                "majordomus_plan_allocate",
+                "/api/v1/plan/allocate",
+            ),
         ];
         let ids: Vec<&str> = m
             .capabilities
@@ -1343,7 +1366,8 @@ mod tests {
         assert_eq!(resource.map(|r| r.uri.as_str()), Some(PLAN_URI));
     }
 
-    /// Exactly one capability of the module writes, and it is named here.
+    /// Two capabilities of the module write, and they are named here: `plan.transition`
+    /// writes a tracked record, `plan.allocate` (I3040) only this runtime's mesh journal.
     ///
     /// This assertion used to read "every capability is a query", which was the registry's
     /// contract until [ADR 0040] made development semantics capabilities of this runtime. It
@@ -1353,7 +1377,7 @@ mod tests {
     ///
     /// [ADR 0040]: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md
     #[test]
-    fn only_the_transition_writes() {
+    fn the_transition_and_the_allocation_are_the_writers() {
         let m = module();
         let writers: Vec<&str> = m
             .capabilities
@@ -1361,7 +1385,21 @@ mod tests {
             .filter(|e| !e.capability.kind.is_read_only())
             .map(|e| e.capability.id.as_str())
             .collect();
-        assert_eq!(writers, ["plan.transition"]);
+        assert_eq!(writers, ["plan.transition", "plan.allocate"]);
+        let repository: Vec<&str> = m
+            .capabilities
+            .iter()
+            .filter(|e| {
+                e.capability.execution.effect
+                    == crate::capability::model::Effect::RepositoryMutation
+            })
+            .map(|e| e.capability.id.as_str())
+            .collect();
+        assert_eq!(
+            repository,
+            ["plan.transition"],
+            "an allocation writes the journal, not the tree"
+        );
     }
 
     /// A transition is an HTTP POST, never a GET.

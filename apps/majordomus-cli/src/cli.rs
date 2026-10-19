@@ -119,6 +119,8 @@ pub enum Command {
     Dashboard(DashboardArgs),
     /// What surrounds this session, in one line and in a few: its episode and task, the peers of every board, the mesh, the integration queue and the derive queue, asked of the server holding this checkout's lease
     Brief(BriefArgs),
+    /// What this session proceeds with, and why: the READY issue nothing refuses, every one passed over with the claim or exclusive scope that refused it, and the terms of the order, from the plan, every checkout's board and every linked machine's live claims (ADR 0177)
+    Proceed(ProceedArgs),
     /// Every skill as a proven capability: the tests that name it and the evidence behind them, its page, the doctrine and gates that hold it, what invokes it, and the orphans
     Skills(SkillsArgs),
     /// What the knowledge deriver left for review and whether it is still writing: the candidate records awaiting promotion, one record by id with every reference it names resolved, and the derivation status of this checkout judged against the policy's freshness thresholds
@@ -303,6 +305,61 @@ pub struct BriefArgs {
     #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
     /// Output shape
     pub format: OutputFormat,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus proceed`: the `proceed` module on the command line (ADR 0177). The output
+/// shape is global, so it reads where a person writes it.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, OutputFormat, ProceedArgs, ProceedCommand};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from([
+///     "majordomus", "proceed", "plan", "--milestone", "m", "--session", "s", "--format", "json",
+/// ])
+/// .unwrap();
+/// let Command::Proceed(args) = cli.command else { panic!("not the proceed command") };
+/// let args: ProceedArgs = args;
+/// let ProceedCommand::Plan { milestone, session } = args.command;
+/// assert_eq!((milestone.as_deref(), session.as_deref()), (Some("m"), Some("s")));
+/// assert!(matches!(args.format, OutputFormat::Json));
+/// ```
+pub struct ProceedArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `plan`. Required: the group runs nothing of its own.
+    pub command: ProceedCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus proceed`.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, ProceedCommand};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "proceed", "plan"]).unwrap();
+/// let Command::Proceed(args) = cli.command else { panic!("not the proceed command") };
+/// assert!(matches!(args.command, ProceedCommand::Plan { milestone: None, session: None }));
+/// ```
+pub enum ProceedCommand {
+    /// The decision, read only: the selected issue and why, the READY issues passed over with what refused each, what the selection unblocks and the commands that take it; asked of the server holding this checkout's lease. Exit 10 when nothing can be selected, 11 when the selection is provisional because the board or a declared mesh could not be read
+    Plan {
+        /// The milestone whose READY issues come first; the active one when absent
+        #[arg(long, value_name = "ID")]
+        milestone: Option<String>,
+        /// The mesh session the decision is for, whose own claims are not held against it
+        #[arg(long, value_name = "ID")]
+        session: Option<String>,
+    },
 }
 
 #[derive(Debug, Subcommand)]
@@ -740,6 +797,8 @@ pub enum MeshCommand {
     Verify(MeshQueryArgs),
     /// Claim repository paths for a session; exits 10 naming the claims it meets when an exclusive claim on any linked runtime holds them
     Claim(MeshClaimArgs),
+    /// Reserve the next issue, case or ADR number for a session with one exclusive mesh claim on its id key, after surveying the tree, the worktrees, every ref and the journal; exits 10 when no server runs the mesh
+    Allocate(MeshAllocateArgs),
     /// Release a claim this server's current run holds
     Release(MeshReleaseArgs),
     /// Open, update or close a session on the mesh
@@ -1058,6 +1117,43 @@ pub struct MeshClaimArgs {
     /// The task the session works under
     #[arg(long)]
     pub task: Option<String>,
+    #[command(flatten)]
+    /// Where the repository is and how to answer.
+    pub query: MeshQueryArgs,
+}
+
+#[derive(Debug, Args)]
+/// `mesh allocate`: `plan.allocate` on the command line, asked of the server whose mesh makes
+/// the reservation atomic. `--session` is required because a reservation belongs to a session
+/// and ends with it.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::capability::builtin::allocate::IdKind;
+/// use majordomus_cli::cli::{Cli, Command, MeshAllocateArgs, MeshCommand};
+///
+/// let cli = Cli::try_parse_from([
+///     "majordomus", "mesh", "allocate", "case", "--session", "s1", "--at-least", "3440",
+/// ])
+/// .unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Allocate(a) = mesh.command else { panic!("expected `allocate`") };
+/// let a: MeshAllocateArgs = a;
+/// assert_eq!((a.kind, a.session.as_str(), a.at_least), (IdKind::Case, "s1", Some(3440)));
+///
+/// // a reservation belongs to a session, so there is none without one
+/// assert!(Cli::try_parse_from(["majordomus", "mesh", "allocate", "case"]).is_err());
+/// ```
+pub struct MeshAllocateArgs {
+    /// The kind of identifier
+    #[arg(value_enum)]
+    pub kind: crate::capability::builtin::allocate::IdKind,
+    /// The mesh session the number is reserved for
+    #[arg(long)]
+    pub session: String,
+    /// The lowest number to take: a survey run elsewhere, or a block a seat was given
+    #[arg(long, value_name = "N")]
+    pub at_least: Option<u32>,
     #[command(flatten)]
     /// Where the repository is and how to answer.
     pub query: MeshQueryArgs,
@@ -5415,6 +5511,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
         }],
     },
     CommandExamples {
+        command: "proceed plan",
+        examples: &[ExampleDoc {
+            id: "proceed-plan-json",
+            title: "What to proceed with, and why, when there is nothing to take",
+            description: "The same answer `GET /api/v1/proceed/plan` and the MCP tool `majordomus_proceed_plan` return: the READY issues in the plan's hand-out order, each with the claims that refuse it, the selected one with what it unblocks and the commands that take it, the unfinished issues that wait by status, and whether the board and the mesh could be read. The command line asks the server holding this checkout's lease; this fixture has no server, declares no mesh and no plan, so the decision is composed here, reads the mesh as undeclared rather than unread, selects nothing and exits 10.",
+            argv: &["proceed", "plan", "--format", "json"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
         command: "dashboard overview",
         examples: &[ExampleDoc {
             id: "dashboard-overview-json",
@@ -7378,6 +7485,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             title: "Claim paths for a session across the mesh",
             description: "An exclusive claim that meets a live exclusive claim on any linked runtime exits 10 with claim_conflict naming it. A claim needs the running server that replicates it; without one the command exits 10 and says so.",
             argv: &["mesh", "claim", "docs", "--session", "s1", "--issue", "#184"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "mesh allocate",
+        examples: &[ExampleDoc {
+            id: "mesh-allocate",
+            title: "Reserve the next case number for a session",
+            description: "The number is reserved by one exclusive claim on `id:case/<n>` in the mesh of the server holding this checkout's lease, after surveying the tree, the sibling worktrees, every ref and every reservation the journal remembers. A reservation needs the running server that makes it atomic; without one the command exits 10 and says so.",
+            argv: &["mesh", "allocate", "case", "--session", "s1"],
             setup: &[],
             expect: Expect::ExitCode(10),
         }],

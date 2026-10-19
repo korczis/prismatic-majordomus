@@ -30,6 +30,7 @@
 //! );
 //! ```
 
+pub mod allocate;
 pub mod artifacts;
 pub(crate) mod brief;
 pub(crate) mod capabilities;
@@ -73,6 +74,7 @@ pub mod pack;
 pub(crate) mod peers;
 pub(crate) mod perf;
 pub mod plan;
+pub(crate) mod proceed;
 pub(crate) mod product;
 pub mod quality;
 pub mod reasoning;
@@ -213,6 +215,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         pack,
         perf,
         plan,
+        proceed,
         recover,
         directories,
         devcontext,

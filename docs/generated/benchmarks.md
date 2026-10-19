@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 206 | 175 | 0 | 31 |
-| http | 201 | 175 | 0 | 26 |
-| mcp | 196 | 171 | 0 | 25 |
+| direct | 208 | 176 | 0 | 32 |
+| http | 203 | 176 | 0 | 27 |
+| mcp | 198 | 172 | 0 | 26 |
 | system | 14 | 14 | 0 | 0 |
-| total | 617 | 535 | 0 | 82 |
+| total | 623 | 538 | 0 | 85 |
 
 ## Capabilities
 
@@ -162,6 +162,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `peers.announce` | peers | command | — | covered | covered | covered | `default` |
 | `peers.list` | peers | query | — | covered | covered | covered | `default` |
 | `perf.counters` | perf | query | — | covered | covered | covered | `default` |
+| `plan.allocate` | plan | command | — | waived | waived | waived | — |
 | `plan.delivery` | plan | query | — | covered | covered | covered | `every-issue`, `one-issue-at-head` |
 | `plan.drift` | plan | query | — | covered | covered | covered | `every-issue`, `one-issue-at-head-as-trunk-gate` |
 | `plan.flight` | plan | query | — | covered | covered | covered | `where-the-work-is`, `one-milestone-inspected` |
@@ -174,6 +175,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `plan.transition` | plan | command | — | covered | covered | covered | `refused-by-status` |
 | `plan.validate` | plan | query | — | covered | covered | covered | `default` |
 | `plan.waves` | plan | query | — | covered | covered | covered | `whole-plan`, `one-milestone` |
+| `proceed.plan` | proceed | query | — | covered | covered | covered | `default`, `milestone_and_session` |
 | `product.domains` | product | query | process, 4 entries | covered | covered | covered | `stable`, `any` |
 | `product.feature` | product | query | process, 64 entries | covered | covered | covered | `first-feature` |
 | `product.features` | product | query | process, 32 entries | covered | covered | covered | `all`, `featured`, `by-area`, `by-domain` |

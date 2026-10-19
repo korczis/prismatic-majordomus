@@ -5,26 +5,26 @@
   "coverage": [
     {
       "scope": "direct",
-      "required": 206,
-      "covered": 175,
+      "required": 208,
+      "covered": 176,
       "missing": 0,
-      "waived": 31,
+      "waived": 32,
       "inapplicable": 0
     },
     {
       "scope": "http",
-      "required": 201,
-      "covered": 175,
+      "required": 203,
+      "covered": 176,
       "missing": 0,
-      "waived": 26,
+      "waived": 27,
       "inapplicable": 0
     },
     {
       "scope": "mcp",
-      "required": 196,
-      "covered": 171,
+      "required": 198,
+      "covered": 172,
       "missing": 0,
-      "waived": 25,
+      "waived": 26,
       "inapplicable": 0
     },
     {
@@ -37,10 +37,10 @@
     },
     {
       "scope": "total",
-      "required": 617,
-      "covered": 535,
+      "required": 623,
+      "covered": 538,
       "missing": 0,
-      "waived": 82,
+      "waived": 85,
       "inapplicable": 0
     }
   ],
@@ -1754,6 +1754,16 @@
       ]
     },
     {
+      "id": "plan.allocate",
+      "module": "plan",
+      "kind": "command",
+      "cache": "—",
+      "direct": "waived",
+      "mcp": "waived",
+      "http": "waived",
+      "cases": []
+    },
+    {
       "id": "plan.delivery",
       "module": "plan",
       "kind": "query",
@@ -1904,6 +1914,19 @@
       "cases": [
         "whole-plan",
         "one-milestone"
+      ]
+    },
+    {
+      "id": "proceed.plan",
+      "module": "proceed",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default",
+        "milestone_and_session"
       ]
     },
     {
