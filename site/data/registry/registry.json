@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.1"
   },
   "registry": {
-    "fingerprint": "891358303b97b8eb1cc099e8096ffb1ac26081d6b801d0ada0391025f3b1f347",
+    "fingerprint": "cbc43bb0c975a148d8b7b356063ae59faa5068f20a177ced27d081923cdb6670",
     "summary": {
-      "total": 3148,
+      "total": 3156,
       "builtin": 206,
-      "declarative": 2942,
+      "declarative": 2950,
       "by_kind": {
         "command": 31,
         "query": 175,
-        "resource": 2942
+        "resource": 2950
       },
       "by_stability": {
         "behaviorally_verified": 142,
         "experimental": 55,
-        "implemented": 2951
+        "implemented": 2959
       },
       "mcp_tools": 196,
-      "mcp_resources": 2997,
+      "mcp_resources": 3005,
       "http_routes": 201,
       "cli_commands": 111,
       "modules": 92,
@@ -84781,7 +84781,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 157,
+        "capabilities": 158,
         "capability_ids": []
       },
       {
@@ -85355,7 +85355,7 @@
         "title": "intent",
         "description": "Declarative objects of kind 'intent' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 30,
+        "capabilities": 33,
         "capability_ids": []
       },
       {
@@ -85404,7 +85404,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 797,
+        "capabilities": 798,
         "capability_ids": []
       },
       {
@@ -85834,7 +85834,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 188,
+        "capabilities": 189,
         "capability_ids": []
       },
       {
@@ -85978,7 +85978,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 565,
+        "capabilities": 567,
         "capability_ids": []
       },
       {
@@ -86070,7 +86070,7 @@
     ]
   },
   "index": {
-    "fingerprint": "8dc26f3022164c93ebaffdc406d7258ed719d54145c8e4c6c7dba528b9a4bdb5",
+    "fingerprint": "a357c1f76c548976c252190c6f5d4825616cb31834f028d887acc5de94034340",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -86093,7 +86093,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 157,
+      "adr": 158,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -86109,8 +86109,8 @@
       "feature": 29,
       "gap": 4,
       "implementation": 52,
-      "intent": 30,
-      "issue": 797,
+      "intent": 33,
+      "issue": 798,
       "knowledge": 50,
       "mesh-declaration": 1,
       "milestone": 100,
@@ -86119,12 +86119,12 @@
       "profile": 4,
       "prompt": 5,
       "release-record": 32,
-      "rule": 188,
+      "rule": 189,
       "scope": 1,
       "session": 90,
       "skill": 8,
       "taxonomy": 10,
-      "test": 565,
+      "test": 567,
       "use-case": 49,
       "workspace": 1
     },
@@ -88674,6 +88674,22 @@
         "tags": [
           "fabric",
           "chatgpt-project"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0218",
+        "kind": "adr",
+        "identity": "adr-0218",
+        "title": "Every language of the site is derived from the English build and a translation memory",
+        "description": "Every language of the site is derived from the English build and a translation memory",
+        "path": ".ai/repo/adrs/0218-every-language-of-the-site-is-derived-from-the-english-build-and-a-translation-memory.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 5711,
+        "tags": [
+          "site",
+          "language",
+          "derivation"
         ]
       },
       {
@@ -93112,7 +93128,7 @@
         "title": "GitHub Pages architecture",
         "path": "docs/GITHUB_PAGES_ARCHITECTURE.md",
         "source_class": "document",
-        "bytes": 57976
+        "bytes": 62657
       },
       {
         "uri": "majordomus://document/docs/GITHUB_PAGES_PERFORMANCE.md",
@@ -93256,7 +93272,7 @@
         "title": "GitHub Pages performance status",
         "path": "docs/PAGES_STATUS.md",
         "source_class": "document",
-        "bytes": 3367
+        "bytes": 3425
       },
       {
         "uri": "majordomus://document/docs/PERFORMANCE.md",
@@ -93292,7 +93308,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 416502
+        "bytes": 419691
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -96382,7 +96398,7 @@
         "identity": "lib/capture.sh",
         "path": "lib/capture.sh",
         "source_class": "library",
-        "bytes": 163185
+        "bytes": 169324
       },
       {
         "uri": "majordomus://implementation/lib/changed.sh",
@@ -96880,6 +96896,17 @@
         "bytes": 3932
       },
       {
+        "uri": "majordomus://intent/every-card-unfolds-into-what-it-summarises",
+        "kind": "intent",
+        "identity": "every-card-unfolds-into-what-it-summarises",
+        "title": "Every card of the site unfolds into what it summarises, recursively",
+        "description": "Every card on majordomus.dev — on the homepage and on every page a card links to — opens in place into the thing it summarises: its facts, its evidence, its own cards and a live reading of the record behind it, derived from the canonical records and never hand-written, and each card it reveals unfolds the same way, so a reader can go from a headline to the proof without leaving the page, in every language the site declares.",
+        "path": ".ai/repo/project/intents/every-card-unfolds-into-what-it-summarises.yaml",
+        "section": "project",
+        "source_class": "intent",
+        "bytes": 662
+      },
+      {
         "uri": "majordomus://intent/every-sessions-usage-is-observed",
         "kind": "intent",
         "identity": "every-sessions-usage-is-observed",
@@ -96955,6 +96982,17 @@
         "section": "project",
         "source_class": "intent",
         "bytes": 2608
+      },
+      {
+        "uri": "majordomus://intent/one-bar-and-one-language-on-every-surface",
+        "kind": "intent",
+        "identity": "one-bar-and-one-language-on-every-surface",
+        "title": "One bar, and the reader's language, on every surface of the product",
+        "description": "Every surface a reader meets — majordomus.dev, its /ui and /cockpit snapshots, the UI and the Cockpit a running majordomus serves, and every application page — wears one top bar, declared once in site/data/nav.toml and rendered once by the site, with the same language switch, and opens in the reader's language: each surface's own text is derived from its English and the shared translation memory, the switch on every surface leads to that surface's own copy in each language, and a gate refuses a surface whose bar or whose languages differ from the site's. How it is derived, what each surface may differ in, and why, is documented where the bar is declared.",
+        "path": ".ai/repo/project/intents/one-bar-and-one-language-on-every-surface.yaml",
+        "section": "project",
+        "source_class": "intent",
+        "bytes": 896
       },
       {
         "uri": "majordomus://intent/operation-convergence",
@@ -97043,6 +97081,17 @@
         "section": "project",
         "source_class": "intent",
         "bytes": 4143
+      },
+      {
+        "uri": "majordomus://intent/the-site-is-always-fully-multilingual",
+        "kind": "intent",
+        "identity": "the-site-is-always-fully-multilingual",
+        "title": "The published site is always fully multilingual, every language derived from the English build",
+        "description": "majordomus.dev is offered, page for page, in every language site/i18n/languages.json declares — Czech and English at the least — with a language switch on every page and the reader's language chosen for them on arrival. Nobody writes or maintains a second language: each copy is derived from the English build and a translation memory filled by a model, a stale translation is never served, and a page whose translation is incomplete says so by measurement, not by promise.",
+        "path": ".ai/repo/project/intents/the-site-is-always-fully-multilingual.yaml",
+        "section": "project",
+        "source_class": "intent",
+        "bytes": 1659
       },
       {
         "uri": "majordomus://intent/the-ui-runs-and-explains-the-work",
@@ -102642,6 +102691,17 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 1726
+      },
+      {
+        "uri": "majordomus://issue/I3060",
+        "kind": "issue",
+        "identity": "I3060",
+        "title": "A provider hook declares its timeout, and the session end closes its episode inside the budget",
+        "description": "`capture install` writes a per-hook `timeout` for every hook it generates. The values come from one declared table per provider and event, read by both the configuration writer and the end handler. The SessionEnd handler keeps the episode close inside that budget: it skips the optional closing checkpoint and continuation, as typed failures, when running them would leave the close too little of the budget. A configuration that byte-for-byte matches the shape this tool wrote before timeouts existed is rewritten to the new shape. Any other configuration is left as it is, and install names the timeouts it lacks.",
+        "path": ".ai/repo/project/issues/I3060.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3229
       },
       {
         "uri": "majordomus://issue/I3100",
@@ -110344,15 +110404,15 @@
         ]
       },
       {
-        "uri": "majordomus://rule/project.english-only@3",
+        "uri": "majordomus://rule/project.english-only@4",
         "kind": "rule",
-        "identity": "project.english-only@3",
+        "identity": "project.english-only@4",
         "title": "English only",
-        "description": "The repository's own artifacts are written in English; content addressed to a reader may be written in that reader's language, declared and confined to the published site or to a declared edition of the handbook.",
-        "path": ".ai/repo/rules/project/english-only.v3.md",
+        "description": "The repository's own artifacts are written in English; content addressed to a reader may be written in that reader's language, declared and confined to the published site, to a declared edition of the handbook, or to the site's declared translation memory of one language.",
+        "path": ".ai/repo/rules/project/english-only.v4.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 5100,
+        "bytes": 6716,
         "tags": [
           "language"
         ]
@@ -111530,6 +111590,24 @@
           "sessions",
           "continuity",
           "lifecycle"
+        ]
+      },
+      {
+        "uri": "majordomus://rule/project.the-site-is-offered-in-every-language@1",
+        "kind": "rule",
+        "identity": "project.the-site-is-offered-in-every-language@1",
+        "title": "Every page of the site is offered in every declared language, derived from the English and held to it in a browser",
+        "description": "The published site is written once, in English, and every page is derived into every language site/i18n/languages.json declares; each copy's links, switch, alternates and bar are held to the English page in a real browser, at every width the design declares.",
+        "path": ".ai/repo/rules/project/the-site-is-offered-in-every-language.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 3352,
+        "tags": [
+          "site",
+          "language",
+          "links",
+          "layout",
+          "testing"
         ]
       },
       {
@@ -113176,7 +113254,7 @@
         "identity": "test/cases/1024_an_installed_release_serves_a_foreign_repository.sh",
         "path": "test/cases/1024_an_installed_release_serves_a_foreign_repository.sh",
         "source_class": "case",
-        "bytes": 6063
+        "bytes": 6184
       },
       {
         "uri": "majordomus://test/test/cases/102_completion_shell.sh",
@@ -114888,7 +114966,7 @@
         "identity": "test/cases/3104_the_ui_roadmap_reads_delivery.sh",
         "path": "test/cases/3104_the_ui_roadmap_reads_delivery.sh",
         "source_class": "case",
-        "bytes": 8912
+        "bytes": 9199
       },
       {
         "uri": "majordomus://test/test/cases/3105_the_homepage_states_no_present_it_does_not_read.sh",
@@ -115347,6 +115425,14 @@
         "bytes": 5880
       },
       {
+        "uri": "majordomus://test/test/cases/3460_a_session_end_hook_fits_its_budget.sh",
+        "kind": "test",
+        "identity": "test/cases/3460_a_session_end_hook_fits_its_budget.sh",
+        "path": "test/cases/3460_a_session_end_hook_fits_its_budget.sh",
+        "source_class": "case",
+        "bytes": 6163
+      },
+      {
         "uri": "majordomus://test/test/cases/349_a_step_reports_its_own_time.sh",
         "kind": "test",
         "identity": "test/cases/349_a_step_reports_its_own_time.sh",
@@ -115425,6 +115511,14 @@
         "path": "test/cases/358_entry_reports_only_evidence.sh",
         "source_class": "case",
         "bytes": 7569
+      },
+      {
+        "uri": "majordomus://test/test/cases/3590_the_site_is_derived_in_every_language.sh",
+        "kind": "test",
+        "identity": "test/cases/3590_the_site_is_derived_in_every_language.sh",
+        "path": "test/cases/3590_the_site_is_derived_in_every_language.sh",
+        "source_class": "case",
+        "bytes": 5511
       },
       {
         "uri": "majordomus://test/test/cases/359_live_scenarios.sh",
@@ -116368,7 +116462,7 @@
         "identity": "test/cases/67_rule_dag.sh",
         "path": "test/cases/67_rule_dag.sh",
         "source_class": "case",
-        "bytes": 19240
+        "bytes": 19324
       },
       {
         "uri": "majordomus://test/test/cases/68_ai_discovery.sh",
@@ -116872,7 +116966,7 @@
         "identity": "test/cases/85_installer.sh",
         "path": "test/cases/85_installer.sh",
         "source_class": "case",
-        "bytes": 22973
+        "bytes": 23804
       },
       {
         "uri": "majordomus://test/test/cases/85_ui_conformance.sh",
@@ -117360,7 +117454,7 @@
         "identity": "test/cases/97_install_gate.sh",
         "path": "test/cases/97_install_gate.sh",
         "source_class": "case",
-        "bytes": 8355
+        "bytes": 8476
       },
       {
         "uri": "majordomus://test/test/cases/97_pages_fast_path.sh",
@@ -118090,7 +118184,7 @@
       "identity": [
         "id"
       ],
-      "objects": 157
+      "objects": 158
     },
     {
       "name": "application",
@@ -118243,7 +118337,7 @@
       "identity": [
         "id"
       ],
-      "objects": 30
+      "objects": 33
     },
     {
       "name": "issue",
@@ -118253,7 +118347,7 @@
       "identity": [
         "id"
       ],
-      "objects": 797
+      "objects": 798
     },
     {
       "name": "knowledge",
@@ -118350,7 +118444,7 @@
         "id",
         "version"
       ],
-      "objects": 188
+      "objects": 189
     },
     {
       "name": "scope",
@@ -118405,7 +118499,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 565
+      "objects": 567
     },
     {
       "name": "use-case",

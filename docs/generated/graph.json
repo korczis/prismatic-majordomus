@@ -3950,6 +3950,14 @@
         "external": true
       },
       {
+        "id": "file:scripts/lib/site-i18n.mjs",
+        "kind": "file",
+        "label": "site-i18n.mjs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "scripts/lib/site-i18n.mjs",
+        "external": true
+      },
+      {
         "id": "file:scripts/lib/ui-audit.mjs",
         "kind": "file",
         "label": "ui-audit.mjs",
@@ -4067,6 +4075,14 @@
         "label": "site-deploy",
         "summary": "named by the layer; not an object of this index",
         "source": "scripts/site-deploy",
+        "external": true
+      },
+      {
+        "id": "file:scripts/site-translate",
+        "kind": "file",
+        "label": "site-translate",
+        "summary": "named by the layer; not an object of this index",
+        "source": "scripts/site-translate",
         "external": true
       },
       {
@@ -4494,6 +4510,22 @@
         "external": true
       },
       {
+        "id": "file:site/i18n/cs/edition.toml",
+        "kind": "file",
+        "label": "edition.toml",
+        "summary": "named by the layer; not an object of this index",
+        "source": "site/i18n/cs/edition.toml",
+        "external": true
+      },
+      {
+        "id": "file:site/i18n/languages.json",
+        "kind": "file",
+        "label": "languages.json",
+        "summary": "named by the layer; not an object of this index",
+        "source": "site/i18n/languages.json",
+        "external": true
+      },
+      {
         "id": "file:site/static/install.sh",
         "kind": "file",
         "label": "install.sh",
@@ -4555,6 +4587,14 @@
         "label": "domain-map.html",
         "summary": "named by the layer; not an object of this index",
         "source": "site/templates/partials/domain-map.html",
+        "external": true
+      },
+      {
+        "id": "file:site/templates/partials/language-switch.html",
+        "kind": "file",
+        "label": "language-switch.html",
+        "summary": "named by the layer; not an object of this index",
+        "source": "site/templates/partials/language-switch.html",
         "external": true
       },
       {
@@ -6430,7 +6470,7 @@
             "rule:project.english-only",
             "claim:authored-files-are-english",
             "claim:published-translation-is-declared",
-            "file:.ai/repo/rules/project/english-only.v3.md",
+            "file:.ai/repo/rules/project/english-only.v4.md",
             "file:scripts/ci/english-only-check",
             "file:scripts/ci/english-only-allow.txt",
             "file:docs/claims/authored-files-are-english.md",
@@ -7532,7 +7572,7 @@
             "rule:project.the-handbook-is-built-from-the-tree",
             "file:.ai/repo/adrs/0077-published-content-may-be-written-in-the-readers-language.md",
             "file:.ai/repo/adrs/0004-canonical-architecture-and-performance-truth.md",
-            "file:.ai/repo/rules/project/english-only.v3.md",
+            "file:.ai/repo/rules/project/english-only.v4.md",
             "file:.ai/repo/rules/project/the-handbook-is-built-from-the-tree.v1.md",
             "file:scripts/ci/english-only-check",
             "file:scripts/ci/english-only-allow.txt",
@@ -9064,6 +9104,36 @@
           "tags": [
             "fabric",
             "chatgpt-project"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0218",
+        "kind": "adr",
+        "label": "adr-0218",
+        "summary": "Every language of the site is derived from the English build and a translation memory",
+        "route": "/cockpit/objects/adr/adr-0218",
+        "source": ".ai/repo/adrs/0218-every-language-of-the-site-is-derived-from-the-english-build-and-a-translation-memory.md",
+        "status": "accepted",
+        "facts": {
+          "date": "2026-10-19",
+          "related": [
+            "rule:project.english-only",
+            "file:.ai/repo/adrs/0077-published-content-may-be-written-in-the-readers-language.md",
+            "file:.ai/repo/adrs/0149-a-handbook-edition-is-a-declared-locale-tree-built-from-the-tree-it-describes.md",
+            "file:.ai/repo/rules/project/english-only.v4.md",
+            "file:scripts/lib/site-i18n.mjs",
+            "file:scripts/site-translate",
+            "file:scripts/site-build",
+            "file:site/i18n/languages.json",
+            "file:site/i18n/cs/edition.toml",
+            "file:site/templates/partials/language-switch.html",
+            "test:test/cases/3590_the_site_is_derived_in_every_language.sh"
+          ],
+          "tags": [
+            "site",
+            "language",
+            "derivation"
           ]
         }
       },
@@ -12537,7 +12607,7 @@
           "claim": "A page of the published site written in a reader's language is declared with that language and a reason, and is refused unless the page declares the same language itself",
           "implementation": "scripts/ci/english-only-check",
           "responsibility": "none",
-          "source": ".ai/repo/rules/project/english-only.v3.md",
+          "source": ".ai/repo/rules/project/english-only.v4.md",
           "test": "test/cases/403_published_translation.sh"
         }
       },
@@ -21616,6 +21686,21 @@
         }
       },
       {
+        "id": "majordomus://intent/every-card-unfolds-into-what-it-summarises",
+        "kind": "intent",
+        "label": "every-card-unfolds-into-what-it-summarises",
+        "summary": "Every card of the site unfolds into what it summarises, recursively",
+        "route": "/cockpit/objects/intent/every-card-unfolds-into-what-it-summarises",
+        "source": ".ai/repo/project/intents/every-card-unfolds-into-what-it-summarises.yaml",
+        "facts": {
+          "created_at": "2026-10-19",
+          "invariants": [],
+          "milestones": [],
+          "satisfaction": [],
+          "updated_at": "2026-10-19"
+        }
+      },
+      {
         "id": "majordomus://intent/every-sessions-usage-is-observed",
         "kind": "intent",
         "label": "every-sessions-usage-is-observed",
@@ -21809,6 +21894,21 @@
             "A second Majordomus server per host"
           ],
           "updated_at": "2026-10-18"
+        }
+      },
+      {
+        "id": "majordomus://intent/one-bar-and-one-language-on-every-surface",
+        "kind": "intent",
+        "label": "one-bar-and-one-language-on-every-surface",
+        "summary": "One bar, and the reader's language, on every surface of the product",
+        "route": "/cockpit/objects/intent/one-bar-and-one-language-on-every-surface",
+        "source": ".ai/repo/project/intents/one-bar-and-one-language-on-every-surface.yaml",
+        "facts": {
+          "created_at": "2026-10-19",
+          "invariants": [],
+          "milestones": [],
+          "satisfaction": [],
+          "updated_at": "2026-10-19"
         }
       },
       {
@@ -22025,6 +22125,38 @@
             "Recording a finish --check forecast event"
           ],
           "updated_at": "2026-10-18"
+        }
+      },
+      {
+        "id": "majordomus://intent/the-site-is-always-fully-multilingual",
+        "kind": "intent",
+        "label": "the-site-is-always-fully-multilingual",
+        "summary": "The published site is always fully multilingual, every language derived from the English build",
+        "route": "/cockpit/objects/intent/the-site-is-always-fully-multilingual",
+        "source": ".ai/repo/project/intents/the-site-is-always-fully-multilingual.yaml",
+        "facts": {
+          "created_at": "2026-10-19",
+          "governance": [
+            "rule:project.english-only",
+            "adr:adr-0077",
+            "adr:adr-0149",
+            "adr:adr-0218"
+          ],
+          "invariants": [
+            "English is the only authored source; no page, template or generator is written twice (ADR 0218)",
+            "A build is a pure function of the English pages and the memory; no build calls a model or needs a credential",
+            "A translation is admitted only with every placeholder of its English, nested the same way; code and identifiers are never translated",
+            "A changed English segment has a new key, so its old translation is never served",
+            "Every internal link of a copy leads to that language's copy; the switch and the alternates lead to every other language",
+            "A reader's explicit choice of language is kept and never overridden; a URL followed inside the site is never redirected"
+          ],
+          "milestones": [],
+          "non_goals": [
+            "Human review of every translation; the translation is machine translation and every translated page says so",
+            "Languages written right to left"
+          ],
+          "satisfaction": [],
+          "updated_at": "2026-10-19"
         }
       },
       {
@@ -45703,6 +45835,40 @@
           "validation": [
             "cargo test --lib ui::knowledge",
             "scripts/ui audit --only /ui/knowledge"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3060",
+        "kind": "issue",
+        "label": "I3060",
+        "summary": "A provider hook declares its timeout, and the session end closes its episode inside the budget",
+        "route": "/cockpit/objects/issue/i3060",
+        "source": ".ai/repo/project/issues/I3060.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "After `capture install`, each of UserPromptSubmit, SessionStart, SessionEnd and PreCompact in .claude/settings.json carries the timeout the provider table declares, and SessionEnd's is at most 60",
+            "A configuration identical to the pre-timeout generated shape is rewritten with the timeouts; a configuration with any other content is left byte-identical and install names the missing timeouts",
+            "The SessionEnd shim, given a provider session that was started, closes the episode in less than its declared timeout",
+            "With the end budget forced below the optional steps' cost, the episode still closes, and the skipped checkpoint and continuation are recorded as typed failures"
+          ],
+          "created_at": "2026-10-19",
+          "evidence_required": [
+            "verified"
+          ],
+          "milestone": "M003",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/capture.sh",
+            "test/cases/3460_a_session_end_hook_fits_its_budget.sh",
+            ".ai/repo/project/issues/I3060.yaml"
+          ],
+          "slug": "a-session-end-hook-fits-its-budget",
+          "updated_at": "2026-10-19",
+          "validation": [
+            "CI=true bash test/run.sh --no-skips 3460"
           ]
         }
       },
@@ -70488,12 +70654,12 @@
         }
       },
       {
-        "id": "majordomus://rule/project.english-only@3",
+        "id": "majordomus://rule/project.english-only@4",
         "kind": "rule",
-        "label": "project.english-only@3",
+        "label": "project.english-only@4",
         "summary": "English only",
-        "route": "/cockpit/objects/rule/project-english-only-3",
-        "source": ".ai/repo/rules/project/english-only.v3.md",
+        "route": "/cockpit/objects/rule/project-english-only-4",
+        "source": ".ai/repo/rules/project/english-only.v4.md",
         "status": "active",
         "facts": {
           "class": "blocking",
@@ -71878,7 +72044,7 @@
         "facts": {
           "class": "blocking",
           "depends_on": [
-            "project.english-only@3"
+            "project.english-only@4"
           ],
           "tags": [
             "handbook",
@@ -71997,6 +72163,30 @@
             "sessions",
             "continuity",
             "lifecycle"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://rule/project.the-site-is-offered-in-every-language@1",
+        "kind": "rule",
+        "label": "project.the-site-is-offered-in-every-language@1",
+        "summary": "Every page of the site is offered in every declared language, derived from the English and held to it in a browser",
+        "route": "/cockpit/objects/rule/project-the-site-is-offered-in-every-language-1",
+        "source": ".ai/repo/rules/project/the-site-is-offered-in-every-language.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.english-only@4",
+            "project.every-link-and-control-is-tested@1",
+            "project.derived-once@1"
+          ],
+          "tags": [
+            "site",
+            "language",
+            "links",
+            "layout",
+            "testing"
           ]
         }
       },
@@ -80718,6 +80908,13 @@
         "source": "test/cases/343_the_cockpit_shows_who_else_is_here.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3460_a_session_end_hook_fits_its_budget.sh",
+        "kind": "test",
+        "label": "test/cases/3460_a_session_end_hook_fits_its_budget.sh",
+        "route": "/cockpit/objects/test/test-cases-3460-a-session-end-hook-fits-its-budget-sh",
+        "source": "test/cases/3460_a_session_end_hook_fits_its_budget.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/349_a_step_reports_its_own_time.sh",
         "kind": "test",
         "label": "test/cases/349_a_step_reports_its_own_time.sh",
@@ -80786,6 +80983,13 @@
         "label": "test/cases/358_entry_reports_only_evidence.sh",
         "route": "/cockpit/objects/test/test-cases-358-entry-reports-only-evidence-sh",
         "source": "test/cases/358_entry_reports_only_evidence.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3590_the_site_is_derived_in_every_language.sh",
+        "kind": "test",
+        "label": "test/cases/3590_the_site_is_derived_in_every_language.sh",
+        "route": "/cockpit/objects/test/test-cases-3590-the-site-is-derived-in-every-language-sh",
+        "source": "test/cases/3590_the_site_is_derived_in_every_language.sh"
       },
       {
         "id": "majordomus://test/test/cases/359_live_scenarios.sh",
@@ -90007,7 +90211,7 @@
       },
       {
         "source": "majordomus://adr/adr-0048",
-        "target": "majordomus://rule/project.english-only@3",
+        "target": "majordomus://rule/project.english-only@4",
         "kind": "put_in_force"
       },
       {
@@ -90842,7 +91046,7 @@
       },
       {
         "source": "majordomus://adr/adr-0077",
-        "target": "majordomus://rule/project.english-only@3",
+        "target": "majordomus://rule/project.english-only@4",
         "kind": "put_in_force"
       },
       {
@@ -92847,7 +93051,7 @@
       },
       {
         "source": "majordomus://adr/adr-0149",
-        "target": "majordomus://rule/project.english-only@3",
+        "target": "majordomus://rule/project.english-only@4",
         "kind": "put_in_force"
       },
       {
@@ -95883,6 +96087,61 @@
       {
         "source": "majordomus://adr/adr-0217",
         "target": "majordomus://rule/project.no-new-nouns@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0218",
+        "target": "file:scripts/lib/site-i18n.mjs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0218",
+        "target": "file:scripts/site-build",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0218",
+        "target": "file:scripts/site-translate",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0218",
+        "target": "file:site/i18n/cs/edition.toml",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0218",
+        "target": "file:site/i18n/languages.json",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0218",
+        "target": "file:site/templates/partials/language-switch.html",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0218",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0218",
+        "target": "majordomus://adr/adr-0077",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0218",
+        "target": "majordomus://adr/adr-0149",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0218",
+        "target": "majordomus://rule/project.english-only@4",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0218",
+        "target": "majordomus://test/test/cases/3590_the_site_is_derived_in_every_language.sh",
         "kind": "put_in_force"
       },
       {
@@ -99682,7 +99941,7 @@
       },
       {
         "source": "majordomus://claim/published-translation-is-declared",
-        "target": "majordomus://rule/project.english-only@3",
+        "target": "majordomus://rule/project.english-only@4",
         "kind": "defined_in"
       },
       {
@@ -104016,6 +104275,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://intent/every-card-unfolds-into-what-it-summarises",
+        "target": "kind:intent",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://intent/every-sessions-usage-is-observed",
         "target": "kind:intent",
         "kind": "is_a"
@@ -104047,6 +104311,11 @@
       },
       {
         "source": "majordomus://intent/nothing-in-the-mesh-waits-on-something-dead",
+        "target": "kind:intent",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://intent/one-bar-and-one-language-on-every-surface",
         "target": "kind:intent",
         "kind": "is_a"
       },
@@ -104087,6 +104356,11 @@
       },
       {
         "source": "majordomus://intent/the-product-shows-what-it-caught",
+        "target": "kind:intent",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://intent/the-site-is-always-fully-multilingual",
         "target": "kind:intent",
         "kind": "is_a"
       },
@@ -111316,6 +111590,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3060",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3060",
+        "target": "majordomus://milestone/M003",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I3100",
         "target": "kind:issue",
         "kind": "is_a"
@@ -118451,7 +118735,7 @@
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.english-only@3",
+        "source": "majordomus://rule/project.english-only@4",
         "target": "kind:rule",
         "kind": "is_a"
       },
@@ -119247,7 +119531,7 @@
       },
       {
         "source": "majordomus://rule/project.the-handbook-is-built-from-the-tree@1",
-        "target": "majordomus://rule/project.english-only@3",
+        "target": "majordomus://rule/project.english-only@4",
         "kind": "depends_on"
       },
       {
@@ -119333,6 +119617,26 @@
       {
         "source": "majordomus://rule/project.the-session-context-is-derived@1",
         "target": "majordomus://rule/project.no-new-nouns@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.the-site-is-offered-in-every-language@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.the-site-is-offered-in-every-language@1",
+        "target": "majordomus://rule/project.derived-once@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.the-site-is-offered-in-every-language@1",
+        "target": "majordomus://rule/project.english-only@4",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.the-site-is-offered-in-every-language@1",
+        "target": "majordomus://rule/project.every-link-and-control-is-tested@1",
         "kind": "depends_on"
       },
       {
@@ -121646,6 +121950,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3460_a_session_end_hook_fits_its_budget.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/349_a_step_reports_its_own_time.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -121692,6 +122001,11 @@
       },
       {
         "source": "majordomus://test/test/cases/358_entry_reports_only_evidence.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3590_the_site_is_derived_in_every_language.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -126887,8 +127201,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3590,
-      "edges": 8362,
+      "nodes": 3603,
+      "edges": 8384,
       "acyclic": false,
       "truncated": false
     }
