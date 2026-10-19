@@ -40602,7 +40602,9 @@
             ".ai/repo/ci/gates.yaml"
           ],
           "slug": "the-site-probe-is-split",
-          "updated_at": "2026-10-17",
+          "started_at": "2026-10-19T20:38:09Z",
+          "started_event": "sha256:7604395f474418fe6074373c6cde143cf594e67ccaad786d51c022e6e43d962d",
+          "updated_at": "2026-10-19T20:38:09Z",
           "validation": [
             "bin/majordomus plan validate",
             "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
@@ -60962,6 +60964,13 @@
         "label": "test/cases/35_future_command.sh",
         "route": "/cockpit/objects/test/test-cases-35-future-command-sh",
         "source": "test/cases/35_future_command.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3602_every_route_is_probed_by_exactly_one_shard.sh",
+        "kind": "test",
+        "label": "test/cases/3602_every_route_is_probed_by_exactly_one_shard.sh",
+        "route": "/cockpit/objects/test/test-cases-3602-every-route-is-probed-by-exactly-one-shard-sh",
+        "source": "test/cases/3602_every_route_is_probed_by_exactly_one_shard.sh"
       },
       {
         "id": "majordomus://test/test/cases/360_the_crate_boundary_is_measured.sh",
@@ -93748,6 +93757,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3602_every_route_is_probed_by_exactly_one_shard.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/360_the_crate_boundary_is_measured.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -98929,8 +98943,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3078,
-      "edges": 6738,
+      "nodes": 3079,
+      "edges": 6739,
       "acyclic": false,
       "truncated": false
     }

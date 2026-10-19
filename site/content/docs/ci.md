@@ -269,6 +269,26 @@ processes finished in, and a finding still names the route, the width, the asser
 what was measured. The homepage behaviour checks (the mobile menu, the dropdown, the theme
 toggle) are unchanged. `--quick` remains the local sample.
 
+In CI the sweep is split in four (I2841). As one step of the site job it took 35-37 minutes,
+which held that job at 46-50 of its 50 minutes until one run was cancelled at its bound. The
+`site-probe-shard` jobs now run side by side after the site job's build:
+
+- each one gets the files that build generated and git ignores (artifact `site-probe-inputs`);
+- each runs its own Zola build;
+- each measures `SITE_PROBE_SHARD=K/4`: every fourth route of the sorted list, starting from
+  the Kth. A stride rather than four blocks, so the expensive sections are spread across shards;
+- each writes the routes it measured (`SITE_PROBE_REPORT`).
+
+The homepage behaviour and the command routes are shard 1's, so each is reported once.
+
+The `site-probe` job is the gate's. It asks `scripts/site-probe --verify-report` whether the
+reports are shards 1..4, each once, and whether together they hold every route of the site,
+each once. Only then, and only if every shard passed, does it write the gate's receipt.
+
+Case 3602 holds the partition, the fan-in and the wiring. Reproduce one shard locally with
+`SITE_PROBE_SHARD=2/4 SITE_PROBE_JOBS=4 scripts/site-probe`, or see which routes it holds with
+`scripts/site-probe --partition 2/4 < routes.txt`.
+
 ## Caches and artifacts
 
 Caches hold reusable dependency and build state; artifacts carry a job's outputs to a

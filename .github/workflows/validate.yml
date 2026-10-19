@@ -934,7 +934,29 @@ jobs:
         with:
           timings: timings.tsv
       - name: build the site
+        id: build
         run: scripts/ci/timed --bound 2700 site-build site-build timings.tsv scripts/site-build --no-data
+      # What the browser probe's own Zola build needs and the checkout does not hold: every file
+      # the build generated under site/static that git ignores (the compiled stylesheets, the
+      # vendored scripts, the graphs, build.json; listed by git, never by hand), and the public
+      # assets the probe copies over its build (scripts/site-probe). About 10 MB, handed to the
+      # site-probe-shard jobs before this job's checks, so the probe measures what was built
+      # even when a check later in this job is red.
+      - name: pack the probe's inputs
+        id: probe-inputs
+        if: always() && needs.plan.outputs.site_probe == 'true' && steps.build.outcome == 'success'
+        run: |
+          git ls-files --others --ignored --exclude-standard -- site/static > probe-inputs.list
+          printf '%s\n' site/public/app.css site/public/giallo-light.css site/public/giallo-dark.css site/public/js site/public/images >> probe-inputs.list
+          tar -cf probe-inputs.tar -T probe-inputs.list
+          echo "$(wc -l < probe-inputs.list | tr -d ' ') path(s), $(du -h probe-inputs.tar | cut -f1)"
+      - if: always() && steps.probe-inputs.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: site-probe-inputs
+          path: probe-inputs.tar
+          if-no-files-found: error
+          retention-days: 1
       # Metadata and landmarks on every route, no unrendered template delimiter, every
       # internal link resolving, no remote asset, no credential, and the generated data
       # still matching its canonical sources.
@@ -948,13 +970,6 @@ jobs:
         id: site-cases
         if: needs.plan.outputs.site_build == 'true'
         run: bash test/run.sh --no-skips --runs-in site
-      # Browser-measured: no horizontal overflow at 320/390/1280 on every route, the mobile
-      # menu, the dropdowns, the theme toggle, Mermaid rendering. The full sweep, deliberately:
-      # every overflow this site has produced came from canonical data rendered into a shared
-      # template, which no sample of one route per template can see.
-      - name: probe the site in a browser
-        if: needs.plan.outputs.site_probe == 'true'
-        run: CHROME_BIN=google-chrome SITE_PROBE_JOBS=4 scripts/ci/timed --bound 2700 site-probe site-probe timings.tsv scripts/site-probe
       - name: manifest
         run: cat site/data/generated/source.json
       - if: always()
@@ -983,6 +998,96 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: case "$GITHUB_HEAD_REF" in integration/*) echo "::notice::an integration/* top runs to the end, so every red of it is shown";; *) gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled";; esac
+
+  # ----------------------------------------------------------------- site-probe
+  # Browser-measured: no horizontal overflow at 320/390/1280 on every route, the mobile menu,
+  # the dropdowns, the theme toggle, Mermaid rendering. The full sweep, deliberately: every
+  # overflow this site has produced came from canonical data rendered into a shared template,
+  # which no sample of one route per template can see. Split in four (I2841): as one step of
+  # the site job it took 35-37 minutes and held that job at 46-50 of its 50 minutes (runs
+  # 39034132446, 39039860066, cancelled at its bound in 39049547899). Each shard is a stride of
+  # the sorted route list (scripts/site-probe SITE_PROBE_SHARD), runs its own Zola build with
+  # the site job's compiled assets, and reports the routes it measured; the fan-in below
+  # proves the reports are the whole sweep, each route once, before the gate's receipt.
+  site-probe-shard:
+    needs: [plan, site]
+    if: always() && needs.plan.outputs.site_probe == 'true' && needs.site.result != 'skipped'
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    # a quarter of the 35-37 minute sweep, its Zola build and the setup: about 15 minutes
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - id: site
+        uses: ./.github/actions/setup-site
+      - uses: actions/download-artifact@v4
+        with:
+          name: site-probe-inputs
+      - name: the site job's generated inputs
+        run: tar -xf probe-inputs.tar && rm probe-inputs.tar
+      - name: probe this shard in a browser
+        env:
+          CHROME_BIN: google-chrome
+          SITE_PROBE_JOBS: 4
+          SITE_PROBE_SHARD: ${{ matrix.shard }}/4
+          SITE_PROBE_REPORT: site-probe-routes.txt
+        run: scripts/ci/timed --bound 1200 site-probe "site-probe-${{ matrix.shard }}" timings.tsv scripts/site-probe
+      - if: always()
+        run: scripts/ci/summary --job site-probe --timings timings.tsv --fact "shard=${{ matrix.shard }}/4" --fact "npm cache hit=${{ steps.site.outputs.npm-cache-hit }}"
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: site-probe-shard-${{ matrix.shard }}
+          path: site-probe-routes.txt
+          if-no-files-found: ignore
+          retention-days: 3
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-metrics-site-probe-${{ matrix.shard }}
+          path: timings.tsv
+          retention-days: 14
+      - name: a failed branch run ends here
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: case "$GITHUB_HEAD_REF" in integration/*) echo "::notice::an integration/* top runs to the end, so every red of it is shown";; *) gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled";; esac
+
+  site-probe:
+    needs: [plan, site-probe-shard]
+    if: always() && needs.plan.outputs.site_probe == 'true'
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    env:
+      MJ_CI_RECEIPTS: ${{ github.workspace }}/receipts.tsv
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: site-probe-shard-*
+          path: shards
+      - name: every route, exactly once
+        id: union
+        run: scripts/site-probe --verify-report shards
+      - name: every shard passed
+        id: shards
+        if: always()
+        run: |
+          echo "the shards concluded: ${{ needs.site-probe-shard.result }}"
+          [ "${{ needs.site-probe-shard.result }}" = success ]
+      - name: the probe's receipt
+        if: always()
+        run: printf '%s\t%s\tsite-probe/union\n%s\t%s\tsite-probe/shards\n' "site-probe" "${{ steps.union.outcome }}" "site-probe" "${{ steps.shards.outcome }}" >> "$MJ_CI_RECEIPTS"
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-receipts-site-probe
+          path: receipts.tsv
+          if-no-files-found: ignore
+          retention-days: 14
 
   # ----------------------------------------------------------------- interactions
   # Every interactive control on every page of the built site, exercised in a real browser by the behaviour spec
@@ -1420,7 +1525,7 @@ jobs:
   # setting and is not made here; until it is required, this is a verdict a person can read
   # and not one the merge obeys.
   ci:
-    needs: [plan, structure, suite, rust, coverage, bench, site, interactions, ui, cockpit, mesh-lab, macos, install, pages]
+    needs: [plan, structure, suite, rust, coverage, bench, site, site-probe, interactions, ui, cockpit, mesh-lab, macos, install, pages]
     if: always()
     timeout-minutes: 15
     runs-on: ubuntu-latest
