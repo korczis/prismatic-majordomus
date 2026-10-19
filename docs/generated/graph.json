@@ -40018,6 +40018,8 @@
             "A double click starts one execution",
             "A request from another origin is refused by the server, not by the page"
           ],
+          "completed_at": "2026-10-19T09:58:06Z",
+          "completed_event": "sha256:723dac03a647e46437e03e517d7030fe3f407ddcdad69920ed44151bc7bb5ff0",
           "created_at": "2026-10-16",
           "current_state": "Moves are offered on /cockpit/plan/issues/<id> only.",
           "depends_on": [
@@ -40046,12 +40048,16 @@
             "the-owner-directs-work-from-the-ui#next-move-is-reachable"
           ],
           "slug": "an-issue-moves-from-the-workspace",
-          "updated_at": "2026-10-16",
+          "started_at": "2026-10-19T09:54:10Z",
+          "started_event": "sha256:29f7ab872c968eb77eb2bd76a4c70b2dc9b557a70d270aa215404305b1b0f250",
+          "updated_at": "2026-10-19T09:58:06Z",
           "validation": [
             "majordomus plan validate",
             "cargo test --lib ui::idd",
             "cargo test --test ui_idd_moves"
           ],
+          "verified_at": "2026-10-19T09:54:24Z",
+          "verified_event": "sha256:bb4f50731386eceb7246c3fe22b3845b138a820b7d2a92db73c375adbd0534b8",
           "why": "The first slice links a ready issue to the Cockpit's move; the criterion asks for the move where the work is read, and the form, its script and the capability already exist."
         }
       },
@@ -40069,6 +40075,8 @@
             "No other screen declares that it follows executions",
             "A snapshot opens no channel"
           ],
+          "completed_at": "2026-10-19T09:58:46Z",
+          "completed_event": "sha256:22ff4b49a6abf738e7b32b3c0a7408a0d9c2ef0692d69b87df09c43dc5d8a26f",
           "created_at": "2026-10-17",
           "current_state": "/ui screens read again every minute; only the Cockpit follows /events.",
           "depends_on": [
@@ -40094,12 +40102,16 @@
             "the-owner-directs-work-from-the-ui#the-workspace-follows-moves"
           ],
           "slug": "the-workspace-follows-the-plan-live",
-          "updated_at": "2026-10-17",
+          "started_at": "2026-10-19T09:58:17Z",
+          "started_event": "sha256:41b70fa72322d05df63b25208f22b5be37d259b6d3f8ca400cad768247cda29e",
+          "updated_at": "2026-10-19T09:58:46Z",
           "validation": [
             "majordomus plan validate",
             "cargo test --test ui_idd_live",
             "cargo test --lib ui::"
-          ]
+          ],
+          "verified_at": "2026-10-19T09:58:35Z",
+          "verified_event": "sha256:7bd55aeb177e3e70414cabbec14f80f923ababf21ec53e86bc1ba000a90ba5fd"
         }
       },
       {
@@ -40201,6 +40213,8 @@
             "Each unmet criterion is shown with its evidence state, its reproduce command and the issues serving it, exactly as the capability answers",
             "A plan.transition started on one of the intent's issues is listed on the workspace, leading to its execution, and one on another intent's issue is not"
           ],
+          "completed_at": "2026-10-19T09:59:24Z",
+          "completed_event": "sha256:79bf17e038f38f899ee21dbf73e67758cbf89b3195c9b68d680688f0ab72c762",
           "created_at": "2026-10-17",
           "current_state": "intent_realization.explain and executions.list answer both questions; no screen reads them for an intent.",
           "depends_on": [
@@ -40226,11 +40240,15 @@
             "the-owner-directs-work-from-the-ui#the-workspace-shows-why-and-what-moved"
           ],
           "slug": "the-workspace-shows-its-evidence",
-          "updated_at": "2026-10-17",
+          "started_at": "2026-10-19T09:58:57Z",
+          "started_event": "sha256:6e661b98fb0ffce4e24a0c472da889be230c513f63af373690d944c8b6b3d758",
+          "updated_at": "2026-10-19T09:59:24Z",
           "validation": [
             "majordomus plan validate",
             "cargo test --test ui_idd_evidence"
-          ]
+          ],
+          "verified_at": "2026-10-19T09:59:14Z",
+          "verified_event": "sha256:1d960ee3061e3764d5ce5dea5bc2eccef706a7ccfa708aec074deb3cf25fd66d"
         }
       },
       {
@@ -40285,6 +40303,8 @@
             "The case walks pick, read, move, test, live, done, explained, evidence and reproduced, each step printed, and fails naming the step that did not happen",
             "Under CI=true a missing browser fails the case"
           ],
+          "completed_at": "2026-10-19T10:00:01Z",
+          "completed_event": "sha256:ec7ceaf990ab8abd3e9682e4dbe9dc79548be5ed0ec2685d0c59a12ecdf35e43",
           "created_at": "2026-10-17",
           "current_state": "Each step of the loop is tested on its own (ui_idd, ui_idd_moves, ui_idd_live, ui_idd_evidence); none walks them together in a browser.",
           "depends_on": [
@@ -40310,11 +40330,15 @@
             "the-owner-directs-work-from-the-ui#the-loop-is-walked-end-to-end"
           ],
           "slug": "the-idd-loop-is-accepted-end-to-end",
-          "updated_at": "2026-10-17",
+          "started_at": "2026-10-19T09:59:34Z",
+          "started_event": "sha256:e496c17c98a111878353da66c0f1bc5e4bc315dab83f99bb19934c24b499a4d4",
+          "updated_at": "2026-10-19T10:00:01Z",
           "validation": [
             "majordomus plan validate",
             "bash test/run.sh 3220_the_idd_loop_is_walked_in_a_browser"
           ],
+          "verified_at": "2026-10-19T09:59:50Z",
+          "verified_event": "sha256:6f7ef722bc9b04d3190e403004dcebc57abadfc11bd5939584942428369c4e92",
           "why": "The owner's acceptance for v1.0.0-alpha.1 is the IDD loop walked once, on one exact commit, in CI: the pieces each have their own tests, and nothing proved that they make one loop a person can walk."
         }
       },
@@ -40333,6 +40357,8 @@
             "A listed page that answers 404 fails at once and is never retried",
             "Removing the retry, retrying every status, removing its bound, or leaving 000 out of it each turns case 3226 red"
           ],
+          "completed_at": "2026-10-19T10:06:00Z",
+          "completed_event": "sha256:d7f388d2ddbffca7c5b3398b99c01a9a8c2f05013aee0748179a6a5fc27f3bdc",
           "created_at": "2026-10-17",
           "current_state": "verify-ui asks each listed page once, in one parallel curl, and a 503 is a missing page; with --timeout 0 nothing asks again.",
           "depends_on": [],
@@ -40353,11 +40379,15 @@
           ],
           "serves": [],
           "slug": "a-pages-503-is-retried-before-a-page-is-called-missing",
-          "updated_at": "2026-10-17",
+          "started_at": "2026-10-19T10:05:22Z",
+          "started_event": "sha256:943ab6b31977c4eddc6989b74f279262e7adaa3248b4e90ec03d13fc668c03e9",
+          "updated_at": "2026-10-19T10:06:00Z",
           "validation": [
             "bash test/run.sh 3226_a_pages_503_is_retried_before_a_page_is_called_missing",
             "bash test/run.sh 2983_the_published_ui_is_the_trunks"
-          ]
+          ],
+          "verified_at": "2026-10-19T10:05:52Z",
+          "verified_event": "sha256:449241fb74482f939222c284c09cd8ca6a69c6d984838d56b4279c7680ffb31c"
         }
       },
       {
@@ -40906,6 +40936,8 @@
             "The shared-scope pairs are one closed disclosure whose summary gives their count, and open to links to both issues of each pair",
             "A distribution without the vendored graph library is never asked for it: no request, no failed response, no console error"
           ],
+          "completed_at": "2026-10-19T10:00:37Z",
+          "completed_event": "sha256:cfcb5915e974cc16bbaf86877760ed9dbdce8ed809096547cd4bf6343f377f19",
           "created_at": "2026-10-17",
           "current_state": "The next-issue tile and the shared-scope lines show issue ids as text; the pairs are listed in full under a heading.",
           "depends_on": [
@@ -40931,11 +40963,15 @@
             "the-owner-directs-work-from-the-ui#the-loop-is-walked-end-to-end"
           ],
           "slug": "every-issue-on-the-workspace-is-a-link",
-          "updated_at": "2026-10-17",
+          "started_at": "2026-10-19T10:00:11Z",
+          "started_event": "sha256:006194ee478dbc4d58b989b6d964773e0e874889951fa58a9fb727768366088f",
+          "updated_at": "2026-10-19T10:00:37Z",
           "validation": [
             "bash test/run.sh --runs-in ui",
             "cargo test --test ui_idd"
-          ]
+          ],
+          "verified_at": "2026-10-19T10:00:28Z",
+          "verified_event": "sha256:d4bc95c09e7c5a8a00d77ec5b8a573d75282b6e356fe2320059fa1a239d94fcc"
         }
       },
       {
@@ -41158,6 +41194,8 @@
             "The hero's numbers change when another intent is chosen",
             "No hero number counts outside the chosen intent"
           ],
+          "completed_at": "2026-10-19T10:01:38Z",
+          "completed_event": "sha256:f1f46c6b447fccc31b6832e19e5426d7d5f722dbaaf9effc4d559eab562793e4",
           "created_at": "2026-10-18",
           "current_state": "The hero counts every intent and milestone in the repository.",
           "depends_on": [
@@ -41180,12 +41218,16 @@
             "the-owner-directs-work-from-the-ui#the-workspace-reads-at-a-glance"
           ],
           "slug": "the-headline-numbers-are-the-intents",
-          "updated_at": "2026-10-18",
+          "started_at": "2026-10-19T10:01:16Z",
+          "started_event": "sha256:f685edf1ee9918117d46c4430d72c281b1b1d0aa4783a4cb83b0c82dd3314cf2",
+          "updated_at": "2026-10-19T10:01:38Z",
           "validation": [
             "majordomus plan validate",
             "cargo test --test ui_idd",
             "bash test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh"
           ],
+          "verified_at": "2026-10-19T10:01:30Z",
+          "verified_event": "sha256:6a8fd2c37a2c6db389c5e88ca434ad81602bc37d63c0ba90878e1bef83a96b90",
           "why": "On 2026-10-18 the owner read the published /ui/idd three times and found it unergonomic: \\\"Milestones 41\\\" counts the whole plan, not the intent on the screen."
         }
       },
@@ -41481,6 +41523,8 @@
           "acceptance_criteria": [
             "No panel heading on /ui/idd names a capability id"
           ],
+          "completed_at": "2026-10-19T10:03:21Z",
+          "completed_event": "sha256:f48b2f18305445097a8843c4e55bdbd15612e44903534eb2c58bd2e27eaf049f",
           "created_at": "2026-10-18",
           "current_state": "Internal names.",
           "depends_on": [],
@@ -41502,11 +41546,15 @@
             "the-owner-directs-work-from-the-ui#the-workspace-reads-at-a-glance"
           ],
           "slug": "the-workspace-speaks-plainly",
-          "updated_at": "2026-10-18",
+          "started_at": "2026-10-19T10:02:58Z",
+          "started_event": "sha256:9636876fbcb464805122b0ca8343ff9af48c13baf6c236c18e457c5b45f20ce3",
+          "updated_at": "2026-10-19T10:03:21Z",
           "validation": [
             "majordomus plan validate",
             "bash test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh"
           ],
+          "verified_at": "2026-10-19T10:03:10Z",
+          "verified_event": "sha256:c1f83b83e6360004a272eeab72a226ac6151fa27288078bf0d1552e9dc135922",
           "why": "On 2026-10-18 the owner read the published /ui/idd three times and found it unergonomic: labels are internal names such as \\\"Plan's next issue\\\" and capability ids in panel headings."
         }
       },
@@ -41521,6 +41569,8 @@
           "acceptance_criteria": [
             "The panels of /ui/idd appear in the reading order the record states"
           ],
+          "completed_at": "2026-10-19T10:04:02Z",
+          "completed_event": "sha256:88328932e8fee022250cc8c0c48189bd20023da6b2157f44416475317f5acf02",
           "created_at": "2026-10-18",
           "current_state": "Capability order.",
           "depends_on": [],
@@ -41542,11 +41592,15 @@
             "the-owner-directs-work-from-the-ui#the-workspace-reads-at-a-glance"
           ],
           "slug": "the-workspace-reads-in-order",
-          "updated_at": "2026-10-18",
+          "started_at": "2026-10-19T10:03:31Z",
+          "started_event": "sha256:e9fe37f8650321e79b8cd6420ba6603626514dee8700024ed4676c153d72226b",
+          "updated_at": "2026-10-19T10:04:02Z",
           "validation": [
             "majordomus plan validate",
             "bash test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh"
           ],
+          "verified_at": "2026-10-19T10:03:48Z",
+          "verified_event": "sha256:aa2e8285dc908abc91f43564252420a4a7bfe2bef209422a04863566bd5b49e9",
           "why": "On 2026-10-18 the owner read the published /ui/idd three times and found it unergonomic: the panels follow the capabilities, not the questions."
         }
       },
@@ -41562,6 +41616,8 @@
             "The primary action names the plan's next issue of the intent and the move its status admits",
             "Exactly one primary action is drawn, and the walk in case 3220 makes its move through it"
           ],
+          "completed_at": "2026-10-19T10:05:01Z",
+          "completed_event": "sha256:4a0ece2b3ba52487a89195b007503cf7573bedfaaeeaa8a9c0af2fdb9022bad8",
           "created_at": "2026-10-18",
           "current_state": "Every move looks alike.",
           "depends_on": [],
@@ -41584,11 +41640,15 @@
             "the-owner-directs-work-from-the-ui#the-workspace-reads-at-a-glance"
           ],
           "slug": "each-intent-has-one-primary-action",
-          "updated_at": "2026-10-18",
+          "started_at": "2026-10-19T10:04:16Z",
+          "started_event": "sha256:1dac3f7bd1b81789cf21544f77b7056ae8712aa4475a4646b96cb5daf02c79ef",
+          "updated_at": "2026-10-19T10:05:01Z",
           "validation": [
             "majordomus plan validate",
             "bash test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh"
           ],
+          "verified_at": "2026-10-19T10:04:37Z",
+          "verified_event": "sha256:5ef213ca254fdc2cfce19fae48552a5900329b834c154622b1353c7489630bd4",
           "why": "On 2026-10-18 the owner read the published /ui/idd three times and found it unergonomic: the only action is a small \\\"done\\\" in the far column, easy to miss."
         }
       },
@@ -42144,6 +42204,8 @@
             "A backticked path in a criterion renders as code",
             "ui/idd.rs carries no id linker of its own"
           ],
+          "completed_at": "2026-10-19T10:02:21Z",
+          "completed_event": "sha256:2a6e9808be476e3a67038251cf572d981cfe7acb93048a7bfec3d7ea705706b7",
           "created_at": "2026-10-18",
           "current_state": "Raw text and a second id linker.",
           "depends_on": [],
@@ -42165,12 +42227,16 @@
             "the-owner-directs-work-from-the-ui#the-workspace-reads-at-a-glance"
           ],
           "slug": "the-record-texts-are-drawn-as-prose",
-          "updated_at": "2026-10-18",
+          "started_at": "2026-10-19T10:02:00Z",
+          "started_event": "sha256:2687377608759e925216b00659a2567de8a73021551dd84f408942ac5b70ba87",
+          "updated_at": "2026-10-19T10:02:21Z",
           "validation": [
             "majordomus plan validate",
             "cargo test --lib ui::",
             "bash test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh"
           ],
+          "verified_at": "2026-10-19T10:02:13Z",
+          "verified_event": "sha256:32e48a9d4c5fa3463855cbe89d99e5860408fdb8d60f773dcaed0471a4863de2",
           "why": "On 2026-10-18 the owner read the published /ui/idd three times and found it unergonomic: texts show raw backticks and markdown; ui::prose already renders them and only milestone.rs uses it."
         }
       },
@@ -42185,6 +42251,8 @@
           "acceptance_criteria": [
             "The h1 of /ui/idd?intent=<id> is that intent's title"
           ],
+          "completed_at": "2026-10-19T10:02:51Z",
+          "completed_event": "sha256:5711672d64721f599d3ac8f03a8b8f9ab3b42e7733373eb7b70007e826267f0b",
           "created_at": "2026-10-18",
           "current_state": "A generic title.",
           "depends_on": [],
@@ -42210,11 +42278,15 @@
             "the-owner-directs-work-from-the-ui#the-workspace-reads-at-a-glance"
           ],
           "slug": "the-intent-is-the-title",
-          "updated_at": "2026-10-18",
+          "started_at": "2026-10-19T10:02:29Z",
+          "started_event": "sha256:3b2dea4e927bccb7c45a905bf7b9f34a2869117ab71b9e27d0cfc75b0ecadef7",
+          "updated_at": "2026-10-19T10:02:51Z",
           "validation": [
             "majordomus plan validate",
             "bash test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh"
           ],
+          "verified_at": "2026-10-19T10:02:42Z",
+          "verified_event": "sha256:d7f391144252b9a2d876090b8a9c193dcc41be163ad60971ff574d73fcc91b2f",
           "why": "On 2026-10-18 the owner read the published /ui/idd three times and found it unergonomic: \\\"Intent workspace\\\" is the heading of every intent."
         }
       },
@@ -42399,6 +42471,8 @@
             "Removing the data walk, the source scan or the template key filter each turns case 3400 red",
             "mj_commit_in_history answers 0, 1 and 2 as stated"
           ],
+          "completed_at": "2026-10-19T10:07:08Z",
+          "completed_event": "sha256:b765086d64edb537f32eff00508ccb2562869350e57ffcd369f402a1f419f434",
           "created_at": "2026-10-18",
           "depends_on": [],
           "desired_state": "A record or data file that names a commit outside the history is refused before the build, by the same rules as a page, and one predicate answers whether a commit is in the history.",
@@ -42420,12 +42494,16 @@
             "site"
           ],
           "slug": "a-recorded-commit-link-names-the-history",
-          "updated_at": "2026-10-18",
+          "started_at": "2026-10-19T10:06:11Z",
+          "started_event": "sha256:b1e424b927c56152869278837b6422397ba4d598b982b6322cec35f3e1fe0249",
+          "updated_at": "2026-10-19T10:07:08Z",
           "validation": [
             "majordomus plan validate",
             "bash test/run.sh 3400_a_recorded_commit_link_names_the_history",
             "scripts/ci/link-check --sources"
-          ]
+          ],
+          "verified_at": "2026-10-19T10:06:46Z",
+          "verified_event": "sha256:63af3d3be402b6268b8b35f2a9b46c1bd38a0ce72fc68f18254ed96ab9a21528"
         }
       },
       {
@@ -42469,6 +42547,48 @@
         }
       },
       {
+        "id": "majordomus://issue/I3009",
+        "kind": "issue",
+        "label": "I3009",
+        "summary": "No record's prose and no board announcement holds a template delimiter",
+        "route": "/cockpit/objects/issue/i3009",
+        "source": ".ai/repo/project/issues/I3009.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "plan validate names a record and field whose prose holds a template delimiter, with the remedy, and exits non-zero",
+            "An announcement whose text holds a template delimiter is refused with the remedy",
+            "Removing either check turns its case red"
+          ],
+          "created_at": "2026-10-19",
+          "current_state": "Nothing refuses a delimiter in record prose or in board text; each one is found by a red site job or a red core-check.",
+          "depends_on": [],
+          "desired_state": "A delimiter in record prose or board text is refused where it is written, with the field and the remedy named.",
+          "evidence_required": [],
+          "milestone": "surfaces-never-disagree",
+          "non_scope": [
+            "Template files themselves, where the delimiters belong"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/plan.rs",
+            "lib/plan.sh",
+            ".githooks",
+            "apps/majordomus-cli/src/capability/builtin/peers.rs",
+            "test/cases",
+            ".ai/repo/project/issues/I3009.yaml",
+            "docs",
+            "site"
+          ],
+          "slug": "prose-holds-no-template-delimiter",
+          "updated_at": "2026-10-19",
+          "validation": [
+            "majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I3010",
         "kind": "issue",
         "label": "I3010",
@@ -42479,6 +42599,8 @@
           "acceptance_criteria": [
             "docs/MESH.md no longer says the edit guard is wired, and names capture install's four events and the hand wiring"
           ],
+          "completed_at": "2026-10-19T10:09:03Z",
+          "completed_event": "sha256:cf7b9bb6758d8b1fc84a8447caa3c37fb84c581a2e770e384d461426fbf2b116",
           "created_at": "2026-10-19",
           "current_state": "The manual presents the PreToolUse entry as wired; it is not.",
           "depends_on": [],
@@ -42498,11 +42620,15 @@
             "site"
           ],
           "slug": "the-edit-guard-is-documented-as-it-is",
-          "updated_at": "2026-10-19",
+          "started_at": "2026-10-19T10:07:35Z",
+          "started_event": "sha256:de4a3ba7740320a0b3651742b60e00cb3b00b4e8d32066492a35f4c5d31ab819",
+          "updated_at": "2026-10-19T10:09:03Z",
           "validation": [
             "majordomus plan validate",
             "scripts/derive-check"
-          ]
+          ],
+          "verified_at": "2026-10-19T10:08:31Z",
+          "verified_event": "sha256:b7fe6c0d1a2bfff1f8ae10e586dc8ccc750e716fff9374d7c2b0fd165a79e253"
         }
       },
       {
@@ -88633,6 +88759,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3009",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3009",
+        "target": "majordomus://milestone/surfaces-never-disagree",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I3010",
         "target": "kind:issue",
         "kind": "is_a"
@@ -98929,8 +99065,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3078,
-      "edges": 6738,
+      "nodes": 3079,
+      "edges": 6740,
       "acyclic": false,
       "truncated": false
     }
