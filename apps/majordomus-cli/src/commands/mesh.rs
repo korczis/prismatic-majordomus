@@ -347,14 +347,24 @@ fn choose(servers: &[Value]) -> Option<Serving> {
 
 /// The ready server that answers for this checkout ([`choose`]), and a note on stderr when
 /// it is another checkout's.
+///
+/// This checkout's own lease is read first. Every other checkout of the repository costs a
+/// lease read and a probe, and is asked about only when this one has no ready server and
+/// one must be borrowed: a primary checkout with hundreds of linked worktrees otherwise
+/// spends most of every mesh command probing servers it never asks (I2855).
 fn server_url(args: &MeshQueryArgs) -> Result<Option<Serving>> {
     let app = App::load(&args.repo)?;
-    let status = app
-        .context
-        .execute("server.status", json!({}))
-        .map_err(map)?;
-    let servers = status["servers"].as_array().cloned().unwrap_or_default();
-    let serving = choose(&servers);
+    let servers = |checkouts: &str| -> Result<Vec<Value>> {
+        let status = app
+            .context
+            .execute("server.status", json!({ "checkouts": checkouts }))
+            .map_err(map)?;
+        Ok(status["servers"].as_array().cloned().unwrap_or_default())
+    };
+    let serving = match choose(&servers("this")?) {
+        Some(own) => Some(own),
+        None => choose(&servers("repository")?),
+    };
     if let Some(Serving {
         url,
         borrowed_from: Some(worktree),

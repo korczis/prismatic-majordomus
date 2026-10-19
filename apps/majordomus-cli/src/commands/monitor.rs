@@ -168,11 +168,12 @@ enum Asked {
     Other(String),
 }
 
-/// This checkout's ready server, when there is one.
+/// This checkout's ready server, when there is one: its own lease alone, because no other
+/// checkout's server is asked here and each one would cost a lease read and a probe (I2855).
 fn server_url(args: &MonitorArgs) -> Result<Option<String>> {
     let app = App::load(&args.query.repo)?;
     app.context
-        .execute("server.status", json!({}))
+        .execute("server.status", json!({ "checkouts": "this" }))
         .map(|status| ready_url(&status))
         .map_err(status_failed)
 }

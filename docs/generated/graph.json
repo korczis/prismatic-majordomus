@@ -40821,6 +40821,49 @@
         }
       },
       {
+        "id": "majordomus://issue/I2855",
+        "kind": "issue",
+        "label": "I2855",
+        "summary": "a command that asks this checkout's server finds it without probing every checkout",
+        "route": "/cockpit/objects/issue/i2855",
+        "source": ".ai/repo/project/issues/I2855.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A mesh command in a checkout with a ready server of its own asks that server without reading any other checkout's lease",
+            "A mesh command in a checkout without a ready server still borrows the primary's, and says so as today",
+            "The monitor finds this checkout's server without enumerating the repository",
+            "A server.status reading never makes the server it asks probe another checkout's server"
+          ],
+          "created_at": "2026-10-19",
+          "current_state": "commands/mesh.rs server_url and commands/monitor.rs server_url build the index and execute server.status over every checkout git registers, then choose this checkout's server out of the answer.",
+          "depends_on": [],
+          "evidence_required": [
+            "no_other_checkout_probed_test"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "The index each CLI process builds only to reach server.status (~1.5-2.5 s per command at this load): reading the lease without the index is the next issue, measured once this one lands.",
+            "The prompt capture's ~1.7 s per prompt: the durable outbox named in the hook-latency finding of 2026-09-10.",
+            "Moving the start event's mesh calls off the blocking path."
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin/server.rs",
+            "apps/majordomus-cli/src/commands/mesh.rs",
+            "apps/majordomus-cli/src/commands/monitor.rs",
+            "apps/majordomus-cli/tests/server_status.rs"
+          ],
+          "slug": "a-command-finds-its-server-without-probing-every-checkout",
+          "updated_at": "2026-10-19",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test server_status"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I2882",
         "kind": "issue",
         "label": "I2882",
@@ -88096,6 +88139,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2855",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2855",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I2882",
         "target": "kind:issue",
         "kind": "is_a"
@@ -98787,8 +98840,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3074,
-      "edges": 6732,
+      "nodes": 3075,
+      "edges": 6734,
       "acyclic": false,
       "truncated": false
     }

@@ -461,3 +461,83 @@ fn a_server_asked_about_itself_by_every_worker_at_once_still_says_ready() {
         assert_eq!(standing, "ready", "{target} under a full worker pool: {v}");
     }
 }
+
+#[test]
+fn a_mesh_command_with_a_server_of_its_own_probes_no_other_checkout() {
+    use std::net::TcpListener;
+    let f = Fixture::new();
+    let wt = f.container().join("feature").join("z");
+    std::fs::create_dir_all(f.container()).unwrap();
+    f.git(&[
+        "worktree",
+        "add",
+        "-q",
+        "-b",
+        "feature/z",
+        wt.to_str().unwrap(),
+    ]);
+    let wt = wt.canonicalize().unwrap();
+
+    // the linked worktree's lease names a live process and a listener this test holds and
+    // never answers: a probe of that checkout is a connection the listener can count
+    let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+    listener.set_nonblocking(true).unwrap();
+    let url = format!("http://{}", listener.local_addr().unwrap());
+    let lease = majordomus_cli::lease::lease_file(&wt, ".ai/local");
+    std::fs::create_dir_all(lease.parent().unwrap()).unwrap();
+    let document = LeaseDocument {
+        schema: SCHEMA.into(),
+        pid: std::process::id(),
+        token: "t".into(),
+        root: wt.clone(),
+        url: Some(url.clone()),
+        started_at: "2026-10-19T00:00:00Z".into(),
+        executable: None,
+        version: Some(majordomus_cli::VERSION.into()),
+    };
+    std::fs::write(&lease, serde_json::to_string(&document).unwrap()).unwrap();
+    let probed = || {
+        let mut n = 0;
+        while listener.accept().is_ok() {
+            n += 1;
+        }
+        n
+    };
+
+    let mut primary = Served::start(&f.root(), &[]);
+    assert_eq!(probed(), 0, "a server probed its siblings while starting");
+
+    // the primary has a ready server of its own: a mesh command finds it from this
+    // checkout's lease, and the peer count it reads is that server's own board, so
+    // neither the command nor the server it asks probes the worktree's listener
+    for command in [["mesh", "status"], ["mesh", "doctor"]] {
+        let mut argv = command.to_vec();
+        argv.extend(["--format", "json"]);
+        let (code, out, err) = common::run_in(&f.root(), &argv, "");
+        assert!(code == 0 || code == 10, "{command:?}: {out}\n{err}");
+        assert!(!err.contains("asking the server of"), "{err}");
+        assert_eq!(probed(), 0, "{command:?} probed another checkout's server");
+    }
+
+    // the control: a reading of every checkout does probe it, so the silence above is the
+    // command's choice and not a listener nothing can reach
+    let (code, out, err) = common::run_in(
+        &f.root(),
+        &[
+            "serve",
+            "status",
+            "--checkouts",
+            "repository",
+            "--format",
+            "json",
+        ],
+        "",
+    );
+    assert_eq!(code, 0, "{out}\n{err}");
+    assert!(
+        probed() > 0,
+        "the repository-wide reading did not probe {url}: {out}"
+    );
+
+    assert_eq!(primary.stop(), 0);
+}
