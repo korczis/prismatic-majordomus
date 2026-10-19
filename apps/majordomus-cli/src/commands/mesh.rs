@@ -349,9 +349,8 @@ fn choose(servers: &[Value]) -> Option<Serving> {
 /// it is another checkout's.
 ///
 /// This checkout's own lease is read first. Every other checkout of the repository costs a
-/// lease read and a probe, and is asked about only when this one has no ready server and
-/// one must be borrowed: a primary checkout with hundreds of linked worktrees otherwise
-/// spends most of every mesh command probing servers it never asks (I2855).
+/// lease read, and a probe when its server answers, so the repository is enumerated only
+/// when this checkout has no ready server and one must be borrowed (I2855).
 fn server_url(args: &MeshQueryArgs) -> Result<Option<Serving>> {
     let app = App::load(&args.repo)?;
     let servers = |checkouts: &str| -> Result<Vec<Value>> {
