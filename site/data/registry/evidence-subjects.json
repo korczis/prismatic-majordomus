@@ -904,6 +904,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:release.currency",
+      "path": "/evidence/capabilities/release-currency/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:release.next",
       "path": "/evidence/capabilities/release-next/"
     },
@@ -5844,6 +5849,16 @@
       "kind": "capability",
       "id": "release.changelog",
       "page": "/evidence/capabilities/release-changelog/",
+      "programs": [],
+      "members": [],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:release.currency": {
+      "kind": "capability",
+      "id": "release.currency",
+      "page": "/evidence/capabilities/release-currency/",
       "programs": [],
       "members": [],
       "routes": [],
@@ -21397,6 +21412,18 @@
       "mechanisms": [],
       "findings": []
     },
+    "mcp:majordomus_release_currency": {
+      "kind": "mcp",
+      "id": "majordomus_release_currency",
+      "alias_of": "capability:release.currency",
+      "programs": [],
+      "members": [
+        "capability:release.currency"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
     "mcp:majordomus_release_next": {
       "kind": "mcp",
       "id": "majordomus_release_next",
@@ -25077,6 +25104,16 @@
           "category": "e2e",
           "inputs": [
             "test/cases/104_published_site.sh",
+            ".ai/repo/rules/project/land-and-publish.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:3470_the_release_follows_the_work",
+          "path": "test/cases/3470_the_release_follows_the_work.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/3470_the_release_follows_the_work.sh",
             ".ai/repo/rules/project/land-and-publish.v1.md"
           ]
         },

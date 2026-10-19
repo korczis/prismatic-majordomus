@@ -6,28 +6,28 @@
     "version": "0.30.1"
   },
   "registry": {
-    "fingerprint": "ce3c9bccfa0d906af23d8d4f78a43c20a3038762a6237e4a58d0095cd00d3638",
+    "fingerprint": "8e7c0d40be75807ecc511f9413c9a5c1e1bbc8e845d901563ce78e8264976ec2",
     "summary": {
-      "total": 2641,
-      "builtin": 206,
-      "declarative": 2435,
+      "total": 2648,
+      "builtin": 207,
+      "declarative": 2441,
       "by_kind": {
         "command": 31,
-        "query": 175,
-        "resource": 2435
+        "query": 176,
+        "resource": 2441
       },
       "by_stability": {
         "behaviorally_verified": 142,
         "experimental": 55,
-        "implemented": 2444
+        "implemented": 2451
       },
-      "mcp_tools": 196,
-      "mcp_resources": 2490,
-      "http_routes": 201,
+      "mcp_tools": 197,
+      "mcp_resources": 2496,
+      "http_routes": 202,
       "cli_commands": 111,
       "modules": 92,
       "benchmark_required": 175,
-      "benchmark_waived": 31,
+      "benchmark_waived": 32,
       "cached": 54
     },
     "builtin": [
@@ -517,6 +517,15 @@
                 "$ref": "#/$defs/BriefIntegrationSection",
                 "description": "The integration queue."
               },
+              "release": {
+                "$ref": "#/$defs/BriefReleaseSection",
+                "description": "Whether the trunk's landed work is released. Absent from the answer of a server older\nthan this section, which leaves it unread rather than failing the whole brief.",
+                "default": {
+                  "state": "unread",
+                  "landed": 0,
+                  "summary": "the server that composed this brief does not measure the release"
+                }
+              },
               "derive": {
                 "$ref": "#/$defs/BriefDeriveSection",
                 "description": "The derive queue."
@@ -817,6 +826,67 @@
                   "summary"
                 ],
                 "description": "The integration queue, as `majordomus prs brief` says it."
+              },
+              "BriefReleaseSection": {
+                "type": "object",
+                "properties": {
+                  "state": {
+                    "$ref": "#/$defs/BriefSectionState",
+                    "description": "`read` when it was measured, `unread` when it could not be, with the summary saying why."
+                  },
+                  "stance": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/ReleaseCurrencyStance"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Current, owed, overdue or unknown, when the capability answered."
+                  },
+                  "landed": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Landed commits past the last release.",
+                    "default": 0
+                  },
+                  "summary": {
+                    "type": "string",
+                    "description": "The section in words."
+                  }
+                },
+                "required": [
+                  "state",
+                  "summary"
+                ],
+                "description": "Whether the trunk's landed work is released, as `release.currency` says it (I3070)."
+              },
+              "ReleaseCurrencyStance": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "current",
+                    "description": "Nothing has landed past the last release."
+                  },
+                  {
+                    "type": "string",
+                    "const": "owed",
+                    "description": "Work has landed past it, and has waited less than `OVERDUE_AFTER`."
+                  },
+                  {
+                    "type": "string",
+                    "const": "overdue",
+                    "description": "Work has landed past it, and has waited at least `OVERDUE_AFTER`."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unknown",
+                    "description": "It could not be measured: no trunk, no release, or a release this clone cannot read."
+                  }
+                ],
+                "description": "Whether the trunk's landed work is released.\n\n```\nuse majordomus_cli::release::currency::{Stance, OVERDUE_AFTER};\nuse std::time::Duration;\nassert_eq!(Stance::of(0, OVERDUE_AFTER), Stance::Current, \"nothing landed, nothing owed\");\nassert_eq!(Stance::of(2, Duration::from_secs(60)), Stance::Owed);\nassert_eq!(Stance::of(2, OVERDUE_AFTER), Stance::Overdue);\nassert_eq!(Stance::Overdue.as_str(), \"overdue\");\n```"
               },
               "BriefDeriveSection": {
                 "type": "object",
@@ -71478,6 +71548,367 @@
         "source_path": "apps/majordomus-cli/src/capability/builtin/release.rs"
       },
       {
+        "id": "release.currency",
+        "module": "release",
+        "kind": "query",
+        "title": "Whether the trunk's landed work is released",
+        "description": "How much landed work the trunk holds past the last release, since when, and at which version, measured when asked (I3070). The last release is the newer of the release the layer records and the newest version tag the trunk contains: a tag is pushed before its record lands. Landed work is every commit of the trunk past it except merges and release commits. A landing is a commit of the trunk's first-parent history, and the work has waited since the oldest landing that brought anything but release commits. The stance is current when nothing has landed past the release, owed when work has, and overdue once it has waited longer than six hours. The version the public contract requires is decided by the version selection release.version makes, but only from a recorded release and only in a checkout at the trunk; otherwise the answer says which it is not. Ask with next false to leave the version out, as the brief and doctor do. It reads git and the clock, so it is never committed into derived data.",
+        "input": {
+          "name": "ReleaseCurrencyInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "next": {
+                "type": [
+                  "boolean",
+                  "null"
+                ],
+                "description": "Whether to decide the version the public contract requires for the landed work, which\nreads the last release's registry: yes when absent. The brief and doctor say no."
+              }
+            },
+            "description": "The input of `release.currency`: whether to decide the version as well.\n\n```\nuse majordomus_cli::capability::builtin::release::CurrencyInput;\n// the version is decided unless the caller says it does not need it\nassert!(CurrencyInput::default().next());\nassert!(!CurrencyInput { next: Some(false) }.next());\n```",
+            "title": "ReleaseCurrencyInput"
+          }
+        },
+        "output": {
+          "name": "ReleaseCurrency",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "stance": {
+                "$ref": "#/$defs/ReleaseCurrencyStance",
+                "description": "Whether the landed work is released."
+              },
+              "summary": {
+                "type": "string",
+                "description": "The answer in one sentence: the brief's and doctor's line."
+              },
+              "trunk": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The remote-tracking ref of the trunk it was measured on (`origin/master`)."
+              },
+              "release": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/ReleaseCurrencyRelease"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "The last release."
+              },
+              "landed": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "Landed commits past the last release, merges and release commits left out."
+              },
+              "landings": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "The landings of the trunk's first-parent history that brought them."
+              },
+              "oldest_landing": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "When the oldest of those landings landed, RFC 3339."
+              },
+              "waited_seconds": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "format": "uint64",
+                "minimum": 0,
+                "description": "How long the work has waited since then, in seconds."
+              },
+              "overdue_after_seconds": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0,
+                "description": "How long it may wait before it is overdue (`OVERDUE_AFTER`)."
+              },
+              "next": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The version the public contract requires for the landed work (ADR 0051), when it was\ndecided."
+              },
+              "next_unmeasured": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Why that version was not decided, when it was asked for and could not be."
+              },
+              "changes": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/ReleaseChange"
+                },
+                "description": "The landed changes, newest first, at most `LISTED`."
+              }
+            },
+            "required": [
+              "stance",
+              "summary",
+              "landed",
+              "landings",
+              "overdue_after_seconds"
+            ],
+            "description": "The answer of `release.currency`: whether the trunk's landed work is released.\n\n```\nuse majordomus_cli::release::currency::{measure, Currency, Stance};\nlet nowhere = tempfile::tempdir().unwrap();\nlet answer: Currency = measure(nowhere.path(), &[], std::time::SystemTime::now());\n// a directory with no trunk is not measured, and says why\nassert_eq!(answer.stance, Stance::Unknown);\nassert!(answer.summary.contains(\"trunk\"), \"{}\", answer.summary);\n```",
+            "title": "ReleaseCurrency",
+            "$defs": {
+              "ReleaseCurrencyStance": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "current",
+                    "description": "Nothing has landed past the last release."
+                  },
+                  {
+                    "type": "string",
+                    "const": "owed",
+                    "description": "Work has landed past it, and has waited less than `OVERDUE_AFTER`."
+                  },
+                  {
+                    "type": "string",
+                    "const": "overdue",
+                    "description": "Work has landed past it, and has waited at least `OVERDUE_AFTER`."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unknown",
+                    "description": "It could not be measured: no trunk, no release, or a release this clone cannot read."
+                  }
+                ],
+                "description": "Whether the trunk's landed work is released.\n\n```\nuse majordomus_cli::release::currency::{Stance, OVERDUE_AFTER};\nuse std::time::Duration;\nassert_eq!(Stance::of(0, OVERDUE_AFTER), Stance::Current, \"nothing landed, nothing owed\");\nassert_eq!(Stance::of(2, Duration::from_secs(60)), Stance::Owed);\nassert_eq!(Stance::of(2, OVERDUE_AFTER), Stance::Overdue);\nassert_eq!(Stance::Overdue.as_str(), \"overdue\");\n```"
+              },
+              "ReleaseCurrencyRelease": {
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "type": "string",
+                    "description": "`0.30.1`."
+                  },
+                  "reference": {
+                    "type": "string",
+                    "description": "`v0.30.1`: the release as a reader recognises it."
+                  },
+                  "at": {
+                    "type": "string",
+                    "description": "What the trunk is measured from: the commit its record names, else its tag."
+                  },
+                  "recorded": {
+                    "type": "boolean",
+                    "description": "Whether the layer holds a record for it yet."
+                  }
+                },
+                "required": [
+                  "version",
+                  "reference",
+                  "at",
+                  "recorded"
+                ],
+                "description": "The release the trunk is measured from.\n\n```\nuse majordomus_cli::release::currency::Released;\nlet tagged = Released {\n    version: \"0.30.1\".into(),\n    reference: \"v0.30.1\".into(),\n    at: \"v0.30.1\".into(),\n    recorded: false,\n};\n// a tag pushed before its record landed is read at the tag itself\nassert_eq!(tagged.at, tagged.reference);\n```"
+              },
+              "ReleaseChange": {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "$ref": "#/$defs/ReleaseChangeKind",
+                    "description": "What it did."
+                  },
+                  "scope": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The area it did it in, when the subject named one: `commands`, `ci`, `site`."
+                  },
+                  "subject": {
+                    "type": "string",
+                    "description": "The subject, without the type and scope that prefixed it."
+                  },
+                  "breaking": {
+                    "type": "boolean",
+                    "description": "Whether the commit marked itself breaking, with `!` or a `BREAKING CHANGE:` trailer."
+                  },
+                  "commit": {
+                    "type": "string",
+                    "description": "The abbreviated commit."
+                  },
+                  "url": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Where that commit can be read, when the repository's own URL is known. Derived from\n`about::REPOSITORY`, never written beside each entry."
+                  },
+                  "references": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/ReleaseReference"
+                    },
+                    "description": "The records of the layer this commit names — issues, milestones — resolved against\nwhat the layer actually holds."
+                  }
+                },
+                "required": [
+                  "kind",
+                  "subject",
+                  "breaking",
+                  "commit"
+                ],
+                "description": "One change, from one commit."
+              },
+              "ReleaseChangeKind": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "feat",
+                    "description": "A capability a person did not have before."
+                  },
+                  {
+                    "type": "string",
+                    "const": "fix",
+                    "description": "Behaviour that was wrong and is not any more."
+                  },
+                  {
+                    "type": "string",
+                    "const": "perf",
+                    "description": "Performance, with the behaviour unchanged."
+                  },
+                  {
+                    "type": "string",
+                    "const": "refactor",
+                    "description": "Structure, with the behaviour unchanged."
+                  },
+                  {
+                    "type": "string",
+                    "const": "docs",
+                    "description": "Documentation."
+                  },
+                  {
+                    "type": "string",
+                    "const": "test",
+                    "description": "Tests."
+                  },
+                  {
+                    "type": "string",
+                    "const": "chore",
+                    "description": "The build, the pipeline, the tooling."
+                  },
+                  {
+                    "type": "string",
+                    "const": "ci",
+                    "description": "Continuous integration."
+                  },
+                  {
+                    "type": "string",
+                    "const": "style",
+                    "description": "Formatting, with the behaviour unchanged."
+                  },
+                  {
+                    "type": "string",
+                    "const": "build",
+                    "description": "The build system or its dependencies."
+                  },
+                  {
+                    "type": "string",
+                    "const": "revert",
+                    "description": "A change that undoes another."
+                  },
+                  {
+                    "type": "string",
+                    "const": "merge",
+                    "description": "An integration: one line of work brought into another.\n\nNot in the conventional-commit specification, and in this repository's history 38\ntimes and counting, because integration here is a deliberate act with a subject\nsomebody writes — `merge: bring origin/master into feature/x` — and not the sentence\n`git merge` composes. Declaring it is what lets the validator hold those subjects to\nthe same width and the same references as every other commit, instead of either\nrefusing a convention this project practises or exempting it from being checked at\nall. The changelog never renders it: `commits::in_range` reads the log with\n`--no-merges`, so a merge commit is not a release entry however its subject is\nspelled."
+                  },
+                  {
+                    "type": "string",
+                    "const": "other",
+                    "description": "A commit whose subject does not parse as a conventional commit."
+                  }
+                ],
+                "description": "What a conventional commit says it did.\n\nThe set is the one the repository's own commit convention uses; a commit whose subject\ndoes not parse is `ChangeKind::Other` and still appears, because a changelog that\nsilently drops what it cannot classify is a changelog that lies by omission."
+              },
+              "ReleaseReference": {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "description": "`issue` or `milestone`."
+                  },
+                  "id": {
+                    "type": "string",
+                    "description": "`I1305`, `M000`."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "What it is, from the record itself."
+                  },
+                  "route": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Where it is published on this site, when it has a page."
+                  }
+                },
+                "required": [
+                  "kind",
+                  "id",
+                  "title"
+                ],
+                "description": "A record of the layer that a commit names in its own text.\n\nInferred, never declared beside the commit: an issue id or a milestone id appearing in a\nsubject or a body is a reference, and the layer already holds the object it refers to. A\nreference to something the layer does not have is not carried — a link to a record that\ndoes not exist is worse than no link, because the reader cannot tell until they follow it.\n\n```\nuse majordomus_cli::release::model::Reference;\nlet r = Reference {\n    kind: \"issue\".into(),\n    id: \"I1305\".into(),\n    title: \"An observed contract has a fingerprint\".into(),\n    route: Some(\"/plan/i1305/\".into()),\n};\nlet json = serde_json::to_value(&r).unwrap();\nassert_eq!(json[\"id\"], \"I1305\");\nassert_eq!(json[\"route\"], \"/plan/i1305/\");\n// a reference the site has no page for carries no route rather than an invented one\nlet bare = Reference { route: None, ..r };\nassert!(serde_json::to_value(&bare).unwrap().get(\"route\").is_none());\n```"
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::release"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_release_currency"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/release/currency"
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "implemented",
+        "tags": [
+          "release",
+          "version",
+          "delivery"
+        ],
+        "benchmark": {
+          "policy": "waived",
+          "reason": "published_history"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/release.rs"
+      },
+      {
         "id": "release.next",
         "module": "release",
         "kind": "query",
@@ -85355,7 +85786,7 @@
         "title": "intent",
         "description": "Declarative objects of kind 'intent' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 5,
+        "capabilities": 6,
         "capability_ids": []
       },
       {
@@ -85404,7 +85835,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 487,
+        "capabilities": 490,
         "capability_ids": []
       },
       {
@@ -85520,7 +85951,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 42,
+        "capabilities": 43,
         "capability_ids": []
       },
       {
@@ -85788,10 +86219,11 @@
         "description": "What this project has shipped and what it would ship next, derived rather than maintained: the changelog composes the layer's release records, the decisions dated inside each release's window and the conventional commits in its range; the version report reads the one place the version is authored and the projection the shell tool prints, and says what the public contract requires it to become — or that it cannot be measured, and so decides nothing — with what the commits since the last release imply beside it as evidence.",
         "stability": "implemented",
         "source": "builtin",
-        "capabilities": 4,
+        "capabilities": 5,
         "capability_ids": [
           "release.analysis",
           "release.changelog",
+          "release.currency",
           "release.next",
           "release.version"
         ],
@@ -85978,7 +86410,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 562,
+        "capabilities": 563,
         "capability_ids": []
       },
       {
@@ -86070,7 +86502,7 @@
     ]
   },
   "index": {
-    "fingerprint": "c6fa35fd101e053a9eafe79a0d029f3bc299f8e7c9696c6b70ed77cfe0ac1c10",
+    "fingerprint": "6510135494d4099d55b9435bf8fc40da55b37c2816b115f0b012b51f6b1b953e",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -86109,11 +86541,11 @@
       "feature": 29,
       "gap": 4,
       "implementation": 52,
-      "intent": 5,
-      "issue": 487,
+      "intent": 6,
+      "issue": 490,
       "knowledge": 4,
       "mesh-declaration": 1,
-      "milestone": 42,
+      "milestone": 43,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -86124,7 +86556,7 @@
       "session": 90,
       "skill": 8,
       "taxonomy": 10,
-      "test": 562,
+      "test": 563,
       "use-case": 49,
       "workspace": 1
     },
@@ -91997,7 +92429,7 @@
         "title": "The session brief — `majordomus brief`",
         "path": "docs/BRIEF.md",
         "source_class": "document",
-        "bytes": 6600
+        "bytes": 6797
       },
       {
         "uri": "majordomus://document/docs/CAPABILITIES.md",
@@ -92447,7 +92879,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 196305
+        "bytes": 200600
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -92501,7 +92933,7 @@
         "title": "The release — a changelog nobody writes, and one writer for the version",
         "path": "docs/RELEASE.md",
         "source_class": "document",
-        "bytes": 43830
+        "bytes": 45847
       },
       {
         "uri": "majordomus://document/docs/ROADMAP.md",
@@ -95625,7 +96057,7 @@
         "identity": "lib/doctor.sh",
         "path": "lib/doctor.sh",
         "source_class": "library",
-        "bytes": 103566
+        "bytes": 105793
       },
       {
         "uri": "majordomus://implementation/lib/doctrine.sh",
@@ -95901,6 +96333,17 @@
         "section": "project",
         "source_class": "intent",
         "bytes": 4446
+      },
+      {
+        "uri": "majordomus://intent/a-version-follows-every-session",
+        "kind": "intent",
+        "identity": "a-version-follows-every-session",
+        "title": "Every session's and every milestone's landed work reaches a measured, released version",
+        "description": "The owner's order of 2026-10-19: from now on, and enforced, a new measured version of majordomus.dev after every session and every milestone, as often as possible. Measured means the Elm-like rule of ADR 0051. Landed work does not wait for a release in silence. How much of it lies past the last release, since when, and at which version is a measured answer that every session sees. The release seat cannot end its session while that work is overdue.",
+        "path": ".ai/repo/project/intents/a-version-follows-every-session.yaml",
+        "section": "project",
+        "source_class": "intent",
+        "bytes": 2225
       },
       {
         "uri": "majordomus://intent/intent-bound-work",
@@ -101304,6 +101747,39 @@
         "bytes": 1840
       },
       {
+        "uri": "majordomus://issue/I3070",
+        "kind": "issue",
+        "identity": "I3070",
+        "title": "release.currency measures the landed work past the last release, and the brief and doctor say when it waits",
+        "description": "Declare release.currency with capability! in the release module. It answers the last release (the release record the layer holds, or the newest v* tag the trunk contains when that tag is newer), the landed commits on the trunk past it (release commits and merges left out), when the oldest of them landed, and the version the public contract requires for them (release::version::select), decided only from a recorded release in a checkout at the trunk. The stance is current when nothing has landed past the release, owed when work has, and overdue once the oldest of it has waited longer than six hours, the threshold stated beside its declaration. The brief shows a release line and section, doctor warns on owed and on overdue, and project.land-and-publish names case 3470 as its proof. It is a runtime read only and never enters committed site data.",
+        "path": ".ai/repo/project/issues/I3070.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3105
+      },
+      {
+        "uri": "majordomus://issue/I3071",
+        "kind": "issue",
+        "identity": "I3071",
+        "title": "/ui/delivery shows how much landed work waits for a release, and since when",
+        "description": "Read release.currency on /ui/delivery as one more source. Show a KPI with the stance (current, owed, overdue), the count of landed commits past the last release, the oldest one's age and the required version. The answer links to the capability's route, like every other value on the screen. The published UI snapshot shows it only as read at the snapshot's revision and says so.",
+        "path": ".ai/repo/project/issues/I3071.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1465
+      },
+      {
+        "uri": "majordomus://issue/I3072",
+        "kind": "issue",
+        "identity": "I3072",
+        "title": "A task holding the release seat does not finish completed while landed work has waited past the threshold",
+        "description": "Add an at-finish gate that reads release.currency, in the same way publication-currency reads the live site. It refuses the outcome completed only to a task whose session holds the release seat: the exclusive mesh claim the cooperation model names. It refuses only once the oldest landed commit past the last release has waited longer than release.currency's threshold. A pushed v* tag whose release run is still in progress counts as released, so the seat never refuses itself while it is releasing. Every other task is told the stance and is not refused.",
+        "path": ".ai/repo/project/issues/I3072.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2011
+      },
+      {
         "uri": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "identity": "a-commit-stood-behind-a-build-lock",
@@ -101452,6 +101928,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 3287
+      },
+      {
+        "uri": "majordomus://milestone/a-version-follows-the-work",
+        "kind": "milestone",
+        "identity": "a-version-follows-the-work",
+        "title": "Landed work is released as a measured version, and how long it has waited is a finding",
+        "description": "One capability, release.currency, answers how much landed work the trunk holds past the last release, since when, and which version the contract requires for it. The brief, doctor and /ui/delivery read it. A task holding the release seat cannot finish completed once that work has waited past its threshold. project.land-and-publish names the capability's case as its proof.",
+        "path": ".ai/repo/project/milestones/a-version-follows-the-work.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 2450
       },
       {
         "uri": "majordomus://milestone/adopter-upgrades",
@@ -104802,7 +105289,7 @@
         "path": ".ai/repo/rules/project/land-and-publish.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 11247,
+        "bytes": 12272,
         "tags": [
           "process",
           "integration",
@@ -109460,6 +109947,14 @@
         "bytes": 5880
       },
       {
+        "uri": "majordomus://test/test/cases/3470_the_release_follows_the_work.sh",
+        "kind": "test",
+        "identity": "test/cases/3470_the_release_follows_the_work.sh",
+        "path": "test/cases/3470_the_release_follows_the_work.sh",
+        "source_class": "case",
+        "bytes": 7482
+      },
+      {
         "uri": "majordomus://test/test/cases/349_a_step_reports_its_own_time.sh",
         "kind": "test",
         "identity": "test/cases/349_a_step_reports_its_own_time.sh",
@@ -112340,7 +112835,7 @@
       "identity": [
         "id"
       ],
-      "objects": 5
+      "objects": 6
     },
     {
       "name": "issue",
@@ -112350,7 +112845,7 @@
       "identity": [
         "id"
       ],
-      "objects": 487
+      "objects": 490
     },
     {
       "name": "knowledge",
@@ -112380,7 +112875,7 @@
       "identity": [
         "id"
       ],
-      "objects": 42
+      "objects": 43
     },
     {
       "name": "moment",
@@ -112502,7 +112997,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 562
+      "objects": 563
     },
     {
       "name": "use-case",
@@ -147874,6 +148369,23 @@
         "output": "ReleaseChangelog"
       },
       {
+        "name": "majordomus_release_currency",
+        "id": "release.currency",
+        "title": "Whether the trunk's landed work is released",
+        "description": "How much landed work the trunk holds past the last release, since when, and at which version, measured when asked (I3070). The last release is the newer of the release the layer records and the newest version tag the trunk contains: a tag is pushed before its record lands. Landed work is every commit of the trunk past it except merges and release commits. A landing is a commit of the trunk's first-parent history, and the work has waited since the oldest landing that brought anything but release commits. The stance is current when nothing has landed past the release, owed when work has, and overdue once it has waited longer than six hours. The version the public contract requires is decided by the version selection release.version makes, but only from a recorded release and only in a checkout at the trunk; otherwise the answer says which it is not. Ask with next false to leave the version out, as the brief and doctor do. It reads git and the clock, so it is never committed into derived data.",
+        "kind": "query",
+        "read_only": true,
+        "effect": "read",
+        "hints": {
+          "read_only": true,
+          "destructive": false,
+          "idempotent": true,
+          "open_world": false
+        },
+        "input": "ReleaseCurrencyInput",
+        "output": "ReleaseCurrency"
+      },
+      {
         "name": "majordomus_release_next",
         "id": "release.next",
         "title": "The version a landing allocates, and why",
@@ -149821,6 +150333,12 @@
         "method": "GET",
         "path": "/api/v1/changelog",
         "id": "release.changelog",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/release/currency",
+        "id": "release.currency",
         "kind": "query"
       },
       {
@@ -161299,6 +161817,30 @@
           "cases": 2
         },
         {
+          "subject": "release.currency",
+          "module": "release",
+          "transport": "direct",
+          "state": "waived",
+          "cases": 0,
+          "reason": "published_history"
+        },
+        {
+          "subject": "release.currency",
+          "module": "release",
+          "transport": "mcp",
+          "state": "waived",
+          "cases": 0,
+          "reason": "published_history"
+        },
+        {
+          "subject": "release.currency",
+          "module": "release",
+          "transport": "http",
+          "state": "waived",
+          "cases": 0,
+          "reason": "published_history"
+        },
+        {
           "subject": "release.next",
           "module": "release",
           "transport": "direct",
@@ -162090,24 +162632,24 @@
       ],
       "tallies": {
         "direct": {
-          "required": 206,
+          "required": 207,
           "covered": 175,
           "missing": 0,
-          "waived": 31,
+          "waived": 32,
           "inapplicable": 0
         },
         "http": {
-          "required": 201,
+          "required": 202,
           "covered": 175,
           "missing": 0,
-          "waived": 26,
+          "waived": 27,
           "inapplicable": 0
         },
         "mcp": {
-          "required": 196,
+          "required": 197,
           "covered": 171,
           "missing": 0,
-          "waived": 25,
+          "waived": 26,
           "inapplicable": 0
         },
         "system": {
@@ -162118,10 +162660,10 @@
           "inapplicable": 0
         },
         "total": {
-          "required": 617,
+          "required": 620,
           "covered": 535,
           "missing": 0,
-          "waived": 82,
+          "waived": 85,
           "inapplicable": 0
         }
       }

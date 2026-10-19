@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "0.30.1"
   },
-  "fingerprint": "e43cfa770521263da16032d3bb4719855076e5cb4914be00ad5052026231130b",
+  "fingerprint": "34fc2f8b87a0cb9954f49f28e5af0845655b7fd4f0beb34892c24720caa4e68c",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -3229,7 +3229,7 @@
         "use_cases": 10,
         "rules": 15,
         "enforced_rules": 14,
-        "capabilities": 137,
+        "capabilities": 138,
         "moments": 38
       },
       "evidence": {
@@ -9942,6 +9942,14 @@
               "route": "GET /api/v1/changelog"
             },
             {
+              "id": "release.currency",
+              "title": "Whether the trunk's landed work is released",
+              "kind": "query",
+              "stability": "implemented",
+              "tool": "majordomus_release_currency",
+              "route": "GET /api/v1/release/currency"
+            },
+            {
               "id": "release.next",
               "title": "The version a landing allocates, and why",
               "kind": "query",
@@ -10288,10 +10296,10 @@
       ],
       "backlinks": [],
       "counts": {
-        "capabilities": 61,
-        "mcp_tools": 54,
+        "capabilities": 62,
+        "mcp_tools": 55,
         "mcp_resources": 9,
-        "http_routes": 58,
+        "http_routes": 59,
         "cli_paths": 19,
         "commands": 0,
         "objects": 1,
@@ -10483,6 +10491,14 @@
               "tool": "majordomus_changelog",
               "resource": "majordomus://changelog",
               "route": "GET /api/v1/changelog"
+            },
+            {
+              "id": "release.currency",
+              "title": "Whether the trunk's landed work is released",
+              "kind": "query",
+              "stability": "implemented",
+              "tool": "majordomus_release_currency",
+              "route": "GET /api/v1/release/currency"
             },
             {
               "id": "release.next",
@@ -11679,10 +11695,10 @@
         "observatory"
       ],
       "counts": {
-        "capabilities": 100,
-        "mcp_tools": 92,
+        "capabilities": 101,
+        "mcp_tools": 93,
         "mcp_resources": 16,
-        "http_routes": 97,
+        "http_routes": 98,
         "cli_paths": 43,
         "commands": 0,
         "objects": 0,
@@ -12610,6 +12626,14 @@
               "route": "GET /api/v1/changelog"
             },
             {
+              "id": "release.currency",
+              "title": "Whether the trunk's landed work is released",
+              "kind": "query",
+              "stability": "implemented",
+              "tool": "majordomus_release_currency",
+              "route": "GET /api/v1/release/currency"
+            },
+            {
               "id": "release.next",
               "title": "The version a landing allocates, and why",
               "kind": "query",
@@ -12827,10 +12851,10 @@
       ],
       "backlinks": [],
       "counts": {
-        "capabilities": 9,
-        "mcp_tools": 9,
+        "capabilities": 10,
+        "mcp_tools": 10,
         "mcp_resources": 32,
-        "http_routes": 9,
+        "http_routes": 10,
         "cli_paths": 5,
         "commands": 4,
         "objects": 31,
@@ -13224,15 +13248,15 @@
       "kind_refs": [
         {
           "name": "milestone",
-          "objects": 42
+          "objects": 43
         },
         {
           "name": "issue",
-          "objects": 487
+          "objects": 490
         },
         {
           "name": "intent",
-          "objects": 5
+          "objects": 6
         },
         {
           "name": "gap",
@@ -13438,11 +13462,11 @@
       "counts": {
         "capabilities": 26,
         "mcp_tools": 26,
-        "mcp_resources": 545,
+        "mcp_resources": 550,
         "http_routes": 26,
         "cli_paths": 13,
         "commands": 1,
-        "objects": 542,
+        "objects": 547,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -17344,14 +17368,14 @@
       },
       {
         "id": "intent",
-        "title": "intent (5)",
+        "title": "intent (6)",
         "features": [
           "planning"
         ]
       },
       {
         "id": "issue",
-        "title": "issue (487)",
+        "title": "issue (490)",
         "features": [
           "planning"
         ]
@@ -17372,7 +17396,7 @@
       },
       {
         "id": "milestone",
-        "title": "milestone (42)",
+        "title": "milestone (43)",
         "features": [
           "planning"
         ]
@@ -18372,17 +18396,17 @@
     }
   ],
   "telemetry": {
-    "capabilities": 2641,
-    "builtin": 206,
-    "declarative": 2435,
+    "capabilities": 2648,
+    "builtin": 207,
+    "declarative": 2441,
     "modules": 58,
-    "mcp_tools": 196,
-    "mcp_resources": 2490,
-    "http_routes": 201,
+    "mcp_tools": 197,
+    "mcp_resources": 2496,
+    "http_routes": 202,
     "cli_commands": 209,
     "shell_commands": 30,
     "kinds": 34,
-    "objects": 2435,
+    "objects": 2441,
     "by_kind": {
       "adr": 119,
       "application": 5,
@@ -18400,11 +18424,11 @@
       "feature": 29,
       "gap": 4,
       "implementation": 52,
-      "intent": 5,
-      "issue": 487,
+      "intent": 6,
+      "issue": 490,
       "knowledge": 4,
       "mesh-declaration": 1,
-      "milestone": 42,
+      "milestone": 43,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -18415,7 +18439,7 @@
       "session": 90,
       "skill": 8,
       "taxonomy": 10,
-      "test": 562,
+      "test": 563,
       "use-case": 49,
       "workspace": 1
     },

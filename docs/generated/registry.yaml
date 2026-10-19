@@ -286,7 +286,7 @@ modules:
     description: "What this project has shipped and what it would ship next, derived rather than maintained: the changelog composes the layer's release records, the decisions dated inside each release's window and the conventional commits in its range; the version report reads the one place the version is authored and the projection the shell tool prints, and says what the public contract requires it to become — or that it cannot be measured, and so decides nothing — with what the commits since the last release imply beside it as evidence."
     stability: implemented
     source: builtin
-    capabilities: 4
+    capabilities: 5
   - id: repository
     title: Repository
     description: "The repository this process serves: its layer, its git state, the state of the index built from it, and its scope: what a worker reads of it and what it never reads."
@@ -701,6 +701,13 @@ capabilities:
           integration:
             "$ref": "#/$defs/BriefIntegrationSection"
             description: The integration queue.
+          release:
+            "$ref": "#/$defs/BriefReleaseSection"
+            description: "Whether the trunk's landed work is released. Absent from the answer of a server older\nthan this section, which leaves it unread rather than failing the whole brief."
+            default:
+              state: unread
+              landed: 0
+              summary: the server that composed this brief does not measure the release
           derive:
             "$ref": "#/$defs/BriefDeriveSection"
             description: The derive queue.
@@ -929,6 +936,45 @@ capabilities:
               - state
               - summary
             description: "The integration queue, as `majordomus prs brief` says it."
+          BriefReleaseSection:
+            type: object
+            properties:
+              state:
+                "$ref": "#/$defs/BriefSectionState"
+                description: "`read` when it was measured, `unread` when it could not be, with the summary saying why."
+              stance:
+                anyOf:
+                  - "$ref": "#/$defs/ReleaseCurrencyStance"
+                  - type: "null"
+                description: "Current, owed, overdue or unknown, when the capability answered."
+              landed:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Landed commits past the last release.
+                default: 0
+              summary:
+                type: string
+                description: The section in words.
+            required:
+              - state
+              - summary
+            description: "Whether the trunk's landed work is released, as `release.currency` says it (I3070)."
+          ReleaseCurrencyStance:
+            oneOf:
+              - type: string
+                const: current
+                description: Nothing has landed past the last release.
+              - type: string
+                const: owed
+                description: "Work has landed past it, and has waited less than `OVERDUE_AFTER`."
+              - type: string
+                const: overdue
+                description: "Work has landed past it, and has waited at least `OVERDUE_AFTER`."
+              - type: string
+                const: unknown
+                description: "It could not be measured: no trunk, no release, or a release this clone cannot read."
+            description: "Whether the trunk's landed work is released.\n\n```\nuse majordomus_cli::release::currency::{Stance, OVERDUE_AFTER};\nuse std::time::Duration;\nassert_eq!(Stance::of(0, OVERDUE_AFTER), Stance::Current, \"nothing landed, nothing owed\");\nassert_eq!(Stance::of(2, Duration::from_secs(60)), Stance::Owed);\nassert_eq!(Stance::of(2, OVERDUE_AFTER), Stance::Overdue);\nassert_eq!(Stance::Overdue.as_str(), \"overdue\");\n```"
           BriefDeriveSection:
             type: object
             properties:
@@ -51111,6 +51157,258 @@ capabilities:
       - changelog
     benchmark:
       policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/release.rs
+  - id: release.currency
+    module: release
+    kind: query
+    title: "Whether the trunk's landed work is released"
+    description: "How much landed work the trunk holds past the last release, since when, and at which version, measured when asked (I3070). The last release is the newer of the release the layer records and the newest version tag the trunk contains: a tag is pushed before its record lands. Landed work is every commit of the trunk past it except merges and release commits. A landing is a commit of the trunk's first-parent history, and the work has waited since the oldest landing that brought anything but release commits. The stance is current when nothing has landed past the release, owed when work has, and overdue once it has waited longer than six hours. The version the public contract requires is decided by the version selection release.version makes, but only from a recorded release and only in a checkout at the trunk; otherwise the answer says which it is not. Ask with next false to leave the version out, as the brief and doctor do. It reads git and the clock, so it is never committed into derived data."
+    input:
+      name: ReleaseCurrencyInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          next:
+            type:
+              - boolean
+              - "null"
+            description: "Whether to decide the version the public contract requires for the landed work, which\nreads the last release's registry: yes when absent. The brief and doctor say no."
+        description: "The input of `release.currency`: whether to decide the version as well.\n\n```\nuse majordomus_cli::capability::builtin::release::CurrencyInput;\n// the version is decided unless the caller says it does not need it\nassert!(CurrencyInput::default().next());\nassert!(!CurrencyInput { next: Some(false) }.next());\n```"
+        title: ReleaseCurrencyInput
+    output:
+      name: ReleaseCurrency
+      schema:
+        type: object
+        properties:
+          stance:
+            "$ref": "#/$defs/ReleaseCurrencyStance"
+            description: Whether the landed work is released.
+          summary:
+            type: string
+            description: "The answer in one sentence: the brief's and doctor's line."
+          trunk:
+            type:
+              - string
+              - "null"
+            description: "The remote-tracking ref of the trunk it was measured on (`origin/master`)."
+          release:
+            anyOf:
+              - "$ref": "#/$defs/ReleaseCurrencyRelease"
+              - type: "null"
+            description: The last release.
+          landed:
+            type: integer
+            format: uint
+            minimum: 0
+            description: "Landed commits past the last release, merges and release commits left out."
+          landings:
+            type: integer
+            format: uint
+            minimum: 0
+            description: "The landings of the trunk's first-parent history that brought them."
+          oldest_landing:
+            type:
+              - string
+              - "null"
+            description: "When the oldest of those landings landed, RFC 3339."
+          waited_seconds:
+            type:
+              - integer
+              - "null"
+            format: uint64
+            minimum: 0
+            description: "How long the work has waited since then, in seconds."
+          overdue_after_seconds:
+            type: integer
+            format: uint64
+            minimum: 0
+            description: "How long it may wait before it is overdue (`OVERDUE_AFTER`)."
+          next:
+            type:
+              - string
+              - "null"
+            description: "The version the public contract requires for the landed work (ADR 0051), when it was\ndecided."
+          next_unmeasured:
+            type:
+              - string
+              - "null"
+            description: "Why that version was not decided, when it was asked for and could not be."
+          changes:
+            type: array
+            items:
+              "$ref": "#/$defs/ReleaseChange"
+            description: "The landed changes, newest first, at most `LISTED`."
+        required:
+          - stance
+          - summary
+          - landed
+          - landings
+          - overdue_after_seconds
+        description: "The answer of `release.currency`: whether the trunk's landed work is released.\n\n```\nuse majordomus_cli::release::currency::{measure, Currency, Stance};\nlet nowhere = tempfile::tempdir().unwrap();\nlet answer: Currency = measure(nowhere.path(), &[], std::time::SystemTime::now());\n// a directory with no trunk is not measured, and says why\nassert_eq!(answer.stance, Stance::Unknown);\nassert!(answer.summary.contains(\"trunk\"), \"{}\", answer.summary);\n```"
+        title: ReleaseCurrency
+        "$defs":
+          ReleaseCurrencyStance:
+            oneOf:
+              - type: string
+                const: current
+                description: Nothing has landed past the last release.
+              - type: string
+                const: owed
+                description: "Work has landed past it, and has waited less than `OVERDUE_AFTER`."
+              - type: string
+                const: overdue
+                description: "Work has landed past it, and has waited at least `OVERDUE_AFTER`."
+              - type: string
+                const: unknown
+                description: "It could not be measured: no trunk, no release, or a release this clone cannot read."
+            description: "Whether the trunk's landed work is released.\n\n```\nuse majordomus_cli::release::currency::{Stance, OVERDUE_AFTER};\nuse std::time::Duration;\nassert_eq!(Stance::of(0, OVERDUE_AFTER), Stance::Current, \"nothing landed, nothing owed\");\nassert_eq!(Stance::of(2, Duration::from_secs(60)), Stance::Owed);\nassert_eq!(Stance::of(2, OVERDUE_AFTER), Stance::Overdue);\nassert_eq!(Stance::Overdue.as_str(), \"overdue\");\n```"
+          ReleaseCurrencyRelease:
+            type: object
+            properties:
+              version:
+                type: string
+                description: "`0.30.1`."
+              reference:
+                type: string
+                description: "`v0.30.1`: the release as a reader recognises it."
+              at:
+                type: string
+                description: "What the trunk is measured from: the commit its record names, else its tag."
+              recorded:
+                type: boolean
+                description: Whether the layer holds a record for it yet.
+            required:
+              - version
+              - reference
+              - at
+              - recorded
+            description: "The release the trunk is measured from.\n\n```\nuse majordomus_cli::release::currency::Released;\nlet tagged = Released {\n    version: \"0.30.1\".into(),\n    reference: \"v0.30.1\".into(),\n    at: \"v0.30.1\".into(),\n    recorded: false,\n};\n// a tag pushed before its record landed is read at the tag itself\nassert_eq!(tagged.at, tagged.reference);\n```"
+          ReleaseChange:
+            type: object
+            properties:
+              kind:
+                "$ref": "#/$defs/ReleaseChangeKind"
+                description: What it did.
+              scope:
+                type:
+                  - string
+                  - "null"
+                description: "The area it did it in, when the subject named one: `commands`, `ci`, `site`."
+              subject:
+                type: string
+                description: "The subject, without the type and scope that prefixed it."
+              breaking:
+                type: boolean
+                description: "Whether the commit marked itself breaking, with `!` or a `BREAKING CHANGE:` trailer."
+              commit:
+                type: string
+                description: The abbreviated commit.
+              url:
+                type:
+                  - string
+                  - "null"
+                description: "Where that commit can be read, when the repository's own URL is known. Derived from\n`about::REPOSITORY`, never written beside each entry."
+              references:
+                type: array
+                items:
+                  "$ref": "#/$defs/ReleaseReference"
+                description: "The records of the layer this commit names — issues, milestones — resolved against\nwhat the layer actually holds."
+            required:
+              - kind
+              - subject
+              - breaking
+              - commit
+            description: "One change, from one commit."
+          ReleaseChangeKind:
+            oneOf:
+              - type: string
+                const: feat
+                description: A capability a person did not have before.
+              - type: string
+                const: fix
+                description: Behaviour that was wrong and is not any more.
+              - type: string
+                const: perf
+                description: "Performance, with the behaviour unchanged."
+              - type: string
+                const: refactor
+                description: "Structure, with the behaviour unchanged."
+              - type: string
+                const: docs
+                description: Documentation.
+              - type: string
+                const: test
+                description: Tests.
+              - type: string
+                const: chore
+                description: "The build, the pipeline, the tooling."
+              - type: string
+                const: ci
+                description: Continuous integration.
+              - type: string
+                const: style
+                description: "Formatting, with the behaviour unchanged."
+              - type: string
+                const: build
+                description: The build system or its dependencies.
+              - type: string
+                const: revert
+                description: A change that undoes another.
+              - type: string
+                const: merge
+                description: "An integration: one line of work brought into another.\n\nNot in the conventional-commit specification, and in this repository's history 38\ntimes and counting, because integration here is a deliberate act with a subject\nsomebody writes — `merge: bring origin/master into feature/x` — and not the sentence\n`git merge` composes. Declaring it is what lets the validator hold those subjects to\nthe same width and the same references as every other commit, instead of either\nrefusing a convention this project practises or exempting it from being checked at\nall. The changelog never renders it: `commits::in_range` reads the log with\n`--no-merges`, so a merge commit is not a release entry however its subject is\nspelled."
+              - type: string
+                const: other
+                description: A commit whose subject does not parse as a conventional commit.
+            description: "What a conventional commit says it did.\n\nThe set is the one the repository's own commit convention uses; a commit whose subject\ndoes not parse is `ChangeKind::Other` and still appears, because a changelog that\nsilently drops what it cannot classify is a changelog that lies by omission."
+          ReleaseReference:
+            type: object
+            properties:
+              kind:
+                type: string
+                description: "`issue` or `milestone`."
+              id:
+                type: string
+                description: "`I1305`, `M000`."
+              title:
+                type: string
+                description: "What it is, from the record itself."
+              route:
+                type:
+                  - string
+                  - "null"
+                description: "Where it is published on this site, when it has a page."
+            required:
+              - kind
+              - id
+              - title
+            description: "A record of the layer that a commit names in its own text.\n\nInferred, never declared beside the commit: an issue id or a milestone id appearing in a\nsubject or a body is a reference, and the layer already holds the object it refers to. A\nreference to something the layer does not have is not carried — a link to a record that\ndoes not exist is worse than no link, because the reader cannot tell until they follow it.\n\n```\nuse majordomus_cli::release::model::Reference;\nlet r = Reference {\n    kind: \"issue\".into(),\n    id: \"I1305\".into(),\n    title: \"An observed contract has a fingerprint\".into(),\n    route: Some(\"/plan/i1305/\".into()),\n};\nlet json = serde_json::to_value(&r).unwrap();\nassert_eq!(json[\"id\"], \"I1305\");\nassert_eq!(json[\"route\"], \"/plan/i1305/\");\n// a reference the site has no page for carries no route rather than an invented one\nlet bare = Reference { route: None, ..r };\nassert!(serde_json::to_value(&bare).unwrap().get(\"route\").is_none());\n```"
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::release
+    exposure:
+      mcp:
+        tool: majordomus_release_currency
+      http:
+        method: GET
+        path: /api/v1/release/currency
+    availability: runtime
+    visibility: public
+    stability: implemented
+    tags:
+      - release
+      - version
+      - delivery
+    benchmark:
+      policy: waived
+      reason: published_history
     cache:
       policy: disabled
     execution:

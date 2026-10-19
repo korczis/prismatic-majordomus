@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 206 | 175 | 0 | 31 |
-| http | 201 | 175 | 0 | 26 |
-| mcp | 196 | 171 | 0 | 25 |
+| direct | 207 | 175 | 0 | 32 |
+| http | 202 | 175 | 0 | 27 |
+| mcp | 197 | 171 | 0 | 26 |
 | system | 14 | 14 | 0 | 0 |
-| total | 617 | 535 | 0 | 82 |
+| total | 620 | 535 | 0 | 85 |
 
 ## Capabilities
 
@@ -191,6 +191,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `recover.orphans` | recover | command | — | covered | covered | covered | `check-twelve-hours`, `check-one-second` |
 | `release.analysis` | release | query | — | waived | waived | waived | — |
 | `release.changelog` | release | query | — | covered | covered | covered | `all`, `one-version` |
+| `release.currency` | release | query | — | waived | waived | waived | — |
 | `release.next` | release | query | — | waived | waived | waived | — |
 | `release.version` | release | query | process, 2 entries, per checkout state | covered | covered | covered | `default` |
 | `repository.info` | repository | query | process, 1 entries, per generation | covered | covered | covered | `default` |

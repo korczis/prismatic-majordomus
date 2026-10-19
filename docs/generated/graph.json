@@ -1618,6 +1618,15 @@
         "status": "query"
       },
       {
+        "id": "capability:release.currency",
+        "kind": "capability",
+        "label": "release.currency",
+        "summary": "Whether the trunk's landed work is released",
+        "route": "/cockpit/capabilities/release.currency",
+        "source": "apps/majordomus-cli/src/capability/builtin/release.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:release.next",
         "kind": "capability",
         "label": "release.next",
@@ -19820,6 +19829,36 @@
             "Where candidates are written on a trunk that accepts only pull requests (I1984); grouping on read holds wherever they are"
           ],
           "updated_at": "2026-10-09"
+        }
+      },
+      {
+        "id": "majordomus://intent/a-version-follows-every-session",
+        "kind": "intent",
+        "label": "a-version-follows-every-session",
+        "summary": "Every session's and every milestone's landed work reaches a measured, released version",
+        "route": "/cockpit/objects/intent/a-version-follows-every-session",
+        "source": ".ai/repo/project/intents/a-version-follows-every-session.yaml",
+        "facts": {
+          "created_at": "2026-10-19",
+          "governance": [
+            "rule:project.land-and-publish",
+            "rule:project.the-cooperation-model-is-the-owners-word",
+            "adr:adr-0051"
+          ],
+          "invariants": [
+            "How much landed work waits for a release is measured once, by release.currency, and every surface that shows it reads that answer",
+            "A version is the public contract's measurement (ADR 0051), never a word chosen by hand",
+            "The release seat does not finish completed while landed work has waited past the threshold, and no other task is refused by it",
+            "The measurement is a runtime read of git and the layer's release records and is never committed into derived data"
+          ],
+          "milestones": [
+            "a-version-follows-the-work"
+          ],
+          "non_goals": [
+            "Cutting a release from anywhere but the release seat's pipeline",
+            "A second version authority beside the measured one"
+          ],
+          "updated_at": "2026-10-19"
         }
       },
       {
@@ -42560,6 +42599,131 @@
         }
       },
       {
+        "id": "majordomus://issue/I3070",
+        "kind": "issue",
+        "label": "I3070",
+        "summary": "release.currency measures the landed work past the last release, and the brief and doctor say when it waits",
+        "route": "/cockpit/objects/issue/i3070",
+        "source": ".ai/repo/project/issues/I3070.yaml",
+        "facts": {
+          "created_at": "2026-10-19",
+          "current_state": "release.version reports the last release and the commits since it as evidence, and says nothing about how long they have waited. Nothing in the brief, doctor or finish asks.",
+          "depends_on": [],
+          "desired_state": "A session's brief and doctor say how much landed work waits for a release, since when and at which version. The release seat can see the debt without reading git.",
+          "evidence_required": [
+            "case_release_follows_the_work"
+          ],
+          "milestone": "a-version-follows-the-work",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/release/currency.rs",
+            "apps/majordomus-cli/src/release/compat.rs",
+            "apps/majordomus-cli/src/cockpit/pages.rs",
+            "docs/BRIEF.md",
+            ".ai/repo/project/intents/a-version-follows-every-session.yaml",
+            "apps/majordomus-cli/src/release/mod.rs",
+            "apps/majordomus-cli/src/capability/builtin/release.rs",
+            "apps/majordomus-cli/src/capability/builtin/brief.rs",
+            "lib/doctor.sh",
+            ".ai/repo/rules/project/land-and-publish.v1.md",
+            "docs/RELEASE.md",
+            "test/cases/3470_the_release_follows_the_work.sh"
+          ],
+          "serves": [
+            "a-version-follows-every-session#measured"
+          ],
+          "slug": "the-release-is-current",
+          "updated_at": "2026-10-19",
+          "validation": [
+            "bin/majordomus plan validate",
+            "bash test/run.sh 3470_the_release_follows_the_work"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3071",
+        "kind": "issue",
+        "label": "I3071",
+        "summary": "/ui/delivery shows how much landed work waits for a release, and since when",
+        "route": "/cockpit/objects/issue/i3071",
+        "source": ".ai/repo/project/issues/I3071.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "/ui/delivery shows release.currency's stance, count, age and required version, and its value leads to the capability's route"
+          ],
+          "created_at": "2026-10-19",
+          "current_state": "/ui/delivery shows integration and deployment facts and no release debt.",
+          "depends_on": [
+            "I3070"
+          ],
+          "desired_state": "/ui/delivery says whether the trunk has been released, from the same answer the brief and doctor read.",
+          "evidence_required": [
+            "case_delivery_shows_release_currency"
+          ],
+          "milestone": "a-version-follows-the-work",
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui/delivery.rs",
+            "docs/MAJORDOMUS_UI.md"
+          ],
+          "serves": [
+            "a-version-follows-every-session#shown"
+          ],
+          "slug": "the-delivery-screen-shows-the-release-debt",
+          "updated_at": "2026-10-19",
+          "validation": [
+            "bin/majordomus plan validate"
+          ],
+          "why": "The delivery screen is where a person checks whether work reached the public. Release debt is the step between merged and published that it does not show."
+        }
+      },
+      {
+        "id": "majordomus://issue/I3072",
+        "kind": "issue",
+        "label": "I3072",
+        "summary": "A task holding the release seat does not finish completed while landed work has waited past the threshold",
+        "route": "/cockpit/objects/issue/i3072",
+        "source": ".ai/repo/project/issues/I3072.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A release-seat task finishing with landed work older than the threshold past the last release is refused completed, naming the count, the age and the required version",
+            "The same task with a pushed tag whose release run is in progress, or with no landed work past the release, finishes",
+            "A task that does not hold the release seat is told the stance and is never refused by it"
+          ],
+          "created_at": "2026-10-19",
+          "current_state": "finish asks publication-currency about the site and nothing about the release.",
+          "depends_on": [
+            "I3070"
+          ],
+          "desired_state": "The release seat's finish says completed only when the trunk's landed work is released or still inside the threshold.",
+          "evidence_required": [
+            "case_release_seat_finishes_only_current"
+          ],
+          "milestone": "a-version-follows-the-work",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/ci/gates.yaml",
+            "apps/majordomus-cli/src/capability/builtin/release.rs",
+            "lib/finish.sh"
+          ],
+          "serves": [
+            "a-version-follows-every-session#the-seat-releases"
+          ],
+          "slug": "the-release-seat-finishes-only-current",
+          "updated_at": "2026-10-19",
+          "validation": [
+            "bin/majordomus plan validate"
+          ],
+          "why": "Rule 4 of the cooperation model binds the release seat. A seat that ends its session with overdue landed work leaves the owner's order unmet, with every check green."
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "label": "a-commit-stood-behind-a-build-lock",
@@ -43026,6 +43190,45 @@
             "bash test/run.sh 981_an_observation_becomes_a_grouped_candidate",
             "bash test/run.sh 982_a_candidate_is_routed_by_what_it_is_about",
             "bash test/run.sh 564_knowledge_derivation_is_idempotent"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/a-version-follows-the-work",
+        "kind": "milestone",
+        "label": "a-version-follows-the-work",
+        "summary": "Landed work is released as a measured version, and how long it has waited is a finding",
+        "route": "/cockpit/objects/milestone/a-version-follows-the-work",
+        "source": ".ai/repo/project/milestones/a-version-follows-the-work.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "release.currency answers the last release, the landed commits past it with the oldest one's age, and the version the contract requires, on the command line, HTTP and MCP",
+            "The brief and doctor warn once landed work is past the last release and warn harder past the threshold; /ui/delivery shows the same answer",
+            "finish refuses completed to a task holding the release seat while landed work has waited past the threshold, and counts a pushed tag whose release run is in progress as released"
+          ],
+          "created_at": "2026-10-19",
+          "depends_on": [],
+          "evidence_required": [],
+          "non_scope": [
+            "Cutting releases: that stays the release seat's act, through the pipeline it already runs",
+            "Committing the answer into site data: it reads refs, and committed derived data must not"
+          ],
+          "order": 342,
+          "priority": "p1",
+          "scope": [
+            "apps/majordomus-cli/src/release",
+            "apps/majordomus-cli/src/capability/builtin/release.rs",
+            "apps/majordomus-cli/src/capability/builtin/brief.rs",
+            "apps/majordomus-cli/src/ui/delivery.rs",
+            "lib/doctor.sh",
+            ".ai/repo/rules/project/land-and-publish.v1.md",
+            "docs/RELEASE.md"
+          ],
+          "slug": "a-version-follows-the-work",
+          "updated_at": "2026-10-19",
+          "validation": [
+            "bin/majordomus plan validate",
+            "bash test/run.sh 3470_the_release_follows_the_work"
           ]
         }
       },
@@ -60782,6 +60985,13 @@
         "source": "test/cases/343_the_cockpit_shows_who_else_is_here.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3470_the_release_follows_the_work.sh",
+        "kind": "test",
+        "label": "test/cases/3470_the_release_follows_the_work.sh",
+        "route": "/cockpit/objects/test/test-cases-3470-the-release-follows-the-work-sh",
+        "source": "test/cases/3470_the_release_follows_the_work.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/349_a_step_reports_its_own_time.sh",
         "kind": "test",
         "label": "test/cases/349_a_step_reports_its_own_time.sh",
@@ -68082,6 +68292,21 @@
       },
       {
         "source": "capability:release.changelog",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:release.currency",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:release.currency",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:release.currency",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -81606,6 +81831,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://intent/a-version-follows-every-session",
+        "target": "kind:intent",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://intent/intent-bound-work",
         "target": "kind:intent",
         "kind": "is_a"
@@ -88551,6 +88781,46 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3070",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3070",
+        "target": "majordomus://milestone/a-version-follows-the-work",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3071",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3071",
+        "target": "majordomus://issue/I3070",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3071",
+        "target": "majordomus://milestone/a-version-follows-the-work",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3072",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3072",
+        "target": "majordomus://issue/I3070",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3072",
+        "target": "majordomus://milestone/a-version-follows-the-work",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -88607,6 +88877,11 @@
       },
       {
         "source": "majordomus://milestone/a-session-leaves-what-it-observed",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/a-version-follows-the-work",
         "target": "kind:milestone",
         "kind": "is_a"
       },
@@ -93552,6 +93827,11 @@
       },
       {
         "source": "majordomus://test/test/cases/343_the_cockpit_shows_who_else_is_here.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3470_the_release_follows_the_work.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -98617,6 +98897,11 @@
       },
       {
         "source": "module:release",
+        "target": "capability:release.currency",
+        "kind": "composes"
+      },
+      {
+        "source": "module:release",
         "target": "capability:release.next",
         "kind": "composes"
       },
@@ -98787,8 +99072,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3074,
-      "edges": 6732,
+      "nodes": 3081,
+      "edges": 6747,
       "acyclic": false,
       "truncated": false
     }

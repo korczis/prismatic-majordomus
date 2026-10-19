@@ -1,0 +1,29 @@
+id: I3072
+milestone: a-version-follows-the-work
+title: "A task holding the release seat does not finish completed while landed work has waited past the threshold"
+slug: the-release-seat-finishes-only-current
+priority: p1
+profile: implementation
+parallel_safe: false
+serves:
+  - a-version-follows-every-session#the-seat-releases
+objective: "Add an at-finish gate that reads release.currency, in the same way publication-currency reads the live site. It refuses the outcome completed only to a task whose session holds the release seat: the exclusive mesh claim the cooperation model names. It refuses only once the oldest landed commit past the last release has waited longer than release.currency's threshold. A pushed v* tag whose release run is still in progress counts as released, so the seat never refuses itself while it is releasing. Every other task is told the stance and is not refused."
+why: "Rule 4 of the cooperation model binds the release seat. A seat that ends its session with overdue landed work leaves the owner's order unmet, with every check green."
+current_state: "finish asks publication-currency about the site and nothing about the release."
+desired_state: "The release seat's finish says completed only when the trunk's landed work is released or still inside the threshold."
+scope:
+  - ".ai/repo/ci/gates.yaml"
+  - "apps/majordomus-cli/src/capability/builtin/release.rs"
+  - "lib/finish.sh"
+depends_on:
+  - "I3070"
+acceptance_criteria:
+  - "A release-seat task finishing with landed work older than the threshold past the last release is refused completed, naming the count, the age and the required version"
+  - "The same task with a pushed tag whose release run is in progress, or with no landed work past the release, finishes"
+  - "A task that does not hold the release seat is told the stance and is never refused by it"
+validation:
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "case_release_seat_finishes_only_current"
+created_at: 2026-10-19
+updated_at: 2026-10-19
