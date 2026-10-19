@@ -6,23 +6,23 @@
     "version": "0.30.1"
   },
   "registry": {
-    "fingerprint": "ce3c9bccfa0d906af23d8d4f78a43c20a3038762a6237e4a58d0095cd00d3638",
+    "fingerprint": "66bedc6f16d471c3d2ab85fcfc625816aa2ac212dc3daad0d2213e80a13b9ec8",
     "summary": {
-      "total": 2641,
+      "total": 2646,
       "builtin": 206,
-      "declarative": 2435,
+      "declarative": 2440,
       "by_kind": {
         "command": 31,
         "query": 175,
-        "resource": 2435
+        "resource": 2440
       },
       "by_stability": {
         "behaviorally_verified": 142,
         "experimental": 55,
-        "implemented": 2444
+        "implemented": 2449
       },
       "mcp_tools": 196,
-      "mcp_resources": 2490,
+      "mcp_resources": 2495,
       "http_routes": 201,
       "cli_commands": 111,
       "modules": 92,
@@ -85404,7 +85404,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 487,
+        "capabilities": 490,
         "capability_ids": []
       },
       {
@@ -85978,7 +85978,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 562,
+        "capabilities": 564,
         "capability_ids": []
       },
       {
@@ -86070,7 +86070,7 @@
     ]
   },
   "index": {
-    "fingerprint": "c6fa35fd101e053a9eafe79a0d029f3bc299f8e7c9696c6b70ed77cfe0ac1c10",
+    "fingerprint": "139ae955f8549bceb8ef88373ba2a67012f6e2788a4ff5bdae5ff52150ead932",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -86110,7 +86110,7 @@
       "gap": 4,
       "implementation": 52,
       "intent": 5,
-      "issue": 487,
+      "issue": 490,
       "knowledge": 4,
       "mesh-declaration": 1,
       "milestone": 42,
@@ -86124,7 +86124,7 @@
       "session": 90,
       "skill": 8,
       "taxonomy": 10,
-      "test": 562,
+      "test": 564,
       "use-case": 49,
       "workspace": 1
     },
@@ -92447,7 +92447,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 196305
+        "bytes": 199134
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -101304,6 +101304,39 @@
         "bytes": 1840
       },
       {
+        "uri": "majordomus://issue/I3436",
+        "kind": "issue",
+        "identity": "I3436",
+        "title": "Every article reads in every language the site declares, and its counterparts are reciprocal",
+        "description": "scripts/site-check refuses, naming the file, an article whose counterpart is not a page under site/content-src, is in the article's own language or in another language than alternate_lang names, or does not name the article back, and an article site/data/nav.toml lists with no counterpart in a language the site declares; the languages are config.toml's default_language and the lang values the pages declare, and the check runs alone as --articles over a fixture.",
+        "path": ".ai/repo/project/issues/I3436.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3028
+      },
+      {
+        "uri": "majordomus://issue/I3437",
+        "kind": "issue",
+        "identity": "I3437",
+        "title": "An article names every language version in one translations table, and every member names the same group",
+        "description": "An article's front matter may name every counterpart in [extra.translations] (lang = \\\"route/\\\") for any number of languages; site/templates/base.html emits one rel=alternate hreflang link per entry plus its own through get_url, the two-language alternate and alternate_lang pair stays readable, and site-check refuses a group that is not the same set from every member, a language listed twice and an article listing its own language.",
+        "path": ".ai/repo/project/issues/I3437.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2606
+      },
+      {
+        "uri": "majordomus://issue/I3438",
+        "kind": "issue",
+        "identity": "I3438",
+        "title": "A translation records the digest of its source, and site-check refuses one its source has moved past",
+        "description": "A translation names its source and the digest of the source it was made from, [extra] translated_from = \\\"route/\\\" and source_digest = the SHA-256 of the source's bytes after its closing front-matter fence; site-check recomputes the digest and refuses a stale or missing one, printing the file, its source and the digest to record once re-synced, and refuses a digest on an original and a source outside the group. The check never rewrites a digest.",
+        "path": ".ai/repo/project/issues/I3438.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2704
+      },
+      {
         "uri": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "identity": "a-commit-stood-behind-a-build-lock",
@@ -109476,6 +109509,22 @@
         "bytes": 5963
       },
       {
+        "uri": "majordomus://test/test/cases/3502_every_article_reads_in_every_language.sh",
+        "kind": "test",
+        "identity": "test/cases/3502_every_article_reads_in_every_language.sh",
+        "path": "test/cases/3502_every_article_reads_in_every_language.sh",
+        "source_class": "case",
+        "bytes": 5732
+      },
+      {
+        "uri": "majordomus://test/test/cases/3503_a_translation_group_agrees_and_keeps_up_with_its_source.sh",
+        "kind": "test",
+        "identity": "test/cases/3503_a_translation_group_agrees_and_keeps_up_with_its_source.sh",
+        "path": "test/cases/3503_a_translation_group_agrees_and_keeps_up_with_its_source.sh",
+        "source_class": "case",
+        "bytes": 9090
+      },
+      {
         "uri": "majordomus://test/test/cases/350_the_queue_measures_itself.sh",
         "kind": "test",
         "identity": "test/cases/350_the_queue_measures_itself.sh",
@@ -112350,7 +112399,7 @@
       "identity": [
         "id"
       ],
-      "objects": 487
+      "objects": 490
     },
     {
       "name": "knowledge",
@@ -112502,7 +112551,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 562
+      "objects": 564
     },
     {
       "name": "use-case",
