@@ -79,7 +79,6 @@ jq -e '.languages.cs.translated > 0 and .languages.cs.coverage < 100' "$SITE/pub
   || { echo "    the coverage is not published"; exit 1; }
 
 # A second build over the same input writes the same bytes.
-before="$(find "$SITE/public" -type f -exec shasum {} + | sort)"
+cp -R "$SITE/public" "$PWD/before"
 node "$PASS" build "$SITE/public" "$SITE/i18n" https://example.test "$PWD/missing.json" >/dev/null
-after="$(find "$SITE/public" -type f -exec shasum {} + | sort)"
-[ "$before" = "$after" ] || { echo "    a second pass changed the site"; exit 1; }
+diff -r "$PWD/before" "$SITE/public" >/dev/null || { echo "    a second pass changed the site"; exit 1; }
