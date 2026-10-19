@@ -73,14 +73,11 @@ pub fn screen(ctx: &Context) -> View {
         vec![
             kpi("Awaiting review", &queue.read("/total")),
             kpi("On this branch", &queue.read("/on_this_branch")),
-            kpi("From an unknown branch", &queue.read("/unattributed")),
+            kpi(UNKNOWN_BRANCH, &queue.read("/unattributed")),
             ledger_kpi(
-                "Sessions not yet learned from",
+                NOT_LEARNED,
                 status,
-                kpi(
-                    "Sessions not yet learned from",
-                    &status.read("/closed_without_derivation"),
-                ),
+                kpi(NOT_LEARNED, &status.read("/closed_without_derivation")),
             ),
             ledger_kpi(
                 "Newest session",
@@ -223,7 +220,13 @@ fn deriver(status: &Answer) -> El {
 /// What a checkout without a session ledger is told instead of a judgement: the published
 /// snapshot and a fresh clone carry none, and a value read from a ledger that is not there
 /// would read as "never" or "0" about the repository when it is only about this checkout.
-const NO_LEDGER: &str = "not recorded here";
+const NO_LEDGER: &str = "no ledger";
+
+/// The tile that counts candidates whose branch this checkout does not know.
+const UNKNOWN_BRANCH: &str = "Unknown branch";
+
+/// The tile that counts closed sessions no derivation followed.
+const NOT_LEARNED: &str = "Not learned from";
 
 /// Whether the status read any line of the session ledger: a close, a derivation, or a
 /// close no derivation names. The status's own `present` also counts candidates, which are
@@ -396,6 +399,14 @@ mod tests {
     use crate::ui::source::Standing;
     use serde_json::json;
 
+    /// How many characters a tile's label and value hold before the kit truncates them. The
+    /// kit lays tiles out at no less than 9.5rem (`mj-ui-strip`), which is a tile of about
+    /// 152 px at a phone's 390 px; measured there in the published kit, a label of 18
+    /// characters fits and one of 22 does not, and a value of 9 characters fits and one of 10
+    /// does not. A truncated tile reads "not recor…", which says nothing.
+    const TILE_LABEL: usize = 18;
+    const TILE_VALUE: usize = 9;
+
     fn answer(source: Source, value: Value) -> Answer {
         Answer {
             source,
@@ -481,11 +492,7 @@ mod tests {
         };
         assert!(at("Awaiting review</h2>") < at("How to review</h2>"));
         assert!(at("How to review</h2>") < at("Is learning up to date?</h2>"));
-        for label in [
-            "From an unknown branch",
-            "Sessions not yet learned from",
-            "Newest session",
-        ] {
+        for label in [UNKNOWN_BRANCH, NOT_LEARNED, "Newest session"] {
             at(label);
         }
         for gone in [
@@ -502,6 +509,30 @@ mod tests {
             )),
             "{html}"
         );
+    }
+
+    /// Every tile the hero draws, and every value the screen writes into one, fits a tile at
+    /// a phone's width: what the kit truncates is not read.
+    #[test]
+    fn every_tile_label_and_written_value_fits_a_phone() {
+        let repo = SyntheticRepository::small().expect("a synthetic repository");
+        let ctx = repo.context().expect("a context");
+        let html = screen(&ctx).main.render();
+        let labels: Vec<&str> = html
+            .split("<span class=\"mj-ui-kpi-label\">")
+            .skip(1)
+            .filter_map(|rest| rest.split('<').next())
+            .collect();
+        assert_eq!(labels.len(), 5, "{html}");
+        for label in &labels {
+            assert!(
+                label.chars().count() <= TILE_LABEL,
+                "{label:?} is truncated at 390 px"
+            );
+        }
+        assert!(NO_LEDGER.chars().count() <= TILE_VALUE, "{NO_LEDGER:?}");
+        assert!(!html.contains("From an unknown branch"), "{html}");
+        assert!(!html.contains("Sessions not yet learned from"), "{html}");
     }
 
     /// The manual link names a page the site has, wherever it is served: under the server's
