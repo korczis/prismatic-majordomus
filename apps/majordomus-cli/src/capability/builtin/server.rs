@@ -511,6 +511,26 @@ pub fn standing_at(
     (standing, reason, read)
 }
 
+/// The address of the server serving the checkout at `root`, when [`standing_at`] judges it
+/// ready, and nothing otherwise — the same verdict `server.status` gives about this checkout,
+/// read without building the index.
+///
+/// A command that only has to reach this checkout's own server needs nothing else, so it
+/// can ask before paying for the index and the registry (I2856).
+///
+/// ```
+/// use majordomus_cli::capability::builtin::server::ready_server;
+/// assert_eq!(ready_server(std::path::Path::new("/nonexistent/checkout")), None);
+/// ```
+pub fn ready_server(root: &Path) -> Option<String> {
+    let root = root.canonicalize().unwrap_or_else(|_| root.to_path_buf());
+    let (standing, _, read) = standing_at(&root, &local_half(&root));
+    if standing != ServerStanding::Ready {
+        return None;
+    }
+    read.document().and_then(|d| d.url.clone())
+}
+
 /// How many peers the server at `url` holds on its own board, through the route the
 /// registry declares for `peers.list`. `None` when it does not answer or the route is not
 /// declared.

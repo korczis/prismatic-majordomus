@@ -22,12 +22,14 @@ use std::time::Duration;
 use serde_json::{json, Value};
 
 use crate::app::App;
+use crate::capability::builtin::server;
 use crate::capability::CapabilityError;
 use crate::cli::{
     MeshArgs, MeshCommand, MeshFirewallCommand, MeshHandoverCommand, MeshQueryArgs,
     MeshReviewCommand, MeshSessionCommand, OutputFormat,
 };
 use crate::error::{Error, Result};
+use crate::repository::Repository;
 
 /// One bounded request to the running server. A verification runs a round with every
 /// dialed peer, each bounded by the link timeout, so it gets longer.
@@ -348,22 +350,29 @@ fn choose(servers: &[Value]) -> Option<Serving> {
 /// The ready server that answers for this checkout ([`choose`]), and a note on stderr when
 /// it is another checkout's.
 ///
-/// This checkout's own lease is read first. Every other checkout of the repository costs a
-/// lease read, and a probe when its server answers, so the repository is enumerated only
-/// when this checkout has no ready server and one must be borrowed (I2855).
+/// This checkout's own lease is read first, and without the index: a checkout whose server
+/// is ready needs nothing else to be asked (I2856). Every other checkout of the repository
+/// costs a lease read, and a probe when its server answers, so the index is built and the
+/// repository enumerated only when this checkout has no ready server and one must be
+/// borrowed (I2855).
 fn server_url(args: &MeshQueryArgs) -> Result<Option<Serving>> {
+    let start = match &args.repo.repo {
+        Some(p) => p.clone(),
+        None => std::env::current_dir().map_err(|e| Error::io(".", e))?,
+    };
+    let repository = Repository::discover(&start)?;
+    if let Some(url) = server::ready_server(repository.root()) {
+        return Ok(Some(Serving {
+            url,
+            borrowed_from: None,
+        }));
+    }
     let app = App::load(&args.repo)?;
-    let servers = |checkouts: &str| -> Result<Vec<Value>> {
-        let status = app
-            .context
-            .execute("server.status", json!({ "checkouts": checkouts }))
-            .map_err(map)?;
-        Ok(status["servers"].as_array().cloned().unwrap_or_default())
-    };
-    let serving = match choose(&servers("this")?) {
-        Some(own) => Some(own),
-        None => choose(&servers("repository")?),
-    };
+    let status = app
+        .context
+        .execute("server.status", json!({ "checkouts": "repository" }))
+        .map_err(map)?;
+    let serving = choose(status["servers"].as_array().map_or(&[][..], Vec::as_slice));
     if let Some(Serving {
         url,
         borrowed_from: Some(worktree),

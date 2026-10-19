@@ -6,23 +6,23 @@
     "version": "0.30.2"
   },
   "registry": {
-    "fingerprint": "4f4f3e45ea7fd432a0563499cb825f43b4227d279fe4a9262f4a14fb02b49e82",
+    "fingerprint": "3ddfbb56c4face297299cfdaff9d38779aec9b63129c70f4f967449a5ec94cb7",
     "summary": {
-      "total": 2645,
+      "total": 2647,
       "builtin": 206,
-      "declarative": 2439,
+      "declarative": 2441,
       "by_kind": {
         "command": 31,
         "query": 175,
-        "resource": 2439
+        "resource": 2441
       },
       "by_stability": {
         "behaviorally_verified": 142,
         "experimental": 55,
-        "implemented": 2448
+        "implemented": 2450
       },
       "mcp_tools": 196,
-      "mcp_resources": 2494,
+      "mcp_resources": 2496,
       "http_routes": 201,
       "cli_commands": 111,
       "modules": 92,
@@ -85404,7 +85404,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 489,
+        "capabilities": 491,
         "capability_ids": []
       },
       {
@@ -86070,7 +86070,7 @@
     ]
   },
   "index": {
-    "fingerprint": "b72d65717c546ac11ad57e1c1aff27061d33c8a6afffcabef6b3190cabe9142b",
+    "fingerprint": "29fa482566cafa22fd01f22332398dfa51dc9d266b2a1fa14bc5899e5a08ed2c",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -86110,7 +86110,7 @@
       "gap": 4,
       "implementation": 52,
       "intent": 5,
-      "issue": 489,
+      "issue": 491,
       "knowledge": 4,
       "mesh-declaration": 1,
       "milestone": 42,
@@ -92447,7 +92447,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 200488
+        "bytes": 201748
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -100829,6 +100829,28 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 2837
+      },
+      {
+        "uri": "majordomus://issue/I2855",
+        "kind": "issue",
+        "identity": "I2855",
+        "title": "a command that asks this checkout's server finds it without probing every checkout",
+        "description": "`mesh` and `monitor` find the server to ask from this checkout's lease first (`server.status` with `checkouts: this`) and enumerate the repository's other checkouts only when this one has no ready server to borrow from, so a session's start event, which runs `mesh session open` and `mesh doctor`, no longer pays a lease read and a probe for every worktree of the repository; and `server.status` asks each ready server for the peers on its own board (`peers.list` with `checkouts=this`), so a reading never makes the server it asks gather every other checkout's board.",
+        "path": ".ai/repo/project/issues/I2855.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4408
+      },
+      {
+        "uri": "majordomus://issue/I2856",
+        "kind": "issue",
+        "identity": "I2856",
+        "title": "a command that asks this checkout's server reaches it without building the index",
+        "description": "`mesh` and `monitor` read this checkout's lease and ask the server it names when `server.status` would judge that server ready, without building the index or the registry first; the index is built only when this checkout has no ready server and another checkout's must be borrowed.",
+        "path": ".ai/repo/project/issues/I2856.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2647
       },
       {
         "uri": "majordomus://issue/I2882",
@@ -112390,7 +112412,7 @@
       "identity": [
         "id"
       ],
-      "objects": 489
+      "objects": 491
     },
     {
       "name": "knowledge",

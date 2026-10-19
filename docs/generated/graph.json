@@ -40860,6 +40860,93 @@
         }
       },
       {
+        "id": "majordomus://issue/I2855",
+        "kind": "issue",
+        "label": "I2855",
+        "summary": "a command that asks this checkout's server finds it without probing every checkout",
+        "route": "/cockpit/objects/issue/i2855",
+        "source": ".ai/repo/project/issues/I2855.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A mesh command in a checkout with a ready server of its own asks that server without reading any other checkout's lease",
+            "A mesh command in a checkout without a ready server still borrows the primary's, and says so as today",
+            "The monitor finds this checkout's server without enumerating the repository",
+            "A server.status reading never makes the server it asks probe another checkout's server"
+          ],
+          "created_at": "2026-10-19",
+          "current_state": "commands/mesh.rs server_url and commands/monitor.rs server_url build the index and execute server.status over every checkout git registers, then choose this checkout's server out of the answer.",
+          "depends_on": [],
+          "evidence_required": [
+            "no_other_checkout_probed_test"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "The index each CLI process builds only to reach server.status (~1.5-2.5 s per command at this load): reading the lease without the index is the next issue, measured once this one lands.",
+            "The prompt capture's ~1.7 s per prompt: the durable outbox named in the hook-latency finding of 2026-09-10.",
+            "Moving the start event's mesh calls off the blocking path."
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin/server.rs",
+            "apps/majordomus-cli/src/commands/mesh.rs",
+            "apps/majordomus-cli/src/commands/monitor.rs",
+            "apps/majordomus-cli/tests/server_status.rs"
+          ],
+          "slug": "a-command-finds-its-server-without-probing-every-checkout",
+          "updated_at": "2026-10-19",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test server_status"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2856",
+        "kind": "issue",
+        "label": "I2856",
+        "summary": "a command that asks this checkout's server reaches it without building the index",
+        "route": "/cockpit/objects/issue/i2856",
+        "source": ".ai/repo/project/issues/I2856.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A mesh command in a checkout whose server is ready reaches it without building the index",
+            "A checkout without a ready server still borrows the primary's, as before",
+            "The monitor finds this checkout's server from its lease"
+          ],
+          "created_at": "2026-10-19",
+          "current_state": "commands/mesh.rs and commands/monitor.rs call App::load before they look for a server, whatever they find.",
+          "depends_on": [
+            "I2855"
+          ],
+          "desired_state": "capability::builtin::server::ready_server reads one lease through standing_at, the same verdict server.status gives, and both commands ask that server directly; mesh builds the index only to borrow.",
+          "evidence_required": [
+            "no_index_to_find_the_server_test"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "brief --keep-awake and the context briefing, which the start event also runs: each needs the index for what it says, not only to find the server.",
+            "Moving the start event's mesh join off the blocking path (a hook with `async: true`)."
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin/server.rs",
+            "apps/majordomus-cli/src/commands/mesh.rs",
+            "apps/majordomus-cli/src/commands/monitor.rs",
+            "apps/majordomus-cli/tests/server_status.rs"
+          ],
+          "slug": "a-mesh-command-asks-its-server-without-building-the-index",
+          "updated_at": "2026-10-19",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test server_status"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I2882",
         "kind": "issue",
         "label": "I2882",
@@ -88218,6 +88305,31 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2855",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2855",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2856",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2856",
+        "target": "majordomus://issue/I2855",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2856",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I2882",
         "target": "kind:issue",
         "kind": "is_a"
@@ -98929,8 +99041,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3078,
-      "edges": 6738,
+      "nodes": 3080,
+      "edges": 6743,
       "acyclic": false,
       "truncated": false
     }

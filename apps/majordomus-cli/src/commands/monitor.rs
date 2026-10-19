@@ -15,9 +15,10 @@ use std::time::{Duration, Instant};
 
 use serde_json::{json, Value};
 
-use crate::app::App;
+use crate::capability::builtin::server;
 use crate::cli::{MonitorArgs, OutputFormat};
 use crate::error::{Error, Result};
+use crate::repository::Repository;
 
 /// One bounded request to the running server; the GitHub source alone may take seconds.
 const REQUEST_TIMEOUT: Duration = Duration::from_secs(15);
@@ -168,32 +169,15 @@ enum Asked {
     Other(String),
 }
 
-/// This checkout's ready server, when there is one: its own lease alone, because no other
-/// checkout's server is asked here and each one would cost a lease read and a probe (I2855).
+/// This checkout's ready server, when there is one: read from its own lease, without the
+/// index, because no other checkout's server is asked here (I2855, I2856).
 fn server_url(args: &MonitorArgs) -> Result<Option<String>> {
-    let app = App::load(&args.query.repo)?;
-    app.context
-        .execute("server.status", json!({ "checkouts": "this" }))
-        .map(|status| ready_url(&status))
-        .map_err(status_failed)
-}
-
-/// A `server.status` that could not be asked, as the command's error.
-fn status_failed(e: impl std::fmt::Display) -> Error {
-    Error::Protocol {
-        reason: format!("server.status: {e}"),
-    }
-}
-
-/// The address of this checkout's ready server in a `server.status` answer.
-fn ready_url(status: &Value) -> Option<String> {
-    status["servers"]
-        .as_array()
-        .into_iter()
-        .flatten()
-        .find(|s| s["this_checkout"] == json!(true) && s["standing"] == json!("ready"))
-        .and_then(|s| s["lease"]["url"].as_str())
-        .map(str::to_string)
+    let start = match &args.query.repo.repo {
+        Some(p) => p.clone(),
+        None => std::env::current_dir().map_err(|e| Error::io(".", e))?,
+    };
+    let repository = Repository::discover(&start)?;
+    Ok(server::ready_server(repository.root()))
 }
 
 /// The request target of one page.
@@ -676,21 +660,6 @@ mod tests {
         assert!(!wants_color(OutputFormat::Text, false, true));
         assert!(!wants_color(OutputFormat::Text, true, false));
         assert!(!wants_color(OutputFormat::Json, true, true));
-    }
-
-    #[test]
-    fn the_ready_server_of_this_checkout_is_the_one_asked() {
-        let status = json!({"servers": [
-            {"this_checkout": false, "standing": "ready", "lease": {"url": "http://other"}},
-            {"this_checkout": true, "standing": "starting", "lease": {"url": "http://young"}},
-            {"this_checkout": true, "standing": "ready", "lease": {"url": "http://here"}}
-        ]});
-        assert_eq!(ready_url(&status).as_deref(), Some("http://here"));
-        let no_url = json!({"servers": [{"this_checkout": true, "standing": "ready"}]});
-        assert_eq!(ready_url(&no_url), None);
-        assert_eq!(ready_url(&json!({})), None);
-        let e = status_failed("down");
-        assert!(e.to_string().contains("server.status: down"), "{e}");
     }
 
     #[test]

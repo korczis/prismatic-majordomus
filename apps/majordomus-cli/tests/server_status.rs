@@ -517,6 +517,11 @@ fn a_mesh_command_with_a_server_of_its_own_probes_no_other_checkout() {
         assert!(code == 0 || code == 10, "{command:?}: {out}\n{err}");
         assert!(!err.contains("asking the server of"), "{err}");
         assert_eq!(probed(), 0, "{command:?} probed another checkout's server");
+        // and it reached that server without building the index first (I2856)
+        assert!(
+            !err.contains("index built"),
+            "{command:?} built the index to find its own server: {err}"
+        );
     }
 
     // the control: a reading of every checkout does probe it, so the silence above is the

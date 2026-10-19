@@ -1,0 +1,32 @@
+id: I2856
+milestone: development-runtime
+title: "a command that asks this checkout's server reaches it without building the index"
+slug: a-mesh-command-asks-its-server-without-building-the-index
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "`mesh` and `monitor` read this checkout's lease and ask the server it names when `server.status` would judge that server ready, without building the index or the registry first; the index is built only when this checkout has no ready server and another checkout's must be borrowed."
+why: "After I2855 a mesh command no longer probes every checkout, yet each still built the full index (2436 objects) and the registry before asking, only to execute server.status: in the primary checkout at load ~33 `mesh status` took a median 1933 ms and `mesh doctor` 2896 ms with I2855, most of it that build. The session start event runs `mesh session open` and `mesh doctor`, so each new Claude Code session paid it twice before its first answer (the owner's P0 asks for a local bootstrap under 250 ms with network discovery off the blocking path). Measured with this change against master 0.30.2 (dd4c0a87cba) in the primary checkout, 613 registered worktrees, load ~29-42, six interleaved runs each: `mesh status` median 3348 -> 43 ms, `mesh doctor` 4359 -> 1166 ms (the rest of doctor is the server's own checks)."
+current_state: "commands/mesh.rs and commands/monitor.rs call App::load before they look for a server, whatever they find."
+desired_state: "capability::builtin::server::ready_server reads one lease through standing_at, the same verdict server.status gives, and both commands ask that server directly; mesh builds the index only to borrow."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/server.rs"
+  - "apps/majordomus-cli/src/commands/mesh.rs"
+  - "apps/majordomus-cli/src/commands/monitor.rs"
+  - "apps/majordomus-cli/tests/server_status.rs"
+non_scope:
+  - "brief --keep-awake and the context briefing, which the start event also runs: each needs the index for what it says, not only to find the server."
+  - "Moving the start event's mesh join off the blocking path (a hook with `async: true`)."
+depends_on:
+  - "I2855"
+acceptance_criteria:
+  - "A mesh command in a checkout whose server is ready reaches it without building the index"
+  - "A checkout without a ready server still borrows the primary's, as before"
+  - "The monitor finds this checkout's server from its lease"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test server_status"
+evidence_required:
+  - "no_index_to_find_the_server_test"
+created_at: 2026-10-19
+updated_at: 2026-10-19
