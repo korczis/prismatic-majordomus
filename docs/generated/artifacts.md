@@ -300,7 +300,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/economics.json` | `economics` | json | 30840 | `4ad295591dd83d94` |
 | `docs/generated/economics.md` | `economics` | markdown | 15299 | `04b99dad2e8318ab` |
 | `docs/generated/economics.yaml` | `economics` | yaml | 25713 | `8254a5fef62e3874` |
-| `docs/generated/graph.json` | `graph` | json | 3627296 | `c5e205de7bc3856e` |
+| `docs/generated/graph.json` | `graph` | json | 3627849 | `3a7281a1f34f3bd0` |
 | `docs/generated/graph.schema.json` | `graph-schema` | json | 7618 | `8bf8f706bda9cbb0` |
 | `docs/generated/modules/artifacts.md` | `modules/artifacts` | markdown | 1742 | `c833e703a90d4c20` |
 | `docs/generated/modules/blackboard.md` | `modules/blackboard` | markdown | 2532 | `7d003a544b05feb4` |
@@ -425,10 +425,10 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `share/version.txt` | `version` | text | 231 | `c2b8e77697a0d9a6` |
 | `site/data/registry/design.json` | `site-design` | json | 11587 | `7eea32efbcdec1a6` |
 | `site/data/registry/distribution.json` | `site-distribution` | json | 3005 | `0eff218ed99f9f24` |
-| `site/data/registry/evidence-subjects.json` | `site-evidence-subjects` | json | 803926 | `6eef978c5a2102aa` |
+| `site/data/registry/evidence-subjects.json` | `site-evidence-subjects` | json | 803982 | `7c3a8c8d8ffb6f88` |
 | `site/data/registry/product-graph.json` | `site-product-graph` | json | 111570 | `6541d670ffa7292c` |
-| `site/data/registry/product.json` | `site-product` | json | 758905 | `336e25dfb6d541be` |
-| `site/data/registry/registry.json` | `site-registry` | json | 7022897 | `63de5fd20436d7f3` |
+| `site/data/registry/product.json` | `site-product` | json | 758905 | `7c2049596e6e8c31` |
+| `site/data/registry/registry.json` | `site-registry` | json | 7023241 | `13a68715682a6de1` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180163 | `7d44433d8624b20a` |
 | `site/data/registry/why.json` | `site-why` | json | 349924 | `d2557340f9489839` |
 | `site/static/favicon.svg` | `design-mark` | text | 904 | `fd24ab421f13dbc9` |
