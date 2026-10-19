@@ -1,0 +1,24 @@
+id: I3021
+milestone: truthful-plan-surfaces
+title: "The Knowledge screen shows each review command as code with what it does as a sentence"
+slug: the-knowledge-review-reads-as-steps
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "The Review panel of /ui/knowledge draws its six commands as an ordered prose list, each step a command in inline code followed by what it does as a sentence, instead of fact cards whose command is drawn as a bold headline value."
+why: "The published /ui/knowledge (majordomus.dev, v0.29.0) drew the review as mj-ui-facts cards: each command was a large bold monospaced value that overflowed its card at phone width, and what it does sat beneath it in small muted type, so the screen read as six headline numbers rather than a procedure."
+current_state: "review() renders a dl.mj-ui-facts with the command in dt and the explanation in dd."
+desired_state: "review() renders an ol.mj-ui-prose-list; each li is code.mj-ui-code with the command, then the explanation as a sentence; a crate test pins it."
+scope:
+  - "apps/majordomus-cli/src/ui/knowledge.rs"
+acceptance_criteria:
+  - "The Review panel holds an ol.mj-ui-prose-list with one li per review command, in the order a review takes them"
+  - "Each command is inline code (mj-ui-code) and is followed by what it does as a sentence"
+  - "The Review panel carries no mj-ui-fact card"
+validation:
+  - "cargo test --lib ui::knowledge"
+  - "scripts/ui audit --only /ui/knowledge"
+evidence_required:
+  - "knowledge_review_reads_as_steps"
+created_at: 2026-10-18
+updated_at: 2026-10-18

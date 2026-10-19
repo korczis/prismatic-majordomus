@@ -173,6 +173,29 @@ pub struct Policy {
     /// its version exactly as it did.
     #[serde(default)]
     pub release: crate::release::landing::ReleasePolicy,
+    /// `checkout:` — what a checkout is held to against the remote trunk. Absent declares
+    /// no threshold, and a distance is then reported as unjudged rather than judged by a
+    /// number nobody wrote down.
+    #[serde(default)]
+    pub checkout: CheckoutPolicy,
+}
+
+/// `checkout:` — how far a checkout may drift from the remote trunk before what it serves
+/// is reported as lagging or stale (`project.a-checkout-serves-the-current-trunk`).
+///
+/// ```
+/// use majordomus_cli::policy::CheckoutPolicy;
+/// assert_eq!(CheckoutPolicy::default().trunk_distance, None, "absent is not a default");
+/// let p: CheckoutPolicy = serde_json::from_str(
+///     r#"{"trunk_distance": {"warn_behind": 50, "fail_behind": 300}}"#).unwrap();
+/// assert_eq!(p.trunk_distance.and_then(|t| t.fail_behind), Some(300));
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Default)]
+pub struct CheckoutPolicy {
+    /// `checkout.trunk_distance:` — the commits behind the remote trunk at which a checkout
+    /// is lagging (`warn_behind`) and stale (`fail_behind`).
+    #[serde(default)]
+    pub trunk_distance: Option<crate::worktree::TrunkThresholds>,
 }
 
 /// How strictly a start is held to its binding.
@@ -322,6 +345,46 @@ pub struct SessionPolicy {
     /// mod reads the interval from that answer rather than from this file.
     #[serde(default)]
     pub brief_interval_minutes: Option<u64>,
+    /// `session.edits_require_claim:` — whether a provider's tool may write a file of the
+    /// checkout only while a claim covers it: the active task's scope, or a live mesh claim
+    /// of the writing session (I2735, [`crate::guard`]). Off unless a repository turns it
+    /// on, because it refuses edits, and a repository that never asked for that must not
+    /// find its workers stopped by an upgrade.
+    #[serde(default)]
+    pub edits_require_claim: bool,
+    /// `session.stranded_after:` — how long an open episode may be silent before its client
+    /// is taken to be gone (`90s`, `30m`, `12h`). `majordomus recover` reads it to judge an
+    /// episode stranded, and `worktree.uncommitted` reads the same value twice over: an
+    /// episode silent this long holds no work, and uncommitted work untouched this long
+    /// that nothing holds is abandoned. Absent is absent: no reader carries a default of
+    /// its own, because a second copy of the number is the drift the policy exists to stop.
+    ///
+    /// ```
+    /// use majordomus_cli::policy::SessionPolicy;
+    /// let declared: SessionPolicy =
+    ///     serde_json::from_str(r#"{"stranded_after": "12h"}"#).expect("a session block");
+    /// assert_eq!(declared.stranded_after.as_deref(), Some("12h"));
+    /// assert_eq!(SessionPolicy::default().stranded_after, None, "absent is not a default");
+    /// // a bare number is seconds, as the shell reader takes it, and never a parse failure
+    /// // that would take the rest of the policy down with it
+    /// let bare: SessionPolicy =
+    ///     serde_json::from_str(r#"{"stranded_after": 3600}"#).expect("a session block");
+    /// assert_eq!(bare.stranded_after.as_deref(), Some("3600"));
+    /// ```
+    #[serde(default, deserialize_with = "scalar_text")]
+    pub stranded_after: Option<String>,
+}
+
+/// A scalar read as the text it was written as: the subset reader hands `12h` over as a
+/// string and `3600` as a number, and both are the same kind of value to a duration.
+fn scalar_text<'de, D: serde::Deserializer<'de>>(
+    d: D,
+) -> std::result::Result<Option<String>, D::Error> {
+    Ok(match serde_json::Value::deserialize(d)? {
+        serde_json::Value::String(s) => Some(s),
+        serde_json::Value::Number(n) => Some(n.to_string()),
+        _ => None,
+    })
 }
 
 impl Default for SessionPolicy {
@@ -332,6 +395,8 @@ impl Default for SessionPolicy {
             knowledge_on_end: true,
             knowledge_on_compact: true,
             brief_interval_minutes: None,
+            edits_require_claim: false,
+            stranded_after: None,
         }
     }
 }
@@ -496,6 +561,21 @@ pub fn is_safe_relative(path: &str) -> bool {
 mod tests {
     use super::*;
 
+    /// `session.stranded_after` is read as the text it was written as: a duration as a
+    /// string, a bare number as its digits, anything else as absent, and a value that is
+    /// not even well-formed as the parse failure it is.
+    #[test]
+    fn a_stranded_after_is_text_a_number_or_absent() {
+        let read = |json: &str| serde_json::from_str::<SessionPolicy>(json);
+        let text = read(r#"{"stranded_after": "12h"}"#).unwrap();
+        assert_eq!(text.stranded_after.as_deref(), Some("12h"));
+        let number = read(r#"{"stranded_after": 3600}"#).unwrap();
+        assert_eq!(number.stranded_after.as_deref(), Some("3600"));
+        let other = read(r#"{"stranded_after": true}"#).unwrap();
+        assert_eq!(other.stranded_after, None);
+        assert!(read(r#"{"stranded_after": tru}"#).is_err());
+    }
+
     #[test]
     fn a_comment_or_a_blank_line_is_not_part_of_the_normal_form() {
         let plain = "version: 1\ncontext:\n  budget: 150\n  list: [a, b]\n";
@@ -603,4 +683,9 @@ pub struct ServerPolicy {
     /// without a request read in full on it before it closes the connection.
     #[serde(default)]
     pub read_deadline_seconds: Option<u64>,
+    /// `server.idle_seconds:` — how long a server started for a checkout no client owns
+    /// (`serve ensure`, a shell entering the checkout) outlives its last peer before it stops
+    /// by itself. `--idle` on the command line overrides it.
+    #[serde(default)]
+    pub idle_seconds: Option<u64>,
 }

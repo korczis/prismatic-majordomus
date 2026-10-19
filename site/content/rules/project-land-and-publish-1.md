@@ -1,7 +1,7 @@
 +++
 title = "Work lands often and small, and what is published is master and only master"
 description = "Work lands often and small, and what is published is master and only master"
-weight = 117
+weight = 122
 [extra]
 kind = "rule"
 slug = "project-land-and-publish-1"
@@ -28,6 +28,10 @@ rather than argued:
   hand. A previous integration here went from thirty-three conflicts to zero the same way.
 - **The driver is per clone.** A worktree that never ran `just derive-merge-driver` fights
   those same files locally too, which is why they appeared to fight everyone.
+- **The toolchain is per machine.** A derive builds the executable, so a clone with no pinned
+  Rust toolchain refuses every `prs repair --apply` after the merge, naming `cargo` and nothing
+  else. `majordomus doctor` checks it (`derive-toolchain`); install it with rustup before
+  repairing or deriving there.
 - **A batch costs more than its conflicts.** Every conflicted merge needs a full `just
   derive` before the pre-commit hook accepts it, and any source fix made after that derive
   invalidates it. One session ran three derives for one merge.

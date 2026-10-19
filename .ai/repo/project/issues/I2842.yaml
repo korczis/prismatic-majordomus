@@ -1,0 +1,34 @@
+id: I2842
+milestone: surfaces-never-disagree
+title: "The live site is verified on a schedule, and its last verification is evidence"
+slug: the-live-site-is-verified-on-a-schedule
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Between deploys, keep proving that majordomus.dev serves what the trunk says: every scheduled Pages run that finds nothing owed also reads the live homepage, UI and Cockpit snapshots against the trunk, latest.json against the newest release tag, and asks a rotating sample of the UI's pages through `scripts/pages verify-ui`; the result is recorded and shown, and a mismatch that outlives the deploy window turns the run red with the page named."
+why: "On 2026-10-17 the owner asked for continuous verification of the gh-pages deployment. The scheduled run (pages.yml, every 30 min) asks only whether a publication is owed by commit, and `pages-live` judges the live site only inside a validate run or a finish. A session had to verify by hand around the v0.29.0 release: the live UI at 4a4573690f8 answered 1554 snapshot pages (256 sampled, 0 missing), and latest.json moved to 0.29.0 from release.yml's publish job before the record PR landed. Two transient GitHub Pages 503s (master 39004503240, 71a 39037828837) showed that a single read is not a verdict; I2813 adds the bounded 503 retry this issue relies on."
+current_state: "pages.yml's scheduled `owed` job compares gh-pages with the trunk and redeploys or rebuilds; nothing on a schedule reads the live UI or Cockpit pages, compares latest.json with the newest tag, or records when the live site was last proved to be the trunk's."
+desired_state: "The scheduled run, when nothing is owed, runs `scripts/pages verify-ui --commit <trunk> --max-pages N` over a sample that rotates by run so every listed page is asked within a day, compares the Cockpit snapshot the same way and latest.json with the newest v* tag, and writes one evidence record (commit, time, pages asked, pages missing, verdict) that the site and `majordomus served` show as 'live site last verified at'. A mismatch younger than the deploy window is a wait, older is a red run naming the page; a 503 is retried within I2813's bound before it counts."
+scope:
+  - ".github/workflows/pages.yml"
+  - "scripts/pages"
+  - "scripts/ci/pages-check"
+  - "apps/majordomus-cli/src/capability/builtin/served.rs"
+  - "docs/GITHUB_PAGES_ARCHITECTURE.md"
+non_scope:
+  - "Probing every page on every run: the rotation covers the whole snapshot within a day at a bounded cost per run."
+  - "Changing what deploys or when: the owed/redeploy logic stays as it is."
+  - "Anything before v1.0.0-alpha.1 (Operation Convergence, 2026-10-17); until then the repair lane verifies by hand on each master move."
+depends_on: []
+acceptance_criteria:
+  - "A scheduled run with nothing owed records a live verification naming the trunk commit, the pages asked and the pages that did not answer"
+  - "Over 48 runs the rotation asks every page the UI snapshot lists, proved against a fixture snapshot"
+  - "latest.json naming a version other than the newest v* tag after the deploy window is a red run that says which"
+  - "The site shows when the live site was last verified and at which commit, read from the record, never written by hand"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "scheduled_live_verification_case"
+created_at: 2026-10-17
+updated_at: 2026-10-17

@@ -1,0 +1,27 @@
+id: a-second-adopter-is-served
+title: "A second adopter is served: what a foreign repository met on its first day is fixed in the tool"
+slug: a-second-adopter-is-served
+order: 116
+priority: p1
+problem: "Majordomus 0.21.0 and 0.22.0 were adopted on 2026-10-13 in a repository that shares nothing with this one: pnpm and TypeScript, vitest, pull requests into an integration branch, Docker Compose on two machines, no tags. Twenty-four findings were recorded (docs/ADOPTION_SECOND_RUN.md). Twenty-two are still present on master e506c041a4; most are a constant, a path or a vocabulary of this repository read as if it were every repository's."
+outcome: "Each finding is fixed generically, with no test of whether the repository is this one: by a declaration, a derivation or a default that an adopter can state. Each fix carries a case that fails without it, its derived files regenerated and its page of the documentation corrected."
+scope:
+  - "lib"
+  - "apps/majordomus-cli/src"
+  - "share"
+  - "docs"
+  - "test/cases"
+non_scope:
+  - "The adopting repository itself: it is the evidence, read only"
+  - "I1982 and I1996 of adopter-upgrades, which I2597 and I2587 widen rather than replace"
+  - "Accepting any ADR these issues propose; acceptance is the owner's act"
+acceptance_criteria:
+  - "Every issue of this milestone is DONE or CANCELLED with its reason"
+  - "No fix decides by the identity of the repository it runs in"
+validation:
+  - "bin/majordomus plan validate"
+  - "scripts/derive-check"
+evidence_required:
+  - "findings_recorded"
+created_at: 2026-10-13
+updated_at: 2026-10-13

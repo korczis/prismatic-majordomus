@@ -142,6 +142,109 @@ fn every_fixture_line_is_redacted_as_it_states() {
     }
 }
 
+/// A review's subject, body, verdict and notes are free text another session types, and the
+/// mesh signs them into the journal and replicates them in clear (I2708). Every credential
+/// shape the fixture states as redacted, written into each of them, reaches the journal on
+/// disk and the folded state as its marker, and its body appears in neither; written as the
+/// verdict, it is refused before it is signed.
+#[test]
+fn a_review_is_journaled_with_the_marker_never_the_secret() {
+    use std::sync::Arc;
+
+    use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};
+    use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};
+    use majordomus_cli::mesh::identity::NodeIdentity;
+    use majordomus_cli::mesh::link::HttpTransport;
+    use majordomus_cli::mesh::registry::MeshRegistry;
+    use majordomus_cli::mesh::repository::of_root_commits;
+
+    let dir = tempfile::tempdir().unwrap();
+    let journal = dir.path().join("journal");
+    let cooperation = Cooperation::new(CooperationSetup {
+        identity: Arc::new(NodeIdentity::ephemeral().unwrap()),
+        runtime: "0000000000000001".into(),
+        repository: of_root_commits(&["root".into()]),
+        endpoints: vec!["127.0.0.1:9".into()],
+        version: "test".into(),
+        config: CooperationConfig::default(),
+        trust: TrustConfig::default(),
+        journal_path: Some(journal.clone()),
+        registry: Arc::new(MeshRegistry::new()),
+        transport: Arc::new(HttpTransport),
+        board: None,
+        checkout: CheckoutFacts::default(),
+    })
+    .unwrap();
+
+    // a line that is already a marker has no secret to keep out
+    let secrets: Vec<Sample> = samples()
+        .into_iter()
+        .filter(|s| s.redacted && !s.prefix.starts_with("[redacted:"))
+        .collect();
+    assert!(!secrets.is_empty(), "the fixture states credentials");
+    for s in &secrets {
+        let line = format!("{}{}", s.prefix, s.body);
+        let asked = cooperation
+            .request_review("s1", line.clone(), vec![], None, None, Some(line.clone()))
+            .unwrap();
+        // a verdict is a word of a fixed vocabulary: a credential there is refused before
+        // anything is signed, and the refusal names the marker, not the secret
+        let refused = cooperation
+            .answer_review(&asked.key, "s2", line.clone(), None)
+            .expect_err("a credential is not a verdict");
+        assert!(
+            !refused.to_string().contains(&s.body),
+            "the refusal of a {} verdict repeats it",
+            s.name
+        );
+        cooperation
+            .answer_review(&asked.key, "s2", "commented".into(), Some(line.clone()))
+            .unwrap();
+        cooperation
+            .withdraw_review(&asked.key, "s1", Some(line.clone()))
+            .unwrap();
+    }
+
+    let written = std::fs::read_to_string(&journal).expect("the journal is on disk");
+    let state = serde_json::to_string(&cooperation.state()).unwrap();
+    let mut leaked = Vec::new();
+    for s in &secrets {
+        let marker = format!("[redacted:{}]", s.name);
+        for (place, text) in [("journal", &written), ("state", &state)] {
+            if text.contains(&s.body) {
+                leaked.push(format!("{place} carries the body of a {} line", s.name));
+            }
+            if !text.contains(&marker) {
+                leaked.push(format!("{place} carries no {marker}"));
+            }
+        }
+    }
+    assert!(leaked.is_empty(), "{}", leaked.join("\n"));
+
+    // text with nothing credential-shaped in it is signed as written
+    let plain = cooperation
+        .request_review(
+            "s1",
+            "feature/mesh-cooperation".into(),
+            vec![],
+            None,
+            None,
+            None,
+        )
+        .unwrap();
+    cooperation
+        .answer_review(&plain.key, "s2", "approved".into(), None)
+        .unwrap();
+    let review = cooperation
+        .state()
+        .reviews
+        .into_iter()
+        .find(|r| r.key == plain.key)
+        .unwrap();
+    assert_eq!(review.subject, "feature/mesh-cooperation");
+    assert_eq!(review.answers[0].verdict, "approved");
+}
+
 #[test]
 fn machine_paths_are_normalised_root_first_then_home() {
     let dir = tempfile::tempdir().unwrap();
@@ -326,4 +429,67 @@ fn a_secret_access_key_is_refused_without_the_id_it_pairs_with() {
     // naming the variable is not assigning it
     let reason = "skipped: AWS_SECRET_ACCESS_KEY is not set";
     assert_eq!(public_text(reason, dir.path(), None).unwrap().text, reason);
+}
+
+/// A credential-shaped value in any tracing field is absent from the log (I2708). Every
+/// line of the fixture the redactor takes out is logged to a `server.log` through the
+/// subscriber `logging::init` installs: as a span's field, as a string field, as a displayed
+/// field, as a debugged field and inside the message. None of them is in the file, and each
+/// is there as its marker, so the fields were written redacted rather than not at all.
+#[test]
+fn a_tracing_field_never_writes_a_credential() {
+    use majordomus_cli::logging;
+    use tracing_subscriber::EnvFilter;
+
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("server.log");
+    let file = std::sync::Arc::new(std::fs::File::create(&path).unwrap());
+    // a line that is already its own redaction (a marker the fixture feeds back) is not a
+    // credential, so it is not one the log could leak
+    let lines: Vec<(String, String)> = samples()
+        .into_iter()
+        .filter(|s| s.redacted)
+        .map(|s| {
+            let line = format!("{}{}", s.prefix, s.body);
+            let marked = redact_secrets(&line).text;
+            (line, marked)
+        })
+        .filter(|(line, marked)| line != marked)
+        .collect();
+    assert!(lines.len() > 10, "the fixture lost its redacted lines");
+
+    let subscriber = logging::subscriber(EnvFilter::new("trace"), file);
+    tracing::subscriber::with_default(subscriber, || {
+        for (line, _) in &lines {
+            let span = tracing::info_span!("request", origin = line.as_str());
+            let _inside = span.enter();
+            tracing::warn!(
+                value = line.as_str(),
+                shown = %line,
+                debugged = ?line,
+                "refused {line}"
+            );
+        }
+    });
+
+    let log = std::fs::read_to_string(&path).unwrap();
+    let mut leaked = Vec::new();
+    for (line, marked) in &lines {
+        if log.contains(line.as_str()) || log.contains(&format!("{line:?}")) {
+            leaked.push(line.clone());
+        }
+        assert!(
+            log.contains(&format!("refused {marked}")),
+            "the message was not written as {marked:?}:\n{log}"
+        );
+        assert!(
+            log.contains(&format!("origin={marked:?}")),
+            "the span's field was not written as {marked:?}:\n{log}"
+        );
+    }
+    assert!(
+        leaked.is_empty(),
+        "{} credential(s) reached the log:\n{log}",
+        leaked.len()
+    );
 }

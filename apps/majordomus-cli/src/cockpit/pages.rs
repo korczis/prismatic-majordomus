@@ -6369,7 +6369,7 @@ pub fn executions(ctx: &Context, query: &[(String, String)]) -> Page {
         card(
             "Executions",
             nothing(
-                "This process has run nothing yet. Open a capability, choose Run as an execution, and it will appear here.",
+                "Nothing has run here yet. Open a capability and choose Run as an execution, or run `majordomus run <capability>` in this checkout while this server is serving it: either appears here.",
             ),
         )
     } else {
@@ -6478,7 +6478,7 @@ pub fn execution(ctx: &Context, id: &str) -> Page {
                 el("div")
                     .child(alert("warn", reason))
                     .child(el("p").class("mj-empty").text(
-                        "An execution lives as long as the process that ran it, and this process remembers a bounded number of them.",
+                        "An execution lives as long as the server that holds it, and this server remembers a bounded number of them: the ones it ran, and the ones `majordomus run` reported to it while it ran.",
                     ))
                     .child(link("/cockpit/executions", "Every execution this process remembers")),
             )
@@ -6513,7 +6513,13 @@ pub fn execution(ctx: &Context, id: &str) -> Page {
                 )),
             ),
             ("Title", Node::Text(e.title.clone())),
-            ("Started by", Node::Text(word(&e.actor.kind))),
+            (
+                "Started by",
+                Node::Text(match e.actor.pid {
+                    Some(pid) => format!("{} (majordomus run, process {pid})", word(&e.actor.kind)),
+                    None => word(&e.actor.kind),
+                }),
+            ),
             ("Repository", Node::Text(e.repository.name.clone())),
             (
                 "Branch",
@@ -6553,9 +6559,13 @@ pub fn execution(ctx: &Context, id: &str) -> Page {
                         .attr("data-mj-cancel", e.id.to_string())
                         .text("Cancel this execution"),
                 )
-                .child(el("p").class("mj-note").text(
-                    "Cancellation is cooperative: the flag is set and the task stops when it next looks at it.",
-                ))
+                .child(el("p").class("mj-note").text(match e.actor.pid {
+                    Some(pid) => format!(
+                        "It runs in process {pid}, which reports it here. Cancellation is cooperative: that process is told with the answer to its next report, at most {} s away, and the task stops when it next looks at its flag.",
+                        crate::execution::REPORT_HEARTBEAT.as_secs()
+                    ),
+                    None => "Cancellation is cooperative: the flag is set and the task stops when it next looks at it.".to_string(),
+                }))
         } else {
             alert(
                 "warn",
@@ -7596,7 +7606,7 @@ mod tests {
                 required_checks: Some(vec!["ci".into()]),
                 review_policy: Some(Default::default()),
                 up_to_date_required: Some(true),
-                merge_methods: vec!["merge".into()],
+                merge_methods: Some(vec!["merge".into()]),
                 pull_requests: vec![
                     observed_pr(1, &sha, CheckRunState::Passed),
                     observed_pr(2, &sha, CheckRunState::Failed),
@@ -7773,7 +7783,7 @@ mod tests {
                     required_checks: required,
                     review_policy: review,
                     up_to_date_required: up_to_date,
-                    merge_methods: vec!["merge".into()],
+                    merge_methods: Some(vec!["merge".into()]),
                     pull_requests: vec![pr],
                     resolved: [(2, landed)].into(),
                     delete_branch_on_merge: None,

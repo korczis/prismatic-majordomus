@@ -1,0 +1,32 @@
+id: I2813
+milestone: development-runtime
+title: "A published page that answers 503, or does not answer, is asked again before it is called missing"
+slug: a-pages-503-is-retried-before-a-page-is-called-missing
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "In scripts/pages verify-ui, ask again every page that answered 503 or did not answer at all (000: a connection refused or timed out), at most MJ_PAGES_RETRIES times (default 4) with a pause that starts at MJ_PAGES_RETRY_SECONDS (default 1) and doubles, and say each retry on stderr (\"retried /x: 503 ×2 then 200\", \"retried /x: 000 ×1 then 200\", or \"still 503 after N retries\"); any other status, and a 503 or 000 that persists, fails exactly as before. Case 3226 holds both halves of each and the 404 that is never retried, against a server of its own."
+why: "GitHub Pages answers a burst of requests with a transient 503 that a reader a second later does not meet. On 2026-10-17 verify-ui called a page missing on that first 503, which reddened master's validate and batch 71a's run; pages-live gates every release run and finish, so the flake stands in front of v1.0.0-alpha.1. On 2026-10-17 at 23:49Z the scheduled Pages run read five cockpit pages as 000 and called them not served, a needless redeploy and a red run, while each answered 200 a minute later."
+serves: []
+current_state: "verify-ui asks each listed page once, in one parallel curl, and a 503 is a missing page; with --timeout 0 nothing asks again."
+desired_state: "A 503 is asked again a bounded number of times before it counts, and the output says when a page needed it."
+scope:
+  - "scripts/pages"
+  - "test/cases/3226_a_pages_503_is_retried_before_a_page_is_called_missing.sh"
+  - ".ai/repo/project"
+  - "docs"
+  - "site"
+depends_on: []
+acceptance_criteria:
+  - "A page that answers 503 twice and then 200 passes, and the retry is said"
+  - "A page that answers 503 on every try fails as before, after a bounded number of retries"
+  - "A page unanswered once (000) and then served passes, and the retry is said; one never answered fails after the same bound"
+  - "A listed page that answers 404 fails at once and is never retried"
+  - "Removing the retry, retrying every status, removing its bound, or leaving 000 out of it each turns case 3226 red"
+validation:
+  - "bash test/run.sh 3226_a_pages_503_is_retried_before_a_page_is_called_missing"
+  - "bash test/run.sh 2983_the_published_ui_is_the_trunks"
+evidence_required:
+  - "pages_503_case"
+created_at: 2026-10-17
+updated_at: 2026-10-17

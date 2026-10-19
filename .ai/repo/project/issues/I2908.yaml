@@ -1,0 +1,29 @@
+id: I2908
+milestone: idd-reads-at-a-glance
+title: "Stage and verdict wear the kit's one badge"
+slug: stage-and-verdict-wear-one-badge
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Draw an intent's stage and verdict through the same state badge every status uses, retiring the boxed uppercase variant on the workspace."
+why: "On 2026-10-18 the owner read the published /ui/idd three times and found it unergonomic: stage and verdict mix boxed uppercase tags with dot pills."
+serves:
+  - the-owner-directs-work-from-the-ui#the-workspace-reads-at-a-glance
+current_state: "Two badge styles on one screen."
+desired_state: "One."
+scope:
+  - "apps/majordomus-cli/src/ui/idd.rs"
+  - "apps/majordomus-cli/src/ui/view.rs"
+  - ".ai/repo/project"
+  - "docs"
+  - "site"
+depends_on: []
+acceptance_criteria:
+  - "Every stage, verdict and status on /ui/idd renders as the kit's state badge"
+validation:
+  - "majordomus plan validate"
+  - "cargo test --lib ui::idd::"
+  - "scripts/ui audit --only /ui/idd"
+evidence_required: []
+created_at: 2026-10-18
+updated_at: 2026-10-18

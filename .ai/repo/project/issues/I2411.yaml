@@ -1,0 +1,29 @@
+id: I2411
+milestone: the-mesh-works-out-of-the-box
+title: "A server whose mesh is enabled is reachable on the tailnet and the LAN, and only by a trusted peer"
+slug: a-mesh-server-is-reachable-by-its-peers
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "When the mesh is enabled, the shared server listens and advertises on the machine's tailnet and LAN addresses as well as loopback, so a trusted peer can dial it, while a request from a non-loopback address stays limited to what runtime-trust allows."
+why: "The server binds 127.0.0.1 unless --host or MAJORDOMUS_HTTP_HOST says otherwise (apps/majordomus-cli/src/cli.rs:3355-3362) and advertises only loopback (mesh/address.rs:39-45), so two machines on default settings can never dial each other (docs/MESH.md:383-391). The hubs in this repository are servers started by hand on 0.0.0.0."
+current_state: "Cross-machine links exist only through hand-started hubs."
+desired_state: "After the remote-caller restrictions of I2123 (PR #860) land, a mesh-enabled server binds the addresses it advertises (tailnet and LAN, never a public interface), the advertised endpoints are the bound ones, and a non-loopback caller is held to the remote-caller rule."
+scope:
+  - "apps/majordomus-cli/src/cli.rs"
+  - "apps/majordomus-cli/src/shared.rs"
+  - "apps/majordomus-cli/src/mesh/address.rs"
+  - "docs/MESH.md"
+  - "test/cases"
+depends_on: []
+acceptance_criteria:
+  - "A server started with the mesh enabled answers a trusted peer on its tailnet address with no --host"
+  - "The same server refuses a write from a non-loopback caller, as runtime-trust requires"
+  - "A server with the mesh disabled still binds loopback only"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test serve_lifecycle"
+evidence_required:
+  - "mesh_server_reachable_on_tailnet_test"
+created_at: 2026-10-10
+updated_at: 2026-10-10

@@ -1,0 +1,25 @@
+id: I2993
+milestone: a-second-adopter-is-served
+title: "doctor counts the work no remote holds in one walk, whatever the number of branches"
+slug: doctor-reads-unpushed-in-one-pass
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make doctor's `clone unpushed` reading one walk of the clone: the commits some branch reaches and no remote does, with their parents (`git rev-list --parents --branches --not --remotes`), and every branch's tip (`git for-each-ref`). Each branch's count is the commits of that set its tip reaches, walked inside the set. The finding, its wording and its counts are what the per-branch `rev-list --count` gave."
+why: "An adopter's 0.29.0 field report (prismatic-platform, 2026-10-18, item 15) found doctor's wall time 55-96 s against its 40 s budget. In this repository's own commit hooks on 2026-10-18, doctor took 828 s against a budget of 100 s (policy benchmark.budget.doctor_ms), in every seat. The `clone` section ran one `git rev-list --count <branch> --not --remotes` per local branch: 609 branches at about 0.4 s each under load. The release seat named it the biggest throughput fix on the table."
+current_state: "mj_report_clone runs one rev-list per local branch, so doctor's time grows with the branch count and every commit hook pays it."
+desired_state: "One rev-list and one for-each-ref, whatever the number of branches; the same branches named with the same counts."
+scope:
+  - "lib/doctor.sh"
+  - "test/cases/3384_doctor_reads_unpushed_in_one_pass.sh"
+depends_on: []
+acceptance_criteria:
+  - "A branch on a remote is not named, a branch two commits ahead is named with 2, and a branch that merged another unpushed branch counts each commit it reaches once"
+  - "Every count equals the per-branch `git rev-list --count <branch> --not --remotes`"
+  - "doctor walks the commits no remote holds once for 156 branches; the per-branch version walks them 156 times and the case fails"
+validation:
+  - "bash test/run.sh 3384_doctor_reads_unpushed_in_one_pass 02_doctor_basic 276_disk_is_bounded"
+evidence_required:
+  - "case_doctor_one_walk"
+created_at: 2026-10-18
+updated_at: 2026-10-18

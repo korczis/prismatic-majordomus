@@ -129,6 +129,12 @@ H
   fi
   MJ_FINISH_OUTCOME="$outcome"; MJ_FINISH_VERIFY="$verify"; MJ_FINISH_NOTE="$note"
   MJ_FINISH_VEXIT=""; MJ_FINISH_VSECS=""; MJ_FINISH_VTREE=""
+  # A scope that `start` could not claim — no server answered then — is claimed now, before
+  # the contract is judged (I2289): a server that came up since is all the task was missing.
+  if ! grep -q '^mesh_claim: ' "$MJ_CUR" 2>/dev/null && mj_mesh_declared_enabled; then
+    mj_mesh_task_claim "$id" "$(mj_ylist "$MJ_CUR_FLAT" scope | tr '\n' ' ')" "$(mj_cur task)" "$(mj_cur issue)"
+    mj_load_current || true
+  fi
   mj_doctrine_dispatch finish
 
   # The policy may name a requirement the registry does not define. That is a
@@ -176,6 +182,7 @@ H
   local vj=null; [ -n "$MJ_FINISH_VEXIT" ] && vj="{\"command\":\"$(mj_json_esc "$verify")\",\"exit\":$MJ_FINISH_VEXIT,\"seconds\":$MJ_FINISH_VSECS${MJ_FINISH_VTREE:+,\"tree\":\"$MJ_FINISH_VTREE\"}}"
   local cps=0; cps="$(find "$MJ_STATE_DIR/checkpoints" -name '*.md' 2>/dev/null | wc -l | tr -d ' ')"
   mj_ledger_append task.finished "\"task_id\":\"$id\",\"outcome\":\"$outcome\",\"contract\":$contract,\"verify\":$vj,\"checkpoints\":$cps"
+  mj_mesh_task_release "$id"
   [ "$MJ_JSON" = 1 ] || printf 'finish: %s %s\n' "$id" "$outcome"
 }
 

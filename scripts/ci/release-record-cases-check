@@ -1,0 +1,89 @@
+#!/usr/bin/env bash
+# release-record-cases-check — every case about the release record is one the
+# release-record-cases gate runs, and every case that gate names exists.
+#
+# The release-record-cases gate (.ai/repo/ci/gates.yaml) runs its cases by name, because a
+# release record's pull request plans that gate and not the whole suite: a case that reads
+# the record and is not on the list is a case that release pull request never runs. Which
+# cases those are is a definition, kept here and nowhere else: a case names the release
+# record or what is offered from it (.ai/repo/releases, release-record, site/static/releases,
+# scripts/ci/release-check) or reads the checkout's own installation guide, distribution
+# projection or changelog. test/cases/94_ci_plan.sh used to hold that grep, so a new such
+# case was found only when case 94 ran, in a suite shard; on 2026-10-14 a branch that added
+# one went red there (I2716). This asks the same question in the structure job, in seconds,
+# and case 94 asks it by running this script, so the definition has one home.
+#
+# A case is left out of the definition when it names those paths as the fixtures of the gate
+# or the planner it is about rather than as a reader of the record: EXEMPT below, each one
+# with its reason, and an exempt name that is not a case is itself a finding.
+#
+#   scripts/ci/release-record-cases-check            report and refuse
+#   scripts/ci/release-record-cases-check --wanted   print the cases the gate must run, one
+#                                                    per line, and judge nothing
+#
+# MJ_ROOT points it at another tree, which is how case 3033 drives it over a fixture.
+# Exit: 0 the listing matches, 10 a finding, 12 the model or the gate is missing, 2 usage.
+set -eu
+set -o pipefail
+
+ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
+cd "$ROOT"
+MODE=check
+case "${1:-}" in
+  '') ;;
+  --wanted) MODE=wanted ;;
+  *) echo "release-record-cases-check: unknown option $1" >&2; exit 2 ;;
+esac
+
+MODEL=".ai/repo/ci/gates.yaml"
+GATE="release-record-cases"
+# What makes a case one about the release record: a path of the record or of what is
+# offered from it, or this checkout's own copy of the guide, the projection or the changelog
+# (a fixture's copy, read without $ROOT, is the case's own business).
+PATTERN='\.ai/repo/releases|release-record|site/static/releases|ci/release-check|\$ROOT/(docs/INSTALL\.md|site/data/registry/distribution\.json|docs/generated/changelog)'
+# <case>  <why it names the paths without reading the record>
+EXEMPT='94_ci_plan	the planner case: the release-record shape and this gate are its fixtures
+3033_a_release_record_case_is_listed_by_a_structure_gate	this gate'"'"'s own case: the listing is its fixture'
+
+wanted() {
+  local exempt
+  exempt="$(printf '%s\n' "$EXEMPT" | cut -f1)"
+  { grep -l -E "$PATTERN" test/cases/*.sh 2>/dev/null || true; } \
+    | sed 's#.*/##; s#\.sh$##' | grep -vxF "$exempt" | LC_ALL=C sort -u || true
+}
+
+if [ "$MODE" = wanted ]; then wanted; exit 0; fi
+
+[ -f "$MODEL" ] || { echo "release-record-cases-check: $MODEL is missing" >&2; exit 12; }
+runs="$(awk -v id="  - id: $GATE" '$0 == id {f=1; next} f && /^  - id: /{exit} f && /^    runs: /{sub(/^    runs: /, ""); print; exit}' "$MODEL")"
+[ -n "$runs" ] || { echo "release-record-cases-check: $MODEL declares no gate $GATE with a runs line" >&2; exit 12; }
+
+findings=""
+finding() { findings="$findings  $1
+"; }
+case "$runs" in
+  *'test/run.sh --no-skips '*) ;;
+  *) finding "NOSKIPS   $GATE does not run named cases with --no-skips: $runs" ;;
+esac
+named=" ${runs#*--no-skips } "
+want="$(wanted)"
+[ -n "$want" ] || finding "VACUOUS   no case names a release-record path; the definition matches nothing"
+for c in $want; do
+  case "$named" in *" $c "*) ;; *) finding "UNLISTED  $c names the release record and $GATE does not run it" ;; esac
+done
+for c in $named; do
+  [ -f "test/cases/$c.sh" ] || finding "MISSING   $GATE names $c, which is not a case"
+done
+while IFS="$(printf '\t')" read -r c _; do
+  [ -f "test/cases/$c.sh" ] || finding "EXEMPT    $c is exempt from the definition and is not a case"
+done <<EOF
+$EXEMPT
+EOF
+
+if [ -n "$findings" ]; then
+  echo "release-record-cases-check: the $GATE gate does not run the cases about the release record:"
+  printf '%s' "$findings"
+  echo "  add each UNLISTED case to the runs line of $GATE in $MODEL, and drop each MISSING one"
+  exit 10
+fi
+echo "release-record-cases-check: $(printf '%s\n' "$want" | grep -c .) case(s) name the release record, each run by $GATE"
